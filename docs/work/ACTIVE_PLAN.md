@@ -1,480 +1,142 @@
 # Active Plan
 
-Purpose: define the one bounded, resumable execution slice that Forge should
-pursue now. Strategic direction remains in
-`docs/project/FORGE_MASTER_PLAN.md`; completed work, failed approaches and test
-transcripts remain in `docs/work/PROGRESS.md`.
+**The only executable queue.** Scope (Master Plan §1): this file owns only "what work is active right now?". It may not
+override Genesis science, Completion maturity rules, Performance measurement semantics or `CLAUDE.md` repository
+constraints; execution authority does not imply semantic authority outside its scope. Strategy: `docs/project/FORGE_MASTER_PLAN.md` Part I. Track A science:
+`docs/discovery/FORGE_GENESIS.md`. Maturity: `docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md`. History up to
+2026-10-10 (BIG 14 queue, Big Rocks program, Local Assurance passes 2–13): `docs/work/archive/ACTIVE_PLAN_HISTORY_TO_2026-10-10.md`
+— not a queue. Last consolidated: 2026-10-11.
 
-## Bounded battery ingestion review — 2026-10-06
+## Objective
 
-Current review worktree: `C:/Users/dev_kaeem/Downloads/Compressed/forge-battery-review`,
-branch `scientific/battery-1rc-production-closure`, starting HEAD `d66c4756`.
-Scope: hostile review and defect repair of NASA raw ingestion only. Focused
-parsing/adversarial checks complete; integration tiers and review disposition
-are recorded in PROGRESS. Do not advance `real_data` or infer SOC, pulse/rest,
-sensor uncertainty, or R0/R1/C1. Acquisition/frozen source, split, identification,
-validation and UQ remain deferred under the battery preregistration.
+Prove a trustworthy, measurable scientific reasoning loop. Order: **G0** Trust lane → **A1** Genesis-lite measurement →
+**A2** Minimal Mind → **B1** narrow real demo. One Trust architecture, one Mind; no second authority.
 
-## Current objective
+## Verified state (2026-10-11; re-check before relying on it)
 
-The architecture-first BUILD phase through **BIG 13** is complete and merged.
-Forge now enters **BIG 14 â€” Scientific Closure & Recertification**.
+- `main` = `4634eba` (PR #122). It contains PR #124 (Big Rocks foundations) and PR #125 (Roadmap V2 R1–R8: Blindfold,
+  escrow, falsifiers, multiplicity, novelty, Red Team, credibility vectors, FidelityGraph, discovery providers).
+  These are built, **not certified and not qualified**.
+- The hardened certificate (`certification/current_core_v2.json`, recertified 2026-10-09 in `d383eed0`) binds commit
+  `3e396bc4` on `local/r1r4-assurance`, **not** `main`. The last recorded FAST run (on `1e7cbebc`, PROGRESS 2026-10-10)
+  had 14 failures, all in the known base-drift set (certificate, freeze v1/v3/v4 manifests, batch56 r65, two
+  mutation-workspace tests). FAST on `4634eba`: **NOT RUN**.
+- GitHub rulesets: the REST API returns 403 (private repository on a free plan). No merge gate is enforced remotely.
+- Open PRs: #123 Trust Repair Pass 1 (conflicts; base `44637065`); #126 authority ledger + real escrow + battery blind
+  readiness (mergeable; starts a new foundation); #127 Genesis document; #117 battery 1RC NASA ingestion (conflicts);
+  stale #107, #39, #24.
+- Capability ledger (computed): `thermal.nafems_t3` EVIDENCE_BACKED; `battery.thevenin_1rc` FOUNDATION and still the
+  test-pinned completion epic; nothing is PRODUCTION_READY.
+- Negative results stand: four BIG 13 flagships `insufficient_evidence`; Kirkaldy fade NOT MET; LG M50 DFN NOT MET.
+  Local-only, not on the remote: Trust Repair Pass 1 `803946af`; Battery Practical Pass 1 `7e923e75` (WEAKLY_IDENTIFIABLE).
 
-BIG 14 is a stabilization, diagnosis and evidence campaign. It is not another
-breadth-expansion phase. New providers, domains and flagships remain out of
-scope until the existing architecture has passed its declared gates and the
-current flagship evidence gaps have an honest disposition.
+## Current gate: G0 — Trust lane
 
-Starting evidence state:
+| Field | Value |
+|---|---|
+| Start condition | Now. |
+| Window | OWNER_DECISION_REQUIRED (OD-7). |
+| Exit gate | The certificate binds the intended `main` HEAD, **or** every unresolved failure is classified with evidence and no `SCIENTIFIC_CORRECTNESS` or `UNCLASSIFIED` item remains open. |
+| Circuit breaker | Window expired → Master Plan §5.2: classify (unclassified = blocking), preserve the red result, document here, then fix / isolate / ask. Never loosen a gate. |
+| Outcomes | PASS · FAIL · BLOCKED_WITH_EVIDENCE · DEFERRED_BY_OWNER |
 
-- four flagships execute through the generic BIG 12 `SystemExecutor`;
-- all four end `insufficient_evidence`; none is validated;
-- six pre-registered criteria were not met as written;
-- full FAST, SCIENTIFIC, mutation and hardened recertification campaigns have
-  not run on the merged BIG 13 tree;
-- the final BIG 12 and BIG 13 fix batches have not received their missing
-  independent re-reviews.
+Next actions (agent-executable now):
 
-Negative results must remain visible. BIG 14 must not improve an outcome by
-loosening a tolerance, replacing a pre-registered criterion with a post-hoc
-one, treating solver agreement as validation, or turning an unknown
-uncertainty/model discrepancy into zero.
+1. Run the FAST tier on the intended certification HEAD selected by OD-3, normally the post-merge `main` HEAD, in a
+   supported environment (3.11 or 3.12); record exact failures in PROGRESS. Compare failures against the previously
+   recorded 14-test drift set only where still applicable; the historical drift set is not current truth.
+2. Classify every failure as `SCIENTIFIC_CORRECTNESS`, `GOVERNANCE_ONLY` or `UNCLASSIFIED` (Master Plan §5.2).
+   `GOVERNANCE_ONLY` needs the complete six-question evidence record; anything less stays `UNCLASSIFIED` and blocking.
+3. Rebase PR #123 onto current `main` locally, run the `CLAUDE.md` gates and `forge-scientific-review`, and report.
+   Do not push, merge or recertify without the owner.
 
-## Current repository state
+Owner-run: hardened recertification (it writes the certificate); merges (OD-3, OD-4).
 
-- Branch: `feat/big-14-flagship-a` (14.2/14.3 flagship A work), worktree
-  `D:/forge-b14`, based on `a0928965` (PR #111's head, merged as `72b829f3`). No PR
-  opened yet. 14.1 work was on `feat/big-14-scientific-closure` (merged).
-- Base of BIG 14: `origin/main` @ `a3f757eb5fdbc804ef11e3c4088a757c31981870`
-  (merge of PR #109, BIG 13)
-- Pristine baseline worktree (never edited): `D:/forge-b14-base`, detached at
-  the same SHA; baseline test runs happen there so edits cannot contaminate
-  tree-walking tests.
-- PRs: #110 (14.0 + 14.1 baseline repairs) MERGED 2026-09-27 at `86fa1896`
-  by the sharq-labs account with `recertification-gate` red (void formal
-  mutation control rounds). #111 carries the follow-up. Verify GitHub
-  before any current PR claim.
-- Never switch branches in the shared checkout; it is used by other sessions.
+## Track A — Discovery credibility
 
-## Roadmap view
+**A1 Genesis-lite measurement** (Genesis §18 Step 1, on the existing `engcore.blindfold`)
 
-### Now â€” BIG 14
+| Field | Value |
+|---|---|
+| Start condition | Preparation now, limited to benchmark, governance, measurement, stabilization or evaluation infrastructure as the Completion Policy allows for A1 (documents, specifications, a pilot cost measurement; no certified file touched; no new scientific capability). The preregistration freeze and the formal ≥20-seed baseline runs start when G0 exits (PASS, or `GOVERNANCE_ONLY` blockers isolated with complete evidence records). |
+| Window | OWNER_DECISION_REQUIRED (OD-7). |
+| Exit gate | Genesis Step 1 gate: frozen preregistration digest, frozen baseline set (Genesis §10.5), baseline distributions over ≥20 seeds, owner-approved compute estimate (Genesis §10.6). |
+| Circuit breaker | Window expired → record what was measured as smoke-scope only and ask the owner. No maturity claim. |
+| Outcomes | PASS · FAIL · BLOCKED_WITH_EVIDENCE · DEFERRED_BY_OWNER |
 
-Close known authority/review gaps, establish a reproducible full-tree
-baseline, select a bounded flagship evidence target, diagnose its residuals,
-quantify only supportable uncertainty channels, and run the full assurance
-campaign.
+Next actions: draft the Genesis-lite preregistration (task classes, scoring, baselines, leakage-control status
+including the escrow's `SECURITY_BOUNDARY_NOT_PROVEN` label); measure per-run cost at the 10-run rung; write the compute
+estimate.
 
-### Next â€” BIG 15
+**A2 Minimal Mind** (Genesis Step 2). Start: A1 PASS **and** the Completion Policy condition — the active epic formally
+changed (OD-6) or a complete, owner-approved, unexpired narrowly scoped exception. Neither exists today. Window: OWNER_DECISION_REQUIRED. Exit: lift over the strongest
+applicable frozen baseline with confidence intervals, calibrated predictions scored by a proper scoring rule, LLM-ablation
+arm reported. Reuse owners from `docs/architecture/discovery_authority_map.md`; new Mind code must justify why an
+existing owner cannot serve.
 
-Complete graph-level UQ/V&V and evidence composition using the findings and
-contracts proven in BIG 14. Do not start while BIG 14 exit criteria remain
-unmet.
+## Track B — Narrow real demo
 
-### Later
+**B1 Infeasible-specification refusal and correction** (candidate: drone; OD-13)
 
-Additional flagship breadth, HPC/scale and commercial-data expansion remain
-directional under the Master Plan. They do not displace scientific closure.
+| Field | Value |
+|---|---|
+| Start condition | Preparatory engineering when A2 starts. The demo itself runs only after the A2 gate PASSES. |
+| Window | OWNER_DECISION_REQUIRED (OD-7). |
+| Exit gate | The user's infeasible requirement is refused and the binding physical constraint is named; a corrected admissible specification is executed through real providers; uncertainty and applicability are reported; the evidence bundle replays; a scientific review is clean. |
+| Circuit breaker | Window expired → the existing Trust-only refusal behavior may be recorded or demonstrated separately, explicitly labelled as NOT a B1 completion and NOT evidence of Minimal Mind / Genesis capability, with no maturity change and no bypass of the A2 PASS gate; otherwise BLOCKED_WITH_EVIDENCE. |
+| Outcomes | PASS · FAIL · BLOCKED_WITH_EVIDENCE · DEFERRED_BY_OWNER |
 
-## Mapping to the Master Plan
+Substrate: `engcore.systems.products.drone_coupled` (steady algebraic hover chain; every coefficient a declared input;
+uncertainty UNKNOWN) through MCP `run_product_screening(..., screening="coupled_hover")`. Missing: admitted component
+data with provenance, one external validation route, quantified uncertainty. Preparation uses already-built
+capabilities only; a new capability foundation for the demo (model, provider adapter, synthesis engine) follows the same
+Completion Policy rule as A2. Rules: a correction is a PROPOSED
+hypothesis until the Trust Layer admits it; the demo changes no maturity stage; it never substitutes for A1/A2 results.
 
-`BIG` numbers are execution milestones; `P` numbers are strategic Master Plan
-phases. They are related but not numerically identical.
+## Not now
 
-The Master Plan names the P16 flagship systems as HVAC, battery pack, drone and
-vehicle subsystem (Â§10). BIG 13 flagships A-D are integration proofs of the
-generic runtime; only A overlaps a P16 system (battery), and none of them
-completes P16. BIG 14 does not redefine P16.
+Everything in Master Plan §4 NEXT, LATER and DEFERRED. In particular: no new providers without a named benchmark, no
+product depth beyond B1, no viewer/assembly/motion work, no GPU/HPC orchestration, no fusion, biomedical or
+therapeutic work.
 
-| Execution milestone | Master Plan relationship | Status |
+## OWNER_DECISION_REQUIRED
+
+| ID | Decision | Facts |
 |---|---|---|
-| BIG 2â€“9 | P1â€“P8 foundations | Built; full merged-tree campaign pending |
-| BIG 10 | P14 multi-timescale runtime | Built; full campaign pending |
-| BIG 11 | Provider work spanning P7â€“P13 | Built; residual reviews recorded |
-| BIG 12 | Cross-phase end-to-end runtime | Built; final fix batch needs re-review |
-| BIG 13 | Integration proofs toward P16 (not the P16 systems) | Built; all results remain insufficient evidence |
-| BIG 14 | P0 closure plus bounded P15/P16 evidence work | Current |
-| BIG 15 | P15 graph-level UQ/V&V completion | Next |
+| OD-1 | Merge-gate enforcement: make the repository public, upgrade the plan, or formally accept local SHA-bound assurance as the only merge control. | Rulesets API 403; red gates cannot block merges. |
+| OD-2 | Supported Python policy. | `requires-python >=3.11`; CI 3.11/3.12; local runs on 3.13 and 3.14. |
+| OD-3 | Recertification: which HEAD, and when (owner-run). | Certificate binds `3e396bc4`, not `main`. |
+| OD-4 | PR #123: land plan. | Conflicts against `main`; closes R3-01/R3-02 only. |
+| OD-5 | PR #126: land, hold or split. | +8,043 lines; new `engcore.authority`; real escrow is relevant to Genesis leakage controls. |
+| OD-6 | Completion epic: keep `battery.thevenin_1rc` (PR #117) or re-point it; or approve one narrowly scoped A2 exception. | Pinned by the ledger, `tests/test_capability_completion.py` and the PR template (CONTRACT_PIN: a change needs its own reviewed PR). Blocks A2. No blanket Track A/B exemption exists (Completion Policy, anti-loophole rule). |
+| OD-7 | Timebox windows for G0, A1, A2, B1. | None set; no dates invented here. |
+| OD-8 | External evaluator for Genesis hidden tasks: name a person or group, or fix a selection process and deadline. | Required before the A1 freeze names its held-out protocol, and before Genesis Step 6. |
+| OD-9 | RESOLVED. PR #128 supersedes PR #127 and contains Genesis plus the reviewed planning consolidation. PR #127 was closed without merge; its branch remains preserved. | PR #127 existed as the standalone Genesis document. |
+| OD-10 | Publish or record the local-only commits `803946af` and `7e923e75`. | Not verifiable from the remote. |
+| OD-11 | Branch and PR hygiene. | About 119 remote branches; stale PRs #24, #39, #107. |
+| OD-12 | Confirm the control-plane budget signal (Master Plan §5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |
+| OD-13 | Confirm the B1 demo system. | Drone recommended: the only executable product chain today. |
+| OD-14 | Branch `perf/test-suite-runtime`: land it (needs the OD-3 recertification: it touches `certified:harness`, `inference_admission`, `certification_control`), and decide whether to add V4 mutation entries for the admission-record memo (changes the certified population count of 680). | Owner-requested. FAST 992 s -> 476 s, SCIENTIFIC 1448 s -> 1024 s, same failure sets (PROGRESS 2026-10-12). Review F1–F4 fixed; the memo's three mutants are killed by `tests/inference/test_admission_record_memo.py` today, outside the certified population. |
 
-## BIG 14 execution order
+## Active-epic exceptions (open)
 
-The sections below are sequential unless a task explicitly says it may run in
-parallel. The first unchecked item in this section is the next executable task.
-Historical status later in this file is not an execution queue.
-
-### 14.0 â€” Establish the branch and baseline
-
-Owner: repository maintainer / implementation agent.
-
-- [x] Create a bounded BIG 14 branch from current `origin/main` in its own
-      worktree; record branch, base SHA and worktree here and in PROGRESS
-      (including the PROGRESS "Current branch / PR" header).
-- [x] Decide the untracked `AGENTS.md`, `.agents/` and `.codex/` in the shared
-      checkout: ignored by owner decision (`.gitignore`, plus the shared
-      repository's `info/exclude` until this branch merges).
-- [x] Inventory supported Python and provider environments, including exact
-      versions, optional dependencies, external executables and WSL/conda
-      requirements (PROGRESS, BIG 14 14.0). Explicit refusal of unsupported
-      environments is carried by the 14.1 support-alignment item.
-- [x] Measure the base SHA in the pristine worktree before changing scientific
-      behavior, and record exact commands and results:
-      `python tools/forge_check.py --regression`, `git diff --check`, and the
-      FAST tier `python -m pytest -m "not expensive" -q -n 4` as a measurement
-      (not a gate). `forge_check.py --changed` on an unchanged branch selects
-      only the architecture pack and is not a baseline. Save the sorted failing
-      node ids; later runs are compared against that list so old drift and new
-      regressions cannot hide each other.
-- [x] Classify every baseline failure as product defect, stale test/certificate,
-      unsupported environment, missing dependency or external-policy blocker;
-      record the evidence for the classification. Previously recorded drift
-      (Python 3.14 API-surface artifacts, stale `current_core_v2.json`) must be
-      re-confirmed on this SHA, not assumed.
-
-#### Baseline stop gate
-
-Do not begin flagship evidence work (14.2 or 14.3) while a baseline failure can
-alter scientific authority, evidence admission, applicability, uncertainty,
-replay identity or assurance. Infrastructure and authority repairs in 14.1 may
-proceed specifically to close those failures.
-
-### 14.1 â€” Close authority, runtime and review debt
-
-Owner: implementation agent. Reviewer: independent read-only scientific
-reviewer for every claim/evidence/UQ/assurance change.
-
-Baseline repairs first (classes from PROGRESS, BIG 14 14.0):
-
-- [x] Class 1: make the provider-free flagship suite run in the core CI
-      environment, and make provider suites skip (not error) outside their
-      provider environments. The BIG 13 pre-registration pins must execute.
-- [x] Class 2: every one of the 12 schema-less `from_dict` readers either
-      checks its schema or is proven nested-only (exemption with a test).
-- [x] Class 3: classify the nine BIG 5-13 non-Core packages in
-      `docs/CORE_FREEZE_POLICY.md`.
-- [x] Class 4: add `corrosion` and `hygrothermal` to the derived domain list
-      after checking they are real domain packages.
-- [x] Class 5: restore the bare-install boundary (optional extras imported
-      lazily and named in the guard; tests skip when an extra is absent).
-- [x] Independent scientific review of the class 1-5 repairs: round 1 and
-      round 2 CHANGES REQUIRED (all fixed), round 3 PASS; LOW residuals L2-L5
-      recorded in PROGRESS (BIG 14 14.1).
-- [ ] Class 6: run hardened recertification on 3.12 after the repairs
-      (GitHub workflow; needs the owner's go-ahead to push the branch / open
-      the PR, whose automatic classification runs it).
-- [ ] Owner action: configure the `main` ruleset to require `tests-gate` and
-      `recertification-gate` (Branch Policy currently reports NOT ENFORCED).
-      CONFIGURED BUT NOT ENFORCED. On 2026-09-28 the ruleset "Protect main"
-      (id 23351506) was set to require both (source GitHub Actions 15368;
-      strict up-to-date on; merge only; no bypass; approvals 0), and
-      `branch_policy` reported OK. The repository was later made PRIVATE on a
-      free plan. GitHub then disables rulesets: every rules API call returns
-      403 "Upgrade to GitHub Pro or make this repository public", and
-      `branch_policy` fails. A red gate cannot block a merge today.
-      OWNER DECISION: make the repository public, or upgrade to GitHub Pro.
-- [x] Fix `tools/wsl_env.sh` so it is not pinned to `/mnt/d/forge-b13`.
-
-Then review and authority debt:
-
-- [x] Re-review the final BIG 12 fix batch; resolve or explicitly disposition
-      model-selection binding, output-node applicability, multiscale resume
-      dependency and commit-taint findings. Done 2026-09-28 on
-      `feat/big-14-reviews` (PROGRESS, "14.1 review debt"): (a) HIGH closed
-      by refusing validity records and keeping labels out of
-      `provenance.models`; R1, N1, N2, (c) and (d)-1 fixed. Deferred with
-      reasons: the executed-model binding.
-- [x] BIG 12 R2 / (d)-2 (MEDIUM): state reads are not DAG edges. Done
-      2026-09-28 (owner decision), `246098fc`: `reads_owners` (omitted when
-      empty, so no stored digest moves), a StateView per node, and the planner
-      orders readers against writers and every two committing nodes. No
-      flagship request needed a change.
-- [x] BIG 12 (b) (MEDIUM): output-node applicability is undisclosed. Done
-      without a version bump: `undeclared_applicability(result)` is derived
-      from the plan the result carries and named in the `trust_handoff`
-      notes. Making declare-or-waive mandatory for output nodes stays a
-      request-contract change for a later regeneration.
-- [x] Run the missing BIG 13 round-5 review; resolve or explicitly disposition
-      every finding. Done 2026-09-28: F1 partial (the recorded providers are
-      bound; completeness and pre-registration are a documented limit), F2-F8
-      fixed, F4 pins the committed bundles' full digests. Bundle self-consistency must not be called authenticity.
-      Include: `engineering/reference.py` `ReferenceCondition` / `EnvelopeBound`
-      readers pre-coerce with `float(payload[...])` (the U-01 pattern; found
-      by the 14.1 units review).
-- [x] Run the missing second BIG 11 re-review (the focused re-review's fixes
-      were never re-reviewed); resolve or disposition its findings. Done
-      2026-09-28: A1 HIGH (held UNKNOWN ambient) and A2 MEDIUM (non-affine
-      selections) fixed; LOW A3-A6 recorded.
-- [x] Resolve or explicitly defer BIG 13 review M7: study/limit records ship
-      inline but their provider bindings are not compared with the main
-      request. DEFERRED to BIG 15 graph-level V&V (the study requests are not
-      shipped; stated in `engineering.md`).
-- [x] Fix the Units findings U-01/U-02/U-03
-      (`docs/code_audit/MODULE_BY_MODULE_REVIEW.md`) with focused adversarial
-      tests (also numpy bool/arrays, bytes, memoryview, numbers as units).
-- [x] U-05 - OWNER DECISION (2026-09-28: bind it, `b07a58f1`;
-      `claim_replay_environment/2`; /1 still verifies and never replays
-      exactly): verified that the unit-definition content
-      (`registry_fingerprint()`) is bound nowhere; only the Pint version is
-      (claims replay environment, provider identities). Binding it moves
-      every stored bundle's environment fingerprint: needs a version decision.
-- [x] U-04 - OWNER DECISION (2026-09-28: `pint>=0.25.3,<0.27`, the
-      measured range) on a Pint compatibility range: the units
-      contract passes on Pint 0.25.3 and 0.26.1; the declared minimum 0.23 is
-      untested and there is no upper bound.
-- [x] U-06 recorded as accepted LOW residual (runtime context mutation is
-      prohibited; the ledger states the limit).
-- [x] Harden provider identity failure semantics. Known defect:
-      `executable_probe` in `src/engcore/providers/catalog.py` ignores the
-      version probe's exit code, so a non-zero exit whose output parses as a
-      version yields `AVAILABLE` and is cached. Also establish whether a cached
-      `AVAILABLE` status can outlive a changed executable/environment before an
-      execution identity is formed. A failed, non-zero or timed-out probe must
-      not create or cache an execution identity.
-      Done: exit code enforced (OpenFOAM's own probe too); CalculiX declares
-      its measured 201; refresh drops the cached Python environment digest.
-- [x] Review F2 (MEDIUM): a conda package set changed after a cached probe
-      is now re-checked at launch beside the executable re-hash
-      (`ProcessInvocation.conda_environment`, `conda_environment_of`); every
-      adapter invocation declares it (static test). Residual: the digest
-      covers conda package RECORDS, not files edited in place, nor system
-      tools reached through PATH (/bin/sh, a host C toolchain).
-- [x] Re-review N1 (MEDIUM): library providers (Cantera, PyBaMM, CoolProp,
-      TESPy) now check at execution that the library they import is the one
-      discovery bound (`require_library_unchanged`, 1-3 ms per call), in
-      every function that forms an identity (PyBaMM coupling `advance`
-      included), and the module IN MEMORY must match (location, `__version__`,
-      the discovery it was first imported under); discovery refuses a module
-      that is not a file of the distribution it binds (shadowing / editable).
-      Declared dependencies are covered too: per-distribution pins, their
-      `__version__` in memory, and every module derived from a distribution's
-      own files must load from those files - the parsed RECORD's module
-      files, else the conda package record's files (conda-installed casadi),
-      else nothing is established and it is refused; editable installs and
-      checkout egg-infos establish nothing. Adapters re-check after importing.
-- [x] Re-review the F-1 / F-2 fix (`catalog._footprint`: parsed RECORD,
-      editable refusal, empty-module refusal). NOT re-reviewed: the review
-      loop on this sub-area was closed after seven rounds; carry it into the
-      next review batch. Re-reviewed 2026-09-28: PASS (LOW B1-B4 recorded).
-      Recorded LOW: `Mechanism.from_cantera_data` and
-      `forge_pybamm.parameter_set` import their library without the check
-      (their outputs are content-hashed); `<pkg>.libs` dirs derive as module
-      names; conda egg-info packages are refused (visible, not silent). OPERATING RULE: a provider-environment change takes effect in a
-      new process; a same-version rebuild of an already-loaded module cannot
-      be seen from inside the process. Residuals: the shared python-environment
-      digest is re-read only on refresh; undeclared dependencies are unbound;
-      `found_but_refused` reads reason prefixes; FEniCSx (distribution
-      `fenics-dolfinx`, LIBRARY mode) is not covered by this check - open.
-- [ ] Align advertised Python/optional-dependency support with the environments
-      actually tested; either support an environment or refuse it explicitly.
-- [ ] Re-run the affected regression packs after each bounded fix and append
-      the exact commands/results to PROGRESS.
-
-### 14.2 â€” Triage and select the evidence target
-
-Owner: repository maintainer. Selection must be recorded before new evidence
-or acceptance logic is added.
-
-- [ ] Perform a bounded triage of all four flagships using existing records:
-      admissible independent data, applicability status, unresolved numerical
-      residuals, execution cost and expected evidence value.
-      NOT recorded as a written triage: the owner chose flagship A directly.
-- [x] Select one primary flagship and at most one backup for deep closure work.
-      Owner decision (2026-09-27): **flagship A** (battery + cooling +
-      lifecycle), no backup. The owner's rationale is not recorded. Facts in
-      its favour: it is the only BIG 13 flagship that overlaps a P16 system,
-      and measured LG M50 data exist (Chen 2020, Zenodo 4032561). The evidence bar and target outputs are fixed per
-      study in each pre-registration (`flagships/forge_flagships/data/big14_a_*`).
-- [ ] Pre-register the diagnostic questions, acceptance criteria and the 14.3
-      timebox without changing the six BIG 13 outcomes. The pre-registration
-      is committed and pushed before any new evidence-bearing execution of the
-      selected flagship, and its commit SHA is recorded in PROGRESS. (BIG 13
-      could not show from git that its constants preceded the first run; BIG
-      14 must be able to.)
-      PARTIAL: every flagship A study so far has its own pre-registration
-      committed and pushed before its first run (SHAs in PROGRESS), but no
-      umbrella pre-registration and no 14.3 timebox were registered before
-      the first run. The timebox is still open (owner).
-- [ ] Move the non-selected flagships to explicit deferred status; retain their
-      `insufficient_evidence` verdicts and recorded gaps.
-
-Flagship A status (details and SHAs in PROGRESS, "flagship A" entry):
-
-- [x] Cell-side conservation check (BIG 13 M5): met; heat of mixing (83-128 %
-      of counted heat) and reversible heat are absent from the model.
-- [x] Window study (BIG 13 criterion 1 diagnosis): H1 supported; criterion 1
-      stays NOT MET as registered.
-- [x] Representative-day approximation error (pre-registered `31c10f2d`):
-      MET in both cases; the published 4-of-56-day run underestimates fade
-      by 1.2-1.3 % (first order in the macro step).
-- [x] Chen2020 against measured LG M50 cells: NOT MET (SPM 149-153 mV at C/2);
-      electrode-balance correction: NOT MET (SPM 33-38 mV); heat-of-mixing Hc
-      supported.
-- [x] OWNER DECISION carried out (2026-09-28): the cell model moved from SPM
-      to DFN with the heat of mixing. Study `big14-a-lgm50-dfn`:
-      NOT MET (V1 and C1 met at 13.6-16.9 mV; T1 missed on 2 of 3 cells).
-      The balance factors are interior (0.980 / 0.854) and carried into the flagship.
-- [x] Independence of the Chen 2020 data: NOT independent. The C/2-1.5C curves are
-      Chen2020's tuning data (paper read; `chen2020_independence.json`).
-- [x] DFN energy check (`big14-a-cell-energy-check-dfn`, review L5): NOT MET,
-      1.10 % at 313 K against 1 %.
-- [x] Flagship A regenerated on DFN; four battery bundles and the report re-pinned.
-  - Degradation voltage shift: -36.2 mV (normal).
-  - Fresh-day module heat: 69.0 Wh (was 28.8 Wh on SPM).
-  - Window refinement: differences now monotone, but the peak-heat tolerance is
-    missed. Level 4 still NOT reached.
-- [ ] LG M50T ageing data (Kirkaldy 2024, about 22 GB for the recommended
-      subset) for the fade model. Needs download approval.
-- [ ] Out-of-sample cell data (LG M50 curves NOT used by Chen2020): the only
-      untouched curves in hand are C/10. An independent dataset is needed for
-      any validation claim about the cell model.
-
-The triage must cover these known questions, but deep implementation is limited
-to the selected flagship(s):
-
-- A: missing independent cell-side conservation check, non-monotone window
-  study (whose monotone requirement was itself added after the first review),
-  Chen2020 applicability and representative-day approximation error;
-- B: peak-stress convergence, the CalculiX difference and absence of an
-  independent thermo-structural numerical benchmark;
-- C: near-lid mapping/discretization effects, SU2 flux miss and authoritative
-  verification of the Ghia transcription;
-- D: GRI-Mech applicability and absence of ignition-delay/flame experimental
-  comparison.
-
-### 14.3 â€” Diagnose, quantify and admit evidence
-
-Owner: implementation agent. External dependencies: authoritative data,
-provider environments and applicable licenses.
-
-- [ ] Diagnose the selected residuals without changing the scientific question
-      or replacing a failed criterion with a post-hoc success criterion.
-- [ ] Define an uncertainty budget for each selected output, separating
-      numerical, parameter/input, measurement/reference and model-discrepancy
-      channels. Missing channels remain UNKNOWN, never zero.
-- [ ] Admit experimental/reference data only through existing provenance,
-      license, applicability and calibration/holdout contracts. Numerical
-      benchmarks and analytic identities must retain their actual class.
-- [ ] Re-run the selected flagship through the generic runtime and regenerate
-      its bundle/report from the measured records.
-- [ ] Run an independent scientific review of the complete evidence path and
-      resolve or disposition every HIGH/MEDIUM finding.
-- [ ] Respect the pre-registered timebox. If admissible independent data or a
-      required provider environment is not available within it, close the
-      selected campaign as a justified refusal (missing evidence and next
-      admissible step named) instead of extending scope.
-
-### 14.4 â€” Full verification and recertification
-
-Owner: repository maintainer. External dependency: GitHub Actions and the
-repository ruleset for `main`.
-
-- [ ] Run the supported-environment FAST tier:
-      `python -m pytest -m "not expensive" -q -n 4`.
-- [ ] Run the supported-environment SCIENTIFIC tier:
-      `python -m pytest -m "not campaign" -q -n 4`, with required providers;
-      report unavailable providers separately from test failures.
-- [ ] Run the declared provider and flagship suites in their exact environments.
-- [ ] Run normal and hardened mutation populations; investigate surviving
-      mutations rather than weakening scientifically valid guards.
-- [ ] Run hardened-core recertification for every certified/trust-sensitive
-      change and verify that certificate and assurance evidence bind the exact
-      measured source commit.
-- [ ] Obtain green automatic CI on the final source head and verify externally
-      that `main` requires both `tests-gate` and `recertification-gate`.
-- [ ] Reconcile ACTIVE_PLAN, PROGRESS, architecture docs and generated reports
-      with the final repository and CI state.
-
-## BIG 14 exit decisions
-
-BIG 14 has two separate outcomes. Do not conflate them.
-
-### Scientific-closure exit â€” required to finish BIG 14
-
-- [ ] FAST, SCIENTIFIC, required provider suites, mutation gates and hardened
-      recertification pass on the exact final source head in declared supported
-      environments.
-- [ ] BIG 12 and BIG 13 final fix batches have independent review dispositions
-      with no unresolved HIGH finding.
-- [ ] Every investigated residual is diagnosed with admissible evidence or
-      remains an explicit blocking UNKNOWN; none is hidden by changed
-      tolerances or post-hoc replacement criteria.
-- [ ] Bundle integrity/authenticity wording matches the implemented guarantee;
-      an unkeyed manifest is never called authenticated.
-- [ ] The selected evidence campaign ends in either a scoped support decision
-      or a scientifically justified refusal whose missing evidence and next
-      admissible step are explicit.
-
-A justified refusal satisfies scientific closure because it retires ambiguity
-honestly. It does not satisfy product evidence readiness.
-
-### Product-evidence target â€” required before claiming readiness
-
-- [ ] At least one bounded flagship output has quantified uncertainty, model
-      discrepancy quantified or bounded by admissible evidence (a caller- or
-      flagship-declared bound is not evidence), applicable independent
-      evidence and a scoped support decision.
-
-If this target is not met, BIG 14 may close scientifically, but Forge remains
-not ready to claim validated flagship capability and BIG 15 must preserve that
-limitation.
-
-## Historical status and debt handoff
-
-This is a reference ledger, not an execution queue. Detailed implementation,
-reviews, failed approaches and exact test commands live in PROGRESS.
-
-| Area | Current status | BIG 14 ownership |
-|---|---|---|
-| P0 CI/assurance | Automation exists; final merged-tree assurance and branch rules remain unproven | 14.0, 14.4 |
-| P0.1 scientific hardening | Implementation exists; full integrated verification remains pending | 14.1, 14.4 |
-| BIG 2 Time | Built; runtime checkpoint emission and multi-basis mapping remain deferred | No new feature work unless selected evidence requires it |
-| BIG 3 Environment | Built with fail-closed gaps/interpolation semantics | Diagnose only through selected flagship |
-| BIG 4 Lifecycle | Built with explicit degradation/state chaining | Diagnose only through selected flagship |
-| BIG 5 Data/materials | Built on existing knowledge/provenance records | Use for admissible evidence; do not create parallel records |
-| BIG 6 Numerical | Built; PETSc/SUNDIALS breadth is incomplete | No SUNDIALS/DAE expansion in BIG 14 |
-| BIG 7 Spatial | Built; mappings are not generically conservative | Diagnose if selected evidence crosses meshes |
-| BIG 8 PDE/FEM | Built with real FEniCSx/PETSc proofs | Provider tests belong to 14.4 |
-| BIG 9 Coupling | Built; residual non-blocking gaps recorded | Fix only authority/evidence blockers |
-| BIG 10 Multi-timescale | Built; approximation uncertainty is mostly UNKNOWN | Quantify only for selected evidence path |
-| BIG 11 Providers | Multiple real providers executed; second re-review not run | Re-review and identity/support fixes in 14.1; suites in 14.4 |
-| BIG 12 System runtime | Built; final fix batch not re-reviewed | 14.1 |
-| BIG 13 Flagships | Four built; all insufficient evidence; six criteria unmet | 14.2â€“14.4 |
-
-## Explicitly deferred from BIG 14
-
-- optional flagship E and all other new flagship breadth;
-- new solver-provider families or scientific domains;
-- SUNDIALS/DAE and general multi-basis/multi-rate feature expansion unless a
-  selected evidence path proves it is an unavoidable prerequisite;
-- HPC/distributed execution and commercial-data expansion;
-- general BIG 15 graph-level UQ/V&V beyond the minimum contracts required for
-  the selected BIG 14 evidence path.
+None. An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start,
+exit, expiry, owner approval, prohibitions).
 
 ## Stop conditions
 
-Stop implementation and surface a scientific/architectural blocker if a
-proposed change would require:
+Stop and surface a blocker if a change would: weaken UNKNOWN or fail-closed semantics; change a frozen serialized
+contract without a version decision; invent measurements, uncertainty, validation, provenance or evidence; duplicate an
+existing scientific identity or authority; add domain-specific branches to the generic Core; treat convergence, replay or
+solver agreement as validation; change a tolerance or criterion after seeing a result; or bypass an assurance gate.
 
-- weakening UNKNOWN or fail-closed semantics;
-- changing a frozen serialized contract without an explicit version decision;
-- inventing measurements, uncertainty, validation, provenance or evidence;
-- duplicating an existing scientific identity, timeline, state or authority;
-- adding domain-specific names or branches to generic Scientific Core;
-- treating convergence, replay, serialization or solver agreement as
-  validation;
-- changing a tolerance or criterion after seeing the result to make it pass;
-- bypassing automatic assurance gates to make a change appear complete.
+## Checkpoint log
 
-## Session resume
-
-At a new session:
-
-1. read `CLAUDE.md` and `docs/project/FORGE_MASTER_PLAN.md`;
-2. read this file and the newest relevant PROGRESS entries;
-3. inspect actual HEAD, branch, worktree and PR/CI state;
-4. continue the first unchecked item under **BIG 14 execution order**;
-5. update this file only when the bounded plan changes;
-6. append every meaningful milestone, failed approach and executed command to
-   PROGRESS.
-
-Historical tables and Master Plan phases are context, not alternate execution
-queues.
+- 2026-10-11 — planning consolidation (docs only): Big Rocks First and P0–P40 superseded; this file reduced to the live
+  queue; history archived. No code, test, result, threshold or certificate changed.
+- 2026-10-12 — owner-requested, outside the queue: test-suite runtime branch `perf/test-suite-runtime` (OD-14). Tier
+  relabelling and duplicate-work removal; no assertion, tolerance or result changed. Not merged, not recertified.
+- 2026-10-12 — PR #117 (deterministic NASA PCoE raw ingestion for the active epic `battery.thevenin_1rc`) merged with
+  `main` on owner direction. Ingestion only: `real_data` stays `MISSING`, no SOC / pulse-rest / sensor uncertainty /
+  R0-R1-C1 is inferred, and the capability stays FOUNDATION. Its ACTIVE_PLAN edit (an old-queue section with
+  re-encoded characters) was not carried; its prereg is `docs/milestones/battery-1rc-production-closure-prereg.md`.

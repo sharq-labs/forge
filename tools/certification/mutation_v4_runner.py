@@ -18,13 +18,14 @@ can be read -- and tested -- without running anything.
 
 WHAT A ROUND DOES, PER ENTRY
 ----------------------------
-1. copy the tree into a fresh directory OUTSIDE the repository (:func:`require_an_isolated_tree`
-   refuses anything else, including the repository itself and any path inside it);
+1. populate a private pristine seed and independent persistent worker OUTSIDE the repository
+   once per shard; verify its complete byte/mode manifest before each attempt;
 2. apply every edit through ``tests.mutation_guards._apply``, which refuses a mutation that changes
    no executable token or breaks the parse;
 3. run ONLY the entry's target test in the copy, with a JUnit report;
 4. classify with :func:`verdict_from_junit` and compare against the entry's declared expectation;
-5. delete the copy. The checkout is never written to.
+5. repair changed/missing/new worker entries and verify the complete pristine manifest.
+   A restoration failure invalidates the round; the source checkout is never written to.
 
 An unmutated control over the round's target tests runs last. A round whose control is not green
 says nothing at all and is reported as a failed round.
@@ -39,6 +40,12 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from typing import Iterable, Sequence
+
+from tools.certification.mutation_startup import V4_PYTEST_FLAGS
+
+from tools.certification.mutation_workspace import (
+    PersistentWorkspace, WorkspaceError, mutation_target, run_captured,
+)
 
 #: What a copy needs to run the population's target suites: the package, the tests, the experiment
 #: configurations some audit suites import, the pytest configuration, the certification helpers a few
@@ -123,11 +130,17 @@ def verdict_from_junit(report: str | bytes, nodeid: str) -> str:
     a property of the suite, not evidence that the mutation survived. Requiring every case to fail
     would make a mutation's verdict depend on how many examples someone added later.
     """
-    text = report.decode("utf-8", "replace") if isinstance(report, bytes) else report
     try:
+        text = report.decode("utf-8") if isinstance(report, bytes) else report
         root = ET.fromstring(text)
-    except ET.ParseError as exc:
+    except (ET.ParseError, UnicodeDecodeError) as exc:
         return f"REPORT_UNREADABLE({exc})"
+    if root.tag not in {"testsuite", "testsuites"}:
+        return "REPORT_UNREADABLE(not a JUnit suite)"
+    parents = {child: parent for parent in root.iter() for child in parent}
+    if any(parents.get(case) is None or parents[case].tag != "testsuite"
+           for case in root.iter("testcase")):
+        return "REPORT_UNREADABLE(testcase outside a JUnit suite)"
     wanted = nodeid.replace("\\", "/")
     outcomes: list[str] = []
     for case in root.iter("testcase"):
@@ -171,68 +184,91 @@ def require_an_isolated_tree(root: pathlib.Path, work: pathlib.Path) -> None:
 def populate(root: pathlib.Path, destination: pathlib.Path) -> None:
     """A faithful copy: everything a target suite reads, and nothing stale."""
     require_an_isolated_tree(root, destination)
-    destination.mkdir(parents=True, exist_ok=True)
+    destination.mkdir(parents=True, exist_ok=False)
     ignore = shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache")
     for tree in COPY_TREES:
-        shutil.copytree(root / tree, destination / tree, ignore=ignore)
+        shutil.copytree(root / tree, destination / tree, ignore=ignore, symlinks=True)
     for name in COPY_FILES:
-        shutil.copy2(root / name, destination / name)
+        shutil.copy2(root / name, destination / name, follow_symlinks=False)
     for pattern in COPY_GLOBS:
         for source in sorted(root.glob(pattern)):
             target = destination / source.relative_to(root)
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, target)
+            shutil.copy2(source, target, follow_symlinks=False)
 
 
-def _pytest(work: pathlib.Path, arguments: Sequence[str], scratch: pathlib.Path, tag: str):
+def _pytest(work: pathlib.Path, arguments: Sequence[str], scratch: pathlib.Path, tag: str, *, telemetry=None, workspace=None):
+    if workspace is None or work != workspace.work or scratch != workspace.artifacts:
+        raise WorkspaceError("target requires its active owned workspace/artifact root")
+    workspace.artifact_path("basetemp", tag)
+    workspace.artifact_path("junit", tag + ".xml")
     # basetemp lives OUTSIDE the copy: pytest clears its basetemp, and a basetemp inside the rootdir
     # is a usage error (exit 4) rather than a test result.
-    return subprocess.run(
-        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--runxfail",
+    try:
+        workspace.startup.check()
+    except (OSError, RuntimeError) as exc:
+        raise WorkspaceError(str(exc)) from exc
+    return run_captured(
+        [workspace.startup.executable, *V4_PYTEST_FLAGS,
          f"--junitxml={scratch / 'junit' / (tag + '.xml')}",
          f"--basetemp={scratch / 'basetemp' / tag}", *arguments],
-        cwd=work, capture_output=True, text=True, timeout=TEST_TIMEOUT)
+        cwd=work, timeout=TEST_TIMEOUT, telemetry=telemetry,
+        inherited=workspace.startup.environment)
 
 
-def run_one(root: pathlib.Path, entry: Sequence, scratch: pathlib.Path) -> tuple[str, str]:
-    """``(verdict, one-line summary)`` for one population entry, in its own copy of the tree."""
-    import mutation_guards as mg  # noqa: PLC0415 - the pinned harness applies the edit
+def run_one(root: pathlib.Path, entry: Sequence, scratch: pathlib.Path,
+            *, workspace: PersistentWorkspace | None = None) -> tuple[str, str]:
+    """Same named-test attribution; no result escapes failed pristine restoration."""
+    import mutation_guards as mg  # noqa: PLC0415 - pinned mutation validation
 
+    if workspace is None:
+        with PersistentWorkspace(root, scratch, populate) as owned:
+            return run_one(root, entry, scratch, workspace=owned)
+    scratch = workspace.artifacts
     mid, spec, old, new, test, _expect, _note, also, _source = entry
-    work = scratch / f"mut_{mid}"
-    junit = scratch / "junit" / f"mut_{mid}.xml"
-    if work.exists():
-        shutil.rmtree(work)
-    try:
-        populate(root, work)
-        for target_spec, target_old, target_new in ((spec, old, new), *tuple(also)):
-            applied = mg._apply(work, target_spec, target_old, target_new)
-            if isinstance(applied, str):
-                return f"NOT_APPLIED({target_spec} -> {applied})", "no run"
-        done = _pytest(work, [test], scratch, f"mut_{mid}")
+    junit = workspace.artifact_path("junit", f"mut_{mid}.xml")
+    # A report from an earlier invocation of the standalone CLI has no authority.
+    junit.unlink(missing_ok=True)
+    with workspace.attempt(mutation_id=mid, intended=[spec, *(part[0] for part in also)]) as work:
+        workspace.telemetry.stage("mutation_application_started")
+        with workspace.telemetry.measure("mutation_application"):
+            for target_spec, target_old, target_new in ((spec, old, new), *tuple(also)):
+                mutation_target(work, target_spec)
+                applied = mg._apply(work, target_spec, target_old, target_new)
+                if isinstance(applied, str):
+                    workspace.telemetry.failure(WorkspaceError(applied), category="mutation_not_applied")
+                    return f"NOT_APPLIED({target_spec} -> {applied})", "no run"
+        workspace.telemetry.stage("mutation_applied")
+        try:
+            with workspace.telemetry.measure("test_execution"):
+                workspace.artifact_path("basetemp", f"mut_{mid}")
+                done = _pytest(work, [test], scratch, f"mut_{mid}", telemetry=workspace.telemetry, workspace=workspace)
+        except subprocess.TimeoutExpired:
+            return "TIMEOUT", f"no verdict after {TEST_TIMEOUT}s, which is an absence of evidence"
+        if done.returncode not in (0, 1):
+            raise WorkspaceError(f"pytest infrastructure exit {done.returncode}")
         if not junit.is_file():
+            workspace.telemetry.failure(WorkspaceError("JUnit report is missing"), category="missing_junit")
             return "NO_REPORT", f"pytest exited {done.returncode} and wrote no report"
         verdict = verdict_from_junit(junit.read_bytes(), test)
         lines = [line.strip() for line in (done.stdout + "\n" + done.stderr).splitlines() if line.strip()]
         return verdict, lines[-1] if lines else "(no output)"
-    except subprocess.TimeoutExpired:
-        return "TIMEOUT", f"no verdict after {TEST_TIMEOUT}s, which is an absence of evidence"
-    finally:
-        shutil.rmtree(work, ignore_errors=True)
 
 
-def control_is_green(root: pathlib.Path, tests: Iterable[str], scratch: pathlib.Path) -> tuple[bool, str]:
-    """Run the round's target tests unmutated. A round whose control is red says nothing at all."""
-    work = scratch / "control"
-    if work.exists():
-        shutil.rmtree(work)
-    try:
-        populate(root, work)
-        done = _pytest(work, sorted(set(tests)), scratch, "control")
+def control_is_green(root: pathlib.Path, tests: Iterable[str], scratch: pathlib.Path,
+                     *, workspace: PersistentWorkspace | None = None) -> tuple[bool, str]:
+    """Unmutated control still runs last, with pristine checks on both sides."""
+    if workspace is None:
+        with PersistentWorkspace(root, scratch, populate) as owned:
+            return control_is_green(root, tests, scratch, workspace=owned)
+    scratch = workspace.artifacts
+    workspace.artifact_path("junit", "control.xml").unlink(missing_ok=True)
+    with workspace.attempt(mutation_id="CONTROL") as work:
+        with workspace.telemetry.measure("control"):
+            workspace.artifact_path("basetemp", "control")
+            done = _pytest(work, sorted(set(tests)), scratch, "control", telemetry=workspace.telemetry, workspace=workspace)
         lines = [line.strip() for line in (done.stdout + "\n" + done.stderr).splitlines() if line.strip()]
         return done.returncode == 0, lines[-1] if lines else "(no output)"
-    finally:
-        shutil.rmtree(work, ignore_errors=True)
 
 
 def round_lines(root: pathlib.Path, entries: Sequence[Sequence], scratch: pathlib.Path,
@@ -244,20 +280,21 @@ def round_lines(root: pathlib.Path, entries: Sequence[Sequence], scratch: pathli
         say(text, flush=True) if say is print else say(text)
         lines.append(text)
 
-    wrong = 0
-    for entry in entries:
-        mid, _spec, _old, _new, test, expect, note, _also, _source = entry
-        verdict, summary = run_one(root, entry, scratch)
-        mismatch = "" if verdict == expect else f"  <-- EXPECTED {expect}"
-        record(f"{mid} {test.split('::')[-1]} -> {verdict}{mismatch} | {summary}"
-               + (f" | {note}" if note else ""))
-        if mismatch:
+    with PersistentWorkspace(root, scratch, populate) as workspace:
+        wrong = 0
+        for entry in entries:
+            mid, _spec, _old, _new, test, expect, note, _also, _source = entry
+            verdict, summary = run_one(root, entry, scratch, workspace=workspace)
+            mismatch = "" if verdict == expect else f"  <-- EXPECTED {expect}"
+            record(f"{mid} {test.split('::')[-1]} -> {verdict}{mismatch} | {summary}"
+                   + (f" | {note}" if note else ""))
+            if mismatch:
+                wrong += 1
+        green, summary = control_is_green(root, [e[4] for e in entries], scratch, workspace=workspace)
+        record(f"CONTROL (unmutated, {len({e[4] for e in entries})} test(s)) "
+               f"{'GREEN' if green else 'RED'} | {summary}")
+        if not green:
             wrong += 1
-    green, summary = control_is_green(root, [e[4] for e in entries], scratch)
-    record(f"CONTROL (unmutated, {len({e[4] for e in entries})} test(s)) "
-           f"{'GREEN' if green else 'RED'} | {summary}")
-    if not green:
-        wrong += 1
     return lines, wrong
 
 
@@ -287,6 +324,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         wanted = list(v4_population(root).shard(args.index, args.count))
     else:
         wanted = list(entries)
+    if len(wanted) != len(set(wanted)):
+        print("MUTATION ROUND PROBLEM: duplicate mutation IDs", file=sys.stderr)
+        return 1
     unknown = [mid for mid in wanted if mid not in entries]
     if unknown:
         print(f"MUTATION ROUND PROBLEM: ids outside the population: {unknown}", file=sys.stderr)
@@ -309,7 +349,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"MUTATION ROUND PROBLEM: {exc}", file=sys.stderr)
         return 1
     scratch.mkdir(parents=True, exist_ok=True)
-    ran, wrong = round_lines(root, selected, scratch)
+    try:
+        ran, wrong = round_lines(root, selected, scratch)
+    except (WorkspaceError, OSError) as exc:
+        print(f"MUTATION ROUND PROBLEM: {exc}", file=sys.stderr)
+        return 1
     lines += ran
     if args.log:
         pathlib.Path(args.log).write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")

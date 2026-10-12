@@ -19,14 +19,18 @@ thing it guards and watch it go red.
 
 What this does
 --------------
-For each entry in :data:`MUTATIONS`, copy `src`, `tests` and `pyproject.toml`
-into a throwaway directory, remove one guard from the copy **as if it had never
+Populate one private pristine seed and independent worker per shard, using
+:data:`_COPIED`. For each entry in :data:`MUTATIONS`, verify the worker,
+remove one guard from the copy **as if it had never
 been written**, and run every suite in :data:`TARGETS` against it. They must go
 red. A mutation that leaves them green names a check that is decoration.
 
 Nothing is written to the repository. Run it as::
 
-    python -X utf8 tests/mutation_guards.py <scratch-dir>
+    python -X utf8 tests/mutation_guards.py [--pytest-workers N] <scratch-dir>
+
+``--pytest-workers N`` (default 1) runs each attempt's unchanged TARGETS under
+explicit pytest-xdist; see :func:`_run` for why a worker crash refuses the round.
 
 It takes about half an hour: seventy-two copies of the tree, three suites
 against each. The cheap half of it -- that every mutation still matches the
@@ -2405,17 +2409,18 @@ def _validate_declarations() -> None:
 
 
 def _copy_tree(repo: pathlib.Path, work: pathlib.Path) -> None:
-    if work.exists():
-        shutil.rmtree(work)
-    work.mkdir(parents=True)
+    from tools.certification.mutation_workspace import require_isolated
+
+    require_isolated(repo, work)
+    work.mkdir(parents=True, exist_ok=False)
     for item in _COPIED:
         source, target = repo / item, work / item
         if source.is_dir():
             shutil.copytree(
-                source, target, ignore=shutil.ignore_patterns("__pycache__")
+                source, target, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"), symlinks=True
             )
         else:
-            shutil.copy2(source, target)
+            shutil.copy2(source, target, follow_symlinks=False)
 
 
 def _apply(work: pathlib.Path, spec: str, old: str, new: str):
@@ -2428,7 +2433,9 @@ def _apply(work: pathlib.Path, spec: str, old: str, new: str):
     applying for exactly that reason.
     """
     relative, _, scope = spec.partition("::")
-    path = work / relative
+    from tools.certification.mutation_workspace import mutation_target
+
+    path = mutation_target(work, spec)
     text = path.read_bytes().decode("utf-8").replace(CRLF, LF)
     if scope:
         try:
@@ -2490,20 +2497,49 @@ def _self_test() -> None:
         raise SystemExit("file hashes collided; this test is meaningless")
 
 
-def _run(where: pathlib.Path, scratch: pathlib.Path):
+def _run(where: pathlib.Path, scratch: pathlib.Path, *, telemetry=None, workspace=None,
+         pytest_workers: int = 1):
     """Run TARGETS in `where`. Returns ``(code, tail, failed, output)``.
 
     ``code is None`` means the harness ran out of time, which is NOT a red
     suite: nothing was observed, and a mutation whose only evidence is that
     the run did not finish is a mutation nobody checked.
+
+    ``pytest_workers > 1`` runs the SAME targets under explicit pytest-xdist
+    (file-level distribution, no worker restarts). A worker that crashes makes
+    xdist report exit 1 and a synthetic FAILED line for the test it was running
+    -- which the verdict rule below would credit as the guard firing. So an
+    xdist attempt is evidence only with a complete, clean guard sentinel
+    (``tools/certification/formal_xdist_guard.py``); anything else is an
+    infrastructure failure and raises, exactly like a signal exit in serial.
     """
+    from tools.certification.mutation_workspace import WorkspaceError
+    if workspace is None or where != workspace.work or scratch != workspace.artifacts:
+        raise WorkspaceError("target requires its active owned workspace/artifact root")
+    workspace.artifact_path("pt", "bt")
     # pytest creates --basetemp with mkdir(parents=False), lazily, the first time
     # a test asks for tmp_path. Until GUARDS 29-35 no target suite did, so the
     # missing `pt` parent went unnoticed; the first suite that used tmp_path
     # made CONTROL red for a reason unrelated to any guard.
     (scratch / "pt").mkdir(parents=True, exist_ok=True)
+    from tools.certification.mutation_workspace import run_captured
+
+    from tools.certification.mutation_startup import FORMAL_PYTEST_FLAGS, formal_xdist_flags
     try:
-        done = subprocess.run(
+        workspace.startup.check()
+    except (OSError, RuntimeError) as exc:
+        raise WorkspaceError(str(exc)) from exc
+    xdist, sentinel = (), None
+    if pytest_workers != 1:
+        sentinel = workspace.artifact_path("xdist", "formal-xdist-guard.json")
+        # A sentinel from an earlier attempt has no authority over this one.
+        sentinel.unlink(missing_ok=True)
+        try:
+            xdist = formal_xdist_flags(pytest_workers, sentinel, workspace.startup.executable)
+        except ValueError as exc:
+            raise WorkspaceError(str(exc)) from exc
+    try:
+        done = run_captured(
             # `--continue-on-collection-errors`, because without it ONE
             # unimportable module stops the whole run and every guard that
             # would have fired never executes. `G8a` breaks a domain module
@@ -2512,20 +2548,165 @@ def _run(where: pathlib.Path, scratch: pathlib.Path):
             # target modules import that domain transitively, pytest
             # interrupted on their errors, and zero tests ran. The mutation
             # was red on the exit code and the guard was never asked.
-            [sys.executable, "-X", "utf8", "-m", "pytest", *TARGETS, "-q",
+            [workspace.startup.executable, *FORMAL_PYTEST_FLAGS, *TARGETS, "-q",
              "-p", "no:randomly", "--continue-on-collection-errors",
-             "--basetemp", str(scratch / "pt" / "bt")],
-            cwd=where, capture_output=True, text=True, timeout=TEST_TIMEOUT,
+             "--basetemp", str(scratch / "pt" / "bt"), *xdist],
+            cwd=where, timeout=TEST_TIMEOUT, telemetry=telemetry,
+            inherited=workspace.startup.environment,
         )
     except subprocess.TimeoutExpired:
         return None, f"HARNESS TIMEOUT after {TEST_TIMEOUT}s", [], ""
+    if done.returncode not in (0, 1, 2):
+        raise WorkspaceError(f"pytest infrastructure exit {done.returncode}")
+    if sentinel is not None:
+        from tools.certification.formal_xdist_guard import problems
+        found = problems(sentinel, workers=pytest_workers, root=where, executable=workspace.startup.executable,
+                         returncode=done.returncode, output=done.stdout + "\n" + done.stderr)
+        if found:
+            raise WorkspaceError("pytest-xdist infrastructure failure, no mutation credit: "
+                                 + "; ".join(found))
     lines = [l for l in done.stdout.splitlines() if l.strip()]
     failed = [l.split("::")[-1].split()[0]
               for l in done.stdout.splitlines() if l.startswith("FAILED")]
     return done.returncode, (lines[-1] if lines else "?"), failed, done.stdout
 
 
-def _control(repo: pathlib.Path, scratch: pathlib.Path) -> None:
+#: Flags of the serial "alone" runs that back an xdist kill: no cache, so nothing the xdist run
+#: wrote into .pytest_cache can steer them.
+_ALONE_FLAGS = ("-q", "-p", "no:randomly", "-p", "no:cacheprovider")
+
+
+def _function_nodeids(nodeids, expect: str) -> list[str]:
+    """Function-level nodeids whose test name carries ``expect`` -- the verdict rule's own match.
+
+    The rule credits ``expect in name`` where ``name`` is the last nodeid component including any
+    parameter id, so the same match is applied here and every matching function is kept whole.
+    """
+    found = set()
+    for nodeid in nodeids:
+        head, sep, last = nodeid.rpartition("::")
+        if sep and expect in last:
+            found.add(head + sep + last.split("[", 1)[0])
+    return sorted(found)
+
+
+def _named_alone_control(scratch: pathlib.Path, *, workspace, expects) -> dict[str, list[str]]:
+    """xdist mode: every named-guard test function passes ALONE, serially, on the unmutated copy.
+
+    ``--dist loadfile`` hands files to whichever worker is free, so which files share a process
+    depends on timing and the green xdist control proves only its own grouping. A kill under
+    xdist is therefore also required to reproduce ALONE (:func:`_confirm_serially`); this is
+    that check's control: the same functions, the same flags, no mutation, all passing. If a
+    named guard cannot pass alone, no mutation naming it can be confirmed, and the round stops.
+    Returns ``{expect: [function nodeids]}``, from a serial collection of TARGETS.
+    """
+    from tools.certification.mutation_workspace import WorkspaceError, run_captured
+    from tools.certification.mutation_startup import FORMAL_PYTEST_FLAGS
+
+    expects = sorted(set(expects))
+    if not expects:
+        return {}
+    with workspace.attempt(mutation_id="CONTROL-NAMED-ALONE") as work:
+        workspace.artifact_path("pt", "named")
+        try:
+            workspace.startup.check()
+        except (OSError, RuntimeError) as exc:
+            raise WorkspaceError(str(exc)) from exc
+        try:
+            collected = run_captured(
+                [workspace.startup.executable, *FORMAL_PYTEST_FLAGS, *TARGETS, *_ALONE_FLAGS,
+                 "--collect-only", "--basetemp", str(scratch / "pt" / "named")],
+                cwd=work, timeout=TEST_TIMEOUT, telemetry=workspace.telemetry,
+                inherited=workspace.startup.environment)
+        except subprocess.TimeoutExpired:
+            raise SystemExit("the named-guard control timed out while collecting TARGETS")
+        if collected.returncode != 0:
+            raise SystemExit(f"the named-guard control could not collect TARGETS (exit {collected.returncode})")
+        nodeids = [l.strip() for l in collected.stdout.splitlines() if "::" in l and not l[:1].isspace()]
+        named = {expect: _function_nodeids(nodeids, expect) for expect in expects}
+        # Each set is proven with EXACTLY the command its confirmation will run: proving a
+        # union would not show that a subset passes alone (one named test may set up another).
+        for selection in sorted({tuple(v) for v in named.values() if v}):
+            if not _worker_is_pristine_except(workspace):
+                raise SystemExit("the named-guard control changed the unmutated copy between its runs")
+            try:
+                done = run_captured(_alone_argv(workspace, scratch, selection), cwd=work, timeout=TEST_TIMEOUT,
+                                    telemetry=workspace.telemetry, inherited=workspace.startup.environment)
+            except subprocess.TimeoutExpired:
+                raise SystemExit("the named-guard control timed out")
+            if done.returncode != 0:
+                tail = [l for l in done.stdout.splitlines() if l.strip()][-1:]
+                print(f"{'CONTROL':6} {'RED -- ROUND VOID':20} named guard tests fail ALONE with NO mutation")
+                print(f"{'':26} {tail[0] if tail else '?'}  ({', '.join(selection)[:200]})")
+                raise SystemExit("a named guard that fails alone cannot confirm any kill under xdist")
+    proven = sorted({nodeid for v in named.values() for nodeid in v})
+    print(f"{'CONTROL':6} {'GREEN':20} named guards pass alone: {len(proven)} test function(s), "
+          f"{sum(1 for v in named.values() if not v)} name(s) with none")
+    return named
+
+
+def _alone_argv(workspace, scratch: pathlib.Path, nodeids) -> list[str]:
+    """The one command shape both the named-alone control and a confirmation run."""
+    from tools.certification.mutation_startup import FORMAL_PYTEST_FLAGS
+
+    return [workspace.startup.executable, *FORMAL_PYTEST_FLAGS, *nodeids, *_ALONE_FLAGS,
+            "--basetemp", str(scratch / "pt" / "alone")]
+
+
+def _worker_is_pristine_except(workspace, mutated=None) -> bool:
+    """The worker equals the pristine manifest, except the declared edit and .pytest_cache.
+
+    ``mutated`` maps each declared path to its manifest entry as captured right after the edit:
+    that path must still hold exactly those bytes and that mode, not merely "something". A
+    confirmation must run on the tree its control ran on plus the mutation, not on whatever the
+    xdist run left behind. Full SHA comparison; the cache is ignored by the alone runs' flags.
+    """
+    from tools.certification.mutation_workspace import snapshot
+
+    expected = {**workspace.baseline, **(mutated or {})}
+    current = snapshot(workspace.work)
+    ignored = lambda name: name == ".pytest_cache" or name.startswith(".pytest_cache/")
+    return all(current.get(name) == expected.get(name)
+               for name in set(current) | set(expected) if not ignored(name))
+
+
+def _confirm_serially(where: pathlib.Path, scratch: pathlib.Path, *, workspace, nodeids, expect: str,
+                      mutated=None, telemetry=None) -> bool:
+    """Under xdist, a kill also needs the named guard to fail ALONE, in a fresh serial process.
+
+    ``nodeids`` are exactly a set :func:`_named_alone_control` ran green, with the same command,
+    on the unmutated copy. They are re-run in the mutated worker -- only if that worker is still
+    the pristine tree plus the declared edit -- so a failure is the mutation's and not a file
+    grouping's or a leftover's. Anything else is no credit.
+    """
+    from tools.certification.mutation_workspace import WorkspaceError, run_captured
+
+    if not nodeids or where != workspace.work:
+        return False
+    if not _worker_is_pristine_except(workspace, mutated):
+        return False
+    workspace.artifact_path("pt", "alone")
+    try:
+        workspace.startup.check()
+    except (OSError, RuntimeError) as exc:
+        raise WorkspaceError(str(exc)) from exc
+    try:
+        done = run_captured(_alone_argv(workspace, scratch, nodeids), cwd=where, timeout=TEST_TIMEOUT,
+                            telemetry=telemetry, inherited=workspace.startup.environment)
+    except subprocess.TimeoutExpired:
+        return False
+    if done.returncode in (2, 5):            # interrupted / nothing collected: not a confirmation
+        return False
+    if done.returncode not in (0, 1):
+        raise WorkspaceError(f"serial confirmation infrastructure exit {done.returncode}")
+    # The test name is taken from the nodeid token only, so text in a failure message can never
+    # supply the guard's name (stricter than the serial transcript parser, which it backs).
+    confirmed = [l[len("FAILED "):].split(" - ", 1)[0].rpartition("::")[2]
+                 for l in done.stdout.splitlines() if l.startswith("FAILED ")]
+    return done.returncode == 1 and any(expect in name for name in confirmed)
+
+
+def _control(repo: pathlib.Path, scratch: pathlib.Path, *, workspace=None, pytest_workers: int = 1) -> None:
     """TARGETS, on an unmutated copy, before any mutation is believed.
 
     THE CHECK THIS HARNESS DID NOT HAVE, and the one its own docstring twice
@@ -2538,13 +2719,24 @@ def _control(repo: pathlib.Path, scratch: pathlib.Path) -> None:
     A red control does not fail one mutation. It makes the whole round
     unreadable, so it stops here.
     """
-    work = scratch / "control"
-    _copy_tree(repo, work)
+    from tools.certification.mutation_workspace import PersistentWorkspace
+
+    if workspace is None:
+        with PersistentWorkspace(repo, scratch, _copy_tree) as owned:
+            return _control(repo, scratch, workspace=owned, pytest_workers=pytest_workers)
+    scratch = workspace.artifacts
     started = time.monotonic()
-    code, tail, failed, _out = _run(work, scratch)
+    # The default (one worker) call is unchanged; the xdist keyword appears only when asked for.
+    xdist = {"pytest_workers": pytest_workers} if pytest_workers != 1 else {}
+    with workspace.attempt(mutation_id="CONTROL") as work:
+        workspace.artifact_path("pt", "bt")
+        with workspace.telemetry.measure("control"):
+            code, tail, failed, _out = _run(work, scratch, telemetry=workspace.telemetry, workspace=workspace,
+                                            **xdist)
     took = time.monotonic() - started
     if code == 0:
-        print(f"{'CONTROL':6} {'GREEN':20} unmutated copy, {took:.0f}s -- "
+        mode = f" ({pytest_workers} pytest-xdist workers)" if xdist else ""
+        print(f"{'CONTROL':6} {'GREEN':20} unmutated copy{mode}, {took:.0f}s -- "
               f"a red result below is the mutation's doing")
         print(f"{'':26} {tail}")
         print()
@@ -2560,84 +2752,154 @@ def _control(repo: pathlib.Path, scratch: pathlib.Path) -> None:
     )
 
 
+def _pytest_workers(argv: list[str]) -> tuple[int, list[str]]:
+    """Strip a leading ``--pytest-workers N`` (or ``=N``); the default is one worker (serial)."""
+    if not argv or not argv[0].startswith("--pytest-workers"):
+        return 1, argv
+    flag, _, value = argv[0].partition("=")
+    if flag != "--pytest-workers":
+        raise SystemExit(f"unknown option {argv[0]!r}")
+    rest = argv[1:]
+    if not value:
+        if not rest:
+            raise SystemExit("--pytest-workers needs a value")
+        value, rest = rest[0], rest[1:]
+    if not value.isdigit() or int(value) < 1:
+        raise SystemExit(f"--pytest-workers must be a positive integer, not {value!r}")
+    return int(value), rest
+
+
 def main(argv: list[str]) -> int:
+    pytest_workers, argv = _pytest_workers(list(argv))
     if not argv:
         print(__doc__.strip().splitlines()[0])
-        print("usage: python -X utf8 tests/mutation_guards.py <scratch-dir> "
-              "[id ...]")
+        print("usage: python -X utf8 tests/mutation_guards.py [--pytest-workers N] "
+              "<scratch-dir> [id ...]")
         return 2
     _self_test()
     _validate_declarations()
     repo = pathlib.Path(__file__).resolve().parent.parent
+    if str(repo) not in sys.path:
+        sys.path.insert(0, str(repo))
+    from tools.certification.mutation_workspace import PersistentWorkspace, require_isolated
+
     scratch = pathlib.Path(argv[0]).resolve()
+    require_isolated(repo, scratch)
     scratch.mkdir(parents=True, exist_ok=True)
     only = set(argv[1:])
     selected = [m for m in MUTATIONS if not only or m[0] in only]
     unknown = sorted(only - {m[0] for m in MUTATIONS})
     if unknown:
         raise SystemExit(f"no such mutation: {unknown}")
+    xdist = {"pytest_workers": pytest_workers} if pytest_workers != 1 else {}
+    if xdist:
+        # The xdist guard plugin is imported from the worker copy, which is verified
+        # byte-identical to the source except the declared edit. A mutation of tools/
+        # would let the evidence plugin itself be the mutant: refuse that combination.
+        tooling = sorted(m[0] for m in selected if m[1].startswith("tools/"))
+        if tooling:
+            raise SystemExit(f"--pytest-workers > 1 cannot run mutations of tools/: {tooling}")
+        print(f"FORMAL PYTEST WORKERS {pytest_workers} -- pytest-xdist --dist loadfile; "
+              f"a worker crash or lost node is an infrastructure failure, never a kill; "
+              f"named kills must also fail alone; import refusals run serially")
+    refusals = any(EVIDENCE[m[0]][1] == REFUSED_AT_IMPORT for m in selected)
 
-    _control(repo, scratch)
+    with PersistentWorkspace(repo, scratch, _copy_tree) as workspace:
+        scratch = workspace.artifacts
+        _control(repo, scratch, workspace=workspace, **xdist)
+        named: dict[str, list[str]] = {}
+        if xdist:
+            # An import refusal is credited on refusal text anywhere in the output, which can
+            # surface lazily inside tests and so depend on file grouping: those attempts run
+            # serially, exactly as before, against the historical serial control.
+            if refusals:
+                _control(repo, scratch, workspace=workspace)
+            named = _named_alone_control(
+                scratch, workspace=workspace,
+                expects=[EVIDENCE[m[0]][1] for m in selected if EVIDENCE[m[0]][1] != REFUSED_AT_IMPORT])
 
-    results: dict[str, str] = {}
-    for mid, spec, old, new, what in selected:
-        mechanism, expect = EVIDENCE[mid]
-        work = scratch / f"mut_{mid}"
-        _copy_tree(repo, work)
+        results: dict[str, str] = {}
+        for mid, spec, old, new, what in selected:
+            mechanism, expect = EVIDENCE[mid]
+            attempt = xdist if expect != REFUSED_AT_IMPORT else {}
+            with workspace.attempt(mutation_id=mid, intended=[spec]) as work:
+                workspace.telemetry.stage("mutation_application_started")
+                with workspace.telemetry.measure("mutation_application"):
+                    applied = _apply(work, spec, old, new)
+                if isinstance(applied, str):
+                    workspace.telemetry.failure(RuntimeError(applied), category="mutation_not_applied")
+                    print(f"{mid:5} {applied} -- {what}")
+                    results[mid] = "DID_NOT_APPLY"
+                    continue
+                before, after = applied
+                workspace.telemetry.stage("mutation_applied")
+                mutated = None
+                if attempt:
+                    # The exact post-edit entry a later confirmation must still find (xdist only).
+                    from tools.certification.mutation_workspace import snapshot
+                    edited = spec.partition("::")[0]
+                    mutated = {edited: snapshot(work)[edited]}
 
-        applied = _apply(work, spec, old, new)
-        if isinstance(applied, str):
-            # Not a fact about the guard. Reported as loudly as a green
-            # result, and never counted as one.
-            print(f"{mid:5} {applied} -- {what}")
-            results[mid] = "DID_NOT_APPLY"
-            continue
-        before, after = applied
+                started = time.monotonic()
+                workspace.artifact_path("pt", "bt")
+                with workspace.telemetry.measure("test_execution"):
+                    code, tail, failed, output = _run(work, scratch, telemetry=workspace.telemetry, workspace=workspace,
+                                                      **attempt)
+                # Serial attempts are unchanged. Under xdist, a would-be named kill must also
+                # fail alone in a fresh serial process (see _confirm_serially).
+                confirmed = True
+                if attempt and code == 1 and any(expect in name for name in failed):
+                    with workspace.telemetry.measure("serial_confirmation"):
+                        confirmed = _confirm_serially(work, scratch, workspace=workspace,
+                                                      nodeids=named.get(expect, []), expect=expect,
+                                                      mutated=mutated,
+                                                      telemetry=workspace.telemetry)
+                took = time.monotonic() - started
 
-        started = time.monotonic()
-        code, tail, failed, output = _run(work, scratch)
-        took = time.monotonic() - started
-
-        if code is None:
-            verdict, results[mid] = "HARNESS TIMEOUT", "TIMEOUT"
-        elif code == 0:
-            verdict, results[mid] = "GREEN -- DECORATION", "GREEN"
-        elif expect == REFUSED_AT_IMPORT:
-            # The core REFUSED while a module was being imported. With the
-            # original six target suites that stopped collection and no test
-            # ran. Since GUARDS 29-35 some target suites import the refusing
-            # domain lazily, inside a test, so the SAME refusal also surfaces
-            # as failed tests. Either way it is evidence only when the refusal
-            # is raised by the core and nothing broke the language; a failure
-            # list without a core refusal in it is not this mechanism.
-            raised = "\n".join(
-                l for l in output.splitlines() if l.startswith("E   ")
-            )
-            broke = next((n for n in _NOT_A_REFUSAL if n in raised), None)
-            if broke:
-                verdict, results[mid] = f"RED ({broke})", "IMPORT_OR_SYNTAX"
-            elif not _CORE_REFUSAL.search(raised):
-                verdict, results[mid] = "RED (not a core refusal)", "IMPORT_OR_SYNTAX"
+            if code is None:
+                verdict, results[mid] = "HARNESS TIMEOUT", "TIMEOUT"
+            elif code == 0:
+                verdict, results[mid] = "GREEN -- DECORATION", "GREEN"
+            elif expect == REFUSED_AT_IMPORT:
+                # The core REFUSED while a module was being imported. With the
+                # original six target suites that stopped collection and no test
+                # ran. Since GUARDS 29-35 some target suites import the refusing
+                # domain lazily, inside a test, so the SAME refusal also surfaces
+                # as failed tests. Either way it is evidence only when the refusal
+                # is raised by the core and nothing broke the language; a failure
+                # list without a core refusal in it is not this mechanism.
+                raised = "\n".join(
+                    l for l in output.splitlines() if l.startswith("E   ")
+                )
+                broke = next((n for n in _NOT_A_REFUSAL if n in raised), None)
+                if broke:
+                    verdict, results[mid] = f"RED ({broke})", "IMPORT_OR_SYNTAX"
+                elif not _CORE_REFUSAL.search(raised):
+                    verdict, results[mid] = "RED (not a core refusal)", "IMPORT_OR_SYNTAX"
+                else:
+                    verdict, results[mid] = "RED (refused at import)", "RED"
+            elif code == 2:
+                verdict, results[mid] = "COLLECTION INTERRUPTED", "UNRELATED"
+            elif not failed:
+                # Nothing was collected, and the mutation does not claim a refusal:
+                # a stopped suite is not the guard it names.
+                verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
+            elif any(expect in name for name in failed) and confirmed:
+                verdict, results[mid] = "RED", "RED"
+            elif any(expect in name for name in failed):
+                verdict, results[mid] = "RED (NOT CONFIRMED SERIALLY)", "UNRELATED"
             else:
-                verdict, results[mid] = "RED (refused at import)", "RED"
-        elif not failed:
-            # Nothing was collected, and the mutation does not claim a refusal:
-            # a stopped suite is not the guard it names.
-            verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
-        elif any(expect in name for name in failed):
-            verdict, results[mid] = "RED", "RED"
-        else:
-            verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
+                verdict, results[mid] = "RED (NOT THE GUARD)", "UNRELATED"
 
-        print(f"{mid:5} {verdict:20} {what}")
-        print(f"{'':26} code {before} -> {after}   {mechanism}   {took:.0f}s")
-        print(f"{'':26} {tail}")
-        if results[mid] == "UNRELATED":
-            print(f"{'':26} expected {expect!r} among the failures")
-        if failed:
-            shown = sorted(set(failed))
-            print(f"{'':26} {', '.join(shown[:3])}"
-                  + (f" (+{len(shown) - 3} more)" if len(shown) > 3 else ""))
+            print(f"{mid:5} {verdict:20} {what}")
+            print(f"{'':26} code {before} -> {after}   {mechanism}   {took:.0f}s")
+            print(f"{'':26} {tail}")
+            if results[mid] == "UNRELATED":
+                print(f"{'':26} expected {expect!r} among the failures")
+            if failed:
+                shown = sorted(set(failed))
+                print(f"{'':26} {', '.join(shown[:3])}"
+                      + (f" (+{len(shown) - 3} more)" if len(shown) > 3 else ""))
 
     print()
     missing = sorted({m[0] for m in selected} - set(results))

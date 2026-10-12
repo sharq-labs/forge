@@ -18,12 +18,14 @@ from tests import certification_fixtures as fx
 from tools.certification import core_certificate
 from tools.certification.hardening_assurance import (
     ASSURANCE_SCHEMA,
+    LEGACY_ASSURANCE_SCHEMA,
     EVIDENCE,
     EXPECTED_TRUST_POPULATION,
     TRUST_SCRIPT,
     AssuranceError,
     Policy,
     RunContext,
+    assurance_problems,
     build_assurance,
     ngspice_version,
     trust_population,
@@ -108,6 +110,69 @@ def test_complete_evidence_builds_a_record_that_distinguishes_its_claims(source)
     assert record["environment"]["ngspice"] == "ngspice-42 : Circuit level simulation program"
     assert record["control_plane"]["area"] == "certification_control"
 
+def test_local_evidence_builds_a_record_without_fake_github_provenance(source):
+    root, head, evidence = source
+    record = build_assurance(
+        root,
+        source_commit=head,
+        evidence_dir=evidence,
+        run=RunContext(
+            repository=fx.RUN["repository"],
+            run_id=None,
+            run_attempt=None,
+            pull_request=None,
+            executed_commit=head,
+            event="local",
+            runner_os="test-local-os",
+            provenance_mode="local",
+            evidence_manifest_sha256="a" * 64,
+            evidence_file_count=17,
+        ),
+        policy=fx.POLICY,
+    )
+    lineage = record["lineage"]
+    assert record["schema"] == ASSURANCE_SCHEMA
+    assert lineage["provenance_mode"] == "local"
+    assert record["environment"]["execution_model"] == (
+        "sequential_functional_gates_bounded_mutation_shards_then_certificate"
+    )
+    assert "own job" not in record["functional"]["note"]
+    assert lineage["local_evidence_manifest_sha256"] == "a" * 64
+    assert lineage["local_evidence_file_count"] == 17
+    assert "workflow_run_id" not in lineage
+    assert assurance_problems(root, record, source_commit=head, policy=fx.POLICY) == []
+
+
+def test_local_provenance_without_a_frozen_evidence_manifest_is_refused(source):
+    root, head, evidence = source
+    with pytest.raises(AssuranceError) as caught:
+        build_assurance(
+            root,
+            source_commit=head,
+            evidence_dir=evidence,
+            run=RunContext(
+                repository=fx.RUN["repository"],
+                run_id=None,
+                run_attempt=None,
+                pull_request=None,
+                executed_commit=head,
+                event="local",
+                runner_os="test-local-os",
+                provenance_mode="local",
+            ),
+            policy=fx.POLICY,
+        )
+    assert any("evidence manifest" in p for p in caught.value.problems)
+
+
+def test_legacy_github_assurance_schema_remains_verifiable(source):
+    root, head, evidence = source
+    record = _build(root, head, evidence)
+    record["schema"] = LEGACY_ASSURANCE_SCHEMA
+    record["lineage"].pop("provenance_mode", None)
+    record["environment"].pop("provenance_mode", None)
+    assert assurance_problems(root, record, source_commit=head, policy=fx.POLICY) == []
+
 
 def test_a_missing_gate_record_is_refused(source):
     root, head, evidence = source
@@ -138,11 +203,13 @@ def test_a_gate_that_did_not_prove_a_clean_checkout_is_refused(source):
     ("junit_fast", b'<testsuites><testsuite tests="0" failures="0" errors="0" skipped="0"/></testsuites>', "needs tests"),
     ("junit_dependency_guard", b"<testsuites", "not a JUnit report"),
     # Main audit CERT-07: a gate needed only tests and no failures, so a trust
-    # test that started skipping was accepted like a passing one.
+    # test that started skipping was accepted like a passing one. Since assurance /7
+    # a skip is admitted one by one; a declared skip count with no skipped testcase
+    # to admit is malformed evidence, not a smaller number of skips.
     ("junit_fast", b'<testsuites><testsuite tests="9" failures="0" errors="0" skipped="20"/></testsuites>',
-     "above the declared ceiling"),
+     "declares 20 skipped but carries 0"),
     ("junit_dependency_guard", b'<testsuites><testsuite tests="1" failures="0" errors="0" skipped="1"/></testsuites>',
-     "above the declared ceiling"),
+     "declares 1 skipped but carries 0"),
 ])
 def test_a_functional_suite_without_a_clean_report_is_refused(source, suite, xml, fragment):
     root, head, evidence = source
@@ -164,7 +231,7 @@ def test_certification_refuses_skipped_campaign_or_regression_evidence(source, g
         b'</testsuite></testsuites>'
     )
     _file(evidence, head, gate, suite).write_bytes(skipped)
-    _refused(root, head, evidence, "above the declared ceiling of 0")
+    _refused(root, head, evidence, "UNEXPECTED_SKIP")
 
 
 def test_a_source_gate_with_different_resolved_dependencies_is_refused(source):

@@ -146,6 +146,10 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tests/test_core_freeze_manifest.py",
      "holds the freeze self-checks the certificate child executes, for the "
      "same reason as the certificate self-checks"),
+    ("tests/test_local_assurance.py",
+     "hostile checks for the local authority path: automatic workflows stay "
+     "disabled, dirty or moved sources are refused, required runtimes exist and "
+     "frozen evidence tampering is detected"),
     ("tests/scientific_regression/manifest.json",
      "is the fixed false-confidence regression population executed by the "
      "regression312 source gate. Changing its membership changes what that "
@@ -204,6 +208,19 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
     ("tools/certification/hardening_assurance.py",
      "builds the assurance record from the gates' downloaded evidence and "
      "re-validates it on the child; it is what turns job results into claims"),
+    ("tools/certification/skip_admission.py",
+     "the committed skip policy and the provider availability probe: it decides, "
+     "skip by skip, whether a test that did not run may still count toward a gate. "
+     "A broader rule, a weaker probe or a dropped protected-test source would let "
+     "a skipped trust test pass as an explained optional-provider skip"),
+    ("tests/test_skip_admission.py",
+     "hostile specifications that a wrong reason, an available or unknown provider, "
+     "an unapproved scope, malformed metadata, a skipped trust test or tampered "
+     "skip evidence refuses assurance instead of being admitted"),
+    ("tools/certification/local_assurance.py",
+     "executes the authoritative local source gates, freezes their evidence "
+     "manifest, builds local provenance and performs the final certificate-child "
+     "verification before a local result may say SAFE_TO_PUSH"),
     ("tools/certification/api_surface_v4.py",
      "the V4 deep API surface (I-29, R-69): the method signatures and enum "
      "member POSITIONS the frozen snapshot never described, which is why "
@@ -215,6 +232,32 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
      "requires the V3 supersession to be the named refusal rather than any "
      "exception, and re-derives every figure an assurance record asserts. The "
      "audited checks compared the live surface with the live surface"),
+    ("tools/certification/mutation_workspace.py",
+     "owns pristine seed/worker isolation, complete byte/mode manifests, "
+     "restore refusal and target subprocess lifecycle; weakening it allows "
+     "contaminated mutation evidence to be credited"),
+    ("tools/certification/performance_telemetry.py",
+     "diagnostic timing helper imported by the local runner and mutation "
+     "workspace; timing has no authority, but imported executable helpers "
+     "must remain bound to the certified control-plane implementation"),
+    ("tools/certification/mutation_startup.py",
+     "controls the sealed Python/pytest startup of certified mutation "
+     "execution: the interpreter identity check, the forced plugin-autoload "
+     "and bytecode policy, and the Formal and V4 pytest invocation flags; "
+     "weakening it would let host plugins, startup variables or stale "
+     "bytecode shape a mutation verdict"),
+    ("tests/test_mutation_workspace.py",
+     "hostile specifications of persistent workspace restoration, isolation, "
+     "cleanup, attribution preservation and diagnostic telemetry separation"),
+    ("tools/certification/formal_xdist_guard.py",
+     "records pytest-xdist's structured worker signals for Formal attempts run "
+     "with more than one pytest worker and decides whether such an attempt is "
+     "admissible; weakening it would let a crashed or lost worker, or a worker "
+     "importing the run's own project roots from outside the mutation copy, be "
+     "credited as a kill"),
+    ("tests/test_formal_xdist.py",
+     "hostile specifications that real xdist worker crashes, lost workers and "
+     "foreign imports refuse the Formal round instead of earning credit"),
     ("tools/certification/mutation_population.py",
      "the canonical formal mutation population, the shard rule and the "
      "coverage proof; a wrong union with the right count would certify a "
@@ -503,6 +546,10 @@ SCOPE: tuple[ScopeArea, ...] = (
             "tests/test_core_certificate.py",
             "tests/test_mutation_population_v4.py",
             "tests/test_core_freeze_manifest.py",
+            "tests/test_local_assurance.py",
+            "tests/test_skip_admission.py",
+            "tests/test_mutation_workspace.py",
+            "tests/test_formal_xdist.py",
             "tests/scientific_regression/manifest.json",
             "tools/__init__.py",
             "tools/forge_check.py",

@@ -53,7 +53,13 @@ The load-bearing rule is architectural: **MCP is transport, not scientific autho
   ladder (a report vocabulary, not an authority), run bundles and VTU export over a BIG 12 result; it executes and solves nothing. See
   [engineering.md](engineering.md). The four flagship systems are driven from `flagships/` (a separate distribution, not part of `engcore`);
   their reports are in `docs/flagships/`.
-- **Future strategic layer — design-synthesis / assembly:** requirements, parametric geometry, buildable assembly graphs, standard-component
+- **Big Rocks foundations (built and merged in PR #124; not certified, not qualified; further breadth is LATER per Master Plan Part I §4):** provider-neutral geometry, parametric variants and the
+  general Gmsh adapter (`spatial/`), assembly topology, multibody declarations, Scientific Twin revisions and product
+  templates for drone/vehicle/motor/HVAC (`systems/`), provider health and qualification (`providers/health.py`),
+  discovery grammar / multi-fidelity / history / hierarchy / search (`design/`), the Scene IR (`engineering/scene.py`),
+  MCP describe/plan/run tools (`mcp/foundations.py`) and fail-closed OpenVSP/OpenRadioss/Chrono adapters. See
+  [big_rocks_foundations.md](big_rocks_foundations.md), including the deferred-hardening ledger.
+- **Future strategic layer — design-synthesis / assembly (LATER; only narrow catalog-constrained synthesis is NEXT, Master Plan Part I §4):** requirements, parametric geometry, buildable assembly graphs, standard-component
   selection, joints/interfaces/fits, manufacturing/serviceability constraints and high-throughput candidate campaigns. See
   [design_synthesis.md](design_synthesis.md).
 - **Future strategic capability — motion/electromechanical systems:** kinematics, multibody dynamics, mechanisms, springs/dampers/bushings,

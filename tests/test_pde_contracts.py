@@ -156,6 +156,48 @@ def test_interface_roles_are_checked_against_topology():
         steady_problem(mesh, roles=roles, bcs=bcs)
 
 
+# The two Gmsh-meshed tests above check these refusals too, but where Gmsh is absent they skip, and
+# an admitted optional-provider skip must never stand in for a Core contract (Local Assurance Pass 13
+# review): a missing boundary condition, a missing coefficient or a wrong unit is refused on any mesh.
+def test_contract_refusals_hold_on_a_hand_built_mesh_without_a_mesh_generator():
+    mesh = interface_mesh()
+    roles = dict(ROLES, interface=FacetRole.INTERNAL_INTERFACE)
+    base = steady_problem(mesh, roles=roles)
+    assert steady_problem(mesh, roles=roles, left=Quantity(401, "K")).digest != base.digest
+    with pytest.raises(PDERefusal, match="the unknown is kelvin"):
+        steady_problem(mesh, roles=roles, left=Quantity(400, "W/m^2"))
+    with pytest.raises(PDERefusal, match="ratio-scale"):
+        steady_problem(mesh, roles=roles, unknown_unit="degC")
+    with pytest.raises(PDERefusal, match="no declared condition"):
+        steady_problem(mesh, roles=roles,
+                       bcs=(BoundaryCondition(BCKind.DIRICHLET, "left", prescribed(Quantity(400, "K"), "hot")),))
+    with pytest.raises(PDERefusal, match="without a declared facet role"):
+        steady_problem(mesh, roles={"left": FacetRole.EXTERNAL_BOUNDARY})
+    with pytest.raises(PDERefusal, match="singular"):
+        insulated = prescribed(Quantity(0, "W/m^2"), "adiabatic")
+        steady_problem(mesh, roles=roles,
+                       bcs=tuple(BoundaryCondition(BCKind.NEUMANN, g, insulated) for g in ("left", "right", "top", "bottom")))
+    with pytest.raises(PDERefusal, match="anonymous"):
+        SourcedQuantity(Quantity(1, "K"), "prescribed", {})
+
+
+def test_missing_coefficients_and_fabricated_fields_are_refused_without_a_mesh_generator():
+    from engcore.pde import PDEDiagnostics, PDEExecutionRecord
+    from engcore.scientific.solvers.protocol import SolverIdentity
+    from engcore.spatial import Derivation, SpatialField
+    mesh = interface_mesh()
+    roles = dict(ROLES, interface=FacetRole.INTERNAL_INTERFACE)
+    with pytest.raises(Exception, match="UNKNOWN"):
+        conductivity(mesh, moisture=0.5)  # beyond tabulated moisture: resolution refuses
+    problem = steady_problem(mesh, roles=roles)
+    with pytest.raises(PDERefusal, match="never defaulted"):
+        PDEProblem("p", mesh, HEAT, STEADY_DIFFUSION, SpatialFieldDefinition("T", "temperature", "K", Location.NODE, Rank.SCALAR),
+                   (), problem.boundary_conditions, roles, DiscretizationSpec(), SOLVER)
+    fake = SpatialField(problem.unknown, mesh, np.full(mesh.node_count, 350.0), Derivation.COMPUTED, ("made-up",))
+    with pytest.raises(PDERefusal, match="COMPUTED by this execution"):
+        PDEExecutionRecord(problem.digest, SolverIdentity("x", "1"), ConvergenceState.CONVERGED, PDEDiagnostics(), ((0.0, fake),))
+
+
 def ambient_environment(values=(290.0, 270.0), uq=True):
     from engcore.scenarios import (ChannelRepresentation, EnvironmentChannel, EnvironmentKindRegistry, EnvironmentSource,
                                    EnvironmentTimeline, HistoryEntry, QuantityHistory, ReferenceContext, ScenarioSegment,

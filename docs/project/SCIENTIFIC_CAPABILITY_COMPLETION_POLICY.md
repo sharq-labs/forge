@@ -48,6 +48,53 @@ Until its computed stage reaches **PRODUCTION_READY**, horizontal expansion into
 
 This is intentionally a repository-development policy, not scientific evidence and not a verdict rule.
 
+The active epic is pinned in `scientific_capability_completion.json`, in `tests/test_capability_completion.py` and in
+`.github/pull_request_template.md`. Planning documents cannot change it. The canonical mechanism for changing it is a
+separate, reviewed PR that changes the ledger's `active_epic` (and therefore the test and template pins) with the
+owner's approval (OWNER_DECISION_REQUIRED OD-6 in `docs/work/ACTIVE_PLAN.md`).
+
+## The active epic and the current plan tracks (2026-10-11)
+
+This section applies the rule above to the tracks in `docs/work/ACTIVE_PLAN.md`. It neither relaxes the rule nor changes
+any maturity requirement. There is **no blanket exemption** for any track.
+
+| Work | Allowed under the current active epic? | Condition |
+|---|---|---|
+| G0 Trust lane | Yes | Defects, stabilization, verification infrastructure. |
+| A1 Genesis-lite preparation | Yes, within limits | Only benchmark, governance, measurement, stabilization or evaluation infrastructure: extending the existing Blindfold harness, its baselines, scoring, preregistration, leakage controls and cost measurement. It must not add a new scientific capability (no new hypothesis generator, planner, belief state, outcome model or domain capability). A change that would is handled like A2. |
+| A2 Minimal Mind | **Not until one condition holds** | Either (1) the active epic was formally changed through the canonical mechanism above, or (2) a narrowly scoped reviewed exception that meets every requirement below exists, is owner-approved and has not expired. |
+| B1 demo preparation | Yes, using already-built capabilities | Existing Trust layer, `drone_coupled`, existing providers, and data admitted through existing provenance contracts. |
+| B1 new capability foundations (a new model, provider adapter or synthesis engine for the demo) | Same rule as A2 | Active-epic change, or its own narrowly scoped reviewed exception. |
+
+A reviewed exception must state all of:
+
+1. **exact scope** — the capability or capabilities, and the code areas it may touch;
+2. **allowed capability work** — what may be built;
+3. **reason** — why it cannot wait for the active epic;
+4. **start condition;**
+5. **exit condition** — the gate that closes it;
+6. **expiry / timebox** — when it lapses even if unfinished;
+7. **owner approval** — who approved and when;
+8. **what remains prohibited.**
+
+It is recorded in the PR's "Active-epic exception" section and listed in `docs/work/ACTIVE_PLAN.md` while open. An
+exception that is missing any field is not an exception. "Track A and Track B are exempt" is not a valid exception.
+
+**Anti-loophole rule.** Repeated or program-wide exceptions are evidence that the active-epic policy itself must be
+reviewed; exceptions may not become the default roadmap mechanism. A second concurrent exception, or the renewal of an
+expired one, therefore triggers an OWNER_DECISION_REQUIRED review of the active epic, and no further exception is
+granted until that review is decided.
+
+## Relationship to the planning documents (2026-10-11)
+
+- This policy and its ledger own maturity vocabulary and promotion: FOUNDATION → FUNCTIONAL → EVIDENCE_BACKED →
+  PRODUCTION_READY. No planning document may assert, imply or schedule a stage the ledger does not compute.
+- **Primary progress metric** for the whole program (`docs/project/FORGE_MASTER_PLAN.md` Part I §5.4): how many relevant
+  capabilities advanced in computed evidence maturity — not how many foundations, providers or features were added.
+- A Genesis benchmark result, a Blindfold score or the Track B demo never promotes a capability by itself. Promotion
+  happens only through this ledger's gates with repository evidence (Genesis Gate H).
+- Building something new is FOUNDATION at most until its own gates pass; "built", "merged" and "executed" are not stages.
+
 ## Why this exists
 
 The anti-pattern being prevented is:

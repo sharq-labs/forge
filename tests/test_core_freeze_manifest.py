@@ -240,8 +240,11 @@ def test_on_the_exact_freeze_the_domain_digest_binds(live, manifest):
     broken = copy.deepcopy(manifest)
     broken["domain"]["digest"] = "0" * 64
     result = core_freeze.verify_manifest(broken, live, require_clean=False)
-    if result.mode != "EXACT_FREEZE":
+    # Only a descendant may skip: an UNRELATED tree (e.g. a shallow clone that
+    # cannot prove ancestry) is not "a descendant" and must not say it is.
+    if result.mode == "DESCENDANT":
         pytest.skip("this tree is a descendant; the domain digest is informational")
+    assert result.mode == "EXACT_FREEZE", result.render()
     assert "domain.digest" in failing(result)
 
 

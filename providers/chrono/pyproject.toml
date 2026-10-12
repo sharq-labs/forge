@@ -1,0 +1,11 @@
+[project]
+name = "forge-chrono-provider"
+version = "0.1.0"
+description = "Project Chrono (PyChrono) rigid-multibody provider for Forge (crafty). Computes; holds no scientific authority."
+requires-python = ">=3.10"
+# PyChrono is distributed through conda-forge (`projectchrono::pychrono`). The PyPI package named
+# `pychrono` is an unrelated timing library; the descriptor refuses it by API identity.
+dependencies = ["crafty"]
+
+[tool.setuptools]
+packages = ["forge_chrono"]
