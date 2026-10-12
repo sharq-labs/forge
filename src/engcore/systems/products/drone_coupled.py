@@ -325,17 +325,28 @@ def coupled_hover_screening(template: ProductTemplate) -> dict[str, Any]:
         "omitted": OMITTED,
         "notes": ("rated_capacity_over_current is NOT an endurance prediction (no usable-capacity fraction, sag or temperature)",
                   "duty < 1 is a necessary condition at point values only; ESC maximum duty and timing are not modelled",
-                  "the balance residuals measure how well the coupled participants agree at the reported state (verification of "
-                  "the coupling), not whether the models are right"),
+                  "the balance residuals are diagnostics, not checks and not evidence: the bus residual is the last bus-voltage "
+                  "update times the pack current (already bounded by the convergence criterion); the winding residual re-evaluates "
+                  "the thermal node's own law and is zero by construction. Neither says whether the models are right"),
         "inputs": {k: template.input(k).source_ref for k in COUPLED_INPUTS},
     }
 
 
 def coupling_balances(out: Mapping[str, Any], x: Mapping[str, float]) -> dict[str, Quantity]:
-    """Cross-participant balances at the reported state; each is non-zero until the two-way couplings close.
+    """Cross-participant residuals at the reported state. Diagnostics only: no tolerance, no check, no evidence.
 
-    * bus power: what the battery delivers at its terminals (V_b I_pack) minus what the motors/ESCs draw;
+    * bus power: what the battery delivers at its terminals (V_b I_pack) minus what the motors/ESCs draw.
+      The motor participant draws ``P_bus / V_b`` with the bus voltage of the previous sweep, so this is
+      ``I_pack (V_b,k - V_b,k-1)``: the last bus-voltage update times the current. The coupling's own
+      convergence criterion on the bus voltage already bounds it; it adds no independent information.
     * winding heat: the thermal node's temperature minus T_amb + R_th x (the heat the motor produced).
+      The thermal participant runs after the motor in the same Gauss-Seidel sweep and computes exactly
+      this expression from that heat, so on runtime output it is zero by construction, converged or
+      not. It is not an energy balance (its unit is K); only hand-built inputs make it non-zero.
+
+    A balance that could fail independently (shaft power + motor heat + ESC loss = bus power; V_oc I =
+    bus power + battery heat) holds algebraically in these participants and is not evaluated; turning
+    any of these into a check needs a declared, justified tolerance (an open scientific decision).
     """
     def m(key: str, unit: str) -> float:
         return Quantity(out[key]["magnitude"], unit).magnitude_in(unit)

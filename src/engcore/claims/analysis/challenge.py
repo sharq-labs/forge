@@ -89,11 +89,56 @@ class ChallengeReport:
 
     @property
     def status(self) -> str:
+        """A lossy one-word headline; :meth:`outcome_summary` is the unambiguous reading.
+
+        ``survived_attempted_challenges`` means *at least one* attempted challenge
+        survived and none weakened -- not that every attempted challenge
+        survived: others may be INCONCLUSIVE or NOT_ATTEMPTED. ``not_challenged``
+        means none survived or weakened, although some may have been attempted
+        and stayed INCONCLUSIVE. The vocabulary is serialized and kept as is.
+        """
         if any(c.weakened for c in self.challenges):
             return "weakened"
         if any(c.result is ChallengeResult.SURVIVED for c in self.challenges):
             return "survived_attempted_challenges"
         return "not_challenged"
+
+    def outcome_counts(self) -> dict[str, int]:
+        """How many challenges ended in each result, plus how many were attempted."""
+        counts = {result.value: 0 for result in ChallengeResult}
+        for challenge in self.challenges:
+            counts[challenge.result.value] += 1
+        counts["attempted"] = sum(1 for c in self.challenges if c.attempted)
+        return counts
+
+    @property
+    def unresolved(self) -> tuple[Challenge, ...]:
+        """Challenges that neither survived nor weakened: INCONCLUSIVE or NOT_ATTEMPTED.
+
+        A survived challenge says nothing about these; the claim was not shown
+        to hold against them, and not shown to fail.
+        """
+        return tuple(c for c in self.challenges
+                     if c.result in (ChallengeResult.INCONCLUSIVE, ChallengeResult.NOT_ATTEMPTED))
+
+    def outcome_summary(self) -> dict[str, Any]:
+        """Counts per result and whether unresolved challenges remain.
+
+        Not part of :meth:`to_dict`, so the record and its digest are unchanged;
+        everything here is derived from the per-challenge results it serializes.
+        """
+        counts = self.outcome_counts()
+        unresolved = self.unresolved
+        return {
+            "status": self.status,
+            "attempted": counts["attempted"],
+            "survived": counts[ChallengeResult.SURVIVED.value],
+            "weakened": counts[ChallengeResult.WEAKENED.value],
+            "inconclusive": counts[ChallengeResult.INCONCLUSIVE.value],
+            "not_attempted": counts[ChallengeResult.NOT_ATTEMPTED.value],
+            "unresolved_remain": bool(unresolved),
+            "unresolved": [f"{c.kind.value}:{c.target}:{c.result.value}" for c in unresolved],
+        }
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -234,7 +279,10 @@ def _guard_band(assessment, registry) -> list[Challenge]:
     if assessment.verdict.value == "supported" and record["verdict"] != "supported":
         return [Challenge(ChallengeKind.UNCERTAINTY_GUARD_BAND, ",".join(c.value for c in available), True, ChallengeResult.WEAKENED, True, refs,
                           f"with the quantifiable channels applied the comparison is {outcome}: the point comparison overstated the claim")]
-    result = ChallengeResult.SURVIVED if record["verdict"] == assessment.verdict.value else ChallengeResult.INCONCLUSIVE
+    # Survival means a decided verdict held under the band. An undecided nominal verdict that stays
+    # undecided was not tested by the band at all: that is INCONCLUSIVE, never SURVIVED.
+    decided = assessment.verdict.value in ("supported", "contradicted")
+    result = ChallengeResult.SURVIVED if decided and record["verdict"] == assessment.verdict.value else ChallengeResult.INCONCLUSIVE
     return [Challenge(ChallengeKind.UNCERTAINTY_GUARD_BAND, ",".join(c.value for c in available), True, result, False, refs,
                       f"with the quantifiable channels applied the claim is {record['verdict']} (comparison {outcome})")]
 

@@ -502,9 +502,13 @@ FAST quietly absorbed about 680 s of solver work. Re-measure FAST with
 Four workflows exist: `tests.yml` (FAST on Python 3.11 and 3.12, SCIENTIFIC on
 3.12 with the six deselects listed under [Standard commands](#standard-commands)),
 `recertify-hardened-core.yml` (owner-triggered hardened recertification),
-`trust-mutations.yml` and `branch-policy.yml`. Pull requests are classified by
-`tools/certification/recertification_scope.py`. The FULL tier is run manually
-before a freeze.
+`trust-mutations.yml` and `branch-policy.yml`. **All four are
+`workflow_dispatch`-only** (since `35d21685`, 2026-10-06): nothing runs on a pull
+request or a push, so a PR is classified by
+`tools/certification/recertification_scope.py` only when someone runs the
+workflow by hand. The authoritative path is local assurance
+(`docs/assurance/BRANCH_PROTECTION.md`). The FULL tier is run manually before a
+freeze.
 
 Worker counts in the sections above are **local recommendations**. The workflow
 is different: it pins `-n 4 --dist loadfile` on both jobs, and that pinning is

@@ -293,3 +293,32 @@ def test_a_modelless_candidate_does_not_block_an_applicable_one() -> None:
     by_id = _by_id(select_capability(_claim(), registry))
     assert by_id["syn.modelless"].status is CandidateStatus.REJECTED
     assert by_id["syn.known"].status is CandidateStatus.SELECTED
+
+
+def test_an_array_input_feeding_a_model_not_instanced_over_that_array_is_refused_at_declaration() -> None:
+    """D3: selection resolves ``beams[].span`` only for a model instanced over ``beams[]``.
+
+    Any other pairing leaves every supplied element out of the model's context, so a
+    value outside the validity domain could never be seen as OUTSIDE; the candidate
+    would only ever ask for an input that cannot be supplied. Refused when declared.
+    """
+    from engcore.claims import CapabilityDeclarationError
+
+    array_input = InputDeclaration("beams[].span", InputKind.QUANTITY, InputRole.PARAMETER, True, "meter",
+                                   model_id="syn.beam", model_input="span")
+    with pytest.raises(CapabilityDeclarationError, match=r"belongs to the array beams\[\].*no array"):
+        _capability("syn.mismatch", _model("syn.beam"), inputs=(array_input,))
+    with pytest.raises(CapabilityDeclarationError, match=r"instanced over cells\[\]"):
+        _capability("syn.other_array", _model("syn.beam"), inputs=(array_input,),
+                    models=(ModelUse.of(_model("syn.beam"), instance_section="cells[]"),))
+    # the matching pairing, and a global input feeding an instanced model, stay admissible
+    _capability("syn.instanced", _model("syn.beam"), inputs=(array_input,),
+                models=(ModelUse.of(_model("syn.beam"), instance_section="beams[]"),))
+    _capability("syn.global_into_instanced", _model("syn.beam"),
+                models=(ModelUse.of(_model("syn.beam"), instance_section="beams[]"),))
+
+
+def test_every_production_capability_still_satisfies_the_array_section_rule() -> None:
+    from engcore.mcp.capabilities import production_registry
+
+    assert production_registry().declarations  # constructing it runs every declaration's reference checks

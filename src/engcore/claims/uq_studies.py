@@ -1047,6 +1047,27 @@ def verify_study_records(
                     "model-form pairs are not exactly the usable observation set"
                 )
 
+            # The producer records the caller's qualification whatever stopped
+            # the study, so it is read back before any branch, not only in the
+            # branch that reaches promotion.
+            raw_qualification = record.get("qualification")
+            try:
+                qualification = (
+                    None
+                    if raw_qualification is None
+                    else ProducerQualification.from_dict(raw_qualification)
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise UncertaintyStudyError(
+                    f"the model-form study's qualification is not readable: {exc}"
+                ) from exc
+            if qualification is not None and canonical_json(
+                raw_qualification
+            ) != canonical_json(qualification.to_dict()):
+                raise UncertaintyStudyError(
+                    "the model-form study's qualification is not the record "
+                    "its digest was computed from"
+                )
             scope = None
             discrepancy = None
             attempt = None
@@ -1098,12 +1119,6 @@ def verify_study_records(
                         discrepancy,
                         scope=scope,
                         policy=_model_policy(spec),
-                    )
-                    raw_qualification = record.get("qualification")
-                    qualification = (
-                        None
-                        if raw_qualification is None
-                        else ProducerQualification.from_dict(raw_qualification)
                     )
                     if qualification is None:
                         problem = (

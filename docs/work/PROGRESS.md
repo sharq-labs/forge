@@ -2694,3 +2694,68 @@ Failed approaches:
 Open: the two `test_rebuilding_everything_reproduces_the_published_gates` tests write committed files in place (CI
 deselects them; locally they race with `test_offline_revalidation`); the builders need an output-directory parameter.
 SCIENTIFIC without the CI deselects is not equivalent to CI. FULL, Python 3.11/3.12, hardened recertification: NOT RUN.
+
+
+## 2026-10-13 Scientific-integrity, certification and engineering remediation (owner-requested, local only)
+
+Base `origin/main` `c4e05ee6`; branch `fix/remediation-2026-10-12` in worktree `D:/forge-remed`; pristine comparison
+worktree `D:/forge-remed-base`. Uncommitted, not pushed, not recertified. Report:
+`docs/audits/REMEDIATION_2026-10-13.md` (findings table, owner decisions OD-R1..OD-R8).
+
+Fixed (tests fail on base unless stated):
+- `claims/analysis/challenge.py`: `outcome_counts()` / `unresolved` / `outcome_summary()` (serialized `status`,
+  `to_dict` and digest unchanged, digest pinned); `_guard_band` SURVIVED only for a decided, unchanged nominal verdict
+  (an `insufficient_evidence` ET claim at 400 K got SURVIVED and the headline `survived_attempted_challenges`).
+- `claims/model_form_uq.py`: only a VALIDATED_CANDIDATE discrepancy reaches the model-form study; no unknown-uncertainty
+  point is dropped (base: a FAILED_VALIDATION discrepancy came out `ModelFormStatus.VALIDATED`).
+- Ported from the reviewed but never-committed 2026-10-09 pass (`D:/forge-review-fixes`, B2 + B4 only):
+  `model_discrepancy` `Mapping` import, `verify_study_records` qualification read-back, ngspice probe exit/timeout/
+  OSError typing; plus ngspice `run()` OSError -> NgspiceUnavailable. B1 (probabilistic-UQ sampler) and B5 remain
+  stranded there (OD-R8).
+- `claims/capabilities.py`: selection D3 refused at declaration time.
+- `providers/process.py`: output to temp files (same digest bytes), reaper-thread wait, tree kill then bounded reap,
+  typed launch failure, `run_bounded`; `discovery_providers.run_provider` uses it; preCICE single deadline, cleanup,
+  file capture; code_aster workspace created inside its `try`.
+- `execution/sweep.py`: non-exported `run_sweep_within_budget` / `BudgetedSweep` over `ResourceBudget`
+  (RECERTIFICATION_REQUIRED: certified `execution_trust`).
+- `systems/products/drone_coupled.py`: docstring / note only — the winding residual is zero by construction (0.0 K on
+  a real run), the bus residual is the last bus-voltage update times the current (-5.8e-11 W).
+
+Commands (Windows 11, CPython 3.14.2 `.venv`, `TMPDIR`/`--basetemp` on D:, `PYTHONPATH='D:\forge-remed\src;D:\forge-remed'`):
+- `python tools/certification/core_certificate.py --verify` on pristine `c4e05ee6`: FAILED, 14 files / 4 areas
+  (certified `39d43456`). On the branch (`--allow-dirty`): the same plus `src/engcore/execution/sweep.py`.
+- `python tools/forge_check.py --changed --base origin/main --workers 6 --junitxml D:/remed-gate.xml` (before the
+  review fixes): exit 1, 156 failures; vs `D:/forge-perf-logs/fast_base.failed` 4 new by name, all explained: 2
+  `test_formal_xdist` parametrize-ID escapes (same errors on base), `test_the_tree_is_core_freeze_v1` and
+  `test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks` fail only on `tree.clean` (uncommitted
+  branch; pass on clean base).
+- final tree: `python tools/forge_check.py --changed --base origin/main --workers 6 --junitxml D:/remed-gate-final.xml`
+  -> exit 1; 9,529 tests, 136 failed, 21 errors, 181 skipped (118 s). Versus the pristine FAST list the only
+  names not in it are the same 4 explained above; `test_v2_blindfold::test_the_subprocess_escrow_keeps_its_secrets_in_the_child`
+  (new to this selection) fails 3/3 identically on `D:/forge-remed-base` (Windows escrow handshake, in the baseline list).
+- `python -m pytest -q -n 4 tests/claims tests/test_execution_sweep.py tests/test_provider_boundary.py
+  tests/foundations/test_v2_discovery_providers.py tests/test_ngspice_version_probe.py tests/uq/model_form` -> 826
+  passed, 1 skipped.
+- after the last process fixes: `tests/test_provider_boundary.py tests/foundations/test_v2_discovery_providers.py` ->
+  42 passed, 1 skipped (Windows); same on WSL CPython 3.11.16 (`sci` env) -> 42 passed, 1 skipped (optional psutil).
+- `tests/test_core_scientific_audit_batch55.py tests/test_core_guards.py -k "anchor or exactly_once or mutation or
+  guard"` -> 269 passed. `tests/test_execution_sweep.py tests/test_core_freeze_policy.py
+  tests/test_core_runtime_api_surface.py tests/test_core_api_layering.py` -> 72 passed.
+- Fail-before on `D:/forge-remed-base` (test files copied in temporarily, removed after): 15/20 ported, 20/23 new fail;
+  escaped-descendant test 60.1 s for a 2 s timeout.
+- Provider benchmark (WSL, provider tests under a metrics plugin, base vs branch): see the report §D.
+- FAST, SCIENTIFIC, FULL, hardened recertification, Local Assurance, CPython 3.11/3.12 on Windows: NOT RUN.
+
+Reviews (read-only forge-scientific-reviewer): round 1 CHANGES REQUIRED (no BLOCKER/HIGH): M1 fixed; M2 -> OD-R1;
+M3 -> OD-3/OD-R4; L2-L5, L7 fixed; L1, L6 recorded. Round 2 (narrow) PASS; its residual (`run_bounded` reading with a
+moving file position) fixed.
+
+Failed approaches:
+- The first process fix replaced `communicate(timeout)` by `Popen.wait(timeout)`; on POSIX that polls with a back-off
+  up to 50 ms and regressed short solves (CalculiX 14 -> 21 ms, OpenModelica 365 -> 448 ms). A reaper thread blocking
+  in `wait()` plus an event restored them (14.3 / 380 ms).
+- `pytest.importorskip("psutil")` inside a test's `finally` turned the Linux escaped-descendant test into SKIPPED and
+  would have hidden a failure; cleanup now uses `os.kill`.
+- A `forge_check` run from a worktree whose rootdir is the branch imports the branch even with `PYTHONPATH` set to
+  another tree (`pyproject` `pythonpath = ["src", ...]`); fail-before checks must run inside the base worktree.
+- Long bash heredocs for patches broke on quoting again; patch scripts written with the editor tool worked.

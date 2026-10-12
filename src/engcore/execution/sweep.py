@@ -483,6 +483,180 @@ def run_sweep(definition: SweepDefinition, *, workers: int = 1) -> SweepSummary:
     )
 
 
+
+BUDGETED_SWEEP_SCHEMA = "budgeted_sweep/1"
+
+
+@dataclass(frozen=True)
+class BudgetedSweep:
+    """A sweep run under a declared :class:`~engcore.execution.orchestration.resources.ResourceBudget`.
+
+    ``summary`` is the ordinary summary: cases the budget stopped are NOT_RUN in
+    it, never missing. ``exhausted`` names the limits that stopped the sweep;
+    ``complete`` is true only when every declared case ran. ``overrun`` names
+    limits the measured usage exceeds even though nothing was stopped -- a case
+    that started inside the budget is never interrupted, so a time limit can be
+    exceeded by the cases already running when it was reached.
+    """
+
+    summary: SweepSummary
+    budget: Any
+    wall_seconds: float
+    cpu_seconds: float
+    evaluations: int
+    exhausted: tuple[str, ...]
+    overrun: tuple[str, ...]
+
+    @property
+    def complete(self) -> bool:
+        return self.summary.not_run == 0
+
+    def stopped_by_budget(self) -> tuple[SweepCase, ...]:
+        """The cases not run because a limit was reached (empty when nothing was stopped)."""
+        if not self.exhausted:
+            return ()
+        return tuple(o.case for o in self.summary.outcomes if o.status is CaseStatus.NOT_RUN)
+
+    def to_dict(self) -> dict[str, Any]:
+        stopped = self.stopped_by_budget()
+        return {
+            "schema": BUDGETED_SWEEP_SCHEMA,
+            "summary": self.summary.to_dict(),
+            "budget": {
+                "max_wall_seconds": self.budget.max_wall_seconds,
+                "max_cpu_seconds": self.budget.max_cpu_seconds,
+                "max_function_evaluations": self.budget.max_function_evaluations,
+            },
+            "usage": {
+                "wall_seconds": self.wall_seconds,
+                "cpu_seconds": self.cpu_seconds,
+                "function_evaluations": self.evaluations,
+                "peak_memory_bytes": None,
+            },
+            "complete": self.complete,
+            "budget_exhausted": list(self.exhausted),
+            "overrun": list(self.overrun),
+            "stopped_case_ids": [case.case_id for case in stopped],
+            "notice": (
+                "a function evaluation is one call of the sweep's operation, not a solver call inside it; "
+                "cpu_seconds is the whole process's CPU time over the sweep; peak memory is not measured. "
+                "An incomplete sweep supports nothing about the cases it did not run"
+            ),
+        }
+
+
+def run_sweep_within_budget(
+    definition: SweepDefinition, budget: Any, *, workers: int = 1
+) -> BudgetedSweep:
+    """Run the cases in declaration order until a declared limit is reached.
+
+    ``budget`` is a :class:`~engcore.execution.orchestration.resources.ResourceBudget`;
+    no limit is invented here, and a budget declaring none runs every case.
+
+    * ``max_function_evaluations`` caps how many cases start. Deterministic: the
+      first N cases in declaration order run, for any ``workers``.
+    * ``max_wall_seconds`` / ``max_cpu_seconds`` are checked before each case
+      starts. A running case is never interrupted, so which cases run under a
+      time limit depends on timing; the record says so through ``exhausted``.
+    * ``max_peak_memory_bytes`` is refused: the sweep cannot measure or enforce
+      it, and a limit that would be ignored must not look declared.
+
+    Cases not started are NOT_RUN; outcomes stay in declaration order.
+    """
+    from .orchestration.resources import ResourceBudget, ResourceUsage
+
+    if not isinstance(budget, ResourceBudget):
+        raise SweepError(f"a sweep budget must be a ResourceBudget, got {type(budget).__name__}")
+    if budget.max_peak_memory_bytes is not None:
+        raise SweepError(
+            "a sweep cannot measure or enforce peak memory; declare no "
+            "max_peak_memory_bytes rather than a limit that would be ignored"
+        )
+    if workers < 1:
+        raise SweepError(f"a sweep needs at least one worker, got {workers}")
+    if workers > 1 and definition.on_failure is FailurePolicy.FAIL_FAST:
+        raise SweepError(
+            "FAIL_FAST is not available with more than one worker: cases are "
+            "already in flight when the first failure lands, so which ones "
+            "ran would differ between runs of the same sweep"
+        )
+
+    started = time.perf_counter()
+    cpu_started = time.process_time()
+    exhausted: list[str] = []
+
+    def limit_reached(evaluations: int) -> tuple[str, ...]:
+        reached = []
+        if budget.max_function_evaluations is not None and evaluations >= budget.max_function_evaluations:
+            reached.append("function_evaluations")
+        if budget.max_wall_seconds is not None and time.perf_counter() - started >= budget.max_wall_seconds:
+            reached.append("wall_seconds")
+        if budget.max_cpu_seconds is not None and time.process_time() - cpu_started >= budget.max_cpu_seconds:
+            reached.append("cpu_seconds")
+        return tuple(reached)
+
+    cases = definition.cases
+    slots: list[SweepOutcome | None] = [None] * len(cases)
+    evaluations = 0
+    if workers == 1:
+        for position, case in enumerate(cases):
+            reached = limit_reached(evaluations)
+            if reached:
+                exhausted.extend(reached)
+                break
+            evaluations += 1
+            slots[position] = _run_case(definition, case)
+            if slots[position].status is CaseStatus.FAILED and definition.on_failure is FailurePolicy.FAIL_FAST:
+                break
+    else:
+        from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            in_flight: dict[Any, int] = {}
+            position = 0
+            while position < len(cases) or in_flight:
+                while position < len(cases) and len(in_flight) < workers and not exhausted:
+                    reached = limit_reached(evaluations)
+                    if reached:
+                        exhausted.extend(reached)
+                        break
+                    evaluations += 1
+                    in_flight[pool.submit(_run_case, definition, cases[position])] = position
+                    position += 1
+                if not in_flight:
+                    break
+                done, _ = wait(tuple(in_flight), return_when=FIRST_COMPLETED)
+                for future in done:
+                    slots[in_flight.pop(future)] = future.result()
+
+    outcomes = tuple(
+        slot if slot is not None else SweepOutcome(case=case, status=CaseStatus.NOT_RUN)
+        for case, slot in zip(cases, slots)
+    )
+    wall = time.perf_counter() - started
+    cpu = time.process_time() - cpu_started
+    summary = SweepSummary(
+        sweep_id=definition.sweep_id,
+        identity=definition.identity,
+        shared_identity=definition.shared.identity,
+        shared_entries=definition.shared.describe(),
+        outcomes=outcomes,
+        seconds=wall,
+        policy=definition.on_failure,
+        workers=workers,
+    )
+    overrun = ResourceUsage(wall_seconds=wall, cpu_seconds=cpu, function_evaluations=evaluations).exceeded(budget)
+    return BudgetedSweep(
+        summary=summary,
+        budget=budget,
+        wall_seconds=wall,
+        cpu_seconds=cpu,
+        evaluations=evaluations,
+        exhausted=tuple(dict.fromkeys(exhausted)),
+        overrun=tuple(name for name in overrun if name != "peak_memory_bytes"),
+    )
+
+
 def rerun_failed(
     definition: SweepDefinition, summary: SweepSummary, *, workers: int = 1
 ) -> SweepSummary:

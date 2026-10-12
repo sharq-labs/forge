@@ -42,3 +42,54 @@ def test_botorch_and_dakota_outputs_carry_no_authority():
     assert "untrusted_provider_output" in d and "not evidence" in d["note"]
     with pytest.raises(ProviderRefused, match="unknown runner"):
         run_provider(["python"], "../../etc/passwd", {})
+
+
+
+# ---- run_provider: the process boundary is bounded and every failure is a typed refusal ------------
+
+
+@pytest.fixture
+def runners(tmp_path, monkeypatch):
+    import engcore.claims.discovery_providers as dp
+
+    monkeypatch.setattr(dp, "RUNNERS", tmp_path.resolve())
+
+    def write(name, source):
+        (tmp_path / name).write_text(source, encoding="utf-8")
+        return name
+    return write
+
+
+def test_a_runner_returns_a_digest_bound_provider_run(runners):
+    import sys
+
+    name = runners("echo_runner.py", "import json, sys\nreq = json.load(sys.stdin)\n"
+                                     "print(json.dumps({'provider': 'echo', 'provider_version': '1', 'echo': req}))\n")
+    run = run_provider([sys.executable, "-I"], name, {"x": [1, 2]})
+    assert run.provider == "echo" and run.output["echo"] == {"x": [1, 2]} and len(run.runner_digest) == 64
+
+
+def test_a_runner_that_outlives_its_timeout_is_refused_not_raised_raw(runners):
+    import sys
+    import time
+
+    name = runners("slow_runner.py", "import time\ntime.sleep(60)\n")
+    start = time.perf_counter()
+    with pytest.raises(ProviderRefused, match="did not finish within"):
+        run_provider([sys.executable, "-I"], name, {}, timeout=1.0)
+    assert time.perf_counter() - start < 30.0
+
+
+@pytest.mark.parametrize("source", ["print('not json')\n", "print('[1, 2]')\n", ""])
+def test_a_runner_that_writes_no_json_object_is_refused(runners, source):
+    import sys
+
+    name = runners("bad_runner.py", source)
+    with pytest.raises(ProviderRefused, match="no JSON result|not a JSON object"):
+        run_provider([sys.executable, "-I"], name, {})
+
+
+def test_an_interpreter_that_cannot_be_launched_is_refused(runners, tmp_path):
+    name = runners("any_runner.py", "print('{}')\n")
+    with pytest.raises(ProviderRefused, match="could not run"):
+        run_provider([str(tmp_path / "no-such-interpreter.exe")], name, {})

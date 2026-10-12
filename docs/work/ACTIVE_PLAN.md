@@ -12,7 +12,26 @@ constraints; execution authority does not imply semantic authority outside its s
 Prove a trustworthy, measurable scientific reasoning loop. Order: **G0** Trust lane → **A1** Genesis-lite measurement →
 **A2** Minimal Mind → **B1** narrow real demo. One Trust architecture, one Mind; no second authority.
 
-## Verified state (2026-10-11; re-check before relying on it)
+## Verified state (2026-10-13; re-check before relying on it)
+
+Checked this date from git, `gh api` (read-only) and `core_certificate.py --verify`; details in
+`docs/audits/REMEDIATION_2026-10-13.md`.
+
+- `origin/main` = `c4e05ee6` ("Merge test-loop optimization and cleanup", 2026-10-12). It was pushed to `main`
+  directly, not merged through a PR. It contains PR #132 (engineering program, `305928f9`), #129, #128, #126, #123
+  and #117.
+- The hardened certificate binds `39d43456` (`fix/trust-repair-pass1`, recertified in `795042e1`), an ancestor of
+  `main`, **not** `main`: `--verify` FAILS with 14 changed certified files in 4 areas (certification_control, harness,
+  inference_admission, runtime_dependencies), changed by 13 commits between 2026-10-09 and 2026-10-12. The certificate
+  is a valid record of `39d43456` only. Status: BLOCKED_OWNER_RECERTIFICATION (OD-3).
+- `main` is unprotected (`protected: false`); protection and ruleset endpoints return 403 (private repo, free User
+  plan); squash and rebase merges are enabled, contrary to `docs/assurance/BRANCH_PROTECTION.md`. Every workflow is
+  `workflow_dispatch`-only, so nothing runs on a PR or a push (OD-1).
+- Open PRs: #131 and #130 (docs, conflicting), stale #107, #39, #24.
+- Local branch `fix/remediation-2026-10-12` (worktree `D:/forge-remed`, uncommitted, not pushed): remediation of the
+  2026-10-13 owner findings; it adds `execution/sweep.py` to the recertification scope.
+
+Historical snapshot, 2026-10-11 (superseded above; kept for the record):
 
 - `main` = `4634eba` (PR #122). It contains PR #124 (Big Rocks foundations) and PR #125 (Roadmap V2 R1–R8: Blindfold,
   escrow, falsifiers, multiplicity, novelty, Red Team, credibility vectors, FidelityGraph, discovery providers).
@@ -151,6 +170,12 @@ solver agreement as validation; change a tolerance or criterion after seeing a r
   `perf/engineering-program-2026-10-12` (not pushed). Selection, robustness, challenge, impact, provider-timeout and
   changed-file-selection defects fixed; FAST failure set identical to `2d0fa6c3`. `tools/forge_check.py` is
   certification-pinned: landing it needs OD-3. Report `docs/audits/ENGINEERING_PROGRAM_2026-10-12.md`.
+- 2026-10-13 — owner-requested, outside the queue: scientific-integrity / certification / engineering remediation on
+  local branch `fix/remediation-2026-10-12` (uncommitted, not pushed). Fixed: guard-band SURVIVED on an undecided
+  verdict, model-form bridge promoting a FAILED_VALIDATION discrepancy (and replay crashes, ported), selection D3,
+  provider timeouts that an escaped descendant could hold for its lifetime, discovery/ngspice untyped failures, sweep
+  budgets (`run_sweep_within_budget`). Recorded owner decisions OD-R1..OD-R8 in `docs/audits/REMEDIATION_2026-10-13.md`.
+  `execution/sweep.py`, `ngspice.py` and 8 harness tests need the OD-3 recertification.
 - 2026-10-12 — owner-requested, outside the queue: test-loop round on local branch `perf/test-loop-cleanup` (not
   pushed). FAST -14 % at `-n 4`, -28 % at `-n 8`; CI-equivalent SCIENTIFIC -15 %; identical failure sets. The changed-file
   gate now runs the tests a change reaches. Certified harness and `tools/forge_check.py` changed: one owner-run

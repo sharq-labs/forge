@@ -325,3 +325,100 @@ def test_the_summary_stays_small_as_the_sweep_grows():
     assert len(str(large)) < 2 * len(str(small)), (
         "the summary grows with the case count, so it is carrying results"
     )
+
+
+
+# ---- a declared execution budget ------------------------------------------------
+def _budgeted(definition, workers=1, **limits):
+    from engcore.execution.orchestration.resources import ResourceBudget
+    from engcore.execution.sweep import run_sweep_within_budget
+
+    return run_sweep_within_budget(definition, ResourceBudget(**limits), workers=workers)
+
+
+@pytest.mark.parametrize("workers", [1, 3])
+def test_an_evaluation_cap_runs_the_first_cases_and_reports_the_rest_not_run(workers):
+    result = _budgeted(sweep(count=10), workers=workers, max_function_evaluations=4)
+    statuses = [o.status for o in result.summary.outcomes]
+    assert statuses == [CaseStatus.SUCCEEDED] * 4 + [CaseStatus.NOT_RUN] * 6
+    assert result.summary.values() == (0, 2, 4, 6) and result.evaluations == 4
+    assert not result.complete and result.exhausted == ("function_evaluations",)
+    record = result.to_dict()
+    assert record["complete"] is False and record["summary"]["not_run"] == 6
+    assert record["stopped_case_ids"] == [f"n-{i:06d}" for i in range(4, 10)]
+    assert record["usage"]["peak_memory_bytes"] is None  # not measured is not zero
+
+
+def test_a_budget_that_is_not_reached_runs_exactly_what_run_sweep_runs():
+    definition = sweep(count=7)
+    result = _budgeted(definition, max_function_evaluations=7, max_wall_seconds=600.0)
+    plain = run_sweep(definition)
+    assert result.complete and result.exhausted == () and result.stopped_by_budget() == ()
+    assert result.summary.values() == plain.values() and result.summary.identity == plain.identity
+
+
+def test_a_wall_limit_stops_before_the_next_case_and_never_reads_as_complete():
+    import time
+
+    def slow(shared, case):
+        time.sleep(0.05)
+        return case.inputs["x"]
+
+    result = _budgeted(sweep(operation=slow, count=40), max_wall_seconds=0.2)
+    assert "wall_seconds" in result.exhausted and not result.complete
+    assert 1 <= result.summary.succeeded < 40 and result.summary.not_run == 40 - result.summary.succeeded
+    assert result.evaluations == result.summary.succeeded
+
+
+def test_a_failing_case_still_counts_against_the_budget_and_stays_a_failure():
+    def picky(shared, case):
+        if case.inputs["x"] == 1:
+            raise ValueError("no")
+        return case.inputs["x"]
+
+    result = _budgeted(sweep(operation=picky, count=5), max_function_evaluations=3)
+    assert [o.status for o in result.summary.outcomes] == [
+        CaseStatus.SUCCEEDED, CaseStatus.FAILED, CaseStatus.SUCCEEDED, CaseStatus.NOT_RUN, CaseStatus.NOT_RUN]
+
+
+def test_an_unenforceable_or_undeclared_budget_is_refused():
+    from engcore.execution.orchestration.resources import ResourceBudget
+    from engcore.execution.sweep import run_sweep_within_budget
+
+    with pytest.raises(SweepError, match="peak memory"):
+        run_sweep_within_budget(sweep(), ResourceBudget(max_peak_memory_bytes=10**9))
+    with pytest.raises(SweepError, match="must be a ResourceBudget"):
+        run_sweep_within_budget(sweep(), {"max_function_evaluations": 2})
+    with pytest.raises(SweepError, match="FAIL_FAST"):
+        run_sweep_within_budget(sweep(on_failure=FailurePolicy.FAIL_FAST), ResourceBudget(), workers=2)
+
+
+def test_the_budgeted_runner_leaves_the_frozen_execution_surface_unchanged():
+    import engcore.execution as execution
+
+    assert "run_sweep_within_budget" not in execution.__all__ and "BudgetedSweep" not in execution.__all__
+
+
+def test_a_fail_fast_stop_is_incomplete_but_not_a_budget_stop():
+    def picky(shared, case):
+        if case.inputs["x"] == 2:
+            raise ValueError("no")
+        return case.inputs["x"]
+
+    result = _budgeted(sweep(operation=picky, count=6, on_failure=FailurePolicy.FAIL_FAST), max_function_evaluations=10)
+    assert not result.complete and result.exhausted == () and result.stopped_by_budget() == ()
+    assert result.summary.failed == 1 and result.summary.not_run == 3 and result.evaluations == 3
+
+
+def test_a_wall_limit_with_several_workers_stops_submitting_and_keeps_declaration_order():
+    import time
+
+    def slow(shared, case):
+        time.sleep(0.05)
+        return case.inputs["x"]
+
+    result = _budgeted(sweep(operation=slow, count=60), workers=3, max_wall_seconds=0.2)
+    assert "wall_seconds" in result.exhausted and not result.complete
+    ran = [o.case.inputs["x"] for o in result.summary.outcomes if o.ok]
+    assert ran == list(range(len(ran))) and 1 <= len(ran) < 60  # a prefix, in declaration order
+    assert result.evaluations == len(ran)

@@ -20,7 +20,6 @@ import hashlib
 import json
 import math
 import re
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -76,10 +75,26 @@ def run_provider(command: Sequence[str], runner: str, request: Mapping[str, Any]
     path = RUNNERS / runner
     if not path.is_file() or path.parent != RUNNERS:
         raise ProviderRefused(f"unknown runner {runner!r}")
-    proc = subprocess.run([*command, str(path)], input=json.dumps(dict(request)), capture_output=True, text=True, timeout=timeout)
-    if proc.returncode != 0:
-        raise ProviderRefused(f"{runner} failed ({proc.returncode}): {proc.stderr.strip()[-400:]}")
-    out = json.loads(proc.stdout)
+    # The bounded boundary: output spilled to files, the process tree killed on timeout, so a
+    # runner started through a wrapper (micromamba run ...) cannot outlive its timeout.
+    from ..providers.process import run_bounded
+    from ..providers.records import ProviderRefusal
+
+    try:
+        code, timed_out, stdout, stderr = run_bounded([*command, str(path)], timeout_s=timeout,
+                                                      input_bytes=json.dumps(dict(request)).encode("utf-8"))
+    except ProviderRefusal as exc:
+        raise ProviderRefused(f"{runner} could not run: {exc}") from exc
+    if timed_out:
+        raise ProviderRefused(f"{runner} did not finish within {timeout}s; its process tree was terminated")
+    if code != 0:
+        raise ProviderRefused(f"{runner} failed ({code}): {stderr.decode('utf-8', 'replace').strip()[-400:]}")
+    try:
+        out = json.loads(stdout.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError) as exc:
+        raise ProviderRefused(f"{runner} wrote no JSON result: {exc}") from exc
+    if not isinstance(out, dict):
+        raise ProviderRefused(f"{runner} wrote {type(out).__name__}, not a JSON object")
     return ProviderRun(str(out.get("provider", "")), str(out.get("provider_version", "")), hashlib.sha256(path.read_bytes()).hexdigest(),
                        _digest(dict(request)), out)
 
