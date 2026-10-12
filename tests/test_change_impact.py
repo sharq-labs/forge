@@ -358,3 +358,81 @@ def test_the_default_cache_lives_outside_the_repository_and_can_be_switched_off(
         assert test_impact.default_cache_path(ROOT) is None
     monkeypatch.setenv("FORGE_IMPACT_CACHE", str(tmp_path / "c.json"))
     assert test_impact.default_cache_path(ROOT) == tmp_path / "c.json"
+
+
+
+# ---------------------------------------------------------------------------
+# Next required gate, and when a narrow SCIENTIFIC run is sound
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("path, expected", [
+    ("docs/TESTING.md", ()),
+    ("tools/local_workers.py", ("FAST",)),
+    ("src/engcore/domains/battery/thevenin.py", ("FAST",)),
+    ("src/engcore/claims/selection.py", ("FAST", "SCIENTIFIC")),
+    ("src/engcore/authority/ledger.py", ("FAST", "SCIENTIFIC", "forge-scientific-review")),
+    ("tests/conftest.py", ("FAST", "SCIENTIFIC", "RECERTIFICATION (owner-run)")),
+    ("src/engcore/scientific/units/quantity.py", ("FAST", "SCIENTIFIC", "RECERTIFICATION (owner-run)")),
+])
+def test_the_next_required_gate_follows_the_minimum_gate_table(path, expected) -> None:
+    assert test_impact.next_required([path], expensive_affected=0) == expected
+
+
+def test_an_expensive_affected_test_always_owes_scientific_even_after_a_selective_run() -> None:
+    assert test_impact.next_required(["src/engcore/domains/battery/thevenin.py"], expensive_affected=2) == ("FAST", "SCIENTIFIC")
+
+
+@pytest.mark.parametrize("path, narrow", [
+    ("docs/TESTING.md", True),
+    ("src/engcore/domains/battery/thevenin.py", True),
+    ("src/engcore/domains/kinetics/cstr/solver.py", True),  # pinned, but domain-local: narrowing still sound, recert owed
+    ("providers/calculix/forge_calculix/__init__.py", True),
+    ("src/engcore/claims/selection.py", False),
+    ("src/engcore/scientific/units/quantity.py", False),
+    ("src/engcore/authority/ledger.py", False),
+    ("tests/conftest.py", False),
+    ("tests/domains/conftest.py", False),
+    ("pyproject.toml", False),
+    ("tools/test_impact.py", False),
+    ("tools/forge_check.py", False),
+    ("Makefile", False),
+])
+def test_a_narrow_scientific_run_is_offered_only_where_reach_is_bounded(path, narrow) -> None:
+    empty = test_impact.Impact({}, {}, ())
+    assert (not test_impact.scientific_narrowing([path], empty)) is narrow
+
+
+def test_unresolved_reach_always_refuses_narrowing() -> None:
+    impact = test_impact.Impact({}, {}, ("src/engcore/domains/battery/thevenin.py",))
+    assert test_impact.scientific_narrowing(["src/engcore/domains/battery/thevenin.py"], impact)
+
+
+def test_certification_never_hides_what_a_path_is() -> None:
+    assert test_impact.classify("src/engcore/scientific/units/quantity.py") is ChangeClass.CERTIFICATION_PINNED
+    assert test_impact.scope_class("src/engcore/scientific/units/quantity.py") is ChangeClass.SCIENTIFIC_SHARED
+    for path in ("tests/conftest.py", "docs/TESTING.md", "src/engcore/claims/selection.py"):
+        if test_impact.classify(path) is not ChangeClass.CERTIFICATION_PINNED:
+            assert test_impact.scope_class(path) is test_impact.classify(path)
+
+
+def test_every_expensive_test_reached_by_an_import_is_selected_with_expensive_included(real_graph) -> None:
+    """Selective SCIENTIFIC soundness on the real tree: for each expensive module, a change to any
+    first-party module it imports reaches it (import reach is what impact_of uses), and the full
+    impact_of path agrees on a fixed sample. --with-expensive applies no tier split at all."""
+    tiers = test_impact.load_tiers(ROOT)
+    _, _, expensive = test_impact.split_by_tier(real_graph.test_modules, tiers, real_graph.texts)
+    modules = sorted({e.split("::")[0] for e in expensive})
+    assert len(modules) >= 20
+    reach: dict[str, set[str]] = {}
+    missed = []
+    for module in modules:
+        for dep in sorted(d for d in real_graph.deps.get(module, ()) if d.startswith("src/engcore/")):
+            if dep not in reach:
+                reach[dep] = real_graph.importers(dep)
+            if module not in reach[dep]:
+                missed.append((module, dep))
+    assert missed == []
+    for dep in sorted(reach)[:: max(1, len(reach) // 5)][:5]:
+        affected = test_impact.impact_of([dep], real_graph).affected
+        assert {m for m in modules if m in reach[dep]} <= set(affected), dep
