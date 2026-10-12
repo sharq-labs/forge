@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import subprocess
+
+import pytest
+
 from tools import forge_check
 
 
@@ -84,3 +88,101 @@ def test_knowledge_core_changes_select_knowledge_evidence_and_replay_sentinels()
     assert any("test_changed_context_is_refused_even_for_pinned_current_source" in item for item in selected)
     assert any("test_ingestion_receipt_refuses_missing_or_extra_claim_digest" in item for item in selected)
     assert any("test_evidence_wire_trust_status_is_rederived_not_trusted" in item for item in selected)
+
+
+# ---------------------------------------------------------------------------
+# Conservative classification: an unmapped scientific path is never narrowed
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "src/engcore/scientific/units/quantity.py",
+        "src/engcore/systems/electrothermal/coupled.py",
+        "src/engcore/product/capabilities.py",
+        "src/engcore/inference/grid.py",
+        "src/engcore/execution/sweep.py",
+        "src/engcore/brand_new_package/module.py",
+        "pyproject.toml",
+        "tests/conftest.py",
+        "tests/scientific_regression/manifest.json",
+        "tools/forge_check.py",
+    ],
+)
+def test_an_unmapped_scientific_or_configuration_change_selects_the_whole_pack(path):
+    assert forge_check.unclassified_paths([path]) == [path]
+    assert forge_check.tags_for_paths([path]) == set(forge_check.ALL_SCIENTIFIC_TAGS)
+    targets = forge_check.build_targets([path])
+    pack = {case["nodeid"] for case in forge_check.load_manifest()["cases"]}
+    assert pack <= set(targets)
+
+
+def test_windows_separators_are_classified_like_posix_ones():
+    assert forge_check.unclassified_paths(["src\\engcore\\scientific\\units\\quantity.py"]) == [
+        "src/engcore/scientific/units/quantity.py"
+    ]
+    assert forge_check.tags_for_paths(["src\\engcore\\credibility\\evidence.py"]) == forge_check.tags_for_paths(
+        ["src/engcore/credibility/evidence.py"]
+    )
+
+
+def test_a_mapped_path_keeps_its_narrow_selection():
+    assert forge_check.unclassified_paths(["src/engcore/credibility/evidence.py"]) == []
+    assert "compiler" not in forge_check.tags_for_paths(["src/engcore/credibility/evidence.py"])
+
+
+def test_a_changed_test_module_is_run_itself_and_a_deleted_one_is_not():
+    targets = forge_check.build_targets(["tests/claims/test_quantitative_uq.py", "tests/claims/test_deleted_long_ago.py"])
+    assert "tests/claims/test_quantitative_uq.py" in targets
+    assert "tests/claims/test_deleted_long_ago.py" not in targets
+    assert forge_check.changed_test_files(["tests/claims/claims_support.py"]) == []
+
+
+# ---------------------------------------------------------------------------
+# Change detection: committed, staged, unstaged, untracked, deleted, renamed
+# ---------------------------------------------------------------------------
+
+
+def _git(repo, *args):
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args], cwd=repo, check=True, capture_output=True)
+
+
+@pytest.fixture()
+def repo(tmp_path, monkeypatch):
+    _git(tmp_path, "init", "-q", "-b", "main")
+    for name in ("a.py", "b.py", "c.py", "moved.py", "gone.py"):
+        (tmp_path / name).write_bytes(f"# {name} with enough distinct content to be a rename source\n".encode() * 8)
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-q", "-m", "base")
+    _git(tmp_path, "checkout", "-q", "-b", "work")
+    monkeypatch.setattr(forge_check, "ROOT", tmp_path)
+    return tmp_path
+
+
+def test_every_kind_of_change_is_detected_and_committed_only_is_narrower(repo):
+    (repo / "a.py").write_bytes(b"committed edit\n")
+    _git(repo, "mv", "moved.py", "renamed.py")
+    _git(repo, "rm", "-q", "gone.py")
+    _git(repo, "commit", "-q", "-am", "work")
+    (repo / "b.py").write_bytes(b"staged edit\n")
+    _git(repo, "add", "b.py")
+    (repo / "c.py").write_bytes(b"unstaged edit\n")
+    (repo / "new.py").write_bytes(b"untracked\n")
+
+    everything = forge_check.changed_files("main")
+    assert everything == ["a.py", "b.py", "c.py", "gone.py", "moved.py", "new.py", "renamed.py"]
+    committed = forge_check.changed_files("main", working_tree=False)
+    assert committed == ["a.py", "gone.py", "moved.py", "renamed.py"]
+
+
+def test_an_uncommitted_change_on_the_base_branch_itself_is_detected(repo):
+    _git(repo, "checkout", "-q", "main")
+    (repo / "a.py").write_bytes(b"uncommitted\n")
+    assert forge_check.changed_files("main") == ["a.py"]
+    assert forge_check.changed_files("main", working_tree=False) == []
+
+
+def test_an_unknown_base_fails_loudly(repo):
+    with pytest.raises(SystemExit):
+        forge_check.changed_files("no-such-ref")

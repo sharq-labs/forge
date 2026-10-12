@@ -28,6 +28,11 @@ from ..contract import ScientificClaim
 from ..oracles import discover_oracles
 
 _RECORD_TAG = "crafty.claims.assessment_record/1"
+#: (study-record field, graph relation) for the trust registries a UQ study was judged under.
+_STUDY_TRUST_FIELDS = (
+    ("empirical_trust_registry_digest", "studied_under_empirical_trust"),
+    ("qualification_trust_registry_digest", "studied_under_model_form_trust"),
+)
 _IMPACT_TAG = "crafty.claims.impact/1"
 
 
@@ -85,6 +90,12 @@ def _edges_of(record: Mapping[str, Any]) -> list[tuple[str, str, str]]:
         edges.append((rid, "ingested", node(NodeKind.EXTERNAL_RECORD, f"{item['source_class']}:{item['record_digest']}")))
     if record.get("external_trust_registry"):
         edges.append((rid, "judged_under", node(NodeKind.TRUST_REGISTRY, record["external_trust_registry"])))
+    # An aleatoric or model-form study admitted its observations and qualification
+    # under a trust registry the study record names; the verdict rests on it too.
+    for study in record.get("uncertainty_studies") or []:
+        for field, relation in _STUDY_TRUST_FIELDS:
+            if study.get(field):
+                edges.append((rid, relation, node(NodeKind.TRUST_REGISTRY, study[field])))
     evidence = record.get("evidence")
     if evidence is not None:
         edges.append((rid, "rests_on", node(NodeKind.EVIDENCE, evidence["record_hash"])))
@@ -237,17 +248,33 @@ def detect_changes(
     *,
     policy_profiles: Mapping[str, Any] | None = None,
     trust_registry: Any | None = None,
+    empirical_observation_trust: Any | None = None,
+    model_form_qualification_trust: Any | None = None,
 ) -> tuple[Change, ...]:
     """Detect current registry/policy/trust drift from recorded assessment identities.
 
     A trust-registry change is a reassessment trigger only. It never edits a
-    historical decision and never becomes scientific evidence.
+    historical decision and never becomes scientific evidence. That covers the
+    external-evidence registry and the registries an aleatoric or model-form
+    uncertainty study admitted its observations and qualification under.
     """
     from ..policy import BUILTIN_PROFILES
     from ..external_evidence import PRODUCTION_EXTERNAL_REGISTRY
+    from ..empirical_uq_trust import PRODUCTION_EMPIRICAL_OBSERVATIONS
+    from ..model_form_trust import PRODUCTION_MODEL_FORM_QUALIFICATIONS
 
     profiles = BUILTIN_PROFILES if policy_profiles is None else policy_profiles
     trust = PRODUCTION_EXTERNAL_REGISTRY if trust_registry is None else trust_registry
+    study_trust = {
+        "empirical_trust_registry_digest": (
+            "empirical observation trust registry",
+            PRODUCTION_EMPIRICAL_OBSERVATIONS if empirical_observation_trust is None else empirical_observation_trust,
+        ),
+        "qualification_trust_registry_digest": (
+            "model-form qualification trust registry",
+            PRODUCTION_MODEL_FORM_QUALIFICATIONS if model_form_qualification_trust is None else model_form_qualification_trust,
+        ),
+    }
     changes: dict[tuple, Change] = {}
     for record in records:
         plan = record.get("plan")
@@ -339,6 +366,17 @@ def detect_changes(
                 recorded_trust,
                 f"external trust registry is now {(current_trust or 'unknown')[:16]}",
             )
+        for study in record.get("uncertainty_studies") or []:
+            for field, _ in _STUDY_TRUST_FIELDS:
+                recorded = study.get(field)
+                label, active = study_trust[field]
+                now = getattr(active, "digest", None)
+                if recorded and now != recorded:
+                    changes[(ChangeKind.TRUST_REGISTRY, recorded)] = Change(
+                        ChangeKind.TRUST_REGISTRY,
+                        recorded,
+                        f"{label} is now {(now or 'unknown')[:16]}",
+                    )
     return tuple(changes[k] for k in sorted(changes, key=str))
 
 

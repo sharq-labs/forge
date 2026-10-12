@@ -257,3 +257,39 @@ def test_selection_never_executes(monkeypatch) -> None:
 
     registry = CapabilityRegistry((_capability("syn.known", _model("syn.beam"), executor=refuse),))
     assert select_capability(_claim(), registry).selected is not None
+
+
+def _modelless(capability_id: str = "syn.modelless") -> CapabilityDeclaration:
+    """Executable, matching, accepting the claim's input -- and declaring no model at all."""
+    return _capability(
+        capability_id, _model("syn.beam"), models=(),
+        inputs=(InputDeclaration("beam.span", InputKind.QUANTITY, InputRole.PARAMETER, True, "meter"),),
+        produces=(ProducedQuantity("deflection", "meter"),),
+    )
+
+
+def test_a_candidate_with_no_active_model_cannot_bear_evidence() -> None:
+    gated = _capability(
+        "syn.modelless", _model("syn.beam"),
+        models=(ModelUse.of(_model("syn.beam"), activation=("beam.cooling",)),),
+        inputs=(
+            InputDeclaration("beam.span", InputKind.QUANTITY, InputRole.PARAMETER, True, "meter", model_id="syn.beam", model_input="span"),
+            InputDeclaration("beam.cooling.flow", InputKind.QUANTITY, InputRole.PARAMETER, False, "meter"),
+        ),
+    )
+    for declaration in (_modelless(), gated):
+        selection = select_capability(_claim(), CapabilityRegistry((declaration,)))
+        (candidate,) = selection.candidates
+        assert selection.selected is None
+        assert candidate.status is CandidateStatus.REJECTED and candidate.models == ()
+        assert candidate.applicability is ValidityStatus.UNKNOWN
+        assert RejectionReason.VALIDITY_UNASSESSABLE in {r for r, _ in candidate.rejections}
+
+
+def test_a_modelless_candidate_does_not_block_an_applicable_one() -> None:
+    registry = CapabilityRegistry(
+        (_capability("syn.known", _model("syn.beam")), _modelless())
+    )
+    by_id = _by_id(select_capability(_claim(), registry))
+    assert by_id["syn.modelless"].status is CandidateStatus.REJECTED
+    assert by_id["syn.known"].status is CandidateStatus.SELECTED

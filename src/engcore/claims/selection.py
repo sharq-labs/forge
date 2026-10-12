@@ -41,7 +41,8 @@ Selection
    supplied input it does not declare; one given an input it cannot accept; one
    given a qualifier that selects nothing; one with a model OUTSIDE its
    validated domain on what the claim states; one whose applicability can never
-   be established (a model with no conditions, or a declared-unassessable one).
+   be established (a model with no conditions, a declared-unassessable one, or
+   no active model at all on what the claim states).
 2. **UNKNOWN never beats IN_DOMAIN**: if any viable candidate is IN_DOMAIN on
    what the claim states, the UNKNOWN ones are outranked, not merged with it.
 3. Exactly one survivor is selected. More than one is AMBIGUOUS and is left to
@@ -485,6 +486,14 @@ def assess_candidate(
                     f"{[c.condition for c in m.violated]}"
                     for m in outside
                 ),
+            )
+        )
+    if not models:
+        rejections.append(
+            (
+                RejectionReason.VALIDITY_UNASSESSABLE,
+                f"{declaration.capability_id} activates no model on what the claim states; "
+                "no validity domain can establish its applicability",
             )
         )
     unassessable = [m for m in models if UnknownBasis.DECLARED_UNASSESSABLE in m.bases]

@@ -38,68 +38,80 @@ def load_manifest() -> dict:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
 
 
+# (path prefix, tags) rules for scientific source. A path is *classified* when
+# at least one prefix matches it. ``src/engcore/claims/`` selects everything.
+_PREFIX_TAGS: tuple[tuple[str, frozenset[str]], ...] = (
+    ("src/engcore/claims/", ALL_SCIENTIFIC_TAGS),
+    ("src/engcore/credibility/", frozenset({"verdict", "evidence", "context", "uq", "external", "vnv", "diagnostics", "provenance", "replay"})),
+    ("src/engcore/sria/", frozenset({"verdict", "evidence", "context", "policy", "uq", "external", "diagnostics"})),
+    ("src/engcore/mcp/", frozenset({"verdict", "evidence", "context"})),
+    ("src/engcore/domains/", frozenset({"verdict", "evidence", "applicability", "uq", "challenge"})),
+    ("src/engcore/domainpacks/", frozenset({"selection", "context", "evidence", "provenance"})),
+    ("src/engcore/scientific/results/", frozenset({"verdict", "vnv", "uq", "provenance", "diagnostics"})),
+    ("src/engcore/scientific/models/", frozenset({"applicability", "compiler", "selection"})),
+    ("src/engcore/scientific/equations/", frozenset({"equation_ir", "compiler", "applicability", "diagnostics", "provenance", "replay"})),
+    ("src/engcore/scientific/knowledge/", frozenset({"knowledge", "evidence", "provenance", "replay", "applicability", "diagnostics", "policy"})),
+    ("src/engcore/credibility/knowledge_evidence.py", frozenset({"knowledge", "evidence", "provenance", "replay", "applicability", "diagnostics"})),
+    ("src/engcore/uq/", frozenset({"uq", "verdict", "diagnostics"})),
+    ("src/engcore/hybrid_uq/", frozenset({"uq", "verdict", "diagnostics"})),
+    ("src/engcore/scientific/validation_core/", frozenset({"verdict", "vnv", "applicability", "uq", "evidence", "diagnostics"})),
+    ("src/engcore/scientific/replay_core/", frozenset({"replay", "provenance", "diagnostics"})),
+    ("src/engcore/credibility/evidence_graph/", frozenset({"evidence", "provenance", "external", "diagnostics"})),
+    ("src/engcore/scientific/verification/", frozenset({"vnv", "evidence", "provenance", "diagnostics"})),
+    ("src/engcore/execution/orchestration/", frozenset({"vnv", "replay", "diagnostics"})),
+    ("src/engcore/scientific/certification_core/", frozenset({"vnv", "replay", "provenance", "policy", "diagnostics"})),
+    ("src/engcore/scientific/assurance_flow/", frozenset({"verdict", "vnv", "evidence", "replay", "provenance", "diagnostics"})),
+)
+
+# Files that change how every test runs or which cases exist. A change to one
+# of them cannot be narrowed to a subset of the regression pack.
+CONSERVATIVE_FILES = frozenset({
+    "pyproject.toml",
+    "tests/conftest.py",
+    "tests/scientific_regression/manifest.json",
+    "tools/forge_check.py",
+})
+
+
+def _norm(path: str) -> str:
+    return str(path).replace("\\", "/")
+
+
+def unclassified_paths(paths: Iterable[str]) -> list[str]:
+    """Changed paths whose scientific reach this selector cannot narrow.
+
+    A file under ``src/engcore/`` that no rule maps, and the files that
+    configure every test run. Each one selects the whole regression pack: a
+    developer gate must not report a narrow selection as if it covered them.
+    """
+    out = []
+    for p in sorted({_norm(p) for p in paths}):
+        if p in CONSERVATIVE_FILES:
+            out.append(p)
+        elif p.startswith("src/engcore/") and not any(p.startswith(prefix) for prefix, _ in _PREFIX_TAGS):
+            out.append(p)
+    return out
+
+
 def tags_for_paths(paths: Iterable[str]) -> set[str]:
-    paths = {str(p).replace("\\", "/") for p in paths}
-    tags: set[str] = set()
-
-    if any(p.startswith("src/engcore/claims/") for p in paths):
+    paths = {_norm(p) for p in paths}
+    if unclassified_paths(paths):
         return set(ALL_SCIENTIFIC_TAGS)
-
-    if any(p.startswith("src/engcore/credibility/") for p in paths):
-        tags |= {"verdict", "evidence", "context", "uq", "external", "vnv", "diagnostics", "provenance", "replay"}
-
-    if any(p.startswith("src/engcore/sria/") for p in paths):
-        tags |= {"verdict", "evidence", "context", "policy", "uq", "external", "diagnostics"}
-
-    if any(p.startswith("src/engcore/mcp/") for p in paths):
-        tags |= {"verdict", "evidence", "context"}
-
-    if any(p.startswith("src/engcore/domains/") for p in paths):
-        tags |= {"verdict", "evidence", "applicability", "uq", "challenge"}
-
-    if any(p.startswith("src/engcore/domainpacks/") for p in paths):
-        tags |= {"selection", "context", "evidence", "provenance"}
-
-    if any(p.startswith("src/engcore/scientific/results/") for p in paths):
-        tags |= {"verdict", "vnv", "uq", "provenance", "diagnostics"}
-
-    if any(p.startswith("src/engcore/scientific/models/") for p in paths):
-        tags |= {"applicability", "compiler", "selection"}
-
-    if any(p.startswith("src/engcore/scientific/equations/") for p in paths):
-        tags |= {"equation_ir", "compiler", "applicability", "diagnostics", "provenance", "replay"}
-
-    if any(p.startswith("src/engcore/scientific/knowledge/") for p in paths):
-        tags |= {"knowledge", "evidence", "provenance", "replay", "applicability", "diagnostics", "policy"}
-
-    if any(p == "src/engcore/credibility/knowledge_evidence.py" for p in paths):
-        tags |= {"knowledge", "evidence", "provenance", "replay", "applicability", "diagnostics"}
-
-    if any(p.startswith("src/engcore/uq/") or p.startswith("src/engcore/hybrid_uq/") for p in paths):
-        tags |= {"uq", "verdict", "diagnostics"}
-
-    if any(p.startswith("src/engcore/scientific/validation_core/") for p in paths):
-        tags |= {"verdict", "vnv", "applicability", "uq", "evidence", "diagnostics"}
-
-    if any(p.startswith("src/engcore/scientific/replay_core/") for p in paths):
-        tags |= {"replay", "provenance", "diagnostics"}
-
-    if any(p.startswith("src/engcore/credibility/evidence_graph/") for p in paths):
-        tags |= {"evidence", "provenance", "external", "diagnostics"}
-
-    if any(p.startswith("src/engcore/scientific/verification/") for p in paths):
-        tags |= {"vnv", "evidence", "provenance", "diagnostics"}
-
-    if any(p.startswith("src/engcore/execution/orchestration/") for p in paths):
-        tags |= {"vnv", "replay", "diagnostics"}
-
-    if any(p.startswith("src/engcore/scientific/certification_core/") for p in paths):
-        tags |= {"vnv", "replay", "provenance", "policy", "diagnostics"}
-
-    if any(p.startswith("src/engcore/scientific/assurance_flow/") for p in paths):
-        tags |= {"verdict", "vnv", "evidence", "replay", "provenance", "diagnostics"}
-
+    tags: set[str] = set()
+    for prefix, rule_tags in _PREFIX_TAGS:
+        if any(p.startswith(prefix) for p in paths):
+            tags |= rule_tags
     return tags
+
+
+def changed_test_files(paths: Iterable[str]) -> list[str]:
+    """Changed test modules that still exist; a deleted test cannot be run."""
+    out = []
+    for p in sorted({_norm(p) for p in paths}):
+        name = p.rsplit("/", 1)[-1]
+        if p.startswith("tests/") and name.startswith("test_") and name.endswith(".py") and (ROOT / p).is_file():
+            out.append(p)
+    return out
 
 
 def cases_for_tags(tags: set[str]) -> list[str]:
@@ -111,20 +123,40 @@ def cases_for_tags(tags: set[str]) -> list[str]:
     return nodeids
 
 
-def changed_files(base: str) -> list[str]:
-    proc = subprocess.run(
-        ["git", "diff", "--name-only", f"{base}...HEAD"],
-        cwd=ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+def _git(*args: str) -> str:
+    proc = subprocess.run(["git", *args], cwd=ROOT, check=False, capture_output=True, text=True)
     if proc.returncode != 0:
         raise SystemExit(
-            f"git diff against {base!r} failed:\n{proc.stderr.strip()}\n"
+            f"git {' '.join(args)} failed:\n{proc.stderr.strip()}\n"
             "Pass --base <ref> naming a locally available base ref."
         )
-    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+    return proc.stdout
+
+
+def _name_status_paths(output: str) -> list[str]:
+    """Every path a ``--name-status`` listing names: both sides of a rename or copy."""
+    paths = []
+    for line in output.splitlines():
+        fields = line.split("\t")
+        if len(fields) >= 2 and fields[0].strip():
+            paths.extend(f.strip() for f in fields[1:] if f.strip())
+    return paths
+
+
+def changed_files(base: str, *, working_tree: bool = True) -> list[str]:
+    """Paths changed since the merge base with ``base``.
+
+    Committed changes (``base...HEAD``) always count. With ``working_tree``
+    (the default) staged, unstaged and untracked files count too, so an
+    uncommitted edit is never silently left out of the selection. Deleted
+    files and both names of a rename are reported: a deletion or a move can
+    change behaviour as much as an edit.
+    """
+    paths = _name_status_paths(_git("diff", "--name-status", "-M", f"{base}...HEAD"))
+    if working_tree:
+        paths += _name_status_paths(_git("diff", "--name-status", "-M", "HEAD"))
+        paths += [line.strip() for line in _git("ls-files", "--others", "--exclude-standard").splitlines() if line.strip()]
+    return sorted(set(paths))
 
 
 def build_targets(paths: Iterable[str], *, regression: bool = False) -> list[str]:
@@ -132,8 +164,10 @@ def build_targets(paths: Iterable[str], *, regression: bool = False) -> list[str
     if regression:
         targets.extend(case["nodeid"] for case in load_manifest()["cases"])
     else:
+        paths = list(paths)
         tags = tags_for_paths(paths)
         targets.extend(cases_for_tags(tags))
+        targets.extend(changed_test_files(paths))
 
     # Stable order, no duplicate node IDs.
     return list(dict.fromkeys(targets))
@@ -161,6 +195,11 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--changed", action="store_true", help="select tests from changed files (default)")
     mode.add_argument("--regression", action="store_true", help="run the complete fixed scientific regression pack")
     parser.add_argument("--base", default=os.environ.get("FORGE_BASE", "main"), help="base ref for --changed")
+    parser.add_argument(
+        "--committed-only",
+        action="store_true",
+        help="--changed: consider only commits since the merge base, not staged, unstaged or untracked files",
+    )
     parser.add_argument("--workers", type=int, default=0, help="pytest-xdist workers; 0 runs serially")
     parser.add_argument(
         "--junitxml",
@@ -176,9 +215,14 @@ def main(argv: list[str] | None = None) -> int:
 
     paths: list[str] = []
     if not args.regression:
-        paths = changed_files(args.base)
+        paths = changed_files(args.base, working_tree=not args.committed_only)
 
     targets = build_targets(paths, regression=args.regression)
+    unclassified = [] if args.regression else unclassified_paths(paths)
+    if unclassified:
+        print("unclassified changes select the whole regression pack:")
+        for path in unclassified:
+            print(f"  {path}")
 
     if args.list:
         if paths:

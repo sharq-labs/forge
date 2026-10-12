@@ -601,6 +601,36 @@ def test_process_safety_argv_names_timeout_and_exit_code(tmp_path):
         slow.run(_invocation())
 
 
+SPAWNER = (b"import subprocess, sys, time\n"
+           b"child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
+           b"open('grandchild.pid', 'w').write(str(child.pid))\n"
+           b"time.sleep(60)\n")
+
+
+def test_a_timeout_terminates_the_whole_process_tree_not_only_the_direct_child(tmp_path):
+    """A solver wrapper that leaves a grandchild holding the output pipes must not outlive its timeout."""
+    import time
+
+    ws = ProcessWorkspace(str(tmp_path))
+    inv = _invocation(args=("spawn.py",), timeout=2.0, expected=(), extra_inputs=(GeneratedFile("spawn.py", SPAWNER),))
+    start = time.perf_counter()
+    try:
+        rec = ws.run(inv)
+        elapsed = time.perf_counter() - start
+        assert rec.timed_out and rec.exit_code is None and not rec.completed
+        assert elapsed < 30.0, f"the timeout returned after {elapsed:.1f}s: a descendant kept the run alive"
+        pid_file = os.path.join(ws.path, "grandchild.pid")
+        if os.path.exists(pid_file):
+            psutil = pytest.importorskip("psutil")
+            grandchild = int(open(pid_file).read())
+            deadline = time.perf_counter() + 10.0
+            while psutil.pid_exists(grandchild) and time.perf_counter() < deadline:
+                time.sleep(0.1)
+            assert not psutil.pid_exists(grandchild) or psutil.Process(grandchild).status() == psutil.STATUS_ZOMBIE
+    finally:
+        ws.cleanup()
+
+
 # ---- optional dependencies: adapters are safe to import without their scientific stacks --------
 
 

@@ -40,6 +40,28 @@ def _sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _kill_tree(proc: subprocess.Popen) -> None:
+    """Terminate a timed-out step and every descendant it started.
+
+    POSIX: the step leads its own session, so its process group is killed.
+    Windows has no process group to signal; ``Popen.kill`` ends only the direct
+    child, and a descendant that inherited the output pipes keeps
+    ``communicate`` blocked for as long as it lives -- the timeout would then
+    bound nothing. ``taskkill /T`` ends the tree; ``kill`` remains as a fallback.
+    """
+    if os.name == "posix":
+        os.killpg(proc.pid, signal.SIGKILL)
+        return
+    taskkill = os.path.join(os.environ.get("SYSTEMROOT", r"C:\Windows"), "System32", "taskkill.exe")
+    try:
+        subprocess.run([taskkill, "/T", "/F", "/PID", str(proc.pid)], stdin=subprocess.DEVNULL,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    finally:
+        proc.kill()
+
+
 def safe_relative(name: str) -> str:
     if not _SAFE_NAME.fullmatch(name) or any(part in ("", ".", "..") for part in name.split("/")):
         raise ProviderRefusal(f"generated file name {name!r} is not a safe relative path")
@@ -219,10 +241,7 @@ class ProcessWorkspace:
             except subprocess.TimeoutExpired:
                 step_timeout = True
                 try:
-                    if os.name == "posix":
-                        os.killpg(proc.pid, signal.SIGKILL)
-                    else:
-                        proc.kill()
+                    _kill_tree(proc)
                 finally:
                     out, err = proc.communicate()
             code = None if step_timeout else proc.returncode

@@ -32,7 +32,12 @@ not re-quantified at every point). Each side ends in one of:
                   system refuses) -- beyond it the answer is UNKNOWN, not "holds";
 ``SEARCH_LIMIT``  the claim held up to the declared limit -- beyond it UNKNOWN.
 
-Joint variation of several inputs is not explored; the envelope says so.
+Joint variation of several inputs is not explored; the envelope says so. Nor
+is the claim checked between probes: bracketing steps a quarter of the limit
+at a time and bisection assumes one crossing, so a failure region narrower than
+the probe spacing can be missed -- the envelope records that assumption too.
+Bisection stops early once the bracket is narrower than the input's
+floating-point resolution: a further midpoint would be an input already run.
 """
 
 from __future__ import annotations
@@ -249,6 +254,8 @@ def robustness_envelope(assessment: Any, registry: Any, *, search_limit: float =
         "one input varied at a time; joint variation is not explored",
         "the claim's uncertainty band, when demanded, is assumed unchanged away from the nominal point (not re-quantified)",
         f"searched to +/-{search_limit:.0%} of each nominal; beyond a boundary the answer is UNKNOWN",
+        "the claim is evaluated only at the recorded probes; bracketing steps search_limit/4 and bisection assumes a "
+        "single crossing, so a failure region narrower than the probe spacing can be missed",
     )
     if assessment.verdict.value != "supported":
         return RobustnessEnvelope(
@@ -260,16 +267,24 @@ def robustness_envelope(assessment: Any, registry: Any, *, search_limit: float =
         )
     if not 0.0 < search_limit <= 0.95:
         raise SensitivityError("search_limit must lie in (0, 0.95]")
+    if isinstance(resolution, bool) or not isinstance(resolution, int) or resolution < 0:
+        raise SensitivityError("resolution must be a non-negative integer number of bisection steps")
     declaration, inputs = _perturbable(assessment, registry)
     if parameters is not None:
-        inputs = {p: inputs[p] for p in sorted(parameters) if p in inputs}
+        unknown = sorted(set(parameters) - set(inputs))
+        if unknown:
+            raise SensitivityError(f"{unknown} are not perturbable inputs this claim states")
+        inputs = {p: inputs[p] for p in sorted(parameters)}
     plan = assessment.plan
     base = run_inputs_for(assessment.claim, declaration)
     counter = [0]
 
+    def at(nominal: Quantity, relative: float) -> float:
+        return nominal.magnitude * (1.0 + relative)
+
     def probe(path: str, nominal: Quantity, relative: float) -> dict[str, Any]:
         counter[0] += 1
-        x = Quantity(nominal.magnitude * (1.0 + relative), nominal.units)
+        x = Quantity(at(nominal, relative), nominal.units)
         v = run_variant(plan, registry, {**base, path: x}, f"{plan.run_id}~robust~{path}~{counter[0]}")
         state = "unusable" if not v.usable else ("holds" if _holds(assessment, v.value) else "fails")
         return {"relative": relative, "input": x.magnitude, "run_id": v.run_id, "value": v.value, "state": state, "problem": v.problem}
@@ -290,6 +305,8 @@ def robustness_envelope(assessment: Any, registry: Any, *, search_limit: float =
             if bad is not None:
                 for _ in range(resolution):
                     mid = 0.5 * (last_ok + bad)
+                    if at(nominal, mid) in (at(nominal, last_ok), at(nominal, bad)):
+                        break  # the bracket is below the input's floating-point resolution
                     e = probe(path, nominal, mid)
                     evaluations.append(e)
                     if e["state"] == "holds":
