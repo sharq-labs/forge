@@ -12,23 +12,25 @@ constraints; execution authority does not imply semantic authority outside its s
 Prove a trustworthy, measurable scientific reasoning loop. Order: **G0** Trust lane → **A1** Genesis-lite measurement →
 **A2** Minimal Mind → **B1** narrow real demo. One Trust architecture, one Mind; no second authority.
 
-## Verified state (2026-10-11; re-check before relying on it)
+## Verified state (2026-10-12; re-check before relying on it)
 
-- `main` = `4634eba` (PR #122). It contains PR #124 (Big Rocks foundations) and PR #125 (Roadmap V2 R1–R8: Blindfold,
-  escrow, falsifiers, multiplicity, novelty, Red Team, credibility vectors, FidelityGraph, discovery providers).
-  These are built, **not certified and not qualified**.
-- The hardened certificate (`certification/current_core_v2.json`, recertified 2026-10-09 in `d383eed0`) binds commit
-  `3e396bc4` on `local/r1r4-assurance`, **not** `main`. The last recorded FAST run (on `1e7cbebc`, PROGRESS 2026-10-10)
-  had 14 failures, all in the known base-drift set (certificate, freeze v1/v3/v4 manifests, batch56 r65, two
-  mutation-workspace tests). FAST on `4634eba`: **NOT RUN**.
+- `main` = `2d0fa6c3`. Since `4634eba` it also carries #128 (planning consolidation), #129 (test-suite runtime),
+  #126 (authority ledger, real escrow, battery blind readiness `NOT_READY`), #123 (Trust Repair Pass 1: R3-01, R3-02)
+  and #117 (NASA PCoE raw ingestion). Together with #124 (Big Rocks foundations) and #125 (Roadmap V2 R1–R8) these are
+  built, **not certified and not qualified**.
+- The hardened certificate (`certification/current_core_v2.json`, the owner's 2026-10-09 recertification carried by
+  #123) binds `39d43456` (the #123 tree), **not** `main`. FAST on each landing tree (PROGRESS 2026-10-12, CPython 3.12,
+  shallow clone) had 14 failures, identical to unmodified `main` `de36168e` in the same environment (certificate,
+  freeze v1/v3/v4 manifests, batch56 r65, two mutation-workspace tests); UNCLASSIFIED. FAST on `2d0fa6c3` itself:
+  **NOT RUN** (its tree differs from the last FAST tree `bfccb351` by one PROGRESS entry).
 - GitHub rulesets: the REST API returns 403 (private repository on a free plan). No merge gate is enforced remotely.
-- Open PRs: #123 Trust Repair Pass 1 (conflicts; base `44637065`); #126 authority ledger + real escrow + battery blind
-  readiness (mergeable; starts a new foundation); #127 Genesis document; #117 battery 1RC NASA ingestion (conflicts);
-  stale #107, #39, #24.
+- Open PRs: #107 self-hosted CI runner, #39 (draft) and #24 (base `claude/core-v2-hybrid-uq`): all BLOCKED in the
+  2026-10-12 landing pass (OD-11, OD-15).
 - Capability ledger (computed): `thermal.nafems_t3` EVIDENCE_BACKED; `battery.thevenin_1rc` FOUNDATION and still the
   test-pinned completion epic; nothing is PRODUCTION_READY.
 - Negative results stand: four BIG 13 flagships `insufficient_evidence`; Kirkaldy fade NOT MET; LG M50 DFN NOT MET.
-  Local-only, not on the remote: Trust Repair Pass 1 `803946af`; Battery Practical Pass 1 `7e923e75` (WEAKLY_IDENTIFIABLE).
+  Local-only, not on the remote: Battery Practical Pass 1 `7e923e75` (WEAKLY_IDENTIFIABLE). Trust Repair Pass 1
+  `803946af` is on `main` through #123.
 
 ## Current gate: G0 — Trust lane
 
@@ -47,8 +49,9 @@ Next actions (agent-executable now):
    recorded 14-test drift set only where still applicable; the historical drift set is not current truth.
 2. Classify every failure as `SCIENTIFIC_CORRECTNESS`, `GOVERNANCE_ONLY` or `UNCLASSIFIED` (Master Plan §5.2).
    `GOVERNANCE_ONLY` needs the complete six-question evidence record; anything less stays `UNCLASSIFIED` and blocking.
-3. Rebase PR #123 onto current `main` locally, run the `CLAUDE.md` gates and `forge-scientific-review`, and report.
-   Do not push, merge or recertify without the owner.
+3. DONE 2026-10-12: PR #123 landed by merge commit after the `CLAUDE.md` gates and `forge-scientific-review` (PASS).
+   The review's open LOWs: a REGISTRY_CHANGED bundle result carries the stored verdict without re-deriving it
+   (`claims/replay/bundle.py`); `mcp/foundations.py` catches bare `Exception`.
 
 Owner-run: hardened recertification (it writes the certificate); merges (OD-3, OD-4).
 
@@ -105,18 +108,19 @@ therapeutic work.
 |---|---|---|
 | OD-1 | Merge-gate enforcement: make the repository public, upgrade the plan, or formally accept local SHA-bound assurance as the only merge control. | Rulesets API 403; red gates cannot block merges. |
 | OD-2 | Supported Python policy. | `requires-python >=3.11`; CI 3.11/3.12; local runs on 3.13 and 3.14. |
-| OD-3 | Recertification: which HEAD, and when (owner-run). | Certificate binds `3e396bc4`, not `main`. |
+| OD-3 | Recertification: which HEAD, and when (owner-run). | Certificate binds `39d43456`, not `main` `2d0fa6c3`; #126, #123, #117 and #129 all touch certified scope and landed unrecertified. |
 | OD-4 | RESOLVED 2026-10-12 (owner direction: merge the open PRs that pass every gate). PR #123 lands by a merge commit (no rebase); it closes R3-01/R3-02 only. | Its certificate binds `39d43456` (the PR tree), not the merged `main`; recertification stays OD-3. |
 | OD-5 | RESOLVED 2026-10-12 (owner direction: merge the open PRs that pass every gate). PR #126 lands as one PR; it creates no new scientific capability stage and changes no maturity. | +8,043 lines; new `engcore.authority`; real escrow is relevant to Genesis leakage controls. Not recertified (OD-3). |
 | OD-6 | Completion epic: keep `battery.thevenin_1rc` (PR #117) or re-point it; or approve one narrowly scoped A2 exception. | Pinned by the ledger, `tests/test_capability_completion.py` and the PR template (CONTRACT_PIN: a change needs its own reviewed PR). Blocks A2. No blanket Track A/B exemption exists (Completion Policy, anti-loophole rule). |
 | OD-7 | Timebox windows for G0, A1, A2, B1. | None set; no dates invented here. |
 | OD-8 | External evaluator for Genesis hidden tasks: name a person or group, or fix a selection process and deadline. | Required before the A1 freeze names its held-out protocol, and before Genesis Step 6. |
 | OD-9 | RESOLVED. PR #128 supersedes PR #127 and contains Genesis plus the reviewed planning consolidation. PR #127 was closed without merge; its branch remains preserved. | PR #127 existed as the standalone Genesis document. |
-| OD-10 | Publish or record the local-only commits `803946af` and `7e923e75`. | Not verifiable from the remote. |
-| OD-11 | Branch and PR hygiene. | About 119 remote branches; stale PRs #24, #39, #107. |
+| OD-10 | Publish or record the local-only commit `7e923e75`. (`803946af` is on `main` via #123.) | Not verifiable from the remote. |
+| OD-11 | Branch and PR hygiene: close, rebuild or land #107, #39, #24. | About 119 remote branches. #107 (237 behind): certificate conflict between two owner certificates, and it rewrites the CI control-plane workflows and adds self-hosted runners with secrets. #39 / #24 (1,500+ behind) edit frozen Core; see OD-15. |
 | OD-12 | Confirm the control-plane budget signal (Master Plan §5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |
 | OD-13 | Confirm the B1 demo system. | Drone recommended: the only executable product chain today. |
-| OD-14 | Branch `perf/test-suite-runtime`: land it (needs the OD-3 recertification: it touches `certified:harness`, `inference_admission`, `certification_control`), and decide whether to add V4 mutation entries for the admission-record memo (changes the certified population count of 680). | Owner-requested. FAST 992 s -> 476 s, SCIENTIFIC 1448 s -> 1024 s, same failure sets (PROGRESS 2026-10-12). Review F1–F4 fixed; the memo's three mutants are killed by `tests/inference/test_admission_record_memo.py` today, outside the certified population. |
+| OD-14 | LANDED as #129 (`de36168e`); recertification still OD-3. Was: branch `perf/test-suite-runtime`: land it (needs the OD-3 recertification: it touches `certified:harness`, `inference_admission`, `certification_control`), and decide whether to add V4 mutation entries for the admission-record memo (changes the certified population count of 680). | Owner-requested. FAST 992 s -> 476 s, SCIENTIFIC 1448 s -> 1024 s, same failure sets (PROGRESS 2026-10-12). Review F1–F4 fixed; the memo's three mutants are killed by `tests/inference/test_admission_record_memo.py` today, outside the certified population. |
+| OD-15 | `ScientificResult.is_usable`: keep "converged and no failed check" (validity excluded), or require every declared model IN_DOMAIN as #39 / #24 propose. | `docs/assurance/CORE_SEMANTIC_INVARIANTS.md` records the exclusion as deliberate and a test pins the 6×4 truth table; on `main`, OUTSIDE_VALIDATED_DOMAIN and UNKNOWN validity are `is_usable`. A scientific-design decision on frozen Core, not a merge fix. #24's UQ refusals already exist on `main` (different messages). |
 
 ## Active-epic exceptions (open)
 
@@ -147,3 +151,6 @@ solver agreement as validation; change a tolerance or criterion after seeing a r
   `main` on owner direction. Ingestion only: `real_data` stays `MISSING`, no SOC / pulse-rest / sensor uncertainty /
   R0-R1-C1 is inferred, and the capability stays FOUNDATION. Its ACTIVE_PLAN edit (an old-queue section with
   re-encoded characters) was not carried; its prereg is `docs/milestones/battery-1rc-production-closure-prereg.md`.
+- 2026-10-12 — landing pass closed: #126, #123, #117 merged (`2d0fa6c3`); #107, #39, #24 blocked (OD-11, OD-15).
+  Verified state updated. Next agent-executable G0 action is unchanged: FAST on the OD-3 HEAD in a full-history
+  checkout, then classify the 14 failures.

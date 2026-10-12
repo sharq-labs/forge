@@ -2585,3 +2585,31 @@ Commands (this session, Linux container, 4 cores, CPython 3.12.13 `.venv`, shall
 - `python tools/forge_check.py --changed` -> 225 passed; `--regression` -> 225 passed.
 - Review: the branch's own read-only forge-scientific-review (2026-10-06, above) PASS; no code changed in this landing.
 - Hardened recertification: NOT RUN (owner-run, OD-3; `tests/domains/...` is `certified:harness`). SCIENTIFIC / FULL: NOT RUN.
+
+## 2026-10-12 PR landing pass — outcome (owner direction: resolve conflicts, merge what passes every gate)
+
+- Merged, one at a time, each by a merge commit after merging `main` into the PR branch (no rebase, no force push, no
+  force merge; each landing gate is recorded in the PR's own entry above):
+  - #126 -> `17444e14`;
+  - #123 -> `21b7d20f`;
+  - #117 -> `2d0fa6c3`.
+  After each merge, `main`'s tree was checked identical to the tested PR head (`git rev-parse origin/main^{tree}`).
+- Blocked (not merged, no branch changed):
+  - #107 (self-hosted heavy CI runner, 237 behind). `certification/current_core_v2.json` conflicts between two
+    owner certificates. Resolving that means choosing one or editing a certified artifact. It also rewrites
+    `tests.yml` / `recertify-hardened-core.yml` and adds self-hosted runners that read secrets: an owner decision (OD-11).
+  - #39 (draft) and #24 (base `claude/core-v2-hybrid-uq`), 1,530 / 1,569 behind `main` (GitHub compare). They are not
+    unrelated histories: the missing merge base came from this session's shallow clone. Their regression tests,
+    copied onto `main` `2d0fa6c3` and removed afterwards:
+    - `python -m pytest -q tests/_stale39_* tests/_stale24_*` -> 6 failed, 14 passed.
+    - Two are API drift: hybrid `considered` rows; calibration `residuals` key.
+    - Two are wording only: `main` already refuses the same non-finite / inconsistent predictive UQ inputs, with
+      different messages.
+    - Two (`test_result_is_usable_only_when_every_declared_model_is_in_domain`, in both PRs) are a real semantic
+      difference. `main` deliberately excludes validity from `ScientificResult.is_usable`
+      (`docs/assurance/CORE_SEMANTIC_INVARIANTS.md`, truth table pinned by test). Changing that in frozen Core is a
+      scientific-design decision: OD-15.
+- Post-pass state: open PRs #107, #39, #24. Hardened recertification of `main`: NOT RUN (OD-3). FAST on `2d0fa6c3`
+  itself: NOT RUN (its tree = `9e92573e`, whose FAST-tested parent `bfccb351` differs by one PROGRESS entry).
+- Failed approach: `git merge-tree` against #39 / #24 exited 128 ("no merge base"). That was the shallow clone, not
+  unrelated histories. Use the GitHub compare API, or deepen the clone, before calling histories unrelated.
