@@ -2744,6 +2744,15 @@ Commands (Windows 11, CPython 3.14.2 `.venv`, `TMPDIR`/`--basetemp` on D:, `PYTH
 - Fail-before on `D:/forge-remed-base` (test files copied in temporarily, removed after): 15/20 ported, 20/23 new fail;
   escaped-descendant test 60.1 s for a 2 s timeout.
 - Provider benchmark (WSL, provider tests under a metrics plugin, base vs branch): see the report §D.
+- after commit `ce96fa06` (clean tree): `python -m pytest -q -n 0 tests/test_core_freeze_manifest.py
+  tests/test_core_freeze_v3_manifest.py tests/test_core_freeze_v4_manifest.py` -> 5 failed, 41 passed, 1 skipped;
+  pristine `c4e05ee6` -> the same 5 failed, 41 passed, 1 skipped. `test_the_tree_is_core_freeze_v1` and
+  `test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks` now pass (they failed only on `tree.clean`).
+  The 5 (`test_a_descendant_that_keeps_the_contract_still_verifies`, `test_core_freeze_v4_is_the_contract_that_binds_on_this_tree`,
+  `test_the_tree_keeps_the_core_freeze_v4_contract`, `test_once_assured_the_full_verification_holds`,
+  `test_the_deep_surface_carries_methods_and_member_positions`) fail on the same verifier checks on both trees:
+  `api.deep_surface_is_the_live_one` and `api.manifest_records_this_comparison` (Python 3.14 V4 surface artifact) and
+  `certificate.verifies` (certificate drift, OD-3).
 - FAST, SCIENTIFIC, FULL, hardened recertification, Local Assurance, CPython 3.11/3.12 on Windows: NOT RUN.
 
 Reviews (read-only forge-scientific-reviewer): round 1 CHANGES REQUIRED (no BLOCKER/HIGH): M1 fixed; M2 -> OD-R1;
