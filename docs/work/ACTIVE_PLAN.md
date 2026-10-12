@@ -170,6 +170,12 @@ solver agreement as validation; change a tolerance or criterion after seeing a r
   `perf/engineering-program-2026-10-12` (not pushed). Selection, robustness, challenge, impact, provider-timeout and
   changed-file-selection defects fixed; FAST failure set identical to `2d0fa6c3`. `tools/forge_check.py` is
   certification-pinned: landing it needs OD-3. Report `docs/audits/ENGINEERING_PROGRAM_2026-10-12.md`.
+- 2026-10-13 — owner-requested, outside the queue: test-loop round 2 on local branch `perf/test-loop-round2` (base
+  `ca24b152`, not pushed). Benchmark rebuild tests isolated (no tracked file written); `forge_check --changed` dry-run
+  6.37 s -> 1.81 s with a content-addressed impact cache (identical selections); opt-in `--workers safe-auto`;
+  standalone audit of 569 modules found no order-dependent module; probes, escrow stop/close, Dakota version probe and
+  preCICE directory removal hardened. FAST / SCIENTIFIC failure sets identical to base. `tools/forge_check.py` changed:
+  RECERTIFICATION_REQUIRED (OD-3).
 - 2026-10-13 — owner-requested, outside the queue: scientific-integrity / certification / engineering remediation on
   local branch `fix/remediation-2026-10-12` (uncommitted, not pushed). Fixed: guard-band SURVIVED on an undecided
   verdict, model-form bridge promoting a FAILED_VALIDATION discrepancy (and replay crashes, ported), selection D3,
