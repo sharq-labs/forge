@@ -225,6 +225,7 @@ def test_safe_auto_prints_its_choice_and_reason_and_builds_that_command(monkeypa
     monkeypatch.setenv("FORGE_IMPACT_CACHE", "off")  # a test never writes the developer cache
     monkeypatch.setattr(local_workers, "choose", lambda: (6, "stubbed reason"))
     monkeypatch.setattr(forge_check, "changed_files", lambda base, working_tree: [])
+    monkeypatch.setattr(forge_check, "_report_impact", lambda paths, with_expensive: ([], [], []))  # no graph build needed
     assert forge_check.main(["--changed", "--workers", "safe-auto", "--dry-run"]) == 0
     out = capsys.readouterr().out
     assert "safe-auto selected 6 workers: stubbed reason" in out
