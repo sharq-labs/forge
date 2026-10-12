@@ -35,13 +35,25 @@ from tools.certification.recertification_scope import RECERTIFY_SOURCE_GATES
 REPO = pathlib.Path(__file__).resolve().parents[1]
 
 
+@pytest.fixture(scope="module")
+def source_template(tmp_path_factory):
+    """``source``, built once per module under the synthetic SCOPE; tests receive private copies."""
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(core_certificate, "SCOPE", fx.SCOPE)
+        base = tmp_path_factory.mktemp("hardening-source")
+        root = base / "repo"
+        fx.make_repo(root)
+        head = fx.git(root, "rev-parse", "HEAD")
+        fx.write_evidence(root, head, base / "evidence")
+    return base, head
+
+
 @pytest.fixture
-def source(tmp_path, monkeypatch):
+def source(source_template, tmp_path, monkeypatch):
     monkeypatch.setattr(core_certificate, "SCOPE", fx.SCOPE)
-    root = tmp_path / "repo"
-    fx.make_repo(root)
-    head = fx.git(root, "rev-parse", "HEAD")
-    evidence = fx.write_evidence(root, head, tmp_path / "evidence")
+    base, head = source_template
+    root = fx.clone_tree(base / "repo", tmp_path / "repo")
+    evidence = fx.clone_tree(base / "evidence", tmp_path / "evidence")
     return root, head, evidence
 
 

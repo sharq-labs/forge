@@ -17,6 +17,7 @@ from __future__ import annotations
 import hashlib
 import json
 import pathlib
+import shutil
 import subprocess
 from typing import Any, Callable, Mapping, Sequence
 
@@ -90,6 +91,20 @@ def commit(root: pathlib.Path, message: str) -> str:
     git(root, "add", "-A")
     git(root, "commit", "-q", "-m", message)
     return git(root, "rev-parse", "HEAD")
+
+
+def clone_tree(template: pathlib.Path, target: pathlib.Path) -> pathlib.Path:
+    """A private, byte-identical copy of a fixture tree that was built once (a repository, its evidence).
+
+    The synthetic repository, its commits and its evidence are functions of this
+    module's constants alone, and nothing in them records where they live, so a
+    copy is the same fixture (``test_a_cloned_fixture_tree_is_private_and_location_free``
+    holds both halves of that). Building one per test cost about 2 s of ``git``
+    and certify subprocesses on Windows; a copy costs a small fraction, and each
+    test still mutates only its own tree.
+    """
+    shutil.copytree(template, target, symlinks=True)
+    return target
 
 
 def make_repo(root: pathlib.Path) -> str:
