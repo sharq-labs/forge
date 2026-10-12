@@ -246,6 +246,31 @@ def test_a_range_the_search_cannot_reach_is_inconclusive_not_survived(registry) 
     assert "decrease: shown to hold only to" in stress.detail and "increase: shown to hold only to" in stress.detail
 
 
+def _side(kind, last, beyond=None):
+    return {"kind": kind.value, "last_holding": last, "first_not_holding": beyond}
+
+
+def test_a_failure_at_the_range_edge_itself_is_inside_not_unreached() -> None:
+    from engcore.claims.analysis.challenge import _side_against_range
+
+    edge_probe = math.nextafter(260.0, 0.0)  # the edge, one rounding below
+    found = _side_against_range("decrease", _side(BoundaryKind.FAILS_BEYOND, 261.0, edge_probe), 300.0, 260.0, 340.0)
+    assert found is not None and found[0] == "inside"
+    assert _side_against_range("increase", _side(BoundaryKind.SEARCH_LIMIT, math.nextafter(340.0, 0.0)), 300.0, 260.0, 340.0) is None
+    found = _side_against_range("increase", _side(BoundaryKind.FAILS_BEYOND, 339.0, 341.0), 300.0, 260.0, 340.0)
+    assert found is not None and found[0] == "unreached"  # the bracket straddles the edge
+
+
+def test_a_negative_stated_value_is_judged_against_the_edge_its_side_moves_toward() -> None:
+    from engcore.claims.analysis.challenge import _side_against_range
+
+    # x0 = -10 scaled down by 20 % is -8: "decrease" moves toward hi.
+    assert _side_against_range("decrease", _side(BoundaryKind.SEARCH_LIMIT, -8.0), -10.0, -12.0, -8.0) is None
+    assert _side_against_range("increase", _side(BoundaryKind.SEARCH_LIMIT, -12.0), -10.0, -12.0, -8.0) is None
+    found = _side_against_range("decrease", _side(BoundaryKind.FAILS_BEYOND, -9.5, -9.0), -10.0, -12.0, -8.0)
+    assert found is not None and found[0] == "inside"
+
+
 def _measure(value, lo, hi):
     from claims_support import t3_point
 
