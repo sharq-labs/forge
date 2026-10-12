@@ -2418,3 +2418,22 @@ repo, `-p no:cacheprovider`), all on `24373be4`:
 Full Local Assurance runs on the commit that adds this entry, in a dedicated clone, because the shared assurance clone
 carries worktrees, which the mutation workspace refuses as external Git storage. Its result is recorded by the certificate-only child and the PR
 body, not here, because any later edit would move the certification subject.
+
+## 2026-10-12 PR #123 landing gates (owner direction; merge commits only, no rebase)
+
+`origin/main` `17444e14` (with #126) merged into `fix/trust-repair-pass1`; conflicts were PROGRESS / ACTIVE_PLAN only.
+The diff against `main` is exactly #123's 13 files plus docs. The owner-produced certificate (binds `39d43456`) is
+carried unedited. One review LOW was fixed (`tools/forge_diagnose.py` comment: offline verification never yields VERIFIED).
+Commands (this session, Linux container, 4 cores, CPython 3.12.13 `.venv`, shallow clone), on `fbb52f5e`:
+- `python -m pytest -m "not expensive" -q -n 4 --dist loadfile -p no:cacheprovider` -> 14 failed, 9789 passed,
+  135 skipped (287 s). The failure set is identical to unmodified `main` in the same environment (mutation_workspace x2,
+  certificate x1, freeze v1 x5, batch56 r65, freeze v3 x2, freeze v4 x3).
+- `python -m pytest -q -n 4 --dist loadfile -m "not campaign" tests/claims tests/mcp tests/test_forge_diagnose.py
+  tests/credibility tests/foundations` -> 1380 passed.
+- `python tools/forge_check.py --changed` -> 225 passed; `--regression` -> 225 passed.
+- forge-scientific-review (read-only), combined `main` + #126 + #123: PASS. All #123 hardening intact after the
+  `mcp/server.py` auto-merge; no #126 or `main` caller consumes offline VERIFIED; attestation / `verify_evidence` and
+  offline revalidation never judge the same record. LOWs left open: (2) a REGISTRY_CHANGED bundle result carries the
+  stored verdict without re-deriving it (`claims/replay/bundle.py`, pre-existing); (3) `mcp/foundations.py` catches
+  bare `Exception` (from `main`, verdict pinned to insufficient_evidence).
+- Hardened recertification of the merged tree: NOT RUN (owner-run, OD-3). SCIENTIFIC / FULL tiers: NOT RUN.
