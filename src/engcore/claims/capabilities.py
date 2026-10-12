@@ -1035,10 +1035,18 @@ class CapabilityDeclaration:
 
     def _check_references(self) -> None:
         paths = {i.path for i in self.inputs}
-        models = {m.model_id for m in self.models}
+        models = {m.model_id: m for m in self.models}
         for item in self.inputs:
             if item.model_id is not None and item.model_id not in models:
                 raise _err(f"{self.capability_id}: input {item.path} feeds model {item.model_id}, which is not declared")
+            # Selection resolves an array input only for a model instanced over that
+            # same array; any other pairing leaves the value out of the model's
+            # context for good, so a violating value could never be seen as OUTSIDE.
+            if (item.model_id is not None and item.array_section is not None
+                    and item.array_section != models[item.model_id].instance_section):
+                raise _err(f"{self.capability_id}: input {item.path} belongs to the array {item.array_section}, but model "
+                           f"{item.model_id} is instanced over {models[item.model_id].instance_section or 'no array'}; "
+                           "its values could never reach the model's validity assessment")
             for other in item.alternative_to:
                 if other not in paths:
                     raise _err(f"{self.capability_id}: input {item.path} is an alternative to undeclared {other}")

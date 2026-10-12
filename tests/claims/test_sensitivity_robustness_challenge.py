@@ -289,3 +289,81 @@ def test_admissible_external_evidence_that_disagrees_weakens_and_weak_evidence_c
     unpinned = challenge_claim(assess_claim(claim, registry, external=(far,)), registry)
     measured = [c for c in unpinned.challenges if c.kind is ChallengeKind.EXTERNAL_ORACLE and c.target.startswith("measurement")]
     assert measured and not measured[0].weakened and measured[0].result is ChallengeResult.NOT_ATTEMPTED
+
+
+# ---- ChallengeReport: a survived challenge never stands for an unresolved one -------------------
+
+
+def _report(*results):
+    from engcore.claims import Challenge, ChallengeReport
+
+    kinds = list(ChallengeKind)
+    return ChallengeReport("claim-x", "supported", tuple(
+        Challenge(kinds[i % len(kinds)], f"t{i}", result is not ChallengeResult.NOT_ATTEMPTED, result,
+                  result is ChallengeResult.WEAKENED, (), "synthetic")
+        for i, result in enumerate(results)))
+
+
+def test_a_mixed_survived_and_inconclusive_report_states_that_unresolved_challenges_remain() -> None:
+    report = _report(ChallengeResult.SURVIVED, ChallengeResult.INCONCLUSIVE, ChallengeResult.NOT_ATTEMPTED)
+    assert report.status == "survived_attempted_challenges"  # the serialized headline is kept as is
+    summary = report.outcome_summary()
+    assert summary["attempted"] == 2 and summary["survived"] == 1 and summary["inconclusive"] == 1
+    assert summary["not_attempted"] == 1 and summary["weakened"] == 0
+    assert summary["unresolved_remain"] is True and len(report.unresolved) == 2
+    assert all(c.result is not ChallengeResult.SURVIVED for c in report.unresolved)
+
+
+def test_attempted_but_all_inconclusive_is_unresolved_not_survived() -> None:
+    summary = _report(ChallengeResult.INCONCLUSIVE, ChallengeResult.INCONCLUSIVE).outcome_summary()
+    assert summary["status"] == "not_challenged" and summary["attempted"] == 2 and summary["survived"] == 0
+    assert summary["unresolved_remain"] is True
+
+
+def test_nothing_attempted_and_everything_survived_are_told_apart() -> None:
+    none = _report(ChallengeResult.NOT_ATTEMPTED).outcome_summary()
+    assert none["attempted"] == 0 and none["unresolved_remain"] is True
+    clean = _report(ChallengeResult.SURVIVED, ChallengeResult.SURVIVED).outcome_summary()
+    assert clean["survived"] == clean["attempted"] == 2 and clean["unresolved_remain"] is False
+    weakened = _report(ChallengeResult.SURVIVED, ChallengeResult.WEAKENED).outcome_summary()
+    assert weakened["status"] == "weakened" and weakened["unresolved_remain"] is False
+
+
+def test_the_summary_leaves_the_serialized_report_and_its_digest_unchanged() -> None:
+    from engcore.claims import Challenge, ChallengeReport
+
+    report = ChallengeReport("claim-x", "supported", (
+        Challenge(ChallengeKind.ALTERNATIVE_MODEL, "m2", True, ChallengeResult.SURVIVED, False, ("e1",), "independently supports"),
+        Challenge(ChallengeKind.VALIDITY_BOUNDARY_STRESS, "inputs.t", True, ChallengeResult.INCONCLUSIVE, False, ("r1", "r2"),
+                  "not stressed to its edges"),
+        Challenge(ChallengeKind.INDEPENDENT_SOLVER, "spice", False, ChallengeResult.NOT_ATTEMPTED, False, (), "not requested"),
+    ))
+    report.outcome_summary()
+    assert set(report.to_dict()) == {"claim_identity", "nominal_verdict", "status", "challenges", "notice"}
+    # computed on origin/main c4e05ee6, before the summary existed
+    assert report.digest == "5af03b85de68f4510bcb64c28252b38e057f6b000750f8768b5e129f6d6a0ebb"
+
+
+def test_a_real_mixed_report_is_not_read_as_all_survived(registry) -> None:
+    tcr = et_inputs()[TCR]
+    spec = InputUncertainty((InputDistribution(TCR, "uniform", Quantity(tcr.magnitude * 0.01, tcr.units),
+                                               Quantity(tcr.magnitude * 1.99, tcr.units), "a range wider than the 95 % search cap"),), 93)
+    report = challenge_claim(assess_claim(et_claim(input_uncertainty=spec), registry), registry)
+    summary = report.outcome_summary()
+    assert summary["inconclusive"] >= 1 and summary["unresolved_remain"]
+    assert "validity_boundary_stress:" + TCR + ":inconclusive" in summary["unresolved"]
+    assert summary["survived"] + summary["weakened"] + summary["inconclusive"] + summary["not_attempted"] == len(report.challenges)
+
+
+def test_an_undecided_claim_never_survives_the_guard_band(registry) -> None:
+    """Review M1: re-assessing an insufficient-evidence claim with its quantifiable channels and finding it
+    still insufficient tested nothing; it used to be SURVIVED and made the headline read survived."""
+    from dataclasses import replace
+
+    claim = replace(_with_ambient(400.0), input_uncertainty=_ambient_range(398.0, 402.0))
+    assessment = assess_claim(claim, registry)
+    assert assessment.verdict.value == "insufficient_evidence" and assessment.plan is not None
+    report = challenge_claim(assessment, registry)
+    (band,) = [c for c in report.challenges if c.kind is ChallengeKind.UNCERTAINTY_GUARD_BAND]
+    assert band.attempted and band.result is ChallengeResult.INCONCLUSIVE and not band.weakened
+    assert report.outcome_summary()["survived"] == 0 and report.status == "not_challenged"

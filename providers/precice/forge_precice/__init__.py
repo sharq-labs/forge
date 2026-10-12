@@ -20,9 +20,11 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
@@ -167,6 +169,14 @@ def execute(contract: ScalarTwoWayContract, *, timeout: float = 300.0) -> Precic
         from engcore.numerical.core import ProviderUnavailable
         raise ProviderUnavailable(f"preCICE is not available here: {version}")
     work = tempfile.mkdtemp(prefix="forge-precice-")
+    try:
+        return _execute_in(work, contract, version, timeout)
+    finally:
+        # the record carries everything kept (config digest, outputs, logs); the directory is scratch
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def _execute_in(work: str, contract: ScalarTwoWayContract, version: str, timeout: float) -> PreciceExecutionRecord:
     xml = contract.render(work)
     digest = hashlib.sha256(xml.encode()).hexdigest()
     cfg = os.path.join(work, "precice-config.xml")
@@ -178,23 +188,46 @@ def execute(contract: ScalarTwoWayContract, *, timeout: float = 300.0) -> Precic
     roots = [os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
              os.path.dirname(os.path.dirname(os.path.abspath(engcore.__file__)))]
     env["PYTHONPATH"] = os.pathsep.join(roots + [os.path.abspath(p) for p in env.get("PYTHONPATH", "").split(os.pathsep) if p])
-    procs = {}
-    for name in (contract.first, contract.second):
-        spec = json.dumps({"config": cfg, "participant": name, "contract": contract.to_dict()})
-        procs[name] = subprocess.Popen([sys.executable, "-m", "forge_precice.driver", spec], cwd=work, env=env,
-                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    # Output goes to files: two coupled participants on pipes, drained one after the other,
+    # deadlock as soon as the second fills its pipe while the first waits on the coupling.
+    # One deadline bounds the pair, and no participant outlives this call.
+    procs, files = {}, []
+    deadline = time.monotonic() + float(timeout)
     outputs, logs = {}, {}
-    for name, proc in procs.items():
-        try:
-            out, err = proc.communicate(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            for p in procs.values():
-                p.kill()
-            return PreciceExecutionRecord(contract.to_dict(), version, digest, False, {}, (), "timeout")
-        logs[name] = {"returncode": proc.returncode, "stderr_tail": err[-400:]}
-        if proc.returncode != 0:
-            return PreciceExecutionRecord(contract.to_dict(), version, digest, False, {}, (), f"{name} exited {proc.returncode}", logs)
-        outputs[name] = json.loads(out.strip().splitlines()[-1])
+    try:
+        for name in (contract.first, contract.second):
+            spec = json.dumps({"config": cfg, "participant": name, "contract": contract.to_dict()})
+            out_f, err_f = tempfile.TemporaryFile(), tempfile.TemporaryFile()
+            files += [out_f, err_f]
+            procs[name] = (subprocess.Popen([sys.executable, "-m", "forge_precice.driver", spec], cwd=work, env=env,
+                                            stdout=out_f, stderr=err_f, stdin=subprocess.DEVNULL), out_f, err_f)
+        for name, (proc, out_f, err_f) in procs.items():
+            try:
+                proc.wait(timeout=max(0.0, deadline - time.monotonic()))
+            except subprocess.TimeoutExpired:
+                return PreciceExecutionRecord(contract.to_dict(), version, digest, False, {}, (), "timeout")
+            out_f.seek(0)
+            err_f.seek(0)
+            out = out_f.read().decode("utf-8", "replace")
+            err = err_f.read().decode("utf-8", "replace")
+            logs[name] = {"returncode": proc.returncode, "stderr_tail": err[-400:]}
+            if proc.returncode != 0:
+                return PreciceExecutionRecord(contract.to_dict(), version, digest, False, {}, (), f"{name} exited {proc.returncode}", logs)
+            try:
+                outputs[name] = json.loads(out.strip().splitlines()[-1])
+            except (IndexError, ValueError) as exc:
+                return PreciceExecutionRecord(contract.to_dict(), version, digest, False, {}, (),
+                                              f"{name} wrote no readable result line: {exc}", logs)
+    finally:
+        for proc, _, _ in procs.values():
+            if proc.poll() is None:
+                proc.kill()
+                try:
+                    proc.wait(timeout=10.0)
+                except subprocess.TimeoutExpired:
+                    pass
+        for fh in files:
+            fh.close()
     iterations = tuple(outputs[contract.second]["iterations_per_window"])
     windows = round(contract.max_time / contract.time_window)
     if len(iterations) != windows or tuple(outputs[contract.first]["iterations_per_window"]) != iterations:

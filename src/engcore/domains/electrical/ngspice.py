@@ -231,7 +231,7 @@ class NgspiceInvocation:
                 text=True,
                 timeout=self.timeout_seconds,
             )
-        except FileNotFoundError as exc:
+        except OSError as exc:
             raise NgspiceUnavailable(
                 f"could not launch the ngspice provider as {self.command!r}: "
                 f"{exc}. This is an execution failure, not a scientific one"
@@ -248,6 +248,13 @@ class NgspiceInvocation:
         Never hard-coded. A pinned string would make provenance lie the moment
         the binary changed, and provenance that can lie is worse than provenance
         that is absent.
+
+        The probe follows the provider catalog's executable-probe rule
+        (``engcore.providers.catalog``): the version command must exit 0, and a
+        failed, timed-out or unlaunchable probe raises, so no SolverIdentity is
+        formed from it. Text that merely parses as a version is not enough --
+        a process that printed a banner and then failed is not a provider this
+        run can name. ngspice 42 exits 0 for ``--version``.
         """
         try:
             done = subprocess.run(
@@ -256,10 +263,20 @@ class NgspiceInvocation:
                 text=True,
                 timeout=self.timeout_seconds,
             )
-        except FileNotFoundError as exc:
+        except OSError as exc:
             raise NgspiceUnavailable(
                 f"could not launch the ngspice provider as {self.command!r}"
             ) from exc
+        except subprocess.TimeoutExpired as exc:
+            raise NgspiceExecutionFailure(
+                f"the ngspice version probe did not return within "
+                f"{self.timeout_seconds}s"
+            ) from exc
+        if done.returncode != 0:
+            raise NgspiceExecutionFailure(
+                f"the ngspice version probe exited {done.returncode} "
+                "(accepted [0]); a failed probe cannot name the provider"
+            )
         # stdout only, anchored to a line start, and a character class that
         # stops at punctuation. An earlier form searched `stdout + stderr`
         # with `ngspice-(\S+)`, which takes the FIRST match anywhere — so a

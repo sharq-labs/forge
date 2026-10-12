@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 from ...scientific.results.uncertainty import Uncertainty, UncertaintyKind, UncertaintySource
 from ...scientific.units.quantity import Quantity, dimensionality

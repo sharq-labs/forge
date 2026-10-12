@@ -631,6 +631,113 @@ def test_a_timeout_terminates_the_whole_process_tree_not_only_the_direct_child(t
         ws.cleanup()
 
 
+
+#: The step starts a middle process that starts the sleeper and exits at once. The sleeper is
+#: then an orphan (Windows: ``taskkill /T`` follows parent links and cannot reach it) or leads
+#: its own session (POSIX: outside the step's process group). Either way it survives the kill
+#: and still holds the step's inherited stdout/stderr.
+ESCAPER = (b"import os, subprocess, sys, time\n"
+           b"sleeper = ('import os, sys, time\\n'\n"
+           b"           'open(sys.argv[1], \"w\").write(str(os.getpid()))\\n'\n"
+           b"           'time.sleep(60)\\n')\n"
+           b"middle = ('import subprocess, sys\\n'\n"
+           b"          'subprocess.Popen([sys.executable, \"-c\", sys.argv[1], sys.argv[2]], start_new_session=(sys.platform != \"win32\"))\\n')\n"
+           b"subprocess.Popen([sys.executable, '-c', middle, sleeper, os.path.abspath('escaped.pid')]).wait()\n"
+           b"time.sleep(60)\n")
+
+
+def _reap_escaped(path):
+    import time
+
+    deadline = time.perf_counter() + 10.0
+    while not os.path.exists(path) and time.perf_counter() < deadline:
+        time.sleep(0.1)
+    if os.path.exists(path):
+        # cleanup only: never skip here, a skip raised in ``finally`` would hide the test's own failure
+        import signal
+
+        try:
+            os.kill(int(open(path).read()), signal.SIGTERM)
+        except (OSError, ValueError):
+            pass
+
+
+def test_a_descendant_that_escapes_termination_cannot_hold_the_timed_out_step(tmp_path):
+    """Process-tree termination is not complete (orphans, new sessions); the timeout must bound the run anyway.
+
+    With stdout/stderr on pipes the post-kill drain waited for the escaped
+    descendant to close them: a 2 s timeout returned after its full 60 s.
+    """
+    import time
+
+    ws = ProcessWorkspace(str(tmp_path))
+    inv = _invocation(args=("escape.py",), timeout=2.0, expected=(), extra_inputs=(GeneratedFile("escape.py", ESCAPER),))
+    start = time.perf_counter()
+    try:
+        rec = ws.run(inv)
+        elapsed = time.perf_counter() - start
+        assert rec.timed_out and rec.exit_code is None and not rec.completed
+        assert elapsed < 30.0, f"the timeout returned after {elapsed:.1f}s: an escaped descendant kept the run alive"
+    finally:
+        _reap_escaped(os.path.join(ws.path, "escaped.pid"))
+        ws.cleanup()
+
+
+def test_captured_output_keeps_the_digest_form_records_were_written_in(tmp_path):
+    """Spilling to files changed where output is held, not what is digested: sha256 of the newline-joined steps."""
+    import hashlib
+
+    first = _invocation(args=("-c", "import sys; sys.stdout.write('alpha' * 3000); sys.stderr.write('e1')"), expected=())
+    second = _invocation(args=("-c", "import sys; sys.stdout.write('omega'); sys.stderr.write('e2')"), expected=())
+    ws = ProcessWorkspace(str(tmp_path))
+    try:
+        rec = ws.run_sequence((first, second))
+    finally:
+        ws.cleanup()
+    joined = b"alpha" * 3000 + b"\n" + b"omega"
+    assert rec.completed and rec.stdout_digest == hashlib.sha256(joined).hexdigest()
+    assert rec.stderr_digest == hashlib.sha256(b"e1\ne2").hexdigest()
+    assert rec.stdout_tail == joined[-4000:].decode() and rec.stderr_tail == "e1\ne2"
+
+
+def test_an_executable_that_cannot_be_launched_is_a_typed_refusal(tmp_path):
+    from engcore.providers.process import ProcessWorkspace as Workspace
+
+    fake = tmp_path / "not-a-program.bin"
+    fake.write_bytes(b"\x00 this is not an executable image \x00")
+    if os.name == "posix":
+        fake.chmod(0o644)
+    inv = ProcessInvocation(str(fake), _sha256_file(str(fake)), "0", (), (), (), 5.0, ())
+    ws = Workspace(str(tmp_path))
+    try:
+        with pytest.raises(ProviderRefusal, match="could not launch"):
+            ws.run(inv)
+        with pytest.raises(ProviderRefusal, match="exactly once"):
+            ws.run(inv)
+    finally:
+        ws.cleanup()
+
+
+def test_run_bounded_returns_output_and_bounds_time_and_size(tmp_path):
+    import json
+    import time
+
+    from engcore.providers.process import run_bounded
+
+    code, timed_out, out, err = run_bounded([PY, "-c", "import json, sys; print(json.dumps(json.load(sys.stdin)))"],
+                                            timeout_s=60.0, input_bytes=json.dumps({"x": 1}).encode())
+    assert (code, timed_out, json.loads(out), err) == (0, False, {"x": 1}, b"")
+    start = time.perf_counter()
+    code, timed_out, _, _ = run_bounded([PY, "-c", "import time; time.sleep(30)"], timeout_s=1.0)
+    assert code is None and timed_out and time.perf_counter() - start < 20.0
+    with pytest.raises(ProviderRefusal, match="refused, not truncated"):
+        run_bounded([PY, "-c", "print('x' * 5000)"], timeout_s=60.0, max_output_bytes=1000)
+    with pytest.raises(ProviderRefusal, match="could not launch"):
+        run_bounded([str(tmp_path / "missing.exe")], timeout_s=5.0)
+    with pytest.raises(ProviderRefusal, match="positive timeout"):
+        run_bounded([PY, "-c", "pass"], timeout_s=0)
+
+
 # ---- optional dependencies: adapters are safe to import without their scientific stacks --------
 
 

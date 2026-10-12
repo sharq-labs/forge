@@ -183,7 +183,6 @@ class CodeAsterProvider:
                                                       configuration=configuration, output_request=("displacement",))
         t0 = time.perf_counter()
         checked_environment = conda_environment_of(self.status)  # may refuse: before any workspace exists
-        ws = ProcessWorkspace(self.workspace_root)
         files = {"case.comm": generate_comm(problem, base.digest), "mesh.mail": generate_mesh(problem)}
         # workspace-relative paths (run_aster runs with cwd = the workspace): the .export is content, not a temp path
         export = "\n".join(["P time_limit 300", "P memory_limit 2048", "P ncpus 1", "P mpi_nbcpu 1", "P mode interactif",
@@ -195,6 +194,7 @@ class CodeAsterProvider:
         inv = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("case.export",),
                                 tuple(GeneratedFile(k, v.encode()) for k, v in sorted({**files, "case.export": export}.items())),
                                 env, self.timeout_s, ("result.resu", "message"), conda_environment=checked_environment)
+        ws = ProcessWorkspace(self.workspace_root)  # created here: everything above can refuse
         try:
             t1 = time.perf_counter()
             rec = ws.run(inv)
@@ -217,7 +217,6 @@ class CodeAsterProvider:
                                                       configuration=configuration, output_request=("displacement", "stress"))
         t0 = time.perf_counter()
         checked_environment = conda_environment_of(self.status)  # may refuse: before any workspace exists
-        ws = ProcessWorkspace(self.workspace_root)
         files = {"case.comm": generate_thermoelastic_comm(problem, base.digest), "mesh.mail": generate_thermoelastic_mesh(problem)}
         export = "\n".join(["P time_limit 600", "P memory_limit 2048", "P ncpus 1", "P mpi_nbcpu 1", "P mode interactif",
                             "F comm case.comm D 1", "F mail mesh.mail D 20", "F resu result.resu R 8", "F resu stress.resu R 30", "F mess message R 6", ""])
@@ -228,6 +227,7 @@ class CodeAsterProvider:
         inv = ProcessInvocation(self.status.location, self.status.executable_digest, self.status.version, ("case.export",),
                                 tuple(GeneratedFile(k, v.encode()) for k, v in sorted({**files, "case.export": export}.items())),
                                 env, self.timeout_s, ("result.resu", "stress.resu", "message"), conda_environment=checked_environment)
+        ws = ProcessWorkspace(self.workspace_root)  # created here: everything above can refuse
         try:
             t1 = time.perf_counter()
             rec = ws.run(inv)
