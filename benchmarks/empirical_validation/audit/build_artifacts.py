@@ -17,13 +17,13 @@ from . import (
     mutations,
     validation,
 )
-from .loader import ROOT, fixture
+from .loader import ROOT, artifacts, fixture
 from .surface import SURFACE
 from .tolerances import TOLERANCES
 
 
 def _write(name: str, payload) -> None:
-    (ROOT / name).write_text(
+    (artifacts() / name).write_text(
         json.dumps(payload, indent=2, sort_keys=False) + "\n", encoding="utf-8"
     )
 

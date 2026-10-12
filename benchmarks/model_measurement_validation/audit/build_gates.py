@@ -6,7 +6,7 @@ import json
 import subprocess
 
 from . import adjudication, build_artifacts, check_consistency
-from .evidence import ROOT
+from .evidence import ROOT, artifacts
 
 #: The digest of ``src/engcore/scientific`` this round was audited against.
 #:
@@ -69,7 +69,7 @@ def gates(built) -> list[dict]:
             "verdict": "PASS" if passed else "FAIL",
         })
 
-    surface = json.loads((ROOT / "MODEL_EVIDENCE_SURFACE.json").read_text(encoding="utf-8"))
+    surface = json.loads((artifacts() / "MODEL_EVIDENCE_SURFACE.json").read_text(encoding="utf-8"))
     surface_ids = {m["model_id"] for m in surface["models"]}
     accounted = set(adjudication.ACCOUNTING)
     gate(
@@ -82,7 +82,7 @@ def gates(built) -> list[dict]:
         "a model had been dropped because no data was found for it",
     )
 
-    provenance = json.loads((ROOT / "EVIDENCE_PROVENANCE.json").read_text(encoding="utf-8"))
+    provenance = json.loads((artifacts() / "EVIDENCE_PROVENANCE.json").read_text(encoding="utf-8"))
     used = {s["source_id"] for s in provenance["sources_accepted"]}
     in_rows = {row["source_id"] for bundle in results.values() for row in bundle["rows"]}
     hashes = built["evidence_hashes"]
@@ -104,7 +104,7 @@ def gates(built) -> list[dict]:
         "Was anything screened out of scope counted as model validation?",
         applicability["passed"],
         {"offenders": applicability["offenders"],
-         "screens_recorded": len(json.loads((ROOT / "APPLICABILITY_SCREEN.json").read_text(encoding="utf-8"))["screens"]),
+         "screens_recorded": len(json.loads((artifacts() / "APPLICABILITY_SCREEN.json").read_text(encoding="utf-8"))["screens"]),
          "out_of_scope_exclusions_reported_as_findings": [f["id"] for f in found if f["class"] == "OUT_OF_SCOPE_REFERENCE"]},
         "a half-cell potential, an example table or a simulator output had been counted as evidence for a shipped model",
     )
@@ -127,7 +127,7 @@ def gates(built) -> list[dict]:
         "a held-out point had been used as calibration, or a count had drifted from the plan without a finding naming it",
     )
 
-    plan = json.loads((ROOT / "METRIC_PLAN.json").read_text(encoding="utf-8"))
+    plan = json.loads((artifacts() / "METRIC_PLAN.json").read_text(encoding="utf-8"))
     justified = all(
         case.get("scientific_justification") and case.get("pass_rule")
         for case in plan["cases"]
@@ -266,10 +266,10 @@ def build() -> dict:
             "scope would be worth nothing."
         ),
     }
-    (ROOT / "SAFETY_GATES.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    (artifacts() / "SAFETY_GATES.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     # MV-28 last: it reads every artifact above and the report that quotes them.
     consistency = check_consistency.run()
-    (ROOT / "CONSISTENCY_AUDIT.json").write_text(
+    (artifacts() / "CONSISTENCY_AUDIT.json").write_text(
         json.dumps(consistency, indent=2) + "\n", encoding="utf-8"
     )
     return payload | {"_built": built, "consistency": consistency}

@@ -14,7 +14,7 @@ import json
 import subprocess
 
 from . import build_artifacts, check_consistency, construction
-from .loader import ROOT
+from .loader import ROOT, artifacts
 from .tolerances import TOLERANCES
 
 #: The digest of ``src/engcore/scientific`` this round was audited against.
@@ -200,7 +200,7 @@ def gates(result: dict) -> list[dict]:
 
     # ---- EV-5 ----------------------------------------------------------
     provenance = json.loads(
-        (ROOT / "EVIDENCE_PROVENANCE.json").read_text(encoding="utf-8")
+        (artifacts() / "EVIDENCE_PROVENANCE.json").read_text(encoding="utf-8")
     )
     # `invocation` joins `binary` as an answer to "where did this number come
     # from": for an external program reached through WSL there is no single
@@ -474,13 +474,13 @@ def build() -> dict:
             1 for row in result["holdout_validation"] if row["verdict"] == "DISAGREES"
         ),
     }
-    (ROOT / "SAFETY_GATES.json").write_text(
+    (artifacts() / "SAFETY_GATES.json").write_text(
         json.dumps(payload, indent=2) + "\n", encoding="utf-8"
     )
     # EV-30. Written last, because it reads the artifacts every other step
     # produced and the report that quotes them.
     consistency = check_consistency.run()
-    (ROOT / "CONSISTENCY_AUDIT.json").write_text(
+    (artifacts() / "CONSISTENCY_AUDIT.json").write_text(
         json.dumps(consistency, indent=2) + "\n", encoding="utf-8"
     )
     return payload | {"_result": result, "consistency": consistency}

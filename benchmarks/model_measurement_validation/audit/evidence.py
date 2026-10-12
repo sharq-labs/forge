@@ -23,6 +23,19 @@ import zipfile
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 EVIDENCE = ROOT / "evidence"
 
+
+#: Where the round's published artifacts -- the top-level ``*.json`` records --
+#: are read and written. ``None`` means the committed round directory, which is
+#: what a deliberate rebuild of the published record uses. A test points it at a
+#: copy so a rebuild never rewrites committed evidence in the working tree, where
+#: another test reading the tree would see it change underneath it. Inputs in the
+#: round's subdirectories and ``ROUND_REPORT.md`` (never written) stay on ROOT.
+ARTIFACT_DIR: pathlib.Path | None = None
+
+
+def artifacts() -> pathlib.Path:
+    return ROOT if ARTIFACT_DIR is None else ARTIFACT_DIR
+
 NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 RS = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 

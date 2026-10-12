@@ -181,6 +181,48 @@ def test_calibration_rows_carry_no_verdict():
 # =====================================================================
 
 
+def _round_bytes() -> dict[str, bytes]:
+    """Every file of the committed round directory, by relative path."""
+    return {
+        p.relative_to(ROUND).as_posix(): p.read_bytes()
+        for p in sorted(ROUND.rglob("*"))
+        if p.is_file() and "__pycache__" not in p.parts
+    }
+
+
+@pytest.fixture
+def isolated_artifacts(tmp_path, monkeypatch):
+    """Point a rebuild of this round at a private copy of its published artifacts.
+
+    The copy starts byte-identical to the committed records, so the rebuild sees
+    exactly what an in-place rebuild would. Its timestamps are reset so the test
+    can prove the rebuild wrote there; afterwards the committed round directory
+    must be byte-identical to before. Yields ``(set_loader, directory)``.
+    """
+    import os
+    import shutil
+
+    directory = tmp_path / "artifacts"
+    directory.mkdir()
+    for path in sorted(ROUND.glob("*.json")):
+        shutil.copyfile(path, directory / path.name)
+        os.utime(directory / path.name, ns=(0, 0))
+    before = _round_bytes()
+
+    def set_loader(module) -> None:
+        assert pathlib.Path(module.ROOT).resolve() == ROUND, f"another round's audit package: {module.ROOT}"
+        monkeypatch.setattr(module, "ARTIFACT_DIR", directory)
+
+    yield set_loader, directory
+    after = _round_bytes()
+    changed = sorted(name for name in set(before) | set(after) if before.get(name) != after.get(name))
+    assert not changed, f"the rebuild modified committed round files: {changed}"
+
+
+def _rewritten(directory) -> set[str]:
+    return {p.name for p in directory.glob("*.json") if p.stat().st_mtime_ns > 0}
+
+
 def _round_audit():
     """This round's audit package, addressed unambiguously.
 
@@ -335,8 +377,13 @@ def test_the_consistency_checker_can_fail():
 
 
 @pytest.mark.expensive
-def test_rebuilding_everything_reproduces_the_published_gates():
-    payload = _round_audit().build_gates.build()
+def test_rebuilding_everything_reproduces_the_published_gates(isolated_artifacts):
+    audit = _round_audit()
+    set_loader, directory = isolated_artifacts
+    set_loader(audit.evidence)
+    payload = audit.build_gates.build()
+    # the rebuild wrote its records into the private copy, not the working tree
+    assert {"SAFETY_GATES.json", "CONSISTENCY_AUDIT.json", "VALIDATION_RESULTS.json"} <= _rewritten(directory)
     assert payload["passed"] == 10
     assert payload["failed"] == 1
     assert payload["_built"]["plants"]["missed"] == 0

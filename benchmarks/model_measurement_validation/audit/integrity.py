@@ -16,11 +16,11 @@ from __future__ import annotations
 
 import json
 
-from .evidence import ROOT
+from .evidence import ROOT, artifacts
 
 
 def _plan():
-    return json.loads((ROOT / "VALIDATION_SPLIT.json").read_text(encoding="utf-8"))
+    return json.loads((artifacts() / "VALIDATION_SPLIT.json").read_text(encoding="utf-8"))
 
 
 def _rows(results):

@@ -15,7 +15,7 @@ import json
 import pathlib
 import re
 
-from .loader import ROOT
+from .loader import ROOT, artifacts
 
 REPORT = ROOT / "ROUND_REPORT.md"
 
@@ -35,7 +35,7 @@ def _text() -> str:
 
 
 def _artifact(name: str) -> dict:
-    return json.loads((ROOT / name).read_text(encoding="utf-8"))
+    return json.loads((artifacts() / name).read_text(encoding="utf-8"))
 
 
 # ---------------------------------------------------------------------------
