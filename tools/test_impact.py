@@ -224,6 +224,9 @@ class ImpactGraph:
         return seen
 
 
+_FIRST_PARTY_HEADS = frozenset({"engcore", "src", "tools", "benchmarks", "experiments", "forge_flagships"})
+
+
 def _python_files(root: pathlib.Path) -> list[pathlib.Path]:
     out = []
     for p in root.rglob("*.py"):
@@ -292,9 +295,12 @@ def build_graph(root: pathlib.Path) -> ImpactGraph:
                 for alias in node.names:
                     out.update(executed_by(f"{base}.{alias.name}" if base else alias.name))
             elif isinstance(node, ast.Constant) and isinstance(node.value, str) and len(node.value) < 400:
+                # A short string naming a first-party module: an importlib target, a
+                # ``py:`` identity. Long strings are prose (docstrings) and are not read:
+                # measured, reading them too took one domain edit from ~45 affected
+                # modules to 557 through package docstrings that merely name a module.
                 for dotted in _DOTTED.findall(node.value):
-                    if dotted in mod_to_file or dotted.split(".", 1)[0] in ("engcore", "src", "tools", "benchmarks",
-                                                                            "experiments", "forge_flagships"):
+                    if dotted in mod_to_file or dotted.split(".", 1)[0] in _FIRST_PARTY_HEADS:
                         out.update(executed_by(dotted))
         out.discard(rel)
         deps[rel] = out
@@ -363,7 +369,8 @@ def impact_of(paths: Iterable[str], graph: ImpactGraph) -> Impact:
 
 
 # ---------------------------------------------------------------------------
-# Execution tiers, read from tests/conftest.py (the only place they are assigned)
+# Execution tiers: the tables in tests/conftest.py, plus the markers a module
+# applies itself (``@pytest.mark.expensive`` on a test or class, ``pytestmark``)
 # ---------------------------------------------------------------------------
 
 
@@ -398,39 +405,62 @@ def load_tiers(root: pathlib.Path) -> Tiers:
     )
 
 
-def _test_functions(text: str) -> set[str]:
+_TIER_MARKS = frozenset({"expensive", "campaign"})
+
+
+def _is_tier_mark(node: ast.AST) -> bool:
+    """``pytest.mark.expensive`` / ``mark.campaign``, bare or called (``...expensive(reason=...)``)."""
+    if isinstance(node, ast.Call):
+        node = node.func
+    return isinstance(node, ast.Attribute) and node.attr in _TIER_MARKS and (
+        isinstance(node.value, ast.Attribute) and node.value.attr == "mark"
+    )
+
+
+def _self_marked(text: str) -> tuple[bool, set[str], set[str]]:
+    """``(whole module marked, marked top-level test functions and classes, every collectable name)``."""
     try:
         tree = ast.parse(text)
     except SyntaxError:
-        return set()
-    return {n.name for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name.startswith("test")}
+        return False, set(), set()
+    whole, marked, names = False, set(), set()
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "pytestmark" for t in node.targets):
+            values = node.value.elts if isinstance(node.value, (ast.List, ast.Tuple)) else [node.value]
+            whole = whole or any(_is_tier_mark(v) for v in values)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.name.startswith(("test", "Test")):
+            names.add(node.name)
+            if any(_is_tier_mark(d) for d in node.decorator_list):
+                marked.add(node.name)
+    return whole, marked, names
 
 
 def split_by_tier(modules: Iterable[str], tiers: Tiers, texts: Mapping[str, str]) -> tuple[list[str], list[str], list[str]]:
     """``(fast_targets, deselect_prefixes, expensive_left_out)`` for affected modules.
 
-    An expensive module is replaced by its static guards (named node ids); an
-    expensive or campaign test inside an ordinary module is deselected by its
-    key. ``--deselect`` matches node-id PREFIXES, so a key that is also the
-    prefix of another test function in that module (``test_a`` / ``test_ab``)
-    is not deselected: that expensive test runs rather than risk dropping a
-    fast one. Everything left out is returned so the caller can print it.
+    An expensive module (a conftest table entry, or a module-level
+    ``pytestmark``) is replaced by its static guards (named node ids); an
+    expensive or campaign test inside an ordinary module (a conftest key, or a
+    test function or class decorated with the marker) is deselected by its key.
+    ``--deselect`` matches node-id PREFIXES, so a key that is also the prefix of
+    another test in that module (``test_a`` / ``test_ab``) is not deselected:
+    that expensive test runs rather than risk dropping a fast one. Everything
+    left out is returned so the caller can print it.
     """
     targets, deselect, left_out = [], [], []
     keys = sorted(tiers.expensive_tests | tiers.campaign_tests)
     for module in sorted(set(modules)):
-        if module in tiers.expensive_modules:
+        whole, marked, names = _self_marked(texts.get(module, ""))
+        if module in tiers.expensive_modules or whole:
             left_out.append(module)
             targets.extend(f"{module}::{name}" for name in sorted(tiers.static_guards.get(module, ())))
             continue
         targets.append(module)
-        functions = _test_functions(texts.get(module, ""))
-        for key in keys:
-            mod, _, rest = key.partition("::")
-            if mod != module:
-                continue
-            function = rest.split("[", 1)[0]
-            if "[" not in rest and any(f != function and f.startswith(function) for f in functions):
+        module_keys = [k for k in keys if k.partition("::")[0] == module] + [f"{module}::{n}" for n in sorted(marked)]
+        for key in dict.fromkeys(module_keys):
+            rest = key.partition("::")[2]
+            name = rest.split("[", 1)[0].split("::", 1)[0]
+            if "[" not in rest and any(other != name and other.startswith(name) for other in names):
                 continue
             deselect.append(key)
             left_out.append(key)

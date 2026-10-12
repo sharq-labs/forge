@@ -20,6 +20,12 @@ from tools.test_impact import ChangeClass, Tiers
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
+@pytest.fixture(scope="module")
+def real_graph():
+    """The repository's own import graph: built once, read-only."""
+    return test_impact.build_graph(ROOT)
+
+
 def _write(root: pathlib.Path, rel: str, text: str) -> None:
     path = root / rel
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -162,6 +168,44 @@ def test_expensive_affected_tests_are_listed_never_silently_dropped() -> None:
     assert set(left_out) == {"tests/test_heavy.py", "tests/test_a.py::test_campaign", "tests/test_a.py::test_slow"}
 
 
+def test_markers_a_module_applies_itself_are_honoured_too() -> None:
+    empty = Tiers(frozenset(), frozenset(), frozenset(), {})
+    texts = {
+        "tests/test_deco.py": (
+            "import pytest\n"
+            "@pytest.mark.expensive\ndef test_rebuild(): pass\n"
+            "@pytest.mark.campaign(reason='big')\nclass TestStudy:\n    def test_it(self): pass\n"
+            "def test_cheap(): pass\n"
+        ),
+        "tests/test_module_marked.py": "import pytest\npytestmark = [pytest.mark.expensive]\ndef test_a(): pass\n",
+    }
+    targets, deselect, left_out = test_impact.split_by_tier(list(texts), empty, texts)
+    assert targets == ["tests/test_deco.py"]
+    assert deselect == ["tests/test_deco.py::TestStudy", "tests/test_deco.py::test_rebuild"]
+    assert "tests/test_module_marked.py" in left_out
+
+
+def test_no_tier_deselection_can_drop_a_regression_sentinel(real_graph) -> None:
+    """``--deselect`` applies to the whole command: no key may prefix a sentinel node id."""
+    graph = real_graph
+    sentinels = [case["nodeid"] for case in forge_check.load_manifest()["cases"]]
+    modules = sorted({node.split("::", 1)[0] for node in sentinels})
+    _, deselect, _ = test_impact.split_by_tier(modules, test_impact.load_tiers(ROOT), graph.texts)
+    assert not [(key, node) for key in deselect for node in sentinels if node.startswith(key)]
+
+
+def test_the_rebuild_tests_that_rewrite_committed_json_are_never_run_by_the_gate(real_graph) -> None:
+    """They carry `@pytest.mark.expensive` in the module, not a conftest entry, and rewrite 17 committed files."""
+    graph = real_graph
+    modules = [
+        "benchmarks/empirical_validation/tests/test_empirical_validation.py",
+        "benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py",
+    ]
+    _, deselect, _ = test_impact.split_by_tier(modules, test_impact.load_tiers(ROOT), graph.texts)
+    for module in modules:
+        assert f"{module}::test_rebuilding_everything_reproduces_the_published_gates" in deselect
+
+
 def test_a_module_selected_whole_is_not_also_named_node_by_node() -> None:
     sentinel = next(case["nodeid"] for case in forge_check.load_manifest()["cases"])
     module = sentinel.split("::", 1)[0]
@@ -179,9 +223,9 @@ def test_the_certified_regression_path_never_loads_the_impact_module(monkeypatch
     assert "--deselect" not in capsys.readouterr().out
 
 
-def test_the_old_gap_a_domain_models_own_tests_are_now_selected() -> None:
+def test_the_old_gap_a_domain_models_own_tests_are_now_selected(real_graph) -> None:
     """A thevenin edit used to run only tag sentinels; its own test module was never selected."""
-    graph = test_impact.build_graph(ROOT)
+    graph = real_graph
     impact = test_impact.impact_of(["src/engcore/domains/battery/thevenin.py"], graph)
     assert "tests/domains/test_battery_thevenin.py" in impact.affected
     assert "tests/domains/test_battery_thevenin.py" not in forge_check.build_targets(
