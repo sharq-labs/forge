@@ -36,7 +36,6 @@ import hashlib
 import os
 import re
 import shutil
-import subprocess
 import time
 from typing import Any, Callable, Mapping
 
@@ -44,6 +43,7 @@ from ..scientific.errors import InvalidScientificProblem
 from ..scientific.solvers.protocol import SolverIdentity
 from .catalog import Availability, ProviderCapability, ProviderStatus
 from .identity import content_digest
+from .records import ProviderRefusal
 
 PROBE_RECEIPT_SCHEMA = "engcore.providers.probe_receipt/1"
 QUALIFICATION_SCHEMA = "engcore.providers.qualification/1"
@@ -126,29 +126,31 @@ def probe_executable(command: str, version_argv: tuple[str, ...], parse_version:
     except OSError as exc:
         return ProbeReceipt(command, real, "", argv, env_digest, None, False, "", "", "", "", codes, 0.0,
                             failure=f"unreadable_executable: {type(exc).__name__}")
+    from .process import run_bounded  # the process boundary: a timeout ends the probe's whole tree
+
     start = time.perf_counter()
     try:
-        out = subprocess.run([real, *argv], capture_output=True, timeout=float(timeout_s), env=env, stdin=subprocess.DEVNULL)
-    except subprocess.TimeoutExpired as exc:
-        so, se = exc.stdout or b"", exc.stderr or b""
+        code, timed_out, so, se = run_bounded([real, *argv], timeout_s=float(timeout_s), env=env)
+    except ProviderRefusal as exc:
+        cause = exc.__cause__ if isinstance(exc.__cause__, OSError) else exc
+        return ProbeReceipt(command, real, exe_digest, argv, env_digest, None, False, "", "", "", "", codes,
+                            time.perf_counter() - start, failure=f"launch_failed: {type(cause).__name__}: {cause}")
+    if timed_out:
         return ProbeReceipt(command, real, exe_digest, argv, env_digest, None, True, _sha(so), _sha(se),
                             (so + se)[-2000:].decode("utf-8", "replace"), "", codes, time.perf_counter() - start, failure="timeout")
-    except OSError as exc:
-        return ProbeReceipt(command, real, exe_digest, argv, env_digest, None, False, "", "", "", "", codes,
-                            time.perf_counter() - start, failure=f"launch_failed: {type(exc).__name__}: {exc}")
-    text = (out.stdout or b"").decode("utf-8", "replace") + (out.stderr or b"").decode("utf-8", "replace")
+    text = so.decode("utf-8", "replace") + se.decode("utf-8", "replace")
     try:
         version = str(parse_version(text) or "").strip()
     except Exception as exc:  # a parser bug is a broken probe, never a version
         version, failure = "", f"version_parse_error: {type(exc).__name__}"
     else:
         failure = ""
-    if out.returncode not in codes:
-        failure = failure or f"exit_code_{out.returncode}"
+    if code not in codes:
+        failure = failure or f"exit_code_{code}"
     elif not version:
         failure = failure or "version_unparsed"
-    return ProbeReceipt(command, real, exe_digest, argv, env_digest, out.returncode, False, _sha(out.stdout or b""),
-                        _sha(out.stderr or b""), text[-2000:], version, codes, time.perf_counter() - start, failure=failure)
+    return ProbeReceipt(command, real, exe_digest, argv, env_digest, code, False, _sha(so),
+                        _sha(se), text[-2000:], version, codes, time.perf_counter() - start, failure=failure)
 
 
 def status_from_probe(capability: ProviderCapability, receipt: ProbeReceipt) -> ProviderStatus:

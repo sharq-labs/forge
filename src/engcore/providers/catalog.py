@@ -19,7 +19,6 @@ import importlib.util
 import os
 import re
 import shutil
-import subprocess
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable, Mapping
@@ -486,12 +485,18 @@ def executable_probe(capability: ProviderCapability, executable: str, version_ar
             if path is None:
                 return ProviderStatus(capability, Availability.UNAVAILABLE, reason=f"executable {executable!r} not found")
             real = os.path.realpath(path)
-            out = subprocess.run([real, *version_argv], capture_output=True, text=True, timeout=timeout,
-                                 env={"PATH": os.path.dirname(real), "HOME": os.environ.get("HOME", "/tmp")})
-            if out.returncode not in codes:
+            from .process import run_bounded  # a timeout ends the probe's whole tree, not only the direct child
+
+            code, timed_out, so, se = run_bounded([real, *version_argv], timeout_s=timeout,
+                                                  env={"PATH": os.path.dirname(real), "HOME": os.environ.get("HOME", "/tmp")})
+            if timed_out:
                 return ProviderStatus(capability, Availability.UNAVAILABLE, location=real,
-                                      reason=f"version probe of {real} exited {out.returncode} (accepted {list(codes)})")
-            version = parse_version((out.stdout or "") + (out.stderr or ""))
+                                      reason=f"TimeoutExpired: version probe of {real} did not finish within {timeout}s; "
+                                             "its process tree was terminated")
+            if code not in codes:
+                return ProviderStatus(capability, Availability.UNAVAILABLE, location=real,
+                                      reason=f"version probe of {real} exited {code} (accepted {list(codes)})")
+            version = parse_version(so.decode("utf-8", "replace") + se.decode("utf-8", "replace"))
             if not version:
                 return ProviderStatus(capability, Availability.UNAVAILABLE, location=real,
                                       reason=f"could not establish the version of {real}")

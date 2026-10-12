@@ -77,3 +77,58 @@ def test_forge_acceptance_rederives_both_models_and_rejects_a_non_fixed_point():
 def test_duplicate_exchanged_quantities_are_refused():
     with pytest.raises(ValueError, match="distinct"):
         ScalarTwoWayContract("x", "A", "B", (ExchangedQuantity("P", "q", "W", "A", 1e-9), ExchangedQuantity("T", "q", "K", "B", 1e-9)), 5, 1.0, 1.0, 1.0)
+
+
+
+# ---- cleanup: every invocation removes its own work directory and leaves no participant running --------
+
+
+def _driver_processes():
+    """Participant processes still alive under this one; ``None`` where they cannot be listed (no psutil).
+
+    Never a skip: the work-directory assertions of the caller must count whatever happens here.
+    """
+    try:
+        import psutil
+    except ImportError:
+        return None
+    me = psutil.Process()
+    return [p for p in me.children(recursive=True) if "forge_precice.driver" in " ".join(p.cmdline() if p.is_running() else [])]
+
+
+@pytest.mark.parametrize("timeout, reason", [(300.0, "exited"), (0.01, "timeout")])
+def test_a_failed_or_timed_out_coupling_removes_its_work_directory_and_its_participants(tmp_path, monkeypatch, timeout, reason):
+    """Without preCICE the participants fail at import (the failure path); a tiny timeout hits them while starting."""
+    import tempfile
+    import time
+
+    import forge_precice
+
+    monkeypatch.setattr(forge_precice, "precice_available", lambda: (True, "test-double"))
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    if OK:
+        pytest.skip("preCICE is installed: the participants would run, not fail")
+    rec = execute(contract(), timeout=timeout)
+    assert not rec.succeeded and reason in rec.reason
+    assert list(tmp_path.glob("forge-precice-*")) == []  # only its own directory, and it is gone
+    deadline = time.perf_counter() + 10.0
+    while _driver_processes() and time.perf_counter() < deadline:
+        time.sleep(0.1)
+    assert _driver_processes() in ([], None)  # None: not listable here (no psutil); the directory check above still ran
+
+
+def test_cleanup_never_touches_a_directory_it_did_not_create(tmp_path, monkeypatch):
+    import tempfile
+
+    import forge_precice
+
+    monkeypatch.setattr(forge_precice, "precice_available", lambda: (True, "test-double"))
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    if OK:
+        pytest.skip("preCICE is installed: the participants would run, not fail")
+    neighbour = tmp_path / "forge-precice-someone-else"
+    neighbour.mkdir()
+    (neighbour / "keep.txt").write_text("user data", encoding="utf-8")
+    execute(contract(), timeout=300.0)
+    assert (neighbour / "keep.txt").read_text(encoding="utf-8") == "user data"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["forge-precice-someone-else"]
