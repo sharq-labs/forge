@@ -87,11 +87,26 @@ def _statuses(policy=POLICY, **overrides):
     return statuses
 
 
+@pytest.fixture(scope="module")
+def repo_template(tmp_path_factory):
+    """``repo`` and the evidence ``evidence_repo`` adds, built once per module; tests receive private copies."""
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(core_certificate, "SCOPE", fx.SCOPE)
+        base = tmp_path_factory.mktemp("skip-admission")
+        root = _build_repo(base / "repo")
+        head = fx.git(root, "rev-parse", "HEAD")
+        fx.write_evidence(root, head, base / "evidence", skip_policy=POLICY)
+    return base
+
+
 @pytest.fixture
-def repo(tmp_path, monkeypatch):
+def repo(repo_template, tmp_path, monkeypatch):
     """A synthetic committed repository with a provider test module, a core test and the harnesses."""
     monkeypatch.setattr(core_certificate, "SCOPE", fx.SCOPE)
-    root = tmp_path / "repo"
+    return fx.clone_tree(repo_template / "repo", tmp_path / "repo")
+
+
+def _build_repo(root):
     fx.make_repo(root)
     fx.write(root, FAKE_TEST, (
         "import pytest\n"
@@ -320,9 +335,9 @@ def test_an_inconsistently_edited_availability_record_is_not_believed(tamper, fr
 
 # --- 9 ------------------------------------------------------------------------------------------
 @pytest.fixture
-def evidence_repo(repo, tmp_path):
+def evidence_repo(repo, repo_template, tmp_path):
     head = fx.git(repo, "rev-parse", "HEAD")
-    evidence = fx.write_evidence(repo, head, tmp_path / "evidence", skip_policy=POLICY)
+    evidence = fx.clone_tree(repo_template / "evidence", tmp_path / "evidence")
     return repo, head, evidence
 
 

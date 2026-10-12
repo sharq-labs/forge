@@ -53,7 +53,7 @@ import itertools
 
 import pytest
 
-from issued_levels import analytic_issuer_evidence
+from tests.issued_levels import analytic_issuer_evidence
 from engcore.mcp.evidence import (
     CouplingEvidence,
     CredibilityVerdict,

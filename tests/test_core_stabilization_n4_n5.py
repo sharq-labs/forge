@@ -17,7 +17,7 @@ import pytest
 from engcore.mcp.errors import ProblemPayloadError
 from engcore.mcp.evidence import CredibilityEvidenceError, CredibilityVerdict, derive_verdict
 from engcore.scientific.results.validation import ValidationCheck, ValidationLevel, ValidationOutcome
-from test_verdict_monotonicity import (
+from tests.test_verdict_monotonicity import (
     STRENGTH,
     SUPPORTING_CHECK,
     SUPPORTING_VALIDITY,

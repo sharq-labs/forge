@@ -2635,3 +2635,62 @@ because it changes a serialized status vocabulary.
 
 Failed approach: a bash heredoc for the first `forge_check.py` patch broke on quoting and wrote nothing; patch scripts
 written with the editor tool worked.
+
+## 2026-10-12 Test execution speed, developer loop and test-infrastructure cleanup (owner-requested, local only)
+
+Base `origin/main` `305928f9`; branch `perf/test-loop-cleanup` (worktree `D:/forge-tl`), not pushed. Machine: Windows 11,
+16 physical / 24 logical cores, 31.7 GB RAM (~9 GB free), CPython 3.14.2, pytest 9.1.1, pytest-xdist 3.8.0. Harness:
+`-p no:cacheprovider`, bytecode caching on (this agent's shell sets `PYTHONDONTWRITEBYTECODE=1`; that costs ~20 s instead
+of ~8 s of collection per process and was unset for every measurement), per-run wall / process-tree CPU / peak RSS by
+psutil sampling, per-worker collection and busy time by a `-p` plugin, failure sets from JUnit. Scripts and raw runs:
+`D:/forge-tl-bench/`.
+
+Changes (all certified-harness or control-plane files except `tools/test_impact.py`, `docs/`): **RECERTIFICATION_REQUIRED**
+(owner-run, once for the batch):
+- certification suites build their synthetic certified repository once per module and copy it per test
+  (`tests/certification_fixtures.py::clone_tree`); a test pins "private and location-free". Same 178 ids and outcomes;
+  serial 172-176 s -> 30-34 s for lineage + skip_admission + hardening_assurance.
+- hybrid-UQ classifier grids built in the test, not at import (ids unchanged).
+- `forge_check --changed` adds the tests a change can reach (`tools/test_impact.py`: import graph, mentions, conftest,
+  source walkers), classifies each changed path by ownership, prints the CI recertification triggers, lists affected
+  expensive tests instead of running them (`--with-expensive`). `--regression` unchanged and never imports the module.
+- five test modules imported shared helpers by bare name and could not be run alone (collection-order dependent); fixed.
+
+Commands and results (sorted FAILED/ERROR node-id sets compared with `comm`; equal unless stated):
+- Collection, whole suite, one process (`--collect-only -p no:xdist`): 10,615 tests; 8.0 s wall warm (pytest-reported
+  5.6-6.4 s), 18-20 s with `PYTHONDONTWRITEBYTECODE=1`. Branch: pytest-reported 5.4-5.5 s vs 5.6-6.3 s interleaved -- no
+  measurable change claimed. Hotspots: assertion rewriting (no cache when bytecode writing is off), the ngspice WSL probe
+  at import (1.6 s), hybrid-UQ grids at import (moved), `production_registry()` at import (memoized; left).
+- FAST `python -m pytest -m "not expensive" -q -n 4 --dist loadfile`: base 195.9 / 176.5 / 195.0 s, branch 161.1 / 163.3 s
+  (at `4118c626`); 151 failed + 21 errors in every run, identical sets. `-n 8`: 139.9 -> 101.1 s, imbalance 1.19 -> 1.03.
+- Worker scaling on base FAST: n1 589.2 s, n2 302.9, n4 176.5-195.9, n6 151.4, n8 139.9, n4 `--dist load` 189.8; same
+  failure set; n12 not run (memory). Knee 6-8 on this host; CI stays `-n 4`.
+- SCIENTIFIC as CI runs it (six deselects), `-n 4`: base 308.2 / 303.9 s, branch 245.4 / 275.7 s, identical failure sets,
+  tree clean. Without the deselects: base 336.3 s, branch 284.0 s with two extra failures in
+  `tests/claims/test_offline_revalidation.py` -- the rebuild tests rewrote tracked JSON mid-run and a replay correctly
+  reported NOT_REPRODUCIBLE; the module passes alone (31 passed). Both no-deselect runs dirtied 17 committed JSONs.
+- Certification suites (lineage + skip_admission + hardening_assurance + hybrid module), serial, twice each: base 176.1 /
+  173.3 s, branch 35.9 / 34.5 s; same 178 ids and outcomes.
+- Changed-file gate (`--workers 4`, one throwaway edit each, tree restored after every run, nothing else dirtied):
+  thevenin.py 165 tests 11.2 s -> 1,858 tests 52.5 s; claims/selection.py 241 / 12.0 s -> 3,839 / 63.7 s; authority/ledger.py
+  241 / 10.7 s -> 2,047 / 55.3 s; docs/TESTING.md 56 / 6.1 s -> 184 / 15.3 s. New-gate failures: the known environment set,
+  plus batch24/25 (could not run outside the full suite; fixed on the branch).
+- Isolation audit: all 579 test modules collected alone (8 parallel processes): 1 failure (test_mutation_harness, fixed);
+  static scan for bare imports of test modules not on the pythonpath roots: batch24/25 real (fixed), the rest resolve
+  through their own sys.path setup (alone == full-run outcome).
+- Final head `e465ec2a`: FAST `-n 4` 157.4 s (10,061 tests: 151 failed + 21 errors, set identical to base, tree clean);
+  SCIENTIFIC as CI runs it `-n 4` 269.1 s (identical failure set, tree clean).
+
+Failed approaches:
+- Regex over the raw text for dotted module names (to avoid a full AST walk) took a `thevenin.py` edit from 47 affected
+  modules to 557 via package docstrings naming submodules, for 0.7 s; reverted to AST string constants < 400 chars.
+- The first gate-timing pass ran decorator-marked expensive tests (tier detection read only conftest tables); the two
+  benchmark rebuild tests rewrote 17 committed JSONs in the gate worktree and contaminated every later run. Fixed tier
+  detection; the timing script now restores the tree after every run.
+- Moving the ngspice availability probe out of import (1.6 s per collecting process on Windows+WSL) was not done: the
+  skip would move from a `skipif` mark to a fixture, changing the JUnit skip location that certified skip admission
+  matches on.
+
+Open: the two `test_rebuilding_everything_reproduces_the_published_gates` tests write committed files in place (CI
+deselects them; locally they race with `test_offline_revalidation`); the builders need an output-directory parameter.
+SCIENTIFIC without the CI deselects is not equivalent to CI. FULL, Python 3.11/3.12, hardened recertification: NOT RUN.

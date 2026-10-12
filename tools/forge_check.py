@@ -70,6 +70,7 @@ CONSERVATIVE_FILES = frozenset({
     "tests/conftest.py",
     "tests/scientific_regression/manifest.json",
     "tools/forge_check.py",
+    "tools/test_impact.py",
 })
 
 
@@ -159,18 +160,33 @@ def changed_files(base: str, *, working_tree: bool = True) -> list[str]:
     return sorted(set(paths))
 
 
-def build_targets(paths: Iterable[str], *, regression: bool = False) -> list[str]:
-    targets = list(ARCHITECTURE_TESTS)
-    if regression:
-        targets.extend(case["nodeid"] for case in load_manifest()["cases"])
-    else:
-        paths = list(paths)
-        tags = tags_for_paths(paths)
-        targets.extend(cases_for_tags(tags))
-        targets.extend(changed_test_files(paths))
+def build_targets(
+    paths: Iterable[str],
+    *,
+    regression: bool = False,
+    affected: Iterable[str] = (),
+    whole_pack: bool = False,
+) -> list[str]:
+    """Guards, then sentinels, then changed tests, then affected tests -- stable, without duplicates.
 
-    # Stable order, no duplicate node IDs.
-    return list(dict.fromkeys(targets))
+    ``affected`` comes from :mod:`tools.test_impact` in ``--changed`` mode only;
+    ``whole_pack`` is set when a change's reach could not be established.
+    """
+    targets = list(ARCHITECTURE_TESTS)
+    if regression or whole_pack:
+        targets.extend(case["nodeid"] for case in load_manifest()["cases"])
+    if not regression:
+        paths = list(paths)
+        if not whole_pack:
+            targets.extend(cases_for_tags(tags_for_paths(paths)))
+        targets.extend(changed_test_files(paths))
+        targets.extend(affected)
+
+    # Stable order, no duplicate node IDs, and no node ID inside a module that is
+    # itself selected whole (pytest would run that test twice).
+    targets = list(dict.fromkeys(targets))
+    whole = {t for t in targets if "::" not in t}
+    return [t for t in targets if "::" not in t or t.split("::", 1)[0] not in whole]
 
 
 def build_command(
@@ -178,6 +194,7 @@ def build_command(
     workers: int,
     *,
     junitxml: str | None = None,
+    deselect: Iterable[str] = (),
 ) -> list[str]:
     """Build the deterministic pytest command used by the developer/certification gate."""
     cmd = [sys.executable, "-m", "pytest", "-q"]
@@ -185,8 +202,52 @@ def build_command(
         cmd += ["-n", str(workers), "--dist", "loadfile"]
     if junitxml:
         cmd += ["--junitxml", junitxml]
+    for prefix in deselect:
+        cmd += ["--deselect", prefix]
     cmd += list(targets)
     return cmd
+
+
+def _report_impact(paths: list[str], *, with_expensive: bool) -> tuple[list[str], list[str], list[str]]:
+    """``--changed`` only: the affected tests, the expensive ones left out, and unresolved paths -- printed.
+
+    :mod:`tools.test_impact` is imported here and nowhere else, so the certified
+    ``--regression`` path never loads it.
+    """
+    if str(ROOT) not in sys.path:  # run as a script, sys.path[0] is tools/, not the repository
+        sys.path.insert(0, str(ROOT))
+    from tools import test_impact
+
+    graph = test_impact.build_graph(ROOT)
+    impact = test_impact.impact_of(paths, graph)
+    directly = set(changed_test_files(paths))
+    reached = [m for m in impact.affected_modules if m not in directly]
+    if with_expensive:
+        affected, deselect, left_out = reached, [], []
+    else:
+        affected, deselect, left_out = test_impact.split_by_tier(reached, test_impact.load_tiers(ROOT), graph.texts)
+
+    if paths:
+        print("change classes (minimum gate beyond this one):")
+        for path, cls in sorted(impact.classes.items()):
+            print(f"  {cls.value:<22} {path} -- {test_impact.MINIMUM_GATE[cls]}")
+        pinned = {p: test_impact.recertification_reasons(p) for p in paths}
+        pinned = {p: r for p, r in pinned.items() if r}
+        if pinned:
+            print("RECERTIFICATION_REQUIRED (owner-run; this gate does not replace it):")
+            for path, reasons in sorted(pinned.items()):
+                print(f"  {path}: {', '.join(reasons)}")
+    if reached:
+        print(f"affected test modules: {len(reached)} reached by import, mention or source scan")
+    if left_out:
+        print("affected expensive tests NOT run here -- run SCIENTIFIC, or pass --with-expensive:")
+        for item in left_out:
+            print(f"  {item}")
+    if impact.unresolved:
+        print("changes whose reach could not be established select the whole regression pack:")
+        for path in impact.unresolved:
+            print(f"  {path}")
+    return affected, deselect, list(impact.unresolved)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -202,6 +263,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--workers", type=int, default=0, help="pytest-xdist workers; 0 runs serially")
     parser.add_argument(
+        "--with-expensive",
+        action="store_true",
+        help="--changed: also run affected tests marked expensive (by default they are listed, not run)",
+    )
+    parser.add_argument(
         "--junitxml",
         default=None,
         help="write pytest JUnit XML evidence to this path (used by certification)",
@@ -214,10 +280,14 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--workers must be >= 0")
 
     paths: list[str] = []
+    affected: list[str] = []
+    deselect: list[str] = []
+    unresolved: list[str] = []
     if not args.regression:
         paths = changed_files(args.base, working_tree=not args.committed_only)
+        affected, deselect, unresolved = _report_impact(paths, with_expensive=args.with_expensive)
 
-    targets = build_targets(paths, regression=args.regression)
+    targets = build_targets(paths, regression=args.regression, affected=affected, whole_pack=bool(unresolved))
     unclassified = [] if args.regression else unclassified_paths(paths)
     if unclassified:
         print("unclassified changes select the whole regression pack:")
@@ -233,7 +303,7 @@ def main(argv: list[str] | None = None) -> int:
         for target in targets:
             print(f"  {target}")
 
-    cmd = build_command(targets, args.workers, junitxml=args.junitxml)
+    cmd = build_command(targets, args.workers, junitxml=args.junitxml, deselect=deselect)
     print("$ " + shlex.join(cmd))
 
     if args.dry_run:

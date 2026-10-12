@@ -11,6 +11,7 @@ Nothing here touches the checkout.
 
 from __future__ import annotations
 
+import copy
 import io
 import json
 import zipfile
@@ -38,15 +39,45 @@ def repo(tmp_path, monkeypatch):
     return root, first
 
 
+@pytest.fixture(scope="module")
+def certified_template(tmp_path_factory):
+    """``certified``, built once per module under the synthetic SCOPE; tests receive private copies."""
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(core_certificate, "SCOPE", fx.SCOPE)
+        base = tmp_path_factory.mktemp("certified")
+        root = base / "repo"
+        first = fx.make_repo(root)
+        fx.write(root, "src/engcore/scientific/record.py", "VALUE = 3\n")
+        source = fx.commit(root, "core change")
+        certificate = fx.certify(root, base / "evidence")
+        child = fx.commit_child(root, certificate)
+    return base, first, source, child, certificate
+
+
 @pytest.fixture
-def certified(repo, tmp_path):
-    """A source commit, its certificate, and the child that commits it."""
-    root, first = repo
-    fx.write(root, "src/engcore/scientific/record.py", "VALUE = 3\n")
-    source = fx.commit(root, "core change")
-    certificate = fx.certify(root, tmp_path / "evidence")
-    child = fx.commit_child(root, certificate)
-    return root, first, source, child, certificate
+def certified(certified_template, tmp_path, monkeypatch):
+    """A source commit, its certificate, and the child that commits it -- this test's own copy."""
+    monkeypatch.setattr(core_certificate, "SCOPE", fx.SCOPE)
+    base, first, source, child, certificate = certified_template
+    root = fx.clone_tree(base / "repo", tmp_path / "repo")
+    fx.clone_tree(base / "evidence", tmp_path / "evidence")
+    return root, first, source, child, copy.deepcopy(certificate)
+
+
+def test_a_cloned_fixture_tree_is_private_and_location_free(certified_template, tmp_path):
+    """What makes ``certified`` a copy rather than a fresh build safe: no state is shared, none is located."""
+    base, first, source, child, certificate = certified_template
+    one = fx.clone_tree(base / "repo", tmp_path / "one")
+    two = fx.clone_tree(base / "repo", tmp_path / "two")
+    fx.git(one, "reset", "-q", "--hard", first)
+    assert fx.git(one, "rev-parse", "HEAD") == first
+    assert fx.git(two, "rev-parse", "HEAD") == child == fx.git(base / "repo", "rev-parse", "HEAD")
+    assert fx.git(two, "status", "--porcelain") == ""
+    located = (str(base), str(base).replace("\\", "/"), base.name)
+    assert not any(text in json.dumps(certificate) for text in located)
+    for path in (base / "evidence").rglob("*"):
+        if path.is_file():
+            assert not any(text.encode() in path.read_bytes() for text in located), path
 
 
 def failed(root):

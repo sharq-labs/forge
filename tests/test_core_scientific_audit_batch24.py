@@ -51,7 +51,7 @@ def _cross_solver_check():
     is `tests/test_cross_solver_consensus.py`'s own, whose routes are PINNED in
     `tests/route_declarations_for_tests.py`, because a route nothing pinned earns nothing either.
     """
-    from test_cross_solver_consensus import ALPHA, BETA, _consensus, _route
+    from tests.test_cross_solver_consensus import ALPHA, BETA, _consensus, _route
 
     consensus = _consensus((_route("a", ALPHA, "a:rhs"), _route("b", BETA, "b:rhs")),
                            {"a": {"x": 1.0}, "b": {"x": 1.0}})
