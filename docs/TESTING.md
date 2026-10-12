@@ -101,6 +101,25 @@ SCIENTIFIC, FULL or hardened recertification.
 
 ## The tiers
 
+> **Current counts and timings (2026-10-12, `88a258f2`, branch
+> `perf/test-suite-runtime`).** MEASURED with `pytest <selection> --collect-only -q`
+> and `python -m pytest -m "<selection>" -q -n 2 -p no:cacheprovider` on a 2-core
+> Linux container, CPython 3.13.16, pytest 9.1.1, pytest-xdist 3.8.0, with `main`
+> (`8b028dc`) measured back to back on the same host as the comparison. ngspice was
+> absent (Linux, no `CRAFTY_NGSPICE_ARGV`), so its tests fail rather than run.
+>
+> | Tier | Tests | `main` wall, `-n 2` | this branch, `-n 2` |
+> |---|---|---|---|
+> | **FAST** | **9806** (of 10388) | 992 s | **476 s** |
+> | **SCIENTIFIC** | **10384** | 1448 s | **1024 s** |
+> | **FULL** | **10388** | not measured | not measured |
+>
+> Both runs of each tier had the identical failure set: the certificate and
+> freeze-manifest drift `main` already carries, two mutation-workspace tests, and
+> the ngspice tests. Wall-clock is one run on one host and carries the spread
+> described at the top of this file. The table below is the 2026-09-06 record,
+> kept as history; its counts are a third of today's suite.
+
 Test counts measured 2026-09-06 (Windows 11 + WSL, Python 3.14.2, pytest 9.1.1;
 see "Where the counts were measured"). Wall-clock columns are the *older*
 measurement on different hardware and a 1526-test suite — kept for shape, not
@@ -313,6 +332,13 @@ It is not a smoke test. But it deliberately omits these risk classes:
 | Solver **work counts** — the PERF-1 regression gate in `test_cstr_solver_work.py` | SCIENTIFIC |
 | **Cross-experiment** consistency — T2 reusing T1's forward maps, E3's scope mapping from E2 | SCIENTIFIC |
 | Design **campaign population statistics** — the 1000-candidate MVR0/MVR1 counts | FULL |
+| **Oracle agreement and convergence** studies in `benchmarks/scientific_truth`, the B2 flagship result **reproduction**, the multiscale long-horizon and resume proofs, and the resolved-grid **positive controls** (19 tests, `EXPENSIVE_TESTS`) | SCIENTIFIC |
+
+**Refusals stay in FAST even when they cost seconds.** A test whose subject is a
+refusal, a forgery, a context or identity binding, or the separation of two
+scientific verdicts is never moved out of FAST for speed. FAST is the only tier
+CI runs on Python 3.11 (SCIENTIFIC runs on 3.12 only), so moving one would
+silently drop its 3.11 execution.
 
 One class **is** retained in FAST on purpose: the **frozen-artifact digest
 guards**. Every `expensive` module keeps an allowlist of static guards — tests
@@ -490,6 +516,19 @@ If you add a test that runs an experiment, a solver or a design study, add its
 module to `EXPENSIVE_MODULES`. **Unclassified tests default to FAST**, which is
 the safe direction: a new test is covered by the routine loop until someone
 measures it and argues otherwise.
+
+When the cost sits in individual tests rather than in a module-level memoized
+experiment, label the test in `EXPENSIVE_TESTS` instead (a node id, or
+`module::function` for every case), and label every test that reads the same
+fixture or memoized build with it, or the cost hops into its neighbour. The
+refusal rule above still applies. `test_tier_classification.py` checks that
+each key names a test that exists, that no test is classified twice, and that
+the matching rule labels exactly what it names.
+
+**Drift is the failure mode, not a one-off.** Between 2026-09-08 and 2026-10-12
+the suite grew from ~3,100 to ~10,400 tests, nobody extended the tables, and
+FAST quietly absorbed about 680 s of solver work. Re-measure FAST with
+`--durations=30` when the count moves by more than a few hundred tests.
 
 ---
 
