@@ -10,6 +10,7 @@ wrong, and nothing in the calibration layer can tell you which happened.
 
 from __future__ import annotations
 
+import functools
 import math
 
 import numpy as np
@@ -61,7 +62,14 @@ BY_CONDITION = {f"T{i}": Quantity(t, KELVIN) for i, t in enumerate(ALL_T)}
 HELD_IDS = tuple(f"T{i}" for i in range(len(CAL_T), len(ALL_T)))
 
 
+@functools.lru_cache(maxsize=None)
 def build(seed=20260912, curvature=0.0, grid=21, span=6.0):
+    """The seeded split and its grid posterior, built once per distinct argument set.
+
+    Both results are immutable (frozen records, read-only arrays) and the
+    construction is deterministic, so a test reusing another test's build sees
+    exactly what it would have rebuilt; eight tests ask for the default build.
+    """
     source = synthesize_tcr_observations(
         TRUTH, ALL_T, sigma=SIGMA, dataset_id="tcr.source", seed=seed,
         curvature_per_k2=curvature,

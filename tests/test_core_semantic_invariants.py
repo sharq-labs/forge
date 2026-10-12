@@ -499,17 +499,45 @@ def _from_dict_call_sites(name: str) -> set[tuple[str, str]]:
     ``getattr(X, "from_dict")`` all count. A file that defines its own class of
     the same name and does not import the exempted one refers to its own.
     """
-    (exempt_file,) = {w for n, w in _NESTED_WITHOUT_SCHEMA_AT if n == name}
-    target = _module_of(REPO_ROOT / exempt_file)
-    sites: set[tuple[str, str]] = set()
+    return _from_dict_call_sites_by_name((name,))[name]
+
+
+def _from_dict_call_sites_by_name(names) -> dict[str, set[tuple[str, str]]]:
+    """`_from_dict_call_sites` for several names, parsing each product file ONCE.
+
+    The per-name scan parsed all ~750 product files again for every exempted
+    name (eleven of them, about 50 s). Each file is now parsed and walked once
+    and every name is resolved against that tree by exactly the rule above; the
+    tree is dropped before the next file, because holding them all costs ~300 MB.
+    """
+    targets = {}
+    for name in names:
+        (exempt_file,) = {w for n, w in _NESTED_WITHOUT_SCHEMA_AT if n == name}
+        targets[name] = (exempt_file, _module_of(REPO_ROOT / exempt_file))
+    found: dict[str, set[tuple[str, str]]] = {name: set() for name in targets}
     for path in _product_files():
         tree = ast.parse(path.read_bytes().decode("utf-8"))
-        where = path.relative_to(REPO_ROOT).as_posix()
-        here = _module_of(path)
-        package = here if path.name == "__init__.py" else here.rpartition(".")[0]
+        for name, sites in _from_dict_call_sites_in(targets, path, tree).items():
+            found[name] |= sites
+    return found
+
+
+def _from_dict_call_sites_in(targets, path, tree) -> dict[str, set[tuple[str, str]]]:
+    """The sites in ONE parsed file, for every name in ``targets`` (name -> (exempt file, module)).
+
+    The rule `_from_dict_call_sites` documents, applied in one walk of the tree: imports are resolved per
+    name exactly as before, and a node is checked against every name only when it is a ``.from_dict``
+    attribute or a ``getattr(..., "from_dict")`` call -- the only two shapes the rule counts.
+    """
+    where = path.relative_to(REPO_ROOT).as_posix()
+    here = _module_of(path)
+    package = here if path.name == "__init__.py" else here.rpartition(".")[0]
+    imports = [node for node in ast.walk(tree) if isinstance(node, (ast.ImportFrom, ast.Import))]
+    resolved: dict[str, tuple[set[str], dict[str, str], str]] = {}
+    for name, (exempt_file, target) in targets.items():
         classes: set[str] = {name} if where == exempt_file else set()
         modules: dict[str, str] = {}
-        for node in ast.walk(tree):
+        for node in imports:
             if isinstance(node, ast.ImportFrom):
                 base = package.split(".") if node.level else []
                 if node.level > 1:
@@ -522,7 +550,7 @@ def _from_dict_call_sites(name: str) -> set[tuple[str, str]]:
                     full = f"{source}.{alias.name}" if source else alias.name
                     if full == target or target.startswith(full + "."):
                         modules[bound] = full
-            elif isinstance(node, ast.Import):
+            else:
                 for alias in node.names:
                     if alias.name == target or target.startswith(alias.name + "."):
                         if alias.asname:
@@ -530,45 +558,58 @@ def _from_dict_call_sites(name: str) -> set[tuple[str, str]]:
                         else:
                             head = alias.name.split(".")[0]
                             modules[head] = head
+        resolved[name] = (classes, modules, target)
 
-        def names_the_class(value: ast.AST) -> bool:
-            if isinstance(value, ast.Name):
-                return value.id in classes
-            chain: list[str] = []
-            while isinstance(value, ast.Attribute):
-                chain.insert(0, value.attr)
-                value = value.value
-            if not (isinstance(value, ast.Name) and value.id in modules and chain and chain[-1] == name):
-                return False
-            owner = ".".join([modules[value.id], *chain[:-1]])
-            return owner == target or target.startswith(owner + ".")
+    def names_the_class(name: str, value: ast.AST) -> bool:
+        classes, modules, target = resolved[name]
+        if isinstance(value, ast.Name):
+            return value.id in classes
+        chain: list[str] = []
+        while isinstance(value, ast.Attribute):
+            chain.insert(0, value.attr)
+            value = value.value
+        if not (isinstance(value, ast.Name) and value.id in modules and chain and chain[-1] == name):
+            return False
+        owner = ".".join([modules[value.id], *chain[:-1]])
+        return owner == target or target.startswith(owner + ".")
 
-        def visit(node: ast.AST, cls: str | None, func: str | None) -> None:
-            # label = "Class.method" for a method (outermost function kept for nested
-            # helpers), the function name for a module-level function
-            for child in ast.iter_child_nodes(node):
-                c, f = cls, func
-                if isinstance(child, ast.ClassDef):
-                    c, f = child.name, None
-                elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and func is None:
-                    f = child.name
-                hit = (isinstance(child, ast.Attribute) and child.attr == "from_dict" and names_the_class(child.value)) or (
-                    isinstance(child, ast.Call) and getattr(child.func, "id", None) == "getattr" and len(child.args) >= 2
-                    and isinstance(child.args[1], ast.Constant) and child.args[1].value == "from_dict"
-                    and names_the_class(child.args[0]))
-                if hit:
-                    sites.add((where, f"{cls}.{func}" if cls and func else (func or cls or "<module>")))
-                visit(child, c, f)
+    sites: dict[str, set[tuple[str, str]]] = {name: set() for name in targets}
 
-        visit(tree, None, None)
+    def visit(node: ast.AST, cls: str | None, func: str | None) -> None:
+        # label = "Class.method" for a method (outermost function kept for nested
+        # helpers), the function name for a module-level function
+        for child in ast.iter_child_nodes(node):
+            c, f = cls, func
+            if isinstance(child, ast.ClassDef):
+                c, f = child.name, None
+            elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)) and func is None:
+                f = child.name
+            if isinstance(child, ast.Attribute) and child.attr == "from_dict":
+                subject = child.value
+            elif (
+                isinstance(child, ast.Call) and getattr(child.func, "id", None) == "getattr" and len(child.args) >= 2
+                and isinstance(child.args[1], ast.Constant) and child.args[1].value == "from_dict"
+            ):
+                subject = child.args[0]
+            else:
+                subject = None
+            if subject is not None:
+                label = f"{cls}.{func}" if cls and func else (func or cls or "<module>")
+                for name in targets:
+                    if names_the_class(name, subject):
+                        sites[name].add((where, label))
+            visit(child, c, f)
+
+    visit(tree, None, None)
     return sites
 
 
 def test_the_nested_exemptions_are_read_only_through_their_checking_parents():
     assert set(_NESTED_READ_ONLY_BY) == {name for name, _ in _NESTED_WITHOUT_SCHEMA_AT}
     wrong = {}
+    sites_by_name = _from_dict_call_sites_by_name(tuple(_NESTED_READ_ONLY_BY))
     for name, allowed in _NESTED_READ_ONLY_BY.items():
-        sites = _from_dict_call_sites(name)
+        sites = sites_by_name[name]
         if sites - allowed:
             wrong[name] = sorted(sites - allowed)
         if allowed and not sites:
