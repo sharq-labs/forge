@@ -353,6 +353,13 @@ class AdmittedForwardTable:
         # admission. What it can refuse is a row marked admitted with no
         # admission record behind each of its values: that is an absence of
         # evidence, and `from_rows` never produces it.
+        #
+        # Whether a `str` is an admission record is a pure function of its text, and a table repeats the same
+        # few record strings across every row (one TCR grid parsed one string 847,242 times). So each DISTINCT
+        # string is parsed once and every occurrence is still checked against that answer. Only exact `str`
+        # instances are remembered: anything else is parsed every time, as before, so an object whose text
+        # could differ between reads gets no shortcut. Refusal order and messages are unchanged.
+        well_formed: set[str] = set()
         for index in np.flatnonzero(mask):
             row_refs = tuple(self.admission_refs[index])
             if len(row_refs) != len(keys) or any(not str(ref).strip() for ref in row_refs):
@@ -367,6 +374,8 @@ class AdmittedForwardTable:
             # here: it is what the row's constructor writes, from a prediction that crossed one of the two
             # declared admission boundaries.
             for ref in row_refs:
+                if type(ref) is str and ref in well_formed:
+                    continue
                 if parse_admission_ref(ref) is None:
                     raise InferenceProblemError(
                         f"forward-table row {int(index)} carries {str(ref)!r} as an admission record. An "
@@ -375,6 +384,8 @@ class AdmittedForwardTable:
                         f"which is what the admission gate writes; a free string records nothing and "
                         f"nothing can gate on it"
                     )
+                if type(ref) is str:
+                    well_formed.add(ref)
 
         points.setflags(write=False)
         values.setflags(write=False)
