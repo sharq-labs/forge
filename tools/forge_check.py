@@ -208,6 +208,16 @@ def build_command(
     return cmd
 
 
+def _workers_arg(value: str) -> int | str:
+    """An integer worker count, or ``safe-auto``."""
+    if value == "safe-auto":
+        return value
+    try:
+        return int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"expected an integer or 'safe-auto', got {value!r}") from None
+
+
 def _report_impact(paths: list[str], *, with_expensive: bool) -> tuple[list[str], list[str], list[str]]:
     """``--changed`` only: the affected tests, the expensive ones left out, and unresolved paths -- printed.
 
@@ -218,7 +228,7 @@ def _report_impact(paths: list[str], *, with_expensive: bool) -> tuple[list[str]
         sys.path.insert(0, str(ROOT))
     from tools import test_impact
 
-    graph = test_impact.build_graph(ROOT)
+    graph = test_impact.build_graph(ROOT, cache=test_impact.default_cache_path(ROOT))
     impact = test_impact.impact_of(paths, graph)
     directly = set(changed_test_files(paths))
     reached = [m for m in impact.affected_modules if m not in directly]
@@ -261,7 +271,13 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="--changed: consider only commits since the merge base, not staged, unstaged or untracked files",
     )
-    parser.add_argument("--workers", type=int, default=0, help="pytest-xdist workers; 0 runs serially")
+    parser.add_argument(
+        "--workers",
+        type=_workers_arg,
+        default=0,
+        help="pytest-xdist workers; 0 runs serially; 'safe-auto' picks 8/6/4/2/1 from CPUs and available memory "
+        "(developer convenience, see tools/local_workers.py)",
+    )
     parser.add_argument(
         "--with-expensive",
         action="store_true",
@@ -276,7 +292,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--list", action="store_true", help="print selected test targets")
     args = parser.parse_args(argv)
 
-    if args.workers < 0:
+    if args.workers == "safe-auto":
+        if str(ROOT) not in sys.path:  # run as a script, sys.path[0] is tools/, not the repository
+            sys.path.insert(0, str(ROOT))
+        from tools import local_workers
+
+        per_worker = local_workers.MB_PER_WORKER_EXPENSIVE if args.with_expensive else local_workers.MB_PER_WORKER
+        args.workers, reason = local_workers.choose(per_worker_mb=per_worker)
+        print(f"safe-auto selected {args.workers} workers: {reason}")
+    elif args.workers < 0:
         parser.error("--workers must be >= 0")
 
     paths: list[str] = []

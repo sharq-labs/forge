@@ -186,3 +186,57 @@ def test_an_uncommitted_change_on_the_base_branch_itself_is_detected(repo):
 def test_an_unknown_base_fails_loudly(repo):
     with pytest.raises(SystemExit):
         forge_check.changed_files("no-such-ref")
+
+
+
+# ---- --workers safe-auto: developer convenience, bounded, overridable -------------------
+
+
+@pytest.mark.parametrize("cpus, memory_mb, expected", [
+    (24, 32_000, 8),     # the largest measured count, never every logical CPU
+    (24, 6_000, 6),      # memory pressure lowers the count
+    (24, 4_000, 2),
+    (24, 2_000, 0),      # not even one worker's measured budget: serial
+    (8, 32_000, 4),      # never more than half the logical CPUs
+    (2, 32_000, 1),
+    (1, 32_000, 1),
+    (24, None, 4),       # memory unknown: the CI-compatible count, never a guess upward
+])
+def test_safe_auto_picks_from_a_bounded_ladder_and_memory_only_lowers_it(cpus, memory_mb, expected) -> None:
+    from tools import local_workers
+
+    n, reason = local_workers.choose(cpus, memory_mb)
+    assert n == expected and n in (0, *local_workers.LADDER) and n <= max(1, cpus // 2)
+    assert f"{cpus} logical CPUs" in reason
+    more = local_workers.choose(cpus, None if memory_mb is None else memory_mb * 4)[0]
+    assert more >= n  # more memory never selects fewer workers
+
+
+def test_integer_workers_are_unchanged_and_anything_else_is_refused() -> None:
+    assert forge_check._workers_arg("0") == 0 and forge_check._workers_arg("6") == 6
+    assert forge_check._workers_arg("safe-auto") == "safe-auto"
+    with pytest.raises(Exception, match="integer or 'safe-auto'"):
+        forge_check._workers_arg("auto")
+
+
+def test_safe_auto_prints_its_choice_and_reason_and_builds_that_command(monkeypatch, capsys) -> None:
+    from tools import local_workers
+
+    monkeypatch.setenv("FORGE_IMPACT_CACHE", "off")  # a test never writes the developer cache
+    monkeypatch.setattr(local_workers, "choose", lambda per_worker_mb: (6, f"stubbed reason {per_worker_mb}"))
+    monkeypatch.setattr(forge_check, "changed_files", lambda base, working_tree: [])
+    monkeypatch.setattr(forge_check, "_report_impact", lambda paths, with_expensive: ([], [], []))  # no graph build needed
+    assert forge_check.main(["--changed", "--workers", "safe-auto", "--dry-run"]) == 0
+    out = capsys.readouterr().out
+    assert "safe-auto selected 6 workers: stubbed reason 650" in out
+    assert " -n 6 --dist loadfile " in out
+    assert forge_check.main(["--changed", "--workers", "3", "--dry-run"]) == 0
+    assert " -n 3 --dist loadfile " in capsys.readouterr().out  # an explicit count wins, nothing chosen
+
+
+def test_safe_auto_budgets_more_memory_per_worker_when_expensive_tests_will_run() -> None:
+    from tools import local_workers
+
+    light = local_workers.choose(24, 8_000)[0]
+    heavy = local_workers.choose(24, 8_000, per_worker_mb=local_workers.MB_PER_WORKER_EXPENSIVE)[0]
+    assert (light, heavy) == (8, 4) and heavy <= light

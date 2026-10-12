@@ -173,7 +173,21 @@ def execute(contract: ScalarTwoWayContract, *, timeout: float = 300.0) -> Precic
         return _execute_in(work, contract, version, timeout)
     finally:
         # the record carries everything kept (config digest, outputs, logs); the directory is scratch
+        _remove_work_dir(work)
+
+
+def _remove_work_dir(work: str, attempts: int = 50, pause_s: float = 0.1) -> None:
+    """Remove the work directory THIS call created, retrying briefly.
+
+    On Windows a participant killed a moment ago can still hold the directory it
+    ran in, so the first removal leaves an empty directory behind (measured: 1 in
+    15 failure-path runs). Bounded: about five seconds, then the directory stays.
+    """
+    for _ in range(attempts):
         shutil.rmtree(work, ignore_errors=True)
+        if not os.path.exists(work):
+            return
+        time.sleep(pause_s)
 
 
 def _execute_in(work: str, contract: ScalarTwoWayContract, version: str, timeout: float) -> PreciceExecutionRecord:

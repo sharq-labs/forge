@@ -71,6 +71,7 @@ decisions or changes scientific standing.
 python tools/forge_check.py --changed --workers 4          # what changed since main, including uncommitted edits
 python tools/forge_check.py --changed --dry-run --list     # show the selection and why, run nothing
 python tools/forge_check.py --regression --workers 4       # the fixed scientific regression pack
+python tools/forge_check.py --changed --workers safe-auto  # developer only: 8/6/4/2/1 from CPUs and free memory
 ```
 
 `--changed` runs the union of:
@@ -103,6 +104,24 @@ ran the tag sentinels and never `tests/domains/test_battery_thevenin.py`. The
 gate over-selects on purpose -- an extra test costs seconds, a missed one is
 false confidence. Measured cost per change class is under
 [Current measurements](#current-measurements-2026-10-12).
+
+**Impact cache.** `--changed` keeps each file's import facts in
+`~/.cache/forge/test_impact/` (outside the repository), keyed by the sha256 of
+the file's bytes and by the extractor's own source and the interpreter version.
+Every run still lists, reads and hashes every file and recomputes roots, module
+names, resolution and the reverse graph, so a change to any file, an added,
+deleted or renamed file, `pyproject.toml` or a `conftest.py` cannot be answered
+from the cache; a doubtful cache is a miss. `FORGE_IMPACT_CACHE=<file>` moves
+it, `FORGE_IMPACT_CACHE=off` disables it. Measured (2026-10-13, one `selection.py`
+edit, `--dry-run`): 6.37 s median before, 1.81 s warm, 6.6 s on the first (cold)
+run; identical selections for four probe edits.
+
+**`--workers safe-auto`** (developer convenience, never CI policy) picks 8, 6, 4,
+2 or 1 workers from half the logical CPUs and the available memory, and prints
+the choice and why; an integer `--workers` is unchanged. The memory budget
+(650 MB per worker for FAST-tier selections, 1,000 MB with `--with-expensive`,
+plus 2 GB headroom) is measured, see `tools/local_workers.py`. Without `psutil`
+it falls back to 4.
 
 This command is a development aid only. It does **not** replace FAST,
 SCIENTIFIC, FULL or hardened recertification.
@@ -212,12 +231,12 @@ python -m pytest -m "not campaign" -q -n 4 --dist loadfile \
   --deselect benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
 ```
 
-10,611 tests collected before the deselects. **Do not run SCIENTIFIC
-without the two `test_rebuilding_everything...` deselects in a checkout you care
-about**: those tests rewrite 17 committed JSON files under
-`benchmarks/empirical_validation/` and `benchmarks/model_measurement_validation/`
-in place (see [Parallel safety](#parallel-safety)). Restore them with
-`git checkout -- benchmarks/` afterwards if you did.
+10,611 tests collected before the deselects. The two
+`test_rebuilding_everything...` tests rebuild into a private copy under
+`tmp_path` since 2026-10-13 and leave the tree byte-identical (see
+[Parallel safety](#parallel-safety)); CI still deselects them because they fail
+on their own pre-existing grounds (the pinned scientific-core digest no longer
+matches the tree), not because they write.
 
 ### 4. FULL -- milestone / freeze
 
@@ -459,7 +478,7 @@ tree: None" and "Subprocesses: One"; both had stopped being true.
 
 | Hazard | Finding (2026-10-12) |
 |---|---|
-| Writes into the repo tree | **Two tests.** `benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates` and its `model_measurement_validation` twin call builders that rewrite 17 committed JSON files in place (`(ROOT / name).write_text(...)`). Both are in SCIENTIFIC; CI deselects both. Measured consequence: in one local SCIENTIFIC run, `tests/claims/test_offline_revalidation.py` replayed a bundle after the rewrite and got `NOT_REPRODUCIBLE` ("runtime/source environment differs") -- correctly, because the tracked tree had changed under it. The module passes alone. Not fixed here: it needs the published-benchmark builders to accept an output directory. |
+| Writes into the repo tree | **None since 2026-10-13.** The two rebuild tests (`benchmarks/empirical_validation/...` and `benchmarks/model_measurement_validation/...::test_rebuilding_everything_reproduces_the_published_gates`) used to rewrite 17 committed JSON files in place, and a concurrent `tests/claims/test_offline_revalidation.py` replay correctly reported `NOT_REPRODUCIBLE`. Each round's audit package now writes its top-level artifacts through `ARTIFACT_DIR`; the tests point it at a `tmp_path` copy and assert the committed round directory is byte-identical afterwards. SCIENTIFIC without the deselects leaves the tree byte-identical (measured). |
 | Working-directory mutation | `monkeypatch.chdir` in two modules -- restored per test. No bare `os.chdir`. |
 | Environment mutation | `monkeypatch.setenv` in three modules -- restored per test. |
 | Temporary paths | `tmp_path` / `tmp_path_factory` / `tempfile`; unique per test and per worker. No hard-coded temp path. |

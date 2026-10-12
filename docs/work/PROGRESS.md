@@ -2768,3 +2768,62 @@ Failed approaches:
 - A `forge_check` run from a worktree whose rootdir is the branch imports the branch even with `PYTHONPATH` set to
   another tree (`pyproject` `pythonpath = ["src", ...]`); fail-before checks must run inside the base worktree.
 - Long bash heredocs for patches broke on quoting again; patch scripts written with the editor tool worked.
+
+
+## 2026-10-13 Test loop round 2: isolation, impact cache, worker mode, process hygiene (owner-requested, local only)
+
+Base `origin/main` `ca24b152` (PR #133 merge; the task named `c4e05ee6`, main had moved). Branch `perf/test-loop-round2`,
+worktree `D:/forge-tl2`; pristine twin `D:/forge-tl2-base`. Not pushed. Machine: Windows 11, 24 logical / 16 physical
+CPUs, 31.7 GB RAM (9.4 GB available at start), CPython 3.14.2, pytest 9.1.1, pytest-xdist 3.8.0. Bytecode caching on for
+every timing; `FORGE_IMPACT_CACHE=off` for every test run. Scripts and raw results: `D:/forge-tl2-bench/`.
+
+Changes:
+- Task 1 (`8b90e577`): the two benchmark rebuild tests write into a `tmp_path` copy (`ARTIFACT_DIR` in each round's audit
+  package) and assert the committed round directory byte-identical. Before: 17 tracked JSONs rewritten (12 CRLF-only, 5
+  with content changes). Both tests still fail for their pre-existing reasons (`assert False` / `9 == 10`: pinned
+  scientific-core digest drift), identically to base on a clean tree.
+- Task 2 (`1d26492a`): content-addressed per-file import-facts cache in `tools/test_impact.py`, used by
+  `forge_check --changed`; graph identical to the uncached build (deps, reverse, texts, unparseable, roots).
+- Task 3 (`1d26492a`, `148c475b`): `forge_check --workers safe-auto` (`tools/local_workers.py`).
+- Task 4: no change needed (see audit below).
+- Tasks 5-7 (`a1cc7bf6`): health/catalog probes through `run_bounded`; escrow `stop()` / `close()` kill on a timed-out
+  graceful wait; `dakota -version` timeout and typed refusals in `providers/discovery/dakota_runner.py`; preCICE work
+  directory removal retried (Windows left an empty directory 1/15 failure-path runs; 0/40 after).
+- `20b79847`: the safe-auto test stubs the impact graph (it had taken the regression pack from 9 s to 25 s).
+
+Measurements (same workload before / after):
+
+| ID | Improvement | Before | After | Outcome match |
+|---|---|---|---|---|
+| T2 | `forge_check --changed --dry-run`, one `selection.py` edit | 5.89-6.38 s (median 6.37, n=5) | warm 1.71-2.19 s (median 1.81, n=5); cold 6.57 s; cache off 6.37-6.97 s | selections identical for 4 probe edits |
+| T2 | `build_graph` alone | 4.97-5.04 s | warm 0.79-0.86 s; uncached 5.44-5.50 s | graph identical |
+| T1 | tracked files written by the two rebuild tests | 17 | 0 | outcomes identical |
+| - | FAST `-m "not expensive" -n 4 --dist loadfile` | 158.5 / 156.2 s | 135.6 / 168.9 s | no material change (noise); failure sets identical |
+| - | SCIENTIFIC as CI runs it, `-n 4` | 279.7 s | 258.0 s | no material change claimed; failure sets identical |
+| - | `forge_check --regression --workers 4` | 241 passed, 9.0-9.1 s | 251 passed, 9.2-9.5 s | +10 new tests |
+
+Commands and results:
+- FAST on base: 10,111 tests, 151 failed, 21 errors (172 ids), twice; `-n 8`: 105.6 s, same ids, peak 4,043 MB (tree) /
+  1,207 MB (one process); `-n 4` peak 2,577 / 1,277 MB. On the branch (after `20b79847`): 10,148 tests, the same 172 ids,
+  twice; tree clean.
+- SCIENTIFIC (`-m "not campaign"`, CI's six deselects, `-n 4 --dist loadfile`): base 10,683 tests, branch 10,720, the same
+  172 ids; peak 3,874 MB / 2,690 MB single process. Branch without the two rebuild deselects: + exactly those two
+  (pre-existing), `test_offline_revalidation` clean, `assert_clean_tree` byte-identical.
+- Concurrent race check (`-n 3 --dist load`, both rebuild tests + `tests/claims/test_offline_revalidation.py`): branch 0
+  dirty files, base 17 (restored).
+- Standalone audit: all 569 FAST test modules run alone, 8 at a time (218 s); after fixing the driver's own basetemp
+  parent (36 spurious tmp_path errors), no module has a failure outside the full-run failure set: 0 order-dependent.
+- `tests/test_change_impact.py tests/test_forge_check.py tests/test_forge_impact.py`: 88 passed (before the last two
+  forge_check tests); `tests/test_forge_check.py`: 41 passed.
+- Process tests on Windows and on WSL CPython 3.11.16: probes, run_bounded, escrow kill, Dakota (fake `dakota` on
+  POSIX), preCICE cleanup; fail-before on base: the pipe-holding probe (60 s), both escrow kills, missing Dakota.
+- `python tools/forge_check.py --regression --workers 4`: 251 passed (base 241).
+- FULL, hardened recertification, Python 3.11/3.12 on Windows: NOT RUN.
+
+Failed approaches / traps:
+- The standalone driver deleted `D:/fbt-sa` and passed `--basetemp=D:/fbt-sa/NNNN`; pytest does not create basetemp
+  parents, so every tmp_path test in 36 modules errored with FileNotFoundError. Not an order dependence.
+- `pytest.importorskip` inside a cleanup helper again turned asserting tests into SKIPPED (preCICE, on WSL without psutil);
+  the helper now returns None instead.
+- The blindfold `run_discovery` timeout path was not changed: Linux-root only, and its tests need `cryptography`,
+  absent in the WSL env; an untested edit to an isolation boundary was not made.

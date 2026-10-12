@@ -16,7 +16,7 @@ import json
 import pathlib
 import re
 
-from .evidence import ROOT
+from .evidence import ROOT, artifacts
 
 REPORT = ROOT / "ROUND_REPORT.md"
 
@@ -36,7 +36,7 @@ def _text() -> str:
 
 
 def _artifact(name):
-    return json.loads((ROOT / name).read_text(encoding="utf-8"))
+    return json.loads((artifacts() / name).read_text(encoding="utf-8"))
 
 
 # ---------------------------------------------------------------------------

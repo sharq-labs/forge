@@ -302,3 +302,56 @@ def test_the_escrow_never_asserts_a_verified_boundary_and_query_keys_are_unambig
              query_id="a:b", escrow_public=t.escrow_public)
     with pytest.raises(EscrowRefused, match="campaign id"):
         op.create("bad\nid", {"discoverable": 1}, evaluator_config_digest=CFG)
+
+
+
+class _StubbornProcess:
+    """A child that ignores the graceful request: its first wait times out."""
+
+    def __init__(self) -> None:
+        import io
+
+        self.stdin = io.BytesIO()
+        self.killed = False
+        self.waits = 0
+
+    def poll(self):
+        return None if not self.killed else -9
+
+    def terminate(self) -> None:
+        pass
+
+    def kill(self) -> None:
+        self.killed = True
+
+    def wait(self, timeout=None):
+        import subprocess
+
+        self.waits += 1
+        if not self.killed:
+            raise subprocess.TimeoutExpired("escrow_server", timeout)
+        return -9
+
+
+def test_closing_a_transport_whose_process_ignores_eof_kills_it():
+    from engcore.blindfold.escrow import SubprocessTransport
+
+    transport = object.__new__(SubprocessTransport)
+    transport._proc = _StubbornProcess()
+    transport.close()  # used to raise TimeoutExpired and leave the process running
+    assert transport._proc.killed and transport._proc.stdin.closed
+
+
+def test_stopping_an_isolated_escrow_whose_process_ignores_sigterm_kills_it():
+    import socket
+
+    from engcore.blindfold.isolation import IsolatedEscrow
+
+    escrow = object.__new__(IsolatedEscrow)
+    escrow._proc = _StubbornProcess()
+    escrow._discovery_end, other = socket.socketpair()
+    try:
+        escrow.stop()
+    finally:
+        other.close()
+    assert escrow._proc.killed

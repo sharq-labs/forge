@@ -871,3 +871,41 @@ def test_a_symlinked_output_is_never_admitted(tmp_path):
             ws.read_output("out.txt")
     finally:
         ws.cleanup()
+
+
+#: A version probe whose own child outlives it while holding the inherited output pipes.
+PIPE_HOLDER = ("-c", "import subprocess, sys, time\n"
+                     "print('Python 3.99.1', flush=True)\n"
+                     "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
+                     "time.sleep(60)\n")
+
+
+def test_a_version_probe_is_bounded_even_when_its_child_holds_the_pipes():
+    """Both probe paths: the timeout ends the whole tree; a held pipe cannot stretch it to the child's lifetime."""
+    import time
+
+    from engcore.providers.health import probe_executable
+
+    cap = ProviderCapability("python-proc", "demo", "process", "python", ("demo",))
+    parse = lambda s: s.split()[-1] if "Python" in s else ""  # noqa: E731
+    exe, path = os.path.basename(PY), os.path.dirname(PY)
+    start = time.perf_counter()
+    hung = executable_probe(cap, exe, PIPE_HOLDER, parse, search_path=path, timeout=1.0)()
+    assert time.perf_counter() - start < 30.0, "the catalog probe waited for the child's pipes"
+    assert not hung.available and not hung.digest and "TimeoutExpired" in hung.reason
+    start = time.perf_counter()
+    receipt = probe_executable(exe, PIPE_HOLDER, parse, search_path=path, timeout_s=1.0)
+    assert time.perf_counter() - start < 30.0, "the health probe waited for the child's pipes"
+    assert receipt.timed_out and receipt.failure == "timeout" and receipt.exit_code is None
+    assert "Python 3.99.1" in receipt.output_tail  # what it printed before the timeout is kept as diagnosis
+
+
+def test_a_probe_that_cannot_be_launched_keeps_the_launch_error(tmp_path):
+    from engcore.providers.health import probe_executable
+
+    fake = tmp_path / ("demo.exe" if os.name == "nt" else "demo")
+    fake.write_bytes(b"\x00 not an executable image \x00")
+    if os.name == "posix":
+        fake.chmod(0o755)
+    receipt = probe_executable("demo", ("--version",), lambda s: "", search_path=str(tmp_path), timeout_s=5.0)
+    assert receipt.failure.startswith("launch_failed: ") and "Error" in receipt.failure and not receipt.succeeded

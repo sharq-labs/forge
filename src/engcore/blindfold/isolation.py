@@ -110,7 +110,11 @@ class IsolatedEscrow:
     def stop(self) -> None:
         if self._proc is not None and self._proc.poll() is None:
             self._proc.terminate()
-            self._proc.wait(timeout=10)
+            try:
+                self._proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:  # ignored SIGTERM: it must not outlive stop()
+                self._proc.kill()
+                self._proc.wait(timeout=10)
         self._discovery_end.close()
 
     def restart(self) -> None:

@@ -651,7 +651,11 @@ class SubprocessTransport:
     def close(self) -> None:
         if self._proc.poll() is None:
             self._proc.stdin.close()  # type: ignore[union-attr]
-            self._proc.wait(timeout=10)
+            try:
+                self._proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:  # did not exit on EOF: it must not outlive close()
+                self._proc.kill()
+                self._proc.wait(timeout=10)
 
 
 def verify_response(resp: Mapping[str, Any], *, escrow_public: str, request: Mapping[str, Any]) -> None:

@@ -7,11 +7,11 @@ import json
 from pathlib import Path
 
 from . import adjudication, falsification, integrity, residuals, validation
-from .evidence import ROOT
+from .evidence import ROOT, artifacts
 
 
 def _write(name, payload):
-    (ROOT / name).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    (artifacts() / name).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
 def core_digest() -> str:

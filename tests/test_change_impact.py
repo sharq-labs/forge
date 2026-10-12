@@ -232,3 +232,129 @@ def test_the_old_gap_a_domain_models_own_tests_are_now_selected(real_graph) -> N
         ["src/engcore/domains/battery/thevenin.py"]
     )
     assert not graph.unparseable
+
+
+
+# ---------------------------------------------------------------------------
+# The facts cache: a stale or doubtful cache must never narrow the selection
+# ---------------------------------------------------------------------------
+
+
+def _cache_tree(root: pathlib.Path) -> None:
+    _write(root, "pyproject.toml", '[tool.pytest.ini_options]\npythonpath = ["src", ".", "tests/helpers"]\n')
+    _write(root, "src/pkg/__init__.py", "")
+    _write(root, "src/pkg/core.py", "VALUE = 1\n")
+    _write(root, "src/pkg/sub/__init__.py", "from pkg import core\n")
+    _write(root, "src/pkg/sub/leaf.py", "from ..core import VALUE\n")
+    _write(root, "src/pkg/lazy.py", "def f():\n    from pkg import late\n    return late\n")
+    _write(root, "src/pkg/late.py", "X = 2\n")
+    _write(root, "src/pkg/named.py", "Y = 3\n")
+    _write(root, "src/pkg/orphan.py", "Z = 4\n")
+    _write(root, "tests/helpers/support.py", "import pkg.sub.leaf\n")
+    _write(root, "tests/test_chain.py", "from support import *\n")
+    _write(root, "tests/test_lazy.py", "import pkg.lazy\n")
+    _write(root, "tests/test_string.py", "import importlib\nM = importlib.import_module('pkg.named')\n")
+    _write(root, "tests/test_unrelated.py", "X = 1\n")
+    _write(root, "tests/deep/conftest.py", "")
+    _write(root, "tests/deep/test_governed.py", "X = 1\n")
+
+
+def _same_graph(a, b) -> bool:
+    return (a.deps, a.texts, a.unparseable, a.roots, a.reverse) == (b.deps, b.texts, b.unparseable, b.roots, b.reverse)
+
+
+def _move(root, src, dst):
+    target = root / dst
+    target.parent.mkdir(parents=True, exist_ok=True)
+    (root / src).rename(target)
+
+
+MUTATIONS = {
+    "edit": lambda r: _write(r, "src/pkg/core.py", "import pkg.named\nVALUE = 1\n"),
+    "new_file": lambda r: (_write(r, "src/pkg/fresh.py", "import pkg.orphan\n"),
+                           _write(r, "tests/test_fresh.py", "import pkg.fresh\n")),
+    "delete": lambda r: (r / "src/pkg/late.py").unlink(),
+    "rename": lambda r: _move(r, "src/pkg/named.py", "src/pkg/renamed.py"),
+    "import_change": lambda r: _write(r, "tests/test_lazy.py", "import pkg.orphan\n"),
+    "function_level_import": lambda r: _write(r, "src/pkg/late.py", "def g():\n    import pkg.orphan\n    return 2\n"),
+    "conftest": lambda r: _write(r, "tests/deep/conftest.py", "import pkg.orphan\n"),
+    "pyproject": lambda r: _write(r, "pyproject.toml", '[tool.pytest.ini_options]\npythonpath = ["src", "."]\n'),
+    # identical bytes at another place: the cached facts are the same, their meaning is not
+    "same_bytes_elsewhere": lambda r: _write(r, "src/alt/x/leaf.py", "from ..core import VALUE\n"),
+}
+
+
+@pytest.mark.parametrize("mutation", sorted(MUTATIONS))
+def test_a_warm_cache_answers_exactly_as_a_fresh_build_after_any_change(tmp_path, mutation) -> None:
+    root, cache = tmp_path / "repo", tmp_path / "cache" / "facts.json"
+    _cache_tree(root)
+    warm = test_impact.build_graph(root, cache=cache)
+    assert cache.exists() and _same_graph(warm, test_impact.build_graph(root))
+    MUTATIONS[mutation](root)
+    cached, fresh = test_impact.build_graph(root, cache=cache), test_impact.build_graph(root)
+    assert _same_graph(cached, fresh), mutation
+    changed = [p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()] + ["src/pkg/named.py", "src/pkg/late.py"]
+    assert test_impact.impact_of(changed, cached) == test_impact.impact_of(changed, fresh)
+
+
+def test_the_cache_is_used_only_for_the_bytes_it_was_keyed_by(tmp_path, monkeypatch) -> None:
+    root, cache = tmp_path / "repo", tmp_path / "facts.json"
+    _cache_tree(root)
+    calls = []
+    real = test_impact._file_facts
+    monkeypatch.setattr(test_impact, "_file_facts", lambda text: calls.append(text) or real(text))
+    test_impact.build_graph(root, cache=cache)
+    files = len(calls)
+    assert files > 0
+    calls.clear()
+    test_impact.build_graph(root, cache=cache)
+    assert calls == []  # every file answered from the cache
+    _write(root, "src/pkg/core.py", "VALUE = 2\n")
+    test_impact.build_graph(root, cache=cache)
+    assert calls == ["VALUE = 2\n"]  # only the changed bytes are parsed again
+    calls.clear()
+    monkeypatch.setattr(test_impact, "_facts_identity", lambda: "another extractor")
+    test_impact.build_graph(root, cache=cache)
+    assert len(calls) == files  # a different extractor identity reuses nothing
+
+
+@pytest.mark.parametrize("damage", ["garbage", "not_an_object", "other_identity", "malformed_entries", "empty"])
+def test_a_doubtful_cache_is_a_miss_never_an_answer(tmp_path, damage) -> None:
+    import json
+
+    root, cache = tmp_path / "repo", tmp_path / "facts.json"
+    _cache_tree(root)
+    test_impact.build_graph(root, cache=cache)
+    payload = json.loads(cache.read_text(encoding="utf-8"))
+    if damage == "garbage":
+        cache.write_bytes(b"\x00not json")
+    elif damage == "not_an_object":
+        cache.write_text("[1, 2, 3]", encoding="utf-8")
+    elif damage == "other_identity":
+        payload["identity"] = "x" * 64
+        payload["facts"] = {k: [["i", "pkg.orphan"]] for k in payload["facts"]}
+        cache.write_text(json.dumps(payload), encoding="utf-8")
+    elif damage == "malformed_entries":
+        payload["facts"] = {k: [["f", True, 3, "x"], ["?"]] for k in payload["facts"]}
+        cache.write_text(json.dumps(payload), encoding="utf-8")
+    else:
+        cache.write_text("", encoding="utf-8")
+    assert _same_graph(test_impact.build_graph(root, cache=cache), test_impact.build_graph(root))
+
+
+def test_without_a_cache_nothing_is_written(tmp_path, monkeypatch) -> None:
+    root = tmp_path / "repo"
+    _cache_tree(root)
+    monkeypatch.setattr(test_impact, "_store_facts_cache", lambda *a: pytest.fail("wrote a cache that was not asked for"))
+    test_impact.build_graph(root)
+
+
+def test_the_default_cache_lives_outside_the_repository_and_can_be_switched_off(monkeypatch, tmp_path) -> None:
+    monkeypatch.delenv("FORGE_IMPACT_CACHE", raising=False)
+    path = test_impact.default_cache_path(ROOT)
+    assert path is not None and ROOT not in path.parents
+    for off in ("off", "0", ""):
+        monkeypatch.setenv("FORGE_IMPACT_CACHE", off)
+        assert test_impact.default_cache_path(ROOT) is None
+    monkeypatch.setenv("FORGE_IMPACT_CACHE", str(tmp_path / "c.json"))
+    assert test_impact.default_cache_path(ROOT) == tmp_path / "c.json"

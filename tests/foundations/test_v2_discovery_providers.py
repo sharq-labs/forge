@@ -93,3 +93,41 @@ def test_an_interpreter_that_cannot_be_launched_is_refused(runners, tmp_path):
     name = runners("any_runner.py", "print('{}')\n")
     with pytest.raises(ProviderRefused, match="could not run"):
         run_provider([str(tmp_path / "no-such-interpreter.exe")], name, {})
+
+
+
+# ---- the Dakota runner: a missing, hung or silent dakota is a typed refusal with its reason ----------
+
+
+def _fake_dakota(directory, version_body: str) -> None:
+    script = directory / "dakota"
+    script.write_text("#!/bin/sh\n"
+                      'if [ "$1" = "-version" ]; then\n' + version_body + "\n  exit 0\nfi\n"
+                      "echo 'response_fn_1  1.0e+00  1.0e-01  0.0e+00  3.0e+00'\n", encoding="utf-8")
+    script.chmod(0o755)
+
+
+def test_a_missing_dakota_is_refused_with_its_reason():
+    import shutil
+    import sys
+
+    if shutil.which("dakota"):
+        pytest.skip("a real dakota is on PATH here")
+    with pytest.raises(ProviderRefused, match="dakota executable not found on PATH"):
+        run_provider([sys.executable, "-I"], "dakota_runner.py", {"samples": 2, "seed": 1}, timeout=120)
+
+
+@pytest.mark.skipif(__import__("os").name != "posix", reason="a fake dakota needs a POSIX shell script on PATH")
+@pytest.mark.parametrize("body, reason", [("  sleep 60", r"dakota -version did not finish within 1s"),
+                                          ("  :", r"dakota -version printed nothing")])
+def test_a_hung_or_silent_dakota_version_probe_is_a_bounded_refusal(tmp_path, monkeypatch, body, reason):
+    import os
+    import sys
+    import time
+
+    _fake_dakota(tmp_path, body)
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
+    start = time.perf_counter()
+    with pytest.raises(ProviderRefused, match=reason):
+        run_provider([sys.executable, "-I"], "dakota_runner.py", {"samples": 2, "seed": 1, "version_timeout_s": 1}, timeout=120)
+    assert time.perf_counter() - start < 30.0
