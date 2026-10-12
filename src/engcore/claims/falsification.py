@@ -224,11 +224,16 @@ class ExposureAuthority:
     """The measurement side's clock.  Only it releases evidence; it stamps seals; it issues one registry per campaign."""
 
     def __init__(self, authority_id: str, *, key: bytes | None = None,
-                 resolution_scales: Mapping[tuple[str, str], float] | None = None) -> None:
+                 resolution_scales: Mapping[tuple[str, str], float] | None = None, derived_tickets: bool = False) -> None:
+        """``derived_tickets``: owner tickets are derived from ``key`` (HMAC) instead of process randomness, so a campaign
+        replayed from its journal (``claims.durable_campaign``) hands its owners the SAME tickets; it needs a supplied key."""
         if not str(authority_id).strip():
             raise FalsificationRefused("an exposure authority has an id")
+        if derived_tickets and key is None:
+            raise FalsificationRefused("derived owner tickets need externally supplied key material")
         self.authority_id = authority_id
         self.__key = key if key is not None else os.urandom(32)
+        self.__derived_tickets = bool(derived_tickets)
         self._clock = 0
         self._released: dict[str, EvidenceItem] = {}      # acquisition id -> the item as first released
         self._registries: dict[str, FalsifierRegistry] = {}
@@ -269,6 +274,12 @@ class ExposureAuthority:
     def _tick(self) -> int:
         self._clock += 1
         return self._clock
+
+    def _owner_token(self, campaign_id: str, hypothesis_id: str) -> str:
+        if not self.__derived_tickets:
+            return os.urandom(16).hex()
+        return hmac.new(self.__key, f"forge.owner-ticket\n{self.authority_id}\n{campaign_id}\n{hypothesis_id}".encode(),
+                        hashlib.sha256).hexdigest()[:32]
 
     def _mac(self, evidence_id: str, content: str, seq: int) -> str:
         return hmac.new(self.__key, f"{self.authority_id}\n{evidence_id}\n{content}\n{seq}".encode(), hashlib.sha256).hexdigest()
@@ -434,7 +445,7 @@ class FalsifierRegistry:
             if ticket is None or ticket.hypothesis_id != hid or not hmac.compare_digest(ticket.token, self._owners[hid]):
                 raise FalsificationRefused(f"hypothesis {hid!r} is registered; a revision is registered by its owner ticket")
         else:
-            self._owners[hid] = os.urandom(16).hex()
+            self._owners[hid] = self.__authority._owner_token(self.__campaign_id, hid)
         keys = [f"id:{hid}", f"claim:{hypothesis.claim_digest}"] + ([f"structure:{hypothesis.structure_digest}"]
                                                                      if hypothesis.structure_digest else [])
         clock = self.__authority._see(*keys)

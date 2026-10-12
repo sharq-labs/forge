@@ -322,6 +322,10 @@ NON_CORE_PACKAGES = {
         "FORGE Blindfold (Roadmap V2): the adversarial discovery benchmark -- synthetic universes behind an escrow "
         "protocol, isolated evaluation roles and baselines; measures discovery from outside, holds no scientific authority"
     ),
+    "authority": (
+        "issuer-bound authority (Big Rocks: Authority Integrity): persistent signed issuer registry and attestation ledger "
+        "over DIGESTS of existing records; imports nothing else from engcore, issues no scientific verdict"
+    ),
 }
 
 

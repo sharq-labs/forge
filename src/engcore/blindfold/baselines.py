@@ -14,11 +14,12 @@ from __future__ import annotations
 
 import math
 import random
+import secrets
 from typing import Any, Mapping
 
 import numpy as np
 
-from .escrow import EscrowRefused, ObserveClient
+from .escrow import EscrowRefused, ObserveClient, is_budget_refusal
 from .expression import c, mul, pw, v
 
 
@@ -38,8 +39,10 @@ def _collect(card: Mapping[str, Any], client: ObserveClient, n: int, rng: random
     points += points[:replicate]                                    # replicates: same settings again (noise estimate)
     for i, pt in enumerate(points):
         try:
-            rows.append(client.observe(card["universe_id"], pt, query_id=f"q{i}")["observation"])
-        except EscrowRefused:
+            rows.append(client.observe(card["universe_id"], pt, query_id=f"q{i}-{secrets.token_hex(6)}")["observation"])
+        except EscrowRefused as exc:
+            if not is_budget_refusal(exc):                         # only an exhausted budget ends collection
+                raise
             break
     return rows
 
@@ -82,8 +85,10 @@ def single_setting(card: Mapping[str, Any], client: ObserveClient) -> dict[str, 
     rows = []
     for i in range(int(card["query_budget"])):
         try:
-            rows.append(client.observe(uid, pt, query_id=f"s{i}")["observation"])
-        except EscrowRefused:
+            rows.append(client.observe(uid, pt, query_id=f"s{i}-{secrets.token_hex(6)}")["observation"])
+        except EscrowRefused as exc:
+            if not is_budget_refusal(exc):
+                raise
             break
     ys = [math.log(r[out]) for r in rows if r[out] > 0]
     if len(ys) < 3:

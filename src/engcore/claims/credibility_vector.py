@@ -65,6 +65,13 @@ verification, validation and independent routes; and a :class:`~engcore.scientif
 pin for any level that needs trusted provenance (a record's own pin fields are never trust).  The subject must be bound
 to the decision context.  A policy must dominate :data:`RISK_POLICY_V1` row by row.
 
+ISSUER-BOUND MODE (``authority=`` an opened :class:`~engcore.authority.AuthorityLedger`, Big Rock 1): every backing
+record must be attested about the subject's RESULT (an output of an EXECUTOR-attested NodeReceipt, by an issuer other
+than the executor) in this context by an issuer holding the factor's role (:data:`FACTOR_ROLES`); every attested record
+about the subjects -- the negative ones included -- is read from the ledger.  Without a ledger the report is
+``issuer_bound=False`` and meets no requirement.  This closes, in that mode, the caller-supplied-record and
+omitted-negative-input residuals described below for the unattested path.
+
 The report is OUTPUT for a reader, not a persisted authority: there is no reader that trusts a stored report; re-run
 :func:`assess_credibility` on the graph.  Residual (deferred hardening): independence is only as good as provenance; a
 graph from which a contradicting node, or a lineage edge (DERIVED_FROM, CALIBRATES, SUPPORTS) through which a
@@ -92,6 +99,7 @@ from enum import Enum
 from types import MappingProxyType
 from typing import Any, Mapping
 
+from ..authority import AuthorityLedger, Role, TrustAnchor, verify_evidence
 from ..credibility.evidence_graph import EvidenceAuthority, EvidenceGraph, EvidenceRelation, evidence_graph_fingerprint
 from ..credibility.evidence_graph.supersession import SupersessionDecision, assess_supersession
 from ..scientific.errors import ScientificCoreError
@@ -103,7 +111,7 @@ from ..system_runtime.records import ApplicabilityReport
 from .gaps import _CHANNEL_GAP, GapClass
 from .redteam import TrustEnvelope
 
-CREDIBILITY_VECTOR_SCHEMA = "engcore.claims.credibility_vector/3"
+CREDIBILITY_VECTOR_SCHEMA = "engcore.claims.credibility_vector/4"
 UNKNOWN = -1
 _HEX = set("0123456789abcdef")
 
@@ -205,6 +213,27 @@ def _admissible(factor: Factor, level: int) -> frozenset[EvidenceAuthority]:
             Factor.MODEL_FORM_UQ: _MEASURED | _EXTERNAL_REFERENCE}[factor]   # model-form discrepancy needs an outside reference
 
 
+#: the issuer role(s) whose attestation can back each factor (issuer-bound mode, ``assess_credibility(authority=...)``)
+FACTOR_ROLES: Mapping[Factor, frozenset[Role]] = MappingProxyType({
+    Factor.APPLICABILITY: frozenset({Role.APPLICABILITY}),
+    Factor.VERIFICATION: frozenset({Role.NUMERICAL_VERIFICATION}),
+    Factor.VALIDATION: frozenset({Role.VALIDATION}),
+    Factor.NUMERICAL_UQ: frozenset({Role.NUMERICAL_VERIFICATION, Role.UNCERTAINTY}),
+    Factor.PARAMETER_UQ: frozenset({Role.UNCERTAINTY}),
+    Factor.MEASUREMENT_UQ: frozenset({Role.MEASUREMENT}),
+    Factor.MODEL_FORM_UQ: frozenset({Role.UNCERTAINTY}),
+    Factor.INDEPENDENT_ROUTES: frozenset({Role.NUMERICAL_VERIFICATION}),
+    Factor.ADVERSARIAL: frozenset({Role.RED_TEAM}),
+})
+
+
+#: what a FAILED check with no projectable level caps, by the role that attested it
+_ROLE_CAPS: Mapping[Role, tuple[Factor, ...]] = MappingProxyType({
+    Role.NUMERICAL_VERIFICATION: (Factor.VERIFICATION, Factor.INDEPENDENT_ROUTES),
+    Role.VALIDATION: (Factor.VALIDATION,),
+})
+
+
 def _needs_provenance(factor: Factor, level: int) -> bool:
     return (factor is Factor.VALIDATION and level >= 1) or (factor in UQ_CHANNEL and level >= 1) \
         or (factor is Factor.INDEPENDENT_ROUTES and level >= 1) or (factor is Factor.APPLICABILITY and level >= 1) \
@@ -295,13 +324,20 @@ class Defeater:
 class _GraphView:
     def __init__(self, graph: EvidenceGraph, context_digest: str, trusted: TrustedSourceRegistry | None,
                  checks: Mapping[str, ValidationLevel], applicability: Mapping[str, ApplicabilityReport] | None = None,
-                 uq: Mapping[str, ChannelEntry] | None = None) -> None:
+                 uq: Mapping[str, ChannelEntry] | None = None,
+                 admitted: "_Admitted | None" = None) -> None:
         self.graph = graph
         self.context = context_digest
         self.trusted = trusted
         self.checks = checks                                  # check digest -> level it establishes (re-verified, PASS)
         self.applicability = applicability or {}             # report digest -> re-read ApplicabilityReport
         self.uq = uq or {}                                    # entry digest -> re-read ChannelEntry
+        #: issuer-bound mode: (subject id, record digest) -> the roles in which an authorized issuer attested the record
+        #: about THAT subject's result; None = no authority ledger (nothing can meet a requirement)
+        self.admitted = None if admitted is None else admitted.roles
+        self.caps = {} if admitted is None else admitted.caps
+        self.envelope_subjects = {} if admitted is None else admitted.envelope_subjects
+        self.report_subjects = {} if admitted is None else admitted.report_subjects
         self.nodes = {n.evidence_id: n for n in graph.nodes}
         self._out: dict[str, list[tuple[EvidenceRelation, str]]] = {}
         self._calibrators: dict[str, set[str]] = {}
@@ -391,6 +427,9 @@ class _GraphView:
             return f"{evidence_id} ({node.authority.value}) cannot earn {factor.value}={LEVELS[factor][level]}"
         if not self.supports_subject(evidence_id, subject):
             return f"{evidence_id} has no SUPPORTS/VALIDATES edge to the subject {subject}"
+        if self.admitted is not None and not (self.admitted.get((subject, node.content_digest), frozenset()) & FACTOR_ROLES[factor]):
+            return (f"{evidence_id}'s record is not attested about {subject}'s result, in this context, by an issuer "
+                    f"authorized as {sorted(r.value for r in FACTOR_ROLES[factor])}")
         if self.superseded_by(evidence_id):
             return f"{evidence_id} is superseded by {self.superseded_by(evidence_id)}: a superseded record is not support"
         if _needs_provenance(factor, level) and not self.trusted_provenance(evidence_id):
@@ -622,8 +661,14 @@ def _leaf_vector(leaf: "ClaimNode", view: _GraphView, envelopes: Mapping[str, tu
         if fc.level > levels[fc.factor]:
             levels[fc.factor] = fc.level
             support[fc.factor] = fc.evidence_ids
-    if levels[Factor.ADVERSARIAL] == 1 and any(v[0] not in ("survived", "falsified") and v[1:] == (subject, leaf.attacked_subject_digest)
-                                               for v in envelopes.values()):
+    for factor, why in sorted(view.caps.get(subject, {}).items(), key=lambda kv: kv[0].value):
+        if levels[factor] != UNKNOWN:
+            rejected.append(f"{factor.value}={LEVELS[factor][levels[factor]]}: capped at UNKNOWN by {why}")
+        levels[factor] = UNKNOWN
+        support.pop(factor, None)
+    if levels[Factor.ADVERSARIAL] == 1 and any(
+            v[0] not in ("survived", "falsified") and v[2] == leaf.attacked_subject_digest
+            and (v[1] == subject or subject in view.envelope_subjects.get(d, ())) for d, v in envelopes.items()):
         rejected.append("adversarial=survived_declared_attack: capped at UNKNOWN by an UNKNOWN or incoherent envelope for the "
                         "same subject and attacked statement")
         levels[Factor.ADVERSARIAL] = UNKNOWN
@@ -631,7 +676,8 @@ def _leaf_vector(leaf: "ClaimNode", view: _GraphView, envelopes: Mapping[str, tu
     # every supplied applicability report decided on THIS subject counts, cited or not: 'outside' is a defeater and sets
     # the factor to outside_domain; 'unknown' caps it at UNKNOWN (every check must pass; UNKNOWN never passes)
     sd = view.nodes[subject].content_digest
-    on_subject = sorted((d, r) for d, r in view.applicability.items() if r.evidence_digest == sd)
+    on_subject = sorted((d, r) for d, r in view.applicability.items()
+                        if r.evidence_digest == sd or (r.status != "within" and subject in view.report_subjects.get(d, ())))
     outside = [(d, r) for d, r in on_subject if r.status == "outside"]
     unknown = [(d, r) for d, r in on_subject if r.status == "unknown"]
     for d, r in outside:
@@ -855,6 +901,12 @@ class CredibilityVectorReport:
     #: digest of EVERY supplied input beside the graph (checks, applicability reports, channel entries, envelopes,
     #: explicit defeaters, trusted-source pins): two reports from different inputs are distinguishable
     inputs_digest: str = ""
+    #: True only when the authority ledger is the consumer's anchored ledger, opened against its anchor, and production
+    #: (or explicit test mode); then every backing record was admitted through it (``usable`` refuses anything else)
+    issuer_bound: bool = False
+    authority_anchor: Mapping[str, Any] | None = field(hash=False, default=None)
+    authority_profile: str | None = None
+    test_mode: bool = False
 
     @property
     def open_defeaters(self) -> tuple[Defeater, ...]:
@@ -862,7 +914,14 @@ class CredibilityVectorReport:
 
     @property
     def requirement_met(self) -> bool:
-        return bool(self.gaps) and not self.defeaters and all(g.gap <= 0 for g in self.gaps)
+        """Met for a decision: issuer-bound to a PRODUCTION-profile ledger, every gap closed, no open defeater."""
+        return self.requirement_met_in_test_mode and not self.test_mode
+
+    @property
+    def requirement_met_in_test_mode(self) -> bool:
+        """The same judgement, ALSO true against an explicit TEST-profile ledger (``allow_test_profile``).  For tests and
+        dry runs only: it never counts for a decision."""
+        return self.issuer_bound and bool(self.gaps) and not self.defeaters and all(g.gap <= 0 for g in self.gaps)
 
     @property
     def dominant_blocking_gap(self) -> dict[str, Any] | None:
@@ -878,25 +937,123 @@ class CredibilityVectorReport:
     def to_dict(self) -> dict[str, Any]:
         return {"schema": CREDIBILITY_VECTOR_SCHEMA, "decision_id": self.decision_id, "claim_id": self.claim_id,
                 "claim_structure_digest": self.claim_structure_digest, "context_digest": self.context_digest,
-                "graph_digest": self.graph_digest, "inputs_digest": self.inputs_digest, "policy_id": self.policy_id,
+                "graph_digest": self.graph_digest, "inputs_digest": self.inputs_digest, "issuer_bound": self.issuer_bound,
+                "authority_anchor": None if self.authority_anchor is None else dict(self.authority_anchor),
+                "authority_profile": self.authority_profile, "test_mode": self.test_mode, "policy_id": self.policy_id,
                 "policy_digest": self.policy_digest,
                 "risk_class": self.risk_class.value,
                 "required": {f.value: LEVELS[f][lv] for f, lv in sorted(self.required.items(), key=lambda kv: kv[0].value)},
                 "vector": self.vector.to_dict(), "gaps": [g.to_dict() for g in self.gaps],
                 "open_defeaters": [d.to_dict() for d in self.defeaters], "dominant_blocking_gap": self.dominant_blocking_gap,
-                "requirement_met": self.requirement_met, "notes": list(self.notes)}
+                "requirement_met": self.requirement_met, "requirement_met_in_test_mode": self.requirement_met_in_test_mode,
+                "notes": list(self.notes)}
 
     @property
     def digest(self) -> str:
         return _digest(self.to_dict())
 
 
-def _coherent(env: TrustEnvelope) -> bool:
+def _coherent(env: TrustEnvelope | Mapping[str, Any]) -> bool:
     """A SURVIVED envelope that attacked nothing, or counts more coverage than evaluations or budget, backs nothing."""
+    d = env if isinstance(env, Mapping) else env.to_dict()
     try:
-        return 0 < int(env.points_covered) <= int(env.evaluations) <= int(env.budget) and bool(env.attacked_routes)
-    except (TypeError, ValueError):
+        return 0 < int(d["points_covered"]) <= int(d["evaluations"]) <= int(d["budget"]) and bool(d["attacked_routes"])
+    except (KeyError, TypeError, ValueError):
         return False
+
+
+def _envelope_entry(d: Mapping[str, Any]) -> tuple[str, str, str]:
+    return (str(d.get("outcome")) if _coherent(d) else "incoherent", str(d.get("claim_id")), str(d.get("subject_digest")))
+
+
+@dataclass
+class _Admitted:
+    """What the authority ledger established about the subjects' results."""
+
+    roles: dict[tuple[str, str], frozenset[Role]]                 # (subject id, record digest) -> roles it was attested in
+    caps: dict[str, dict[Factor, str]]                            # subject id -> factor -> why it is capped at UNKNOWN
+    envelope_subjects: dict[str, set[str]]                        # envelope digest -> subjects whose result it is about
+    report_subjects: dict[str, set[str]] = field(default_factory=dict)   # applicability report digest -> subjects (attested)
+
+
+def _negative(kind: str, body: Mapping[str, Any]) -> bool:
+    from .attestation import APPLICABILITY_REPORT, CHANNEL_ENTRY, TRUST_ENVELOPE, VALIDATION_CHECK
+    return ((kind == VALIDATION_CHECK and body.get("outcome") != ValidationOutcome.PASS.value)
+            or (kind == APPLICABILITY_REPORT and body.get("status") != "within")
+            or (kind == CHANNEL_ENTRY and body.get("state") == ChannelState.UNKNOWN.value)
+            or (kind == TRUST_ENVELOPE and body.get("outcome") != "survived"))
+
+
+def _from_authority(ledger: AuthorityLedger, subjects: Mapping[str, str], context: str, notes: list[str],
+                    checks: dict[str, ValidationLevel], reports: dict[str, ApplicabilityReport], entries: dict[str, ChannelEntry],
+                    envelope_dicts: dict[str, Mapping[str, Any]]) -> _Admitted:
+    """Every attested record about each subject's result in this context, re-verified.  NEGATIVE records -- an attested
+    failing check, an UNKNOWN channel entry, an 'outside' / 'unknown' report, a FALSIFIED / UNKNOWN envelope -- arrive
+    here whether or not the caller mentions them, are admitted even from the result's own executor (they only lower),
+    and cap or defeat; none is dropped without a note."""
+    from .attestation import APPLICABILITY_REPORT, CHANNEL_ENTRY, KIND_ROLES, TRUST_ENVELOPE, VALIDATION_CHECK
+    out = _Admitted({}, {}, {}, {})
+    roles: dict[tuple[str, str], set[Role]] = {}
+    for subject_id, sd in sorted(subjects.items()):
+        for rec in ledger.attestations(subject_digest=sd, context_digest=context):
+            kind = rec.attestation.record_kind
+            if kind not in KIND_ROLES:
+                continue
+            body = rec.attestation.record_dict()
+            negative = _negative(kind, body)
+            ok, why = verify_evidence(ledger, record_kind=kind, record_digest=rec.record_digest, subject_digest=sd,
+                                      context_digest=context, roles=KIND_ROLES[kind], allow_self_issued=negative)
+            if ok is None:
+                notes.append(f"attested {kind} {rec.record_digest[:12]} about {subject_id} refused: {'; '.join(why)[:240]}")
+                continue
+            if ok.evidence.sequence != rec.sequence:
+                continue
+            try:
+                if kind == VALIDATION_CHECK:
+                    chk = ValidationCheck.from_dict(body)
+                    if chk.outcome is ValidationOutcome.PASS and chk.establishes is not None:
+                        checks[check_digest(chk)] = chk.establishes
+                    else:
+                        proj = VALIDATION_LEVEL_PROJECTION.get(chk.establishes) if chk.establishes is not None else None
+                        if proj is not None:
+                            capped = (proj[0],)
+                        elif chk.outcome in (ValidationOutcome.FAIL, ValidationOutcome.WARNING):
+                            # a failed check that names no level (a conservation balance, a failed oracle comparison)
+                            # still says the attesting role's finding about THIS result is negative: it caps every
+                            # factor that role backs, so an authorized verifier's FAIL is never outvoted by a PASS
+                            capped = _ROLE_CAPS.get(rec.attestation.role, ())
+                        else:
+                            capped = ()
+                        for factor in capped:
+                            out.caps.setdefault(subject_id, {})[factor] = (
+                                f"attested {chk.outcome.value} check {chk.name!r} "
+                                f"({chk.establishes.value if chk.establishes is not None else 'no level'}) by {rec.issuer_id!r}")
+                        notes.append(f"attested {chk.outcome.value} check {chk.name!r} about {subject_id}"
+                                     + (f": caps {sorted(f.value for f in capped)}" if capped else " (no level it could back; noted)"))
+                elif kind == APPLICABILITY_REPORT:
+                    ar = ApplicabilityReport.from_dict(body)
+                    reports[record_digest(ar)] = ar
+                    if ar.status != "within":
+                        # the ATTESTATION binds the report to this result (receipt output), whatever digest the report
+                        # itself carries: a negative report decided on the attested subject counts
+                        out.report_subjects.setdefault(record_digest(ar), set()).add(subject_id)
+                elif kind == CHANNEL_ENTRY:
+                    ce = ChannelEntry.from_dict(body)
+                    entries[record_digest(ce)] = ce
+                    if ce.state is ChannelState.UNKNOWN:
+                        factor = next(f for f, ch in UQ_CHANNEL.items() if ch == ce.channel.value)
+                        out.caps.setdefault(subject_id, {})[factor] = (f"attested UNKNOWN {ce.channel.value} entry by "
+                                                                       f"{rec.issuer_id!r}: an unevaluated channel stays unknown")
+                        notes.append(f"attested UNKNOWN {ce.channel.value} entry about {subject_id}: caps {factor.value}")
+                elif kind == TRUST_ENVELOPE:
+                    envelope_dicts[rec.record_digest] = body
+                    out.envelope_subjects.setdefault(rec.record_digest, set()).add(subject_id)
+            except Exception as exc:   # noqa: BLE001 - an attested record that does not re-read backs nothing
+                notes.append(f"attested {kind} {rec.record_digest[:12]} does not re-read: {str(exc)[:160]}")
+                continue
+            roles.setdefault((subject_id, rec.record_digest), set()).add(rec.attestation.role)
+    out.roles = {k: frozenset(v) for k, v in roles.items()}
+    return out
 
 
 def envelope_digest(envelope: Any) -> str:
@@ -907,13 +1064,30 @@ def envelope_digest(envelope: Any) -> str:
 def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: DecisionRequirement, *,
                        trusted_sources: TrustedSourceRegistry | None = None, validation_checks: tuple[ValidationCheck, ...] = (),
                        applicability_reports: tuple[ApplicabilityReport, ...] = (), uncertainty_entries: tuple[ChannelEntry, ...] = (),
-                       defeaters: tuple[Defeater, ...] = (), red_team: tuple[Any, ...] = ()) -> CredibilityVectorReport:
+                       defeaters: tuple[Defeater, ...] = (), red_team: tuple[Any, ...] = (),
+                       authority: AuthorityLedger | None = None, trust_anchor: TrustAnchor | None = None,
+                       allow_test_profile: bool = False) -> CredibilityVectorReport:
     """f(C) from the graph, r(D) from the registered policy, g = r - f, open defeaters, dominant blocking gap.
     ``trusted_sources`` pins provenance; ``validation_checks`` are re-verified (``from_dict``) and only PASSING ones back
     a level; ``applicability_reports`` / ``uncertainty_entries`` are re-read (``from_dict``) and back applicability and
     the UQ factors through the nodes carrying their digests (an 'outside' report decided on a subject is a defeater);
     ``red_team``: TrustEnvelope records -- a SURVIVED one for the subject and the claim's attacked statement can back
-    ADVERSARIAL (through the graph node carrying its digest), a FALSIFIED one for a subject is a defeater."""
+    ADVERSARIAL (through the graph node carrying its digest), a FALSIFIED one for a subject is a defeater.
+
+    ``authority``: the opened (anchored, re-verified) :class:`~engcore.authority.AuthorityLedger`.  WITH it, a backing
+    record counts only if an issuer authorized for the factor's role (:data:`FACTOR_ROLES`) attested it about THAT
+    subject's result (an output of an EXECUTOR-attested NodeReceipt, by another issuer) in THIS context; every attested
+    record about the subjects -- negative ones included -- is read from the ledger, so omitting one from the call changes
+    nothing.  Caller-supplied records still LOWER (defeaters, caps) but never back a level unattested.  WITHOUT it the
+    report is ``issuer_bound=False`` and no requirement is met.
+
+    ``trust_anchor``: the anchor to hold the ledger to.  The ledger must be exactly an ``AuthorityLedger``, OPENED
+    (``AuthorityLedger.open``) against an anchor, and extend THIS anchor; another root or ledger id is refused.  A
+    ``production`` ledger makes the report issuer-bound; a ``test`` ledger does so only with ``allow_test_profile=True``,
+    which the report states (``test_mode``), binds into ``inputs_digest``, and under which ``requirement_met`` is never
+    true (``requirement_met_in_test_mode`` is).  The call cannot tell an operator-configured anchor from one the caller
+    minted with its own root: authority rests on who chose ``trust_anchor``, which must be operator configuration, never
+    planner / LLM / MCP input (docs/architecture/authority_integrity_map.md)."""
     checks: dict[str, ValidationLevel] = {}
     notes: list[str] = []
     reports: dict[str, ApplicabilityReport] = {}
@@ -937,18 +1111,42 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
             continue
         if again.outcome is ValidationOutcome.PASS and again.establishes is not None:
             checks[check_digest(again)] = again.establishes
-    view = _GraphView(graph, requirement.context_digest, trusted_sources, checks, reports, entries)
     if any(not isinstance(env, TrustEnvelope) for env in red_team):
         raise CredibilityRefused("red-team input is TrustEnvelope records")
-    envelopes = {envelope_digest(env): (env.outcome.value if _coherent(env) else "incoherent", env.claim_id, env.subject_digest)
-                 for env in red_team}
+    issuer_bound = False
+    if authority is not None:
+        if type(authority) is not AuthorityLedger:                 # a subclass could override what is verified
+            raise CredibilityRefused("authority is an opened AuthorityLedger (exactly that type)")
+        if not isinstance(trust_anchor, TrustAnchor):
+            raise CredibilityRefused("an authority ledger is admitted only against the consumer's pinned TrustAnchor")
+        if authority.verified_anchor is None:
+            raise CredibilityRefused("the authority ledger was not opened against an anchor (AuthorityLedger.open); a ledger "
+                                     "created in this process proves nothing about who its issuers are")
+        if not authority.extends(trust_anchor):
+            raise CredibilityRefused("the authority ledger is not the consumer's anchored ledger (ledger id, profile, root key or "
+                                     "anchored head differs)")
+        issuer_bound = authority.profile == "production" or bool(allow_test_profile)
+        if not issuer_bound:
+            notes.append("TEST-PROFILE authority ledger: records are admitted for inspection, but no requirement is met outside "
+                         "explicit test mode")
+    envelope_dicts: dict[str, Mapping[str, Any]] = {envelope_digest(env): env.to_dict() for env in red_team}
     leaves = _leaves(claim)
+    graph_nodes = {n.evidence_id: n for n in graph.nodes}
     for leaf in leaves:
-        subject = view.nodes.get(leaf.subject_id)
+        subject = graph_nodes.get(leaf.subject_id)
         if subject is None:
             raise CredibilityRefused(f"claim {leaf.node_id}'s subject {leaf.subject_id!r} is not in the evidence graph")
         if subject.applicability != requirement.context_digest or subject.authority is EvidenceAuthority.UNKNOWN:
             raise CredibilityRefused(f"subject {leaf.subject_id!r} is not a known-authority result bound to the decision's context")
+    admitted = None
+    if authority is not None:
+        admitted = _from_authority(authority, {leaf.subject_id: graph_nodes[leaf.subject_id].content_digest for leaf in leaves},
+                                   requirement.context_digest, notes, checks, reports, entries, envelope_dicts)
+    else:
+        notes.append("UNATTESTED: no authority ledger was supplied; levels are shown, but no requirement can be met without "
+                     "issuer-bound evidence")
+    view = _GraphView(graph, requirement.context_digest, trusted_sources, checks, reports, entries, admitted)
+    envelopes = {d: _envelope_entry(e) for d, e in envelope_dicts.items()}
     required = requirement.required
     vec = _vector(claim, view, notes, envelopes, required)
     gaps = []
@@ -960,15 +1158,17 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
     found = list(vec.defeaters) + view.contradictions_of(subjects, claim.evidence(), notes)
     subject_digests = {view.nodes[s].content_digest for s in subjects}
     for _d, ar in sorted(reports.items()):
-        if ar.status != "within" and ar.evidence_digest not in subject_digests:
+        if ar.status != "within" and ar.evidence_digest not in subject_digests and not (view.report_subjects.get(_d, set()) & subjects):
             notes.append(f"applicability report {ar.check_id!r} ({ar.status}) is decided on no subject of this claim "
                          f"(evidence digest {ar.evidence_digest or 'EMPTY'}); a negative finding counts only when decided on "
                          "the subject, or recorded in the graph as a CONTRADICTS edge")
-    for env in red_team:
-        if env.outcome.value == "falsified" and env.claim_id in subjects:
-            found.append(Defeater(f"red_team:{env.claim_id}:{envelope_digest(env)[:12]}", "red_team_falsified", (), env.statement()))
-        elif env.outcome.value == "falsified":
-            notes.append(f"a FALSIFIED envelope for {env.claim_id!r}, which is no subject of this claim, is not evidence about it")
+    for d, env in sorted(envelope_dicts.items()):
+        about = view.envelope_subjects.get(d, set()) & subjects
+        if env.get("outcome") == "falsified" and (env.get("claim_id") in subjects or about):
+            found.append(Defeater(f"red_team:{env.get('claim_id')}:{d[:12]}", "red_team_falsified", (),
+                                  str(env.get("statement", "")) + (f" (attested about the result of {sorted(about)})" if about else "")))
+        elif env.get("outcome") == "falsified":
+            notes.append(f"a FALSIFIED envelope for {env.get('claim_id')!r}, which is no subject of this claim, is not evidence about it")
     computed = {d.defeater_id for d in found}
     for d in defeaters:
         missing = [e for e in d.evidence_ids if e not in view.nodes]
@@ -992,15 +1192,20 @@ def assess_credibility(claim: ClaimNode, graph: EvidenceGraph, requirement: Deci
         "validation_checks": _each(validation_checks), "applicability_reports": _each(applicability_reports),
         "uncertainty_entries": _each(uncertainty_entries), "red_team": _each(red_team), "defeaters": _each(defeaters),
         "trusted_sources": None if trusted_sources is None else sorted([p.source_id, p.issuer, p.document_digest, p.version]
-                                                                       for p in trusted_sources.pins)})
+                                                                       for p in trusted_sources.pins),
+        "authority": None if authority is None else authority.anchor().to_dict(),
+        "trust_anchor": None if trust_anchor is None else trust_anchor.to_dict(), "test_mode": bool(allow_test_profile)})
     return CredibilityVectorReport(
         requirement.decision_id, claim.node_id, _digest(claim.structure()), requirement.context_digest, evidence_graph_fingerprint(graph),
         requirement.policy_id, requirement.policy_digest, requirement.risk_class, required, vec, tuple(gaps),
         tuple(sorted({d.defeater_id: d for d in found}.values(), key=lambda d: (order[d.kind], d.defeater_id))),
-        tuple(notes) + tuple(f"rejected: {r}" for r in vec.rejected), inputs_digest)
+        tuple(notes) + tuple(f"rejected: {r}" for r in vec.rejected), inputs_digest, issuer_bound,
+        None if authority is None else MappingProxyType(authority.anchor().to_dict()),
+        None if authority is None else authority.profile,
+        bool(allow_test_profile) and authority is not None and authority.profile != "production")
 
 
 __all__ = ["ClaimNode", "Combine", "CredibilityRefused", "CredibilityVectorReport", "DEFEATER_KINDS", "Defeater", "DecisionRequirement",
            "ENVELOPE_SURVIVED", "FACTOR_GAP", "FACTOR_PRIORITY", "Factor", "FactorClaim", "FactorGap", "FactorVector", "LEVELS",
            "RISK_POLICY_V1", "RISK_POLICY_V1_ID", "RiskClass", "UNKNOWN", "UQ_CHANNEL", "VALIDATION_LEVEL_PROJECTION",
-           "assess_credibility", "check_digest", "envelope_digest", "policy_digest", "record_digest", "register_risk_policy"]
+           "FACTOR_ROLES", "assess_credibility", "check_digest", "envelope_digest", "policy_digest", "record_digest", "register_risk_policy"]
