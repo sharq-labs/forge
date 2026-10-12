@@ -2678,7 +2678,8 @@ Commands and results (sorted FAILED/ERROR node-id sets compared with `comm`; equ
 - Isolation audit: all 579 test modules collected alone (8 parallel processes): 1 failure (test_mutation_harness, fixed);
   static scan for bare imports of test modules not on the pythonpath roots: batch24/25 real (fixed), the rest resolve
   through their own sys.path setup (alone == full-run outcome).
-- Final head: see the next lines.
+- Final head `e465ec2a`: FAST `-n 4` 157.4 s (10,061 tests: 151 failed + 21 errors, set identical to base, tree clean);
+  SCIENTIFIC as CI runs it `-n 4` 269.1 s (identical failure set, tree clean).
 
 Failed approaches:
 - Regex over the raw text for dotted module names (to avoid a full AST walk) took a `thevenin.py` edit from 47 affected
