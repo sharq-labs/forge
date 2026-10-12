@@ -174,6 +174,7 @@ def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
            "describe_external_evidence", "describe_empirical_uq",
            "describe_product", "prepare_simulation", "run_simulation",
            "run_proposed_simulation"]
+        + ["describe_engineering_platform", "plan_product", "run_product_screening"]
         + [s.tool for s in SYSTEMS]
     )
 

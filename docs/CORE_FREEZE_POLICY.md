@@ -73,11 +73,11 @@ digest rather than merely labelled, so that editing the flagship study cannot
 look like a compatibility event. The day nobody believes that alarm is the day
 a real one goes unnoticed.
 
-**Non-Core packages** (`23`): `domainpacks`, `domains`, `systems`, `sria`,
+**Non-Core packages** (`24`): `domainpacks`, `domains`, `systems`, `sria`,
 `design`, `credibility`, `mcp`, `claims`, `assembly`, `compositionpacks`,
 `executionpacks`, `planning`, `product`, `scenarios`, `materials`,
 `numerical`, `spatial`, `pde`, `coupling`, `providers`, `multiscale`,
-`system_runtime`, and `engineering`.
+`system_runtime`, `engineering`, and `blindfold`.
 They live under `engcore` and are not part of the frozen Core API. Recorded in
 `tests/test_core_api_layering.py::NON_CORE_PACKAGES`, because a package that is
 neither frozen nor experimental nor explicitly excluded is an accidental public

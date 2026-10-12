@@ -14,6 +14,7 @@ core enforced. A convention has a fifth domain; a rule does not.
 from __future__ import annotations
 
 import ast
+import functools
 import importlib
 import inspect
 import pathlib
@@ -4289,10 +4290,13 @@ def test_the_domain_names_were_derived_from_the_packages_not_listed():
         "electrothermal",
         "hygrothermal",
         "kinetics",
+        "products",
         "thermal",
         "thermal_models",
     }, names
-    assert len(names) == 9
+    # `products` (Big Rocks P-R: drone/vehicle/motor/HVAC compositions under engcore.systems) joins the
+    # list; GUARD 17 keeps the word out of the core like every other system package name.
+    assert len(names) == 10
 
     # Whole names, never split on `_`. Splitting `thermal_models` yields
     # `models`, which is core vocabulary in every sense, and forbidding it
@@ -4792,7 +4796,18 @@ def _reached_modules() -> dict[str, list[str]]:
 
     Both forms: the statements, and the string arguments that do the same job
     at runtime.
+
+    The sweep parses every file under src/, tests/ and benchmarks/ (several
+    seconds) and four guards here, plus the dependency-hygiene guard that loads
+    this module, ask for it. It is measured once per process and every caller
+    gets its own copy, so no caller can edit another's answer.
     """
+    return {name: list(sites) for name, sites in _swept_reached_modules()}
+
+
+@functools.lru_cache(maxsize=1)
+def _swept_reached_modules() -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """The sweep itself, frozen; read it through `_reached_modules`."""
     top_level = _importable_top_level()
     # A module under src/ ships in the wheel, where only src/ is importable:
     # the other pytest roots (the repository root, flagships/, providers/<name>/)
@@ -4846,7 +4861,7 @@ def _reached_modules() -> dict[str, list[str]]:
                             first.value, str
                         ):
                             note(first.value, path, node.lineno, local)
-    return found
+    return tuple((name, tuple(sites)) for name, sites in found.items())
 
 
 def _distributions_providing(module: str) -> frozenset[str]:

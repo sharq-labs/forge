@@ -198,6 +198,12 @@ PROVIDERS: tuple[OptionalProvider, ...] = (
     OptionalProvider("pybamm", OPTIONAL_PROVIDER_UNAVAILABLE, _registry("pybamm", Facet("module_spec", "pybamm"))),
     OptionalProvider("su2", OPTIONAL_PROVIDER_UNAVAILABLE, _registry("su2", Facet("executable", "SU2_CFD"))),
     OptionalProvider("tespy", OPTIONAL_PROVIDER_UNAVAILABLE, _registry("tespy", Facet("module_spec", "tespy"))),
+    # Big Rocks G/H/I adapters. The PyPI package named `pychrono` is NOT Project Chrono: when it is installed the
+    # module facet says present while the registry refuses it, and the disagreement is UNKNOWN (never admitted).
+    OptionalProvider("chrono", OPTIONAL_PROVIDER_UNAVAILABLE, _registry("chrono", Facet("module_spec", "pychrono"))),
+    OptionalProvider("openvsp", OPTIONAL_PROVIDER_UNAVAILABLE, _registry("openvsp", Facet("module_spec", "openvsp"))),
+    OptionalProvider("openradioss", OPTIONAL_PROVIDER_UNAVAILABLE, _registry(
+        "openradioss", Facet("executable", "engine_linux64_gf"))),
     OptionalProvider("gmsh", OPTIONAL_PROVIDER_UNAVAILABLE, (
         Facet("callable", "engcore.spatial:gmsh_available"), Facet("module_spec", "gmsh")),
         extra="mesh", module="gmsh"),
@@ -288,12 +294,33 @@ RULES: tuple[SkipRule, ...] = (
                  "test_proof_e_openfoam_vs_su2_whole_field_disagrees_near_the_lid_recorded_negative_result",
                  "test_proof_e_openfoam_vs_su2_lower_half_corroborate_and_converge_with_refinement")),
     SkipRule("tespy", "providers/tespy/tests/test_tespy_provider.py", "TESPy unavailable", _P, ("tespy",)),
+    # --- Big Rocks: provider adapters whose real-run qualification tests need the provider ----------
+    SkipRule("chrono", "providers/chrono/tests/test_chrono_adapter.py", "Project Chrono unavailable", _P, ("chrono",),
+             tests=("test_pendulum_period_matches_the_analytic_reference[sparse_qr]",
+                    "test_pendulum_period_matches_the_analytic_reference[sparse_lu]")),
+    SkipRule("openvsp", "providers/openvsp/tests/test_openvsp_adapter.py", "OpenVSP unavailable", _P, ("openvsp",),
+             tests=("test_real_openvsp_build_meshes_through_the_gmsh_adapter",)),
+    SkipRule("openradioss", "providers/openradioss/tests/test_openradioss_adapter.py", "OpenRadioss unavailable", _P,
+             ("openradioss",), tests=("test_real_impact_run_conserves_energy_before_contact",)),
+    SkipRule("geometry-slice-gmsh", "flagships/tests/test_geometry_slice.py", "Gmsh unavailable: {gmsh}", _P, ("gmsh",),
+             tests=("test_slice_runs_end_to_end_and_ends_at_insufficient_evidence",
+                    "test_every_result_changing_input_moves_the_bound_identities",
+                    "test_face_temperatures_outside_the_material_data_are_out_of_domain_even_when_the_mean_is_inside")),
     # --- core suites that exercise an optional mesh provider or dependency extra --------------
     SkipRule("spatial-gmsh", "tests/test_spatial_core.py", "Gmsh unavailable: {gmsh}", _P, ("gmsh",),
              tests=("test_gmsh_plate_is_real_exact_and_replayable",)),
     SkipRule("spatial-meshio", "tests/test_spatial_core.py", "meshio unavailable (the 'mesh' extra)", _E,
              ("meshio",), tests=("test_meshio_roundtrip_preserves_identity",
                                  "test_duplicate_facet_and_flattening_are_refused")),
+    SkipRule("foundations-geometry-gmsh", "tests/foundations/test_geometry_foundation.py", "Gmsh unavailable: {gmsh}", _P,
+             ("gmsh",), tests=(
+                 "test_gmsh_2d_plate_maps_every_declared_entity_and_is_deterministic",
+                 "test_gmsh_3d_cutout_and_interface_measures", "test_gmsh_refuses_rather_than_guessing",
+                 "test_region_material_map_follows_geometry_bindings",
+                 "test_imported_geometry_requires_and_checks_declared_units",
+                 "test_review_h1_swapped_or_foreign_mesh_binding_is_refused",
+                 "test_review_h2_flush_faces_of_other_bodies_and_internal_faces_are_not_boundaries",
+                 "test_review_m1_m6_thin_bodies_and_foreign_frames_are_refused")),
     SkipRule("pde-contracts-gmsh", "tests/test_pde_contracts.py", "{gmsh}", _P, ("gmsh",), tests=(
         "test_identity_changes_with_bc_and_mesh_and_refusals",
         "test_missing_or_unknown_material_property_refuses_before_solve")),

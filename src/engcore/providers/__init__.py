@@ -11,6 +11,7 @@ materials/data, units, time, state, provenance, uncertainty and admission.
   digest-bound inputs/outputs and stale/foreign-output refusal.
 * :mod:`.records` -- generic provider execution record (not evidence).
 * :mod:`.compare` -- declared cross-provider comparison (corroboration only).
+* :mod:`.health` -- NOT_INSTALLED / BROKEN / AVAILABLE / UNQUALIFIED / QUALIFIED, probe receipts.
 
 Provider-specific adapters live in separate distributions under ``providers/``;
 no provider name is branched on here.
@@ -28,6 +29,10 @@ from .process import (
     safe_relative,
 )
 from .records import ProviderExecutionRecord, ProviderRefusal, QuantitySeries, failed
+from .health import (
+    ProbeReceipt, ProviderHealth, ProviderHealthReport, ProviderQualification, assess_health, probe_executable,
+    solver_identity_from_probe, status_from_probe,
+)
 
 __all__ = [
     "ProviderUnavailable", "Availability", "ProviderCapability", "ProviderMode", "ProviderRegistry", "ProviderStatus",
@@ -36,4 +41,6 @@ __all__ = [
     "ProviderExecutionIdentity", "canonical_json", "content_digest",
     "GeneratedFile", "ProcessExecutionRecord", "ProcessInvocation", "ProcessWorkspace", "conda_environment_of", "minimal_environment", "safe_relative",
     "ProviderExecutionRecord", "ProviderRefusal", "QuantitySeries", "failed",
+    "ProbeReceipt", "ProviderHealth", "ProviderHealthReport", "ProviderQualification", "assess_health", "probe_executable",
+    "solver_identity_from_probe", "status_from_probe",
 ]

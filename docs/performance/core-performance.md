@@ -137,3 +137,30 @@ Unchanged at every step, which is the only acceptable outcome:
 | Battery | 389/400, FA 0, FR 11 | identical |
 | `cases_hard` digest | `2f0a48db…` | identical |
 | `cases_battery` digest | `32a7bff3…` | identical |
+
+## 9. Discovery performance (Roadmap V2 R8)
+
+`python -m tools.discovery_performance --candidates 20000` (this container, `.venv` CPython 3.12.13, one process, wall
+clock, seed 7; machine-dependent, not gated). Each tier is measured separately and reported as compact batch records
+(counts, seconds, digest of the candidate ids), never one record per candidate.
+
+| tier | what | items | rate |
+|---|---|---|---|
+| 0 | law-grammar admission + canonical structure digest + de-dup | 20 000 | ~33 000 /s |
+| 1 raw | analytic low-fidelity model alone | 20 000 | ~27 000 000 /s |
+| 1 | `fidelity_graph.screen` under an admitted link + ledger record (re-screen) | 20 000 | ~3 400 /s |
+| 1 audit | margin-stratified false-elimination audit (draw + record) | 963 | ~1 600 /s |
+| 2 | register + seal + authority release + judge | 2 000 | ~640 /s |
+| 3 | Blindfold campaign end to end (careful proposer) | 16 universes | ~33 universes/s, ~1 160 observe/s |
+
+- **Trust overhead**: ~292 µs per screened candidate. Against an analytic low-fidelity model this is a ~8 000x ratio (an
+  upper bound: the raw model is a multiplication); against any real low-fidelity solver it is negligible.
+- **Useful promotions per compute-hour**: 50.7 under a DECLARED 60 s high-fidelity cost per promoted or audited
+  candidate (9 607 useful of 10 396 promoted; the FORGE machinery time is measured, the high-fidelity time is not).
+- **False-elimination rate**: recorded audit 0.0 over 963 audits; ground truth of the synthetic population 0.0 (the
+  link's measured discrepancy envelope makes elimination conservative here).
+- **Scaling finding**: tier 2 seal time grows with the number of prior authority releases (the novel-prediction check
+  scans them); an index by (source, observable, unit) is the obvious fix when campaigns grow (DEFERRED).
+- Provider status (`engcore.claims.discovery_providers.PROVIDER_STATUS`): PySINDy 2.1.0, BoTorch 0.17.2 and Dakota 6.16
+  EXECUTED in their conda-forge environments (provider-gated tests); Ax and PySR NOT_INSTALLED. Executing is not
+  qualifying: providers own algorithms, FORGE owns authority (proposals and suggestions only).

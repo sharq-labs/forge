@@ -10,6 +10,8 @@ wrong, and nothing in the calibration layer can tell you which happened.
 
 from __future__ import annotations
 
+import copy
+import functools
 import math
 
 import numpy as np
@@ -61,7 +63,15 @@ BY_CONDITION = {f"T{i}": Quantity(t, KELVIN) for i, t in enumerate(ALL_T)}
 HELD_IDS = tuple(f"T{i}" for i in range(len(CAL_T), len(ALL_T)))
 
 
+@functools.lru_cache(maxsize=None)
 def build(seed=20260912, curvature=0.0, grid=21, span=6.0):
+    """The seeded split and its grid posterior, built once per distinct argument set.
+
+    Both results are frozen records with read-only arrays and the construction
+    is deterministic, so a test reusing another test's build sees exactly what
+    it would have rebuilt; eight tests ask for the default build. A test that
+    needs to tamper with one (`object.__setattr__`) must copy it first.
+    """
     source = synthesize_tcr_observations(
         TRUTH, ALL_T, sigma=SIGMA, dataset_id="tcr.source", seed=seed,
         curvature_per_k2=curvature,
@@ -233,7 +243,10 @@ def test_scoring_the_calibration_half_as_held_out_is_refused():
 
 def test_a_posterior_from_a_foreign_dataset_cannot_be_scored():
     split, _ = build()
-    _, other_posterior = build(seed=999)
+    # A shallow copy is tampered, never the build itself: `build` is memoized,
+    # and rebinding the shared object would leak the forged dataset id into any
+    # later test in this process that asks for seed 999.
+    other_posterior = copy.copy(build(seed=999)[1])
     foreign = ObservationSplit(
         calibration=split.calibration,
         held_out=split.held_out,

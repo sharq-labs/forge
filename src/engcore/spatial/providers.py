@@ -28,6 +28,16 @@ def gmsh_available() -> tuple[bool, str]:
         return False, f"{type(exc).__name__}: {exc}"
 
 
+def gmsh_module():
+    """The Gmsh API module, or ProviderUnavailable.  The one lazy entry point other spatial modules use."""
+    ok, detail = gmsh_available()
+    if not ok:
+        raise ProviderUnavailable(f"Gmsh cannot run here: {detail}")
+    import gmsh
+
+    return gmsh
+
+
 def gmsh_two_region_plate(*, length: float, height: float, split: float, size: float, frame_id: str = "plate-xy") -> SpatialMesh:
     """A rectangle [0,length]x[0,height] (metres) split at x=split into two cell regions.
 

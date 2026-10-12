@@ -1,0 +1,10 @@
+[project]
+name = "forge-openvsp-provider"
+version = "0.1.0"
+description = "OpenVSP parametric aerospace geometry provider for Forge (crafty). Builds geometry; holds no scientific authority."
+requires-python = ">=3.10"
+# The `openvsp` Python API ships with the OpenVSP distribution (openvsp.org); it is not a PyPI dependency.
+dependencies = ["crafty"]
+
+[tool.setuptools]
+packages = ["forge_openvsp"]
