@@ -2080,3 +2080,12 @@ fast-forwarded.
 - `git diff --check` against the full planning diff reports exactly two archive-only trailing-whitespace findings inherited byte-exact from the historical Master Plan; no live-document whitespace findings. The incremental cleanup diff was clean where applicable. Those historical whitespace lines were not removed or normalized; archive byte integrity is intentional.
 - ARCHIVE_VERIFY: PASS (Master Plan body, ACTIVE_PLAN body, PERFORMANCE.md lines 26–53 and 126–189, SHA-256 byte match).
 - FAST / Full Local Assurance: NOT RUN.
+
+## 2026-10-12 A1.5 manufacturer-rating applicability
+
+- Added `engcore.scientific.knowledge.operating_rating` on HEAD `8b028dcf`. No Mind, no catalog search, no multirotor redesign.
+- `python -m pytest tests/scientific/knowledge/test_operating_rating.py -q --tb=line` -> 15 passed in 4.61s. Python 3.11.17, venv `/home/dev_kaeem/forge-g0-repair-venv`.
+- Seal rerun of the same command -> 15 passed in 4.41s.
+- `python tools/forge_check.py --regression` -> 225 passed in 75.73s. No digest or certificate mismatch was reported by this gate. Pins were not republished.
+- Frozen packet `a1-packet-c.json` SHA-256 remained `e1df8cefcf1ae85e7633aca6db084b635b9ffa6703363b593e64dc766db0ac30` before and after the seal rerun. Mission status `insufficient_evidence`. Component statuses: kde-4012, tmotor-mn4010-kv370, and mad-5008-400-eee `outside_duration_envelope`; mad-5010-240-eee `operating_point_not_established`. Not a physical-infeasibility claim.
+- FAST / recertification: NOT RUN.
