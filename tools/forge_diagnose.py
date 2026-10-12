@@ -98,8 +98,9 @@ def main(argv: list[str] | None = None) -> int:
 
     output = {
         **report.to_dict(),
-        # What offline verification can say about the record diagnosed. VERIFIED or SCIENTIFICALLY_REVALIDATED
-        # is never "the computation happened", and anything else needs a replay before the verdict is relied on.
+        # What offline verification can say about the record diagnosed. Offline verification never yields VERIFIED;
+        # SCIENTIFICALLY_REVALIDATED is never "the computation happened", and anything else needs a replay before the
+        # verdict is relied on.
         "offline_verification": standing,
     }
     text = json.dumps(output, sort_keys=True, indent=2) + "\n"
