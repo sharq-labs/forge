@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from claims_support import et_claim, et_inputs, t3_claim
@@ -130,6 +132,28 @@ def test_a_non_boundary_parameter_reaches_the_search_limit_and_claims_nothing_be
     assert envelope.to_dict()["report_digest"] == envelope.digest
 
 
+def test_the_envelope_records_that_it_checks_only_its_probes(envelope) -> None:
+    assert any("failure region narrower than the probe spacing can be missed" in a for a in envelope.assumptions)
+
+
+@pytest.mark.parametrize("bad", [dict(resolution=-1), dict(resolution=True), dict(resolution=2.5), dict(parameters=("stages[0].body.duration",))])
+def test_robustness_refuses_what_no_declaration_supports_instead_of_dropping_it(et_supported, registry, bad) -> None:
+    with pytest.raises(SensitivityError):
+        robustness_envelope(et_supported, registry, **bad)
+
+
+def test_bisection_stops_at_the_input_resolution_instead_of_rerunning_one_input(et_supported, registry) -> None:
+    side = robustness_envelope(et_supported, registry, parameters=(AMB,), resolution=500).parameters[AMB]["increase"]
+    inputs = [e["input"] for e in side["evaluations"]]
+    assert len(inputs) == len(set(inputs))  # no physical state is run twice
+    assert len(inputs) < 4 + 70  # the float bracket collapses long before 500 bisections
+    assert side["kind"] == BoundaryKind.FAILS_BEYOND.value
+    holds, fails = side["last_holding"], side["first_not_holding"]
+    assert holds < fails and math.nextafter(holds, math.inf) >= fails - 2 * math.ulp(fails)
+    by_input = {e["input"]: e["state"] for e in side["evaluations"]}
+    assert by_input[holds] == "holds" and by_input[fails] == "fails"
+
+
 def test_there_is_no_envelope_around_a_claim_that_is_not_supported(registry) -> None:
     contradicted = assess_claim(et_claim(target=type(et_claim().target)(value=Quantity(310.0, K))), registry)
     env = robustness_envelope(contradicted, registry)
@@ -185,6 +209,66 @@ def test_nothing_weak_or_undeclared_can_weaken_a_claim(registry, et_supported) -
     # Registry growth should increase challenge coverage, not make this test
     # demand that one historical alternative remain the only candidate.
     assert not any(c.weakened for c in alternatives)
+
+
+def test_a_declared_range_that_cannot_be_stressed_is_reported_not_skipped(registry) -> None:
+    duration = et_inputs()["stages[0].body.duration"]
+    spec = InputUncertainty((InputDistribution("stages[0].body.duration", "uniform", Quantity(duration.magnitude * 0.9, duration.units),
+                                               Quantity(duration.magnitude * 1.1, duration.units), "declared run length"),), 93)
+    report = challenge_claim(assess_claim(et_claim(input_uncertainty=spec), registry), registry)
+    (stress,) = [c for c in report.challenges if c.kind is ChallengeKind.VALIDITY_BOUNDARY_STRESS]
+    assert stress.target == "stages[0].body.duration"
+    assert stress.result is ChallengeResult.NOT_ATTEMPTED and not stress.attempted and not stress.weakened
+    assert "not perturbable" in stress.detail
+
+
+def test_a_range_declared_in_another_unit_is_stressed_in_the_stated_unit(registry) -> None:
+    # 260 K .. 340 K written in degC around the stated 300 K: support fails at ~336 K, inside the range,
+    # and the domain end at ~240 K lies outside it.
+    spec = InputUncertainty((InputDistribution(AMB, "uniform", Quantity(260.0 - 273.15, "degree_Celsius"),
+                                               Quantity(340.0 - 273.15, "degree_Celsius"), "declared operating range"),), 93)
+    report = challenge_claim(assess_claim(et_claim(input_uncertainty=spec), registry), registry)
+    (stress,) = [c for c in report.challenges if c.kind is ChallengeKind.VALIDITY_BOUNDARY_STRESS]
+    assert stress.result is ChallengeResult.WEAKENED
+    assert "increase: fails_beyond" in stress.detail and "decrease" not in stress.detail
+    assert "[260, 340]" in stress.detail
+
+
+def test_a_range_the_search_cannot_reach_is_inconclusive_not_survived(registry) -> None:
+    tcr = et_inputs()[TCR]
+    spec = InputUncertainty((InputDistribution(TCR, "uniform", Quantity(tcr.magnitude * 0.01, tcr.units),
+                                               Quantity(tcr.magnitude * 1.99, tcr.units), "a range wider than the 95 % search cap"),), 93)
+    report = challenge_claim(assess_claim(et_claim(input_uncertainty=spec), registry), registry)
+    (stress,) = [c for c in report.challenges if c.kind is ChallengeKind.VALIDITY_BOUNDARY_STRESS]
+    # The claim held on every probe, but the probes stop at 95 % of the nominal: both edges stay unexamined.
+    assert stress.result is ChallengeResult.INCONCLUSIVE
+    assert stress.attempted and not stress.weakened
+    assert "decrease: shown to hold only to" in stress.detail and "increase: shown to hold only to" in stress.detail
+
+
+def _side(kind, last, beyond=None):
+    return {"kind": kind.value, "last_holding": last, "first_not_holding": beyond}
+
+
+def test_a_failure_at_the_range_edge_itself_is_inside_not_unreached() -> None:
+    from engcore.claims.analysis.challenge import _side_against_range
+
+    edge_probe = math.nextafter(260.0, 0.0)  # the edge, one rounding below
+    found = _side_against_range("decrease", _side(BoundaryKind.FAILS_BEYOND, 261.0, edge_probe), 300.0, 260.0, 340.0)
+    assert found is not None and found[0] == "inside"
+    assert _side_against_range("increase", _side(BoundaryKind.SEARCH_LIMIT, math.nextafter(340.0, 0.0)), 300.0, 260.0, 340.0) is None
+    found = _side_against_range("increase", _side(BoundaryKind.FAILS_BEYOND, 339.0, 341.0), 300.0, 260.0, 340.0)
+    assert found is not None and found[0] == "unreached"  # the bracket straddles the edge
+
+
+def test_a_negative_stated_value_is_judged_against_the_edge_its_side_moves_toward() -> None:
+    from engcore.claims.analysis.challenge import _side_against_range
+
+    # x0 = -10 scaled down by 20 % is -8: "decrease" moves toward hi.
+    assert _side_against_range("decrease", _side(BoundaryKind.SEARCH_LIMIT, -8.0), -10.0, -12.0, -8.0) is None
+    assert _side_against_range("increase", _side(BoundaryKind.SEARCH_LIMIT, -12.0), -10.0, -12.0, -8.0) is None
+    found = _side_against_range("decrease", _side(BoundaryKind.FAILS_BEYOND, -9.5, -9.0), -10.0, -12.0, -8.0)
+    assert found is not None and found[0] == "inside"
 
 
 def _measure(value, lo, hi):

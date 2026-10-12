@@ -2585,3 +2585,53 @@ Commands (this session, Linux container, 4 cores, CPython 3.12.13 `.venv`, shall
 - `python tools/forge_check.py --changed` -> 225 passed; `--regression` -> 225 passed.
 - Review: the branch's own read-only forge-scientific-review (2026-10-06, above) PASS; no code changed in this landing.
 - Hardened recertification: NOT RUN (owner-run, OD-3; `tests/domains/...` is `certified:harness`). SCIENTIFIC / FULL: NOT RUN.
+
+## 2026-10-12 Engineering / performance / scientific-integrity program (owner-requested, local only)
+
+Base `origin/main` `2d0fa6c3`; branch `perf/engineering-program-2026-10-12` in worktree `D:/forge-perf`; commits
+`088a8c8c`, `80a3dbe2` (+ this docs commit). Not pushed, not merged, not recertified. Report:
+`docs/audits/ENGINEERING_PROGRAM_2026-10-12.md`.
+
+Fixed (each with tests that fail on `2d0fa6c3`):
+- `claims/selection.py`: a candidate with no active model is REJECTED (`VALIDITY_UNASSESSABLE`); it was SELECTED as
+  sole survivor. No production capability changes selection (all have always-active models).
+- `claims/analysis/sensitivity.py::robustness_envelope`: `resolution` validated; non-perturbable `parameters` refused
+  (was silently dropped); bisection stops at the input's float resolution (`resolution=500`: 1,003 solves with 102
+  distinct inputs -> 102 solves, 8.43 s -> ~1.1 s, identical boundaries; default resolution unchanged); records the
+  probe-spacing assumption.
+- `claims/analysis/challenge.py::_validity_stress`: NOT_ATTEMPTED instead of a silent skip; range edges compared in
+  the stated unit (was raw degC vs K magnitudes); an edge not reached by a holding probe -> INCONCLUSIVE (was a false
+  SURVIVED); edge-exact failure counts as inside; negative stated values judged against the right edge.
+- `claims/analysis/impact.py`: UQ study trust registries are graph nodes and drift-detected (latent: no production
+  capability declares ALEATORIC / MODEL_FORM).
+- `providers/process.py`: Windows timeout terminates the process tree (`taskkill /T /F`); a 2 s timeout used to return
+  after 60 s when a grandchild held the pipes.
+- `tools/forge_check.py --changed`: working tree included (`--committed-only` opts out), renames/deletions reported,
+  changed tests run, unclassified `src/engcore/**` and config files select the whole pack. **Certification-pinned
+  file: needs the owner-run hardened recertification (OD-3).** `--regression` behaviour unchanged.
+
+Measured and deliberately not built: parallel parameter UQ (93 ET samples: sequential 0.95 s; ThreadPool(4) 0.92-0.97 s,
+GIL; one Windows process worker cold start 1.8-2.0 s); parallel refinement (4 solves, ~75 ms).
+
+Commands (Windows 11, CPython 3.14.2 `.venv`, `TMPDIR`/`--basetemp` on D:, `PYTHONPATH='D:\forge-perf\src;D:\forge-perf'`):
+- `python -m pytest -m "not expensive" -q -n 4 -p no:cacheprovider` on pristine `2d0fa6c3` (worktree `D:/forge-perf-base`)
+  -> 151 failed, 9644 passed, 185 skipped, 21 errors (216 s).
+- same on `088a8c8c` -> 151 failed, 9674 passed, 185 skipped, 21 errors (204 s). Sorted FAILED/ERROR node-id sets
+  identical (`comm` empty both ways); +30 passes are the new tests. Lists: `D:/forge-perf-logs/fast_{base,branch}.failed`.
+  The common set is Windows/3.14 environment (test_mutation_workspace, test_local_assurance source-gate,
+  test_mutation_startup, test_formal_xdist, foundations escrow/authority subprocess tests, flagships battery blind
+  readiness dry run) plus known drift (test_core_certificate, freeze v1/v3/v4 manifests, batch56 r69).
+- on `80a3dbe2` (challenge follow-up): `python -m pytest -q -n 4 tests/claims` -> 694 passed.
+- `python -m pytest -q tests/test_forge_check.py` -> 30 passed; `tests/test_provider_boundary.py` -> 29 passed, 1 skipped
+  (pre-existing symlink-privilege skip).
+- `python tools/forge_check.py --changed --base origin/main --workers 4` on the final tree -> 328 passed, 1 skipped (14.3 s); selected the whole pack (`providers/process.py`, `tools/forge_check.py` unclassified).
+- SCIENTIFIC, FULL, hardened recertification, Python 3.11/3.12: NOT RUN.
+
+Reviews (read-only forge-scientific-reviewer): selection audit (D1 fixed; D2 NOT_ASSESSABLE invisible to the
+compiler and D3 array-section mismatch recorded, both fail closed); full diff PASS (M1 = certification pin; L1
+Windows orphaned-descendant residual recorded; L3 false SURVIVED fixed); challenge-fix review: findings 2-3 fixed,
+re-review PASS; finding 1 (`ChallengeReport.status` ignores INCONCLUSIVE, pre-existing) left as an owner decision
+because it changes a serialized status vocabulary.
+
+Failed approach: a bash heredoc for the first `forge_check.py` patch broke on quoting and wrote nothing; patch scripts
+written with the editor tool worked.

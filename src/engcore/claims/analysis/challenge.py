@@ -31,6 +31,7 @@ challenge INCONCLUSIVE or NOT_ATTEMPTED, never a weakening.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Any, Mapping
@@ -41,7 +42,7 @@ from .._records import tagged_digest
 from ..capabilities import CapabilityRegistry
 from ..contract import UncertaintyDemand
 from ..parameter_uq import DistributionKind
-from .sensitivity import BoundaryKind, robustness_envelope
+from .sensitivity import BoundaryKind, SensitivityError, robustness_envelope
 from ..uq_studies import run_inputs_for, run_variant
 
 _TAG = "crafty.claims.challenge/1"
@@ -238,37 +239,84 @@ def _guard_band(assessment, registry) -> list[Challenge]:
                       f"with the quantifiable channels applied the claim is {record['verdict']} (comparison {outcome})")]
 
 
+#: Relative slack for comparing an envelope input with a range edge: the probe at the
+#: edge is ``x0 * (1 +/- limit)``, which reproduces the edge only to rounding.
+_EDGE_RTOL = 1e-12
+
+
+def _side_against_range(direction: str, side: Mapping[str, Any], x0: float, lo: float, hi: float) -> tuple[str, str] | None:
+    """Judge one envelope side against the declared range ``[lo, hi]`` (stated unit).
+
+    ``("inside", why)`` when support ends (failure or domain end) within the range,
+    an edge included; ``("unreached", why)`` when the last holding probe stops short
+    of the edge -- a capped search or a boundary bracket straddling the edge leaves
+    the rest of the range unexamined, which is not "holds across"; ``None`` when the
+    claim held at the edge. The envelope's ``decrease`` side scales the stated value
+    down, which moves toward ``hi`` when the stated value is negative.
+    """
+    toward_lower = (direction == "decrease") == (x0 > 0)
+    edge = lo if toward_lower else hi
+
+    def at_edge(value: float) -> bool:
+        return math.isclose(value, edge, rel_tol=_EDGE_RTOL, abs_tol=0.0)
+
+    beyond = side["first_not_holding"]
+    if side["kind"] != BoundaryKind.SEARCH_LIMIT.value and beyond is not None:
+        if (beyond >= edge if toward_lower else beyond <= edge) or at_edge(beyond):
+            return "inside", f"{direction}: {side['kind']} at {beyond:g}"
+    last = side["last_holding"]
+    if (last <= edge if toward_lower else last >= edge) or at_edge(last):
+        return None
+    return "unreached", f"{direction}: shown to hold only to {last:g}, short of {edge:g}"
+
+
 def _validity_stress(assessment, registry) -> list[Challenge]:
     spec = assessment.claim.input_uncertainty
     if spec is None or assessment.verdict.value != "supported":
         return [Challenge(ChallengeKind.VALIDITY_BOUNDARY_STRESS, "inputs", False, ChallengeResult.NOT_ATTEMPTED, False, (),
                           "stress needs a supported claim and declared input ranges to stress within")]
     out = []
+    stated = run_inputs_for(assessment.claim, registry.get(assessment.plan.capability_id))
     for dist in spec.distributions:
         if dist.kind is DistributionKind.UNIFORM:
-            lo, hi = dist.first.magnitude, dist.second.magnitude
+            lo_q, hi_q = dist.first, dist.second
         else:
             sigma = dist.second.magnitude_as_spread_in(dist.first.units)
-            lo, hi = dist.first.magnitude - 3.0 * sigma, dist.first.magnitude + 3.0 * sigma
-        nominal = dist.center.magnitude
-        limit = min(0.95, max(abs(hi - nominal), abs(nominal - lo)) / abs(nominal)) if nominal else 0.0
+            lo_q = Quantity(dist.first.magnitude - 3.0 * sigma, dist.first.units)
+            hi_q = Quantity(dist.first.magnitude + 3.0 * sigma, dist.first.units)
+        # The envelope searches around the stated value, in the stated unit; the
+        # range edges are compared there, never as raw magnitudes of another unit.
+        x0_q = stated.get(dist.path)
+        if not isinstance(x0_q, Quantity):
+            out.append(Challenge(ChallengeKind.VALIDITY_BOUNDARY_STRESS, dist.path, False, ChallengeResult.NOT_ATTEMPTED, False, (),
+                                 "the claim states no quantity at this path to stress around"))
+            continue
+        x0 = x0_q.magnitude
+        lo, hi = lo_q.to(x0_q.units).magnitude, hi_q.to(x0_q.units).magnitude
+        limit = min(0.95, max(abs(hi - x0), abs(x0 - lo)) / abs(x0)) if x0 else 0.0
         if limit <= 0.0:
+            out.append(Challenge(ChallengeKind.VALIDITY_BOUNDARY_STRESS, dist.path, False, ChallengeResult.NOT_ATTEMPTED, False, (),
+                                 "a zero nominal has no relative range to stress"))
             continue
-        envelope = robustness_envelope(assessment, registry, search_limit=limit, parameters=(dist.path,))
-        entry = envelope.parameters.get(dist.path)
-        if entry is None:
+        try:
+            envelope = robustness_envelope(assessment, registry, search_limit=limit, parameters=(dist.path,))
+        except SensitivityError as exc:
+            out.append(Challenge(ChallengeKind.VALIDITY_BOUNDARY_STRESS, dist.path, False, ChallengeResult.NOT_ATTEMPTED, False, (),
+                                 f"the declared range was not stressed: {exc}"))
             continue
+        entry = envelope.parameters[dist.path]
         refs = tuple(e["run_id"] for d in ("decrease", "increase") for e in entry[d]["evaluations"])
-        inside = []
-        for direction, edge in (("decrease", lo), ("increase", hi)):
-            side = entry[direction]
-            if side["kind"] != BoundaryKind.SEARCH_LIMIT.value and side["first_not_holding"] is not None:
-                beyond = side["first_not_holding"]
-                if (direction == "decrease" and beyond >= edge) or (direction == "increase" and beyond <= edge):
-                    inside.append(f"{direction}: {side['kind']} at {beyond:g}")
+        inside, unreached = [], []
+        for direction in ("decrease", "increase"):
+            found = _side_against_range(direction, entry[direction], x0, lo, hi)
+            if found is not None:
+                (inside if found[0] == "inside" else unreached).append(found[1])
         if inside:
             out.append(Challenge(ChallengeKind.VALIDITY_BOUNDARY_STRESS, dist.path, True, ChallengeResult.WEAKENED, True, refs,
                                  f"support ends inside the declared range [{lo:g}, {hi:g}]: {inside}"))
+        elif unreached:
+            out.append(Challenge(ChallengeKind.VALIDITY_BOUNDARY_STRESS, dist.path, True, ChallengeResult.INCONCLUSIVE, False, refs,
+                                 f"the declared range [{lo:g}, {hi:g}] was not stressed to its edges: {unreached}"))
         else:
             out.append(Challenge(ChallengeKind.VALIDITY_BOUNDARY_STRESS, dist.path, True, ChallengeResult.SURVIVED, False, refs,
                                  f"support holds across the declared range [{lo:g}, {hi:g}]"))

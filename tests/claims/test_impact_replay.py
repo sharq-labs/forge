@@ -183,6 +183,34 @@ def test_a_changed_external_trust_registry_is_detected_and_impacts_the_bound_ass
     assert [item["assessment"] for item in affected] == [record_digest(record)]
 
 
+@pytest.mark.parametrize(
+    "field, keyword, production",
+    [
+        ("empirical_trust_registry_digest", "empirical_observation_trust", "engcore.claims.empirical_uq_trust:PRODUCTION_EMPIRICAL_OBSERVATIONS"),
+        ("qualification_trust_registry_digest", "model_form_qualification_trust", "engcore.claims.model_form_trust:PRODUCTION_MODEL_FORM_QUALIFICATIONS"),
+    ],
+)
+def test_a_changed_uq_study_trust_registry_is_detected_and_impacts_the_bound_assessment(corpus, registry, field, keyword, production) -> None:
+    import importlib
+
+    module, name = production.split(":")
+    current = getattr(importlib.import_module(module), name)
+    record = corpus["t3"].to_dict()
+    record["uncertainty_studies"] = [{"channel": "aleatoric", field: "a" * 64}]
+    unrelated = corpus["et"].to_dict()
+
+    class Moved:
+        digest = "b" * 64
+
+    changes = detect_changes([record, unrelated], registry, **{keyword: Moved()})
+    assert [(c.kind, c.key) for c in changes] == [(ChangeKind.TRUST_REGISTRY, "a" * 64)]
+    affected = impact_of(DecisionGraph([record, unrelated]), changes).to_dict()["requires_reassessment"]
+    assert [item["assessment"] for item in affected] == [record_digest(record)]
+
+    record["uncertainty_studies"] = [{"channel": "aleatoric", field: current.digest}]
+    assert detect_changes([record], registry) == ()
+
+
 # ---------------------------------------------------------------------------
 # Replay / reproducibility
 # ---------------------------------------------------------------------------
