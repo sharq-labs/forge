@@ -223,12 +223,20 @@ def test_safe_auto_prints_its_choice_and_reason_and_builds_that_command(monkeypa
     from tools import local_workers
 
     monkeypatch.setenv("FORGE_IMPACT_CACHE", "off")  # a test never writes the developer cache
-    monkeypatch.setattr(local_workers, "choose", lambda: (6, "stubbed reason"))
+    monkeypatch.setattr(local_workers, "choose", lambda per_worker_mb: (6, f"stubbed reason {per_worker_mb}"))
     monkeypatch.setattr(forge_check, "changed_files", lambda base, working_tree: [])
     monkeypatch.setattr(forge_check, "_report_impact", lambda paths, with_expensive: ([], [], []))  # no graph build needed
     assert forge_check.main(["--changed", "--workers", "safe-auto", "--dry-run"]) == 0
     out = capsys.readouterr().out
-    assert "safe-auto selected 6 workers: stubbed reason" in out
+    assert "safe-auto selected 6 workers: stubbed reason 650" in out
     assert " -n 6 --dist loadfile " in out
     assert forge_check.main(["--changed", "--workers", "3", "--dry-run"]) == 0
     assert " -n 3 --dist loadfile " in capsys.readouterr().out  # an explicit count wins, nothing chosen
+
+
+def test_safe_auto_budgets_more_memory_per_worker_when_expensive_tests_will_run() -> None:
+    from tools import local_workers
+
+    light = local_workers.choose(24, 8_000)[0]
+    heavy = local_workers.choose(24, 8_000, per_worker_mb=local_workers.MB_PER_WORKER_EXPENSIVE)[0]
+    assert (light, heavy) == (8, 4) and heavy <= light

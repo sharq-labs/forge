@@ -15,6 +15,9 @@ process tree sampled every 0.5 s):
 * the largest single process reached 1.2 - 1.3 GB, and ``-n auto`` (24 workers)
   was recorded exhausting memory (``MemoryError`` in ``json.encoder``);
   :data:`HEADROOM_MB` keeps one such worker's spike plus the rest of the machine.
+* SCIENTIFIC (``-m "not campaign"``, CI deselects, ``-n 4``): peak 3,874 MB for the tree (970 MB per
+  worker), the largest single process 2.4 - 2.7 GB; :data:`MB_PER_WORKER_EXPENSIVE` is used when
+  ``--with-expensive`` will run that tier's tests.
 * ``-n 8`` is the largest count measured (scaling 1 / 2 / 4 / 6 / 8: 589 / 303 /
   177 - 196 / 151 / 140 s before the test-loop round); 12 was never measured, so
   it is not offered.
@@ -26,6 +29,7 @@ import os
 
 LADDER = (8, 6, 4, 2, 1)
 MB_PER_WORKER = 650
+MB_PER_WORKER_EXPENSIVE = 1000
 HEADROOM_MB = 2048
 FALLBACK = 4
 
@@ -42,7 +46,8 @@ def _available_mb() -> int | None:
         return None
 
 
-def choose(logical_cpus: int | None = None, available_mb: int | None = -1) -> tuple[int, str]:
+def choose(logical_cpus: int | None = None, available_mb: int | None = -1, *,
+           per_worker_mb: int = MB_PER_WORKER) -> tuple[int, str]:
     """``(workers, reason)``; 0 means serial. ``available_mb=-1`` reads the machine; ``None`` means unknown."""
     cpus = os.cpu_count() if logical_cpus is None else logical_cpus
     cpus = max(1, int(cpus or 1))
@@ -54,10 +59,10 @@ def choose(logical_cpus: int | None = None, available_mb: int | None = -1) -> tu
         n = min(FALLBACK, by_cpu)
         return n, f"{cpus} logical CPUs, available memory unknown: the CI-compatible {n}"
     for n in LADDER:
-        if n <= by_cpu and memory >= n * MB_PER_WORKER + HEADROOM_MB:
+        if n <= by_cpu and memory >= n * per_worker_mb + HEADROOM_MB:
             limit = ("the largest measured count" if n == LADDER[0] else "limited by CPU" if n == by_cpu
                      else "limited by available memory")
             return n, (f"{cpus} logical CPUs, {memory / 1024:.1f} GB available "
-                       f"(needs {n} x {MB_PER_WORKER} MB + {HEADROOM_MB} MB headroom): {limit}")
+                       f"(needs {n} x {per_worker_mb} MB + {HEADROOM_MB} MB headroom): {limit}")
     return 0, (f"{cpus} logical CPUs, {memory / 1024:.1f} GB available: below the "
-               f"{MB_PER_WORKER + HEADROOM_MB} MB one worker needs, running serially (no xdist)")
+               f"{per_worker_mb + HEADROOM_MB} MB one worker needs, running serially (no xdist)")

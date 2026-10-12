@@ -297,7 +297,8 @@ def main(argv: list[str] | None = None) -> int:
             sys.path.insert(0, str(ROOT))
         from tools import local_workers
 
-        args.workers, reason = local_workers.choose()
+        per_worker = local_workers.MB_PER_WORKER_EXPENSIVE if args.with_expensive else local_workers.MB_PER_WORKER
+        args.workers, reason = local_workers.choose(per_worker_mb=per_worker)
         print(f"safe-auto selected {args.workers} workers: {reason}")
     elif args.workers < 0:
         parser.error("--workers must be >= 0")
