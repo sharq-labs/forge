@@ -33,6 +33,7 @@ from engcore.sria.uncertainty import UncertaintyChannel as UC
 from engcore.system_runtime.records import ApplicabilityReport
 from tests.route_declarations_for_tests import earned_consensus, route, route_declarations_for_tests  # noqa: F401 - autouse
 from engcore.scientific.units.quantity import Quantity
+from tests.authority_helpers import World as AuthorityWorld
 from tests.test_audit_consensus_level_issuers import AT, _oracle_check
 
 CTX = hashlib.sha256(b"decision-context").hexdigest()
@@ -128,11 +129,33 @@ def req(risk=RiskClass.HIGH):
     return DecisionRequirement("decision-1", CTX, risk)
 
 
+def _leaf_subjects(claim):
+    return [claim.subject_id] if not claim.children else [s for ch in claim.children for s in _leaf_subjects(ch)]
+
+
+def attested(claim, g, ctx=CTX, **records):
+    """A TEST authority ledger in which an issuer of the matching role attested every supplied record about every
+    subject's result (the issuer-bound path ``assess_credibility(authority=...)`` admits records through)."""
+    world = AuthorityWorld()
+    digests = {n.evidence_id: n.content_digest for n in g.nodes}
+    for sid in sorted(set(_leaf_subjects(claim))):
+        for group in ("validation_checks", "applicability_reports", "uncertainty_entries", "red_team"):
+            for rec in records.get(group, ()):
+                try:
+                    world.attest(rec, digests[sid], ctx)
+                except Exception:           # noqa: BLE001 - a record that cannot be attested (tampered, non-finite) stays unattested
+                    pass
+    return world
+
+
 def assess(w, claim, g, risk=RiskClass.HIGH, **kw):
     kw.setdefault("trusted_sources", w["pins"])
     kw.setdefault("validation_checks", w["checks"])
     kw.setdefault("applicability_reports", w["reports"])
     kw.setdefault("uncertainty_entries", w["entries"])
+    if "authority" not in kw:
+        kw.update(attested(claim, g, **{k: kw[k] for k in ("validation_checks", "applicability_reports",
+                                                            "uncertainty_entries", "red_team") if k in kw}).assess_kwargs())
     return assess_credibility(claim, g, req(risk), **kw)
 
 
@@ -140,7 +163,7 @@ def test_the_projection_is_complete_and_a_fully_evidenced_claim_meets_high(world
     assert set(VALIDATION_LEVEL_PROJECTION) == set(VL)
     assert VALIDATION_LEVEL_PROJECTION[VL.CROSS_SOLVER_VALIDATED][0] is Factor.INDEPENDENT_ROUTES      # R-39: not validation
     rep = assess(world, leaf(), graph(world))
-    assert rep.requirement_met and rep.dominant_blocking_gap is None, rep.notes
+    assert rep.requirement_met_in_test_mode and rep.dominant_blocking_gap is None, rep.notes
     d = rep.to_dict()
     assert d["policy_digest"] and d["required"] and d["context_digest"] == CTX and d["claim_structure_digest"]
     with pytest.raises(CredibilityRefused, match="never asserted"):
@@ -207,7 +230,7 @@ def test_one_record_one_factor_is_decided_over_all_citations_and_removal_never_h
     with_mms = assess(world, leaf(claims), graph(world), RiskClass.LOW)
     without = assess(world, leaf(claims), graph(world, drop=("mms",)), RiskClass.LOW)
     assert with_mms.vector.level(Factor.NUMERICAL_UQ) == without.vector.level(Factor.NUMERICAL_UQ) == UNKNOWN
-    assert not with_mms.requirement_met and not without.requirement_met
+    assert not with_mms.requirement_met_in_test_mode and not without.requirement_met_in_test_mode
 
 
 def test_independence_must_be_shown_positively(world):
@@ -228,10 +251,10 @@ def test_independence_must_be_shown_positively(world):
 
 def test_defeaters_block_and_only_a_newer_version_of_the_same_source_closes_one(world):    # H-C2
     contradicted = assess(world, leaf(), graph(world, EvidenceEdge("bench", "exp", R.CONTRADICTS)))
-    assert not contradicted.requirement_met and contradicted.dominant_blocking_gap["kind"] == "defeater"
+    assert not contradicted.requirement_met_in_test_mode and contradicted.dominant_blocking_gap["kind"] == "defeater"
     patch = dict(world["nodes"], patch=node("patch", A.SIMULATION, provenance=False))
     g = graph(world, EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge("patch", "bench", R.SUPERSEDES), nodes=patch)
-    assert not assess(world, leaf(), g).requirement_met                                 # a caller-made node cannot close it
+    assert not assess(world, leaf(), g).requirement_met_in_test_mode                                 # a caller-made node cannot close it
     b = world["nodes"]["bench"]
     newer = node("bench_v2", A.REFERENCE_DATA, issuer=b.provenance.issuer, source_id=b.provenance.source_id, version="2")
     pins = TrustedSourceRegistry(tuple(p for p in world["pins"].pins if p.source_id != b.provenance.source_id)
@@ -241,7 +264,7 @@ def test_defeaters_block_and_only_a_newer_version_of_the_same_source_closes_one(
     closed = assess(world, leaf(), g2, trusted_sources=pins)
     assert not any(d.kind == "contradiction" for d in closed.open_defeaters) and any("closed by" in x for x in closed.notes)
     rumour = assess(world, leaf(), graph(world, EvidenceEdge("rumour", "exp", R.CONTRADICTS)))
-    assert rumour.requirement_met and any("sub-bar contradiction" in x for x in rumour.notes)
+    assert rumour.requirement_met_in_test_mode and any("sub-bar contradiction" in x for x in rumour.notes)
     with pytest.raises(CredibilityRefused, match="kind"):
         Defeater("d", "vibes", (), "x")
 
@@ -249,7 +272,7 @@ def test_defeaters_block_and_only_a_newer_version_of_the_same_source_closes_one(
 def test_an_outside_domain_finding_is_a_defeater_and_dominates(world):
     claims = [FactorClaim(Factor.APPLICABILITY, 0, ("domain_out",), "applicability")] + list(full_claims())
     rep = assess(world, leaf(claims), graph(world))
-    assert not rep.requirement_met and rep.dominant_blocking_gap["defeater"]["kind"] == "outside_domain"
+    assert not rep.requirement_met_in_test_mode and rep.dominant_blocking_gap["defeater"]["kind"] == "outside_domain"
     gap = next(g for g in rep.gaps if g.factor is Factor.APPLICABILITY)
     assert gap.gap_class is GapClass.MODEL_OUTSIDE_DOMAIN
     empty = assess(world, leaf([FactorClaim(Factor.VALIDATION, 1, ("bench",), VL.BENCHMARK_VALIDATED.value)]), graph(world))
@@ -301,7 +324,7 @@ def test_adversarial_standing_needs_a_surviving_envelope_for_this_subject(world)
     falsified = run_red_team(ClaimSubject("result", "y", "1", Sense.AT_MOST, 1.0, broken, "a"), space, AttackPlan(space.digest, 200, "s"))
     assert falsified.outcome is EnvelopeOutcome.FALSIFIED and isinstance(falsified, TrustEnvelope)
     rep = assess(world, claim, g, RiskClass.CRITICAL, trusted_sources=pins, red_team=(survived, falsified))
-    assert not rep.requirement_met and any(d.kind == "red_team_falsified" for d in rep.open_defeaters)
+    assert not rep.requirement_met_in_test_mode and any(d.kind == "red_team_falsified" for d in rep.open_defeaters)
 
 
 def test_removing_evidence_never_raises_any_factor_or_meets_a_requirement(world):
@@ -312,9 +335,9 @@ def test_removing_evidence_never_raises_any_factor_or_meets_a_requirement(world)
         for removed in itertools.combinations(ids, k):
             rep = assess(world, leaf(claims), graph(world, drop=removed))
             assert all(rep.vector.level(f) <= base.vector.level(f) for f in Factor), removed
-            assert not rep.requirement_met or base.requirement_met
+            assert not rep.requirement_met_in_test_mode or base.requirement_met_in_test_mode
     contradicted = assess(world, leaf(claims), graph(world, EvidenceEdge("bench", "exp", R.CONTRADICTS)))
-    assert contradicted.graph_digest != base.graph_digest and not contradicted.requirement_met
+    assert contradicted.graph_digest != base.graph_digest and not contradicted.requirement_met_in_test_mode
 
 
 # ---------------------------------------------------------------------------- second confirmation review
@@ -328,12 +351,12 @@ def _pins_with(w, *extra):
 
 def test_a_contradiction_of_the_subject_or_its_lineage_is_a_defeater_in_any_child_order(world):      # BLOCKER-1
     nodes = dict(world["nodes"], lab=node("lab", A.EXPERIMENT), model=node("model", A.ANALYTICAL))
-    assert assess(world, leaf(), graph(world, nodes=nodes)).requirement_met
+    assert assess(world, leaf(), graph(world, nodes=nodes)).requirement_met_in_test_mode
     direct = assess(world, leaf(), graph(world, EvidenceEdge("lab", "result", R.CONTRADICTS), nodes=nodes))
-    assert not direct.requirement_met and any(d.evidence_ids == ("lab", "result") for d in direct.open_defeaters)
+    assert not direct.requirement_met_in_test_mode and any(d.evidence_ids == ("lab", "result") for d in direct.open_defeaters)
     lineage = assess(world, leaf(), graph(world, EvidenceEdge("result", "model", R.DERIVED_FROM),
                                           EvidenceEdge("lab", "model", R.CONTRADICTS), nodes=nodes))
-    assert not lineage.requirement_met and any(d.evidence_ids == ("lab", "model") for d in lineage.open_defeaters)
+    assert not lineage.requirement_met_in_test_mode and any(d.evidence_ids == ("lab", "model") for d in lineage.open_defeaters)
     # two subjects: the verdict does not depend on which child is processed last
     other = dict(nodes, result2=node("result2", A.SIMULATION))
     edges = [EvidenceEdge(k, "result2", R.SUPPORTS) for k in world["nodes"] if k not in ("result", "rumour")]
@@ -358,7 +381,7 @@ def test_a_cited_contradicted_record_defeats_even_when_it_did_not_win_its_factor
                        trusted_sources=TrustedSourceRegistry(tuple(p for p in world["pins"].pins if p.source_id != exp_pin)))]
     assert variants[1].vector.level(Factor.VALIDATION) == 1                               # bench took over the factor ...
     for rep in variants:                                                                  # ... but exp is still cited and contradicted
-        assert not rep.requirement_met and any(d.evidence_ids == ("muq", "exp") for d in rep.open_defeaters)
+        assert not rep.requirement_met_in_test_mode and any(d.evidence_ids == ("muq", "exp") for d in rep.open_defeaters)
 
 
 def test_supersession_only_lowers_whatever_the_superseder_s_pin_or_standing(world):              # HIGH-2
@@ -385,7 +408,7 @@ def test_applicability_and_uq_are_backed_by_existing_records_not_labels(world): 
             FactorClaim(Factor.VERIFICATION, 1, ("conv",), VL.NUMERICALLY_CONVERGED.value),
             FactorClaim(Factor.NUMERICAL_UQ, 1, ("copy",), "numerical")]
     rep = assess(world, leaf(bare), graph(world, nodes=nodes), RiskClass.LOW, trusted_sources=pins)
-    assert not rep.requirement_met
+    assert not rep.requirement_met_in_test_mode
     assert rep.vector.level(Factor.APPLICABILITY) == UNKNOWN and rep.vector.level(Factor.NUMERICAL_UQ) == UNKNOWN
     # the record must be SUPPLIED (re-read), decided on THIS subject, of THIS channel, quantified with that channel's source
     assert assess(world, leaf(), graph(world), applicability_reports=()).vector.level(Factor.APPLICABILITY) == UNKNOWN
@@ -419,14 +442,14 @@ def test_applicability_and_uq_are_backed_by_existing_records_not_labels(world): 
     # an 'outside' report decided on the subject is a defeater without anyone citing it
     outside = ApplicabilityReport("domain.check2", "outside", RESULT_DIGEST, "temperature above the fitted range")
     rep = assess(world, leaf(), graph(world), applicability_reports=world["reports"] + (outside,))
-    assert not rep.requirement_met and rep.dominant_blocking_gap["defeater"]["kind"] == "outside_domain"
+    assert not rep.requirement_met_in_test_mode and rep.dominant_blocking_gap["defeater"]["kind"] == "outside_domain"
 
 
 def test_citing_an_outside_domain_record_twice_does_not_cancel_it(world):                          # MEDIUM-1
     claims = list(full_claims()) + [FactorClaim(Factor.APPLICABILITY, 0, ("domain_out",), "applicability"),
                                     FactorClaim(Factor.MODEL_FORM_UQ, 0, ("domain_out",), "model_form")]
     rep = assess(world, leaf(claims), graph(world))
-    assert not rep.requirement_met and any(d.kind == "outside_domain" for d in rep.open_defeaters)
+    assert not rep.requirement_met_in_test_mode and any(d.kind == "outside_domain" for d in rep.open_defeaters)
 
 
 def test_an_envelope_for_another_statement_of_the_claim_supplies_nothing(world):                    # MEDIUM-2
@@ -444,7 +467,7 @@ def test_an_envelope_for_another_statement_of_the_claim_supplies_nothing(world):
     undeclared = ClaimNode("c", tuple(full_claims()) + adv, subject_id="result")
     for claim in (declared_real, undeclared):
         rep = assess(world, claim, g, RiskClass.CRITICAL, trusted_sources=pins, red_team=(vacuous,))
-        assert rep.vector.level(Factor.ADVERSARIAL) == UNKNOWN and not rep.requirement_met
+        assert rep.vector.level(Factor.ADVERSARIAL) == UNKNOWN and not rep.requirement_met_in_test_mode
     honest = ClaimNode("c", tuple(full_claims()) + adv, subject_id="result", attacked_subject_digest=vacuous.subject_digest)
     assert honest.structure() != declared_real.structure()                              # what was attacked is in the claim digest
     with pytest.raises(CredibilityRefused, match="attacked_subject_digest"):
@@ -472,8 +495,14 @@ def test_refused_records_leave_a_note_and_falsified_envelopes_of_other_claims_ar
     broken = (Route("a", "f", 1, lambda p: RouteResult(5.0)), Route("b", "g", 2, lambda p: RouteResult(5.0)))
     other = run_red_team(ClaimSubject("someone-else", "y", "1", Sense.AT_MOST, 1.0, broken, "a"), space, AttackPlan(space.digest, 200, "s"))
     assert other.outcome is EnvelopeOutcome.FALSIFIED
+    # supplied by the caller only (not attested about this result): a falsification of another claim is a note
+    rep = assess(world, leaf(), graph(world), red_team=(other,),
+                 **attested(leaf(), graph(world), validation_checks=world["checks"], applicability_reports=world["reports"],
+                            uncertainty_entries=world["entries"]).assess_kwargs())
+    assert rep.requirement_met_in_test_mode and any("no subject of this claim" in n for n in rep.notes)
+    # ... but ATTESTED by the red-team issuer about THIS result, it defeats whatever claim id it names (checkpoint A H2)
     rep = assess(world, leaf(), graph(world), red_team=(other,))
-    assert rep.requirement_met and any("no subject of this claim" in n for n in rep.notes)
+    assert not rep.requirement_met_in_test_mode and any(d.kind == "red_team_falsified" for d in rep.open_defeaters)
 
 
 # ---------------------------------------------------------------------------- third confirmation review
@@ -483,11 +512,11 @@ def test_an_outside_domain_finding_is_judged_like_a_defeater(world):            
     claims = [FactorClaim(Factor.APPLICABILITY, 0, ("domain_out",), "applicability")] + list(full_claims())
     nodes = dict(world["nodes"], patch=node("patch", A.SIMULATION, provenance=False))
     lifted = assess(world, leaf(claims), graph(world, EvidenceEdge("patch", "domain_out", R.SUPERSEDES), nodes=nodes))
-    assert not lifted.requirement_met and any(d.kind == "outside_domain" for d in lifted.open_defeaters)
+    assert not lifted.requirement_met_in_test_mode and any(d.kind == "outside_domain" for d in lifted.open_defeaters)
     unlinked = EvidenceGraph(tuple(world["nodes"].values()), tuple(EvidenceEdge(k, "result", R.SUPPORTS) for k in world["nodes"]
                                                                    if k not in ("result", "rumour", "domain_out")))
     rep = assess(world, leaf(claims), unlinked)                       # an outside finding need not SUPPORT the result
-    assert not rep.requirement_met and any(d.kind == "outside_domain" for d in rep.open_defeaters)
+    assert not rep.requirement_met_in_test_mode and any(d.kind == "outside_domain" for d in rep.open_defeaters)
     with pytest.raises(CredibilityRefused, match="not in the graph"):
         assess(world, leaf(claims), graph(world, drop=("domain_out",)))
     d = world["nodes"]["domain_out"]                                  # only a registry-pinned newer version closes it
@@ -504,7 +533,7 @@ def test_contradicted_calibration_data_defeats_and_nothing_is_dropped_silently(w
                  elsewhere=node("elsewhere", A.MEASUREMENT))
     g = graph(world, EvidenceEdge("cal_data", "result", R.CALIBRATES), EvidenceEdge("lab", "cal_data", R.CONTRADICTS), nodes=nodes)
     rep = assess(world, leaf(), g)
-    assert not rep.requirement_met and any(d.evidence_ids == ("lab", "cal_data") for d in rep.open_defeaters)
+    assert not rep.requirement_met_in_test_mode and any(d.evidence_ids == ("lab", "cal_data") for d in rep.open_defeaters)
     g2 = EvidenceGraph(g.nodes, tuple(e for e in g.edges if e.relation is not R.CALIBRATES and e.source_id != "elsewhere")
                        + (EvidenceEdge("lab", "elsewhere", R.CONTRADICTS),))
     rep2 = assess(world, leaf(), g2)
@@ -519,7 +548,7 @@ def test_a_same_content_twin_does_not_escape_contradiction_or_supersession(world
               for c in full_claims()]
     rep = assess(world, leaf(claims), graph(world, EvidenceEdge("lab", "exp", R.CONTRADICTS), nodes=nodes),
                  trusted_sources=_pins_with(world, twin))
-    assert not rep.requirement_met and any(d.evidence_ids == ("lab", "exp") for d in rep.open_defeaters)
+    assert not rep.requirement_met_in_test_mode and any(d.evidence_ids == ("lab", "exp") for d in rep.open_defeaters)
     conv_copy = node("conv_copy", A.SIMULATION, digest=conv.content_digest, issuer="iss:conv_copy")
     nodes = dict(world["nodes"], conv_copy=conv_copy, conv_v2=node("conv_v2", A.SIMULATION))
     rep = assess(world, leaf([FactorClaim(Factor.VERIFICATION, 1, ("conv_copy",), VL.NUMERICALLY_CONVERGED.value)]),
@@ -527,7 +556,7 @@ def test_a_same_content_twin_does_not_escape_contradiction_or_supersession(world
     assert rep.vector.level(Factor.VERIFICATION) == UNKNOWN
 
 
-def test_the_report_binds_its_inputs_and_unbound_negative_reports_are_noted(world):                   # M-1
+def test_the_report_binds_its_inputs_and_attested_negative_reports_count_on_their_subject(world):     # M-1, re-review H-2
     outside = ApplicabilityReport("domain.check2", "outside", RESULT_DIGEST, "temperature above the fitted range")
     with_it = assess(world, leaf(), graph(world), applicability_reports=world["reports"] + (outside,))
     without = assess(world, leaf(), graph(world))
@@ -536,13 +565,20 @@ def test_the_report_binds_its_inputs_and_unbound_negative_reports_are_noted(worl
     assert assess(world, leaf(), graph(world), trusted_sources=None).inputs_digest != without.inputs_digest
     unbound = ApplicabilityReport("domain.check3", "outside", "", "no evidence named")
     rep = assess(world, leaf(), graph(world), applicability_reports=world["reports"] + (unbound,))
-    assert any("decided on no subject" in n for n in rep.notes)
+    # the report names no digest, but its ATTESTATION binds it to this result: it is decided on the subject
+    assert not rep.requirement_met_in_test_mode and any(d.kind == "outside_domain" for d in rep.open_defeaters)
+
+
+def test_test_mode_never_meets_a_decision_requirement(world):                                       # re-review M-3
+    rep = assess(world, leaf(), graph(world))
+    assert rep.requirement_met_in_test_mode and rep.test_mode and not rep.requirement_met
+    assert rep.to_dict()["requirement_met"] is False and rep.to_dict()["requirement_met_in_test_mode"] is True
 
 
 def test_an_unknown_check_caps_applicability_and_an_outside_report_sets_the_level(world):             # M-2, L-1
     unknown = ApplicabilityReport("domain.check2", "unknown", RESULT_DIGEST, "T not evaluated")
     rep = assess(world, leaf(), graph(world), applicability_reports=world["reports"] + (unknown,))
-    assert not rep.requirement_met and rep.vector.level(Factor.APPLICABILITY) == UNKNOWN
+    assert not rep.requirement_met_in_test_mode and rep.vector.level(Factor.APPLICABILITY) == UNKNOWN
     assert rep.dominant_blocking_gap["gap_class"] == GapClass.MODEL_APPLICABILITY_UNKNOWN.value
     outside = ApplicabilityReport("domain.check2", "outside", RESULT_DIGEST, "too hot")
     rep = assess(world, leaf(), graph(world), applicability_reports=world["reports"] + (outside,))
@@ -555,7 +591,7 @@ def test_any_supersession_disqualifies_support_and_an_obsolete_subject_is_defeat
     assert rep.vector.level(Factor.VERIFICATION) == UNKNOWN                      # the canonical rule: SUPERSEDED
     nodes = dict(world["nodes"], result_v2=node("result_v2", A.SIMULATION))
     rep = assess(world, leaf(), graph(world, EvidenceEdge("result_v2", "result", R.SUPERSEDES), nodes=nodes))
-    assert not rep.requirement_met and any(d.kind == "superseded" for d in rep.open_defeaters)
+    assert not rep.requirement_met_in_test_mode and any(d.kind == "superseded" for d in rep.open_defeaters)
     # a contradiction from something the claim rests on is not closed by superseding that thing
     m = node("model", A.ANALYTICAL, issuer="iss:model", source_id="sid:model")
     m2 = node("model_v2", A.ANALYTICAL, issuer="iss:model", source_id="sid:model", version="2")
@@ -588,7 +624,7 @@ def test_an_obsolete_subject_is_defeated_whatever_else_links_it_to_its_replaceme
     nodes = dict(world["nodes"], result_v2=node("result_v2", A.SIMULATION))
     for extra in (EvidenceEdge("result", "result_v2", R.SUPPORTS), EvidenceEdge("result_v2", "result", R.CALIBRATES)):
         rep = assess(world, leaf(), graph(world, EvidenceEdge("result_v2", "result", R.SUPERSEDES), extra, nodes=nodes))
-        assert not rep.requirement_met and any(d.kind == "superseded" for d in rep.open_defeaters), extra
+        assert not rep.requirement_met_in_test_mode and any(d.kind == "superseded" for d in rep.open_defeaters), extra
 
 
 def test_or_never_meets_a_requirement_because_a_branch_lost_evidence(world):                         # finding 2
@@ -611,17 +647,17 @@ def test_or_never_meets_a_requirement_because_a_branch_lost_evidence(world):    
     variants = [assess(world, claim, g, RiskClass.LOW, **dict(kw, validation_checks=tuple(c for c in kw["validation_checks"]
                                                                                           if c is not mms_check))),
                 assess(world, claim, graph(world, EvidenceEdge("rumour", "mms", R.SUPERSEDES), nodes=nodes), RiskClass.LOW, **kw)]
-    assert full.requirement_met, full.notes                         # the branch that meets the bar is the one chosen
+    assert full.requirement_met_in_test_mode, full.notes                         # the branch that meets the bar is the one chosen
     for rep in variants:                                            # ... and stays chosen when the other branch loses evidence
-        assert rep.requirement_met and rep.vector.level(Factor.NUMERICAL_UQ) == full.vector.level(Factor.NUMERICAL_UQ)
+        assert rep.requirement_met_in_test_mode and rep.vector.level(Factor.NUMERICAL_UQ) == full.vector.level(Factor.NUMERICAL_UQ)
     # neither branch meets the bar: removing evidence from either never makes the OR met
     b_short = leaf([c for c in b.claims if c.factor is not Factor.NUMERICAL_UQ], "b")
     short = ClaimNode("or", combine=Combine.OR, children=(a, b_short))
     base = assess(world, short, g, RiskClass.LOW, **kw)
-    assert not base.requirement_met
+    assert not base.requirement_met_in_test_mode
     for removed in (("mms",), ("conv",), ("domain",), ("domain_b",), ("conv_b",)):
         assert not assess(world, short, graph(world, nodes={k: v for k, v in nodes.items() if k not in removed}), RiskClass.LOW,
-                          **kw).requirement_met, removed
+                          **kw).requirement_met_in_test_mode, removed
 
 
 def test_independence_follows_shared_calibration_and_same_content_ancestry(world):                  # finding 3
@@ -662,9 +698,9 @@ def test_a_model_never_declares_its_own_model_form_discrepancy(world):          
 def test_a_contradiction_is_a_conflict_whichever_side_wrote_it(world):                              # finding 6
     nodes = dict(world["nodes"], lab=node("lab", A.EXPERIMENT))
     rep = assess(world, leaf(), graph(world, EvidenceEdge("result", "lab", R.CONTRADICTS), nodes=nodes))
-    assert not rep.requirement_met and any(d.evidence_ids == ("result", "lab") for d in rep.open_defeaters)
+    assert not rep.requirement_met_in_test_mode and any(d.evidence_ids == ("result", "lab") for d in rep.open_defeaters)
     rumour = assess(world, leaf(), graph(world, EvidenceEdge("result", "rumour", R.CONTRADICTS)))
-    assert rumour.requirement_met and any("sub-bar contradiction" in n for n in rumour.notes)
+    assert rumour.requirement_met_in_test_mode and any("sub-bar contradiction" in n for n in rumour.notes)
 
 
 def test_fourth_review_lows(world):
@@ -704,10 +740,10 @@ def test_a_contradiction_inside_the_closure_needs_only_one_admissible_end(world)
         g = graph(world, EvidenceEdge("result", "model", R.DERIVED_FROM), EvidenceEdge("model", "lab", R.CONTRADICTS), nodes=nodes)
         for claims in (list(full_claims()), list(full_claims()) + [lab_cite]):
             rep = assess(world, leaf(claims), g)
-            assert not rep.requirement_met and any(d.evidence_ids == ("model", "lab") for d in rep.open_defeaters), (authority, claims)
+            assert not rep.requirement_met_in_test_mode and any(d.evidence_ids == ("model", "lab") for d in rep.open_defeaters), (authority, claims)
         both = graph(world, EvidenceEdge("result", "model", R.DERIVED_FROM), EvidenceEdge("result", "lab", R.DERIVED_FROM),
                      EvidenceEdge("model", "lab", R.CONTRADICTS), nodes=nodes)
-        assert not assess(world, leaf(), both).requirement_met, authority
+        assert not assess(world, leaf(), both).requirement_met_in_test_mode, authority
 
 
 def test_a_contradicted_twin_disqualifies_a_closing_superseder(world):                              # NEW-4
@@ -718,7 +754,7 @@ def test_a_contradicted_twin_disqualifies_a_closing_superseder(world):          
                                  + (SourcePin(b.provenance.source_id, b.provenance.issuer, newer.provenance.document_digest, "2"),))
     nodes = dict(world["nodes"], bench_v2=newer, bench_v2_copy=twin, lab=node("lab", A.EXPERIMENT))
     edges = (EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge("bench_v2", "bench", R.SUPERSEDES))
-    assert assess(world, leaf(), graph(world, *edges, nodes=nodes), trusted_sources=pins).requirement_met
+    assert assess(world, leaf(), graph(world, *edges, nodes=nodes), trusted_sources=pins).requirement_met_in_test_mode
     rep = assess(world, leaf(), graph(world, *edges, EvidenceEdge("lab", "bench_v2_copy", R.CONTRADICTS), nodes=nodes), trusted_sources=pins)
     assert any(d.evidence_ids == ("bench", "exp") for d in rep.open_defeaters)
 
@@ -748,7 +784,7 @@ def test_a_closing_version_must_be_other_content_and_not_itself_obsolete(world):
     newer, pins = pinned_v2(b, "bench_v2", A.REFERENCE_DATA)
     nodes = dict(world["nodes"], bench_v2=newer, lab=node("lab", A.EXPERIMENT))
     base = (EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge("bench_v2", "bench", R.SUPERSEDES))
-    assert assess(world, leaf(), graph(world, *base, nodes=nodes), trusted_sources=pins).requirement_met
+    assert assess(world, leaf(), graph(world, *base, nodes=nodes), trusted_sources=pins).requirement_met_in_test_mode
     for extra in (EvidenceEdge("rumour", "bench_v2", R.SUPERSEDES), EvidenceEdge("bench_v2", "lab", R.CONTRADICTS)):
         rep = assess(world, leaf(), graph(world, *base, extra, nodes=nodes), trusted_sources=pins)
         assert any(x.evidence_ids == ("bench", "exp") for x in rep.open_defeaters), extra
@@ -759,7 +795,7 @@ def test_an_explicit_defeater_may_add_but_never_replace_a_computed_one(world):  
     with pytest.raises(CredibilityRefused, match="collides"):
         assess(world, leaf(claims), graph(world), defeaters=(Defeater("outside_domain:result", "superseded", (), "x"),))
     rep = assess(world, leaf(), graph(world), defeaters=(Defeater("review:1", "contradiction", ("exp",), "a reviewer's finding"),))
-    assert not rep.requirement_met
+    assert not rep.requirement_met_in_test_mode
 
 
 # ---------------------------------------------------------------------------- seventh confirmation review (post-approval LOW)

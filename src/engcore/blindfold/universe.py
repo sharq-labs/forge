@@ -259,10 +259,14 @@ def _covariate_value(spec: Mapping[str, Any], point: Mapping[str, float], hidden
 # ---------------------------------------------------------------------------- generation
 
 
+#: the generator's identity: part of every journaled world digest, so a generator change is a different universe
+GENERATOR_TAG = "forge.blindfold.L5/2"
+
+
 def generate_universe(seed: str, kind: UniverseKind | str = UniverseKind.DISCOVERABLE, *, n_eval: int = 40) -> HiddenWorld:
     """Generate one hidden world deterministically from ``seed`` (which must stay inside the escrow)."""
     kind = UniverseKind(kind)
-    rng = random.Random(f"forge.blindfold.L5/2\n{seed}\n{kind.value}")
+    rng = random.Random(f"{GENERATOR_TAG}\n{seed}\n{kind.value}")
     base = tuple(f"D{chr(0x3B1 + i)}" for i in range(rng.choice((2, 3))))      # invented dimensions: Dα, Dβ, Dγ
     prefix = rng.choice(("q", "s", "z", "w"))
     for _attempt in range(200):

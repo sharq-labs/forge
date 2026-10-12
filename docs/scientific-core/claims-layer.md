@@ -245,7 +245,52 @@ Every item carries a JSON pointer to the value it restates.
 
 `verify_assessment(record, registry)` re-derives everything from the claim, plan
 and credibility report the record carries. It then compares the whole record and
-refuses any edit.
+refuses any edit that leaves the record inconsistent.
+
+**It does not prove the computation happened.** A record rewritten consistently
+re-derives, because every part of it is data. The bundle digest is an unkeyed
+hash that the rewriter can recompute. Review 3 (R3-01) showed this: a NAFEMS T3
+record forged to 305 K verified as SUPPORTED with BENCHMARK_VALIDATED.
+
+Since Trust Repair Pass 1, read-back also revalidates the stored evidence
+(`engcore.claims.revalidation`):
+
+- An oracle-issued level (BENCHMARK_VALIDATED, EXPERIMENTALLY_VALIDATED) is
+  re-earned. The pinned comparison, reached through the plan capability's own
+  routes, is re-run on the stored values at the stored operating point. A stored
+  outcome, residual or metric list that it does not reproduce is refused as a
+  forgery.
+- Every other level, and every demanded uncertainty channel quantified from the
+  run's own numbers, is earned only inside a run. It is reported
+  `REPLAY_REQUIRED`, never as re-earned.
+- The verdict itself must also be fixed by pinned evidence. A re-earned oracle
+  level pins the stored value only to the oracle's band (expected ± tolerance),
+  and the claim is compared on that value. So offline support requires two
+  things: the verdict rests on admissible evidence, and the claim's comparison
+  has the same outcome for every value in that band. A claim whose decision
+  boundary lies inside the band, or an insufficient verdict (decided by the
+  run's own diagnostics), is `REPLAY_REQUIRED`.
+
+`verify_bundle` never returns `VERIFIED`. It reports one of four outcomes:
+
+- `SCIENTIFICALLY_REVALIDATED`: consistent; the required levels and the claim's
+  comparison are re-earned against pinned evidence. It does not show that the
+  stored report is the planned run, or that the run's own admissibility
+  diagnostics hold. It is not publishable support.
+- `REPLAY_REQUIRED`: consistent, but the support needs `replay_bundle`.
+- `TAMPERED`: inconsistent, or refuted.
+- `REGISTRY_CHANGED`: judged under another registry.
+
+`VERIFIED` comes only from `replay_bundle`, which re-executes the claim, and
+only it is publishable support.
+
+Review 3's follow-up adversary showed why offline verification cannot be
+publishable. A consistent record can carry a genuine report from ANOTHER run,
+for example the default 160-cell grid in place of a planned 40-cell one whose
+real run is INSUFFICIENT_EVIDENCE. Every pinned check passes, and only
+re-execution tells the two runs apart. For the same reason, a value moved to
+another number that the benchmark itself admits is SCIENTIFICALLY_REVALIDATED
+and not VERIFIED.
 
 ## Behaviour on the production registry
 

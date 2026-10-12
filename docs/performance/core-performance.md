@@ -164,3 +164,28 @@ clock, seed 7; machine-dependent, not gated). Each tier is measured separately a
 - Provider status (`engcore.claims.discovery_providers.PROVIDER_STATUS`): PySINDy 2.1.0, BoTorch 0.17.2 and Dakota 6.16
   EXECUTED in their conda-forge environments (provider-gated tests); Ax and PySR NOT_INSTALLED. Executing is not
   qualifying: providers own algorithms, FORGE owns authority (proposals and suggestions only).
+
+## 10. Authority and escrow overhead (Big Rocks: Authority Integrity → Real Escrow)
+
+`python tools/authority_escrow_performance.py --n 200` (this container, `.venv` CPython 3.12, one warm process, wall
+clock; machine-dependent, not gated, no threshold). Median / p95 in milliseconds per operation.
+
+| operation | median ms | p95 ms | note |
+|---|---:|---:|---|
+| ed25519 signature verification | 0.106 | 0.125 | `cryptography` 50 |
+| ledger append (signed receipt attestation, re-applied, flock'd, fsync'd JSONL append) | 1.84 | 3.01 | |
+| ledger open (re-verify every event) | 85.2 | 94.5 | 202 events: ~0.42 ms per event |
+| registry role lookup (`role_at`) | 0.0006 | 0.0007 | in memory |
+| issuer-bound evidence verification (`verify_evidence`) | 0.007 | 0.012 | small ledger; `producers_of` is O(receipts) |
+| `assess_credibility`, caller-supplied records (unattested) | 0.126 | 0.187 | meets no requirement |
+| `assess_credibility`, issuer-bound (test mode, ledger opened per call) | 4.35 | 5.03 | includes `AuthorityLedger.open` |
+| durable falsifier seal (`DurableCampaign.seal`) | 3.29 | 4.24 | journaled attestation + head check |
+| escrow observe round trip, in memory (auth + budget + sign + client verify) | 0.32 | 0.40 | |
+| escrow observe round trip, stored (fsync'd journal) | 0.69 | 1.03 | |
+| client response verification (`verify_response`) | 0.68 | 0.88 | canonical JSON + signature |
+| unauthenticated escrow refusal (uniform, signed, counted) | 0.063 | 0.130 | no campaign state touched |
+
+- The dominant cost is RE-VERIFYING a ledger on open (linear in events). A consumer that assesses many claims should
+  open once per assessment batch; a checkpointed open (verify from a trusted anchor forward) is DEFERRED.
+- Escrow authentication, budget checks and response signing add well under a millisecond per query; fsync dominates
+  the stored escrow.

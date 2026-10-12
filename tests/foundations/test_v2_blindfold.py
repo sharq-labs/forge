@@ -12,7 +12,7 @@ import pytest
 
 from engcore.blindfold import (
     LEVELS, NOVEL_DISCOVERY_LEVELS, SECURITY_LABEL, EscrowRefused, EvaluatorConfig, InProcessTransport, ProposalStore, RoleRefused,
-    SubprocessTransport, run_campaign,
+    SubprocessTransport,
 )
 import dataclasses
 
@@ -22,6 +22,12 @@ from engcore.blindfold.escrow import (
 )
 from engcore.blindfold.expression import ExpressionRefused, add, c, evaluate, mul, pw, structure_digest, v, validate
 from engcore.blindfold.roles import admit, adjudicate
+from engcore.blindfold.roles import run_campaign as _run_campaign
+
+
+def run_campaign(transport, **kw):
+    """The operator pins the escrow key it learned out of band (here: from the transport it built)."""
+    return _run_campaign(transport, escrow_public=transport.escrow_public, **kw)
 from engcore.blindfold.universe import (
     CONTROL_KINDS, COVARIATE, INBOX_MAX_SIGMAS, OUTSIDE_FRACTION, OUTSIDE_TOLERANCES, UniverseKind, _box, _corners, _sample,
     generate_universe, known_law_signature, observe, truth_at,
@@ -33,7 +39,7 @@ ID = {"kind": "algorithm", "id": "t"}
 
 
 def _campaign(t, cid, mix):
-    op = OperatorClient(t, t.operator_token)
+    op = OperatorClient(t, t.operator_token, escrow_public=t.escrow_public)
     return op, op.create(cid, mix, evaluator_config_digest=CFG.digest)
 
 
@@ -137,29 +143,30 @@ def test_the_observe_client_api_sends_only_observe_and_every_query_is_logged():
     t = InProcessTransport()
     op, created = _campaign(t, "c1", {"discoverable": 1})
     card, tok = created["cards"][0], created["tokens"]
-    obs = ObserveClient(t, "c1", tok["observe"])
+    obs = ObserveClient(t, "c1", tok["observe"], escrow_public=t.escrow_public)
     assert not hasattr(obs, "transport") and not hasattr(obs, "token") and not hasattr(obs, "__dict__")   # review H1
     # ... but this is construction, NOT isolation: the closure still reaches the transport (SECURITY_BOUNDARY_NOT_PROVEN)
-    assert t in [cell.cell_contents for cell in obs._send.__closure__]
+    cells = [cell.cell_contents for cell in obs._send.__closure__]
+    assert t in cells + [getattr(c, "_transport", None) for c in cells]
     with pytest.raises(EscrowRefused, match="evaluator-config digest"):
         call(t, "create", campaign_id="noconfig", mix={"discoverable": 1}, operator_token=t.operator_token)
     for token in (tok["observe"], tok["score"], "forged"):
-        with pytest.raises(EscrowRefused, match="OPERATOR"):
+        with pytest.raises(EscrowRefused, match="not authenticated"):
             call(t, "create", campaign_id="mine", mix={"confounded": 5}, operator_token=token)
-        with pytest.raises(EscrowRefused, match="OPERATOR"):
+        with pytest.raises(EscrowRefused, match="not authenticated"):
             call(t, "log", campaign_id="c1", operator_token=token)
     pt = {x["name"]: x["range"][0] for x in card["inputs"]}
     r = obs.observe(card["universe_id"], pt, query_id="q0")
     assert r["security_boundary"] == SECURITY_LABEL and set(r["observation"]) >= set(pt) | {"y", COVARIATE}
     assert "law" not in json.dumps(r) and "evaluation" not in json.dumps(r)
-    with pytest.raises(EscrowRefused, match="SCORE capability"):
-        ScoreClient(t, "c1", tok["observe"]).score(card["universe_id"], {"answer": "no_law"})
+    with pytest.raises(EscrowRefused, match="not authenticated"):
+        ScoreClient(t, "c1", tok["observe"], escrow_public=t.escrow_public).score(card["universe_id"], {"answer": "no_law"})
     with pytest.raises(EscrowRefused, match="outside the allowed query range"):
         obs.observe(card["universe_id"], {k: val * 1e6 for k, val in pt.items()})
     with pytest.raises(EscrowRefused, match="digest does not match"):
         call(t, "score", campaign_id="c1", token=tok["score"], universe_id=card["universe_id"], proposal={"answer": "no_law"},
              proposal_digest="0" * 64)
-    sc = ScoreClient(t, "c1", tok["score"])
+    sc = ScoreClient(t, "c1", tok["score"], escrow_public=t.escrow_public)
     res = sc.score(card["universe_id"], {"answer": "no_law"})
     assert res["universe_kind"] == "discoverable" and "law_structure_hidden_digest" not in res
     with pytest.raises(EscrowRefused, match="one sealed submission"):
@@ -168,9 +175,11 @@ def test_the_observe_client_api_sends_only_observe_and_every_query_is_logged():
         obs.observe(card["universe_id"], pt)
     log = op.log("c1")["log"]
     ops = [e["op"] for e in log]
-    # refusals are logged too (review M8): forged-capability score, out-of-range observe, bad digest, second score, sealed observe
-    assert ops[0] == "create" and ops.count("log_refused") == 3 and "observe" in ops
-    assert ops.count("score_refused") >= 3 and ops.count("observe_refused") >= 2
+    # AUTHENTICATED refusals are logged (review M8): out-of-range observe, bad digest, second score, sealed observe.  Requests
+    # with a forged or wrong capability are not: they are counted service-wide and never enter a campaign's chain (B-M1)
+    assert ops[0] == "create" and ops.count("log_refused") == 0 and "observe" in ops
+    assert ops.count("score_refused") >= 2 and ops.count("observe_refused") >= 2
+    assert op.log("c1")["auth_failures"] >= 7
     assert verify_log(log) == log[-1]["digest"] and "token" not in json.dumps(log)
     # log digests are keyed: the create entry cannot be confirmed by hashing a guessed mix
     guess = hashlib.sha256(json.dumps({"campaign_id": "c1", "mix": {"discoverable": 1}}, sort_keys=True, separators=(",", ":")).encode())
@@ -181,7 +190,7 @@ def test_budget_mix_bounds_and_malformed_requests_are_refused_not_fatal():
     t = InProcessTransport()
     op, created = _campaign(t, "b", {"insufficient_evidence": 1})
     card, tok = created["cards"][0], created["tokens"]
-    obs = ObserveClient(t, "b", tok["observe"])
+    obs = ObserveClient(t, "b", tok["observe"], escrow_public=t.escrow_public)
     pt = {x["name"]: x["range"][0] for x in card["inputs"]}
     with pytest.raises(EscrowRefused, match="finite number"):               # float() overflow (re-review H-1)
         obs.observe(card["universe_id"], {name: 10 ** 400 for name in pt})
@@ -210,7 +219,7 @@ def test_indistinguishable_cannot_be_shotgunned_or_duplicated():
         admit({"universe_id": card["universe_id"], "answer": "no_law", "law": law, "proposer": ID}, card, store)
     t = InProcessTransport()
     _op, created = _campaign(t, "sh", {"indistinguishable": 1})
-    uid, sc = created["cards"][0]["universe_id"], ScoreClient(t, "sh", created["tokens"]["score"])
+    uid, sc = created["cards"][0]["universe_id"], ScoreClient(t, "sh", created["tokens"]["score"], escrow_public=t.escrow_public)
     world = t._service._campaigns["sh"].worlds[uid]
     with pytest.raises(EscrowRefused, match="exactly two"):
         sc.score(uid, {"answer": "indistinguishable", "laws": [world.law, world.alternative_law, world.law]})
@@ -219,7 +228,7 @@ def test_indistinguishable_cannot_be_shotgunned_or_duplicated():
     # re-review M1: a pair a tolerance apart is distinguishable in the box; a law that goes NaN outside is a miss
     s_ = 0.6 * world.tolerance
     _op, cr3 = _campaign(t, "sh3", {"indistinguishable": 2, "discoverable": 2})
-    sc3 = ScoreClient(t, "sh3", cr3["tokens"]["score"])
+    sc3 = ScoreClient(t, "sh3", cr3["tokens"]["score"], escrow_public=t.escrow_public)
     worlds3 = t._service._campaigns["sh3"].worlds
     u_a, u_b, *rest = cr3["cards"]
     for card3, pair in ((u_a, lambda w: [mul(c(1 + s_), w.law), mul(c(1 - s_), w.law)]),
@@ -235,7 +244,7 @@ def test_indistinguishable_cannot_be_shotgunned_or_duplicated():
     _op, created = _campaign(t, "sh2", {"indistinguishable": 1})
     uid2 = created["cards"][0]["universe_id"]
     w2 = t._service._campaigns["sh2"].worlds[uid2]
-    hit = ScoreClient(t, "sh2", created["tokens"]["score"]).score(uid2, {"answer": "indistinguishable", "laws": [w2.alternative_law, w2.law]})
+    hit = ScoreClient(t, "sh2", created["tokens"]["score"], escrow_public=t.escrow_public).score(uid2, {"answer": "indistinguishable", "laws": [w2.alternative_law, w2.law]})
     assert hit["pair"]["hit"]                                               # the genuine pair is credited
 
 
@@ -344,15 +353,15 @@ def test_the_evaluator_config_is_sealed_and_admission_sees_only_the_card():
 def test_the_subprocess_escrow_keeps_its_secrets_in_the_child():
     t = SubprocessTransport()
     try:
-        with pytest.raises(EscrowRefused, match="OPERATOR"):
+        with pytest.raises(EscrowRefused, match="not authenticated"):
             call(t, "create", campaign_id="sp", mix={"discoverable": 1})
-        created = OperatorClient(t, t.operator_token).create("sp", {"discoverable": 1}, evaluator_config_digest=CFG.digest)
+        created = OperatorClient(t, t.operator_token, escrow_public=t.escrow_public).create("sp", {"discoverable": 1}, evaluator_config_digest=CFG.digest)
         assert created["transport"] == "subprocess" and created["security_boundary"] == SECURITY_LABEL
         card, tok = created["cards"][0], created["tokens"]
-        r = ObserveClient(t, "sp", tok["observe"]).observe(card["universe_id"], {x["name"]: x["range"][1] for x in card["inputs"]})
+        r = ObserveClient(t, "sp", tok["observe"], escrow_public=t.escrow_public).observe(card["universe_id"], {x["name"]: x["range"][1] for x in card["inputs"]})
         assert r["observation"]["y"] > 0
         with pytest.raises(EscrowRefused, match="finite number"):           # re-review H-1: the child survives an overflow
-            ObserveClient(t, "sp", tok["observe"]).observe(card["universe_id"], {x["name"]: 10 ** 400 for x in card["inputs"]})
-        assert ObserveClient(t, "sp", tok["observe"]).observe(card["universe_id"], {x["name"]: x["range"][1] for x in card["inputs"]})
+            ObserveClient(t, "sp", tok["observe"], escrow_public=t.escrow_public).observe(card["universe_id"], {x["name"]: 10 ** 400 for x in card["inputs"]})
+        assert ObserveClient(t, "sp", tok["observe"], escrow_public=t.escrow_public).observe(card["universe_id"], {x["name"]: x["range"][1] for x in card["inputs"]})
     finally:
         t.close()

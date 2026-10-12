@@ -28,7 +28,10 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
 from . import NOVEL_DISCOVERY_LEVELS
-from .escrow import ANSWERS, SECURITY_LABEL, EscrowRefused, ObserveClient, OperatorClient, ScoreClient, verify_log
+from .escrow import (
+    ANSWERS, SECURITY_LABEL, EscrowCheckpoint, EscrowIntegrityError, EscrowRefused, ObserveClient, OperatorClient, ScoreClient,
+    verify_log,
+)
 from .expression import ExpressionRefused, validate
 
 REFUSALS = ("no_law", "insufficient_evidence", "confounded")
@@ -312,7 +315,8 @@ Proposer = Callable[[Mapping[str, Any], ObserveClient], Mapping[str, Any]]
 def run_campaign(transport: Callable[[bytes], bytes], *, campaign_id: str, mix: Mapping[str, int], proposer: Proposer,
                  proposer_identity: Mapping[str, str], config: EvaluatorConfig, store: ProposalStore | None = None,
                  replay: Mapping[str, str] | None = None, replay_of: BlindfoldReport | None = None,
-                 operator_token: str | None = None) -> tuple[BlindfoldReport, ProposalStore]:
+                 operator_token: str | None = None, escrow_public: str | None = None,
+                 checkpoint: EscrowCheckpoint | None = None) -> tuple[BlindfoldReport, ProposalStore]:
     """Operator: create the campaign, hand the proposer ONLY an observe client, store and admit each proposal, have the
     evaluator score it once, adjudicate under the sealed config, verify receipts against the escrow log, report.
 
@@ -328,10 +332,12 @@ def run_campaign(transport: Callable[[bytes], bytes], *, campaign_id: str, mix: 
     token = operator_token if operator_token is not None else getattr(transport, "operator_token", None)
     if not token:
         raise RoleRefused("the operator credential is required to create a campaign")
-    operator = OperatorClient(transport, token)
+    if not escrow_public:
+        raise RoleRefused("the operator pins the escrow's public key (escrow_public, known out of band): responses are verified")
+    operator = OperatorClient(transport, token, escrow_public=escrow_public, checkpoint=checkpoint)
     created = operator.create(campaign_id, mix, evaluator_config_digest=sealed)   # declared before any kind is revealed
-    observe_client = ObserveClient(transport, campaign_id, created["tokens"]["observe"])
-    score_client = ScoreClient(transport, campaign_id, created["tokens"]["score"])
+    observe_client = ObserveClient(transport, campaign_id, created["tokens"]["observe"], escrow_public=escrow_public)
+    score_client = ScoreClient(transport, campaign_id, created["tokens"]["score"], escrow_public=escrow_public)
     card_ids = [card["universe_id"] for card in created["cards"]]
     if replay is not None:
         if set(replay) != set(card_ids):
@@ -360,6 +366,8 @@ def run_campaign(transport: Callable[[bytes], bytes], *, campaign_id: str, mix: 
                 proposal.setdefault("universe_id", uid)
                 proposal["proposer"] = identity
                 stored = store.get(admit(proposal, frozen_card, store).proposal_digest)
+            except EscrowIntegrityError:
+                raise                                              # a forged / rolled-back escrow is never the proposer's fault
             except Exception as exc:  # noqa: BLE001 - a proposer that raises or returns garbage is scored, never a non-result
                 # kept as it was, scored as what it is: inadmissible (negative credit), never a substitute refusal
                 original = store.put_any(raw)

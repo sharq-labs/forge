@@ -60,6 +60,7 @@ from .battery import run_battery_case
 from .claim_assessment import (
     ClaimAssessmentError,
     assess_claim_request,
+    assess_structured_claim,
     refused_claim_assessment,
 )
 from .canonical import plan_canonical_engineering_intent
@@ -1013,19 +1014,31 @@ field and call again."""
 
 _ASSESS_CLAIM_DESCRIPTION = """Assess one structured scientific claim for one declared decision.
 
-The request must explicitly name a registered system, its case payload, the
-reported quantity to assess, the terminal decision statement, one or more
-required ValidationLevels, and a model-discrepancy declaration.
+The decision is made by the canonical claim path, the same one
+assess_scientific_claim uses, and the result is its claim_assessment_record:
+verdict SUPPORTED, CONTRADICTED or INSUFFICIENT_EVIDENCE.
 
-This tool does not infer a scientific question from prose, select a model,
-choose a report when a system returns several, or invent a confidence target.
-It executes the existing system boundary and carries its credibility report
-through SRIA evidence and assurance.
+The request is either {"claim": <scientific_claim/1>} or a case-based
+description that names:
+- a registered system and its case payload;
+- the reported quantity_name;
+- the decision {id, statement};
+- one or more required ValidationLevels;
+- a model-discrepancy declaration;
+- a structured comparison {operator: < <= > >= ==, target: quantity,
+  tolerance: quantity, required for ==};
+- an explicit uncertainty demand (claim_uncertainty_demand/1; an empty demand
+  declares a point comparison);
+- optionally, a decision_context.
 
-The result contains BOTH the production credibility verdict and the assurance
-verdict. A validation level cannot hide a NOT_SUPPORTED or
-INSUFFICIENT_EVIDENCE credibility report: the credibility critic itself is a
-required assurance critic.
+The claim must route to the named system, or the request is refused.
+
+The case becomes the claim's inputs exactly. A free-text statement without a
+comparison is refused, because it has no truth value to decide. report_index is
+refused: the claim names its instance through its own inputs.
+
+A validation level counts only for a quantity whose planned check established
+it. A level the run attained for another quantity is never borrowed.
 
 This is scientific decision support, not safety certification and not an
 automatic real-world decision."""
@@ -1286,38 +1299,13 @@ def assess_scientific_claim(
     unsupported capability, an insufficient verdict -- is returned as a
     record. An unexpected exception is a defect and is not caught.
     """
-    from ..claims.assessment import assess_claim as assess
-    from ..claims.external_evidence import (
-        PRODUCTION_EXTERNAL_REGISTRY,
-        read_external_record,
-    )
-    from ..claims.measurement_dataset import DatasetObservation
-    from ..uq.model_form.qualification import ProducerQualification
-    from .capabilities import production_registry
-
-    offered = []
-    for item in external or ():
-        raw = item.get("record", item) if isinstance(item, dict) else item
-        offered.append(read_external_record(raw))
-
-    empirical = tuple(
-        DatasetObservation.from_dict(item)
-        for item in (empirical_observations or ())
-    )
-    qualification = (
-        None
-        if model_form_qualification is None
-        else ProducerQualification.from_dict(model_form_qualification)
-    )
-
-    return assess(
+    # One decision path for every MCP claim tool (Trust Repair Pass 1, R3-02).
+    return assess_structured_claim(
         claim,
-        production_registry(),
-        external=tuple(offered),
-        empirical_observations=empirical,
-        model_form_qualification=qualification,
-        trust=PRODUCTION_EXTERNAL_REGISTRY,
-    ).to_dict()
+        external=external,
+        empirical_observations=empirical_observations,
+        model_form_qualification=model_form_qualification,
+    )
 
 
 def describe_product() -> dict[str, Any]:

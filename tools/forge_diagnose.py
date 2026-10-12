@@ -35,14 +35,24 @@ def _optional_mapping(path: str | None, *, label: str) -> Mapping[str, Any] | No
 
 def _verified_record(payload: Any, registry: Any, *, source: str) -> Mapping[str, Any]:
     """Fail closed: diagnostics consume a re-derived assessment, never raw JSON."""
+    return _verified_record_and_standing(payload, registry, source=source)[0]
+
+
+def _verified_record_and_standing(payload: Any, registry: Any, *, source: str) -> tuple[Mapping[str, Any], dict[str, Any]]:
+    """The re-derived record, and what offline verification can say about its support.
+
+    REPLAY_REQUIRED is a consistent record whose support only a replay re-earns. Diagnostics may derive
+    hypotheses from it, and never strengthen its verdict. The standing travels with the output, so a
+    diagnostic that restates the record's verdict never presents it as verified (Trust Repair Pass 1).
+    """
     if isinstance(payload, Mapping) and payload.get("schema") == BUNDLE_SCHEMA:
         check = verify_bundle(payload, registry)
-        if check.status is not BundleStatus.VERIFIED:
+        if check.status not in (BundleStatus.SCIENTIFICALLY_REVALIDATED, BundleStatus.REPLAY_REQUIRED):
             raise ValueError(f"{source}: replay bundle is {check.status.value}: {list(check.problems)}")
         record = payload.get("record")
         if not isinstance(record, Mapping):
             raise ValueError(f"{source}: verified bundle carries no assessment record")
-        return record
+        return record, {"bundle_status": check.status.value, "reasons": list(check.problems)}
 
     records = records_from_payload(payload, source=source)
     if len(records) != 1:
@@ -52,7 +62,14 @@ def _verified_record(payload: Any, registry: Any, *, source: str) -> Mapping[str
         raise ValueError(
             "raw assessment uses a non-production trust registry; diagnose its replay bundle so the trust pins can be verified"
         )
-    return verify_assessment(record, registry, trust=PRODUCTION_EXTERNAL_REGISTRY).to_dict()
+    back = verify_assessment(record, registry, trust=PRODUCTION_EXTERNAL_REGISTRY)
+    revalidation = back.revalidation
+    standing = {
+        "revalidation": None if revalidation is None else revalidation.standing.value,
+        "reasons": [] if revalidation is None else list(revalidation.reasons),
+    }
+    return back.to_dict(), standing
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -68,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         payload = _load(args.assessment)
         registry = production_registry()
-        record = _verified_record(payload, registry, source=args.assessment)
+        record, standing = _verified_record_and_standing(payload, registry, source=args.assessment)
         report = diagnose_assessment(
             record,
             registry,
@@ -79,7 +96,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"forge-diagnose: {exc}", file=sys.stderr)
         return 2
 
-    text = json.dumps(report.to_dict(), sort_keys=True, indent=2) + "\n"
+    output = {
+        **report.to_dict(),
+        # What offline verification can say about the record diagnosed. Offline verification never yields VERIFIED;
+        # SCIENTIFICALLY_REVALIDATED is never "the computation happened", and anything else needs a replay before the
+        # verdict is relied on.
+        "offline_verification": standing,
+    }
+    text = json.dumps(output, sort_keys=True, indent=2) + "\n"
     if args.output:
         Path(args.output).write_text(text, encoding="utf-8")
     else:
