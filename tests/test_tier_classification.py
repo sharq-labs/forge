@@ -45,6 +45,7 @@ _spec.loader.exec_module(_root_conftest)
 
 CAMPAIGN_TESTS = _root_conftest.CAMPAIGN_TESTS
 EXPENSIVE_MODULES = _root_conftest.EXPENSIVE_MODULES
+EXPENSIVE_TESTS = _root_conftest.EXPENSIVE_TESTS
 STATIC_GUARDS = _root_conftest.STATIC_GUARDS
 normalized_nodeid = _root_conftest.normalized_nodeid
 
@@ -98,6 +99,66 @@ def test_campaign_tests_live_in_expensive_modules() -> None:
         }
     )
     assert not stray, f"campaign tests in modules that are not expensive: {stray}"
+
+
+def test_every_expensive_test_exists() -> None:
+    """A renamed test would silently rejoin FAST, and a shared build with it.
+
+    Keys are `module::function` or `module::function[case]`; the function must
+    still be defined in the module and, for a case key, the case id must still
+    appear in it.
+    """
+    missing = []
+    for key in EXPENSIVE_TESTS:
+        module, _, rest = key.partition("::")
+        name, _, case = rest.partition("[")
+        path = REPO_ROOT / module
+        source = path.read_text(encoding="utf-8") if path.is_file() else ""
+        if f"def {name}(" not in source or (case and case.rstrip("]") not in source):
+            missing.append(key)
+    assert not missing, f"conftest names expensive tests that no longer exist: {missing}"
+
+
+def test_expensive_tests_are_not_also_classified_by_module() -> None:
+    """One table per test: a per-test label inside an expensive module is dead."""
+    doubled = sorted(
+        key for key in EXPENSIVE_TESTS if key.partition("::")[0] in EXPENSIVE_MODULES
+    )
+    assert not doubled, f"labelled both by module and by test: {doubled}"
+    overlap = sorted(set(EXPENSIVE_TESTS) & set(CAMPAIGN_TESTS))
+    assert not overlap, f"labelled both expensive and campaign by test: {overlap}"
+
+
+def test_the_per_test_labels_reach_the_items_they_name(pytestconfig: pytest.Config) -> None:
+    """The table is applied to the collected items, including those under `benchmarks/`.
+
+    Checked on stand-in items handed to the hook, so this pins the matching rule
+    (an exact id, or the id without its case), not pytest's collection order.
+    """
+
+    class _Item:
+        def __init__(self, nodeid: str) -> None:
+            self.nodeid = nodeid
+            self.name = nodeid.rpartition("::")[2]
+            self.markers: list[str] = []
+
+        def add_marker(self, marker) -> None:
+            self.markers.append(marker.name)
+
+    items = []
+    for key in EXPENSIVE_TESTS:
+        items.append(_Item(key if "[" in key else f"{key}[some-case]"))
+        if "[" not in key:
+            items.append(_Item(key))
+    bystander = _Item(
+        "benchmarks/scientific_truth/tests/test_scientific_truth.py"
+        "::test_randomized_cases_inside_the_declared_domain_hold[lumped_property]"
+    )
+    _root_conftest.pytest_collection_modifyitems(pytestconfig, [*items, bystander])
+    assert all(item.markers == ["expensive"] for item in items), [
+        (item.nodeid, item.markers) for item in items if item.markers != ["expensive"]
+    ]
+    assert bystander.markers == [], "a case not named in the table must stay in FAST"
 
 
 def test_markers_are_actually_applied(pytestconfig: pytest.Config) -> None:

@@ -5,9 +5,9 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 
 ## Current branch / PR
 
-- Branch: `fix/big-14-review-r1-r4` (base `origin/main` @ `16c87f40`, the PR #119 merge), worktree `D:/forge-r1r4`. Earlier BIG 14
-  branches (`feat/big-14-scientific-closure`, `feat/big-14-flagship-a`, `feat/big-14-reviews`, the local-assurance passes) are merged.
-- PR: none opened; verify GitHub before making a current PR claim.
+- As of 2026-10-11: `main` @ `4634eba`. Open PRs and the verified repository state are listed in
+  `docs/work/ACTIVE_PLAN.md` ("Verified state"); verify GitHub before making a current PR claim.
+- Previous value of this field (historical): branch `fix/big-14-review-r1-r4` (base `16c87f40`), worktree `D:/forge-r1r4`.
 - Base: `main`
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
@@ -2189,3 +2189,108 @@ Recertification is owner-run and NOT RUN.
    load. Run the tier alone.
 5. `ruff --fix` over pre-existing files: it churned imports against the repo's compact style. Reverted; only
    campaign-new files are auto-fixed.
+
+## 2026-10-11 Planning consolidation (docs only; uncommitted working tree on `main` @ `4634eba`)
+
+- Problem: conflicting execution authority — Master Plan §8.1 "Big Rocks First" + P0–P40, the Completion Policy's
+  paused-expansion epic, PERFORMANCE.md's three-rocks-then-pivot policy, an 800-line ACTIVE_PLAN mixing history with
+  tasks, and the Genesis contract present only in PR #127.
+- Done: Master Plan rewritten as Part I strategy (authority map, Now/Next/Later/Superseded, timebox framework, Trust-lane
+  circuit breaker, control-plane budget, evidence-maturity progress metric) + Part II architecture reference;
+  ACTIVE_PLAN reduced to the live queue (G0 → A1 → A2 → B1) with OWNER_DECISION_REQUIRED OD-1..OD-13; Genesis (from
+  PR #127 head `4872b10`) gained substrate inventory §4.1, baseline families §10.5, compute estimate §10.6, timebox
+  policy §18.0, Step-0 circuit breaker, Step 2B demo, evaluator-ownership rule; PERFORMANCE.md lost execution authority
+  and gained measurement labels and compute staging; Completion Policy gained the planning relationship; CLAUDE.md
+  gained a planning-authority section. Old texts archived verbatim: `docs/archive/FORGE_MASTER_PLAN_2026-10-10.md`
+  (+ PERFORMANCE appendix), `docs/work/archive/ACTIVE_PLAN_HISTORY_TO_2026-10-10.md`.
+- Verified state used: certificate binds `3e396bc4` (not `main`); rulesets API 403; open PRs #123 (conflicts), #126,
+  #127, #117 (conflicts), stale #107/#39/#24; ledger computed stages unchanged.
+- Commands (this session, scratch venv CPython 3.13, pytest only):
+  - `python -m pytest -q -p no:cacheprovider tests/test_agent_workflow_contract.py tests/test_capability_completion.py`
+    -> 7 passed.
+  - `python3 -m tools.capability_maturity` -> "Capability completion ledger is coherent."
+  - `git diff --check` on this session's incremental tracked diff -> no live-document whitespace findings. This is not a claim that the full planning diff against `main` is clean.
+  - FAST / SCIENTIFIC tiers, regression pack, recertification: NOT RUN (docs-only change).
+- No code, test, threshold, result, maturity state or certificate changed. Not committed or pushed.
+- Correction pass (same day, docs only): (1) authority is by scope, not a global precedence chain ("execution authority
+  does not imply semantic authority outside the document's scope"); (2) Completion Policy: no blanket Track A/B
+  exemption — A1 limited to benchmark/measurement infrastructure, A2 and new B1 foundations need the active epic changed
+  or one fully specified owner-approved exception, anti-loophole rule added; (3) circuit breaker has three states,
+  `UNCLASSIFIED` is the blocking default and `GOVERNANCE_ONLY` needs a six-question evidence record; (4) the PERFORMANCE
+  appendix in the Master Plan archive was rebuilt byte-exact inside `~~~~` fences (the first version had demoted
+  headings, so it was not verbatim). Archive check (sha256 of archive bodies vs `git show 4634eba:<path>`, per-section
+  containment, appendix blocks vs original line ranges): PASS. Cross-reference audit: no broken references.
+  `python -m pytest -q -p no:cacheprovider tests/test_agent_workflow_contract.py tests/test_capability_completion.py`
+  -> 7 passed; `python3 -m tools.capability_maturity` -> coherent; `git diff --check` on the incremental correction diff -> no live-document whitespace findings (not a claim about the full planning diff against `main`);
+  `recertification_reasons` for every changed path -> none (ORDINARY). FAST / recertification: NOT RUN.
+
+## 2026-10-11 Planning consolidation landing
+
+- Reconstructed the reviewed docs tree on `docs/planning-consolidation-2026-10-11` from `main` @ `4634eba`, including the B1 non-shortcut circuit breaker. No maturity, code, test, or scientific-result change.
+- `py -3 -m pytest -q -p no:cacheprovider tests/test_agent_workflow_contract.py tests/test_capability_completion.py` -> 7 passed.
+- `py -3 -m tools.capability_maturity` -> "Capability completion ledger is coherent."
+- `git diff --check` against the full planning diff reports exactly two archive-only trailing-whitespace findings inherited byte-exact from the historical Master Plan; no live-document whitespace findings. The incremental cleanup diff was clean where applicable. Those historical whitespace lines were not removed or normalized; archive byte integrity is intentional.
+- ARCHIVE_VERIFY: PASS (Master Plan body, ACTIVE_PLAN body, PERFORMANCE.md lines 26–53 and 126–189, SHA-256 byte match).
+- FAST / Full Local Assurance: NOT RUN.
+
+## 2026-10-12 Test-suite runtime (owner-requested; branch `perf/test-suite-runtime`, base `main` @ `8b028dc`)
+
+- Problem: FAST (`-m "not expensive"`) had grown to ~13–17 min on a 2-core host. Measured cause: (1) the tier tables
+  were last extended at ~3k tests; at 10.4k, FAST carried ~680 s of solver runs, result reproductions and studies;
+  (2) source-scanning guards recomputed identical sweeps (guard_reach tokenized `src/` 4x per `verify()` and ~25
+  `verify()` calls per session; the nested `from_dict` scan parsed ~750 files once per exempted name; the dependency
+  sweep ran once per caller); (3) `AdmittedForwardTable.__post_init__` parsed one admission string 847,242 times for
+  one TCR grid; (4) 70% of TCR forward solves in four inference modules repeated inputs already solved in the session.
+- Done (no assertion, tolerance, threshold or selection changed; every relabelled test still runs in SCIENTIFIC/FULL):
+  - `src/engcore/inference/grid.py`: each distinct exact-`str` admission record parsed once per table; non-`str`
+    refs parsed every time; refusal order/messages unchanged; mutation B45a still matches once and is still killed.
+  - `tools/certification/guard_reach.py`: `_strip_comments_and_strings` memoized on the text.
+  - tests: dependency sweep cached per process (copies to callers); nested `from_dict` scan parses/walks each file
+    once for all names; `applied()` locates each spec / digests each unmutated file once; deterministic immutable
+    TCR posterior builds shared (`lru_cache`, one module fixture).
+  - `tests/conftest.py` `EXPENSIVE_TESTS`: 19 reproduction / convergence / oracle-agreement / positive-control tests
+    labelled `expensive`; fixture-sharing tests labelled together. Refusal, forgery, context-binding and
+    verdict-separation tests deliberately left in FAST (FAST is CI's only Python 3.11 tier).
+  - Equivalence (old HEAD helper vs new, same tree): `guard_reach.verify()`, `_reached_modules()`, nested
+    `from_dict` sites (all 11 names + synthetic file of every counted form), `applied()` -> all identical.
+- forge-scientific-review: CHANGES REQUIRED (F1 MEDIUM: memo had no adversarial test, two memo mutants survived every
+  existing test; F2 LOW: a test tampered a now-memoized posterior; F3 LOW: refusal tests moved out of FAST lost 3.11
+  coverage; F4 LOW: restructured scan had no adversarial test). All four fixed in `88a258f2`: new
+  `tests/inference/test_admission_record_memo.py` kills all three memo mutants and B45a; F2 tampers a copy; 11
+  refusal tests returned to FAST; synthetic scan test kills four scan mutants. No finding overruled.
+- Commands (this session, Linux container, 2 cores, CPython 3.13.16, pytest 9.1.1, xdist 3.8.0; history fetched to
+  depth 3000 so the freeze verifiers can resolve their commits):
+  - `python tools/forge_check.py --changed` (base `main`) -> 40 passed.
+  - `python tools/forge_check.py --regression` -> 225 passed.
+  - Targeted: `python -m pytest tests/test_core_scientific_audit_batch45.py tests/test_guard_reach_ledger.py
+    tests/test_mutation_population_v4.py tests/test_core_scientific_audit_batch55.py tests/test_core_semantic_invariants.py
+    tests/test_core_guards.py tests/test_core_api_contracts.py tests/inference tests/hybrid_uq/test_hybrid_uq_identifiability_predictive.py
+    tests/test_core_scientific_audit_batch25.py -q -n 2 --dist loadfile` (on `5429b9de`) -> 700 passed.
+  - `python -m pytest tests/test_tier_classification.py -q` -> 9 passed.
+  - FAST, MEASURED back to back on one host, `python -m pytest -m "not expensive" -q -n 2 -p no:cacheprovider`:
+    `main` `8b028dc` -> 9 failed, 9641 passed, 167 skipped, **992 s** wall; branch `88a258f2` -> 9 failed, 9630 passed,
+    167 skipped, **476 s** wall. Identical failure set: `test_core_certificate::test_the_certificate_describes_this_tree`;
+    `test_core_freeze_manifest::test_a_descendant_that_keeps_the_contract_still_verifies`;
+    `test_core_freeze_v3_manifest::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree`;
+    `test_core_freeze_v4_manifest::{test_once_assured_the_full_verification_holds, test_the_deep_surface_carries_methods_and_member_positions, test_the_tree_keeps_the_core_freeze_v4_contract}`;
+    `test_core_scientific_audit_batch56::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see`;
+    `test_mutation_workspace::{test_local_telemetry_is_outside_manifest_and_cannot_verify_as_receipt, test_mid_walk_failure_still_reports_entries_already_scanned}`.
+    These fail on unmodified `main` too (certificate binds `3e396bc4`; certified files changed since `d383eed0`);
+    the v4 deep-surface ones may also reflect Python 3.13 (unsupported per OD-2). UNCLASSIFIED here.
+  - SCIENTIFIC, same protocol, `-m "not campaign"`: `main` -> 27 failed, 10165 passed, 167 skipped, 14 errors,
+    **1448 s**; branch -> 27 failed, 10176 passed, 167 skipped, 14 errors, **1024 s**. Identical failure/error set:
+    the nine above plus 26 `tests/test_heterogeneous_ngspice.py` (no `wsl.exe` / ngspice on this host),
+    `tests/mcp/test_problem.py` (1), `tests/test_cross_solver_consensus.py` (1),
+    `benchmarks/empirical_validation` (1), `benchmarks/model_measurement_validation` (1).
+  - FULL, campaign tier, CI (3.11/3.12), hardened recertification: NOT RUN.
+- Side finding (not fixed): `benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::
+  test_rebuilding_everything_reproduces_the_published_gates` rewrites the committed `SAFETY_GATES.json` (MV-10 PASS ->
+  FAIL on this host); a test writing committed evidence is a hermeticity defect and races under xdist.
+- Recertification: every changed file except `docs/` is in the certified scope (`certified:harness`,
+  `certified:inference_admission`, `certified:certification_control`), so this branch needs the owner-run hardened
+  recertification (OD-3). Not pushed for merge; not recertified.
+- Failed approaches: (1) holding every product AST to share across names -- correct but ~300 MB per worker; replaced
+  by parse-and-walk-per-file. (2) Parsing each file once but still walking it once per name -- only 63 s -> 36 s; the
+  walk, not the parse, was the cost; one walk for all names -> 5 s. (3) Moving refusal tests out of FAST for speed --
+  reverted after review (F3): it silently drops their Python 3.11 execution. (4) Blaming `--dist loadfile` for the
+  tail -- a scheduling simulation over measured durations put it at 10-15 %, not worth a change.

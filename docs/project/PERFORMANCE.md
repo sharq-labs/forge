@@ -1,9 +1,17 @@
 # FORGE Performance Tracker
 
-> **Purpose:** Single execution tracker for the current FORGE roadmap.  
-> **Location:** Same strategic area as `FORGE_MASTER_PLAN.md`.  
-> **Rule:** Work is not closed because code exists. A row is closed only when its **Close Criteria** are met and the supporting evidence is recorded.  
-> **Authority:** This tracker does not override scientific authority, frozen contracts, certification rules, or `FORGE_MASTER_PLAN.md`.
+> **Purpose:** measurement policy and evidence ledger — how performance and workstream status are measured, labelled
+> and closed. Measured numbers themselves live in `docs/performance/core-performance.md` (command, SHA, environment).
+>
+> **Authority (2026-10-11):** this file grants **no execution authority**. What to work on now is decided only by
+> `docs/work/ACTIVE_PLAN.md`, under the strategy in `docs/project/FORGE_MASTER_PLAN.md` Part I. It does not override
+> scientific authority, frozen contracts, certification rules or the capability ledger. In its own scope — measurement
+> semantics, measured evidence, freezes and compute claims — it is final: `ACTIVE_PLAN.md` may schedule measurement
+> work but cannot redefine how it is measured, labelled or claimed. Execution authority does not imply semantic
+> authority outside the document's scope.
+>
+> **Rule:** work is not closed because code exists. A row is closed only when its **Close Criteria** are met and the
+> supporting evidence is recorded.
 
 ## Status legend
 
@@ -22,36 +30,64 @@
 4. Any false-support, wrong-number, provenance/identity corruption, evaluator-capture, or hidden-data leakage bug interrupts normal sequencing.
 5. Lightweight targeted tests run continuously. Full Local Assurance / hardened recertification runs at deliberate integration freezes, not after every row.
 6. Update this tracker at every major checkpoint. Put detailed transcripts, SHAs, failures, and measurements in `docs/work/PROGRESS.md`.
+7. Never present a number without its measurement label (below). An ESTIMATED or TARGET value never becomes a claim.
 
-## Current execution policy
+## Measurement labels
 
-The current cloud implementation is allowed to finish the previously selected **NEXT THREE BIG ROCKS** before the Roadmap V2 pivot:
+| Label | Meaning | May support a claim? |
+|---|---|---|
+| `MEASURED` | Executed; command, source SHA, environment and date recorded (in `docs/performance/core-performance.md` or PROGRESS) | yes, within the measured environment and scope |
+| `ESTIMATED` | Derived by arithmetic or modelling from measured inputs; method stated | no — planning only |
+| `TARGET` | A goal someone set | no |
+| `UNMEASURED` | Nothing has been run | no |
 
-1. bounded real-provider runs and qualification records;
-2. one bounded executable product coupling;
-3. Twin / Discovery history integration with the existing SRIA/evidence authority.
+Labels for the numbers recorded so far: the Roadmap V2 R8 discovery tiers in `core-performance.md` §9 (tier 0–3 rates,
+~292 µs trust overhead per screened candidate, false-elimination 0.0 over 963 audits) are `MEASURED` in one container,
+one process, seed 7. "50.7 useful promotions per compute-hour" is `ESTIMATED`: the FORGE machinery time is measured,
+the high-fidelity cost is a DECLARED 60 s. The Genesis campaign size (Genesis §10.6) is `ESTIMATED`. The 10 / 100 /
+1,000 / 10,000 campaign ladder is `UNMEASURED`.
 
-After those three are checkpointed and preserved, the program pivots to the higher-leverage sequence:
+## Compute staging
+
+Compute capability is added only when a measured workload requires it:
 
 ```text
-Discovery Authority Consolidation
-        ↓
-FidelityGraph
-        ↓
-Blindfold + Escrow
-        ↓
-Evaluator Isolation
-        ↓
-Multiplicity + Sealed Falsifiers
-        ↓
-Scientific Red Team
-        ↓
-Credibility Vectors
-        ↓
-Battery / AM-Bench Discovery Proofs
+content-addressed tasks → process workers per provider environment → scientifically valid result reuse (proven per
+execution class, Genesis §21) → telemetry as provenance → vectorized cheap tiers → existing schedulers (Ray / Dask /
+Parsl / Slurm) where needed → GPU / HPC only when a measured, accelerator-suitable workload justifies it
 ```
 
-## Master execution table
+No bespoke scheduler is built as a moat. A ladder rung (10, 100, 1,000, 10,000 campaigns) is reported only after it
+has been run, with strong-scaling, cache-correctness, false-elimination and per-tier cost results.
+
+## Status reconciliation (2026-10-11)
+
+The 2026-10-09 "finish three rocks, then pivot" policy is **closed**: the three rocks merged in PR #124 and Roadmap V2
+R1–R8 merged in PR #125 (`main` @ `4634eba`). The original text is archived in
+`docs/archive/FORGE_MASTER_PLAN_2026-10-10.md` (appendix). Ledger rows below keep their 2026-10-09 status cells; this
+table records what PROGRESS shows was built since. **No row is ticked DONE by this reconciliation**: close criteria were
+not re-audited, and nothing below is certified or qualified.
+
+| Rows | Recorded evidence (PROGRESS 2026-10-09/10) | Status now |
+|---|---|---|
+| 0–4 | Big Rocks + next three rocks merged (#124); Chrono / FEniCSx / CalculiX executed; OpenVSP / OpenRadioss not installable | BUILT; close criteria NOT RE-AUDITED |
+| 5 | No salvage matrix found in the repository | unchanged (PLANNED) |
+| 6–8 | Discovery authority map; canonical hypothesis and planner owners chosen; duplicates mapped, not removed | PARTIAL |
+| 9–11 | `design.fidelity_graph`: measured links, stratified audit, suspension, resurrection | BUILT (not a ledger stage) |
+| 12–20 | `engcore.blindfold` (L5, controls, escrow `SECURITY_BOUNDARY_NOT_PROVEN`, roles); sealed falsifiers, multiplicity, novelty | BUILT (not a ledger stage); L0–L4 and L6 levels NOT RE-AUDITED |
+| 21–25 | `tools/discovery_performance.py`, one-container measurement (labels above) | PARTIAL (MEASURED once) |
+| 26–29 | PySINDy, BoTorch, Dakota executed in provider envs; PySR, Ax NOT_INSTALLED | EXECUTED, not qualified |
+| 30–36 | Red Team, seeded-flaw suite, TrustEnvelope, credibility vectors (seven review rounds) | BUILT (not a ledger stage) |
+| 47 | Battery readiness: NOT READY for a confirmatory experiment; Kirkaldy stays NOT MET | unchanged |
+
+Mapping to Master Plan Part I §4 (strategic direction; the active queue is `docs/work/ACTIVE_PLAN.md`):
+
+- **NOW:** G0 Trust lane (rows 64, 66); Track A uses rows 6–20 as substrate; Track B demo (drone coupled chain from row 2).
+- **NEXT:** rows 9–11 and 21–25 as Genesis Steps 3–5 need them; rows 37 and 60.
+- **LATER:** rows 26 and 43 (only when a named benchmark pulls them), 47, 49, 50–58, 61–63.
+- **In force as policy:** row 41 (provider strategy freeze).
+
+## Workstream ledger (status cells as of 2026-10-09 unless edited 2026-10-11)
 
 | Done | # | Workstream / Big Rock | Current Status | Objective | Close Criteria |
 |---|---:|---|---|---|---|
@@ -96,16 +132,16 @@ Battery / AM-Bench Discovery Proofs
 | [x] | 38 | Minimum Robust Geometry Foundation | DONE (FOUNDATION) | Preserve the provider-neutral geometry/region/boundary/interface identity foundation already built. | Stable Forge identity; provider-native tags isolated in receipts/maps; targeted tests and hostile fixes completed. |
 | [ ] | 39 | Geometry Regeneration Check | PARTIAL | Detect persistent-naming/selector changes on regeneration instead of silently remapping. | Region selectors re-resolve; receipt mismatch causes UNKNOWN/refusal; no silent remap. |
 | [ ] | 40 | Twin Revision DAG | PARTIAL | Extend the existing frozen ScientificTwin through immutable non-Core revisions and typed change events. | Revision DAG, event semantics, evidence snapshot references, and authority separation are complete and integrated. |
-| [ ] | 41 | Provider Strategy Freeze | PLANNED | Stop adding providers for count after the current three rocks. | Future providers require a named benchmark/claim; breadth is no longer a progress metric. |
+| [ ] | 41 | Provider Strategy Freeze | IN FORCE (policy, 2026-10-11) | Stop adding providers for count after the current three rocks. | Future providers require a named benchmark/claim; breadth is no longer a progress metric. |
 | [ ] | 42 | Qualify FEniCSx | IN_PROGRESS | Deepen a useful PDE/FEM qualification scope beyond adapter availability. | Real bounded run, independent check/oracle, validity envelope, numerical evidence, provider identity, and failure semantics recorded. |
 | [ ] | 43 | Qualify OpenFOAM | PLANNED | Expand qualification beyond the narrow current case family. | At least one meaningful additional case family with verification/evidence and declared applicability is qualified. |
 | [ ] | 44 | Keep OpenVSP Scaffold | DEFERRED | Preserve valid adapter work without deepening it now. | Scaffold remains fail-closed and explicitly `REAL_EXECUTION_NOT_VERIFIED` until an aero benchmark pulls it. |
 | [ ] | 45 | Keep Chrono Scaffold | DEFERRED | Preserve valid adapter work without broad multibody expansion now. | Scaffold remains fail-closed; unsupported joints/actuators are explicit; real qualification waits for a benchmark. |
 | [ ] | 46 | OpenRadioss Governance Decision | REVIEW | Verify authoritative upstream/governance status before further investment. | Evidence-backed KEEP / FORK-MIGRATE / DEFER / REMOVE decision recorded. |
-| [ ] | 47 | Battery Degradation Discovery | IN_PROGRESS | Use battery fade as the first real scientific-discovery proving ground. | New pre-registration, model competition, independent/fresh confirmatory dataset, falsification, multiplicity, and Red Team output. Status 2026-10-10: readiness `NOT_READY` (`docs/flagships/BATTERY_CONFIRMATORY_READINESS.md`): pre-registration draft, hypothesis set, frozen prior-art snapshot, exposure gate, sealed-falsifier rule, Red Team plan and a synthetic dry run exist; no confirmatory dataset is designated and no confirmatory datum was exposed. |
+| [ ] | 47 | Battery Degradation Discovery | DEFERRED (LATER; may return as a Genesis inverse-problem domain) | Use battery fade as the first real scientific-discovery proving ground. | New pre-registration, model competition, independent/fresh confirmatory dataset, falsification, multiplicity, and Red Team output. Status 2026-10-10: readiness `NOT_READY` (`docs/flagships/BATTERY_CONFIRMATORY_READINESS.md`): pre-registration draft, hypothesis set, frozen prior-art snapshot, exposure gate, sealed-falsifier rule, Red Team plan and a synthetic dry run exist; no confirmatory dataset is designated and no confirmatory datum was exposed. |
 | [x] | 48 | Battery Negative-Result Discipline | DONE | Preserve Kirkaldy NOT MET and prevent observed holdout reuse as unseen validation. | Negative result stays visible; any new study uses new hypothesis/protocol and fresh confirmatory evidence. |
-| [ ] | 49 | NIST AM-Bench Vertical | PLANNED | Use prospective/blind additive-manufacturing prediction as the second discovery proof. | Official benchmark protocol followed; prediction sealed before truth exposure; scoring is externally checkable. |
-| [ ] | 50 | Fusion F1 | PLANNED | Add one bounded safe fusion-energy component benchmark after Red Team exists. | Component-level benchmark has admitted data/models, independent routes where possible, UQ, falsification, and scoped claims. |
+| [ ] | 49 | NIST AM-Bench Vertical | DEFERRED (LATER) | Use prospective/blind additive-manufacturing prediction as the second discovery proof. | Official benchmark protocol followed; prediction sealed before truth exposure; scoring is externally checkable. |
+| [ ] | 50 | Fusion F1 | DEFERRED (LATER) | Add one bounded safe fusion-energy component benchmark after Red Team exists. | Component-level benchmark has admitted data/models, independent routes where possible, UQ, falsification, and scoped claims. |
 | [ ] | 51 | Fusion F2+ | DEFERRED | Expand fusion multiphysics/lifecycle/RAMI only after F1 demonstrates value. | Pulled by benchmark/evidence need; no whole-system overclaim. |
 | [ ] | 52 | Biomedical Benchmark | DEFERRED | Start with one bounded externally referenceable computational engineering benchmark. | Clear engineering context of use, validation route, and no clinical treatment authority. |
 | [ ] | 53 | Drone Product | DEFERRED | Preserve template/current bounded coupling proof, but defer full product expansion. | Reopened only by a named benchmark/customer need after Discovery/Red Team priorities. |
@@ -121,73 +157,19 @@ Battery / AM-Bench Discovery Proofs
 | [ ] | 63 | L6 Prospective Result | DEFERRED | Produce a real prospective result sealed before future measurements exist. | Prediction/protocol timestamped and sealed before data; later scoring uses independent external truth. |
 | [ ] | 64 | Continuous Authority Hardening | IN_PROGRESS | Fix authority-critical defects immediately throughout the roadmap. | No known false-support, wrong-number, hidden-data leakage, evaluator-capture, or provenance/identity blocker remains open at a milestone. Status 2026-10-10: issuer-bound authority ledger (signed, persistent, key lifecycle, compromise windows) and issuer-bound credibility; four hostile reviews in the Big Rocks campaign, findings fixed or recorded in `docs/work/PROGRESS.md`. |
 | [ ] | 65 | Deferred Hardening Ledger | IN_PROGRESS | Track low-risk lint/UI/package/refactor debt without blocking Big Rocks. | Every deferred item has reason, owner/trigger, and no hidden scientific-authority impact. |
-| [ ] | 66 | Full Assurance / Recertification | DEFERRED UNTIL FREEZE | Run the expensive SHA-bound campaign at a deliberate integration freeze. | FAST + SCIENTIFIC + required provider suites + mutations + scope/certificate checks pass on the exact final source SHA. |
+| [ ] | 66 | Full Assurance / Recertification | NOW (Gate G0, owner-run) | Run the expensive SHA-bound campaign at a deliberate integration freeze. | FAST + SCIENTIFIC + required provider suites + mutations + scope/certificate checks pass on the exact final source SHA. |
 
 ## Milestone targets
 
-### Current checkpoint — finish the existing three rocks
-
-- [ ] Bounded real-provider proof(s) recorded.
-- [ ] One bounded executable coupled chain recorded.
-- [ ] Twin / Discovery history integrated with canonical SRIA/evidence authority.
-- [ ] Current work committed and pushed safely.
-- [ ] No new breadth added merely for provider count.
-
-### Roadmap V2 first proof
-
-- [ ] Canonical Discovery ownership consolidated.
-- [ ] FidelityGraph active with measured links.
-- [ ] Blindfold L5 minimum benchmark works.
-- [ ] Escrow boundary is real or explicitly marked unproven.
-- [ ] Evaluator isolation prevents proposer write access.
-- [ ] Multiplicity and sealed falsifiers are recorded.
-- [ ] Scientific Red Team attacks the discovery output.
-- [ ] Credibility output uses factor vectors/gaps, not a scalar score.
-
-### First externally impressive demo
-
-A live Blindfold run where an unseen universe is selected after the system is fixed:
-
-```text
-Blindfold universe
-        ↓
-Forge proposes/searches
-        ↓
-Forge discovers or correctly refuses
-        ↓
-Escrow scores hidden truth
-        ↓
-Scientific Red Team attacks the survivor
-        ↓
-Trust Envelope
-        ↓
-Replayable Discovery Passport
-```
-
-The demonstration succeeds only if it proves all three behaviors:
-
-- not dependent on memorizing a known answer;
-- willing to return `INSUFFICIENT_EVIDENCE` / `INDISTINGUISHABLE`;
-- able to attack and qualify its own discovery.
-
-### First scientific result target
-
-A pre-registered blind competition for lithium-ion capacity-fade model structure using an exploratory dataset and a truly independent confirmatory dataset.
-
-The result may be positive or negative. A rigorous negative result still counts as scientific progress if the protocol, multiplicity, falsification, and uncertainty are preserved.
-
-### 6–12 month target
-
-- [ ] Blindfold v1 credible enough for outside submissions.
-- [ ] Battery discovery proof completed.
-- [ ] AM-Bench prospective/blind vertical active.
-- [ ] Red Team seeded-flaw suite published internally or externally.
-- [ ] At least one cross-family reproduced counterexample.
-- [ ] Discovery Passport corpus accumulating.
-- [ ] Fusion F1 starts only after Red Team and credibility machinery are usable.
-- [ ] One L6 prospective result is targeted before broad product expansion.
+Milestones are the gates in `docs/work/ACTIVE_PLAN.md` (G0, A1, A2, B1) and Genesis §18. The 2026-10-09 milestone text
+("finish the existing three rocks", "Roadmap V2 first proof", "first externally impressive demo", "first scientific
+result target", "6–12 month target") is archived verbatim in the Master Plan archive appendix; for strategic direction,
+Master Plan Part I §4 governs (authority by scope, Master Plan §1).
 
 ## Progress metrics
+
+Primary metric: **how many relevant capabilities advanced in evidence maturity** (computed stage,
+`python -m tools.capability_maturity`), plus the Genesis measurement vector. The list below is secondary.
 
 Do **not** use raw file count, LOC, provider count, or generated-candidate count as primary success metrics.
 
@@ -225,6 +207,13 @@ NOTES:
 ```
 
 ## Change log
+
+### 2026-10-11
+
+- Planning consolidation: this file no longer carries execution authority (ACTIVE_PLAN does); added measurement labels
+  and compute staging; replaced the closed execution policy with a status reconciliation; rows 41, 47, 49, 50 and 66
+  re-dispositioned to match Master Plan Part I §4; milestone targets point to the ACTIVE_PLAN gates. Old text archived.
+  No row was ticked DONE and no measurement was changed.
 
 ### 2026-10-09
 
