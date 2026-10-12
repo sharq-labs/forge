@@ -56,22 +56,41 @@ def _correlated():
                      (-10.0, -10.0), (10.0, 10.0), (0.0, 0.0))
 
 
-def _grids():
-    affine = S.affine()
-    yield "affine", affine.grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)])
+def _affine_grid():
+    return S.affine().grid([np.linspace(0.6, 1.3, 61), np.linspace(1.4, 2.7, 61)])
+
+
+def _correlated_resolved_grid():
     ridge = _correlated()
     mu, cov = S.gaussian_truth(ridge)
     sd = np.sqrt(np.diag(cov))
-    yield "correlated_resolved", ridge.grid([np.linspace(mu[i] - 6 * sd[i], mu[i] + 6 * sd[i], 161) for i in range(2)])
-    nonlinear = S.strong_nonlinearity()
-    yield "nonlinear", nonlinear.grid([np.linspace(0.01, 20.0, 241), np.linspace(0.01, 10.0, 241)])
+    return ridge.grid([np.linspace(mu[i] - 6 * sd[i], mu[i] + 6 * sd[i], 161) for i in range(2)])
+
+
+def _nonlinear_grid():
+    return S.strong_nonlinearity().grid([np.linspace(0.01, 20.0, 241), np.linspace(0.01, 10.0, 241)])
+
+
+def _near_zero_grid():
     near_zero = S.Problem("near_zero", lambda t, x: t[0] + t[1] * x, np.linspace(0, 1, 12), (0.01, 2.0), 0.05,
                           (-10.0, -10.0), (10.0, 10.0), (0.0, 0.0))
-    yield "near_zero", near_zero.grid([np.linspace(-0.2, 0.2, 81), np.linspace(1.6, 2.4, 81)])
+    return near_zero.grid([np.linspace(-0.2, 0.2, 81), np.linspace(1.6, 2.4, 81)])
 
 
-@pytest.mark.parametrize("label,grid", list(_grids()), ids=lambda v: v if isinstance(v, str) else "")
-def test_the_v2_classifier_is_the_frozen_classifier_on_the_same_inputs(label, grid):
+# Builders, not grids: building all four at import cost every collecting process
+# (each xdist worker, every run) ~0.8 s whether or not this test was selected.
+# The ids are unchanged -- a callable renders as "" exactly as a grid did.
+_GRIDS = (
+    ("affine", _affine_grid),
+    ("correlated_resolved", _correlated_resolved_grid),
+    ("nonlinear", _nonlinear_grid),
+    ("near_zero", _near_zero_grid),
+)
+
+
+@pytest.mark.parametrize("label,build", _GRIDS, ids=lambda v: v if isinstance(v, str) else "")
+def test_the_v2_classifier_is_the_frozen_classifier_on_the_same_inputs(label, build):
+    grid = build()
     frozen = assess_identifiability(grid)
     lows, highs = zip(*(grid.marginal_interval(i, 0.95) for i in range(len(grid.parameter_names))))
     status, condition, correlation, widths, why = classify(
