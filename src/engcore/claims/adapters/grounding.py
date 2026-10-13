@@ -42,7 +42,7 @@ final period optional)::
     The decision requires <level> [, <level>] [and <level>] evidence
     Quantify <channel> [, <channel>] [and <channel>] uncertainty [with coverage factor <k>]
               [, and model form discrepancy must be supported]
-    [<words>] <input name> is <value>
+    [The] <input name | input path> is <value>
 
 and the text speaks about that quantity, that input, or that kind of
 requirement in no other sentence -- so a second statement, a condition or a
@@ -53,6 +53,16 @@ Anything else is UNGROUNDED: the user restates it in the controlled form, or
 the deploying application binds it by policy. A waiver of uncertainty, a
 capability constraint, a model-form declaration, input distributions and a
 decision context are never read from prose.
+
+The reading is CLOSED-WORLD (third review): every sentence of the text must be
+accounted for -- read by a rule, stated about a declared input, or stating
+exactly what a policy binds. One sentence nothing accounts for ("That limit is
+waived during burn-in", "Apply a safety margin of 20 K") makes the claim
+UNGROUNDED, because a deterministic reader cannot know it changes nothing. A
+policy may bind a comparison, an evidence bar or an uncertainty demand; it may
+not replace a different or stricter one the user wrote. A value is written
+unambiguously: no number that could be a grouped integer (``1.200``) and no
+unit spelling with more than one standard definition (``gallon``, ``ton``).
 """
 
 from __future__ import annotations
@@ -291,10 +301,28 @@ def stated_numbers(text: str, start: int, end: int) -> list[StatedNumber]:
     return found
 
 
-def _quantity(number: str, unit: str, *, bound: bool = False) -> Quantity:
-    """``<number> <unit>`` read with the Core's own parser, or Ungrounded."""
-    if bound and _GROUPING_LOOKALIKE.fullmatch(number):
-        raise Ungrounded(f"{number!r} could be a decimal or a grouped integer; a bound is written unambiguously")
+#: Unit spellings with more than one standard definition (short ton / tonne / long ton, US / imperial
+#: volumes, thermochemical / IT calorie and BTU, mechanical / metric horsepower, thou / milliradian ...).
+#: The parser would pick one silently; a criterion or an input written with one of them is not read.
+AMBIGUOUS_UNIT_WORDS = frozenset({
+    "ton", "tons", "gallon", "gallons", "gal", "quart", "quarts", "qt", "pint", "pints", "pt", "cup", "cups",
+    "ounce", "ounces", "oz", "floz", "fluid", "mil", "mils", "calorie", "calories", "cal", "kcal", "kilocalorie",
+    "kilocalories", "btu", "btus", "mmbtu", "hp", "horsepower", "bhp", "barrel", "barrels", "bbl", "cwt",
+    "hundredweight", "therm", "therms", "bushel", "bushels",
+})
+
+
+def _quantity(number: str, unit: str) -> Quantity:
+    """``<number> <unit>`` read with the Core's own parser, or Ungrounded.
+
+    A number that could be a decimal or a grouped integer (``1.200``) and a unit spelling with more
+    than one standard definition are refused: a value is written unambiguously or it is not read.
+    """
+    if _GROUPING_LOOKALIKE.fullmatch(number):
+        raise Ungrounded(f"{number!r} could be a decimal or a grouped integer; a value is written unambiguously")
+    ambiguous = sorted(set(re.findall(r"[a-z]+", unit.lower())) & AMBIGUOUS_UNIT_WORDS)
+    if ambiguous:
+        raise Ungrounded(f"the unit {unit.strip()!r} spells {ambiguous}, which has more than one standard definition")
     try:
         return Quantity.parse(f"{number} {unit.strip()}")
     except Exception as exc:
@@ -412,11 +440,11 @@ def read_comparison(text: str, where: tuple[int, int]) -> StatedComparison:
         match = pattern.fullmatch(body)
         if match is None:
             continue
-        target = _quantity(match["v"], match["vu"], bound=True)
+        target = _quantity(match["v"], match["vu"])
         if kind == "threshold":
             operator = THRESHOLD_PHRASES[" ".join(match["op"].lower().split())]
             return StatedComparison(sentence, match["subject"], operator, target, None)
-        tolerance = _quantity(match["t"], match["tu"], bound=True)
+        tolerance = _quantity(match["t"], match["tu"])
         return StatedComparison(sentence, match["subject"], ConstraintOperator.EQUAL, target, tolerance)
     match = _THRESHOLD_REF.fullmatch(body)
     if match is not None:
@@ -507,6 +535,8 @@ class GroundingContext:
     proposal: Mapping[str, Any]
     #: input path -> the sentence that grounded it (quantity inputs only)
     grounded_inputs: dict[str, Sentence | None]
+    #: start offsets of the sentences a rule read; every sentence of the text must end up here (closed world)
+    consumed: set[int] = field(default_factory=set)
     _comparison: StatedComparison | Ungrounded | None = None
 
     def span(self, name: str) -> tuple[int, int]:
@@ -537,6 +567,12 @@ def _source(name: str, sentence: Sentence, note: str = "") -> FieldProvenance:
     return FieldProvenance(name, CriterionProvenance.SOURCE_GROUNDED, "read from " + _quote(sentence) + (f"; {note}" if note else ""))
 
 
+def _read(ctx: GroundingContext, name: str, sentence: Sentence, note: str = "") -> FieldProvenance:
+    """``name`` was read from ``sentence``; the sentence is consumed."""
+    ctx.consumed.add(sentence.start)
+    return _source(name, sentence, note)
+
+
 def _rule_qoi(ctx: GroundingContext, raw: Any) -> FieldProvenance:
     stated = ctx.comparison()
     name = str(raw.get("name", "")).replace("_", " ")
@@ -553,7 +589,7 @@ def _rule_qoi(ctx: GroundingContext, raw: Any) -> FieldProvenance:
     elsewhere = _named_elsewhere(ctx.text, name, stated.sentence)
     if elsewhere:
         raise Ungrounded(f"the text speaks about {name!r} in another sentence too ({elsewhere[0]!r}); one statement is read")
-    return _source("qoi", stated.sentence)
+    return _read(ctx, "qoi", stated.sentence)
 
 
 def _rule_operator(ctx: GroundingContext, raw: Any) -> FieldProvenance:
@@ -564,7 +600,7 @@ def _rule_operator(ctx: GroundingContext, raw: Any) -> FieldProvenance:
         raise Ungrounded(f"operator {raw!r} is not a comparison") from exc
     if proposed is not stated.operator:
         raise Ungrounded(f"the sentence states {stated.operator.value!r}, the proposal {proposed.value!r}")
-    return _source("operator", stated.sentence)
+    return _read(ctx, "operator", stated.sentence)
 
 
 def _rule_kind(ctx: GroundingContext, raw: Any) -> FieldProvenance:
@@ -588,6 +624,7 @@ def _rule_target(ctx: GroundingContext, raw: Any) -> FieldProvenance:
         if stated.target_ref != " ".join(_content_words(_input_name(ref))):
             raise Ungrounded(f"the comparison names {stated.target_ref!r} as its bound, not the input {ref!r}")
         ctx.ledger.take(stated.token, "claim.target")
+        ctx.consumed.add(stated.sentence.start)
         return FieldProvenance("target", CriterionProvenance.COMPUTED_FROM_GROUNDED,
                                f"the bound is grounded input {ref!r}, named by " + _quote(stated.sentence))
     if stated.target is None:
@@ -597,7 +634,7 @@ def _rule_target(ctx: GroundingContext, raw: Any) -> FieldProvenance:
         raise Ungrounded(f"the sentence's bound is {stated.target.magnitude!r} {stated.target.units}, "
                          f"not {value.magnitude!r} {value.units}")
     ctx.ledger.take(stated.token, "claim.target")
-    return _source("target", stated.sentence)
+    return _read(ctx, "target", stated.sentence)
 
 
 def _rule_tolerance(ctx: GroundingContext, raw: Any) -> FieldProvenance:
@@ -609,7 +646,7 @@ def _rule_tolerance(ctx: GroundingContext, raw: Any) -> FieldProvenance:
     value = Quantity.from_dict(raw)
     if stated.tolerance is None or not _equal(stated.tolerance, value, spread=True):
         raise Ungrounded(f"the sentence does not state the tolerance {value.magnitude!r} {value.units}")
-    return _source("tolerance", stated.sentence)
+    return _read(ctx, "tolerance", stated.sentence)
 
 
 def _policy_only(name: str, empty_basis: str) -> Rule:
@@ -645,13 +682,13 @@ def _rule_assumptions(ctx: GroundingContext, raw: Any) -> FieldProvenance:
         raise Ungrounded("more than one assumption is not read from one cited sentence; a policy may bind them")
     sentence = _statement_sentence(ctx, ctx.span("assumptions"), str(items[0].get("statement", "")), _ASSUMPTION_PREFIXES,
                                    f"the assumption {items[0].get('assumption_id')!r}")
-    return _source("assumptions", sentence)
+    return _read(ctx, "assumptions", sentence)
 
 
 def _rule_decision(ctx: GroundingContext, raw: Any) -> FieldProvenance:
     sentence = _statement_sentence(ctx, ctx.span("decision"), str(raw.get("statement", "")), _DECISION_PREFIXES,
                                    "the decision this claim serves")
-    return _source("decision", sentence, "the decision id labels the stated decision")
+    return _read(ctx, "decision", sentence, "the decision id labels the stated decision")
 
 
 def _rule_evidence(ctx: GroundingContext, raw: Any) -> FieldProvenance:
@@ -666,7 +703,7 @@ def _rule_evidence(ctx: GroundingContext, raw: Any) -> FieldProvenance:
     elsewhere = _other_mentions(ctx.text, LEVEL_STEMS, sentence)
     if elsewhere:
         raise Ungrounded(f"the text speaks about evidence in another sentence too ({elsewhere[0]!r}); one statement is read")
-    return _source("evidence", sentence)
+    return _read(ctx, "evidence", sentence)
 
 
 def _rule_uncertainty(ctx: GroundingContext, raw: Any) -> FieldProvenance:
@@ -689,7 +726,7 @@ def _rule_uncertainty(ctx: GroundingContext, raw: Any) -> FieldProvenance:
     elsewhere = _other_mentions(ctx.text, CHANNEL_STEMS, sentence)
     if elsewhere:
         raise Ungrounded(f"the text speaks about uncertainty in another sentence too ({elsewhere[0]!r}); one statement is read")
-    return _source("uncertainty", sentence)
+    return _read(ctx, "uncertainty", sentence)
 
 
 def _rule_discrepancy(ctx: GroundingContext, raw: Any) -> FieldProvenance:
@@ -790,16 +827,57 @@ ADAPTER_GROUNDED_FIELDS = frozenset({"known_inputs", "operating_context", "missi
 # ---------------------------------------------------------------------------
 
 _INPUT = re.compile(r"(?P<subject>.+?)\s+(?:is|=|equals)\s+(?P<value>.+)", re.IGNORECASE)
+#: An input identifier written as one token: a dotted path or a snake_case name, never prose.
+_IDENTIFIER = re.compile(r"[A-Za-z][A-Za-z0-9]*(?:(?:_|\.|\[\d+\]\.?)[A-Za-z0-9]+)+")
 
 
 def _input_name(path: str) -> str:
     return re.sub(r"\[\d+\]", "", path).split(".")[-1].replace("_", " ")
 
 
-def ground_input(text: str, spans: Mapping[str, Sequence[int]], ledger: TokenLedger, path: str, raw: Any) -> Sentence | None:
-    """Ground one input from a sentence that is exactly ``[<words>] <input name> is <value>``.
+def _input_subjects(path: str) -> tuple[list[str], list[str]]:
+    """The two exact ways a sentence may name an input: its own name, or its whole path."""
+    return _content_words(_input_name(path)), _content_words(path)
 
-    Returns the sentence that stated a quantity, ``None`` for text, flags and counts.
+
+def _input_named_elsewhere(text: str, path: str, subject: list[str], here: Sentence) -> list[str]:
+    """Other sentences that speak about this input (hostile review, third pass A1).
+
+    Any sentence that names the input blocks it -- a second value, a qualifier, a change over time --
+    except (a) another input's own statement whose subject is a DIFFERENT input identifier written as one
+    token (``stages[1].body.initial_temperature``, ``ratings.rated_power_temperature``) -- when that
+    identifier ends with this input's name, only if this sentence names its input by whole path too --
+    and (b) a controlled comparison that names the input as its bound.
+    """
+    name, _ = _input_subjects(path)
+    phrase = " ".join(name)
+    blocking: list[str] = []
+    for other in sentences(text):
+        if other.start == here.start or not _phrase_in(phrase, other.text):
+            continue
+        match = _INPUT.fullmatch(other.text)
+        if match is not None and _IDENTIFIER.fullmatch(re.sub(r"(?i)^the\s+", "", match["subject"].strip())):
+            words = _content_words(match["subject"])
+            if words != subject and (words[-len(name):] != name or len(subject) > len(name)):
+                continue
+        try:
+            stated = read_comparison(text, (other.start, other.end))
+        except Ungrounded:
+            stated = None
+        if stated is not None and stated.target_ref == phrase and phrase not in " ".join(_content_words(stated.subject)):
+            continue
+        blocking.append(other.text)
+    return blocking
+
+
+def ground_input(text: str, spans: Mapping[str, Sequence[int]], ledger: TokenLedger, path: str, raw: Any,
+                 consumed: set[int] | None = None) -> Sentence | None:
+    """Ground one input from a sentence that is exactly ``[the] <input name | input path> is <value>``.
+
+    The subject is the input's name or its whole path, nothing more ("the minimum ambient temperature"
+    is not "ambient temperature"), and no other sentence may speak about the input. Returns the
+    sentence that stated a quantity, ``None`` for text, flags and counts; on success the sentence's
+    start is added to ``consumed``.
     """
     where = span_text(text, spans, path)
     if where is None:
@@ -809,28 +887,23 @@ def ground_input(text: str, spans: Mapping[str, Sequence[int]], ledger: TokenLed
     name = _input_name(path)
     if match is None:
         raise Ungrounded(f"the cited sentence is not '<{name}> is <value>' ({sentence.text!r})")
-    subject = _content_words(match["subject"])
-    wanted = _content_words(name)
-    if not wanted or subject[-len(wanted):] != wanted:
-        raise Ungrounded(f"the cited sentence states {match['subject']!r}, not {name!r}")
     if _BLOCKING.search(normalized(sentence.text)):
         raise Ungrounded("the cited sentence is conditional, negated or contrastive; its value is not read")
-    def _overlaps(other: list[str]) -> bool:
-        shorter, longer = sorted((subject, other), key=len)
-        return longer[-len(shorter):] == shorter
-
-    # Another '<subject> is <value>' sentence whose subject ends with this one (or this with it) may be a
-    # second statement or a correction of the same input: neither is chosen between. A near-duplicate name
-    # ("heat capacity" / "extra heat capacity") is refused too -- fail closed; the user can word them apart.
-    competing = [
-        s.text for s in sentences(text)
-        if s.start != sentence.start and (m := _INPUT.fullmatch(s.text)) is not None
-        and _overlaps(_content_words(m["subject"]))
-    ]
-    if competing:
-        raise Ungrounded(f"the text states {match['subject']!r} more than once ({competing[0]!r}); one statement is read")
+    subject = _content_words(match["subject"])
+    if not subject or subject not in _input_subjects(path):
+        raise Ungrounded(f"the cited sentence states {match['subject']!r}, not {name!r}")
+    elsewhere = _input_named_elsewhere(text, path, subject, sentence)
+    if elsewhere:
+        raise Ungrounded(f"the text speaks about {name!r} in another sentence too ({elsewhere[0]!r}); one statement is read")
     value_text = match["value"].strip()
     ledger.take((sentence.start, sentence.end), path)
+    stated = _input_value_matches(value_text, raw, sentence)
+    if consumed is not None:
+        consumed.add(sentence.start)
+    return stated
+
+
+def _input_value_matches(value_text: str, raw: Any, sentence: Sentence) -> Sentence | None:
     if isinstance(raw, Mapping):
         try:
             value = Quantity.from_dict(raw)
@@ -858,9 +931,129 @@ def ground_input(text: str, spans: Mapping[str, Sequence[int]], ledger: TokenLed
     raise Ungrounded(f"a {type(raw).__name__} cannot be grounded")
 
 
+# ---------------------------------------------------------------------------
+# Closed world: a policy-bound field consumes only the sentences that agree with it,
+# and every sentence of the text must be consumed by something (third review A2, A5)
+# ---------------------------------------------------------------------------
+
+#: The comparison fields a policy may bind. A controlled comparison the user wrote must agree with each.
+COMPARISON_FIELDS = ("qoi", "operator", "target", "tolerance")
+
+
+def _comparison_disagrees(stated: StatedComparison, bound: Mapping[str, Any]) -> list[str]:
+    problems: list[str] = []
+    try:
+        if "qoi" in bound:
+            qoi = dict(bound["qoi"])
+            wanted = _content_words(str(qoi.get("name", "")).replace("_", " "))
+            for value in dict(qoi.get("qualifiers") or {}).values():
+                wanted = wanted + ["of"] + _content_words(str(value))
+            if _content_words(stated.subject) != wanted:
+                problems.append(f"the text compares {stated.subject!r}, the policy {' '.join(wanted)!r}")
+        if "operator" in bound and ConstraintOperator(bound["operator"]) is not stated.operator:
+            problems.append(f"the text states {stated.operator.value!r}, the policy {bound['operator']!r}")
+        if "target" in bound:
+            target = dict(bound["target"] or {})
+            if target.get("input_ref") is not None:
+                if stated.target_ref != " ".join(_content_words(_input_name(str(target["input_ref"])))):
+                    problems.append("the text's bound is not the input the policy names")
+            elif stated.target is None or not _equal(stated.target, Quantity.from_dict(target["value"]), spread=False):
+                problems.append("the text states a different bound than the policy")
+        if "tolerance" in bound:
+            tolerance = bound["tolerance"]
+            if (tolerance is None) != (stated.tolerance is None) or (
+                    tolerance is not None and not _equal(stated.tolerance, Quantity.from_dict(tolerance), spread=True)):
+                problems.append("the text states a different tolerance than the policy")
+    except (KeyError, TypeError, ValueError, AttributeError, ScientificCoreError) as exc:
+        problems.append(f"the policy's comparison is not readable ({exc})")
+    return problems
+
+
+def policy_comparison_conflicts(text: str, policy: Mapping[str, Any]) -> tuple[list[str], set[int]]:
+    """Controlled comparisons in the text that a policy-bound comparison field would silently override.
+
+    Returns the conflicts and the sentences that agree with the policy (consumed by it). A policy may
+    bind a comparison; it may not replace a different one the user wrote -- stricter or looser.
+    """
+    bound = {name: policy[name] for name in COMPARISON_FIELDS if name in policy}
+    if not bound:
+        return [], set()
+    conflicts: list[str] = []
+    agreeing: set[int] = set()
+    for sentence in sentences(text):
+        try:
+            stated = read_comparison(text, (sentence.start, sentence.end))
+        except Ungrounded:
+            continue
+        problems = _comparison_disagrees(stated, bound)
+        if problems:
+            conflicts.append(f"{sentence.text!r}: {'; '.join(problems)}")
+        else:
+            agreeing.add(sentence.start)
+    return conflicts, agreeing
+
+
+def _statement_options(statement: str, prefixes: Sequence[str]) -> set[str]:
+    wanted = normalized(str(statement).strip().rstrip(".!?;:"))
+    return {wanted} | {f"{normalized(p)} {wanted}" for p in prefixes}
+
+
+def policy_consumes(text: str, name: str, bound: Any) -> set[int]:
+    """The sentences a policy-bound field accounts for: those that state exactly what the policy binds.
+
+    Evidence and uncertainty sentences are consumed only after :data:`POLICY_TEXT_CHECKS` found them
+    no stricter than the policy; the decision and assumptions only when a sentence states them verbatim.
+    """
+    consumed: set[int] = set()
+    for sentence in sentences(text):
+        body = normalized(sentence.text)
+        if name == "evidence" and read_evidence(sentence.text) is not None:
+            consumed.add(sentence.start)
+        elif name == "uncertainty" and read_uncertainty(sentence.text) is not None:
+            consumed.add(sentence.start)
+        elif name == "decision" and isinstance(bound, Mapping) and \
+                body in _statement_options(str(bound.get("statement", "")), _DECISION_PREFIXES):
+            consumed.add(sentence.start)
+        elif name == "assumptions" and any(
+                isinstance(item, Mapping) and body in _statement_options(str(item.get("statement", "")), _ASSUMPTION_PREFIXES)
+                for item in (bound or [])):
+            consumed.add(sentence.start)
+    return consumed
+
+
+def declared_input_sentences(text: str, paths: Sequence[str]) -> set[int]:
+    """Unconditional ``<input> is <value>`` sentences about an input the claim declares, grounded or not.
+
+    Such a sentence is accounted for even when its input was not grounded (a misread value, a missing
+    citation): that input is then missing, which can only withhold an answer, never support one.
+    """
+    subjects = [words for path in paths for words in _input_subjects(path)]
+    found: set[int] = set()
+    for sentence in sentences(text):
+        match = _INPUT.fullmatch(sentence.text)
+        if match is None or _BLOCKING.search(normalized(sentence.text)):
+            continue
+        if _content_words(match["subject"]) in subjects:
+            found.add(sentence.start)
+    return found
+
+
+def unread_sentences(text: str, consumed: set[int]) -> list[str]:
+    """Sentences no grounding rule, input or policy accounted for. Any one of them makes the claim UNGROUNDED.
+
+    A deterministic reader cannot know what an unread sentence changes -- a retraction ("That limit is
+    waived during burn-in"), a margin, a confidence level, a condition cut off by an abbreviation -- so
+    it does not guess that it changes nothing.
+    """
+    return [sentence.text for sentence in sentences(text) if sentence.start not in consumed]
+
+
 __all__ = [
     "ADAPTER_GROUNDED_FIELDS",
     "ADMISSIBLE_PROVENANCE",
+    "AMBIGUOUS_UNIT_WORDS",
+    "COMPARISON_FIELDS",
+    "declared_input_sentences",
     "CHANNEL_NAMES",
     "CRITERION_SPANS",
     "CRITERION_SPAN_PREFIX",
@@ -878,10 +1071,13 @@ __all__ = [
     "clause_of",
     "ground_input",
     "operators_stated",
+    "policy_comparison_conflicts",
+    "policy_consumes",
     "read_comparison",
     "read_evidence",
     "read_uncertainty",
     "sentence_at",
     "sentences",
     "stated_numbers",
+    "unread_sentences",
 ]

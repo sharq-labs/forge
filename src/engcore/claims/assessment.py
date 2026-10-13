@@ -37,6 +37,7 @@ re-executes it.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
@@ -649,17 +650,38 @@ CALLER_AUTHORED_CRITERIA: Mapping[str, Any] = {
 
 def grounded_criteria(source_text: str, spans: Mapping[str, Sequence[int]], policy: Mapping[str, Any],
                       provenance: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    """The criteria authority of a claim the natural-language adapter grounded: re-derivable offline."""
-    return {
-        "authority": "grounded",
-        "grounded": True,
+    """The criteria authority of a claim the natural-language adapter compiled: re-derivable offline.
+
+    ``grounded`` only when no criterion is POLICY_BOUND. A policy travels inside the record and nothing
+    pins it to a deploying application (third review A3), so criteria a policy fixed are labelled
+    ``policy_bound`` and carry the policy's digest: the verdict is about that policy's criteria, and a
+    reader checks the digest against their own deployment.
+    """
+    plain_policy = json.loads(canonical_json(dict(policy)))
+    by_policy = sorted(str(item.get("field")) for item in provenance if item.get("provenance") == "policy_bound")
+    block: dict[str, Any] = {
+        "authority": "policy_bound" if by_policy else "grounded",
+        "grounded": not by_policy,
         "source_text": str(source_text),
         "spans": {key: [int(v) for v in spans[key]] for key in sorted(spans)},
-        "policy": json.loads(canonical_json(dict(policy))),
+        "policy": plain_policy,
         "provenance": [dict(item) for item in provenance],
-        "meaning": "Every decision criterion was read from the user's controlled sentences, bound by the "
-                   "deploying policy, or derived from grounded values; read-back re-runs the grounding.",
     }
+    if by_policy:
+        block["policy_fields"] = by_policy
+        block["policy_digest"] = hashlib.sha256(canonical_json(plain_policy).encode("utf-8")).hexdigest()
+        block["meaning"] = ("Criteria " + ", ".join(by_policy) + " were fixed by the deployment policy carried in "
+                            "this record, which nothing here pins to a deploying application: compare policy_digest "
+                            "with your deployment. The other criteria were read from the user's controlled sentences "
+                            "or derived from them; read-back re-runs the grounding.")
+    else:
+        block["meaning"] = ("Every decision criterion was read from the user's controlled sentences or derived "
+                            "from them; read-back re-runs the grounding.")
+    return block
+
+
+#: The criteria authorities a record may carry.
+CRITERIA_AUTHORITIES = ("caller_authored", "grounded", "policy_bound")
 
 
 def _verify_criteria_authority(record: Mapping[str, Any], claim: ScientificClaim | None, registry: CapabilityRegistry) -> None:
@@ -670,21 +692,27 @@ def _verify_criteria_authority(record: Mapping[str, Any], claim: ScientificClaim
         if canonical_json(_plain(block)) != canonical_json(dict(CALLER_AUTHORED_CRITERIA)):
             raise AssessmentForgeryError("the caller-authored criteria block is not the canonical one")
         return
-    if block.get("authority") != "grounded":
+    if block.get("authority") not in ("grounded", "policy_bound"):
         raise AssessmentForgeryError(f"unknown criteria authority {block.get('authority')!r}")
     from .adapters.nl import compile_natural_language
 
     try:
-        regrounded = compile_natural_language(block["source_text"], _plain(record["claim"]),
-                                              {k: tuple(v) for k, v in dict(block["spans"]).items()}, registry,
-                                              policy=_plain(block["policy"]))
+        source_text = str(block["source_text"])
+        spans = {k: tuple(v) for k, v in dict(block["spans"]).items()}
+        policy = _plain(block["policy"])
+        regrounded = compile_natural_language(source_text, _plain(record["claim"]), spans, registry, policy=policy)
     except Exception as exc:  # any refusal of the stored grounding inputs is a forgery of the block
         raise AssessmentForgeryError(f"the grounded criteria do not re-ground: {exc}") from exc
     if regrounded.status != CompilationStatus.READY.value or claim is None or regrounded.compiled is None \
             or regrounded.compiled.claim.identity_digest != claim.identity_digest:
         raise AssessmentForgeryError("the record's criteria are not what its stored source text grounds")
-    if [p.to_dict() for p in regrounded.provenance] != _plain(block["provenance"]):
-        raise AssessmentForgeryError("the record's criteria provenance does not re-derive")
+    if claim.statement != source_text.strip():
+        raise AssessmentForgeryError("the record's statement is not the source text its criteria were grounded in")
+    # The whole block re-derives -- authority label, policy digest, provenance, meaning -- so a record whose
+    # criteria a policy fixed cannot call itself grounded.
+    derived = grounded_criteria(source_text, spans, policy, [p.to_dict() for p in regrounded.provenance])
+    if canonical_json(derived) != canonical_json(_plain(block)):
+        raise AssessmentForgeryError("the record's criteria authority does not re-derive from its grounding")
 
 
 @dataclass(frozen=True)
@@ -757,10 +785,14 @@ def assess_claim(
     (:func:`grounded_criteria`), which read-back re-runs. It decides nothing in the verdict; it says what
     the verdict is a verdict about.
     """
-    if criteria_authority is not None and criteria_authority.get("authority") not in ("caller_authored", "grounded"):
+    if criteria_authority is not None and criteria_authority.get("authority") not in CRITERIA_AUTHORITIES:
         raise ClaimLayerError(f"unknown criteria authority {criteria_authority.get('authority')!r}")
     compiled = compile_claim(claim, registry)
     parsed = compiled.claim
+    if criteria_authority is not None:
+        # Third review A4: a criteria authority is verified when the record is built, not only on read-back.
+        _verify_criteria_authority({"criteria_authority": _plain(criteria_authority),
+                                    "claim": None if parsed is None else parsed.to_dict()}, parsed, registry)
     plan = execution = report = None
     view = None
     if compiled.status is CompilationStatus.READY:
@@ -947,6 +979,7 @@ __all__ = [
     "AssessmentForgeryError",
     "Assurance",
     "CALLER_AUTHORED_CRITERIA",
+    "CRITERIA_AUTHORITIES",
     "ClaimAssessment",
     "assemble_evidence",
     "grounded_criteria",

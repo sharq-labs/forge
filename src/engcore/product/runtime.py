@@ -39,6 +39,8 @@ class ProductRequestError(ValueError):
 #: Re-exported: who authored a record's criteria lives IN the assessment record (claims layer), bound by
 #: its digest and re-derived on read-back (hostile review F1-G / R9). The view only repeats it.
 CALLER_AUTHORED_QUALIFIER = "criteria authored by the caller, not grounded"
+POLICY_BOUND_QUALIFIER = "criteria fixed by a deployment policy the record does not pin; compare its policy_digest"
+_QUALIFIERS = {"grounded": None, "policy_bound": POLICY_BOUND_QUALIFIER}
 
 
 def _wire_spans(spans: Mapping[str, Sequence[int]]) -> dict[str, tuple[int, int]]:
@@ -212,9 +214,8 @@ def _assessment_view(record: Mapping[str, Any], *, digest: str) -> dict[str, Any
         "status": record.get("status"),
         "verdict": record.get("verdict"),
         # The verdict is about the criteria in the record; when nobody grounded them, the view says so beside it.
-        "verdict_qualifier": None
-        if (record.get("criteria_authority") or {}).get("authority") == "grounded"
-        else CALLER_AUTHORED_QUALIFIER,
+        "verdict_qualifier": _QUALIFIERS.get((record.get("criteria_authority") or {}).get("authority"),
+                                             CALLER_AUTHORED_QUALIFIER),
         "criteria_authority": record.get("criteria_authority"),
         "result": record.get("result"),
         "plan": record.get("plan"),
@@ -332,6 +333,7 @@ def run_proposed_simulation(
 __all__ = [
     "CALLER_AUTHORED_CRITERIA",
     "CALLER_AUTHORED_QUALIFIER",
+    "POLICY_BOUND_QUALIFIER",
     "PRODUCT_CAPABILITIES_SCHEMA",
     "PRODUCT_PREPARATION_SCHEMA",
     "PRODUCT_RUN_SCHEMA",

@@ -51,9 +51,14 @@ from .grounding import (
     CriterionProvenance,
     FieldProvenance,
     GroundingContext,
+    COMPARISON_FIELDS,
     TokenLedger,
     Ungrounded,
+    declared_input_sentences,
     ground_input,
+    policy_comparison_conflicts,
+    policy_consumes,
+    unread_sentences,
 )
 
 #: Fields no language-model proposal may carry, anywhere in the proposal.
@@ -162,6 +167,8 @@ def compile_natural_language(
     provenance: list[FieldProvenance] = []
     advisory: dict[str, Any] = {}
     ledger = TokenLedger()
+    #: start offsets of every sentence some input, rule or policy accounted for (closed world)
+    consumed: set[int] = set()
 
     # Inputs first: an input the text does not state is moved to missing, never defaulted.
     missing = list(proposal.get("missing_inputs") or [])
@@ -172,7 +179,7 @@ def compile_natural_language(
             if path.startswith(CRITERION_SPAN_PREFIX):
                 return NaturalLanguageCompilation("refused", (f"input path {path!r} collides with the criterion span namespace",), ())
             try:
-                grounded_inputs[path] = ground_input(text, spans, ledger, path, inputs[path])
+                grounded_inputs[path] = ground_input(text, spans, ledger, path, inputs[path], consumed)
             except (Ungrounded, ScientificCoreError, ValueError, TypeError) as why:
                 findings.append(f"{section}.{path}: {why}; moved to missing_inputs")
                 moved.append(path)
@@ -182,6 +189,8 @@ def compile_natural_language(
         proposal[section] = inputs
         provenance.append(FieldProvenance(section, CriterionProvenance.SOURCE_GROUNDED, "every remaining input is stated at its cited span"))
     proposal["missing_inputs"] = sorted(missing)
+    consumed.update(declared_input_sentences(text, [*moved, *proposal["missing_inputs"], *(
+        path for section in ("known_inputs", "operating_context") for path in proposal[section])]))
     provenance.append(FieldProvenance(
         "missing_inputs", CriterionProvenance.COMPUTED_FROM_GROUNDED,
         "declared unknowns and ungrounded inputs; an unknown input can only withhold an answer",
@@ -189,6 +198,7 @@ def compile_natural_language(
 
     # A policy-bound field takes the policy's value. A proposal disagreeing with it is not grounded.
     policy_view = _canonical_fields({**proposal, **policy})
+    comparison_conflicts, agreeing = policy_comparison_conflicts(text, policy)
     for name, bound in sorted(policy.items()):
         if name in proposal:
             # The field alone is compared: every other policy-bound field already holds the policy's value.
@@ -198,6 +208,12 @@ def compile_natural_language(
                 advisory[name] = proposal.get(name)
                 provenance.append(FieldProvenance(name, CriterionProvenance.AI_PROPOSED, "contradicts the bound policy"))
                 continue
+        if name in COMPARISON_FIELDS and comparison_conflicts:
+            findings.append(f"{name}: the user's text states a comparison the deploying policy would replace "
+                            f"({comparison_conflicts[0]}); a policy may not silently override a stated comparison")
+            advisory[name] = proposal.get(name)
+            provenance.append(FieldProvenance(name, CriterionProvenance.AI_PROPOSED, "the text states a different comparison"))
+            continue
         stricter = POLICY_TEXT_CHECKS.get(name, lambda *_: [])(text, bound if isinstance(bound, Mapping) else {})
         if stricter:
             findings.append(f"{name}: the user's text demands {stricter}, beyond what the deploying policy binds; "
@@ -206,10 +222,12 @@ def compile_natural_language(
             provenance.append(FieldProvenance(name, CriterionProvenance.AI_PROPOSED, f"text demands {stricter} beyond the policy"))
             continue
         proposal[name] = copy.deepcopy(bound)
+        consumed.update(agreeing if name in COMPARISON_FIELDS else policy_consumes(text, name, bound))
         provenance.append(FieldProvenance(name, CriterionProvenance.POLICY_BOUND, "fixed by the deploying application's policy"))
 
     # Every other scientific field needs a rule, and the rule has to pass.
-    context = GroundingContext(text=text, spans=spans, ledger=ledger, proposal=proposal, grounded_inputs=grounded_inputs)
+    context = GroundingContext(text=text, spans=spans, ledger=ledger, proposal=proposal, grounded_inputs=grounded_inputs,
+                               consumed=consumed)
     for name in SCIENTIFIC_FIELDS:
         if name in ADAPTER_GROUNDED_FIELDS or name in policy:
             continue
@@ -228,6 +246,15 @@ def compile_natural_language(
         findings.append(f"{name}: {why}")
         advisory[name] = raw
         provenance.append(FieldProvenance(name, CriterionProvenance.AI_PROPOSED, str(why)))
+
+    # Closed world (third review A2): a sentence nothing accounted for may retract, condition or tighten
+    # what was read. It is not assumed to change nothing.
+    unread = unread_sentences(text, consumed)
+    if unread:
+        findings.append(f"the text has sentences no controlled form reads ({unread[0]!r}"
+                        + (f" and {len(unread) - 1} more" if len(unread) > 1 else "")
+                        + "); restate them in a controlled form, bind them by policy, or remove them")
+        advisory["unread_sentences"] = unread
 
     if advisory:
         return NaturalLanguageCompilation(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any, Mapping
 
 
@@ -38,8 +39,10 @@ class Prose:
 
 
 def quantity_words(raw: Mapping[str, Any]) -> str:
-    magnitude = raw["magnitude"]
-    return f"{magnitude!r} {raw['units']}"
+    magnitude = repr(raw["magnitude"])
+    if re.fullmatch(r"[+-]?[1-9]\d{0,2}\.\d{3}", magnitude):
+        magnitude += "0"  # 1.616 could be a grouped 1616; 1.6160 cannot (the adapter refuses the former)
+    return f"{magnitude} {raw['units']}"
 
 
 def state_inputs(prose: Prose, payload: Mapping[str, Any]) -> Prose:

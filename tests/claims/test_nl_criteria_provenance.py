@@ -38,7 +38,7 @@ from engcore.claims.adapters.grounding import (
 from engcore.claims.adapters.nl import UNGROUNDED, compile_natural_language
 from engcore.claims.contract import SCIENTIFIC_FIELDS
 from engcore.mcp.capabilities import production_registry
-from engcore.product.runtime import prepare_simulation, run_proposed_simulation
+from engcore.product.runtime import POLICY_BOUND_QUALIFIER, prepare_simulation, run_proposed_simulation
 from engcore.scientific.ir.constraints import ConstraintOperator
 from engcore.scientific.units.quantity import Quantity
 from nl_support import Prose, state_claim, state_inputs
@@ -199,10 +199,12 @@ def test_f1g_an_advisory_claim_resubmitted_as_a_structured_claim_says_who_author
     assert laundered["record"]["criteria_authority"]["authority"] == "caller_authored"
     proposal["target"]["value"]["magnitude"] = 305.0
     grounded = run_proposed_simulation(prose.text, proposal, prose.spans, registry, policy=prose.policy)
-    assert grounded["record"]["criteria_authority"]["authority"] == "grounded"
+    # This case's uncertainty waiver is bound by policy, so the record says so (third review A3).
+    assert grounded["record"]["criteria_authority"]["authority"] == "policy_bound"
+    assert grounded["record"]["criteria_authority"]["policy_fields"] == ["uncertainty"]
     assert {p["field"] for p in grounded["record"]["criteria_authority"]["provenance"]} == set(SCIENTIFIC_FIELDS)
     assert laundered["view"]["verdict_qualifier"] == "criteria authored by the caller, not grounded"
-    assert grounded["view"]["verdict_qualifier"] is None
+    assert grounded["view"]["verdict_qualifier"] == POLICY_BOUND_QUALIFIER
 
 
 def test_r9_who_authored_the_criteria_is_bound_into_the_record_and_re_derived(registry) -> None:
