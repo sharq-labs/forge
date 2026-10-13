@@ -1021,20 +1021,24 @@ def policy_consumes(text: str, name: str, bound: Any) -> set[int]:
     return consumed
 
 
-def declared_input_sentences(text: str, paths: Sequence[str]) -> set[int]:
-    """Unconditional ``<input> is <value>`` sentences about an input the claim declares, grounded or not.
+def declared_input_sentences(text: str, paths: Sequence[str]) -> dict[int, set[str]]:
+    """Unconditional ``<input> is <value>`` sentences about a proposed input path, grounded or not, by start.
 
-    Such a sentence is accounted for even when its input was not grounded (a misread value, a missing
-    citation): that input is then missing, which can only withhold an answer, never support one.
+    Each sentence comes with the input paths that account for it. It is only PROVISIONALLY read: a
+    misread or uncited input is then missing, which withholds an answer -- but only for an input the
+    selected capability takes. A path the model merely listed ("missing_inputs: [that_limit]") must not
+    hide a sentence, so :func:`~engcore.claims.adapters.nl.compile_natural_language` re-checks every
+    input-read sentence against the selected capability's declared inputs (fourth review BLOCKER).
     """
-    subjects = [words for path in paths for words in _input_subjects(path)]
-    found: set[int] = set()
+    found: dict[int, set[str]] = {}
     for sentence in sentences(text):
         match = _INPUT.fullmatch(sentence.text)
         if match is None or _BLOCKING.search(normalized(sentence.text)):
             continue
-        if _content_words(match["subject"]) in subjects:
-            found.add(sentence.start)
+        subject = _content_words(match["subject"])
+        for path in paths:
+            if subject in _input_subjects(path):
+                found.setdefault(sentence.start, set()).add(path)
     return found
 
 

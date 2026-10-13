@@ -56,6 +56,7 @@ from .grounding import (
     Ungrounded,
     declared_input_sentences,
     ground_input,
+    sentences,
     policy_comparison_conflicts,
     policy_consumes,
     unread_sentences,
@@ -167,8 +168,11 @@ def compile_natural_language(
     provenance: list[FieldProvenance] = []
     advisory: dict[str, Any] = {}
     ledger = TokenLedger()
-    #: start offsets of every sentence some input, rule or policy accounted for (closed world)
+    #: start offsets of every sentence a criterion rule or a policy accounted for (closed world)
     consumed: set[int] = set()
+    #: sentences read only as input statements, with the input paths that read them -- provisional until
+    #: the selected capability is known to take one of those inputs (fourth review BLOCKER)
+    by_input: dict[int, set[str]] = {}
 
     # Inputs first: an input the text does not state is moved to missing, never defaulted.
     missing = list(proposal.get("missing_inputs") or [])
@@ -179,7 +183,10 @@ def compile_natural_language(
             if path.startswith(CRITERION_SPAN_PREFIX):
                 return NaturalLanguageCompilation("refused", (f"input path {path!r} collides with the criterion span namespace",), ())
             try:
-                grounded_inputs[path] = ground_input(text, spans, ledger, path, inputs[path], consumed)
+                read: set[int] = set()
+                grounded_inputs[path] = ground_input(text, spans, ledger, path, inputs[path], read)
+                for start in read:
+                    by_input.setdefault(start, set()).add(path)
             except (Ungrounded, ScientificCoreError, ValueError, TypeError) as why:
                 findings.append(f"{section}.{path}: {why}; moved to missing_inputs")
                 moved.append(path)
@@ -189,8 +196,9 @@ def compile_natural_language(
         proposal[section] = inputs
         provenance.append(FieldProvenance(section, CriterionProvenance.SOURCE_GROUNDED, "every remaining input is stated at its cited span"))
     proposal["missing_inputs"] = sorted(missing)
-    consumed.update(declared_input_sentences(text, [*moved, *proposal["missing_inputs"], *(
-        path for section in ("known_inputs", "operating_context") for path in proposal[section])]))
+    for start, paths in declared_input_sentences(text, [*moved, *proposal["missing_inputs"], *(
+            path for section in ("known_inputs", "operating_context") for path in proposal[section])]).items():
+        by_input.setdefault(start, set()).update(paths)
     provenance.append(FieldProvenance(
         "missing_inputs", CriterionProvenance.COMPUTED_FROM_GROUNDED,
         "declared unknowns and ungrounded inputs; an unknown input can only withhold an answer",
@@ -249,7 +257,7 @@ def compile_natural_language(
 
     # Closed world (third review A2): a sentence nothing accounted for may retract, condition or tighten
     # what was read. It is not assumed to change nothing.
-    unread = unread_sentences(text, consumed)
+    unread = unread_sentences(text, consumed | set(by_input))
     if unread:
         findings.append(f"the text has sentences no controlled form reads ({unread[0]!r}"
                         + (f" and {len(unread) - 1} more" if len(unread) > 1 else "")
@@ -264,6 +272,21 @@ def compile_natural_language(
     # The record keeps the user's own words, never the model's paraphrase of them.
     proposal["statement"] = text.strip()
     compiled = compile_claim(proposal, registry)
+    # An input statement is accounted for only by an input the selected capability takes. A path the model
+    # invented or listed as missing -- "That limit is waived during burn-in" read as input "that_limit" --
+    # would otherwise hide a sentence that changes the criteria.
+    capability = None if compiled.capability is None else registry.get(compiled.capability.capability_id)
+    foreign = sorted(
+        (start, sorted(paths)) for start, paths in by_input.items()
+        if start not in consumed and (capability is None or not any(capability.input(p) is not None for p in paths))
+    )
+    if foreign and compiled.status.value == "ready":
+        quoted = [next(s.text for s in sentences(text) if s.start == start) for start, _ in foreign]
+        findings.append(f"the text states {quoted[0]!r} about {foreign[0][1]}, which the selected capability does not "
+                        "take as an input; a sentence nothing reads is not assumed to change nothing")
+        return NaturalLanguageCompilation(
+            UNGROUNDED, tuple(findings), tuple(moved), None, tuple(provenance), {"unread_sentences": quoted},
+        )
     return NaturalLanguageCompilation(compiled.status.value, tuple(findings), tuple(moved), compiled, tuple(provenance), {})
 
 

@@ -108,6 +108,27 @@ def test_a2_a_conditional_statement_about_a_declared_input_is_not_accounted_for(
     assert any("unless the fan stops" in sentence for sentence in result.advisory["unread_sentences"])
 
 
+@pytest.mark.parametrize("extra, path", [
+    ("That limit is waived during burn-in.", "that_limit"),
+    ("The limit is 400 K for flight hardware.", "limit"),
+])
+@pytest.mark.parametrize("how", ["missing", "known"])
+def test_fourth_review_blocker_an_invented_input_cannot_hide_a_sentence(registry, extra, path, how) -> None:
+    prose, proposal = _faithful(t3_claim())
+    prose.say((path, extra) if how == "known" else extra)
+    if how == "missing":
+        proposal["missing_inputs"] = sorted({*proposal.get("missing_inputs", []), path})
+    else:
+        proposal["known_inputs"] = {**proposal["known_inputs"], path: extra.split(" is ", 1)[1].rstrip(".")}
+        start = prose.text.index(extra)
+        prose.spans[path] = (start, start + len(extra))
+    result = _compile(prose, proposal, registry)
+    assert result.status != "ready", (result.status, result.findings)
+    if how == "missing":  # the reviewer's route: before the fix this compiled READY with the sentence hidden
+        assert result.status == UNGROUNDED and result.compiled is None, (result.status, result.findings)
+        assert any(extra.rstrip(".") in sentence for sentence in result.advisory["unread_sentences"])
+
+
 # ---- A3 -------------------------------------------------------------------------------------------------
 
 
