@@ -274,3 +274,26 @@ def test_a7_an_input_written_like_a_grouped_integer_is_not_read() -> None:
     with pytest.raises(Ungrounded, match="grouped integer"):
         _ground("The cell mass is 1.200 kg.", "1.200 kg", "cell.cell_mass", mass)
     assert _ground("The cell mass is 1.2000 kg.", "1.2000 kg", "cell.cell_mass", mass) is not None
+
+
+# ---- fifth review BLOCKER A/B: only a sentence ground_input READ accounts for an input ----------------------
+
+
+@pytest.mark.parametrize("extra_missing", [[], ["stages[9].body.heat_capacity"]])
+def test_fifth_review_a_sentence_no_input_read_never_makes_a_claim_ready(registry, extra_missing) -> None:
+    prose, proposal = _faithful(et_claim())
+    prose.say("heat_capacity is 77 J/K and that limit is waived during burn-in.")
+    proposal["missing_inputs"] = sorted({*proposal.get("missing_inputs", []), *extra_missing})
+    result = _compile(prose, proposal, registry)
+    assert result.status == UNGROUNDED and result.compiled is None, (result.status, result.findings)
+    assert any("waived during burn-in" in s for s in result.advisory["unread_sentences"])
+    run = run_proposed_simulation(prose.text, proposal, prose.spans, registry, policy=prose.policy)
+    assert run["record"] is None and run["view"] is None
+
+
+def test_fifth_review_a_misread_input_is_listed_not_silently_dropped(registry) -> None:
+    prose, proposal = _faithful(et_claim())
+    proposal["known_inputs"]["stages[0].body.heat_capacity"]["magnitude"] = 77.0
+    result = _compile(prose, proposal, registry)
+    assert result.status == "needs_input"
+    assert any("heat_capacity" in s for s in result.advisory["sentences_not_read"])

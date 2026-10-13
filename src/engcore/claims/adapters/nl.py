@@ -173,6 +173,8 @@ def compile_natural_language(
     #: sentences read only as input statements, with the input paths that read them -- provisional until
     #: the selected capability is known to take one of those inputs (fourth review BLOCKER)
     by_input: dict[int, set[str]] = {}
+    #: sentences ground_input actually READ for a grounded input (fifth review: only these can account for one)
+    read_by_input: set[int] = set()
 
     # Inputs first: an input the text does not state is moved to missing, never defaulted.
     missing = list(proposal.get("missing_inputs") or [])
@@ -187,6 +189,7 @@ def compile_natural_language(
                 grounded_inputs[path] = ground_input(text, spans, ledger, path, inputs[path], read)
                 for start in read:
                     by_input.setdefault(start, set()).add(path)
+                read_by_input.update(read)
             except (Ungrounded, ScientificCoreError, ValueError, TypeError) as why:
                 findings.append(f"{section}.{path}: {why}; moved to missing_inputs")
                 moved.append(path)
@@ -201,7 +204,7 @@ def compile_natural_language(
         by_input.setdefault(start, set()).update(paths)
     provenance.append(FieldProvenance(
         "missing_inputs", CriterionProvenance.COMPUTED_FROM_GROUNDED,
-        "declared unknowns and ungrounded inputs; an unknown input can only withhold an answer",
+        "declared unknowns and ungrounded inputs; a sentence about one is never what makes a claim READY",
     ))
 
     # A policy-bound field takes the policy's value. A proposal disagreeing with it is not grounded.
@@ -272,22 +275,27 @@ def compile_natural_language(
     # The record keeps the user's own words, never the model's paraphrase of them.
     proposal["statement"] = text.strip()
     compiled = compile_claim(proposal, registry)
-    # An input statement is accounted for only by an input the selected capability takes. A path the model
-    # invented or listed as missing -- "That limit is waived during burn-in" read as input "that_limit" --
-    # would otherwise hide a sentence that changes the criteria.
+    # A sentence is accounted for by an input only when ground_input READ that very sentence for a grounded input
+    # the selected capability takes (fourth and fifth reviews). A sentence attributed to an input merely because
+    # its subject names one -- a missing, invented, misread, optional or out-of-range path, or a second sentence
+    # about a grounded input -- was never read: it may carry "and that limit is waived", so it never lets a claim
+    # be READY, and on any other status it is listed so a later structured completion cannot lose it.
     capability = None if compiled.capability is None else registry.get(compiled.capability.capability_id)
     foreign = sorted(
         (start, sorted(paths)) for start, paths in by_input.items()
-        if start not in consumed and (capability is None or not any(capability.input(p) is not None for p in paths))
+        if start not in consumed and (start not in read_by_input or capability is None
+                                      or not any(capability.input(p) is not None for p in paths))
     )
+    quoted = [next(s.text for s in sentences(text) if s.start == start) for start, _ in foreign]
     if foreign and compiled.status.value == "ready":
-        quoted = [next(s.text for s in sentences(text) if s.start == start) for start, _ in foreign]
-        findings.append(f"the text states {quoted[0]!r} about {foreign[0][1]}, which the selected capability does not "
-                        "take as an input; a sentence nothing reads is not assumed to change nothing")
+        findings.append(f"the text states {quoted[0]!r} about {foreign[0][1]}, which no grounded input of the selected "
+                        "capability read; a sentence nothing reads is not assumed to change nothing")
         return NaturalLanguageCompilation(
             UNGROUNDED, tuple(findings), tuple(moved), None, tuple(provenance), {"unread_sentences": quoted},
         )
-    return NaturalLanguageCompilation(compiled.status.value, tuple(findings), tuple(moved), compiled, tuple(provenance), {})
+    advisory_out = {"sentences_not_read": quoted} if quoted else {}
+    return NaturalLanguageCompilation(compiled.status.value, tuple(findings), tuple(moved), compiled, tuple(provenance),
+                                      advisory_out)
 
 
 __all__ = [
