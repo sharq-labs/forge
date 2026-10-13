@@ -1,11 +1,13 @@
 name: Branch Policy
 
-# Manual policy inspection only. FORGE intentionally has no required GitHub
-# status checks; scientific assurance is produced locally and bound to the
-# source commit. Repository branch rules still protect review/lineage controls.
-# The required configuration is in docs/assurance/BRANCH_PROTECTION.md.
+# Branch/ruleset policy is checked after every update to main (hostile review
+# F8) and on manual dispatch. FORGE intentionally has no required GitHub status
+# checks; scientific assurance is produced locally and bound to the source
+# commit. The required configuration is in docs/assurance/BRANCH_PROTECTION.md.
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

@@ -24,13 +24,18 @@ See `docs/assurance/LOCAL_ASSURANCE.md` for the operator procedure.
 
 ## What GitHub does and does not attest
 
-GitHub hosts the repository, pull requests, reviews and merge history. The
-workflows under `.github/workflows/` are manual-only reference/fallback
-workflows. There is no `pull_request`, `push` or `schedule` trigger in the
-authoritative configuration.
+GitHub hosts the repository, pull requests, reviews and merge history. Since
+hostile review F8 the workflows run automatically again: `tests.yml` classifies
+and tests every pull request and every push to `main`; `recertify-hardened-core.yml`
+runs on every pull request and recertifies when the classifier finds a
+certificate-sensitive change; `branch-policy.yml` checks the branch policy after
+every push to `main`. Manual dispatch stays as an explicit fallback;
+`trust-mutations.yml` remains manual and nothing runs on a schedule.
 
-GitHub therefore does **not** attest that FAST, SCIENTIFIC, regression or
-mutation gates ran. That claim comes from the local assurance receipt embedded
+No GitHub status check is REQUIRED by the branch rules (below), so a red or
+missing workflow run does not by itself block a merge, and a green one is not
+the assurance record. GitHub therefore does **not** attest that FAST,
+SCIENTIFIC, regression or mutation gates ran. That claim comes from the local assurance receipt embedded
 into the certificate's assurance record and bound to the exact source commit.
 
 This is a deliberate trust model. It must not be described as independent

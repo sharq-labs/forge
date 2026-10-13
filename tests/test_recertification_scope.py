@@ -398,13 +398,13 @@ def _needs_of(block: str) -> list[str]:
     return re.findall(r"- ([A-Za-z0-9_-]+)", listed.group(1)) if listed else []
 
 
-def test_recertification_is_manual_only_and_both_workflows_call_the_classifier():
+def test_recertification_runs_on_every_pull_request_and_both_workflows_call_the_classifier():
     recertify = (WORKFLOWS / "recertify-hardened-core.yml").read_text(encoding="utf-8")
     trigger = recertify.split("\npermissions:", 1)[0]
-    assert "paths" not in trigger
-    # GitHub workflows are manual references; local assurance owns source gates.
+    assert "paths" not in trigger  # the classifier, not a path filter, decides what is certificate-sensitive
+    # Hostile review F8: automatic on pull requests, manual dispatch kept as the explicit fallback.
+    assert "\n  pull_request:" in trigger
     assert "workflow_dispatch:" in trigger
-    assert "\n  pull_request:" not in trigger
     assert "\n  push:" not in trigger
     assert "\n  schedule:" not in trigger
     tests = (WORKFLOWS / "tests.yml").read_text(encoding="utf-8")
