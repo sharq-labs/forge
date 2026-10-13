@@ -119,3 +119,129 @@ def test_a_new_module_a_verdict_starts_importing_is_refused_until_certified(tmp_
     assert len(problems) == 1
     assert "src/engcore/decider/rule.py" in problems[0] and "src/engcore/decider/__init__.py" in problems[0]
     assert "domains" not in problems[0]  # an answer producer is exempt by declaration, never by omission
+
+
+# ---- third review B1-B4: the builder and the verifier enforce the closure, past dynamic imports too ----
+
+
+def _closure_tree(root: pathlib.Path, verdict_source: bytes) -> list[cc.ScopeArea]:
+    for package in ("claims", "decider", "domains"):
+        (root / "src" / "engcore" / package).mkdir(parents=True)
+        (root / "src" / "engcore" / package / "__init__.py").write_bytes(b"")
+    (root / "src" / "engcore" / "__init__.py").write_bytes(b"")
+    (root / "src" / "engcore" / "claims" / "verdict.py").write_bytes(verdict_source)
+    (root / "src" / "engcore" / "decider" / "rule.py").write_bytes(b"def decide():\n    return 'supported'\n")
+    return [cc.ScopeArea("claims", "CORE_CERTIFIED", ("src/engcore/__init__.py", "src/engcore/claims/**/*.py",
+                                                      "src/engcore/domains/__init__.py"), "test")]
+
+
+def test_b2_an_exempt_package_init_is_not_exempt(tmp_path) -> None:
+    scope = _closure_tree(tmp_path, b"from engcore.domains.solver import solve\n")
+    (tmp_path / "src" / "engcore" / "domains" / "solver.py").write_bytes(b"def solve():\n    return 1.0\n")
+    unpinned = [cc.ScopeArea("claims", "CORE_CERTIFIED", ("src/engcore/__init__.py", "src/engcore/claims/**/*.py"), "t")]
+    assert cc.authority_closure_problems(tmp_path, scope) == []
+    (problem,) = cc.authority_closure_problems(tmp_path, unpinned)
+    assert "src/engcore/domains/__init__.py" in problem and "solver.py" not in problem
+
+
+def test_b4_the_manifest_builder_refuses_a_closure_gap(tmp_path) -> None:
+    scope = _closure_tree(tmp_path, b"from ..decider.rule import decide\n")
+    with pytest.raises(cc.CertificationError, match="outside every certified area"):
+        cc.build_manifest(tmp_path, scope)
+
+
+def test_b4_the_verifier_refuses_a_committed_closure_gap(committed) -> None:
+    root, certificate = committed
+    (root / "src" / "engcore" / "decider").mkdir(parents=True)
+    (root / "src" / "engcore" / "decider" / "__init__.py").write_bytes(b"")
+    (root / "src" / "engcore" / "decider" / "rule.py").write_bytes(b"def decide():\n    return 'supported'\n")
+    verdict = root / "src" / "engcore" / "claims" / "verdict.py"
+    verdict.write_bytes(verdict.read_bytes() + b"\nfrom ..decider.rule import decide  # noqa\n")
+    _git(root, "add", "-A")
+    _git(root, "commit", "-q", "-m", "a verdict starts importing an uncertified module")
+    result = cc.verify_certificate(root, certificate, require_commit=False)
+    assert not result.ok
+    assert any("src/engcore/decider/rule.py" in problem for problem in result.problems), result.render()
+
+
+def test_b1_a_literal_import_module_is_followed_like_an_import(tmp_path) -> None:
+    scope = _closure_tree(tmp_path, b"import importlib\nRULE = importlib.import_module('engcore.decider.rule')\n")
+    problems = cc.authority_closure_problems(tmp_path, scope)
+    assert len(problems) == 1 and "src/engcore/decider/rule.py" in problems[0]
+
+
+@pytest.mark.parametrize("source", [
+    b"import importlib\nNAME = 'engcore.decider.rule'\nRULE = importlib.import_module(NAME)\n",
+    b"import pkgutil\nimport engcore\nFOUND = list(pkgutil.walk_packages(engcore.__path__))\n",
+    b"RULE = __import__('engcore.' + 'decider')\n",
+])
+def test_b1_an_undeclared_dynamic_import_in_the_closure_is_refused(tmp_path, source) -> None:
+    scope = _closure_tree(tmp_path, source)
+    problems = cc.authority_closure_problems(tmp_path, scope)
+    assert any("DYNAMIC_REACH" in problem and "src/engcore/claims/verdict.py" in problem for problem in problems), problems
+
+
+def test_b1_every_declared_dynamic_reach_is_real_and_covered() -> None:
+    closure = set(cc.authority_import_closure(ROOT))
+    for file, reach, why in cc.DYNAMIC_REACH:
+        assert (ROOT / file).is_file() and why
+        assert cc.dynamic_imports(ROOT / file), f"{file} is declared dynamic and has no dynamic import"
+    undeclared = [name for name in closure if cc.dynamic_imports(ROOT / name)
+                  and name not in {file for file, _, _ in cc.DYNAMIC_REACH}]
+    assert undeclared == []
+
+
+def test_b1_the_model_index_walks_only_the_declaring_package_and_refuses_a_shadow(monkeypatch) -> None:
+    import pkgutil
+    import sys
+    import types
+    from dataclasses import replace
+
+    from engcore.credibility import evidence
+    from engcore.credibility.errors import CredibilityEvidenceError
+
+    monkeypatch.setattr(evidence, "_MODEL_INDEX", None)
+    real = dict(evidence._declared_models())
+    assert real
+    walked: list[str] = []
+    original = pkgutil.walk_packages
+
+    def recording(path=None, prefix="", onerror=None):
+        top = not walked
+        walked.append(prefix)
+        if not top:  # pkgutil recurses through its own global name: let the inner walks through untouched
+            yield from original(path, prefix, onerror)
+            return
+        yield from original(path, prefix, onerror)
+        yield pkgutil.ModuleInfo(None, prefix + "zz_shadow", False)
+
+    key, definition = sorted(real.items())[0]
+    shadow = types.ModuleType("engcore.domains.zz_shadow")
+    shadow.SHADOW = replace(definition, exclusions=(), excludes_nothing_because="a shadow claims to exclude nothing")
+    assert shadow.SHADOW != definition
+    monkeypatch.setitem(sys.modules, "engcore.domains.zz_shadow", shadow)
+    monkeypatch.setattr(pkgutil, "walk_packages", recording)
+    monkeypatch.setattr(evidence, "_MODEL_INDEX", None)
+    with pytest.raises(CredibilityEvidenceError, match="two different model definitions"):
+        evidence._declared_models()
+    assert walked[0] == "engcore.domains." and all(p.startswith("engcore.domains.") for p in walked)
+
+
+def test_b3_the_production_registry_is_pinned_and_a_moved_registry_fails() -> None:
+    actual = cc.production_registry_identity(ROOT)
+    assert actual is not None and len(actual["digest"]) == 64
+    assert cc.registry_problems(ROOT, {"manifest": {"production_registry": actual}}) == []
+    moved = {**actual, "capabilities": {**actual["capabilities"]}}
+    first = sorted(moved["capabilities"])[0]
+    moved["capabilities"][first] = {**moved["capabilities"][first], "executor": "engcore.elsewhere:run"}
+    problems = cc.registry_problems(ROOT, {"manifest": {"production_registry": moved}})
+    assert problems and first in problems[0]
+    assert "predates the pin" in cc.registry_problems(ROOT, {"manifest": {}})[0]
+
+
+def test_b3_the_verifier_and_the_builder_carry_the_registry_pin(committed, monkeypatch) -> None:
+    root, certificate = committed
+    monkeypatch.setattr(cc, "registry_problems", lambda r, c: ["REGISTRY SENTINEL"])
+    assert "REGISTRY SENTINEL" in cc.verify_certificate(root, certificate, require_commit=False).problems
+    monkeypatch.setattr(cc, "production_registry_identity", lambda r: {"digest": "d" * 64, "capabilities": {}})
+    assert cc.build_manifest(root)["production_registry"]["digest"] == "d" * 64

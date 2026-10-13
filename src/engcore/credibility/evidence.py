@@ -188,7 +188,10 @@ __all__ = [
 
 #: Every model definition this package can reach, by ``(model_id, version)``.
 #:
-#: Built by walking ``engcore`` once, lazily, on first use. Lazily because
+#: Built by walking ``engcore.domains`` -- where every model is declared -- once, lazily, on first use.
+#: Not the whole of ``engcore`` (hostile review F2, third pass B1): a module anywhere in the tree that
+#: happened to be walked first could shadow a real model's definition, exclusions and all, from outside
+#: every certified area. Two different definitions under one key are refused, not resolved by walk order. Lazily because
 #: this module is imported *from* that tree and a walk at import time would
 #: close the cycle; once because the walk costs more than the lookup and a
 #: report may carry many records.
@@ -215,7 +218,7 @@ def _declared_models() -> Mapping[tuple[str, str], Any]:
         # exists to stop. The frozen spelling is an alias for the canonical
         # modules now (`src/__init__.py`), so there is one name; deriving it
         # from `__name__` costs nothing and stays right if that ever changes.
-        root_name = __name__.rsplit(".", 2)[0]
+        root_name = __name__.rsplit(".", 2)[0] + ".domains"
         root = importlib.import_module(root_name)
 
         index: dict[tuple[str, str], Any] = {}
@@ -230,7 +233,12 @@ def _declared_models() -> Mapping[tuple[str, str], Any]:
                 continue
             for value in vars(module).values():
                 if isinstance(value, ScientificModelDefinition):
-                    index.setdefault(value.key, value)
+                    existing = index.setdefault(value.key, value)
+                    if existing is not value and existing != value:
+                        raise CredibilityEvidenceError(
+                            f"two different model definitions are declared as {value.key!r} (one found in "
+                            f"{found.name}); a model's exclusions would depend on which was walked first"
+                        )
         _MODEL_INDEX = index
     return _MODEL_INDEX
 

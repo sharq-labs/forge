@@ -68,6 +68,7 @@ import argparse
 import ast
 import hashlib
 import json
+import os
 import pathlib
 import platform
 import subprocess
@@ -83,7 +84,8 @@ CERTIFICATE_SCHEMA = "core_certificate/2"
 #: Identity of the code that produced a certificate, recorded in it. Not a
 #: version of the repository: a version of *this algorithm*.
 TOOL_ID = "tools/certification/core_certificate.py"
-TOOL_VERSION = "2.2.0"  # 2.2.0: verdict_authority area and the derived authority-closure check (hostile review F2)
+TOOL_VERSION = "2.3.0"  # 2.3.0: dynamic import reach, production registry pin (hostile review F2, third pass)
+# 2.2.0: verdict_authority area and the derived authority-closure check (hostile review F2)
 
 EXCLUDED_DIR_PARTS = frozenset({"__pycache__"})
 EXCLUDED_SUFFIXES = frozenset({".pyc", ".pyo"})
@@ -811,6 +813,57 @@ AUTHORITY_CLOSURE_EXEMPT: tuple[tuple[str, str], ...] = (
     ("src/engcore/systems/**", "system compositions of domain models: answers, not verdict semantics"),
 )
 
+#: Imports the static closure cannot follow: a computed module name, or a walk over a package. Each one in
+#: the closure must be declared here with what it can reach and why that reach is acceptable; an
+#: undeclared one is a closure problem (third review B1/B2), so a root that starts loading code by name
+#: cannot widen what decides a verdict without saying so in the certification control plane.
+DYNAMIC_REACH: tuple[tuple[str, str, str], ...] = (
+    ("src/engcore/credibility/evidence.py", "src/engcore/domains/**",
+     "_declared_models walks engcore.domains only -- where every ScientificModelDefinition is declared -- and "
+     "refuses two different definitions under one (model_id, version), so a module cannot shadow a model"),
+    ("src/engcore/claims/analysis/__init__.py", "src/engcore/claims/analysis/**",
+     "lazy loader of its own submodules, all inside the verdict_authority area"),
+    ("src/engcore/scientific/consensus.py", "src/engcore/domains/**",
+     "route declarations are read from engcore.domains; a component identity 'py:<module>:<qualname>' is "
+     "resolved as named by a declaration, and the declarations' trust registries are pinned in "
+     "src/engcore/domains/__init__.py, which is not exempt"),
+    ("src/engcore/scientific/results/thresholds.py", "src/engcore/domains/**",
+     "threshold declarations are read from engcore.domains; their registry digest is pinned in "
+     "src/engcore/domains/__init__.py, which is not exempt"),
+    ("src/engcore/scientific/results/validation.py", "src/engcore/domains/**",
+     "validation-level declarations are read from engcore.domains, as for thresholds"),
+    ("src/engcore/scientific/independence_evidence.py", "src/engcore/domains/**",
+     "a route component identity names its module; identities are pinned by the domain trust registries"),
+)
+
+
+def _call_name(func: ast.AST) -> str:
+    if isinstance(func, ast.Name):
+        return func.id
+    if isinstance(func, ast.Attribute):
+        return func.attr
+    return ""
+
+
+def dynamic_imports(path: pathlib.Path) -> list[int]:
+    """Lines where ``path`` loads a module the static closure cannot name.
+
+    A call to ``import_module``/``__import__`` with anything but a string literal, or any package walk
+    (``walk_packages``/``iter_modules``). A literal name is not dynamic: :func:`_engcore_imports` follows it.
+    """
+    lines: list[int] = []
+    for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+        if not isinstance(node, ast.Call):
+            continue
+        name = _call_name(node.func)
+        if name in ("walk_packages", "iter_modules"):
+            lines.append(node.lineno)
+        elif name.endswith("import_module") or name == "__import__":
+            literal = node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)
+            if not literal:
+                lines.append(node.lineno)
+    return sorted(lines)
+
 
 def _engcore_module_file(src: pathlib.Path, module: str) -> pathlib.Path | None:
     base = src.joinpath(*module.split("."))
@@ -836,6 +889,12 @@ def _engcore_imports(src: pathlib.Path, path: pathlib.Path) -> set[str]:
                 module = node.module or ""
             found.add(module)
             found.update(f"{module}.{alias.name}" for alias in node.names)
+        elif isinstance(node, ast.Call) and node.args and isinstance(node.args[0], ast.Constant) \
+                and isinstance(node.args[0].value, str):
+            # importlib.import_module("engcore.x") is an import with a literal name: followed like one.
+            name = _call_name(node.func)
+            if name.endswith("import_module") or name == "__import__":
+                found.add(node.args[0].value)
     return {name for name in found if name == "engcore" or name.startswith("engcore.")}
 
 
@@ -871,18 +930,121 @@ def authority_closure_problems(root: pathlib.Path, scope: Sequence[ScopeArea] | 
     pinned: set[str] = set()
     for area in areas:
         pinned.update(enumerate_area(root, area))
-    exempt = [pattern for pattern, _ in AUTHORITY_CLOSURE_EXEMPT]
-    missing = [
-        name for name in authority_import_closure(root)
-        if name not in pinned and not any(pathlib.PurePosixPath(name).match(p) or name.startswith(p.rstrip("*/") + "/")
-                                          for p in exempt)
-    ]
-    if not missing:
+    closure = authority_import_closure(root)
+    missing = [name for name in closure if name not in pinned and not _closure_exempt(name)]
+    problems: list[str] = []
+    if missing:
+        problems.append(
+            f"{len(missing)} module(s) the verdict/authority roots import are outside every certified area, so a "
+            f"change to them could change what SUPPORTED means without moving the certificate: " + ", ".join(missing)
+        )
+    declared = {file: reach for file, reach, _ in DYNAMIC_REACH}
+    for name in closure:
+        lines = dynamic_imports(root / name)
+        if lines and name not in declared:
+            problems.append(
+                f"{name} loads modules by computed name or package walk (line(s) {lines}) and DYNAMIC_REACH does "
+                f"not declare what it can reach; the static closure cannot see past it"
+            )
+    for file, reach, _ in DYNAMIC_REACH:
+        if not (root / file).is_file():
+            continue
+        reached = [str(p.relative_to(root).as_posix()) for p in sorted(root.glob(reach)) if p.is_file() and p.suffix == ".py"]
+        uncovered = [n for n in reached if n not in pinned and not _closure_exempt(n) and not _excluded(pathlib.PurePosixPath(n))]
+        if uncovered:
+            problems.append(f"{file} can reach {len(uncovered)} module(s) by name outside every certified area: "
+                            + ", ".join(uncovered[:10]))
+    return problems
+
+
+def _closure_exempt(name: str) -> bool:
+    """An exempt package's own ``__init__`` is never exempt: importing any submodule runs it (third review B2)."""
+    for pattern, _ in AUTHORITY_CLOSURE_EXEMPT:
+        base = pattern.rstrip("*/")
+        if name == base + "/__init__.py":
+            return False
+        if pathlib.PurePosixPath(name).match(pattern) or name.startswith(base + "/"):
+            return True
+    return False
+
+
+# ---------------------------------------------------------------------------
+# the production capability registry (hostile review F2, third pass B3)
+# ---------------------------------------------------------------------------
+#: assess_claim and verify_assessment judge every claim against the production registry: routes and their
+#: activation, input roles, required overrides, refinement defaults, perturbable inputs. That registry is
+#: assembled in src/engcore/product and the pack registries -- ~100 modules that produce answers and are
+#: out of scope. Rather than certify them, a certificate pins what the verdict reads from them: the
+#: registry's own declaration digest, and the identity of every executor, case builder and oracle provider.
+_REGISTRY_PROBE = r"""
+import json, pathlib, sys
+src = pathlib.Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(src))
+import engcore
+if pathlib.Path(engcore.__file__).resolve().parent != src / "engcore":
+    raise SystemExit("engcore was imported from " + engcore.__file__ + ", not from the tree being certified")
+from engcore.product.capabilities import production_registry
+
+def ident(f):
+    if f is None:
+        return None
+    return getattr(f, "__module__", "?") + ":" + getattr(f, "__qualname__", type(f).__qualname__)
+
+registry = production_registry()
+print(json.dumps({
+    "digest": registry.digest,
+    "capabilities": {
+        d.capability_id: {
+            "digest": d.digest,
+            "executor": ident(d.executor),
+            "case_builder": ident(d.case_builder),
+            "oracle_providers": {r.route_id: ident(getattr(r, "oracle_provider", None)) for r in d.routes},
+        }
+        for d in registry.declarations
+    },
+}, sort_keys=True))
+"""
+
+#: The file whose presence says this tree has a production registry to pin.
+REGISTRY_ENTRY = "src/engcore/product/capabilities.py"
+
+
+def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
+    """The production registry's declaration digest and code identities, read from the tree at ``root``.
+
+    ``None`` for a tree with no production registry (a synthetic test repository). Runs in a subprocess
+    so the tree's ``engcore`` -- and only that one -- is imported; any failure is a CertificationError.
+    """
+    if not (root / REGISTRY_ENTRY).is_file():
+        return None
+    env = {key: value for key, value in os.environ.items() if key not in ("PYTHONPATH", "PYTHONHOME", "PYTHONSTARTUP")}
+    run = subprocess.run([sys.executable, "-c", _REGISTRY_PROBE, str(root / "src")], cwd=str(root), env=env,
+                         capture_output=True, text=True, timeout=600)
+    if run.returncode != 0:
+        raise CertificationError("the production registry could not be read from the tree: "
+                                 + (run.stderr.strip().splitlines() or ["no output"])[-1])
+    return json.loads(run.stdout.strip().splitlines()[-1])
+
+
+def registry_problems(root: pathlib.Path, certificate: Mapping[str, Any]) -> list[str]:
+    """Why the tree's production registry is not the one the certificate pinned."""
+    try:
+        actual = production_registry_identity(root)
+    except CertificationError as exc:
+        return [str(exc)]
+    stored = (certificate.get("manifest") or {}).get("production_registry")
+    if actual is None:
+        return [] if stored is None else ["the certificate pins a production registry this tree does not have"]
+    if stored is None:
+        return ["the certificate does not pin the production registry the verdict reads; it predates the pin"]
+    if stored == actual:
         return []
-    return [
-        f"{len(missing)} module(s) the verdict/authority roots import are outside every certified area, so a "
-        f"change to them could change what SUPPORTED means without moving the certificate: " + ", ".join(missing)
-    ]
+    changed = sorted(
+        cid for cid in set(stored.get("capabilities", {})) | set(actual.get("capabilities", {}))
+        if stored.get("capabilities", {}).get(cid) != actual.get("capabilities", {}).get(cid)
+    )
+    return [f"the production registry changed since certification (capabilities {changed}): what a claim is "
+            f"judged against moved without moving the certificate"]
 
 
 def file_digest(path: pathlib.Path) -> str:
@@ -948,13 +1110,17 @@ def build_manifest(
     pinning += authority_closure_problems(root, SCOPE if scope is None else scope)
     if pinning:
         raise CertificationError("; ".join(pinning))
-    return {
+    manifest = {
         "areas": areas,
         "file_count": sum(a["file_count"] for a in areas.values()),
         "aggregate_digest": aggregate_digest(
             {name: a["digest"] for name, a in areas.items()}
         ),
     }
+    registry = production_registry_identity(root)
+    if registry is not None:
+        manifest["production_registry"] = registry
+    return manifest
 
 
 def _require_file_reasons(area: ScopeArea, relatives: Sequence[str]) -> None:
@@ -1322,6 +1488,8 @@ def verify_certificate(
         problems.extend(scope_problems(certificate))
         # F2: the current scope must still cover what the verdict and authority roots import.
         problems.extend(authority_closure_problems(root))
+        # F2, third pass: and the production registry the verdict reads is the one certified.
+        problems.extend(registry_problems(root, certificate))
 
     drifts: list[AreaDrift] = []
     actual_area_digests: dict[str, str] = {}
