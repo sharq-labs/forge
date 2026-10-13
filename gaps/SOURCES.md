@@ -1,5 +1,13 @@
 # المصادر وحدود الحالة الحالية
 
+## إضافة الثقة والتجارب الخارجية — ملف 08
+
+[الملف 08](08-trust-and-pilot-readiness.md) مبني على قراءة ساكنة للمستودع عند `79d2b474d2cc77cad32f2b3278f4535b5d90ae95` بتاريخ 2026-10-14، بالإضافة إلى مراجعة محتوى ملفات gaps/01–07. **NOT RUN** لأي reproduction أو اختبار أو benchmark في هذه الإضافة. نتائج مراجعات أقدم لا تصبح مؤكدة عند هذا SHA إلا بعد إعادة تنفيذها.
+
+مصادر الأسئلة البحثية: `src/engcore/claims/adapters/nl.py` و`claims/verdict.py` و`claims/capabilities.py` و`product/runtime.py` (T01–T04)، و`scientific/results/validation.py` و`scientific/oracles.py` (T05)، و`tools/certification/core_certificate.py` و`.github/workflows/` (T06–T07)، و`claims/measurement_dataset.py` و`docs/discovery/FORGE_GENESIS.md` و`docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md` (T08)، و`engineering/bundle.py` و`providers/process.py` و`replay_core/` (T09)، و`pyproject.toml` وبيانات provider/dataset المعتمدة (T10). قراءة مسار الملف وحدها ليست دليلًا على غياب أو وجود ضمان مكتمل.
+
+مصادر **السلطة على التنفيذ** كما هي: `CLAUDE.md` و`docs/work/ACTIVE_PLAN.md` و`docs/project/FORGE_MASTER_PLAN.md`. مصدر **ترقية maturity** هو Completion Policy وledger فقط. أي اشتراط حماية branch أو اعتماد علمي يحتاج إثباتًا عند وقت التنفيذ ولا يُستنتج من التصريح به في الوثائق.
+
 ## اقتراحات جودة التصميم والربط
 
 [الملف 07](07-design-and-coupling-improvements.md) يضيف ثمانية اقتراحات من قراءة ساكنة عند `415f9993` بتاريخ 2026-10-14. مصادره المباشرة: inference/calibration، design/fidelity_graph، numerical/core، system_runtime/preflight، scientific/fields/regions، scenarios/timeline، execution/multiphysics/mapping، materials/properties. الموجود فعليًا موضح لكل بند، والتوسيع المقترح لا يمثل حكمًا بأن التنفيذ الحالي معيب.
