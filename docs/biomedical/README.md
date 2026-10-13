@@ -37,6 +37,7 @@ Develop a research-grade, scientifically falsifiable route that uses the existin
 
 1. [ROADMAP.md](ROADMAP.md) — phased proposal, initial pilot, decision gates and dependencies.
 2. [EVIDENCE_AND_SAFETY.md](EVIDENCE_AND_SAFETY.md) — evidence semantics, safety boundaries, data and review requirements.
+3. [BLINDFOLD_DISCOVERY.md](BLINDFOLD_DISCOVERY.md) — proposed biomedical Blindfold tasks, Discovery hypotheses, anti-leakage, scientific baselines and future approval gates.
 
 ### Architecture
 
