@@ -279,3 +279,19 @@ def test_bind_run_refuses_a_run_whose_required_balance_failed() -> None:
     failed = replace(_run(_runtime(FAIL_THEN_PASS, STEADY)), scenario_digest=timeline.scenario_digest)
     with pytest.raises(InvalidScientificProblem, match="bind_run refuses the run: required conservation"):
         timeline.bind_run(failed)
+
+@pytest.mark.parametrize("a_power, refused_for_conservation", [(FAIL_THEN_PASS, True), (STEADY, False)])
+def test_a_system_runtime_node_exposes_nothing_when_required_conservation_failed(a_power, refused_for_conservation) -> None:
+    from engcore.system_runtime.authorities import MultiphysicsAuthority
+
+    initial = {"e_a": Quantity(0, "kg/s"), "e_b": Quantity(0, "kg/s")}
+    authority = MultiphysicsAuthority(
+        "conservation-node", _runtime(a_power, STEADY),
+        run_kwargs=lambda call: {"external_inputs": {}, "initial_coupling_values": initial,
+                                 "initial_coupling_uncertainty": {k: UNKNOWN for k in initial}},
+        outputs={"flow": "a.p"})
+    call = SimpleNamespace(run_id="sys", node=SimpleNamespace(node_id="mp", commits_state=False))
+    outcome = authority.execute(call)
+    # The explicit fixture never reports "converged", so the node fails either way; what matters is which check
+    # refuses first: conservation is checked before any output is read or any other gate runs.
+    assert ("declared conservation did not hold" in outcome.reason) is refused_for_conservation, outcome.reason

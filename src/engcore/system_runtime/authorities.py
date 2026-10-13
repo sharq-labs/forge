@@ -126,6 +126,7 @@ class MultiphysicsAuthority(_Base):
             "extractors": sorted(extractors or {}), "artifacts": artifacts is not None,
             "state_owners": dict(sorted((state_owners or {}).items())), "config": dict(config or {})})
         self._extractors, self._artifacts = dict(extractors or {}), artifacts
+        self._declares_conservation = bool(getattr(graph, "conservation", ()))
         self.runtime, self._factory, self._kwargs, self._outputs = runtime, runtime_factory, run_kwargs, dict(outputs)
         self._state_outputs = dict(state_outputs or {})
         self._owners, self._applicability, self._providers = dict(state_owners or {}), applicability, providers
@@ -154,6 +155,17 @@ class MultiphysicsAuthority(_Base):
         t0 = time.perf_counter()
         run = runtime.run(call.run_id + "." + call.node.node_id, **kwargs)  # refusals raise: the executor records a FAILED node
         wall = time.perf_counter() - t0
+        # F5 (fifth review): a run whose REQUIRED conservation failed in any window exposes nothing downstream.
+        from ..execution.multiphysics.runtime import MultiphysicsExecutionError, require_conservation
+        from ..scientific.multiphysics.report import MultiphysicsRunRecord
+
+        if isinstance(run, MultiphysicsRunRecord):
+            try:
+                require_conservation(run)
+            except MultiphysicsExecutionError as exc:
+                return NodeOutcome.failed(f"declared conservation did not hold; nothing is exposed ({exc})")
+        elif self._declares_conservation:
+            return NodeOutcome.failed("the graph declares conservation and the runtime returned no run record to check it on")
         outputs: dict[str, OutputValue] = {}
         for name, (participant, variable) in self._state_outputs.items():
             last = [t for t in run.state_transitions if t.participant_id == participant]
