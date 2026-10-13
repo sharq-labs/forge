@@ -83,7 +83,7 @@ CERTIFICATE_SCHEMA = "core_certificate/2"
 #: Identity of the code that produced a certificate, recorded in it. Not a
 #: version of the repository: a version of *this algorithm*.
 TOOL_ID = "tools/certification/core_certificate.py"
-TOOL_VERSION = "2.1.0"
+TOOL_VERSION = "2.2.0"  # 2.2.0: verdict_authority area and the derived authority-closure check (hostile review F2)
 
 EXCLUDED_DIR_PARTS = frozenset({"__pycache__"})
 EXCLUDED_SUFFIXES = frozenset({".pyc", ".pyo"})
@@ -387,19 +387,14 @@ SCOPE: tuple[ScopeArea, ...] = (
     ScopeArea(
         name="credibility_assurance",
         classification="CORE_CERTIFIED",
-        patterns=(
-            "src/engcore/credibility/evidence_graph/**/*.py",
-            "src/engcore/credibility/assurance_bundle.py",
-            "src/engcore/credibility/assurance_manifest.py",
-            "src/engcore/credibility/assurance_replay_bundle.py",
-            "src/engcore/credibility/replay_binding.py",
-            "src/engcore/credibility/knowledge_evidence.py",
-        ),
+        patterns=("src/engcore/credibility/**/*.py",),
         why=(
-            "the trust-critical credibility boundary added by the production hardening round: "
-            "evidence authority/conflict/lineage, the composite assurance identity and its replay "
-            "binding. These bytes now decide whether evidence may enter a trusted assurance chain, "
-            "so leaving them outside the certificate would measure their consumers but not the rule."
+            "the whole credibility package. The production hardening round certified its trust-critical "
+            "boundary (evidence authority/conflict/lineage, the composite assurance identity and its replay "
+            "binding); hostile review F2 found the rest of the package deciding verdicts outside the "
+            "certificate -- credibility/evidence.py::derive_verdict is what turns a report into SUPPORTED, "
+            "and evidence_basis_of is what says a verdict rests on validation. The package owns those "
+            "semantics, so the package is in"
         ),
     ),
     ScopeArea(
@@ -423,6 +418,35 @@ SCOPE: tuple[ScopeArea, ...] = (
             "critic's obligation, all green and none mutated. Whatever sria is as "
             "an application, the decision that turns evidence into belief is a "
             "trust boundary of the core"
+        ),
+    ),
+    ScopeArea(
+        name="verdict_authority",
+        classification="CORE_CERTIFIED",
+        patterns=(
+            "src/engcore/claims/**/*.py",
+            "src/engcore/authority/**/*.py",
+            "src/engcore/blindfold/**/*.py",
+            "src/engcore/sria/__init__.py",
+            "src/engcore/sria/actions.py",
+            "src/engcore/sria/domain_pack.py",
+            "src/engcore/sria/errors.py",
+            "src/engcore/sria/outcomes.py",
+            "src/engcore/sria/provenance.py",
+            "src/engcore/sria/signatures.py",
+            "src/engcore/sria/uncertainty.py",
+            "src/engcore/sria/calibration/**/*.py",
+        ),
+        why=(
+            "hostile review F2: what a claim's SUPPORTED means was decided outside the certificate. The "
+            "claims package owns claim admissibility, criteria grounding (adapters/), the verdict "
+            "(claims/verdict.py, claims/assessment.py), the credibility vector and its risk policy; "
+            "authority/ owns who may attest evidence (the ledger and its genesis); blindfold/ owns "
+            "evidence isolation; and the listed sria modules are the uncertainty-channel vocabulary, "
+            "provenance and calibration those decisions read. The boundary is not a hand list: "
+            "authority_closure_problems derives the static import closure of the verdict, assessment, "
+            "authority and blindfold roots and refuses a certificate whose areas do not cover it, so a "
+            "module that starts deciding authority cannot sit outside this area unnoticed"
         ),
     ),
     ScopeArea(
@@ -586,19 +610,15 @@ OUT_OF_SCOPE: tuple[tuple[str, str], ...] = (
      "scientific models and solvers. They produce answers rather than decide "
      "what a verdict means, and they carry their own assurance — three of them "
      "are byte-pinned by frozen experiments"),
-    ("src/engcore/credibility/** (except evidence_graph/**, assurance_bundle.py, replay_binding.py)",
-     "the remaining outer credibility/V&V report semantics and SRIA bridge stay outside the "
-     "certified core. The trust-critical evidence graph and assurance/replay identity files are "
-     "explicitly certified in the credibility_assurance area"),
-    ("src/engcore/mcp/**",
+    ("src/engcore/mcp/**, src/engcore/product/**",
      "the outer product/tool transport boundary: a consumer of claims and "
-     "credibility, never scientific authority"),
-    ("src/engcore/claims/**",
-     "the scientific intelligence layer (EXPERIMENTAL): routing, planning, "
-     "assessment and analysis above the Core and credibility/SRIA. It defines "
-     "claim-level orchestration without extending the frozen Core API"),
-    ("src/engcore/design/**, sria/** (except the assurance/admission chain), systems/**",
-     "applications built on the core"),
+     "credibility, never scientific authority. The natural-language grounding that "
+     "decides whether a proposal's criteria are the user's is claims/adapters/**, "
+     "inside the verdict_authority area"),
+    ("src/engcore/design/**, sria/** (except the assurance/admission chain and the modules "
+     "the verdict_authority area lists), systems/**",
+     "applications built on the core. authority_closure_problems refuses a certificate "
+     "if the verdict and authority roots ever import one of them"),
     ("tests/** (except the harness area, the two self-check modules and the pinned regression manifest)",
      "assurance for everything above, not part of what is certified. They "
      "still trigger recertification (tools/certification/recertification_scope.py), "
@@ -764,6 +784,102 @@ def harness_pinning_problems(
     ]
 
 
+# ---------------------------------------------------------------------------
+# what decides a verdict's meaning (hostile review F2)
+# ---------------------------------------------------------------------------
+#: The modules where SUPPORTED, admissibility, evidence authority and isolation are decided. Their
+#: static import closure inside ``src/engcore`` is what a certificate must cover; the closure is
+#: DERIVED, so a module that a verdict starts depending on cannot be left outside scope by omission.
+AUTHORITY_ROOTS: tuple[str, ...] = (
+    "src/engcore/claims/verdict.py",
+    "src/engcore/claims/assessment.py",
+    "src/engcore/claims/adapters/nl.py",
+    "src/engcore/credibility/evidence.py",
+    "src/engcore/authority/**/*.py",
+    "src/engcore/blindfold/**/*.py",
+)
+
+#: Packages that produce ANSWERS (a solved value, a domain model) rather than decide what an answer
+#: is worth. Named, with the reason, rather than silently skipped; the closure never reaches them today.
+AUTHORITY_CLOSURE_EXEMPT: tuple[tuple[str, str], ...] = (
+    ("src/engcore/domains/**", "domain models and solvers: answers, assured by their own suites and frozen pins"),
+    ("src/engcore/systems/**", "system compositions of domain models: answers, not verdict semantics"),
+)
+
+
+def _engcore_module_file(src: pathlib.Path, module: str) -> pathlib.Path | None:
+    base = src.joinpath(*module.split("."))
+    for candidate in (base.with_suffix(".py"), base / "__init__.py"):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _engcore_imports(src: pathlib.Path, path: pathlib.Path) -> set[str]:
+    """Every ``engcore`` module ``path`` names, absolute or relative, including imports inside functions."""
+    relative = path.relative_to(src).with_suffix("")
+    package = list(relative.parts[:-1])
+    found: set[str] = set()
+    for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+        if isinstance(node, ast.Import):
+            found.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                base = package[: len(package) - (node.level - 1)] if node.level > 1 else package
+                module = ".".join(base + ([node.module] if node.module else []))
+            else:
+                module = node.module or ""
+            found.add(module)
+            found.update(f"{module}.{alias.name}" for alias in node.names)
+    return {name for name in found if name == "engcore" or name.startswith("engcore.")}
+
+
+def authority_import_closure(root: pathlib.Path) -> list[str]:
+    """The source files the verdict/authority roots reach by static import, transitively.
+
+    Static, and it says so: a module reached only through ``importlib`` with a computed name is not
+    found, exactly as for :func:`harness_import_closure`. Each package ``__init__`` on the way to an
+    imported module is included, because importing a submodule executes it.
+    """
+    src = root / "src"
+    if not (src / "engcore").is_dir():
+        return []
+    queue = [path for pattern in AUTHORITY_ROOTS for path in sorted(root.glob(pattern)) if path.is_file()]
+    seen: set[pathlib.Path] = set()
+    while queue:
+        current = queue.pop()
+        if current in seen or _excluded(current.relative_to(root)):
+            continue
+        seen.add(current)
+        for module in _engcore_imports(src, current):
+            parts = module.split(".")
+            for length in range(1, len(parts) + 1):
+                target = _engcore_module_file(src, ".".join(parts[:length]))
+                if target is not None and target not in seen:
+                    queue.append(target)
+    return sorted((path.relative_to(root).as_posix() for path in seen), key=lambda text: text.encode("utf-8"))
+
+
+def authority_closure_problems(root: pathlib.Path, scope: Sequence[ScopeArea] | None = None) -> list[str]:
+    """Why ``scope`` does not cover everything the verdict and authority roots import."""
+    areas = tuple(scope if scope is not None else SCOPE)
+    pinned: set[str] = set()
+    for area in areas:
+        pinned.update(enumerate_area(root, area))
+    exempt = [pattern for pattern, _ in AUTHORITY_CLOSURE_EXEMPT]
+    missing = [
+        name for name in authority_import_closure(root)
+        if name not in pinned and not any(pathlib.PurePosixPath(name).match(p) or name.startswith(p.rstrip("*/") + "/")
+                                          for p in exempt)
+    ]
+    if not missing:
+        return []
+    return [
+        f"{len(missing)} module(s) the verdict/authority roots import are outside every certified area, so a "
+        f"change to them could change what SUPPORTED means without moving the certificate: " + ", ".join(missing)
+    ]
+
+
 def file_digest(path: pathlib.Path) -> str:
     """SHA-256 over the file's exact bytes. Nothing is decoded or normalized."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -823,6 +939,8 @@ def build_manifest(
     # cover what its own suites import. Here, not only in a test, because the claim a certificate
     # makes about the mutation rounds is a claim about these bytes.
     pinning = harness_pinning_problems(root, SCOPE if scope is None else scope)
+    # F2: and refused over a scope that leaves part of what decides a verdict's meaning unmeasured.
+    pinning += authority_closure_problems(root, SCOPE if scope is None else scope)
     if pinning:
         raise CertificationError("; ".join(pinning))
     return {
@@ -1197,6 +1315,8 @@ def verify_certificate(
         problems.append("certificate carries no manifest areas")
     if require_current_scope:
         problems.extend(scope_problems(certificate))
+        # F2: the current scope must still cover what the verdict and authority roots import.
+        problems.extend(authority_closure_problems(root))
 
     drifts: list[AreaDrift] = []
     actual_area_digests: dict[str, str] = {}

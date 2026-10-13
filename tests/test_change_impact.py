@@ -116,8 +116,10 @@ def test_a_change_no_rule_reaches_is_unresolved_never_silently_empty(synthetic) 
         ("tools/test_impact.py", ChangeClass.TEST_INFRASTRUCTURE),
         ("tests/conftest.py", ChangeClass.TEST_INFRASTRUCTURE),
         ("src/engcore/scientific/units/quantity.py", ChangeClass.CERTIFICATION_PINNED),
-        ("src/engcore/authority/ledger.py", ChangeClass.TRUST_OR_AUTHORITY),
-        ("src/engcore/claims/selection.py", ChangeClass.SCIENTIFIC_SHARED),
+        # F2: authority/** and claims/** are certified (verdict_authority area), so pinning decides the class;
+        # what each path IS stays scope_class's answer (test below), which is what keeps its review gate.
+        ("src/engcore/authority/ledger.py", ChangeClass.CERTIFICATION_PINNED),
+        ("src/engcore/claims/selection.py", ChangeClass.CERTIFICATION_PINNED),
         ("src/engcore/domains/battery/thevenin.py", ChangeClass.DOMAIN_LOCAL),
         ("tools/nasa_battery_aging.py", ChangeClass.LOCAL_NONSCIENTIFIC),
         ("benchmarks/battery_flagship_b3/round.json", ChangeClass.UNCLASSIFIED),
@@ -370,13 +372,22 @@ def test_the_default_cache_lives_outside_the_repository_and_can_be_switched_off(
     ("docs/TESTING.md", ()),
     ("tools/local_workers.py", ("FAST",)),
     ("src/engcore/domains/battery/thevenin.py", ("FAST",)),
-    ("src/engcore/claims/selection.py", ("FAST", "SCIENTIFIC")),
-    ("src/engcore/authority/ledger.py", ("FAST", "SCIENTIFIC", "forge-scientific-review")),
+    ("src/engcore/claims/selection.py", ("FAST", "SCIENTIFIC", "RECERTIFICATION (owner-run)")),
+    ("src/engcore/authority/ledger.py", ("FAST", "SCIENTIFIC", "forge-scientific-review", "RECERTIFICATION (owner-run)")),
     ("tests/conftest.py", ("FAST", "SCIENTIFIC", "RECERTIFICATION (owner-run)")),
     ("src/engcore/scientific/units/quantity.py", ("FAST", "SCIENTIFIC", "RECERTIFICATION (owner-run)")),
 ])
 def test_the_next_required_gate_follows_the_minimum_gate_table(path, expected) -> None:
     assert test_impact.next_required([path], expensive_affected=0) == expected
+
+
+@pytest.mark.parametrize("path, expected", [
+    ("src/engcore/authority/ledger.py", ChangeClass.TRUST_OR_AUTHORITY),
+    ("src/engcore/claims/selection.py", ChangeClass.SCIENTIFIC_SHARED),
+])
+def test_certification_pinning_never_hides_what_a_path_is(path, expected) -> None:
+    """F2 pinned these paths; the review and SCIENTIFIC gates their kind owes must survive the pinning."""
+    assert test_impact.scope_class(path) is expected
 
 
 def test_an_expensive_affected_test_always_owes_scientific_even_after_a_selective_run() -> None:
