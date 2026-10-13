@@ -9,6 +9,7 @@ import pytest
 from claims_support import et_claim, et_inputs
 from engcore.claims.nl_adapter import FORBIDDEN_AUTHORITY_FIELDS, compile_natural_language
 from engcore.mcp.capabilities import production_registry
+from nl_support import state_claim
 
 
 @pytest.fixture(scope="module")
@@ -17,15 +18,9 @@ def registry():
 
 
 def _text_and_spans(claim):
-    """Source prose that states every input, with the span each value is quoted from."""
-    parts, spans, cursor = [], {}, 0
-    for path, value in sorted(claim.to_dict()["known_inputs"].items()):
-        shown = value["magnitude"] if isinstance(value, dict) else value
-        piece = f"{path} is {shown} {value.get('units', '') if isinstance(value, dict) else ''}. "
-        spans[path] = (cursor, cursor + len(piece))
-        parts.append(piece)
-        cursor += len(piece)
-    return "".join(parts), spans
+    """Source prose that states every input and every criterion, with the span each is quoted from."""
+    prose = state_claim(claim.to_dict())
+    return prose.text, prose.spans
 
 
 def test_a_faithful_proposal_compiles_to_what_the_compiler_decides(registry) -> None:

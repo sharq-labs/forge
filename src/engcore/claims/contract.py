@@ -431,6 +431,11 @@ def _discrepancy_from_dict(payload: Any) -> ModelDiscrepancy:
 # The claim
 # ---------------------------------------------------------------------------
 
+#: Fields excluded from scientific identity: the record's own schema tag, its
+#: id, the caller's prose and the output format. Everything else is part of the
+#: question the claim asks and of the bar it is judged against.
+PRESENTATION_FIELDS: tuple[str, ...] = ("schema", "claim_id", "statement", "requested_outputs")
+
 #: Every field of the serialized claim other than ``schema``, which each
 #: reader names itself.
 _CLAIM_FIELDS = (
@@ -451,6 +456,16 @@ _CLAIM_FIELDS = (
     "uncertainty",
     "discrepancy",
     "requested_outputs",
+)
+
+#: Optional fields, serialized only when present, and part of identity when they are.
+_OPTIONAL_CLAIM_FIELDS = ("input_uncertainty", "decision_context")
+
+#: Every field that participates in a claim's scientific identity: what the claim
+#: asks, of what subject, and against which bar. A field enters this set by being
+#: serialized and not presentation-only, never by being listed somewhere else.
+SCIENTIFIC_FIELDS: tuple[str, ...] = tuple(
+    name for name in _CLAIM_FIELDS + _OPTIONAL_CLAIM_FIELDS if name not in PRESENTATION_FIELDS
 )
 
 
@@ -684,7 +699,7 @@ class ScientificClaim:
 
     def _scientific_content(self) -> dict[str, Any]:
         payload = self.to_dict()
-        for presentation_only in ("schema", "claim_id", "statement", "requested_outputs"):
+        for presentation_only in PRESENTATION_FIELDS:
             payload.pop(presentation_only)
         return payload
 
@@ -733,7 +748,7 @@ class ScientificClaim:
     def from_dict(cls, payload: Mapping[str, Any]) -> "ScientificClaim":
         """Read a claim, refusing every unknown, missing or malformed field."""
         payload = require_mapping(payload, field="claim")
-        require_keys(payload, required=("schema",) + _CLAIM_FIELDS, optional=("input_uncertainty", "decision_context"), record="claim")
+        require_keys(payload, required=("schema",) + _CLAIM_FIELDS, optional=_OPTIONAL_CLAIM_FIELDS, record="claim")
         require_schema_exact(payload, CLAIM_SCHEMA, record="claim")
         tolerance = payload["tolerance"]
         if tolerance is not None:
@@ -792,7 +807,9 @@ __all__ = [
     "CLAIM_SCHEMA",
     "DECISION_SCHEMA",
     "EVIDENCE_REQUIREMENT_SCHEMA",
+    "PRESENTATION_FIELDS",
     "QOI_SCHEMA",
+    "SCIENTIFIC_FIELDS",
     "TARGET_SCHEMA",
     "UNCERTAINTY_DEMAND_SCHEMA",
     "CallerAssumption",

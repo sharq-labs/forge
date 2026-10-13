@@ -5,9 +5,10 @@ such as MCP, HTTP or a web UI. It does not contain physics, choose credibility
 levels or trust language-model output.
 
 A language model may propose a structured claim from user prose. The existing
-natural-language adapter verifies that every proposed physical value is
-grounded in a cited span of the user's text and refuses authority fields. The
-deterministic compiler then decides whether the proposal is executable.
+natural-language adapter verifies that every proposed physical value and every
+decision criterion is grounded in a cited span of the user's text (or bound by
+the application's policy) and refuses authority fields. The deterministic
+compiler then decides whether the proposal is executable.
 
 No OpenAI or Anthropic SDK belongs here. A transport or application may call
 any provider it wants, then submit the provider's proposal to this boundary.
@@ -144,6 +145,7 @@ def _compile_proposal(
     proposal: Mapping[str, Any],
     spans: Mapping[str, Sequence[int]],
     registry: CapabilityRegistry,
+    policy: Mapping[str, Any] | None = None,
 ):
     """Compile one provider proposal once, translating contract refusals to product input errors."""
     try:
@@ -152,6 +154,7 @@ def _compile_proposal(
             proposal,
             _wire_spans(spans),
             registry,
+            policy=policy,
         )
     except ClaimLayerError as exc:
         raise ProductRequestError(str(exc)) from exc
@@ -169,9 +172,12 @@ def _preparation_view(compilation: Any) -> dict[str, Any]:
             if compilation.compiled is None
             else compilation.compiled.to_dict()
         ),
+        "provenance": [item.to_dict() for item in compilation.provenance],
+        "advisory": dict(compilation.advisory or {}),
         "authority": (
             "The language model proposed the claim; grounding and deterministic "
-            "compilation decided whether it is executable."
+            "compilation decided whether it is executable. Advisory values have "
+            "no source, policy or derivation behind them and were not used."
         ),
     }
 
@@ -181,9 +187,16 @@ def prepare_simulation(
     proposal: Mapping[str, Any],
     spans: Mapping[str, Sequence[int]],
     registry: CapabilityRegistry,
+    *,
+    policy: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Ground an LLM proposal in the user's prose and compile it without executing."""
-    return _preparation_view(_compile_proposal(text, proposal, spans, registry))
+    """Ground an LLM proposal in the user's prose and compile it without executing.
+
+    ``policy`` is the deploying application's binding of decision criteria (see
+    :func:`~engcore.claims.adapters.nl.compile_natural_language`); it is never
+    read from the proposal.
+    """
+    return _preparation_view(_compile_proposal(text, proposal, spans, registry, policy))
 
 
 def _assessment_view(record: Mapping[str, Any], *, digest: str) -> dict[str, Any]:
@@ -263,13 +276,16 @@ def run_proposed_simulation(
     external: Sequence[Mapping[str, Any]] = (),
     empirical_observations: Sequence[Mapping[str, Any]] = (),
     model_form_qualification: Mapping[str, Any] | None = None,
+    policy: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """End-to-end product flow from an LLM proposal to an assessed simulation.
 
     A proposal that is not READY is returned as preparation data and is never
-    executed. No missing value is defaulted merely to make the product flow.
+    executed. No missing value is defaulted merely to make the product flow,
+    and no decision criterion the model proposed without a source, a policy or
+    a derivation reaches the run (status ``ungrounded``).
     """
-    compilation = _compile_proposal(text, proposal, spans, registry)
+    compilation = _compile_proposal(text, proposal, spans, registry, policy)
     preparation = _preparation_view(compilation)
     if not preparation["ready"] or preparation["compilation"] is None:
         return {

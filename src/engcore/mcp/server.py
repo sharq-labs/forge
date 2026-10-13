@@ -1390,9 +1390,13 @@ result is derived from the same capability registry used for execution."""
 _PRODUCT_PREPARE_DESCRIPTION = """Prepare a simulation proposed by an LLM without running physics.
 
 Pass the user's exact text, the provider's structured scientific-claim
-proposal, and source spans for every physical value. Values not grounded in the
-user text are moved to missing inputs. Authority fields are refused. The
-deterministic compiler returns READY, NEEDS_INPUT, AMBIGUOUS,
+proposal, and source spans: one per input (keyed by its input path) and one per
+decision criterion (keyed `claim.qoi`, `claim.operator`, `claim.target`,
+`claim.tolerance`, `claim.evidence`, `claim.uncertainty`, `claim.decision`, ...).
+Inputs not grounded in the user text are moved to missing inputs. A criterion
+the text does not state makes the proposal UNGROUNDED: nothing is compiled and
+the proposed value is returned as advisory only. Authority fields are refused.
+Otherwise the deterministic compiler returns READY, NEEDS_INPUT, AMBIGUOUS,
 UNSUPPORTED_CAPABILITY or REFUSED."""
 
 
@@ -1406,8 +1410,9 @@ record. The language model does not choose the verdict."""
 _PRODUCT_RUN_PROPOSED_DESCRIPTION = """Run the end-to-end product flow from an LLM proposal.
 
 Forge first grounds the proposal in the user's text and compiles it. Physics is
-executed only when the deterministic compiler returns READY. A non-ready
-proposal returns its missing inputs, ambiguity or refusal and never runs."""
+executed only when every decision criterion is grounded and the deterministic
+compiler returns READY. A non-ready proposal returns its missing inputs,
+ungrounded criteria, ambiguity or refusal and never runs."""
 
 
 _COMPILE_INTENT_DESCRIPTION = """\
