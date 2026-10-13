@@ -225,12 +225,13 @@ def _declared_models() -> Mapping[tuple[str, str], Any]:
         for found in pkgutil.walk_packages(root.__path__, f"{root_name}."):
             try:
                 module = importlib.import_module(found.name)
-            except Exception:  # pragma: no cover - an optional dependency
-                # A module that will not import contributes no models, and a
-                # report is not the place to raise about it. The repo-wide
-                # guard over the same walk is where an unimportable domain
-                # module is a failure.
-                continue
+            except Exception as exc:
+                # Fourth review: skipping it would drop that module's models -- and their exclusions --
+                # from every report without a word. An index that is not complete is not an index.
+                raise CredibilityEvidenceError(
+                    f"model index incomplete: {found.name} does not import ({type(exc).__name__}: {exc}); its "
+                    f"models' exclusions cannot be reported"
+                ) from exc
             for value in vars(module).values():
                 if isinstance(value, ScientificModelDefinition):
                     existing = index.setdefault(value.key, value)

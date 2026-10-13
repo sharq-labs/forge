@@ -174,6 +174,14 @@ def test_b1_a_literal_import_module_is_followed_like_an_import(tmp_path) -> None
     b"import importlib\nNAME = 'engcore.decider.rule'\nRULE = importlib.import_module(NAME)\n",
     b"import pkgutil\nimport engcore\nFOUND = list(pkgutil.walk_packages(engcore.__path__))\n",
     b"RULE = __import__('engcore.' + 'decider')\n",
+    # fourth review: loaders the first detector missed
+    b"from importlib import import_module as load\nRULE = load('engcore.' + 'decider.rule')\n",
+    b"import importlib\nRULE = getattr(importlib, 'import_module')('engcore.decider.rule')\n",
+    b"import importlib.util\nSPEC = importlib.util.spec_from_file_location('r', 'src/engcore/decider/rule.py')\n",
+    b"import runpy\nNS = runpy.run_path('src/engcore/decider/rule.py')\n",
+    b"exec(open('src/engcore/decider/rule.py').read())\n",
+    b"import importlib\nRULE = importlib.import_module('.rule', 'engcore.decider')\n",
+    b"from importlib.metadata import entry_points\nPLUGINS = entry_points(group='forge')\n",
 ])
 def test_b1_an_undeclared_dynamic_import_in_the_closure_is_refused(tmp_path, source) -> None:
     scope = _closure_tree(tmp_path, source)
@@ -245,3 +253,46 @@ def test_b3_the_verifier_and_the_builder_carry_the_registry_pin(committed, monke
     assert "REGISTRY SENTINEL" in cc.verify_certificate(root, certificate, require_commit=False).problems
     monkeypatch.setattr(cc, "production_registry_identity", lambda r: {"digest": "d" * 64, "capabilities": {}})
     assert cc.build_manifest(root)["production_registry"]["digest"] == "d" * 64
+
+def test_fourth_review_the_registry_pin_covers_source_bytes_and_model_modules() -> None:
+    actual = cc.production_registry_identity(ROOT)
+    for declaration in actual["capabilities"].values():
+        executor = declaration["executor"]
+        assert executor["source"].startswith("src/") and len(executor["sha256"]) == 64
+        assert executor["sha256"] == cc.file_digest(ROOT / executor["source"])
+    models = actual["model_definition_modules"]
+    assert models and all(entry["sha256"] == cc.file_digest(ROOT / entry["source"]) for entry in models.values())
+    assert all(name.startswith("engcore.domains.") for name in models)
+
+
+def test_fourth_review_the_registry_probe_is_not_steered_by_the_environment(monkeypatch) -> None:
+    baseline = cc.production_registry_identity(ROOT)
+    monkeypatch.setenv("FORGE_DOMAIN_PACKS", "some.external:pack")
+    monkeypatch.setenv("PYTHONPATH", "/nonexistent-shadow")
+    assert cc.production_registry_identity(ROOT) == baseline
+
+
+def test_fourth_review_a_claims_tree_without_its_registry_entry_cannot_be_certified(tmp_path) -> None:
+    (tmp_path / "src" / "engcore" / "claims").mkdir(parents=True)
+    (tmp_path / "src" / "engcore" / "claims" / "assessment.py").write_bytes(b"")
+    with pytest.raises(cc.CertificationError, match="cannot be pinned"):
+        cc.production_registry_identity(tmp_path)
+
+
+def test_fourth_review_a_domain_module_that_does_not_import_fails_the_model_index(monkeypatch) -> None:
+    import pkgutil
+
+    from engcore.credibility import evidence
+    from engcore.credibility.errors import CredibilityEvidenceError
+
+    original = pkgutil.walk_packages
+
+    def broken(path=None, prefix="", onerror=None):
+        yield from original(path, prefix, onerror)
+        if prefix == "engcore.domains.":
+            yield pkgutil.ModuleInfo(None, prefix + "zz_does_not_exist", False)
+
+    monkeypatch.setattr(pkgutil, "walk_packages", broken)
+    monkeypatch.setattr(evidence, "_MODEL_INDEX", None)
+    with pytest.raises(CredibilityEvidenceError, match="model index incomplete"):
+        evidence._declared_models()

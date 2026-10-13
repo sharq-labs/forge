@@ -84,7 +84,8 @@ CERTIFICATE_SCHEMA = "core_certificate/2"
 #: Identity of the code that produced a certificate, recorded in it. Not a
 #: version of the repository: a version of *this algorithm*.
 TOOL_ID = "tools/certification/core_certificate.py"
-TOOL_VERSION = "2.3.0"  # 2.3.0: dynamic import reach, production registry pin (hostile review F2, third pass)
+TOOL_VERSION = "2.4.0"  # 2.4.0: registry pin covers source bytes; loader detection widened (F2, fourth pass)
+# 2.3.0: dynamic import reach, production registry pin (hostile review F2, third pass)
 # 2.2.0: verdict_authority area and the derived authority-closure check (hostile review F2)
 
 EXCLUDED_DIR_PARTS = frozenset({"__pycache__"})
@@ -845,24 +846,52 @@ def _call_name(func: ast.AST) -> str:
     return ""
 
 
+#: Calls that load or run code by a name or a path the static closure cannot follow (fourth review).
+_LOADER_CALLS = frozenset({
+    "walk_packages", "iter_modules", "resolve_name", "spec_from_file_location", "spec_from_loader",
+    "module_from_spec", "exec_module", "load_module", "run_module", "run_path", "entry_points", "load_entry_point",
+})
+#: Modules whose attributes are loaders: an alias of one, or getattr() on one, is a loader too.
+_LOADER_MODULES = frozenset({"importlib", "importlib.util", "importlib.metadata", "pkgutil", "runpy"})
+
+
 def dynamic_imports(path: pathlib.Path) -> list[int]:
     """Lines where ``path`` loads a module the static closure cannot name.
 
-    A call to ``import_module``/``__import__`` with anything but a string literal, or any package walk
-    (``walk_packages``/``iter_modules``). A literal name is not dynamic: :func:`_engcore_imports` follows it.
+    ``import_module``/``__import__`` with anything but an absolute string literal; any call in
+    :data:`_LOADER_CALLS`; the builtins ``exec``/``compile``/``eval``; ``getattr`` on a loader module; and
+    any of these reached through an alias (``from importlib import import_module as load``). A literal
+    absolute name is not dynamic: :func:`_engcore_imports` follows it.
     """
+    tree = ast.parse(path.read_bytes().decode("utf-8"))
+    aliases: dict[str, str] = {}
+    modules: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module in _LOADER_MODULES and not node.level:
+            for alias in node.names:
+                aliases[alias.asname or alias.name] = alias.name
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name in _LOADER_MODULES:
+                    modules.add(alias.asname or alias.name.split(".")[0])
     lines: list[int] = []
-    for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+    for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
             continue
         name = _call_name(node.func)
-        if name in ("walk_packages", "iter_modules"):
+        name = aliases.get(name, name) if isinstance(node.func, ast.Name) else name
+        literal = (bool(node.args) and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)
+                   and not node.args[0].value.startswith("."))
+        if name in _LOADER_CALLS:
             lines.append(node.lineno)
         elif name.endswith("import_module") or name == "__import__":
-            literal = node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)
             if not literal:
                 lines.append(node.lineno)
-    return sorted(lines)
+        elif isinstance(node.func, ast.Name) and name in ("exec", "compile", "eval"):
+            lines.append(node.lineno)
+        elif name == "getattr" and node.args and isinstance(node.args[0], ast.Name) and node.args[0].id in modules:
+            lines.append(node.lineno)
+    return sorted(set(lines))
 
 
 def _engcore_module_file(src: pathlib.Path, module: str) -> pathlib.Path | None:
@@ -975,20 +1004,46 @@ def _closure_exempt(name: str) -> bool:
 #: activation, input roles, required overrides, refinement defaults, perturbable inputs. That registry is
 #: assembled in src/engcore/product and the pack registries -- ~100 modules that produce answers and are
 #: out of scope. Rather than certify them, a certificate pins what the verdict reads from them: the
-#: registry's own declaration digest, and the identity of every executor, case builder and oracle provider.
+#: registry's own declaration digest; for every executor, case builder and oracle provider its name AND
+#: the SHA-256 of the source file that defines it (fourth review: a name alone is not code); and the source
+#: digest of every domain module that declares a ScientificModelDefinition (validity domains, exclusions).
+#: What those functions CALL (domain solvers) produces answers and is not pinned: it is assured by its own
+#: suites and pins, as every other answer is.
 _REGISTRY_PROBE = r"""
-import json, pathlib, sys
+import hashlib, importlib, inspect, json, pathlib, pkgutil, sys
 src = pathlib.Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(src))
 import engcore
 if pathlib.Path(engcore.__file__).resolve().parent != src / "engcore":
     raise SystemExit("engcore was imported from " + engcore.__file__ + ", not from the tree being certified")
 from engcore.product.capabilities import production_registry
+from engcore.scientific.models.definition import ScientificModelDefinition
+
+def source(path):
+    path = pathlib.Path(path).resolve()
+    try:
+        rel = path.relative_to(src.parent).as_posix()
+    except ValueError:
+        raise SystemExit("code the verdict reads is defined outside the tree being certified: " + str(path))
+    return {"source": rel, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
 def ident(f):
     if f is None:
         return None
-    return getattr(f, "__module__", "?") + ":" + getattr(f, "__qualname__", type(f).__qualname__)
+    name = getattr(f, "__module__", "?") + ":" + getattr(f, "__qualname__", type(f).__qualname__)
+    try:
+        where = inspect.getsourcefile(f)
+    except TypeError:
+        where = None
+    if where is None:
+        raise SystemExit("cannot locate the source of " + name)
+    return {"name": name, **source(where)}
+
+models = {}
+for found in pkgutil.walk_packages(importlib.import_module("engcore.domains").__path__, "engcore.domains."):
+    module = importlib.import_module(found.name)  # an import failure fails the probe, never drops a model
+    if any(isinstance(value, ScientificModelDefinition) for value in vars(module).values()):
+        models[found.name] = source(module.__file__)
 
 registry = production_registry()
 print(json.dumps({
@@ -1002,6 +1057,7 @@ print(json.dumps({
         }
         for d in registry.declarations
     },
+    "model_definition_modules": models,
 }, sort_keys=True))
 """
 
@@ -1016,10 +1072,19 @@ def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
     so the tree's ``engcore`` -- and only that one -- is imported; any failure is a CertificationError.
     """
     if not (root / REGISTRY_ENTRY).is_file():
+        if (root / "src" / "engcore" / "claims" / "assessment.py").is_file():
+            # A tree that assesses claims has a registry; a moved or renamed entry must not drop the pin silently.
+            raise CertificationError(f"{REGISTRY_ENTRY} is missing from a tree that assesses claims; the production "
+                                     "registry cannot be pinned")
         return None
-    env = {key: value for key, value in os.environ.items() if key not in ("PYTHONPATH", "PYTHONHOME", "PYTHONSTARTUP")}
-    run = subprocess.run([sys.executable, "-c", _REGISTRY_PROBE, str(root / "src")], cwd=str(root), env=env,
-                         capture_output=True, text=True, timeout=600)
+    # Fourth review: nothing from the environment steers the probe -- no PYTHON*/FORGE*/user-site/cwd entries
+    # (-E -s -P, a scratch working directory), and only the tree's own engcore is accepted.
+    env = {key: value for key, value in os.environ.items() if not key.upper().startswith(("PYTHON", "FORGE"))}
+    import tempfile  # noqa: PLC0415 - only the probe needs a scratch directory
+
+    with tempfile.TemporaryDirectory(prefix="forge-registry-probe-") as scratch:
+        run = subprocess.run([sys.executable, "-E", "-s", "-P", "-c", _REGISTRY_PROBE, str(root / "src")], cwd=scratch,
+                             env=env, capture_output=True, text=True, timeout=600)
     if run.returncode != 0:
         raise CertificationError("the production registry could not be read from the tree: "
                                  + (run.stderr.strip().splitlines() or ["no output"])[-1])
