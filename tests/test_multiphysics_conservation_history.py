@@ -311,3 +311,19 @@ def test_a_system_runtime_node_refuses_a_run_of_a_graph_it_does_not_declare() ->
         outputs={"flow": "a.p"})
     outcome = authority.execute(SimpleNamespace(run_id="sys", node=SimpleNamespace(node_id="mp", commits_state=False)))
     assert outcome.status == "failed" and "different graph" in outcome.reason
+
+def test_a_system_runtime_node_refuses_a_run_of_a_plan_it_does_not_declare() -> None:
+    from engcore.system_runtime.authorities import MultiphysicsAuthority
+
+    declared = _runtime(STEADY, STEADY)
+    other = _runtime(STEADY, STEADY)
+    looser = replace(other.plan, plan_id="history-plan-looser")  # any change to the plan is a different plan
+    swapped = MultiphysicsRuntime(other.graph, looser, other.participants, resolver=other.resolver, store=other.store)
+    initial = {"e_a": Quantity(0, "kg/s"), "e_b": Quantity(0, "kg/s")}
+    authority = MultiphysicsAuthority(
+        "conservation-node", graph=declared.graph, plan=declared.plan, runtime_factory=lambda call: swapped,
+        run_kwargs=lambda call: {"external_inputs": {}, "initial_coupling_values": initial,
+                                 "initial_coupling_uncertainty": {k: UNKNOWN for k in initial}},
+        outputs={"flow": "a.p"})
+    outcome = authority.execute(SimpleNamespace(run_id="sys", node=SimpleNamespace(node_id="mp", commits_state=False)))
+    assert outcome.status == "failed" and "different coupling plan" in outcome.reason

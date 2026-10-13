@@ -304,7 +304,8 @@ def test_fifth_review_the_pin_covers_the_code_that_builds_the_evidence() -> None
     # product/battery.py builds the battery CredibilityEvidenceReport itself; product/problem.py runs electrothermal
     assert {"src/engcore/product/battery.py", "src/engcore/product/problem.py", "src/engcore/product/capabilities.py"} <= set(code)
     # sixth review: an "answers" module that awards a level is pinned (dc/validation.py awards NUMERICALLY_CONVERGED)
-    assert {"src/engcore/domains/electrical/dc/validation.py", "src/engcore/domains/battery/solver.py"} <= set(code)
+    assert {"src/engcore/domains/electrical/dc/validation.py", "src/engcore/domains/battery/solver.py",
+            "src/engcore/domains/electrical/dc/mna.py"} <= set(code)
     assert all(code[name] == cc.file_digest(ROOT / name) for name in code)
 
 
@@ -321,7 +322,7 @@ def _executor_tree(root, files):
     return {"capabilities": {"c": {"executor": {"source": "src/engcore/product/run.py"}}}}
 
 
-def test_sixth_review_exempt_code_is_pinned_exactly_when_it_builds_evidence(tmp_path) -> None:
+def test_seventh_review_every_file_the_executors_reach_is_pinned(tmp_path) -> None:
     identity = _executor_tree(tmp_path, {
         "src/engcore/__init__.py": b"", "src/engcore/product/__init__.py": b"", "src/engcore/domains/__init__.py": b"",
         "src/engcore/domains/a/__init__.py": b"",
@@ -331,7 +332,8 @@ def test_sixth_review_exempt_code_is_pinned_exactly_when_it_builds_evidence(tmp_
     })
     code = cc.evidence_code_digests(tmp_path, identity)
     assert "src/engcore/domains/a/validation.py" in code and "src/engcore/product/run.py" in code
-    assert "src/engcore/domains/a/solver.py" not in code
+    # a helper that decides an award without naming an evidence type (dc/mna.py feeding the residual check)
+    assert "src/engcore/domains/a/solver.py" in code
 
 
 def test_sixth_review_an_undeclared_computed_import_in_the_evidence_closure_is_refused(tmp_path) -> None:

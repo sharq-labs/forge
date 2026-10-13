@@ -128,6 +128,7 @@ class MultiphysicsAuthority(_Base):
         self._extractors, self._artifacts = dict(extractors or {}), artifacts
         self._declares_conservation = bool(getattr(graph, "conservation", ()))
         self._graph_fingerprint = graph.fingerprint()
+        self._plan_fingerprint = plan.fingerprint()
         self.runtime, self._factory, self._kwargs, self._outputs = runtime, runtime_factory, run_kwargs, dict(outputs)
         self._state_outputs = dict(state_outputs or {})
         self._owners, self._applicability, self._providers = dict(state_owners or {}), applicability, providers
@@ -165,12 +166,16 @@ class MultiphysicsAuthority(_Base):
             # runtime on another graph (one without the declared balances) would otherwise pass the check vacuously.
             if run.graph_fingerprint != self._graph_fingerprint:
                 return NodeOutcome.failed("the coupled run executed a different graph than the one this authority declares")
+            # Seventh review: and the declared plan -- its convergence tolerances decide what "converged" means below.
+            if run.plan_fingerprint != self._plan_fingerprint:
+                return NodeOutcome.failed("the coupled run executed a different coupling plan than the one this authority declares")
             try:
                 require_conservation(run)
             except MultiphysicsExecutionError as exc:
                 return NodeOutcome.failed(f"declared conservation did not hold; nothing is exposed ({exc})")
-        elif self._declares_conservation:
-            return NodeOutcome.failed("the graph declares conservation and the runtime returned no run record to check it on")
+        elif self._declares_conservation or self._factory is not None:
+            # a built runtime must prove which graph and plan it ran; a declared balance must be checkable
+            return NodeOutcome.failed("the runtime returned no run record to check its graph, plan and conservation on")
         outputs: dict[str, OutputValue] = {}
         for name, (participant, variable) in self._state_outputs.items():
             last = [t for t in run.state_transitions if t.participant_id == participant]

@@ -1106,31 +1106,14 @@ def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
     return identity
 
 
-#: Names that make an otherwise exempt ("answers") module verdict-relevant: it awards a level, records model
-#: validity or builds the evidence report (sixth review: domains/electrical/dc/validation.py awards
-#: NUMERICALLY_CONVERGED from its own comparison).
-_EVIDENCE_NAMES = frozenset({"ValidationCheck", "ValidationLevel", "ModelValidityRecord", "CredibilityEvidenceReport"})
-
-
-def _builds_evidence(path: pathlib.Path) -> bool:
-    for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
-        if isinstance(node, ast.Name) and node.id in _EVIDENCE_NAMES:
-            return True
-        if isinstance(node, ast.Attribute) and node.attr in _EVIDENCE_NAMES:
-            return True
-        if isinstance(node, ast.alias) and node.name.split(".")[-1] in _EVIDENCE_NAMES:
-            return True
-    return False
-
-
 def evidence_code_digests(root: pathlib.Path, identity: Mapping[str, Any]) -> dict[str, str]:
     """SHA-256 of the first-party code the registry's executors, case builders and oracle providers reach.
 
     The static import closure (absolute, relative and literal ``import_module`` names, function-level imports
-    included) from each defining file, walked THROUGH the exempt answer packages. Every non-exempt file is
-    pinned; an exempt file is pinned when it awards a level or builds validity/evidence records
-    (:data:`_EVIDENCE_NAMES`). A computed-name load anywhere in the closure must be declared in
-    DYNAMIC_REACH, or the registry cannot be pinned.
+    included) from each defining file, walked THROUGH the exempt answer packages, and EVERY file reached is
+    pinned: an "answers" module (a solver, a matrix assembler) can decide whether a level is earned without
+    naming an evidence type. A computed-name load anywhere in the closure must be declared in DYNAMIC_REACH,
+    or the registry cannot be pinned.
     """
     src = root / "src"
     seeds: set[str] = set()
@@ -1158,7 +1141,9 @@ def evidence_code_digests(root: pathlib.Path, identity: Mapping[str, Any]) -> di
     if undeclared:
         raise CertificationError("code the production registry's executors reach loads modules by computed name "
                                  f"without a DYNAMIC_REACH declaration: {undeclared}")
-    pinned = [p for p in seen if not _closure_exempt(p.relative_to(root).as_posix()) or _builds_evidence(p)]
+    # Seventh review: pinning only files that NAME an evidence type left the helpers that decide an award (dc/mna.py
+    # feeding dc/validation.py's residual check) unpinned. Everything the production executors reach is pinned.
+    pinned = list(seen)
     return {path.relative_to(root).as_posix(): file_digest(path)
             for path in sorted(pinned, key=lambda p: p.relative_to(root).as_posix().encode("utf-8"))}
 
