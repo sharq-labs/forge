@@ -31,6 +31,10 @@ A fit to synthetic data alone is *not* experimental validation and does not demo
 
 **Decision:** Documentation and candidate evaluation may be proposed now; developing a new domain capability is deferred. The date to activate is **not assigned**.
 
+## Biomedical Blindfold & Discovery research companion
+
+[BLINDFOLD_DISCOVERY.md](BLINDFOLD_DISCOVERY.md) proposes one **deferred, nonclinical** evaluation track using the existing Genesis / Blindfold authority. It specifies bounded abstract reaction networks, competing mechanisms, hidden transformed worlds, correct-refusal tasks, baseline comparisons, 30 generated instances per formal class per domain and 20 stochastic seeds when material, and independent scoring. This proposal **does not** create a new research track in `ACTIVE_PLAN`, qualify a biological capability, or substitute synthetic benchmark success for empirical or clinical validation. Implementation requires later program clearance and owner approval.
+
 ## Candidate research tracks (selection before development)
 
 | Candidate | Testable research claim | Needed external evidence | Initial recommendation |
