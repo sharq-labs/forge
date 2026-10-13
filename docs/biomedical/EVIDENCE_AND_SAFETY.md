@@ -2,6 +2,8 @@
 
 **Status:** Concept specification for a future nonclinical research initiative. **No biomedical capability verified. Tests: NOT RUN.** This document does not define a second Trust/Validation engine; it records additional **domain obligations** and maps them to the existing FORGE authorities.
 
+The proposed [Biomedical Blindfold & Discovery research protocol](BLINDFOLD_DISCOVERY.md) reuses the existing Genesis evaluator and scientific authority. Its synthetic tasks are tests of bounded reasoning competence only; they cannot become evidence of clinical validity or a new biomedical capability stage.
+
 ## 1. Primary distinction: scientific evidence is use-case dependent
 
 | Evidence type | Valid interpretation | Must not be promoted to |
