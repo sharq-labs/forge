@@ -251,7 +251,9 @@ def test_a5_a_policy_operator_cannot_flip_the_stated_one(registry) -> None:
 
 @pytest.mark.parametrize("sentence", ["The tank volume must be at least 50 gallon.",
                                       "The payload mass must be at most 2 ton.",
-                                      "The heater power must be below 3 hp."])
+                                      "The heater power must be below 3 hp.",
+                                      "The bracket load must be at most 20 lb.",
+                                      "The cable run must be at most 2 mile."])
 def test_a6_an_ambiguous_unit_is_not_read_in_a_bound(sentence) -> None:
     with pytest.raises(Ungrounded, match="more than one standard definition"):
         read_comparison(sentence, (0, len(sentence)))

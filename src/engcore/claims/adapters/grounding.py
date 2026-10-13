@@ -309,6 +309,8 @@ AMBIGUOUS_UNIT_WORDS = frozenset({
     "ounce", "ounces", "oz", "floz", "fluid", "mil", "mils", "calorie", "calories", "cal", "kcal", "kilocalorie",
     "kilocalories", "btu", "btus", "mmbtu", "hp", "horsepower", "bhp", "barrel", "barrels", "bbl", "cwt",
     "hundredweight", "therm", "therms", "bushel", "bushels",
+    # pound: mass or force (lbm / lbf); mile: statute or nautical
+    "pound", "pounds", "lb", "lbs", "mile", "miles",
 })
 
 
