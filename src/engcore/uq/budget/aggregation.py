@@ -17,6 +17,8 @@ class AggregatedUncertainty:
 
 def aggregate_uncertainty(components:tuple[UncertaintyComponent,...],correlations:tuple[Correlation,...]=())->AggregatedUncertainty:
     components=tuple(components)
+    if not components:
+        raise ValueError("uncertainty budget requires at least one declared component; missing uncertainty is not zero")
     correlations=tuple(correlations)
     matrix=require_positive_semidefinite_correlation(components,correlations)
     vector=np.asarray([c.standard_uncertainty for c in components],dtype=float)

@@ -179,9 +179,10 @@ def test_a_challenge_never_changes_the_verdict(registry) -> None:
     assert band.weakened and band.evidence_refs  # the refinement runs that weakened it
 
 
-def test_a_claim_that_holds_across_its_declared_range_survives(registry) -> None:
+def test_surviving_range_probes_do_not_hide_other_inconclusive_challenges(registry) -> None:
     report = challenge_claim(assess_claim(et_claim(input_uncertainty=_ambient_range(296.0, 304.0)), registry), registry)
-    assert report.status == "survived_attempted_challenges"
+    assert report.status == "inconclusive_attempted_challenges"
+    assert any(c.result is ChallengeResult.INCONCLUSIVE for c in report.challenges)
     kinds = {c.kind for c in report.challenges if c.result is ChallengeResult.SURVIVED}
     assert {ChallengeKind.PARAMETER_BOUNDARY, ChallengeKind.VALIDITY_BOUNDARY_STRESS, ChallengeKind.UNCERTAINTY_GUARD_BAND} <= kinds
 

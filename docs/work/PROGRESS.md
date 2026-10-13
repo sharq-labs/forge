@@ -2694,3 +2694,52 @@ Failed approaches:
 Open: the two `test_rebuilding_everything_reproduces_the_published_gates` tests write committed files in place (CI
 deselects them; locally they race with `test_offline_revalidation`); the builders need an output-directory parameter.
 SCIENTIFIC without the CI deselects is not equivalent to CI. FULL, Python 3.11/3.12, hardened recertification: NOT RUN.
+
+## 2026-10-13 Owner-requested scientific boundary repairs
+
+Base `origin/main` `c4e05ee6`; isolated worktree, branch
+`codex/repair-scientific-boundaries`. The shared checkout and its existing edits
+are preserved. Scope: empty UQ budgets, discovery timeout, benchmark output
+isolation, challenge summary, and unassessable applicability compilation.
+
+Compatibility decision: keep frozen Core signatures, record field names, schema
+strings and valid-budget serialization unchanged. Empty or missing budget
+components are refused rather than interpreted as zero. The non-Core challenge
+summary gains `inconclusive_attempted_challenges`; its existing digest formula
+stays unchanged, but corrected summaries intentionally change the digest. Existing
+historical records are not rewritten. The non-Core compiler gains an explicit
+applicability gap and refuses readiness on evaluator failure.
+
+Failed environment approaches: forge-runner WSL cannot start because its D:
+virtual disk is unavailable. A venv under /tmp disappeared between WSL starts;
+retry under the persistent Ubuntu user home succeeded (Python 3.12.3). Initial
+forge_check launch did not execute tests because the /tmp interpreter was missing.
+Tests: NOT RUN at the environment-preparation checkpoint; results appended below.
+
+2026-10-13 — initial adversarial tests (Ubuntu Python 3.12.3; mounted Windows source)
+command: `/home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q tests/uq/budget tests/claims/test_challenge_summary.py tests/claims/test_unassessable_compilation.py tests/foundations/test_discovery_deadline.py --tb=short`
+result: FAIL — 30 passed, 1 failed in 13.21 s.
+failure: `test_timeout_covers_handshake_output_and_inherited_pipes` (leader exits, descendant pipes).
+Cause: test expected a killed orphan's process group to disappear immediately; a zombie may persist until init reaps it. Corrected the assertion to reject any live member; no deadline or production behavior relaxed.
+
+command: `/home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --changed --workers 4` (mounted Windows worktree)
+result: BLOCKED — no tests executed; Linux git cannot resolve the Windows .git worktree path.
+Correction: created a task-owned native Linux Git clone at `/home/dev_kaeem/forge-repair-src`, pinned at c4e05ee6, and copied only the repair changes with Git-normalized LF bytes. Python environment installed against that clone. Native checkout has its own Git identities and Linux-supported execution.
+
+command: `/home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --changed --workers 4` (native Linux clone)
+result: FAIL — 3889 passed, 59 skipped, 2 failed in 73.37 s.
+failures: `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`; `tests/claims/test_sensitivity_robustness_challenge.py::test_a_claim_that_holds_across_its_declared_range_survives`.
+Certificate failure names the pre-existing certified-area drift plus changed UQ/harness bytes and the uncommitted tree; no certificate regenerated. Challenge failure was an obsolete expected summary: real surviving range probes coexist with another INCONCLUSIVE challenge. Updated the test to assert both surviving routes and an honest overall inconclusive status; this is the requested behavior correction.
+
+Independent read-only forge-scientific-review: PASS. Initial request for task-write/final-wait stall tests addressed; reviewer inspected them. No tests executed by reviewer, no scientific validation claimed. Pre-existing direct UncertaintyBudgetReport dataclass construction can carry arbitrary fields; no authority consumer found by reviewer, recorded as scope limitation. Aggregation/build/loading paths are hardened.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q tests/uq/budget tests/claims/test_challenge_summary.py tests/claims/test_unassessable_compilation.py tests/claims/test_sensitivity_robustness_challenge.py tests/foundations/test_discovery_deadline.py tests/test_benchmark_output_isolation.py --tb=short` (native Linux clone)
+result: PASS — 60 passed in 40.20 s.
+Published benchmark JSON/Markdown bytes were compared before and after both builds by the isolation tests. Mutating/deleting the private generated result was detected instead of reading a published fallback. These are software tests, not physical validation.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --regression --workers 4` (native Linux clone)
+result: PASS — 241 passed in 6.07 s.
+
+command: `python3 .pytest-review-temp/compare_api.py` (WSL Ubuntu; script invokes `/home/dev_kaeem/forge-repair-venv/bin/python -X utf8 -m engcore.api_snapshot --frozen` with each checkout's own src on PYTHONPATH)
+result: PASS — base c4e05ee6 and repair frozen API output bytes identical; SHA256 `0cfcaca6290cfe910e13d851986b62bbe55ae732a2e7a9f43174c5a319916072`.
+This comparison establishes unchanged frozen API shape, not certificate validity.

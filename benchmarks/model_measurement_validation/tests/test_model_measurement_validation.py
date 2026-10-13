@@ -335,8 +335,8 @@ def test_the_consistency_checker_can_fail():
 
 
 @pytest.mark.expensive
-def test_rebuilding_everything_reproduces_the_published_gates():
-    payload = _round_audit().build_gates.build()
+def test_rebuilding_everything_reproduces_the_published_gates(tmp_path):
+    payload = _round_audit().build_gates.build(output_dir=tmp_path)
     assert payload["passed"] == 10
     assert payload["failed"] == 1
     assert payload["_built"]["plants"]["missed"] == 0

@@ -41,12 +41,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import pathlib
 import shutil
 import socket
+import selectors
+import signal
 import subprocess
 import sys
+import time
 from collections.abc import Mapping
 from typing import Any
 
@@ -125,6 +129,8 @@ class IsolatedEscrow:
     def run_discovery(self, task: dict[str, Any], *, timeout: float = 300) -> tuple[dict[str, Any], dict[str, Any]]:
         """Run the hostile proposer (:mod:`.isolation_probe`) in the Discovery domain.  Returns (its report, what the
         LAUNCHER verified about the process from outside, through /proc, before letting it run)."""
+        if isinstance(timeout, bool) or not math.isfinite(timeout) or timeout <= 0:
+            raise ValueError("discovery timeout must be finite and positive")
         pydir = pathlib.Path(sys.executable).resolve().parent.parent
         src = pathlib.Path(__file__).resolve().parents[2]
         site = next(p for p in sys.path if p.endswith("site-packages") and os.path.isdir(p))
@@ -137,23 +143,91 @@ class IsolatedEscrow:
                  f"--no-new-privs -- /mnt/fpy/bin/{pathlib.Path(sys.executable).resolve().name} -I -c {_q(boot)}")
         cmd = ["unshare", "--mount", "--pid", "--fork", "--net", "--ipc", "--uts", "--mount-proc", "--", "/bin/sh", "-c", inner]
         proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=(fd,),
-                                env={"PATH": "/usr/bin:/bin"}, cwd="/")
-        assert proc.stdin is not None and proc.stdout is not None
+                                env={"PATH": "/usr/bin:/bin"}, cwd="/", start_new_session=True)
         try:
-            proc.stdin.write((json.dumps({**task, "fd": fd}) + "\n").encode())
-            proc.stdin.flush()
-            ready = json.loads(proc.stdout.readline() or b"{}")
-            outside = _inspect(_leaf(proc.pid), self.storage_dir) if ready.get("ready") else {"inspected": False}
-            proc.stdin.write(b"go\n")
-            proc.stdin.close()
-            out, err = proc.stdout.read(), proc.stderr.read() if proc.stderr else b""
-            proc.wait(timeout=timeout)
+            out, err, outside = _discovery_exchange(
+                proc, (json.dumps({**task, "fd": fd}) + "\n").encode(), self.storage_dir, timeout,
+            )
+        except BaseException:
+            # Kill the session even if its leader exited while a descendant kept a pipe open.
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait(timeout=5)
+            raise
         finally:
-            if proc.poll() is None:
-                proc.kill()
+            for stream in (proc.stdin, proc.stdout, proc.stderr):
+                if stream is not None:
+                    stream.close()
         if proc.returncode != 0:
             raise RuntimeError(f"discovery process failed: {err.decode()[-600:]}")
         return json.loads(out), outside
+
+
+def _discovery_exchange(proc, payload: bytes, storage_dir: pathlib.Path, timeout: float):
+    """One deadline for the task write, readiness handshake, both output pipes and exit.
+
+    Drain stderr alongside stdout: a noisy proposer must not deadlock the handshake.
+    Only the launcher inspects the live process, before sending permission to run.
+    """
+    deadline = time.monotonic() + timeout
+    output, errors, handshake = bytearray(), bytearray(), bytearray()
+    outside = {"inspected": False}
+    ready_seen = False
+    pending = payload
+    with selectors.DefaultSelector() as selector:
+        for stream, label in ((proc.stdin, "input"), (proc.stdout, "output"), (proc.stderr, "error")):
+            os.set_blocking(stream.fileno(), False)
+            selector.register(stream, selectors.EVENT_WRITE if label == "input" else selectors.EVENT_READ, label)
+        while selector.get_map():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired(proc.args, timeout)
+            for key, _ in selector.select(remaining):
+                stream = key.fileobj
+                if key.data == "input":
+                    try:
+                        written = os.write(stream.fileno(), pending)
+                    except BlockingIOError:
+                        continue
+                    pending = pending[written:]
+                    if not pending:
+                        selector.unregister(stream)
+                        if ready_seen:
+                            stream.close()
+                    continue
+                try:
+                    chunk = os.read(stream.fileno(), 65536)
+                except BlockingIOError:
+                    continue
+                if not chunk:
+                    selector.unregister(stream)
+                    if key.data == "output" and not ready_seen:
+                        raise RuntimeError("discovery exited before the readiness handshake")
+                    continue
+                if key.data == "error":
+                    errors.extend(chunk)
+                elif ready_seen:
+                    output.extend(chunk)
+                else:
+                    handshake.extend(chunk)
+                    if b"\n" in handshake:
+                        line, rest = handshake.split(b"\n", 1)
+                        ready = json.loads(line)
+                        if not ready.get("ready"):
+                            raise RuntimeError("discovery did not acknowledge readiness")
+                        outside = _inspect(_leaf(proc.pid), storage_dir)
+                        ready_seen = True
+                        output.extend(rest)
+                        pending += b"go\n"
+                        if proc.stdin not in selector.get_map():
+                            selector.register(proc.stdin, selectors.EVENT_WRITE, "input")
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired(proc.args, timeout)
+        proc.wait(timeout=remaining)
+    return bytes(output), bytes(errors), outside
 
 
 def _leaf(pid: int) -> int:

@@ -20,7 +20,7 @@ from .loader import ROOT
 REPORT = ROOT / "ROUND_REPORT.md"
 
 
-def _text() -> str:
+def _text(report: pathlib.Path = REPORT) -> str:
     """The report with markdown emphasis removed, but underscores kept.
 
     A number inside **bold** is the same number and a checker that missed it
@@ -30,12 +30,12 @@ def _text() -> str:
     haystack while leaving it in the needle makes every such check silently
     unsatisfiable.
     """
-    raw = REPORT.read_text(encoding="utf-8")
+    raw = report.read_text(encoding="utf-8")
     return re.sub(r"[*`\[\]]", "", raw)
 
 
-def _artifact(name: str) -> dict:
-    return json.loads((ROOT / name).read_text(encoding="utf-8"))
+def _artifact(name: str, artifact_dir: pathlib.Path = ROOT) -> dict:
+    return json.loads((artifact_dir / name).read_text(encoding="utf-8"))
 
 
 # ---------------------------------------------------------------------------
@@ -77,8 +77,8 @@ FORBIDDEN = [
 ]
 
 
-def forbidden_reasoning() -> list[dict]:
-    text = _text()
+def forbidden_reasoning(*, report: pathlib.Path = REPORT) -> list[dict]:
+    text = _text(report)
     found = []
     for description, pattern in FORBIDDEN:
         match = pattern.search(text)
@@ -92,7 +92,7 @@ def forbidden_reasoning() -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def quoted_numbers() -> list[dict]:
+def quoted_numbers(*, artifact_dir: pathlib.Path = ROOT, report: pathlib.Path = REPORT) -> list[dict]:
     """Each number must appear NEAR the thing it describes.
 
     Checking only that a digit occurs somewhere in the file would pass a report
@@ -100,15 +100,15 @@ def quoted_numbers() -> list[dict]:
     them. So each claim carries a context pattern, and the value has to appear
     inside a window that also matches it.
     """
-    text = _text()
-    results = _artifact("VALIDATION_RESULTS.json")
-    surface = _artifact("VALIDATION_SURFACE.json")
-    construction = _artifact("PROBLEM_CONSTRUCTION.json")
-    gates = _artifact("SAFETY_GATES.json")
-    shapes = _artifact("ERROR_SHAPE.json")
-    mutations = _artifact("CONSTRUCTION_MUTATIONS.json")
-    harness = _artifact("HARNESS_FALSIFICATION.json")
-    graph = _artifact("INDEPENDENCE_GRAPH.json")
+    text = _text(report)
+    results = _artifact("VALIDATION_RESULTS.json", artifact_dir)
+    surface = _artifact("VALIDATION_SURFACE.json", artifact_dir)
+    construction = _artifact("PROBLEM_CONSTRUCTION.json", artifact_dir)
+    gates = _artifact("SAFETY_GATES.json", artifact_dir)
+    shapes = _artifact("ERROR_SHAPE.json", artifact_dir)
+    mutations = _artifact("CONSTRUCTION_MUTATIONS.json", artifact_dir)
+    harness = _artifact("HARNESS_FALSIFICATION.json", artifact_dir)
+    graph = _artifact("INDEPENDENCE_GRAPH.json", artifact_dir)
 
     counts = surface["empirical_evidence_possible_counts"]
     ipm6 = next(m for m in mutations["mutations"] if m["id"] == "IPM-6")
@@ -237,11 +237,11 @@ def quoted_numbers() -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def claim_checks() -> list[dict]:
-    text = _text()
-    surface = _artifact("VALIDATION_SURFACE.json")
-    gates = _artifact("SAFETY_GATES.json")
-    results = _artifact("VALIDATION_RESULTS.json")
+def claim_checks(*, artifact_dir: pathlib.Path = ROOT, report: pathlib.Path = REPORT) -> list[dict]:
+    text = _text(report)
+    surface = _artifact("VALIDATION_SURFACE.json", artifact_dir)
+    gates = _artifact("SAFETY_GATES.json", artifact_dir)
+    results = _artifact("VALIDATION_RESULTS.json", artifact_dir)
 
     checks = []
 
@@ -252,7 +252,7 @@ def claim_checks() -> list[dict]:
         {
             "check": "the report does not claim empirical validation passed",
             "ok": not empirical_claimed
-            or "Not \"empirical validation passed\"" in REPORT.read_text(encoding="utf-8"),
+            or "Not \"empirical validation passed\"" in report.read_text(encoding="utf-8"),
             "why": (
                 "No LEVEL 1 or LEVEL 2 evidence exists in this environment, so "
                 "that verdict is unavailable. The phrase may appear only where "
@@ -308,7 +308,7 @@ def claim_checks() -> list[dict]:
     return checks
 
 
-def self_check() -> dict:
+def self_check(*, artifact_dir: pathlib.Path = ROOT, report: pathlib.Path = REPORT) -> dict:
     """Can this checker fail?
 
     The same discipline the round applies to the comparison harness. A
@@ -316,12 +316,11 @@ def self_check() -> dict:
     a green light with no bulb behind it. One digit in the report is changed in
     memory -- the file on disk is not touched -- and the checker must notice.
     """
-    global REPORT
     import tempfile
 
-    original = REPORT
+    original = report
     text = original.read_text(encoding="utf-8")
-    results = _artifact("VALIDATION_RESULTS.json")
+    results = _artifact("VALIDATION_RESULTS.json", artifact_dir)
     truth = str(results["primary"]["rows"])
     spoiled = text.replace(
         f"| Primary comparison rows | {truth},",
@@ -332,11 +331,7 @@ def self_check() -> dict:
     with tempfile.TemporaryDirectory() as directory:
         path = pathlib.Path(directory) / "ROUND_REPORT.md"
         path.write_text(spoiled, encoding="utf-8")
-        REPORT = path
-        try:
-            spoiled_rows = quoted_numbers()
-        finally:
-            REPORT = original
+        spoiled_rows = quoted_numbers(artifact_dir=artifact_dir, report=path)
     caught = any(not row["present_in_report"] for row in spoiled_rows)
     return {
         "a_digit_was_changed": changed,
@@ -347,13 +342,13 @@ def self_check() -> dict:
     }
 
 
-def run() -> dict:
-    numbers = quoted_numbers()
-    claims = claim_checks()
-    forbidden = forbidden_reasoning()
+def run(*, artifact_dir: pathlib.Path = ROOT, report: pathlib.Path = REPORT) -> dict:
+    numbers = quoted_numbers(artifact_dir=artifact_dir, report=report)
+    claims = claim_checks(artifact_dir=artifact_dir, report=report)
+    forbidden = forbidden_reasoning(report=report)
     missing = [row for row in numbers if not row["present_in_report"]]
     failed = [row for row in claims if not row["ok"]]
-    checker = self_check()
+    checker = self_check(artifact_dir=artifact_dir, report=report)
     return {
         "schema": "consistency_audit/1",
         "checker_self_falsification": checker,

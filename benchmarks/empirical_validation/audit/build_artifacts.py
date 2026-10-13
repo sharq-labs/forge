@@ -6,6 +6,7 @@ import collections
 import hashlib
 import json
 from pathlib import Path
+from functools import partial
 
 from reference import spice
 
@@ -22,8 +23,8 @@ from .surface import SURFACE
 from .tolerances import TOLERANCES
 
 
-def _write(name: str, payload) -> None:
-    (ROOT / name).write_text(
+def _write(name: str, payload, *, output_dir: Path = ROOT) -> None:
+    (output_dir / name).write_text(
         json.dumps(payload, indent=2, sort_keys=False) + "\n", encoding="utf-8"
     )
 
@@ -117,7 +118,10 @@ def _per_model(rows: list[dict]) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def build() -> dict:
+def build(*, output_dir: Path = ROOT) -> dict:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    write = partial(_write, output_dir=output_dir)
     primary = run_primary()
     holdout = run_holdout()
 
@@ -163,7 +167,7 @@ def build() -> dict:
                 ),
             }
         )
-    _write(
+    write(
         "VALIDATION_SURFACE.json",
         {
             "schema": "validation_surface/1",
@@ -187,7 +191,7 @@ def build() -> dict:
     classification_counts = collections.Counter(
         row["classification"] for row in all_construction
     )
-    _write(
+    write(
         "PROBLEM_CONSTRUCTION.json",
         {
             "schema": "problem_construction/1",
@@ -210,7 +214,7 @@ def build() -> dict:
 
     # ---- EV-6 / EV-7 ---------------------------------------------------
     codata = ROOT / "evidence" / "scipy_codata.py"
-    _write(
+    write(
         "EVIDENCE_PROVENANCE.json",
         {
             "schema": "evidence_provenance/1",
@@ -320,7 +324,7 @@ def build() -> dict:
     )
 
     # ---- EV-11 to EV-18 ------------------------------------------------
-    _write(
+    write(
         "VALIDATION_RESULTS.json",
         {
             "schema": "validation_results/1",
@@ -373,10 +377,10 @@ def build() -> dict:
     )
 
     # ---- EV-17 ---------------------------------------------------------
-    _write("ERROR_SHAPE.json", {"schema": "error_shape/1", **shapes})
+    write("ERROR_SHAPE.json", {"schema": "error_shape/1", **shapes})
 
     # ---- EV-19 ---------------------------------------------------------
-    _write(
+    write(
         "CONSTRUCTION_MUTATIONS.json",
         {
             "schema": "construction_mutations/1",
@@ -397,10 +401,10 @@ def build() -> dict:
     )
 
     # ---- EV-20 ---------------------------------------------------------
-    _write("HARNESS_FALSIFICATION.json", {"schema": "harness_falsification/1", **harness})
+    write("HARNESS_FALSIFICATION.json", {"schema": "harness_falsification/1", **harness})
 
     # ---- EV-26 ---------------------------------------------------------
-    _write("INDEPENDENCE_GRAPH.json", graph)
+    write("INDEPENDENCE_GRAPH.json", graph)
 
     return {
         "primary": primary,
