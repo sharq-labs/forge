@@ -927,6 +927,13 @@ def execute_authorized_graph_plan(
         # SCENARIO IDENTITY IS NOT CONDITIONAL ON EVENTS (Sprint 1 P0).
         scenario_digest="" if scenario is None else scenario.digest,
     )
+    # F5: required conservation is authoritative -- a failure in ANY window refuses the authorized run.
+    from ..execution.multiphysics.runtime import MultiphysicsExecutionError, require_conservation
+
+    try:
+        require_conservation(run)
+    except MultiphysicsExecutionError as exc:
+        raise InvalidScientificProblem(f"the executed graph is not an admissible coupled result: {exc}") from exc
 
     validation: list[AuthorizedSystemValidation] = []
     for protocol in composition.validation_protocols:

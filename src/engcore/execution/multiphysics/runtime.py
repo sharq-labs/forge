@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from ...data.resolver import BulkDataResolver
 from ...data.store import BulkDataStore
@@ -36,6 +36,7 @@ from ...scientific.multiphysics.receipts import (
     StateTransitionReceipt,
     TerminationReceipt,
 )
+from ...scientific.results.immutable import detach
 from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.units.quantity import Quantity
 from ...scenarios import (
@@ -99,6 +100,7 @@ class MultiphysicsRuntime:
         *,
         resolver: BulkDataResolver,
         store: BulkDataStore,
+        diagnostic_balances: Iterable[str] = (),
     ) -> "MultiphysicsRuntime":
         """Materialize exact graph participants and construct the runtime."""
         if not isinstance(registry, ParticipantFactoryRegistry):
@@ -116,6 +118,7 @@ class MultiphysicsRuntime:
                 participants,
                 resolver=resolver,
                 store=store,
+                diagnostic_balances=diagnostic_balances,
             )
         except Exception:
             for participant_id in sorted(participants, reverse=True):
@@ -145,6 +148,7 @@ class MultiphysicsRuntime:
             registry,
             resolver=resolver,
             store=store,
+            diagnostic_balances=recorded_diagnostic_balances(record),
         )
 
     @classmethod
@@ -216,6 +220,7 @@ class MultiphysicsRuntime:
             participants,
             resolver=resolver,
             store=store,
+            diagnostic_balances=recorded_diagnostic_balances(record),
         )
 
     @classmethod
@@ -275,8 +280,17 @@ class MultiphysicsRuntime:
         *,
         resolver: BulkDataResolver,
         store: BulkDataStore,
+        diagnostic_balances: Iterable[str] = (),
     ) -> None:
         plan.validate_against(graph)
+        # F5: every declared balance is REQUIRED unless the model that declared it names it DIAGNOSTIC here.
+        # A name that is not a declared balance is refused: a typo must not quietly demote nothing.
+        declared = {item.balance_id for item in graph.conservation}
+        diagnostic = frozenset(str(item).strip() for item in diagnostic_balances)
+        unknown = sorted(diagnostic - declared)
+        if unknown:
+            raise InvalidScientificProblem(f"diagnostic_balances names undeclared balances {unknown}")
+        self.diagnostic_balances = diagnostic
         self.graph = graph
         self.plan = plan
         self.participants = dict(participants)
@@ -939,60 +953,102 @@ class MultiphysicsRuntime:
     def _audit_conservation(
         self, transfers: Mapping[str, TransferResult]
     ) -> tuple[dict[str, Any], ...]:
-        checks: list[dict[str, Any]] = []
+        return tuple(
+            self._balance(definition, transfers).to_validation_check().to_dict()
+            for definition in self.graph.conservation
+        )
+
+    def _conservation_history(
+        self, window: CouplingWindowRecord, transfers: Mapping[str, TransferResult]
+    ) -> list[dict[str, Any]]:
+        """One entry per declared balance for THIS window (hostile review F5): nothing is overwritten later.
+
+        A REQUIRED balance whose terms cannot be read stops the run (refusal); a DIAGNOSTIC one is
+        recorded UNKNOWN. Each entry names its window, balance, unit, both sides, residual, the declared
+        tolerance, its status and its requirement.
+        """
+        entries: list[dict[str, Any]] = []
         for definition in self.graph.conservation:
-            left: list[BalanceTerm] = []
-            right: list[BalanceTerm] = []
+            requirement = "diagnostic" if definition.balance_id in self.diagnostic_balances else "required"
+            base = {
+                "window_index": window.index,
+                "window_start": window.start.to_dict(),
+                "window_end": window.end.to_dict(),
+                "balance_id": definition.balance_id,
+                "requirement": requirement,
+                "declared_tolerance": definition.tolerance.to_dict(),
+            }
+            try:
+                balance = self._balance(definition, transfers)
+            except MultiphysicsExecutionError as exc:
+                if requirement == "required":
+                    raise
+                entries.append({**base, "status": "unknown", "reason": str(exc)})
+                continue
+            entries.append({
+                **base,
+                "unit": balance.unit,
+                "left": balance.left_total,
+                "right": balance.right_total,
+                "residual": balance.absolute_residual,
+                "tolerance": balance.tolerance_magnitude,
+                "status": "pass" if balance.closed else "fail",
+                "check": balance.to_validation_check().to_dict(),
+            })
+        return entries
 
-            for binding in definition.terms:
-                transfer = transfers.get(binding.edge_id)
-                if transfer is None:
-                    raise MultiphysicsExecutionError(
-                        f"conservation {definition.balance_id!r} references "
-                        f"unexecuted edge {binding.edge_id!r}"
-                    )
+    def _balance(
+        self, definition: Any, transfers: Mapping[str, TransferResult]
+    ) -> ConservationBalance:
+        left: list[BalanceTerm] = []
+        right: list[BalanceTerm] = []
 
-                if binding.measure is TransferMeasure.SOURCE:
-                    value = transfer.source_value
-                elif binding.measure is TransferMeasure.RECEIVED:
-                    value = transfer.value
-                else:
-                    value = transfer.losses.get(binding.loss_form)
-                    if value is None:
-                        raise MultiphysicsExecutionError(
-                            f"conservation term {binding.name!r} requires loss "
-                            f"{binding.loss_form!r} absent from {binding.edge_id!r}"
-                        )
-
-                if not isinstance(value, Quantity):
-                    raise MultiphysicsExecutionError(
-                        f"conservation term {binding.name!r} is field-valued; "
-                        f"field conservation is measured by mapping diagnostics"
-                    )
-
-                term = BalanceTerm(
-                    binding.name,
-                    value,
-                    evidence=(
-                        f"edge:{binding.edge_id}:{binding.measure.value}"
-                    ),
+        for binding in definition.terms:
+            transfer = transfers.get(binding.edge_id)
+            if transfer is None:
+                raise MultiphysicsExecutionError(
+                    f"conservation {definition.balance_id!r} references "
+                    f"unexecuted edge {binding.edge_id!r}"
                 )
-                if binding.side is BalanceSide.LEFT:
-                    left.append(term)
-                else:
-                    right.append(term)
 
-            balance = ConservationBalance(
-                definition.balance_id,
-                tuple(left),
-                tuple(right),
-                definition.tolerance,
-                definition.description,
-                reference=f"physics_graph:{self.graph.graph_id}",
+            if binding.measure is TransferMeasure.SOURCE:
+                value = transfer.source_value
+            elif binding.measure is TransferMeasure.RECEIVED:
+                value = transfer.value
+            else:
+                value = transfer.losses.get(binding.loss_form)
+                if value is None:
+                    raise MultiphysicsExecutionError(
+                        f"conservation term {binding.name!r} requires loss "
+                        f"{binding.loss_form!r} absent from {binding.edge_id!r}"
+                    )
+
+            if not isinstance(value, Quantity):
+                raise MultiphysicsExecutionError(
+                    f"conservation term {binding.name!r} is field-valued; "
+                    f"field conservation is measured by mapping diagnostics"
+                )
+
+            term = BalanceTerm(
+                binding.name,
+                value,
+                evidence=(
+                    f"edge:{binding.edge_id}:{binding.measure.value}"
+                ),
             )
-            checks.append(balance.to_validation_check().to_dict())
+            if binding.side is BalanceSide.LEFT:
+                left.append(term)
+            else:
+                right.append(term)
 
-        return tuple(checks)
+        return ConservationBalance(
+            definition.balance_id,
+            tuple(left),
+            tuple(right),
+            definition.tolerance,
+            definition.description,
+            reference=f"physics_graph:{self.graph.graph_id}",
+        )
 
     def _window(
         self,
@@ -1597,7 +1653,7 @@ class MultiphysicsRuntime:
         end_time = end_seconds
         width = width_seconds
         index = 0
-        last_conservation: tuple[dict[str, Any], ...] = ()
+        conservation_history: list[dict[str, Any]] = []
         input_receipts: list[ScenarioInputReceipt] = []
         condition_receipts: list[OperatingConditionReceipt] = []
         transitions: list[StateTransitionReceipt] = []
@@ -1702,7 +1758,7 @@ class MultiphysicsRuntime:
                     external_uq,
                     transfers,
                 )
-                last_conservation = self._audit_conservation(transfers)
+                conservation_history.extend(self._conservation_history(window, transfers))
                 windows.append(window)
 
                 new_time = self._seconds(window.end)
@@ -1769,7 +1825,12 @@ class MultiphysicsRuntime:
             edge_id: uncertainty.to_dict()
             for edge_id, uncertainty in sorted(edge_uq.items())
         }
-        final_outputs["_conservation"] = list(last_conservation)
+        # F5: every window's balances, never only the last window's.
+        final_outputs["_conservation"] = list(conservation_history)
+        if self.graph.conservation:
+            final_outputs["_conservation_status"] = conservation_status(
+                conservation_history, self.diagnostic_balances
+            )
         final_outputs["_coupling_error"] = error_budget.to_dict()
 
         ended_at = Quantity(current_time, "second")
@@ -1832,4 +1893,68 @@ class MultiphysicsRuntime:
             state_transitions=tuple(transitions),
             termination=termination,
             quantities_of_interest=qoi_records,
+        )
+
+
+def conservation_status(history: Iterable[Mapping[str, Any]], diagnostic_balances: Iterable[str]) -> dict[str, Any]:
+    """The run-level verdict on declared conservation, derived from the per-window history alone.
+
+    ``required`` is ``fail`` when ANY required balance failed in ANY window (a later pass never
+    erases it), ``unknown`` when a required balance has no reading, ``pass`` otherwise. Diagnostic
+    failures are recorded and grant nothing either way.
+    """
+    entries = list(history)
+    required = [e for e in entries if e.get("requirement") == "required"]
+    failed = [{"window_index": e["window_index"], "balance_id": e["balance_id"]} for e in required if e.get("status") == "fail"]
+    unread = [{"window_index": e["window_index"], "balance_id": e["balance_id"]} for e in required
+              if e.get("status") not in ("pass", "fail")]
+    return {
+        "required": "fail" if failed else "unknown" if unread or not required and not entries else "pass",
+        "failed_required": failed,
+        "unknown_required": unread,
+        "diagnostic_failures": [
+            {"window_index": e["window_index"], "balance_id": e["balance_id"], "status": e.get("status")}
+            for e in entries if e.get("requirement") == "diagnostic" and e.get("status") != "pass"
+        ],
+        "diagnostic_balances": sorted(str(item) for item in diagnostic_balances),
+    }
+
+
+def recorded_diagnostic_balances(record: MultiphysicsRunRecord) -> tuple[str, ...]:
+    """The diagnostic declaration a recorded run was executed under, so a replay labels balances the same way."""
+    status = record.final_outputs.get("_conservation_status") if isinstance(record.final_outputs, Mapping) else None
+    return tuple(detach((status or {}).get("diagnostic_balances", ())))
+
+
+def require_conservation(run: MultiphysicsRunRecord) -> None:
+    """Refuse a run as a scientifically successful coupled result unless every REQUIRED balance held in every window.
+
+    The status is re-derived from the recorded history, never read on trust: a record whose status
+    disagrees with its own history is refused as inconsistent.
+    """
+    if not run.graph.conservation:
+        return
+    # A stored record holds frozen containers; compare plain copies so the check reads values, not shapes.
+    outputs = run.final_outputs
+    history = detach(outputs.get("_conservation"))
+    status = detach(outputs.get("_conservation_status"))
+    if not isinstance(history, list) or not isinstance(status, Mapping):
+        raise MultiphysicsExecutionError(
+            "the graph declares conservation balances and the run records no conservation history"
+        )
+    windows = {window.index for window in run.windows}
+    for definition in run.graph.conservation:
+        seen = {e.get("window_index") for e in history if e.get("balance_id") == definition.balance_id}
+        if seen != windows:
+            raise MultiphysicsExecutionError(
+                f"conservation {definition.balance_id!r} is not recorded for every window "
+                f"(recorded {sorted(seen)}, windows {sorted(windows)})"
+            )
+    derived = conservation_status(history, status.get("diagnostic_balances", ()))
+    if dict(status) != derived:
+        raise MultiphysicsExecutionError("the run's conservation status does not re-derive from its history")
+    if derived["required"] != "pass":
+        raise MultiphysicsExecutionError(
+            f"required conservation did not hold: failed {derived['failed_required']}, "
+            f"unread {derived['unknown_required']}; a coupled result is not admitted"
         )
