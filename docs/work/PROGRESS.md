@@ -2956,3 +2956,43 @@ the record is in plan.py and the calculator in execution/multiphysics/convergenc
 PowerShell rg with a literal *.py path failed; use a directory plus -g '*.py'.
 No code or state changed by either failed read.
 Command: git diff --cached --check. Result: PASS, exit 0. Documentation link/count check repeated after the sources update: PASS, exit 0.
+
+## 2026-10-14 — More design and coupling improvement proposals (docs only)
+
+User requested more improvement proposals. PR #137 was read as open and unmerged;
+continued on codex/gaps-additional-review at 415f9993056bce2a0bcd8a62d21c5184eef6f4ab.
+Added eight source-linked proposals in gaps/07-design-and-coupling-improvements.md:
+parameter identifiability, measured multifidelity screening, derivative consistency,
+initial-state consistency, boundary/frame semantics, discontinuity semantics,
+declared mesh transitions, and consumed material-property coverage.
+
+Catalogue now has nine Markdown files and 75 table entries across seven tables.
+Each proposal records existing code, bounded first slice, adversarial acceptance,
+ownership/dependencies and ease/impact stars. No behavior, executable queue,
+maturity evidence, frozen contract or certificate changed.
+
+Documentation command:
+```powershell
+@'
+from pathlib import Path
+import re
+files=sorted(Path('gaps').glob('*.md'))
+ids=[]
+for p in files:
+    text=p.read_text(encoding='utf-8')
+    ids+=re.findall(r'^\| ([CRPGUNX]\d{2}) \|',text,re.M)
+    for target in re.findall(r'\]\(([^)]+)\)',text):
+        if target.startswith(('https://','http://')): continue
+        name,_,anchor=target.partition('#')
+        dest=(p.parent/name).resolve() if name else p
+        assert dest.exists(), (str(p),target)
+        if anchor: assert f'id="{anchor}"' in dest.read_text(encoding='utf-8'), (str(p),anchor)
+assert len(files)==9, len(files)
+assert len(ids)==len(set(ids))==75, len(ids)
+print('PASS: 9 Markdown files, 75 unique entries; local links and explicit anchors resolve. External URLs not checked.')
+'@ | py -3.14 -
+```
+Result: PASS, exit 0; nine Markdown files, 75 unique table IDs, all local links and
+explicit anchors resolve. External URLs not checked. Scientific tests, regression,
+FAST, SCIENTIFIC and certification: **NOT RUN**, documentation-only.
+Command: git diff --cached --check. Result: PASS, exit 0 for the design/coupling proposal update.

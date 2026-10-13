@@ -1,5 +1,9 @@
 # المصادر وحدود الحالة الحالية
 
+## اقتراحات جودة التصميم والربط
+
+[الملف 07](07-design-and-coupling-improvements.md) يضيف ثمانية اقتراحات من قراءة ساكنة عند `415f9993` بتاريخ 2026-10-14. مصادره المباشرة: inference/calibration، design/fidelity_graph، numerical/core، system_runtime/preflight، scientific/fields/regions، scenarios/timeline، execution/multiphysics/mapping، materials/properties. الموجود فعليًا موضح لكل بند، والتوسيع المقترح لا يمثل حكمًا بأن التنفيذ الحالي معيب.
+
 ## مراجعة إضافية بعد PR #136
 
 ملف [الفجوات الإضافية](06-additional-cross-cutting-gaps.md) مبني على قراءة ساكنة عند `375ab559677768dec5ab2c7267f20d127f51b197` بتاريخ 2026-10-14. كل بند يربط بمصدره المباشر، ويذكر القدرة الموجودة قبل اقتراح التوسيع. المراجع الجديدة تشمل سياسة النضج وreplay migration/profiles وevidence supersession ومشغلات الرصد وعقود graph/plan وتخزين البيانات. لم ننفذ أمثلة مضادة علمية أو نستنتج غياب القدرة من مجرد غياب اختبار مقروء.
