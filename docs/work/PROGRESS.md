@@ -2919,3 +2919,23 @@ User explicitly approved WSL/WMI restart. Normal Restart-Service Winmgmt denied 
 
 command: git diff --check
 result: PASS exit0, before source commit.
+
+
+### Corrected final attribution and closeout - overrides earlier empirical claims
+
+Empirical rebuild DID NOT EXECUTE: import of reference.spice._argv timed out at wsl which ngspice(60s), before build_gates.build. Fixture artifacts were copies with timestamp0, not fresh outputs. The earlier empirical equivalence/classB statement is withdrawn. Its pin is restored exactly from origin/main in781a6492; categoryE UNRESOLVED blocks final recertification. Corrected comparator records NOT_REBUILT and checks required rewritten files before any equivalence conclusion. No empirical helper change remains in the final diff.
+
+Model-measurement genuinely rewrote all7JSONs. Six scientific/report artifacts are LF-normalized byte-identical and canonical-JSON-identical; only SAFETY_GATES source-integrity digest/matches/verdict and gate totals differ before re-pin. Both source-pin recipes/digest history and individual artifact hashes are stored externally. After metadata re-pin exact model-measurement test PASS; empirical remains TimeoutExpired, not a scientific-output equivalence proof.
+
+commands/results: diagnostic_no_wmi.py both benchmark selectors on source5d3dd047, benchmark-after-temp/XML:1passed(model-measurement),1failed(empirical import/WSL),62.96s. diagnostic_no_wmi.py scope/change-impact/forge-impact tests, local-complete-temp/XML:89passed/1skipped,13.67s. Exact original scanner test with ignored Latin1venv file: main1failed6.72s, repair1passed7.54s. Exact certificate test on main:1failed0.37s. Fresh diagnostic core_certificate verifier:FAILED,target39d43456,source5d3dd047; external wrapper initially lacked root/srcsys.path, corrected. These are explicitly diagnostic Windows native-WMI-fallback results, NOT supported qualification or scientific validation.
+
+Updated independent forge-scientific-review: HIGH interpretation finding resolved by retracting copied-artifact equivalence and restoring empirical pin; corrected production scope PASS. Reviewer executed no tests/commands. Two extra refusal tests close nonregular-input and dangling-Git coverage gaps.
+
+Windows283failure/error IDs mapped to11rootcause clusters; full messages and representatives in windows-clusters.json. Cantera pair fails alone on clean preRound3: referenced-array resize ValueError and missing-temperature ProviderRefusal. No installed-provider success inferred from prior Linux skips. Escrow handshake attribution remains limited. No blanket Windows harmlessness or zero-regression claim.
+
+Supported matrix, FULL3.12, current regression, owner recertification and certificate-child checks NOT RUN in this repair. Normal changed gate INCOMPLETE (WMI import). Services restart was approved but normal control denied; elevated launches exit1 without a receipt. WSL echo/shutdown unresponsive. No restart success claimed. Exact report:docs/work/FINAL_ASSURANCE_BLOCKER_REPAIR_2026-10-13.md.
+
+command: git diff --exit-code origin/main -- src/ experiments/ certification/ tests/api/ tests/test_sria_e1_electrical.py tests/test_sria_e2_model_adequacy.py
+result:PASS exit0; benchmarkJSON changed-name list empty; certificate SHA256 unchanged c22a012147c26183031b32b0e016c80ef86218ef3cd1664361be47d4cf2f186b.
+command: git diff --check
+result:PASS exit0 before final documentation. No push/merge. Inline non-ASCII bytes literal failed only the first correction-ledger write; file-based UTF8 writer records the correction here.
