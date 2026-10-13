@@ -1,0 +1,26 @@
+import platform
+platform._wmi=None
+from pathlib import Path
+import hashlib,inspect,textwrap
+from tools.test_impact import build_graph,impact_of,scientific_narrowing
+path=Path('src/engcore/systems/products/hvac.py'); data=path.read_bytes();before=hashlib.sha256(data).hexdigest()
+try:
+ path.unlink(); impact=impact_of([path.as_posix()],build_graph(Path.cwd()))
+ print('HVAC affected tests',len(impact.affected_modules),'HVAC-specific',[p for p in impact.affected_modules if 'hvac' in p])
+ print('HVAC unresolved',impact.unresolved,'narrowing refusal',scientific_narrowing([path.as_posix()],impact))
+finally:
+ path.write_bytes(data);assert hashlib.sha256(path.read_bytes()).hexdigest()==before
+print('HVAC bytes restored',before)
+from engcore.authority import ledger
+original=ledger.AuthorityLedger._apply_checked
+source=textwrap.dedent(inspect.getsource(original))
+source=source.replace('if not verify_signature(b["root_public"], ev.signature, ev.signed_bytes()):','if False:')
+assert source!=textwrap.dedent(inspect.getsource(original))
+namespace={};exec(source,original.__globals__,namespace)
+ledger.AuthorityLedger._apply_checked=namespace['_apply_checked']
+try:
+ import pytest
+ result=pytest.main(['tests/foundations/test_authority_integrity.py','tests/foundations/test_authority_durable_campaign.py','-q','-p','no:cacheprovider','--basetemp=D:/forge-hostile-genesis-mutant-temp'])
+ print('GENESIS MUTATION pytest exit',result)
+finally:
+ ledger.AuthorityLedger._apply_checked=original

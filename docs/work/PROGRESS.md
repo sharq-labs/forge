@@ -2886,3 +2886,44 @@ NOT RUN.
 
 Trap: a real-tree soundness test that called `impact_of` per dependency took 137 s; computing `importers` once per
 dependency (what `impact_of` uses for import reach) takes 2.8 s.
+
+## Hostile remediation round 1 — 2026-10-13, BLOCKED_WITH_EVIDENCE
+
+Verified origin/main after fetch: 5d73e8f5118aa845f1957decc5aae986e72476a9.
+Created clean D:/forge-hostile-remediation, branch fix/hostile-review-p0-p1.
+Original dirty checkout preserved. No production edits, push, PR or merge.
+Current bounded queue and evidence: HOSTILE_REMEDIATION_ROUND1.md and
+hostile-round1-evidence/. No listed finding closed; phase 0 remains incomplete.
+
+Commands executed in this session (working directory D:/forge-hostile-remediation):
+- `git fetch origin`; `git rev-parse origin/main`: expected SHA above.
+- `git worktree add -b fix/hostile-review-p0-p1 D:/forge-hostile-remediation origin/main`: exit 0.
+- `py -0p`: Windows Python 3.10/3.14 only.
+- `wsl --list --quiet`; `wsl -d Ubuntu -- bash -lc 'command -v python3.11; command -v python3.12; ls -d /opt/forge* /mnt/c/Users/dev_kaeem/Downloads/Compressed/phyx/.forge/venvs/* 2>/dev/null'`: BLOCKED, unresponsive, interrupted.
+- `py -3.14 tools/forge_check.py --regression *> D:/forge-hostile-regression-baseline.log`: BLOCKED, interrupted. Direct executable retry also blocked.
+- `& 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' -c 'import faulthandler; faulthandler.dump_traceback_later(10); import engcore.claims; print("imported")'`, PYTHONPATH=src: BLOCKED; traceback shows platform._wmi_query while importing Pint/flexcache; interrupted.
+- Diagnostic here-string piped to `& 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' -`, PYTHONPATH=src;tests/claims, source: `import platform; platform._wmi=None; import pytest; from tools.forge_check import build_targets; raise SystemExit(pytest.main(build_targets([],regression=True)+['-q','--basetemp=D:/forge-hostile-diagnostic-pytest','-p','no:cacheprovider']))`: 256 passed in 11.85s, exit 0. Output regression-diagnostic.log. DIAGNOSTIC ONLY, unsupported Python and WMI fallback; not supported acceptance.
+- `$env:PYTHONPATH='.;src;tests;tests/claims;tests/foundations'; & 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' D:/forge-hostile-phase0-probes.py *> D:/forge-hostile-phase0-probes.log`: exit 0; exact script/output retained. 305K request ->309.75K proposal ->ready ->supported; FM14.55456 accepted; synthetic scanner reads environment; injected two-window conservation FAIL/PASS loses FAIL.
+- In-memory certificate scope and verifier probe with WMI fallback: verdict/authority/blindfold files absent from scope; certificate verification FAILS on clean starting main. Certificate target 39d43456cab918ed0748efe7f5b0ff5781474ffa; source drift in certification_control, execution_trust, harness, inference_admission, runtime_dependencies. No certificate changed.
+- `& 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' -c 'from tools.certification.local_assurance import _require_linux; _require_linux()'`, PYTHONPATH=.;src: exit 1, native Windows refused. Authoritative recertification cannot prove this tree in available environment; user stop condition honored.
+- `& 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' -c 'import platform,runpy,sys; platform._wmi=None; sys.argv=["pip","install","--target","D:/forge-hostile-diagnostic-deps","cryptography"]; runpy.run_module("pip",run_name="__main__")'`: exit 0, external diagnostic-only cryptography50.0.2/cffi2.1.1/pycparser3.11 installation.
+- `$env:PYTHONPATH='D:/forge-hostile-diagnostic-deps;.;src;tests;tests/foundations'; & 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' D:/forge-hostile-phase0-mutations.py *> D:/forge-hostile-phase0-mutations-with-crypto.log`: harness exit0, pytest exit1, 15 failed/21 passed in2.11s. Exact script/output retained. HVAC module temporarily deleted/restored byte-for-byte; 47 selected modules, no HVAC-specific module, unresolved/refusal empty. In-memory genesis-signature guard mutation restored after tests.
+- Genesis BASELINE, same diagnostic Python/PYTHONPATH, here-string `import platform; platform._wmi=None; import pytest; raise SystemExit(pytest.main(['tests/foundations/test_authority_integrity.py','tests/foundations/test_authority_durable_campaign.py','-q','-p','no:cacheprovider','--basetemp=D:/forge-hostile-genesis-baseline-temp']))`: exit1, 15 failed/21 passed in2.02s. Failures: os.geteuid/fcntl unavailable and default cp1252 decoding; full exact FAILED IDs in genesis-baseline.log.
+- `Compare-Object $taskBaseline $taskMutant`, arrays populated from all exact `^FAILED ` lines in genesis-baseline.log and phase0-mutations-with-crypto.log: no differences. This compares IDs, not counts. Linux mutation population NOT RUN; no claim of completed mutation gate.
+- `git diff --check`: PASS, exit0 before documentation commit.
+
+Failed approaches: adapter function is not exported at top-level claims; external
+script requires repository root explicitly on PYTHONPATH; initial authority pack
+had35 failures/1pass from missing cryptography, corrected with isolated dependency
+installation. No global environment changes and no remaining temporary source edits.
+
+Supported Python3.11/3.12 FAST, SCIENTIFIC, FULL, complete selective mutation red
+team, benchmark digest attribution, hardened recertification: NOT RUN. Original
+critical false support remains OPEN. Remaining listed critical/high counts:1/7.
+Scientific numerical/frozen experiment outputs changed:NO. No Mind work.
+
+Checkpoint correction: `git diff --cached --check` initially FAILED on trailing
+spaces emitted by pytest traceback transcripts. Normalized transcript trailing
+whitespace only; raw originals retained outside the worktree. No evidence values,
+failure IDs or source bytes changed. Rerun required below before final checkpoint.
+`git diff --cached --check`: PASS after transcript whitespace normalization, exit 0.

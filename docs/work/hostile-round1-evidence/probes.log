@@ -1,0 +1,6 @@
+F1 verdict supported
+F1 assessment None
+F6 computed coupled_steady_hover_screening_not_validated FM 14.554560428103372
+F7 deleted relative import () unresolved ('src/pkg/hvac.py',)
+scanner snapshot reads env True
+F5 injected audit FAIL then PASS windows 2 final conservation FrozenList([FrozenMapping({'name': 'declared_balance', 'outcome': 'pass', 'residual': 0.0, 'tolerance': 0.01})])

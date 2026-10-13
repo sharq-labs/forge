@@ -1,0 +1,38 @@
+import platform
+platform._wmi=None
+import math,tempfile,pathlib,types
+from dataclasses import replace
+from claims_support import t3_claim
+from engcore.claims import assess_claim
+from engcore.claims.adapters.nl import compile_natural_language
+from engcore.mcp.capabilities import production_registry
+from test_drone_coupled_hover import template
+from engcore.systems.products import coupled_hover_screening
+from engcore.scientific.units.quantity import Quantity as Q
+from tools.test_impact import build_graph,impact_of
+from tools.certification.mutation_workspace import snapshot
+registry=production_registry(); made=t3_claim();text='The target is 305 K ± 0.5 K. ';spans={}
+for path,v in made.to_dict()['operating_context'].items():
+ value=v.get('magnitude',v) if isinstance(v,dict) else v
+ piece=f'{path} is {value}. ';spans[path]=(len(text),len(text)+len(piece));text+=piece
+compiled=compile_natural_language(text,made.to_dict(),spans,registry)
+record=assess_claim(compiled.compiled.claim,registry).to_dict()
+print('F1 verdict',record.get('verdict')); print('F1 assessment',record.get('assessment'))
+r=coupled_hover_screening(template(prop_power_coefficient=Q(0.002,'dimensionless')))
+thrust=1.5*9.80665;area=4*math.pi*(.254/2)**2
+ideal=thrust**1.5/math.sqrt(2*1.225*area)
+print('F6 computed',r['classification'],'FM',ideal/r['shaft_power_total'].magnitude_in('W'))
+with tempfile.TemporaryDirectory() as d:
+ root=pathlib.Path(d);(root/'pyproject.toml').write_text('[tool.pytest.ini_options]\npythonpath=["src"]\n')
+ for p,s in {'src/pkg/__init__.py':'','src/pkg/use.py':'from .hvac import model\n','tests/test_use.py':'from pkg.use import model\n'}.items():
+  f=root/p;f.parent.mkdir(parents=True,exist_ok=True);f.write_text(s)
+ impact=impact_of(['src/pkg/hvac.py'],build_graph(root));print('F7 deleted relative import',impact.affected_modules,'unresolved',impact.unresolved)
+ (root/'.forge/venvs/env/lib').mkdir(parents=True);(root/'.forge/venvs/env/lib/foreign.py').write_text('foreign=1\n')
+ print('scanner snapshot reads env','.forge/venvs/env/lib/foreign.py' in snapshot(root))
+from test_stateful_multiphysics_runtime import _runtime
+from engcore.scientific.multiphysics import TimePolicy,PortRef
+runtime=_runtime();runtime.plan=replace(runtime.plan,time=TimePolicy(Q(0,'s'),Q(2,'s'),Q(1,'s')))
+checks=iter([({'name':'declared_balance','outcome':'fail','residual':1.,'tolerance':.01},),({'name':'declared_balance','outcome':'pass','residual':0.,'tolerance':.01},)])
+runtime._audit_conservation=types.MethodType(lambda self,transfers:next(checks),runtime)
+run=runtime.run('probe',external_inputs={PortRef('body','forcing'):Q(0,'K')})
+print('F5 injected audit FAIL then PASS windows',len(run.windows),'final conservation',run.final_outputs['_conservation'])
