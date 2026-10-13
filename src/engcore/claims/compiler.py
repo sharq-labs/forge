@@ -94,6 +94,8 @@ class GapKind(str, Enum):
     APPLICABILITY_PENDING = "applicability_pending"
     #: Pending conditions the system measured may need an input the claim omits.
     APPLICABILITY_AT_RISK = "applicability_at_risk"
+    #: Applicability could not be evaluated; execution cannot be assumed to close it.
+    APPLICABILITY_UNASSESSABLE = "applicability_unassessable"
 
 
 @dataclass(frozen=True)
@@ -442,6 +444,21 @@ def _predicted_gaps(claim: ScientificClaim, declaration: CapabilityDeclaration, 
         )
     source = f"capability:{declaration.capability_id}"
     for model in candidate.models:
+        for condition in model.unknown_of(UnknownBasis.NOT_ASSESSABLE):
+            target = f"{model.model_id}#{condition.condition}"
+            gaps.append(PredictedGap(
+                GapKind.APPLICABILITY_UNASSESSABLE,
+                target,
+                f"applicability remains UNKNOWN: {condition.note or condition.reason or 'condition cannot be assessed'}; "
+                "a run is not evidence that this condition holds",
+            ))
+            repairs.append(RepairAction(
+                RepairKind.EXTEND_CAPABILITY,
+                target,
+                "repair the declared applicability evaluator; no missing input or successful run is assumed to close this gap",
+                required_for=(f"model:{target}",),
+                source=source,
+            ))
         for condition in model.unknown_of(UnknownBasis.PENDING_EXECUTION):
             if not condition.advisory_inputs:
                 continue
@@ -642,6 +659,11 @@ def compile_claim(claim: ScientificClaim | Mapping[str, Any], registry: Capabili
 
     gaps, gap_repairs = _predicted_gaps(claim, declaration, selected)
     repairs += gap_repairs
+    unassessable = [gap for gap in gaps if gap.kind is GapKind.APPLICABILITY_UNASSESSABLE]
+    if unassessable:
+        reasons.extend(f"{gap.target}: {gap.detail}" for gap in unassessable)
+        if readiness_rank(CompilationStatus.UNSUPPORTED_CAPABILITY) < readiness_rank(status):
+            status = CompilationStatus.UNSUPPORTED_CAPABILITY
 
     return CompiledClaim(
         status=status,

@@ -25,6 +25,8 @@ def budget_to_dict(report:UncertaintyBudgetReport)->dict[str,Any]:
 
 def budget_from_dict(payload:Mapping[str,Any])->UncertaintyBudgetReport:
     require_schema(payload,UQ_BUDGET_SCHEMA)
+    if not payload.get("components"):
+        raise ValueError("uncertainty budget requires non-empty components; missing uncertainty is not zero")
     components=tuple(
         UncertaintyComponent(i["component_id"],UncertaintySource(i["source"]),i["standard_uncertainty"])
         for i in payload.get("components",())
