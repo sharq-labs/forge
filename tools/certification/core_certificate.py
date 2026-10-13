@@ -835,6 +835,10 @@ DYNAMIC_REACH: tuple[tuple[str, str, str], ...] = (
      "validation-level declarations are read from engcore.domains, as for thresholds"),
     ("src/engcore/scientific/independence_evidence.py", "src/engcore/domains/**",
      "a route component identity names its module; identities are pinned by the domain trust registries"),
+    ("src/engcore/domainpacks/discovery.py", "<external entry points: nothing in this tree>",
+     "discovers EXTERNAL domain packs (installed entry points, FORGE_DOMAIN_PACKS). The registry probe runs with "
+     "FORGE_* scrubbed, so the pinned registry is the built-in one; an external pack is never certified by this "
+     "certificate"),
 )
 
 
@@ -879,6 +883,7 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
         # A loader bound to another name (load = importlib.import_module) is a loader wherever it is later called.
         if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(node.value, (ast.Attribute, ast.Name)):
             bound = _call_name(node.value)
+            bound = aliases.get(bound, bound) if isinstance(node.value, ast.Name) else bound
             if bound in _LOADER_CALLS or bound.endswith("import_module") or bound == "__import__":
                 lines.append(node.lineno)
         if not isinstance(node, ast.Call):
@@ -1101,11 +1106,31 @@ def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
     return identity
 
 
+#: Names that make an otherwise exempt ("answers") module verdict-relevant: it awards a level, records model
+#: validity or builds the evidence report (sixth review: domains/electrical/dc/validation.py awards
+#: NUMERICALLY_CONVERGED from its own comparison).
+_EVIDENCE_NAMES = frozenset({"ValidationCheck", "ValidationLevel", "ModelValidityRecord", "CredibilityEvidenceReport"})
+
+
+def _builds_evidence(path: pathlib.Path) -> bool:
+    for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+        if isinstance(node, ast.Name) and node.id in _EVIDENCE_NAMES:
+            return True
+        if isinstance(node, ast.Attribute) and node.attr in _EVIDENCE_NAMES:
+            return True
+        if isinstance(node, ast.alias) and node.name.split(".")[-1] in _EVIDENCE_NAMES:
+            return True
+    return False
+
+
 def evidence_code_digests(root: pathlib.Path, identity: Mapping[str, Any]) -> dict[str, str]:
-    """SHA-256 of every first-party file the registry's executors, case builders and oracle providers reach.
+    """SHA-256 of the first-party code the registry's executors, case builders and oracle providers reach.
 
     The static import closure (absolute, relative and literal ``import_module`` names, function-level imports
-    included) from each defining file, not descending into AUTHORITY_CLOSURE_EXEMPT.
+    included) from each defining file, walked THROUGH the exempt answer packages. Every non-exempt file is
+    pinned; an exempt file is pinned when it awards a level or builds validity/evidence records
+    (:data:`_EVIDENCE_NAMES`). A computed-name load anywhere in the closure must be declared in
+    DYNAMIC_REACH, or the registry cannot be pinned.
     """
     src = root / "src"
     seeds: set[str] = set()
@@ -1114,7 +1139,7 @@ def evidence_code_digests(root: pathlib.Path, identity: Mapping[str, Any]) -> di
                      *dict(declaration.get("oracle_providers") or {}).values()):
             if isinstance(item, Mapping) and item.get("source"):
                 seeds.add(str(item["source"]))
-    queue = [root / name for name in sorted(seeds) if not _closure_exempt(name)]
+    queue = [root / name for name in sorted(seeds)]
     seen: set[pathlib.Path] = set()
     while queue:
         current = queue.pop()
@@ -1125,10 +1150,17 @@ def evidence_code_digests(root: pathlib.Path, identity: Mapping[str, Any]) -> di
             parts = module.split(".")
             for length in range(1, len(parts) + 1):
                 target = _engcore_module_file(src, ".".join(parts[:length]))
-                if target is not None and target not in seen and not _closure_exempt(target.relative_to(root).as_posix()):
+                if target is not None and target not in seen:
                     queue.append(target)
+    declared = {file for file, _, _ in DYNAMIC_REACH}
+    undeclared = sorted(rel for rel in (p.relative_to(root).as_posix() for p in seen)
+                        if rel not in declared and dynamic_imports(root / rel))
+    if undeclared:
+        raise CertificationError("code the production registry's executors reach loads modules by computed name "
+                                 f"without a DYNAMIC_REACH declaration: {undeclared}")
+    pinned = [p for p in seen if not _closure_exempt(p.relative_to(root).as_posix()) or _builds_evidence(p)]
     return {path.relative_to(root).as_posix(): file_digest(path)
-            for path in sorted(seen, key=lambda p: p.relative_to(root).as_posix().encode("utf-8"))}
+            for path in sorted(pinned, key=lambda p: p.relative_to(root).as_posix().encode("utf-8"))}
 
 
 def registry_problems(root: pathlib.Path, certificate: Mapping[str, Any]) -> list[str]:

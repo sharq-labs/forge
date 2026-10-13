@@ -183,6 +183,7 @@ def test_b1_a_literal_import_module_is_followed_like_an_import(tmp_path) -> None
     b"import importlib\nRULE = importlib.import_module('.rule', 'engcore.decider')\n",
     b"from importlib.metadata import entry_points\nPLUGINS = entry_points(group='forge')\n",
     b"import importlib\nload = importlib.import_module\nRULE = load('engcore.decider.rule')\n",  # fifth review
+    b"from importlib import import_module as im\nload = im\nRULE = load('engcore.' + 'decider')\n",  # sixth review
 ])
 def test_b1_an_undeclared_dynamic_import_in_the_closure_is_refused(tmp_path, source) -> None:
     scope = _closure_tree(tmp_path, source)
@@ -302,8 +303,8 @@ def test_fifth_review_the_pin_covers_the_code_that_builds_the_evidence() -> None
     code = cc.production_registry_identity(ROOT)["evidence_code"]
     # product/battery.py builds the battery CredibilityEvidenceReport itself; product/problem.py runs electrothermal
     assert {"src/engcore/product/battery.py", "src/engcore/product/problem.py", "src/engcore/product/capabilities.py"} <= set(code)
-    answers = [n for n in code if n.startswith(("src/engcore/domains/", "src/engcore/systems/"))]
-    assert set(answers) <= {"src/engcore/domains/__init__.py", "src/engcore/systems/__init__.py"}, answers  # packages' own __init__ only
+    # sixth review: an "answers" module that awards a level is pinned (dc/validation.py awards NUMERICALLY_CONVERGED)
+    assert {"src/engcore/domains/electrical/dc/validation.py", "src/engcore/domains/battery/solver.py"} <= set(code)
     assert all(code[name] == cc.file_digest(ROOT / name) for name in code)
 
 
@@ -312,3 +313,31 @@ def test_fifth_review_a_moved_evidence_module_fails_verification() -> None:
     stored = {**actual, "evidence_code": {**actual["evidence_code"], "src/engcore/product/battery.py": "0" * 64}}
     (problem,) = cc.registry_problems(ROOT, {"manifest": {"production_registry": stored}})
     assert "src/engcore/product/battery.py" in problem
+
+def _executor_tree(root, files):
+    for rel, body in files.items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_bytes(body)
+    return {"capabilities": {"c": {"executor": {"source": "src/engcore/product/run.py"}}}}
+
+
+def test_sixth_review_exempt_code_is_pinned_exactly_when_it_builds_evidence(tmp_path) -> None:
+    identity = _executor_tree(tmp_path, {
+        "src/engcore/__init__.py": b"", "src/engcore/product/__init__.py": b"", "src/engcore/domains/__init__.py": b"",
+        "src/engcore/domains/a/__init__.py": b"",
+        "src/engcore/product/run.py": b"from ..domains.a import solver, validation\n",
+        "src/engcore/domains/a/solver.py": b"def solve():\n    return 1.0\n",
+        "src/engcore/domains/a/validation.py": b"from engcore.scientific.results.validation import ValidationLevel\nLEVEL = ValidationLevel.NUMERICALLY_CONVERGED\n",
+    })
+    code = cc.evidence_code_digests(tmp_path, identity)
+    assert "src/engcore/domains/a/validation.py" in code and "src/engcore/product/run.py" in code
+    assert "src/engcore/domains/a/solver.py" not in code
+
+
+def test_sixth_review_an_undeclared_computed_import_in_the_evidence_closure_is_refused(tmp_path) -> None:
+    identity = _executor_tree(tmp_path, {
+        "src/engcore/__init__.py": b"", "src/engcore/product/__init__.py": b"",
+        "src/engcore/product/run.py": b"import importlib\nNAME = 'engcore.product.x'\nM = importlib.import_module(NAME)\n",
+    })
+    with pytest.raises(cc.CertificationError, match="computed name"):
+        cc.evidence_code_digests(tmp_path, identity)
