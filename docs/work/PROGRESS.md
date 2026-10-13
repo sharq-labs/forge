@@ -2886,3 +2886,36 @@ NOT RUN.
 
 Trap: a real-tree soundness test that called `impact_of` per dependency took 137 s; computing `importers` once per
 dependency (what `impact_of` uses for import reach) takes 2.8 s.
+
+
+## 2026-10-13 Final assurance blocker repair — source fix, qualification pending
+
+Starting origin/main and branch fix/final-assurance-blockers: 5d73e8f5118aa845f1957decc5aae986e72476a9. Clean dedicated worktree D:/forge-assurance-fix; clean main control D:/forge-assurance-main-control. Original dirty checkout preserved. Evidence D:/forge-assurance-fix-evidence.
+
+Scanner: tools/test_impact.py _python_files previously walked ignored .forge/venvs. Now Git tracked plus nonignored untracked inventory defines ownership; tracked files win over runtime names, unknown candidate source is retained, root substitution/failed Git inventory/linked or nonregular inputs refuse. Archives/synthetic trees narrowly exclude .forge/venvs while retaining other .forge source.
+
+command: py -3.14 -m pytest tests/test_impact_repository_scope.py -q --basetemp=D:/forge-assurance-fix-evidence/before-temp
+result: 5 failed, 8 passed, 1 skipped (before fix). Initial attempt had 14 fixture errors from nonexistent basetemp parent; repaired driver, not product.
+command: explicit Python3.14 pytest_entry.py -p no:faulthandler tests/test_impact_repository_scope.py -vv -s --basetemp=D:/forge-assurance-fix-evidence/scope-trace-temp
+result: 17 passed, 1 skipped in2.02s (real outside symlink unavailable on Windows). Test assertions unchanged; this scoped diagnostic is not supported release assurance.
+command: explicit Python3.14 pytest_entry.py -p no:faulthandler tests/test_change_impact.py -q --basetemp=D:/forge-assurance-fix-evidence/graph-timeout-temp
+result: 68 passed in11.32s.
+
+commands: diagnostic_no_wmi.py tests/test_change_impact.py::test_the_old_gap_a_domain_models_own_tests_are_now_selected -q with external basetemps real-main-repro-temp and real-fixed-repro-temp
+results: clean main control FAIL the exact scanner ID with an ignored Latin1 file under .forge/venvs/reproduction; repaired branch PASS. Diagnostic uses CPython native Windows fallback with WMI unavailable, not a supported gate. Initial inline fixture script had a quoting SyntaxError; file-based fixture then reproduced correctly.
+
+Benchmark attribution: source pin715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092 set in889d399a (55Pythonfiles); current Git/disk/LF-normalized digest b9c4b76eb32ef726f5fab6f9f409556edf09247f63e19f0d9c86b5e9d9b3acd6 (196files), first divergenceb843a07b5fca4ea4bdc9dad4cf3415ed61b0418c APIinventory. Both mismatches classB STALE PIN/STALE EXPECTATION. Existing build_gates comments explicitly prescribe re-pinning this source snapshot when the Core moves; prior889d399a performs exactly that metadata change. Updated only two constants/comments; no published JSON or freeze artifacts edited.
+command: explicit Python3.14 diagnostic_no_wmi.py the two benchmark rebuild node IDs -q --basetemp=D:/forge-assurance-fix-evidence/benchmark-fallback-temp --junitxml=D:/forge-assurance-fix-evidence/benchmark-fallback.xml (clean main control)
+result: 2failed in63.65s. Private rebuild comparison: all scientific artifact content unchanged; only model-measurement SAFETY_GATES.json source-integrity matches/digest/verdict and passed10->9, failed1->2 differ. No solver number, tolerance, validation output or frozen artifact changed. JSONcomparison/digest individual-file hashes in external evidence.
+
+command: diagnostic_no_wmi.py two Cantera failure IDs on clean preRound3 9ca337f9
+result: 2failed in1.91s. First Cantera SolutionArray constructor ValueError cannot resize referenced array; second ProviderRefusal no temperature series. Installed optional-provider compatibility baseline, not introduced by Round3. Previous supported CI-extra environment lacks Cantera; no installed-provider success claimed.
+
+Scientific review: forge-scientific-review skill, read-only forge-scientific-reviewer: PASS; no authority/evidence leak. Reviewer executed no commands/tests. Two added tests cover nonregular tracked input and dangling Git metadata after review; production scope unchanged.
+
+Normal changed gate python tools/forge_check.py --changed: INCOMPLETE, scientific imports blocked by Windows3.14 WMI. Supported 3.11 FAST/3.12 FAST/SCIENTIFIC/FULL reruns NOT RUN yet: installed WSL interpreters cannot be reached because even WSL echo and shutdown hang. Source scientific import traceback: platform._wmi_query -> win32_ver/uname/system -> flexcache BasicPythonHeader -> Pint -> engcore.scientific.units. NumPy2.4.3/SciPy1.18.0 import separately. WMI fallback used only for scoped diagnostic attribution, never an owner receipt or supported-matrix substitute.
+
+User explicitly approved WSL/WMI restart. Normal Restart-Service Winmgmt denied service-control access; administrative launches returned exit1 without restart log/receipt. WSL shutdown incomplete. No restart success claimed. Recertification and certificate-child commit/verify NOT RUN while Tasks1-5 qualification is incomplete. Certificate still names39d43456cab918ed0748efe7f5b0ff5781474ffa and SHA256c22a012147c26183031b32b0e016c80ef86218ef3cd1664361be47d4cf2f186b. No push/merge.
+
+command: git diff --check
+result: PASS exit0, before source commit.

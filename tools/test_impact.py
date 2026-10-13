@@ -45,6 +45,8 @@ import json
 import os
 import pathlib
 import re
+import stat
+import subprocess
 import sys
 import tomllib
 from dataclasses import dataclass, field
@@ -241,13 +243,70 @@ _FIRST_PARTY_HEADS = frozenset({"engcore", "src", "tools", "benchmarks", "experi
 
 
 def _python_files(root: pathlib.Path) -> list[pathlib.Path]:
-    out = []
-    for p in root.rglob("*.py"):
-        parts = p.relative_to(root).parts
-        if any(part in _SKIP_DIRS or part.endswith(".egg-info") for part in parts):
-            continue
-        out.append(p)
-    return sorted(out)
+    """Scan owned inputs, including new files, rather than installed environments.
+
+    Tracked files always win over ignore rules and conventional runtime names.
+    In particular, ignoring the untracked `.forge/venvs` created by assurance
+    must not hide a tracked scientific helper elsewhere under `.forge`.
+    A broken ownership query or a linked input refuses the scan, never returns
+    an apparently complete but narrower graph.
+    """
+    root = root.resolve()
+
+    def runtime(parts):
+        return (parts[:2] == (".forge", "venvs") or
+                any(p in _SKIP_DIRS or p.endswith(".egg-info") for p in parts))
+
+    def checked(rel):
+        relative = pathlib.PurePosixPath(rel)
+        if relative.is_absolute() or ".." in relative.parts or "\\" in rel:
+            raise ValueError(f"repository inventory path is outside the root: {rel}")
+        path = root.joinpath(*relative.parts)
+        for parent in (path, *path.parents):
+            if parent == root:
+                break
+            if parent.is_symlink() or getattr(parent, "is_junction", lambda: False)():
+                raise ValueError(f"repository input contains a link: {rel}")
+        if not path.resolve().is_relative_to(root):
+            raise ValueError(f"repository input resolves outside the root: {rel}")
+        if path.suffix == ".py" and path.exists():
+            if not stat.S_ISREG(path.stat().st_mode):
+                raise ValueError(f"repository Python input is not a regular file: {rel}")
+            return path
+        return None  # Deleted tracked inputs are traced by their import names.
+
+    if (root / ".git").exists() or (root / ".git").is_symlink():
+        owner = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+            check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        if pathlib.Path(os.fsdecode(owner.stdout).strip()).resolve() != root:
+            raise ValueError("Git ownership points outside the requested repository root")
+
+        def inventory(*flags):
+            result = subprocess.run(
+                ["git", "-C", str(root), "ls-files", "-z", *flags],
+                check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+            return {os.fsdecode(name) for name in result.stdout.split(b"\0") if name}
+
+        tracked = inventory("--cached")
+        new = inventory("--others", "--exclude-standard")
+        names = tracked | {name for name in new if not runtime(pathlib.PurePosixPath(name).parts)}
+    else:
+        # Small synthetic trees and source archives have no Git ownership data.
+        # Exclude only conventional runtime subtrees; unknown source remains in.
+        names = set()
+        for directory, dirs, files in os.walk(root, followlinks=False):
+            base = pathlib.Path(directory)
+            dirs[:] = [d for d in dirs if not runtime((base / d).relative_to(root).parts)]
+            for d in dirs:
+                checked((base / d).relative_to(root).as_posix())
+            for name in files:
+                rel = (base / name).relative_to(root)
+                if not runtime(rel.parts):
+                    names.add(rel.as_posix())
+    return sorted(path for rel in names if (path := checked(rel)) is not None)
 
 
 def _file_facts(text: str) -> list | None:

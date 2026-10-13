@@ -192,3 +192,8 @@ solver agreement as validation; change a tolerance or criterion after seeing a r
   pushed). FAST -14 % at `-n 4`, -28 % at `-n 8`; CI-equivalent SCIENTIFIC -15 %; identical failure sets. The changed-file
   gate now runs the tests a change reaches. Certified harness and `tools/forge_check.py` changed: one owner-run
   recertification (OD-3) covers the batch. Two benchmark rebuild tests still write committed JSON in place (open).
+
+
+## 2026-10-13 bounded final assurance repair
+
+Active owner request: fix/final-assurance-blockers, dedicated D:/forge-assurance-fix from main5d73e8f5. Scanner ownership repair and source-snapshot re-pins implemented; scientific review PASS. No scientific runtime, tolerance, evidence admission or frozen result changes. Supported matrix and owner recertification remain pending due inaccessible WSL and Windows WMI import hang; restart was authorized but not confirmed successful. Do not close assurance or start new performance work. Resume supported3.11 FAST and3.12 FAST/SCIENTIFIC/FULL, then authoritative Local Assurance only after complete failure attribution. PROGRESS and external evidence record exact diagnostics and limits.

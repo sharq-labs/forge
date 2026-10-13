@@ -35,8 +35,13 @@ from .evidence import ROOT, artifacts
 #: re-pinning whenever the Core does. Recorded here so the next reader treats a
 #: mismatch as "the Core moved" rather than as evidence about this round.
 EXPECTED_SCIENTIFIC_DIGEST = (
-    "715e6a6e625c1e1406f4e080ea664cdcfca0b15b61e58fc86cfb13710f2e0092"
+    "b9c4b76eb32ef726f5fab6f9f409556edf09247f63e19f0d9c86b5e9d9b3acd6"
 )
+# Fourth re-pin: the merged scientific tree at 5d73e8f5 (196 Python files).
+# The preceding 55-file pin first diverged at b843a07b (Core API inventory).
+# Rebuilding the published validation artifacts in a private copy preserves
+# their scientific content; this is a source snapshot, never a certificate.
+# Historical published artifacts retain their original bytes and old pin.
 
 #: Discrepancies the round has adjudicated in writing. The split check reports
 #: every difference from the preregistered counts; a difference passes the gate
