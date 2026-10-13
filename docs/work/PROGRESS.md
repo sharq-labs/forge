@@ -2927,3 +2927,95 @@ spaces emitted by pytest traceback transcripts. Normalized transcript trailing
 whitespace only; raw originals retained outside the worktree. No evidence values,
 failure IDs or source bytes changed. Rerun required below before final checkpoint.
 `git diff --cached --check`: PASS after transcript whitespace normalization, exit 0.
+
+## Hostile remediation round 1 — implementation, 2026-10-13/14 (Linux/WSL Ubuntu 24.04)
+
+Branch `fix/hostile-review-p0-p1`, base `5d73e8f5`. Work clone `~/forge-hostile-dev`; integration
+clone `~/forge-hostile-remediation` fast-forwarded from it; Python `.forge/venvs/3.11` and `3.12`
+(pytest 9.1.1, xdist 3.8.0). No push, PR or merge. Evidence: `~/forge-hostile-evidence/` (WSL).
+
+Fixes (each its own commit, each with adversarial tests and a targeted apply/revert mutation proof,
+`mutate.py`: a mutant is KILLED only when pytest exits 1 with failures; bytes restored by SHA-256):
+
+| Finding | Commits | Mutation proof |
+|---|---|---|
+| F1 LLM-authored criteria | dcfe4ca8, f54b2986, bc45e9c1, e5d862a1, c2d592a4, 86b6e51e, d150f975, aafd6a40 | 16 + 16 + 3 + 2 + 2 killed |
+| F4 benchmark is verification | 81b2cf6a, 7970052d, d014e7da | 5 + 2 killed |
+| F2 certificate covers verdict semantics | 8d81cb70, 50921eff, e00a9fce, 11f1514f, a40318dc, 57dd68ce, 659da048 | 6 + 8 + 10 + 4 + 4 + 1 + 1 killed |
+| scanner ownership | ee2029f8, d9ad7bdd | 5 + 5 killed |
+| F5 conservation per window | d63de65b, 1bccb1b4, f1f6dea5, 154706ec, 57dd68ce | 12 + 9 + 1 + 1 + 1 killed |
+| F6 physical admissibility | 26240134 | 7 killed (1 equivalent pre-check removed) |
+| F7 selective gate | 91cb9790, 11f1514f | 7 + 1 killed (1 equivalent branch removed) |
+| FIX 8 empty UQ / undeclared correlation | 954213ac | 3 killed |
+| FIX 9 (F8) CI triggers | 324d1a7e | 5 killed |
+
+Independent reviews (forge-scientific-reviewer, read-only, static): eight passes. Every BLOCKER and
+HIGH was fixed in the commits above; the eighth pass found the commit it reviewed correct and one
+pre-existing scope leak (system_runtime), fixed in 659da048. Accepted residuals
+(not fixed, reason stated in the commit messages): F1-I one-way input grounding and decision_id as a
+label; decision/assumption statements recorded verbatim, not interpreted; F5 run records are unkeyed,
+so an internally consistent forged history is not detected (enforcement re-derives verdicts from the
+record, not from transfer receipts); no separate CONSERVATION gate in the trust assessment (an
+authorized run whose required conservation failed cannot be constructed); executor callees inside
+exempt answer packages are pinned only when they build evidence; SRIA budget independence is a stated
+free-text assumption; guard_band takes a bare float; test_impact basename mentions; `-s` without `-S`
+in the registry probe; planning/nl.py any-span weakness (no production caller); the registry probe
+does not unwrap a decorated executor (none is decorated today); a fixed runtime returning a non-record
+on a graph without balances skips the graph/plan check (test stubs only).
+
+OPEN SCOPE FINDING (owner decision, not fixed): certified files import uncertified modules --
+claims/design_memory.py (design/, sria/campaign/), claims/discovery_providers.py (providers/,
+sria/decision/), claims/discovery_passport.py, durable_campaign.py, falsification.py (sria/decision/),
+claims/twin_evidence.py (systems/), sria/campaign/runner.py (sria/campaign/*, sria/decision/*),
+execution/multiphysics/runtime.py (scenarios/). None is on the assess_claim verdict path found by the
+reviewers; seeding the authority closure with all of claims/** would bring 95 modules into scope.
+
+Selective-gate hostile campaign (F7), separate clone at 91cb9790 then H10 re-run with a valid mutant:
+`python selective_campaign.py ~/forge-hostile-sel` -> 10 hostile changes, 8 CAUGHT by the selection,
+2 REFUSED_NARROWING (whole tier), FALSE_NEGATIVES 0, tree clean after. Logs:
+`dev/selective_campaign.log`, `dev/selective_campaign_h10.log`.
+
+Impact-selected gates during development (`tools/forge_check.py --changed --base HEAD --workers 6`,
+dev clone): every run's only failures were the certificate-drift tests and, on a dirty tree, the
+Core-freeze manifest tests (which pass once committed: `tests/test_core_freeze_*` 73 passed, 2
+certificate-drift failed after commit).
+
+Acceptance matrix (`gates.sh`, integration clone; FULL and SCIENTIFIC deselect the two JSON-rewriting
+rebuild tests, three ngspice-process tests and the dependency guard, which runs separately):
+
+| Gate | HEAD | Result |
+|---|---|---|
+| regression (`tools/forge_check.py --regression`) | 324d1a7e, 11f1514f | exit 0 |
+| FAST 3.11 | 11f1514f | 10351 passed, 2 failed, 158 skipped |
+| FAST 3.12 | 11f1514f | 10350 passed, 3 failed, 158 skipped |
+| SCIENTIFIC 3.12 | 11f1514f | 10923 passed, 3 failed, 158 skipped |
+| FULL 3.12 | 11f1514f | 10927 passed, 3 failed, 158 skipped |
+| FAST 3.11 | a40318dc | 10358 passed, 2 failed, 158 skipped |
+| FAST 3.12 | a40318dc | 10357 passed, 3 failed, 158 skipped |
+| SCIENTIFIC 3.12 | a40318dc | 10930 passed, 3 failed, 158 skipped |
+| FULL 3.12 | a40318dc | 10934 passed, 3 failed, 158 skipped |
+| regression | a40318dc | 256 passed |
+
+The final-HEAD matrix and hardened recertification are recorded in the next entry.
+
+Failure identities against Phase 0 (5d73e8f5 + docs, same gates): CERTIFICATE_DRIFT
+`test_core_certificate.py::test_the_certificate_describes_this_tree` (baseline) and
+`::test_the_certificate_records_the_v1_relationship_truthfully` (new: F4 edits a Core file, which moves
+the V1-compatible digest); PRE-EXISTING FLAKE `test_formal_xdist.py::test_plain_xdist_would_credit_a_crash_so_the_guard_is_required`
+on 3.12 under `-n 4` (baseline; passes in isolation on 3.11 and 3.12). Phase 0's
+`test_change_impact.py::test_the_old_gap_a_domain_models_own_tests_are_now_selected` now passes. No
+REAL_REGRESSION.
+
+Benchmark digest attribution (Phase 12): `git diff --stat 5d73e8f5..HEAD -- benchmarks experiments
+flagships certification '*.json' '*.csv'` is empty: no committed numeric or benchmark artifact moved;
+the digest-pinned benchmark tests pass in every tier above.
+
+Host branch protection: NOT re-verified this session (`gh` is not installed in Ubuntu and the session
+was restricted to Linux). Last recorded read-only check (ACTIVE_PLAN, 2026-10-13): `main` unprotected,
+protection/ruleset endpoints 403, squash and rebase merges enabled. FIX 9 does not change any host
+setting and makes no status check required.
+
+Failed approaches: a closed-world reader that counted every input statement as read let an invented
+`missing_inputs` path hide a retraction (fixed c2d592a4, d150f975); a duplicated-test-name probe and a
+malformed H10 mutant (syntax error) were corrected; a commit helper that took an absolute message path
+committed with a stale message once (amended before anything else built on it).
