@@ -2886,3 +2886,30 @@ NOT RUN.
 
 Trap: a real-tree soundness test that called `impact_of` per dependency took 137 s; computing `importers` once per
 dependency (what `impact_of` uses for import reach) takes 2.8 s.
+
+## 2026-10-14 — User-requested gaps catalogue (docs only)
+
+Created seven Arabic Markdown files under gaps/, preserving all five research
+tables (57 entries, with intentional overlap), star ratings, implementation slices,
+acceptance criteria and sources. This is a research catalogue, not an executable
+queue or current defect certification. No production behavior changed.
+
+Conversation baseline: a3f757eb5fdbc804ef11e3c4088a757c31981870.
+PR base: 5d73e8f5118aa845f1957decc5aae986e72476a9. Main had advanced;
+historical findings are explicitly marked for re-verification. Existing local
+uncommitted planning/review files remain untouched in the original checkout.
+
+Documentation validation: an inline Python script via PowerShell here-string
+piped to `py -3.14 -` counted seven Markdown files, asserted 57 unique table IDs,
+and checked every relative link and explicit HTML anchor. PASS, exit 0.
+External URLs were not rechecked by that validator.
+
+Command: `git diff --check`. Result: PASS, exit 0 before staging.
+Scientific tests / forge_check / regression / FAST / SCIENTIFIC / certification:
+**NOT RUN** (documentation-only). No scientific verification or validation claimed.
+
+Failed approach: embedding the validator's PowerShell here-string inside another
+here-string for a progress append produced a ParserError before execution. Used
+apply_patch instead; no partial append or repository mutation from the failed command.
+
+Command: git diff --cached --check. Initial result: seven trailing blank-line warnings in new Markdown files; trimmed EOF whitespace. Repeated result: PASS, exit 0.
