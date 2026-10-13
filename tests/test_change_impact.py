@@ -447,3 +447,78 @@ def test_every_expensive_test_reached_by_an_import_is_selected_with_expensive_in
     for dep in sorted(reach)[:: max(1, len(reach) // 5)][:5]:
         affected = test_impact.impact_of([dep], real_graph).affected
         assert {m for m in modules if m in reach[dep]} <= set(affected), dep
+
+
+# ---- hostile review F7: no selective false negatives ---------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def relative(tmp_path_factory):
+    root = tmp_path_factory.mktemp("relative")
+    _write(root, "pyproject.toml", '[tool.pytest.ini_options]\npythonpath = ["src", "."]\n')
+    _write(root, "src/pkg/__init__.py", "from .facade import model\n")
+    _write(root, "src/pkg/facade.py", "from .hvac import model\n")         # hvac.py is deleted: only a relative import names it
+    _write(root, "src/pkg/sub/__init__.py", "")
+    _write(root, "src/pkg/sub/deep.py", "from ..hvac import model as m\n")
+    _write(root, "tests/test_use.py", "from pkg.facade import model\n")
+    _write(root, "tests/test_deep.py", "import pkg.sub.deep\n")
+    _write(root, "tests/test_other.py", "X = 1\n")
+    return root, test_impact.build_graph(root)
+
+
+def test_f7_a_deleted_module_named_only_by_relative_imports_reaches_their_tests(relative) -> None:
+    _, graph = relative
+    impact = test_impact.impact_of(["src/pkg/hvac.py"], graph)
+    assert {"tests/test_use.py", "tests/test_deep.py"} <= set(impact.affected)
+    assert "tests/test_other.py" not in impact.affected
+
+
+def test_f7_a_deleted_module_refuses_narrowing_even_when_importers_were_found(relative, synthetic) -> None:
+    for (_, graph), path in ((relative, "src/pkg/hvac.py"), (synthetic, "src/pkg/removed.py")):
+        impact = test_impact.impact_of([path], graph)
+        assert impact.affected and path in impact.unresolved
+        assert test_impact.scientific_narrowing([path], impact)
+
+
+@pytest.mark.parametrize("path, is_test", [
+    ("tests/test_x.py", True),
+    ("providers/calculix/tests/test_calculix_descriptor.py", True),
+    ("flagships/forge_flagships/heat_of_mixing_test.py", True),
+    ("benchmarks/blind_v2/tests/test_something.py", True),
+    ("src/engcore/claims/verdict.py", False),
+    (".forge/venvs/3.12/lib/python3.12/site-packages/x/test_y.py", False),
+])
+def test_f7_a_test_is_what_pytest_collects_wherever_it_lies(path, is_test) -> None:
+    assert test_impact.is_test_module(path) is is_test
+
+
+def test_f7_a_changed_test_outside_the_root_tests_directory_selects_itself() -> None:
+    changed = ["providers/calculix/tests/test_calculix_descriptor.py", "flagships/forge_flagships/heat_of_mixing_test.py",
+               "tests/test_change_impact.py", "providers/calculix/tests/test_deleted_long_ago.py"]
+    selected = forge_check.changed_test_files(changed)
+    assert selected == sorted(changed[:3])
+    targets = forge_check.build_targets(changed)
+    assert set(changed[:3]) <= set(targets)
+
+
+def test_f7_unresolved_reach_runs_the_whole_tier_instead_of_a_selection(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(forge_check, "changed_files", lambda base, working_tree=True: ["src/engcore/systems/products/gone_module.py"])
+    assert forge_check.main(["--changed", "--dry-run", "--workers", "0"]) == 0
+    out = capsys.readouterr().out
+    assert "NARROWING REFUSED" in out
+    command = [line for line in out.splitlines() if line.startswith("$ ")][-1]
+    assert "-m 'not expensive'" in command and "tests/" not in command
+
+def test_f7_a_tree_with_a_refused_entry_narrows_nothing(tmp_path) -> None:
+    _write(tmp_path, "pyproject.toml", '[tool.pytest.ini_options]\npythonpath = ["src", "."]\n')
+    _write(tmp_path, "src/pkg/__init__.py", "")
+    _write(tmp_path, "src/pkg/core.py", "X = 1\n")
+    _write(tmp_path, "tests/test_core.py", "import pkg.core\n")
+    _write(tmp_path, "elsewhere/plugins/impl.py", "Y = 2\n")
+    (tmp_path / "src" / "pkg" / "plugins").symlink_to(tmp_path / "elsewhere" / "plugins", target_is_directory=True)
+    graph = test_impact.build_graph(tmp_path)
+    assert "src/pkg/plugins" in graph.refused
+    for path in ("src/pkg/core.py", "src/pkg/plugins"):
+        impact = test_impact.impact_of([path], graph)
+        assert path in impact.unresolved, path
+    assert test_impact.impact_of(["docs/notes.md"], graph).unresolved == ()

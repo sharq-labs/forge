@@ -127,9 +127,20 @@ def norm(path: str) -> str:
     return out[2:] if out.startswith("./") else out
 
 
+#: pytest's own default ``python_files`` (pyproject sets none): a module it collects wherever it lies.
+_TEST_FILE = re.compile(r"(?:test_[^/]*|[^/]*_test)\.py")
+#: Toolchain roots inside a checkout: never repository tests (see tools/certification/ownership.py).
+_NOT_TESTS = (".forge/",)
+
+
 def is_test_module(rel: str) -> bool:
-    name = rel.rsplit("/", 1)[-1]
-    return name.startswith("test_") and name.endswith(".py") and ("/tests/" in f"/{rel}")
+    """A file pytest collects as a test module: ``test_*.py`` or ``*_test.py`` ANYWHERE in the repository.
+
+    Hostile review F7: requiring a ``tests/`` directory (and, in forge_check, the root one) left
+    provider-local and flagship tests unselectable -- a changed test there selected nothing.
+    """
+    rel = norm(rel)
+    return bool(_TEST_FILE.fullmatch(rel.rsplit("/", 1)[-1])) and not rel.startswith(_NOT_TESTS)
 
 
 def recertification_reasons(rel: str) -> tuple[str, ...]:
@@ -185,6 +196,12 @@ class ImpactGraph:
     unparseable: tuple[str, ...]
     roots: tuple[pathlib.Path, ...] = ()
     reverse: dict[str, set[str]] = field(default_factory=dict)
+    #: file -> dotted names it imports (absolute or relative, resolved) that name no file in the tree.
+    #: How a DELETED module's importers are found, including ``from .gone import x`` (hostile review F7).
+    missing: dict[str, set[str]] = field(default_factory=dict)
+    #: entries the ownership walk refused to read (symlinks, nested repositories, environment markers in
+    #: source). What lies behind them is unknown, so while any exists no change is narrowed.
+    refused: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for a, bs in self.deps.items():
@@ -220,6 +237,9 @@ class ImpactGraph:
             names = [n for n in self.module_names(rel) if "." in n]
             pattern = re.compile("|".join(rf"\b{re.escape(n)}\b" for n in names)) if names else None
             direct = {f for f, text in self.texts.items() if pattern is not None and pattern.search(text)}
+            every = self.module_names(rel)
+            direct |= {f for f, wanted in self.missing.items()
+                       if any(w == n or w.startswith(n + ".") for w in wanted for n in every)}
             out = set(direct)
             for f in direct:
                 out |= self.importers(f)
@@ -394,6 +414,7 @@ def build_graph(root: pathlib.Path, *, cache: pathlib.Path | None = None) -> Imp
     deps: dict[str, set[str]] = {}
     texts: dict[str, str] = {}
     unparseable: list[str] = []
+    missing: dict[str, set[str]] = {}
     for f in files:
         rel = f.relative_to(root).as_posix()
         data = f.read_bytes()
@@ -418,9 +439,12 @@ def build_graph(root: pathlib.Path, *, cache: pathlib.Path | None = None) -> Imp
         own = (file_mods.get(rel) or [""])[0]
         package = own if f.name == "__init__.py" else own.rpartition(".")[0]
         out: set[str] = set()
+        unresolved_names: set[str] = set()
         for fact in facts:
             if fact[0] == "i":
                 out.update(executed_by(fact[1]))
+                if fact[1] not in mod_to_file:
+                    unresolved_names.add(fact[1])
             elif fact[0] == "f":
                 _, level, module, names = fact
                 base = module
@@ -430,19 +454,25 @@ def build_graph(root: pathlib.Path, *, cache: pathlib.Path | None = None) -> Imp
                         anchor = anchor[: len(anchor) - (level - 1)]
                     base = ".".join(anchor + ([module] if module else []))
                 out.update(executed_by(base))
+                # each imported name records base.name, which names a missing base as well
                 for name in names:
-                    out.update(executed_by(f"{base}.{name}" if base else name))
+                    full = f"{base}.{name}" if base else name
+                    out.update(executed_by(full))
+                    if full not in mod_to_file:
+                        unresolved_names.add(full)
             else:
                 dotted = fact[1]
                 if dotted in mod_to_file or dotted.split(".", 1)[0] in _FIRST_PARTY_HEADS:
                     out.update(executed_by(dotted))
         out.discard(rel)
         deps[rel] = out
+        if unresolved_names:
+            missing[rel] = unresolved_names
     if cache is not None and kept != cached:
         _store_facts_cache(cache, identity, kept)
     # A refused symlink was never read: it is reported like an unparseable file, so nothing narrows past it.
     unparseable.extend(_refused_python_paths(owned))
-    return ImpactGraph(root, deps, texts, tuple(unparseable), tuple(roots))
+    return ImpactGraph(root, deps, texts, tuple(unparseable), tuple(roots), missing=missing, refused=tuple(owned.refused))
 
 
 def default_cache_path(root: pathlib.Path) -> pathlib.Path | None:
@@ -513,7 +543,12 @@ def impact_of(paths: Iterable[str], graph: ImpactGraph) -> Impact:
             reached = reached or bool(scanners)
         if rel.endswith(".py") and rel in graph.unparseable:
             reached = False
-        if not reached and not is_test_module(rel) and classes[rel] is not ChangeClass.DOC_ONLY:
+        # A deleted (or renamed-away) module: its importers are found above, but what loaded it by a computed
+        # name, a path or a plugin entry is not, so a narrowed selection is refused (hostile review F7).
+        deleted = rel.endswith(".py") and not is_test_module(rel) and not (graph.root / rel).exists()
+        # A tree with refused entries has code the graph never read (third review, scanner): nothing is narrowed.
+        blind = bool(graph.refused)
+        if (deleted or blind or not reached) and not is_test_module(rel) and classes[rel] is not ChangeClass.DOC_ONLY:
             unresolved.append(rel)
     return Impact(classes, {t: tuple(sorted(r)) for t, r in why.items()}, tuple(unresolved))
 
