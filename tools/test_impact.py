@@ -146,6 +146,15 @@ def classify(path: str) -> ChangeClass:
         return ChangeClass.TEST_INFRASTRUCTURE
     if recertification_reasons(rel):
         return ChangeClass.CERTIFICATION_PINNED
+    return scope_class(rel)
+
+
+def scope_class(path: str) -> ChangeClass:
+    """What a path IS, setting aside whether it is certification-pinned (which only ever adds a gate)."""
+    rel = norm(path)
+    name = rel.rsplit("/", 1)[-1]
+    if rel in INFRASTRUCTURE_FILES or name == "conftest.py":
+        return ChangeClass.TEST_INFRASTRUCTURE
     if rel.startswith(_TRUST_PREFIXES) or rel in _TRUST_FILES or (
         rel.startswith("src/engcore/claims/") and name.endswith("_trust.py")
     ):
@@ -600,13 +609,69 @@ __all__ = [
     "ImpactGraph",
     "INFRASTRUCTURE_FILES",
     "MINIMUM_GATE",
+    "NO_NARROW_SCIENTIFIC",
     "Tiers",
     "build_graph",
     "classify",
     "impact_of",
+    "next_required",
+    "scientific_narrowing",
+    "scope_class",
     "is_test_module",
     "load_tiers",
     "norm",
     "recertification_reasons",
     "split_by_tier",
 ]
+
+
+# ---------------------------------------------------------------------------
+# What the developer must run next, and whether a narrow SCIENTIFIC run is sound
+# ---------------------------------------------------------------------------
+
+#: Changes whose reach a narrow SCIENTIFIC selection cannot be trusted to cover:
+#: the developer is sent to the whole SCIENTIFIC tier instead.
+NO_NARROW_SCIENTIFIC: Mapping[ChangeClass, str] = {
+    ChangeClass.TRUST_OR_AUTHORITY: "trust/authority change: its reach is every assessment",
+    ChangeClass.SCIENTIFIC_SHARED: "shared scientific code: its reach is wider than its importers' tiers",
+    ChangeClass.TEST_INFRASTRUCTURE: "selection, tiering or test configuration changed: the selection itself is in question",
+    ChangeClass.UNCLASSIFIED: "unclassified path: reach unknown",
+}
+
+
+def scientific_narrowing(paths: Iterable[str], impact: Impact) -> tuple[str, ...]:
+    """Why a narrow (affected-only) SCIENTIFIC run would NOT be sound; empty when it may be offered.
+
+    Developer aid only: even when it may run, the full SCIENTIFIC tier stays the gate
+    before review, merge or freeze. Doubt always broadens.
+    """
+    reasons = []
+    for rel in sorted({norm(p) for p in paths}):
+        cls = scope_class(rel)
+        if cls in NO_NARROW_SCIENTIFIC:
+            reasons.append(f"{rel}: {NO_NARROW_SCIENTIFIC[cls]}")
+    reasons.extend(f"{rel}: reach could not be established" for rel in impact.unresolved)
+    return tuple(reasons)
+
+
+def next_required(paths: Iterable[str], *, expensive_affected: int) -> tuple[str, ...]:
+    """The gates still owed after this developer check, strongest last.
+
+    Follows :data:`MINIMUM_GATE`: FAST for anything but documentation; SCIENTIFIC for
+    shared, trust, configuration or unknown reach, and whenever an affected test is
+    expensive (a selective run here never replaces the tier); a scientific review for
+    trust/authority; recertification for any certification-pinned path.
+    """
+    rels = sorted({norm(p) for p in paths})
+    scopes = {scope_class(r) for r in rels}
+    gates = []
+    if scopes - {ChangeClass.DOC_ONLY}:
+        gates.append("FAST")
+    if expensive_affected or scopes & {ChangeClass.SCIENTIFIC_SHARED, ChangeClass.TRUST_OR_AUTHORITY,
+                                       ChangeClass.TEST_INFRASTRUCTURE, ChangeClass.UNCLASSIFIED}:
+        gates.append("SCIENTIFIC")
+    if ChangeClass.TRUST_OR_AUTHORITY in scopes:
+        gates.append("forge-scientific-review")
+    if any(recertification_reasons(r) for r in rels):
+        gates.append("RECERTIFICATION (owner-run)")
+    return tuple(gates)

@@ -72,7 +72,53 @@ python tools/forge_check.py --changed --workers 4          # what changed since 
 python tools/forge_check.py --changed --dry-run --list     # show the selection and why, run nothing
 python tools/forge_check.py --regression --workers 4       # the fixed scientific regression pack
 python tools/forge_check.py --changed --workers safe-auto  # developer only: 8/6/4/2/1 from CPUs and free memory
+python tools/forge_check.py --dev                          # one command after editing (below)
+python tools/forge_check.py --scientific                   # developer aid: affected expensive tests too, when narrowable
 ```
+
+**`--dev`** is the one command to run after an edit: the `--changed` gate with
+safe-auto workers (an explicit `--workers` wins), a timing report under
+`~/.cache/forge/timing/` (`FORGE_TIMING_DIR` moves it), a warning-only comparison
+with the previous report, and a closing block:
+
+```text
+CHANGE CLASS: domain_local
+AFFECTED: 49 test modules reached; 143 targets selected
+RUN: changed gate -> PASS
+EXPENSIVE AFFECTED: 7 (7 not run)
+NEXT REQUIRED: FAST + SCIENTIFIC
+```
+
+`NEXT REQUIRED` follows the minimum-gate table (`tools/test_impact.next_required`):
+FAST for anything but documentation; SCIENTIFIC for shared, trust, configuration or
+unknown reach and whenever an affected test is expensive; a forge-scientific-review
+for trust/authority; RECERTIFICATION for any certification-pinned path. It never
+runs those gates for you.
+
+**`--scientific`** (developer aid, never a gate) also runs the affected expensive
+tests (`-m "not campaign"`), but only where the reach can be bounded. It refuses
+(exit 2, prints the whole-tier command) for trust/authority, shared scientific code,
+test infrastructure (any `conftest.py`, `pyproject.toml`, the selector itself),
+unclassified paths and any change whose reach could not be established. The
+certification overlay never hides what a path is: a pinned domain module may be
+narrowed, and RECERTIFICATION is still owed. Measured 2026-10-13 (`-n 8`, one probe
+edit each): documentation 13.5 s; `domains/battery/thevenin.py` 63.7 s (49 modules
+reached, 7 expensive); `providers/process.py` 69.9 s (99 reached, 7 expensive);
+units, authority and `tests/conftest.py` refused. The full SCIENTIFIC tier was 267 s.
+With the CSTR mutation G9c applied, `--scientific` selected and ran
+`tests/domains/kinetics/test_cstr_domain.py` (expensive), which failed. A selective
+run discharges nothing: SCIENTIFIC is still owed before review, merge or freeze.
+
+**Timing telemetry and the slowdown guard** (`tools/test_timing.py`). Any pytest run
+can record a report with `-p tools.test_timing --timing-report=PATH`; `python -m
+tools.test_timing compare OLD NEW` lists only large slowdowns and exits 1 if any,
+`history` lists recorded runs. A report is developer telemetry: machine-specific,
+never evidence, never certification, never read to decide a result. A change is
+flagged only when it clears both bars -- a module x2 and +5 s, a test x2 and +3 s,
+the whole run x1.4 (same worker count and tests). Measured noise between identical
+warm FAST runs: modules within 2.5 s, tests within 1.8 s, whole runs of identical
+code up to x1.25; none of six real run pairs (including a cold first run) was
+flagged, a synthetic x2.2 module was.
 
 `--changed` runs the union of:
 

@@ -13,6 +13,7 @@ from pathlib import Path
 import shlex
 import subprocess
 import sys
+import time
 from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -195,6 +196,7 @@ def build_command(
     *,
     junitxml: str | None = None,
     deselect: Iterable[str] = (),
+    extra: Iterable[str] = (),
 ) -> list[str]:
     """Build the deterministic pytest command used by the developer/certification gate."""
     cmd = [sys.executable, "-m", "pytest", "-q"]
@@ -204,6 +206,7 @@ def build_command(
         cmd += ["--junitxml", junitxml]
     for prefix in deselect:
         cmd += ["--deselect", prefix]
+    cmd += list(extra)
     cmd += list(targets)
     return cmd
 
@@ -218,7 +221,8 @@ def _workers_arg(value: str) -> int | str:
         raise argparse.ArgumentTypeError(f"expected an integer or 'safe-auto', got {value!r}") from None
 
 
-def _report_impact(paths: list[str], *, with_expensive: bool) -> tuple[list[str], list[str], list[str]]:
+def _report_impact(paths: list[str], *, with_expensive: bool,
+                   details: dict | None = None) -> tuple[list[str], list[str], list[str]]:
     """``--changed`` only: the affected tests, the expensive ones left out, and unresolved paths -- printed.
 
     :mod:`tools.test_impact` is imported here and nowhere else, so the certified
@@ -232,10 +236,18 @@ def _report_impact(paths: list[str], *, with_expensive: bool) -> tuple[list[str]
     impact = test_impact.impact_of(paths, graph)
     directly = set(changed_test_files(paths))
     reached = [m for m in impact.affected_modules if m not in directly]
+    tiers = test_impact.load_tiers(ROOT)
+    _, _, expensive = test_impact.split_by_tier(reached, tiers, graph.texts)
     if with_expensive:
         affected, deselect, left_out = reached, [], []
     else:
-        affected, deselect, left_out = test_impact.split_by_tier(reached, test_impact.load_tiers(ROOT), graph.texts)
+        affected, deselect, left_out = test_impact.split_by_tier(reached, tiers, graph.texts)
+    if details is not None:
+        details.update(
+            classes=dict(impact.classes), reached=len(reached), expensive=list(expensive), left_out=list(left_out),
+            narrowing=test_impact.scientific_narrowing(paths, impact),
+            next_required=test_impact.next_required(paths, expensive_affected=len(expensive)),
+        )
 
     if paths:
         print("change classes (minimum gate beyond this one):")
@@ -274,9 +286,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--workers",
         type=_workers_arg,
-        default=0,
-        help="pytest-xdist workers; 0 runs serially; 'safe-auto' picks 8/6/4/2/1 from CPUs and available memory "
-        "(developer convenience, see tools/local_workers.py)",
+        default=None,
+        help="pytest-xdist workers; 0 runs serially (the default, except --dev / --scientific: safe-auto); "
+        "'safe-auto' picks 8/6/4/2/1 from CPUs and available memory (developer convenience, see tools/local_workers.py)",
+    )
+    parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="one command after editing: --changed with safe-auto workers, a timing record outside the repository, "
+        "and the gate still owed (developer aid; replaces nothing)",
+    )
+    parser.add_argument(
+        "--scientific",
+        action="store_true",
+        help="developer aid: also run the affected expensive tests (SCIENTIFIC tier, not campaign) when the change "
+        "can be narrowed; otherwise print the full SCIENTIFIC command. Never replaces the SCIENTIFIC tier",
     )
     parser.add_argument(
         "--with-expensive",
@@ -291,6 +315,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true", help="print selection without executing pytest")
     parser.add_argument("--list", action="store_true", help="print selected test targets")
     args = parser.parse_args(argv)
+    if (args.dev or args.scientific) and args.regression:
+        parser.error("--dev / --scientific select from changed files; they cannot be combined with --regression")
+    if args.scientific:
+        args.with_expensive = True
+    if args.workers is None:
+        args.workers = "safe-auto" if (args.dev or args.scientific) else 0
 
     if args.workers == "safe-auto":
         if str(ROOT) not in sys.path:  # run as a script, sys.path[0] is tools/, not the repository
@@ -307,9 +337,18 @@ def main(argv: list[str] | None = None) -> int:
     affected: list[str] = []
     deselect: list[str] = []
     unresolved: list[str] = []
+    details: dict = {}
     if not args.regression:
         paths = changed_files(args.base, working_tree=not args.committed_only)
-        affected, deselect, unresolved = _report_impact(paths, with_expensive=args.with_expensive)
+        affected, deselect, unresolved = _report_impact(paths, with_expensive=args.with_expensive, details=details)
+
+    if args.scientific and details.get("narrowing"):
+        print("selective SCIENTIFIC refused -- this change cannot be narrowed:")
+        for reason in details["narrowing"]:
+            print(f"  {reason}")
+        print("run the whole SCIENTIFIC tier (docs/TESTING.md, Standard commands), e.g.:")
+        print('  python -m pytest -m "not campaign" -q -n 4 --dist loadfile  (plus the CI deselects)')
+        return 2
 
     targets = build_targets(paths, regression=args.regression, affected=affected, whole_pack=bool(unresolved))
     unclassified = [] if args.regression else unclassified_paths(paths)
@@ -327,13 +366,62 @@ def main(argv: list[str] | None = None) -> int:
         for target in targets:
             print(f"  {target}")
 
-    cmd = build_command(targets, args.workers, junitxml=args.junitxml, deselect=deselect)
+    extra: list[str] = []
+    if args.scientific:
+        extra += ["-m", "not campaign"]
+    timing_report = None
+    if args.dev and not args.dry_run:
+        from tools import test_timing
+
+        timing_report = test_timing.default_history_dir() / time.strftime("dev-%Y%m%dT%H%M%S.json", time.gmtime())
+        extra += ["-p", "tools.test_timing", f"--timing-report={timing_report}"]
+    cmd = build_command(targets, args.workers, junitxml=args.junitxml, deselect=deselect, extra=extra)
     print("$ " + shlex.join(cmd))
 
     if args.dry_run:
+        if args.dev or args.scientific:
+            _summary(details, targets, None, scientific=args.scientific)
         return 0
 
-    return subprocess.run(cmd, cwd=ROOT, check=False).returncode
+    code = subprocess.run(cmd, cwd=ROOT, check=False).returncode
+    if args.dev or args.scientific:
+        _summary(details, targets, code, scientific=args.scientific)
+    if timing_report is not None:
+        _timing_note(timing_report)
+    return code
+
+
+def _summary(details: dict, targets: list[str], code: int | None, *, scientific: bool) -> None:
+    """The closing block of --dev / --scientific: what ran, and the gate still owed."""
+    classes = details.get("classes", {})
+    print("\n== forge_check summary (developer aid; replaces no gate) ==")
+    order = ["certification_pinned", "trust_or_authority", "test_infrastructure", "unclassified", "scientific_shared",
+             "domain_local", "local_nonscientific", "test_only", "doc_only"]
+    present = sorted({c.value for c in classes.values()}, key=order.index)
+    print(f"CHANGE CLASS: {', '.join(present) if present else 'no changed files'}")
+    print(f"AFFECTED: {details.get('reached', 0)} test modules reached; {len(targets)} targets selected")
+    run = "not run (dry run)" if code is None else ("PASS" if code == 0 else f"FAIL (exit {code})")
+    print(f"RUN: {'selective SCIENTIFIC' if scientific else 'changed gate'} -> {run}")
+    expensive = details.get("expensive", [])
+    where = "run here" if scientific else f"{len(details.get('left_out', []))} not run"
+    print(f"EXPENSIVE AFFECTED: {len(expensive)} ({where})")
+    owed = details.get("next_required") or ()
+    print(f"NEXT REQUIRED: {' + '.join(owed) if owed else 'none beyond this gate'}")
+
+
+def _timing_note(report_path) -> None:
+    """Compare this --dev run with the previous recorded one: a warning, never a failure."""
+    from tools import test_timing
+
+    reports = [p for p in test_timing.history(report_path.parent) if p != report_path]
+    if not report_path.exists() or not reports:
+        return
+    try:
+        found = test_timing.compare(test_timing._load(reports[-1]), test_timing._load(report_path))
+    except (OSError, ValueError, SystemExit):
+        return
+    for line in found:
+        print(f"timing warning (telemetry, not a result): {line}")
 
 
 if __name__ == "__main__":

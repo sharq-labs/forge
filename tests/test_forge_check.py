@@ -225,7 +225,7 @@ def test_safe_auto_prints_its_choice_and_reason_and_builds_that_command(monkeypa
     monkeypatch.setenv("FORGE_IMPACT_CACHE", "off")  # a test never writes the developer cache
     monkeypatch.setattr(local_workers, "choose", lambda per_worker_mb: (6, f"stubbed reason {per_worker_mb}"))
     monkeypatch.setattr(forge_check, "changed_files", lambda base, working_tree: [])
-    monkeypatch.setattr(forge_check, "_report_impact", lambda paths, with_expensive: ([], [], []))  # no graph build needed
+    monkeypatch.setattr(forge_check, "_report_impact", lambda paths, with_expensive, details=None: ([], [], []))  # no graph build
     assert forge_check.main(["--changed", "--workers", "safe-auto", "--dry-run"]) == 0
     out = capsys.readouterr().out
     assert "safe-auto selected 6 workers: stubbed reason 650" in out
@@ -240,3 +240,63 @@ def test_safe_auto_budgets_more_memory_per_worker_when_expensive_tests_will_run(
     light = local_workers.choose(24, 8_000)[0]
     heavy = local_workers.choose(24, 8_000, per_worker_mb=local_workers.MB_PER_WORKER_EXPENSIVE)[0]
     assert (light, heavy) == (8, 4) and heavy <= light
+
+
+
+# ---- --dev and --scientific: one command, developer aid, the gate still owed -------------------------
+
+
+def _stub_impact(monkeypatch, paths, details):
+    monkeypatch.setenv("FORGE_IMPACT_CACHE", "off")
+    monkeypatch.setattr(forge_check, "changed_files", lambda base, working_tree: list(paths))
+
+    def report(paths, with_expensive, details_out=None, **kw):
+        sink = kw.get("details", details_out)
+        if sink is not None:
+            sink.update(details)
+        return [], [], []
+    monkeypatch.setattr(forge_check, "_report_impact", report)
+
+
+def test_dev_prints_the_class_the_run_and_the_gate_still_owed(monkeypatch, capsys) -> None:
+    from tools import local_workers
+    from tools.test_impact import ChangeClass
+
+    monkeypatch.setattr(local_workers, "choose", lambda per_worker_mb: (4, "stub"))
+    _stub_impact(monkeypatch, ["src/engcore/domains/battery/thevenin.py"], {
+        "classes": {"src/engcore/domains/battery/thevenin.py": ChangeClass.DOMAIN_LOCAL}, "reached": 12,
+        "expensive": ["tests/x.py"], "left_out": ["tests/x.py"], "narrowing": (), "next_required": ("FAST", "SCIENTIFIC")})
+    assert forge_check.main(["--dev", "--dry-run"]) == 0
+    out = capsys.readouterr().out
+    assert "safe-auto selected 4 workers" in out  # --dev picks workers locally unless told otherwise
+    for line in ("CHANGE CLASS: domain_local", "AFFECTED: 12 test modules", "RUN: changed gate -> not run (dry run)",
+                 "EXPENSIVE AFFECTED: 1 (1 not run)", "NEXT REQUIRED: FAST + SCIENTIFIC"):
+        assert line in out, line
+    assert forge_check.main(["--dev", "--dry-run", "--workers", "2"]) == 0
+    out = capsys.readouterr().out
+    assert "safe-auto" not in out and " -n 2 " in out  # an explicit count wins
+
+
+def test_selective_scientific_refuses_to_narrow_a_change_it_cannot_bound(monkeypatch, capsys) -> None:
+    _stub_impact(monkeypatch, ["src/engcore/claims/selection.py"], {
+        "classes": {}, "reached": 0, "expensive": [], "left_out": [],
+        "narrowing": ("src/engcore/claims/selection.py: shared scientific code",), "next_required": ("FAST", "SCIENTIFIC")})
+    monkeypatch.setattr(forge_check.subprocess, "run", lambda *a, **k: pytest.fail("ran tests after refusing"))
+    assert forge_check.main(["--scientific", "--workers", "1"]) == 2
+    out = capsys.readouterr().out
+    assert "selective SCIENTIFIC refused" in out and "run the whole SCIENTIFIC tier" in out
+
+
+def test_selective_scientific_runs_the_expensive_affected_tests_outside_campaign(monkeypatch, capsys) -> None:
+    _stub_impact(monkeypatch, ["src/engcore/domains/battery/thevenin.py"], {
+        "classes": {}, "reached": 3, "expensive": ["tests/x.py"], "left_out": [], "narrowing": (),
+        "next_required": ("FAST", "SCIENTIFIC")})
+    assert forge_check.main(["--scientific", "--workers", "1", "--dry-run"]) == 0
+    out = capsys.readouterr().out
+    assert "-m 'not campaign'" in out and "RUN: selective SCIENTIFIC" in out
+    assert "NEXT REQUIRED: FAST + SCIENTIFIC" in out  # never replaces the tier
+
+
+def test_dev_and_scientific_never_combine_with_the_regression_pack() -> None:
+    with pytest.raises(SystemExit):
+        forge_check.main(["--regression", "--dev"])
