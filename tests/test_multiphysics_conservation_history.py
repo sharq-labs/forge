@@ -295,3 +295,19 @@ def test_a_system_runtime_node_exposes_nothing_when_required_conservation_failed
     # The explicit fixture never reports "converged", so the node fails either way; what matters is which check
     # refuses first: conservation is checked before any output is read or any other gate runs.
     assert ("declared conservation did not hold" in outcome.reason) is refused_for_conservation, outcome.reason
+
+def test_a_system_runtime_node_refuses_a_run_of_a_graph_it_does_not_declare() -> None:
+    from engcore.system_runtime.authorities import MultiphysicsAuthority
+
+    declared = _runtime(FAIL_THEN_PASS, STEADY)
+    other = _runtime(FAIL_THEN_PASS, STEADY)
+    other_graph = replace(other.graph, conservation=())  # the same participants, no balances declared
+    swapped = MultiphysicsRuntime(other_graph, other.plan, other.participants, resolver=other.resolver, store=other.store)
+    initial = {"e_a": Quantity(0, "kg/s"), "e_b": Quantity(0, "kg/s")}
+    authority = MultiphysicsAuthority(
+        "conservation-node", graph=declared.graph, plan=declared.plan, runtime_factory=lambda call: swapped,
+        run_kwargs=lambda call: {"external_inputs": {}, "initial_coupling_values": initial,
+                                 "initial_coupling_uncertainty": {k: UNKNOWN for k in initial}},
+        outputs={"flow": "a.p"})
+    outcome = authority.execute(SimpleNamespace(run_id="sys", node=SimpleNamespace(node_id="mp", commits_state=False)))
+    assert outcome.status == "failed" and "different graph" in outcome.reason

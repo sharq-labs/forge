@@ -127,6 +127,7 @@ class MultiphysicsAuthority(_Base):
             "state_owners": dict(sorted((state_owners or {}).items())), "config": dict(config or {})})
         self._extractors, self._artifacts = dict(extractors or {}), artifacts
         self._declares_conservation = bool(getattr(graph, "conservation", ()))
+        self._graph_fingerprint = graph.fingerprint()
         self.runtime, self._factory, self._kwargs, self._outputs = runtime, runtime_factory, run_kwargs, dict(outputs)
         self._state_outputs = dict(state_outputs or {})
         self._owners, self._applicability, self._providers = dict(state_owners or {}), applicability, providers
@@ -160,6 +161,10 @@ class MultiphysicsAuthority(_Base):
         from ..scientific.multiphysics.report import MultiphysicsRunRecord
 
         if isinstance(run, MultiphysicsRunRecord):
+            # Sixth review: the run must be of the graph this authority's identity names -- a factory that builds a
+            # runtime on another graph (one without the declared balances) would otherwise pass the check vacuously.
+            if run.graph_fingerprint != self._graph_fingerprint:
+                return NodeOutcome.failed("the coupled run executed a different graph than the one this authority declares")
             try:
                 require_conservation(run)
             except MultiphysicsExecutionError as exc:
