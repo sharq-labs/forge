@@ -166,6 +166,13 @@ def test_a_diagnostic_failure_is_retained_and_grants_nothing() -> None:
     assert status["failed_required"] == [] and status["diagnostic_balances"] == ["mass_balance"]
     assert status["diagnostic_failures"] == [{"window_index": 0, "balance_id": "mass_balance", "status": "fail"}]
     assert [e["requirement"] for e in run.final_outputs["_conservation"]] == ["diagnostic", "diagnostic"]
+    assert status["required"] == "none_required"  # nothing required was checked: never "pass"
+    # The runtime's labels are a report; they cannot demote a declared balance at enforcement.
+    with pytest.raises(MultiphysicsExecutionError, match="required conservation did not hold"):
+        require_conservation(run)
+    require_conservation(run, diagnostic=("mass_balance",))  # only the enforcing consumer can say so
+    with pytest.raises(MultiphysicsExecutionError, match="undeclared"):
+        require_conservation(run, diagnostic=("mass_balnce",))
 
 
 def test_a_diagnostic_declaration_must_name_a_declared_balance() -> None:
@@ -186,7 +193,7 @@ def test_a_history_missing_a_window_is_refused() -> None:
     outputs = dict(run.final_outputs)
     outputs["_conservation"] = [e for e in outputs["_conservation"] if e["window_index"] != 0]
     outputs["_conservation_status"] = conservation_status(outputs["_conservation"], ())
-    with pytest.raises(MultiphysicsExecutionError, match="not recorded for every window"):
+    with pytest.raises(MultiphysicsExecutionError, match="not recorded exactly once for every window"):
         require_conservation(replace(run, final_outputs=outputs))
 
 
@@ -226,3 +233,49 @@ def test_authorized_assembly_refuses_a_run_whose_required_balance_failed_earlier
     monkeypatch.setattr(MultiphysicsRuntime, "run", lambda self, *args, **kwargs: failed)
     with pytest.raises(InvalidScientificProblem, match="not an admissible coupled result: required conservation"):
         _authorized("conservation-history")
+
+# ---- fourth review: nothing in the record is taken on trust ---------------------------------------------
+
+
+def _forged(run, edit):
+    outputs = dict(run.final_outputs)
+    history = [dict(entry) for entry in outputs["_conservation"]]
+    edit(history)
+    outputs["_conservation"] = history
+    outputs["_conservation_status"] = conservation_status(history, outputs["_conservation_status"]["diagnostic_balances"])
+    return replace(run, final_outputs=outputs)
+
+
+@pytest.mark.parametrize("edit, match", [
+    (lambda h: h[0].update(requirement="diagnostic"), "required conservation did not hold"),   # relabelled
+    (lambda h: h[0].update(requirement="optional"), "neither required nor diagnostic"),
+    (lambda h: h[0].update(status="pass"), "its numbers say 'fail'"),                             # flipped
+    (lambda h: h[0].update(tolerance=10.0, status="pass"), "the graph declares"),                  # inflated
+    (lambda h: h[0].update(residual=0.0, status="pass"), r"not \|left - right\|"),
+    (lambda h: h.append(dict(h[1])), "exactly once"),                                             # duplicated window
+    (lambda h: h[0].update(balance_id="other"), "exactly once|undeclared"),
+])
+def test_a_forged_history_with_a_consistent_report_is_still_refused(edit, match) -> None:
+    run = _forged(_run(_runtime(FAIL_THEN_PASS, STEADY)), edit)
+    with pytest.raises(MultiphysicsExecutionError, match=match):
+        require_conservation(run)
+
+
+def test_an_authorized_run_read_back_with_a_failed_balance_is_refused(monkeypatch) -> None:
+    from engcore.assembly.multiphysics import AuthorizedMultiphysicsRun
+    from tests.test_scientific_trust_sprint2 import _authorized
+
+    genuine = _authorized("conservation-readback").to_dict()
+    failed = _run(_runtime(FAIL_THEN_PASS, STEADY))
+    payload = {**genuine, "run": failed.to_dict()}
+    with pytest.raises(InvalidScientificProblem, match="required conservation"):
+        AuthorizedMultiphysicsRun.from_dict(payload)
+
+
+def test_bind_run_refuses_a_run_whose_required_balance_failed() -> None:
+    from tests.test_lifecycle_engine import _environment
+
+    timeline = _environment().timeline
+    failed = replace(_run(_runtime(FAIL_THEN_PASS, STEADY)), scenario_digest=timeline.scenario_digest)
+    with pytest.raises(InvalidScientificProblem, match="bind_run refuses the run: required conservation"):
+        timeline.bind_run(failed)

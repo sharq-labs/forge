@@ -1009,6 +1009,13 @@ class Timeline:
             )
         if self.state_transitions:
             raise InvalidScientificProblem("timeline already holds state transitions from a run")
+        # F5 (fourth review): state reached by a run whose required conservation failed is not bound as history.
+        from ..execution.multiphysics.runtime import MultiphysicsExecutionError, require_conservation
+
+        try:
+            require_conservation(run)
+        except MultiphysicsExecutionError as exc:
+            raise InvalidScientificProblem(f"bind_run refuses the run: {exc}") from exc
         scheduled = {item.subject_id for item in self.events if item.kind is TimelineEventKind.SCHEDULED_SYNCHRONIZATION}
         reached_ids = {item.event_id for item in run.reached_scheduled_events}
         unknown = reached_ids - scheduled

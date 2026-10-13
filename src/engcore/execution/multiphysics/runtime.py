@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
 
@@ -1897,11 +1898,13 @@ class MultiphysicsRuntime:
 
 
 def conservation_status(history: Iterable[Mapping[str, Any]], diagnostic_balances: Iterable[str]) -> dict[str, Any]:
-    """The run-level verdict on declared conservation, derived from the per-window history alone.
+    """The run-level summary of declared conservation, derived from the per-window history alone.
 
     ``required`` is ``fail`` when ANY required balance failed in ANY window (a later pass never
-    erases it), ``unknown`` when a required balance has no reading, ``pass`` otherwise. Diagnostic
-    failures are recorded and grant nothing either way.
+    erases it), ``unknown`` when a required balance has no reading, ``none_required`` when every
+    balance was labelled diagnostic, ``pass`` otherwise -- never ``pass`` for nothing checked.
+    Diagnostic failures are recorded and grant nothing either way. This summary is a REPORT;
+    :func:`require_conservation` does not take it, or the labels in the history, on trust.
     """
     entries = list(history)
     required = [e for e in entries if e.get("requirement") == "required"]
@@ -1909,7 +1912,7 @@ def conservation_status(history: Iterable[Mapping[str, Any]], diagnostic_balance
     unread = [{"window_index": e["window_index"], "balance_id": e["balance_id"]} for e in required
               if e.get("status") not in ("pass", "fail")]
     return {
-        "required": "fail" if failed else "unknown" if unread or not required and not entries else "pass",
+        "required": "fail" if failed else "unknown" if unread else "pass" if required else "none_required",
         "failed_required": failed,
         "unknown_required": unread,
         "diagnostic_failures": [
@@ -1921,19 +1924,62 @@ def conservation_status(history: Iterable[Mapping[str, Any]], diagnostic_balance
 
 
 def recorded_diagnostic_balances(record: MultiphysicsRunRecord) -> tuple[str, ...]:
-    """The diagnostic declaration a recorded run was executed under, so a replay labels balances the same way."""
+    """The diagnostic labels a recorded run was executed under, so a replay REPORTS balances the same way.
+
+    Labels only: enforcement (:func:`require_conservation`) never reads them.
+    """
     status = record.final_outputs.get("_conservation_status") if isinstance(record.final_outputs, Mapping) else None
     return tuple(detach((status or {}).get("diagnostic_balances", ())))
 
 
-def require_conservation(run: MultiphysicsRunRecord) -> None:
+def _entry_verdict(entry: Mapping[str, Any], definition: Any) -> str:
+    """``pass``/``fail`` recomputed from an entry's own numbers and the GRAPH's tolerance; ``unknown`` when unread.
+
+    A recorded status, tolerance or residual that the numbers do not reproduce is a forged or corrupt
+    record and is refused (fourth review: the per-entry status was read on trust).
+    """
+    if entry.get("requirement") not in ("required", "diagnostic"):
+        raise MultiphysicsExecutionError(f"conservation entry labelled {entry.get('requirement')!r}: neither required nor diagnostic")
+    if entry.get("status") == "unknown" and "left" not in entry:
+        return "unknown"
+    try:
+        unit = str(entry["unit"])
+        left, right = float(entry["left"]), float(entry["right"])
+        residual, tolerance = float(entry["residual"]), float(entry["tolerance"])
+        declared = definition.tolerance.magnitude_in(unit)
+    except (KeyError, TypeError, ValueError, ScientificCoreError) as exc:
+        raise MultiphysicsExecutionError(f"conservation entry for {definition.balance_id!r} is not readable ({exc})") from exc
+    if not all(math.isfinite(x) for x in (left, right, residual, tolerance)):
+        raise MultiphysicsExecutionError(f"conservation entry for {definition.balance_id!r} carries a non-finite number")
+    if not math.isclose(tolerance, declared, rel_tol=1e-12, abs_tol=0.0):
+        raise MultiphysicsExecutionError(
+            f"conservation entry for {definition.balance_id!r} records tolerance {tolerance!r} {unit}; the graph declares "
+            f"{declared!r} {unit}")
+    if residual != abs(left - right):
+        raise MultiphysicsExecutionError(f"conservation entry for {definition.balance_id!r}: its residual is not |left - right|")
+    verdict = "pass" if residual <= declared else "fail"
+    if entry.get("status") != verdict:
+        raise MultiphysicsExecutionError(
+            f"conservation entry for {definition.balance_id!r} says {entry.get('status')!r}; its numbers say {verdict!r}")
+    return verdict
+
+
+def require_conservation(run: MultiphysicsRunRecord, *, diagnostic: Iterable[str] = ()) -> None:
     """Refuse a run as a scientifically successful coupled result unless every REQUIRED balance held in every window.
 
-    The status is re-derived from the recorded history, never read on trust: a record whose status
-    disagrees with its own history is refused as inconsistent.
+    Nothing in the record is taken on trust (fourth review): every balance the GRAPH declares is
+    required unless the enforcing consumer names it in ``diagnostic`` -- the labels a runtime wrote
+    into the record cannot demote one -- and each entry's pass/fail is recomputed from its recorded
+    sides against the graph's declared tolerance. A record whose report does not re-derive from its
+    history, that misses a window, or that names an undeclared balance is refused as inconsistent.
+    A graph that declares no balance makes no conservation claim, and none is checked.
     """
     if not run.graph.conservation:
         return
+    definitions = {definition.balance_id: definition for definition in run.graph.conservation}
+    demoted = frozenset(str(item) for item in diagnostic)
+    if demoted - set(definitions):
+        raise MultiphysicsExecutionError(f"diagnostic names undeclared balances {sorted(demoted - set(definitions))}")
     # A stored record holds frozen containers; compare plain copies so the check reads values, not shapes.
     outputs = run.final_outputs
     history = detach(outputs.get("_conservation"))
@@ -1943,18 +1989,30 @@ def require_conservation(run: MultiphysicsRunRecord) -> None:
             "the graph declares conservation balances and the run records no conservation history"
         )
     windows = {window.index for window in run.windows}
-    for definition in run.graph.conservation:
-        seen = {e.get("window_index") for e in history if e.get("balance_id") == definition.balance_id}
-        if seen != windows:
+    for balance_id in definitions:
+        seen = [e.get("window_index") for e in history if isinstance(e, Mapping) and e.get("balance_id") == balance_id]
+        if sorted(seen) != sorted(windows):
             raise MultiphysicsExecutionError(
-                f"conservation {definition.balance_id!r} is not recorded for every window "
+                f"conservation {balance_id!r} is not recorded exactly once for every window "
                 f"(recorded {sorted(seen)}, windows {sorted(windows)})"
             )
-    derived = conservation_status(history, status.get("diagnostic_balances", ()))
-    if dict(status) != derived:
+    if dict(status) != conservation_status(history, status.get("diagnostic_balances", ())):
         raise MultiphysicsExecutionError("the run's conservation status does not re-derive from its history")
-    if derived["required"] != "pass":
+    failed: list[dict[str, Any]] = []
+    unread: list[dict[str, Any]] = []
+    for entry in history:
+        definition = definitions.get(entry.get("balance_id"))
+        if definition is None:
+            raise MultiphysicsExecutionError(f"the history names undeclared balance {entry.get('balance_id')!r}")
+        verdict = _entry_verdict(entry, definition)
+        if definition.balance_id in demoted:
+            continue
+        where = {"window_index": entry["window_index"], "balance_id": definition.balance_id}
+        if verdict == "fail":
+            failed.append(where)
+        elif verdict != "pass":
+            unread.append(where)
+    if failed or unread:
         raise MultiphysicsExecutionError(
-            f"required conservation did not hold: failed {derived['failed_required']}, "
-            f"unread {derived['unknown_required']}; a coupled result is not admitted"
+            f"required conservation did not hold: failed {failed}, unread {unread}; a coupled result is not admitted"
         )
