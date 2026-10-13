@@ -240,14 +240,23 @@ class ImpactGraph:
 _FIRST_PARTY_HEADS = frozenset({"engcore", "src", "tools", "benchmarks", "experiments", "forge_flagships"})
 
 
-def _python_files(root: pathlib.Path) -> list[pathlib.Path]:
-    out = []
-    for p in root.rglob("*.py"):
-        parts = p.relative_to(root).parts
-        if any(part in _SKIP_DIRS or part.endswith(".egg-info") for part in parts):
-            continue
-        out.append(p)
-    return sorted(out)
+def _python_files(root: pathlib.Path, owned=None) -> list[pathlib.Path]:
+    """Repository-owned Python files: tracked ones wherever they are, untracked ones outside environment roots.
+
+    Hostile review (scanner ownership): a name list missed ``.forge/venvs``, so the graph parsed every
+    site-package of the local assurance environments as first-party code. Ownership is decided once,
+    in :mod:`tools.certification.ownership`.
+    """
+    from tools.certification.ownership import owned_files
+
+    owned = owned or owned_files(root)
+    return sorted(root / rel for rel in owned.files
+                  if rel.endswith(".py") and not any(part.endswith(".egg-info") for part in rel.split("/")))
+
+
+def _refused_python_paths(owned) -> list[str]:
+    """Symlinked paths the ownership walk refused to follow: never read, so their reach is unknown."""
+    return [rel for rel in owned.refused if rel.endswith(".py") or "." not in rel.rsplit("/", 1)[-1]]
 
 
 def _file_facts(text: str) -> list | None:
@@ -353,7 +362,10 @@ def build_graph(root: pathlib.Path, *, cache: pathlib.Path | None = None) -> Imp
     root = root.resolve()
     pythonpath = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["pytest"]["ini_options"]["pythonpath"]
     roots = [(root / r).resolve() for r in pythonpath]
-    files = _python_files(root)
+    from tools.certification.ownership import owned_files
+
+    owned = owned_files(root)
+    files = _python_files(root, owned)
 
     mod_to_file: dict[str, str] = {}
     file_mods: dict[str, list[str]] = {}
@@ -428,6 +440,8 @@ def build_graph(root: pathlib.Path, *, cache: pathlib.Path | None = None) -> Imp
         deps[rel] = out
     if cache is not None and kept != cached:
         _store_facts_cache(cache, identity, kept)
+    # A refused symlink was never read: it is reported like an unparseable file, so nothing narrows past it.
+    unparseable.extend(_refused_python_paths(owned))
     return ImpactGraph(root, deps, texts, tuple(unparseable), tuple(roots))
 
 

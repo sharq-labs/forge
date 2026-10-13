@@ -2410,15 +2410,16 @@ def _validate_declarations() -> None:
 
 def _copy_tree(repo: pathlib.Path, work: pathlib.Path) -> None:
     from tools.certification.mutation_workspace import require_isolated
+    from tools.certification.ownership import copy_ignore
 
     require_isolated(repo, work)
     work.mkdir(parents=True, exist_ok=False)
+    # Repository-owned content only: an environment root holding nothing tracked is never copied.
+    ignore = copy_ignore(repo, "__pycache__", "*.pyc")
     for item in _COPIED:
         source, target = repo / item, work / item
         if source.is_dir():
-            shutil.copytree(
-                source, target, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"), symlinks=True
-            )
+            shutil.copytree(source, target, ignore=ignore, symlinks=True)
         else:
             shutil.copy2(source, target, follow_symlinks=False)
 

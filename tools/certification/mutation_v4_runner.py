@@ -185,7 +185,10 @@ def populate(root: pathlib.Path, destination: pathlib.Path) -> None:
     """A faithful copy: everything a target suite reads, and nothing stale."""
     require_an_isolated_tree(root, destination)
     destination.mkdir(parents=True, exist_ok=False)
-    ignore = shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache")
+    from tools.certification.ownership import copy_ignore
+
+    # Repository-owned content only: an environment root holding nothing tracked is never copied.
+    ignore = copy_ignore(root, "__pycache__", "*.pyc", ".pytest_cache")
     for tree in COPY_TREES:
         shutil.copytree(root / tree, destination / tree, ignore=ignore, symlinks=True)
     for name in COPY_FILES:

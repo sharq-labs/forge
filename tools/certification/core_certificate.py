@@ -236,6 +236,11 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
      "owns pristine seed/worker isolation, complete byte/mode manifests, "
      "restore refusal and target subprocess lifecycle; weakening it allows "
      "contaminated mutation evidence to be credited"),
+    ("tools/certification/ownership.py",
+     "decides which files of a checkout are repository source for every assurance traversal (seed "
+     "population, the impact graph, owned snapshots): tracked files always, untracked files outside "
+     "environment roots, symlinks never followed. A weaker rule lets a toolchain tree be scanned or "
+     "copied as source, or lets a tracked file hide under an environment-looking path"),
     ("tools/certification/performance_telemetry.py",
      "diagnostic timing helper imported by the local runner and mutation "
      "workspace; timing has no authority, but imported executable helpers "
