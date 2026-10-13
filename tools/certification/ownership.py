@@ -22,6 +22,12 @@ The rule is ownership, not a list of names to ignore:
   is therefore still seen.
 * **A symlink is never followed.** It is reported as refused, so a caller fails
   safe instead of reading what the link points at, inside or outside the tree.
+* **Fail closed, not open** (third review C1-C6): a checkout whose ``git ls-files``
+  fails raises instead of silently treating every file as untracked; inherited
+  ``GIT_*`` variables are scrubbed so the listing describes THIS checkout; an
+  environment marker inside a directory that holds tracked source, and any nested
+  repository, are refused rather than pruned or walked; and a path that differs
+  from a tracked one only by case (a case-insensitive filesystem) is the tracked file.
 
 Outside a Git checkout (a synthetic tree in a test) nothing is tracked, so only
 the second and third rules apply.
@@ -45,6 +51,13 @@ ARTIFACT_DIR_NAMES = frozenset({
 })
 _ARTIFACT_ONLY_WHEN_UNTRACKED = frozenset({"build", "dist"})
 
+#: Directory names that are installed-package trees whatever else they hold (PEP 582, a bare site-packages).
+ENVIRONMENT_DIR_NAMES = frozenset({"__pypackages__", "site-packages"})
+
+
+class OwnershipError(RuntimeError):
+    """The repository's ownership of its files could not be established; nothing is guessed."""
+
 
 @dataclass(frozen=True)
 class OwnedTree:
@@ -57,8 +70,24 @@ class OwnedTree:
 
 
 def is_environment_dir(path: pathlib.Path) -> bool:
-    """A directory that IS a Python environment: a virtualenv or a conda environment."""
-    return (path / "pyvenv.cfg").is_file() or (path / "conda-meta").is_dir()
+    """A directory that IS a Python environment or installed-package tree.
+
+    A virtualenv (``pyvenv.cfg``), a conda environment (``conda-meta``), a PEP 582 or bare
+    ``site-packages`` tree, or a ``pip install --target`` directory (it holds ``*.dist-info``).
+    """
+    if path.name in ENVIRONMENT_DIR_NAMES:
+        return True
+    if (path / "pyvenv.cfg").is_file() or (path / "conda-meta").is_dir() or (path / "site-packages").is_dir():
+        return True
+    try:
+        return any(child.suffix == ".dist-info" and child.is_dir() for child in path.iterdir())
+    except OSError:
+        return False
+
+
+def _git_environment() -> dict[str, str]:
+    """The process environment without inherited GIT_* variables, so git describes the checkout it is pointed at."""
+    return {key: value for key, value in os.environ.items() if not key.upper().startswith("GIT_")}
 
 
 def tracked_files(root: pathlib.Path) -> frozenset[str] | None:
@@ -67,9 +96,14 @@ def tracked_files(root: pathlib.Path) -> frozenset[str] | None:
         return None
     try:
         out = subprocess.run(["git", "-C", str(root), "ls-files", "-z", "--cached"],
-                             check=True, capture_output=True).stdout
-    except (OSError, subprocess.CalledProcessError):
-        return None
+                             check=True, capture_output=True, env=_git_environment()).stdout
+    except (OSError, subprocess.CalledProcessError) as exc:
+        detail = getattr(exc, "stderr", b"") or b""
+        raise OwnershipError(
+            f"{root} is a Git checkout and its tracked files could not be listed "
+            f"({detail.decode('utf-8', 'replace').strip() or exc}); treating every file as untracked would "
+            f"hide tracked files under artifact or environment names, so nothing is guessed"
+        ) from exc
     return frozenset(name for name in out.decode("utf-8", "surrogateescape").split("\0") if name)
 
 
@@ -84,6 +118,7 @@ def owned_files(root: pathlib.Path) -> OwnedTree:
             for i in range(1, len(parts) + 1):
                 tracked_dirs.add("/".join(parts[:i]))
     files: set[str] = set(name for name in (tracked or ()) if (root / name).is_file() and not (root / name).is_symlink())
+    tracked_by_fold = {name.casefold(): name for name in files}
     refused: set[str] = set()
     excluded: set[str] = set()
 
@@ -100,9 +135,19 @@ def owned_files(root: pathlib.Path) -> OwnedTree:
                 continue
             if rel == ".git":
                 continue
+            if name == ".git" or (path / ".git").exists():
+                # A nested repository or submodule: another repository's files, never walked as ours.
+                refused.add(rel)
+                continue
             environment = (rel in EXTERNAL_ROOTS or is_environment_dir(path)
                            or (name in ARTIFACT_DIR_NAMES
                                and not (name in _ARTIFACT_ONLY_WHEN_UNTRACKED and rel in tracked_dirs)))
+            if environment and rel in tracked_dirs and rel not in EXTERNAL_ROOTS and name not in ARTIFACT_DIR_NAMES:
+                # An environment marker inside tracked source (a stray pyvenv.cfg in src/): pruning would hide
+                # untracked modules below it, walking would read an environment. Refused: the caller fails safe.
+                refused.add(rel)
+                keep.append(name)
+                continue
             if environment:
                 # Not walked. Any tracked file inside is already in ``files`` from the tracked set.
                 excluded.add(rel)
@@ -115,6 +160,13 @@ def owned_files(root: pathlib.Path) -> OwnedTree:
             if path.is_symlink():
                 refused.add(rel)
                 continue
+            twin = tracked_by_fold.get(rel.casefold())
+            if twin is not None and twin != rel:
+                try:
+                    if path.samefile(root / twin):
+                        continue  # the tracked file, reached under another case on a case-insensitive filesystem
+                except OSError:
+                    pass
             files.add(rel)
     order = lambda text: text.encode("utf-8")  # noqa: E731 - the certificate's canonical order
     return OwnedTree(root, tuple(sorted(files, key=order)), tuple(sorted(refused, key=order)),
@@ -158,8 +210,10 @@ def owned_entry(root: pathlib.Path, relative: str, owned: OwnedTree | None = Non
 
 __all__ = [
     "ARTIFACT_DIR_NAMES",
+    "ENVIRONMENT_DIR_NAMES",
     "EXTERNAL_ROOTS",
     "OwnedTree",
+    "OwnershipError",
     "copy_ignore",
     "is_environment_dir",
     "owned_entry",

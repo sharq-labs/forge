@@ -17,7 +17,7 @@ import pytest
 
 from tools import test_impact
 from tools.certification.mutation_workspace import WorkspaceError, environment_trees, owned_snapshot, snapshot
-from tools.certification.ownership import copy_ignore, owned_files
+from tools.certification.ownership import OwnershipError, copy_ignore, is_environment_dir, owned_files, tracked_files
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -130,3 +130,75 @@ def test_the_real_checkout_graph_never_contains_an_environment() -> None:
     graph = test_impact.build_graph(ROOT)
     assert not [f for f in graph.deps if f.startswith(".forge/")]
     assert not [f for f in graph.unparseable if f.startswith(".forge/")]
+
+
+# ---- third review C1-C6: the scanner fails closed -----------------------------------------------------
+
+
+def test_c1_a_checkout_whose_listing_fails_raises_instead_of_hiding_tracked_files(checkout, monkeypatch) -> None:
+    (checkout / ".git" / "index").write_bytes(b"not an index")  # git ls-files now fails in this checkout
+    with pytest.raises(OwnershipError, match="could not be listed"):
+        tracked_files(checkout)
+    with pytest.raises(OwnershipError):
+        owned_files(checkout)
+
+
+def test_c2_inherited_git_variables_cannot_point_the_listing_at_another_repository(checkout, tmp_path, monkeypatch) -> None:
+    other = tmp_path / "other"
+    other.mkdir()
+    _write(other, "unrelated.py")
+    _git(other, "init", "-q")
+    _git(other, "add", "-A")
+    _git(other, "commit", "-q", "-m", "other")
+    monkeypatch.setenv("GIT_DIR", str(other / ".git"))
+    monkeypatch.setenv("GIT_WORK_TREE", str(other))
+    listed = tracked_files(checkout)
+    assert "build/generator.py" in listed and "unrelated.py" not in listed
+
+
+@pytest.mark.parametrize("marker", ["site-packages/x.py", "foreign-1.0.dist-info/METADATA"])
+def test_c3_an_installed_package_tree_is_an_environment(checkout, marker) -> None:
+    _write(checkout, f"vendor/target/{marker}", "foreign = 1\n")
+    _write(checkout, "vendor/target/foreign/__init__.py", "foreign = 1\n")
+    assert is_environment_dir(checkout / "vendor" / "target")
+    names = owned_files(checkout).files
+    assert not any(name.startswith("vendor/target/") for name in names)
+    _write(checkout, "__pypackages__/3.12/lib/foreign.py")
+    assert not any(name.startswith("__pypackages__/") for name in owned_files(checkout).files)
+
+
+def test_c4_a_nested_repository_is_refused_not_walked(checkout) -> None:
+    nested = checkout / "third_party" / "lib"
+    _write(nested, "code.py")
+    _git(nested, "init", "-q")
+    owned = owned_files(checkout)
+    assert "third_party/lib" in owned.refused
+    assert not any(name.startswith("third_party/lib/") for name in owned.files)
+
+
+def test_c5_an_environment_marker_inside_tracked_source_is_refused_and_does_not_hide_it(checkout) -> None:
+    _write(checkout, "src/pkg/pyvenv.cfg", "home = /usr/bin\n")
+    _write(checkout, "src/pkg/fresh.py", "NEW = 1\n")              # untracked first-party source below the marker
+    owned = owned_files(checkout)
+    assert "src/pkg" in owned.refused
+    assert "src/pkg/fresh.py" in owned.files and "src/pkg/model.py" in owned.files
+
+
+def test_c6_a_tracked_file_reached_under_another_case_is_listed_once(checkout, monkeypatch) -> None:
+    from tools.certification import ownership
+
+    real = ownership.tracked_files
+
+    def upper(root):
+        listed = real(root)
+        return frozenset(("SRC/pkg/model.py" if name == "src/pkg/model.py" else name) for name in listed)
+
+    probe = checkout / "src" / "PKG_CASE_PROBE"
+    probe.write_bytes(b"")
+    insensitive = (checkout / "SRC" / "pkg" / "model.py").exists()
+    probe.unlink()
+    if not insensitive:
+        pytest.skip("case-sensitive filesystem: two spellings are two files here")
+    monkeypatch.setattr(ownership, "tracked_files", upper)
+    files = owned_files(checkout).files
+    assert ("SRC/pkg/model.py" in files) != ("src/pkg/model.py" in files)
