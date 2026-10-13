@@ -25,6 +25,8 @@ SEMANTIC_EDITS = {
     "src/engcore/claims/verdict.py": ("\n", "\nFORGED_VERDICT_SHIFT = 'supported'\n"),
     "src/engcore/authority/ledger.py": ('raise AuthorityRefused("genesis signature invalid")', "pass"),
     "src/engcore/blindfold/__init__.py": ("\n", "\nISOLATION_DISABLED = True\n"),
+    # eighth review: the system runtime decides whether a coupled node succeeded (F5 guards included)
+    "src/engcore/system_runtime/authorities.py": ("if run.plan_fingerprint != self._plan_fingerprint:", "if False:"),
 }
 
 

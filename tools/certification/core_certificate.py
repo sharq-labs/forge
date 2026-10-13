@@ -458,6 +458,18 @@ SCOPE: tuple[ScopeArea, ...] = (
         ),
     ),
     ScopeArea(
+        name="system_runtime_authority",
+        classification="CORE_CERTIFIED",
+        patterns=("src/engcore/system_runtime/**/*.py",),
+        why=(
+            "hostile review F2, eighth pass: certified claims modules (claims/credibility_vector.py, "
+            "claims/attestation.py) read system_runtime records (ApplicabilityReport, NodeReceipt), and the "
+            "system runtime decides whether a coupled node succeeded -- including the F5 guard that refuses a "
+            "node whose required conservation failed, or whose run executed another graph or plan. A change "
+            "there could change what a recorded system result means without moving the certificate"
+        ),
+    ),
+    ScopeArea(
         name="harness",
         classification="HARNESS",
         patterns=(
