@@ -41,10 +41,13 @@ from typing import Any, Mapping, Protocol
 from .._records import require_mapping, require_text
 from ..contract import SCIENTIFIC_FIELDS, ScientificClaim
 from ..errors import ClaimContractError
+from ...scientific.errors import ScientificCoreError
 from .grounding import (
     ADAPTER_GROUNDED_FIELDS,
     CRITERION_SPAN_PREFIX,
+    CRITERION_SPANS,
     FIELD_RULES,
+    POLICY_TEXT_CHECKS,
     CriterionProvenance,
     FieldProvenance,
     GroundingContext,
@@ -147,8 +150,12 @@ def compile_natural_language(
     if not_criteria:
         raise ClaimContractError(f"a policy binds decision criteria only; it cannot bind {not_criteria}")
     for path in list(spans):
-        if path.startswith(CRITERION_SPAN_PREFIX) and path[len(CRITERION_SPAN_PREFIX):] not in FIELD_RULES:
-            return NaturalLanguageCompilation("refused", (f"span key {path!r} names no claim criterion",), ())
+        if path.startswith(CRITERION_SPAN_PREFIX) and path[len(CRITERION_SPAN_PREFIX):] not in CRITERION_SPANS:
+            return NaturalLanguageCompilation(
+                "refused",
+                (f"span key {path!r} is not one of {sorted(CRITERION_SPAN_PREFIX + s for s in CRITERION_SPANS)}",),
+                (),
+            )
 
     findings: list[str] = []
     moved: list[str] = []
@@ -166,7 +173,7 @@ def compile_natural_language(
                 return NaturalLanguageCompilation("refused", (f"input path {path!r} collides with the criterion span namespace",), ())
             try:
                 grounded_inputs[path] = ground_input(text, spans, ledger, path, inputs[path])
-            except Ungrounded as why:
+            except (Ungrounded, ScientificCoreError, ValueError, TypeError) as why:
                 findings.append(f"{section}.{path}: {why}; moved to missing_inputs")
                 moved.append(path)
                 del inputs[path]
@@ -181,16 +188,23 @@ def compile_natural_language(
     ))
 
     # A policy-bound field takes the policy's value. A proposal disagreeing with it is not grounded.
-    proposed_view = _canonical_fields(proposal)
+    policy_view = _canonical_fields({**proposal, **policy})
     for name, bound in sorted(policy.items()):
         if name in proposal:
-            merged = {**proposal, name: bound}
-            policy_view = _canonical_fields(merged)
+            # The field alone is compared: every other policy-bound field already holds the policy's value.
+            proposed_view = _canonical_fields({**proposal, **policy, name: proposal[name]})
             if proposed_view is None or policy_view is None or proposed_view.get(name) != policy_view.get(name):
                 findings.append(f"{name}: the proposal states a value the deploying policy does not; the proposal is not grounded")
                 advisory[name] = proposal.get(name)
                 provenance.append(FieldProvenance(name, CriterionProvenance.AI_PROPOSED, "contradicts the bound policy"))
                 continue
+        stricter = POLICY_TEXT_CHECKS.get(name, lambda *_: [])(text, bound if isinstance(bound, Mapping) else {})
+        if stricter:
+            findings.append(f"{name}: the user's text demands {stricter}, beyond what the deploying policy binds; "
+                            "a policy may not silently drop a stricter stated requirement")
+            advisory[name] = proposal.get(name)
+            provenance.append(FieldProvenance(name, CriterionProvenance.AI_PROPOSED, f"text demands {stricter} beyond the policy"))
+            continue
         proposal[name] = copy.deepcopy(bound)
         provenance.append(FieldProvenance(name, CriterionProvenance.POLICY_BOUND, "fixed by the deploying application's policy"))
 
@@ -209,7 +223,7 @@ def compile_natural_language(
                 continue
             except Ungrounded as exc:
                 why = exc
-            except (KeyError, TypeError, ValueError, AttributeError) as exc:
+            except (KeyError, TypeError, ValueError, AttributeError, ScientificCoreError) as exc:
                 why = f"not a well-formed value ({exc})"
         findings.append(f"{name}: {why}")
         advisory[name] = raw

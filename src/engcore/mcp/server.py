@@ -45,6 +45,7 @@ from ..product import (
     run_proposed_simulation as _run_proposed_simulation,
     run_simulation as _run_simulation,
 )
+from ..product.runtime import CALLER_AUTHORED_CRITERIA
 from ..systems.electrothermal import coupled as cp
 from .errors import (
     MalformedPayloadError,
@@ -1103,9 +1104,17 @@ def assess_claim(request: dict[str, Any]) -> dict[str, Any]:
     into an innocent-looking INSUFFICIENT_EVIDENCE answer.
     """
     try:
-        return assess_claim_request(request)
+        result = assess_claim_request(request)
     except (ClaimAssessmentError, ProblemPayloadError) as exc:
         return refused_claim_assessment(exc)
+    return _caller_authored(result)
+
+
+def _caller_authored(result: Any) -> Any:
+    """Mark a structured-claim result: its criteria came from the MCP client, not from grounding (F1-G)."""
+    if isinstance(result, dict):
+        return {**result, "criteria_authority": dict(CALLER_AUTHORED_CRITERIA)}
+    return result
 
 
 _ASSESS_SCIENTIFIC_CLAIM_DESCRIPTION = """Assess one structured scientific claim WITHOUT naming a system.
@@ -1304,12 +1313,12 @@ def assess_scientific_claim(
     record. An unexpected exception is a defect and is not caught.
     """
     # One decision path for every MCP claim tool (Trust Repair Pass 1, R3-02).
-    return assess_structured_claim(
+    return _caller_authored(assess_structured_claim(
         claim,
         external=external,
         empirical_observations=empirical_observations,
         model_form_qualification=model_form_qualification,
-    )
+    ))
 
 
 def describe_product() -> dict[str, Any]:

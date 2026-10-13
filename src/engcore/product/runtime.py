@@ -36,6 +36,33 @@ class ProductRequestError(ValueError):
     """A product request is malformed before it reaches scientific compilation."""
 
 
+#: Attached to every result of a STRUCTURED claim: nobody grounded its criteria (hostile review F1-G).
+#: A client that takes an advisory, ungrounded proposal and submits it as a structured claim gets a
+#: verdict about the criteria as written -- and this says so, so it cannot pass for a grounded run.
+CALLER_AUTHORED_CRITERIA: Mapping[str, Any] = {
+    "authority": "caller_authored",
+    "grounded": False,
+    "meaning": (
+        "The comparison, bound, tolerance, evidence bar and uncertainty demand were supplied by the "
+        "caller. Forge did not ground them in a user's statement or a deployment policy: the verdict "
+        "is about the criteria as written in this record, and the caller is accountable for whether "
+        "they are the user's. Use prepare_simulation / run_proposed_simulation to have criteria "
+        "grounded in the user's own text."
+    ),
+}
+
+
+def grounded_criteria(provenance: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """The criteria authority of a run whose every scientific field was grounded by the adapter."""
+    return {
+        "authority": "grounded",
+        "grounded": True,
+        "provenance": [dict(item) for item in provenance],
+        "meaning": "Every decision criterion was read from the user's text, bound by the deploying "
+                   "policy, or derived from grounded values; see provenance.",
+    }
+
+
 def _wire_spans(spans: Mapping[str, Sequence[int]]) -> dict[str, tuple[int, int]]:
     """Read JSON-friendly path-to-[start,end] spans without coercion."""
     if not isinstance(spans, Mapping):
@@ -260,6 +287,7 @@ def run_simulation(
         "schema": PRODUCT_RUN_SCHEMA,
         "view": _assessment_view(record, digest=assessment.digest),
         "record": record,
+        "criteria_authority": dict(CALLER_AUTHORED_CRITERIA),
         "notice": (
             "The view is a projection of the canonical assessment record; the "
             "record remains the auditable source of every displayed status."
@@ -307,16 +335,19 @@ def run_proposed_simulation(
     )
     return {
         **result,
+        "criteria_authority": grounded_criteria(preparation["provenance"]),
         "preparation": preparation,
     }
 
 
 __all__ = [
+    "CALLER_AUTHORED_CRITERIA",
     "PRODUCT_CAPABILITIES_SCHEMA",
     "PRODUCT_PREPARATION_SCHEMA",
     "PRODUCT_RUN_SCHEMA",
     "ProductRequestError",
     "describe_product",
+    "grounded_criteria",
     "prepare_simulation",
     "run_proposed_simulation",
     "run_simulation",

@@ -23,10 +23,15 @@ def _text_and_spans(claim):
     return prose.text, prose.spans
 
 
+def _compile(text, proposal, spans, registry):
+    """The ET claim demands no uncertainty quantification: a waiver only the deploying policy may grant."""
+    return compile_natural_language(text, proposal, spans, registry, policy={"uncertainty": et_claim().to_dict()["uncertainty"]})
+
+
 def test_a_faithful_proposal_compiles_to_what_the_compiler_decides(registry) -> None:
     made = et_claim()
     text, spans = _text_and_spans(made)
-    result = compile_natural_language(text, made.to_dict(), spans, registry)
+    result = _compile(text, made.to_dict(), spans, registry)
     assert result.status == "ready" and result.findings == () and result.moved_to_missing == ()
 
 
@@ -35,7 +40,7 @@ def test_an_invented_value_is_moved_to_missing_never_defaulted(registry) -> None
     text, spans = _text_and_spans(made)
     proposal = copy.deepcopy(made.to_dict())
     proposal["known_inputs"]["stages[0].body.heat_capacity"]["magnitude"] = 77.0  # not what the text says
-    result = compile_natural_language(text, proposal, spans, registry)
+    result = _compile(text, proposal, spans, registry)
     assert result.moved_to_missing == ("stages[0].body.heat_capacity",)
     assert result.status == "needs_input"
     assert "stages[0].body.heat_capacity" in result.compiled.to_dict()["missing_inputs"]
@@ -45,7 +50,7 @@ def test_an_uncited_value_is_moved_to_missing(registry) -> None:
     made = et_claim()
     text, spans = _text_and_spans(made)
     del spans["source_voltage"]
-    result = compile_natural_language(text, made.to_dict(), spans, registry)
+    result = _compile(text, made.to_dict(), spans, registry)
     assert "source_voltage" in result.moved_to_missing and result.status == "needs_input"
 
 
@@ -56,7 +61,7 @@ def test_a_proposal_carrying_authority_is_refused(registry, field) -> None:
     text, spans = _text_and_spans(made)
     proposal = made.to_dict()
     proposal[field] = "supported"
-    result = compile_natural_language(text, proposal, spans, registry)
+    result = _compile(text, proposal, spans, registry)
     assert result.status == "refused" and result.compiled is None
 
 
@@ -65,7 +70,7 @@ def test_a_proposal_cannot_declare_discrepancy_zero(registry) -> None:
     text, spans = _text_and_spans(made)
     proposal = made.to_dict()
     proposal["discrepancy"]["kind"] = "zero_declared"
-    assert compile_natural_language(text, proposal, spans, registry).status == "refused"
+    assert _compile(text, proposal, spans, registry).status == "refused"
 
 
 def test_the_core_imports_no_language_model() -> None:

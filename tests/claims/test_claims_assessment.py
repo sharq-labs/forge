@@ -317,5 +317,8 @@ def test_unknown_applicability_after_the_run_is_repaired_from_the_declarations(r
 def test_the_mcp_tool_returns_the_same_record(registry) -> None:
     from engcore.mcp.server import assess_scientific_claim
 
+    from engcore.product.runtime import CALLER_AUTHORED_CRITERIA
+
     record = assess_scientific_claim(t3_claim().to_dict())
-    assert record == assess_claim(t3_claim(), registry).to_dict()
+    # the canonical record, plus exactly the F1-G annotation: the client authored these criteria
+    assert record == {**assess_claim(t3_claim(), registry).to_dict(), "criteria_authority": dict(CALLER_AUTHORED_CRITERIA)}
