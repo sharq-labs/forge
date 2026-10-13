@@ -876,6 +876,11 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
                     modules.add(alias.asname or alias.name.split(".")[0])
     lines: list[int] = []
     for node in ast.walk(tree):
+        # A loader bound to another name (load = importlib.import_module) is a loader wherever it is later called.
+        if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(node.value, (ast.Attribute, ast.Name)):
+            bound = _call_name(node.value)
+            if bound in _LOADER_CALLS or bound.endswith("import_module") or bound == "__import__":
+                lines.append(node.lineno)
         if not isinstance(node, ast.Call):
             continue
         name = _call_name(node.func)
@@ -1007,8 +1012,11 @@ def _closure_exempt(name: str) -> bool:
 #: registry's own declaration digest; for every executor, case builder and oracle provider its name AND
 #: the SHA-256 of the source file that defines it (fourth review: a name alone is not code); and the source
 #: digest of every domain module that declares a ScientificModelDefinition (validity domains, exclusions).
-#: What those functions CALL (domain solvers) produces answers and is not pinned: it is assured by its own
-#: suites and pins, as every other answer is.
+#: Fifth review: the code those functions reach builds evidence too (product/battery.py assembles the
+#: CredibilityEvidenceReport itself), so the static first-party import closure of every executor, case builder
+#: and oracle provider is pinned file by file -- stopping only at AUTHORITY_CLOSURE_EXEMPT (domain models and
+#: solvers, system compositions: answers, assured by their own suites and frozen pins). A module reached only
+#: by a computed name is not seen by this closure, as for the authority closure.
 _REGISTRY_PROBE = r"""
 import hashlib, importlib, inspect, json, pathlib, pkgutil, sys
 src = pathlib.Path(sys.argv[1]).resolve()
@@ -1088,7 +1096,39 @@ def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
     if run.returncode != 0:
         raise CertificationError("the production registry could not be read from the tree: "
                                  + (run.stderr.strip().splitlines() or ["no output"])[-1])
-    return json.loads(run.stdout.strip().splitlines()[-1])
+    identity = json.loads(run.stdout.strip().splitlines()[-1])
+    identity["evidence_code"] = evidence_code_digests(root, identity)
+    return identity
+
+
+def evidence_code_digests(root: pathlib.Path, identity: Mapping[str, Any]) -> dict[str, str]:
+    """SHA-256 of every first-party file the registry's executors, case builders and oracle providers reach.
+
+    The static import closure (absolute, relative and literal ``import_module`` names, function-level imports
+    included) from each defining file, not descending into AUTHORITY_CLOSURE_EXEMPT.
+    """
+    src = root / "src"
+    seeds: set[str] = set()
+    for declaration in identity.get("capabilities", {}).values():
+        for item in (declaration.get("executor"), declaration.get("case_builder"),
+                     *dict(declaration.get("oracle_providers") or {}).values()):
+            if isinstance(item, Mapping) and item.get("source"):
+                seeds.add(str(item["source"]))
+    queue = [root / name for name in sorted(seeds) if not _closure_exempt(name)]
+    seen: set[pathlib.Path] = set()
+    while queue:
+        current = queue.pop()
+        if current in seen or not current.is_file():
+            continue
+        seen.add(current)
+        for module in _engcore_imports(src, current):
+            parts = module.split(".")
+            for length in range(1, len(parts) + 1):
+                target = _engcore_module_file(src, ".".join(parts[:length]))
+                if target is not None and target not in seen and not _closure_exempt(target.relative_to(root).as_posix()):
+                    queue.append(target)
+    return {path.relative_to(root).as_posix(): file_digest(path)
+            for path in sorted(seen, key=lambda p: p.relative_to(root).as_posix().encode("utf-8"))}
 
 
 def registry_problems(root: pathlib.Path, certificate: Mapping[str, Any]) -> list[str]:
@@ -1108,8 +1148,10 @@ def registry_problems(root: pathlib.Path, certificate: Mapping[str, Any]) -> lis
         cid for cid in set(stored.get("capabilities", {})) | set(actual.get("capabilities", {}))
         if stored.get("capabilities", {}).get(cid) != actual.get("capabilities", {}).get(cid)
     )
-    return [f"the production registry changed since certification (capabilities {changed}): what a claim is "
-            f"judged against moved without moving the certificate"]
+    stored_code, actual_code = dict(stored.get("evidence_code") or {}), dict(actual.get("evidence_code") or {})
+    moved_code = sorted(name for name in set(stored_code) | set(actual_code) if stored_code.get(name) != actual_code.get(name))
+    return [f"the production registry changed since certification (capabilities {changed}, evidence code "
+            f"{moved_code[:10]}): what a claim is judged against moved without moving the certificate"]
 
 
 def file_digest(path: pathlib.Path) -> str:

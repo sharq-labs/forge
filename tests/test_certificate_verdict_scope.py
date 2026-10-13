@@ -182,6 +182,7 @@ def test_b1_a_literal_import_module_is_followed_like_an_import(tmp_path) -> None
     b"exec(open('src/engcore/decider/rule.py').read())\n",
     b"import importlib\nRULE = importlib.import_module('.rule', 'engcore.decider')\n",
     b"from importlib.metadata import entry_points\nPLUGINS = entry_points(group='forge')\n",
+    b"import importlib\nload = importlib.import_module\nRULE = load('engcore.decider.rule')\n",  # fifth review
 ])
 def test_b1_an_undeclared_dynamic_import_in_the_closure_is_refused(tmp_path, source) -> None:
     scope = _closure_tree(tmp_path, source)
@@ -296,3 +297,18 @@ def test_fourth_review_a_domain_module_that_does_not_import_fails_the_model_inde
     monkeypatch.setattr(evidence, "_MODEL_INDEX", None)
     with pytest.raises(CredibilityEvidenceError, match="model index incomplete"):
         evidence._declared_models()
+
+def test_fifth_review_the_pin_covers_the_code_that_builds_the_evidence() -> None:
+    code = cc.production_registry_identity(ROOT)["evidence_code"]
+    # product/battery.py builds the battery CredibilityEvidenceReport itself; product/problem.py runs electrothermal
+    assert {"src/engcore/product/battery.py", "src/engcore/product/problem.py", "src/engcore/product/capabilities.py"} <= set(code)
+    answers = [n for n in code if n.startswith(("src/engcore/domains/", "src/engcore/systems/"))]
+    assert set(answers) <= {"src/engcore/domains/__init__.py", "src/engcore/systems/__init__.py"}, answers  # packages' own __init__ only
+    assert all(code[name] == cc.file_digest(ROOT / name) for name in code)
+
+
+def test_fifth_review_a_moved_evidence_module_fails_verification() -> None:
+    actual = cc.production_registry_identity(ROOT)
+    stored = {**actual, "evidence_code": {**actual["evidence_code"], "src/engcore/product/battery.py": "0" * 64}}
+    (problem,) = cc.registry_problems(ROOT, {"manifest": {"production_registry": stored}})
+    assert "src/engcore/product/battery.py" in problem

@@ -540,7 +540,8 @@ def impact_of(paths: Iterable[str], graph: ImpactGraph) -> Impact:
                                  and _SOURCE_WORD.search(graph.texts.get(t, "")))
             for t in scanners:
                 why.setdefault(t, set()).add("reads source files by path")
-            reached = reached or bool(scanners)
+            # Fifth review: a test that walks the source tree is selected, but it does not establish the reach of
+            # the change -- a module loaded only by a package walk would otherwise narrow to the scanners alone.
         if rel.endswith(".py") and rel in graph.unparseable:
             reached = False
         # A deleted (or renamed-away) module: its importers are found above, but what loaded it by a computed

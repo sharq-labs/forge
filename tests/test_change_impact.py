@@ -522,3 +522,9 @@ def test_f7_a_tree_with_a_refused_entry_narrows_nothing(tmp_path) -> None:
         impact = test_impact.impact_of([path], graph)
         assert path in impact.unresolved, path
     assert test_impact.impact_of(["docs/notes.md"], graph).unresolved == ()
+
+def test_fifth_review_a_source_scanner_does_not_establish_reach(synthetic) -> None:
+    _, graph = synthetic
+    impact = test_impact.impact_of(["src/pkg/orphan.py"], graph)  # imported by nothing; walked by test_scan
+    assert "tests/test_scan.py" in impact.affected
+    assert impact.unresolved == ("src/pkg/orphan.py",)
