@@ -200,7 +200,8 @@ _BASIS_GUIDANCE: Mapping[tuple[CredibilityVerdict, str], Mapping[str, str]] = {
     (CredibilityVerdict.SUPPORTED, "VALIDATED"): {
         "means": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["means"]
                  + " At least one of those levels compares the model with something outside "
-                   "itself: a benchmark, an experiment, or an independently implemented solver.",
+                   "itself: an independent physical measurement (experimental validation). A "
+                   "benchmark reference solution or a second solver is verification, not this.",
         "does_not_mean": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["does_not_mean"],
         "action": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["action"],
     },
@@ -211,9 +212,11 @@ _BASIS_GUIDANCE: Mapping[tuple[CredibilityVerdict, str], Mapping[str, str]] = {
                  "correctly. This report contains no comparison of the model with the world.",
         "does_not_mean": "It does not mean the model describes the part, that the equations are the "
                          "right equations, or that any measurement agrees with the answer. Nothing "
-                         "here was compared with a benchmark, an experiment, or an independently "
-                         "implemented solver. A correct solution of the wrong model is exactly what "
-                         "this verdict cannot distinguish. Read the attained levels, the conditions "
+                         "here was compared with an experiment; agreement with a benchmark reference "
+                         "solution or an independently implemented solver, if attained, shows the "
+                         "equations were solved, not that they describe reality. A correct solution of "
+                         "the wrong model is exactly what this verdict cannot distinguish. Read the "
+                         "attained levels, the conditions "
                          "each model was judged against, and decide.",
         "action": "Read the evidence and decide, and decide separately whether the model applies: "
                   "this report does not answer that. To demand more, set required_evidence_basis "
@@ -241,9 +244,10 @@ _BASIS_MEANS: Mapping[str, str] = {
     # most likely to be read as validation -- it used to be counted as one -- and because it is the only
     # level in this group that involves a second program rather than a second look at the same one.
     "VERIFICATION_ONLY": "Every attained level says the declared model was solved correctly. That includes "
-                         "agreement between two solvers of the same declared model, which compares two "
-                         "implementations and not the model with the world. Nothing here compares it with "
-                         "the world.",
+                         "agreement with a published benchmark reference solution (benchmark_validated is "
+                         "that level's legacy wire name) and agreement between two solvers of the same "
+                         "declared model: both compare the solution with another solution of the same "
+                         "equations, not the model with the world. Nothing here compares it with the world.",
     "NONE": "No check both passed and established an evidentiary level.",
 }
 

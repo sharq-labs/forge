@@ -131,5 +131,5 @@ def test_production_routes_are_classified_without_trusting_their_declarations() 
     t3 = {r.route_id: r for r in assess_routes(registry.get("benchmark.nafems_t3"), ())}
     oracle = t3["nafems.p18.t3.oracle"]
     assert oracle.route_class is RouteClass.BENCHMARK
-    assert oracle.could_establish is ValidationLevel.BENCHMARK_VALIDATED and oracle.is_validation is True
+    assert oracle.could_establish is ValidationLevel.BENCHMARK_VALIDATED and oracle.is_validation is False  # F4
     assert oracle.attainable_here is True

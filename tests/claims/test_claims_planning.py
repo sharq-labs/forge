@@ -153,7 +153,7 @@ def test_the_t3_plan_requires_the_trusted_oracle_comparison(registry) -> None:
     plan = plan_for(t3_claim(), registry)
     (oracle,) = plan.steps_of(StepKind.ORACLE_COMPARISON)
     assert oracle.availability is StepAvailability.PLANNED
-    assert oracle.detail["could_establish"] == "benchmark_validated" and oracle.detail["is_validation"] is True
+    assert oracle.detail["could_establish"] == "benchmark_validated" and oracle.detail["is_validation"] is False  # F4
     (check,) = plan.steps_of(StepKind.VALIDATION_CHECK)
     assert check.detail["check_name"] == "nafems_t3_external_benchmark"
 

@@ -15,7 +15,7 @@ from engcore.authority import (
 )
 from engcore.claims.attestation import attest_receipt, attest_record, record_kind_of
 from engcore.execution.orchestration.resources import ResourceUsage
-from engcore.scientific.results.validation import ValidationLevel
+from engcore.scientific.results.validation import VERIFICATION_LEVELS
 from engcore.system_runtime.records import NodeReceipt, NodeStatus
 
 ISSUERS = {
@@ -81,7 +81,8 @@ class World:
                              subject_output=output, context_digest=context, role=role)
 
 
-_VERIFY = {ValidationLevel.NUMERICALLY_CONVERGED, ValidationLevel.ANALYTICALLY_VERIFIED, ValidationLevel.CROSS_SOLVER_VALIDATED}
+#: the Core's own classification, never a copy of it (F4 moved BENCHMARK_VALIDATED into it)
+_VERIFY = VERIFICATION_LEVELS
 
 
 def default_role(record) -> Role:

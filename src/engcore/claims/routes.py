@@ -37,8 +37,11 @@ Evidence routes
 ---------------
 An analytic reference can establish ``ANALYTICALLY_VERIFIED`` (verification).
 A benchmark or experimental oracle establishes what its *trusted* identity
-establishes (``BENCHMARK_VALIDATED`` or ``EXPERIMENTALLY_VALIDATED``) --
-validation, the only kind that speaks to reality.
+establishes. A benchmark is a published reference SOLUTION, so
+``BENCHMARK_VALIDATED`` (a legacy name kept for the wire) is verification (F4,
+hostile review 2026-10-13); only ``EXPERIMENTALLY_VALIDATED``, issued by an
+independent physical measurement, is validation -- the only kind that speaks
+to reality.
 """
 
 from __future__ import annotations
@@ -200,9 +203,12 @@ def assess_routes(declaration: CapabilityDeclaration, supplied_paths: Iterable[s
                     could_establish=level,
                     attainable_here=level is not None and attainable.get(route.route_id) is level,
                     reason=(
-                        "a trusted external oracle: validation against reality at its stated conditions only"
-                        if level is not None
-                        else "the oracle is not trusted: it establishes nothing"
+                        "the oracle is not trusted: it establishes nothing"
+                        if level is None
+                        else "a trusted measurement: validation against reality at its stated conditions only"
+                        if route.kind is RouteKind.EXPERIMENTAL
+                        else "a trusted benchmark reference solution: verification that the declared "
+                        "equations were solved, at its stated conditions only; not validation"
                     ),
                     **common,
                 )

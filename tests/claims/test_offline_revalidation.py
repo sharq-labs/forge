@@ -395,7 +395,7 @@ def test_a_malformed_record_is_tampered_not_a_crash(t3, registry, record):
 # --- 9. single-field tamper -------------------------------------------------------------------
 @pytest.mark.parametrize("edit", [
     lambda r: r.__setitem__("verdict", "contradicted"),
-    lambda r: r["validation"].__setitem__("attained", []),
+    lambda r: r["verification"].__setitem__("attained", []),   # F4: the benchmark level is a verification level
     lambda r: r["credibility"]["report"]["validity"][0].__setitem__("version", "0.9.0"),
     lambda r: r["claim"]["tolerance"].__setitem__("magnitude", 50.0),
 ], ids=["verdict", "attained-levels", "model-version", "tolerance"])

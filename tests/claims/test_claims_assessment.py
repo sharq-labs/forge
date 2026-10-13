@@ -54,8 +54,10 @@ def _codes(record) -> set[str]:
 def test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation(registry) -> None:
     record = assess_claim(t3_claim(), registry).to_dict()
     assert record["verdict"] == "supported" and record["status"] == "assessed"
-    assert record["validation"]["attained"] == ["benchmark_validated"]
-    assert record["validation"]["evidence_basis"] == "VALIDATED"
+    # F4: the benchmark level is attained and is verification; nothing here is experimental validation
+    assert "benchmark_validated" in record["verification"]["attained"]
+    assert record["validation"]["attained"] == []
+    assert record["validation"]["evidence_basis"] == "VERIFICATION_ONLY"
     assert record["assurance"]["verdict"] == "valid" and record["assurance"]["unmet_obligations"] == []
     assert record["comparison"]["rule"] == "point" and record["comparison"]["outcome"] == "satisfied"
     assert record["basis"]["admissible"] is True

@@ -84,12 +84,14 @@ def world(monkeypatch):
         "mms": _oracle_check(oracles[OracleKind.ANALYTIC_REFERENCE]),
         "conv": ValidationCheck("conv", ValidationOutcome.PASS, establishes=VL.NUMERICALLY_CONVERGED, residual=0.001, tolerance=0.01,
                                 evidence=("richardson:3-level",)),
+        "conv_b": ValidationCheck("conv_b", ValidationOutcome.PASS, establishes=VL.NUMERICALLY_CONVERGED, residual=0.002,
+                                  tolerance=0.01, evidence=("richardson:3-level, second mesh family",)),
     }
     from engcore.domains.electrical import dc_consensus as dcc
     for name, val in (("route_a", 1.0), ("route_b", 2.0)):
         checks[name] = earned_consensus((route("a"), route("b")), {"a": {"v": val}, "b": {"v": val}}, thresholds=dcc.DC_CONSENSUS_THRESHOLDS,
                                         tolerance_key="agreement_rel_tol", required=("v",)).to_check()
-    authority = {"exp": A.EXPERIMENT, "bench": A.REFERENCE_DATA, "mms": A.ANALYTICAL, "conv": A.SIMULATION, "route_a": A.SIMULATION,
+    authority = {"exp": A.EXPERIMENT, "bench": A.REFERENCE_DATA, "mms": A.ANALYTICAL, "conv": A.SIMULATION, "conv_b": A.SIMULATION, "route_a": A.SIMULATION,
                  "route_b": A.ANALYTICAL}
     nodes = {k: node(k, authority[k], digest=check_digest(c)) for k, c in checks.items()}
     within = ApplicabilityReport("domain.check", "within", RESULT_DIGEST, "inside the declared envelope")
@@ -211,7 +213,7 @@ def test_the_subject_is_bound_to_the_decision_context(world):                   
 
 
 def test_levels_need_support_of_the_subject_admissible_authority_and_context(world):
-    claims = [FactorClaim(Factor.VALIDATION, 1, ("foreign",), VL.BENCHMARK_VALIDATED.value),
+    claims = [FactorClaim(Factor.VALIDATION, 2, ("foreign",), VL.EXPERIMENTALLY_VALIDATED.value),
               FactorClaim(Factor.MEASUREMENT_UQ, 1, ("rumour",), "aleatoric"),
               FactorClaim(Factor.MODEL_FORM_UQ, 1, ("conv",), "model_form")]
     rep = assess(world, leaf(claims), graph(world))
@@ -275,23 +277,23 @@ def test_an_outside_domain_finding_is_a_defeater_and_dominates(world):
     assert not rep.requirement_met_in_test_mode and rep.dominant_blocking_gap["defeater"]["kind"] == "outside_domain"
     gap = next(g for g in rep.gaps if g.factor is Factor.APPLICABILITY)
     assert gap.gap_class is GapClass.MODEL_OUTSIDE_DOMAIN
-    empty = assess(world, leaf([FactorClaim(Factor.VALIDATION, 1, ("bench",), VL.BENCHMARK_VALIDATED.value)]), graph(world))
+    empty = assess(world, leaf([FactorClaim(Factor.VERIFICATION, 1, ("conv",), VL.NUMERICALLY_CONVERGED.value)]), graph(world))
     assert empty.dominant_blocking_gap["factor"] == "applicability"
 
 
 def test_and_takes_the_weakest_and_or_takes_one_whole_independent_branch(world):
-    weak = leaf([FactorClaim(Factor.VALIDATION, 1, ("bench",), VL.BENCHMARK_VALIDATED.value)], "weak")
-    strong = leaf([FactorClaim(Factor.VALIDATION, 2, ("exp",), VL.EXPERIMENTALLY_VALIDATED.value)], "strong")
+    weak = leaf([FactorClaim(Factor.VERIFICATION, 1, ("conv_b",), VL.NUMERICALLY_CONVERGED.value)], "weak")
+    strong = leaf([FactorClaim(Factor.VERIFICATION, 2, ("conv", "mms"), VL.ANALYTICALLY_VERIFIED.value)], "strong")
     g = graph(world)
-    assert assess(world, ClaimNode("and", combine=Combine.AND, children=(weak, strong)), g).vector.level(Factor.VALIDATION) == 1
-    assert assess(world, ClaimNode("or", combine=Combine.OR, children=(weak, strong)), g).vector.level(Factor.VALIDATION) == 2
+    assert assess(world, ClaimNode("and", combine=Combine.AND, children=(weak, strong)), g).vector.level(Factor.VERIFICATION) == 1
+    assert assess(world, ClaimNode("or", combine=Combine.OR, children=(weak, strong)), g).vector.level(Factor.VERIFICATION) == 2
     a = leaf([FactorClaim(Factor.VALIDATION, 2, ("exp",), VL.EXPERIMENTALLY_VALIDATED.value)], "a")
     b = leaf([FactorClaim(Factor.APPLICABILITY, 1, ("domain",), "applicability")], "b")
     mixed = assess(world, ClaimNode("or", combine=Combine.OR, children=(a, b)), g).vector
     assert not (mixed.level(Factor.VALIDATION) == 2 and mixed.level(Factor.APPLICABILITY) == 1)
-    dependent = graph(world, EvidenceEdge("exp", "bench", R.DERIVED_FROM))
+    dependent = graph(world, EvidenceEdge("mms", "conv_b", R.DERIVED_FROM))
     rep = assess(world, ClaimNode("or", combine=Combine.OR, children=(weak, strong)), dependent)
-    assert rep.vector.level(Factor.VALIDATION) == 1 and any("not shown independent" in x for x in rep.notes)
+    assert rep.vector.level(Factor.VERIFICATION) == 1 and any("not shown independent" in x for x in rep.notes)
     one = assess(world, ClaimNode("x", combine=Combine.AND, children=(weak,)), g)
     both = assess(world, ClaimNode("x", combine=Combine.AND, children=(weak, strong)), g)
     assert one.claim_structure_digest != both.claim_structure_digest
@@ -361,8 +363,8 @@ def test_a_contradiction_of_the_subject_or_its_lineage_is_a_defeater_in_any_chil
     other = dict(nodes, result2=node("result2", A.SIMULATION))
     edges = [EvidenceEdge(k, "result2", R.SUPPORTS) for k in world["nodes"] if k not in ("result", "rumour")]
     g = graph(world, *edges, EvidenceEdge("lab", "result", R.CONTRADICTS), nodes=other)
-    a = ClaimNode("a", (FactorClaim(Factor.VALIDATION, 1, ("bench",), VL.BENCHMARK_VALIDATED.value),), subject_id="result")
-    b = ClaimNode("b", (FactorClaim(Factor.VALIDATION, 1, ("bench",), VL.BENCHMARK_VALIDATED.value),), subject_id="result2")
+    a = ClaimNode("a", (FactorClaim(Factor.VERIFICATION, 1, ("conv",), VL.NUMERICALLY_CONVERGED.value),), subject_id="result")
+    b = ClaimNode("b", (FactorClaim(Factor.VERIFICATION, 1, ("conv",), VL.NUMERICALLY_CONVERGED.value),), subject_id="result2")
     for kids in ((a, b), (b, a)):
         for how in (Combine.AND, Combine.OR):
             rep = assess(world, ClaimNode("x", combine=how, children=kids), g, RiskClass.LOW)
@@ -370,18 +372,20 @@ def test_a_contradiction_of_the_subject_or_its_lineage_is_a_defeater_in_any_chil
 
 
 def test_a_cited_contradicted_record_defeats_even_when_it_did_not_win_its_factor(world):            # HIGH-1
-    claims = list(full_claims()) + [FactorClaim(Factor.VALIDATION, 1, ("bench",), VL.BENCHMARK_VALIDATED.value)]
+    # F4: the competing claim is benchmark-backed CODE verification (a reference solution is verification)
+    claims = list(full_claims()) + [FactorClaim(Factor.VERIFICATION, 2, ("conv", "bench"), VL.BENCHMARK_VALIDATED.value)]
     claims = [c for c in claims if c.factor is not Factor.MEASUREMENT_UQ and c.factor is not Factor.INDEPENDENT_ROUTES]
-    g = graph(world, EvidenceEdge("muq", "exp", R.CONTRADICTS))
-    exp_check = world["checks"][0]
-    exp_pin = world["nodes"]["exp"].provenance.source_id
+    g = graph(world, EvidenceEdge("muq", "mms", R.CONTRADICTS))
+    mms_check = world["checks"][2]
+    mms_pin = world["nodes"]["mms"].provenance.source_id
     variants = [assess(world, leaf(claims), g, RiskClass.MEDIUM),
-                assess(world, leaf(claims), g, RiskClass.MEDIUM, validation_checks=tuple(c for c in world["checks"] if c is not exp_check)),
+                assess(world, leaf(claims), g, RiskClass.MEDIUM, validation_checks=tuple(c for c in world["checks"] if c is not mms_check)),
                 assess(world, leaf(claims), g, RiskClass.MEDIUM,
-                       trusted_sources=TrustedSourceRegistry(tuple(p for p in world["pins"].pins if p.source_id != exp_pin)))]
-    assert variants[1].vector.level(Factor.VALIDATION) == 1                               # bench took over the factor ...
-    for rep in variants:                                                                  # ... but exp is still cited and contradicted
-        assert not rep.requirement_met_in_test_mode and any(d.evidence_ids == ("muq", "exp") for d in rep.open_defeaters)
+                       trusted_sources=TrustedSourceRegistry(tuple(p for p in world["pins"].pins if p.source_id != mms_pin)))]
+    assert variants[1].vector.level(Factor.VERIFICATION) == 2                             # bench took over the factor ...
+    assert variants[1].vector.support[Factor.VERIFICATION] == ("bench", "conv")
+    for rep in variants:                                                                  # ... but mms is still cited and contradicted
+        assert not rep.requirement_met_in_test_mode and any(d.evidence_ids == ("muq", "mms") for d in rep.open_defeaters)
 
 
 def test_supersession_only_lowers_whatever_the_superseder_s_pin_or_standing(world):              # HIGH-2
@@ -820,6 +824,32 @@ def test_the_claim_s_own_records_never_close_its_defeaters(world):              
                                    + (SourcePin(b.provenance.source_id, b.provenance.issuer, newer.provenance.document_digest, "2"),))
     g = graph(world, EvidenceEdge("bench", "exp", R.CONTRADICTS), EvidenceEdge("bench_v2", "bench", R.SUPERSEDES),
               nodes=dict(world["nodes"], bench_v2=newer))
-    cites_v2 = list(full_claims()) + [FactorClaim(Factor.VALIDATION, 1, ("bench_v2",), VL.BENCHMARK_VALIDATED.value)]
+    cites_v2 = list(full_claims()) + [FactorClaim(Factor.VERIFICATION, 2, ("conv", "bench_v2"), VL.BENCHMARK_VALIDATED.value)]
     rep = assess(world, leaf(cites_v2), g, trusted_sources=pins_b)
     assert any(x.evidence_ids == ("bench", "exp") for x in rep.open_defeaters)
+
+
+# ---------------------------------------------------------------------------- F4 (hostile review 2026-10-13)
+
+
+def test_f4_a_benchmark_cannot_be_claimed_as_validation(world):
+    """A published reference solution is verification: the projection itself refuses validation=1 from it."""
+    with pytest.raises(CredibilityRefused, match="does not project"):
+        FactorClaim(Factor.VALIDATION, 1, ("bench",), VL.BENCHMARK_VALIDATED.value)
+    assert VALIDATION_LEVEL_PROJECTION[VL.BENCHMARK_VALIDATED] == (Factor.VERIFICATION, 2)
+
+
+def test_f4_benchmark_agreement_with_convergence_is_code_verification_and_never_validation(world):
+    rep = assess(world, leaf([FactorClaim(Factor.VERIFICATION, 2, ("conv", "bench"), VL.BENCHMARK_VALIDATED.value)]), graph(world))
+    assert rep.vector.level(Factor.VERIFICATION) == 2
+    assert rep.vector.level(Factor.VALIDATION) == UNKNOWN
+    alone = assess(world, leaf([FactorClaim(Factor.VERIFICATION, 2, ("bench", "mms"), VL.BENCHMARK_VALIDATED.value)]), graph(world))
+    assert alone.vector.level(Factor.VERIFICATION) == UNKNOWN          # no convergence check: solution not verified
+
+
+def test_f4_a_benchmark_document_backs_verification_only_through_a_pinned_source(world):
+    bench_pin = world["nodes"]["bench"].provenance.source_id
+    unpinned = TrustedSourceRegistry(tuple(p for p in world["pins"].pins if p.source_id != bench_pin))
+    rep = assess(world, leaf([FactorClaim(Factor.VERIFICATION, 2, ("conv", "bench"), VL.BENCHMARK_VALIDATED.value)]), graph(world),
+                 trusted_sources=unpinned)
+    assert rep.vector.level(Factor.VERIFICATION) == UNKNOWN

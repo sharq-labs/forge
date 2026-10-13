@@ -296,7 +296,7 @@ and not VERIFIED.
 
 | claim | verdict |
 |---|---|
-| NAFEMS T3 probe temperature ≈ 309.75 ± 0.5 K at the benchmark point | SUPPORTED, BENCHMARK_VALIDATED |
+| NAFEMS T3 probe temperature ≈ 309.75 ± 0.5 K at the benchmark point | SUPPORTED, BENCHMARK_VALIDATED (verification only: F4) |
 | the same, against a 305 K target | CONTRADICTED |
 | electrothermal `final_temperature < 353.15 K`, example case | SUPPORTED (verification only, and said so) |
 | the same, with EXPERIMENTALLY_VALIDATED required | INSUFFICIENT_EVIDENCE |

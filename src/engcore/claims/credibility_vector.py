@@ -140,7 +140,10 @@ class Factor(str, Enum):
 LEVELS: Mapping[Factor, tuple[str, ...]] = MappingProxyType({
     Factor.APPLICABILITY: ("outside_domain", "inside_domain"),
     Factor.VERIFICATION: ("none", "solution_verified", "code_and_solution_verified"),
-    Factor.VALIDATION: ("none", "benchmark", "experimental"),
+    # F4: index 1 was "benchmark". Agreement with a published reference solution is verification
+    # (VALIDATION_LEVELS), so nothing earns validation level 1 any more; the index is kept so stored levels
+    # keep their positions, and its name says it is retired rather than reading as validation.
+    Factor.VALIDATION: ("none", "retired_benchmark_is_verification", "experimental"),
     Factor.NUMERICAL_UQ: ("declared", "quantified"),
     Factor.PARAMETER_UQ: ("declared", "quantified"),
     Factor.MEASUREMENT_UQ: ("declared", "quantified"),
@@ -155,7 +158,7 @@ VALIDATION_LEVEL_PROJECTION: Mapping[ValidationLevel, tuple[Factor, int] | None]
     ValidationLevel.DIMENSIONALLY_VALID: None,
     ValidationLevel.NUMERICALLY_CONVERGED: (Factor.VERIFICATION, 1),          # solution verification
     ValidationLevel.ANALYTICALLY_VERIFIED: (Factor.VERIFICATION, 2),          # code verification (with a converged solution)
-    ValidationLevel.BENCHMARK_VALIDATED: (Factor.VALIDATION, 1),
+    ValidationLevel.BENCHMARK_VALIDATED: (Factor.VERIFICATION, 2),            # F4: reference-solution agreement; NOT validation
     ValidationLevel.CROSS_SOLVER_VALIDATED: (Factor.INDEPENDENT_ROUTES, 1),   # R-39: implementations agree; NOT validation
     ValidationLevel.EXPERIMENTALLY_VALIDATED: (Factor.VALIDATION, 2),
 })
@@ -201,7 +204,11 @@ _NOT_RESTING_ON = frozenset({EvidenceRelation.CONTRADICTS, EvidenceRelation.SUPE
 def _admissible(factor: Factor, level: int) -> frozenset[EvidenceAuthority]:
     """Which authorities can earn ``level`` of ``factor``."""
     if factor is Factor.VALIDATION:
-        return {1: _EXTERNAL_REFERENCE | _MEASURED, 2: _MEASURED}[level]
+        return {1: frozenset(), 2: _MEASURED}[level]         # F4: level 1 (benchmark) is verification, earned by nobody here
+    if factor is Factor.VERIFICATION and level == 2:
+        # code verification compares THIS run with a reference solution: a closed form (computed) or a published
+        # benchmark solution (an external reference, which must then carry registry-pinned provenance)
+        return _COMPUTED | _EXTERNAL_REFERENCE
     if factor in (Factor.VERIFICATION, Factor.INDEPENDENT_ROUTES, Factor.ADVERSARIAL):
         return _COMPUTED                                     # verification checks THIS run: a document cannot verify it
     if factor is Factor.APPLICABILITY:
@@ -240,11 +247,19 @@ def _needs_provenance(factor: Factor, level: int) -> bool:
         or factor is Factor.ADVERSARIAL
 
 
+def _needs_reference_provenance(factor: Factor, authority: EvidenceAuthority) -> bool:
+    """A published reference solution backs verification only through registry-pinned provenance."""
+    return factor is Factor.VERIFICATION and authority in _EXTERNAL_REFERENCE
+
+
+#: the reference comparisons that make solution verification CODE verification: a closed form or a benchmark solution
+_REFERENCE_VERIFICATION = frozenset({ValidationLevel.ANALYTICALLY_VERIFIED, ValidationLevel.BENCHMARK_VALIDATED})
+
 #: the ValidationLevel(s) a backing check must establish, per factor and level
 _CHECK_LEVELS: Mapping[tuple[Factor, int], frozenset[ValidationLevel]] = MappingProxyType({
     (Factor.VERIFICATION, 1): frozenset({ValidationLevel.NUMERICALLY_CONVERGED}),
-    (Factor.VERIFICATION, 2): frozenset({ValidationLevel.NUMERICALLY_CONVERGED, ValidationLevel.ANALYTICALLY_VERIFIED}),
-    (Factor.VALIDATION, 1): frozenset({ValidationLevel.BENCHMARK_VALIDATED}),
+    (Factor.VERIFICATION, 2): frozenset({ValidationLevel.NUMERICALLY_CONVERGED}) | _REFERENCE_VERIFICATION,
+    (Factor.VALIDATION, 1): frozenset(),                       # F4: retired; a present key with no member refuses every check
     (Factor.VALIDATION, 2): frozenset({ValidationLevel.EXPERIMENTALLY_VALIDATED}),
     (Factor.INDEPENDENT_ROUTES, 1): frozenset({ValidationLevel.CROSS_SOLVER_VALIDATED}),
     (Factor.INDEPENDENT_ROUTES, 2): frozenset({ValidationLevel.CROSS_SOLVER_VALIDATED}),
@@ -432,7 +447,8 @@ class _GraphView:
                     f"authorized as {sorted(r.value for r in FACTOR_ROLES[factor])}")
         if self.superseded_by(evidence_id):
             return f"{evidence_id} is superseded by {self.superseded_by(evidence_id)}: a superseded record is not support"
-        if _needs_provenance(factor, level) and not self.trusted_provenance(evidence_id):
+        if (_needs_provenance(factor, level) or _needs_reference_provenance(factor, node.authority)) \
+                and not self.trusted_provenance(evidence_id):
             return (f"{evidence_id} needs provenance pinned by the trusted source registry for {factor.value}="
                     f"{LEVELS[factor][level]}")
         if (factor, level) in _CHECK_LEVELS and self.checks.get(node.content_digest) not in _CHECK_LEVELS[(factor, level)]:
@@ -636,8 +652,9 @@ def _leaf_vector(leaf: "ClaimNode", view: _GraphView, envelopes: Mapping[str, tu
                        "record backs one factor, so every claim citing them is refused")
         if fc.factor is Factor.VERIFICATION and fc.level == 2 and not why:
             got = {view.checks.get(view.nodes[e].content_digest) for e in fc.evidence_ids}
-            if not _CHECK_LEVELS[(Factor.VERIFICATION, 2)] <= got:
-                why.append("code AND solution verification are two checks (analytically verified + numerically converged)")
+            if ValidationLevel.NUMERICALLY_CONVERGED not in got or not (got & _REFERENCE_VERIFICATION):
+                why.append("code AND solution verification are two checks (numerically converged + agreement with a "
+                           "reference solution: analytically verified or a benchmark solution)")
         if fc.factor is Factor.INDEPENDENT_ROUTES and not why:
             ids = fc.evidence_ids
             pairs_ok = all(view.independent(a, b, subject) for i, a in enumerate(ids) for b in ids[i + 1:])
