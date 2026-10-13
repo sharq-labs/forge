@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Sequence
 
+from ..claims.assessment import CALLER_AUTHORED_CRITERIA
 from ..scientific.units.quantity import Quantity
 
 __all__ = ["CONTEXT_SCHEMA", "evaluate_context"]
@@ -129,6 +130,8 @@ def evaluate_context(
         "evidence_status": evidence_status,
         "criteria": evaluated,
         "advisory": True,
+        # Hostile review R9: the thresholds are the caller's, in the same machine-readable words a claim record uses.
+        "criteria_authority": dict(CALLER_AUTHORED_CRITERIA),
         "does_not_mean": (
             "This is not certification or an autonomous engineering decision; "
             "it evaluates caller-declared criteria against recorded evidence."

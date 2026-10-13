@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import Any, Mapping, Sequence
 
 from ..claims.adapters.nl import compile_natural_language
-from ..claims.assessment import assess_claim
+from ..claims.assessment import CALLER_AUTHORED_CRITERIA, assess_claim, grounded_criteria
 from ..claims.capabilities import CapabilityRegistry
 from ..claims.external_evidence import read_external_record
 from ..claims.measurement_dataset import DatasetObservation
@@ -36,31 +36,9 @@ class ProductRequestError(ValueError):
     """A product request is malformed before it reaches scientific compilation."""
 
 
-#: Attached to every result of a STRUCTURED claim: nobody grounded its criteria (hostile review F1-G).
-#: A client that takes an advisory, ungrounded proposal and submits it as a structured claim gets a
-#: verdict about the criteria as written -- and this says so, so it cannot pass for a grounded run.
-CALLER_AUTHORED_CRITERIA: Mapping[str, Any] = {
-    "authority": "caller_authored",
-    "grounded": False,
-    "meaning": (
-        "The comparison, bound, tolerance, evidence bar and uncertainty demand were supplied by the "
-        "caller. Forge did not ground them in a user's statement or a deployment policy: the verdict "
-        "is about the criteria as written in this record, and the caller is accountable for whether "
-        "they are the user's. Use prepare_simulation / run_proposed_simulation to have criteria "
-        "grounded in the user's own text."
-    ),
-}
-
-
-def grounded_criteria(provenance: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    """The criteria authority of a run whose every scientific field was grounded by the adapter."""
-    return {
-        "authority": "grounded",
-        "grounded": True,
-        "provenance": [dict(item) for item in provenance],
-        "meaning": "Every decision criterion was read from the user's text, bound by the deploying "
-                   "policy, or derived from grounded values; see provenance.",
-    }
+#: Re-exported: who authored a record's criteria lives IN the assessment record (claims layer), bound by
+#: its digest and re-derived on read-back (hostile review F1-G / R9). The view only repeats it.
+CALLER_AUTHORED_QUALIFIER = "criteria authored by the caller, not grounded"
 
 
 def _wire_spans(spans: Mapping[str, Sequence[int]]) -> dict[str, tuple[int, int]]:
@@ -233,6 +211,11 @@ def _assessment_view(record: Mapping[str, Any], *, digest: str) -> dict[str, Any
     return {
         "status": record.get("status"),
         "verdict": record.get("verdict"),
+        # The verdict is about the criteria in the record; when nobody grounded them, the view says so beside it.
+        "verdict_qualifier": None
+        if (record.get("criteria_authority") or {}).get("authority") == "grounded"
+        else CALLER_AUTHORED_QUALIFIER,
+        "criteria_authority": record.get("criteria_authority"),
         "result": record.get("result"),
         "plan": record.get("plan"),
         "trust": {
@@ -260,8 +243,13 @@ def run_simulation(
     external: Sequence[Mapping[str, Any]] = (),
     empirical_observations: Sequence[Mapping[str, Any]] = (),
     model_form_qualification: Mapping[str, Any] | None = None,
+    criteria_authority: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Run one structured product claim through the production scientific runtime."""
+    """Run one structured product claim through the production scientific runtime.
+
+    Its criteria are the caller's unless ``criteria_authority`` is the natural-language adapter's
+    grounding (passed only by :func:`run_proposed_simulation`); the assessment record carries which.
+    """
     offered = tuple(
         read_external_record(item.get("record", item))
         for item in external
@@ -281,13 +269,14 @@ def run_simulation(
         external=offered,
         empirical_observations=empirical,
         model_form_qualification=qualification,
+        criteria_authority=criteria_authority,
     )
     record = assessment.to_dict()
     return {
         "schema": PRODUCT_RUN_SCHEMA,
         "view": _assessment_view(record, digest=assessment.digest),
         "record": record,
-        "criteria_authority": dict(CALLER_AUTHORED_CRITERIA),
+        "criteria_authority": record["criteria_authority"],
         "notice": (
             "The view is a projection of the canonical assessment record; the "
             "record remains the auditable source of every displayed status."
@@ -332,22 +321,22 @@ def run_proposed_simulation(
         external=external,
         empirical_observations=empirical_observations,
         model_form_qualification=model_form_qualification,
+        criteria_authority=grounded_criteria(text, _wire_spans(spans), policy or {}, preparation["provenance"]),
     )
     return {
         **result,
-        "criteria_authority": grounded_criteria(preparation["provenance"]),
         "preparation": preparation,
     }
 
 
 __all__ = [
     "CALLER_AUTHORED_CRITERIA",
+    "CALLER_AUTHORED_QUALIFIER",
     "PRODUCT_CAPABILITIES_SCHEMA",
     "PRODUCT_PREPARATION_SCHEMA",
     "PRODUCT_RUN_SCHEMA",
     "ProductRequestError",
     "describe_product",
-    "grounded_criteria",
     "prepare_simulation",
     "run_proposed_simulation",
     "run_simulation",
