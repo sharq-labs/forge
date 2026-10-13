@@ -63,7 +63,8 @@ def _explicit_correlations(contributions,correlations,policy):
         raise InvalidScientificProblem(f"correlations are unspecified for contribution pairs {missing}")
     if missing:
         assumptions.extend(f"assumed_zero_correlation:{a}:{b}" for a,b in missing)
-    return tuple(assumptions)
+    # The policy's assumption becomes declared data, so the aggregate never reads silence as independence.
+    return tuple(assumptions),tuple(Correlation(a,b,0.0) for a,b in missing)
 
 
 def combine_uncertainties(nominal:Quantity,contributions:tuple[UncertaintyContribution,...],
@@ -75,11 +76,12 @@ def combine_uncertainties(nominal:Quantity,contributions:tuple[UncertaintyContri
     if policy.mode is CombinationMode.STANDARD_RSS:
         if any(c.uncertainty.kind is not UncertaintyKind.STANDARD for c in contributions):
             raise InvalidScientificProblem("STANDARD_RSS accepts only STANDARD uncertainty records")
-        assumptions.extend(_explicit_correlations(contributions,correlations,policy))
+        stated,assumed=_explicit_correlations(contributions,correlations,policy)
+        assumptions.extend(stated)
         components=tuple(UncertaintyComponent(
             c.contribution_id,BudgetSource(c.source_kind.value),_standard_magnitude(c,spread_unit)
         ) for c in contributions)
-        aggregate=aggregate_uncertainty(components,correlations)
+        aggregate=aggregate_uncertainty(components,correlations+assumed)
         output=Uncertainty(kind=UncertaintyKind.STANDARD,
             standard_uncertainty=Quantity(aggregate.standard_uncertainty,spread_unit),
             method="correlation-aware RSS over explicitly attributed uncertainty contributions",
