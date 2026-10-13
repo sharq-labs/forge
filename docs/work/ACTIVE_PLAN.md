@@ -9,6 +9,14 @@ constraints; execution authority does not imply semantic authority outside its s
 
 ## Objective
 
+Owner-requested repair slice (2026-10-13), branch `codex/repair-scientific-boundaries`,
+base `c4e05ee6`: reject empty UQ budgets; make Discovery deadlines cover the handshake
+and pipe reads; isolate benchmark rebuild outputs; report inconclusive challenges;
+block compilation when applicability cannot be assessed. No new capability, maturity
+promotion, certificate regeneration or strategic change. Exit: adversarial tests,
+repository gates with exact failures recorded, and independent scientific review.
+Hardened recertification remains owner-run (OD-3).
+
 Prove a trustworthy, measurable scientific reasoning loop. Order: **G0** Trust lane → **A1** Genesis-lite measurement →
 **A2** Minimal Mind → **B1** narrow real demo. One Trust architecture, one Mind; no second authority.
 

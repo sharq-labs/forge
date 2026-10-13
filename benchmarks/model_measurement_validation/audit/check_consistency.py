@@ -21,22 +21,22 @@ from .evidence import ROOT
 REPORT = ROOT / "ROUND_REPORT.md"
 
 
-def _text() -> str:
+def _text(report: pathlib.Path = REPORT) -> str:
     """The report with emphasis stripped, underscores KEPT.
 
     Underscores survive because the verdicts matched against are identifiers
     like EMPIRICAL_EVIDENCE_NOT_ESTABLISHED; stripping them from the haystack
     while leaving them in the needle makes every such check unsatisfiable.
     """
-    stripped = re.sub(r"[*`\[\]]", "", REPORT.read_text(encoding="utf-8"))
+    stripped = re.sub(r"[*`\[\]]", "", report.read_text(encoding="utf-8"))
     # Line wrapping is not content. Without this, a phrase that happens to
     # straddle a newline is unmatchable and the checker reports a report that
     # says the right thing as saying nothing.
     return re.sub(r"[ \t]*\n[ \t]*", " ", stripped)
 
 
-def _artifact(name):
-    return json.loads((ROOT / name).read_text(encoding="utf-8"))
+def _artifact(name, artifact_dir: pathlib.Path = ROOT):
+    return json.loads((artifact_dir / name).read_text(encoding="utf-8"))
 
 
 # ---------------------------------------------------------------------------
@@ -61,8 +61,8 @@ FORBIDDEN = [
 ]
 
 
-def forbidden_reasoning() -> list[dict]:
-    text = _text()
+def forbidden_reasoning(*, report: pathlib.Path = REPORT) -> list[dict]:
+    text = _text(report)
     found = []
     for description, pattern in FORBIDDEN:
         match = pattern.search(text)
@@ -76,13 +76,14 @@ def forbidden_reasoning() -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def quoted_numbers() -> list[dict]:
-    text = _text()
-    results = _artifact("VALIDATION_RESULTS.json")
-    accounting = _artifact("MODEL_ACCOUNTING.json")
-    gates = _artifact("SAFETY_GATES.json")
-    plants = _artifact("FALSIFICATION.json")
-    shapes = _artifact("RESIDUAL_ANALYSIS.json")["analyses"]
+def quoted_numbers(*, artifact_dir: pathlib.Path = ROOT, report: pathlib.Path = REPORT) -> list[dict]:
+    text = _text(report)
+    results = _artifact("VALIDATION_RESULTS.json", artifact_dir)
+    accounting = _artifact("MODEL_ACCOUNTING.json", artifact_dir)
+    gates = _artifact("SAFETY_GATES.json", artifact_dir)
+    plants = _artifact("FALSIFICATION.json", artifact_dir)
+    shapes = _artifact("RESIDUAL_ANALYSIS.json", artifact_dir)["analyses"]
+    # Immutable source declaration; generated results must come from artifact_dir.
     provenance = _artifact("EVIDENCE_PROVENANCE.json")
 
     a = results["cases"]["MV-A"]["summary"]
@@ -147,11 +148,11 @@ def quoted_numbers() -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def claim_checks() -> list[dict]:
-    text = _text()
-    accounting = _artifact("MODEL_ACCOUNTING.json")
-    gates = _artifact("SAFETY_GATES.json")
-    results = _artifact("VALIDATION_RESULTS.json")
+def claim_checks(*, artifact_dir: pathlib.Path = ROOT, report: pathlib.Path = REPORT) -> list[dict]:
+    text = _text(report)
+    accounting = _artifact("MODEL_ACCOUNTING.json", artifact_dir)
+    gates = _artifact("SAFETY_GATES.json", artifact_dir)
+    results = _artifact("VALIDATION_RESULTS.json", artifact_dir)
 
     checks = []
     checks.append({
@@ -222,14 +223,13 @@ def claim_checks() -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def self_check() -> dict:
+def self_check(*, artifact_dir: pathlib.Path = ROOT, report: pathlib.Path = REPORT) -> dict:
     """Can this checker fail? Demonstrated, not assumed."""
-    global REPORT
     import tempfile
 
-    original = REPORT
+    original = report
     text = original.read_text(encoding="utf-8")
-    truth = str(_artifact("VALIDATION_RESULTS.json")["row_counts"]["VALIDATION"])
+    truth = str(_artifact("VALIDATION_RESULTS.json", artifact_dir)["row_counts"]["VALIDATION"])
     spoiled = text.replace(f"{truth} validation rows", f"{int(truth) - 1} validation rows", 1)
     changed = spoiled != text
     caught = False
@@ -237,11 +237,7 @@ def self_check() -> dict:
         with tempfile.TemporaryDirectory() as directory:
             path = pathlib.Path(directory) / "ROUND_REPORT.md"
             path.write_text(spoiled, encoding="utf-8")
-            REPORT = path
-            try:
-                caught = any(not row["present_in_report"] for row in quoted_numbers())
-            finally:
-                REPORT = original
+            caught = any(not row["present_in_report"] for row in quoted_numbers(artifact_dir=artifact_dir, report=path))
     return {
         "a_number_was_changed": changed,
         "the_checker_noticed": caught,
@@ -249,11 +245,11 @@ def self_check() -> dict:
     }
 
 
-def run() -> dict:
-    numbers = quoted_numbers()
-    claims = claim_checks()
-    forbidden = forbidden_reasoning()
-    checker = self_check()
+def run(*, artifact_dir: pathlib.Path = ROOT, report: pathlib.Path = REPORT) -> dict:
+    numbers = quoted_numbers(artifact_dir=artifact_dir, report=report)
+    claims = claim_checks(artifact_dir=artifact_dir, report=report)
+    forbidden = forbidden_reasoning(report=report)
+    checker = self_check(artifact_dir=artifact_dir, report=report)
     missing = [row for row in numbers if not row["present_in_report"]]
     failed = [row for row in claims if not row["ok"]]
     return {

@@ -91,6 +91,8 @@ class ChallengeReport:
     def status(self) -> str:
         if any(c.weakened for c in self.challenges):
             return "weakened"
+        if any(c.result is ChallengeResult.INCONCLUSIVE for c in self.challenges):
+            return "inconclusive_attempted_challenges"
         if any(c.result is ChallengeResult.SURVIVED for c in self.challenges):
             return "survived_attempted_challenges"
         return "not_challenged"

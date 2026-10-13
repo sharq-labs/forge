@@ -499,10 +499,10 @@ def test_the_consistency_checker_is_live_not_just_recorded():
 
 
 @pytest.mark.expensive
-def test_rebuilding_everything_reproduces_the_published_gates():
-    from audit import build_gates
+def test_rebuilding_everything_reproduces_the_published_gates(tmp_path):
+    from benchmarks.empirical_validation.audit import build_gates
 
-    payload = build_gates.build()
+    payload = build_gates.build(output_dir=tmp_path)
     assert payload["failed"] == 0
     assert payload["primary_disagreements"] == 0
     assert payload["holdout_disagreements"] == 0

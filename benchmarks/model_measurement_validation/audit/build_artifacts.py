@@ -5,13 +5,14 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from functools import partial
 
 from . import adjudication, falsification, integrity, residuals, validation
 from .evidence import ROOT
 
 
-def _write(name, payload):
-    (ROOT / name).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+def _write(name, payload, *, output_dir: Path = ROOT):
+    (output_dir / name).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
 def core_digest() -> str:
@@ -33,7 +34,10 @@ def evidence_hashes() -> dict:
     }
 
 
-def build() -> dict:
+def build(*, output_dir: Path = ROOT) -> dict:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    write = partial(_write, output_dir=output_dir)
     results = validation.run_all()
     shapes = residuals.run_all(results)
     checks = integrity.run_all(results)
@@ -45,7 +49,7 @@ def build() -> dict:
     for row in rows:
         counts[row["split"]] += 1
 
-    _write("VALIDATION_RESULTS.json", {
+    write("VALIDATION_RESULTS.json", {
         "schema": "validation_results/1",
         "what_this_is": (
             "Every comparison this round ran, at the tolerances METRIC_PLAN.json "
@@ -65,7 +69,7 @@ def build() -> dict:
         "integrity": checks,
     })
 
-    _write("RESIDUAL_ANALYSIS.json", {
+    write("RESIDUAL_ANALYSIS.json", {
         "schema": "residual_analysis/1",
         "why_this_exists": (
             "A low summary error with a systematic trend inside it is a "
@@ -76,7 +80,7 @@ def build() -> dict:
         "analyses": shapes,
     })
 
-    _write("FALSIFICATION.json", {
+    write("FALSIFICATION.json", {
         "schema": "falsification/1",
         "what_this_is": (
             "Eight controlled failures planted in what the Core returns or in "
@@ -87,7 +91,7 @@ def build() -> dict:
         **plants,
     })
 
-    _write("FINDINGS.json", {
+    write("FINDINGS.json", {
         "schema": "findings/1",
         "adjudication_classes": adjudication.CLASSES,
         "findings": found,
@@ -99,7 +103,7 @@ def build() -> dict:
         "production_changes_made": 0,
     })
 
-    _write("MODEL_ACCOUNTING.json", {
+    write("MODEL_ACCOUNTING.json", {
         "schema": "model_accounting/1",
         "rule": "Every shipped model appears exactly once. None disappears because data was unavailable.",
         "model_count": len(adjudication.ACCOUNTING),

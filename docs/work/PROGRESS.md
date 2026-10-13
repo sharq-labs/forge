@@ -2694,3 +2694,24 @@ Failed approaches:
 Open: the two `test_rebuilding_everything_reproduces_the_published_gates` tests write committed files in place (CI
 deselects them; locally they race with `test_offline_revalidation`); the builders need an output-directory parameter.
 SCIENTIFIC without the CI deselects is not equivalent to CI. FULL, Python 3.11/3.12, hardened recertification: NOT RUN.
+
+## 2026-10-13 Owner-requested scientific boundary repairs
+
+Base `origin/main` `c4e05ee6`; isolated worktree, branch
+`codex/repair-scientific-boundaries`. The shared checkout and its existing edits
+are preserved. Scope: empty UQ budgets, discovery timeout, benchmark output
+isolation, challenge summary, and unassessable applicability compilation.
+
+Compatibility decision: keep frozen Core signatures, record field names, schema
+strings and valid-budget serialization unchanged. Empty or missing budget
+components are refused rather than interpreted as zero. The non-Core challenge
+summary gains `inconclusive_attempted_challenges`; its existing digest formula
+stays unchanged, but corrected summaries intentionally change the digest. Existing
+historical records are not rewritten. The non-Core compiler gains an explicit
+applicability gap and refuses readiness on evaluator failure.
+
+Failed environment approaches: forge-runner WSL cannot start because its D:
+virtual disk is unavailable. A venv under /tmp disappeared between WSL starts;
+retry under the persistent Ubuntu user home succeeded (Python 3.12.3). Initial
+forge_check launch did not execute tests because the /tmp interpreter was missing.
+Tests: NOT RUN at the environment-preparation checkpoint; results appended below.

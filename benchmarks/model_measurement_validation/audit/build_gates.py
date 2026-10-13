@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from pathlib import Path
 
 from . import adjudication, build_artifacts, check_consistency
 from .evidence import ROOT
@@ -247,8 +248,10 @@ def gates(built) -> list[dict]:
     return out
 
 
-def build() -> dict:
-    built = build_artifacts.build()
+def build(*, output_dir: Path = ROOT) -> dict:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    built = build_artifacts.build(output_dir=output_dir)
     entries = gates(built)
     payload = {
         # /2: MV-10's `certified_digest` became `expected_digest`, plus an
@@ -266,10 +269,10 @@ def build() -> dict:
             "scope would be worth nothing."
         ),
     }
-    (ROOT / "SAFETY_GATES.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    (output_dir / "SAFETY_GATES.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     # MV-28 last: it reads every artifact above and the report that quotes them.
-    consistency = check_consistency.run()
-    (ROOT / "CONSISTENCY_AUDIT.json").write_text(
+    consistency = check_consistency.run(artifact_dir=output_dir)
+    (output_dir / "CONSISTENCY_AUDIT.json").write_text(
         json.dumps(consistency, indent=2) + "\n", encoding="utf-8"
     )
     return payload | {"_built": built, "consistency": consistency}

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from pathlib import Path
 
 from . import build_artifacts, check_consistency, construction
 from .loader import ROOT
@@ -65,7 +66,7 @@ def _git(*args) -> str:
     ).stdout
 
 
-def gates(result: dict) -> list[dict]:
+def gates(result: dict, *, artifact_dir: Path = ROOT) -> list[dict]:
     primary = result["primary_validation"]
     holdout = result["holdout_validation"]
     construction_rows = result["construction"]
@@ -200,7 +201,7 @@ def gates(result: dict) -> list[dict]:
 
     # ---- EV-5 ----------------------------------------------------------
     provenance = json.loads(
-        (ROOT / "EVIDENCE_PROVENANCE.json").read_text(encoding="utf-8")
+        (artifact_dir / "EVIDENCE_PROVENANCE.json").read_text(encoding="utf-8")
     )
     # `invocation` joins `binary` as an answer to "where did this number come
     # from": for an external program reached through WSL there is no single
@@ -433,9 +434,11 @@ def gates(result: dict) -> list[dict]:
     return out
 
 
-def build() -> dict:
-    result = build_artifacts.build()
-    entries = gates(result)
+def build(*, output_dir: Path = ROOT) -> dict:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    result = build_artifacts.build(output_dir=output_dir)
+    entries = gates(result, artifact_dir=output_dir)
     digest = build_artifacts.core_digest()
     status = _git("status", "--porcelain")
     touched = sorted(
@@ -474,13 +477,13 @@ def build() -> dict:
             1 for row in result["holdout_validation"] if row["verdict"] == "DISAGREES"
         ),
     }
-    (ROOT / "SAFETY_GATES.json").write_text(
+    (output_dir / "SAFETY_GATES.json").write_text(
         json.dumps(payload, indent=2) + "\n", encoding="utf-8"
     )
     # EV-30. Written last, because it reads the artifacts every other step
     # produced and the report that quotes them.
-    consistency = check_consistency.run()
-    (ROOT / "CONSISTENCY_AUDIT.json").write_text(
+    consistency = check_consistency.run(artifact_dir=output_dir)
+    (output_dir / "CONSISTENCY_AUDIT.json").write_text(
         json.dumps(consistency, indent=2) + "\n", encoding="utf-8"
     )
     return payload | {"_result": result, "consistency": consistency}
