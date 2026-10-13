@@ -2982,3 +2982,48 @@ Attribution run on pristine base 5d73e8f5 is underway. Dirty-tree failures are n
 command: `CRAFTY_NGSPICE_ARGV=ngspice PYTHONPATH=/home/dev_kaeem/forge-repair-latest-base/src:/home/dev_kaeem/forge-repair-latest-base /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-base-attribution.xml <the nine failure node IDs listed above>`
 result: FAIL — 3 failed, 6 passed in 26.35 s on pristine 5d73e8f5.
 Base failures: certificate_describes_this_tree and both historical benchmark rebuild tests. The six freeze tests pass on the clean base and reject the uncommitted repair tree specifically at tree.clean; a committed repair rerun will determine their status. No scientific regression was inferred from those dirty-tree failures; no gate was waived.
+
+Exact base-attribution subprocess command (cwd `/home/dev_kaeem/forge-repair-latest-base`; PYTHONPATH set to that checkout src/root; CRAFTY_NGSPICE_ARGV=ngspice):
+`/home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-base-attribution.xml benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates tests/test_core_certificate.py::test_the_certificate_describes_this_tree tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract`
+
+
+## 2026-10-13 Final committed repair gates
+
+Implementation commit: `cf0f31f1a0718b3921dc47e0bae71ea19bf39554`, base `5d73e8f5`.
+Ubuntu / Python 3.12.3; all commands below ran sequentially against the clean,
+Git-native clone of that exact implementation commit. No source change since the
+independent latest-base review PASS. Valid frozen API output remains byte-identical
+to base. Hardened recertification: NOT RUN (OD-3, owner-run).
+
+Failed transport approach: fetching the implementation commit through the Windows
+managed worktree path failed because Linux Git cannot resolve its Windows .git
+pointer. The mistakenly started base-only runner was stopped and its partial
+results were not used. Fetching the branch through the primary repository's .git
+worked. The final runner asserts the exact HEAD and a clean tree before any test.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --regression --workers 4`
+result: PASS — 256 passed in 5.19 s.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -m "not expensive" -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-latest-fast.xml`
+result: FAIL — 10047 passed, 157 skipped, 1 failed in 119.30 s.
+failure: `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -m "not campaign" -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-latest-scientific.xml`
+result: FAIL — 10623 passed, 157 skipped, 3 failed in 204.95 s.
+failures: certificate_describes_this_tree and both historical benchmark rebuild
+nodes listed above. All three also fail on pristine 5d73e8f5; XML failure-ID union
+comparison matched exactly. The six freeze checks that rejected the dirty tree
+pass on the committed repair. No certificate, threshold, skip rule, reference
+artifact or published negative result was rewritten to clear a gate.
+
+command: `wsl -d Ubuntu -- python3 /mnt/c/Users/dev_kaeem/.codex/worktrees/repair-scientific-boundaries/phyx/.pytest-review-temp/compare_final_failures.py`
+result: PASS — final FAST/SCIENTIFIC failure union equals the three failures from
+the pristine-main attribution run. This is failure attribution, not a passing tier.
+
+command: `/home/dev_kaeem/forge-repair-venv/bin/python -m tools.certification.assert_clean_tree`
+result: PASS — `/home/dev_kaeem/forge-repair-src` byte-identical to HEAD after all tiers.
+
+Outcome: the remaining three requested code repairs are implemented and reviewed;
+latest-main benchmark and additive challenge-summary repairs are preserved.
+Integration remains blocked by the actual red gates / certificate drift; no
+G0 PASS, certification, qualification or physical validation is claimed.

@@ -16,6 +16,13 @@ output isolation and the additive challenge outcome summary; preserve those
 implementations. Exit: adversarial tests, repository gate results with failures
 recorded, independent scientific review. No certificate regeneration (OD-3).
 
+Implementation complete at `cf0f31f1`; scientific review PASS. Committed-tree
+regression: 256 passed. FAST: 10047 passed / 1 failed; SCIENTIFIC: 10623 passed /
+3 failed; their failure union matches pristine `5d73e8f5` (certificate and two
+historical benchmark gates). Freeze checks pass on the committed tree. Integration
+remains blocked by these red gates; this slice does not declare G0 PASS or change
+scientific maturity. Exact commands and failures are in PROGRESS.
+
 Prove a trustworthy, measurable scientific reasoning loop. Order: **G0** Trust lane → **A1** Genesis-lite measurement →
 **A2** Minimal Mind → **B1** narrow real demo. One Trust architecture, one Mind; no second authority.
 
