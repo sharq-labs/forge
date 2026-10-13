@@ -440,6 +440,12 @@ class _GraphView:
             return f"{evidence_id} is bound to another context than the decision's"
         if node.authority not in _admissible(factor, level):
             return f"{evidence_id} ({node.authority.value}) cannot earn {factor.value}={LEVELS[factor][level]}"
+        if factor is Factor.VERIFICATION and node.authority in _EXTERNAL_REFERENCE \
+                and self.checks.get(node.content_digest) is not ValidationLevel.BENCHMARK_VALIDATED:
+            # F4 re-review: a document may stand only for the benchmark SOLUTION it publishes; the convergence and
+            # closed-form parts of code verification check THIS run and are never carried by a document.
+            return (f"{evidence_id} ({node.authority.value}) is a document: it can back only the benchmark-solution part "
+                    "of code verification, never this run's convergence or closed-form check")
         if not self.supports_subject(evidence_id, subject):
             return f"{evidence_id} has no SUPPORTS/VALIDATES edge to the subject {subject}"
         if self.admitted is not None and not (self.admitted.get((subject, node.content_digest), frozenset()) & FACTOR_ROLES[factor]):

@@ -94,7 +94,7 @@ class Role(str, Enum):
 
     EXECUTOR = "executor"                              # attests NodeReceipts it executed
     NUMERICAL_VERIFICATION = "numerical_verification"  # convergence / code verification / independent routes / numerical UQ
-    VALIDATION = "validation"                          # benchmark / experimental validation checks
+    VALIDATION = "validation"                          # experimental validation checks (a benchmark check is verification: F4)
     APPLICABILITY = "applicability"                    # applicability reports
     MEASUREMENT = "measurement"                        # measurement (aleatoric) uncertainty, measurement releases
     UNCERTAINTY = "uncertainty"                        # parameter / model-form uncertainty entries

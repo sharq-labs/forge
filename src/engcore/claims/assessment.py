@@ -555,6 +555,12 @@ def _build_record(
             "evidence_basis": report.evidence_basis,
             "required": [l.value for l in claim.evidence.required_levels],
             "missing_required": [l.value for l in claim.evidence.required_levels if l not in set(report.attained_levels)],
+            # F4: "required" lists every required ValidationLevel (the Core's name for all evidentiary levels);
+            # this says which KIND each one is, so a missing benchmark is never read as missing validation.
+            "required_by_kind": {
+                "verification": [l.value for l in claim.evidence.required_levels if l in VERIFICATION_LEVELS],
+                "validation": [l.value for l in claim.evidence.required_levels if l in VALIDATION_LEVELS],
+            },
         },
         "uncertainty": None
         if report is None

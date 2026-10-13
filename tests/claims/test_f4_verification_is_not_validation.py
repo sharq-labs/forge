@@ -122,3 +122,15 @@ def test_a_policy_demanding_validation_evidence_is_not_met_by_a_benchmark(regist
     record = assess_claim(t3_claim(decision_context=context), registry).to_dict()
     assert record["verdict"] != "supported"
     assert "validation_evidence" in str(record)
+
+
+def test_the_record_says_which_kind_each_required_level_is(registry) -> None:
+    claim = t3_claim(evidence=EvidenceRequirement((VL.BENCHMARK_VALIDATED, VL.EXPERIMENTALLY_VALIDATED)))
+    by_kind = assess_claim(claim, registry).to_dict()["validation"]["required_by_kind"]
+    assert by_kind == {"verification": ["benchmark_validated"], "validation": ["experimentally_validated"]}
+
+
+def test_obtaining_benchmark_evidence_is_planned_as_verification_work() -> None:
+    from engcore.claims.next_experiment import ExperimentAction, planning_family
+
+    assert planning_family(ExperimentAction.OBTAIN_BENCHMARK_EVIDENCE) == "reduce_uncertainty"

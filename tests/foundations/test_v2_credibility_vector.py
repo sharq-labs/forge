@@ -862,3 +862,16 @@ def test_f4_nothing_can_back_the_retired_validation_level():
     assert not [lv for lv, proj in VALIDATION_LEVEL_PROJECTION.items() if proj == (Factor.VALIDATION, 1)]
     assert cv._CHECK_LEVELS[(Factor.VALIDATION, 1)] == frozenset()
     assert cv._admissible(Factor.VALIDATION, 1) == frozenset()
+
+
+def test_f4_a_document_cannot_carry_this_runs_convergence_or_closed_form_check(world):
+    """F4 re-review: external-reference authority backs only the benchmark-solution part of code verification."""
+    conv = next(c for c in world["checks"] if c.name == "conv")
+    as_document = node("conv_doc", A.REFERENCE_DATA, digest=check_digest(conv))
+    nodes = dict(world["nodes"], conv_doc=as_document)
+    pins = TrustedSourceRegistry(world["pins"].pins + (SourcePin(as_document.provenance.source_id, as_document.provenance.issuer,
+                                                                 as_document.provenance.document_digest, as_document.provenance.version),))
+    rep = assess(world, leaf([FactorClaim(Factor.VERIFICATION, 2, ("conv_doc", "bench"), VL.BENCHMARK_VALIDATED.value)]),
+                 graph(world, nodes=nodes), trusted_sources=pins)
+    assert rep.vector.level(Factor.VERIFICATION) == UNKNOWN
+    assert any("is a document" in r for r in rep.vector.rejected)

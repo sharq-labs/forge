@@ -305,9 +305,10 @@ PLANNING_FAMILY = {
     ExperimentAction.DECLARE_INPUT_DISTRIBUTIONS: "reduce_uncertainty",
     ExperimentAction.SENSITIVITY_ANALYSIS: "characterize",
     ExperimentAction.RUN_INDEPENDENT_ROUTE: "reduce_uncertainty",  # solver agreement is verification, not validation
+    # A trusted oracle's point may be a measurement (validation) or a benchmark solution; the action names both.
     ExperimentAction.TEST_AT_BENCHMARK_POINT: "validate",
     ExperimentAction.COLLECT_MEASUREMENT: "validate",
-    ExperimentAction.OBTAIN_BENCHMARK_EVIDENCE: "validate",
+    ExperimentAction.OBTAIN_BENCHMARK_EVIDENCE: "reduce_uncertainty",  # F4: a benchmark solution is verification evidence
     ExperimentAction.QUANTIFY_MODEL_FORM: "reduce_uncertainty",
     ExperimentAction.REASSESS_UNDER_PLAN: None,
     ExperimentAction.RESTATE_CLAIM: None,
