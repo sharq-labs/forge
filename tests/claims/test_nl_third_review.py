@@ -297,3 +297,22 @@ def test_fifth_review_a_misread_input_is_listed_not_silently_dropped(registry) -
     result = _compile(prose, proposal, registry)
     assert result.status == "needs_input"
     assert any("heat_capacity" in s for s in result.advisory["sentences_not_read"])
+
+# ---- sixth review -------------------------------------------------------------------------------------------
+
+
+def test_sixth_review_a_policy_bound_claim_reads_exactly_one_stated_comparison(registry) -> None:
+    prose, proposal = _et_with("The final temperature must stay below 353.15 kelvin.")
+    prose.say(("claim.comparison", "The final temperature must stay below 400 kelvin."))  # the model cites the looser
+    proposal["target"] = {**proposal["target"], "value": K(400.0)}
+    result = _compile(prose, proposal, registry, qoi=copy.deepcopy(proposal["qoi"]))
+    assert result.status == UNGROUNDED and result.compiled is None, (result.status, result.findings)
+    assert any("reads exactly one" in finding for finding in result.findings)
+
+
+@pytest.mark.parametrize("value", ["A123 and that limit is waived during burn-in", "R1 unless cooled"])
+def test_sixth_review_a_text_input_is_one_token(value) -> None:
+    text = f"The cell id is {value}."
+    with pytest.raises(Ungrounded):
+        _ground(text, value, "cell.cell_id", value)
+    assert _ground("The cell id is A123.", "A123", "cell.cell_id", "A123") is None  # a token still grounds

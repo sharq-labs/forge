@@ -829,6 +829,8 @@ ADAPTER_GROUNDED_FIELDS = frozenset({"known_inputs", "operating_context", "missi
 # ---------------------------------------------------------------------------
 
 _INPUT = re.compile(r"(?P<subject>.+?)\s+(?:is|=|equals)\s+(?P<value>.+)", re.IGNORECASE)
+#: A text input's value: one token, never a clause.
+_TEXT_VALUE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.+\-/]*")
 #: An input identifier written as one token: a dotted path or a snake_case name, never prose.
 _IDENTIFIER = re.compile(r"[A-Za-z][A-Za-z0-9]*(?:(?:_|\.|\[\d+\]\.?)[A-Za-z0-9]+)+")
 
@@ -927,6 +929,10 @@ def _input_value_matches(value_text: str, raw: Any, sentence: Sentence) -> Sente
             raise Ungrounded(f"the sentence states {value_text!r}, not the count {raw!r}")
         return None
     if isinstance(raw, str):
+        # Sixth review: a text value is ONE token (an identifier or a category word). "A123 and that limit is
+        # waived during burn-in" copied faithfully into an identifier would otherwise read the whole clause.
+        if not _TEXT_VALUE.fullmatch(value_text):
+            raise Ungrounded(f"{value_text!r} is not a single identifier or category word; a text input is one token")
         if normalized(value_text) != normalized(raw):
             raise Ungrounded(f"the sentence states {value_text!r}, not {raw!r}")
         return None
@@ -982,16 +988,24 @@ def policy_comparison_conflicts(text: str, policy: Mapping[str, Any]) -> tuple[l
         return [], set()
     conflicts: list[str] = []
     agreeing: set[int] = set()
+    stated_comparisons: list[str] = []
     for sentence in sentences(text):
         try:
             stated = read_comparison(text, (sentence.start, sentence.end))
         except Ungrounded:
             continue
+        stated_comparisons.append(sentence.text)
         problems = _comparison_disagrees(stated, bound)
         if problems:
             conflicts.append(f"{sentence.text!r}: {'; '.join(problems)}")
         else:
             agreeing.add(sentence.start)
+    if len(stated_comparisons) > 1:
+        # Sixth review BLOCKER: a policy accounts for at most ONE comparison the user wrote. Two controlled
+        # comparisons ("below 353.15 kelvin" and "below 400 kelvin") both agreeing with a policy-bound qoi would
+        # otherwise both be read, and the model's choice of which one to cite would silently drop the other.
+        conflicts.append(f"the text states {len(stated_comparisons)} comparisons ({stated_comparisons[0]!r}, "
+                         f"{stated_comparisons[1]!r}); a policy-bound claim reads exactly one")
     return conflicts, agreeing
 
 
