@@ -2886,3 +2886,30 @@ NOT RUN.
 
 Trap: a real-tree soundness test that called `impact_of` per dependency took 137 s; computing `importers` once per
 dependency (what `impact_of` uses for import reach) takes 2.8 s.
+
+## 2026-10-13 Check of `main` @ `5d73e8f5` on Python 3.12 (cloud session, Linux; read-only except this entry)
+
+Environment: Linux container, 2 CPUs, CPython 3.12.13 (uv venv) with full history fetched; `pip install -e
+".[dev,mcp,oracles]"`. Python 3.11: NOT RUN. SCIENTIFIC, FULL and hardened recertification: NOT RUN.
+
+| Command | Result |
+|---|---|
+| `python tools/forge_check.py --regression` | 256 passed (37.6 s) |
+| `python -m pytest -m "not expensive" -q -n 2 --dist loadfile` | 5 failed, 10010 passed, 171 skipped (310 s) |
+| `python tools/certification/core_certificate.py --verify` | FAILED: certified `39d43456`, HEAD `5d73e8f5`; 15 files in 5 areas (certification_control, execution_trust, harness, inference_admission, runtime_dependencies) |
+
+FAST failures, classified:
+- `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` — certificate drift (OD-3); the only
+  failure that reflects the tree.
+- `tests/test_mutation_workspace.py::{test_local_telemetry_is_outside_manifest_and_cannot_verify_as_receipt,
+  test_mid_walk_failure_still_reports_entries_already_scanned}` — environment: run as root, so the read-only
+  directory these tests build does not raise `PermissionError`.
+- `tests/foundations/test_escrow_isolation.py::{test_the_isolated_deployment_reports_exactly_what_it_established,
+  test_the_leak_detector_catches_a_planted_partial_copy}` — environment: inside the namespace only the interpreter
+  prefix is mounted, and a uv venv keeps `cryptography` outside it. Both pass with the system interpreter
+  (CPython 3.13.16): `python -m pytest tests/foundations/test_escrow_isolation.py` 2 passed.
+
+Observed on 2026-10-12 with CPython 3.13 and a shallow clone (`2d0fa6c3`): 27 FAST failures, of which 18 came from
+the shallow history and 6 from the V4 deep API surface gaining `format`/`format_map` (str enums) and
+`add_note`/`with_traceback` (exceptions) under 3.13; the same tests pass on 3.12. The V4 surface is therefore
+interpreter-dependent. The owner's local interpreter is 3.14 (REMEDIATION_2026-10-13); 3.14: NOT RUN here (OD-2).
