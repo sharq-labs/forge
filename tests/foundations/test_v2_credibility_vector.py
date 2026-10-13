@@ -853,3 +853,12 @@ def test_f4_a_benchmark_document_backs_verification_only_through_a_pinned_source
     rep = assess(world, leaf([FactorClaim(Factor.VERIFICATION, 2, ("conv", "bench"), VL.BENCHMARK_VALIDATED.value)]), graph(world),
                  trusted_sources=unpinned)
     assert rep.vector.level(Factor.VERIFICATION) == UNKNOWN
+
+
+def test_f4_nothing_can_back_the_retired_validation_level():
+    """Defence in depth: neither the projection nor the backing-check table nor the authority table admits validation=1."""
+    from engcore.claims import credibility_vector as cv
+
+    assert not [lv for lv, proj in VALIDATION_LEVEL_PROJECTION.items() if proj == (Factor.VALIDATION, 1)]
+    assert cv._CHECK_LEVELS[(Factor.VALIDATION, 1)] == frozenset()
+    assert cv._admissible(Factor.VALIDATION, 1) == frozenset()
