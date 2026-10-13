@@ -2827,3 +2827,62 @@ Failed approaches / traps:
   the helper now returns None instead.
 - The blindfold `run_discovery` timeout path was not changed: Linux-root only, and its tests need `cryptography`,
   absent in the WSL env; an untested edit to an isolation boundary was not made.
+
+
+## 2026-10-13 Test loop round 3: one-command dev check, selective SCIENTIFIC, slowdown guard (owner-requested, local only)
+
+Base `origin/main` `9ca337f9` (as expected). Branch `perf/test-loop-round3`, worktree `D:/forge-tl3`; pristine twin
+`D:/forge-tl3-base`. Not pushed. Machine: Windows 11, 24 logical / 16 physical CPUs, 31.7 GB (14.5 GB free), CPython
+3.14.2, pytest 9.1.1, xdist 3.8.0. Measurement instrument (outside the repo, same for base and branch):
+`D:/forge-tl3-bench/tl3_metrics.py` (per-test start/stop per worker, Popen and probe counts). Bytecode caching on.
+
+Implemented (`cd6fdc03`, `c2c79b02`):
+- `forge_check --dev`: changed gate + safe-auto workers + timing report (`~/.cache/forge/timing/`) + warning-only
+  comparison + summary (CHANGE CLASS / AFFECTED / RUN / EXPENSIVE AFFECTED / NEXT REQUIRED from
+  `test_impact.next_required`).
+- `forge_check --scientific`: affected tests incl. expensive (`-m "not campaign"`) when `test_impact.scientific_narrowing`
+  allows; refuses (exit 2) for trust/authority, shared scientific, test infrastructure (conftest, pyproject, selector),
+  unclassified and unresolved changes. `test_impact.scope_class` separates what a path is from its certification pin.
+- `tools/test_timing.py`: developer telemetry plugin + `compare` / `history`; thresholds module x2 & +5 s, test x2 & +3 s,
+  wall x1.4.
+
+Measured (same workloads, base / branch):
+
+| Measurement | Base | Branch | Outcome |
+|---|---|---|---|
+| Dev loop, one `thevenin.py` edit (`--changed -n 4` / `--dev`) | 50.9 s | 53.6 s (`-n 4`), 47.4 s (`--dev`, safe-auto 8) | same 9 known failures; no speedup claimed |
+| Selective SCIENTIFIC (`--scientific`, -n 8) | full tier 267.0 s | docs 13.5 s, domain 63.7 s, provider 69.9 s; units / authority / conftest refused | failures all in the known set |
+| FAST -n 4 (warm) | 147.6 / 148.9 s | 139.8 s | 172 ids identical |
+| FAST -n 8 (safe-auto) | 101.5 s | 93.0 s | 172 ids identical |
+| SCIENTIFIC as CI, -n 4 | 267.0 s | 240.9 s | 172 ids identical; within noise, not claimed |
+| xdist imbalance (last worker after first) | FAST 4.5 s, SCI 9.5 s | FAST 4.7 s, SCI 8.2 s | unchanged |
+| Regression pack | 252 passed | 256 passed | +4 new tests |
+| Slowest module | `test_core_guards.py` 41-48 s (FAST); `scientific_truth` 120 s (SCI) | unchanged | - |
+
+Measured and rejected:
+- Provider-probe memoization (Task 5): one FAST run makes 44 `ProviderRegistry.discover()` calls (0.033 s each) and 21
+  ngspice `probe_version` calls (1.85 s first per process through WSL, 0.08 s after). An in-process memo saves < 3 s of
+  worker time (< 1 s wall), and a stale provider identity is the risk; a cross-run cache is not safe for a binary behind
+  WSL. Not built.
+- Giant-module splits (Task 4): imbalance is 4.5 s (FAST) / 9.5 s (SCIENTIFIC) at -n 4. `scientific_truth` (120 s, four
+  independent diffusion tests) is not on the critical path at -n 4 and its node ids are pinned in `tests/conftest.py`
+  tier tables and `tests/test_tier_classification.py`. Not split.
+
+Selective SCIENTIFIC safety evidence:
+- `tests/test_change_impact.py::test_every_expensive_test_reached_by_an_import_is_selected_with_expensive_included`:
+  on the real tree every expensive module is reached by a change to any `src/engcore` module it imports.
+- Mutation G9c (CSTR solver discards its validity assessment) applied temporarily: `--scientific` selected 554 modules
+  and ran `tests/domains/kinetics/test_cstr_domain.py` (expensive), which failed; tree restored.
+
+Flaky / isolation audit (repeated, failure sets compared run by run): preCICE x20, process-boundary timeouts x10,
+timing plugin x10, rebuild tests + offline revalidation at -n 3 x3 (only the two pre-existing rebuild failures, tree
+clean), certification suites at -n 4 x3, `test_benchmark_records` x3, impact / forge_check / timing at -n 4 x3: no run
+differed. No edit made.
+
+Commands: `python tools/forge_check.py --regression --workers 4` (base 252 passed, branch 256 passed, twice each);
+FAST `-m "not expensive" -n 4|8 --dist loadfile`; SCIENTIFIC `-m "not campaign" -n 4 --dist loadfile` + CI's six
+deselects; `python -m tools.certification.assert_clean_tree` clean. FULL, hardened recertification, Python 3.11/3.12:
+NOT RUN.
+
+Trap: a real-tree soundness test that called `impact_of` per dependency took 137 s; computing `importers` once per
+dependency (what `impact_of` uses for import reach) takes 2.8 s.
