@@ -19,10 +19,10 @@ def test_active_epic_is_battery_1rc_and_still_incomplete() -> None:
     active = next(cap for cap in data["capabilities"] if cap["id"] == data["active_epic"])
 
     assert data["active_epic"] == "battery.thevenin_1rc"
-    # FUNCTIONAL since 2026-10-14: the execution route and its replay (Rock A) carry evidence.
+    # FUNCTIONAL since 2026-10-14: execution, replay and real NASA data carry evidence; calibration is NOT_IDENTIFIABLE.
     assert maturity.computed_stage(active) == "FUNCTIONAL"
     assert active["declared_stage"] == "FUNCTIONAL"
-    assert "real_data" in maturity.missing_for_next_stage(active)
+    assert "calibration" in maturity.missing_for_next_stage(active)
 
 
 def test_declared_stage_cannot_exceed_supported_gates() -> None:
