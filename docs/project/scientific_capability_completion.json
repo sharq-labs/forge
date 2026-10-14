@@ -12,7 +12,7 @@
       "kind": "scientific",
       "title": "Battery Thevenin 1RC",
       "owner": "src/engcore/domains/battery",
-      "declared_stage": "FOUNDATION",
+      "declared_stage": "FUNCTIONAL",
       "summary": "Dynamic discharge/rest 1RC kernel exists, but it is not yet a formal production model/realization and has no fitted or held-out evidence path.",
       "next_actions": [
         "Raw NASA ingestion and deterministic cycle segmentation.",
@@ -48,9 +48,13 @@
           ]
         },
         "execution": {
-          "status": "MISSING",
-          "evidence": [],
-          "next_action": "Add formal ScientificModelDefinition + realization + end-to-end battery execution route for 1RC."
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/battery/thevenin_route.py",
+            "tests/domains/test_battery_thevenin_route.py::test_the_march_agrees_with_an_independent_adaptive_ode_integration",
+            "tests/domains/test_battery_thevenin_route.py::test_as_r1_vanishes_the_route_reduces_to_the_production_rint_kernel",
+            "tests/domains/test_battery_thevenin_route.py::test_the_result_is_attributed_to_the_execution_with_explicit_unknown_uncertainty"
+          ]
         },
         "verification": {
           "status": "PASS",
@@ -67,9 +71,13 @@
           ]
         },
         "provenance_replay": {
-          "status": "MISSING",
-          "evidence": [],
-          "next_action": "Bind a formal 1RC model/realization identity and selected parameter set into replay/provenance artifacts."
+          "status": "PASS",
+          "evidence": [
+            "tests/domains/test_battery_thevenin_route.py::test_a_replay_record_reproduces_bit_for_bit_after_a_json_round_trip",
+            "tests/domains/test_battery_thevenin_route.py::test_a_stale_replay_record_is_refused_not_rerun_under_new_code",
+            "tests/domains/test_battery_thevenin_route.py::test_a_forged_trajectory_with_a_recomputed_digest_does_not_reproduce",
+            "tests/domains/test_battery_thevenin_route.py::test_a_changed_parameter_set_under_its_old_digest_is_refused"
+          ]
         },
         "real_data": {
           "status": "MISSING",
