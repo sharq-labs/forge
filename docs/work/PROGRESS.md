@@ -3322,6 +3322,13 @@ v0.1 Tier-1 cost pilot, BR-16 `90a970cf`/`ed65ef3c`, WSL 3.12, `python -m benchm
 - Strongest baseline `space_filling` (+3.175); `always_law` last (-4.642).
 - Formal ESTIMATE: 31,200 runs, about 6,451 s.
 
+Gates on the final code HEAD `eb2720f9` (WSL clone, Linux; the next commit adds only this record):
+- `python -m pytest -m "not expensive" -q -n 4` (3.12): 10493 passed, 156 skipped, 1 failed:
+  `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` (expected until OD-3); 395.9 s.
+- Same command, 3.11: 10493 passed, 156 skipped, 1 failed (same test); 327.0 s.
+- Focused set (same command as above): 108 passed.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+
 Failed approaches, so they are not repeated:
 1. `git stash` in a worktree applies another session's stash. Use `git show rev:path > path` for fail-before runs.
 2. Pilot concurrent with a FAST run: contaminated timing; killed by PID and rerun alone.

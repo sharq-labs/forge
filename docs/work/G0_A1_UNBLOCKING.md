@@ -123,7 +123,8 @@ certified change.
 | Regression `tools/forge_check.py --regression` | `5ead8312`, WSL 3.12 | 256 passed, exit 0 |
 | Genesis-lite tests | BR-16 `90a970cf`, WSL 3.12 | 67 passed |
 | v0.1 pilot | BR-16 `ed65ef3c`, WSL 3.12 | 1,560 runs, 0 invalid |
-| Final-HEAD re-run | see PROGRESS | — |
+| FAST, 3.12 and 3.11 | final code HEAD `eb2720f9`, WSL | each 10493 passed, 156 skipped, 1 failed (same expected test) |
+| Focused set and regression | `eb2720f9`, WSL 3.12 | 108 passed; 256 passed, exit 0 |
 | Hardened recertification, FULL local assurance | — | **NOT RUN** (owner) |
 
 ## 7. OD-6: the active epic stays `battery.thevenin_1rc`
