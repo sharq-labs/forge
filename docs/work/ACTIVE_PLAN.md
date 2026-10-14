@@ -1,6 +1,21 @@
 # Active Plan
 
-## Active override — hostile remediation round 1 (2026-10-13)
+## Active override — BR-16 Genesis-lite v0 preparation (2026-10-14)
+
+Branch `feat/br16-genesis-lite-benchmark` (worktree `D:/forge-br16`), base `origin/main` `e193e573`. This is A1
+preparation only: no certified file was touched and no Mind capability was added. Report:
+[GENESIS_LITE_V0.md](../discovery/GENESIS_LITE_V0.md). No push, PR or merge without the owner.
+
+- [x] Benchmark layer over `engcore.blindfold`: presentations (renamed, paraphrased, trap), equal-budget arms,
+      reveal step, separately implemented evaluator, leakage tests (Genesis F1–F8).
+- [x] Preregistration frozen for the pilot (`f99fcfbd…`); two review rounds, every finding fixed.
+- [x] Tier-1 cost pilot: 960 runs, 0 invalid, 85 s (MEASURED); formal baseline tier ≈ 1,185 s (ESTIMATE).
+- [ ] Owner: OD-3/G0 exit, OD-8 evaluator, OD-15 budget, OD-16 v0.1 amendment (pilot finding P-1), OD-17 escrow
+      deployment. Formal ≥20-seed runs wait for all of these.
+
+Status: PILOT_COMPLETE · BLOCKED_OWNER_APPROVAL (not GENESIS_A1_PASS).
+
+## Superseded override — hostile remediation round 1 (2026-10-13)
 
 The current user scope is F1–F8 plus scanner/genesis/empty-UQ closure, with no
 push, PR, merge or Mind work. Branch `fix/hostile-review-p0-p1`, clean worktree
@@ -159,6 +174,9 @@ therapeutic work.
 | OD-11 | Branch and PR hygiene. | About 119 remote branches; stale PRs #24, #39, #107. |
 | OD-12 | Confirm the control-plane budget signal (Master Plan §5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |
 | OD-13 | Confirm the B1 demo system. | Drone recommended: the only executable product chain today. |
+| OD-15 | Approve the Genesis-lite formal compute budget. | Baselines: 15,120 campaign runs ≈ 1,185 s ESTIMATED from the BR-16 pilot; Mind/LLM arms UNMEASURED. |
+| OD-16 | Approve Genesis-lite v0.1 before any formal run. | Pilot finding P-1: the floor arm `always_law` dominates the discoverable cell (0.70 vs 0.27), so the lift bar must be the strongest non-adversarial arm, with no loss allowed in control cells. Optional: PySR/BoTorch, a full-grammar enumerator, a distinguishable-rival kind (certified change). |
+| OD-17 | Choose the escrow deployment for formal runs. | The in-process escrow leaks (attack test `test_l2_in_process…`); formal runs need the isolated escrow (isolation demo). |
 | OD-14 | Branch `perf/test-suite-runtime`: land it (needs the OD-3 recertification: it touches `certified:harness`, `inference_admission`, `certification_control`), and decide whether to add V4 mutation entries for the admission-record memo (changes the certified population count of 680). | Owner-requested. FAST 992 s -> 476 s, SCIENTIFIC 1448 s -> 1024 s, same failure sets (PROGRESS 2026-10-12). Review F1–F4 fixed; the memo's three mutants are killed by `tests/inference/test_admission_record_memo.py` today, outside the certified population. |
 
 ## Active-epic exceptions (open)
