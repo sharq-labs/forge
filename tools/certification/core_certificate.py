@@ -936,14 +936,18 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
     tree = ast.parse(path.read_bytes().decode("utf-8"))
     aliases: dict[str, str] = {}
     modules: set[str] = set()
+    builtin_names = {"builtins", "__builtins__"}
     for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom) and node.module in _LOADER_MODULES and not node.level:
+        if isinstance(node, ast.ImportFrom) and (node.module in _LOADER_MODULES or node.module == "builtins") and not node.level:
             for alias in node.names:
                 aliases[alias.asname or alias.name] = alias.name
         elif isinstance(node, ast.Import):
             for alias in node.names:
                 if alias.name in _LOADER_MODULES:
                     modules.add(alias.asname or alias.name.split(".")[0])
+                elif alias.name == "builtins":  # BR-15 confirmation review: `import builtins as b; b.exec(...)`
+                    builtin_names.add(alias.asname or alias.name)
+    modules |= builtin_names  # getattr(builtins, "exec") is a loader lookup like getattr(importlib, ...)
     lines: list[int] = []
     for node in ast.walk(tree):
         # A loader bound to another name (load = importlib.import_module) is a loader wherever it is later called.
@@ -966,13 +970,17 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
         elif isinstance(node.func, ast.Name) and name in ("exec", "compile", "eval"):
             lines.append(node.lineno)
         elif (isinstance(node.func, ast.Attribute) and name in ("exec", "compile", "eval")
-              and isinstance(node.func.value, ast.Name) and node.func.value.id in ("builtins", "__builtins__")):
+              and isinstance(node.func.value, ast.Name) and node.func.value.id in builtin_names):
             lines.append(node.lineno)  # BR-15 review: builtins.exec(...) is exec(...)
         elif name == "getattr" and node.args and isinstance(node.args[0], ast.Name) and node.args[0].id in modules:
             lines.append(node.lineno)
         elif (name == "getattr" and node.args and isinstance(node.args[0], ast.Call)
               and (_call_name(node.args[0].func) == "__import__" or _call_name(node.args[0].func).endswith("import_module"))):
             lines.append(node.lineno)  # BR-15 review: getattr(__import__("importlib"), "import_module")
+        elif (isinstance(node.func, ast.Subscript) and isinstance(node.func.value, ast.Call)
+              and _call_name(node.func.value.func) == "vars" and node.func.value.args
+              and isinstance(node.func.value.args[0], ast.Name) and node.func.value.args[0].id in modules):
+            lines.append(node.lineno)  # BR-15 confirmation review: vars(importlib)["import_module"](name)
     return sorted(set(lines))
 
 

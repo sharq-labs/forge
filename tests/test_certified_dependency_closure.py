@@ -253,6 +253,10 @@ def test_a_pinned_control_plane_package_init_is_a_seed(tmp_path) -> None:
 @pytest.mark.parametrize("source", [
     b"import builtins\nbuiltins.exec(open('rule.py').read())\n",
     b"RULE = getattr(__import__('importlib'), 'import_module')('engcore.' + 'decider')\n",
+    b"import builtins as b\nb.exec(open('rule.py').read())\n",
+    b"from builtins import exec as run\nrun(open('rule.py').read())\n",
+    b"import builtins\ngetattr(builtins, 'exec')(open('rule.py').read())\n",
+    b"import importlib\nRULE = vars(importlib)['import_module']('engcore.' + 'decider')\n",
 ])
 def test_review_i5_loaders_the_detector_missed_are_refused(tmp_path, source) -> None:
     _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", "src/engcore/certified/stop.py": source})
@@ -282,3 +286,16 @@ def test_the_closure_names_files_with_their_on_disk_spelling(tmp_path) -> None:
     assert "src/engcore/certified/results/uncertainty.py" in closure
     assert all((tmp_path / name).name in {p.name for p in (tmp_path / name).parent.iterdir()} for name in closure)
     assert cc.certified_dependency_problems(tmp_path, _SCOPE) == []
+
+
+def test_a_declared_edge_does_not_excuse_lookalike_names(tmp_path) -> None:
+    """Confirmation review: design_memory2.py is not design_memory.py, and designs/ is not design/."""
+    _tree(tmp_path, {
+        **_DESIGN,
+        "src/engcore/claims/design_memory2.py": b"from ..designs.history import DesignHistory\n",
+        "src/engcore/designs/__init__.py": b"",
+        "src/engcore/designs/history.py": b"class DesignHistory:\n    pass\n",
+        "src/engcore/claims/design_memoryx.py": b"from ..design.history import DesignHistory\n",
+    })
+    (problem,) = cc.certified_dependency_problems(tmp_path, _CLAIMS)
+    assert "src/engcore/designs/history.py" in problem and "src/engcore/design/history.py" in problem
