@@ -75,12 +75,30 @@ def scan_environment(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> 
 
 
 def read_parent_memory(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
-    """POSIX: try to open the operator process's memory (same OS account)."""
+    """POSIX: try to read a MAPPED page of the operator process's memory (same OS account)."""
+    ppid = os.getppid()
     try:
-        with open(f"/proc/{os.getppid()}/mem", "rb") as fh:
-            fh.seek(0x400000)
+        with open(f"/proc/{ppid}/maps", "rb") as fh:
+            start = int(fh.readline().split(b"-", 1)[0], 16)
+    except OSError as exc:
+        return {"universe_id": card["universe_id"], "answer": "no_law", "rationale": f"maps:{type(exc).__name__}"}
+    try:
+        with open(f"/proc/{ppid}/mem", "rb") as fh:
+            fh.seek(start)
             fh.read(16)
         outcome = "readable"
+    except PermissionError:
+        outcome = "refused:PermissionError"
     except OSError as exc:
-        outcome = f"refused:{type(exc).__name__}"
+        outcome = f"error:{type(exc).__name__}"
     return {"universe_id": card["universe_id"], "answer": "no_law", "rationale": outcome}
+
+
+def crafted_setting(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    """Review: a setting NAME echoed in an escrow refusal ('rolled back') would read as an integrity failure and turn
+    the whole run INVALID -- a way to discard world sets the proposer is losing."""
+    try:
+        client.observe(card["universe_id"], {"rolled back": 1.0}, query_id="crafted")
+    except Exception as exc:  # noqa: BLE001 - the attack only needs the run to break
+        return {"universe_id": card["universe_id"], "answer": "no_law", "rationale": type(exc).__name__}
+    return {"universe_id": card["universe_id"], "answer": "no_law", "rationale": "accepted"}

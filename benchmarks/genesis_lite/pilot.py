@@ -39,9 +39,10 @@ FORMAL_SEEDS = 20
 BOOTSTRAP = 2000
 
 
-def master_for(root: bytes, i: int, presentation: str) -> bytes:
-    """v0.1: one master per (campaign, presentation), shared by every arm and seed (paired comparisons)."""
-    return hmac.new(root, f"forge.genesis_lite.v0_1/{presentation}/{i}".encode(), hashlib.sha256).digest()
+def master_for(root: bytes, i: int, presentation: str, seed: int) -> bytes:
+    """v0.1: one master per world set (campaign, presentation, seed), shared by every arm (paired comparisons) and never
+    reused across seeds or presentations, so no proposer sees a world twice (review: cross-seed pooling)."""
+    return hmac.new(root, f"forge.genesis_lite.v0_1/{presentation}/{seed}/{i}".encode(), hashlib.sha256).digest()
 
 
 def run_pilot(root: bytes, arms: Iterable[str], *, campaigns: int = RUNG, seeds: Iterable[int] = PILOT_SEEDS,
@@ -49,11 +50,11 @@ def run_pilot(root: bytes, arms: Iterable[str], *, campaigns: int = RUNG, seeds:
               isolation: str = "proposer_process") -> list[RunRecord]:
     records = []
     for name in arms:
-        fn, _family, stochastic, _role = arm_module.ARMS[name]
-        for seed in (tuple(seeds) if stochastic else (0,)):
+        fn, _family, _stochastic, _role = arm_module.ARMS[name]
+        for seed in tuple(seeds):                              # every arm runs every world set once
             for presentation in presentations:
                 for i in range(campaigns):
-                    rec = run_one(name, fn, master_seed=master_for(root, i, presentation), campaign_id=f"gl-pilot-{i}",
+                    rec = run_one(name, fn, master_seed=master_for(root, i, presentation, seed), campaign_id=f"gl-pilot-{i}",
                                   presentation=presentation, seed=seed, isolation=isolation,
                                   measure_memory=(i == 0 and presentation == "anonymous" and seed == 0
                                                   and isolation == "in_process"))
@@ -139,6 +140,7 @@ def summarize(records: list[RunRecord]) -> dict[str, Any]:
     credits = analysis.world_credits(records)
     roles = {name: arm_module.ARMS[name][3] for name in credits if name in arm_module.ARMS}
     best, primary = analysis.strongest_baseline(credits, roles) if credits else (None, {})
+    per_kind_best = analysis.best_per_kind(credits, roles) if credits else {}
     split = {}
     for name, camps in credits.items():
         disc = [k.get("discoverable", 0.0) for k in camps.values()]
@@ -153,7 +155,8 @@ def summarize(records: list[RunRecord]) -> dict[str, Any]:
         invariance[name] = None if not pairs else round(sum(a == b for a, b in pairs) / len(pairs), 4)
     return {"label": "MEASURED (pilot tier; cost and variance only; not a rate claim)",
             "primary_endpoint_indicative": {"mean_campaign_credit": {k: round(v, 4) for k, v in sorted(primary.items())},
-                                            "strongest_non_adversarial_arm": best, "credit_split": split,
+                                            "strongest_non_adversarial_arm": best, "best_arm_per_kind": per_kind_best,
+                                            "credit_split": split,
                                             "note": "pilot scale (10 campaigns per presentation): indicative only"},
             "cells": table,
             "invalid_runs_by_arm_presentation": invalid_cells,
@@ -174,8 +177,7 @@ def estimate(cost: dict[str, Any]) -> dict[str, Any]:
     """Formal-tier ESTIMATE: runs x measured per-campaign wall time, with a 95% interval from the measured spread."""
     rows, total_mean, total_var = {}, 0.0, 0.0
     for name, c in cost.items():
-        stochastic = arm_module.ARMS[name][2]
-        runs = FORMAL_CAMPAIGNS_PER_PRESENTATION * len(PRESENTATIONS) * (FORMAL_SEEDS if stochastic else 1)
+        runs = FORMAL_CAMPAIGNS_PER_PRESENTATION * len(PRESENTATIONS) * FORMAL_SEEDS   # every arm, every world set
         mean, sd = c["wall_seconds_per_campaign"]["mean"], c["wall_seconds_per_campaign"]["sd"]
         rows[name] = {"campaign_runs": runs, "seconds": round(runs * mean, 1)}
         total_mean += runs * mean

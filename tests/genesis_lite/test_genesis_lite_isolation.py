@@ -70,7 +70,7 @@ def test_the_proposer_process_cannot_read_the_operators_memory_where_the_kernel_
     outcomes = {p["rationale"] for p in seen}
     scope = pathlib.Path("/proc/sys/kernel/yama/ptrace_scope")
     if os.name == "posix" and scope.exists() and int(scope.read_text().strip() or 0) >= 1:
-        assert all(o.startswith("refused") for o in outcomes), outcomes      # Linux YAMA: a child cannot ptrace its parent
+        assert outcomes == {"refused:PermissionError"}, outcomes            # Linux YAMA: a child cannot ptrace its parent
     else:
         assert rec.security_boundary == "SECURITY_BOUNDARY_NOT_PROVEN"      # elsewhere this is NOT established
 
@@ -87,3 +87,10 @@ def test_an_unknown_isolation_is_an_invalid_run():
     rec = harness.run_one("careful", arms.ARMS["careful"][0], master_seed=MASTER, campaign_id="gl-iso-1",
                           presentation="anonymous", isolation="none")
     assert rec.status == "INVALID_BENCHMARK"
+
+
+@pytest.mark.parametrize("isolation", ["in_process", "proposer_process"])
+def test_review_a_crafted_setting_name_cannot_turn_a_run_invalid(isolation):
+    rec = _run("crafted_setting", isolation)
+    assert rec.status == "VALID", rec.reasons
+    assert all(u["answer"] == "no_law" for u in rec.universes)

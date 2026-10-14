@@ -6,7 +6,8 @@
    "control non-inferiority (margin 0.10) and a fixed Holm family",
    "added arm fit_all_gated (raises the bar; no arm removed or weakened)",
    "proposer_process isolation required",
-   "one master root per (campaign, presentation), shared by every arm and seed"
+   "one master root per world set (campaign, presentation, seed), shared by every arm, never reused",
+   "setting names outside the card are refused before they reach the escrow"
   ],
   "identity": "genesis_lite.blindfold_l5.v0",
   "kept": "v0 preregistration and pilot results unchanged (historical evidence)",
@@ -14,7 +15,8 @@
   "reasons": [
    "P-1: per-cell lift let a floor arm that always proposes win the discoverable cell (0.70 vs 0.27) while scoring -1 on every control; root cause = per-cell metric + over-conservative gated baselines + 70% of discoverable worlds inside the simple monomial family (not leakage, not a scoring defect: 5,760/5,760 universes independently re-scored in agreement)",
    "OD-20: in-process proposers stole hidden laws by heap scan and stack walk (tested); v0.1 requires the isolated proposer process"
-  ]
+  ],
+  "v0_pilot_summary_sha256": "776513afa4b40e163b693f2bf4211743aae56ee486fa786bd78175e3d2ba1c0d"
  },
  "arms": {
   "always_insufficient": {
@@ -283,12 +285,12 @@
   "leakage_audit": "LITERAL only (NO_LITERAL_LEAK_FOUND / LITERAL_LEAK_FOUND); structural tells are measured separately and are never cleared by this audit"
  },
  "harness": {
-  "analysis.py": "5a964ef8af569dd6abb275a065346b260d48377b91816f31a895313cab9f58fa",
+  "analysis.py": "c0a41d1619502d6c8011d038a099c83f9582c1e53ef39e550c505982e3ef9bef",
   "answer_key.py": "46977bcb959ac737cdadb6bb7472f89ad434d4c4c513c2240bb58a77644e5db6",
-  "arms.py": "f0e5027d6aa4dd76f6050cb6e06511c1fb38cda6babe7850d8d3bc72233f5dfe",
+  "arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
   "harness.py": "75c12ebcf089962085fd7578e921243c7ab59283a79bd0860d9bac2f19b8ca58",
-  "pilot.py": "951e961d9b4be5a093e675917ebb38ad9c8ee99f70414ad2d2d95e0134184e0a",
-  "presentation.py": "3f362d0e1a0583f89b8485a9aa00f901c5e876456d932249675520c859fbd32f",
+  "pilot.py": "a7eeda73b4a5611ddbd26b6a4f8cc98bba1f69ef38bad5a0a36f790a96a09cd8",
+  "presentation.py": "65a88265fc2e5eed441d4cde0c2b588438bf429ac71ee2f475c5e5cecb477900",
   "primitives.py": "caaea4fc83c9a4ec0c89e104b401194ab3d48e2f5f0b55d8d328f954cae96f78",
   "proposer_host.py": "a4b9331780351232d3007596e6c9949eb9e6bdabcb88f7057c6c4e33b25c31a4"
  },
@@ -321,11 +323,12 @@
   "OD-19 identity": "approve this v0.1 identity before any formal run",
   "OD-20 escrow_deployment": "a separate OS account / container / host for the operator, escrow and secrets",
   "OD-8 external_evaluator": "name an evaluator or a selection process with a deadline (Genesis \u00a726)",
+  "escrow_refusal_codes": "residual in certified engcore.blindfold: the client classifies refusals by text ('rolled back'), and the escrow echoes caller input in refusal texts; Genesis-lite blocks the channel at the client, the structural fix (refusal codes) needs a certified change",
   "held_out_authoring": "v0.1 instances come from FORGE's own generator"
  },
  "pilot_root_commitment_sha256": "b80ae0be4142b504dfe2c3dee90008e32c32fd721fdd130e7787a25a95c94d0a",
  "primitive_library_digest": "281e1df0f46d0a0d25e63fef58e11f2681882492a37f1dd7551339e08edb8173",
- "representation_gap_rule": "v0 search arms cover only the monomial family; the generator also draws exponential, two-term and regime laws. For law-recovery cells (discoverable, spurious_correlate, confounded) there is NO STRONG APPLICABLE BASELINE for worlds whose truth is outside the family (Genesis \u00a710.5 rule 4). The rule is PER WORLD: out-of-family worlds are reported as NO_STRONG_BASELINE and excluded from every lift computation; a law-recovery cell enters the lift family only with >= 10 in-family worlds.",
+ "representation_gap_rule": "v0.1 search arms cover only the monomial family; the generator also draws exponential, two-term and regime laws. The PRIMARY (joint) endpoint includes every world. Discovery credit is additionally reported split into in-family and out-of-family worlds, and the out-of-family share is labelled NO_STRONG_BASELINE (Genesis \u00a710.5 rule 4). v0.1 makes no discovery-only lift claim.",
  "representation_limited_rule": "a (kind, presentation) cell is REPRESENTATION_LIMITED when monomial_enumeration's full-credit rate has a cluster-bootstrap 95% lower bound >= 0.5 at the formal tier: that cell measures the representation, and no lift there is credited as reasoning. Pilot values are indicative only.",
  "reveal_protocol": [
   "master seed derived from a pilot root committed here by sha256 before any run",
@@ -342,7 +345,7 @@
    "campaigns_per_presentation": 10,
    "isolation": "proposer_process",
    "purpose": "cost and variance measurement ONLY; never a rate or lift claim",
-   "stochastic_seeds": [
+   "seeds": [
     0,
     1,
     2
@@ -350,23 +353,24 @@
   },
   "tier2_formal": {
    "campaigns_per_presentation": 30,
-   "isolation": "proposer_process required: every arm, the Mind included, runs each campaign in a fresh interpreter that never holds the escrow, the master seed or a hidden world; an in_process run is INVALID for the formal tier",
-   "lift_decision_rule": "analysis.lift_decision: the paired per-campaign difference to the strongest baseline has a cluster-bootstrap 95% lower bound > 0 for the pooled primary endpoint after Holm correction (alpha 0.05) over the FIXED family pooled, anonymous, renamed, paraphrased, trap; AND every control kind's paired mean difference has a lower bound > -0.1 (no trading control failures for discovery credit)",
+   "isolation": "proposer_process required and checked by analysis.coverage_problems; in addition the OD-20 deployment (operator, escrow and secrets under another OS account or container; proposer with a read-only filesystem, no network, no ptrace) must be in place and verified by the isolation demo before any formal run: a same-account run is INVALID for the formal tier",
+   "lift_decision_rule": "analysis.lift_decision (digest above), all of: COMPLETE coverage (a VALID isolated candidate run on every world set the baseline ran; an invalid world set blocks the claim, it is never dropped); pooled paired primary difference with cluster-bootstrap 95% lower bound > 0 and significant after Holm (alpha 0.05) over the FIXED family pooled, anonymous, renamed, paraphrased, trap; every presentation's paired primary lower bound > -0.6000000000000001; every control kind's paired difference to the BEST arm on that kind has a lower bound > -0.1",
    "rules": [
     "every arm reported for every cell",
     "no post-result tuning of criteria",
     "no compute-budget increase mid-campaign",
     "a defective task is INVALID_BENCHMARK with a new identity and a rerun from preregistration",
-    "invalid runs are reported and never aggregated",
+    "invalid runs are reported, never aggregated, and block a lift claim",
     "arms may be ADDED by a new identity, never removed or weakened"
    ],
-   "start_condition": "G0 exit (OD-3), owner-approved compute budget (OD-18), evaluator decision (OD-8), escrow deployment decision (OD-20), this identity approved (OD-19)",
-   "stochastic_seeds": 20,
+   "seeds": 20,
+   "start_condition": "G0 exit (OD-3), owner-approved compute budget (OD-18), evaluator decision (OD-8), OD-20 deployment in place and verified, this identity approved (OD-19)",
    "strongest_baseline_rule": "the non-adversarial arm (competence, floor or sanity role) with the highest formal-tier PRIMARY score; frozen in a baseline-freeze addendum (digest) BEFORE any Mind run",
-   "world_reuse": "one master root per (campaign, presentation), committed by sha256 before the campaign and revealed after, SHARED by every arm and every seed (paired lift); never reused across campaigns or presentations; ids and names pseudonymised per run",
-   "worlds_per_cell": 30
+   "world_reuse": "one master root per world set, committed by sha256 before the campaign and revealed after, SHARED by every arm (paired lift) and NEVER reused across seeds, campaigns or presentations, so no proposer, stateful or not, sees a world twice; ids and names pseudonymised per run",
+   "world_sets_per_presentation": 600,
+   "worlds_per_kind_and_presentation": 600
   },
-  "unit_of_analysis": "the CAMPAIGN (one hidden world of every kind) for the primary endpoint; per world for descriptive cells. Seeds are averaged per world and never pooled as instances. Intervals: percentile bootstrap over campaigns (2000 resamples, Random(0))."
+  "unit_of_analysis": "the WORLD SET: one campaign (one hidden world of every kind) under one (presentation, seed) master root. Every arm runs every world set once. Intervals: percentile bootstrap over world sets (2000 resamples, Random(0)). Per-cell rates are descriptive only."
  },
  "status": "FREEZE_READY",
  "substrate": {
