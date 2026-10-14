@@ -163,6 +163,12 @@ class TranslatingClient:
         if universe_id != p.card["universe_id"]:            # this client serves exactly one universe, by its pseudonym
             raise EscrowRefused("unknown universe")
         target = p.original_id
+        settable = {x["name"] for x in p.card["inputs"] if x.get("settable")}
+        unknown = sorted(str(k) for k in settings if k not in settable)
+        if unknown:
+            # never forwarded: the escrow echoes setting names in its refusal text, and its client treats some refusal
+            # texts as integrity failures, so a crafted name could turn a run the proposer is losing INVALID (review)
+            raise EscrowRefused(f"cannot set {len(unknown)} name(s): not settable inputs of this universe")
         original = {p.to_original.get(k, k): v for k, v in settings.items()}
         try:
             resp = self.__client.observe(target, original, query_id=query_id)

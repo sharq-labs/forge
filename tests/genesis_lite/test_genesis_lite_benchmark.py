@@ -327,8 +327,9 @@ def test_h5_seeds_over_one_world_are_one_unit_not_many():
     recs = []
     for seed in range(5):
         r = harness.RunRecord("monomial_enumeration", seed, f"campaign-{seed}", "anonymous")   # campaign ids differ
-        r.universes = [{"kind": "discoverable", "credit": 1.0, "truth_in_searched_family": True, "region_tell": "box",
-                        "universe_id": "u", "outcome": "law_pass"}]
+        r.isolation = "proposer_process"
+        r.universes = [{"kind": k, "credit": 1.0, "truth_in_searched_family": True, "region_tell": "box",
+                        "universe_id": f"u-{k}", "outcome": "law_pass"} for k in harness.KINDS]
         recs.append(r)
     cell = pilot.summarize(recs)["cells"]["monomial_enumeration|discoverable|anonymous"]
     assert cell["worlds"] == 1 and cell["runs"] == 5

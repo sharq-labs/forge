@@ -302,8 +302,8 @@ def _fixed(fn: Callable[..., dict[str, Any]]) -> Callable[..., dict[str, Any]]:
     return arm
 
 
-#: name -> (callable, family, stochastic, role). "competence" arms are candidates for the strongest applicable baseline;
-#: "floor"/"sanity" arms are never the competence bar; "adversarial" arms exist to fail (traps).
+#: name -> (callable, family, stochastic, role). v0.1: the strongest baseline is chosen over EVERY non-adversarial arm
+#: ("competence", "floor" and "sanity" roles alike, analysis.strongest_baseline); "adversarial" arms exist to fail.
 ARMS: dict[str, tuple[Callable[..., dict[str, Any]], str, bool, str]] = {
     "monomial_enumeration": (monomial_enumeration, "law recovery: enumeration of the frozen v0 monomial family", True, "competence"),
     "random_structures": (random_structures, "law recovery: constrained random structures (v0 family)", True, "competence"),

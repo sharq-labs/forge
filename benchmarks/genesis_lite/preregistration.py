@@ -32,6 +32,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 PREREG_PATH = HERE / "preregistration" / "genesis_lite_v0_1.json"
 V0_PREREG_PATH = HERE / "preregistration" / "genesis_lite_v0.json"
 V0_PREREG_SHA256 = "f99fcfbdc97aabcbea52fa72c12ad196d420e298237c5374184f537c67774ab0"
+V0_PILOT_SUMMARY = HERE / "pilot_results" / "v0-2026-10-14" / "summary.json"
 
 SUBSTRATE = ("universe.py", "escrow.py", "expression.py", "roles.py", "baselines.py")
 HARNESS_FILES = ("harness.py", "presentation.py", "answer_key.py", "primitives.py", "arms.py", "pilot.py", "analysis.py",
@@ -80,12 +81,14 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
                 "OD-20: in-process proposers stole hidden laws by heap scan and stack walk (tested); v0.1 requires the "
                 "isolated proposer process",
             ],
+            "v0_pilot_summary_sha256": _file_digest(V0_PILOT_SUMMARY),
             "changes": ["joint campaign credit as the primary endpoint (analysis.py)",
                         "strongest baseline over every non-adversarial arm (floors included)",
                         "control non-inferiority (margin 0.10) and a fixed Holm family",
                         "added arm fit_all_gated (raises the bar; no arm removed or weakened)",
                         "proposer_process isolation required",
-                        "one master root per (campaign, presentation), shared by every arm and seed"],
+                        "one master root per world set (campaign, presentation, seed), shared by every arm, never reused",
+                        "setting names outside the card are refused before they reach the escrow"],
         },
         "domain": "blindfold L5 synthetic scalar laws (one domain)",
         "substrate": {name: _file_digest(blindfold / name) for name in SUBSTRATE},
@@ -138,43 +141,47 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
                                        "full-credit rate has a cluster-bootstrap 95% lower bound >= 0.5 at the formal tier: that "
                                        "cell measures the representation, and no lift there is credited as reasoning. Pilot "
                                        "values are indicative only.",
-        "representation_gap_rule": "v0 search arms cover only the monomial family; the generator also draws exponential, "
-                                   "two-term and regime laws. For law-recovery cells (discoverable, spurious_correlate, "
-                                   "confounded) there is NO STRONG APPLICABLE BASELINE for worlds whose truth is outside the "
-                                   "family (Genesis §10.5 rule 4). The rule is PER WORLD: out-of-family worlds are reported "
-                                   "as NO_STRONG_BASELINE and excluded from every lift computation; a law-recovery cell enters "
-                                   "the lift family only with >= 10 in-family worlds.",
+        "representation_gap_rule": "v0.1 search arms cover only the monomial family; the generator also draws exponential, "
+                                   "two-term and regime laws. The PRIMARY (joint) endpoint includes every world. Discovery "
+                                   "credit is additionally reported split into in-family and out-of-family worlds, and the "
+                                   "out-of-family share is labelled NO_STRONG_BASELINE (Genesis §10.5 rule 4). v0.1 makes no "
+                                   "discovery-only lift claim.",
         "statistics": {
-            "unit_of_analysis": "the CAMPAIGN (one hidden world of every kind) for the primary endpoint; per world for "
-                                "descriptive cells. Seeds are averaged per world and never pooled as instances. Intervals: "
-                                "percentile bootstrap over campaigns (2000 resamples, Random(0)).",
-            "tier1_pilot": {"campaigns_per_presentation": 10, "stochastic_seeds": [0, 1, 2],
-                            "isolation": "proposer_process",
+            "unit_of_analysis": "the WORLD SET: one campaign (one hidden world of every kind) under one (presentation, seed) "
+                                "master root. Every arm runs every world set once. Intervals: percentile bootstrap over world "
+                                "sets (2000 resamples, Random(0)). Per-cell rates are descriptive only.",
+            "tier1_pilot": {"campaigns_per_presentation": 10, "seeds": [0, 1, 2], "isolation": "proposer_process",
                             "purpose": "cost and variance measurement ONLY; never a rate or lift claim"},
-            "tier2_formal": {"campaigns_per_presentation": 30, "worlds_per_cell": 30, "stochastic_seeds": 20,
-                             "world_reuse": "one master root per (campaign, presentation), committed by sha256 before the "
-                                            "campaign and revealed after, SHARED by every arm and every seed (paired lift); "
-                                            "never reused across campaigns or presentations; ids and names pseudonymised "
-                                            "per run",
-                             "isolation": "proposer_process required: every arm, the Mind included, runs each campaign in a "
-                                          "fresh interpreter that never holds the escrow, the master seed or a hidden "
-                                          "world; an in_process run is INVALID for the formal tier",
+            "tier2_formal": {"campaigns_per_presentation": 30, "seeds": 20,
+                             "world_sets_per_presentation": 600, "worlds_per_kind_and_presentation": 600,
+                             "world_reuse": "one master root per world set, committed by sha256 before the campaign and "
+                                            "revealed after, SHARED by every arm (paired lift) and NEVER reused across seeds, "
+                                            "campaigns or presentations, so no proposer, stateful or not, sees a world "
+                                            "twice; ids and names pseudonymised per run",
+                             "isolation": "proposer_process required and checked by analysis.coverage_problems; in addition "
+                                          "the OD-20 deployment (operator, escrow and secrets under another OS account or "
+                                          "container; proposer with a read-only filesystem, no network, no ptrace) must be "
+                                          "in place and verified by the isolation demo before any formal run: a "
+                                          "same-account run is INVALID for the formal tier",
                              "strongest_baseline_rule": "the non-adversarial arm (competence, floor or sanity role) with the "
                                                         "highest formal-tier PRIMARY score; frozen in a baseline-freeze "
                                                         "addendum (digest) BEFORE any Mind run",
-                             "lift_decision_rule": "analysis.lift_decision: the paired per-campaign difference to the "
-                                                   "strongest baseline has a cluster-bootstrap 95% lower bound > 0 for the "
-                                                   "pooled primary endpoint after Holm correction (alpha 0.05) over the FIXED "
-                                                   "family " + ", ".join(analysis.PRIMARY_FAMILY) + "; AND every control kind's "
-                                                   "paired mean difference has a lower bound > -" + str(analysis.NONINFERIORITY_MARGIN)
-                                                   + " (no trading control failures for discovery credit)",
+                             "lift_decision_rule": "analysis.lift_decision (digest above), all of: COMPLETE coverage (a VALID "
+                                                   "isolated candidate run on every world set the baseline ran; an invalid "
+                                                   "world set blocks the claim, it is never dropped); pooled paired primary "
+                                                   "difference with cluster-bootstrap 95% lower bound > 0 and significant "
+                                                   "after Holm (alpha 0.05) over the FIXED family "
+                                                   + ", ".join(analysis.PRIMARY_FAMILY) + "; every presentation's paired "
+                                                   "primary lower bound > -" + str(analysis.PRESENTATION_MARGIN) + "; every "
+                                                   "control kind's paired difference to the BEST arm on that kind has a lower "
+                                                   "bound > -" + str(analysis.NONINFERIORITY_MARGIN),
                              "rules": ["every arm reported for every cell", "no post-result tuning of criteria",
                                        "no compute-budget increase mid-campaign", "a defective task is INVALID_BENCHMARK with a "
                                        "new identity and a rerun from preregistration",
-                                       "invalid runs are reported and never aggregated",
+                                       "invalid runs are reported, never aggregated, and block a lift claim",
                                        "arms may be ADDED by a new identity, never removed or weakened"],
                              "start_condition": "G0 exit (OD-3), owner-approved compute budget (OD-18), evaluator decision "
-                                                "(OD-8), escrow deployment decision (OD-20), this identity approved (OD-19)"},
+                                                "(OD-8), OD-20 deployment in place and verified, this identity approved (OD-19)"},
         },
         "reveal_protocol": ["master seed derived from a pilot root committed here by sha256 before any run",
                             "proposals stored content-addressed and sealed by one escrow score each",
@@ -193,6 +200,10 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
             "OD-18 compute_budget": "formal tier from the v0.1 pilot ESTIMATE",
             "OD-19 identity": "approve this v0.1 identity before any formal run",
             "OD-20 escrow_deployment": "a separate OS account / container / host for the operator, escrow and secrets",
+            "escrow_refusal_codes": "residual in certified engcore.blindfold: the client classifies refusals by text "
+                                    "('rolled back'), and the escrow echoes caller input in refusal texts; Genesis-lite "
+                                    "blocks the channel at the client, the structural fix (refusal codes) needs a "
+                                    "certified change",
         },
     }
     return doc
