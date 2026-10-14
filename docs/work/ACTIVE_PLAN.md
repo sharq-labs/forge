@@ -1,6 +1,22 @@
 # Active Plan
 
-## Active override — hostile remediation round 1 (2026-10-13)
+## Active override — BR-15 authority boundary & certification closure (2026-10-14)
+
+Branch `fix/br15-authority-closure`, base `origin/main` `e193e573`. No push, PR, merge, settings change or
+recertification without the owner. Report: [BR15_AUTHORITY_CLOSURE.md](BR15_AUTHORITY_CLOSURE.md).
+
+- [x] Post-merge truth: `main` certificate FAILS (PR #142 changed two certified harness files); #140 merge clean.
+- [x] Independent review of 659da048, 313bbf1e, 05522b59 (ACCEPT) and f869a737 (nested-summary defect, fixed).
+- [x] Certified-imports-uncertified gap: derived closure of every certified module, +71 pinned files, one declared
+      non-authority edge; red reproducer `dc26175d`, fix `6d62e5cf`, `a49e8d12`, `01073787`; review ACCEPT.
+- [ ] Owner: hardened recertification (OD-3) of the intended HEAD — BR-15 cannot PASS without it.
+- [ ] Owner: disable squash/rebase merges; branch protection needs GitHub Pro or a public repository (HTTP 403).
+- [ ] Next bounded tasks (not started): CI V4 workspace vs `actions/checkout` `config.worktree` (F-7); keyed
+      campaign records / restored `stop_review_outcome` (F-9). BR-16 is not started.
+
+Status: PARTIALLY_CLOSED — BLOCKED_OWNER_RECERTIFICATION, BLOCKED_OWNER_GOVERNANCE.
+
+## Superseded override — hostile remediation round 1 (2026-10-13)
 
 The current user scope is F1–F8 plus scanner/genesis/empty-UQ closure, with no
 push, PR, merge or Mind work. Branch `fix/hostile-review-p0-p1`, clean worktree
