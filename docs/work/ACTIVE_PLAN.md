@@ -8,6 +8,10 @@ BR-16. Nothing is pushed or merged to `main`. Report: [G0_A1_UNBLOCKING.md](G0_A
 - [x] G0 code gaps with reproducers: F-9 (restored stop-review outcome), F-7 (CI V4 shards vs checkout).
 - [x] Escrow leak: heap-scan and stack-walk attacks reproduced; isolated proposer process (same-account, NOT_PROVEN).
 - [x] Genesis-lite v0.1: P-1 root cause, joint-credit contract, new identity; v0 preserved.
+- [x] Genesis-lite v0.1 Tier-1 cost pilot with isolated proposers: 1,560 runs, 0 invalid, 374.6 s (MEASURED);
+      formal baseline tier 31,200 runs ≈ 6,451 s (ESTIMATE). Preregistration `94efff08…`, FREEZE_READY.
+- [ ] Owner: OD-1 governance (plan or visibility for branch protection; disable squash/rebase merges); push the
+      candidate so CI exercises the F-7 workflow step (not yet observed on GitHub).
 - [ ] Owner: OD-3 recertification of this integration HEAD; OD-8 evaluator; OD-18 budget; OD-19 v0.1 identity;
       OD-20 escrow deployment; OD-6 active epic (exception or ledger change). BR-17/BR-18 stay closed until then.
 

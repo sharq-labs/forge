@@ -3283,3 +3283,46 @@ No Mind code was written; the active epic and the ledger were not touched. Recor
 ## 2026-10-14 -- BR-18: BLOCKED_BY_PREREQUISITE
 
 BR-17 has not passed (BLOCKED_BY_PREREQUISITE), and origin/main e193e573 has no Mind to evaluate. No BR-18 work was started. The verified-guard map is in [BR17_MINIMAL_MIND_READINESS.md](../discovery/BR17_MINIMAL_MIND_READINESS.md). Tests: NOT RUN (documentation only).
+
+
+## 2026-10-14 -- G0/A1 unblocking sprint (integration/g0-a1-unblock, local only)
+
+Integration branch `integration/g0-a1-unblock` (worktree `D:/forge-g0a1`) = `origin/main` `e193e573` + BR-15
+(`9df87275`) + BR-16 (`0f69a453`). Report: [G0_A1_UNBLOCKING.md](G0_A1_UNBLOCKING.md). Nothing pushed or merged.
+Hardened recertification and FULL local assurance: NOT RUN (owner, OD-3).
+
+Fixed with reproducers that fail first:
+- F-9: a restored campaign could carry a stop-review outcome different from the one in its own log.
+  Fix: `stop_review_disagreements`, used in both runner restore and `IncrementalCheckpointStore.materialize`.
+  Test: `tests/test_audit_sria_stop_review_restore.py`.
+- F-7: the CI V4 shards refused the `config.worktree` that `actions/checkout` writes.
+  Fix: a workflow step removes exactly the three sparse-checkout defaults. Test: `tests/test_ci_v4_checkout_admission.py`.
+  Not yet observed on GitHub.
+- Escrow leak: in-process heap-scan and stack-walk attacks stole hidden laws while the runs stayed VALID.
+  Fix: `isolation="proposer_process"` (`benchmarks/genesis_lite/proposer_host.py`).
+  Test: `tests/genesis_lite/test_genesis_lite_isolation.py`. Same-account boundary only: SECURITY_BOUNDARY_NOT_PROVEN; OD-20.
+- Crafted setting name (`rolled back`) that turned a losing run INVALID: refused at the client; `lift_decision`
+  refuses incomplete coverage.
+- P-1: the root cause comes from the v0 run log (per-cell metric, gated arms over-refusing, mostly in-family worlds;
+  neither leakage nor scoring). Fix: the v0.1 joint-credit contract in `benchmarks/genesis_lite/analysis.py`, identity
+  `genesis_lite.blindfold_l5.v0_1`, preregistration `94efff08...`. v0 (`f99fcfbd...`) is preserved byte for byte.
+
+Gates on `5ead8312` (WSL clone, Linux):
+- `python -m pytest -m "not expensive" -q -n 4` (3.12): 10493 passed, 156 skipped, 1 failed:
+  `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` (expected until OD-3).
+- Same command, 3.11: 10493 passed, 156 skipped, 1 failed (same test).
+- `python -m pytest tests/genesis_lite tests/test_audit_sria_stop_review_restore.py tests/test_ci_v4_checkout_admission.py tests/test_certified_dependency_closure.py -q`: 108 passed.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+- Certificate pre-checks: dependency, authority, harness and registry problems all `[]`.
+  `--verify` reports only the expected drift.
+
+v0.1 Tier-1 cost pilot, BR-16 `90a970cf`/`ed65ef3c`, WSL 3.12, `python -m benchmarks.genesis_lite.pilot`:
+- 1,560 runs, 0 invalid, 0 inadmissible, 374.6 s (MEASURED). The `90a970cf` run had 384.95 s, before the
+  summary-shadowing fix.
+- Strongest baseline `space_filling` (+3.175); `always_law` last (-4.642).
+- Formal ESTIMATE: 31,200 runs, about 6,451 s.
+
+Failed approaches, so they are not repeated:
+1. `git stash` in a worktree applies another session's stash. Use `git show rev:path > path` for fail-before runs.
+2. Pilot concurrent with a FAST run: contaminated timing; killed by PID and rerun alone.
+3. Environment scan by broad patterns (`ROOT`): SYSTEMROOT false positive; narrowed.
