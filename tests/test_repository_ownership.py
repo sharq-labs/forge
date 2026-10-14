@@ -185,20 +185,18 @@ def test_c5_an_environment_marker_inside_tracked_source_is_refused_and_does_not_
 
 
 def test_c6_a_tracked_file_reached_under_another_case_is_listed_once(checkout, monkeypatch) -> None:
-    from tools.certification import ownership
-
-    real = ownership.tracked_files
-
-    def upper(root):
-        listed = real(root)
-        return frozenset(("SRC/pkg/model.py" if name == "src/pkg/model.py" else name) for name in listed)
-
-    probe = checkout / "src" / "PKG_CASE_PROBE"
-    probe.write_bytes(b"")
-    insensitive = (checkout / "SRC" / "pkg" / "model.py").exists()
-    probe.unlink()
-    if not insensitive:
-        pytest.skip("case-sensitive filesystem: two spellings are two files here")
-    monkeypatch.setattr(ownership, "tracked_files", upper)
+    # Runs on any filesystem: a second spelling is created as a real file, and "the same file" is decided by
+    # samefile, which is what a case-insensitive filesystem answers True for.
+    _write(checkout, "src/pkg/Model.py", "OTHER = 1\n")
     files = owned_files(checkout).files
-    assert ("SRC/pkg/model.py" in files) != ("src/pkg/model.py" in files)
+    assert "src/pkg/model.py" in files and "src/pkg/Model.py" in files     # two files: both listed
+    real_samefile = pathlib.Path.samefile
+
+    def same(self, other):
+        if {pathlib.Path(self).name, pathlib.Path(other).name} == {"model.py", "Model.py"}:
+            return True                                                     # one file under two spellings
+        return real_samefile(self, other)
+
+    monkeypatch.setattr(pathlib.Path, "samefile", same)
+    files = owned_files(checkout).files
+    assert "src/pkg/model.py" in files and "src/pkg/Model.py" not in files  # the tracked spelling, once
