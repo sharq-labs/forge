@@ -299,3 +299,64 @@ def test_a_declared_edge_does_not_excuse_lookalike_names(tmp_path) -> None:
     })
     (problem,) = cc.certified_dependency_problems(tmp_path, _CLAIMS)
     assert "src/engcore/designs/history.py" in problem and "src/engcore/design/history.py" in problem
+
+
+# ---- G0/A1 final review (2026-10-14) -------------------------------------------------------------------------------
+@pytest.mark.parametrize("source", [
+    b"RULE = __import__('engcore', fromlist=['decider']).decider\n",
+    b"RULE = __import__('decider', globals(), None, ['rule'], 2)\n",
+    b"import importlib\nL = {'k': importlib.import_module}\nRULE = L['k']('engcore.' + 'decider')\n",
+    b"import importlib\nRULE = importlib.__dict__['import_module']('engcore.' + 'decider')\n",
+])
+def test_final_review_c1_loaders_reached_without_a_direct_call_are_refused(tmp_path, source) -> None:
+    _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", "src/engcore/certified/stop.py": source})
+    problems = cc.certified_dependency_problems(tmp_path, _SCOPE)
+    assert any("DYNAMIC_REACH" in p for p in problems), problems
+
+
+def test_final_review_c2_an_exempt_module_on_the_path_is_checked_for_dynamic_loads(tmp_path) -> None:
+    """Traversal continues through exempt answer modules (review I-3), so their computed-name loads count too."""
+    _tree(tmp_path, {
+        "src/engcore/certified/__init__.py": b"",
+        "src/engcore/certified/run.py": b"from ..domains.solver import solve\n",
+        "src/engcore/domains/__init__.py": b"",
+        "src/engcore/domains/solver.py": b"import importlib\nRULE = importlib.import_module('engcore.' + 'decider')\n"
+                                         b"def solve():\n    return 1\n",
+    })
+    problems = cc.certified_dependency_problems(tmp_path, _SCOPE)
+    assert any("src/engcore/domains/solver.py" in p and "DYNAMIC_REACH" in p for p in problems), problems
+
+
+def test_final_review_c2_a_declared_dynamic_reach_is_traversed(tmp_path, monkeypatch) -> None:
+    """A declared computed-name load reaches its targets; what THEY import is followed like any other import."""
+    _tree(tmp_path, {
+        "src/engcore/certified/__init__.py": b"",
+        "src/engcore/certified/load.py": b"import importlib, pkgutil\nimport engcore.domains as d\n"
+                                         b"MODS = [importlib.import_module(m.name) for m in pkgutil.walk_packages(d.__path__)]\n",
+        "src/engcore/domains/__init__.py": b"",
+        "src/engcore/domains/pack.py": b"from ..decider.rule import decide\n",
+        "src/engcore/decider/__init__.py": b"",
+        "src/engcore/decider/rule.py": b"def decide():\n    return 'admissible'\n",
+    })
+    monkeypatch.setattr(cc, "DYNAMIC_REACH", (("src/engcore/certified/load.py", "src/engcore/domains/**", "test"),))
+    problems = cc.certified_dependency_problems(tmp_path, _SCOPE)
+    assert any("src/engcore/decider/rule.py" in p for p in problems), problems
+
+
+@pytest.mark.parametrize("relative", [
+    "src/engcore/certified/__pycache__/stop.cpython-312.pyc",
+    "src/engcore/certified/stop.cpython-312-x86_64-linux-gnu.so",
+    "src/engcore/certified/stop.pyd",
+])
+def test_final_review_c3_a_tracked_compiled_module_beside_certified_source_is_refused(tmp_path, relative) -> None:
+    """CPython runs an unchecked-hash .pyc or an extension module instead of the pinned .py source."""
+    _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", "src/engcore/certified/stop.py": b"X = 1\n",
+                     relative: b"\x00compiled"})
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "add", "-f", ".")
+    problems = cc.source_form_problems(tmp_path)
+    assert any(relative in p for p in problems), problems
+
+
+def test_final_review_c3_the_real_tree_tracks_only_python_source_under_engcore() -> None:
+    assert cc.source_form_problems(ROOT) == []

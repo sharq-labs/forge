@@ -84,7 +84,7 @@ CERTIFICATE_SCHEMA = "core_certificate/2"
 #: Identity of the code that produced a certificate, recorded in it. Not a
 #: version of the repository: a version of *this algorithm*.
 TOOL_ID = "tools/certification/core_certificate.py"
-TOOL_VERSION = "2.5.0"  # 2.5.0: derived dependency closure of every certified module (BR-15)
+TOOL_VERSION = "2.6.0"  # 2.6.0: G0/A1 final review C1-C3 (indirect loaders, walked-path dynamic loads, declared reach, source forms)
 # 2.4.0: registry pin covers source bytes; loader detection widened (F2, fourth pass)
 # 2.3.0: dynamic import reach, production registry pin (hostile review F2, third pass)
 # 2.2.0: verdict_authority area and the derived authority-closure check (hostile review F2)
@@ -949,7 +949,22 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
                     builtin_names.add(alias.asname or alias.name)
     modules |= builtin_names  # getattr(builtins, "exec") is a loader lookup like getattr(importlib, ...)
     lines: list[int] = []
+    callees = {id(node.func) for node in ast.walk(tree) if isinstance(node, ast.Call)}
+
+    def loader_name(node: ast.AST) -> bool:
+        name = _call_name(node)
+        name = aliases.get(name, name) if isinstance(node, ast.Name) else name
+        return name in _LOADER_CALLS or name.endswith("import_module") or name == "__import__"
+
     for node in ast.walk(tree):
+        # G0/A1 final review C1: a loader referenced anywhere but as the callee of a call (stored in a container, a
+        # default argument, passed along) is called later under another name.
+        if isinstance(node, (ast.Attribute, ast.Name)) and id(node) not in callees and loader_name(node):
+            lines.append(node.lineno)
+        # C1: importlib.__dict__["import_module"] is vars(importlib)["import_module"]
+        if (isinstance(node, ast.Subscript) and isinstance(node.value, ast.Attribute) and node.value.attr == "__dict__"
+                and isinstance(node.value.value, ast.Name) and node.value.value.id in modules):
+            lines.append(node.lineno)
         # A loader bound to another name (load = importlib.import_module) is a loader wherever it is later called.
         if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(node.value, (ast.Attribute, ast.Name)):
             bound = _call_name(node.value)
@@ -965,7 +980,8 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
         if name in _LOADER_CALLS:
             lines.append(node.lineno)
         elif name.endswith("import_module") or name == "__import__":
-            if not literal:
+            # C1: __import__("engcore", fromlist=[...]) or with a level loads names the static closure never follows
+            if not literal or (name == "__import__" and (len(node.args) > 1 or node.keywords)):
                 lines.append(node.lineno)
         elif isinstance(node.func, ast.Name) and name in ("exec", "compile", "eval"):
             lines.append(node.lineno)
@@ -1172,11 +1188,23 @@ def certified_dependency_problems(root: pathlib.Path, scope: Sequence[ScopeArea]
     missing: set[str] = set()
     seen: set[str] = set()
     queue = sorted(seeds)
+    reach = {file: pattern for file, pattern, _ in DYNAMIC_REACH if pattern.startswith("src/engcore/")}
     while queue:
         current = queue.pop()
         if current in seen:
             continue
         seen.add(current)
+        if current in reach:   # G0/A1 final review C2: a declared computed-name load reaches every file it names
+            for target in sorted((root / "src" / "engcore").rglob("*.py")):
+                name = target.relative_to(root).as_posix()
+                if _excluded(target.relative_to(root)) or not _matches(name, reach[current]):
+                    continue
+                if name in pinned or _dependency_excluded(name, current):
+                    continue
+                if not _closure_exempt(name):
+                    missing.add(name)
+                if name not in seen:
+                    queue.append(name)
         for module in _engcore_imports(src, root / current):
             parts = module.split(".")
             for length in range(1, len(parts) + 1):
@@ -1199,14 +1227,34 @@ def certified_dependency_problems(root: pathlib.Path, scope: Sequence[ScopeArea]
             f"change a certified result without moving the certificate: " + ", ".join(names)
         )
     declared = {file for file, _, _ in DYNAMIC_REACH}
-    for name in sorted(seeds):
+    for name in sorted(seen):   # C2: every module the closure walks through, not only the seeds
         lines = dynamic_imports(root / name)
         if lines and name not in declared:
+            role = "certified module" if name in seeds else "module on a certified module's import path"
             problems.append(
-                f"certified module {name} loads modules by computed name or package walk (line(s) {lines}) and "
+                f"{role} {name} loads modules by computed name or package walk (line(s) {lines}) and "
                 f"DYNAMIC_REACH does not declare what it can reach"
             )
     return problems
+
+
+#: G0/A1 final review C3: what may be TRACKED under src/engcore. CPython prefers an extension module (.so/.pyd) to the
+#: .py beside it and runs an unchecked-hash .pyc from __pycache__ without reading the source, so a tracked compiled
+#: file could replace pinned source while every digest still matches.
+SOURCE_FORMS = (".py", "/py.typed")
+
+
+def source_form_problems(root: pathlib.Path) -> list[str]:
+    """Tracked files under src/engcore that are not Python source (or the py.typed marker)."""
+    try:
+        tracked = _git(root, "ls-files", "-z", "--", "src/engcore", strip=False).split("\0")
+    except Exception as exc:  # noqa: BLE001 - fail closed: without the index nothing is known about the tree
+        return [f"cannot list the tracked files under src/engcore: {exc}"]
+    bad = sorted(name for name in tracked if name and not name.endswith(SOURCE_FORMS))
+    if not bad:
+        return []
+    return [f"{len(bad)} tracked file(s) under src/engcore are not Python source; an import could run them instead of "
+            f"the pinned .py: " + ", ".join(bad)]
 
 
 # ---------------------------------------------------------------------------
@@ -1436,6 +1484,7 @@ def build_manifest(
     pinning += authority_closure_problems(root, SCOPE if scope is None else scope)
     # BR-15: and over a scope whose certified modules import code that decides their meaning unmeasured.
     pinning += certified_dependency_problems(root, SCOPE if scope is None else scope)
+    pinning += source_form_problems(root)
     if pinning:
         raise CertificationError("; ".join(pinning))
     manifest = {
@@ -1818,6 +1867,7 @@ def verify_certificate(
         problems.extend(authority_closure_problems(root))
         # BR-15: and what every certified module imports.
         problems.extend(certified_dependency_problems(root))
+        problems.extend(source_form_problems(root))
         # F2, third pass: and the production registry the verdict reads is the one certified.
         problems.extend(registry_problems(root, certificate))
 
