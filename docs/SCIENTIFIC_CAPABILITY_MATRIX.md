@@ -9,7 +9,7 @@ Stages: FOUNDATION -> FUNCTIONAL -> EVIDENCE_BACKED -> PRODUCTION_READY.
 
 | Capability | Declared | Computed max | Real data | Validation | UQ closure | Claims | Domain Pack | Next blockers |
 |---|---|---|---|---|---|---|---|---|
-| battery.thevenin_1rc | FOUNDATION | FOUNDATION | NO | NO | NO | NO | NO | execution, provenance_replay |
+| battery.thevenin_1rc | FUNCTIONAL | FUNCTIONAL | YES | NO | NO | NO | NO | independent_validation, measurement_uq |
 | battery.rint | FUNCTIONAL | FUNCTIONAL | NO | NO | NO | YES | YES | real_data, independent_validation, measurement_uq, benchmark_metrics |
 | thermal.nafems_t3 | EVIDENCE_BACKED | EVIDENCE_BACKED | N/A | YES | YES | YES | NO | domainpack_integration |
 | electrical.electrothermal | FUNCTIONAL | FUNCTIONAL | NO | NO | NO | YES | NO | real_data, calibration, independent_validation, measurement_uq |

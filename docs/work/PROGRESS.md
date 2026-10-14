@@ -3392,3 +3392,107 @@ Failed approaches, so they are not repeated:
 3. Reusing a pilot root after a code change. A new preregistration needs a fresh root; three roots are retired.
 4. `cat > file` with no input inside a Bash tool command blocks on stdin until the timeout.
 5. A sandbox launcher for the proposer was started and abandoned; OD-20 stays a deployment decision.
+
+## 2026-10-14 -- Battery 1RC scientific closure (feat/battery-1rc-scientific-closure, local only)
+
+Evidence package: [benchmarks/battery_1rc_closure/README.md](../../benchmarks/battery_1rc_closure/README.md).
+Nothing is pushed or merged, and no recertification has been run. The owner approved the NASA archive download
+(209,708,670 bytes, sha256 82302a7d..., outside the repo).
+
+Ledger (`python -m tools.capability_maturity`, coherent): battery.thevenin_1rc computes **FUNCTIONAL** (was FOUNDATION).
+- PASS with evidence: execution, provenance_replay, real_data, benchmark_metrics.
+- MISSING with measured blockers: calibration (NOT_IDENTIFIABLE), independent_validation (cross-cell FAIL; within-cell
+  NOT_ASSESSABLE), measurement_uq (UNKNOWN), parameter_uq, model_discrepancy, claims_integration,
+  domainpack_integration.
+
+Order of record (the commit history is the evidence):
+1. Preregistration v1 `f02bdedb`, then v2 `2301632c`. v2 changes the capacity basis, before any fit.
+2. Calibration data `653b243f`.
+3. Calibration and identifiability `dadafae4`.
+4. Held-out data `0f01baa3`.
+5. Held-out evaluation `8a1b406d`.
+6. UQ `5aa5c493`.
+7. Review corrections `d5d85743`, re-reported from the same frozen calibration with no data reopened.
+
+Gates on `d5d85743` (WSL clone, Linux):
+- `python -m pytest -m "not expensive" -q -n 4`, 3.12: 10426 passed, 157 skipped, 1 failed.
+- The same command, 3.11: 10426 passed, 157 skipped, 1 failed.
+  - On both versions the failure is `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`: the
+    certificate is stale and the new model definition changes the registry pin. Expected until recertification.
+- `python tools/forge_check.py --changed --base e193e573`: the same single failure. It lists four
+  RECERTIFICATION_REQUIRED test files: test_battery_thevenin_route.py, test_evidentiary_level_audit.py,
+  test_capability_completion.py and test_core_guards.py.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+- Focused set (closure, route, kernel, battery domain, capability, audit, guards, NASA importer/adapter): 682 passed,
+  1 skipped. The skip is the opt-in raw-bytes test.
+- On Windows `.venv` 3.14 with `FORGE_NASA_FY08Q4_DIR` set, the closure tests pass 22 of 22, including the rebuild of
+  every trajectory file from the raw `.mat` bytes.
+- Rerunning fit -> evaluate -> uq reproduces every scientific number bit for bit; only the timing fields differ.
+
+Scientific review (forge-scientific-reviewer): CHANGES REQUIRED. F1 HIGH, F2-F5 MEDIUM and L1-L4 were fixed in
+`d5d85743`. Deferred: F6, the caller-declared applicability range; it must be bound to a calibration record before
+claims integration (recorded in the ledger). Not analysed: sensitivity to the rest band.
+
+Failed approaches, so they are not repeated:
+1. A capacity basis from NASA's `Capacity` field is wrong for cells that discharge below 2.7 V.
+2. A parameter-set range equal to the calibration min/max is tripped by measurement-level excursions. Declare the range
+   from evidence in the next preregistration, never by widening it after results.
+3. Running benchmark modules without `PYTHONPATH="<wt>/src;<wt>"` imports the shared checkout's engcore.
+4. `pytest ... | tail` in a command chain hides pytest's exit code; one commit went in with a red test, fixed in `a130a0e1`.
+
+## 2026-10-14 -- Battery 1RC identifiability and independent evidence (feat/battery-1rc-identifiability, local only)
+
+Evidence package: [benchmarks/battery_1rc_identifiability/README.md](../../benchmarks/battery_1rc_identifiability/README.md).
+The branch is stacked on the closure branch (50671ebd), which is unchanged. Nothing is pushed or merged, and no
+recertification has been run.
+
+WP1. An independent review of the NASA closure found it SOUND_WITH_CAVEATS (eight caveats in the README). Its four
+result digests are pinned unchanged by a test.
+
+WP2. Dataset qualification:
+- LG HG2 (McMaster, CC BY 4.0) is qualified and used. It is one cell; its bytes match Mendeley's published sha256.
+- Kirkaldy 2024 is the cross-cell candidate. It is not acquired: a multi-GB download that needs owner approval.
+- Jahn A123, Panasonic 18650PF, Chen 2020 and NASA were assessed.
+
+WP3/4. Order of record (the commits are the evidence):
+1. Preregistration f06905dc (d8acfb26...).
+2. Data roles a4e83f72.
+3. Calibration 6e69f0c9.
+4. Held-out evaluation ec788c2f, opened once.
+5. Tests and outcome 709a46de.
+6. Ledger c99b1781.
+7. README 7a2698d4.
+8. Review corrections d35cecb0: re-reported from the same frozen records, with no threshold or mapping change.
+
+Results:
+- IDENTIFIABLE: R0 20.7 mOhm, R1 15.6 mOhm, C1 1586 F, tau 24.8 s, with the OCV measured from relaxed rests.
+- Held-out 2C/4C pulses PASS the pooled limits (12.6 mV), but fail under load alone (19.7 mV).
+- The 1C constant-current test FAILS marginally (28.7 mV, P95 50.7 mV).
+- Outcome MODEL_REJECTED. Without the preregistered +/-1 degC widening it would be IDENTIFIABILITY_SUPPORTED.
+- Ledger: calibration PASS (scoped); the computed stage stays FUNCTIONAL.
+
+Commands and results:
+- Windows .venv 3.14, `FORGE_LGHG2_DIR=<raw> pytest benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py`:
+  47 passed, 1 skipped (the closure's opt-in raw-bytes test). This includes the rebuild of every role from the raw
+  LG HG2 bytes.
+- Manual rerun of fit -> evaluate -> outcome reproduced CALIBRATION.json and VALIDATION.json byte for byte; only the
+  unpinned TIMINGS files changed.
+- Trial merge of integration/g0-a1-unblock with this branch:
+  - conflicts only in docs/work/ACTIVE_PLAN.md and PROGRESS.md;
+  - certified_dependency, authority_closure, source_form and harness_pinning problems all [];
+  - 498 passed, 3 skipped (guards, audit, route, both battery benchmarks, closure tests, genesis_lite).
+- WSL gates on d35cecb0:
+  - `pytest -m "not expensive" -n 4`, 3.12: 10446 passed, 158 skipped, 1 failed.
+  - The same, 3.11: 10446 passed, 158 skipped, 1 failed.
+  - On both, the failure is `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`: the
+    certificate is stale and the closure branch adds a model definition, so recertification is needed.
+  - `forge_check --changed --base e193e573`: the same single failure, and the four RECERTIFICATION_REQUIRED test files.
+  - `forge_check --regression`: 256 passed.
+  - Focused set: 702 passed, 2 skipped (the opt-in raw-bytes tests).
+
+Failed approaches, so they are not repeated:
+1. Letting an out-of-domain set FAIL broke "contradiction requires admissible evidence". Out-of-domain is now
+   NOT_ASSESSABLE in both directions. The closure's cross-cell FAIL carries this caveat and is not edited.
+2. Pooling rest samples hid a load-only miss. Report load and rest separately alongside any pooled acceptance.
+3. Comparisons with one unit need no verdict field, only a point difference.
+

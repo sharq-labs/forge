@@ -1,0 +1,2311 @@
+{
+ "calibration_sha256": "a302989a9034fb5b169480bf1a1e031bca9706ed3d474bd17ce44a641b685530",
+ "claim_scope": "predictive comparison of the two frozen fitted models at 2 A constant-current discharge plus rest, room temperature, early life; NOT a validation of parameter values, which are not identified. The cross-cell set takes its capacity basis from B0006's own earlier cycles (causal), so it tests the voltage model's transfer, not capacity transfer",
+ "deviation": "the production Rint kernel refuses zero current, so rest intervals use the Rint equation at I = 0 (V = OCV(z)); loaded intervals use the production kernel",
+ "identifiability_decision": "NOT_IDENTIFIABLE",
+ "preregistration_sha256": "408f9dc4b1743e134886aefa6ff34bb5eda5d56f3fad6c5056e30d4adf31402f",
+ "review_corrections": "2026-10-14 scientific review: acceptance is applicability-gated (F1), comparisons are scoped to their cycles and cells and split into body and rest tail (F2), and every 1RC prediction is bound to its route replay record (F3). Re-reported from the same frozen calibration; no data was reopened and no threshold changed",
+ "roles": {
+  "calibration": {
+   "1rc": {
+    "acceptance": "PASS",
+    "acceptance_thresholds_all_cycles": "PASS",
+    "bias_mV": 0.7402109289958313,
+    "body_rmse_mV": 45.29612784592174,
+    "execution_seconds": 1.558,
+    "lag1_autocorrelation_mean": 0.71430957046176,
+    "mae_mV": 16.056715447658487,
+    "max_abs_mV": 852.002128832041,
+    "p95_abs_mV": 73.2911924315151,
+    "per_cycle_rmse_mV": [
+     59.65268373475488,
+     50.82430898923617,
+     45.20423962066363,
+     40.344088692825196,
+     39.940199389732555,
+     36.70378069842431,
+     37.50768383589469,
+     30.28840604583231,
+     26.492379142394505,
+     23.486088633525803,
+     20.472163688211634,
+     17.588717029784206,
+     18.326746481434075,
+     15.033502029236903,
+     19.22153714693323,
+     24.337990586706635,
+     31.38840006912927,
+     35.627232622492734,
+     63.18972701282394,
+     42.16772318869255,
+     48.17605883617154,
+     56.34908584563127,
+     60.14532839338459,
+     37.1119671402839,
+     41.53767655907152,
+     47.6833698690637,
+     54.204605502293106,
+     61.517124868301984,
+     69.60765481779808,
+     62.65053162816911,
+     61.99167048094757,
+     75.47086101684556,
+     48.80888736038685,
+     60.352858575406486,
+     75.0166289288904,
+     56.12811067765823,
+     69.14751938568223,
+     57.52859931616314
+    ],
+    "rmse_mV": 48.38954222872942,
+    "route_validity_status_counts": {
+     "in_domain": 38
+    },
+    "samples": 7154,
+    "tail_rmse_mV": 87.84342854644036,
+    "tail_samples": 366
+   },
+   "cells": [
+    "B0005",
+    "B0007"
+   ],
+   "comparison": {
+    "ci95_mV": [
+     6.771042072984217,
+     10.02518961952736
+    ],
+    "rmse_rint_minus_1rc_mV": 8.302896428613947,
+    "scope": "these 38 cycles of 2 independent cell(s); the cycle bootstrap does not generalize beyond them",
+    "verdict": "1RC_BETTER"
+   },
+   "comparison_body": {
+    "ci95_mV": [
+     -0.35791793433954805,
+     0.30730101234557233
+    ],
+    "rmse_rint_minus_1rc_mV": -0.037433532805455916,
+    "scope": "these 38 cycles of 2 independent cell(s); the cycle bootstrap does not generalize beyond them",
+    "verdict": "NOT_DISTINGUISHED"
+   },
+   "comparison_tail": {
+    "ci95_mV": [
+     64.21454611721227,
+     76.45810197030501
+    ],
+    "rmse_rint_minus_1rc_mV": 69.74246984053717,
+    "scope": "these 38 cycles of 2 independent cell(s); the cycle bootstrap does not generalize beyond them",
+    "verdict": "1RC_BETTER"
+   },
+   "cycles": 38,
+   "in_domain_only": {
+    "1rc": {
+     "bias_mV": 0.7402109289958313,
+     "body_rmse_mV": 45.29612784592174,
+     "lag1_autocorrelation_mean": 0.71430957046176,
+     "mae_mV": 16.056715447658487,
+     "max_abs_mV": 852.002128832041,
+     "p95_abs_mV": 73.2911924315151,
+     "per_cycle_rmse_mV": [
+      59.65268373475488,
+      50.82430898923617,
+      45.20423962066363,
+      40.344088692825196,
+      39.940199389732555,
+      36.70378069842431,
+      37.50768383589469,
+      30.28840604583231,
+      26.492379142394505,
+      23.486088633525803,
+      20.472163688211634,
+      17.588717029784206,
+      18.326746481434075,
+      15.033502029236903,
+      19.22153714693323,
+      24.337990586706635,
+      31.38840006912927,
+      35.627232622492734,
+      63.18972701282394,
+      42.16772318869255,
+      48.17605883617154,
+      56.34908584563127,
+      60.14532839338459,
+      37.1119671402839,
+      41.53767655907152,
+      47.6833698690637,
+      54.204605502293106,
+      61.517124868301984,
+      69.60765481779808,
+      62.65053162816911,
+      61.99167048094757,
+      75.47086101684556,
+      48.80888736038685,
+      60.352858575406486,
+      75.0166289288904,
+      56.12811067765823,
+      69.14751938568223,
+      57.52859931616314
+     ],
+     "rmse_mV": 48.38954222872942,
+     "samples": 7154,
+     "tail_rmse_mV": 87.84342854644036,
+     "tail_samples": 366
+    },
+    "cycles": 38,
+    "rint": {
+     "bias_mV": 1.5775420357466736e-08,
+     "body_rmse_mV": 45.25869431311628,
+     "lag1_autocorrelation_mean": 0.7301929174758242,
+     "mae_mV": 18.033663195719985,
+     "max_abs_mV": 844.2931944753285,
+     "p95_abs_mV": 101.04350213683558,
+     "per_cycle_rmse_mV": [
+      74.45736035501928,
+      67.50699370795552,
+      61.01891249777932,
+      57.15858152505955,
+      58.79688652013182,
+      56.03036646525175,
+      50.14914954026021,
+      42.87382395406496,
+      40.46032653329924,
+      36.961383931923756,
+      32.116299549713915,
+      29.702359012653442,
+      30.73215733943202,
+      27.763689420977173,
+      31.20360182596295,
+      35.65465034677174,
+      41.941166501420795,
+      45.74133619036703,
+      69.30942477706559,
+      49.90697545570452,
+      55.57207575350086,
+      63.37183683798359,
+      66.87839207498546,
+      45.04292351141376,
+      49.042157510575954,
+      55.17469635144073,
+      61.3283963862133,
+      68.21642142807964,
+      75.83777777806344,
+      68.57081192385311,
+      67.41848637849114,
+      80.19478063379854,
+      54.72830363281334,
+      63.95273565916129,
+      74.67629584054265,
+      56.44474968667955,
+      69.11899463695244,
+      65.41997456986118
+     ],
+     "rmse_mV": 56.69243865734337,
+     "samples": 7154,
+     "tail_rmse_mV": 157.58589838697753,
+     "tail_samples": 366
+    }
+   },
+   "independent_cells": 2,
+   "parameter_uncertainty_1rc": {
+    "band": "2.5-97.5 % of 40 joint bootstrap parameter sets",
+    "coverage_of_measurements": 0.10050321498462399,
+    "median_half_width_mV": 1.2077783457209446
+   },
+   "per_cycle": [
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.016820542901454,
+     "ordinal": 2,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "1522c2a441266b6ca0f2ae100bc5ccfda362b6ad5fec3f0f9106ba06db09252c",
+     "replay_record_sha256": "df84aa59847a31d445d13fe8479b95fa229193a43817e5e2125315de7a2aa235",
+     "result_id": "battery-thevenin1rc-df84aa59847a31d4",
+     "rmse_1rc_mV": 59.65268373475488,
+     "rmse_rint_mV": 74.45736035501928,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.685948163596,
+      39.033397966787035
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.016573862170142,
+     "ordinal": 3,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "655fcfbf4c9781feab998e1a7ed051fe7c86f8aeb55aaa28ab33b9c5aa8d2602",
+     "replay_record_sha256": "5010a792b766a230bed3879cdcd703c85407f12a475b5d8727b006e8f860d66a",
+     "result_id": "battery-thevenin1rc-5010a792b766a230",
+     "rmse_1rc_mV": 50.82430898923617,
+     "rmse_rint_mV": 67.50699370795552,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.734266163954402,
+      38.818796689817404
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0159359571668354,
+     "ordinal": 4,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "56c19b503382c61281e680d2f0e24ba8bc38c9d815ecff23815f9b7bc06317c2",
+     "replay_record_sha256": "f57aa51782a6acc44676396ba1f6584494e39516b9de6f324697927c4c9b7cd3",
+     "result_id": "battery-thevenin1rc-f57aa51782a6acc4",
+     "rmse_1rc_mV": 45.20423962066363,
+     "rmse_rint_mV": 61.01891249777932,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.652243741292516,
+      38.7623045063458
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.017425579158831,
+     "ordinal": 5,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "6321c61100c99f8d579fd704ef98daed83cbf7d1f72b3fc655eef19212ed550b",
+     "replay_record_sha256": "b4fe1951512a090e88b9d57c83918a34b02b4b55741f0d1de7b416c7b0cd0293",
+     "result_id": "battery-thevenin1rc-b4fe1951512a090e",
+     "rmse_1rc_mV": 40.344088692825196,
+     "rmse_rint_mV": 57.15858152505955,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.518700434435164,
+      38.66539257343368
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0162347618032066,
+     "ordinal": 6,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "b90edc058dc9ad0fefc153dec7bd0f1d3790f70058495a63db7c90b050c2c459",
+     "replay_record_sha256": "0b0fa24374f2da44e3e7e640151fbd45e828f35c66f541572e186a1270971a94",
+     "result_id": "battery-thevenin1rc-0b0fa24374f2da44",
+     "rmse_1rc_mV": 39.940199389732555,
+     "rmse_rint_mV": 58.79688652013182,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.51442664842638,
+      38.75169504640032
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.01583310669507,
+     "ordinal": 7,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "be5ffba3180a93ca39b2d2586166cca799418086c3e8826fa92887d07fdce389",
+     "replay_record_sha256": "531487d624a8dd400a371dbad87837bff1454239bf5855e3e2ab32e0e5aedea5",
+     "result_id": "battery-thevenin1rc-531487d624a8dd40",
+     "rmse_1rc_mV": 36.70378069842431,
+     "rmse_rint_mV": 56.03036646525175,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.575581239008407,
+      38.8207012322275
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0166395518034546,
+     "ordinal": 8,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "38cb2759ac1b5a1f0f302175eb48f3e1de12d23807cbf63008ac7418f72533b4",
+     "replay_record_sha256": "fd0e58d3638fc408eaee9154a65282dbabe2ed80e4be85cdf2f1531f1d7aac0f",
+     "result_id": "battery-thevenin1rc-fd0e58d3638fc408",
+     "rmse_1rc_mV": 37.50768383589469,
+     "rmse_rint_mV": 50.14914954026021,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.71132429046902,
+      38.51713023385634
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.018357230695621,
+     "ordinal": 9,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "3de5cf00c2abe821a16dfce3a5db2d913fcba965497631990cdab4a077810599",
+     "replay_record_sha256": "d63cfece65901972eda1f7a2fca9184b66049c1a13900aa6b0d7fa83988e1d57",
+     "result_id": "battery-thevenin1rc-d63cfece65901972",
+     "rmse_1rc_mV": 30.28840604583231,
+     "rmse_rint_mV": 42.87382395406496,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.628487294051176,
+      38.526267904657
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0160718378149842,
+     "ordinal": 10,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "342f1869ac839b6c2cb19f7d216411b6619ef43dc654de4f7f83322f96232424",
+     "replay_record_sha256": "345213dd6e6267833beceee37e7602874b453a54cefe3c4ffdc177f7e233f1e1",
+     "result_id": "battery-thevenin1rc-345213dd6e626783",
+     "rmse_1rc_mV": 26.492379142394505,
+     "rmse_rint_mV": 40.46032653329924,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.561560340089137,
+      38.52698128472781
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0160713863396573,
+     "ordinal": 11,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "f8649329faf4ad406d7e9c04566eff384623c78b212749bda81f0e42ee56b943",
+     "replay_record_sha256": "351a3e6d6884d5258dcb94c22b4cd4a69334b8a149689f5d42da4960e146b5f1",
+     "result_id": "battery-thevenin1rc-351a3e6d6884d525",
+     "rmse_1rc_mV": 23.486088633525803,
+     "rmse_rint_mV": 36.961383931923756,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.43128509546442,
+      38.54143406601644
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.016851865845563,
+     "ordinal": 12,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "93ff7a73dcef7954ddd291b98e87bf75949000ca9480d6e85535dd5299c26964",
+     "replay_record_sha256": "2c0951921154f71c400fbab0b02a2b699894e6b3a061c1516031a301476c3589",
+     "result_id": "battery-thevenin1rc-2c0951921154f71c",
+     "rmse_1rc_mV": 20.472163688211634,
+     "rmse_rint_mV": 32.116299549713915,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.74037188089418,
+      38.52197451768004
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.016393908986775,
+     "ordinal": 13,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "a1fe41df63534ed920a4c77f8ab06fa7bf49f9ff847f5e2322e30445710352af",
+     "replay_record_sha256": "d0a13b7fe6797bab7ea2f51443b25640ba267c34d2b40f4a7bfd21f86981878c",
+     "result_id": "battery-thevenin1rc-d0a13b7fe6797bab",
+     "rmse_1rc_mV": 17.588717029784206,
+     "rmse_rint_mV": 29.702359012653442,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.733107699311514,
+      38.582485834057856
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0158117255163046,
+     "ordinal": 14,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "b2e71639b597b2b429965d674d67e5d33617bb2eadfb246bb495ccb3669c2dbe",
+     "replay_record_sha256": "76702e2966059e16058a344f39b119538decbafaf5dfdad550d33505f219545d",
+     "result_id": "battery-thevenin1rc-76702e2966059e16",
+     "rmse_1rc_mV": 18.326746481434075,
+     "rmse_rint_mV": 30.73215733943202,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.44798340505406,
+      38.520294134873915
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0193509920362724,
+     "ordinal": 15,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "9cbd1a3c4643ec536ac9f72a8f7ed9db47f5d9f1c629796e6d59f1acfc3f43bf",
+     "replay_record_sha256": "0e3cb3aceeabc8ab8dcd69478f2523df2f759823a98f5b987d570f226d169717",
+     "result_id": "battery-thevenin1rc-0e3cb3aceeabc8ab",
+     "rmse_1rc_mV": 15.033502029236903,
+     "rmse_rint_mV": 27.763689420977173,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.463097121123557,
+      38.21358592965045
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0164420273602586,
+     "ordinal": 16,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "8169ff3b027eb6f224f97d96545cf2baba9e4a8cd6564960e8f41e97e6133c72",
+     "replay_record_sha256": "c30a71e675c1df6112b5c9723f62af859b5358aaba935ac18422d9295d1549db",
+     "result_id": "battery-thevenin1rc-c30a71e675c1df61",
+     "rmse_1rc_mV": 19.22153714693323,
+     "rmse_rint_mV": 31.20360182596295,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.32051139249706,
+      38.1983618706913
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.016465255161054,
+     "ordinal": 17,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "f57ba48115661ca6b444b1ef5c11665461e14fdd5e3f0c13d468362b17641af1",
+     "replay_record_sha256": "47941afa91b88f44809454c7c7c86602ff2ea88ffd60d8141d849fcb7b8719c6",
+     "result_id": "battery-thevenin1rc-47941afa91b88f44",
+     "rmse_1rc_mV": 24.337990586706635,
+     "rmse_rint_mV": 35.65465034677174,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.357321702352365,
+      38.31926916027133
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0181069603406625,
+     "ordinal": 18,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "4f6b040a17ecde2e5620c13abcff1ebc18071bb34ede5fdfb07b0020ee16c2e2",
+     "replay_record_sha256": "b89e3e155004612f538b7ec9816d0b74a7517854a2758e0db6a83b1bacecefe1",
+     "result_id": "battery-thevenin1rc-b89e3e155004612f",
+     "rmse_1rc_mV": 31.38840006912927,
+     "rmse_rint_mV": 41.941166501420795,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.382419922756025,
+      38.4787542519308
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0170254305215485,
+     "ordinal": 19,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "c4df3b51df994c6caee8bc943fb4fb297c8164b5779907a0a48ac52087bada26",
+     "replay_record_sha256": "e6869450d0e621fce744d299df46000cbe659ba7bc7e806d23ee0b0337c6d02d",
+     "result_id": "battery-thevenin1rc-e6869450d0e621fc",
+     "rmse_1rc_mV": 35.627232622492734,
+     "rmse_rint_mV": 45.74133619036703,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.355030419469987,
+      38.54659017774874
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.01684718332263,
+     "ordinal": 20,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "88d524c811754b9cf91a78e8f9b252586435790f0c0b0356a27237b8170f6264",
+     "replay_record_sha256": "5081feef8fe2c2fccf02f5bc9469e79ab00a7a3e2063e858b8a5b694b301d62d",
+     "result_id": "battery-thevenin1rc-5081feef8fe2c2fc",
+     "rmse_1rc_mV": 63.18972701282394,
+     "rmse_rint_mV": 69.30942477706559,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.549424447285215,
+      38.44749852224995
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9943911963511516,
+     "ordinal": 2,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "2467774c822f058711db1bba5fe886e9b1e0139e4583da7be8b056d90ee656a2",
+     "replay_record_sha256": "7d2763c382032d63859f6eaf5fb423ecc27b89b37aedccf22a0e96e89b8e0038",
+     "result_id": "battery-thevenin1rc-7d2763c382032d63",
+     "rmse_1rc_mV": 42.16772318869255,
+     "rmse_rint_mV": 49.90697545570452,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.261106709876195,
+      40.26023408628707
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.994681656822022,
+     "ordinal": 3,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "f9d963fb065ead44150894d9848fcd039dda8562f9f49af8b7ea2d4a6494ce54",
+     "replay_record_sha256": "f89073697fb06d723bd84d778f8f9f40eafa1a14f3597a237991fd751ef14921",
+     "result_id": "battery-thevenin1rc-f89073697fb06d72",
+     "rmse_1rc_mV": 48.17605883617154,
+     "rmse_rint_mV": 55.57207575350086,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.3190033925327,
+      40.27558633997852
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9952731083659303,
+     "ordinal": 4,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "d5cb22b1cb380db57912778abfa0227452dc050b5dcf34d65f496c04d88b5f8e",
+     "replay_record_sha256": "d43327a569cc1dbb6c1d6153d269062327fcb92877b1024b666039428d6b42bb",
+     "result_id": "battery-thevenin1rc-d43327a569cc1dbb",
+     "rmse_1rc_mV": 56.34908584563127,
+     "rmse_rint_mV": 63.37183683798359,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.223578724887073,
+      40.29314715799111
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9935500451030046,
+     "ordinal": 5,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "89713e5a191f3db396474b33ccbe1059f12fd230db35960a19acdf20c78ca1cb",
+     "replay_record_sha256": "9f9b87bcc9dc8943581f29376981ca6a67405e8343e0e766461aeff9f5edc7d7",
+     "result_id": "battery-thevenin1rc-9f9b87bcc9dc8943",
+     "rmse_1rc_mV": 60.14532839338459,
+     "rmse_rint_mV": 66.87839207498546,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.13830760704513,
+      40.268872630219796
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9941041745764116,
+     "ordinal": 6,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "22761d60c30fe5519bf6c9a5a294801cbd8502310430a788e9fe6ba7a697c4c3",
+     "replay_record_sha256": "ce90f59f1c0f1c5426fe41b0ffe56511ad11872d6505282ca01a5d9276d818e8",
+     "result_id": "battery-thevenin1rc-ce90f59f1c0f1c54",
+     "rmse_1rc_mV": 37.1119671402839,
+     "rmse_rint_mV": 45.04292351141376,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.135840711684263,
+      39.67620802332074
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.993164510431567,
+     "ordinal": 7,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "481ab62fdabcfb2c52e0fd47d89ced1302b2e2369c68d3c4fbaad69b665b758d",
+     "replay_record_sha256": "d91a12a251c2f3ee12a4a1342674d0bda8a74f4adc97ec89a58a61ec292c2c14",
+     "result_id": "battery-thevenin1rc-d91a12a251c2f3ee",
+     "rmse_1rc_mV": 41.53767655907152,
+     "rmse_rint_mV": 49.042157510575954,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.255515986671373,
+      39.803817662926164
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9936540341331743,
+     "ordinal": 8,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "0a0a9a7c1d502f808a828183f90f9d461187c75846ac74e1858b7b1466034410",
+     "replay_record_sha256": "96545e6161c1d836fc19692aece1840b7c8c8adfb3f210411d1254a19021d7a2",
+     "result_id": "battery-thevenin1rc-96545e6161c1d836",
+     "rmse_1rc_mV": 47.6833698690637,
+     "rmse_rint_mV": 55.17469635144073,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.302952144966042,
+      39.88810476942348
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.99377953803378,
+     "ordinal": 9,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "4a8123221a6a854e4d255a09220168922d37f40a52c641da6b64213632384814",
+     "replay_record_sha256": "e1a23e4117a8e3c4cb852ae663ed823820c726adde52e72ce342d8579ac55c3c",
+     "result_id": "battery-thevenin1rc-e1a23e4117a8e3c4",
+     "rmse_1rc_mV": 54.204605502293106,
+     "rmse_rint_mV": 61.3283963862133,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.257530932186896,
+      39.95162250671474
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9937831213829802,
+     "ordinal": 10,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "65112ee7d2867914b89aa2b8f0bba397d98396a347249fbf0787d47a3db9d832",
+     "replay_record_sha256": "c1bd50f6a5ba8d30db7bcf8646bf54e91026f36ec9088684ce0e64b64bf2b45f",
+     "result_id": "battery-thevenin1rc-c1bd50f6a5ba8d30",
+     "rmse_1rc_mV": 61.517124868301984,
+     "rmse_rint_mV": 68.21642142807964,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.189583713016194,
+      40.052021854718284
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9942511729128334,
+     "ordinal": 11,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "247674499fa2c6f961616d7a6211507de6d2caf8f8331bc6295a335604612366",
+     "replay_record_sha256": "836df4e0a78f9a11b1e69bdb2a5682002d675c782b78882cf6e2305c4dafcf35",
+     "result_id": "battery-thevenin1rc-836df4e0a78f9a11",
+     "rmse_1rc_mV": 69.60765481779808,
+     "rmse_rint_mV": 75.83777777806344,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.062655752137022,
+      40.1213838436794
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9938120330189373,
+     "ordinal": 12,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "c4eef81755da9fcb40de7148b1af18c46e466aa1426e3b9ffcf3504c8ab9ab68",
+     "replay_record_sha256": "4e7de676cdfd370be92efbd631c47c1ed7f4e5a3ca5c1eb52c0f96c9e27abfe6",
+     "result_id": "battery-thevenin1rc-4e7de676cdfd370b",
+     "rmse_1rc_mV": 62.65053162816911,
+     "rmse_rint_mV": 68.57081192385311,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.334878490739897,
+      40.174657039770814
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9942213710086447,
+     "ordinal": 13,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "3078673989fed9cd68a3da7179f9a1c9367fc949349861f48d1f9f4003805bef",
+     "replay_record_sha256": "03e92af11b0396313b403e4bb9ed871f59ff77e78825b5b795ed9305afe4e05f",
+     "result_id": "battery-thevenin1rc-03e92af11b039631",
+     "rmse_1rc_mV": 61.99167048094757,
+     "rmse_rint_mV": 67.41848637849114,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.352069874766624,
+      40.016434730174936
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9939995868905829,
+     "ordinal": 14,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "6441334498a6fbd1ee943c4472ba4ed1660d08b2edc61d7751d8563ad96a343e",
+     "replay_record_sha256": "3fb080b9d7dc0cdb7b8537812230671ad053ef1e5593c468cfa8eccc26340f9a",
+     "result_id": "battery-thevenin1rc-3fb080b9d7dc0cdb",
+     "rmse_1rc_mV": 75.47086101684556,
+     "rmse_rint_mV": 80.19478063379854,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.125190486792466,
+      40.16569230743226
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.994356138623711,
+     "ordinal": 15,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "9c16ee275fed19e4c6d49dbc1267a01714047a92ee33665cdcfb71d4e1b50a39",
+     "replay_record_sha256": "20c3f3ceba36909ad0143a783a7446a893e82705b17cf0bc9a1f28ad318c5497",
+     "result_id": "battery-thevenin1rc-20c3f3ceba36909a",
+     "rmse_1rc_mV": 48.80888736038685,
+     "rmse_rint_mV": 54.72830363281334,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.072501109913752,
+      39.46139677634257
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9935665024864544,
+     "ordinal": 16,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "09c458b056e1b6dcade11cf9ecd912d7b9ee369a760454811d96e411ebfbc70e",
+     "replay_record_sha256": "4a06e4ae595b7ac934531dda415912becdfc00a02df75d9c4f31766b12d2feb1",
+     "result_id": "battery-thevenin1rc-4a06e4ae595b7ac9",
+     "rmse_1rc_mV": 60.352858575406486,
+     "rmse_rint_mV": 63.95273565916129,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      23.938131916668528,
+      39.5636595172155
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.993742172224942,
+     "ordinal": 17,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "d17e4a85367ce95bab9bf356b261842907491c3124d9ef85961043e67c9b971f",
+     "replay_record_sha256": "7fcff4be097865fd3845f6419719f9e6717acbbd5e51726685768d6678b3d692",
+     "result_id": "battery-thevenin1rc-7fcff4be097865fd",
+     "rmse_1rc_mV": 75.0166289288904,
+     "rmse_rint_mV": 74.67629584054265,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      23.932016714666645,
+      39.628948319501816
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9946244036549008,
+     "ordinal": 18,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "90485109d2d0355b77c487391e5160789bdf261ef1a854bc04babff555940987",
+     "replay_record_sha256": "9114537c6c8231c37bd251bc6300388c86dd57ffd3a9df76424bc51503cc9f9c",
+     "result_id": "battery-thevenin1rc-9114537c6c8231c3",
+     "rmse_1rc_mV": 56.12811067765823,
+     "rmse_rint_mV": 56.44474968667955,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      23.976819790445433,
+      39.225347214914876
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.994455565707021,
+     "ordinal": 19,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "e522a96890692ad50df86a42dcf7b5b9d3b87fe74e0dbe8ca17e42a7df90ef58",
+     "replay_record_sha256": "b6bf817f4eb886f5c45a90dfe882a621dc8be2ed2f197f914d005c1576c63333",
+     "result_id": "battery-thevenin1rc-b6bf817f4eb886f5",
+     "rmse_1rc_mV": 69.14751938568223,
+     "rmse_rint_mV": 69.11899463695244,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      23.980775695020398,
+      39.4126321606434
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9992261048783584,
+     "ordinal": 20,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "eacbd578ad0bece555949ea1428c9f45aa7502dd0e1001066956c1adf8958a04",
+     "replay_record_sha256": "9c3c8b79a7f3e875d227d31d3f45f48f00f9b08deb08ea2bf31e5fcb7fa9509a",
+     "result_id": "battery-thevenin1rc-9c3c8b79a7f3e875",
+     "rmse_1rc_mV": 57.52859931616314,
+     "rmse_rint_mV": 65.41997456986118,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.35868522365832,
+      39.95874037686836
+     ]
+    }
+   ],
+   "rint": {
+    "acceptance": "FAIL",
+    "acceptance_thresholds_all_cycles": "FAIL",
+    "bias_mV": 1.5775420357466736e-08,
+    "body_rmse_mV": 45.25869431311628,
+    "execution_seconds": 0.196,
+    "lag1_autocorrelation_mean": 0.7301929174758242,
+    "mae_mV": 18.033663195719985,
+    "max_abs_mV": 844.2931944753285,
+    "p95_abs_mV": 101.04350213683558,
+    "per_cycle_rmse_mV": [
+     74.45736035501928,
+     67.50699370795552,
+     61.01891249777932,
+     57.15858152505955,
+     58.79688652013182,
+     56.03036646525175,
+     50.14914954026021,
+     42.87382395406496,
+     40.46032653329924,
+     36.961383931923756,
+     32.116299549713915,
+     29.702359012653442,
+     30.73215733943202,
+     27.763689420977173,
+     31.20360182596295,
+     35.65465034677174,
+     41.941166501420795,
+     45.74133619036703,
+     69.30942477706559,
+     49.90697545570452,
+     55.57207575350086,
+     63.37183683798359,
+     66.87839207498546,
+     45.04292351141376,
+     49.042157510575954,
+     55.17469635144073,
+     61.3283963862133,
+     68.21642142807964,
+     75.83777777806344,
+     68.57081192385311,
+     67.41848637849114,
+     80.19478063379854,
+     54.72830363281334,
+     63.95273565916129,
+     74.67629584054265,
+     56.44474968667955,
+     69.11899463695244,
+     65.41997456986118
+    ],
+    "rmse_mV": 56.69243865734337,
+    "samples": 7154,
+    "tail_rmse_mV": 157.58589838697753,
+    "tail_samples": 366
+   }
+  },
+  "cross_cell_validation": {
+   "1rc": {
+    "acceptance": "FAIL",
+    "acceptance_thresholds_all_cycles": "FAIL",
+    "bias_mV": -26.487268299929788,
+    "body_rmse_mV": 83.0794661494935,
+    "calibration_to_holdout_rmse_gap_mV": 40.83842685955303,
+    "execution_seconds": 1.223,
+    "lag1_autocorrelation_mean": 0.92435293979791,
+    "mae_mV": 32.39138319837704,
+    "max_abs_mV": 1104.0961260723577,
+    "p95_abs_mV": 115.65783960924821,
+    "per_cycle_rmse_mV": [
+     37.76377619410947,
+     30.777756930476063,
+     22.145054506761927,
+     30.279676779356954,
+     34.19594692603703,
+     34.059832232557156,
+     47.9719885522132,
+     54.524602000749795,
+     79.44078778738319,
+     73.68318607722688,
+     79.3858239162099,
+     79.42178823106062,
+     91.44328513878729,
+     111.06807358356227,
+     122.2029552775862,
+     102.61301146618052,
+     117.13822384883473,
+     119.3911506500858,
+     49.877014517088675,
+     58.11130891015628,
+     82.00703067545307,
+     84.69996649603644,
+     74.89155259695377,
+     86.63028207233451,
+     135.51434283283234,
+     120.86565197390205,
+     138.1824858535147,
+     150.97719876334367,
+     131.03846739284467
+    ],
+    "rmse_mV": 89.22796908828245,
+    "route_validity_status_counts": {
+     "in_domain": 23,
+     "outside_validated_domain": 6
+    },
+    "samples": 5420,
+    "tail_rmse_mV": 392.6018187066018,
+    "tail_samples": 39
+   },
+   "cells": [
+    "B0006"
+   ],
+   "comparison": {
+    "ci95_mV": [
+     2.3828423549045983,
+     5.412786959005398
+    ],
+    "rmse_rint_minus_1rc_mV": 3.856662181453169,
+    "scope": "these 29 cycles of 1 independent cell(s); the cycle bootstrap does not generalize beyond them",
+    "verdict": "1RC_BETTER"
+   },
+   "comparison_body": {
+    "ci95_mV": [
+     0.27589030599944747,
+     0.5121287387849505
+    ],
+    "rmse_rint_minus_1rc_mV": 0.4020738268063623,
+    "scope": "these 29 cycles of 1 independent cell(s); the cycle bootstrap does not generalize beyond them",
+    "verdict": "1RC_BETTER"
+   },
+   "comparison_tail": {
+    "ci95_mV": [
+     90.8962460165377,
+     110.30343983531651
+    ],
+    "rmse_rint_minus_1rc_mV": 99.95422751621847,
+    "scope": "these 29 cycles of 1 independent cell(s); the cycle bootstrap does not generalize beyond them",
+    "verdict": "1RC_BETTER"
+   },
+   "cycles": 29,
+   "in_domain_only": {
+    "1rc": {
+     "bias_mV": -20.83762984696675,
+     "body_rmse_mV": 76.30168637781634,
+     "lag1_autocorrelation_mean": 0.9154527085833452,
+     "mae_mV": 27.56400104757883,
+     "max_abs_mV": 1101.5167543980908,
+     "p95_abs_mV": 102.09102900026748,
+     "per_cycle_rmse_mV": [
+      37.76377619410947,
+      30.777756930476063,
+      22.145054506761927,
+      30.279676779356954,
+      34.19594692603703,
+      34.059832232557156,
+      47.9719885522132,
+      54.524602000749795,
+      79.44078778738319,
+      73.68318607722688,
+      79.3858239162099,
+      79.42178823106062,
+      91.44328513878729,
+      111.06807358356227,
+      122.2029552775862,
+      102.61301146618052,
+      117.13822384883473,
+      119.3911506500858,
+      58.11130891015628,
+      82.00703067545307,
+      84.69996649603644,
+      74.89155259695377,
+      86.63028207233451
+     ],
+     "rmse_mV": 77.477335167425,
+     "samples": 4319,
+     "tail_rmse_mV": 195.84850298341632,
+     "tail_samples": 24
+    },
+    "cycles": 23,
+    "rint": {
+     "bias_mV": -24.357248730399732,
+     "body_rmse_mV": 76.68162240517537,
+     "lag1_autocorrelation_mean": 0.8189319269294211,
+     "mae_mV": 29.0648142694142,
+     "max_abs_mV": 1103.5667033513764,
+     "p95_abs_mV": 103.44215824871429,
+     "per_cycle_rmse_mV": [
+      41.63024859310207,
+      34.78950804172328,
+      26.662268027351207,
+      32.96180283510378,
+      36.98362210211619,
+      36.44302998164824,
+      49.61019313532528,
+      56.36810923959687,
+      80.66980631167596,
+      75.3626678331434,
+      81.14764364858965,
+      81.21138688994994,
+      93.06037406972635,
+      112.51495970340896,
+      123.62366041671936,
+      104.20967923910798,
+      118.61481157980846,
+      127.03943466145206,
+      59.594603075408536,
+      83.37091024452698,
+      86.36932620778019,
+      76.33610277207119,
+      88.36692256998239
+     ],
+     "rmse_mV": 79.51871568486641,
+     "samples": 4319,
+     "tail_rmse_mV": 292.62517617678105,
+     "tail_samples": 24
+    }
+   },
+   "independent_cells": 1,
+   "parameter_uncertainty_1rc": {
+    "band": "2.5-97.5 % of 40 joint bootstrap parameter sets",
+    "coverage_of_measurements": 0.04538745387453875,
+    "median_half_width_mV": 1.1352004602727117
+   },
+   "per_cycle": [
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0149020169266376,
+     "ordinal": 2,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "241c50b4889c9cb5c92ca1d280b755f1bc8df04d05f3b2ba6021bf4f7687a591",
+     "replay_record_sha256": "45cdca261197eebec42247639871f53a7254d17da3b417e6fa5dc197e705748a",
+     "result_id": "battery-thevenin1rc-45cdca261197eebe",
+     "rmse_1rc_mV": 37.76377619410947,
+     "rmse_rint_mV": 41.63024859310207,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.63823886086074,
+      39.2462026826329
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.014434345552428,
+     "ordinal": 3,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "ec8ef3193b3be8e1d8ed60faf03f489ff3734fedd9e95133a02940212fc9c76f",
+     "replay_record_sha256": "e90a19140965ca17d98669a331ac77e7c7841d83e7241a27cdc433ba1b9b0601",
+     "result_id": "battery-thevenin1rc-e90a19140965ca17",
+     "rmse_1rc_mV": 30.777756930476063,
+     "rmse_rint_mV": 34.78950804172328,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.704057719023776,
+      38.999202460252846
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0142051662535234,
+     "ordinal": 4,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "2b9bf4e15b7a07a95fcb75fd4483b50bfe3222fb79660fb35b3d327cde81f88d",
+     "replay_record_sha256": "dc7e87acef4e17ca6fd26e8c657a763449265fb7422e5df769f61fe70867aecc",
+     "result_id": "battery-thevenin1rc-dc7e87acef4e17ca",
+     "rmse_1rc_mV": 22.145054506761927,
+     "rmse_rint_mV": 26.662268027351207,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.648384924528084,
+      38.843627771866515
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.013995769332238,
+     "ordinal": 5,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "226b8c7d87c104c44505adb7654c1965a64019477466c20f021f7f373e3d52fa",
+     "replay_record_sha256": "2f1af4057b404da27fd110de025ee6ba2f255bbf0d04026a6b52d079e8754250",
+     "result_id": "battery-thevenin1rc-2f1af4057b404da2",
+     "rmse_1rc_mV": 30.279676779356954,
+     "rmse_rint_mV": 32.96180283510378,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.634206199911688,
+      38.97798888258284
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0151519685741275,
+     "ordinal": 6,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "15dbb1976319a778cbbbf75f2a1ea032c973074ee0f7542839855ef4de8c1ab7",
+     "replay_record_sha256": "730837cb7cc92a722b69366f43a1410ad83c93f2e8813af8f7af4dce41abd333",
+     "result_id": "battery-thevenin1rc-730837cb7cc92a72",
+     "rmse_1rc_mV": 34.19594692603703,
+     "rmse_rint_mV": 36.98362210211619,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.343399604359956,
+      38.83989920742278
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0145081864690626,
+     "ordinal": 7,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "96030cf71842dd27d5fb644a03cc894f3bab9b31f4e444cb7af28b513d0c76c7",
+     "replay_record_sha256": "f5204ac2fb8b2c34da1dd2345b02edbe653e25078c8b808587272b722f3c612a",
+     "result_id": "battery-thevenin1rc-f5204ac2fb8b2c34",
+     "rmse_1rc_mV": 34.059832232557156,
+     "rmse_rint_mV": 36.44302998164824,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.430946389444678,
+      39.04610837498471
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0146816699579064,
+     "ordinal": 8,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "421cb1e3573899b91ffd60011bb84b3b3416be460f1709464cc36a4af758a06c",
+     "replay_record_sha256": "29c49b000acf016407c32c43db6963d7e680a827da85948e41413da477c01851",
+     "result_id": "battery-thevenin1rc-29c49b000acf0164",
+     "rmse_1rc_mV": 47.9719885522132,
+     "rmse_rint_mV": 49.61019313532528,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.650435471431692,
+      38.87507521022778
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.015071955488147,
+     "ordinal": 9,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "219f3ad078aae8675a51b372d491c9aabbe8ddebdad9476783432cd31d7dbdff",
+     "replay_record_sha256": "edf4c372040bd6153a4c6ead2ca74b4c80d36bfece37eb74a1bf9ed049794518",
+     "result_id": "battery-thevenin1rc-edf4c372040bd615",
+     "rmse_1rc_mV": 54.524602000749795,
+     "rmse_rint_mV": 56.36810923959687,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.564976908542672,
+      38.7260539826455
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0155176072270926,
+     "ordinal": 10,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "6d42a5cf766393d59f35c1551fce649e550b778b149e32e76276c741c9faca1e",
+     "replay_record_sha256": "a8aaff0d7f06f9edfa5955c7c77b93ec5cfb0dbd5f88e833726ec615af5796e3",
+     "result_id": "battery-thevenin1rc-a8aaff0d7f06f9ed",
+     "rmse_1rc_mV": 79.44078778738319,
+     "rmse_rint_mV": 80.66980631167596,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.515019617858613,
+      38.98629728904917
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.014079047237871,
+     "ordinal": 11,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "b72bd060afb42a81840080e2b94fd6db3453fec804a7ddb846ad113c2eb9a09b",
+     "replay_record_sha256": "dbba84c93d2dba509c301e33102b1bccacf915974252cc5f644f9f0d4a347758",
+     "result_id": "battery-thevenin1rc-dbba84c93d2dba50",
+     "rmse_1rc_mV": 73.68318607722688,
+     "rmse_rint_mV": 75.3626678331434,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.40648205159496,
+      38.65978861919643
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0134697854511865,
+     "ordinal": 12,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "0503348ba6835f9cc28b36dafa8bc007f5c67a86e04c06b9e0ac89fd44ef3949",
+     "replay_record_sha256": "7ece70883dfb70b350f0481ac52f09921c36b2ebde30943af399bac67ae9b7b7",
+     "result_id": "battery-thevenin1rc-7ece70883dfb70b3",
+     "rmse_1rc_mV": 79.3858239162099,
+     "rmse_rint_mV": 81.14764364858965,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.666067568688486,
+      38.84979195732924
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0148749194363664,
+     "ordinal": 13,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "7bfdaeba1ee736f5854b519a15c362112964a75c6ebbe6ad7b7725935284ca7e",
+     "replay_record_sha256": "9b3f130311d0dc22d01afab60a83db4194d1b9edf21ac0eda0d265edbc40e402",
+     "result_id": "battery-thevenin1rc-9b3f130311d0dc22",
+     "rmse_1rc_mV": 79.42178823106062,
+     "rmse_rint_mV": 81.21138688994994,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.819105859024557,
+      38.75128344015104
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0144081790374893,
+     "ordinal": 14,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "8bc18a46b7c7f841ba38393fecac08c19eea3a5cb1c8e4e6603c64f1143243a1",
+     "replay_record_sha256": "16d866face43e06bf20479077ac0487ddd10e18f2cc24a097b0a5cdd2124bda8",
+     "result_id": "battery-thevenin1rc-16d866face43e06b",
+     "rmse_1rc_mV": 91.44328513878729,
+     "rmse_rint_mV": 93.06037406972635,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.627666776864352,
+      38.76853764058789
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.014472686005532,
+     "ordinal": 15,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "004dade16079740b418df6d3501647f262883b41bc1d4dde89fc87813626432d",
+     "replay_record_sha256": "07b3adcca8d4dc98b372d1d2fc3f7170307508042906edbc5d4fd05e11dca44c",
+     "result_id": "battery-thevenin1rc-07b3adcca8d4dc98",
+     "rmse_1rc_mV": 111.06807358356227,
+     "rmse_rint_mV": 112.51495970340896,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.450913129560714,
+      38.84686112344348
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0146756268214814,
+     "ordinal": 16,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "572cd5fbd0c1afbcee9545d24c2c5469940d2b326fc2597f770e159ff052b187",
+     "replay_record_sha256": "cef2e859543be5f4f0a297f85ab74bd85979e80be008da72d9cb98548c9c20d0",
+     "result_id": "battery-thevenin1rc-cef2e859543be5f4",
+     "rmse_1rc_mV": 122.2029552775862,
+     "rmse_rint_mV": 123.62366041671936,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.26604433063594,
+      38.865889781652804
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.015931347705288,
+     "ordinal": 17,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "1303713ffe885797349076356d7a776ba6cb6768c9070439eebb3fdb55d17315",
+     "replay_record_sha256": "2befd29df728d04d92ab580c971c8f31966cca57ac0b4559e419737026d44018",
+     "result_id": "battery-thevenin1rc-2befd29df728d04d",
+     "rmse_1rc_mV": 102.61301146618052,
+     "rmse_rint_mV": 104.20967923910798,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.34725293029431,
+      38.647578733807656
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.01432419683381,
+     "ordinal": 18,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "0292448e1950c6b4aad7ea3c61c4a24b6ede2230006b3bf966b9c3b1f49282df",
+     "replay_record_sha256": "781fb1f5e225de109e9a73e6e2406f9237b612d625f64bf4ed85b4c95122166c",
+     "result_id": "battery-thevenin1rc-781fb1f5e225de10",
+     "rmse_1rc_mV": 117.13822384883473,
+     "rmse_rint_mV": 118.61481157980846,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.380274264917215,
+      38.79218188173866
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.015920256743369,
+     "ordinal": 19,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "960bb6f6c8343586ad1c6dca2f6a5bdb94ac1aeb1e7d652956c92d4794c5fb01",
+     "replay_record_sha256": "6c81a92989a11b98aadd8145739ce821e2411ff2dfee715b4eb38fb8096966a8",
+     "result_id": "battery-thevenin1rc-6c81a92989a11b98",
+     "rmse_1rc_mV": 119.3911506500858,
+     "rmse_rint_mV": 127.03943466145206,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.455293448252306,
+      38.77022223929529
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.00042449170195313357,
+     "max_current_A": 2.0202081897757225,
+     "ordinal": 20,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "c5a3a30efe5587e58ddcbb6816028c86a3d3f64449ad00adc8836c886f732b6a",
+     "replay_record_sha256": "0ef2a7e6f3f0d15953efdc1e8385acf3a1d3ec87df40c2105e5d089d8eb67820",
+     "result_id": "battery-thevenin1rc-0ef2a7e6f3f0d159",
+     "rmse_1rc_mV": 49.877014517088675,
+     "rmse_rint_mV": 50.874937449827456,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      24.511611712923585,
+      37.54320599748628
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0141161810049812,
+     "ordinal": 21,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "fca6497b7e72bbacce55f2bdbc3bee623f68b817e2ec90d811a5d5a6ee775944",
+     "replay_record_sha256": "a3ddd8cd3368671e85b436fbc206443833185a40410e0946a8910bb4fe66bdf0",
+     "result_id": "battery-thevenin1rc-a3ddd8cd3368671e",
+     "rmse_1rc_mV": 58.11130891015628,
+     "rmse_rint_mV": 59.594603075408536,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.910587532936997,
+      37.90362577530197
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.014039356997488,
+     "ordinal": 22,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "3f0d440ac854869a9a8784b4dbd34a3044af34a0b763416373728550d0f76908",
+     "replay_record_sha256": "84bfa1d21401951b34e71b917666e3934d8f984c2d633eb1f1305c4771d6600b",
+     "result_id": "battery-thevenin1rc-84bfa1d21401951b",
+     "rmse_1rc_mV": 82.00703067545307,
+     "rmse_rint_mV": 83.37091024452698,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.567665011550126,
+      37.6701605139887
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.014851230713757,
+     "ordinal": 23,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "7610ee20b3dda4f64df2fcd9dfb4f3395f77661974ab3a8c5bbb98287ed0f532",
+     "replay_record_sha256": "d37bf416abb12c9f6def112b7fcd907756925afe75295e9f2afbd90c7831c749",
+     "result_id": "battery-thevenin1rc-d37bf416abb12c9f",
+     "rmse_1rc_mV": 84.69996649603644,
+     "rmse_rint_mV": 86.36932620778019,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.224319222372547,
+      37.34166959188387
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.013606338093071,
+     "ordinal": 24,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "df8ffb4f3c03184e9bbd168137d17478c0bedeacb05e9f96db7ed32dfacbda1f",
+     "replay_record_sha256": "a2574799cc1fd328de0d075c50c17d6d9eaf5c2223d935b644c788b172ce1c33",
+     "result_id": "battery-thevenin1rc-a2574799cc1fd328",
+     "rmse_1rc_mV": 74.89155259695377,
+     "rmse_rint_mV": 76.33610277207119,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.029961629396936,
+      37.28979017254232
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.014324216253238,
+     "ordinal": 25,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "3e5e2add89ee4bb50f6c622b1eb1cc823d3cb438b1d337d26d6ad0c7bf5c59b9",
+     "replay_record_sha256": "c36028b2fdcb36e26f4341b67e78d7bd4add0fae39a987abea60c22c2189cf27",
+     "result_id": "battery-thevenin1rc-c36028b2fdcb36e2",
+     "rmse_1rc_mV": 86.63028207233451,
+     "rmse_rint_mV": 88.36692256998239,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.015743593007034,
+      37.16794481484507
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.034302133031985704,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0138293357975146,
+     "ordinal": 26,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "89280f61569488b4f043acb64c1da71e0b1c4d10f3404267d41b9cc0f34b519e",
+     "replay_record_sha256": "2df49265179dd63a8796f3572d64289fddccd9b3ac3a93218e096c9cb67dd3b3",
+     "result_id": "battery-thevenin1rc-2df49265179dd63a",
+     "rmse_1rc_mV": 135.51434283283234,
+     "rmse_rint_mV": 142.73445753457685,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.89771458163466,
+      37.51577848501052
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.11512961635752461,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.001380727720584618,
+     "max_current_A": 2.022139165928567,
+     "ordinal": 27,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "6e925728b5a3893df9fdf347f6d2036784871ed0fedc8d1b880a56468284f7d4",
+     "replay_record_sha256": "de0279c231d1fb28244f8243abfae77c897c98745955ad7989c7a400df34028b",
+     "result_id": "battery-thevenin1rc-de0279c231d1fb28",
+     "rmse_1rc_mV": 120.86565197390205,
+     "rmse_rint_mV": 128.58082955537586,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.81688709830912,
+      37.24165964092258
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.16943245137374063,
+     "cell": "B0006",
+     "current_over_max_fraction": 8.454392289802826e-05,
+     "max_current_A": 2.019521715890847,
+     "ordinal": 28,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "80335ec9768cf05dac21bb0a7e0d5e90ddf279885850870fbbdfd363d1859be7",
+     "replay_record_sha256": "e2e7b7edd3fc3b16d1c81f0151d566f2248a442b8570096ce9c3380dba81d54c",
+     "result_id": "battery-thevenin1rc-e2e7b7edd3fc3b16",
+     "rmse_1rc_mV": 138.1824858535147,
+     "rmse_rint_mV": 148.94365790714923,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.762584263292904,
+      37.27233216178077
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.15819261425863473,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0145859231710013,
+     "ordinal": 29,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "97de83ce3a47bd12069a075bbcac5a489c7382178a1ac3159c3a2e0094988e2c",
+     "replay_record_sha256": "7d0c871553f425e9f4c226ed8c7cedfb8bfab5a8ac181aa6f30cb245615704ef",
+     "result_id": "battery-thevenin1rc-7d0c871553f425e9",
+     "rmse_1rc_mV": 150.97719876334367,
+     "rmse_rint_mV": 164.3866005249402,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.77382410040801,
+      37.207134503019795
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.17512452064045192,
+     "cell": "B0006",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.01454229289152,
+     "ordinal": 30,
+     "parameter_set_sha256": "66e7660a49cea9bacf24beb7261d6cd9e9d2400341e23f216faa63aa4c00b0c0",
+     "profile_sha256": "837d631a051fae60c047b6f9d1a73fe35e363570e6ff8df4745fe1c43ce436dd",
+     "replay_record_sha256": "764a865970d1cfe683c9de34fea09b162f643c32e722c7f12d1e16981e4267a5",
+     "result_id": "battery-thevenin1rc-764a865970d1cfe6",
+     "rmse_1rc_mV": 131.03846739284467,
+     "rmse_rint_mV": 138.3719104335034,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.756892194026193,
+      37.49607769896255
+     ]
+    }
+   ],
+   "rint": {
+    "acceptance": "FAIL",
+    "acceptance_thresholds_all_cycles": "FAIL",
+    "bias_mV": -30.243779116279647,
+    "body_rmse_mV": 83.48153997629984,
+    "calibration_to_holdout_rmse_gap_mV": 36.39219261239224,
+    "execution_seconds": 0.18,
+    "lag1_autocorrelation_mean": 0.8423115233920873,
+    "mae_mV": 34.27447963919274,
+    "max_abs_mV": 1105.3924140921017,
+    "p95_abs_mV": 118.23422258164153,
+    "per_cycle_rmse_mV": [
+     41.63024859310207,
+     34.78950804172328,
+     26.662268027351207,
+     32.96180283510378,
+     36.98362210211619,
+     36.44302998164824,
+     49.61019313532528,
+     56.36810923959687,
+     80.66980631167596,
+     75.3626678331434,
+     81.14764364858965,
+     81.21138688994994,
+     93.06037406972635,
+     112.51495970340896,
+     123.62366041671936,
+     104.20967923910798,
+     118.61481157980846,
+     127.03943466145206,
+     50.874937449827456,
+     59.594603075408536,
+     83.37091024452698,
+     86.36932620778019,
+     76.33610277207119,
+     88.36692256998239,
+     142.73445753457685,
+     128.58082955537586,
+     148.94365790714923,
+     164.3866005249402,
+     138.3719104335034
+    ],
+    "rmse_mV": 93.08463126973561,
+    "samples": 5420,
+    "tail_rmse_mV": 492.5560462228202,
+    "tail_samples": 39
+   }
+  },
+  "within_cell_holdout": {
+   "1rc": {
+    "acceptance": "NOT_ASSESSABLE (12 cycle(s) outside the validated domain)",
+    "acceptance_thresholds_all_cycles": "PASS",
+    "bias_mV": 0.677358682937517,
+    "body_rmse_mV": 48.02432507666471,
+    "calibration_to_holdout_rmse_gap_mV": 1.3507650299202751,
+    "execution_seconds": 0.775,
+    "lag1_autocorrelation_mean": 0.7572372394984622,
+    "mae_mV": 15.325548516453123,
+    "max_abs_mV": 869.3030594602376,
+    "p95_abs_mV": 59.11929717580988,
+    "per_cycle_rmse_mV": [
+     54.07134419704496,
+     46.555655887255796,
+     38.54362109923752,
+     31.33047937215039,
+     24.579262751756936,
+     22.324981053078574,
+     17.493637421334775,
+     20.80143889881089,
+     16.023244616119346,
+     24.457755334269617,
+     66.82405037918205,
+     43.2052896142659,
+     62.59527291210252,
+     73.40010920090322,
+     47.148402326887776,
+     67.92632919893563,
+     46.70813776945607,
+     62.55237259134848,
+     78.72827353746891,
+     66.01491073213853
+    ],
+    "rmse_mV": 49.74030725864969,
+    "route_validity_status_counts": {
+     "in_domain": 8,
+     "outside_validated_domain": 12
+    },
+    "samples": 3686,
+    "tail_rmse_mV": 86.36802943782777,
+    "tail_samples": 120
+   },
+   "cells": [
+    "B0005",
+    "B0007"
+   ],
+   "comparison": {
+    "ci95_mV": [
+     2.8230629500889375,
+     6.0042910626127215
+    ],
+    "rmse_rint_minus_1rc_mV": 4.33848490471956,
+    "scope": "these 20 cycles of 2 independent cell(s); the cycle bootstrap does not generalize beyond them",
+    "verdict": "1RC_BETTER"
+   },
+   "comparison_body": {
+    "ci95_mV": [
+     -0.6876713356775058,
+     0.18974701909700853
+    ],
+    "rmse_rint_minus_1rc_mV": -0.2919363024634983,
+    "scope": "these 20 cycles of 2 independent cell(s); the cycle bootstrap does not generalize beyond them",
+    "verdict": "NOT_DISTINGUISHED"
+   },
+   "comparison_tail": {
+    "ci95_mV": [
+     48.63119151231939,
+     80.95888457107944
+    ],
+    "rmse_rint_minus_1rc_mV": 62.37836191730016,
+    "scope": "these 20 cycles of 2 independent cell(s); the cycle bootstrap does not generalize beyond them",
+    "verdict": "1RC_BETTER"
+   },
+   "cycles": 20,
+   "in_domain_only": {
+    "1rc": {
+     "bias_mV": 12.053237631012413,
+     "body_rmse_mV": 38.41899479745486,
+     "lag1_autocorrelation_mean": 0.7536683477967394,
+     "mae_mV": 17.45719855927192,
+     "max_abs_mV": 743.7650657729533,
+     "p95_abs_mV": 84.27823973050552,
+     "per_cycle_rmse_mV": [
+      54.07134419704496,
+      46.555655887255796,
+      38.54362109923752,
+      31.33047937215039,
+      24.579262751756936,
+      22.324981053078574,
+      43.2052896142659,
+      62.59527291210252
+     ],
+     "rmse_mV": 42.579767690459924,
+     "samples": 1490,
+     "tail_rmse_mV": 91.92610166493898,
+     "tail_samples": 72
+    },
+    "cycles": 8,
+    "rint": {
+     "bias_mV": 9.954838803406647,
+     "body_rmse_mV": 39.05703557028715,
+     "lag1_autocorrelation_mean": 0.6611578568430871,
+     "mae_mV": 18.04675679472761,
+     "max_abs_mV": 742.2055947718637,
+     "p95_abs_mV": 96.18019294484152,
+     "per_cycle_rmse_mV": [
+      59.26924502706451,
+      52.263217895119844,
+      43.57825168578615,
+      40.20466520480346,
+      31.8255013687897,
+      28.595813807950584,
+      51.848164095711816,
+      68.82176177196241
+     ],
+     "rmse_mV": 48.840897941521995,
+     "samples": 1490,
+     "tail_rmse_mV": 139.00462919120451,
+     "tail_samples": 72
+    }
+   },
+   "independent_cells": 2,
+   "parameter_uncertainty_1rc": {
+    "band": "2.5-97.5 % of 40 joint bootstrap parameter sets",
+    "coverage_of_measurements": 0.15382528486163863,
+    "median_half_width_mV": 1.2070608934875438
+   },
+   "per_cycle": [
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.016190951623346,
+     "ordinal": 21,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "f6804b72000ad48c314b8b22f97769ccb9617f26a436c957d74265c2beb08a26",
+     "replay_record_sha256": "2a485679d471b71130fefa11a03f1fd7597e451406f466fcf49422ea64625754",
+     "result_id": "battery-thevenin1rc-2a485679d471b711",
+     "rmse_1rc_mV": 54.07134419704496,
+     "rmse_rint_mV": 59.26924502706451,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.917503693363493,
+      38.992275791716615
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.016760348146938,
+     "ordinal": 22,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "3de751f535451898a897868f4a2cce12b8d3b73799008d0b146783c4fed22ebb",
+     "replay_record_sha256": "c30327e071d80911fd80e1672769847f6a2d0b93a726bdc98b75147bc73f3079",
+     "result_id": "battery-thevenin1rc-c30327e071d80911",
+     "rmse_1rc_mV": 46.555655887255796,
+     "rmse_rint_mV": 52.263217895119844,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.56596639952811,
+      38.51424197364312
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0160230713598764,
+     "ordinal": 23,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "5c32150418b50dbb3be72fcbb0a9ccf7642c1aaeac8d1fef1b40c5e9679fcd5a",
+     "replay_record_sha256": "99c85fbf027e46fbbb19285b89e65cad1a4a1fd5f68ddb0d42a0b8cd1c1f67ee",
+     "result_id": "battery-thevenin1rc-99c85fbf027e46fb",
+     "rmse_1rc_mV": 38.54362109923752,
+     "rmse_rint_mV": 43.57825168578615,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.21658146702539,
+      38.165816144899125
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.01719076462715,
+     "ordinal": 24,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "55ab9928c60c6be269ba2853172a5438ced1fd25ee096ffc67ec546be4700d53",
+     "replay_record_sha256": "1f93994c82b326fd1b8c806193d0de3e060d2fc1595eae9735780ae91da16d7f",
+     "result_id": "battery-thevenin1rc-1f93994c82b326fd",
+     "rmse_1rc_mV": 31.33047937215039,
+     "rmse_rint_mV": 40.20466520480346,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.054990657817566,
+      38.16526203587147
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0161148625656655,
+     "ordinal": 25,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "37db70ec92585d3a4492551df36d2a79a260eff504b596279dc3b162a6553786",
+     "replay_record_sha256": "f37aac4f1c971e3e63c12df4393618152d986d15b9a6c7fac24a54891e973eff",
+     "result_id": "battery-thevenin1rc-f37aac4f1c971e3e",
+     "rmse_1rc_mV": 24.579262751756936,
+     "rmse_rint_mV": 31.8255013687897,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.024851602995685,
+      38.27549578575718
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0168636304742815,
+     "ordinal": 26,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "01861894bbb947844d97430cf56df5d12c929a99ca17ec0f00329fdf89b15422",
+     "replay_record_sha256": "3d51535e1e6113df4406d62facb72a301fd7da0d07e65b9127422014709b43cc",
+     "result_id": "battery-thevenin1rc-3d51535e1e6113df",
+     "rmse_1rc_mV": 22.324981053078574,
+     "rmse_rint_mV": 28.595813807950584,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      23.93622764909489,
+      37.982160799183106
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.12048252714914298,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0026209806490984366,
+     "max_current_A": 2.024643671910137,
+     "ordinal": 27,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "ec02105cbe0803ab4822837538d28c962a32bd94d12fb727318d22c08ae7dc14",
+     "replay_record_sha256": "2c0cbaecad277cc61d41380883ddc7cec6068b88ee5a30ed2e8c45f025e6b5cc",
+     "result_id": "battery-thevenin1rc-2c0cbaecad277cc6",
+     "rmse_1rc_mV": 17.493637421334775,
+     "rmse_rint_mV": 27.448411797778153,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.811534187517502,
+      38.11100191887773
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.17725138378321859,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.017291134571006,
+     "ordinal": 28,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "a43358b40e8fe0a629b7658a1a961b81d39b26a7481fdd8ccff1502aa6da72d2",
+     "replay_record_sha256": "cc86336cb8a0106a49a306f8cb939567101b7a70cfcaca8998a0b9e0ce80b7f6",
+     "result_id": "battery-thevenin1rc-cc86336cb8a0106a",
+     "rmse_1rc_mV": 20.80143889881089,
+     "rmse_rint_mV": 31.046659782059706,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.754765330883426,
+      38.18831137948753
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.13790740718287609,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.01713712589233,
+     "ordinal": 29,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "a6ceff982c386e411aa6c72d6625716f0c38ab806de66a69bbda2a97b16d574d",
+     "replay_record_sha256": "b12be4796631d2df6ecf3d7d6c83d917aa1b8986800f49bee727803908dcb468",
+     "result_id": "battery-thevenin1rc-b12be4796631d2df",
+     "rmse_1rc_mV": 16.023244616119346,
+     "rmse_rint_mV": 28.747887466192534,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.79410930748377,
+      37.998541119085836
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.13071572774819273,
+     "cell": "B0005",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 2.0159460285100574,
+     "ordinal": 30,
+     "parameter_set_sha256": "41286f9b1545b81a09dabaf3ab4f717a50085386352c8aef5bc274d355bf6b0f",
+     "profile_sha256": "dfaa4a125674e31670d7c2fcf3fa7908b7c5ec985218cc50a5a4a6499d277200",
+     "replay_record_sha256": "2cf79b380daaaa7d4baca5a6157880d69c5094925a255a14afee9a811a78f21a",
+     "result_id": "battery-thevenin1rc-2cf79b380daaaa7d",
+     "rmse_1rc_mV": 24.457755334269617,
+     "rmse_rint_mV": 35.68013370517712,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.801300986918452,
+      38.194201649765226
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.01987584533897291,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9940266531677509,
+     "ordinal": 21,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "a4b8586c63814e9b43978bd2ce6c10b2624660b77d5e7f9c64428baf84d167ca",
+     "replay_record_sha256": "2461a4a4786228359d5136da21b6b4f1714fb2b7eda57d3a78c409f9af2befb7",
+     "result_id": "battery-thevenin1rc-2461a4a478622835",
+     "rmse_1rc_mV": 66.82405037918205,
+     "rmse_rint_mV": 74.4106928196235,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      24.65025766803762,
+      40.31302300333008
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.993858646326954,
+     "ordinal": 22,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "17be6b125a5f1d149e644debeecd022901cbbe44e2558beff4c98a755d6662fb",
+     "replay_record_sha256": "c12625a2145c5c82744623b84e3c8218f449920b958a04e4e873148ed7349b20",
+     "result_id": "battery-thevenin1rc-c12625a2145c5c82",
+     "rmse_1rc_mV": 43.2052896142659,
+     "rmse_rint_mV": 51.848164095711816,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      24.306273974736932,
+      39.359447242364645
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.0,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9927272592846585,
+     "ordinal": 23,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "1dde86a36ba0236d5b212fa55ad7dd13da5b7bef3169b98addf66c081afc0ef2",
+     "replay_record_sha256": "f1ba224c0025e92fdd535d593aabd7ba281f6b072a3ec8c9f77c734f7d4b6af3",
+     "result_id": "battery-thevenin1rc-f1ba224c0025e92f",
+     "rmse_1rc_mV": 62.59527291210252,
+     "rmse_rint_mV": 68.82176177196241,
+     "route_validity": "in_domain",
+     "temperature_C": [
+      23.946713982155597,
+      39.454159451189874
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.13691177638604657,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9934659604006035,
+     "ordinal": 24,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "b6a62f9f68c2168e6ef4136d2eeb3eadbf27e89c66ae64a00d57d64e405be7f5",
+     "replay_record_sha256": "829ad2e62cc2293d1781730771798e14795e41d94317691022a666ebd6059de6",
+     "result_id": "battery-thevenin1rc-829ad2e62cc2293d",
+     "rmse_1rc_mV": 73.40010920090322,
+     "rmse_rint_mV": 79.50629710605772,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.7951049382806,
+      39.641748274009444
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.2135596969510729,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9930006393050421,
+     "ordinal": 25,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "9da4b514f35851f92c863a9c2f03489e6b93d6c36fdd0613955e9736403d05c0",
+     "replay_record_sha256": "48e0f2c8aa187b7aa1bff976ee058f5cbfe91e6bfb9907a9dcfa791935cbca66",
+     "result_id": "battery-thevenin1rc-48e0f2c8aa187b7a",
+     "rmse_1rc_mV": 47.148402326887776,
+     "rmse_rint_mV": 48.32437363780682,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.718457017715572,
+      38.86906912217273
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.29018110890027415,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9947910338783705,
+     "ordinal": 26,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "caf4b69a6a4e2f6910e06b188f702c2069354a63eee7cf2992de215aeade665e",
+     "replay_record_sha256": "b4ca236b8d20c91cd648db709c2260d2feb0af1c5e43369a7a9bf2e9bf681698",
+     "result_id": "battery-thevenin1rc-b4ca236b8d20c91c",
+     "rmse_1rc_mV": 67.92632919893563,
+     "rmse_rint_mV": 68.22645691700843,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.64183560576637,
+      39.11839966443177
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.4121239393292875,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9956093835681803,
+     "ordinal": 27,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "12cfbea990159c213132e4617995af4c3a9bbe66419ac61b4fdecfe176aedb42",
+     "replay_record_sha256": "7091cb4777f5fc9f1d8c64d3a477a2f5d774bb9b3f6157d430cc0e03a8b990ba",
+     "result_id": "battery-thevenin1rc-7091cb4777f5fc9f",
+     "rmse_1rc_mV": 46.70813776945607,
+     "rmse_rint_mV": 47.302760106099946,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.519892775337357,
+      38.68010761281634
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.4647570323935817,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9936520198661494,
+     "ordinal": 28,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "1dbb56395aa00961c0be1dd2ee9e5a8e5ff17c8283ebb629f77ffcb6a8414bfe",
+     "replay_record_sha256": "2635e1481b6ab7656b4be5033b55f8e1a6c836cbdb0506e12ef7e3388a544ab4",
+     "result_id": "battery-thevenin1rc-2635e1481b6ab765",
+     "rmse_1rc_mV": 62.55237259134848,
+     "rmse_rint_mV": 62.5177975051419,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.467259682273063,
+      38.863045678198645
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.4398183743050694,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9944764248874858,
+     "ordinal": 29,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "8aeb209c61c2255489c32f2fb28b2d926a0b61e6775b8e6133d6c3b28cc1b0f7",
+     "replay_record_sha256": "a4169e90f52ad588f6707760e57e708286e3a7bbe09da685e46aa01ec3a53488",
+     "result_id": "battery-thevenin1rc-a4169e90f52ad588",
+     "rmse_1rc_mV": 78.72827353746891,
+     "rmse_rint_mV": 78.33847659743878,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.492198340361576,
+      39.14531169811219
+     ]
+    },
+    {
+     "above_temperature_range_C": 0.0,
+     "below_temperature_range_C": 0.4208916778292533,
+     "cell": "B0007",
+     "current_over_max_fraction": 0.0,
+     "max_current_A": 1.9940826161567085,
+     "ordinal": 30,
+     "parameter_set_sha256": "6e71143a7437a31a7ceea194b26a17640e6844a609de422a6d445ca150a906b9",
+     "profile_sha256": "5265bb71a52a52a2fe0ad4333853e7d31cba941333a92b009d0169d93586e114",
+     "replay_record_sha256": "fb028fe65d5c3448306d66d549145c25f13f7264bd69865c8bcb0c5a842bca7f",
+     "result_id": "battery-thevenin1rc-fb028fe65d5c3448",
+     "rmse_1rc_mV": 66.01491073213853,
+     "rmse_rint_mV": 66.01690674144868,
+     "route_validity": "outside_validated_domain",
+     "temperature_C": [
+      23.51112503683739,
+      38.8380564174779
+     ]
+    }
+   ],
+   "rint": {
+    "acceptance": "FAIL",
+    "acceptance_thresholds_all_cycles": "FAIL",
+    "bias_mV": -0.9403265620167703,
+    "body_rmse_mV": 47.73238877420121,
+    "calibration_to_holdout_rmse_gap_mV": -2.613646493974116,
+    "execution_seconds": 0.103,
+    "lag1_autocorrelation_mean": 0.6651120557544561,
+    "mae_mV": 15.899987676229387,
+    "max_abs_mV": 855.9957022695173,
+    "p95_abs_mV": 69.11393111720454,
+    "per_cycle_rmse_mV": [
+     59.26924502706451,
+     52.263217895119844,
+     43.57825168578615,
+     40.20466520480346,
+     31.8255013687897,
+     28.595813807950584,
+     27.448411797778153,
+     31.046659782059706,
+     28.747887466192534,
+     35.68013370517712,
+     74.4106928196235,
+     51.848164095711816,
+     68.82176177196241,
+     79.50629710605772,
+     48.32437363780682,
+     68.22645691700843,
+     47.302760106099946,
+     62.5177975051419,
+     78.33847659743878,
+     66.01690674144868
+    ],
+    "rmse_mV": 54.07879216336925,
+    "samples": 3686,
+    "tail_rmse_mV": 148.74639135512794,
+    "tail_samples": 120
+   }
+  }
+ },
+ "schema": "forge.battery_1rc_closure.validation/1"
+}

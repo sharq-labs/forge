@@ -196,8 +196,8 @@ RESERVING_IDS = [f"{m.model_id}@{m.version}" for m in RESERVING]
 #: directions and has to be updated deliberately, which is the moment somebody
 #: looks at the new record. `tests/test_pin_portability.py:_pinned_paths` is
 #: the pattern: derive the population, then assert its size.
-EXPECTED_MODELS = 17
-EXPECTED_RESERVING_MODELS = 15
+EXPECTED_MODELS = 18  # 18: battery.cell.thevenin_1rc (2026-10-14)
+EXPECTED_RESERVING_MODELS = 16  # 16: battery.cell.thevenin_1rc
 # 64 -> 67 and 46 -> 49 in the capability-boundary round, which added one
 # condition to each of three records: linear_resistance_ratio on the
 # unrated TCR model, adiabatic_ceiling_temperature on the constant-rate
@@ -223,8 +223,8 @@ EXPECTED_RESERVING_MODELS = 15
 # executable vertical is intentionally valid at exactly one reviewed operating
 # point. Its fifteen declared benchmark inputs each carry an exact validity
 # condition. None is derived, so EXPECTED_RESERVED_NAMES remains unchanged.
-EXPECTED_CONDITION_NAMES = 92
-EXPECTED_RESERVED_NAMES = 59
+EXPECTED_CONDITION_NAMES = 96  # 96: the four 1RC route conditions
+EXPECTED_RESERVED_NAMES = 63  # 63: the four 1RC route derived quantities
 
 
 def test_the_only_modules_the_walk_lost_are_declared_optional_ones():
@@ -1315,7 +1315,7 @@ SOLVER_CLASSES = _every_solver()
 #: now part of the guarded inventory; every solver-specific invariant below is
 #: evaluated over the same discovered set, so this count remains a change
 #: detector rather than a substitute for those guards.
-EXPECTED_SOLVER_CLASSES = 10
+EXPECTED_SOLVER_CLASSES = 11  # 11: Thevenin1RCSolver
 
 
 def test_the_solver_discovery_found_the_adapters():

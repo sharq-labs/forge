@@ -12,14 +12,14 @@
       "kind": "scientific",
       "title": "Battery Thevenin 1RC",
       "owner": "src/engcore/domains/battery",
-      "declared_stage": "FOUNDATION",
-      "summary": "Dynamic discharge/rest 1RC kernel exists, but it is not yet a formal production model/realization and has no fitted or held-out evidence path.",
+      "declared_stage": "FUNCTIONAL",
+      "summary": "Exact 1RC route with replay (FUNCTIONAL). Calibration PASS is SCOPED: one LG HG2 cell (SN62A4), 25 degC, pulse time scale, SOC >= 0.10, OCV measured not fitted, OCV-knot uncertainty not propagated. NASA FY08Q4 is NOT_IDENTIFIABLE. Held-out: pulses pass pooled limits (fail under load alone); the 1C constant-current test fails marginally (MODEL_REJECTED by the frozen mapping). No cross-cell validation; measurement uncertainty not admitted.",
       "next_actions": [
-        "Raw NASA ingestion and deterministic cycle segmentation.",
-        "R0/R1/C1 + OCV identification on calibration cells.",
-        "Held-out validation with quantitative Rint-vs-1RC metrics.",
-        "Measurement/parameter/discrepancy uncertainty closure.",
-        "Only then register 1RC in claims and BatteryDomainPack."
+        "Cross-cell held-out evaluation on independent cells with measured OCV and pulse data (e.g. Kirkaldy 2024 RPTs, owner-approved download).",
+        "Decide the model scope the constant-current failure allows (pulse-scale only) under a new preregistration.",
+        "Owner/review decision on publisher-stated Type B measurement accuracy.",
+        "Propagate OCV-knot uncertainty jointly with R0/R1/C1.",
+        "Only then claims and BatteryDomainPack integration."
       ],
       "gates": {
         "scientific_definition": {
@@ -48,9 +48,13 @@
           ]
         },
         "execution": {
-          "status": "MISSING",
-          "evidence": [],
-          "next_action": "Add formal ScientificModelDefinition + realization + end-to-end battery execution route for 1RC."
+          "status": "PASS",
+          "evidence": [
+            "src/engcore/domains/battery/thevenin_route.py",
+            "tests/domains/test_battery_thevenin_route.py::test_the_march_agrees_with_an_independent_adaptive_ode_integration",
+            "tests/domains/test_battery_thevenin_route.py::test_as_r1_vanishes_the_route_reduces_to_the_production_rint_kernel",
+            "tests/domains/test_battery_thevenin_route.py::test_the_result_is_attributed_to_the_execution_with_explicit_unknown_uncertainty"
+          ]
         },
         "verification": {
           "status": "PASS",
@@ -67,39 +71,69 @@
           ]
         },
         "provenance_replay": {
-          "status": "MISSING",
-          "evidence": [],
-          "next_action": "Bind a formal 1RC model/realization identity and selected parameter set into replay/provenance artifacts."
+          "status": "PASS",
+          "evidence": [
+            "tests/domains/test_battery_thevenin_route.py::test_a_replay_record_reproduces_bit_for_bit_after_a_json_round_trip",
+            "tests/domains/test_battery_thevenin_route.py::test_a_stale_replay_record_is_refused_not_rerun_under_new_code",
+            "tests/domains/test_battery_thevenin_route.py::test_a_forged_trajectory_with_a_recomputed_digest_does_not_reproduce",
+            "tests/domains/test_battery_thevenin_route.py::test_a_changed_parameter_set_under_its_old_digest_is_refused"
+          ]
         },
         "real_data": {
-          "status": "MISSING",
-          "evidence": [],
-          "next_action": "Ingest pinned NASA single-cell raw files and build reproducible discharge/pulse/rest traces."
+          "status": "PASS",
+          "evidence": [
+            "benchmarks/battery_1rc_closure/PREREGISTRATION_v2.json",
+            "benchmarks/battery_1rc_closure/data/calibration.json",
+            "benchmarks/battery_1rc_closure/data/within_cell_holdout.json",
+            "benchmarks/battery_1rc_closure/data/cross_cell_validation.json",
+            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_the_calibration_trajectories_are_pinned_to_this_preregistration",
+            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_no_held_out_cycle_leaks_into_calibration",
+            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_malformed_or_misleading_cycles_are_refused_not_repaired",
+            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_every_trajectory_file_rebuilds_from_the_raw_nasa_bytes"
+          ]
         },
         "calibration": {
-          "status": "MISSING",
-          "evidence": [],
-          "next_action": "Implement OCV/R0/R1/C1 identification with calibration cells frozen before validation."
+          "status": "PASS",
+          "evidence": [
+            "benchmarks/battery_1rc_identifiability/PREREGISTRATION.json",
+            "benchmarks/battery_1rc_identifiability/results/CALIBRATION.json",
+            "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_the_calibration_record_is_identifiable_and_rerun_stable",
+            "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_the_fit_reads_only_the_calibration_role_and_the_ocv",
+            "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_the_ocv_is_measured_and_never_extrapolated",
+            "benchmarks/battery_1rc_identifiability/README.md"
+          ]
         },
         "independent_validation": {
           "status": "MISSING",
-          "evidence": [],
-          "next_action": "Evaluate frozen parameters on held-out cells/cycles."
+          "evidence": [
+            "benchmarks/battery_1rc_identifiability/results/VALIDATION.json",
+            "benchmarks/battery_1rc_identifiability/results/OUTCOME.json",
+            "benchmarks/battery_1rc_closure/results/VALIDATION.json"
+          ],
+          "next_action": "LG HG2 (one cell, 25 degC): held-out 2C/4C pulses PASS (1RC 12.6 mV) but the 1C constant-current test FAILS (28.7 mV, P95 50.7 mV): outcome MODEL_REJECTED. NASA: cross-cell transfer FAILS. Needs a cross-cell held-out evaluation on independent cells and a model scope that the constant-current test supports (or a preregistered narrower claim); no acceptance limit may move after these results."
         },
         "measurement_uq": {
           "status": "MISSING",
-          "evidence": [],
-          "next_action": "Attach calibrated voltage/current/temperature measurement uncertainty or keep evidence inadmissible."
+          "evidence": [
+            "benchmarks/battery_1rc_identifiability/PREREGISTRATION.json"
+          ],
+          "next_action": "LG HG2 has a publisher-stated Type B instrument accuracy (+/-5 mV, +/-75 mA, +/-1 degC; readme), not a calibration certificate; NASA states none. Owner/review decision whether a publisher accuracy statement is admissible; until then MISSING."
         },
         "benchmark_metrics": {
-          "status": "MISSING",
-          "evidence": [],
-          "next_action": "Publish Rint vs 1RC RMSE, MAE, bias, max error and residual autocorrelation on held-out data."
+          "status": "PASS",
+          "evidence": [
+            "benchmarks/battery_1rc_closure/results/VALIDATION.json",
+            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_every_result_record_is_pinned_and_bound_to_preregistration_v2",
+            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_validation_claims_stay_inside_what_the_evidence_shows"
+          ]
         },
         "parameter_uq": {
           "status": "MISSING",
-          "evidence": [],
-          "next_action": "Propagate uncertainty in OCV/R0/R1/C1, including dependencies where supported by evidence."
+          "evidence": [
+            "benchmarks/battery_1rc_identifiability/results/CALIBRATION.json",
+            "benchmarks/battery_1rc_identifiability/results/VALIDATION.json"
+          ],
+          "next_action": "LG HG2: identifiable parameters with a joint window bootstrap (CV 1-9 %) propagated to +/-1-2 mV; the measured OCV knots' own +/-5 mV accuracy is not yet propagated, and the band covers only 23 % of held-out pulse samples (model form dominates). Propagate OCV-knot uncertainty jointly before this can PASS."
         },
         "numerical_uq": {
           "status": "NOT_APPLICABLE",
@@ -108,13 +142,15 @@
         },
         "model_discrepancy": {
           "status": "MISSING",
-          "evidence": [],
-          "next_action": "Estimate context-dependent model/data discrepancy on held-out measurements after known uncertainty is accounted for."
+          "evidence": [
+            "benchmarks/battery_1rc_closure/results/UNCERTAINTY_REPORT.json"
+          ],
+          "next_action": "Held-out residuals are 41-79x the parameter band and autocorrelated (lag-1 0.76-0.92): structured model-form error that cannot be separated while measurement uncertainty is UNKNOWN. Never zero."
         },
         "claims_integration": {
           "status": "MISSING",
           "evidence": [],
-          "next_action": "Expose the validated 1RC realization to claim planning without auto-strengthening verdicts."
+          "next_action": "Only after calibration and validation pass. Before any claim wiring, bind the parameter set's temperature and current range to a calibration record digest (today it is caller-declared and decides IN_DOMAIN), and never auto-strengthen verdicts."
         },
         "domainpack_integration": {
           "status": "MISSING",
