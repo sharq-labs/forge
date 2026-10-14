@@ -186,3 +186,12 @@ def test_every_role_rebuilds_from_the_raw_lg_hg2_bytes():
     for name, doc in docs.items():
         pinned = idata.load(name)
         assert json.dumps(doc, sort_keys=True) == json.dumps(pinned, sort_keys=True), name
+
+
+def test_the_measurement_uncertainty_decision_is_owner_admitted_and_scoped():
+    rec = _pinned(HERE / "MEASUREMENT_UNCERTAINTY_DECISION")
+    assert rec["decision"] == "ADMITTED_TYPE_B" and rec["decided_by"] == "owner"
+    assert rec["components"]["voltage"]["half_width_V"] == 0.005
+    assert any("NASA" in limit and "UNKNOWN" in limit for limit in rec["limits"])
+    nasa = json.loads((CLOSURE / "UNCERTAINTY_REPORT.json").read_bytes())
+    assert nasa["components"]["measurement"]["status"] == "UNKNOWN"          # the NASA evidence is not upgraded

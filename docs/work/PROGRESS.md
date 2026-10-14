@@ -3496,3 +3496,21 @@ Failed approaches, so they are not repeated:
 2. Pooling rest samples hid a load-only miss. Report load and rest separately alongside any pooled acceptance.
 3. Comparisons with one unit need no verdict field, only a point difference.
 
+## 2026-10-15 -- Owner decisions and the consolidated source (integration/g0a1-battery-1rc, local)
+
+Owner reply "approved" (2026-10-15), applied to the three listed decisions:
+1. The LG HG2 publisher-stated Type B accuracy is admitted for its own channels only
+   (benchmarks/battery_1rc_identifiability/MEASUREMENT_UNCERTAINTY_DECISION.json). NASA stays UNKNOWN.
+   - battery.thevenin_1rc measurement_uq is PASS.
+   - The computed stage stays FUNCTIONAL: independent_validation (cross-cell) is the only gate left before
+     EVIDENCE_BACKED.
+   - No frozen acceptance or outcome changed.
+2. Push and one hardened recertification of the consolidated source.
+3. The Kirkaldy 2024 download: the exact files and sizes are listed for confirmation before any byte is fetched.
+
+Consolidated source: `integration/g0a1-battery-1rc` (worktree `D:/forge-consolidated`). It is
+`integration/g0-a1-unblock` (d1c96ae4) merged with `feat/battery-1rc-identifiability` (a4d4c24b) in 37674bfc. The
+union resolution touched only docs/work/ACTIVE_PLAN.md and PROGRESS.md.
+- `pytest benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py`
+  (Windows): 47 passed, 2 skipped (the opt-in raw-bytes tests).
+

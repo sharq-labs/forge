@@ -13,7 +13,7 @@
       "title": "Battery Thevenin 1RC",
       "owner": "src/engcore/domains/battery",
       "declared_stage": "FUNCTIONAL",
-      "summary": "Exact 1RC route with replay (FUNCTIONAL). Calibration PASS is SCOPED: one LG HG2 cell (SN62A4), 25 degC, pulse time scale, SOC >= 0.10, OCV measured not fitted, OCV-knot uncertainty not propagated. NASA FY08Q4 is NOT_IDENTIFIABLE. Held-out: pulses pass pooled limits (fail under load alone); the 1C constant-current test fails marginally (MODEL_REJECTED by the frozen mapping). No cross-cell validation; measurement uncertainty not admitted.",
+      "summary": "Exact 1RC route with replay (FUNCTIONAL). Calibration PASS is SCOPED: one LG HG2 cell (SN62A4), 25 degC, pulse time scale, SOC >= 0.10, OCV measured not fitted, OCV-knot uncertainty not propagated. NASA FY08Q4 is NOT_IDENTIFIABLE. Held-out: pulses pass pooled limits (fail under load alone); the 1C constant-current test fails marginally (MODEL_REJECTED by the frozen mapping). No cross-cell validation; measurement uncertainty not admitted. Measurement uncertainty: owner-admitted Type B for the LG HG2 channels only (2026-10-15); NASA stays UNKNOWN.",
       "next_actions": [
         "Cross-cell held-out evaluation on independent cells with measured OCV and pulse data (e.g. Kirkaldy 2024 RPTs, owner-approved download).",
         "Decide the model scope the constant-current failure allows (pulse-scale only) under a new preregistration.",
@@ -113,11 +113,12 @@
           "next_action": "LG HG2 (one cell, 25 degC): held-out 2C/4C pulses PASS (1RC 12.6 mV) but the 1C constant-current test FAILS (28.7 mV, P95 50.7 mV): outcome MODEL_REJECTED. NASA: cross-cell transfer FAILS. Needs a cross-cell held-out evaluation on independent cells and a model scope that the constant-current test supports (or a preregistered narrower claim); no acceptance limit may move after these results."
         },
         "measurement_uq": {
-          "status": "MISSING",
+          "status": "PASS",
           "evidence": [
-            "benchmarks/battery_1rc_identifiability/PREREGISTRATION.json"
-          ],
-          "next_action": "LG HG2 has a publisher-stated Type B instrument accuracy (+/-5 mV, +/-75 mA, +/-1 degC; readme), not a calibration certificate; NASA states none. Owner/review decision whether a publisher accuracy statement is admissible; until then MISSING."
+            "benchmarks/battery_1rc_identifiability/MEASUREMENT_UNCERTAINTY_DECISION.json",
+            "benchmarks/battery_1rc_identifiability/PREREGISTRATION.json",
+            "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_the_measurement_uncertainty_decision_is_owner_admitted_and_scoped"
+          ]
         },
         "benchmark_metrics": {
           "status": "PASS",

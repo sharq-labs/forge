@@ -181,7 +181,8 @@ def test_the_ledger_does_not_promote_what_the_evidence_does_not_support():
     gates = next(c for c in ledger["capabilities"] if c["id"] == "battery.thevenin_1rc")["gates"]
     # calibration PASSES since the LG HG2 identifiability experiment (benchmarks/battery_1rc_identifiability); the NASA
     # evidence alone never supported it, and these gates still have no supporting evidence:
-    for gate in ("independent_validation", "measurement_uq", "parameter_uq", "model_discrepancy",
+    # measurement_uq PASSES since the owner admitted the LG HG2 Type B accuracy (2026-10-15); NASA stays UNKNOWN.
+    for gate in ("independent_validation", "parameter_uq", "model_discrepancy",
                  "claims_integration", "domainpack_integration"):
         assert gates[gate]["status"] == "MISSING", gate
 
