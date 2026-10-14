@@ -3019,3 +3019,37 @@ Failed approaches: a closed-world reader that counted every input statement as r
 `missing_inputs` path hide a retraction (fixed c2d592a4, d150f975); a duplicated-test-name probe and a
 malformed H10 mutant (syntax error) were corrected; a commit helper that took an absolute message path
 committed with a stale message once (amended before anything else built on it).
+## Hostile remediation round 1 — final matrix and hardened recertification, 2026-10-14
+
+Late fixes after the first entry: 313bbf1e (harness: a FAILED line is attributed to its own nodeid --
+the 3.12 "xdist flake" since Phase 0 was a real parsing bug in tests/mutation_guards.py and the xdist
+test driver, reproduced by terminal width: passes at COLUMNS 40/80, failed at 200; mutation HX-M1/M2
+killed) and 05522b59 (no unadmitted skips: a provider liveness check that skipped without psutil now
+reads the POSIX kernel, the case-twin ownership test runs on any filesystem; SK-M1..M3 killed; no skip
+rule added).
+
+Final matrix at ae25aed9 (`gates.sh phase11d`, integration clone): regression exit 0; FAST 3.11 10362
+passed / 2 failed; FAST 3.12 10361 / 3; SCIENTIFIC 3.12 10934 / 3; FULL 3.12 10938 / 3 -- failures are
+the two certificate-drift tests (resolved by recertification) and the xdist test fixed in 313bbf1e.
+
+Hardened recertification (`python -m tools.certification.local_assurance run --reuse --repository
+sharq-labs/forge --python311 .forge/venvs/3.11/bin/python --python312 .forge/venvs/3.12/bin/python`):
+- run at ae25aed9 with system python3.11: REFUSED in 0 s (no pytest) -- wrong interpreter flag.
+- run at ae25aed9 with venv interpreters: REFUSED at FAST 3.12 on the xdist parsing bug.
+- run at 313bbf1e: every execution gate passed (FAST 3.11/3.12 10347, SCIENTIFIC 10920, campaign 4,
+  regression 256, Formal 284/284 killed, V4 every entry at its declared verdict, trust 0 survived);
+  REFUSED on two skips with no committed admission rule.
+- run at 05522b59 (first attempt lost to a WSL restart mid-Formal; re-run): **SOURCE_PASS**, wall
+  12422 s. FAST 3.11 10350 / 3.12 10350 passed, SCIENTIFIC 10923, campaign 4, regression 256, Formal
+  284/284, V4 8 shards all at declared verdicts, trust 0 survived. SKIP_ADMISSION skipped 468, accepted
+  468, unexpected 0. RECEIPT_SHA256 efe9d0940d2c2be94c8dca3a1850a02bc7f9289277c52dcc227171f0584e0cfc.
+- certificate-only child b1eea81b "certification: recertify hardened core";
+  `python -m tools.certification.local_assurance verify`: 22 deferred certificate/freeze self-checks
+  passed; **LOCAL_ASSURANCE: PASS**, SOURCE_SHA 05522b59, CERTIFICATE_CHILD_SHA b1eea81b,
+  RECEIPT_SHA256 51b42770425ad168b61bc4b7c8a850e34f0e794f0c50c16c6e24c9d5f7984d3a.
+- fresh process, `env -u PYTHONPATH python -m tools.certification.core_certificate --verify --certificate
+  certification/current_core_v2.json`: "certificate matches the tree", OK, exit 0. The certificate
+  binds 05522b59 (clean) and adds the verdict_authority and system_runtime_authority areas and the
+  production-registry pin (456 evidence-code files). Old target 39d43456 superseded.
+
+Not pushed, not merged (user instruction). Host branch protection not re-verified.

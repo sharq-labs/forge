@@ -12,12 +12,12 @@ This bounded task supersedes the older executable queue below for this branch.
 - [x] Implement F1, F4, F2/scanner, F5, F6, F7, empty-UQ and F8 repairs (see PROGRESS, 2026-10-13/14).
 - [x] Run targeted/adversarial/mutation checks and independent scientific review (eight passes).
 - [x] Run supported 3.11/3.12 tiers and exact failure attribution (no REAL_REGRESSION).
-- [ ] Hardened recertification through `tools/certification/local_assurance.py` (run, certificate child, verify).
+- [x] Hardened recertification: SOURCE_PASS at 05522b59, certificate child b1eea81b, LOCAL_ASSURANCE: PASS.
 - [ ] Owner decisions: the certified-imports-uncertified scope gap (PROGRESS, eighth review); host
       branch protection (no required status checks; not re-verified this session).
 
-Status: implementation complete on `fix/hostile-review-p0-p1` (Linux clone
-`~/forge-hostile-remediation`); recertification next. Not pushed, not merged.
+Status: implemented and recertified on `fix/hostile-review-p0-p1` (Linux clone
+`~/forge-hostile-remediation`, certificate child b1eea81b). Not pushed, not merged.
 Evidence: PROGRESS.md and `~/forge-hostile-evidence/` in WSL. Historical
 phase-0 blocker report: [HOSTILE_REMEDIATION_ROUND1.md](HOSTILE_REMEDIATION_ROUND1.md).
 
