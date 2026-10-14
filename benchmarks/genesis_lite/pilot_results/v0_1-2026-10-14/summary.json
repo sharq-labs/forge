@@ -1,0 +1,5033 @@
+{
+ "arm_availability": {
+  "bo_botorch": {
+   "family": "experiment selection: BO/BoTorch-only on the same observable",
+   "reason": "botorch is not installed in the benchmark environment",
+   "status": "NOT_AVAILABLE"
+  },
+  "discriminating_design": {
+   "family": "competing-mechanism falsification: fixed discriminating-design heuristic",
+   "reason": "not built in v0 (needs the Mind, a port grammar, a distinguishable-rival generator or a nonlinear-form fitter)",
+   "status": "NOT_APPLICABLE_IN_V0"
+  },
+  "full_grammar_enumeration": {
+   "family": "law recovery: enumeration of the full law grammar (exp / two-term / regime forms)",
+   "reason": "not built in v0 (needs the Mind, a port grammar, a distinguishable-rival generator or a nonlinear-form fitter)",
+   "status": "NOT_APPLICABLE_IN_V0"
+  },
+  "llm_ablation": {
+   "family": "AI-proposer contribution: Mind with LLM workers replaced (\u00a78.5)",
+   "reason": "not built in v0 (needs the Mind, a port grammar, a distinguishable-rival generator or a nonlinear-form fitter)",
+   "status": "NOT_APPLICABLE_IN_V0"
+  },
+  "mechanism_enumeration": {
+   "family": "coupled mechanism recovery (G1/G2): structure enumeration in a port grammar",
+   "reason": "not built in v0 (needs the Mind, a port grammar, a distinguishable-rival generator or a nonlinear-form fitter)",
+   "status": "NOT_APPLICABLE_IN_V0"
+  },
+  "pysindy": {
+   "family": "dynamics / inverse identification: PySINDy",
+   "reason": "pysindy is not installed in the benchmark environment",
+   "status": "NOT_AVAILABLE"
+  },
+  "pysr": {
+   "family": "law recovery: PySR symbolic regression",
+   "reason": "pysr is not installed in the benchmark environment",
+   "status": "NOT_AVAILABLE"
+  }
+ },
+ "cells": {
+  "always_insufficient|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_insufficient|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.4,
+    0.7333
+   ],
+   "full_credit_rate": 0.5667,
+   "mean_credit": 0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.2,
+    0.4667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.2667,
+    0.6
+   ],
+   "full_credit_rate": 0.4333,
+   "mean_credit": -0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.4667,
+    0.2
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.4,
+    0.7667
+   ],
+   "full_credit_rate": 0.6,
+   "mean_credit": 0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.2,
+    0.5333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.2667,
+    0.6
+   ],
+   "full_credit_rate": 0.4333,
+   "mean_credit": -0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.4667,
+    0.2
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.8333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.9667,
+    -0.7
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.6667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.8333,
+    -0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.9333,
+    -0.6667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.9333,
+    -0.6333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1667
+   ],
+   "full_credit_rate": 0.0667,
+   "mean_credit": -0.8667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -0.6667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2333
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": -0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -0.5333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": -0.9333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -0.8
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_law|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": -0.9333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -0.8
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "always_refuse|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.3667,
+    0.7
+   ],
+   "full_credit_rate": 0.5333,
+   "mean_credit": 0.5333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3667,
+    0.7
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "full_credit_rate": 0.8333,
+   "mean_credit": 0.8333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.3,
+    0.6667
+   ],
+   "full_credit_rate": 0.5,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3,
+    0.6667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5333,
+    0.8667
+   ],
+   "full_credit_rate": 0.7,
+   "mean_credit": 0.7,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5333,
+    0.8667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "full_credit_rate": 0.1667,
+   "mean_credit": 0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3667
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4333
+   ],
+   "full_credit_rate": 0.2667,
+   "mean_credit": 0.2333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.4
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "full_credit_rate": 0.9667,
+   "mean_credit": 0.9667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7667,
+    1.0
+   ],
+   "full_credit_rate": 0.9,
+   "mean_credit": 0.9,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7667,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9333
+   ],
+   "full_credit_rate": 0.8333,
+   "mean_credit": 0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9333
+   ],
+   "full_credit_rate": 0.8333,
+   "mean_credit": 0.8333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "full_credit_rate": 0.6667,
+   "mean_credit": 0.6667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "full_credit_rate": 0.6667,
+   "mean_credit": 0.6667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7333,
+    0.9667
+   ],
+   "full_credit_rate": 0.8667,
+   "mean_credit": 0.8667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7333,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "full_credit_rate": 0.8333,
+   "mean_credit": 0.8333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": 0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": 0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "careful|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4
+   ],
+   "full_credit_rate": 0.2333,
+   "mean_credit": 0.2333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": -0.2333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.4667,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": -0.4667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.6667,
+    -0.2667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": -0.3,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.5333,
+    -0.0667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": -0.3333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.5333,
+    -0.1333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1667,
+    0.5
+   ],
+   "full_credit_rate": 0.3333,
+   "mean_credit": 0.3,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1667,
+    0.5
+   ],
+   "full_credit_rate": 0.3333,
+   "mean_credit": 0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.0333,
+    0.4333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4667
+   ],
+   "full_credit_rate": 0.3,
+   "mean_credit": 0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.0333,
+    0.4
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1667,
+    0.5
+   ],
+   "full_credit_rate": 0.3333,
+   "mean_credit": 0.2333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.4667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.1833,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.4333,
+    0.05
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.35,
+    0.1
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.2333,
+    0.2
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.45,
+    0.0667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "full_credit_rate": 0.8,
+   "mean_credit": 0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "full_credit_rate": 0.8,
+   "mean_credit": 0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5667,
+    0.9
+   ],
+   "full_credit_rate": 0.7333,
+   "mean_credit": 0.7333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5667,
+    0.9
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6667,
+    0.9333
+   ],
+   "full_credit_rate": 0.8,
+   "mean_credit": 0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6667,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7667,
+    1.0
+   ],
+   "full_credit_rate": 0.9,
+   "mean_credit": 0.9,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7667,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "full_credit_rate": 0.9667,
+   "mean_credit": 0.9667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "full_credit_rate": 0.9333,
+   "mean_credit": 0.9333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "full_credit_rate": 0.1667,
+   "mean_credit": 0.0667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1,
+    0.2667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.0667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1333,
+    0.2667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4
+   ],
+   "full_credit_rate": 0.2333,
+   "mean_credit": 0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1,
+    0.3
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolating_fit|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4667
+   ],
+   "full_credit_rate": 0.3,
+   "mean_credit": 0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.0333,
+    0.4
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.4333,
+    0.7667
+   ],
+   "full_credit_rate": 0.6,
+   "mean_credit": 0.6,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4333,
+    0.7667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "full_credit_rate": 0.8333,
+   "mean_credit": 0.8333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.4,
+    0.7333
+   ],
+   "full_credit_rate": 0.5667,
+   "mean_credit": 0.5667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4,
+    0.7333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.3,
+    0.6667
+   ],
+   "full_credit_rate": 0.5,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3,
+    0.6667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.0333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1667,
+    0.2333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3667
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.0667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1333,
+    0.2667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4333
+   ],
+   "full_credit_rate": 0.2667,
+   "mean_credit": 0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.0167,
+    0.3667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.05,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.15,
+    0.25
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "full_credit_rate": 0.1667,
+   "mean_credit": 0.0833,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.2167,
+    0.3667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4333
+   ],
+   "full_credit_rate": 0.2667,
+   "mean_credit": 0.1833,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1167,
+    0.4667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.15,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1,
+    0.4
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4333
+   ],
+   "full_credit_rate": 0.2667,
+   "mean_credit": 0.3,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.5333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "full_credit_rate": 0.9333,
+   "mean_credit": 0.9333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "full_credit_rate": 0.9333,
+   "mean_credit": 0.9333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9333
+   ],
+   "full_credit_rate": 0.8333,
+   "mean_credit": 0.8333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7333,
+    0.9667
+   ],
+   "full_credit_rate": 0.8667,
+   "mean_credit": 0.8667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7333,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5667,
+    0.9
+   ],
+   "full_credit_rate": 0.7333,
+   "mean_credit": 0.7333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5667,
+    0.9
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5333,
+    0.8667
+   ],
+   "full_credit_rate": 0.7,
+   "mean_credit": 0.7,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5333,
+    0.8667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6,
+    0.9
+   ],
+   "full_credit_rate": 0.7667,
+   "mean_credit": 0.7667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6,
+    0.9
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "full_credit_rate": 0.8333,
+   "mean_credit": 0.8333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1667,
+    0.1667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.15,
+    0.1667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": -0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.2667,
+    0.0833
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "extrapolation_pair|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4333
+   ],
+   "full_credit_rate": 0.2667,
+   "mean_credit": 0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.0833,
+    0.35
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.5667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.7333,
+    -0.4
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.9333,
+    -0.6333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.5333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.7,
+    -0.3333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.5333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.7,
+    -0.3667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.2333,
+    0.5667
+   ],
+   "full_credit_rate": 0.4,
+   "mean_credit": 0.4,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.2333,
+    0.5667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4667
+   ],
+   "full_credit_rate": 0.3,
+   "mean_credit": 0.2667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1667,
+    0.5
+   ],
+   "full_credit_rate": 0.3333,
+   "mean_credit": 0.3,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1667,
+    0.5
+   ],
+   "full_credit_rate": 0.3333,
+   "mean_credit": 0.3,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.4667,
+    0.05
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1833,
+    0.25
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.35,
+    0.15
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1667,
+    0.2833
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1667,
+    0.5
+   ],
+   "full_credit_rate": 0.3333,
+   "mean_credit": -0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.5333,
+    0.1333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.2,
+    0.5333
+   ],
+   "full_credit_rate": 0.3667,
+   "mean_credit": -0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.4333,
+    0.2
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1667,
+    0.5
+   ],
+   "full_credit_rate": 0.3333,
+   "mean_credit": -0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.5,
+    0.1333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4667
+   ],
+   "full_credit_rate": 0.3,
+   "mean_credit": -0.2333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.5333,
+    0.1
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5667,
+    0.8667
+   ],
+   "full_credit_rate": 0.7333,
+   "mean_credit": 0.7,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "full_credit_rate": 0.6667,
+   "mean_credit": 0.6333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4333,
+    0.8333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "full_credit_rate": 0.8,
+   "mean_credit": 0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6,
+    0.9
+   ],
+   "full_credit_rate": 0.7667,
+   "mean_credit": 0.7667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6,
+    0.9
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": -0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.3333,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": -0.2667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.4667,
+    -0.0667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -0.3,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.4667,
+    -0.1333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "fit_all_gated|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": -0.2667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.4667,
+    -0.1
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1667
+   ],
+   "full_credit_rate": 0.0667,
+   "mean_credit": -0.0667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.2333,
+    0.1
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": -0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.3667,
+    -0.0333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": -0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.3,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4
+   ],
+   "full_credit_rate": 0.2333,
+   "mean_credit": 0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.0667,
+    0.3333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.0333,
+    0.2333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3667
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4
+   ],
+   "full_credit_rate": 0.2333,
+   "mean_credit": 0.2333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3667,
+    0.4833
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.45,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3833,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3667,
+    0.4833
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3667,
+    0.4833
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "full_credit_rate": 0.8333,
+   "mean_credit": 0.8333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5667,
+    0.9
+   ],
+   "full_credit_rate": 0.7333,
+   "mean_credit": 0.7333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5667,
+    0.9
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "full_credit_rate": 0.6667,
+   "mean_credit": 0.6667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "full_credit_rate": 0.6667,
+   "mean_credit": 0.6667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "full_credit_rate": 0.9333,
+   "mean_credit": 0.9333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "full_credit_rate": 0.9667,
+   "mean_credit": 0.9667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "full_credit_rate": 0.9333,
+   "mean_credit": 0.9333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": -0.0333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1333,
+    0.0667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2333
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": 0.0333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1,
+    0.1667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1667
+   ],
+   "full_credit_rate": 0.0667,
+   "mean_credit": 0.0667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "greedy_forward|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.0667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1,
+    0.2333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "historical_answer|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": -1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -1.0,
+    -1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3667
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.0667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1333,
+    0.2667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2333
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": -0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.3667,
+    0.0333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2333
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": -0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.3667,
+    0.0333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1667
+   ],
+   "full_credit_rate": 0.0667,
+   "mean_credit": -0.0667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.2333,
+    0.1
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3667
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.3333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4
+   ],
+   "full_credit_rate": 0.2333,
+   "mean_credit": 0.2333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "full_credit_rate": 0.1667,
+   "mean_credit": 0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.3
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.45,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.45,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4167,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.35,
+    0.4833
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4167,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "full_credit_rate": 0.8,
+   "mean_credit": 0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5333,
+    0.8667
+   ],
+   "full_credit_rate": 0.7,
+   "mean_credit": 0.7,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5333,
+    0.8667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "full_credit_rate": 0.6667,
+   "mean_credit": 0.6667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "full_credit_rate": 0.8,
+   "mean_credit": 0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "full_credit_rate": 0.9667,
+   "mean_credit": 0.9667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "full_credit_rate": 0.9667,
+   "mean_credit": 0.9667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7333,
+    0.9667
+   ],
+   "full_credit_rate": 0.8667,
+   "mean_credit": 0.8667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7333,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7667,
+    1.0
+   ],
+   "full_credit_rate": 0.9,
+   "mean_credit": 0.9,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7667,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": 0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3
+   ],
+   "full_credit_rate": 0.1667,
+   "mean_credit": 0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1
+   ],
+   "full_credit_rate": 0.0333,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1,
+    0.1
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "monomial_enumeration|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3667
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.3333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": -0.0333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.2,
+    0.1333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1,
+    0.3
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1667
+   ],
+   "full_credit_rate": 0.0667,
+   "mean_credit": -0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.3,
+    0.0333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.0333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1333,
+    0.2
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "full_credit_rate": 0.1667,
+   "mean_credit": 0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3667
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.2,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "full_credit_rate": 0.1667,
+   "mean_credit": 0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4167,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.35,
+    0.4833
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3667,
+    0.4833
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3667,
+    0.4833
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3667,
+    0.4833
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "full_credit_rate": 0.8333,
+   "mean_credit": 0.8333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5667,
+    0.8667
+   ],
+   "full_credit_rate": 0.7333,
+   "mean_credit": 0.7333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5667,
+    0.8667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "full_credit_rate": 0.6667,
+   "mean_credit": 0.6667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.8333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.4667,
+    0.8
+   ],
+   "full_credit_rate": 0.6333,
+   "mean_credit": 0.6333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4667,
+    0.8
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "full_credit_rate": 0.9333,
+   "mean_credit": 0.9333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "full_credit_rate": 0.9667,
+   "mean_credit": 0.9667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.8,
+    1.0
+   ],
+   "full_credit_rate": 0.9,
+   "mean_credit": 0.9,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.8,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": 0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.0333,
+    0.2333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": 0.1,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "random_structures|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.2
+   ],
+   "full_credit_rate": 0.1,
+   "mean_credit": 0.0333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    -0.1,
+    0.1667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.45,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4167,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4833,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.45,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.4667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4167,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "full_credit_rate": 1.0,
+   "mean_credit": 1.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    1.0,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "full_credit_rate": 0.9333,
+   "mean_credit": 0.9333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.8333,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "full_credit_rate": 0.9667,
+   "mean_credit": 0.9667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.9,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "single_setting|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.0,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|confounded|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.4333,
+    0.7667
+   ],
+   "full_credit_rate": 0.6,
+   "mean_credit": 0.6,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.4333,
+    0.7667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|confounded|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7333,
+    0.9667
+   ],
+   "full_credit_rate": 0.8667,
+   "mean_credit": 0.8667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7333,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|confounded|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.3667,
+    0.7
+   ],
+   "full_credit_rate": 0.5333,
+   "mean_credit": 0.5333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.3667,
+    0.7
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|confounded|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5333,
+    0.8667
+   ],
+   "full_credit_rate": 0.7,
+   "mean_credit": 0.7,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5333,
+    0.8667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|discoverable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0667,
+    0.3333
+   ],
+   "full_credit_rate": 0.2,
+   "mean_credit": 0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.3333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|discoverable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "full_credit_rate": 0.1667,
+   "mean_credit": 0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|discoverable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4667
+   ],
+   "full_credit_rate": 0.3,
+   "mean_credit": 0.3,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.1333,
+    0.4667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|discoverable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "full_credit_rate": 0.1667,
+   "mean_credit": 0.1667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.3
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|indistinguishable|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|indistinguishable|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|indistinguishable|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|indistinguishable|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.0
+   ],
+   "full_credit_rate": 0.0,
+   "mean_credit": 0.5,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5,
+    0.5
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|insufficient_evidence|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.8,
+    1.0
+   ],
+   "full_credit_rate": 0.9,
+   "mean_credit": 0.9,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.8,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|insufficient_evidence|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7667,
+    1.0
+   ],
+   "full_credit_rate": 0.9,
+   "mean_credit": 0.9,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7667,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|insufficient_evidence|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "full_credit_rate": 0.8,
+   "mean_credit": 0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6333,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|insufficient_evidence|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6667,
+    0.9333
+   ],
+   "full_credit_rate": 0.8,
+   "mean_credit": 0.8,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6667,
+    0.9333
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|no_solution|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.5333,
+    0.8667
+   ],
+   "full_credit_rate": 0.7,
+   "mean_credit": 0.7,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.5333,
+    0.8667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|no_solution|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.6,
+    0.9
+   ],
+   "full_credit_rate": 0.7667,
+   "mean_credit": 0.7667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.6,
+    0.9
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|no_solution|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.7333,
+    0.9667
+   ],
+   "full_credit_rate": 0.8667,
+   "mean_credit": 0.8667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.7333,
+    0.9667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|no_solution|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.8,
+    1.0
+   ],
+   "full_credit_rate": 0.9,
+   "mean_credit": 0.9,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.8,
+    1.0
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|spurious_correlate|anonymous": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|spurious_correlate|paraphrased": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "full_credit_rate": 0.1333,
+   "mean_credit": 0.1333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0333,
+    0.2667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|spurious_correlate|renamed": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1667
+   ],
+   "full_credit_rate": 0.0667,
+   "mean_credit": 0.0667,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.0,
+    0.1667
+   ],
+   "runs": 30,
+   "worlds": 30
+  },
+  "space_filling|spurious_correlate|trap": {
+   "full_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4
+   ],
+   "full_credit_rate": 0.2333,
+   "mean_credit": 0.2333,
+   "mean_credit_ci95_cluster_bootstrap": [
+    0.1,
+    0.4
+   ],
+   "runs": 30,
+   "worlds": 30
+  }
+ },
+ "cost": {
+  "always_insufficient": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 1.5,
+    "1": 1.5,
+    "2": 1.5
+   },
+   "observe_calls_per_campaign": 0.0,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.008782099607954782,
+    "discoverable": 0.012737950508441525,
+    "indistinguishable": 0.012389018883277458,
+    "insufficient_evidence": 0.010637208549966696,
+    "no_solution": 0.01258712289181858,
+    "spurious_correlate": 0.009819628200087511
+   },
+   "sd_of_seed_means": 0.0,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.137804325993784,
+    "mean": 0.11586892331661147,
+    "n": 120,
+    "sd": 0.01000055949037516
+   }
+  },
+  "always_law": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": -4.575,
+    "1": -4.4,
+    "2": -4.95
+   },
+   "observe_calls_per_campaign": 206.15,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.027821450474887873,
+    "discoverable": 0.03267895540808847,
+    "indistinguishable": 0.03245482211671818,
+    "insufficient_evidence": 0.03122972040834308,
+    "no_solution": 0.033914250908431615,
+    "spurious_correlate": 0.028613257441641813
+   },
+   "sd_of_seed_means": 0.2294,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.36160501099948306,
+    "mean": 0.2381245363499147,
+    "n": 120,
+    "sd": 0.03190481934625656
+   }
+  },
+  "always_refuse": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 1.0,
+    "1": 1.0,
+    "2": 1.0
+   },
+   "observe_calls_per_campaign": 0.0,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.008102130741644942,
+    "discoverable": 0.013051381516652328,
+    "indistinguishable": 0.012116296616568434,
+    "insufficient_evidence": 0.010490619083187387,
+    "no_solution": 0.013165032074872822,
+    "spurious_correlate": 0.009961458433372173
+   },
+   "sd_of_seed_means": 0.0,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.13643300100011402,
+    "mean": 0.11490924659971521,
+    "n": 120,
+    "sd": 0.008198647836171524
+   }
+  },
+  "careful": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 2.9,
+    "1": 3.225,
+    "2": 3.225
+   },
+   "observe_calls_per_campaign": 206.15,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.027586720941872044,
+    "discoverable": 0.03282594327514137,
+    "indistinguishable": 0.031127112283320456,
+    "insufficient_evidence": 0.030615122766509253,
+    "no_solution": 0.03385227764162361,
+    "spurious_correlate": 0.028763991041705593
+   },
+   "sd_of_seed_means": 0.1532,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.3120103469991591,
+    "mean": 0.23322627380833486,
+    "n": 120,
+    "sd": 0.03520016938924759
+   }
+  },
+  "extrapolating_fit": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 1.875,
+    "1": 1.6375,
+    "2": 1.325
+   },
+   "observe_calls_per_campaign": 206.15,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.02915934562494537,
+    "discoverable": 0.035492019108308646,
+    "indistinguishable": 0.034804402958434365,
+    "insufficient_evidence": 0.03289296529167889,
+    "no_solution": 0.03661429734144501,
+    "spurious_correlate": 0.030741813041701486
+   },
+   "sd_of_seed_means": 0.2252,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.3280182179987605,
+    "mean": 0.2473203988334717,
+    "n": 120,
+    "sd": 0.03417662213717389
+   }
+  },
+  "extrapolation_pair": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 2.375,
+    "1": 2.6875,
+    "2": 2.5625
+   },
+   "observe_calls_per_campaign": 206.15,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.025445238341793203,
+    "discoverable": 0.031125908075046026,
+    "indistinguishable": 0.030247468799795268,
+    "insufficient_evidence": 0.028686945408450508,
+    "no_solution": 0.03141781277524084,
+    "spurious_correlate": 0.026982626458387435
+   },
+   "sd_of_seed_means": 0.1284,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.31497190299705835,
+    "mean": 0.2228549784415918,
+    "n": 120,
+    "sd": 0.030239439736588075
+   }
+  },
+  "fit_all_gated": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 0.075,
+    "1": 0.3125,
+    "2": -0.5625
+   },
+   "observe_calls_per_campaign": 206.15,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.02633213446682324,
+    "discoverable": 0.031000156816602006,
+    "indistinguishable": 0.030236900025132248,
+    "insufficient_evidence": 0.029449154058026276,
+    "no_solution": 0.031016643566696683,
+    "spurious_correlate": 0.027341940925028514
+   },
+   "sd_of_seed_means": 0.3694,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.3034761300041282,
+    "mean": 0.22326316894168485,
+    "n": 120,
+    "sd": 0.03054192087519695
+   }
+  },
+  "greedy_forward": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 2.2625,
+    "1": 2.2125,
+    "2": 2.2875
+   },
+   "observe_calls_per_campaign": 206.15,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.02857714082510938,
+    "discoverable": 0.033405997166513164,
+    "indistinguishable": 0.03317661664990131,
+    "insufficient_evidence": 0.0317592714833457,
+    "no_solution": 0.03304328325827252,
+    "spurious_correlate": 0.029543154908242285
+   },
+   "sd_of_seed_means": 0.0312,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.310919998002646,
+    "mean": 0.23727897307502038,
+    "n": 120,
+    "sd": 0.034045367499275905
+   }
+  },
+  "historical_answer": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": -0.375,
+    "1": -0.375,
+    "2": -0.375
+   },
+   "observe_calls_per_campaign": 51.45,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.011740260891595728,
+    "discoverable": 0.016623846725087786,
+    "indistinguishable": 0.016370426858490342,
+    "insufficient_evidence": 0.014988012858157162,
+    "no_solution": 0.016145177874932415,
+    "spurious_correlate": 0.013256539949967798
+   },
+   "sd_of_seed_means": 0.0,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.2713924700001371,
+    "mean": 0.134636906541679,
+    "n": 120,
+    "sd": 0.051275923902200635
+   }
+  },
+  "monomial_enumeration": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 2.45,
+    "1": 2.3125,
+    "2": 2.2
+   },
+   "observe_calls_per_campaign": 206.15,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.02918968653317885,
+    "discoverable": 0.03439446790010455,
+    "indistinguishable": 0.03383664578326109,
+    "insufficient_evidence": 0.03271073475010174,
+    "no_solution": 0.03491366274174652,
+    "spurious_correlate": 0.03048785540016373
+   },
+   "sd_of_seed_means": 0.1022,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.3214369049965171,
+    "mean": 0.24242487596687473,
+    "n": 120,
+    "sd": 0.03384090197050675
+   }
+  },
+  "random_structures": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 2.325,
+    "1": 2.35,
+    "2": 2.3875
+   },
+   "observe_calls_per_campaign": 206.15,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.028422944474884086,
+    "discoverable": 0.03464799704170218,
+    "indistinguishable": 0.03299535440846739,
+    "insufficient_evidence": 0.03271127958353948,
+    "no_solution": 0.03546616777518163,
+    "spurious_correlate": 0.030086344883299414
+   },
+   "sd_of_seed_means": 0.0257,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.32825029699961306,
+    "mean": 0.24050029652507873,
+    "n": 120,
+    "sd": 0.032695518446130174
+   }
+  },
+  "single_setting": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 2.45,
+    "1": 2.4,
+    "2": 2.475
+   },
+   "observe_calls_per_campaign": 206.15,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.025257687466698066,
+    "discoverable": 0.030657831575202483,
+    "indistinguishable": 0.029918084250099734,
+    "insufficient_evidence": 0.02949737700831368,
+    "no_solution": 0.030832030116744135,
+    "spurious_correlate": 0.026298233400060173
+   },
+   "sd_of_seed_means": 0.0312,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.2793480879990966,
+    "mean": 0.21878108055013096,
+    "n": 120,
+    "sd": 0.028166469453212856
+   }
+  },
+  "space_filling": {
+   "campaign_runs": 120,
+   "inadmissible_proposals": 0,
+   "invalid_runs": 0,
+   "mean_campaign_credit_by_seed": {
+    "0": 3.125,
+    "1": 3.175,
+    "2": 3.225
+   },
+   "observe_calls_per_campaign": 206.15,
+   "peak_traced_kib": null,
+   "proposer_seconds_per_universe_by_kind": {
+    "confounded": 0.025652222666728144,
+    "discoverable": 0.029435896658257358,
+    "indistinguishable": 0.03003627730846953,
+    "insufficient_evidence": 0.028822691766830152,
+    "no_solution": 0.031185042950164645,
+    "spurious_correlate": 0.027237650975348516
+   },
+   "sd_of_seed_means": 0.0408,
+   "valid_runs": 120,
+   "wall_seconds_per_campaign": {
+    "excludes": "the memory-instrumented run",
+    "includes": "proposer-process start-up",
+    "max": 0.2825748510003905,
+    "mean": 0.21865179891622877,
+    "n": 120,
+    "sd": 0.027787906520319698
+   }
+  }
+ },
+ "elapsed_seconds": 374.6,
+ "estimate": {
+  "assumes": "the pilot machine; the escrow in the operator's process and each arm in an isolated proposer process (as measured); the OD-20 deployment (separate account/container) may add cost (UNMEASURED)",
+  "baseline_arms_total_seconds": 6450.8,
+  "excludes": "Mind, LLM-ablation and model-swap arms (do not exist; their cost is UNMEASURED); a full-grammar enumerator, PySR, BoTorch (not integrated); an isolated escrow transport (UNMEASURED)",
+  "interval95_seconds": [
+   6439.9,
+   6461.8
+  ],
+  "label": "ESTIMATE (derived from pilot measurements; not measured)",
+  "per_arm": {
+   "always_insufficient": {
+    "campaign_runs": 2400,
+    "seconds": 278.1
+   },
+   "always_law": {
+    "campaign_runs": 2400,
+    "seconds": 571.5
+   },
+   "always_refuse": {
+    "campaign_runs": 2400,
+    "seconds": 275.8
+   },
+   "careful": {
+    "campaign_runs": 2400,
+    "seconds": 559.7
+   },
+   "extrapolating_fit": {
+    "campaign_runs": 2400,
+    "seconds": 593.6
+   },
+   "extrapolation_pair": {
+    "campaign_runs": 2400,
+    "seconds": 534.9
+   },
+   "fit_all_gated": {
+    "campaign_runs": 2400,
+    "seconds": 535.8
+   },
+   "greedy_forward": {
+    "campaign_runs": 2400,
+    "seconds": 569.5
+   },
+   "historical_answer": {
+    "campaign_runs": 2400,
+    "seconds": 323.1
+   },
+   "monomial_enumeration": {
+    "campaign_runs": 2400,
+    "seconds": 581.8
+   },
+   "random_structures": {
+    "campaign_runs": 2400,
+    "seconds": 577.2
+   },
+   "single_setting": {
+    "campaign_runs": 2400,
+    "seconds": 525.1
+   },
+   "space_filling": {
+    "campaign_runs": 2400,
+    "seconds": 524.8
+   }
+  },
+  "total_campaign_runs": 31200
+ },
+ "invalid_reasons": [],
+ "invalid_runs_by_arm_presentation": {},
+ "label": "MEASURED (pilot tier; cost and variance only; not a rate claim)",
+ "outcome_agreement_with_anonymous": {
+  "by_arm": {
+   "always_insufficient": 1.0,
+   "always_law": 0.85,
+   "always_refuse": 1.0,
+   "careful": 0.7315,
+   "extrapolating_fit": 0.5167,
+   "extrapolation_pair": 0.537,
+   "fit_all_gated": 0.5167,
+   "greedy_forward": 0.5963,
+   "historical_answer": 0.6667,
+   "monomial_enumeration": 0.5926,
+   "random_structures": 0.5981,
+   "single_setting": 0.95,
+   "space_filling": 0.713
+  },
+  "note": "same worlds; differs by presentation AND by run-private design randomness (pseudonymous ids seed the arms)"
+ },
+ "pilot_root_revealed_hex": "91739335e9716f8f47cd42adf0b1d2f4bfd16d9a48e2ad4f5f36c38eb3b6685c",
+ "prereg_sha256": "94efff081f7a603653d0da79083428f1da2802e49c60587fcd0e86ce5643fedd",
+ "primary_endpoint_indicative": {
+  "best_arm_per_kind": {
+   "confounded": "single_setting",
+   "discoverable": "fit_all_gated",
+   "indistinguishable": "always_insufficient",
+   "insufficient_evidence": "always_insufficient",
+   "no_solution": "always_refuse",
+   "spurious_correlate": "careful"
+  },
+  "credit_split": {
+   "always_insufficient": {
+    "control_credit_per_campaign": 1.5,
+    "discovery_credit_in_family": 0.0,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.0,
+    "discovery_credit_per_campaign": 0.0
+   },
+   "always_law": {
+    "control_credit_per_campaign": -4.6583,
+    "discovery_credit_in_family": 0.8113,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": -0.6119,
+    "discovery_credit_per_campaign": 0.0167
+   },
+   "always_refuse": {
+    "control_credit_per_campaign": 1.0,
+    "discovery_credit_in_family": 0.0,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.0,
+    "discovery_credit_per_campaign": 0.0
+   },
+   "careful": {
+    "control_credit_per_campaign": 2.9167,
+    "discovery_credit_in_family": 0.283,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.1343,
+    "discovery_credit_per_campaign": 0.2
+   },
+   "extrapolating_fit": {
+    "control_credit_per_campaign": 1.3792,
+    "discovery_credit_in_family": 0.5283,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.0,
+    "discovery_credit_per_campaign": 0.2333
+   },
+   "extrapolation_pair": {
+    "control_credit_per_campaign": 2.4625,
+    "discovery_credit_in_family": 0.0943,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.0672,
+    "discovery_credit_per_campaign": 0.0792
+   },
+   "fit_all_gated": {
+    "control_credit_per_campaign": -0.375,
+    "discovery_credit_in_family": 0.5849,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.1045,
+    "discovery_credit_per_campaign": 0.3167
+   },
+   "greedy_forward": {
+    "control_credit_per_campaign": 2.0875,
+    "discovery_credit_in_family": 0.283,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.0746,
+    "discovery_credit_per_campaign": 0.1667
+   },
+   "historical_answer": {
+    "control_credit_per_campaign": -0.125,
+    "discovery_credit_in_family": -0.2453,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": -0.2537,
+    "discovery_credit_per_campaign": -0.25
+   },
+   "monomial_enumeration": {
+    "control_credit_per_campaign": 2.1375,
+    "discovery_credit_in_family": 0.3019,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.0896,
+    "discovery_credit_per_campaign": 0.1833
+   },
+   "random_structures": {
+    "control_credit_per_campaign": 2.1708,
+    "discovery_credit_in_family": 0.3019,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.0896,
+    "discovery_credit_per_campaign": 0.1833
+   },
+   "single_setting": {
+    "control_credit_per_campaign": 2.4417,
+    "discovery_credit_in_family": 0.0,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.0,
+    "discovery_credit_per_campaign": 0.0
+   },
+   "space_filling": {
+    "control_credit_per_campaign": 2.975,
+    "discovery_credit_in_family": 0.3208,
+    "discovery_credit_out_of_family_NO_STRONG_BASELINE": 0.1045,
+    "discovery_credit_per_campaign": 0.2
+   }
+  },
+  "mean_campaign_credit": {
+   "always_insufficient": 1.5,
+   "always_law": -4.6417,
+   "always_refuse": 1.0,
+   "careful": 3.1167,
+   "extrapolating_fit": 1.6125,
+   "extrapolation_pair": 2.5417,
+   "fit_all_gated": -0.0583,
+   "greedy_forward": 2.2542,
+   "monomial_enumeration": 2.3208,
+   "random_structures": 2.3542,
+   "single_setting": 2.4417,
+   "space_filling": 3.175
+  },
+  "note": "pilot scale (10 campaigns per presentation): indicative only",
+  "strongest_non_adversarial_arm": "space_filling"
+ },
+ "region_tell": {
+  "indistinguishable_flagged_by_pushed_extension": 0.0,
+  "kinds_by_tell": {
+   "box": [
+    "confounded",
+    "discoverable",
+    "insufficient_evidence",
+    "no_solution",
+    "spurious_correlate"
+   ],
+   "ordinary_extension": [
+    "confounded",
+    "discoverable",
+    "indistinguishable",
+    "insufficient_evidence",
+    "no_solution",
+    "spurious_correlate"
+   ],
+   "pushed_extension": []
+  },
+  "pushed_extension_is_indistinguishable": null
+ },
+ "representation_limited_indicative": [
+  "insufficient_evidence|anonymous",
+  "insufficient_evidence|paraphrased",
+  "insufficient_evidence|renamed",
+  "insufficient_evidence|trap",
+  "no_solution|anonymous",
+  "no_solution|paraphrased",
+  "no_solution|renamed",
+  "no_solution|trap"
+ ],
+ "truth_in_searched_family_fraction": {
+  "confounded": 0.4,
+  "discoverable": 0.4417,
+  "spurious_correlate": 0.4
+ }
+}
