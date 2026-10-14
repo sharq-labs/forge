@@ -3216,3 +3216,15 @@ Failed approaches, so they are not repeated:
 2. Selecting the structure on the same hold-out the gate judges. Replaced by CV inside the training split.
 3. One master root per (arm, seed, presentation). That breaks paired lift; roots are now shared across arms.
 4. Long `python -c` strings with f-strings through bash. They were mangled; use script files.
+
+
+## 2026-10-14 -- BR-17 Minimal Mind: start gate BLOCKED_BY_PREREQUISITE
+
+The gate was checked against the live origin/main e193e573. All three prerequisites are unmet:
+- A1 has not passed: BR-16 is PILOT_COMPLETE / BLOCKED_OWNER_APPROVAL, and G0 has not exited because the certificate
+  fails on main.
+- No baseline identity is frozen for A1: v0 is frozen for the pilot only, and P-1 needs v0.1.
+- The active epic is still battery.thevenin_1rc, and no exception is open.
+
+No Mind code was written; the active epic and the ledger were not touched. Record and loop owner map:
+[BR17_MINIMAL_MIND_READINESS.md](../discovery/BR17_MINIMAL_MIND_READINESS.md). Tests: NOT RUN (documentation only).
