@@ -1,6 +1,18 @@
 # Active Plan
 
-## Active override — G0/A1 unblocking sprint (2026-10-14)
+## Active override — G0/A1 final closure (2026-10-14)
+
+Same local branch `integration/g0-a1-unblock`. Report: [G0_A1_FINAL_CLOSURE.md](G0_A1_FINAL_CLOSURE.md). Nothing pushed.
+
+- [x] Integration integrity: exact ancestry; docs-only differences are outside every certified area.
+- [x] BR-15 hostile confirmation: C1-C3 plus two confirmation rounds fixed with reproducers. Static loader completeness
+      is UNRESOLVED (declared); runtime-injected objects are NOT_VERIFIED.
+- [x] Genesis-lite v0.2 (`878e6812`): D1-D7, the pilot screen defect and record identity fixed; pilot 1,560 runs, 0 invalid.
+- [x] Escrow: same-account exploit measured; SECURITY_BOUNDARY_NOT_PROVEN; OD-20 requirements written.
+- [x] OD-6 package prepared (Option C recommended; nothing applied).
+- [ ] Owner: OD-3, OD-19 (v0.2), OD-20, OD-8, OD-18, OD-6, OD-1. BR-17/BR-18 stay closed until A1 PASS.
+
+## Superseded override — G0/A1 unblocking sprint (2026-10-14)
 
 Local integration branch `integration/g0-a1-unblock` (worktree `D:/forge-g0a1`) = `origin/main` `e193e573` + BR-15 +
 BR-16. Nothing is pushed or merged to `main`. Report: [G0_A1_UNBLOCKING.md](G0_A1_UNBLOCKING.md).

@@ -3333,3 +3333,49 @@ Failed approaches, so they are not repeated:
 1. `git stash` in a worktree applies another session's stash. Use `git show rev:path > path` for fail-before runs.
 2. Pilot concurrent with a FAST run: contaminated timing; killed by PID and rerun alone.
 3. Environment scan by broad patterns (`ROOT`): SYSTEMROOT false positive; narrowed.
+
+
+## 2026-10-14 -- G0/A1 final closure (integration/g0-a1-unblock, local only)
+
+Report: [G0_A1_FINAL_CLOSURE.md](G0_A1_FINAL_CLOSURE.md). OD-6 package:
+[OD6_GENESIS_EPIC_MIGRATION_PACKAGE.md](OD6_GENESIS_EPIC_MIGRATION_PACKAGE.md). Nothing pushed or merged.
+Hardened recertification, FULL local assurance and the formal campaign: NOT RUN (owner).
+
+Fixed, each with a reproducer committed red first:
+- BR-15 certificate (tool 2.6.0):
+  - C1, C2 and C3: `bb4f08d9` (red), fixed in `aedc7b24` and `a87ab594`.
+  - Nine further loader forms and planted bytecode: `912539ac` (red), fixed in `26f2505c`.
+  - Private importlib API, symlinks, and the registry probe's pycache: fixed in `3c28bedf`.
+  - Static loader completeness stays UNRESOLVED (declared).
+- Genesis-lite v0.2 (`genesis_lite.blindfold_l5.v0_2`, preregistration `878e6812...`):
+  - D1-D7, credit binding and candidate naming: `a1b5ab9b` (red), fixed in `f3ca0e63`.
+  - Screened world sets, record identity and outcome binding: `e7616785` (red), fixed in `80f798ba`.
+  - Run identity from the code digests: `f18bc4fc` (red), fixed in `4a302959`.
+  - Pilot evidence: `427dd66b`.
+- Escrow (measured, not fixable in code):
+  - A same-account proposer read `/proc/<ppid>/cmdline`, then the root file, and stole 5 of 6 laws in a VALID run.
+  - It also had network access, a child that outlived the campaign, and writable benchmark code.
+  - Remedy: the OD-20 deployment. Evidence: `D:/forge-g0a1-final-evidence/escrow_probe_2026-10-14.txt`.
+
+Commands run (Windows `.venv` 3.14 unless stated):
+- BR-16 `4a302959`: `python -m pytest tests/genesis_lite -n 4`: 94 passed.
+  - WSL 3.12 (in `pilot02.sh`): 94 passed.
+- BR-15 `3c28bedf`: `python -m pytest tests/test_certified_dependency_closure.py`: 58 passed, 1 skipped (symlink privilege).
+- BR-15 `aedc7b24`, with the certificate, recertification-scope, F-9 and F-7 suites: 193 passed, 1 skipped, 1 failed.
+  - The failure is `test_the_certificate_describes_this_tree`: certified-file drift and an uncommitted edit, expected until OD-3.
+- Real tree at `3c28bedf`: `certified_dependency_problems`, `authority_closure_problems` and `source_form_problems` all `[]`.
+- v0.2 Tier-1 pilot, WSL 3.12: `python -m benchmarks.genesis_lite.pilot --root-file <operator> --out <dir>`.
+  - 1,560 runs, 0 invalid, 384.79 s; run log sha256 `d504f2e3...`.
+  - Formal ESTIMATE: 6,608.1 s (95% 6,597.7-6,618.4).
+- Superseded pilots (not committed; roots retired):
+  - `7cc71b13`: 1,560 runs, 13 INVALID on one world set (literal audit, 0.642 coincidence); log `6e70c72a...`.
+  - `ddc7c3a6`: 1,560 runs, 0 invalid, 402.58 s; log `ca0716f3...`.
+
+Failed approaches, so they are not repeated:
+1. A static loader deny-list grew by three review rounds and is still incomplete. Further spellings belong to a
+   runtime audit-hook cross-check, not to more AST rules.
+2. Strict completeness plus a strict literal audit made a formal lift impossible. An arm-independent screen must exclude
+   a world set for every arm alike, not block the claim.
+3. Reusing a pilot root after a code change. A new preregistration needs a fresh root; three roots are retired.
+4. `cat > file` with no input inside a Bash tool command blocks on stdin until the timeout.
+5. A sandbox launcher for the proposer was started and abandoned; OD-20 stays a deployment decision.
