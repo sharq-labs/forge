@@ -84,7 +84,7 @@ CERTIFICATE_SCHEMA = "core_certificate/2"
 #: Identity of the code that produced a certificate, recorded in it. Not a
 #: version of the repository: a version of *this algorithm*.
 TOOL_ID = "tools/certification/core_certificate.py"
-TOOL_VERSION = "2.5.0"  # 2.5.0: derived dependency closure of every certified module (BR-15)
+TOOL_VERSION = "2.6.0"  # 2.6.0: G0/A1 final review C1-C3 (indirect loaders, walked-path dynamic loads, declared reach, source forms)
 # 2.4.0: registry pin covers source bytes; loader detection widened (F2, fourth pass)
 # 2.3.0: dynamic import reach, production registry pin (hostile review F2, third pass)
 # 2.2.0: verdict_authority area and the derived authority-closure check (hostile review F2)
