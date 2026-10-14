@@ -7,7 +7,8 @@ searched-family flag. ``field`` supplies every registered non-adversarial arm, b
 
 from __future__ import annotations
 
-from benchmarks.genesis_lite import analysis, arms
+from benchmarks.genesis_lite import analysis, arms, preregistration
+from engcore.blindfold.roles import DEFAULT_CREDIT
 
 KINDS = analysis.KINDS
 PRESENTATIONS = ("anonymous", "renamed", "paraphrased", "trap")
@@ -18,6 +19,17 @@ BASELINES = sorted(n for n, entry in arms.ARMS.items() if entry[3] in ("competen
 WEAK = {k: 0.3 for k in KINDS}
 CAREFUL = dict(discoverable=0.3, **{k: 0.8 for k in KINDS if k != "discoverable"})
 BETTER = dict(CAREFUL, discoverable=0.8)
+#: the reason the harness records when the literal leakage audit refuses a presented card (an arm-independent screen)
+SCREEN_REASON = "leakage audit: [{'universe_id': 'bf-x', 'leak': 'hidden numbers appear on the card: [0.642]'}]"
+PREREG_SHA256 = preregistration.PREREG_PATH.with_suffix(".sha256").read_bytes().split()[0].decode()
+
+
+def outcome_for(kind: str, value: float) -> str:
+    """An outcome whose DEFAULT_CREDIT value is ``value`` (unlisted outcomes score 0)."""
+    for outcome, credit in sorted(DEFAULT_CREDIT[kind].items()):
+        if credit == value:
+            return outcome
+    return "unlisted_outcome" if value == 0.0 else "no_such_outcome"
 
 
 def credit(rate: float, i: int, s: int, kind: str) -> float:
@@ -31,13 +43,14 @@ def records(arm, rates, *, grid=GRID, status="VALID", ids=True, id_prefix="", ou
         i = int(c[1:]) if c[1:].isdigit() else 0
         universes = []
         for k in KINDS:
-            u = {"kind": k, "credit": credit_fn(p, c, s, k) if credit_fn else credit(rates[k], i, s, k),
-                 "independent_agrees": True, "truth_in_searched_family": not (k == "discoverable" and out_of_family((p, c, s)))}
+            value = credit_fn(p, c, s, k) if credit_fn else credit(rates[k], i, s, k)
+            u = {"kind": k, "credit": value, "outcome": outcome_for(k, value), "independent_agrees": True,
+                 "truth_in_searched_family": not (k == "discoverable" and out_of_family((p, c, s)))}
             if ids:
                 u["universe_id"] = f"{id_prefix}{p}-{s}-{c}-{k}"
             universes.append(u)
         out.append({"arm": arm, "status": status, "presentation": p, "campaign_id": c, "seed": s, "isolation": isolation,
-                    "universes": universes})
+                    "reasons": [], "prereg_sha256": PREREG_SHA256, "universes": universes})
     return out
 
 
