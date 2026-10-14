@@ -41,9 +41,9 @@ BOOTSTRAP = 2000
 
 
 def master_for(root: bytes, i: int, presentation: str, seed: int) -> bytes:
-    """v0.1: one master per world set (campaign, presentation, seed), shared by every arm (paired comparisons) and never
+    """v0.1+: one master per world set (campaign, presentation, seed), shared by every arm (paired comparisons) and never
     reused across seeds or presentations, so no proposer sees a world twice (review: cross-seed pooling)."""
-    return hmac.new(root, f"forge.genesis_lite.v0_1/{presentation}/{seed}/{i}".encode(), hashlib.sha256).digest()
+    return hmac.new(root, f"forge.genesis_lite.v0_2/{presentation}/{seed}/{i}".encode(), hashlib.sha256).digest()
 
 
 def run_pilot(root: bytes, arms: Iterable[str], *, campaigns: int = RUNG, seeds: Iterable[int] = PILOT_SEEDS,

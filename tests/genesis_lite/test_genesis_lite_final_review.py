@@ -22,48 +22,8 @@ import json
 import pytest
 
 from benchmarks.genesis_lite import analysis, arms, harness
-
-KINDS = analysis.KINDS
-PRESENTATIONS = ("anonymous", "renamed", "paraphrased", "trap")
-CAMPAIGNS = [f"c{i}" for i in range(30)]
-SEEDS = (0, 1)
-GRID = analysis.formal_grid(CAMPAIGNS, PRESENTATIONS, SEEDS)
-BASELINES = sorted(n for n, entry in arms.ARMS.items() if entry[3] in ("competence", "floor", "sanity"))
-WEAK = {k: 0.3 for k in KINDS}
-CAREFUL = dict(discoverable=0.3, **{k: 0.8 for k in KINDS if k != "discoverable"})
-BETTER = dict(CAREFUL, discoverable=0.8)
-
-
-def _credit(rate: float, i: int, s: int, kind: str) -> float:
-    return 1.0 if (i * 7 + s * 3 + len(kind)) % 10 < round(rate * 10) else -1.0
-
-
-def _records(arm, rates, *, grid=GRID, status="VALID", ids=True, id_prefix="", out_of_family=lambda ws: False,
-             credit=None):
-    out = []
-    for p, c, s in sorted(grid):
-        i = int(c[1:]) if c[1:].isdigit() else 0
-        universes = []
-        for k in KINDS:
-            u = {"kind": k, "credit": credit(p, c, s, k) if credit else _credit(rates[k], i, s, k),
-                 "independent_agrees": True, "truth_in_searched_family": not (k == "discoverable" and out_of_family((p, c, s)))}
-            if ids:
-                u["universe_id"] = f"{id_prefix}{p}-{s}-{c}-{k}"
-            universes.append(u)
-        out.append({"arm": arm, "status": status, "presentation": p, "campaign_id": c, "seed": s,
-                    "isolation": "proposer_process", "universes": universes})
-    return out
-
-
-def _field(**override):
-    """Every registered non-adversarial arm (weak), careful as the strongest, plus overrides (None drops an arm)."""
-    rows = []
-    for name in BASELINES:
-        spec = override.get(name, CAREFUL if name == "careful" else WEAK)
-        if spec is None:
-            continue
-        rows += spec if isinstance(spec, list) else _records(name, spec)
-    return rows
+from tests.genesis_lite.lift_records import (BASELINES, BETTER, CAMPAIGNS, CAREFUL, GRID, KINDS, PRESENTATIONS, SEEDS,
+                                             WEAK, credit as _credit, field as _field, records as _records)
 
 
 @pytest.fixture(autouse=True)
@@ -119,7 +79,7 @@ def test_d4_gains_only_on_worlds_outside_the_searched_family_are_not_lift():
         if k == "discoverable" and off((p, c, s)):
             return 1.0                                          # the candidate "wins" only where no strong arm exists
         return _credit(CAREFUL[k], i, s, k)
-    rows += _records("mind", CAREFUL, out_of_family=off, credit=mind_credit)
+    rows += _records("mind", CAREFUL, out_of_family=off, credit_fn=mind_credit)
     assert _decide(rows)["lift_claimed"] is False
 
 
@@ -140,7 +100,7 @@ def test_d6_a_representation_limited_cell_credits_no_lift_as_reasoning():
 
 
 def test_credits_must_come_from_the_frozen_table():
-    rows = _field() + _records("mind", BETTER, credit=lambda p, c, s, k: 0.8)
+    rows = _field() + _records("mind", BETTER, credit_fn=lambda p, c, s, k: 0.8)
     with pytest.raises(analysis.AnalysisRefused, match="DEFAULT_CREDIT"):
         _decide(rows)
 
