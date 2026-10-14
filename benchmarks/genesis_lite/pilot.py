@@ -1,12 +1,8 @@
 """Genesis-lite Tier 1: the bounded cost pilot (Genesis §10.6 step 1). Measurement, never a rate claim.
 
 For every arm, every presentation and the preregistered seeds, run the 10-campaign rung. Each campaign holds one universe
-of every kind, so every (kind, presentation) cell gets 10 WORLDS per arm (and seed). For cost and variance measurement
-campaign ``i`` reuses the same master seed for every arm, presentation and seed (paired worlds); a run-private key
-pseudonymises universe ids and names, but the worlds are the same, so a stateful proposer could still link them by their
-public ranges. That is acceptable for a cost pilot of STATELESS baselines. The formal tier never reuses a root across
-seeds or presentations, shares each root across arms (paired lift), and runs every arm stateless in a fresh process
-(preregistered).
+of every kind. v0.1: campaign ``i`` of a presentation uses one master seed shared by every arm and seed (paired worlds,
+as in the formal tier), every arm runs in an isolated proposer process, and run-private keys pseudonymise ids and names.
 
 Rates are analysed with the WORLD as the unit (review H5): per world, the fraction of seeds with full credit; the cell
 rate is the mean over worlds; its interval is a percentile bootstrap over worlds (2000 resamples, seed 0).
@@ -31,6 +27,7 @@ import sys
 import time
 from typing import Any, Callable, Iterable
 
+from . import analysis
 from . import arms as arm_module
 from .harness import RunRecord, run_one
 from .presentation import PRESENTATIONS
@@ -42,21 +39,24 @@ FORMAL_SEEDS = 20
 BOOTSTRAP = 2000
 
 
-def master_for(root: bytes, i: int) -> bytes:
-    return hmac.new(root, f"forge.genesis_lite.pilot/{i}".encode(), hashlib.sha256).digest()
+def master_for(root: bytes, i: int, presentation: str) -> bytes:
+    """v0.1: one master per (campaign, presentation), shared by every arm and seed (paired comparisons)."""
+    return hmac.new(root, f"forge.genesis_lite.v0_1/{presentation}/{i}".encode(), hashlib.sha256).digest()
 
 
 def run_pilot(root: bytes, arms: Iterable[str], *, campaigns: int = RUNG, seeds: Iterable[int] = PILOT_SEEDS,
-              presentations: Iterable[str] = PRESENTATIONS, sink: Callable[[RunRecord], None] | None = None) -> list[RunRecord]:
+              presentations: Iterable[str] = PRESENTATIONS, sink: Callable[[RunRecord], None] | None = None,
+              isolation: str = "proposer_process") -> list[RunRecord]:
     records = []
     for name in arms:
         fn, _family, stochastic, _role = arm_module.ARMS[name]
         for seed in (tuple(seeds) if stochastic else (0,)):
             for presentation in presentations:
                 for i in range(campaigns):
-                    rec = run_one(name, fn, master_seed=master_for(root, i), campaign_id=f"gl-pilot-{i}",
-                                  presentation=presentation, seed=seed,
-                                  measure_memory=(i == 0 and presentation == "anonymous" and seed == 0))
+                    rec = run_one(name, fn, master_seed=master_for(root, i, presentation), campaign_id=f"gl-pilot-{i}",
+                                  presentation=presentation, seed=seed, isolation=isolation,
+                                  measure_memory=(i == 0 and presentation == "anonymous" and seed == 0
+                                                  and isolation == "in_process"))
                     records.append(rec)
                     if sink is not None:
                         sink(rec)
@@ -112,7 +112,7 @@ def summarize(records: list[RunRecord]) -> dict[str, Any]:
     cost: dict[str, Any] = {}
     for name in sorted({r.arm for r in records}):
         mine = [r for r in records if r.arm == name]
-        timed = [r.wall_seconds for r in mine if not r.memory_instrumented]
+        timed = [r.wall_seconds + r.host_start_seconds for r in mine if not r.memory_instrumented]
         per_kind: dict[str, list[float]] = {}
         for r in mine:
             for u in r.universes:
@@ -126,7 +126,8 @@ def summarize(records: list[RunRecord]) -> dict[str, Any]:
             "invalid_runs": sum(r.status != "VALID" for r in mine),
             "inadmissible_proposals": sum(u["outcome"] == "inadmissible" for r in mine for u in r.universes),
             "wall_seconds_per_campaign": {"mean": statistics.fmean(timed), "sd": statistics.pstdev(timed), "max": max(timed),
-                                          "n": len(timed), "excludes": "the memory-instrumented run"},
+                                          "n": len(timed), "includes": "proposer-process start-up",
+                                          "excludes": "the memory-instrumented run"},
             "observe_calls_per_campaign": statistics.fmean(r.observe_calls for r in mine),
             "peak_traced_kib": max((r.peak_traced_kib for r in mine if r.peak_traced_kib is not None), default=None),
             "proposer_seconds_per_universe_by_kind": {k: statistics.fmean(v) for k, v in sorted(per_kind.items())},
@@ -135,13 +136,26 @@ def summarize(records: list[RunRecord]) -> dict[str, Any]:
                                  if len(seed_credit) > 1 else None),
         }
     invariance: dict[str, Any] = {}
+    credits = analysis.world_credits(records)
+    roles = {name: arm_module.ARMS[name][3] for name in credits if name in arm_module.ARMS}
+    best, primary = analysis.strongest_baseline(credits, roles) if credits else (None, {})
+    split = {}
+    for name, camps in credits.items():
+        disc = [k.get("discoverable", 0.0) for k in camps.values()]
+        ctrl = [sum(v for kind, v in k.items() if kind != "discoverable") for k in camps.values()]
+        split[name] = {"discovery_credit_per_campaign": round(statistics.fmean(disc), 4),
+                       "control_credit_per_campaign": round(statistics.fmean(ctrl), 4)}
     for name in sorted({r.arm for r in valid}):
         outcome = {(r.seed, r.presentation, r.campaign_id, u["kind"]): u["outcome"] for r in valid if r.arm == name
                    for u in r.universes}
         pairs = [(o, outcome[(s, "anonymous", cid, k)]) for (s, p, cid, k), o in outcome.items()
                  if p != "anonymous" and (s, "anonymous", cid, k) in outcome]
         invariance[name] = None if not pairs else round(sum(a == b for a, b in pairs) / len(pairs), 4)
-    return {"label": "MEASURED (pilot tier; cost and variance only; not a rate claim)", "cells": table,
+    return {"label": "MEASURED (pilot tier; cost and variance only; not a rate claim)",
+            "primary_endpoint_indicative": {"mean_campaign_credit": {k: round(v, 4) for k, v in sorted(primary.items())},
+                                            "strongest_non_adversarial_arm": best, "credit_split": split,
+                                            "note": "pilot scale (10 campaigns per presentation): indicative only"},
+            "cells": table,
             "invalid_runs_by_arm_presentation": invalid_cells,
             "representation_limited_indicative": indicative_rl,
             "truth_in_searched_family_fraction": family,

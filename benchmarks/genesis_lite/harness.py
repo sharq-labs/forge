@@ -20,6 +20,13 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
+import pathlib
+import queue
+import subprocess
+import sys
+import tempfile
+import threading
 import time
 import tracemalloc
 from dataclasses import dataclass, field
@@ -34,9 +41,85 @@ from .presentation import Presented, PresentationRefused, TranslatingClient, che
 
 KINDS = ("confounded", "discoverable", "indistinguishable", "insufficient_evidence", "no_solution", "spurious_correlate")
 MIX = {k: 1 for k in KINDS}
-CONFIG = EvaluatorConfig("forge.genesis_lite.v0", "1")
+CONFIG = EvaluatorConfig("forge.genesis_lite.v0_1", "1")
 #: kinds in which a proposed law can earn positive credit: a trap there must be verified
 LAW_CREDIT_KINDS = tuple(k for k in KINDS if independent.CREDIT[k].get("law_pass", 0.0) > 0)
+
+
+ISOLATIONS = ("in_process", "proposer_process")
+_ROOT = pathlib.Path(__file__).resolve().parents[2]
+_HOST = pathlib.Path(__file__).resolve().parent / "proposer_host.py"
+
+
+class ProposerHost:
+    """The operator's end of one isolated proposer process (OD-20 hardening; see :mod:`.proposer_host`).
+
+    One fresh interpreter per campaign, started with ``-I`` from an empty temporary working directory and a scrubbed
+    environment; it receives only presented cards and observation answers. The operator refuses a host that did not
+    import THIS tree's engcore (a stray installed copy would be a different proposer)."""
+
+    def __init__(self, extra_paths: tuple[str, ...] = (), timeout: float = 600.0) -> None:
+        self._dir = tempfile.TemporaryDirectory(prefix="gl-proposer-")
+        env = {k: os.environ[k] for k in ("PATH", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "TMPDIR") if k in os.environ}
+        paths = [str(_ROOT), str(_ROOT / "src"), *extra_paths]
+        self._proc = subprocess.Popen([sys.executable, "-I", str(_HOST), *paths], cwd=self._dir.name, env=env,
+                                      stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0)
+        self._lines: queue.Queue = queue.Queue()
+        threading.Thread(target=self._pump, daemon=True).start()
+        self._timeout = timeout
+        hello = self._recv()
+        expected = str((_ROOT / "src" / "engcore" / "__init__.py").resolve())
+        if hello.get("op") != "hello" or str(pathlib.Path(hello.get("engcore", "")).resolve()) != expected:
+            self.close()
+            raise RuntimeError(f"the proposer process did not import this tree's engcore: {hello}")
+
+    def _pump(self) -> None:
+        assert self._proc.stdout is not None
+        for line in self._proc.stdout:
+            self._lines.put(line)
+        self._lines.put(b"")
+
+    def _send(self, obj: Any) -> None:
+        assert self._proc.stdin is not None
+        self._proc.stdin.write(json.dumps(obj).encode() + b"\n")
+        self._proc.stdin.flush()
+
+    def _recv(self) -> dict[str, Any]:
+        try:
+            line = self._lines.get(timeout=self._timeout)
+        except queue.Empty:
+            self.close()
+            raise RuntimeError(f"the proposer process gave no answer within {self._timeout} s") from None
+        if not line:
+            raise RuntimeError("the proposer process exited")
+        return json.loads(line)
+
+    def propose(self, spec: str, card: Mapping[str, Any], seed: int, client: Any) -> dict[str, Any]:
+        from engcore.blindfold.escrow import EscrowRefused
+
+        self._send({"op": "propose", "arm": spec, "seed": seed, "card": card})
+        while True:
+            msg = self._recv()
+            if msg.get("op") == "observe":
+                try:
+                    resp = client.observe(msg["universe_id"], msg["settings"], query_id=msg.get("query_id", ""))
+                    self._send({"ok": True, "response": resp})
+                except EscrowRefused as exc:
+                    self._send({"ok": False, "refused": str(exc)})
+            elif msg.get("op") == "proposal":
+                return dict(msg["proposal"])
+            else:
+                raise RuntimeError(f"the proposer failed: {msg.get('error', msg)}")
+
+    def close(self) -> None:
+        if self._proc.poll() is None:
+            try:
+                self._proc.stdin.close()  # type: ignore[union-attr]
+                self._proc.wait(timeout=10)
+            except Exception:  # noqa: BLE001 - it must not outlive the campaign
+                self._proc.kill()
+                self._proc.wait(timeout=10)
+        self._dir.cleanup()
 
 
 def _digest(payload: Any) -> str:
@@ -67,6 +150,8 @@ class RunRecord:
     leakage_audit: str = "UNKNOWN"
     evaluator_status: str = "UNKNOWN"
     security_boundary: str = ""
+    isolation: str = "in_process"
+    host_start_seconds: float = 0.0
 
     def invalid(self, reason: str) -> None:
         self.status = "INVALID_BENCHMARK"
@@ -78,13 +163,31 @@ class RunRecord:
 
 def run_one(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_seed: bytes, campaign_id: str, presentation: str,
             seed: int = 0, measure_memory: bool = False, card_hook: Callable[[dict], dict] | None = None,
-            config: EvaluatorConfig = CONFIG) -> RunRecord:
-    """Run one campaign end to end. ``card_hook`` exists ONLY for adversarial tests (an injected leak)."""
-    rec = RunRecord(arm_name, seed, campaign_id, presentation, memory_instrumented=measure_memory)
+            config: EvaluatorConfig = CONFIG, isolation: str = "in_process", arm_spec: str | None = None,
+            extra_paths: tuple[str, ...] = ()) -> RunRecord:
+    """Run one campaign end to end. ``card_hook`` exists ONLY for adversarial tests (an injected leak).
+
+    ``isolation="proposer_process"`` runs the arm in a fresh process (:class:`ProposerHost`) named by ``arm_spec``
+    (a registry name, or ``module:function``); ``in_process`` runs ``arm`` here, where a hostile proposer can read the
+    operator's secrets (tests/genesis_lite/test_genesis_lite_isolation.py)."""
+    rec = RunRecord(arm_name, seed, campaign_id, presentation, memory_instrumented=measure_memory, isolation=isolation)
+    if isolation not in ISOLATIONS:
+        rec.invalid(f"unknown isolation {isolation!r}")
+        return rec
+    host = None
     try:
+        if isolation == "proposer_process":
+            started = time.perf_counter()
+            host = ProposerHost(extra_paths)
+            rec.host_start_seconds = time.perf_counter() - started
+            spec = arm_spec or arm_name
+            arm = lambda card, client, *, seed=0: host.propose(spec, card, seed, client)  # noqa: E731
         _run(rec, arm, master_seed, campaign_id, presentation, seed, measure_memory, card_hook, config)
     except Exception as exc:  # noqa: BLE001 - every failure is a recorded benchmark-invalid run, never a lost record
         rec.invalid(f"run aborted: {type(exc).__name__}: {str(exc)[:300]}")
+    finally:
+        if host is not None:
+            host.close()
     return rec
 
 

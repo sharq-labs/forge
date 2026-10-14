@@ -127,7 +127,7 @@ def _law(coef: np.ndarray, names: list[str]) -> dict:
 
 
 def _gate(card: Mapping[str, Any], rows: list[dict], replicate: int, names: list[str], why: str, *,
-          extrapolate: bool = False) -> dict[str, Any]:
+          extrapolate: bool = False, precision: float | None = PRECISION) -> dict[str, Any]:
     """careful's decision rule over any variable subset: refuse unless the evidence pins the law down."""
     uid, out = card["universe_id"], card["output"]["name"]
     if len(rows) < len(names) + 6 + replicate:
@@ -147,7 +147,7 @@ def _gate(card: Mapping[str, Any], rows: list[dict], replicate: int, names: list
     se = resid * math.sqrt((len(names) + 1) / len(train))
     scale = noise if noise is not None and noise > 0 else resid
     rms_hold = float(np.sqrt(np.mean(np.square(err_fit))))
-    if se > PRECISION or not (rms_hold <= LACK_OF_FIT_RATIO * scale and resid <= LACK_OF_FIT_RATIO * scale):
+    if (precision is not None and se > precision) or not (rms_hold <= LACK_OF_FIT_RATIO * scale and resid <= LACK_OF_FIT_RATIO * scale):
         covs = list(card.get("observed_covariates", ()))
         if covs:
             pos = _positive(rows, names + covs[:1], out)
@@ -267,6 +267,17 @@ def extrapolation_pair(card: Mapping[str, Any], client: Any, *, seed: int = 0) -
             "rationale": "in-box fit plus an outward-diverging rival within half a noise sigma in the box"}
 
 
+def fit_all_gated(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    """v0.1 (pilot finding P-1): always_law's fit -- every observed variable, log-linear -- behind the shared control
+    checks (held-out improvement over a constant, lack of fit against replicate noise, residual-vs-covariate confounding)
+    but WITHOUT the fixed precision bar and the no-extrapolation refusal. It raises the competence bar on discoverable
+    worlds that the gated arms over-refuse; it is added, never substituted, and no arm is removed or weakened."""
+    rng = random.Random(f"fitall:{seed}:{card['universe_id']}")
+    rows, replicate = _gather(card, client, rng, "random", "f")
+    return _clean(_gate(card, rows, replicate, _variables(card), "log-linear fit on every observed variable, control-checked",
+                        extrapolate=True, precision=None))
+
+
 def historical_answer(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     """Adversarial control: answers with the textbook law its vocabulary suggests (a memorising proposer). Fits only the
     constant. Without a familiar vocabulary it declines (insufficient_evidence)."""
@@ -299,6 +310,7 @@ ARMS: dict[str, tuple[Callable[..., dict[str, Any]], str, bool, str]] = {
     "greedy_forward": (greedy_forward, "variable-primitive selection: greedy forward", True, "competence"),
     "space_filling": (space_filling, "experiment selection: space-filling design", True, "competence"),
     "extrapolating_fit": (extrapolating_fit, "law recovery that extrapolates outside the query box", True, "competence"),
+    "fit_all_gated": (fit_all_gated, "law recovery: all-variable fit behind the control checks (v0.1)", True, "competence"),
     "extrapolation_pair": (extrapolation_pair, "indistinguishable answer: fixed rival-pair heuristic", True, "competence"),
     "careful": (_fixed(bf.careful), "experiment selection: random design + replicate/holdout (existing)", False, "competence"),
     "single_setting": (_fixed(bf.single_setting), "non-discoverer control (existing)", False, "sanity"),

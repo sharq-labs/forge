@@ -163,8 +163,9 @@ def test_l6_vocabulary_is_assigned_per_campaign_never_per_kind():
 def test_l7_no_answer_key_or_pilot_root_is_committed():
     gl = ROOT / "benchmarks" / "genesis_lite"
     assert not [p for p in gl.rglob("*") if p.is_file() and ("answer_key" in p.name and p.suffix == ".json")]
-    prereg = json.loads((gl / "preregistration" / "genesis_lite_v0.json").read_bytes())
-    assert "pilot_root_revealed_hex" not in prereg and len(prereg["pilot_root_commitment_sha256"]) == 64
+    for name in ("genesis_lite_v0.json", "genesis_lite_v0_1.json"):
+        prereg = json.loads((gl / "preregistration" / name).read_bytes())
+        assert "pilot_root_revealed_hex" not in prereg and len(prereg["pilot_root_commitment_sha256"]) == 64
 
 
 def test_l8_a_sealed_universe_takes_no_further_observation_and_others_cannot_be_addressed():

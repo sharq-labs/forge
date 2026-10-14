@@ -1,4 +1,7 @@
-"""Genesis-lite v0 preregistration: built from the code, frozen by digest, committed BEFORE any pilot run.
+"""Genesis-lite v0.1 preregistration: built from the code, frozen by digest, committed BEFORE any v0.1 run.
+
+v0.1 is a NEW identity. The v0 preregistration (``genesis_lite_v0.json``, sha256 recorded beside it) and its pilot
+results are kept byte-for-byte as historical evidence; they are never rebuilt or edited.
 
 Any change to what it covers (the Blindfold substrate, the primitive library, an arm, the harness, the evaluator, the
 credit table, the class table, the statistical plan) changes the digest; ``tests/genesis_lite`` refuses a committed
@@ -15,6 +18,7 @@ from typing import Any
 
 from engcore.blindfold.roles import DEFAULT_CREDIT
 
+from . import analysis
 from . import arms as arm_module
 from .evaluator import CREDIT, CREDIT_DIGEST, credit_digest
 from .harness import CONFIG, KINDS, MIX
@@ -22,13 +26,16 @@ from .presentation import PRESENTATIONS, TRAP_TEMPLATES
 from .primitives import library_digest
 
 PREREG_SCHEMA = "forge.genesis_lite.preregistration/1"
-BENCHMARK_ID = "genesis_lite.blindfold_l5.v0"
+BENCHMARK_ID = "genesis_lite.blindfold_l5.v0_1"
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 HERE = pathlib.Path(__file__).resolve().parent
-PREREG_PATH = HERE / "preregistration" / "genesis_lite_v0.json"
+PREREG_PATH = HERE / "preregistration" / "genesis_lite_v0_1.json"
+V0_PREREG_PATH = HERE / "preregistration" / "genesis_lite_v0.json"
+V0_PREREG_SHA256 = "f99fcfbdc97aabcbea52fa72c12ad196d420e298237c5374184f537c67774ab0"
 
 SUBSTRATE = ("universe.py", "escrow.py", "expression.py", "roles.py", "baselines.py")
-HARNESS_FILES = ("harness.py", "presentation.py", "answer_key.py", "primitives.py", "arms.py", "pilot.py")
+HARNESS_FILES = ("harness.py", "presentation.py", "answer_key.py", "primitives.py", "arms.py", "pilot.py", "analysis.py",
+                 "proposer_host.py")
 EVALUATOR_FILES = ("evaluator/__init__.py", "evaluator/expr.py", "evaluator/score.py")
 
 #: (kind, presentation) -> Genesis class. Every cell is scored; the table is part of the identity.
@@ -61,7 +68,25 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
     doc = {
         "schema": PREREG_SCHEMA,
         "benchmark_id": BENCHMARK_ID,
-        "status": "FROZEN_FOR_PILOT",
+        "status": "FREEZE_READY",
+        "amends": {
+            "identity": "genesis_lite.blindfold_l5.v0", "preregistration_sha256": V0_PREREG_SHA256,
+            "kept": "v0 preregistration and pilot results unchanged (historical evidence)",
+            "reasons": [
+                "P-1: per-cell lift let a floor arm that always proposes win the discoverable cell (0.70 vs 0.27) while "
+                "scoring -1 on every control; root cause = per-cell metric + over-conservative gated baselines + 70% of "
+                "discoverable worlds inside the simple monomial family (not leakage, not a scoring defect: 5,760/5,760 "
+                "universes independently re-scored in agreement)",
+                "OD-20: in-process proposers stole hidden laws by heap scan and stack walk (tested); v0.1 requires the "
+                "isolated proposer process",
+            ],
+            "changes": ["joint campaign credit as the primary endpoint (analysis.py)",
+                        "strongest baseline over every non-adversarial arm (floors included)",
+                        "control non-inferiority (margin 0.10) and a fixed Holm family",
+                        "added arm fit_all_gated (raises the bar; no arm removed or weakened)",
+                        "proposer_process isolation required",
+                        "one master root per (campaign, presentation), shared by every arm and seed"],
+        },
         "domain": "blindfold L5 synthetic scalar laws (one domain)",
         "substrate": {name: _file_digest(blindfold / name) for name in SUBSTRATE},
         "primitive_library_digest": library_digest(),
@@ -98,9 +123,12 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
             "the region's extension follows the first dimensionless group, hinting which inputs carry structure",
             "public ranges identify a world across runs that share a master seed: the formal tier never reuses one"],
         "metrics": {
-            "primary": "full-credit rate per (arm, kind, presentation) cell: credit == 1.0 (law_pass on discoverable/spurious; the "
-                       "correct refusal on no_solution / insufficient_evidence / confounded; an indistinguishable HIT)",
-            "secondary": ["mean credit (DEFAULT_CREDIT table)", "credit over the best constant answer", "inadmissible count",
+            "primary": "JOINT campaign credit: per campaign (one world of every kind) the sum over kinds of the world's frozen "
+                       "DEFAULT_CREDIT, each world averaged over seeds; an arm's score is the mean over campaigns "
+                       "(benchmarks/genesis_lite/analysis.py, digest above)",
+            "secondary": ["full-credit rate per (arm, kind, presentation) cell -- DESCRIPTIVE ONLY, never a claim",
+                          "discovery credit and control (refusal) credit reported apart; correct-refusal rate on controls",
+                          "mean credit (DEFAULT_CREDIT table)", "credit over the best constant answer", "inadmissible count",
                           "observe calls", "wall seconds", "presentation invariance (deterministic arms, paired worlds)"],
             "not_measured_in_v0": ["proper prediction score / calibration (needs predictive distributions: the Mind)",
                                    "information gain per provider call (needs a belief model)",
@@ -117,41 +145,36 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
                                    "as NO_STRONG_BASELINE and excluded from every lift computation; a law-recovery cell enters "
                                    "the lift family only with >= 10 in-family worlds.",
         "statistics": {
-            "unit_of_analysis": "the WORLD (one hidden universe). Per world: the fraction of seeds with full credit, and "
-                                "the mean credit over seeds; a cell's rate is the mean over its worlds; intervals are "
-                                "percentile bootstrap over worlds (2000 resamples, Random(0)). Seeds are never pooled as "
-                                "independent instances.",
-            "tier1_pilot": {"campaigns_per_presentation": 10, "worlds_per_cell": 10, "stochastic_seeds": [0, 1, 2],
-                            "world_reuse": "paired: campaign i uses one master seed for every arm, presentation and seed; ids "
-                                           "and names are pseudonymised per run",
-                            "purpose": "cost and variance measurement ONLY; never a rate claim"},
+            "unit_of_analysis": "the CAMPAIGN (one hidden world of every kind) for the primary endpoint; per world for "
+                                "descriptive cells. Seeds are averaged per world and never pooled as instances. Intervals: "
+                                "percentile bootstrap over campaigns (2000 resamples, Random(0)).",
+            "tier1_pilot": {"campaigns_per_presentation": 10, "stochastic_seeds": [0, 1, 2],
+                            "isolation": "proposer_process",
+                            "purpose": "cost and variance measurement ONLY; never a rate or lift claim"},
             "tier2_formal": {"campaigns_per_presentation": 30, "worlds_per_cell": 30, "stochastic_seeds": 20,
-                             "world_reuse": "one master root per (campaign, seed, presentation), committed by sha256 before "
-                                            "the campaign and revealed after, SHARED by every arm (so baseline and Mind face the "
-                                            "same worlds and lift is paired); never reused across seeds or presentations; ids and "
-                                            "names pseudonymised per arm",
-                             "proposer_state": "every arm, the Mind included, runs each campaign in a fresh process from an "
-                                               "empty state and is stateless across universes (precondition, checked by the "
-                                               "operator); a stateful arm could link worlds only within its own run",
-                             "strongest_baseline_rule": "per (kind, presentation) cell, the competence-role arm with the "
-                                                        "highest formal-tier mean credit (ties: lower measured cost) is the "
-                                                        "named strongest applicable baseline; it is computed from the "
-                                                        "baseline runs and frozen in a baseline-freeze addendum (digest) "
-                                                        "BEFORE any Mind run",
-                             "lift_decision_rule": "Mind lift in a cell = mean over worlds of (Mind credit - strongest "
-                                                   "baseline credit) on the SAME worlds (shared roots), each world's credit "
-                                                   "averaged over its seeds; a cell is claimed only when the 95% cluster "
-                                                   "bootstrap lower bound of that mean is > 0 after Holm correction at alpha "
-                                                   "0.05 over the FIXED family of every eligible cell (all (kind, "
-                                                   "presentation) cells not REPRESENTATION_LIMITED and with >= 10 in-family "
-                                                   "worlds where the representation-gap rule applies), the family frozen in "
-                                                   "the baseline-freeze addendum before any Mind run",
+                             "world_reuse": "one master root per (campaign, presentation), committed by sha256 before the "
+                                            "campaign and revealed after, SHARED by every arm and every seed (paired lift); "
+                                            "never reused across campaigns or presentations; ids and names pseudonymised "
+                                            "per run",
+                             "isolation": "proposer_process required: every arm, the Mind included, runs each campaign in a "
+                                          "fresh interpreter that never holds the escrow, the master seed or a hidden "
+                                          "world; an in_process run is INVALID for the formal tier",
+                             "strongest_baseline_rule": "the non-adversarial arm (competence, floor or sanity role) with the "
+                                                        "highest formal-tier PRIMARY score; frozen in a baseline-freeze "
+                                                        "addendum (digest) BEFORE any Mind run",
+                             "lift_decision_rule": "analysis.lift_decision: the paired per-campaign difference to the "
+                                                   "strongest baseline has a cluster-bootstrap 95% lower bound > 0 for the "
+                                                   "pooled primary endpoint after Holm correction (alpha 0.05) over the FIXED "
+                                                   "family " + ", ".join(analysis.PRIMARY_FAMILY) + "; AND every control kind's "
+                                                   "paired mean difference has a lower bound > -" + str(analysis.NONINFERIORITY_MARGIN)
+                                                   + " (no trading control failures for discovery credit)",
                              "rules": ["every arm reported for every cell", "no post-result tuning of criteria",
                                        "no compute-budget increase mid-campaign", "a defective task is INVALID_BENCHMARK with a "
                                        "new identity and a rerun from preregistration",
-                                       "invalid runs are reported and never aggregated"],
-                             "start_condition": "G0 exit, owner-approved compute budget, owner decision on the evaluator "
-                                                "and on the escrow deployment"},
+                                       "invalid runs are reported and never aggregated",
+                                       "arms may be ADDED by a new identity, never removed or weakened"],
+                             "start_condition": "G0 exit (OD-3), owner-approved compute budget (OD-18), evaluator decision "
+                                                "(OD-8), escrow deployment decision (OD-20), this identity approved (OD-19)"},
         },
         "reveal_protocol": ["master seed derived from a pilot root committed here by sha256 before any run",
                             "proposals stored content-addressed and sealed by one escrow score each",
@@ -160,12 +183,16 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
                             "presented cards audited against the key; trap instances verified (textbook law must fail)",
                             "the pilot root is revealed with the pilot results (the pilot is not held out)"],
         "pilot_root_commitment_sha256": pilot_root_commitment,
-        "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN (in-process escrow transport); no result counts as novel discovery",
+        "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN: the proposer runs in a separate process under the SAME OS "
+                             "account (heap scan, stack walk and environment attacks refused, tested; on Linux YAMA ptrace "
+                             "scope >= 1 refuses parent-memory reads); file reads by the same account are NOT prevented. No "
+                             "result counts as novel discovery.",
         "owner_decisions_open": {
-            "external_evaluator": "OWNER_DECISION_REQUIRED: name an evaluator or a selection process with a deadline (Genesis §26)",
-            "held_out_authoring": "OWNER_DECISION_REQUIRED: v0 instances come from FORGE's own generator",
-            "compute_budget": "OWNER_DECISION_REQUIRED: formal tier from the pilot ESTIMATE",
-            "escrow_deployment": "OWNER_DECISION_REQUIRED: formal runs need an isolated escrow (process boundary demonstrated)",
+            "OD-8 external_evaluator": "name an evaluator or a selection process with a deadline (Genesis §26)",
+            "held_out_authoring": "v0.1 instances come from FORGE's own generator",
+            "OD-18 compute_budget": "formal tier from the v0.1 pilot ESTIMATE",
+            "OD-19 identity": "approve this v0.1 identity before any formal run",
+            "OD-20 escrow_deployment": "a separate OS account / container / host for the operator, escrow and secrets",
         },
     }
     return doc
@@ -180,7 +207,7 @@ def canonical(doc: dict[str, Any]) -> bytes:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="write the Genesis-lite v0 preregistration")
+    parser = argparse.ArgumentParser(description="write the Genesis-lite v0.1 preregistration")
     parser.add_argument("--commitment", required=True, help="sha256 hex of the pilot root secret (kept outside the repo)")
     args = parser.parse_args(argv)
     doc = build(args.commitment)
