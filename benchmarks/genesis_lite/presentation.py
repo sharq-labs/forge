@@ -73,7 +73,9 @@ def _rename_units(unit: str, dims: Mapping[str, str]) -> str:
     return "*".join(re.sub(r"^[^^]+", lambda m: dims.get(m.group(0), m.group(0)), part) for part in unit.split("*")) if unit != "1" else unit
 
 
-def present(card: Mapping[str, Any], presentation: str, key: bytes) -> Presented:
+def present(card: Mapping[str, Any], presentation: str, key: bytes, stimulus_key: bytes | None = None) -> Presented:
+    """``key`` is private to one run (the pseudonym); ``stimulus_key`` is shared by every arm on one world set, so that
+    all arms see the same renaming, trap template and wording (v0.2, review D7). Without it the run key is used."""
     if presentation not in PRESENTATIONS:
         raise PresentationRefused(f"unknown presentation {presentation!r}")
     uid = str(card["universe_id"])
@@ -81,7 +83,7 @@ def present(card: Mapping[str, Any], presentation: str, key: bytes) -> Presented
     covs = list(card.get("observed_covariates", ()))
     out = card["output"]["name"]
     names = [x["name"] for x in inputs] + covs + [out]
-    rng = _rng(key, presentation, uid)
+    rng = _rng(key if stimulus_key is None else stimulus_key, presentation, uid)
     historical = None
     text = 0
     if presentation == "anonymous":

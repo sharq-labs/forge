@@ -26,10 +26,13 @@ from .presentation import PRESENTATIONS, TRAP_TEMPLATES
 from .primitives import library_digest
 
 PREREG_SCHEMA = "forge.genesis_lite.preregistration/1"
-BENCHMARK_ID = "genesis_lite.blindfold_l5.v0_1"
+BENCHMARK_ID = "genesis_lite.blindfold_l5.v0_2"
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 HERE = pathlib.Path(__file__).resolve().parent
-PREREG_PATH = HERE / "preregistration" / "genesis_lite_v0_1.json"
+PREREG_PATH = HERE / "preregistration" / "genesis_lite_v0_2.json"
+V0_1_PREREG_PATH = HERE / "preregistration" / "genesis_lite_v0_1.json"
+V0_1_PREREG_SHA256 = "94efff081f7a603653d0da79083428f1da2802e49c60587fcd0e86ce5643fedd"
+V0_1_PILOT_SUMMARY = HERE / "pilot_results" / "v0_1-2026-10-14" / "summary.json"
 V0_PREREG_PATH = HERE / "preregistration" / "genesis_lite_v0.json"
 V0_PREREG_SHA256 = "f99fcfbdc97aabcbea52fa72c12ad196d420e298237c5374184f537c67774ab0"
 V0_PILOT_SUMMARY = HERE / "pilot_results" / "v0-2026-10-14" / "summary.json"
@@ -71,6 +74,36 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
         "benchmark_id": BENCHMARK_ID,
         "status": "FREEZE_READY",
         "amends": {
+            "identity": "genesis_lite.blindfold_l5.v0_1", "preregistration_sha256": V0_1_PREREG_SHA256,
+            "kept": "v0.1 preregistration and its Tier-1 pilot results unchanged (historical evidence); v0.1 is NOT used "
+                    "for any formal evaluation",
+            "v0_1_pilot_summary_sha256": _file_digest(V0_1_PILOT_SUMMARY),
+            "reasons": [
+                "G0/A1 final review (2026-10-14), each reproduced by tests/genesis_lite/test_genesis_lite_final_review.py "
+                "before the fix: D1 an invalid or omitted registered baseline silently weakened the comparison; D2 the "
+                "grid and the record set were chosen by the caller; D3 discovery could be traded for control credit; "
+                "D4 gains on discoverable worlds outside every arm's searched family counted as lift; D5 records without "
+                "universe ids, and per-kind references, were never content-paired; D6 the preregistered "
+                "REPRESENTATION_LIMITED rule was not implemented; D7 the stimulus (renaming, trap template, wording) "
+                "differed by arm name; credits were not bound to the frozen table or to the independent evaluator's "
+                "agreement; a candidate could take a registered baseline's name",
+                "measured: a proposer in a same-account process read the operator's command line, found the root file, "
+                "read it and re-derived every hidden world while its run stayed VALID; it also reached the network, "
+                "left a child process running after the campaign and wrote into the benchmark package",
+            ],
+            "changes": ["every registered non-adversarial arm must be complete, VALID, isolated and content-paired; a "
+                        "missing or invalid one blocks the claim (analysis.lift_decision)",
+                        "the formal grid is preregistered (analysis.FORMAL_GRID); another grid or off-grid records claim "
+                        "nothing; the code must rebuild this preregistration",
+                        "non-inferiority on every kind, discovery included",
+                        "no lift where no strong baseline exists: the candidate is capped at its comparator in "
+                        "out-of-family discoverable worlds and in REPRESENTATION_LIMITED cells",
+                        "credits must be values of DEFAULT_CREDIT that the independent evaluator agreed with",
+                        "one stimulus per world set shared by every arm; only the pseudonym is per run (harness.stimulus_key)",
+                        "the bootstrap lower bound uses the floor order statistic"],
+            "earlier": {"identity": "genesis_lite.blindfold_l5.v0", "preregistration_sha256": V0_PREREG_SHA256},
+        },
+        "v0_1_amendment_of_v0": {
             "identity": "genesis_lite.blindfold_l5.v0", "preregistration_sha256": V0_PREREG_SHA256,
             "kept": "v0 preregistration and pilot results unchanged (historical evidence)",
             "reasons": [
@@ -141,12 +174,14 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
         },
         "representation_limited_rule": "a (kind, presentation) cell is REPRESENTATION_LIMITED when monomial_enumeration's "
                                        "full-credit rate has a cluster-bootstrap 95% lower bound >= 0.5 at the formal tier: that "
-                                       "cell measures the representation, and no lift there is credited as reasoning. Pilot "
-                                       "values are indicative only.",
+                                       "cell measures the representation, and no lift there is credited as reasoning "
+                                       "(analysis.representation_limited; the candidate is capped at its comparator there). "
+                                       "Pilot values are indicative only.",
         "representation_gap_rule": "v0.1 search arms cover only the monomial family; the generator also draws exponential, "
                                    "two-term and regime laws. The PRIMARY (joint) endpoint includes every world. Discovery "
                                    "credit is additionally reported split into in-family and out-of-family worlds, and the "
-                                   "out-of-family share is labelled NO_STRONG_BASELINE (Genesis §10.5 rule 4). v0.1 makes no "
+                                   "out-of-family share is labelled NO_STRONG_BASELINE (Genesis §10.5 rule 4). In those worlds the "
+                                   "candidate is capped at its comparator: no lift comes from them. v0.2 makes no "
                                    "discovery-only lift claim.",
         "statistics": {
             "unit_of_analysis": "the WORLD SET: one campaign (one hidden world of every kind) under one (presentation, seed) "
@@ -155,6 +190,8 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
             "tier1_pilot": {"campaigns_per_presentation": 10, "seeds": [0, 1, 2], "isolation": "proposer_process",
                             "purpose": "cost and variance measurement ONLY; never a rate or lift claim"},
             "tier2_formal": {"campaigns_per_presentation": 30, "seeds": 20,
+                             "grid": {"campaign_ids": list(analysis.FORMAL_CAMPAIGNS), "seeds": list(analysis.FORMAL_SEEDS),
+                                      "presentations": list(analysis.PRIMARY_FAMILY[1:])},
                              "world_sets_per_presentation": 600, "worlds_per_kind_and_presentation": 600,
                              "world_reuse": "one master root per world set, committed by sha256 before the campaign and "
                                             "revealed after, SHARED by every arm (paired lift) and NEVER reused across seeds, "
@@ -162,20 +199,27 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
                                             "twice; ids and names pseudonymised per run",
                              "isolation": "proposer_process required and checked by analysis.coverage_problems; in addition "
                                           "the OD-20 deployment (operator, escrow and secrets under another OS account or "
-                                          "container; proposer with a read-only filesystem, no network, no ptrace) must be "
+                                          "container; the proposer cannot see operator processes or their command lines, has a "
+                                          "read-only filesystem without the operator's files, no network, no ptrace, and "
+                                          "every process it starts ends with the campaign) must be "
                                           "in place and verified by the isolation demo before any formal run: a "
                                           "same-account run is INVALID for the formal tier",
-                             "strongest_baseline_rule": "the non-adversarial arm (competence, floor or sanity role) with the "
-                                                        "highest formal-tier PRIMARY score; frozen in a baseline-freeze "
-                                                        "addendum (digest) BEFORE any Mind run",
-                             "lift_decision_rule": "analysis.lift_decision (digest above), all of: COMPLETE coverage (a VALID "
-                                                   "isolated candidate run on every world set the baseline ran; an invalid "
-                                                   "world set blocks the claim, it is never dropped); pooled paired primary "
+                             "strongest_baseline_rule": "the registered non-adversarial arm (competence, floor or sanity "
+                                                        "role) with the highest formal-tier PRIMARY score; every such arm "
+                                                        "must be complete; frozen in a baseline-freeze addendum (digest) "
+                                                        "BEFORE any Mind run",
+                             "lift_decision_rule": "analysis.lift_decision (digest above), all of: the preregistered grid; "
+                                                   "COMPLETE coverage (a VALID, isolated, content-paired run of the candidate "
+                                                   "and of EVERY registered non-adversarial arm on every world set of the "
+                                                   "grid, credits from DEFAULT_CREDIT agreed by the independent evaluator; "
+                                                   "an invalid world set blocks the claim, it is never dropped); no lift "
+                                                   "from out-of-family discoverable worlds or REPRESENTATION_LIMITED cells "
+                                                   "(capped at the comparator); pooled paired primary "
                                                    "difference with cluster-bootstrap 95% lower bound > 0 and significant "
                                                    "after Holm (alpha 0.05) over the FIXED family "
                                                    + ", ".join(analysis.PRIMARY_FAMILY) + "; every presentation's paired "
                                                    "primary lower bound > -" + str(analysis.PRESENTATION_MARGIN) + "; every "
-                                                   "control kind's paired difference to the BEST arm on that kind has a lower "
+                                                   "kind's (discovery included) paired difference to the BEST arm on that kind has a lower "
                                                    "bound > -" + str(analysis.NONINFERIORITY_MARGIN),
                              "rules": ["every arm reported for every cell", "no post-result tuning of criteria",
                                        "no compute-budget increase mid-campaign", "a defective task is INVALID_BENCHMARK with a "
@@ -194,13 +238,16 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
         "pilot_root_commitment_sha256": pilot_root_commitment,
         "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN: the proposer runs in a separate process under the SAME OS "
                              "account (heap scan, stack walk and environment attacks refused, tested; on Linux YAMA ptrace "
-                             "scope >= 1 refuses parent-memory reads); file reads by the same account are NOT prevented. No "
-                             "result counts as novel discovery.",
+                             "scope >= 1 refuses parent-memory reads). MEASURED 2026-10-14: such a proposer read the "
+                             "operator's command line, then the root file it named, and re-derived every hidden world; it "
+                             "also reached the network, outlived the campaign through a child process and wrote into the "
+                             "benchmark package. Same-account runs are therefore never formal evidence. No result counts as "
+                             "novel discovery.",
         "owner_decisions_open": {
             "OD-8 external_evaluator": "name an evaluator or a selection process with a deadline (Genesis §26)",
-            "held_out_authoring": "v0.1 instances come from FORGE's own generator",
-            "OD-18 compute_budget": "formal tier from the v0.1 pilot ESTIMATE",
-            "OD-19 identity": "approve this v0.1 identity before any formal run",
+            "held_out_authoring": "v0.2 instances come from FORGE's own generator",
+            "OD-18 compute_budget": "formal tier from the v0.2 pilot ESTIMATE",
+            "OD-19 identity": "approve this v0.2 identity before any formal run (v0.1 is superseded, never formal)",
             "OD-20 escrow_deployment": "a separate OS account / container / host for the operator, escrow and secrets",
             "escrow_refusal_codes": "residual in certified engcore.blindfold: the client classifies refusals by text "
                                     "('rolled back'), and the escrow echoes caller input in refusal texts; Genesis-lite "
@@ -220,7 +267,7 @@ def canonical(doc: dict[str, Any]) -> bytes:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="write the Genesis-lite v0.1 preregistration")
+    parser = argparse.ArgumentParser(description="write the Genesis-lite v0.2 preregistration")
     parser.add_argument("--commitment", required=True, help="sha256 hex of the pilot root secret (kept outside the repo)")
     args = parser.parse_args(argv)
     doc = build(args.commitment)

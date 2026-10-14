@@ -194,17 +194,28 @@ def test_f8_the_independent_evaluator_refuses_a_table_it_was_not_preregistered_w
         evaluator.evaluate_campaign({}, {"universes": []}, {}, expected_credit_digest="0" * 64)
 
 
-def test_v0_evidence_is_preserved_byte_for_byte():
-    """v0.1 is a new identity; the v0 preregistration and its pilot stay exactly as they were frozen."""
+@pytest.mark.parametrize("path_name, sha_name, pilot_dir", [
+    ("V0_PREREG_PATH", "V0_PREREG_SHA256", "v0-2026-10-14"),
+    ("V0_1_PREREG_PATH", "V0_1_PREREG_SHA256", "v0_1-2026-10-14"),
+])
+def test_earlier_identities_and_their_pilots_are_preserved_byte_for_byte(path_name, sha_name, pilot_dir):
+    """v0.1 and v0.2 are new identities; every earlier preregistration and its pilot stay exactly as they were frozen."""
     import hashlib
-    v0 = preregistration.V0_PREREG_PATH.read_bytes()
-    assert hashlib.sha256(v0).hexdigest() == preregistration.V0_PREREG_SHA256
-    assert preregistration.V0_PREREG_PATH.with_suffix(".sha256").read_bytes().strip().decode() == preregistration.V0_PREREG_SHA256
-    pilot = json.loads((ROOT / "benchmarks/genesis_lite/pilot_results/v0-2026-10-14/summary.json").read_bytes())
-    assert pilot["prereg_sha256"] == preregistration.V0_PREREG_SHA256
+    path, sha = getattr(preregistration, path_name), getattr(preregistration, sha_name)
+    old = path.read_bytes()
+    assert hashlib.sha256(old).hexdigest() == sha
+    assert path.with_suffix(".sha256").read_bytes().strip().decode() == sha
+    pilot = json.loads((ROOT / "benchmarks/genesis_lite/pilot_results" / pilot_dir / "summary.json").read_bytes())
+    assert pilot["prereg_sha256"] == sha
     doc = json.loads(preregistration.PREREG_PATH.read_bytes())
-    assert doc["amends"]["preregistration_sha256"] == preregistration.V0_PREREG_SHA256
-    assert doc["benchmark_id"] != json.loads(v0)["benchmark_id"]
+    assert doc["benchmark_id"] != json.loads(old)["benchmark_id"]
+
+
+def test_the_current_identity_amends_v0_1_which_amended_v0():
+    doc = json.loads(preregistration.PREREG_PATH.read_bytes())
+    assert doc["amends"]["preregistration_sha256"] == preregistration.V0_1_PREREG_SHA256
+    assert doc["amends"]["earlier"]["preregistration_sha256"] == preregistration.V0_PREREG_SHA256
+    assert doc["benchmark_id"] == "genesis_lite.blindfold_l5.v0_2"
 
 
 def test_f8_the_committed_preregistration_is_exactly_what_the_code_rebuilds():

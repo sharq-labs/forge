@@ -41,7 +41,7 @@ from .presentation import Presented, PresentationRefused, TranslatingClient, che
 
 KINDS = ("confounded", "discoverable", "indistinguishable", "insufficient_evidence", "no_solution", "spurious_correlate")
 MIX = {k: 1 for k in KINDS}
-CONFIG = EvaluatorConfig("forge.genesis_lite.v0_1", "1")
+CONFIG = EvaluatorConfig("forge.genesis_lite.v0_2", "1")
 #: kinds in which a proposed law can earn positive credit: a trap there must be verified
 LAW_CREDIT_KINDS = tuple(k for k in KINDS if independent.CREDIT[k].get("law_pass", 0.0) > 0)
 
@@ -126,8 +126,15 @@ def _digest(payload: Any) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
 
 
+def stimulus_key(master_seed: bytes, seed: int, presentation: str) -> bytes:
+    """Shared by every arm on one world set (v0.2, review D7): the renaming, trap template and wording are paired
+    across arms. World sets are never reused, so no proposer sees one stimulus twice."""
+    return hmac.new(master_seed, f"forge.genesis_lite.stimulus\n{seed}\n{presentation}".encode(), hashlib.sha256).digest()
+
+
 def presentation_key(master_seed: bytes, arm: str, seed: int, presentation: str) -> bytes:
-    """Private to one run: two runs over the same hidden world never share a universe pseudonym or a renaming."""
+    """Private to one run: two runs over the same hidden world never share a universe pseudonym (the stimulus itself is
+    shared per world set, see :func:`stimulus_key`)."""
     return hmac.new(master_seed, f"forge.genesis_lite.presentation\n{arm}\n{seed}\n{presentation}".encode(), hashlib.sha256).digest()
 
 
@@ -209,6 +216,7 @@ def _run(rec: RunRecord, arm: Callable[..., Mapping[str, Any]], master_seed: byt
 
     transport.operator_token = inner.operator_token        # type: ignore[attr-defined]
     pkey = presentation_key(master_seed, rec.arm, seed, presentation)
+    skey = stimulus_key(master_seed, seed, presentation)
     shown: dict[str, dict[str, Any]] = {}
     per_universe: dict[str, dict[str, Any]] = {}
     traps: dict[str, Presented] = {}
@@ -217,7 +225,7 @@ def _run(rec: RunRecord, arm: Callable[..., Mapping[str, Any]], master_seed: byt
     def proposer(card: Mapping[str, Any], client: Any) -> Mapping[str, Any]:
         uid = card["universe_id"]
         try:
-            p = present(card, presentation, pkey)
+            p = present(card, presentation, pkey, skey)
             shown_card = p.card if card_hook is None else card_hook(dict(p.card))
             check_card(shown_card)
             tells[uid] = independent.region_tell(shown_card)
