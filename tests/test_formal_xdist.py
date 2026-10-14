@@ -193,7 +193,7 @@ def test_formal_run_credits_only_with_a_clean_sentinel(owned, monkeypatch, senti
             doc["events"] = [{"kind": "crash_report", "nodeid": "tests/t.py::test_guard"}]
         if sentinel_state in ("clean", "crash"):
             _write(path, doc)
-        return subprocess.CompletedProcess(argv, 1, "FAILED tests/t.py::test_guard - boom\n1 failed\n", "")
+        return subprocess.CompletedProcess(argv, 1, _summary("FAILED tests/t.py::test_guard - boom\n"), "")
 
     monkeypatch.setattr(mw, "run_captured", fake)
     if sentinel_state == "clean":
@@ -217,9 +217,16 @@ def test_serial_formal_run_has_no_xdist(owned, monkeypatch):
     assert not any("xdist" in a or a in ("-n", "--tx") or a.startswith(guard.OPTION) for a in seen[0])
 
 
+def _summary(failed_lines: str) -> str:
+    """What pytest -q prints after a failure: the FAILED lines inside the short test summary block."""
+    return ("tests/t.py F\n" + "=" * 20 + " short test summary info " + "=" * 20 + "\n" + failed_lines
+            + "=" * 10 + " 1 failed in 0.10s " + "=" * 10 + "\n")
+
+
 @pytest.mark.parametrize("code,stdout,expected", [
-    (1, "FAILED tests/t.py::test_guard[a] - boom\n", True),
-    (1, "FAILED tests/t.py::test_other - boom\n", False),
+    (1, _summary("FAILED tests/t.py::test_guard[a] - boom\n"), True),
+    (1, _summary("FAILED tests/t.py::test_other - boom\n"), False),
+    (1, "FAILED tests/t.py::test_guard[a] - boom\n", False),  # no summary block: text, not a verdict
     (0, "1 passed\n", False),
     (5, "no tests ran\n", False),
     (2, "Interrupted\n", False),
@@ -258,7 +265,7 @@ def test_confirmation_needs_the_pristine_tree_plus_exactly_the_declared_edit(own
     mg = _mg(monkeypatch)
     seen = []
     monkeypatch.setattr(mw, "run_captured", lambda argv, **kw: seen.append(argv) or
-                        subprocess.CompletedProcess(argv, 1, "FAILED tests/t.py::test_guard - x\n", ""))
+                        subprocess.CompletedProcess(argv, 1, _summary("FAILED tests/t.py::test_guard - x\n"), ""))
     confirm = lambda **kw: mg._confirm_serially(owned.work, owned.artifacts, workspace=owned,
                                                 nodeids=["tests/t.py::test_guard"], expect="test_guard", **kw)
     (owned.work / "src/guard.py").write_text("def guard():\n    return 0\n")      # the declared edit
@@ -277,7 +284,7 @@ def test_confirmation_needs_the_pristine_tree_plus_exactly_the_declared_edit(own
 
 def test_confirmation_reads_the_name_from_the_nodeid_not_the_message(owned, monkeypatch):
     mg = _mg(monkeypatch)
-    out = "FAILED tests/t.py::test_other[x] - AssertionError: see tests/t.py::test_guard\n"
+    out = _summary("FAILED tests/t.py::test_other[x] - AssertionError: see tests/t.py::test_guard\n")
     monkeypatch.setattr(mw, "run_captured", lambda argv, **kw: subprocess.CompletedProcess(argv, 1, out, ""))
     assert mg._confirm_serially(owned.work, owned.artifacts, workspace=owned,
                                 nodeids=["tests/t.py::test_other"], expect="test_guard") is False
@@ -603,4 +610,18 @@ def test_real_xdist_infrastructure_failure_never_earns_credit(tmp_path, scenario
     ("FAILED tests/test_alpha.py::TestX::test_p[a b] - x", "test_p[a b]"),
 ])
 def test_a_failure_is_attributed_to_its_own_nodeid_never_to_one_its_message_names(monkeypatch, line, name):
-    assert _mg(monkeypatch).failed_test_names("noise\n" + line + "\nmore noise\n") == [name]
+    out = "noise\n" + SUMMARY + line + "\n" + "=" * 10 + " 1 failed in 0.1s " + "=" * 10 + "\n"
+    assert _mg(monkeypatch).failed_test_names(out) == [name]
+
+
+SUMMARY = "=" * 20 + " short test summary info " + "=" * 20 + "\n"
+
+
+def test_a_failed_line_outside_the_summary_block_is_never_credited(monkeypatch):
+    """Review of 313bbf1e: captured output can print a FAILED line naming any guard."""
+    mg = _mg(monkeypatch)
+    out = ("tests/a.py F\n---- Captured stdout call ----\nFAILED tests/b.py::test_guard_named\n"
+           + SUMMARY + "FAILED tests/a.py::test_other - x\n" + "=" * 10 + " 1 failed in 0.1s " + "=" * 10 + "\n"
+           + "FAILED tests/c.py::test_guard_named\n")
+    assert mg.failed_test_names(out) == ["test_other"]
+    assert mg.failed_test_names("FAILED tests/b.py::test_guard_named\n") == []  # no summary block: no credit

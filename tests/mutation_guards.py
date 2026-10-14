@@ -2578,8 +2578,19 @@ def failed_test_names(stdout: str) -> list[str]:
     -- an xdist crash report does ("[gw0] node down ... tests/test_alpha.py::test_guard_na...", cut to the
     terminal width) -- so a kill could be denied, or credited to whichever guard the message named.
     """
+    # Only the short test summary block is read (review of 313bbf1e): a "FAILED ...::name" line printed
+    # inside captured output, or inside an untrimmed crash message, is text, not pytest's verdict. No
+    # summary block means no name: a kill is never credited from text pytest did not mark as a summary.
     names = []
+    in_summary = False
     for line in stdout.splitlines():
+        if "short test summary info" in line and line.startswith("="):
+            in_summary = True
+            continue
+        if not in_summary:
+            continue
+        if line.startswith("=") and line.rstrip().endswith("="):
+            break  # the closing "=== N failed ... ===" line ends the block
         if not line.startswith("FAILED "):
             continue
         nodeid = line[len("FAILED "):].split(" - ", 1)[0].strip()
@@ -2715,10 +2726,9 @@ def _confirm_serially(where: pathlib.Path, scratch: pathlib.Path, *, workspace, 
         return False
     if done.returncode not in (0, 1):
         raise WorkspaceError(f"serial confirmation infrastructure exit {done.returncode}")
-    # The test name is taken from the nodeid token only, so text in a failure message can never
-    # supply the guard's name (stricter than the serial transcript parser, which it backs).
-    confirmed = [l[len("FAILED "):].split(" - ", 1)[0].rpartition("::")[2]
-                 for l in done.stdout.splitlines() if l.startswith("FAILED ")]
+    # The same parser as the transcript run: the nodeid token of a summary-block FAILED line only, so
+    # neither a failure message nor captured output can supply the guard's name.
+    confirmed = failed_test_names(done.stdout)
     return done.returncode == 1 and any(expect in name for name in confirmed)
 
 

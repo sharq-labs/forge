@@ -619,8 +619,8 @@ def _alive(pid: int) -> bool:
         psutil = None
     if psutil is not None:
         return psutil.pid_exists(pid) and psutil.Process(pid).status() != psutil.STATUS_ZOMBIE
-    if os.name != "posix":
-        pytest.skip("without psutil, process liveness is only read from the POSIX kernel")
+    if os.name != "posix" or not os.path.exists("/proc/self/stat"):
+        pytest.skip("without psutil, process liveness is read from procfs, which this host does not have")
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -631,7 +631,12 @@ def _alive(pid: int) -> bool:
         with open(f"/proc/{pid}/stat", "rb") as stat:
             return stat.read().rsplit(b")", 1)[1].split()[0] != b"Z"
     except FileNotFoundError:
-        return False
+        # procfs exists, so a missing entry means the process went between the two reads; ask the kernel again
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        return True
 
 
 @pytest.mark.skipif(os.name != "posix", reason="the zombie state is a POSIX notion")
