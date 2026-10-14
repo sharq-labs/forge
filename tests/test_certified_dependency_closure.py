@@ -409,3 +409,15 @@ def test_final_review_round2_ordinary_bytecode_caches_are_not_refused(tmp_path) 
     src = tmp_path / "src/engcore/certified/stop.py"
     py_compile.compile(str(src), cfile=importlib.util.cache_from_source(str(src)))
     assert cc.source_form_problems(tmp_path) == []
+
+
+@pytest.mark.parametrize("source, flagged", [
+    (b"import pydoc\nX = pydoc.locate('engcore.' + 'decider')\n", True),
+    (b"from pydoc import locate\nX = locate('engcore.' + 'decider')\n", True),
+    (b"import sys\nsys.path[:0] = ['src/engcore/decider']\n", True),
+    (b"x = region.locate(point)\n", False),                       # a method named locate is not pydoc.locate
+    (b"import sys\nSITE = [p for p in sys.path if p.endswith('site-packages')]\n", False),   # reading is not a load
+])
+def test_final_review_round2_rules_mean_loading_not_spelling(tmp_path, source, flagged) -> None:
+    (tmp_path / "m.py").write_bytes(source)
+    assert bool(cc.dynamic_imports(tmp_path / "m.py")) is flagged
