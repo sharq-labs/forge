@@ -97,8 +97,5 @@ def read_parent_memory(card: Mapping[str, Any], client: Any, *, seed: int = 0) -
 def crafted_setting(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     """Review: a setting NAME echoed in an escrow refusal ('rolled back') would read as an integrity failure and turn
     the whole run INVALID -- a way to discard world sets the proposer is losing."""
-    try:
-        client.observe(card["universe_id"], {"rolled back": 1.0}, query_id="crafted")
-    except Exception as exc:  # noqa: BLE001 - the attack only needs the run to break
-        return {"universe_id": card["universe_id"], "answer": "no_law", "rationale": type(exc).__name__}
+    client.observe(card["universe_id"], {"rolled back": 1.0}, query_id="crafted")   # let whatever happens propagate
     return {"universe_id": card["universe_id"], "answer": "no_law", "rationale": "accepted"}

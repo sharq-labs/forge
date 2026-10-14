@@ -1,8 +1,9 @@
 """Genesis-lite Tier 1: the bounded cost pilot (Genesis §10.6 step 1). Measurement, never a rate claim.
 
 For every arm, every presentation and the preregistered seeds, run the 10-campaign rung. Each campaign holds one universe
-of every kind. v0.1: campaign ``i`` of a presentation uses one master seed shared by every arm and seed (paired worlds,
-as in the formal tier), every arm runs in an isolated proposer process, and run-private keys pseudonymise ids and names.
+of every kind. v0.1: each world set (campaign, presentation, seed) has its own master seed, shared by every arm (paired
+worlds, as in the formal tier) and never reused; every arm runs in an isolated proposer process, and run-private keys
+pseudonymise ids and names.
 
 Rates are analysed with the WORLD as the unit (review H5): per world, the fraction of seeds with full credit; the cell
 rate is the mean over worlds; its interval is a percentile bootstrap over worlds (2000 resamples, seed 0).
@@ -145,8 +146,17 @@ def summarize(records: list[RunRecord]) -> dict[str, Any]:
     for name, camps in credits.items():
         disc = [k.get("discoverable", 0.0) for k in camps.values()]
         ctrl = [sum(v for kind, v in k.items() if kind != "discoverable") for k in camps.values()]
+        family = {True: [], False: []}
+        for r in valid:
+            if r.arm == name:
+                for u in r.universes:
+                    if u["kind"] == "discoverable":
+                        family[bool(u["truth_in_searched_family"])].append(u["credit"])
         split[name] = {"discovery_credit_per_campaign": round(statistics.fmean(disc), 4),
-                       "control_credit_per_campaign": round(statistics.fmean(ctrl), 4)}
+                       "control_credit_per_campaign": round(statistics.fmean(ctrl), 4),
+                       "discovery_credit_in_family": round(statistics.fmean(family[True]), 4) if family[True] else None,
+                       "discovery_credit_out_of_family_NO_STRONG_BASELINE":
+                           round(statistics.fmean(family[False]), 4) if family[False] else None}
     for name in sorted({r.arm for r in valid}):
         outcome = {(r.seed, r.presentation, r.campaign_id, u["kind"]): u["outcome"] for r in valid if r.arm == name
                    for u in r.universes}
