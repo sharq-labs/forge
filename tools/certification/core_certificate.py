@@ -932,7 +932,7 @@ _CODE_BUILTINS = frozenset({"exec", "eval", "compile", "__import__"})
 _IMPORT_STATE = frozenset({"path", "meta_path", "path_hooks", "path_importer_cache"})
 #: Modules whose attributes are loaders: an alias of one, or getattr() on one, is a loader too.
 _LOADER_MODULES = frozenset({"importlib", "importlib.util", "importlib.metadata", "importlib.machinery", "pkgutil",
-                             "runpy", "pydoc"})
+                             "runpy", "pydoc", "importlib._bootstrap", "importlib._bootstrap_external"})
 
 
 def dynamic_imports(path: pathlib.Path) -> list[int]:
@@ -997,6 +997,10 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
         # G0/A1 final review C1: a loader referenced anywhere but as the callee of a call (stored in a container, a
         # default argument, passed along) is called later under another name.
         if isinstance(node, (ast.Attribute, ast.Name)) and id(node) not in callees and loader_name(node):
+            lines.append(node.lineno)
+        # third confirmation review: a loader module's private API (importlib._bootstrap._gcd_import, ...)
+        if (isinstance(node, ast.Attribute) and node.attr.startswith("_")
+                and not (node.attr.startswith("__") and node.attr.endswith("__")) and root_name(node.value) in modules):
             lines.append(node.lineno)
         # C1 + confirmation review: a loader module's namespace (m.__dict__, vars(m)) read in any way
         if isinstance(node, ast.Attribute) and node.attr == "__dict__" and root_name(node.value) in modules:
@@ -1320,8 +1324,12 @@ def source_form_problems(root: pathlib.Path) -> list[str]:
     # reading the source, prefers an extension module to the .py beside it, and imports a sourceless .pyc.
     planted = []
     base = root / "src" / "engcore"
+    for dirpath, dirnames, filenames in os.walk(base) if base.is_dir() else ():
+        for entry in (*dirnames, *filenames):   # third confirmation review: imports follow links, rglob does not
+            if (pathlib.Path(dirpath) / entry).is_symlink():
+                planted.append(f"{(pathlib.Path(dirpath) / entry).relative_to(root).as_posix()} (symbolic link)")
     for path in sorted(base.rglob("*")) if base.is_dir() else ():
-        if not path.is_file():
+        if not path.is_file() or path.is_symlink():
             continue
         name = path.relative_to(root).as_posix()
         suffix = path.suffix.lower()
@@ -1430,7 +1438,10 @@ def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
     import tempfile  # noqa: PLC0415 - only the probe needs a scratch directory
 
     with tempfile.TemporaryDirectory(prefix="forge-registry-probe-") as scratch:
-        run = subprocess.run([sys.executable, "-E", "-s", "-P", "-c", _REGISTRY_PROBE, str(root / "src")], cwd=scratch,
+        # third confirmation review: a planted timestamp .pyc whose header matches the source's mtime and size runs
+        # instead of it; with a fresh pycache prefix the probe never reads the tree's __pycache__ at all
+        run = subprocess.run([sys.executable, "-E", "-s", "-P", "-X", f"pycache_prefix={pathlib.Path(scratch) / 'pycache'}",
+                              "-c", _REGISTRY_PROBE, str(root / "src")], cwd=scratch,
                              env=env, capture_output=True, text=True, timeout=600)
     if run.returncode != 0:
         raise CertificationError("the production registry could not be read from the tree: "
