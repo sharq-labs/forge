@@ -509,6 +509,38 @@ def derive_obligation_state(events: Iterator[CampaignEvent] | Any) -> dict[str, 
     return state
 
 
+def stop_review_disagreements(
+    events: Iterator[CampaignEvent] | Any, *, stop_review_outcome: str, iterations: Any
+) -> list[str]:
+    """Why a run's stop-review state is not what its own log establishes (BR-15 F-9).
+
+    Every STOP_REVIEWED payload must be a valid :class:`~engcore.sria.campaign.stopping.StopReview` (so an approval
+    names its Arbiter decision, its criterion and a VALID verdict); the run's ``stop_review_outcome`` must be the last
+    review's outcome ("" with none); a stop-proposing iteration must record its own iteration's review. A log rewritten
+    consistently end to end is not detectable here: the chain is unkeyed (the accepted residual of SRIA-06).
+    """
+    from .stopping import StopReview  # noqa: PLC0415 - stopping imports the campaign package
+
+    problems: list[str] = []
+    outcomes: list[tuple[int, str]] = []
+    for event in events:
+        if event.event_type is not CampaignEventType.STOP_REVIEWED:
+            continue
+        try:
+            outcomes.append((event.iteration, StopReview.from_dict(event.payload).outcome.value))
+        except (ValueError, KeyError, TypeError) as exc:
+            problems.append(f"the STOP_REVIEWED entry of iteration {event.iteration} is not a valid stop review: {exc}")
+    logged = outcomes[-1][1] if outcomes else ""
+    if stop_review_outcome != logged:
+        problems.append(f"stop review outcome {stop_review_outcome!r} is not the logged {logged!r}")
+    by_iteration = dict(outcomes)
+    for record in iterations:
+        if record.stop_proposed and by_iteration.get(record.iteration) != record.detail:
+            problems.append(f"iteration {record.iteration} records stop review {record.detail!r}, the log "
+                            f"{by_iteration.get(record.iteration)!r}")
+    return problems
+
+
 def derive_iteration_assurance(
     events: Iterator[CampaignEvent] | Any,
 ) -> dict[int, tuple[str, str, tuple[str, ...]]]:
