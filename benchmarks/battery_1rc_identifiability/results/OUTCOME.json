@@ -1,0 +1,34 @@
+{
+ "calibration_sha256": "0bcec32d774ec3465bb86a9dc2254424c5a0524c9fbbd9fc74d2d3cab7b8bf9e",
+ "held_out_acceptance_1rc": {
+  "heldout_cc": "FAIL",
+  "heldout_pulses": "PASS"
+ },
+ "held_out_acceptance_rint": {
+  "heldout_cc": "FAIL",
+  "heldout_pulses": "FAIL"
+ },
+ "identifiability": "IDENTIFIABLE",
+ "mapping": {
+  "IDENTIFIABILITY_SUPPORTED": "IDENTIFIABLE, and a held-out set is NOT_ASSESSABLE",
+  "INSUFFICIENT_MEASUREMENT_EVIDENCE": "WEAKLY_IDENTIFIABLE or NOT_IDENTIFIABLE",
+  "MODEL_REJECTED": "IDENTIFIABLE and a held-out set FAILS for the 1RC",
+  "MODEL_VALIDATION_SUPPORTED": "IDENTIFIABLE and every held-out set PASSES for the 1RC",
+  "ledger_rule": "an outcome is a report, not a promotion. calibration may PASS only on IDENTIFIABLE; independent_validation stays MISSING with one cell (no cross-cell transfer); measurement_uq is decided by review of the Type B evidence, not by this script"
+ },
+ "outcome": "MODEL_REJECTED",
+ "reading": {
+  "comparison_note": "the constant-current comparison has ONE unit; its interval is degenerate and is a point difference, not a statistical result",
+  "hypotheses_not_evidence": [
+   "slower diffusion beyond one time constant",
+   "rate-dependent OCV/hysteresis offset",
+   "a capacity-basis offset between the HPPC day and the 1C test day",
+   "cell self-heating (case 23.8-25.5 degC)"
+  ],
+  "not_tested": "cross-cell transfer (one cell), other temperatures, charge and regenerative drive cycles",
+  "rejected": "the same parameter set fails the frozen constant-current acceptance on the one 1C capacity test (RMSE 28.7 mV, P95 50.7 mV, bias -25.1 mV): one RC branch fitted to 10 s pulses does not carry a one-hour constant-current discharge of this cell within the declared limit",
+  "supported": "R0, R1, C1 and tau are identifiable from 1C/6C HPPC pulses with a MEASURED OCV, and the frozen 1RC predicts held-out 2C/4C pulse windows of the same cell within 15 / 30 mV"
+ },
+ "schema": "forge.battery_1rc_identifiability.outcome/1",
+ "validation_sha256": "b933ca50d1b7ae47f25f75ba8620050c81b0ccd6d560fd85129a74fc55e222d5"
+}
