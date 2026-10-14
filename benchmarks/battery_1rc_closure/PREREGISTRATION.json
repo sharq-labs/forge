@@ -1,0 +1,153 @@
+{
+ "capability": "battery.thevenin_1rc",
+ "data": {
+  "archive_bytes": 209708670,
+  "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+  "archive_url": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip",
+  "catalog": "https://data.nasa.gov/dataset/li-ion-battery-aging-datasets",
+  "ingestion": "tools.nasa_battery_aging (byte receipt + canonical record; no sign normalization, no SOC, no segmentation, sensor uncertainty UNKNOWN)",
+  "inner_archive": "5. Battery Data Set/1. BatteryAgingARC-FY08Q4.zip",
+  "protocol_as_published": "room temperature; CC charge 1.5 A to 4.2 V then CV to 20 mA; CC discharge 2 A to 2.7 / 2.5 / 2.2 / 2.5 V for cells 5 / 6 / 7 / 18; EIS sweeps between cycles",
+  "refused_cells": {
+   "B0018": "the importer refuses the file: cycle[114].data.Voltage_measured[940] is NaN (fail closed; never repaired)"
+  },
+  "source": "NASA Ames Prognostics Center of Excellence, Li-ion Battery Aging Datasets"
+ },
+ "frozen_before": "any parameter fit and any look at the validation cell's channels",
+ "identifiability": {
+  "calibration_gate": "PASS only if the decision is IDENTIFIABLE",
+  "decision": "IDENTIFIABLE if R0, R1 and C1 are each identified; WEAKLY_IDENTIFIABLE if tau or R0 is identified but R1 or C1 is not; NOT_IDENTIFIABLE otherwise",
+  "diagnostics": [
+   "scaled Jacobian singular values and condition number",
+   "parameter correlation from the Gauss-Newton covariance",
+   "profile of the objective in log R0, log R1, log C1 and log tau (every other parameter re-optimized)",
+   "cycle-block bootstrap of the calibration set (B = 40, seed 0)",
+   "dependence on the hold convention (forward vs backward) and on v_p0 = +20 mA x R1"
+  ],
+  "note": "the 10 % / factor-3 rule is a declared practical rule, not a statistical interval: the residuals are autocorrelated, so a chi-square threshold would be unjustified",
+  "parameter_identified_if": "the profile rises by >= 10 % of the optimal objective within a factor of 3 on BOTH sides, AND the bootstrap coefficient of variation is <= 0.25, AND the estimate is not on a bound"
+ },
+ "models": {
+  "bounds": {
+   "C1_F": [
+    1.0,
+    1000000.0
+   ],
+   "R0_ohm": [
+    0.0001,
+    1.0
+   ],
+   "R1_ohm": [
+    1e-05,
+    1.0
+   ]
+  },
+  "compared": [
+   "battery.cell.rint_ocv (OCV table + R0)",
+   "battery.cell.thevenin_1rc (OCV table + R0 + R1 + C1)"
+  ],
+  "objective": "sum of squared terminal-voltage residuals over every scored calibration sample; identical data, initial state, capacity basis and cost for both models",
+  "ocv_bounds_V": [
+   2.0,
+   4.5
+  ],
+  "ocv_knots_soc": [
+   0.0,
+   0.025,
+   0.05,
+   0.1,
+   0.2,
+   0.3,
+   0.4,
+   0.5,
+   0.6,
+   0.7,
+   0.8,
+   0.9,
+   1.0
+  ],
+  "optimizer": "scipy.optimize.least_squares (trf), log-parameters for R0, R1, C1; 8 fixed starts",
+  "parameter_set_max_current": "the largest calibration current, fixed at fit time",
+  "parameter_set_temperature_range": "the minimum and maximum measured cell temperature over the calibration samples, fixed at fit time"
+ },
+ "preregistration_id": "battery_1rc_closure.nasa_pcoe_fy08q4.v1",
+ "roles": {
+  "ageing_window": "discharge ordinals 1-30 only (early life); ageing, capacity fade and resistance growth are excluded by the model and not represented by these parameters",
+  "calibration": {
+   "cells": [
+    "B0005",
+    "B0007"
+   ],
+   "discharge_ordinals": [
+    2,
+    20
+   ]
+  },
+  "capacity_source_only": "discharge ordinal 1 of every cell (no earlier capacity exists)",
+  "cross_cell_validation": {
+   "cells": [
+    "B0006"
+   ],
+   "claim": "TRANSFER between cells of one batch and one protocol; B0006 was chosen from its published cutoff (2.5 V, inside the calibration cells' 2.7-2.2 V span) without opening its channels",
+   "discharge_ordinals": [
+    2,
+    30
+   ]
+  },
+  "within_cell_holdout": {
+   "cells": [
+    "B0005",
+    "B0007"
+   ],
+   "claim": "NARROW: later cycles of the calibration cells (temporal holdout, same cells)",
+   "discharge_ordinals": [
+    21,
+    30
+   ]
+  }
+ },
+ "schema": "forge.battery_1rc_closure.preregistration/1",
+ "trajectory_construction": {
+  "capacity_basis": "the largest delivered capacity among this cell's EARLIER discharge cycles (causal)",
+  "coulombic_efficiency": 1.0,
+  "efficiency_basis": "discharge only; no charge-direction throughput enters any trajectory",
+  "hold": "BACKWARD: the current reported at sample k is taken to have flowed over [t_(k-1), t_k]. The forward hold is run only as the switch-time sensitivity diagnostic",
+  "initial_polarization_V": 0.0,
+  "initial_polarization_basis": "the CV charge tapers to 20 mA and the record starts at rest (|I| <= 10 mA); the residual is at most 20 mA x R1, reported as an initial-state sensitivity",
+  "initial_state_of_charge": "1 at sample 0, on the capacity basis below (protocol: CV charge to 20 mA, then rest)",
+  "rest_band_A": 0.01,
+  "rest_rule": "|Current_measured| <= rest_band_A is rest (0 A); a charge-direction current beyond the band refuses the cycle",
+  "scored_samples": "every sample after the first; sample 0 defines the initial rest state",
+  "screen_initial_rest_voltage_min_V": 4.15,
+  "sign": "Forge current = -Current_measured (NASA reports discharge as negative). Verified per cycle by the passive step response: where the declared discharge current rises above the rest band, the terminal voltage must fall below the initial rest voltage; otherwise the cycle is refused"
+ },
+ "uncertainty": {
+  "initial_state": "hold-convention and v_p0 sensitivity",
+  "measurement": "UNKNOWN unless an admissible calibrated sensor uncertainty is supplied; NASA states none",
+  "model_form": "held-out residuals beyond the propagated parameter spread; never set to zero",
+  "numerical": "NOT_APPLICABLE: the update is exact for piecewise-constant current (float rounding only)",
+  "parameter": "cycle-block bootstrap distribution, propagated jointly (no independence assumption)"
+ },
+ "validation": {
+  "acceptance_per_model": {
+   "P95_abs_error_mV_max": 90.0,
+   "RMSE_mV_max": 50.0,
+   "basis": "the repository's earlier battery voltage Gate A limits (Sprint 3); engineering adequacy targets, NOT derived from a measurement uncertainty, which NASA does not state"
+  },
+  "comparison": "1RC is better than Rint on a held-out set iff the paired cycle-level bootstrap (B = 2000, seed 0) 95 % interval of RMSE_Rint - RMSE_1RC lies above 0; Rint better iff it lies below 0; otherwise NOT_DISTINGUISHED. Every outcome is reported",
+  "metrics": [
+   "RMSE",
+   "MAE",
+   "bias (mean of measured - predicted)",
+   "max |error|",
+   "P95 |error|",
+   "lag-1 residual autocorrelation",
+   "per-cycle RMSE",
+   "constant-current body and rest-tail metrics separately",
+   "calibration vs held-out gap",
+   "execution seconds"
+  ],
+  "opened": "once, after the calibration and identifiability records are committed",
+  "predictions": "1RC through engcore.domains.battery.thevenin_route.run_thevenin_1rc; Rint through the production Rint kernel engcore.domains.battery.solver.evaluate_step"
+ }
+}
