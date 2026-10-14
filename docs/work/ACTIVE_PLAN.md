@@ -1,5 +1,16 @@
 # Active Plan
 
+## Active override — Battery 1RC identifiability (2026-10-14)
+
+Branch `feat/battery-1rc-identifiability` (worktree `D:/forge-battery-ident`), stacked on the closure branch. Local only.
+
+- [x] WP1: NASA independent review, SOUND_WITH_CAVEATS (immutable; digests pinned).
+- [x] WP2: dataset qualification (LG HG2 used; Kirkaldy 2024 is the cross-cell candidate, not acquired).
+- [x] WP3/4: preregistered LG HG2 experiment: IDENTIFIABLE; outcome MODEL_REJECTED (marginal constant-current FAIL).
+- [x] WP5: ledger calibration PASS (scoped); stage FUNCTIONAL; NO-GO for EVIDENCE_BACKED or claims.
+- [ ] Owner: the Kirkaldy 2024 download (cross-cell), Type B admissibility, and one recertification of the merged
+      battery + G0/A1 source.
+
 ## Active override — Battery 1RC scientific closure (2026-10-14)
 
 Branch `feat/battery-1rc-scientific-closure` (worktree `D:/forge-battery-1rc`), base `origin/main` `e193e573`. Local
