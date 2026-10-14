@@ -8,11 +8,18 @@ knots only; its windows are the primary windows re-expressed on that Q (z_own = 
 
 Deviations recorded before any fit (both found while building the roles; no model had been run):
 1. a temperature dropout outside a pulse cannot be "excluded from the applicability check" without handing the route an
-   invented temperature, so EVERY window holding a dropout is excluded (stricter than the preregistered wording);
+   invented temperature, so EVERY window holding a dropout is excluded. This is stricter on applicability, but it is NOT
+   free: it removes held-out windows the preregistration would have scored (removing evidence can hide a failure). The
+   windows it removed are labelled "temperature dropout only in the rest (deviation 1)" and counted, and the dropout
+   samples of every file are counted, in data/exclusions.json. A strictly conservative alternative for a future
+   preregistration is to keep such windows with UNKNOWN applicability (which makes their set NOT_ASSESSABLE);
 2. the Expt 2,2 files log, at every rest -> discharge edge, one sample 2 ms before the first load sample with I = 0 but an
    on-load voltage (67-84 mV below the rest). It made every Expt 2,2 window fail the 1 mV relaxation screen. Found by
-   reading the raw samples at the step edges of a HELD-OUT cell (Expt 2,2/C) after the first build excluded 50 of its
-   windows; no voltage was compared with any model. Such records are dropped by one uniform rule in ``read`` (the census
+   reading the raw samples at the step edges of the HELD-OUT Expt 2,2 cells after the first build excluded 50 of their
+   windows (22 + 22 of the 25-pulse, 3 + 3 of the 5-pulse) as "not relaxed"; no voltage was compared with any model.
+   This partly unblinded the held-out cells before the calibration fit: the edges show on-load drops of 67-84 mV at
+   2.5 A (an R0 proxy of ~27-34 mOhm). It could not steer the fit: the objective, bounds, starts and rules were frozen,
+   and all eight starts converge to one optimum (results/CALIBRATION.json). Such records are dropped by one uniform rule in ``read`` (the census
    finds them only in the Expt 2,2 files: 25 + 5 per cell).
 """
 
@@ -64,7 +71,9 @@ def read(raw_dir: pathlib.Path, name: str) -> dict[str, np.ndarray]:
     bad = k[(i[k] == 0) & (i[k + 1] != 0) & (t[k + 1] - t[k] < 0.05) & (v[k] < v[k - 1] - 0.005)]
     keep = np.ones(len(t), bool)
     keep[bad] = False
-    return {"t": t[keep], "v": v[keep], "i": i[keep], "temp": a[keep, 4], "transition_records_dropped": int(len(bad))}
+    temp = a[keep, 4]
+    return {"t": t[keep], "v": v[keep], "i": i[keep], "temp": temp, "transition_records_dropped": int(len(bad)),
+            "dropout_samples": int(np.sum((temp < T_LO) | (temp > T_HI)))}
 
 
 def runs_of(i: np.ndarray) -> list[tuple[int, int, int]]:
@@ -120,8 +129,10 @@ def windows(d, s0: int, z: np.ndarray, z_lo: float, cell: str, test: str, nomina
             wb = int(np.searchsorted(d["t"], d["t"][nxt[0]] + 600.0, side="right"))
             if abs(d["v"][prev[1] - 1] - d["v"][wa]) > 0.001:
                 reason = f"not relaxed ({1000 * (d['v'][prev[1] - 1] - d['v'][wa]):.2f} mV over the last 60 s)"
+            elif np.any((d["temp"][a:b] < T_LO) | (d["temp"][a:b] > T_HI)):
+                reason = "temperature dropout inside the pulse"
             elif np.any((d["temp"][wa:wb] < T_LO) | (d["temp"][wa:wb] > T_HI)):
-                reason = "temperature dropout inside the window"
+                reason = "temperature dropout only in the rest (deviation 1)"
             elif z[wb - 1] < max(Z_MIN, z_lo) or z[wa] > 1.0 + 1e-12:
                 reason = f"SOC outside the declared scope (z {z[wa]:.3f} -> {z[wb - 1]:.3f})"
         if reason:
@@ -137,10 +148,12 @@ def build(raw_dir: pathlib.Path) -> dict[str, dict[str, Any]]:
     base = {"preregistration_sha256": prereg_sha256()}
     exclusions: list = []
     transitions: dict[str, int] = {}
+    dropouts: dict[str, int] = {}
 
     def read_counted(cell: str, test: str):
         doc = read(raw_dir, fname(cell, test))
         transitions[f"{cell} {test}"] = doc["transition_records_dropped"]
+        dropouts[f"{cell} {test}"] = doc["dropout_samples"]
         return doc
 
     cal = {}
@@ -151,6 +164,12 @@ def build(raw_dir: pathlib.Path) -> dict[str, dict[str, Any]]:
     q_cal = float(np.mean([q[-1] for _, _, q in cal.values()]))
     per_cell_knots = {cell: rest_knots(d, s0, 1.0 - q / q_cal) for cell, (d, s0, q) in cal.items()}
     n = max(len(k) for k in per_cell_knots.values())
+    if any(len(k) != n for k in per_cell_knots.values()):
+        raise ValueError("the calibration cells do not share one knot structure: knot-by-knot averaging refused")
+    for j in range(n):
+        zs = [k[j][0] for k in per_cell_knots.values()]
+        if max(zs) - min(zs) > 0.01:
+            raise ValueError(f"knot {j} is not at one SOC across the calibration cells: averaging refused")
     knots = []
     for j in range(n):
         pts = [k[j] for k in per_cell_knots.values() if len(k) > j]
@@ -178,13 +197,17 @@ def build(raw_dir: pathlib.Path) -> dict[str, dict[str, Any]]:
             "heldout_own_ocv": own,
             "exclusions": {**base, "role": "exclusions", "excluded": exclusions,
                            "transition_records_dropped": transitions,
+                           "dropout_samples_per_file": dropouts,
                            "deviations": [
-                               "every window holding a temperature dropout is excluded (stricter than the preregistered "
-                               "wording, which cannot be met without inventing a temperature)",
+                               "every window holding a temperature dropout is excluded: stricter on applicability than "
+                               "the preregistered wording (which cannot be met without inventing a temperature), but it "
+                               "removes windows the preregistration would have scored; those are labelled 'only in the "
+                               "rest (deviation 1)'",
                                "a zero-current sample < 50 ms before a load sample and > 5 mV below the sample before it "
                                "is a step-transition record logged with the wrong current; it is dropped (found in the "
-                               "held-out Expt 2,2 files after the first build excluded their windows as not relaxed; "
-                               "no model had been run)"]}}
+                               "held-out Expt 2,2 files after the first build excluded 50 of their windows as not "
+                               "relaxed; no model had been run; this partly unblinded those cells: on-load drops of "
+                               "67-84 mV at 2.5 A were seen before the calibration fit)"]}}
 
 
 def write_all(docs) -> dict[str, str]:

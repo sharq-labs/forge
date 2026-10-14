@@ -1,0 +1,3332 @@
+{
+ "calibration_sha256": "748fc1bd911b5946dde6fcef1c31238031abb75e2dd6538529fc7cf81d89e7ee",
+ "charge_axis": {
+  "rule": "z' = (z - z_lo) / (1 - z_lo), Q' = Q (1 - z_lo)",
+  "z_lo": -4.7580986769649563e-17
+ },
+ "identifiability_decision": "IDENTIFIABLE",
+ "measurement_uncertainty": "UNKNOWN (not admitted for this dataset)",
+ "post_opening_changes": {
+  "changes": [
+   "run 2 added descriptive fields only (out_of_domain_attribution, in_domain_windows_only); every run-1 field was compared and found identical",
+   "run 3 gated the Rint-vs-1RC comparison verdict to NOT_ASSESSABLE when a set holds out-of-domain windows (stricter only; the preregistered comparison rule gated only on fewer than 2 units); run-2 fields other than the two comparison verdicts were identical",
+   "run 4 (independent review): the unconditioned comparison label moved out of the verdict field; the calibration role's comparison is marked IN_SAMPLE; the OCV curve source text was corrected (this changes the route's parameter-set digests in per_unit, not any voltage); held-out maximum currents and the calibrated SOC span were added. Acceptance values and every metric are unchanged from run 1"
+  ],
+  "data_changes_after_opening": "data/exclusions.json gained dropout counts and split its dropout reason (in the pulse / only in the rest); the three window roles and ocv_cal are byte-identical",
+  "first_run_validation_sha256": "eef51a32ba5a5690e5535b2d5212b34189b68930a442691078dc8fc72fa8d289",
+  "kept_at": "results/superseded/VALIDATION_run1.json, VALIDATION_run2.json and VALIDATION_run3.json",
+  "second_run_validation_sha256": "db79821ddc7a43ad6c7f79edc612b134cf07ed43b00fa1e0d3c40d1374c4b6df",
+  "third_run_validation_sha256": "c631e1c6fb3219d0195a35ccf0e18ccd657d98798ee331cd40b88980c5acfbf3"
+ },
+ "preregistration_sha256": "b1704515a191d860a7da17ea1359328e1750f454f06d271e5ba1360ed62b8f7a",
+ "roles": {
+  "calibration": {
+   "1rc": {
+    "bias_mV": -0.8193629663273977,
+    "load_only": {
+     "bias_mV": 6.446751710230618e-05,
+     "p95_abs_mV": 18.905636446688632,
+     "rmse_mV": 9.167130749318067,
+     "samples": 397986
+    },
+    "mae_mV": 6.062682748094479,
+    "max_abs_mV": 43.506450543798096,
+    "p95_abs_mV": 18.037087263079844,
+    "per_window_rmse_mV": [
+     9.547078574799313,
+     3.01390452921484,
+     3.6329829275245613,
+     5.987234732678233,
+     7.826323446305551,
+     8.91745584912336,
+     6.964359894126111,
+     12.327354064241803,
+     12.636265205398134,
+     8.602873336725484,
+     4.489244891620422,
+     3.566414960088057,
+     5.770870767687419,
+     4.717153675004351,
+     3.152789438050554,
+     7.343439733411035,
+     6.256752373803911,
+     8.940970285499931,
+     18.2463804725079,
+     7.878883344909065,
+     3.7971123808729326,
+     2.5101416313193448,
+     5.475812957922677,
+     8.092454178595988,
+     9.63864518241215,
+     10.422704961181354,
+     6.535114933251333,
+     10.334600871371498,
+     10.713834277005018,
+     6.705408364415235,
+     2.7825228123972776,
+     3.6013464135167803,
+     6.533829807274736,
+     5.133653174211136,
+     2.4728300215282943,
+     6.229349669784217,
+     5.108076122632746,
+     10.141042997928936,
+     19.020148018231957,
+     7.298087076454546,
+     3.354437234288235,
+     2.6134883672975273,
+     5.295096967476578,
+     7.6800320155489965,
+     9.26019105332373,
+     10.011441812562017,
+     6.108289418260076,
+     11.103785054627924,
+     11.813643597045884,
+     7.858632689904501,
+     3.500355940510686,
+     2.9157555944258413,
+     5.7234495059374675,
+     4.247835080216729,
+     4.521369421255908,
+     8.77636677333451,
+     8.652584450735748,
+     5.783583375200633,
+     11.423310362557443,
+     9.151718602074089,
+     5.149540702514012,
+     3.110772216876258,
+     3.102255444941342,
+     5.222044270311274,
+     7.390309016246862,
+     8.719816410791669,
+     6.719783953471033,
+     12.276732463869562,
+     12.748686544933737,
+     8.590986130876516,
+     4.2058648347992795,
+     3.4086311553284756,
+     5.926034214750351,
+     4.923749163605988,
+     2.5800245534215067,
+     6.319728991122175,
+     4.629616421946093,
+     11.266186143187683,
+     22.780884038153644,
+     9.475581900348013,
+     5.412154618018384,
+     3.263861082150314,
+     3.0309507542740137,
+     5.050111159207009,
+     7.1784007795918425,
+     8.5334505195583,
+     6.763294216454348,
+     12.556723624501936,
+     13.03284033764544,
+     8.92104308523289,
+     4.548557515479438,
+     3.2606153194036698,
+     5.5646677710332835,
+     4.5081299999715565,
+     2.845626777620497,
+     6.7740369718252476,
+     5.3742725439431815,
+     10.226015570965691,
+     20.744800044947354,
+     7.938065364311358,
+     4.360101882212699,
+     2.4143669310229297,
+     4.619024617005172,
+     7.245122927378095,
+     9.076067850085039,
+     10.075485068772945,
+     6.776291074980679,
+     10.432362429481152,
+     10.288203861775607,
+     6.181112289222746,
+     2.732808574131287,
+     4.474531802803671,
+     7.322647811720421,
+     6.016494205084236,
+     5.558334031336419,
+     3.5775598320851056,
+     13.029663540377186,
+     24.343875000558466,
+     7.904919544384313,
+     4.430778060408825,
+     2.406052660132589,
+     5.192100760035668,
+     8.022488842355097,
+     9.780919007440474,
+     10.732742403980723,
+     7.067448960620376,
+     9.843660675338597,
+     9.75566703974626,
+     5.747670428505953,
+     2.9230151749898696,
+     4.853881865869984,
+     7.647435848484137,
+     6.261066695491531,
+     2.6491427952414175,
+     5.460790656123499,
+     3.51522412726805,
+     13.675009399920754,
+     25.236708402919156
+    ],
+    "rest_rmse_mV": 6.602718337360169,
+    "rest_samples": 165600,
+    "rmse_mV": 8.494326043396772,
+    "samples": 563586
+   },
+   "calibrated_z_span": {
+    "max": 1.0,
+    "min": 0.1302559606608131,
+    "note": "the SOC actually covered by the calibration windows; CALIBRATION.json parameter_set.z_range is the OCV knot range, which is wider. The route admits z in [0, 1], so the SOC scope is enforced by the role builder only"
+   },
+   "cells": [
+    "Expt 3/D",
+    "Expt 3/E",
+    "Expt 3/F",
+    "Expt 4/D",
+    "Expt 4/E",
+    "Expt 5/D",
+    "Expt 5/E"
+   ],
+   "comparison": {
+    "ci95_mV": [
+     6.190613902826732,
+     6.324013631471033
+    ],
+    "in_sample_descriptive_label": "1RC_BETTER",
+    "rmse_rint_minus_1rc_mV": 6.249566608723674,
+    "unit": "held-out cell",
+    "units": 7,
+    "verdict": "IN_SAMPLE (the parameters were fitted to these cells: no verdict)"
+   },
+   "comparison_load": {
+    "ci95_mV": [
+     6.113184173929986,
+     6.350139674704517
+    ],
+    "in_sample_descriptive_label": "1RC_BETTER",
+    "rmse_rint_minus_1rc_mV": 6.218897385565076,
+    "unit": "held-out cell",
+    "units": 7,
+    "verdict": "IN_SAMPLE (the parameters were fitted to these cells: no verdict)"
+   },
+   "note": "calibration fit: no acceptance",
+   "out_of_domain_attribution": {
+    "in_domain": 138
+   },
+   "parameter_uncertainty_1rc": {
+    "band": "2.5-97.5 % of the 200 cell-block bootstrap parameter sets (parameter uncertainty only; measurement uncertainty UNKNOWN, model discrepancy not quantified)",
+    "coverage_of_measurements": 0.07712576252781297,
+    "median_half_width_mV": 0.783191828003349
+   },
+   "per_cell": {
+    "Expt 3/D": {
+     "1rc_bias_mV": 0.14526638799381925,
+     "1rc_rmse_mV": 8.361913779852022
+    },
+    "Expt 3/E": {
+     "1rc_bias_mV": -1.4068326237603248,
+     "1rc_rmse_mV": 8.106914005134762
+    },
+    "Expt 3/F": {
+     "1rc_bias_mV": 0.3467202955839376,
+     "1rc_rmse_mV": 7.463664834444953
+    },
+    "Expt 4/D": {
+     "1rc_bias_mV": -0.05580253612332467,
+     "1rc_rmse_mV": 8.72437867416184
+    },
+    "Expt 4/E": {
+     "1rc_bias_mV": 0.46487100291711225,
+     "1rc_rmse_mV": 8.491229599709587
+    },
+    "Expt 5/D": {
+     "1rc_bias_mV": -2.3212398731905917,
+     "1rc_rmse_mV": 9.083748294610132
+    },
+    "Expt 5/E": {
+     "1rc_bias_mV": -2.9354276289733163,
+     "1rc_rmse_mV": 9.132417531388736
+    }
+   },
+   "per_unit": [
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 15741.843641995365,
+     "replay_record_sha256": "c8e92ea25fa8d7aac13aa3488ce0a7d22f278f5ef95ee2a04d7e198306c85a22",
+     "result_id": "battery-thevenin1rc-c8e92ea25fa8d7aa",
+     "route_validity": "in_domain",
+     "z0": 0.95858456606953
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23638.49046567449,
+     "replay_record_sha256": "063de5034edaf1d6bd5c97ef3e2de3aa95fc98cd92e165c3f326f9ea65e1c203",
+     "result_id": "battery-thevenin1rc-063de5034edaf1d6",
+     "route_validity": "in_domain",
+     "z0": 0.875752554649746
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27586.818877514394,
+     "replay_record_sha256": "76da71db5ae253178d8174e1909f1a9ca24e497493b7d219290465839569b936",
+     "result_id": "battery-thevenin1rc-76da71db5ae25317",
+     "route_validity": "in_domain",
+     "z0": 0.8343361816619568
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31535.13728935219,
+     "replay_record_sha256": "c501507f27bfcb93663e58d20ee6c7db54cd03ff03b7e55245504d58e8949e0c",
+     "result_id": "battery-thevenin1rc-c501507f27bfcb93",
+     "route_validity": "in_domain",
+     "z0": 0.7929197192173945
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35483.467701191985,
+     "replay_record_sha256": "2735ab8b2057c5eb74d344cfa6dd27e6abe82d760db9b81e6959aa680714ef79",
+     "result_id": "battery-thevenin1rc-2735ab8b2057c5eb",
+     "route_validity": "in_domain",
+     "z0": 0.751504694776976
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39431.78411303359,
+     "replay_record_sha256": "8e1dedadab709acc52158604a1705290bb05931d7ea530869f04f8cc5228582a",
+     "result_id": "battery-thevenin1rc-8e1dedadab709acc",
+     "route_validity": "in_domain",
+     "z0": 0.7100881343205874
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43380.0965248718,
+     "replay_record_sha256": "703aa8ea5c302611575fc92567b511a30d44cf3be9259ed618b2dd3c6809a897",
+     "result_id": "battery-thevenin1rc-703aa8ea5c302611",
+     "route_validity": "in_domain",
+     "z0": 0.6686726855217806
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47328.42293671137,
+     "replay_record_sha256": "7202aa535960021bcecf30a8112707e961cbe13455e26d93bad2534c0dadedc9",
+     "result_id": "battery-thevenin1rc-7202aa535960021b",
+     "route_validity": "in_domain",
+     "z0": 0.6272571060156864
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51276.74734855181,
+     "replay_record_sha256": "7312bd831882561bee0e0c6d87849d7a8a95fc1ad703488b0caaa58275cd4dc2",
+     "result_id": "battery-thevenin1rc-7312bd831882561b",
+     "route_validity": "in_domain",
+     "z0": 0.585839861229783
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55225.0597603872,
+     "replay_record_sha256": "6f772c0f3f4ab071fe2ff310ea8653f085b03a85965e01cd954437c13c0f317a",
+     "result_id": "battery-thevenin1rc-6f772c0f3f4ab071",
+     "route_validity": "in_domain",
+     "z0": 0.5444237873855682
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59173.378172228986,
+     "replay_record_sha256": "b932fec7fdf5adca8fbae406dd28146875a5d11b106e9ab0e2720dcdb1417ca8",
+     "result_id": "battery-thevenin1rc-b932fec7fdf5adca",
+     "route_validity": "in_domain",
+     "z0": 0.5030082603031993
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63121.70058406817,
+     "replay_record_sha256": "42a76873a987787a4857638b5f28fca5b2fd2aad00c7713b6521b3772f053955",
+     "result_id": "battery-thevenin1rc-42a76873a987787a",
+     "route_validity": "in_domain",
+     "z0": 0.46159266868036086
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 67070.01099590349,
+     "replay_record_sha256": "dc92e551f673cd542809585b48f508824c4ea76a375a9e58dc73a605f75d3d0a",
+     "result_id": "battery-thevenin1rc-dc92e551f673cd54",
+     "route_validity": "in_domain",
+     "z0": 0.42017571536372356
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 71018.32540774086,
+     "replay_record_sha256": "b1a2a226640577a6780807b5ed4e11051691d565debd962e0789e959d0469e98",
+     "result_id": "battery-thevenin1rc-b1a2a226640577a6",
+     "route_validity": "in_domain",
+     "z0": 0.37876052195794696
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 74966.62581957688,
+     "replay_record_sha256": "b183dac3a73fe1a0bf257c550cf154ff566481ed8df1a2a8fd22a4a6b2aa65db",
+     "result_id": "battery-thevenin1rc-b183dac3a73fe1a0",
+     "route_validity": "in_domain",
+     "z0": 0.3373437260236739
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 78914.94423141886,
+     "replay_record_sha256": "b573ba11cf25361fc567312372cc1f87289cdc6e3dffaa2d80e7bad4988c18d2",
+     "result_id": "battery-thevenin1rc-b573ba11cf25361f",
+     "route_validity": "in_domain",
+     "z0": 0.2959290672309154
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 82863.25464325387,
+     "replay_record_sha256": "110401cfc23bfb8e8a5eaa7e1f16edd6080dc331847843e8b5361ff4da76cfd2",
+     "result_id": "battery-thevenin1rc-110401cfc23bfb8e",
+     "route_validity": "in_domain",
+     "z0": 0.2545124453504647
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 86811.57105509349,
+     "replay_record_sha256": "9026ed0b72051bc6c119597e067f31ed46d8ae1e6bc47275402765ed85f76356",
+     "result_id": "battery-thevenin1rc-9026ed0b72051bc6",
+     "route_validity": "in_domain",
+     "z0": 0.21309668198566067
+    },
+    {
+     "cell": "Expt 3/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 90759.89146692949,
+     "replay_record_sha256": "fc834176430b5f17b10d1dfc870e0c2dc8ac0d36ce19acff35f98d89614e296e",
+     "result_id": "battery-thevenin1rc-fc834176430b5f17",
+     "route_validity": "in_domain",
+     "z0": 0.1716810939725718
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 15790.76764709872,
+     "replay_record_sha256": "d92dced41e2a17c4efeec2d65e84962fb367e3f1eff6226a136fdcae9f511dec",
+     "result_id": "battery-thevenin1rc-d92dced41e2a17c4",
+     "route_validity": "in_domain",
+     "z0": 0.9585867414146974
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 19739.094058939198,
+     "replay_record_sha256": "9b07dbfa6711c0b1841715f9009815fcfffde02998b5fcc94769883a87e50a66",
+     "result_id": "battery-thevenin1rc-9b07dbfa6711c0b1",
+     "route_validity": "in_domain",
+     "z0": 0.9171730237410045
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23687.424470777594,
+     "replay_record_sha256": "b2f58c043597f03cc0d357e7a90a8c6780e89ecd4ecd2371a5b46c7ae705a656",
+     "result_id": "battery-thevenin1rc-b2f58c043597f03c",
+     "route_validity": "in_domain",
+     "z0": 0.8757595303872594
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27635.752882614703,
+     "replay_record_sha256": "f0f0a6b296c907aea663453f3467c25f0e64ea0577b29226a2c3ba223346b2ac",
+     "result_id": "battery-thevenin1rc-f0f0a6b296c907ae",
+     "route_validity": "in_domain",
+     "z0": 0.834345206898218
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31584.08529445663,
+     "replay_record_sha256": "4a0422c81baa513302bb1eef32fb9a91d181702e3845dd56d264540a57c92bba",
+     "result_id": "battery-thevenin1rc-4a0422c81baa5133",
+     "route_validity": "in_domain",
+     "z0": 0.7929307697742296
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35532.403706295416,
+     "replay_record_sha256": "39c12c12a61b8645769c6249017c37ccf5f2aad4df9c7256fd3a057a64cca518",
+     "result_id": "battery-thevenin1rc-39c12c12a61b8645",
+     "route_validity": "in_domain",
+     "z0": 0.7515157441544084
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39480.73411813562,
+     "replay_record_sha256": "e3d11905dd87a878decf1f1a44fd84c2364368a59d31a907efe22843aaff3ce3",
+     "result_id": "battery-thevenin1rc-e3d11905dd87a878",
+     "route_validity": "in_domain",
+     "z0": 0.7101030380360974
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43429.06252997639,
+     "replay_record_sha256": "7282e4bc880f6230cfecfba60f7be65c88eb5c70b97f95dc482889c311ca2031",
+     "result_id": "battery-thevenin1rc-7282e4bc880f6230",
+     "route_validity": "in_domain",
+     "z0": 0.6686887778218958
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47377.3969418169,
+     "replay_record_sha256": "b91d75ecd2e6db22b476b0543cc9dfca27d39a8bddd2f21370e879d4166e3b80",
+     "result_id": "battery-thevenin1rc-b91d75ecd2e6db22",
+     "route_validity": "in_domain",
+     "z0": 0.6272756630933993
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51325.73935365843,
+     "replay_record_sha256": "4fea8b294c65fd307638ffa915f6a1d6eef9733488275adf5f47003f29356a88",
+     "result_id": "battery-thevenin1rc-4fea8b294c65fd30",
+     "route_validity": "in_domain",
+     "z0": 0.5858614830765742
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55274.07976549861,
+     "replay_record_sha256": "4fdc71a44058eadec84fbdc8391a622529cc9c3455ce6806d01766e2534bd6f1",
+     "result_id": "battery-thevenin1rc-4fdc71a44058eade",
+     "route_validity": "in_domain",
+     "z0": 0.5444473219973875
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59222.412177339604,
+     "replay_record_sha256": "3b031ae82b09ce198bd9e8634e6e7fd2cbaf96bab9e7a47d7d51fa4f3b83cedc",
+     "result_id": "battery-thevenin1rc-3b031ae82b09ce19",
+     "route_validity": "in_domain",
+     "z0": 0.5030327245144495
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63170.738589175686,
+     "replay_record_sha256": "9f977f4cf7ddbd309e9b431f940b0ad590cb707fe673331ab87d826d9cbafac3",
+     "result_id": "battery-thevenin1rc-9f977f4cf7ddbd30",
+     "route_validity": "in_domain",
+     "z0": 0.46161970945564357
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 67119.06700101472,
+     "replay_record_sha256": "93514894df0721a275b386336efff66bf49b2e8cb3484a66a4d4ba2c463c2c03",
+     "result_id": "battery-thevenin1rc-93514894df0721a2",
+     "route_validity": "in_domain",
+     "z0": 0.42020640064975257
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 71067.40341285523,
+     "replay_record_sha256": "995ae01510593de0a6ddf089c1c24a3945c7c55197a0a26e50f5af3389b45d50",
+     "result_id": "battery-thevenin1rc-995ae01510593de0",
+     "route_validity": "in_domain",
+     "z0": 0.3787931965600423
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 75015.73382469639,
+     "replay_record_sha256": "19b399d34dddaa0ba9a4c3ceb090d148683424f92238ef2dd21ae50998ef05e0",
+     "result_id": "battery-thevenin1rc-19b399d34dddaa0b",
+     "route_validity": "in_domain",
+     "z0": 0.3373789340861165
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 78964.0762365376,
+     "replay_record_sha256": "8510fd967dce44c44daaca5049d57de34db457648d484ee2c8e8b78dd29d73b7",
+     "result_id": "battery-thevenin1rc-8510fd967dce44c4",
+     "route_validity": "in_domain",
+     "z0": 0.29596502008884107
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 82912.4066483769,
+     "replay_record_sha256": "9f8b89aba98c104baa8fe1342a7d590cafd09de89496f817c07264c7e63d09dd",
+     "result_id": "battery-thevenin1rc-9f8b89aba98c104b",
+     "route_validity": "in_domain",
+     "z0": 0.25454974108994666
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 86860.73906021722,
+     "replay_record_sha256": "135b629e466b325db69689f7440c29d85dd8bc74c7f007aebec76eacbf5091b4",
+     "result_id": "battery-thevenin1rc-135b629e466b325d",
+     "route_validity": "in_domain",
+     "z0": 0.21313658139450908
+    },
+    {
+     "cell": "Expt 3/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 90809.07947205842,
+     "replay_record_sha256": "8f35d088993c45df22280bebd0ee8ee2ddf3618808adaf7eddf2aea4021814dd",
+     "result_id": "battery-thevenin1rc-8f35d088993c45df",
+     "route_validity": "in_domain",
+     "z0": 0.17172251488204426
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 15828.31565100979,
+     "replay_record_sha256": "e94e9a10ee40048b33e09eaaf1d6aea971411f4350206d2166bd39559b7a21ba",
+     "result_id": "battery-thevenin1rc-e94e9a10ee40048b",
+     "route_validity": "in_domain",
+     "z0": 0.958585484217568
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 19776.55806283938,
+     "replay_record_sha256": "247c5c168097116b03112ed07f5faa7d3a49b4247c4f5079884cb597d515885d",
+     "result_id": "battery-thevenin1rc-247c5c168097116b",
+     "route_validity": "in_domain",
+     "z0": 0.917170395130648
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23724.7904746703,
+     "replay_record_sha256": "bb57f9c46db9218d29a1bd55026a87bb750a0cfba30f71133f43eee19b7e468f",
+     "result_id": "battery-thevenin1rc-bb57f9c46db9218d",
+     "route_validity": "in_domain",
+     "z0": 0.8757560433168247
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27673.022886500286,
+     "replay_record_sha256": "80009bfb6b6a31af0ce1357d5a09ed88a5f3ece25cb138d8571a2167c12426fe",
+     "result_id": "battery-thevenin1rc-80009bfb6b6a31af",
+     "route_validity": "in_domain",
+     "z0": 0.8343432452927873
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31621.25729832938,
+     "replay_record_sha256": "0377f60f7e7c42de16374bf3e3a4de111612b3b5164e0b07eea2632df0d3cb50",
+     "result_id": "battery-thevenin1rc-0377f60f7e7c42de",
+     "route_validity": "in_domain",
+     "z0": 0.7929294077411407
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35569.493710159586,
+     "replay_record_sha256": "8a6902da93d97774abfb72be531a16a83e19183a6ad8f340fdcb1bf0fb6603d3",
+     "result_id": "battery-thevenin1rc-8a6902da93d97774",
+     "route_validity": "in_domain",
+     "z0": 0.7515154699335229
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39517.7381219902,
+     "replay_record_sha256": "33f69dec70adf8901e15e85df7b9f471298e0961de05df9c3184d23df87611b0",
+     "result_id": "battery-thevenin1rc-33f69dec70adf890",
+     "route_validity": "in_domain",
+     "z0": 0.7101008650021778
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43465.98053381778,
+     "replay_record_sha256": "6eea2af1b3e59b4f7fb6459b4a93ad35ff2d2ddc85a0c050deef5450665faaf5",
+     "result_id": "battery-thevenin1rc-6eea2af1b3e59b4f",
+     "route_validity": "in_domain",
+     "z0": 0.668686362535537
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47414.22694564727,
+     "replay_record_sha256": "8811828f824fe84ebaf4bd77da92d177eb3a4837a6cb6a4c23f16226766cf8bc",
+     "result_id": "battery-thevenin1rc-8811828f824fe84e",
+     "route_validity": "in_domain",
+     "z0": 0.6272726616724466
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51362.47935748199,
+     "replay_record_sha256": "ccd035b25724d9b6e2b2cbce62045567e7aad6b8e720f5fb3c5d5d3bfb418935",
+     "result_id": "battery-thevenin1rc-ccd035b25724d9b6",
+     "route_validity": "in_domain",
+     "z0": 0.5858589012097528
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55310.73576931469,
+     "replay_record_sha256": "61b2a018153b6610324d8b1dce7326b2302b828187d390b893b5265cfa67be2e",
+     "result_id": "battery-thevenin1rc-61b2a018153b6610",
+     "route_validity": "in_domain",
+     "z0": 0.5444454136941718
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59258.98218114491,
+     "replay_record_sha256": "f02fce80ce31c7aec8376e91d97f0b580025481f60492cb26cede257dd4df2d9",
+     "result_id": "battery-thevenin1rc-f02fce80ce31c7ae",
+     "route_validity": "in_domain",
+     "z0": 0.5030315473359277
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63207.23459297887,
+     "replay_record_sha256": "03f45c4665effbde4a1dacfbcf31bc37f46c22e59b16ed6b4de9a4703acd51da",
+     "result_id": "battery-thevenin1rc-03f45c4665effbde",
+     "route_validity": "in_domain",
+     "z0": 0.4616186708434177
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 67155.49300481219,
+     "replay_record_sha256": "6d3550ba3822953cfffd799a91fb001f413f3e868b75bc3dc7369c133c45f978",
+     "result_id": "battery-thevenin1rc-6d3550ba3822953c",
+     "route_validity": "in_domain",
+     "z0": 0.42020470350215444
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 71103.74741664247,
+     "replay_record_sha256": "4817821de987a7a9b2f9182b65cb0c2579d5c53ca95b9738a958afd538f7ac4d",
+     "result_id": "battery-thevenin1rc-4817821de987a7a9",
+     "route_validity": "in_domain",
+     "z0": 0.3787901061019898
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 75051.9958284749,
+     "replay_record_sha256": "7d9d6214a5d00f8e4c418ae87f0a3909b1d3e44be5cace6ac80b33bfc6c3bac3",
+     "result_id": "battery-thevenin1rc-7d9d6214a5d00f8e",
+     "route_validity": "in_domain",
+     "z0": 0.3373759043349316
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 79000.24424030469,
+     "replay_record_sha256": "d1ce40547aaeb097cda78503ff4ae26e2fb8789861301f77e814f0ecf5d6720a",
+     "result_id": "battery-thevenin1rc-d1ce40547aaeb097",
+     "route_validity": "in_domain",
+     "z0": 0.29596152989296975
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 82948.4906521379,
+     "replay_record_sha256": "79593e0facc5c22923c9858717c8da655722bf7fdad0fb466742d9dc3a4e4ab3",
+     "result_id": "battery-thevenin1rc-79593e0facc5c229",
+     "route_validity": "in_domain",
+     "z0": 0.25454841363310365
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 86896.73906396868,
+     "replay_record_sha256": "9baf02e0ee1f8925004706ce652144de105c8d712f2c735222fdab6c213da25c",
+     "result_id": "battery-thevenin1rc-9baf02e0ee1f8925",
+     "route_validity": "in_domain",
+     "z0": 0.21313534622985397
+    },
+    {
+     "cell": "Expt 3/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 90845.00547580118,
+     "replay_record_sha256": "13f171bc54af4fd4cea23e82270367cd61181502ee50fa24ea40d2853f6865d6",
+     "result_id": "battery-thevenin1rc-13f171bc54af4fd4",
+     "route_validity": "in_domain",
+     "z0": 0.17172171204791853
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 12122.082575768001,
+     "replay_record_sha256": "0357c192473a18fc25e0dbc7237ddcef4951d91974f832a747a616e7e52fb13e",
+     "result_id": "battery-thevenin1rc-0357c192473a18fc",
+     "route_validity": "in_domain",
+     "z0": 0.958584570133005
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 16070.278763297252,
+     "replay_record_sha256": "4d0238cde0f16c78d57d4ce856ad5c2104fd0769949834dea9c5b9775d282a65",
+     "result_id": "battery-thevenin1rc-4d0238cde0f16c78",
+     "route_validity": "in_domain",
+     "z0": 0.917169225608248
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 20018.47495082649,
+     "replay_record_sha256": "efe11b3e637e195e0b0e68a134979b4d860dd6213d5c7e47182180f582453f50",
+     "result_id": "battery-thevenin1rc-efe11b3e637e195e",
+     "route_validity": "in_domain",
+     "z0": 0.8757528587425164
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23966.66713835555,
+     "replay_record_sha256": "3e80c3bf643ae3e3370753ff3f52413367ca121c1490ca6bbd1f7d454a49a725",
+     "result_id": "battery-thevenin1rc-3e80c3bf643ae3e3",
+     "route_validity": "in_domain",
+     "z0": 0.8343375091571171
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27914.863325884802,
+     "replay_record_sha256": "4d3558cc786aeb787625baf4c0e11b8bba16c68b20c71c72d73fb7b9eb7c4516",
+     "result_id": "battery-thevenin1rc-4d3558cc786aeb78",
+     "route_validity": "in_domain",
+     "z0": 0.7929219879085614
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31863.051513413662,
+     "replay_record_sha256": "534f1c28183c3c410427371cc39f5c027083523e31376b747a7d7d3443073c02",
+     "result_id": "battery-thevenin1rc-534f1c28183c3c41",
+     "route_validity": "in_domain",
+     "z0": 0.7515056563874261
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35811.241700942635,
+     "replay_record_sha256": "fd193fdaa05f063b84bab0dc976ca13942f4648f5dcff9d1cdf3f1385b180d58",
+     "result_id": "battery-thevenin1rc-fd193fdaa05f063b",
+     "route_validity": "in_domain",
+     "z0": 0.7100906479658444
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39759.4278884714,
+     "replay_record_sha256": "0b275c3ff3e05c7a850e56bb524a0cdd3b0b0fbec55d23c93eb7c4dc485cabfc",
+     "result_id": "battery-thevenin1rc-0b275c3ff3e05c7a",
+     "route_validity": "in_domain",
+     "z0": 0.6686754425657313
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43707.62607600074,
+     "replay_record_sha256": "db00ad3f2bd09fae09019384dfa87dbaba9ffcbcfadc29a0ec781415e217ee2c",
+     "result_id": "battery-thevenin1rc-db00ad3f2bd09fae",
+     "route_validity": "in_domain",
+     "z0": 0.627260957465761
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47655.820263529895,
+     "replay_record_sha256": "e2dd35198d05c347c25799c4c6b9cdcd210634af8804eca4eb193bc6f47708ed",
+     "result_id": "battery-thevenin1rc-e2dd35198d05c347",
+     "route_validity": "in_domain",
+     "z0": 0.5858443622385412
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51604.02445105952,
+     "replay_record_sha256": "d1b6e7667d1068a8eb5d30bb457e3820359c3cb5e937220acaf11eaa4350d925",
+     "result_id": "battery-thevenin1rc-d1b6e7667d1068a8",
+     "route_validity": "in_domain",
+     "z0": 0.5444283859204776
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55552.21663858858,
+     "replay_record_sha256": "ac0bbd257d98ce6deac07b23f733a307e51142ba6ab37828a1516d4b92899c80",
+     "result_id": "battery-thevenin1rc-ac0bbd257d98ce6d",
+     "route_validity": "in_domain",
+     "z0": 0.5030115297854789
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59500.40482611744,
+     "replay_record_sha256": "fcad62e8de9507e3202244c2423af4996235e3436c1d453ac653e6f5dd3ec080",
+     "result_id": "battery-thevenin1rc-fcad62e8de9507e3",
+     "route_validity": "in_domain",
+     "z0": 0.4615962304430251
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63448.601013646694,
+     "replay_record_sha256": "b1d1fee470784e355c8f6f21f07a6b497599872dbf1123dc17f4bf1b66035f09",
+     "result_id": "battery-thevenin1rc-b1d1fee470784e35",
+     "route_validity": "in_domain",
+     "z0": 0.42018074295336516
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 67396.80120704696,
+     "replay_record_sha256": "0769389ee787c81f03a51616839be993f707c4c59dff0ec2a116c7d2974abddf",
+     "result_id": "battery-thevenin1rc-0769389ee787c81f",
+     "route_validity": "in_domain",
+     "z0": 0.3787647151536787
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 71344.99740560818,
+     "replay_record_sha256": "7c6676da3c85c961b745870c3db89c90763373236a5f5693028807e142c6118c",
+     "result_id": "battery-thevenin1rc-7c6676da3c85c961",
+     "route_validity": "in_domain",
+     "z0": 0.33734823852841433
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 75293.19160417141,
+     "replay_record_sha256": "4b2de1b307607709cb75db6dde4374ffff62a752ed583eceafa06d40c465745b",
+     "result_id": "battery-thevenin1rc-4b2de1b307607709",
+     "route_validity": "in_domain",
+     "z0": 0.29593165774751684
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 79241.38180273469,
+     "replay_record_sha256": "3fedeb7cb07e61ef060dc084fa00bb5cf3f0671aa7bd99d6ada79ba4c34bd22e",
+     "result_id": "battery-thevenin1rc-3fedeb7cb07e61ef",
+     "route_validity": "in_domain",
+     "z0": 0.254515900504644
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 83189.57400129735,
+     "replay_record_sha256": "e1f79c9c0fcec58a5fb3e963947334207e6c351e4b50eadd84b894fb00095e55",
+     "result_id": "battery-thevenin1rc-e1f79c9c0fcec58a",
+     "route_validity": "in_domain",
+     "z0": 0.2131009627380539
+    },
+    {
+     "cell": "Expt 4/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 87137.75619985792,
+     "replay_record_sha256": "b7a1fbefc665599b29871f0d498f1d26c497b122ef2863af4d7d12e888a02f2d",
+     "result_id": "battery-thevenin1rc-b7a1fbefc665599b",
+     "route_validity": "in_domain",
+     "z0": 0.17168570634006375
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 12141.168576674532,
+     "replay_record_sha256": "36ad9a7c1b0ada6c5935d7df263095aa567a80fbf2d787d4d4f4dfa03f7d0bc3",
+     "result_id": "battery-thevenin1rc-36ad9a7c1b0ada6c",
+     "route_validity": "in_domain",
+     "z0": 0.9585833872188794
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 16089.606764215281,
+     "replay_record_sha256": "4cc302a9547b348b517b95032c83aaae73ff010d4ec27abc2ac2d6a6f5802901",
+     "result_id": "battery-thevenin1rc-4cc302a9547b348b",
+     "route_validity": "in_domain",
+     "z0": 0.9171682037702564
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 20038.028951755263,
+     "replay_record_sha256": "5f0c93c2d44a5e9306fcb55cc967903e0d0cac4a9a9dc838d416ecd756149370",
+     "result_id": "battery-thevenin1rc-5f0c93c2d44a5e93",
+     "route_validity": "in_domain",
+     "z0": 0.8757510666245609
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23986.467139296,
+     "replay_record_sha256": "07e759dd0bed879d4a601afc5fc85034f83409fa0a24a508c2dc41545a1a1f2a",
+     "result_id": "battery-thevenin1rc-07e759dd0bed879d",
+     "route_validity": "in_domain",
+     "z0": 0.8343364343187494
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27934.89532683627,
+     "replay_record_sha256": "19443166c8b0bfe393ed6398fab2b9fe0d2b4cc9d1de9ebb8c20c37d5285bb6d",
+     "result_id": "battery-thevenin1rc-19443166c8b0bfe3",
+     "route_validity": "in_domain",
+     "z0": 0.7929193971178196
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31883.33151437691,
+     "replay_record_sha256": "c1c64e698c0a68bffd5d673651f8febfe34e5e8f10b6f547eca354e33e259e70",
+     "result_id": "battery-thevenin1rc-c1c64e698c0a68bf",
+     "route_validity": "in_domain",
+     "z0": 0.7515035953453517
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35831.76770191756,
+     "replay_record_sha256": "25982b31d85dcdcff2854fc2fa9f49bf3ebe9721b7e64f3b12d917199dfe37d6",
+     "result_id": "battery-thevenin1rc-25982b31d85dcdcf",
+     "route_validity": "in_domain",
+     "z0": 0.7100866452157437
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39780.19788945792,
+     "replay_record_sha256": "575464e6344269e01149d85b928d95d44065c64c77753a563694d3055a29db34",
+     "result_id": "battery-thevenin1rc-575464e6344269e0",
+     "route_validity": "in_domain",
+     "z0": 0.6686701968304226
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43728.63407699857,
+     "replay_record_sha256": "502695b4cb8bf0221b7c02ba4bf46cd353d4259bf97c8ecaee364b91f4d672ef",
+     "result_id": "battery-thevenin1rc-502695b4cb8bf022",
+     "route_validity": "in_domain",
+     "z0": 0.6272545051476125
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47677.06826453912,
+     "replay_record_sha256": "4747c37a4c96c0e029b91440e9995c34886ed43601316673f5060c80ee61c1a2",
+     "result_id": "battery-thevenin1rc-4747c37a4c96c0e0",
+     "route_validity": "in_domain",
+     "z0": 0.58583744466684
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51625.50245207967,
+     "replay_record_sha256": "2823e03f9d0b4022473805b2806aed9fc1d6879848f16ad695c94217d771af11",
+     "result_id": "battery-thevenin1rc-2823e03f9d0b4022",
+     "route_validity": "in_domain",
+     "z0": 0.5444209870586838
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55573.940639620414,
+     "replay_record_sha256": "ba3b043e2a9a1e89653615e4fcfead55a8d8e6d7060c8a98ea27c90fc54e17ec",
+     "result_id": "battery-thevenin1rc-ba3b043e2a9a1e89",
+     "route_validity": "in_domain",
+     "z0": 0.5030039791188115
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59522.36882716068,
+     "replay_record_sha256": "516dbaee5405a86284b1d31b3efa39756a5435128067723d94f8957b6616120e",
+     "result_id": "battery-thevenin1rc-516dbaee5405a862",
+     "route_validity": "in_domain",
+     "z0": 0.46158692928614553
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63470.801014701145,
+     "replay_record_sha256": "4d766ddfbcfc1e4cd1c4b7a0b9e27a414d28fd5833585acffd8234d9e7ba027b",
+     "result_id": "battery-thevenin1rc-4d766ddfbcfc1e4c",
+     "route_validity": "in_domain",
+     "z0": 0.42017023650106544
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 67419.23320817505,
+     "replay_record_sha256": "1aeab34bdc6bba7c41bb5d218b4c3556ba910609ac706267aaec5ad6f84f53cd",
+     "result_id": "battery-thevenin1rc-1aeab34bdc6bba7c",
+     "route_validity": "in_domain",
+     "z0": 0.3787544565173899
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 71367.67540675029,
+     "replay_record_sha256": "82f5d70caa9c77c2a2de69fdd99335a30ecc700ee78a3e5fd0f814aee85ce02e",
+     "result_id": "battery-thevenin1rc-82f5d70caa9c77c2",
+     "route_validity": "in_domain",
+     "z0": 0.33733771649256883
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 75316.11760532437,
+     "replay_record_sha256": "3835e3eb1b8c503e23b1f7ece87cd4ef43df39344e64cc9978b3167dd88ba901",
+     "result_id": "battery-thevenin1rc-3835e3eb1b8c503e",
+     "route_validity": "in_domain",
+     "z0": 0.2959208918396551
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 79264.5538038977,
+     "replay_record_sha256": "5ad8c22625a56ff69e2cbdde2f20047a83dafac5eb6cffc04b3edbab7ae401ac",
+     "result_id": "battery-thevenin1rc-5ad8c22625a56ff6",
+     "route_validity": "in_domain",
+     "z0": 0.25450461314787987
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 83212.99000247172,
+     "replay_record_sha256": "63580a44fedd633523cb5e198ffee5d07cf3da73ff66266bfd0370569f951329",
+     "result_id": "battery-thevenin1rc-63580a44fedd6335",
+     "route_validity": "in_domain",
+     "z0": 0.21308800931352367
+    },
+    {
+     "cell": "Expt 4/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 87161.4162010441,
+     "replay_record_sha256": "0965b08b0ab1fc32ba31fbb7118941a17f0033f489f59b7070ff7a2aef049422",
+     "result_id": "battery-thevenin1rc-0965b08b0ab1fc32",
+     "route_validity": "in_domain",
+     "z0": 0.17167157165262537
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 11922.339243595488,
+     "replay_record_sha256": "6abe9ff37896282788cb45834c86c3eb4dcde61dd3a76c13f7d51cd3e112996d",
+     "result_id": "battery-thevenin1rc-6abe9ff378962827",
+     "route_validity": "in_domain",
+     "z0": 1.0
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 19818.9420672711,
+     "replay_record_sha256": "1433ca232c7db2f30cadaa4b348ebe84eacb01a541249b959c344ae1daf9e702",
+     "result_id": "battery-thevenin1rc-1433ca232c7db2f3",
+     "route_validity": "in_domain",
+     "z0": 0.9171689098022183
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23767.2364791063,
+     "replay_record_sha256": "764e3a297ec19e67c8081dbfd5082822e7b6b8bba71ff2d131d6aa55e89fcad7",
+     "result_id": "battery-thevenin1rc-764e3a297ec19e67",
+     "route_validity": "in_domain",
+     "z0": 0.8757533237603868
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27715.528890941292,
+     "replay_record_sha256": "e8051faa59d5eac97a7ebabfd9a01f86e995d4402483793298dabb80c2987774",
+     "result_id": "battery-thevenin1rc-e8051faa59d5eac9",
+     "route_validity": "in_domain",
+     "z0": 0.8343384559916908
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31663.823302776786,
+     "replay_record_sha256": "261f2ff342adaf07149f47fbb90ec279339bbcebd69206928ee484a73116c84f",
+     "result_id": "battery-thevenin1rc-261f2ff342adaf07",
+     "route_validity": "in_domain",
+     "z0": 0.792924114925534
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35612.1137146102,
+     "replay_record_sha256": "d8e523155f584185093838c28a80e83def13612344f65704d066c82b5315b36c",
+     "result_id": "battery-thevenin1rc-d8e523155f584185",
+     "route_validity": "in_domain",
+     "z0": 0.7515084673559635
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39560.408126445516,
+     "replay_record_sha256": "006d4f4974353fe04ec3a9878d5bd8831faccdbbd73b4c4fe7f5bde96dc1b0b2",
+     "result_id": "battery-thevenin1rc-006d4f4974353fe0",
+     "route_validity": "in_domain",
+     "z0": 0.7100932456069657
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43508.70253828072,
+     "replay_record_sha256": "f1a43a99d2cfc9788b8693915814591cfd7dd628bf953ad75ab2e400d0e7e18f",
+     "result_id": "battery-thevenin1rc-f1a43a99d2cfc978",
+     "route_validity": "in_domain",
+     "z0": 0.6686783695833407
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47457.006950120005,
+     "replay_record_sha256": "5e13e731852de43af982d25af994349d8b66da7264b5819bbf2ddc8fe8336e54",
+     "result_id": "battery-thevenin1rc-5e13e731852de43a",
+     "route_validity": "in_domain",
+     "z0": 0.6272634959517095
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51405.30736195782,
+     "replay_record_sha256": "736c222454aa335308430e46cad9b44e62ad0d2dd7b380c97a6bfdd723cc2ed4",
+     "result_id": "battery-thevenin1rc-736c222454aa3353",
+     "route_validity": "in_domain",
+     "z0": 0.5858481057276279
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55353.60777379759,
+     "replay_record_sha256": "3e5a78ae6f78b4a7396b4746dfb4db62367c1c25c1b3691c68020fb1f4eba70f",
+     "result_id": "battery-thevenin1rc-3e5a78ae6f78b4a7",
+     "route_validity": "in_domain",
+     "z0": 0.5444326370806867
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59301.91618563532,
+     "replay_record_sha256": "f16e8fe9da7f1e48ba21a6048390818c9e4717670d90f08bccb3b1361b391722",
+     "result_id": "battery-thevenin1rc-f16e8fe9da7f1e48",
+     "route_validity": "in_domain",
+     "z0": 0.5030175215090784
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63250.216597471415,
+     "replay_record_sha256": "40282194db7e7c4e22809f11410a73e8d5195b9051481ed162ef3e1abeb10075",
+     "result_id": "battery-thevenin1rc-40282194db7e7c4e",
+     "route_validity": "in_domain",
+     "z0": 0.4616018468353652
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 67198.51900930982,
+     "replay_record_sha256": "d7e5f2b0d069809971279706f478aa9cf1aa93702cf3c8386c70cce5aedcac8a",
+     "result_id": "battery-thevenin1rc-d7e5f2b0d0698099",
+     "route_validity": "in_domain",
+     "z0": 0.4201872783672168
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 71146.82342114858,
+     "replay_record_sha256": "3d2936598e537fb039c57cb9d438285a947012bd823654e0a968664527fa14aa",
+     "result_id": "battery-thevenin1rc-3d2936598e537fb0",
+     "route_validity": "in_domain",
+     "z0": 0.37877148944878225
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 79043.41824482009,
+     "replay_record_sha256": "4d31328c01981bc42381caa86182de41c862e0e9e76f54d49f1c387184568133",
+     "result_id": "battery-thevenin1rc-4d31328c01981bc4",
+     "route_validity": "in_domain",
+     "z0": 0.29594036543191504
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 82991.71665665688,
+     "replay_record_sha256": "a035bfa1cbe47fe9a3e8ddf9d280408c14ffd180f2c837a9c70f9099192a500b",
+     "result_id": "battery-thevenin1rc-a035bfa1cbe47fe9",
+     "route_validity": "in_domain",
+     "z0": 0.25452506786602536
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 86940.0110684931,
+     "replay_record_sha256": "a9a6aeb8bcfeba91be3bc1dbeb6d81c9d679e17e0c6d97faf2bb4ea254d1d7d7",
+     "result_id": "battery-thevenin1rc-a9a6aeb8bcfeba91",
+     "route_validity": "in_domain",
+     "z0": 0.21310966242897977
+    },
+    {
+     "cell": "Expt 5/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 90888.30948033,
+     "replay_record_sha256": "7909b0c71bdae2b04723de7fc47b0ba560afdfc4b334de6f443df70d59d266f0",
+     "result_id": "battery-thevenin1rc-7909b0c71bdae2b0",
+     "route_validity": "in_domain",
+     "z0": 0.17169415136625676
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 11852.93323635048,
+     "replay_record_sha256": "fe6ecbea3a2b36e41c5e85eede369ffe4675730bbd38c35698ee7b28055dd2f6",
+     "result_id": "battery-thevenin1rc-fe6ecbea3a2b36e4",
+     "route_validity": "in_domain",
+     "z0": 1.0
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 19749.534060025588,
+     "replay_record_sha256": "fd40101ee13f0e96c9638871f1fa593550882af29abdb4fc50807b7cb1e9e2fe",
+     "result_id": "battery-thevenin1rc-fd40101ee13f0e96",
+     "route_validity": "in_domain",
+     "z0": 0.9171702978911634
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23697.83247186427,
+     "replay_record_sha256": "219096a79b2538dbce834df97340616f6fdc741800be8a76d0f359582a2d5f2b",
+     "result_id": "battery-thevenin1rc-219096a79b2538db",
+     "route_validity": "in_domain",
+     "z0": 0.875755821084697
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27646.13088369998,
+     "replay_record_sha256": "172c87264f163a0214276d0444bcb32f8c66bf36aee4d1d7bff05ef7a1ad3afc",
+     "result_id": "battery-thevenin1rc-172c87264f163a02",
+     "route_validity": "in_domain",
+     "z0": 0.8343409825237398
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31594.4172955362,
+     "replay_record_sha256": "29853f78142b371b8fe33b806896caaa0f6c0bb955e73672796bbf312c509d92",
+     "result_id": "battery-thevenin1rc-29853f78142b371b",
+     "route_validity": "in_domain",
+     "z0": 0.7929261285267243
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35542.69170736888,
+     "replay_record_sha256": "0195755ec00a9fdb98a287aa6909e936c8fff9d0611eba4f21e1ccbb6ffe1010",
+     "result_id": "battery-thevenin1rc-0195755ec00a9fdb",
+     "route_validity": "in_domain",
+     "z0": 0.7515125064050355
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39490.96211920158,
+     "replay_record_sha256": "e1ea78ba03a844bb07da3a16a94f809a94c2c74c3d2b8e0fc44112523abeaa40",
+     "result_id": "battery-thevenin1rc-e1ea78ba03a844bb",
+     "route_validity": "in_domain",
+     "z0": 0.7100987782290391
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43439.2385310363,
+     "replay_record_sha256": "df9337188b302b82b4b29637880402ccfc5bd0c765e010a5f006331b9944964b",
+     "result_id": "battery-thevenin1rc-df9337188b302b82",
+     "route_validity": "in_domain",
+     "z0": 0.6686841607876723
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47387.518942871975,
+     "replay_record_sha256": "0742015589051092362ec421ba9f13301c2120f9d1d4c1da259b37ab803f6228",
+     "result_id": "battery-thevenin1rc-0742015589051092",
+     "route_validity": "in_domain",
+     "z0": 0.6272684344447044
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51335.79535470618,
+     "replay_record_sha256": "374a3cb2a16be1d6c546c4db77eaf426bd704d9007c4ed45ce2e02861efd1c27",
+     "result_id": "battery-thevenin1rc-374a3cb2a16be1d6",
+     "route_validity": "in_domain",
+     "z0": 0.5858539552954916
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55284.08176654106,
+     "replay_record_sha256": "defd226843091b4b3358550bf557eb2177da5e4c56ec75d46ccf8b94034d90eb",
+     "result_id": "battery-thevenin1rc-defd226843091b4b",
+     "route_validity": "in_domain",
+     "z0": 0.5444399378497036
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59232.370178373676,
+     "replay_record_sha256": "b486aedd3ccc20d9e42c31b2435bc286724ef513d804a97732f184f7b9597473",
+     "result_id": "battery-thevenin1rc-b486aedd3ccc20d9",
+     "route_validity": "in_domain",
+     "z0": 0.5030244711422891
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63180.6505902058,
+     "replay_record_sha256": "8bbc73a47217691317bc83acae29e3f1427c5652ec36419d19cbcf136aa744fe",
+     "result_id": "battery-thevenin1rc-8bbc73a472176913",
+     "route_validity": "in_domain",
+     "z0": 0.461609358596793
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 67128.93300204189,
+     "replay_record_sha256": "5ac419f5bd3fdcf889b297eaaae78ff668e8671a69eebb1209ae8c46dc3c72ae",
+     "result_id": "battery-thevenin1rc-5ac419f5bd3fdcf8",
+     "route_validity": "in_domain",
+     "z0": 0.42019419275482617
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 71077.2094138756,
+     "replay_record_sha256": "5aae33f263d9a9d89b2a5c5fe40475e67c80d6fbcf866f08c45ff74393b808f4",
+     "result_id": "battery-thevenin1rc-5aae33f263d9a9d8",
+     "route_validity": "in_domain",
+     "z0": 0.3787789518223411
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 75025.4898257106,
+     "replay_record_sha256": "cc441322f5efea383fc2888bd998477450e64e385d62c089b46aa3fa1e08a2b8",
+     "result_id": "battery-thevenin1rc-cc441322f5efea38",
+     "route_validity": "in_domain",
+     "z0": 0.33736371843485224
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 78973.75223754067,
+     "replay_record_sha256": "336b1fa62ccb79f6d0b8172f5e437cff42038f6148362c27e756e4bccee663cf",
+     "result_id": "battery-thevenin1rc-336b1fa62ccb79f6",
+     "route_validity": "in_domain",
+     "z0": 0.29594889023040727
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 82922.01864937131,
+     "replay_record_sha256": "e3ee4758eeaafb8acd4e432ae1da038b7c4bd34bf3cf85ba80e257a9d10ac6cc",
+     "result_id": "battery-thevenin1rc-e3ee4758eeaafb8a",
+     "route_validity": "in_domain",
+     "z0": 0.2545345686270235
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 86870.29706120401,
+     "replay_record_sha256": "611deef2e05af1fc15d3e7223b6cfae3c0453abdcac4872f14b26f101c98cb8f",
+     "result_id": "battery-thevenin1rc-611deef2e05af1fc",
+     "route_validity": "in_domain",
+     "z0": 0.21312088141883878
+    },
+    {
+     "cell": "Expt 5/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 90818.5834730379,
+     "replay_record_sha256": "3aeb49aec4f5369137b66890d8deee9e7e64e33b978edb020ee06b6718de904e",
+     "result_id": "battery-thevenin1rc-3aeb49aec4f53691",
+     "route_validity": "in_domain",
+     "z0": 0.1717060353840728
+    }
+   ],
+   "rint": {
+    "bias_mV": -2.051118608690806,
+    "load_only": {
+     "bias_mV": 1.2213945337851114e-05,
+     "p95_abs_mV": 33.611777552758795,
+     "rmse_mV": 15.386028134883142,
+     "samples": 397986
+    },
+    "mae_mV": 10.56735358506492,
+    "max_abs_mV": 90.45809884333522,
+    "p95_abs_mV": 32.98672127845737,
+    "per_window_rmse_mV": [
+     11.113103118711347,
+     11.705248290136623,
+     12.841211417392081,
+     14.337283403283857,
+     15.5821011628467,
+     16.219376436305765,
+     12.174097883222727,
+     12.576227441297041,
+     14.420089788459997,
+     13.11694445208705,
+     13.12066623890006,
+     14.809356222663858,
+     16.862799700066972,
+     16.08274324234309,
+     13.364912652295402,
+     11.623507939772336,
+     11.937740255738047,
+     17.84933030432549,
+     24.793610964554688,
+     9.565138443173995,
+     10.489741493710602,
+     11.612605373505254,
+     13.501767664753626,
+     15.354125522441711,
+     16.591770239674034,
+     17.166537108634387,
+     12.14637089701229,
+     11.36459477454745,
+     12.797225957321729,
+     11.548806670797292,
+     12.116356954479658,
+     14.370514229281,
+     16.80507087547625,
+     15.915662439919133,
+     12.98458603729382,
+     11.1534133586593,
+     11.384548142900298,
+     18.209503350101844,
+     25.033334509886032,
+     9.211415927303417,
+     10.393410227604509,
+     11.553321728736456,
+     13.34499256666292,
+     15.098913947077351,
+     16.373135217759266,
+     16.88853369511348,
+     11.8108117501904,
+     12.012290973732329,
+     13.53490204619661,
+     12.0471962294489,
+     12.187023867206921,
+     14.132242256400044,
+     16.405281044079118,
+     15.50650069413675,
+     13.248836064500365,
+     12.552898361555052,
+     12.962894829132743,
+     15.192800999805902,
+     18.072729057756888,
+     11.059465803010536,
+     11.107581584919846,
+     11.426751505867397,
+     12.489049996521782,
+     14.000029558288906,
+     15.405942331356094,
+     16.133338830410565,
+     12.017280775379682,
+     12.463684377629418,
+     14.497144916456739,
+     13.040495296542375,
+     12.954981909869591,
+     14.6761295843731,
+     16.83235914705804,
+     16.090075861803502,
+     13.242822275857401,
+     11.073774373025682,
+     11.39761090208023,
+     19.40017008083327,
+     28.77292960719286,
+     11.201087204714101,
+     11.118899939259657,
+     11.353598374077603,
+     12.377025707948267,
+     13.860858952426355,
+     15.238843131257653,
+     15.983265090550072,
+     12.011709417075936,
+     12.709401389073514,
+     14.65076116008566,
+     13.116367284010293,
+     12.891808942350165,
+     14.49302641814923,
+     16.57249933941519,
+     15.82245682449065,
+     13.121529701798805,
+     11.307247197924365,
+     11.493522272603647,
+     18.552253050094237,
+     26.905058641238604,
+     7.703466864024729,
+     10.87956898390091,
+     11.751362978372638,
+     13.316363920203505,
+     15.017970845392014,
+     16.351161892024336,
+     17.012958178426143,
+     12.271237730657813,
+     10.940808143208871,
+     12.648312388778418,
+     11.913542805862251,
+     12.832615374188714,
+     15.237992671257743,
+     17.61313001436848,
+     16.679145219750037,
+     10.789102542029573,
+     11.259390623799916,
+     20.660621853684564,
+     30.127120747678912,
+     7.630064281192998,
+     10.872368096285149,
+     11.818085437244804,
+     13.594061170106345,
+     15.462306617259495,
+     16.786400535464857,
+     17.464858759728116,
+     12.607501304764694,
+     10.853025830875504,
+     12.32849613643966,
+     11.580575967393097,
+     12.663854987724644,
+     15.160093561449338,
+     17.62393495766907,
+     16.681200245087144,
+     13.439615619971757,
+     10.85316625486141,
+     11.251742949316275,
+     21.06806750892961,
+     30.863047158835958
+    ],
+    "rest_rmse_mV": 13.072283692740227,
+    "rest_samples": 165600,
+    "rmse_mV": 14.743892652120445,
+    "samples": 563586
+   },
+   "route_validity": {
+    "in_domain": 138
+   },
+   "temperature_C": {
+    "calibration_range": [
+     23.188345,
+     29.657916999999998
+    ],
+    "max": 29.657916999999998,
+    "min": 23.188345
+   },
+   "units_windows": 138
+  },
+  "heldout_gitt25": {
+   "1rc": {
+    "acceptance": "NOT_ASSESSABLE (32 outside the validated domain)",
+    "bias_mV": -4.446179843579784,
+    "calibration_to_heldout_rmse_gap_mV": 2.573112565722667,
+    "load_only": {
+     "bias_mV": -4.296000310851236,
+     "p95_abs_mV": 21.500785167710777,
+     "rmse_mV": 12.068808308125764,
+     "samples": 285515
+    },
+    "mae_mV": 7.83688449901699,
+    "max_abs_mV": 59.67576171956601,
+    "p95_abs_mV": 20.883355578458968,
+    "per_window_rmse_mV": [
+     8.132104242201397,
+     9.928718279089578,
+     6.180631472115297,
+     2.9433442111644865,
+     3.9853311626459003,
+     6.713340177740959,
+     8.357323601098404,
+     9.407297714546875,
+     6.4256273268907735,
+     11.727377726789948,
+     12.671456024654493,
+     8.963627005064286,
+     5.092565103652511,
+     2.8987882084240413,
+     4.127842811137821,
+     2.979682478197674,
+     6.733515752668346,
+     10.715834491051352,
+     9.676843621231257,
+     4.892776181120787,
+     12.106826707049589,
+     7.715173391528941,
+     8.281154604527728,
+     4.168803863242082,
+     2.4681325001216528,
+     5.764564901612301,
+     8.719652399179635,
+     10.365297992276037,
+     11.179675287622855,
+     7.32295541190507,
+     9.151100355423946,
+     8.974781125174198,
+     5.1550419640384115,
+     3.016512893179077,
+     5.22942692784623,
+     8.036719306300883,
+     6.851868235866831,
+     3.5430834603317662,
+     5.245216422931064,
+     3.315046221844448,
+     15.84800601712477,
+     28.941630946735064,
+     7.527829993237777,
+     7.444628329091839,
+     3.3675912901873617,
+     2.6952940329691573,
+     6.092558486205127,
+     8.901554927956505,
+     10.55386536245465,
+     11.32210634367986,
+     7.276335788031589,
+     8.975631864509722,
+     8.271718806133292,
+     4.310187230917985,
+     3.1665848863456145,
+     6.226575044452884,
+     9.058086342256843,
+     7.8471434467882775,
+     4.9193149608205164,
+     5.354778820332632,
+     3.3865104281756637,
+     16.50053674200197,
+     29.205272176316715,
+     2.8997822852288717,
+     3.1805892145664654,
+     6.686217856897275,
+     9.51305671270756,
+     11.203927007132473,
+     11.959813947409033,
+     7.5772564414822385,
+     8.555490199464622,
+     7.915160065837186,
+     4.151805112699886,
+     2.959823163256249,
+     5.955424250805971,
+     4.94457127470759,
+     5.301740391731816,
+     3.5432756956904394,
+     30.476416242213492,
+     5.251052474905688,
+     5.368513457437012,
+     8.449941623628906,
+     12.463841523560642,
+     15.30061755960101,
+     16.67105915311132,
+     17.054135814396595,
+     11.883736030303357,
+     7.683583590623487,
+     4.884720258297833,
+     5.942638982962812,
+     9.472209292476144,
+     12.705993482987235,
+     15.258371803964934,
+     14.147697928178761,
+     12.347802149738481,
+     10.502149513199264,
+     10.801299765354425,
+     26.366448540872515,
+     43.59679832825936
+    ],
+    "rest_rmse_mV": 8.173623312801858,
+    "rest_samples": 118800,
+    "rmse_mV": 11.067438609119439,
+    "samples": 404315
+   },
+   "cells": [
+    "Expt 1/D",
+    "Expt 1/E",
+    "Expt 1/F",
+    "Expt 2,2/C",
+    "Expt 2,2/D"
+   ],
+   "comparison": {
+    "ci95_mV": [
+     4.800965274996351,
+     5.801168034928727
+    ],
+    "rmse_rint_minus_1rc_mV": 5.302546972341245,
+    "unconditioned_descriptive_label": "1RC_BETTER",
+    "unit": "held-out cell",
+    "units": 5,
+    "verdict": "NOT_ASSESSABLE (32 windows outside the validated domain)"
+   },
+   "comparison_load": {
+    "ci95_mV": [
+     4.459463499649515,
+     5.631248718340566
+    ],
+    "rmse_rint_minus_1rc_mV": 5.04493936211294,
+    "unconditioned_descriptive_label": "1RC_BETTER",
+    "unit": "held-out cell",
+    "units": 5,
+    "verdict": "NOT_ASSESSABLE (32 windows outside the validated domain)"
+   },
+   "current_A": {
+    "calibration_max": 2.5016553,
+    "excess_mA": 0.5150999999998795,
+    "heldout_max": 2.5021704
+   },
+   "descriptive_own_ocv_own_q": {
+    "cells": {
+     "Expt 1/D": {
+      "1rc_load_rmse_mV": 8.77821844012335,
+      "1rc_rmse_mV": 8.047947989661564,
+      "excluded_outside_own_scope": 0,
+      "q_own_Ah": 4.839342646678014,
+      "rint_rmse_mV": 13.861297333925561,
+      "windows": 21
+     },
+     "Expt 1/E": {
+      "1rc_load_rmse_mV": 9.21987449276551,
+      "1rc_rmse_mV": 8.430511716678744,
+      "excluded_outside_own_scope": 0,
+      "q_own_Ah": 4.810838563121142,
+      "rint_rmse_mV": 14.44518750985858,
+      "windows": 21
+     },
+     "Expt 1/F": {
+      "1rc_load_rmse_mV": 9.221527489062423,
+      "1rc_rmse_mV": 8.464623236122819,
+      "excluded_outside_own_scope": 0,
+      "q_own_Ah": 4.817509876253661,
+      "rint_rmse_mV": 14.637749448841136,
+      "windows": 21
+     },
+     "Expt 2,2/C": {
+      "1rc_load_rmse_mV": 9.377917745421428,
+      "1rc_rmse_mV": 8.595992385489694,
+      "excluded_outside_own_scope": 0,
+      "q_own_Ah": 4.806653623687678,
+      "rint_rmse_mV": 14.435643256279405,
+      "windows": 16
+     },
+     "Expt 2,2/D": {
+      "1rc_load_rmse_mV": 13.531318101694275,
+      "1rc_rmse_mV": 11.882907980128495,
+      "excluded_outside_own_scope": 0,
+      "q_own_Ah": 4.7825589249441816,
+      "rint_rmse_mV": 17.025045737214196,
+      "windows": 20
+     }
+    },
+    "note": "parameter transfer only, NO verdict; computed on ALL primary windows, including the out-of-domain ones"
+   },
+   "in_domain_windows_only": {
+    "1rc": {
+     "bias_mV": -2.918424577989256,
+     "load_only": {
+      "bias_mV": -2.403734965087134,
+      "p95_abs_mV": 19.68619320643148,
+      "rmse_mV": 10.192249177309218,
+      "samples": 193232
+     },
+     "mae_mV": 6.902284926308032,
+     "max_abs_mV": 48.29696876841672,
+     "p95_abs_mV": 19.45149045749956,
+     "rest_rmse_mV": 7.689872651338635,
+     "rest_samples": 80400,
+     "rmse_mV": 9.525434777970705,
+     "samples": 273632
+    },
+    "carries_no_verdict": true,
+    "cells": [
+     "Expt 1/D",
+     "Expt 1/E",
+     "Expt 1/F",
+     "Expt 2,2/C",
+     "Expt 2,2/D"
+    ],
+    "not_preregistered": true,
+    "rint": {
+     "bias_mV": -4.150388779861308,
+     "load_only": {
+      "bias_mV": -2.40410813635361,
+      "p95_abs_mV": 32.96438556243542,
+      "rmse_mV": 15.822547995314055,
+      "samples": 193232
+     },
+     "mae_mV": 11.177523441876087,
+     "max_abs_mV": 95.26689094819574,
+     "p95_abs_mV": 32.65415493767824,
+     "rest_rmse_mV": 13.923336417549242,
+     "rest_samples": 80400,
+     "rmse_mV": 15.289007142169336,
+     "samples": 273632
+    },
+    "selection_not_neutral": "the excluded out-of-domain windows carry larger errors than the kept ones; compare the full set's metrics",
+    "why": "descriptive only: the preregistered set is NOT_ASSESSABLE; a post-hoc in-domain subset cannot replace it",
+    "windows": 67
+   },
+   "out_of_domain_attribution": {
+    "current_above_calibration_max": 7,
+    "in_domain": 67,
+    "temperature_below_calibration_min": 20,
+    "temperature_below_calibration_min+current_above_calibration_max": 5
+   },
+   "parameter_uncertainty_1rc": {
+    "band": "2.5-97.5 % of the 200 cell-block bootstrap parameter sets (parameter uncertainty only; measurement uncertainty UNKNOWN, model discrepancy not quantified)",
+    "coverage_of_measurements": 0.06825371307025463,
+    "median_half_width_mV": 0.7831498738064546
+   },
+   "per_cell": {
+    "Expt 1/D": {
+     "1rc_bias_mV": 1.4114523900678917,
+     "1rc_rmse_mV": 7.973707929321738
+    },
+    "Expt 1/E": {
+     "1rc_bias_mV": -3.580758892919722,
+     "1rc_rmse_mV": 9.821173329911721
+    },
+    "Expt 1/F": {
+     "1rc_bias_mV": -4.1856038258449555,
+     "1rc_rmse_mV": 9.974048891159512
+    },
+    "Expt 2,2/C": {
+     "1rc_bias_mV": -4.624603142863646,
+     "1rc_rmse_mV": 10.21954151951034
+    },
+    "Expt 2,2/D": {
+     "1rc_bias_mV": -11.635820800027783,
+     "1rc_rmse_mV": 15.819131224902447
+    }
+   },
+   "per_unit": [
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 11662.85121652321,
+     "replay_record_sha256": "0e785a27694eb2ce6c0d05013d6b8b510a9abadaec829207d09fbbd8c8257326",
+     "result_id": "battery-thevenin1rc-0e785a27694eb2ce",
+     "route_validity": "in_domain",
+     "z0": 1.0
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 15611.303628373193,
+     "replay_record_sha256": "7ad4508f823cf954a7b66a9c01e63f40bdc06e7d4bc438658cd8f203f4852190",
+     "result_id": "battery-thevenin1rc-7ad4508f823cf954",
+     "route_validity": "in_domain",
+     "z0": 0.9585832903951519
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 19559.730040222406,
+     "replay_record_sha256": "4f4ce2c625c5f913b45b416fb01243cf0b5fb58aab3792bdb2dcd75d11556f53",
+     "result_id": "battery-thevenin1rc-4f4ce2c625c5f913",
+     "route_validity": "in_domain",
+     "z0": 0.9171630620503718
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23508.15845207381,
+     "replay_record_sha256": "a2c6cf7b7cfd4ec70800b1a97d20a4efb21acb6aa1718be679e904c210957e40",
+     "result_id": "battery-thevenin1rc-a2c6cf7b7cfd4ec7",
+     "route_validity": "in_domain",
+     "z0": 0.8757454600211384
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27456.574863922782,
+     "replay_record_sha256": "b2f5a445bba7b0030917d9fa6dfa1056b0c2a3be09bada3993c6dacb9f6df181",
+     "result_id": "battery-thevenin1rc-b2f5a445bba7b003",
+     "route_validity": "in_domain",
+     "z0": 0.8343273414636011
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31405.007275773503,
+     "replay_record_sha256": "cb7fb9d2a2719c8ce06c6c20960d36e0fe74fbf2406ead6f2845ee4e512ee0ba",
+     "result_id": "battery-thevenin1rc-cb7fb9d2a2719c8c",
+     "route_validity": "in_domain",
+     "z0": 0.7929109060281561
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35353.437687623315,
+     "replay_record_sha256": "8ae1c0dbcd44faab0689fa638eba148d3ab31817af939932abcde1691b5eaaae",
+     "result_id": "battery-thevenin1rc-8ae1c0dbcd44faab",
+     "route_validity": "in_domain",
+     "z0": 0.7514924855243211
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39301.8740994735,
+     "replay_record_sha256": "1fdf2e82607ba40fd55a5288fe3de433c41e173c59efdc543bef8403d8e50fe2",
+     "result_id": "battery-thevenin1rc-1fdf2e82607ba40f",
+     "route_validity": "in_domain",
+     "z0": 0.7100750357876026
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43250.312511325814,
+     "replay_record_sha256": "f396b6068184e84782afa76ae4fb96f8a5955bf9fe8fefba2e67d6e61c3ae332",
+     "result_id": "battery-thevenin1rc-f396b6068184e847",
+     "route_validity": "in_domain",
+     "z0": 0.6686565871092245
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47198.7489231769,
+     "replay_record_sha256": "1f4eba22daac3a7da18d3af8cffa0e46b6a20941a2d2b0e4de784d01dde9e5cd",
+     "result_id": "battery-thevenin1rc-1f4eba22daac3a7d",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.6272377856422012
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51147.189335025614,
+     "replay_record_sha256": "9695be58e2b735e81bd856235a34f2a21ec0dc27ce75e9704b9fa2389968694f",
+     "result_id": "battery-thevenin1rc-9695be58e2b735e8",
+     "route_validity": "in_domain",
+     "z0": 0.5858192762285527
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55095.62974687619,
+     "replay_record_sha256": "15fb93be0a207401ef7c5c0c0ef9c2d7aeaffef643139454cef0351c2831dbb4",
+     "result_id": "battery-thevenin1rc-15fb93be0a207401",
+     "route_validity": "in_domain",
+     "z0": 0.5444012472240704
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59044.066158726375,
+     "replay_record_sha256": "fc48595716b8d6df537baea85a12198bf3499cd114544c6d9c6418bf30c23bdb",
+     "result_id": "battery-thevenin1rc-fc48595716b8d6df",
+     "route_validity": "in_domain",
+     "z0": 0.5029823643073389
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 62992.50057057568,
+     "replay_record_sha256": "da46d3175672bc3c50aa5da633ce71e8e69e11e6977e2d4275a9ed9a5b3bf2c3",
+     "result_id": "battery-thevenin1rc-da46d3175672bc3c",
+     "route_validity": "in_domain",
+     "z0": 0.46156488821191843
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 66940.94698242849,
+     "replay_record_sha256": "91d2209a2e7719fa8ce925c9f88fe2beb82dd27dd756c474819fd1bf98fb1de1",
+     "result_id": "battery-thevenin1rc-91d2209a2e7719fa",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.42014728297922643
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 70889.37739427929,
+     "replay_record_sha256": "453ba3561dc15017f2170184ff7927a0b20df8499df64c0c4cdb19664c5045d9",
+     "result_id": "battery-thevenin1rc-453ba3561dc15017",
+     "route_validity": "in_domain",
+     "z0": 0.3787278445321729
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 74837.8178061308,
+     "replay_record_sha256": "bc98d1e829fb0b0b4f10da9cd1e091eebec6a5d7626e0de4c74299b0f37a6beb",
+     "result_id": "battery-thevenin1rc-bc98d1e829fb0b0b",
+     "route_validity": "in_domain",
+     "z0": 0.33730987018877767
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 78786.25621798099,
+     "replay_record_sha256": "7a78f72610c0de74d6281da839c0fe53261b23e9be48552785509a59582a8844",
+     "result_id": "battery-thevenin1rc-7a78f72610c0de74",
+     "route_validity": "in_domain",
+     "z0": 0.29589079441062904
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 82734.6946298324,
+     "replay_record_sha256": "bf1bfb23959dc8e8963072d253934be479c40f1df3a310b562f5a9edf7cee80c",
+     "result_id": "battery-thevenin1rc-bf1bfb23959dc8e8",
+     "route_validity": "in_domain",
+     "z0": 0.25447220519214897
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 86683.12704168429,
+     "replay_record_sha256": "440e0828d9cb4819b8dc70c381bb6666d6f595f57442e38fa0b7a05fc35f07d0",
+     "result_id": "battery-thevenin1rc-440e0828d9cb4819",
+     "route_validity": "in_domain",
+     "z0": 0.2130531620197158
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 90631.55945353588,
+     "replay_record_sha256": "dc12213b9c8742ad2961d34850c7f7e1f9ac8738ff88ea4f1109f4295b26c205",
+     "result_id": "battery-thevenin1rc-dc12213b9c8742ad",
+     "route_validity": "in_domain",
+     "z0": 0.17163545758660104
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 11743.463224931009,
+     "replay_record_sha256": "3972e9ee2a4a0803594bddd7d276b0886c5819c35fec57c39f52d7928040d83e",
+     "result_id": "battery-thevenin1rc-3972e9ee2a4a0803",
+     "route_validity": "outside_validated_domain",
+     "z0": 1.0
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 15691.615636751318,
+     "replay_record_sha256": "b3edc2f9ee8232ff2fd453c126665611ce11c3030e891a58325f97ba9b0289ae",
+     "result_id": "battery-thevenin1rc-b3edc2f9ee8232ff",
+     "route_validity": "in_domain",
+     "z0": 0.958586012998996
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 19639.766048573918,
+     "replay_record_sha256": "2e5974e7dd61656b5546bf063d521b05162510e5b198ab3a8e9b9aa5e2f9f4c7",
+     "result_id": "battery-thevenin1rc-2e5974e7dd61656b",
+     "route_validity": "in_domain",
+     "z0": 0.91717288742469
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23587.9264603951,
+     "replay_record_sha256": "6f6768b74ed1c73b671431da5c937839d1c0ba5157315adcc8cd71adc0879f1b",
+     "result_id": "battery-thevenin1rc-6f6768b74ed1c73b",
+     "route_validity": "in_domain",
+     "z0": 0.8757598680613691
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27536.08487221808,
+     "replay_record_sha256": "cc3c26db85526d2d00e44060d38a5095510d858ea0196b3bc1065eaed04eb9df",
+     "result_id": "battery-thevenin1rc-cc3c26db85526d2d",
+     "route_validity": "in_domain",
+     "z0": 0.8343448001472077
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31484.23928404,
+     "replay_record_sha256": "76bb16262363408c585e47d6ff1634551a68a796ac8294d9e0d206acd50c538e",
+     "result_id": "battery-thevenin1rc-76bb16262363408c",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.7929301210985764
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35432.38769586128,
+     "replay_record_sha256": "26a7a5829c68c395d4dc984a332124251d4a89ed92b2776d8089cd3dea2ec7eb",
+     "result_id": "battery-thevenin1rc-26a7a5829c68c395",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.751515994331506
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39380.54810768351,
+     "replay_record_sha256": "eb192c923d87235c8c6a02641445a87d6ee4e1712953769a9ae923727ca0c653",
+     "result_id": "battery-thevenin1rc-eb192c923d87235c",
+     "route_validity": "in_domain",
+     "z0": 0.7101024551522189
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43328.72251950629,
+     "replay_record_sha256": "5e7d3d789e101ee617c98fef6441e9216ef21ceae469dc81bcbacabdf0071e0f",
+     "result_id": "battery-thevenin1rc-5e7d3d789e101ee6",
+     "route_validity": "in_domain",
+     "z0": 0.6686882683975239
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47276.88293132681,
+     "replay_record_sha256": "a5028d2eeb33fde8c67e3a4feab16bf330e8bfb85a8eb9d7df5c9af55b6037f9",
+     "result_id": "battery-thevenin1rc-a5028d2eeb33fde8",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.6272729097763073
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51225.05934315108,
+     "replay_record_sha256": "6b0655bb81fb016a86b1b78fe5b7623d3c2922454eb22a974eed8b2a87649e68",
+     "result_id": "battery-thevenin1rc-6b0655bb81fb016a",
+     "route_validity": "in_domain",
+     "z0": 0.5858596469359711
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55173.22775497218,
+     "replay_record_sha256": "31657d219ba6ce37ec1110f311858df76e65d4edb39c6a410f261baf9bd6d7b9",
+     "result_id": "battery-thevenin1rc-31657d219ba6ce37",
+     "route_validity": "in_domain",
+     "z0": 0.5444445516886829
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59121.40216679621,
+     "replay_record_sha256": "8bb28a68c3dab2f393a49767601a9088ab2eba221ca622188bf7b14610f9a7b9",
+     "result_id": "battery-thevenin1rc-8bb28a68c3dab2f3",
+     "route_validity": "in_domain",
+     "z0": 0.5030299907535923
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63069.57857862121,
+     "replay_record_sha256": "8ac77393792a4208a2138c2bde07a94b1c903a5c23295dbf73d1384e89cbe00b",
+     "result_id": "battery-thevenin1rc-8ac77393792a4208",
+     "route_validity": "in_domain",
+     "z0": 0.4616156826047375
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 67017.74699044251,
+     "replay_record_sha256": "2d071ebd08f548ed05a90468aa67d8d9c8d6152fb599bd3a4b67d469e1ea1429",
+     "result_id": "battery-thevenin1rc-2d071ebd08f548ed",
+     "route_validity": "in_domain",
+     "z0": 0.42020041440115985
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 70965.92140226442,
+     "replay_record_sha256": "1475d5b05f00d6687a896aec9a3f7e7aa04b28e4e66f530b0b863985ae7520cf",
+     "result_id": "battery-thevenin1rc-1475d5b05f00d668",
+     "route_validity": "in_domain",
+     "z0": 0.378786419126254
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 74914.08581408422,
+     "replay_record_sha256": "666de0714eed2db517f54397aca592309b5e25dcbc2e5920a48cc0222cb1f0b8",
+     "result_id": "battery-thevenin1rc-666de0714eed2db5",
+     "route_validity": "in_domain",
+     "z0": 0.33737158509298626
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 78862.25222590819,
+     "replay_record_sha256": "94308feb0ad4188f415085f0984623ae32fdfb8ce36550a7f3b5532f7f433969",
+     "result_id": "battery-thevenin1rc-94308feb0ad4188f",
+     "route_validity": "in_domain",
+     "z0": 0.2959581940327103
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 82810.42863772929,
+     "replay_record_sha256": "d745e89f47be15be60cfd22440233c99705439b0af67372fa637923cdaa9366a",
+     "result_id": "battery-thevenin1rc-d745e89f47be15be",
+     "route_validity": "in_domain",
+     "z0": 0.25454462914141607
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 86758.59104955322,
+     "replay_record_sha256": "126db75df2557028f873066258cbad6af86b3622959c093dd6b6d92fc65a90a2",
+     "result_id": "battery-thevenin1rc-126db75df2557028",
+     "route_validity": "in_domain",
+     "z0": 0.21313002034983508
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 90706.76346137488,
+     "replay_record_sha256": "5d1219f647207d96915a4e85bc8fb6c73bd25e074debc729e9e510a4096efa78",
+     "result_id": "battery-thevenin1rc-5d1219f647207d96",
+     "route_validity": "in_domain",
+     "z0": 0.17171601962322036
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 11894.525240693678,
+     "replay_record_sha256": "41d5d268baf0412f7aac6f6c2d50710ad92fa927560518f063fe72f044670edc",
+     "result_id": "battery-thevenin1rc-41d5d268baf0412f",
+     "route_validity": "in_domain",
+     "z0": 1.0
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 15842.889652536483,
+     "replay_record_sha256": "d44ddc810876fde180f037e4839cf2aa0df1a44293128affc04349069a15a447",
+     "result_id": "battery-thevenin1rc-d44ddc810876fde1",
+     "route_validity": "in_domain",
+     "z0": 0.9585820609233966
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 19791.25006437578,
+     "replay_record_sha256": "d71105adfef94e416b534433c8f7b63222c76c602b17a537d4983e6ddf96cd13",
+     "result_id": "battery-thevenin1rc-d71105adfef94e41",
+     "route_validity": "in_domain",
+     "z0": 0.9171651213761998
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23739.60647621978,
+     "replay_record_sha256": "07f03d12de7a17b5aaa555755c0012afba0bf97760b5ef060dfd86b1ac7ad6a2",
+     "result_id": "battery-thevenin1rc-07f03d12de7a17b5",
+     "route_validity": "in_domain",
+     "z0": 0.8757480813003922
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27687.9768880638,
+     "replay_record_sha256": "89e2fc146a512b5bb088af8ae8eda67e41dc6c9f2bcee418b6687aacf9e50f69",
+     "result_id": "battery-thevenin1rc-89e2fc146a512b5b",
+     "route_validity": "in_domain",
+     "z0": 0.8343315290508679
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31636.339299907384,
+     "replay_record_sha256": "8165f59d36fa9e76ec8873250c2c23c92d54e0311401e0d9e5c2e968673137af",
+     "result_id": "battery-thevenin1rc-8165f59d36fa9e76",
+     "route_validity": "in_domain",
+     "z0": 0.7929135601696535
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35584.699711748865,
+     "replay_record_sha256": "c0d727d5d50eb35fb89a98ea530c6a2550bba9788ae4df785389cec54b868569",
+     "result_id": "battery-thevenin1rc-c0d727d5d50eb35f",
+     "route_validity": "in_domain",
+     "z0": 0.751496511250169
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39533.054123589274,
+     "replay_record_sha256": "91d300b2f4ce76d9cb834bb84c3a6af5bdb53a5fc8af61b1500de31ed0134630",
+     "result_id": "battery-thevenin1rc-91d300b2f4ce76d9",
+     "route_validity": "in_domain",
+     "z0": 0.7100796208709539
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43481.41253543316,
+     "replay_record_sha256": "25b5247fdc0cd7c99cdbd50bf28613a0d89997123ea3db27d01ee303a83f95ce",
+     "result_id": "battery-thevenin1rc-25b5247fdc0cd7c9",
+     "route_validity": "in_domain",
+     "z0": 0.6686631451606477
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47429.78094727566,
+     "replay_record_sha256": "2b237e3a1dcec42ae706c644c4198656ad1bac25258b2de8cdcb0abdf732ece3",
+     "result_id": "battery-thevenin1rc-2b237e3a1dcec42a",
+     "route_validity": "in_domain",
+     "z0": 0.6272464082387108
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51378.145359119895,
+     "replay_record_sha256": "4e86d915058eba1002983763872160c14f00f81e5f6c7a4280227a1839141f62",
+     "result_id": "battery-thevenin1rc-4e86d915058eba10",
+     "route_validity": "in_domain",
+     "z0": 0.5858282445671624
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55326.50577096309,
+     "replay_record_sha256": "d6fe71fd0e59fb5b1dbb61f96d722b180ff4b7bc6adee25cdaf4900f8b19ab03",
+     "result_id": "battery-thevenin1rc-d6fe71fd0e59fb5b",
+     "route_validity": "in_domain",
+     "z0": 0.5444102525570402
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59274.856182802,
+     "replay_record_sha256": "10cd29b6ea5a1f849cb8fad6e659f5499cea78b9f727c70433a312280fe5be74",
+     "result_id": "battery-thevenin1rc-10cd29b6ea5a1f84",
+     "route_validity": "in_domain",
+     "z0": 0.5029934116008394
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63223.20459464559,
+     "replay_record_sha256": "35d68489e368646bd247b250234890d21072ae278245cbf77fc30ed8fe7ac1c9",
+     "result_id": "battery-thevenin1rc-35d68489e368646b",
+     "route_validity": "in_domain",
+     "z0": 0.461576899276545
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 67171.56100648656,
+     "replay_record_sha256": "d744bcf7d60e66a9be79a69d86d7b4341f38540c54cef13d7c3e420e213384c2",
+     "result_id": "battery-thevenin1rc-d744bcf7d60e66a9",
+     "route_validity": "in_domain",
+     "z0": 0.420160066629096
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 71119.92141832528,
+     "replay_record_sha256": "3e82a544d0f6e2a89a7a691b7d333704611909f016244d2a6450dac1240e5447",
+     "result_id": "battery-thevenin1rc-3e82a544d0f6e2a8",
+     "route_validity": "in_domain",
+     "z0": 0.37874281866215653
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 75068.27783016907,
+     "replay_record_sha256": "e7bcf423602d7a0cc51e14a7191b197deb2af2adb391f8ee9353c2c9cda7b216",
+     "result_id": "battery-thevenin1rc-e7bcf423602d7a0c",
+     "route_validity": "in_domain",
+     "z0": 0.337325470545486
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 79016.6342420117,
+     "replay_record_sha256": "d38de2fad8daa5744e095b03a5e565016b6f8fa8a6419e01595003a5eb1406fd",
+     "result_id": "battery-thevenin1rc-d38de2fad8daa574",
+     "route_validity": "in_domain",
+     "z0": 0.2959076644533709
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 82964.98265385279,
+     "replay_record_sha256": "15c160ca52aa88ea947cb2b6732370b5c0a5801c06382de737fbde6d64a62b35",
+     "result_id": "battery-thevenin1rc-15c160ca52aa88ea",
+     "route_validity": "in_domain",
+     "z0": 0.2544898673141416
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 86913.33306569187,
+     "replay_record_sha256": "0506be7a1b15923a5aacdbcbb89457d337082ec84abd7f581a5d23c78fe98e71",
+     "result_id": "battery-thevenin1rc-0506be7a1b15923a",
+     "route_validity": "in_domain",
+     "z0": 0.21307372390964974
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 90861.7034775372,
+     "replay_record_sha256": "0fc98f6fc0aa0174bb719d4b2c1285ec638a6a5010a077726b1692c978fd0175",
+     "result_id": "battery-thevenin1rc-0fc98f6fc0aa0174",
+     "route_validity": "in_domain",
+     "z0": 0.1716573760119532
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 19653.604050022404,
+     "replay_record_sha256": "3875f8b6726bb9c00e70e5fc5231177311c7ee17d72aea62facf5bf753969602",
+     "result_id": "battery-thevenin1rc-3875f8b6726bb9c0",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.9171877594287136
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23601.704461838206,
+     "replay_record_sha256": "4cd6ebcbd15e47b47ea9cffa7a38a4d883676a570697b2c6b256896f4f3f2a51",
+     "result_id": "battery-thevenin1rc-4cd6ebcbd15e47b4",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.8757806177563418
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27549.79487365231,
+     "replay_record_sha256": "d55fa7d878a6b340648ab84a9a45527e6de60ac582088b3de5946a27dabc65ad",
+     "result_id": "battery-thevenin1rc-d55fa7d878a6b340",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.8343744024715463
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31497.835285464418,
+     "replay_record_sha256": "175ded6845a5e09280958af8b8af4fc669cd23bf2ba4b9133a9bbc85685aab63",
+     "result_id": "battery-thevenin1rc-175ded6845a5e092",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.7929683340460453
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35445.85969727312,
+     "replay_record_sha256": "55b8f0928388c8ac3c35e484ab5537ed68f0b35b520170ce761627228782fbce",
+     "result_id": "battery-thevenin1rc-55b8f0928388c8ac",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.7515652948802805
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39393.94010908628,
+     "replay_record_sha256": "e7d8d25f34efe0c7d5d0cf4c05fbe3d7eb7862b87068975ffe674a51a872b0ee",
+     "result_id": "battery-thevenin1rc-e7d8d25f34efe0c7",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.7101622589956353
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43342.03252090153,
+     "replay_record_sha256": "471585d48b3d4d5f8fe34f17ece52ed6ca736c4308a5a461b1aa6609551a0de3",
+     "result_id": "battery-thevenin1rc-471585d48b3d4d5f",
+     "route_validity": "in_domain",
+     "z0": 0.6687600112655219
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47290.11893271821,
+     "replay_record_sha256": "c4b7babdded0a3367fbe09b2d5af03e413bba11283d87947ea8698c866c96bd8",
+     "result_id": "battery-thevenin1rc-c4b7babdded0a336",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.6273564215521588
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51238.2113445327,
+     "replay_record_sha256": "7f08b25a031145d1f94c7e1a942f9373df8ee4c01daa0d63e603a830eed65727",
+     "result_id": "battery-thevenin1rc-7f08b25a031145d1",
+     "route_validity": "in_domain",
+     "z0": 0.5859542759362892
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55186.293756348605,
+     "replay_record_sha256": "5c26d51a2ee8c72c22bd499a2a91e73c1de67b46d357c787e1709cbbdc54963f",
+     "result_id": "battery-thevenin1rc-5c26d51a2ee8c72c",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.5445513565113127
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59134.338168160815,
+     "replay_record_sha256": "826426e8f8caac29ec24f535852e12a6f9ee3f0dbfaa3c12f70d44f2d690174d",
+     "result_id": "battery-thevenin1rc-826426e8f8caac29",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.5031493223271308
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63082.406579974224,
+     "replay_record_sha256": "89129e10f58648ffbfa042f1140b4091469ee50dbfe0694c23ce7f11b2b60e7e",
+     "result_id": "battery-thevenin1rc-89129e10f58648ff",
+     "route_validity": "in_domain",
+     "z0": 0.4617465287057616
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 74926.6658154212,
+     "replay_record_sha256": "7b8f4ce78e8b59f398114146e898af616a32b60d3d6b0adc90933cfd50d268e0",
+     "result_id": "battery-thevenin1rc-7b8f4ce78e8b59f3",
+     "route_validity": "in_domain",
+     "z0": 0.3375379155123004
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 78874.73822723608,
+     "replay_record_sha256": "b333600895523cf3cd6febedac6aea2a371060172a5a5b32390fb34cd1515a65",
+     "result_id": "battery-thevenin1rc-b333600895523cf3",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.29613467061864673
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 82822.77063904802,
+     "replay_record_sha256": "5a3a451da2b795531872fb18dcccea44705e7c2695050980745692cd2d08267a",
+     "result_id": "battery-thevenin1rc-5a3a451da2b79553",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.2547326948764298
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 90718.8514626734,
+     "replay_record_sha256": "a1230edbce2f70cd4894a649d5f4e377794541933e3938103dc87cc5534ffd80",
+     "result_id": "battery-thevenin1rc-a1230edbce2f70cd",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.17193090657025578
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 15849.315653198108,
+     "replay_record_sha256": "430f4af47e480ef7053c11869a284596cee3771777c71aae115b70b25e2c9751",
+     "result_id": "battery-thevenin1rc-430f4af47e480ef7",
+     "route_validity": "in_domain",
+     "z0": 0.9585938122705825
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 19797.69206504291,
+     "replay_record_sha256": "84a26208f8ce8903845967a670c0f6e62346814c4012058ad04aed92264eb12a",
+     "result_id": "battery-thevenin1rc-84a26208f8ce8903",
+     "route_validity": "in_domain",
+     "z0": 0.9171870715700048
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 23746.044476885494,
+     "replay_record_sha256": "2d343d48b72dc68e353c3370daa5041ce84540dfdc49189a05f94128808a4b0d",
+     "result_id": "battery-thevenin1rc-2d343d48b72dc68e",
+     "route_validity": "in_domain",
+     "z0": 0.8757807017967035
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 27694.39088872628,
+     "replay_record_sha256": "ca37a7ea583c936cfee89859d0ab7a67b848b2528623233fc0b3753c1a210405",
+     "result_id": "battery-thevenin1rc-ca37a7ea583c936c",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.834374344940343
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31642.707300565584,
+     "replay_record_sha256": "8615a04e4e791041884dc7ec4e9cb9d01796919aa3dcd06b3e90ff301fc08fc3",
+     "result_id": "battery-thevenin1rc-8615a04e4e791041",
+     "route_validity": "in_domain",
+     "z0": 0.7929671590309545
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 35591.015712406515,
+     "replay_record_sha256": "100b8b75dd4a7e546d36831ab7441f6ef7e678bf4752ed016d7e9e273569f66f",
+     "result_id": "battery-thevenin1rc-100b8b75dd4a7e54",
+     "route_validity": "in_domain",
+     "z0": 0.7515649128375789
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 39539.35012424691,
+     "replay_record_sha256": "7ebf071a0eaa3553b935aa4dd8fe8be156674a8f92b276f4e68d8bb1dc7ba687",
+     "result_id": "battery-thevenin1rc-7ebf071a0eaa3553",
+     "route_validity": "in_domain",
+     "z0": 0.7101622653736157
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 43487.692536090006,
+     "replay_record_sha256": "409e104dd0000b6c29fa888fb84c52c124efd27f512090bbb59031f3f52336b9",
+     "result_id": "battery-thevenin1rc-409e104dd0000b6c",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.6687590417276462
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 47436.03894793379,
+     "replay_record_sha256": "d63d07a868463adc29ef4206f5e31ac3028997b7f0588e37048abc0a6034491b",
+     "result_id": "battery-thevenin1rc-d63d07a868463adc",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.6273562772201362
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 51384.385359778506,
+     "replay_record_sha256": "25e5abb98d5e7fb4495d4463ce889e50616471c2159881d07c3711ddfc16fdb7",
+     "result_id": "battery-thevenin1rc-25e5abb98d5e7fb4",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.5859532527170691
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 55332.7317716211,
+     "replay_record_sha256": "069112e0c5c93cfbe61502ea9a9d75b26f6d8f025328f5264bb334147739b877",
+     "result_id": "battery-thevenin1rc-069112e0c5c93cfb",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.5445501222633726
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 59281.058183462825,
+     "replay_record_sha256": "90cf1cc380f0e59e1bfb6129d205ceee2810b543ec17d2df0c9bd8490c2708dc",
+     "result_id": "battery-thevenin1rc-90cf1cc380f0e59e",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.5031471173828044
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 63229.37259530299,
+     "replay_record_sha256": "a0599923876c63c475a115c7d832df5567721333e74d2b4c834505cc054c93b7",
+     "result_id": "battery-thevenin1rc-a0599923876c63c4",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.4617443552149414
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 67177.72300714391,
+     "replay_record_sha256": "252e1275ade060bcdfa85ce44edfe476f8c35664bae791c00be2a0da235704ac",
+     "result_id": "battery-thevenin1rc-252e1275ade060bc",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.4203420377135866
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 71126.0694189886,
+     "replay_record_sha256": "6e29e11056c5be1da4418e15102d3358fe068cfe7d8ea1cb89010c9d9138f295",
+     "result_id": "battery-thevenin1rc-6e29e11056c5be1d",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.37893923226605264
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 75074.3978308285,
+     "replay_record_sha256": "7ba47965d5f4242e112466238841e9d0cae3719ea70829769073005bbdc087c7",
+     "result_id": "battery-thevenin1rc-7ba47965d5f4242e",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.3375363306806787
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 79022.7362426722,
+     "replay_record_sha256": "db223a29d5338e987a5a50c0f73f13cc4e42e1bc9128d763c822418bc4487105",
+     "result_id": "battery-thevenin1rc-db223a29d5338e98",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.2961333708165734
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 82971.05065451332,
+     "replay_record_sha256": "b41dc018d4a1f447a61fcc2b82ecfde63d88c0eaf76bb3dc37959ef7744d1bf8",
+     "result_id": "battery-thevenin1rc-b41dc018d4a1f447",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.2547308506816499
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 86919.33506635058,
+     "replay_record_sha256": "9122a5bb7b8d4bbefe07ae1aa9b44b84058289ebebf803a2309e606019eca652",
+     "result_id": "battery-thevenin1rc-9122a5bb7b8d4bbe",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.2133298347875182
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 90867.65747819192,
+     "replay_record_sha256": "8acb8608c860fe5ce5b314fc68ceaee57065f17818a4b9307750f241142ee26a",
+     "result_id": "battery-thevenin1rc-8acb8608c860fe5c",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.17192882614595884
+    }
+   ],
+   "rint": {
+    "acceptance": "NOT_ASSESSABLE (32 outside the validated domain)",
+    "bias_mV": -5.675515775694635,
+    "calibration_to_heldout_rmse_gap_mV": 1.6260929293402402,
+    "load_only": {
+     "bias_mV": -4.292503615340896,
+     "p95_abs_mV": 35.24047669868481,
+     "rmse_mV": 17.113747670238702,
+     "samples": 285515
+    },
+    "mae_mV": 11.980093024663002,
+    "max_abs_mV": 106.62130078086606,
+    "p95_abs_mV": 34.4899783472083,
+    "per_window_rmse_mV": [
+     7.685131736673921,
+     10.880748184703414,
+     11.047712447939428,
+     11.286649398983378,
+     12.667302157041703,
+     14.446114898541667,
+     15.727817863587775,
+     16.490129390692136,
+     12.085888938953842,
+     13.039453089178044,
+     14.364277355284042,
+     12.403348309723341,
+     11.940675935122114,
+     13.229276392852196,
+     15.105784255302813,
+     14.44158733280984,
+     13.49505725939319,
+     13.812321504065542,
+     13.838610548058558,
+     14.914870056712296,
+     18.63199304278726,
+     7.655218008536763,
+     9.957277051248376,
+     10.661959489474025,
+     11.813672406393131,
+     13.841334745497495,
+     15.84334296927591,
+     17.117683866297824,
+     17.734125628868977,
+     12.76011441127878,
+     10.195748001657385,
+     11.727580526381253,
+     11.320449156454922,
+     12.662227736817442,
+     15.255461435650036,
+     17.775580376316306,
+     16.90865434769913,
+     13.674484773398298,
+     10.755545145630043,
+     11.375309920923268,
+     22.801818435470604,
+     34.262024639709615,
+     7.491065776167635,
+     9.57944106792748,
+     10.674051502262992,
+     12.030719290573794,
+     14.086339513554314,
+     16.016862775219575,
+     17.302662664270436,
+     17.872387559789868,
+     12.726198932067305,
+     9.769210319391469,
+     11.361297647550447,
+     11.391635392571455,
+     13.191202250506198,
+     16.054907334625312,
+     18.594370968862638,
+     17.64891873992108,
+     14.384035203006068,
+     10.828554969709826,
+     11.568741271350977,
+     23.354965999195038,
+     34.47726661044044,
+     10.447790869899585,
+     11.962753921714132,
+     14.20965668586694,
+     16.295462486274385,
+     17.68410456069788,
+     18.26011275870914,
+     12.817324185156648,
+     9.115947617730873,
+     10.824701139372722,
+     11.01007734640212,
+     12.806746522773606,
+     15.618283176664885,
+     14.060287420255673,
+     10.650076077919893,
+     11.349586842600024,
+     35.56476900535839,
+     7.70691096289483,
+     11.516588572543661,
+     14.511890287385222,
+     17.863229567527917,
+     20.349147714793215,
+     21.65500538166848,
+     22.039465768234766,
+     15.919659305700241,
+     8.5365151188207,
+     9.308738746278816,
+     12.184854822150552,
+     15.930117800672658,
+     19.47309477852667,
+     22.255345284545633,
+     21.191434880766703,
+     18.35170507055277,
+     14.133419073029007,
+     15.728557221848867,
+     31.523429748245185,
+     47.809226344678386
+    ],
+    "rest_rmse_mV": 14.426509943211627,
+    "rest_samples": 118800,
+    "rmse_mV": 16.369985581460686,
+    "samples": 404315
+   },
+   "route_validity": {
+    "in_domain": 67,
+    "outside_validated_domain": 32
+   },
+   "temperature_C": {
+    "calibration_range": [
+     23.188345,
+     29.657916999999998
+    ],
+    "max": 28.348055,
+    "min": 17.607104999999997
+   },
+   "units_windows": 99
+  },
+  "heldout_gitt5": {
+   "1rc": {
+    "acceptance": "NOT_ASSESSABLE (8 outside the validated domain)",
+    "bias_mV": -4.063962985044643,
+    "calibration_to_heldout_rmse_gap_mV": 3.0005244805048275,
+    "load_only": {
+     "bias_mV": -3.916982814441394,
+     "p95_abs_mV": 21.488038978882873,
+     "rmse_mV": 11.666500232574785,
+     "samples": 244979
+    },
+    "mae_mV": 9.364987171615025,
+    "max_abs_mV": 43.978939385983296,
+    "p95_abs_mV": 21.41087993943524,
+    "per_window_rmse_mV": [
+     11.115428502813334,
+     5.374098111584989,
+     11.35190805752164,
+     7.88417103259212,
+     9.855128222433585,
+     7.844371510059785,
+     11.580175565550329,
+     8.652813631902317,
+     9.213741775970492,
+     8.695374635675986,
+     12.66157070720572,
+     9.593410948272156,
+     9.560855315954276,
+     12.265065490540481,
+     16.493055481895368,
+     17.175316304603683,
+     17.700240296477823
+    ],
+    "rest_rmse_mV": 9.186350470375869,
+    "rest_samples": 20400,
+    "rmse_mV": 11.494850523901599,
+    "samples": 265379
+   },
+   "cells": [
+    "Expt 1/D",
+    "Expt 1/E",
+    "Expt 1/F",
+    "Expt 2,2/C",
+    "Expt 2,2/D"
+   ],
+   "comparison": {
+    "ci95_mV": [
+     8.573409617514299,
+     13.201988038403753
+    ],
+    "rmse_rint_minus_1rc_mV": 11.035070834920976,
+    "unconditioned_descriptive_label": "1RC_BETTER",
+    "unit": "held-out cell",
+    "units": 5,
+    "verdict": "NOT_ASSESSABLE (8 windows outside the validated domain)"
+   },
+   "comparison_load": {
+    "ci95_mV": [
+     8.602630194792194,
+     13.52413541782823
+    ],
+    "rmse_rint_minus_1rc_mV": 11.228590860466097,
+    "unconditioned_descriptive_label": "1RC_BETTER",
+    "unit": "held-out cell",
+    "units": 5,
+    "verdict": "NOT_ASSESSABLE (8 windows outside the validated domain)"
+   },
+   "current_A": {
+    "calibration_max": 2.5016553,
+    "excess_mA": 0.5150999999998795,
+    "heldout_max": 2.5021704
+   },
+   "in_domain_windows_only": {
+    "1rc": {
+     "bias_mV": -3.0683462908762724,
+     "load_only": {
+      "bias_mV": -2.9102129417217784,
+      "p95_abs_mV": 21.19518570925356,
+      "rmse_mV": 12.031142903928968,
+      "samples": 129733
+     },
+     "mae_mV": 9.685225780520495,
+     "max_abs_mV": 43.978939385983296,
+     "p95_abs_mV": 21.050124665644084,
+     "rest_rmse_mV": 8.241239175049126,
+     "rest_samples": 10800,
+     "rmse_mV": 11.783206857708088,
+     "samples": 140533
+    },
+    "carries_no_verdict": true,
+    "cells": [
+     "Expt 1/D",
+     "Expt 1/F",
+     "Expt 2,2/D"
+    ],
+    "not_preregistered": true,
+    "rint": {
+     "bias_mV": -16.030714663338753,
+     "load_only": {
+      "bias_mV": -16.577529338663847,
+      "p95_abs_mV": 38.14176979172803,
+      "rmse_mV": 22.21188005398051,
+      "samples": 129733
+     },
+     "mae_mV": 18.278251014019432,
+     "max_abs_mV": 94.3296096647086,
+     "p95_abs_mV": 38.13910240190168,
+     "rest_rmse_mV": 16.510487594744845,
+     "rest_samples": 10800,
+     "rmse_mV": 21.82661840751565,
+     "samples": 140533
+    },
+    "selection_not_neutral": "the excluded out-of-domain windows carry larger errors than the kept ones; compare the full set's metrics",
+    "why": "descriptive only: the preregistered set is NOT_ASSESSABLE; a post-hoc in-domain subset cannot replace it",
+    "windows": 9
+   },
+   "out_of_domain_attribution": {
+    "current_above_calibration_max": 3,
+    "in_domain": 9,
+    "temperature_above_calibration_max": 1,
+    "temperature_above_calibration_max+current_above_calibration_max": 1,
+    "temperature_below_calibration_min": 1,
+    "temperature_below_calibration_min+current_above_calibration_max": 2
+   },
+   "parameter_uncertainty_1rc": {
+    "band": "2.5-97.5 % of the 200 cell-block bootstrap parameter sets (parameter uncertainty only; measurement uncertainty UNKNOWN, model discrepancy not quantified)",
+    "coverage_of_measurements": 0.11056262929621409,
+    "median_half_width_mV": 2.3600835286106125
+   },
+   "per_cell": {
+    "Expt 1/D": {
+     "1rc_bias_mV": 2.9783026417568146,
+     "1rc_rmse_mV": 9.26633221306691
+    },
+    "Expt 1/E": {
+     "1rc_bias_mV": -2.200669985056101,
+     "1rc_rmse_mV": 9.586831678738394
+    },
+    "Expt 1/F": {
+     "1rc_bias_mV": -3.5804752744693196,
+     "1rc_rmse_mV": 10.15937355309149
+    },
+    "Expt 2,2/C": {
+     "1rc_bias_mV": -6.67758253718683,
+     "1rc_rmse_mV": 10.9964036361862
+    },
+    "Expt 2,2/D": {
+     "1rc_bias_mV": -14.84022695312047,
+     "1rc_rmse_mV": 17.130001710888425
+    }
+   },
+   "per_unit": [
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 21344.510226405167,
+     "replay_record_sha256": "058873a03f782484f484e7263339e78d8642a07ccb9e2bcdaaa5c0d1395388e0",
+     "result_id": "battery-thevenin1rc-058873a03f782484",
+     "route_validity": "in_domain",
+     "z0": 1.0
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 26446.070758540183,
+     "replay_record_sha256": "98ab4a142f4e8f68df0cbd3576614958736016aed2ac83ff6df30a88562be071",
+     "result_id": "battery-thevenin1rc-98ab4a142f4e8f68",
+     "route_validity": "in_domain",
+     "z0": 0.7930615062181523
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31547.627290673438,
+     "replay_record_sha256": "b085eb7c4dcd9282d90f4429135ad9779bfc40c06624e830f425a9835948fd89",
+     "result_id": "battery-thevenin1rc-b085eb7c4dcd9282",
+     "route_validity": "in_domain",
+     "z0": 0.5861245134017786
+    },
+    {
+     "cell": "Expt 1/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 36649.16582280485,
+     "replay_record_sha256": "9a1fa94014e3e02eb12f09f205ed40ab563c28c08916b497b4203b06d6576df6",
+     "result_id": "battery-thevenin1rc-9a1fa94014e3e02e",
+     "route_validity": "in_domain",
+     "z0": 0.3791862351252232
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 21361.488228176662,
+     "replay_record_sha256": "718501bdc6bdcab563548a90115c71d44447084946c7fe8e99c8cb0ddaddf73c",
+     "result_id": "battery-thevenin1rc-718501bdc6bdcab5",
+     "route_validity": "outside_validated_domain",
+     "z0": 1.0
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 26461.67476016737,
+     "replay_record_sha256": "c3595523770e4d5b0edeb96048b4f3fe52165f4d4ae9043937bbf673d4389bf8",
+     "result_id": "battery-thevenin1rc-c3595523770e4d5b",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.7930672072170332
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31561.857292157598,
+     "replay_record_sha256": "f502725552a5f69c6083d70c64413e802fafcf30c5d7cd5020320ca4d7477c3e",
+     "result_id": "battery-thevenin1rc-f502725552a5f69c",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.5861328653395156
+    },
+    {
+     "cell": "Expt 1/E",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 36662.03582414787,
+     "replay_record_sha256": "8d08c8528241f5654e07619e0a2abb05bc81b9f18529b46388e1d5e18b519dc7",
+     "result_id": "battery-thevenin1rc-8d08c8528241f565",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.3791988423887064
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 21495.96624220349,
+     "replay_record_sha256": "b95b8ddf1144c78032e32cdef37bfcb69e74752e76c892c34923cf053fedc4d3",
+     "result_id": "battery-thevenin1rc-b95b8ddf1144c780",
+     "route_validity": "in_domain",
+     "z0": 1.0
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 26597.1887743026,
+     "replay_record_sha256": "52b8b6364f118faa92ea9d37bd92671b23c92cd5ff4f66812d0a047415ea9d04",
+     "result_id": "battery-thevenin1rc-52b8b6364f118faa",
+     "route_validity": "in_domain",
+     "z0": 0.79306307884432
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31698.39930639969,
+     "replay_record_sha256": "d2eeaa34b3a0d7b96e4a9a589e16d113bcc4539f01f0a005319f903e06d5c721",
+     "result_id": "battery-thevenin1rc-d2eeaa34b3a0d7b9",
+     "route_validity": "in_domain",
+     "z0": 0.5861244793243987
+    },
+    {
+     "cell": "Expt 1/F",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 36799.589838495536,
+     "replay_record_sha256": "c838047c3c70ab9e95fe96437287575bd137ef1c1a1067bbed30bc2207f96fb4",
+     "result_id": "battery-thevenin1rc-c838047c3c70ab9e",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.37918515944329034
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 26204.146733305417,
+     "replay_record_sha256": "10d62952e9950174a8b300e0fd8c7b00b11acfb6eb674e018c894db8860aebaf",
+     "result_id": "battery-thevenin1rc-10d62952e9950174",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.7930815241098927
+    },
+    {
+     "cell": "Expt 2,2/C",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31304.22926528519,
+     "replay_record_sha256": "2b36e173ff8b9c76a9c09e3d8ea5e08cb9740db57f10113ca9e59aa05ca3c958",
+     "result_id": "battery-thevenin1rc-2b36e173ff8b9c76",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.586161227594992
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 26497.712763926887,
+     "replay_record_sha256": "a0c5bb9eb8d2b4b2832b7b16c9c168cbc6cc7269f5890fbbaab0c6d34683e495",
+     "result_id": "battery-thevenin1rc-a0c5bb9eb8d2b4b2",
+     "route_validity": "in_domain",
+     "z0": 0.7930796305051975
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 31599.057296037674,
+     "replay_record_sha256": "9c0f8f1d2c822f0ee5a2203df261f9fdb2b6715026bcf5f365d87fd37790e487",
+     "result_id": "battery-thevenin1rc-9c0f8f1d2c822f0e",
+     "route_validity": "outside_validated_domain",
+     "z0": 0.5861598597355355
+    },
+    {
+     "cell": "Expt 2,2/D",
+     "parameter_set_sha256": "2d42ba4334b50b611ba2edc37cbed4cd931cf1820174413799d71ca2f22a7f08",
+     "pulse_start_s": 36700.381828147685,
+     "replay_record_sha256": "f0bdf3cc91765ee4cb5a7c2941abe5b37608df4e5ebbf70d1dbde62f6e2d8f5a",
+     "result_id": "battery-thevenin1rc-f0bdf3cc91765ee4",
+     "route_validity": "in_domain",
+     "z0": 0.3792390162055511
+    }
+   ],
+   "rint": {
+    "acceptance": "NOT_ASSESSABLE (8 outside the validated domain)",
+    "bias_mV": -17.028488411585098,
+    "calibration_to_heldout_rmse_gap_mV": 7.786028706702128,
+    "load_only": {
+     "bias_mV": -17.586723325321042,
+     "p95_abs_mV": 38.50498093211807,
+     "rmse_mV": 22.895091093040882,
+     "samples": 244979
+    },
+    "mae_mV": 19.18480826515147,
+    "max_abs_mV": 94.3296096647086,
+    "p95_abs_mV": 38.523981894545,
+    "per_window_rmse_mV": [
+     10.454744540484823,
+     18.899074791706273,
+     17.733210675261606,
+     14.17755280248353,
+     12.3058178791251,
+     22.338925996455384,
+     22.8543896199989,
+     21.67395899531407,
+     13.025046955953204,
+     23.337661353952758,
+     24.74931980106842,
+     23.16831977842033,
+     24.074077424127093,
+     24.613789865883135,
+     30.925006891822466,
+     31.251573038644565,
+     31.976989165703912
+    ],
+    "rest_rmse_mV": 17.56125649221954,
+    "rest_samples": 20400,
+    "rmse_mV": 22.529921358822573,
+    "samples": 265379
+   },
+   "route_validity": {
+    "in_domain": 9,
+    "outside_validated_domain": 8
+   },
+   "temperature_C": {
+    "calibration_range": [
+     23.188345,
+     29.657916999999998
+    ],
+    "max": 30.113621000000002,
+    "min": 17.93025
+   },
+   "units_windows": 17
+  }
+ },
+ "schema": "forge.battery_1rc_crosscell.validation/1",
+ "scope": "LG M50T at 25 degC base cooling, beginning of life; 2.5 A discharge pulses and rests; SOC >= max(0.10, lowest knot); held-out cells from experiments 1 and 2,2"
+}

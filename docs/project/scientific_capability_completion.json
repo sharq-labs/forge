@@ -15,7 +15,7 @@
       "declared_stage": "FUNCTIONAL",
       "summary": "Exact 1RC route with replay (FUNCTIONAL). Calibration PASS is SCOPED: one LG HG2 cell (SN62A4), 25 degC, pulse time scale, SOC >= 0.10, OCV measured not fitted, OCV-knot uncertainty not propagated. NASA FY08Q4 is NOT_IDENTIFIABLE. Held-out: pulses pass pooled limits (fail under load alone); the 1C constant-current test fails marginally (MODEL_REJECTED by the frozen mapping). No cross-cell validation; measurement uncertainty not admitted. Measurement uncertainty: owner-admitted Type B for the LG HG2 channels only (2026-10-15); NASA stays UNKNOWN.",
       "next_actions": [
-        "Cross-cell held-out evaluation on independent cells with measured OCV and pulse data (e.g. Kirkaldy 2024 RPTs, owner-approved download).",
+        "Kirkaldy cross-cell done (IDENTIFIABILITY_SUPPORTED, held-out NOT_ASSESSABLE): the temperature gap, not the cycler accuracy, blocks assessment; next needs temperature-spanning calibration and unopened cells for a blind verdict.",
         "Decide the model scope the constant-current failure allows (pulse-scale only) under a new preregistration.",
         "Owner/review decision on publisher-stated Type B measurement accuracy.",
         "Propagate OCV-knot uncertainty jointly with R0/R1/C1.",
@@ -108,9 +108,11 @@
           "evidence": [
             "benchmarks/battery_1rc_identifiability/results/VALIDATION.json",
             "benchmarks/battery_1rc_identifiability/results/OUTCOME.json",
-            "benchmarks/battery_1rc_closure/results/VALIDATION.json"
+            "benchmarks/battery_1rc_closure/results/VALIDATION.json",
+            "benchmarks/battery_1rc_crosscell/results/OUTCOME.json",
+            "benchmarks/battery_1rc_crosscell/tests/test_battery_1rc_crosscell.py::test_the_recorded_outcome_is_identifiability_supported_and_does_not_promote_the_ledger"
           ],
-          "next_action": "LG HG2 (one cell, 25 degC): held-out 2C/4C pulses PASS (1RC 12.6 mV) but the 1C constant-current test FAILS (28.7 mV, P95 50.7 mV): outcome MODEL_REJECTED. NASA: cross-cell transfer FAILS. Needs a cross-cell held-out evaluation on independent cells and a model scope that the constant-current test supports (or a preregistered narrower claim); no acceptance limit may move after these results."
+          "next_action": "LG HG2 (one cell, 25 degC): MODEL_REJECTED (1C constant-current test FAILS, 28.7 mV). NASA: cross-cell transfer FAILS. Kirkaldy 2024 LG M50T cross-cell (7 calibration / 5 held-out cells, 25 degC BoL): parameters IDENTIFIABLE, but both held-out sets are NOT_ASSESSABLE (32/99 and 8/17 windows outside the unwidened calibration temperature/current domain) -> IDENTIFIABILITY_SUPPORTED. Those 5 held-out cells are no longer blind. An owner-admitted cycler accuracy could cover only the sub-mA current excess, not the temperature gap (25 of 32 primary out-of-domain windows are below the 23.2 degC calibration minimum); needs calibration data spanning the held-out temperatures (or held-out cells inside the calibrated range) and unopened cells for a blind verdict, under a new preregistration; no acceptance limit may move after these results."
         },
         "measurement_uq": {
           "status": "PASS",

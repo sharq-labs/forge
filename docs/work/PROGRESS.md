@@ -3514,3 +3514,65 @@ union resolution touched only docs/work/ACTIVE_PLAN.md and PROGRESS.md.
 - `pytest benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py`
   (Windows): 47 passed, 2 skipped (the opt-in raw-bytes tests).
 
+
+## 2026-10-15 -- Battery 1RC cross-cell evaluation on Kirkaldy 2024 (feat/battery-1rc-crosscell, local only)
+
+**Data.**
+- Owner-approved partial download ("Partial: 25°C BoL tests"): the 36 RPT0 CSVs of the 12 LG M50T cells at 25 °C, about
+  250 MB, read from the five Zenodo 10637534 archives by HTTP range. Each file was CRC32-checked.
+- Location: D:/forge-data/kirkaldy2024/bol25 (receipts in bol25.sha256).
+
+**Commits** (worktree D:/forge-battery-xcell, based on the certified source 5847345e, which is unchanged):
+- cc4d1256: preregistration PREREGISTRATION.json b1704515..., frozen before any fit. After the freeze, and before
+  data.py was written, a temperature-only dropout census over the 24 GITT files was run. It read no voltages.
+- a5ad3523: roles.
+  - The first roles commit, 256679db, was reset and never pushed. It committed the 85 MB window JSONs. The three window
+    roles are now gitignored and pinned by their committed .sha256; a rebuild must reproduce them byte for byte.
+  - Each build takes ~1 min.
+  - The first build excluded 50 Expt 2,2 windows as "not relaxed". Reading the raw step edges of those HELD-OUT cells
+    found a zero-current on-load transition record. Deviation 2 drops it by a uniform rule.
+  - This partly unblinded the Expt 2,2 cells (on-load drops of 67-84 mV seen) before the fit. No model had run, and the
+    fit had no free choice left.
+  - Deviation 1 (exclude any window holding a temperature dropout) removed no window on these files.
+- 3c865540: calibration on the 7 calibration cells, committed before the held-out evaluation ran.
+  - IDENTIFIABLE: R0 33.1 mΩ, R1 20.2 mΩ, C1 5307 F, τ 107 s. Cell-block bootstrap CV ≤ 6.1 %.
+- Held-out (5 cells, strict transfer through the engcore route):
+  - Primary: 32/99 windows outside the unwidened calibration domain.
+  - Secondary: 8/17 windows outside.
+  - Causes: temperature down to 17.61 °C against a 23.19 °C minimum, and current up to 0.52 mA above the calibration
+    maximum.
+  - Both sets are NOT_ASSESSABLE, so the outcome is **IDENTIFIABILITY_SUPPORTED**. The ledger's independent_validation
+    stays MISSING; the computed stage stays FUNCTIONAL.
+  - Descriptive only (no verdict): in-domain-only 1RC RMSE is 9.5 mV primary and 11.8 mV secondary.
+- evaluate.py ran four times after the held-out cells were opened.
+  - Runs 2-4 added descriptive fields, gated the comparison verdict (stricter only), and applied the review fixes.
+  - Every run-1 metric and acceptance value is unchanged; a test checks this.
+  - Superseded records: results/superseded/VALIDATION_run{1,2,3}.json.
+
+**Independent review** (forge-scientific-reviewer): CHANGES REQUIRED, no blocker. All findings fixed:
+- M1: disclosure of the post-opening changes (VALIDATION.json post_opening_changes, README section).
+- m1/m2: no verdict token in a NOT_ASSESSABLE comparison; the calibration comparison is IN_SAMPLE.
+- m3: dropout counts and the split dropout reason.
+- m4: partial-unblinding wording; "50 windows" corrected.
+- m5: this entry.
+- m6: a cycler accuracy cannot close the temperature gap (25 of 32 primary windows); the ledger was reworded.
+- m7: the current excess is derived.
+- m8: calibrated_z_span recorded (min 0.130).
+- m9: the descriptive subsets are labelled as not neutral / all-window.
+- m10: the OCV source wording.
+- m11: tests added for synthetic route-vs-transcription, comparison gating, held-out leakage, knot-structure refusal,
+  and absolute LG HG2 digests.
+
+**Failed approach.** Committing native-0.1 s window JSONs (85 MB) does not scale. Pin them by digest and rebuild from
+the pinned raw files.
+
+**Tests** (Windows, this worktree):
+- `FORGE_KIRKALDY_DIR=D:/forge-data/kirkaldy2024/bol25 python -m pytest -q -p no:cacheprovider --basetemp=<tmp> benchmarks/battery_1rc_crosscell/tests benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py tests/domains/test_battery_thevenin_route.py tests/test_core_guards.py`
+  - Result: 372 passed, 2 skipped. This includes the byte-for-byte rebuild of every role from the raw files.
+- `python tools/forge_check.py --changed` (no --basetemp, so the Windows default temp root applies):
+  - Result: 9868 passed, 18 failed, 734 errors.
+  - The errors are all tmp_path PermissionError (known environment issue).
+  - Running the same 18 on the untouched base 5847345e: 16 fail there too (mutation_workspace POSIX-only, blindfold
+    escrow, certificate/freeze-v4 manifests).
+  - The other 2 (test_the_tree_is_core_freeze_v1, test_the_v3_contract_is_superseded...) failed only on
+    tree.clean (uncommitted files). They were rerun after the commit; see below.
