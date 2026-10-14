@@ -3053,3 +3053,112 @@ sharq-labs/forge --python311 .forge/venvs/3.11/bin/python --python312 .forge/ven
   production-registry pin (456 evidence-code files). Old target 39d43456 superseded.
 
 Not pushed, not merged (user instruction). Host branch protection not re-verified.
+## 2026-10-14 — User-requested gaps catalogue (docs only)
+
+Created seven Arabic Markdown files under gaps/, preserving all five research
+tables (57 entries, with intentional overlap), star ratings, implementation slices,
+acceptance criteria and sources. This is a research catalogue, not an executable
+queue or current defect certification. No production behavior changed.
+
+Conversation baseline: a3f757eb5fdbc804ef11e3c4088a757c31981870.
+PR base: 5d73e8f5118aa845f1957decc5aae986e72476a9. Main had advanced;
+historical findings are explicitly marked for re-verification. Existing local
+uncommitted planning/review files remain untouched in the original checkout.
+
+Documentation validation: an inline Python script via PowerShell here-string
+piped to `py -3.14 -` counted seven Markdown files, asserted 57 unique table IDs,
+and checked every relative link and explicit HTML anchor. PASS, exit 0.
+External URLs were not rechecked by that validator.
+
+Command: `git diff --check`. Result: PASS, exit 0 before staging.
+Scientific tests / forge_check / regression / FAST / SCIENTIFIC / certification:
+**NOT RUN** (documentation-only). No scientific verification or validation claimed.
+
+Failed approach: embedding the validator's PowerShell here-string inside another
+here-string for a progress append produced a ParserError before execution. Used
+apply_patch instead; no partial append or repository mutation from the failed command.
+
+Command: git diff --cached --check. Initial result: seven trailing blank-line warnings in new Markdown files; trimmed EOF whitespace. Repeated result: PASS, exit 0.
+
+## 2026-10-14 — Additional gaps catalogue review (docs only)
+
+User requested additional cross-cutting gaps and publication on PR #136. Read the
+PR state: already merged as 375ab559677768dec5ab2c7267f20d127f51b197.
+Created codex/gaps-additional-review from that main HEAD for a follow-up PR.
+
+Added ten proposals in gaps/06-additional-cross-cutting-gaps.md, each with inspected
+source, existing capability, bounded next slice, counterexample/acceptance criteria,
+ownership, dependencies, ease and impact. Index now counts 67 entries in six tables.
+These are catalogue coverage gaps, not ten reproduced defects. No executable plan,
+maturity evidence, certified artifacts or scientific behavior changed.
+
+Documentation check command (executed in the PR worktree):
+```powershell
+@'
+from pathlib import Path
+import re
+files=sorted(Path('gaps').glob('*.md'))
+ids=[]
+for p in files:
+    text=p.read_text(encoding='utf-8')
+    ids+=re.findall(r'^\| ([CRPGUN]\d{2}) \|',text,re.M)
+    for target in re.findall(r'\]\(([^)]+)\)',text):
+        if target.startswith(('https://','http://')): continue
+        name,_,anchor=target.partition('#')
+        dest=(p.parent/name).resolve() if name else p
+        assert dest.exists(), (str(p),target)
+        if anchor: assert f'id="{anchor}"' in dest.read_text(encoding='utf-8'), (str(p),anchor)
+assert len(files)==8, len(files)
+assert len(ids)==len(set(ids))==67, len(ids)
+print('PASS: 8 Markdown files, 67 unique entries; local links and explicit anchors resolve. External URLs not checked.')
+'@ | py -3.14 -
+```
+Result: PASS, exit 0. Eight Markdown files, 67 unique entries, all local links and
+explicit anchors resolve. External URLs not checked. Scientific tests, regression,
+FAST, SCIENTIFIC, certification: **NOT RUN** (documentation-only).
+
+Read-only inspection traps: scientific/multiphysics/convergence.py does not exist;
+the record is in plan.py and the calculator in execution/multiphysics/convergence.py.
+PowerShell rg with a literal *.py path failed; use a directory plus -g '*.py'.
+No code or state changed by either failed read.
+Command: git diff --cached --check. Result: PASS, exit 0. Documentation link/count check repeated after the sources update: PASS, exit 0.
+
+## 2026-10-14 — More design and coupling improvement proposals (docs only)
+
+User requested more improvement proposals. PR #137 was read as open and unmerged;
+continued on codex/gaps-additional-review at 415f9993056bce2a0bcd8a62d21c5184eef6f4ab.
+Added eight source-linked proposals in gaps/07-design-and-coupling-improvements.md:
+parameter identifiability, measured multifidelity screening, derivative consistency,
+initial-state consistency, boundary/frame semantics, discontinuity semantics,
+declared mesh transitions, and consumed material-property coverage.
+
+Catalogue now has nine Markdown files and 75 table entries across seven tables.
+Each proposal records existing code, bounded first slice, adversarial acceptance,
+ownership/dependencies and ease/impact stars. No behavior, executable queue,
+maturity evidence, frozen contract or certificate changed.
+
+Documentation command:
+```powershell
+@'
+from pathlib import Path
+import re
+files=sorted(Path('gaps').glob('*.md'))
+ids=[]
+for p in files:
+    text=p.read_text(encoding='utf-8')
+    ids+=re.findall(r'^\| ([CRPGUNX]\d{2}) \|',text,re.M)
+    for target in re.findall(r'\]\(([^)]+)\)',text):
+        if target.startswith(('https://','http://')): continue
+        name,_,anchor=target.partition('#')
+        dest=(p.parent/name).resolve() if name else p
+        assert dest.exists(), (str(p),target)
+        if anchor: assert f'id="{anchor}"' in dest.read_text(encoding='utf-8'), (str(p),anchor)
+assert len(files)==9, len(files)
+assert len(ids)==len(set(ids))==75, len(ids)
+print('PASS: 9 Markdown files, 75 unique entries; local links and explicit anchors resolve. External URLs not checked.')
+'@ | py -3.14 -
+```
+Result: PASS, exit 0; nine Markdown files, 75 unique table IDs, all local links and
+explicit anchors resolve. External URLs not checked. Scientific tests, regression,
+FAST, SCIENTIFIC and certification: **NOT RUN**, documentation-only.
+Command: git diff --cached --check. Result: PASS, exit 0 for the design/coupling proposal update.
