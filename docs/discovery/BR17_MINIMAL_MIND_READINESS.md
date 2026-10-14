@@ -46,3 +46,23 @@ table has been re-verified against code for enforcement; that is BR-17's own fir
    5. then run the formal baseline tier (≥20 seeds) and freeze the baseline-freeze addendum.
 3. **A2:** change the active epic through the reviewed ledger change, or approve one narrowly scoped exception with
    all eight required fields (OD-6).
+
+## BR-18 (discovery, falsification and false confidence): BLOCKED_BY_PREREQUISITE
+
+BR-18 requires BR-17 to have passed its gate and an existing Mind to evaluate. Neither holds: BR-17 is blocked as
+above, and `origin/main` (`e193e573`) contains no Mind, outcome model or belief state. No BR-18 work was started.
+
+Existing guards for the BR-18 target vulnerabilities, limited to those read or tested in this session (BR-15/16).
+Everything else is UNVERIFIED and is BR-18's own first task once its gate opens.
+
+| # | Vulnerability | Existing guard (verified this session) | State |
+|---|---|---|---|
+| 3 | Observational equivalence taken as identification | Blindfold INDISTINGUISHABLE kind: a single law earns credit 0, only a hit pair earns 1 (`test_f4_…`, BR-16) | guarded in the benchmark |
+| 4 | Correlation promoted to mechanism | SPURIOUS_CORRELATE and CONFOUNDED kinds; a law using the decoupled covariate fails (`test_f5_…`) | guarded in the benchmark |
+| 5 | Experiment chosen with the hidden answer | escrow, pseudonymous ids, literal leakage audit, sealed universes (`tests/genesis_lite`). The in-process escrow DOES leak (`test_l2_…`) | open until OD-17 (isolated escrow) |
+| 7 | Renamed hypothesis escapes failures | `sria.decision.Hypothesis.claim_digest`: a refutation follows the claim. Since BR-15, `hypotheses.py` is certificate-pinned | guarded (certified after OD-3) |
+| 9 | Survivor described as proven | `HypothesisStatus` has no TRUE; `NoveltyStatus` has no NOVEL; Blindfold `counts_as_novel_discovery` needs a proven boundary (none) | guarded by vocabulary |
+| 1, 2, 6, 8, 10 | Weak tests; repeated trials; solver agreement as validation; missing UQ; vanished challenges | owners exist (`claims.multiplicity`, `claims.redteam`, the verification/validation split, the UQ channels) but were not exercised against a Mind in this session | UNVERIFIED |
+
+The held-out comparison BR-18 requires also needs the A1 prerequisites: the v0.1 identity, the evaluator decision
+(OD-8) and the formal baseline tier.

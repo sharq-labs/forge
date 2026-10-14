@@ -3228,3 +3228,7 @@ The gate was checked against the live origin/main e193e573. All three prerequisi
 
 No Mind code was written; the active epic and the ledger were not touched. Record and loop owner map:
 [BR17_MINIMAL_MIND_READINESS.md](../discovery/BR17_MINIMAL_MIND_READINESS.md). Tests: NOT RUN (documentation only).
+
+## 2026-10-14 -- BR-18: BLOCKED_BY_PREREQUISITE
+
+BR-17 has not passed (BLOCKED_BY_PREREQUISITE), and origin/main e193e573 has no Mind to evaluate. No BR-18 work was started. The verified-guard map is in [BR17_MINIMAL_MIND_READINESS.md](../discovery/BR17_MINIMAL_MIND_READINESS.md). Tests: NOT RUN (documentation only).
