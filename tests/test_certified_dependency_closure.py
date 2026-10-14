@@ -360,3 +360,52 @@ def test_final_review_c3_a_tracked_compiled_module_beside_certified_source_is_re
 
 def test_final_review_c3_the_real_tree_tracks_only_python_source_under_engcore() -> None:
     assert cc.source_form_problems(ROOT) == []
+
+
+@pytest.mark.parametrize("source", [
+    b"from importlib import util as u\nS = getattr(u, 'spec_from_file_location')('m', 'rule.py')\n",
+    b"import importlib.util\nS = getattr(importlib.util, 'module_from_spec')\n",
+    b"import importlib\nRULE = importlib.__dict__.get('import_module')('engcore.' + 'decider')\n",
+    b"import importlib\nRULE = vars(importlib).get('import_module')('engcore.' + 'decider')\n",
+    b"RULE = __builtins__['__import__']('engcore.' + 'decider')\n",
+    b"e = exec\ne(open('rule.py').read())\n",
+    b"list(map(eval, ['1']))\n",
+    b"import sys\nsys.path.insert(0, 'src/engcore/decider')\nimport rule\n",
+    b"from importlib.machinery import SourceFileLoader\nL = SourceFileLoader('m', 'rule.py')\n",
+])
+def test_final_review_round2_loader_forms_are_refused(tmp_path, source) -> None:
+    """Confirmation review of the C1 fix: further loader spellings the detector must refuse (or DYNAMIC_REACH declare)."""
+    _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", "src/engcore/certified/stop.py": source})
+    problems = cc.certified_dependency_problems(tmp_path, _SCOPE)
+    assert any("DYNAMIC_REACH" in p for p in problems), problems
+
+
+def test_final_review_round2_an_untracked_unchecked_pyc_is_refused(tmp_path) -> None:
+    """.gitignore hides __pycache__, so an unchecked-hash .pyc planted there is invisible to git; the walk sees it."""
+    import importlib.util
+    import py_compile
+
+    _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", "src/engcore/certified/stop.py": b"X = 1\n",
+                     ".gitignore": b"__pycache__/\n*.py[cod]\n"})
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "add", ".")
+    weak = tmp_path / "weak.py"
+    weak.write_bytes(b"X = 0\n")
+    py_compile.compile(str(weak), cfile=importlib.util.cache_from_source(str(tmp_path / "src/engcore/certified/stop.py")),
+                       invalidation_mode=py_compile.PycInvalidationMode.UNCHECKED_HASH)
+    problems = cc.source_form_problems(tmp_path)
+    assert any("stop" in p and "unchecked" in p for p in problems), problems
+
+
+def test_final_review_round2_ordinary_bytecode_caches_are_not_refused(tmp_path) -> None:
+    """Positive control: a timestamp-checked cache (what Python writes itself) is never run instead of changed source."""
+    import importlib.util
+    import py_compile
+
+    _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", "src/engcore/certified/stop.py": b"X = 1\n",
+                     ".gitignore": b"__pycache__/\n"})
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "add", ".")
+    src = tmp_path / "src/engcore/certified/stop.py"
+    py_compile.compile(str(src), cfile=importlib.util.cache_from_source(str(src)))
+    assert cc.source_form_problems(tmp_path) == []
