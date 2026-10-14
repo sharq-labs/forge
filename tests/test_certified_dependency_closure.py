@@ -421,3 +421,37 @@ def test_final_review_round2_ordinary_bytecode_caches_are_not_refused(tmp_path) 
 def test_final_review_round2_rules_mean_loading_not_spelling(tmp_path, source, flagged) -> None:
     (tmp_path / "m.py").write_bytes(source)
     assert bool(cc.dynamic_imports(tmp_path / "m.py")) is flagged
+
+
+def test_final_review_round3_the_private_importlib_api_is_a_loader(tmp_path) -> None:
+    for source in (b"import importlib\nRULE = importlib._bootstrap._gcd_import('engcore.' + 'decider')\n",
+                   b"from importlib import _bootstrap\nRULE = _bootstrap._gcd_import('engcore.' + 'decider')\n"):
+        (tmp_path / "m.py").write_bytes(source)
+        assert cc.dynamic_imports(tmp_path / "m.py"), source
+
+
+def test_final_review_round3_a_symlink_under_engcore_is_refused(tmp_path) -> None:
+    _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", "src/engcore/certified/stop.py": b"X = 1\n"})
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "add", ".")
+    (tmp_path / "elsewhere").mkdir()
+    try:
+        (tmp_path / "src/engcore/certified/__pycache__").symlink_to(tmp_path / "elsewhere", target_is_directory=True)
+    except OSError:
+        pytest.skip("this platform cannot create symbolic links")
+    assert any("symbolic link" in p for p in cc.source_form_problems(tmp_path))
+
+
+def test_final_review_round3_the_registry_probe_never_reads_the_trees_bytecode_caches(tmp_path, monkeypatch) -> None:
+    """A planted timestamp .pyc with a matching header would run instead of pinned source; the probe uses its own prefix."""
+    seen = {}
+
+    def capture(args, **kwargs):
+        seen["args"] = list(args)
+        raise RuntimeError("captured")
+
+    _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", cc.REGISTRY_ENTRY: b""})
+    monkeypatch.setattr(cc.subprocess, "run", capture)
+    with pytest.raises(RuntimeError, match="captured"):
+        cc.production_registry_identity(tmp_path)
+    assert "-X" in seen["args"] and any(a.startswith("pycache_prefix=") for a in seen["args"])
