@@ -1608,11 +1608,29 @@ class CampaignRunner:
         verdicts and admissions must be what its own event log says (audit
         SRIA-06 / SER-01).
         """
-        problems = assurance_disagreements(
+        problems = list(assurance_disagreements(
             checkpoint.events.events,
             obligation_state=checkpoint.obligation_state,
             iterations=checkpoint.run.iterations,
-        )
+        ))
+        # BR-15 F-9: the stop review's outcome is assurance state too. The run and
+        # every stop-proposing iteration must say what the log's STOP_REVIEWED
+        # entries say, or an edited checkpoint restores an approval never given.
+        reviews = [e for e in checkpoint.events.events
+                   if e.event_type is CampaignEventType.STOP_REVIEWED]
+        logged = str(reviews[-1].payload.get("outcome", "")) if reviews else ""
+        if checkpoint.run.stop_review_outcome != logged:
+            problems.append(
+                f"stop review outcome {checkpoint.run.stop_review_outcome!r} is not "
+                f"the logged {logged!r}"
+            )
+        by_iteration = {e.iteration: str(e.payload.get("outcome", "")) for e in reviews}
+        for record in checkpoint.run.iterations:
+            if record.stop_proposed and by_iteration.get(record.iteration) != record.detail:
+                problems.append(
+                    f"iteration {record.iteration} records stop review "
+                    f"{record.detail!r}, the log {by_iteration.get(record.iteration)!r}"
+                )
         if problems:
             raise ResumeViolation(
                 "checkpoint assurance state is not backed by its event log: "
