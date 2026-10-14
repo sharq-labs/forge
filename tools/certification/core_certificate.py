@@ -920,9 +920,19 @@ def _call_name(func: ast.AST) -> str:
 _LOADER_CALLS = frozenset({
     "walk_packages", "iter_modules", "resolve_name", "spec_from_file_location", "spec_from_loader",
     "module_from_spec", "exec_module", "load_module", "run_module", "run_path", "entry_points", "load_entry_point",
+    # confirmation review of the G0/A1 final-review fix: loader classes and other name-to-object resolvers
+    "SourceFileLoader", "SourcelessFileLoader", "ExtensionFileLoader", "FileFinder", "get_code",
 })
+#: Names that load code only when they come from a loader module (pydoc.locate; a method ``x.locate`` is not one).
+_QUALIFIED_LOADERS = frozenset({"locate"})
+_MUTATORS = frozenset({"insert", "append", "extend", "remove", "pop", "clear", "__setitem__", "__delitem__"})
+#: Builtins that run code: a call is a load, and so is any other reference to them (``e = exec``, ``map(eval, ...)``).
+_CODE_BUILTINS = frozenset({"exec", "eval", "compile", "__import__"})
+#: Interpreter import state: changing or reading it lets a plain literal import reach any file.
+_IMPORT_STATE = frozenset({"path", "meta_path", "path_hooks", "path_importer_cache"})
 #: Modules whose attributes are loaders: an alias of one, or getattr() on one, is a loader too.
-_LOADER_MODULES = frozenset({"importlib", "importlib.util", "importlib.metadata", "pkgutil", "runpy"})
+_LOADER_MODULES = frozenset({"importlib", "importlib.util", "importlib.metadata", "importlib.machinery", "pkgutil",
+                             "runpy", "pydoc"})
 
 
 def dynamic_imports(path: pathlib.Path) -> list[int]:
@@ -937,16 +947,25 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
     aliases: dict[str, str] = {}
     modules: set[str] = set()
     builtin_names = {"builtins", "__builtins__"}
+    sys_names = {"sys"}
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom) and (node.module in _LOADER_MODULES or node.module == "builtins") and not node.level:
             for alias in node.names:
                 aliases[alias.asname or alias.name] = alias.name
+                if f"{node.module}.{alias.name}" in _LOADER_MODULES:   # from importlib import util as u
+                    modules.add(alias.asname or alias.name)
+        elif isinstance(node, ast.ImportFrom) and node.module == "sys" and not node.level:
+            for alias in node.names:
+                if alias.name in _IMPORT_STATE:
+                    aliases[alias.asname or alias.name] = "sys." + alias.name
         elif isinstance(node, ast.Import):
             for alias in node.names:
                 if alias.name in _LOADER_MODULES:
                     modules.add(alias.asname or alias.name.split(".")[0])
                 elif alias.name == "builtins":  # BR-15 confirmation review: `import builtins as b; b.exec(...)`
                     builtin_names.add(alias.asname or alias.name)
+                elif alias.name == "sys":
+                    sys_names.add(alias.asname or "sys")
     modules |= builtin_names  # getattr(builtins, "exec") is a loader lookup like getattr(importlib, ...)
     lines: list[int] = []
     callees = {id(node.func) for node in ast.walk(tree) if isinstance(node, ast.Call)}
@@ -956,14 +975,55 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
         name = aliases.get(name, name) if isinstance(node, ast.Name) else name
         return name in _LOADER_CALLS or name.endswith("import_module") or name == "__import__"
 
+    def root_name(node: ast.AST) -> str:
+        while isinstance(node, ast.Attribute):
+            node = node.value
+        return node.id if isinstance(node, ast.Name) else ""
+
+    parents = {id(child): parent for parent in ast.walk(tree) for child in ast.iter_child_nodes(parent)}
+
+    def modified(node: ast.AST) -> bool:
+        """``node`` (an import-state object) is assigned, deleted, sliced into, or changed by a mutating method."""
+        parent = parents.get(id(node))
+        if isinstance(getattr(node, "ctx", None), (ast.Store, ast.Del)):
+            return True
+        if isinstance(parent, ast.Subscript) and isinstance(parent.ctx, (ast.Store, ast.Del)):
+            return True
+        if isinstance(parent, ast.Attribute) and parent.attr in _MUTATORS:
+            return True
+        return isinstance(parent, ast.AugAssign) and parent.target is node
+
     for node in ast.walk(tree):
         # G0/A1 final review C1: a loader referenced anywhere but as the callee of a call (stored in a container, a
         # default argument, passed along) is called later under another name.
         if isinstance(node, (ast.Attribute, ast.Name)) and id(node) not in callees and loader_name(node):
             lines.append(node.lineno)
-        # C1: importlib.__dict__["import_module"] is vars(importlib)["import_module"]
-        if (isinstance(node, ast.Subscript) and isinstance(node.value, ast.Attribute) and node.value.attr == "__dict__"
-                and isinstance(node.value.value, ast.Name) and node.value.value.id in modules):
+        # C1 + confirmation review: a loader module's namespace (m.__dict__, vars(m)) read in any way
+        if isinstance(node, ast.Attribute) and node.attr == "__dict__" and root_name(node.value) in modules:
+            lines.append(node.lineno)
+        if (isinstance(node, ast.Call) and _call_name(node.func) == "vars" and node.args
+                and root_name(node.args[0]) in modules):
+            lines.append(node.lineno)
+        # __builtins__["__import__"], builtins.__dict__, __builtins__.get(...)
+        if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name) and node.value.id in builtin_names:
+            lines.append(node.lineno)
+        if (isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id in builtin_names
+                and (node.attr in _CODE_BUILTINS or node.attr in ("get", "__dict__"))):
+            lines.append(node.lineno)
+        # exec/eval/compile/__import__ referenced other than as a callee (e = exec; map(eval, xs))
+        if (isinstance(node, ast.Name) and id(node) not in callees
+                and aliases.get(node.id, node.id) in _CODE_BUILTINS and isinstance(node.ctx, ast.Load)):
+            lines.append(node.lineno)
+        # a CHANGED sys.path / sys.meta_path / ...: a literal import can then reach any file (reading it is not a load)
+        if (isinstance(node, ast.Attribute) and node.attr in _IMPORT_STATE and root_name(node.value) in sys_names
+                and modified(node)):
+            lines.append(node.lineno)
+        if isinstance(node, ast.Name) and aliases.get(node.id, "").startswith("sys.") and modified(node):
+            lines.append(node.lineno)
+        # pydoc.locate(name) / from pydoc import locate
+        if isinstance(node, ast.Call) and _call_name(node.func) in _QUALIFIED_LOADERS and (
+                (isinstance(node.func, ast.Attribute) and root_name(node.func.value) in modules)
+                or (isinstance(node.func, ast.Name) and node.func.id in aliases)):
             lines.append(node.lineno)
         # A loader bound to another name (load = importlib.import_module) is a loader wherever it is later called.
         if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(node.value, (ast.Attribute, ast.Name)):
@@ -988,8 +1048,8 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
         elif (isinstance(node.func, ast.Attribute) and name in ("exec", "compile", "eval")
               and isinstance(node.func.value, ast.Name) and node.func.value.id in builtin_names):
             lines.append(node.lineno)  # BR-15 review: builtins.exec(...) is exec(...)
-        elif name == "getattr" and node.args and isinstance(node.args[0], ast.Name) and node.args[0].id in modules:
-            lines.append(node.lineno)
+        elif name == "getattr" and node.args and root_name(node.args[0]) in modules:
+            lines.append(node.lineno)  # confirmation review: getattr(importlib.util, ...) and getattr(u, ...) too
         elif (name == "getattr" and node.args and isinstance(node.args[0], ast.Call)
               and (_call_name(node.args[0].func) == "__import__" or _call_name(node.args[0].func).endswith("import_module"))):
             lines.append(node.lineno)  # BR-15 review: getattr(__import__("importlib"), "import_module")
@@ -1251,10 +1311,34 @@ def source_form_problems(root: pathlib.Path) -> list[str]:
     except Exception as exc:  # noqa: BLE001 - fail closed: without the index nothing is known about the tree
         return [f"cannot list the tracked files under src/engcore: {exc}"]
     bad = sorted(name for name in tracked if name and not name.endswith(SOURCE_FORMS))
-    if not bad:
-        return []
-    return [f"{len(bad)} tracked file(s) under src/engcore are not Python source; an import could run them instead of "
-            f"the pinned .py: " + ", ".join(bad)]
+    problems = []
+    if bad:
+        problems.append(f"{len(bad)} tracked file(s) under src/engcore are not Python source; an import could run them "
+                        f"instead of the pinned .py: " + ", ".join(bad))
+    # Confirmation review: .gitignore hides __pycache__ and *.py[cod], so a planted file is invisible to git. CPython
+    # never runs a timestamp- or checked-hash cache for changed source, but it runs an UNCHECKED-hash .pyc without
+    # reading the source, prefers an extension module to the .py beside it, and imports a sourceless .pyc.
+    planted = []
+    base = root / "src" / "engcore"
+    for path in sorted(base.rglob("*")) if base.is_dir() else ():
+        if not path.is_file():
+            continue
+        name = path.relative_to(root).as_posix()
+        suffix = path.suffix.lower()
+        if suffix in (".so", ".pyd", ".dll", ".dylib"):
+            planted.append(f"{name} (extension module)")
+        elif suffix in (".pyc", ".pyo"):
+            if path.parent.name != "__pycache__":
+                planted.append(f"{name} (sourceless bytecode)")
+            else:
+                with path.open("rb") as handle:
+                    header = handle.read(8)
+                flags = int.from_bytes(header[4:8], "little") if len(header) == 8 else 0
+                if flags & 0b01 and not flags & 0b10:
+                    planted.append(f"{name} (unchecked-hash bytecode: runs without reading the source)")
+    if planted:
+        problems.append(f"{len(planted)} file(s) under src/engcore could run instead of pinned source: " + ", ".join(planted))
+    return problems
 
 
 # ---------------------------------------------------------------------------
