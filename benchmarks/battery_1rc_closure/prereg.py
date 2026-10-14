@@ -11,14 +11,25 @@ import json
 import pathlib
 
 HERE = pathlib.Path(__file__).resolve().parent
-PREREG_PATH = HERE / "PREREGISTRATION.json"
-PREREG_ID = "battery_1rc_closure.nasa_pcoe_fy08q4.v1"
+PREREG_PATH = HERE / "PREREGISTRATION_v2.json"
+PREREG_ID = "battery_1rc_closure.nasa_pcoe_fy08q4.v2"
+V1_PATH = HERE / "PREREGISTRATION.json"
+V1_SHA256 = "35bb500c293432c35666004de60cc7019ac2d845c4942d1e6ec26c50052aa844"
 
 PREREG = {
     "schema": "forge.battery_1rc_closure.preregistration/1",
     "preregistration_id": PREREG_ID,
     "capability": "battery.thevenin_1rc",
     "frozen_before": "any parameter fit and any look at the validation cell's channels",
+    "amends": {
+        "preregistration_id": "battery_1rc_closure.nasa_pcoe_fy08q4.v1",
+        "preregistration_sha256": V1_SHA256,
+        "reason": "building the calibration trajectories (no fit) showed that NASA's per-cycle Capacity field is "
+                  "defined to 2.7 V (FY08Q4 README) while B0007 discharges to 2.2 V: its records deliver ~1.908 Ah "
+                  "against a 1.891 Ah field, so a basis read from that field drives SOC below 0 and 11 B0007 "
+                  "calibration cycles were refused. The basis is redefined on the same quantity the trajectory "
+                  "integrates. Nothing else changes; v1 is kept unchanged",
+    },
     "data": {
         "source": "NASA Ames Prognostics Center of Excellence, Li-ion Battery Aging Datasets",
         "catalog": "https://data.nasa.gov/dataset/li-ion-battery-aging-datasets",
@@ -58,7 +69,9 @@ PREREG = {
         "screen_initial_rest_voltage_min_V": 4.15,
         "initial_state_of_charge": "1 at sample 0, on the capacity basis below (protocol: CV charge to 20 mA, then "
                                    "rest)",
-        "capacity_basis": "the largest delivered capacity among this cell's EARLIER discharge cycles (causal)",
+        "capacity_basis": "the largest charge delivered by any EARLIER discharge record of this cell, integrated "
+                          "from its measured current with the same backward hold (causal; same quantity as the "
+                          "trajectory, to the cell's own cutoff)",
         "initial_polarization_V": 0.0,
         "initial_polarization_basis": "the CV charge tapers to 20 mA and the record starts at rest (|I| <= 10 mA); "
                                       "the residual is at most 20 mA x R1, reported as an initial-state sensitivity",
