@@ -66,7 +66,10 @@ def predict_1rc_route(c: bfit.Cycle, p: dict[str, Any], pset: dict[str, Any], ba
     run = tr.run_thevenin_1rc(ps, tr.Thevenin1RCInitialState(Q(1.0, "dimensionless"), Q(0.0, "volt"),
                                                              PREREG["trajectory_construction"]["initial_polarization_basis"]),
                               tr.DischargeRestProfile(f"{c.cell}-{c.ordinal}", segments, tr.POSITIVE_DISCHARGE))
-    return np.array([x.terminal_voltage_v for x in run.trajectory]), run.result.validity[tr.MODEL_ID].status.value
+    return (np.array([x.terminal_voltage_v for x in run.trajectory]), run.result.validity[tr.MODEL_ID].status.value,
+            {"result_id": run.result.result_id, "replay_record_sha256": run.replay.digest,
+             "parameter_set_sha256": run.result.provenance.metadata["parameter_set_sha256"],
+             "profile_sha256": run.result.provenance.metadata["profile_sha256"]})
 
 
 def predict_rint_production(c: bfit.Cycle, p: dict[str, Any]) -> np.ndarray:
@@ -118,6 +121,18 @@ def paired_bootstrap(res_a: list[np.ndarray], res_b: list[np.ndarray], b=2000, s
                                                           float(np.percentile(diffs, 97.5))]}
 
 
+def acceptance(m: dict[str, Any]) -> str:
+    return "PASS" if m["rmse_mV"] <= ACC["RMSE_mV_max"] and m["p95_abs_mV"] <= ACC["P95_abs_error_mV_max"] else "FAIL"
+
+
+def applicable_acceptance(threshold_outcome: str, outside_cycles: int) -> str:
+    """Applicability precedes evidence (review F1): a set holding any cycle the route judged outside its validated
+    domain can still FAIL, but cannot PASS; a would-be PASS is NOT_ASSESSABLE."""
+    if outside_cycles and threshold_outcome == "PASS":
+        return f"NOT_ASSESSABLE ({outside_cycles} cycle(s) outside the validated domain)"
+    return threshold_outcome
+
+
 def comparison_verdict(ci) -> str:
     """Preregistered: 1RC better iff the 95 % interval of RMSE_Rint - RMSE_1RC lies above 0, Rint better iff below."""
     return "1RC_BETTER" if ci[0] > 0 else "RINT_BETTER" if ci[1] < 0 else "NOT_DISTINGUISHED"
@@ -167,7 +182,14 @@ def main() -> int:
                            "identifiability_decision": cal["identifiability"]["decision"],
                            "claim_scope": "predictive comparison of the two frozen fitted models at 2 A constant-current "
                                           "discharge plus rest, room temperature, early life; NOT a validation of "
-                                          "parameter values, which are not identified",
+                                          "parameter values, which are not identified. The cross-cell set takes its "
+                                          "capacity basis from B0006's own earlier cycles (causal), so it tests the "
+                                          "voltage model's transfer, not capacity transfer",
+                           "review_corrections": "2026-10-14 scientific review: acceptance is applicability-gated "
+                                                 "(F1), comparisons are scoped to their cycles and cells and split "
+                                                 "into body and rest tail (F2), and every 1RC prediction is bound to "
+                                                 "its route replay record (F3). Re-reported from the same frozen "
+                                                 "calibration; no data was reopened and no threshold changed",
                            "deviation": "the production Rint kernel refuses zero current, so rest intervals use the Rint "
                                         "equation at I = 0 (V = OCV(z)); loaded intervals use the production kernel",
                            "roles": {}}
@@ -176,7 +198,7 @@ def main() -> int:
         doc = load(role)
         cycles = [bfit.Cycle(c) for c in doc["cycles"]]
         started = time.perf_counter()
-        pred1, statuses = zip(*(predict_1rc_route(c, p1, cal["parameter_set"], basis) for c in cycles))
+        pred1, statuses, bindings = zip(*(predict_1rc_route(c, p1, cal["parameter_set"], basis) for c in cycles))
         t1 = time.perf_counter() - started
         started = time.perf_counter()
         predr = [predict_rint_production(c, pr) for c in cycles]
@@ -194,18 +216,43 @@ def main() -> int:
         inside = np.concatenate([(o >= lo) & (o <= hi) for o, lo, hi in zip(obs, band_lo, band_hi)])
         halfwidth = np.concatenate([(hi - lo) / 2 for lo, hi in zip(band_lo, band_hi)])
         m1, mr = metrics(res1, cur), metrics(resr, cur)
+        rng_t, imax = cal["parameter_set"]["temperature_range_C"], cal["parameter_set"]["max_current_A"]
+        per_cycle = [{"cell": c.cell, "ordinal": c.ordinal, "route_validity": st,
+                      "temperature_C": [float(c.temp.min()), float(c.temp.max())], "max_current_A": float(c.i.max()),
+                      "below_temperature_range_C": max(0.0, rng_t[0] - float(c.temp.min())),
+                      "above_temperature_range_C": max(0.0, float(c.temp.max()) - rng_t[1]),
+                      "current_over_max_fraction": max(0.0, float(c.i.max()) / imax - 1.0),
+                      "rmse_1rc_mV": 1000 * float(np.sqrt(np.mean(r1 ** 2))),
+                      "rmse_rint_mV": 1000 * float(np.sqrt(np.mean(rr ** 2))), **b}
+                     for c, st, b, r1, rr in zip(cycles, statuses, bindings, res1, resr)]
+        inside_idx = [k for k, st in enumerate(statuses) if st == "in_domain"]
         entry = {"cycles": len(cycles), "cells": sorted({c.cell for c in cycles}),
                  "1rc": m1 | {"execution_seconds": round(t1, 3),
                               "route_validity_status_counts": {s: statuses.count(s) for s in sorted(set(statuses))}},
                  "rint": mr | {"execution_seconds": round(tr_, 3)},
                  "comparison": paired_bootstrap(resr, res1),
+                 "comparison_body": paired_bootstrap([r[i > 0] for r, i in zip(resr, cur)],
+                                                     [r[i > 0] for r, i in zip(res1, cur)]),
+                 "comparison_tail": paired_bootstrap([r[i == 0] for r, i in zip(resr, cur)],
+                                                     [r[i == 0] for r, i in zip(res1, cur)]),
+                 "independent_cells": len({c.cell for c in cycles}),
+                 "in_domain_only": {"cycles": len(inside_idx),
+                                    "1rc": metrics([res1[k] for k in inside_idx], [cur[k] for k in inside_idx])
+                                    if inside_idx else None,
+                                    "rint": metrics([resr[k] for k in inside_idx], [cur[k] for k in inside_idx])
+                                    if inside_idx else None},
+                 "per_cycle": per_cycle,
                  "parameter_uncertainty_1rc": {"band": "2.5-97.5 % of 40 joint bootstrap parameter sets",
                                                "median_half_width_mV": 1000 * float(np.median(halfwidth)),
                                                "coverage_of_measurements": float(inside.mean())}}
-        entry["comparison"]["verdict"] = comparison_verdict(entry["comparison"]["ci95_mV"])
+        for key in ("comparison", "comparison_body", "comparison_tail"):
+            entry[key]["verdict"] = comparison_verdict(entry[key]["ci95_mV"])
+            entry[key]["scope"] = (f"these {len(cycles)} cycles of {entry['independent_cells']} independent cell(s); "
+                                   "the cycle bootstrap does not generalize beyond them")
+        outside = len(cycles) - len(inside_idx)
         for name, m in (("1rc", m1), ("rint", mr)):
-            entry[name]["acceptance"] = ("PASS" if m["rmse_mV"] <= ACC["RMSE_mV_max"]
-                                         and m["p95_abs_mV"] <= ACC["P95_abs_error_mV_max"] else "FAIL")
+            entry[name]["acceptance_thresholds_all_cycles"] = acceptance(m)
+            entry[name]["acceptance"] = applicable_acceptance(acceptance(m), outside)
         out["roles"][role] = entry
         if role != "calibration":
             for pick in (0, len(cycles) - 1):

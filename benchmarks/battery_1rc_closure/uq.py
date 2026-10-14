@@ -26,10 +26,12 @@ def build() -> dict:
     ident = cal["identifiability"]
     roles = val["roles"]
     held = {r: roles[r] for r in ("within_cell_holdout", "cross_cell_validation")}
+    sens = _pinned("SENSITIVITY")
     return {
         "schema": "forge.battery_1rc_closure.uncertainty/1",
         "calibration_sha256": val["calibration_sha256"],
         "validation_sha256": (RESULTS / "VALIDATION.sha256").read_bytes().split()[0].decode(),
+        "sensitivity_sha256": (RESULTS / "SENSITIVITY.sha256").read_bytes().split()[0].decode(),
         "components": {
             "measurement": {
                 "status": "UNKNOWN",
@@ -63,11 +65,22 @@ def build() -> dict:
             "initial_state": {
                 "status": "PARTIALLY_QUANTIFIED",
                 "vp0_plus_20mA_x_R1": ident["sensitivity"]["vp0_20mA_x_R1"],
+                "vp0_minus_20mA_x_R1": sens["cases"]["vp0_minus_20mA_x_R1"],
+                "reason": "after a CV charge v_p0 carries the charge direction (negative under the positive-discharge "
+                          "convention); either sign of a 20 mA x R1 polarization is immaterial (objective ratios "
+                          f"{ident['sensitivity']['vp0_20mA_x_R1']['sse_ratio']:.4f} and "
+                          f"{sens['cases']['vp0_minus_20mA_x_R1']['sse_ratio']:.4f})",
+            },
+            "input_reconstruction": {
+                "status": "NOT_REDUCED",
                 "hold_convention_forward_vs_backward": ident["sensitivity"]["forward_hold"],
-                "reason": "an initial polarization of 20 mA x R1 is immaterial (objective ratio "
-                          f"{ident['sensitivity']['vp0_20mA_x_R1']['sse_ratio']:.4f}); the unknown load switch time "
-                          "within one ~19 s sample is NOT immaterial (objective ratio "
-                          f"{ident['sensitivity']['forward_hold']['sse_ratio']:.3f}) and is not reduced by this data",
+                "forward_hold_with_negative_vp0": sens["cases"]["forward_hold_and_vp0_minus_20mA_x_R1"],
+                "reason": "turning ~19 s current samples into a piecewise-constant input leaves the load switch "
+                          "time unknown within one sample: the forward hold changes the objective by a factor "
+                          f"{ident['sensitivity']['forward_hold']['sse_ratio']:.3f} and moves R1 by "
+                          f"{100 * (ident['sensitivity']['forward_hold']['R1'] / cal['models']['1rc']['parameters']['R1'] - 1):+.0f} %. "
+                          "This is an input (measurement-sampling) uncertainty, not numerical discretization, and it "
+                          "is never NOT_APPLICABLE for measured profiles",
             },
             "model_form": {
                 "status": "NOT_QUANTIFIED_AS_ADMISSIBLE_UQ",
@@ -92,6 +105,8 @@ def build() -> dict:
                                     "batch within their first 30 discharges, SOC on the causal integrated-charge basis",
                 "transfer": "cross-cell transfer (B0006) FAILED the preregistered acceptance for both models",
                 "extrapolation_flags": {r: held[r]["1rc"]["route_validity_status_counts"] for r in held},
+                "acceptance_after_applicability": {r: {m: held[r][m]["acceptance"] for m in ("1rc", "rint")}
+                                                   for r in held},
                 "unsupported": ["any other current, including pulses and charge", "other temperatures",
                                 "aged cells beyond ordinal 30", "other cell types", "parameter values as physical "
                                 "constants of the cell"],

@@ -3,6 +3,16 @@
  "combination": "none: the components are reported separately; UNKNOWN measurement uncertainty prevents any total, and no independence assumption is made",
  "components": {
   "applicability": {
+   "acceptance_after_applicability": {
+    "cross_cell_validation": {
+     "1rc": "FAIL",
+     "rint": "FAIL"
+    },
+    "within_cell_holdout": {
+     "1rc": "NOT_ASSESSABLE (12 cycle(s) outside the validated domain)",
+     "rint": "FAIL"
+    }
+   },
    "extrapolation_flags": {
     "cross_cell_validation": {
      "in_domain": 23,
@@ -24,20 +34,48 @@
    ]
   },
   "initial_state": {
-   "hold_convention_forward_vs_backward": {
-    "C1": 931.4579345615059,
-    "R0": 0.11757418897830821,
-    "R1": 0.2829103129765973,
-    "sse_ratio": 1.3372124827741498
-   },
-   "reason": "an initial polarization of 20 mA x R1 is immaterial (objective ratio 0.9994); the unknown load switch time within one ~19 s sample is NOT immaterial (objective ratio 1.337) and is not reduced by this data",
+   "reason": "after a CV charge v_p0 carries the charge direction (negative under the positive-discharge convention); either sign of a 20 mA x R1 polarization is immaterial (objective ratios 0.9994 and 1.0006)",
    "status": "PARTIALLY_QUANTIFIED",
+   "vp0_minus_20mA_x_R1": {
+    "C1": 773.0325706042972,
+    "R0": 0.13238560365943805,
+    "R1": 0.22699245399424217,
+    "relative_shift": {
+     "C1": 0.01728985439570563,
+     "R0": 0.005383471989707456,
+     "R1": 0.00525318687406795
+    },
+    "sse_ratio": 1.0005953756034818,
+    "tau_s": 175.4725602189467
+   },
    "vp0_plus_20mA_x_R1": {
     "C1": 747.2460503750171,
     "R0": 0.1309775503917797,
     "R1": 0.22477121588948842,
     "sse_ratio": 0.9993616402928561
    }
+  },
+  "input_reconstruction": {
+   "forward_hold_with_negative_vp0": {
+    "C1": 930.6434979702792,
+    "R0": 0.11765589778584455,
+    "R1": 0.28322313025454665,
+    "relative_shift": {
+     "C1": 0.22470155145521464,
+     "R0": -0.10647916581399797,
+     "R1": 0.2542749737929797
+    },
+    "sse_ratio": 1.3376632670550308,
+    "tau_s": 263.5797646461833
+   },
+   "hold_convention_forward_vs_backward": {
+    "C1": 931.4579345615059,
+    "R0": 0.11757418897830821,
+    "R1": 0.2829103129765973,
+    "sse_ratio": 1.3372124827741498
+   },
+   "reason": "turning ~19 s current samples into a piecewise-constant input leaves the load switch time unknown within one sample: the forward hold changes the objective by a factor 1.337 and moves R1 by +25 %. This is an input (measurement-sampling) uncertainty, not numerical discretization, and it is never NOT_APPLICABLE for measured profiles",
+   "status": "NOT_REDUCED"
   },
   "measurement": {
    "evidence_required": "a calibration certificate (or manufacturer accuracy specification bound to the actual instruments and ranges used) for voltage, current, temperature and time, or an independent co-located reference measurement of the same records",
@@ -141,5 +179,6 @@
   }
  },
  "schema": "forge.battery_1rc_closure.uncertainty/1",
- "validation_sha256": "e6a29d604145172d4e84838ae03a883da29ae1dd86c9ecd9e3fbd4ddb60cd085"
+ "sensitivity_sha256": "7cf0c9bedc4be7dc8503aacb6cb95b6f8f36d8eb657680f6a835cb19ecb76919",
+ "validation_sha256": "ff6f19568a2e8f2e81133cd2aea907e296f5fc27c90d92657667e4052ae9d65c"
 }

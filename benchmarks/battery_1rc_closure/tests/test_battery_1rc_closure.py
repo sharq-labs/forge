@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import os
 import hashlib
 import json
 import pathlib
@@ -181,3 +182,46 @@ def test_the_ledger_does_not_promote_what_the_evidence_does_not_support():
     for gate in ("calibration", "independent_validation", "measurement_uq", "parameter_uq", "model_discrepancy",
                  "claims_integration", "domainpack_integration"):
         assert gates[gate]["status"] == "MISSING", gate
+
+
+# ---- review corrections ---------------------------------------------------------------------------------------------
+def test_a_set_with_out_of_domain_cycles_cannot_pass_acceptance():
+    from benchmarks.battery_1rc_closure.evaluate import applicable_acceptance
+    assert applicable_acceptance("PASS", 0) == "PASS"
+    assert applicable_acceptance("PASS", 3).startswith("NOT_ASSESSABLE")
+    assert applicable_acceptance("FAIL", 3) == "FAIL"                 # a failure is never excused by the domain
+    within = _pinned("VALIDATION")["roles"]["within_cell_holdout"]
+    assert within["1rc"]["acceptance"].startswith("NOT_ASSESSABLE")
+    assert within["1rc"]["acceptance_thresholds_all_cycles"] == "PASS"
+
+
+def test_every_held_out_prediction_is_bound_to_a_reproducible_route_replay_record():
+    from benchmarks.battery_1rc_closure.evaluate import load_calibration, predict_1rc_route
+    cal = load_calibration()
+    entry = _pinned("VALIDATION")["roles"]["cross_cell_validation"]
+    assert all(len(c["replay_record_sha256"]) == 64 for c in entry["per_cycle"])
+    first = bfit.Cycle(bdata.load("cross_cell_validation")["cycles"][0])
+    basis = next(iter(entry["per_cycle"]))  # noqa: F841 - the record is checked through the digest below
+    import math as _m
+    cal_digest = (RESULTS / "CALIBRATION.sha256").read_bytes().split()[0].decode()[:16]
+    text = (f"identified on B0005+B0007 (results/CALIBRATION.json, sha256 {cal_digest}); identifiability decision "
+            f"{cal['identifiability']['decision']}: NOT a validated parameter set")
+    _, _, binding = predict_1rc_route(first, cal["models"]["1rc"]["parameters"], cal["parameter_set"], text)
+    assert binding["replay_record_sha256"] == entry["per_cycle"][0]["replay_record_sha256"]
+    assert _m.isfinite(entry["per_cycle"][0]["rmse_1rc_mV"])
+
+
+@pytest.mark.skipif(not os.environ.get("FORGE_NASA_FY08Q4_DIR"),
+                    reason="needs the receipted NASA FY08Q4 .mat files (set FORGE_NASA_FY08Q4_DIR); see README")
+def test_every_trajectory_file_rebuilds_from_the_raw_nasa_bytes(tmp_path):
+    from tools.nasa_battery_aging import ingest_mat_file, write_canonical_json
+    raw_dir = pathlib.Path(os.environ["FORGE_NASA_FY08Q4_DIR"])
+    for role in ("calibration", "within_cell_holdout", "cross_cell_validation"):
+        pinned = bdata.load(role)
+        for cell, meta in pinned["cells"].items():
+            record = ingest_mat_file(raw_dir / f"{cell}.mat", cell_id=cell)
+            assert record["source"] == meta["source"] and record["canonical_sha256"] == meta["canonical_sha256"]
+            write_canonical_json(record, tmp_path / f"{cell}.canonical.json")
+        rebuilt = bdata.build_role(role, tmp_path)
+        assert json.dumps(rebuilt["cycles"], sort_keys=True) == json.dumps(pinned["cycles"], sort_keys=True)
+        assert rebuilt["refused"] == pinned["refused"]

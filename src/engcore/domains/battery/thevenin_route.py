@@ -23,7 +23,7 @@ would leave SOC in [0, 1] is refused, never clipped.
 What this module does NOT establish: that any parameter set describes a real cell, that the model is adequate
 for any measured trajectory, or any measurement, parameter or model-form uncertainty. Every output carries
 UNKNOWN uncertainty. ``validation_status`` is SELF_CONSISTENT: the closed form is checked against independent
-analytic references (tests/domains/battery/test_thevenin_route.py), not against measurements. The route is
+analytic references (tests/domains/test_battery_thevenin_route.py), not against measurements. The route is
 deliberately NOT registered in the production capability registry, the MCP boundary or the battery domain pack.
 """
 
@@ -779,9 +779,11 @@ def _replay_payload(parameter_set, initial, profile, points) -> dict[str, Any]:
 def run_thevenin_1rc(parameter_set: Thevenin1RCParameterSet, initial: Thevenin1RCInitialState,
                      profile: DischargeRestProfile, *, run_id: str | None = None) -> Thevenin1RCRun:
     """Execute the 1RC route end to end: problem, prepare, solve, validate, validity, provenance, result, replay."""
-    for name, value in (("parameter_set", parameter_set), ("initial", initial), ("profile", profile)):
-        if not isinstance(value, (Thevenin1RCParameterSet, Thevenin1RCInitialState, DischargeRestProfile)):
-            raise InvalidScientificProblem(f"{name} has the wrong type: {type(value).__name__}")
+    for name, value, expected in (("parameter_set", parameter_set, Thevenin1RCParameterSet),
+                                  ("initial", initial, Thevenin1RCInitialState),
+                                  ("profile", profile, DischargeRestProfile)):
+        if not isinstance(value, expected):
+            raise InvalidScientificProblem(f"{name} must be a {expected.__name__}, got {type(value).__name__}")
     problem = build_thevenin_problem(parameter_set, initial, profile)
     solver = Thevenin1RCSolver()
     solver.bind(parameter_set, initial, profile, problem.problem_id)
@@ -852,7 +854,13 @@ def replay_thevenin_1rc(record: Mapping[str, Any]) -> Thevenin1RCRun:
     Refused: a record digest that does not match its content; another schema; a model, realization or solver
     identity other than this code's (a stale record is never re-run under new code); a parameter-set or profile
     digest that does not match the embedded content; a trajectory that does not reproduce exactly."""
-    record = dict(record)
+    try:
+        return _replay(dict(record))
+    except (KeyError, TypeError) as exc:
+        raise ReplayRefused(f"the replay record is incomplete or malformed: {exc!r}") from exc
+
+
+def _replay(record: dict[str, Any]) -> Thevenin1RCRun:
     stated = record.pop("record_sha256", None)
     if stated is None or _sha256(record) != stated:
         raise ReplayRefused("the replay record's content does not match its digest (altered or truncated)")

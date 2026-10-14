@@ -252,3 +252,15 @@ def test_the_route_is_not_registered_as_a_production_battery_model():
     assert tr.MODEL_ID not in {m.model_id for m in BATTERY_MODELS}
     assert "thevenin" not in repr(builtin_battery.__dict__.get("PACK_ID", ""))
     assert tr.THEVENIN_1RC_MODEL.validation_status.value == "self_consistent"
+
+
+def test_swapped_arguments_are_refused_with_a_scientific_error_not_a_crash():
+    with pytest.raises(InvalidScientificProblem, match="must be a Thevenin1RCParameterSet"):
+        tr.run_thevenin_1rc(_init(), _set(), _profile())
+
+
+def test_an_incomplete_replay_record_is_refused_not_a_key_error():
+    record = _record()
+    del record["initial_state"]
+    with pytest.raises(tr.ReplayRefused):
+        tr.replay_thevenin_1rc(_redigest(record))

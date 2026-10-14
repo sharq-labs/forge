@@ -13,7 +13,7 @@
       "title": "Battery Thevenin 1RC",
       "owner": "src/engcore/domains/battery",
       "declared_stage": "FUNCTIONAL",
-      "summary": "Dynamic discharge/rest 1RC kernel exists, but it is not yet a formal production model/realization and has no fitted or held-out evidence path.",
+      "summary": "Exact 1RC route with replay (FUNCTIONAL). Real NASA FY08Q4 data is receipted and rebuilt from raw bytes; identification is NOT_IDENTIFIABLE at one 2 A current level; held-out cross-cell transfer fails acceptance for both 1RC and Rint; measurement uncertainty is UNKNOWN.",
       "next_actions": [
         "OCV characterization and multi-level pulse/rest data at >= 1 Hz under a new preregistration (calibration).",
         "Re-identify OCV/R0/R1/C1; then cross-cell held-out validation on independent cells.",
@@ -88,7 +88,8 @@
             "benchmarks/battery_1rc_closure/data/cross_cell_validation.json",
             "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_the_calibration_trajectories_are_pinned_to_this_preregistration",
             "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_no_held_out_cycle_leaks_into_calibration",
-            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_malformed_or_misleading_cycles_are_refused_not_repaired"
+            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_malformed_or_misleading_cycles_are_refused_not_repaired",
+            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_every_trajectory_file_rebuilds_from_the_raw_nasa_bytes"
           ]
         },
         "calibration": {
@@ -103,14 +104,14 @@
           "evidence": [
             "benchmarks/battery_1rc_closure/results/VALIDATION.json"
           ],
-          "next_action": "Held-out comparison ran: within-cell temporal holdout 1RC RMSE 49.7 mV (PASS of 50/90 mV) but cross-cell transfer to B0006 FAILS for both models (1RC 89.2 mV, Rint 93.1 mV); and the parameters are not identified. Needs identified parameters and a passing cross-cell transfer on independent cells."
+          "next_action": "Held-out comparison ran (results/VALIDATION.json). Within-cell temporal holdout: 1RC meets the 50/90 mV thresholds over all cycles, but 12 of 20 cycles lie outside the route's validated domain, so acceptance is NOT_ASSESSABLE; Rint FAILS. Cross-cell transfer to B0006 FAILS for both models (1RC 89.2 mV, Rint 93.1 mV). Parameters are not identified. Needs identified parameters, an evidence-based applicability range and a passing cross-cell transfer on independent cells."
         },
         "measurement_uq": {
           "status": "MISSING",
           "evidence": [
             "benchmarks/battery_1rc_closure/results/UNCERTAINTY_REPORT.json"
           ],
-          "next_action": "NASA states no calibrated per-sample uncertainty; measurement uncertainty stays UNKNOWN. Needs instrument calibration evidence bound to the actual voltage/current/temperature/time channels, or a co-located reference."
+          "next_action": "NASA states no calibrated per-sample uncertainty, so measurement uncertainty stays UNKNOWN. The ~19 s current sampling also leaves the load switch time unknown (forward vs backward hold moves R1 by +25 %). Needs instrument calibration evidence for voltage, current, temperature and time, and higher-rate current sampling."
         },
         "benchmark_metrics": {
           "status": "PASS",
@@ -142,7 +143,7 @@
         "claims_integration": {
           "status": "MISSING",
           "evidence": [],
-          "next_action": "Expose the validated 1RC realization to claim planning without auto-strengthening verdicts."
+          "next_action": "Only after calibration and validation pass. Before any claim wiring, bind the parameter set's temperature and current range to a calibration record digest (today it is caller-declared and decides IN_DOMAIN), and never auto-strengthen verdicts."
         },
         "domainpack_integration": {
           "status": "MISSING",

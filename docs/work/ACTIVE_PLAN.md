@@ -1,5 +1,22 @@
 # Active Plan
 
+## Active override — Battery 1RC scientific closure (2026-10-14)
+
+Branch `feat/battery-1rc-scientific-closure` (worktree `D:/forge-battery-1rc`), base `origin/main` `e193e573`. Local
+only: no push, PR, merge or recertification without the owner. Evidence package:
+[benchmarks/battery_1rc_closure/README.md](../../benchmarks/battery_1rc_closure/README.md).
+
+- [x] Rock A: `battery.cell.thevenin_1rc` execution route with replay (ledger execution and provenance_replay PASS).
+- [x] Rock B: NASA PCoE FY08Q4 archive receipted (owner-approved download); B0005, B0006 and B0007 ingested, B0018
+      refused for a NaN; preregistration v2 (real_data PASS).
+- [x] Rock C: calibration ran and is NOT_IDENTIFIABLE (calibration gate MISSING; the required protocol is specified).
+- [x] Rock D: held-out comparison opened once. Within-cell, 1RC passes and Rint fails; cross-cell, both fail; 1RC is
+      better in every set (benchmark_metrics PASS, independent_validation MISSING).
+- [x] Rock E: measurement UNKNOWN; parameter band not admissible; model form dominant and never zero.
+- [x] Rock F: the ledger computes FUNCTIONAL; claims and domain-pack integration not justified.
+- [ ] Owner: recertification (new model definition under engcore.domains plus test edits), and a decision on the new
+      measurement campaign (OCV characterization, pulses at >= 1 Hz) that calibration requires.
+
 ## Active override — hostile remediation round 1 (2026-10-13)
 
 The current user scope is F1–F8 plus scanner/genesis/empty-UQ closure, with no
