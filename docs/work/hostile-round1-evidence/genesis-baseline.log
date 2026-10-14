@@ -1,0 +1,503 @@
+...F......FF..F....F......FFFFFFFFFF                                     [100%]
+================================== FAILURES ===================================
+_____ test_a_key_is_registered_only_by_its_holder_in_its_providers_class ______
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_a_key_is_registered_only_0')
+
+    def test_a_key_is_registered_only_by_its_holder_in_its_providers_class(tmp_path):                 # checkpoint A H1
+        with pytest.raises(AuthorityRefused, match="minted by a key provider"):
+            Signer("root", "production", "00" * 32, object())
+        w = World()
+        t = EphemeralKeyProvider().signer("t")
+        forged = dict(t.possession(w.ledger_id, "t"), key_class="production")         # relabel a test key
+        with pytest.raises(AuthorityRefused, match="proof of possession does not verify"):
+            w.ledger.register_issuer(w.root, "t", forged, roles=[Role.VALIDATION])
+        other_holder = EphemeralKeyProvider().signer("o").possession(w.ledger_id, "t")
+        with pytest.raises(AuthorityRefused, match="proof of possession"):             # a possession made for another identity
+            w.ledger.register_issuer(w.root, "t2", other_holder, roles=[Role.VALIDATION])
+        keydir = tmp_path / "keys"
+        for name in ("root", "exec"):
+>           generate_key_files(keydir, name)
+
+tests\foundations\test_authority_integrity.py:146:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\engcore\authority\keys.py:265: in generate_key_files
+    DirectoryKeyProvider(d)                       # the same placement checks the reader applies
+    ^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:230: in __init__
+    _check_private_path(d, "key directory")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_a_key_is_registered_only_0/keys')
+what = 'key directory'
+
+    def _check_private_path(path: pathlib.Path, what: str) -> None:
+        st = path.lstat()
+        if stat.S_ISLNK(st.st_mode):
+            raise AuthorityRefused(f"{what} {path} is a symbolic link; private key material is a regular file in the key directory")
+>       if st.st_uid != os.geteuid():
+                        ^^^^^^^^^^
+E       AttributeError: module 'os' has no attribute 'geteuid'. Did you mean: 'getpid'?
+
+src\engcore\authority\keys.py:212: AttributeError
+________________ test_persistence_restart_and_tamper_detection ________________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_persistence_restart_and_t0')
+
+    def test_persistence_restart_and_tamper_detection(tmp_path):
+>       keys, path, led = _file_ledger(tmp_path)
+                          ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_integrity.py:298:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_integrity.py:289: in _file_ledger
+    led = AuthorityLedger.create(FileLedgerStore(path), ledger_id="campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D3442B230>
+line = '{"body":{"ledger_id":"campaign","profile":"test","root_key_class":"test","root_public":"851cf2a511770b4c817e9682de28e...56eb5bc88cb1b2fc17dce8ecad8c28fd778c1203ffc106713de55ccdfdbe7c70e3fc4ea8ab10b9b14472d01ac5d7f673c26b2e621efedb9e6c09"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+_______ test_a_second_writer_or_a_failed_append_never_forks_the_ledger ________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_a_second_writer_or_a_fail0')
+
+    def test_a_second_writer_or_a_failed_append_never_forks_the_ledger(tmp_path):                     # checkpoint A M3
+>       keys, path, led = _file_ledger(tmp_path)
+                          ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_integrity.py:335:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_integrity.py:289: in _file_ledger
+    led = AuthorityLedger.create(FileLedgerStore(path), ledger_id="campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D3446CA50>
+line = '{"body":{"ledger_id":"campaign","profile":"test","root_key_class":"test","root_public":"2ed938274af91e861b7ee972708f5...fcb3a16e94406ca6748bf8894aceaedaaf5166aa5c0070a59555331e78b73fcae2c58775dc0bce098ed3d9bd02f4a8a9dfd7e45b1a39653db70e"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+_________________________ test_key_material_placement _________________________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_key_material_placement0')
+
+    def test_key_material_placement(tmp_path):
+        keydir = tmp_path / "keys"
+>       generate_key_files(keydir, "exec")
+
+tests\foundations\test_authority_integrity.py:375:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\engcore\authority\keys.py:265: in generate_key_files
+    DirectoryKeyProvider(d)                       # the same placement checks the reader applies
+    ^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:230: in __init__
+    _check_private_path(d, "key directory")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_key_material_placement0/keys')
+what = 'key directory'
+
+    def _check_private_path(path: pathlib.Path, what: str) -> None:
+        st = path.lstat()
+        if stat.S_ISLNK(st.st_mode):
+            raise AuthorityRefused(f"{what} {path} is a symbolic link; private key material is a regular file in the key directory")
+>       if st.st_uid != os.geteuid():
+                        ^^^^^^^^^^
+E       AttributeError: module 'os' has no attribute 'geteuid'. Did you mean: 'getpid'?
+
+src\engcore\authority\keys.py:212: AttributeError
+_ test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_path _
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_residual_the_anchor_is_th0')
+
+    def test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_path(tmp_path):   # re-review M-1 (pinned)
+        """issuer_bound rests on WHO chose the anchor's root key: a caller that mints its own root, opens its own ledger and
+        passes that ledger's anchor gets issuer_bound.  So the anchor must be operator configuration -- and no MCP / planner
+        path may forward ``authority`` / ``trust_anchor`` / ``allow_test_profile``."""
+        w = World()
+        w.attest(CONV, RESULT, CTX)
+        led, anchor = w.opened()
+        assert assess(None, authority=led, trust_anchor=anchor, allow_test_profile=True).issuer_bound
+        import pathlib
+        mcp = pathlib.Path(__file__).resolve().parents[2] / "src" / "engcore" / "mcp"
+        for f in mcp.rglob("*.py"):
+>           text = f.read_text()
+                   ^^^^^^^^^^^^^
+
+tests\foundations\test_authority_integrity.py:474:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\dev_kaeem\AppData\Local\Python\pythoncore-3.14-64\Lib\pathlib\__init__.py:788: in read_text
+    return f.read()
+           ^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <encodings.cp1252.IncrementalDecoder object at 0x0000029D343B4C00>
+input = b'"""A narrow, auditable natural-language entrance to Forge.\n\nThis module does not choose physics.  It recognises de...,\n            "message": str(exc),\n        }]\n        return result\n    result["case"] = case\n    return result\n'
+final = True
+
+    def decode(self, input, final=False):
+>       return codecs.charmap_decode(input,self.errors,decoding_table)[0]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       UnicodeDecodeError: 'charmap' codec can't decode byte 0x81 in position 1505: character maps to <undefined>
+
+C:\Users\dev_kaeem\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\cp1252.py:23: UnicodeDecodeError
+________________ test_a_campaign_resumes_exactly_after_restart ________________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_a_campaign_resumes_exactl0')
+
+    def test_a_campaign_resumes_exactly_after_restart(tmp_path):
+>       keys, led, camp, h, ticket, item, refuted = run_campaign(tmp_path)
+                                                    ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:86:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:59: in ledger
+    led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D3446E850>
+line = '{"body":{"ledger_id":"battery-campaign","profile":"test","root_key_class":"test","root_public":"b49735c1edb3ca8aea2cc...ae5d5ccf25b16a936bd2656fbfb29f6ab80f644294524232cdfbe1526d5e20b87db5d7b8dc7be5d6ba5411b54832bf13793d697e9630c6330008"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+_______ test_restart_detects_dropped_reordered_or_rewritten_operations ________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_restart_detects_dropped_r0')
+
+    def test_restart_detects_dropped_reordered_or_rewritten_operations(tmp_path):
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:106:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:59: in ledger
+    led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D344C1220>
+line = '{"body":{"ledger_id":"battery-campaign","profile":"test","root_key_class":"test","root_public":"70206b902543ba0a8666f...edbd5c8eb7818acae26902de98ce10af7910a202fe7774e6a9e316cbe3b6b73af00c7b03dd0c939fe1687f5e94be804e6e739a718f6299e8080e"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+_______ test_another_key_or_issuer_cannot_resume_or_extend_the_campaign _______
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_another_key_or_issuer_can0')
+
+    def test_another_key_or_issuer_cannot_resume_or_extend_the_campaign(tmp_path):
+>       keys, led, camp, h, *_ = run_campaign(tmp_path)
+                                 ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:130:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:59: in ledger
+    led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D344C16E0>
+line = '{"body":{"ledger_id":"battery-campaign","profile":"test","root_key_class":"test","root_public":"bbe2b3add8490513db373...9a2bce643c9ce186b5ff596f4e23b544d68a0417c205e66088f2337e7e648168a41ba1798b8f980f26a5ff4d5f3b6efc6a17c9edea40bf054901"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+___________ test_a_mutation_around_the_journal_is_refused_not_lost ____________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_a_mutation_around_the_jou0')
+
+    def test_a_mutation_around_the_journal_is_refused_not_lost(tmp_path):
+>       keys, led, camp, h, ticket, *_ = run_campaign(tmp_path)
+                                         ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:150:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:59: in ledger
+    led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D34570050>
+line = '{"body":{"ledger_id":"battery-campaign","profile":"test","root_key_class":"test","root_public":"1da3e63e41e800bf17420...02b10ff2cd8100e35ddee6043d017082bdcd31099cfd8526b249bf0c0b738558919e83599a07933f8c55f1eb6e75d2c0aa5af807f7450ade5301"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+_______ test_a_verdict_judged_before_restart_is_the_same_verdict_after ________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_a_verdict_judged_before_r0')
+
+    def test_a_verdict_judged_before_restart_is_the_same_verdict_after(tmp_path):
+>       keys, led, camp, h, *_ = run_campaign(tmp_path)
+                                 ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:157:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:59: in ledger
+    led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D3447ABE0>
+line = '{"body":{"ledger_id":"battery-campaign","profile":"test","root_key_class":"test","root_public":"e05a15d87b66728996bdd...fdd7c4206b9329429fc405127557f94ce3acdafd7601bf52660bc655d6cdc213e58612853e33a8b6b8a86a9296fc7c01960cb28a526051f0f306"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+_______ test_the_same_campaign_id_cannot_restart_its_multiplicity_count _______
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_the_same_campaign_id_cann0')
+
+    def test_the_same_campaign_id_cannot_restart_its_multiplicity_count(tmp_path):                       # checkpoint A H3
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:168:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:59: in ledger
+    led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D3447ACF0>
+line = '{"body":{"ledger_id":"battery-campaign","profile":"test","root_key_class":"test","root_public":"12e9b3ed4beeab7b48b12...2a07bebdc90ac40601fe8f0d69a294c352c3edaa61941ff4295d75c0d401e223a421621482f19e6559bae1054299d83e72c1c03c8149fc39ed05"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+________ test_foreign_journal_entries_cannot_squat_or_brick_a_campaign ________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_foreign_journal_entries_c0')
+
+    def test_foreign_journal_entries_cannot_squat_or_brick_a_campaign(tmp_path):                           # checkpoint A M4
+        from engcore.authority import Attestation
+        from engcore.claims.durable_campaign import campaign_subject
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:186:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:59: in ledger
+    led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D34584E50>
+line = '{"body":{"ledger_id":"battery-campaign","profile":"test","root_key_class":"test","root_public":"22515774253269c05ff97...5db1f500af68c98808bbc3633e34b87940beee72f74b4cfbbab3a16751885d54259e35d0e70841c436538ee0f580cfecb192345ffd6f3c4a0408"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+______ test_a_dropped_journal_tail_after_the_operators_anchor_is_refused ______
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_a_dropped_journal_tail_af0')
+
+    def test_a_dropped_journal_tail_after_the_operators_anchor_is_refused(tmp_path):                       # checkpoint A M5
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:200:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:59: in ledger
+    led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D34585550>
+line = '{"body":{"ledger_id":"battery-campaign","profile":"test","root_key_class":"test","root_public":"dfb18b65398059c1b4257...b2611b4cc6d1dd6c2d57b40a2ce0e2a01bfabcc3428ac12b0dafedbded297ef2b3cec4510abd81396c6425344f7a1479e1a57e6a25f8ee71e901"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+_______ test_a_second_exposure_issuer_cannot_fork_or_squat_the_campaign _______
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_a_second_exposure_issuer_0')
+
+    def test_a_second_exposure_issuer_cannot_fork_or_squat_the_campaign(tmp_path):                    # re-review M-4
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:222:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:59: in ledger
+    led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D3455FC50>
+line = '{"body":{"ledger_id":"battery-campaign","profile":"test","root_key_class":"test","root_public":"784f3c962d46cd279452a...0797dc35e5f8bba0d6d14fba2f44cf2962a138f167f04163964ef06dc4540fc2823faf42d0da427bc4fc8b89b385106e549d98b0b773c5396b03"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+_______ test_a_journal_signed_in_a_compromise_window_cannot_be_resumed ________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-baseline-temp/test_a_journal_signed_in_a_com0')
+
+    def test_a_journal_signed_in_a_compromise_window_cannot_be_resumed(tmp_path):                     # combined review M-3
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:237:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:59: in ledger
+    led = AuthorityLedger.create(FileLedgerStore(tmp_path / "authority.jsonl"), ledger_id="battery-campaign", profile="test", root=root)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\ledger.py:380: in create
+    led._append_signed(LedgerEvent(ledger_id, 0, GENESIS_PREVIOUS, "genesis", body, root.key_id), root)
+src\engcore\authority\ledger.py:531: in _append_signed
+    self._store.append(canonical(ev.to_dict()), expected_lines=expected)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <engcore.authority.ledger.FileLedgerStore object at 0x0000029D345888C0>
+line = '{"body":{"ledger_id":"battery-campaign","profile":"test","root_key_class":"test","root_public":"de1b185b53178affeb739...3c1e90aad2c5fcd23fd2f6e59b461fe5aa80b3dcdcd8d7aababaa77130d580d73bc3e731aef76073ebede41394e706c360bc11ba684aa213c70d"}'
+
+    def append(self, line: str, *, expected_lines: int) -> None:
+        """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
+        a second writer (another ledger object on the same file) is refused instead of forking the chain."""
+>       import fcntl
+E       ModuleNotFoundError: No module named 'fcntl'
+
+src\engcore\authority\ledger.py:277: ModuleNotFoundError
+=========================== short test summary info ===========================
+FAILED tests/foundations/test_authority_integrity.py::test_a_key_is_registered_only_by_its_holder_in_its_providers_class
+FAILED tests/foundations/test_authority_integrity.py::test_persistence_restart_and_tamper_detection
+FAILED tests/foundations/test_authority_integrity.py::test_a_second_writer_or_a_failed_append_never_forks_the_ledger
+FAILED tests/foundations/test_authority_integrity.py::test_key_material_placement
+FAILED tests/foundations/test_authority_integrity.py::test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_path
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_campaign_resumes_exactly_after_restart
+FAILED tests/foundations/test_authority_durable_campaign.py::test_restart_detects_dropped_reordered_or_rewritten_operations
+FAILED tests/foundations/test_authority_durable_campaign.py::test_another_key_or_issuer_cannot_resume_or_extend_the_campaign
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_mutation_around_the_journal_is_refused_not_lost
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_verdict_judged_before_restart_is_the_same_verdict_after
+FAILED tests/foundations/test_authority_durable_campaign.py::test_the_same_campaign_id_cannot_restart_its_multiplicity_count
+FAILED tests/foundations/test_authority_durable_campaign.py::test_foreign_journal_entries_cannot_squat_or_brick_a_campaign
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_dropped_journal_tail_after_the_operators_anchor_is_refused
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_second_exposure_issuer_cannot_fork_or_squat_the_campaign
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_journal_signed_in_a_compromise_window_cannot_be_resumed
+15 failed, 21 passed in 2.02s

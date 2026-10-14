@@ -589,8 +589,17 @@ class ValidationLevel(str, Enum):
 #: about the wrong model. The level itself is unchanged and still says exactly what it said; what changed is
 #: the KIND of evidence it is counted as. The instances are named in
 #: `docs/audits/CORE_REAUDIT_2026-09-16.md`, which is where this core is allowed to know about them.
+#:
+#: F4 (hostile review 2026-10-13): BENCHMARK_VALIDATED is NOT one of them either, for the same reason. The
+#: only issuer of that level is an oracle of kind BENCHMARK_DATASET -- a published REFERENCE SOLUTION of a
+#: stated mathematical problem, named in `docs/work/HOSTILE_REMEDIATION_ROUND1.md` rather than here.
+#: Agreement with it shows the implementation solves the declared equations correctly; it compares the model
+#: with nothing outside itself, and a model with the wrong physics agrees with a benchmark of the same wrong
+#: physics. Measured physical behaviour is an EXPERIMENTAL_DATASET oracle and earns EXPERIMENTALLY_VALIDATED.
+#: The member keeps its name and serialized value -- the frozen API and every stored record still read -- and
+#: what it is worth is decided here, by kind, never by the word in its name: like CROSS_SOLVER_VALIDATED it is
+#: strong VERIFICATION evidence, and a report resting on it is VERIFICATION_ONLY.
 VALIDATION_LEVELS = frozenset({
-    ValidationLevel.BENCHMARK_VALIDATED,
     ValidationLevel.EXPERIMENTALLY_VALIDATED,
 })
 
@@ -601,6 +610,7 @@ VERIFICATION_LEVELS = frozenset({
     ValidationLevel.DIMENSIONALLY_VALID,
     ValidationLevel.NUMERICALLY_CONVERGED,
     ValidationLevel.ANALYTICALLY_VERIFIED,
+    ValidationLevel.BENCHMARK_VALIDATED,
     ValidationLevel.CROSS_SOLVER_VALIDATED,
 })
 
@@ -1076,14 +1086,15 @@ class ValidationReport:
     def evidence_basis(self) -> str:
         """``VALIDATED``, ``VERIFICATION_ONLY`` or ``NONE``: what kind of evidence the attained levels are (CORE-008).
 
-        Dimensional validity, numerical convergence, analytic verification and agreement between two solvers of
-        the same declared model say the declared model was solved correctly. Benchmark and experimental
-        validation compare it with something outside itself. A verdict resting on the first kind alone is a
-        statement about the solution, not about the world, and this says which kind a report holds so no reader
-        has to infer it from level names.
+        Dimensional validity, numerical convergence, analytic verification, agreement with a published
+        benchmark reference solution and agreement between two solvers of the same declared model say the
+        declared model was solved correctly. Experimental validation compares it with something outside
+        itself. A verdict resting on the first kind alone is a statement about the solution, not about the
+        world, and this says which kind a report holds so no reader has to infer it from level names.
 
-        R-39 (re-audit 2026-09-16): cross-solver agreement moved from the second group to the first. See
-        :data:`VALIDATION_LEVELS` for why, in this tree's own words.
+        R-39 (re-audit 2026-09-16): cross-solver agreement moved from the second group to the first. F4
+        (hostile review 2026-10-13): benchmark agreement moved likewise. See :data:`VALIDATION_LEVELS` for
+        why, in this tree's own words.
         """
         attained = self.attained_levels
         if attained & VALIDATION_LEVELS:

@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import subprocess
 import sys
@@ -106,12 +107,20 @@ def tags_for_paths(paths: Iterable[str]) -> set[str]:
     return tags
 
 
+#: pytest's default ``python_files`` -- the same rule tools/test_impact.is_test_module applies.
+_TEST_FILE = re.compile(r"(?:test_[^/]*|[^/]*_test)\.py")
+
+
 def changed_test_files(paths: Iterable[str]) -> list[str]:
-    """Changed test modules that still exist; a deleted test cannot be run."""
+    """Changed test modules that still exist, WHEREVER they live; a deleted test cannot be run.
+
+    Hostile review F7: only root ``tests/`` used to count, so a changed provider-local or flagship
+    test selected nothing at all.
+    """
     out = []
     for p in sorted({_norm(p) for p in paths}):
         name = p.rsplit("/", 1)[-1]
-        if p.startswith("tests/") and name.startswith("test_") and name.endswith(".py") and (ROOT / p).is_file():
+        if _TEST_FILE.fullmatch(name) and not p.startswith(".forge/") and (ROOT / p).is_file():
             out.append(p)
     return out
 
@@ -351,6 +360,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     targets = build_targets(paths, regression=args.regression, affected=affected, whole_pack=bool(unresolved))
+    extra: list[str] = []
+    if unresolved and not args.regression:
+        # Hostile review F7: a change whose reach could not be established (a deleted module, a path no rule
+        # reaches) is not narrowed at all -- a subset that passes would be a false negative. The whole tier runs.
+        print("NARROWING REFUSED -- running the whole FAST tier (or SCIENTIFIC with --with-expensive), not a selection")
+        targets, deselect = [], []
+        extra += ["-m", "not campaign" if args.with_expensive else "not expensive"]
     unclassified = [] if args.regression else unclassified_paths(paths)
     if unclassified:
         print("unclassified changes select the whole regression pack:")
@@ -366,8 +382,7 @@ def main(argv: list[str] | None = None) -> int:
         for target in targets:
             print(f"  {target}")
 
-    extra: list[str] = []
-    if args.scientific:
+    if args.scientific and targets:
         extra += ["-m", "not campaign"]
     timing_report = None
     if args.dev and not args.dry_run:

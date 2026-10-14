@@ -486,6 +486,13 @@ def evaluate_degradation(
         raise InvalidScientificProblem("evaluate_degradation requires an EnvironmentTimeline")
     if not isinstance(run, MultiphysicsRunRecord):
         raise InvalidScientificProblem("evaluate_degradation requires a MultiphysicsRunRecord")
+    # F5: a run whose REQUIRED conservation failed in any window is not a result anything may build on.
+    from ..execution.multiphysics.runtime import MultiphysicsExecutionError, require_conservation
+
+    try:
+        require_conservation(run)
+    except MultiphysicsExecutionError as exc:
+        raise InvalidScientificProblem(f"evaluate_degradation refuses the run: {exc}") from exc
     timeline = environment.timeline
     if run.scenario_digest != timeline.scenario_digest:
         raise InvalidScientificProblem("the physics run was executed for a different scenario than the environment")

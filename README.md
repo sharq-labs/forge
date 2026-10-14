@@ -19,7 +19,7 @@ Every result a domain produces is a `ScientificResult` that carries:
 |---|---|
 | `values` | the quantities, with units |
 | `provenance` | which model, which realization, which solver, which version, which settings |
-| `validation` | which checks ran, which passed, and which evidentiary level they establish (`dimensionally_valid` → `numerically_converged` → `analytically_verified` → `benchmark_validated` → `cross_solver_validated` → `experimentally_validated`) |
+| `validation` | which checks ran, which passed, and which evidentiary level they establish (`dimensionally_valid`, `numerically_converged`, `analytically_verified`, `benchmark_validated`, `cross_solver_validated` are verification; only `experimentally_validated` is validation) |
 | model `validity` | whether the inputs sit inside the model's declared validity domain: `in_domain`, `outside_validated_domain`, or `unknown` |
 | model `validity_not_assessed` | for a declared model nobody asked about: **why not**, in words. A result cannot be constructed that declares a model and says neither |
 

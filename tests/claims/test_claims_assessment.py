@@ -54,8 +54,10 @@ def _codes(record) -> set[str]:
 def test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation(registry) -> None:
     record = assess_claim(t3_claim(), registry).to_dict()
     assert record["verdict"] == "supported" and record["status"] == "assessed"
-    assert record["validation"]["attained"] == ["benchmark_validated"]
-    assert record["validation"]["evidence_basis"] == "VALIDATED"
+    # F4: the benchmark level is attained and is verification; nothing here is experimental validation
+    assert "benchmark_validated" in record["verification"]["attained"]
+    assert record["validation"]["attained"] == []
+    assert record["validation"]["evidence_basis"] == "VERIFICATION_ONLY"
     assert record["assurance"]["verdict"] == "valid" and record["assurance"]["unmet_obligations"] == []
     assert record["comparison"]["rule"] == "point" and record["comparison"]["outcome"] == "satisfied"
     assert record["basis"]["admissible"] is True
@@ -315,5 +317,8 @@ def test_unknown_applicability_after_the_run_is_repaired_from_the_declarations(r
 def test_the_mcp_tool_returns_the_same_record(registry) -> None:
     from engcore.mcp.server import assess_scientific_claim
 
+    from engcore.product.runtime import CALLER_AUTHORED_CRITERIA
+
     record = assess_scientific_claim(t3_claim().to_dict())
-    assert record == assess_claim(t3_claim(), registry).to_dict()
+    # the canonical record, plus exactly the F1-G annotation: the client authored these criteria
+    assert record == {**assess_claim(t3_claim(), registry).to_dict(), "criteria_authority": dict(CALLER_AUTHORED_CRITERIA)}

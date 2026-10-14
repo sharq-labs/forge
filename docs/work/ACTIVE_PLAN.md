@@ -1,5 +1,26 @@
 # Active Plan
 
+## Active override — hostile remediation round 1 (2026-10-13)
+
+The current user scope is F1–F8 plus scanner/genesis/empty-UQ closure, with no
+push, PR, merge or Mind work. Branch `fix/hostile-review-p0-p1`, clean worktree
+`D:/forge-hostile-remediation`, base `5d73e8f5118aa845f1957decc5aae986e72476a9`.
+This bounded task supersedes the older executable queue below for this branch.
+
+- [x] Verify current origin/main and create isolated worktree.
+- [x] Complete phase-0 reproduction before changing production code (WSL Ubuntu, 3.11/3.12 venvs).
+- [x] Implement F1, F4, F2/scanner, F5, F6, F7, empty-UQ and F8 repairs (see PROGRESS, 2026-10-13/14).
+- [x] Run targeted/adversarial/mutation checks and independent scientific review (eight passes).
+- [x] Run supported 3.11/3.12 tiers and exact failure attribution (no REAL_REGRESSION).
+- [x] Hardened recertification: SOURCE_PASS at 05522b59, certificate child b1eea81b, LOCAL_ASSURANCE: PASS.
+- [ ] Owner decisions: the certified-imports-uncertified scope gap (PROGRESS, eighth review); host
+      branch protection (no required status checks; not re-verified this session).
+
+Status: implemented and recertified on `fix/hostile-review-p0-p1` (Linux clone
+`~/forge-hostile-remediation`, certificate child b1eea81b). Not pushed, not merged.
+Evidence: PROGRESS.md and `~/forge-hostile-evidence/` in WSL. Historical
+phase-0 blocker report: [HOSTILE_REMEDIATION_ROUND1.md](HOSTILE_REMEDIATION_ROUND1.md).
+
 **The only executable queue.** Scope (Master Plan §1): this file owns only "what work is active right now?". It may not
 override Genesis science, Completion maturity rules, Performance measurement semantics or `CLAUDE.md` repository
 constraints; execution authority does not imply semantic authority outside its scope. Strategy: `docs/project/FORGE_MASTER_PLAN.md` Part I. Track A science:

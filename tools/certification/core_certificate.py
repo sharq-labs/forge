@@ -68,6 +68,7 @@ import argparse
 import ast
 import hashlib
 import json
+import os
 import pathlib
 import platform
 import subprocess
@@ -83,7 +84,9 @@ CERTIFICATE_SCHEMA = "core_certificate/2"
 #: Identity of the code that produced a certificate, recorded in it. Not a
 #: version of the repository: a version of *this algorithm*.
 TOOL_ID = "tools/certification/core_certificate.py"
-TOOL_VERSION = "2.1.0"
+TOOL_VERSION = "2.4.0"  # 2.4.0: registry pin covers source bytes; loader detection widened (F2, fourth pass)
+# 2.3.0: dynamic import reach, production registry pin (hostile review F2, third pass)
+# 2.2.0: verdict_authority area and the derived authority-closure check (hostile review F2)
 
 EXCLUDED_DIR_PARTS = frozenset({"__pycache__"})
 EXCLUDED_SUFFIXES = frozenset({".pyc", ".pyo"})
@@ -236,6 +239,11 @@ CERTIFICATION_CONTROL_FILES: tuple[tuple[str, str], ...] = (
      "owns pristine seed/worker isolation, complete byte/mode manifests, "
      "restore refusal and target subprocess lifecycle; weakening it allows "
      "contaminated mutation evidence to be credited"),
+    ("tools/certification/ownership.py",
+     "decides which files of a checkout are repository source for every assurance traversal (seed "
+     "population, the impact graph, owned snapshots): tracked files always, untracked files outside "
+     "environment roots, symlinks never followed. A weaker rule lets a toolchain tree be scanned or "
+     "copied as source, or lets a tracked file hide under an environment-looking path"),
     ("tools/certification/performance_telemetry.py",
      "diagnostic timing helper imported by the local runner and mutation "
      "workspace; timing has no authority, but imported executable helpers "
@@ -387,19 +395,14 @@ SCOPE: tuple[ScopeArea, ...] = (
     ScopeArea(
         name="credibility_assurance",
         classification="CORE_CERTIFIED",
-        patterns=(
-            "src/engcore/credibility/evidence_graph/**/*.py",
-            "src/engcore/credibility/assurance_bundle.py",
-            "src/engcore/credibility/assurance_manifest.py",
-            "src/engcore/credibility/assurance_replay_bundle.py",
-            "src/engcore/credibility/replay_binding.py",
-            "src/engcore/credibility/knowledge_evidence.py",
-        ),
+        patterns=("src/engcore/credibility/**/*.py",),
         why=(
-            "the trust-critical credibility boundary added by the production hardening round: "
-            "evidence authority/conflict/lineage, the composite assurance identity and its replay "
-            "binding. These bytes now decide whether evidence may enter a trusted assurance chain, "
-            "so leaving them outside the certificate would measure their consumers but not the rule."
+            "the whole credibility package. The production hardening round certified its trust-critical "
+            "boundary (evidence authority/conflict/lineage, the composite assurance identity and its replay "
+            "binding); hostile review F2 found the rest of the package deciding verdicts outside the "
+            "certificate -- credibility/evidence.py::derive_verdict is what turns a report into SUPPORTED, "
+            "and evidence_basis_of is what says a verdict rests on validation. The package owns those "
+            "semantics, so the package is in"
         ),
     ),
     ScopeArea(
@@ -423,6 +426,47 @@ SCOPE: tuple[ScopeArea, ...] = (
             "critic's obligation, all green and none mutated. Whatever sria is as "
             "an application, the decision that turns evidence into belief is a "
             "trust boundary of the core"
+        ),
+    ),
+    ScopeArea(
+        name="verdict_authority",
+        classification="CORE_CERTIFIED",
+        patterns=(
+            "src/engcore/claims/**/*.py",
+            "src/engcore/authority/**/*.py",
+            "src/engcore/blindfold/**/*.py",
+            "src/engcore/sria/__init__.py",
+            "src/engcore/sria/actions.py",
+            "src/engcore/sria/domain_pack.py",
+            "src/engcore/sria/errors.py",
+            "src/engcore/sria/outcomes.py",
+            "src/engcore/sria/provenance.py",
+            "src/engcore/sria/signatures.py",
+            "src/engcore/sria/uncertainty.py",
+            "src/engcore/sria/calibration/**/*.py",
+        ),
+        why=(
+            "hostile review F2: what a claim's SUPPORTED means was decided outside the certificate. The "
+            "claims package owns claim admissibility, criteria grounding (adapters/), the verdict "
+            "(claims/verdict.py, claims/assessment.py), the credibility vector and its risk policy; "
+            "authority/ owns who may attest evidence (the ledger and its genesis); blindfold/ owns "
+            "evidence isolation; and the listed sria modules are the uncertainty-channel vocabulary, "
+            "provenance and calibration those decisions read. The boundary is not a hand list: "
+            "authority_closure_problems derives the static import closure of the verdict, assessment, "
+            "authority and blindfold roots and refuses a certificate whose areas do not cover it, so a "
+            "module that starts deciding authority cannot sit outside this area unnoticed"
+        ),
+    ),
+    ScopeArea(
+        name="system_runtime_authority",
+        classification="CORE_CERTIFIED",
+        patterns=("src/engcore/system_runtime/**/*.py",),
+        why=(
+            "hostile review F2, eighth pass: certified claims modules (claims/credibility_vector.py, "
+            "claims/attestation.py) read system_runtime records (ApplicabilityReport, NodeReceipt), and the "
+            "system runtime decides whether a coupled node succeeded -- including the F5 guard that refuses a "
+            "node whose required conservation failed, or whose run executed another graph or plan. A change "
+            "there could change what a recorded system result means without moving the certificate"
         ),
     ),
     ScopeArea(
@@ -586,19 +630,15 @@ OUT_OF_SCOPE: tuple[tuple[str, str], ...] = (
      "scientific models and solvers. They produce answers rather than decide "
      "what a verdict means, and they carry their own assurance — three of them "
      "are byte-pinned by frozen experiments"),
-    ("src/engcore/credibility/** (except evidence_graph/**, assurance_bundle.py, replay_binding.py)",
-     "the remaining outer credibility/V&V report semantics and SRIA bridge stay outside the "
-     "certified core. The trust-critical evidence graph and assurance/replay identity files are "
-     "explicitly certified in the credibility_assurance area"),
-    ("src/engcore/mcp/**",
+    ("src/engcore/mcp/**, src/engcore/product/**",
      "the outer product/tool transport boundary: a consumer of claims and "
-     "credibility, never scientific authority"),
-    ("src/engcore/claims/**",
-     "the scientific intelligence layer (EXPERIMENTAL): routing, planning, "
-     "assessment and analysis above the Core and credibility/SRIA. It defines "
-     "claim-level orchestration without extending the frozen Core API"),
-    ("src/engcore/design/**, sria/** (except the assurance/admission chain), systems/**",
-     "applications built on the core"),
+     "credibility, never scientific authority. The natural-language grounding that "
+     "decides whether a proposal's criteria are the user's is claims/adapters/**, "
+     "inside the verdict_authority area"),
+    ("src/engcore/design/**, sria/** (except the assurance/admission chain and the modules "
+     "the verdict_authority area lists), systems/**",
+     "applications built on the core. authority_closure_problems refuses a certificate "
+     "if the verdict and authority roots ever import one of them"),
     ("tests/** (except the harness area, the two self-check modules and the pinned regression manifest)",
      "assurance for everything above, not part of what is certified. They "
      "still trigger recertification (tools/certification/recertification_scope.py), "
@@ -764,6 +804,385 @@ def harness_pinning_problems(
     ]
 
 
+# ---------------------------------------------------------------------------
+# what decides a verdict's meaning (hostile review F2)
+# ---------------------------------------------------------------------------
+#: The modules where SUPPORTED, admissibility, evidence authority and isolation are decided. Their
+#: static import closure inside ``src/engcore`` is what a certificate must cover; the closure is
+#: DERIVED, so a module that a verdict starts depending on cannot be left outside scope by omission.
+AUTHORITY_ROOTS: tuple[str, ...] = (
+    "src/engcore/claims/verdict.py",
+    "src/engcore/claims/assessment.py",
+    "src/engcore/claims/adapters/nl.py",
+    "src/engcore/credibility/evidence.py",
+    "src/engcore/authority/**/*.py",
+    "src/engcore/blindfold/**/*.py",
+)
+
+#: Packages that produce ANSWERS (a solved value, a domain model) rather than decide what an answer
+#: is worth. Named, with the reason, rather than silently skipped; the closure never reaches them today.
+AUTHORITY_CLOSURE_EXEMPT: tuple[tuple[str, str], ...] = (
+    ("src/engcore/domains/**", "domain models and solvers: answers, assured by their own suites and frozen pins"),
+    ("src/engcore/systems/**", "system compositions of domain models: answers, not verdict semantics"),
+)
+
+#: Imports the static closure cannot follow: a computed module name, or a walk over a package. Each one in
+#: the closure must be declared here with what it can reach and why that reach is acceptable; an
+#: undeclared one is a closure problem (third review B1/B2), so a root that starts loading code by name
+#: cannot widen what decides a verdict without saying so in the certification control plane.
+DYNAMIC_REACH: tuple[tuple[str, str, str], ...] = (
+    ("src/engcore/credibility/evidence.py", "src/engcore/domains/**",
+     "_declared_models walks engcore.domains only -- where every ScientificModelDefinition is declared -- and "
+     "refuses two different definitions under one (model_id, version), so a module cannot shadow a model"),
+    ("src/engcore/claims/analysis/__init__.py", "src/engcore/claims/analysis/**",
+     "lazy loader of its own submodules, all inside the verdict_authority area"),
+    ("src/engcore/scientific/consensus.py", "src/engcore/domains/**",
+     "route declarations are read from engcore.domains; a component identity 'py:<module>:<qualname>' is "
+     "resolved as named by a declaration, and the declarations' trust registries are pinned in "
+     "src/engcore/domains/__init__.py, which is not exempt"),
+    ("src/engcore/scientific/results/thresholds.py", "src/engcore/domains/**",
+     "threshold declarations are read from engcore.domains; their registry digest is pinned in "
+     "src/engcore/domains/__init__.py, which is not exempt"),
+    ("src/engcore/scientific/results/validation.py", "src/engcore/domains/**",
+     "validation-level declarations are read from engcore.domains, as for thresholds"),
+    ("src/engcore/scientific/independence_evidence.py", "src/engcore/domains/**",
+     "a route component identity names its module; identities are pinned by the domain trust registries"),
+    ("src/engcore/domainpacks/discovery.py", "<external entry points: nothing in this tree>",
+     "discovers EXTERNAL domain packs (installed entry points, FORGE_DOMAIN_PACKS). The registry probe runs with "
+     "FORGE_* scrubbed, so the pinned registry is the built-in one; an external pack is never certified by this "
+     "certificate"),
+)
+
+
+def _call_name(func: ast.AST) -> str:
+    if isinstance(func, ast.Name):
+        return func.id
+    if isinstance(func, ast.Attribute):
+        return func.attr
+    return ""
+
+
+#: Calls that load or run code by a name or a path the static closure cannot follow (fourth review).
+_LOADER_CALLS = frozenset({
+    "walk_packages", "iter_modules", "resolve_name", "spec_from_file_location", "spec_from_loader",
+    "module_from_spec", "exec_module", "load_module", "run_module", "run_path", "entry_points", "load_entry_point",
+})
+#: Modules whose attributes are loaders: an alias of one, or getattr() on one, is a loader too.
+_LOADER_MODULES = frozenset({"importlib", "importlib.util", "importlib.metadata", "pkgutil", "runpy"})
+
+
+def dynamic_imports(path: pathlib.Path) -> list[int]:
+    """Lines where ``path`` loads a module the static closure cannot name.
+
+    ``import_module``/``__import__`` with anything but an absolute string literal; any call in
+    :data:`_LOADER_CALLS`; the builtins ``exec``/``compile``/``eval``; ``getattr`` on a loader module; and
+    any of these reached through an alias (``from importlib import import_module as load``). A literal
+    absolute name is not dynamic: :func:`_engcore_imports` follows it.
+    """
+    tree = ast.parse(path.read_bytes().decode("utf-8"))
+    aliases: dict[str, str] = {}
+    modules: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module in _LOADER_MODULES and not node.level:
+            for alias in node.names:
+                aliases[alias.asname or alias.name] = alias.name
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name in _LOADER_MODULES:
+                    modules.add(alias.asname or alias.name.split(".")[0])
+    lines: list[int] = []
+    for node in ast.walk(tree):
+        # A loader bound to another name (load = importlib.import_module) is a loader wherever it is later called.
+        if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(node.value, (ast.Attribute, ast.Name)):
+            bound = _call_name(node.value)
+            bound = aliases.get(bound, bound) if isinstance(node.value, ast.Name) else bound
+            if bound in _LOADER_CALLS or bound.endswith("import_module") or bound == "__import__":
+                lines.append(node.lineno)
+        if not isinstance(node, ast.Call):
+            continue
+        name = _call_name(node.func)
+        name = aliases.get(name, name) if isinstance(node.func, ast.Name) else name
+        literal = (bool(node.args) and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)
+                   and not node.args[0].value.startswith("."))
+        if name in _LOADER_CALLS:
+            lines.append(node.lineno)
+        elif name.endswith("import_module") or name == "__import__":
+            if not literal:
+                lines.append(node.lineno)
+        elif isinstance(node.func, ast.Name) and name in ("exec", "compile", "eval"):
+            lines.append(node.lineno)
+        elif name == "getattr" and node.args and isinstance(node.args[0], ast.Name) and node.args[0].id in modules:
+            lines.append(node.lineno)
+    return sorted(set(lines))
+
+
+def _engcore_module_file(src: pathlib.Path, module: str) -> pathlib.Path | None:
+    base = src.joinpath(*module.split("."))
+    for candidate in (base.with_suffix(".py"), base / "__init__.py"):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _engcore_imports(src: pathlib.Path, path: pathlib.Path) -> set[str]:
+    """Every ``engcore`` module ``path`` names, absolute or relative, including imports inside functions."""
+    relative = path.relative_to(src).with_suffix("")
+    package = list(relative.parts[:-1])
+    found: set[str] = set()
+    for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+        if isinstance(node, ast.Import):
+            found.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                base = package[: len(package) - (node.level - 1)] if node.level > 1 else package
+                module = ".".join(base + ([node.module] if node.module else []))
+            else:
+                module = node.module or ""
+            found.add(module)
+            found.update(f"{module}.{alias.name}" for alias in node.names)
+        elif isinstance(node, ast.Call) and node.args and isinstance(node.args[0], ast.Constant) \
+                and isinstance(node.args[0].value, str):
+            # importlib.import_module("engcore.x") is an import with a literal name: followed like one.
+            name = _call_name(node.func)
+            if name.endswith("import_module") or name == "__import__":
+                found.add(node.args[0].value)
+    return {name for name in found if name == "engcore" or name.startswith("engcore.")}
+
+
+def authority_import_closure(root: pathlib.Path) -> list[str]:
+    """The source files the verdict/authority roots reach by static import, transitively.
+
+    Static, and it says so: a module reached only through ``importlib`` with a computed name is not
+    found, exactly as for :func:`harness_import_closure`. Each package ``__init__`` on the way to an
+    imported module is included, because importing a submodule executes it.
+    """
+    src = root / "src"
+    if not (src / "engcore").is_dir():
+        return []
+    queue = [path for pattern in AUTHORITY_ROOTS for path in sorted(root.glob(pattern)) if path.is_file()]
+    seen: set[pathlib.Path] = set()
+    while queue:
+        current = queue.pop()
+        if current in seen or _excluded(current.relative_to(root)):
+            continue
+        seen.add(current)
+        for module in _engcore_imports(src, current):
+            parts = module.split(".")
+            for length in range(1, len(parts) + 1):
+                target = _engcore_module_file(src, ".".join(parts[:length]))
+                if target is not None and target not in seen:
+                    queue.append(target)
+    return sorted((path.relative_to(root).as_posix() for path in seen), key=lambda text: text.encode("utf-8"))
+
+
+def authority_closure_problems(root: pathlib.Path, scope: Sequence[ScopeArea] | None = None) -> list[str]:
+    """Why ``scope`` does not cover everything the verdict and authority roots import."""
+    areas = tuple(scope if scope is not None else SCOPE)
+    pinned: set[str] = set()
+    for area in areas:
+        pinned.update(enumerate_area(root, area))
+    closure = authority_import_closure(root)
+    missing = [name for name in closure if name not in pinned and not _closure_exempt(name)]
+    problems: list[str] = []
+    if missing:
+        problems.append(
+            f"{len(missing)} module(s) the verdict/authority roots import are outside every certified area, so a "
+            f"change to them could change what SUPPORTED means without moving the certificate: " + ", ".join(missing)
+        )
+    declared = {file: reach for file, reach, _ in DYNAMIC_REACH}
+    for name in closure:
+        lines = dynamic_imports(root / name)
+        if lines and name not in declared:
+            problems.append(
+                f"{name} loads modules by computed name or package walk (line(s) {lines}) and DYNAMIC_REACH does "
+                f"not declare what it can reach; the static closure cannot see past it"
+            )
+    for file, reach, _ in DYNAMIC_REACH:
+        if not (root / file).is_file():
+            continue
+        reached = [str(p.relative_to(root).as_posix()) for p in sorted(root.glob(reach)) if p.is_file() and p.suffix == ".py"]
+        uncovered = [n for n in reached if n not in pinned and not _closure_exempt(n) and not _excluded(pathlib.PurePosixPath(n))]
+        if uncovered:
+            problems.append(f"{file} can reach {len(uncovered)} module(s) by name outside every certified area: "
+                            + ", ".join(uncovered[:10]))
+    return problems
+
+
+def _closure_exempt(name: str) -> bool:
+    """An exempt package's own ``__init__`` is never exempt: importing any submodule runs it (third review B2)."""
+    for pattern, _ in AUTHORITY_CLOSURE_EXEMPT:
+        base = pattern.rstrip("*/")
+        if name == base + "/__init__.py":
+            return False
+        if pathlib.PurePosixPath(name).match(pattern) or name.startswith(base + "/"):
+            return True
+    return False
+
+
+# ---------------------------------------------------------------------------
+# the production capability registry (hostile review F2, third pass B3)
+# ---------------------------------------------------------------------------
+#: assess_claim and verify_assessment judge every claim against the production registry: routes and their
+#: activation, input roles, required overrides, refinement defaults, perturbable inputs. That registry is
+#: assembled in src/engcore/product and the pack registries -- ~100 modules that produce answers and are
+#: out of scope. Rather than certify them, a certificate pins what the verdict reads from them: the
+#: registry's own declaration digest; for every executor, case builder and oracle provider its name AND
+#: the SHA-256 of the source file that defines it (fourth review: a name alone is not code); and the source
+#: digest of every domain module that declares a ScientificModelDefinition (validity domains, exclusions).
+#: Fifth review: the code those functions reach builds evidence too (product/battery.py assembles the
+#: CredibilityEvidenceReport itself), so the static first-party import closure of every executor, case builder
+#: and oracle provider is pinned file by file -- stopping only at AUTHORITY_CLOSURE_EXEMPT (domain models and
+#: solvers, system compositions: answers, assured by their own suites and frozen pins). A module reached only
+#: by a computed name is not seen by this closure, as for the authority closure.
+_REGISTRY_PROBE = r"""
+import hashlib, importlib, inspect, json, pathlib, pkgutil, sys
+src = pathlib.Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(src))
+import engcore
+if pathlib.Path(engcore.__file__).resolve().parent != src / "engcore":
+    raise SystemExit("engcore was imported from " + engcore.__file__ + ", not from the tree being certified")
+from engcore.product.capabilities import production_registry
+from engcore.scientific.models.definition import ScientificModelDefinition
+
+def source(path):
+    path = pathlib.Path(path).resolve()
+    try:
+        rel = path.relative_to(src.parent).as_posix()
+    except ValueError:
+        raise SystemExit("code the verdict reads is defined outside the tree being certified: " + str(path))
+    return {"source": rel, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+def ident(f):
+    if f is None:
+        return None
+    name = getattr(f, "__module__", "?") + ":" + getattr(f, "__qualname__", type(f).__qualname__)
+    try:
+        where = inspect.getsourcefile(f)
+    except TypeError:
+        where = None
+    if where is None:
+        raise SystemExit("cannot locate the source of " + name)
+    return {"name": name, **source(where)}
+
+models = {}
+for found in pkgutil.walk_packages(importlib.import_module("engcore.domains").__path__, "engcore.domains."):
+    module = importlib.import_module(found.name)  # an import failure fails the probe, never drops a model
+    if any(isinstance(value, ScientificModelDefinition) for value in vars(module).values()):
+        models[found.name] = source(module.__file__)
+
+registry = production_registry()
+print(json.dumps({
+    "digest": registry.digest,
+    "capabilities": {
+        d.capability_id: {
+            "digest": d.digest,
+            "executor": ident(d.executor),
+            "case_builder": ident(d.case_builder),
+            "oracle_providers": {r.route_id: ident(getattr(r, "oracle_provider", None)) for r in d.routes},
+        }
+        for d in registry.declarations
+    },
+    "model_definition_modules": models,
+}, sort_keys=True))
+"""
+
+#: The file whose presence says this tree has a production registry to pin.
+REGISTRY_ENTRY = "src/engcore/product/capabilities.py"
+
+
+def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
+    """The production registry's declaration digest and code identities, read from the tree at ``root``.
+
+    ``None`` for a tree with no production registry (a synthetic test repository). Runs in a subprocess
+    so the tree's ``engcore`` -- and only that one -- is imported; any failure is a CertificationError.
+    """
+    if not (root / REGISTRY_ENTRY).is_file():
+        if (root / "src" / "engcore" / "claims" / "assessment.py").is_file():
+            # A tree that assesses claims has a registry; a moved or renamed entry must not drop the pin silently.
+            raise CertificationError(f"{REGISTRY_ENTRY} is missing from a tree that assesses claims; the production "
+                                     "registry cannot be pinned")
+        return None
+    # Fourth review: nothing from the environment steers the probe -- no PYTHON*/FORGE*/user-site/cwd entries
+    # (-E -s -P, a scratch working directory), and only the tree's own engcore is accepted.
+    env = {key: value for key, value in os.environ.items() if not key.upper().startswith(("PYTHON", "FORGE"))}
+    import tempfile  # noqa: PLC0415 - only the probe needs a scratch directory
+
+    with tempfile.TemporaryDirectory(prefix="forge-registry-probe-") as scratch:
+        run = subprocess.run([sys.executable, "-E", "-s", "-P", "-c", _REGISTRY_PROBE, str(root / "src")], cwd=scratch,
+                             env=env, capture_output=True, text=True, timeout=600)
+    if run.returncode != 0:
+        raise CertificationError("the production registry could not be read from the tree: "
+                                 + (run.stderr.strip().splitlines() or ["no output"])[-1])
+    identity = json.loads(run.stdout.strip().splitlines()[-1])
+    identity["evidence_code"] = evidence_code_digests(root, identity)
+    return identity
+
+
+def evidence_code_digests(root: pathlib.Path, identity: Mapping[str, Any]) -> dict[str, str]:
+    """SHA-256 of the first-party code the registry's executors, case builders and oracle providers reach.
+
+    The static import closure (absolute, relative and literal ``import_module`` names, function-level imports
+    included) from each defining file, walked THROUGH the exempt answer packages, and EVERY file reached is
+    pinned: an "answers" module (a solver, a matrix assembler) can decide whether a level is earned without
+    naming an evidence type. A computed-name load anywhere in the closure must be declared in DYNAMIC_REACH,
+    or the registry cannot be pinned.
+    """
+    src = root / "src"
+    seeds: set[str] = set()
+    for declaration in identity.get("capabilities", {}).values():
+        for item in (declaration.get("executor"), declaration.get("case_builder"),
+                     *dict(declaration.get("oracle_providers") or {}).values()):
+            if isinstance(item, Mapping) and item.get("source"):
+                seeds.add(str(item["source"]))
+    queue = [root / name for name in sorted(seeds)]
+    seen: set[pathlib.Path] = set()
+    while queue:
+        current = queue.pop()
+        if current in seen or not current.is_file():
+            continue
+        seen.add(current)
+        for module in _engcore_imports(src, current):
+            parts = module.split(".")
+            for length in range(1, len(parts) + 1):
+                target = _engcore_module_file(src, ".".join(parts[:length]))
+                if target is not None and target not in seen:
+                    queue.append(target)
+    declared = {file for file, _, _ in DYNAMIC_REACH}
+    undeclared = sorted(rel for rel in (p.relative_to(root).as_posix() for p in seen)
+                        if rel not in declared and dynamic_imports(root / rel))
+    if undeclared:
+        raise CertificationError("code the production registry's executors reach loads modules by computed name "
+                                 f"without a DYNAMIC_REACH declaration: {undeclared}")
+    # Seventh review: pinning only files that NAME an evidence type left the helpers that decide an award (dc/mna.py
+    # feeding dc/validation.py's residual check) unpinned. Everything the production executors reach is pinned.
+    pinned = list(seen)
+    return {path.relative_to(root).as_posix(): file_digest(path)
+            for path in sorted(pinned, key=lambda p: p.relative_to(root).as_posix().encode("utf-8"))}
+
+
+def registry_problems(root: pathlib.Path, certificate: Mapping[str, Any]) -> list[str]:
+    """Why the tree's production registry is not the one the certificate pinned."""
+    try:
+        actual = production_registry_identity(root)
+    except CertificationError as exc:
+        return [str(exc)]
+    stored = (certificate.get("manifest") or {}).get("production_registry")
+    if actual is None:
+        return [] if stored is None else ["the certificate pins a production registry this tree does not have"]
+    if stored is None:
+        return ["the certificate does not pin the production registry the verdict reads; it predates the pin"]
+    if stored == actual:
+        return []
+    changed = sorted(
+        cid for cid in set(stored.get("capabilities", {})) | set(actual.get("capabilities", {}))
+        if stored.get("capabilities", {}).get(cid) != actual.get("capabilities", {}).get(cid)
+    )
+    stored_code, actual_code = dict(stored.get("evidence_code") or {}), dict(actual.get("evidence_code") or {})
+    moved_code = sorted(name for name in set(stored_code) | set(actual_code) if stored_code.get(name) != actual_code.get(name))
+    return [f"the production registry changed since certification (capabilities {changed}, evidence code "
+            f"{moved_code[:10]}): what a claim is judged against moved without moving the certificate"]
+
+
 def file_digest(path: pathlib.Path) -> str:
     """SHA-256 over the file's exact bytes. Nothing is decoded or normalized."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -823,15 +1242,21 @@ def build_manifest(
     # cover what its own suites import. Here, not only in a test, because the claim a certificate
     # makes about the mutation rounds is a claim about these bytes.
     pinning = harness_pinning_problems(root, SCOPE if scope is None else scope)
+    # F2: and refused over a scope that leaves part of what decides a verdict's meaning unmeasured.
+    pinning += authority_closure_problems(root, SCOPE if scope is None else scope)
     if pinning:
         raise CertificationError("; ".join(pinning))
-    return {
+    manifest = {
         "areas": areas,
         "file_count": sum(a["file_count"] for a in areas.values()),
         "aggregate_digest": aggregate_digest(
             {name: a["digest"] for name, a in areas.items()}
         ),
     }
+    registry = production_registry_identity(root)
+    if registry is not None:
+        manifest["production_registry"] = registry
+    return manifest
 
 
 def _require_file_reasons(area: ScopeArea, relatives: Sequence[str]) -> None:
@@ -1197,6 +1622,10 @@ def verify_certificate(
         problems.append("certificate carries no manifest areas")
     if require_current_scope:
         problems.extend(scope_problems(certificate))
+        # F2: the current scope must still cover what the verdict and authority roots import.
+        problems.extend(authority_closure_problems(root))
+        # F2, third pass: and the production registry the verdict reads is the one certified.
+        problems.extend(registry_problems(root, certificate))
 
     drifts: list[AreaDrift] = []
     actual_area_digests: dict[str, str] = {}

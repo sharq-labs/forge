@@ -19,21 +19,26 @@ from tools.certification.local_assurance import (
 REPO = pathlib.Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.parametrize(
-    "workflow",
-    (
-        ".github/workflows/tests.yml",
-        ".github/workflows/recertify-hardened-core.yml",
-        ".github/workflows/branch-policy.yml",
-        ".github/workflows/trust-mutations.yml",
-    ),
-)
-def test_github_workflows_are_manual_only(workflow):
+#: Hostile review F8: the CI control plane runs automatically (CLAUDE.md, CI policy) -- every pull request
+#: is classified and tested, certificate-sensitive ones are recertified, pushes to main rerun the merged-tree
+#: checks and the branch policy. Manual dispatch stays as an explicit fallback; nothing runs on a schedule.
+WORKFLOW_TRIGGERS = {
+    ".github/workflows/tests.yml": {"pull_request", "push", "workflow_dispatch"},
+    ".github/workflows/recertify-hardened-core.yml": {"pull_request", "workflow_dispatch"},
+    ".github/workflows/branch-policy.yml": {"push", "workflow_dispatch"},
+    ".github/workflows/trust-mutations.yml": {"workflow_dispatch"},
+}
+
+
+@pytest.mark.parametrize("workflow", sorted(WORKFLOW_TRIGGERS))
+def test_github_workflows_trigger_as_the_ci_policy_requires(workflow):
     text = (REPO / workflow).read_text(encoding="utf-8")
-    assert "workflow_dispatch:" in text
-    assert "\n  pull_request:" not in text
-    assert "\n  push:" not in text
-    assert "\n  schedule:" not in text
+    block = text.split("\non:\n", 1)[1].split("\n\n", 1)[0]
+    triggers = {line.strip().rstrip(":") for line in block.splitlines() if line.startswith("  ") and not line.startswith("    ")}
+    assert triggers == WORKFLOW_TRIGGERS[workflow]
+    if "push" in triggers:
+        assert "branches: [main]" in block  # a push anywhere else is not the merged tree
+    assert "paths" not in block  # classification, not a path filter, decides what a change needs
 
 
 def test_forge_policy_requires_no_github_status_checks():

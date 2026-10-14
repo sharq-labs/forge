@@ -450,7 +450,7 @@ with mw.PersistentWorkspace(source, scratch, lambda r, d: shutil.copytree(r, d, 
                                         "-p", "xdist.plugin", "-n", "2", "--dist", "loadfile",
                                         "--max-worker-restart=0"], cwd=work, timeout=300,
                                        inherited=ws.startup.environment)
-                failed = [l.split("::")[-1].split()[0] for l in done.stdout.splitlines() if l.startswith("FAILED")]
+                failed = mg.failed_test_names(done.stdout)
                 result = {"outcome": "PLAIN", "code": done.returncode, "failed": failed}
             else:
                 code, tail, failed, out = mg._run(work, ws.artifacts, workspace=ws, pytest_workers=2)
@@ -590,3 +590,17 @@ def test_real_xdist_infrastructure_failure_never_earns_credit(tmp_path, scenario
     # Refused for ITS reason, not because some unrelated check refuses everything.
     assert any(reason in result["error"] for reason in reasons), result
     assert "configuration is not the declared" not in result["error"], result
+
+
+@pytest.mark.parametrize("line, name", [
+    ("FAILED tests/test_alpha.py::test_guard_named", "test_guard_named"),
+    ("FAILED tests/test_alpha.py::test_guard_named - assert False", "test_guard_named"),
+    # an xdist crash report names a nodeid inside its message, cut to the terminal width
+    ("FAILED tests/test_alpha.py::test_guard_named - [gw0] node down: Not properly terminated "
+     "tests/test_alpha.py::test_guard_na...", "test_guard_named"),
+    ("FAILED tests/test_alpha.py::test_other - AssertionError: see tests/test_alpha.py::test_guard_named",
+     "test_other"),
+    ("FAILED tests/test_alpha.py::TestX::test_p[a b] - x", "test_p[a b]"),
+])
+def test_a_failure_is_attributed_to_its_own_nodeid_never_to_one_its_message_names(monkeypatch, line, name):
+    assert _mg(monkeypatch).failed_test_names("noise\n" + line + "\nmore noise\n") == [name]

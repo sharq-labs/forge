@@ -607,6 +607,54 @@ SPAWNER = (b"import subprocess, sys, time\n"
            b"time.sleep(60)\n")
 
 
+def _alive(pid: int) -> bool:
+    """Whether ``pid`` is a live (non-zombie) process: psutil when installed, else the POSIX kernel's own answer.
+
+    The check used to skip whenever psutil was absent, so the assertion it guards never ran in an environment
+    without it (local assurance refused the unadmitted skip). A zombie has been killed and only awaits reaping.
+    """
+    try:
+        import psutil
+    except ImportError:
+        psutil = None
+    if psutil is not None:
+        return psutil.pid_exists(pid) and psutil.Process(pid).status() != psutil.STATUS_ZOMBIE
+    if os.name != "posix":
+        pytest.skip("without psutil, process liveness is only read from the POSIX kernel")
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    try:
+        with open(f"/proc/{pid}/stat", "rb") as stat:
+            return stat.read().rsplit(b")", 1)[1].split()[0] != b"Z"
+    except FileNotFoundError:
+        return False
+
+
+@pytest.mark.skipif(os.name != "posix", reason="the zombie state is a POSIX notion")
+def test_the_liveness_check_tells_a_live_process_from_a_zombie_and_a_reaped_one():
+    import signal
+    import subprocess
+    import sys
+    import time
+
+    child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    try:
+        assert _alive(child.pid)
+        os.kill(child.pid, signal.SIGKILL)
+        deadline = time.perf_counter() + 10.0
+        while _alive(child.pid) and time.perf_counter() < deadline:  # killed, not yet reaped: a zombie
+            time.sleep(0.05)
+        assert not _alive(child.pid)
+    finally:
+        child.kill()
+        child.wait()
+    assert not _alive(child.pid)  # reaped
+
+
 def test_a_timeout_terminates_the_whole_process_tree_not_only_the_direct_child(tmp_path):
     """A solver wrapper that leaves a grandchild holding the output pipes must not outlive its timeout."""
     import time
@@ -621,12 +669,11 @@ def test_a_timeout_terminates_the_whole_process_tree_not_only_the_direct_child(t
         assert elapsed < 30.0, f"the timeout returned after {elapsed:.1f}s: a descendant kept the run alive"
         pid_file = os.path.join(ws.path, "grandchild.pid")
         if os.path.exists(pid_file):
-            psutil = pytest.importorskip("psutil")
             grandchild = int(open(pid_file).read())
             deadline = time.perf_counter() + 10.0
-            while psutil.pid_exists(grandchild) and time.perf_counter() < deadline:
+            while _alive(grandchild) and time.perf_counter() < deadline:
                 time.sleep(0.1)
-            assert not psutil.pid_exists(grandchild) or psutil.Process(grandchild).status() == psutil.STATUS_ZOMBIE
+            assert not _alive(grandchild), "the grandchild outlived the timeout"
     finally:
         ws.cleanup()
 

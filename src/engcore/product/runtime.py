@@ -5,9 +5,10 @@ such as MCP, HTTP or a web UI. It does not contain physics, choose credibility
 levels or trust language-model output.
 
 A language model may propose a structured claim from user prose. The existing
-natural-language adapter verifies that every proposed physical value is
-grounded in a cited span of the user's text and refuses authority fields. The
-deterministic compiler then decides whether the proposal is executable.
+natural-language adapter verifies that every proposed physical value and every
+decision criterion is grounded in a cited span of the user's text (or bound by
+the application's policy) and refuses authority fields. The deterministic
+compiler then decides whether the proposal is executable.
 
 No OpenAI or Anthropic SDK belongs here. A transport or application may call
 any provider it wants, then submit the provider's proposal to this boundary.
@@ -18,7 +19,7 @@ from __future__ import annotations
 from typing import Any, Mapping, Sequence
 
 from ..claims.adapters.nl import compile_natural_language
-from ..claims.assessment import assess_claim
+from ..claims.assessment import CALLER_AUTHORED_CRITERIA, assess_claim, grounded_criteria
 from ..claims.capabilities import CapabilityRegistry
 from ..claims.external_evidence import read_external_record
 from ..claims.measurement_dataset import DatasetObservation
@@ -33,6 +34,13 @@ PRODUCT_RUN_SCHEMA = schema_string("product_simulation_run")
 
 class ProductRequestError(ValueError):
     """A product request is malformed before it reaches scientific compilation."""
+
+
+#: Re-exported: who authored a record's criteria lives IN the assessment record (claims layer), bound by
+#: its digest and re-derived on read-back (hostile review F1-G / R9). The view only repeats it.
+CALLER_AUTHORED_QUALIFIER = "criteria authored by the caller, not grounded"
+POLICY_BOUND_QUALIFIER = "criteria fixed by a deployment policy the record does not pin; compare its policy_digest"
+_QUALIFIERS = {"grounded": None, "policy_bound": POLICY_BOUND_QUALIFIER}
 
 
 def _wire_spans(spans: Mapping[str, Sequence[int]]) -> dict[str, tuple[int, int]]:
@@ -144,6 +152,7 @@ def _compile_proposal(
     proposal: Mapping[str, Any],
     spans: Mapping[str, Sequence[int]],
     registry: CapabilityRegistry,
+    policy: Mapping[str, Any] | None = None,
 ):
     """Compile one provider proposal once, translating contract refusals to product input errors."""
     try:
@@ -152,6 +161,7 @@ def _compile_proposal(
             proposal,
             _wire_spans(spans),
             registry,
+            policy=policy,
         )
     except ClaimLayerError as exc:
         raise ProductRequestError(str(exc)) from exc
@@ -169,9 +179,12 @@ def _preparation_view(compilation: Any) -> dict[str, Any]:
             if compilation.compiled is None
             else compilation.compiled.to_dict()
         ),
+        "provenance": [item.to_dict() for item in compilation.provenance],
+        "advisory": dict(compilation.advisory or {}),
         "authority": (
             "The language model proposed the claim; grounding and deterministic "
-            "compilation decided whether it is executable."
+            "compilation decided whether it is executable. Advisory values have "
+            "no source, policy or derivation behind them and were not used."
         ),
     }
 
@@ -181,9 +194,16 @@ def prepare_simulation(
     proposal: Mapping[str, Any],
     spans: Mapping[str, Sequence[int]],
     registry: CapabilityRegistry,
+    *,
+    policy: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Ground an LLM proposal in the user's prose and compile it without executing."""
-    return _preparation_view(_compile_proposal(text, proposal, spans, registry))
+    """Ground an LLM proposal in the user's prose and compile it without executing.
+
+    ``policy`` is the deploying application's binding of decision criteria (see
+    :func:`~engcore.claims.adapters.nl.compile_natural_language`); it is never
+    read from the proposal.
+    """
+    return _preparation_view(_compile_proposal(text, proposal, spans, registry, policy))
 
 
 def _assessment_view(record: Mapping[str, Any], *, digest: str) -> dict[str, Any]:
@@ -193,6 +213,10 @@ def _assessment_view(record: Mapping[str, Any], *, digest: str) -> dict[str, Any
     return {
         "status": record.get("status"),
         "verdict": record.get("verdict"),
+        # The verdict is about the criteria in the record; when nobody grounded them, the view says so beside it.
+        "verdict_qualifier": _QUALIFIERS.get((record.get("criteria_authority") or {}).get("authority"),
+                                             CALLER_AUTHORED_QUALIFIER),
+        "criteria_authority": record.get("criteria_authority"),
         "result": record.get("result"),
         "plan": record.get("plan"),
         "trust": {
@@ -220,8 +244,13 @@ def run_simulation(
     external: Sequence[Mapping[str, Any]] = (),
     empirical_observations: Sequence[Mapping[str, Any]] = (),
     model_form_qualification: Mapping[str, Any] | None = None,
+    criteria_authority: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Run one structured product claim through the production scientific runtime."""
+    """Run one structured product claim through the production scientific runtime.
+
+    Its criteria are the caller's unless ``criteria_authority`` is the natural-language adapter's
+    grounding (passed only by :func:`run_proposed_simulation`); the assessment record carries which.
+    """
     offered = tuple(
         read_external_record(item.get("record", item))
         for item in external
@@ -241,12 +270,14 @@ def run_simulation(
         external=offered,
         empirical_observations=empirical,
         model_form_qualification=qualification,
+        criteria_authority=criteria_authority,
     )
     record = assessment.to_dict()
     return {
         "schema": PRODUCT_RUN_SCHEMA,
         "view": _assessment_view(record, digest=assessment.digest),
         "record": record,
+        "criteria_authority": record["criteria_authority"],
         "notice": (
             "The view is a projection of the canonical assessment record; the "
             "record remains the auditable source of every displayed status."
@@ -263,13 +294,16 @@ def run_proposed_simulation(
     external: Sequence[Mapping[str, Any]] = (),
     empirical_observations: Sequence[Mapping[str, Any]] = (),
     model_form_qualification: Mapping[str, Any] | None = None,
+    policy: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """End-to-end product flow from an LLM proposal to an assessed simulation.
 
     A proposal that is not READY is returned as preparation data and is never
-    executed. No missing value is defaulted merely to make the product flow.
+    executed. No missing value is defaulted merely to make the product flow,
+    and no decision criterion the model proposed without a source, a policy or
+    a derivation reaches the run (status ``ungrounded``).
     """
-    compilation = _compile_proposal(text, proposal, spans, registry)
+    compilation = _compile_proposal(text, proposal, spans, registry, policy)
     preparation = _preparation_view(compilation)
     if not preparation["ready"] or preparation["compilation"] is None:
         return {
@@ -288,6 +322,7 @@ def run_proposed_simulation(
         external=external,
         empirical_observations=empirical_observations,
         model_form_qualification=model_form_qualification,
+        criteria_authority=grounded_criteria(text, _wire_spans(spans), policy or {}, preparation["provenance"]),
     )
     return {
         **result,
@@ -296,6 +331,9 @@ def run_proposed_simulation(
 
 
 __all__ = [
+    "CALLER_AUTHORED_CRITERIA",
+    "CALLER_AUTHORED_QUALIFIER",
+    "POLICY_BOUND_QUALIFIER",
     "PRODUCT_CAPABILITIES_SCHEMA",
     "PRODUCT_PREPARATION_SCHEMA",
     "PRODUCT_RUN_SCHEMA",

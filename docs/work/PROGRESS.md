@@ -2887,6 +2887,172 @@ NOT RUN.
 Trap: a real-tree soundness test that called `impact_of` per dependency took 137 s; computing `importers` once per
 dependency (what `impact_of` uses for import reach) takes 2.8 s.
 
+## Hostile remediation round 1 — 2026-10-13, BLOCKED_WITH_EVIDENCE
+
+Verified origin/main after fetch: 5d73e8f5118aa845f1957decc5aae986e72476a9.
+Created clean D:/forge-hostile-remediation, branch fix/hostile-review-p0-p1.
+Original dirty checkout preserved. No production edits, push, PR or merge.
+Current bounded queue and evidence: HOSTILE_REMEDIATION_ROUND1.md and
+hostile-round1-evidence/. No listed finding closed; phase 0 remains incomplete.
+
+Commands executed in this session (working directory D:/forge-hostile-remediation):
+- `git fetch origin`; `git rev-parse origin/main`: expected SHA above.
+- `git worktree add -b fix/hostile-review-p0-p1 D:/forge-hostile-remediation origin/main`: exit 0.
+- `py -0p`: Windows Python 3.10/3.14 only.
+- `wsl --list --quiet`; `wsl -d Ubuntu -- bash -lc 'command -v python3.11; command -v python3.12; ls -d /opt/forge* /mnt/c/Users/dev_kaeem/Downloads/Compressed/phyx/.forge/venvs/* 2>/dev/null'`: BLOCKED, unresponsive, interrupted.
+- `py -3.14 tools/forge_check.py --regression *> D:/forge-hostile-regression-baseline.log`: BLOCKED, interrupted. Direct executable retry also blocked.
+- `& 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' -c 'import faulthandler; faulthandler.dump_traceback_later(10); import engcore.claims; print("imported")'`, PYTHONPATH=src: BLOCKED; traceback shows platform._wmi_query while importing Pint/flexcache; interrupted.
+- Diagnostic here-string piped to `& 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' -`, PYTHONPATH=src;tests/claims, source: `import platform; platform._wmi=None; import pytest; from tools.forge_check import build_targets; raise SystemExit(pytest.main(build_targets([],regression=True)+['-q','--basetemp=D:/forge-hostile-diagnostic-pytest','-p','no:cacheprovider']))`: 256 passed in 11.85s, exit 0. Output regression-diagnostic.log. DIAGNOSTIC ONLY, unsupported Python and WMI fallback; not supported acceptance.
+- `$env:PYTHONPATH='.;src;tests;tests/claims;tests/foundations'; & 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' D:/forge-hostile-phase0-probes.py *> D:/forge-hostile-phase0-probes.log`: exit 0; exact script/output retained. 305K request ->309.75K proposal ->ready ->supported; FM14.55456 accepted; synthetic scanner reads environment; injected two-window conservation FAIL/PASS loses FAIL.
+- In-memory certificate scope and verifier probe with WMI fallback: verdict/authority/blindfold files absent from scope; certificate verification FAILS on clean starting main. Certificate target 39d43456cab918ed0748efe7f5b0ff5781474ffa; source drift in certification_control, execution_trust, harness, inference_admission, runtime_dependencies. No certificate changed.
+- `& 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' -c 'from tools.certification.local_assurance import _require_linux; _require_linux()'`, PYTHONPATH=.;src: exit 1, native Windows refused. Authoritative recertification cannot prove this tree in available environment; user stop condition honored.
+- `& 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' -c 'import platform,runpy,sys; platform._wmi=None; sys.argv=["pip","install","--target","D:/forge-hostile-diagnostic-deps","cryptography"]; runpy.run_module("pip",run_name="__main__")'`: exit 0, external diagnostic-only cryptography50.0.2/cffi2.1.1/pycparser3.11 installation.
+- `$env:PYTHONPATH='D:/forge-hostile-diagnostic-deps;.;src;tests;tests/foundations'; & 'C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe' D:/forge-hostile-phase0-mutations.py *> D:/forge-hostile-phase0-mutations-with-crypto.log`: harness exit0, pytest exit1, 15 failed/21 passed in2.11s. Exact script/output retained. HVAC module temporarily deleted/restored byte-for-byte; 47 selected modules, no HVAC-specific module, unresolved/refusal empty. In-memory genesis-signature guard mutation restored after tests.
+- Genesis BASELINE, same diagnostic Python/PYTHONPATH, here-string `import platform; platform._wmi=None; import pytest; raise SystemExit(pytest.main(['tests/foundations/test_authority_integrity.py','tests/foundations/test_authority_durable_campaign.py','-q','-p','no:cacheprovider','--basetemp=D:/forge-hostile-genesis-baseline-temp']))`: exit1, 15 failed/21 passed in2.02s. Failures: os.geteuid/fcntl unavailable and default cp1252 decoding; full exact FAILED IDs in genesis-baseline.log.
+- `Compare-Object $taskBaseline $taskMutant`, arrays populated from all exact `^FAILED ` lines in genesis-baseline.log and phase0-mutations-with-crypto.log: no differences. This compares IDs, not counts. Linux mutation population NOT RUN; no claim of completed mutation gate.
+- `git diff --check`: PASS, exit0 before documentation commit.
+
+Failed approaches: adapter function is not exported at top-level claims; external
+script requires repository root explicitly on PYTHONPATH; initial authority pack
+had35 failures/1pass from missing cryptography, corrected with isolated dependency
+installation. No global environment changes and no remaining temporary source edits.
+
+Supported Python3.11/3.12 FAST, SCIENTIFIC, FULL, complete selective mutation red
+team, benchmark digest attribution, hardened recertification: NOT RUN. Original
+critical false support remains OPEN. Remaining listed critical/high counts:1/7.
+Scientific numerical/frozen experiment outputs changed:NO. No Mind work.
+
+Checkpoint correction: `git diff --cached --check` initially FAILED on trailing
+spaces emitted by pytest traceback transcripts. Normalized transcript trailing
+whitespace only; raw originals retained outside the worktree. No evidence values,
+failure IDs or source bytes changed. Rerun required below before final checkpoint.
+`git diff --cached --check`: PASS after transcript whitespace normalization, exit 0.
+
+## Hostile remediation round 1 — implementation, 2026-10-13/14 (Linux/WSL Ubuntu 24.04)
+
+Branch `fix/hostile-review-p0-p1`, base `5d73e8f5`. Work clone `~/forge-hostile-dev`; integration
+clone `~/forge-hostile-remediation` fast-forwarded from it; Python `.forge/venvs/3.11` and `3.12`
+(pytest 9.1.1, xdist 3.8.0). No push, PR or merge. Evidence: `~/forge-hostile-evidence/` (WSL).
+
+Fixes (each its own commit, each with adversarial tests and a targeted apply/revert mutation proof,
+`mutate.py`: a mutant is KILLED only when pytest exits 1 with failures; bytes restored by SHA-256):
+
+| Finding | Commits | Mutation proof |
+|---|---|---|
+| F1 LLM-authored criteria | dcfe4ca8, f54b2986, bc45e9c1, e5d862a1, c2d592a4, 86b6e51e, d150f975, aafd6a40 | 16 + 16 + 3 + 2 + 2 killed |
+| F4 benchmark is verification | 81b2cf6a, 7970052d, d014e7da | 5 + 2 killed |
+| F2 certificate covers verdict semantics | 8d81cb70, 50921eff, e00a9fce, 11f1514f, a40318dc, 57dd68ce, 659da048 | 6 + 8 + 10 + 4 + 4 + 1 + 1 killed |
+| scanner ownership | ee2029f8, d9ad7bdd | 5 + 5 killed |
+| F5 conservation per window | d63de65b, 1bccb1b4, f1f6dea5, 154706ec, 57dd68ce | 12 + 9 + 1 + 1 + 1 killed |
+| F6 physical admissibility | 26240134 | 7 killed (1 equivalent pre-check removed) |
+| F7 selective gate | 91cb9790, 11f1514f | 7 + 1 killed (1 equivalent branch removed) |
+| FIX 8 empty UQ / undeclared correlation | 954213ac | 3 killed |
+| FIX 9 (F8) CI triggers | 324d1a7e | 5 killed |
+
+Independent reviews (forge-scientific-reviewer, read-only, static): eight passes. Every BLOCKER and
+HIGH was fixed in the commits above; the eighth pass found the commit it reviewed correct and one
+pre-existing scope leak (system_runtime), fixed in 659da048. Accepted residuals
+(not fixed, reason stated in the commit messages): F1-I one-way input grounding and decision_id as a
+label; decision/assumption statements recorded verbatim, not interpreted; F5 run records are unkeyed,
+so an internally consistent forged history is not detected (enforcement re-derives verdicts from the
+record, not from transfer receipts); no separate CONSERVATION gate in the trust assessment (an
+authorized run whose required conservation failed cannot be constructed); executor callees inside
+exempt answer packages are pinned only when they build evidence; SRIA budget independence is a stated
+free-text assumption; guard_band takes a bare float; test_impact basename mentions; `-s` without `-S`
+in the registry probe; planning/nl.py any-span weakness (no production caller); the registry probe
+does not unwrap a decorated executor (none is decorated today); a fixed runtime returning a non-record
+on a graph without balances skips the graph/plan check (test stubs only).
+
+OPEN SCOPE FINDING (owner decision, not fixed): certified files import uncertified modules --
+claims/design_memory.py (design/, sria/campaign/), claims/discovery_providers.py (providers/,
+sria/decision/), claims/discovery_passport.py, durable_campaign.py, falsification.py (sria/decision/),
+claims/twin_evidence.py (systems/), sria/campaign/runner.py (sria/campaign/*, sria/decision/*),
+execution/multiphysics/runtime.py (scenarios/). None is on the assess_claim verdict path found by the
+reviewers; seeding the authority closure with all of claims/** would bring 95 modules into scope.
+
+Selective-gate hostile campaign (F7), separate clone at 91cb9790 then H10 re-run with a valid mutant:
+`python selective_campaign.py ~/forge-hostile-sel` -> 10 hostile changes, 8 CAUGHT by the selection,
+2 REFUSED_NARROWING (whole tier), FALSE_NEGATIVES 0, tree clean after. Logs:
+`dev/selective_campaign.log`, `dev/selective_campaign_h10.log`.
+
+Impact-selected gates during development (`tools/forge_check.py --changed --base HEAD --workers 6`,
+dev clone): every run's only failures were the certificate-drift tests and, on a dirty tree, the
+Core-freeze manifest tests (which pass once committed: `tests/test_core_freeze_*` 73 passed, 2
+certificate-drift failed after commit).
+
+Acceptance matrix (`gates.sh`, integration clone; FULL and SCIENTIFIC deselect the two JSON-rewriting
+rebuild tests, three ngspice-process tests and the dependency guard, which runs separately):
+
+| Gate | HEAD | Result |
+|---|---|---|
+| regression (`tools/forge_check.py --regression`) | 324d1a7e, 11f1514f | exit 0 |
+| FAST 3.11 | 11f1514f | 10351 passed, 2 failed, 158 skipped |
+| FAST 3.12 | 11f1514f | 10350 passed, 3 failed, 158 skipped |
+| SCIENTIFIC 3.12 | 11f1514f | 10923 passed, 3 failed, 158 skipped |
+| FULL 3.12 | 11f1514f | 10927 passed, 3 failed, 158 skipped |
+| FAST 3.11 | a40318dc | 10358 passed, 2 failed, 158 skipped |
+| FAST 3.12 | a40318dc | 10357 passed, 3 failed, 158 skipped |
+| SCIENTIFIC 3.12 | a40318dc | 10930 passed, 3 failed, 158 skipped |
+| FULL 3.12 | a40318dc | 10934 passed, 3 failed, 158 skipped |
+| regression | a40318dc | 256 passed |
+
+The final-HEAD matrix and hardened recertification are recorded in the next entry.
+
+Failure identities against Phase 0 (5d73e8f5 + docs, same gates): CERTIFICATE_DRIFT
+`test_core_certificate.py::test_the_certificate_describes_this_tree` (baseline) and
+`::test_the_certificate_records_the_v1_relationship_truthfully` (new: F4 edits a Core file, which moves
+the V1-compatible digest); PRE-EXISTING FLAKE `test_formal_xdist.py::test_plain_xdist_would_credit_a_crash_so_the_guard_is_required`
+on 3.12 under `-n 4` (baseline; passes in isolation on 3.11 and 3.12). Phase 0's
+`test_change_impact.py::test_the_old_gap_a_domain_models_own_tests_are_now_selected` now passes. No
+REAL_REGRESSION.
+
+Benchmark digest attribution (Phase 12): `git diff --stat 5d73e8f5..HEAD -- benchmarks experiments
+flagships certification '*.json' '*.csv'` is empty: no committed numeric or benchmark artifact moved;
+the digest-pinned benchmark tests pass in every tier above.
+
+Host branch protection: NOT re-verified this session (`gh` is not installed in Ubuntu and the session
+was restricted to Linux). Last recorded read-only check (ACTIVE_PLAN, 2026-10-13): `main` unprotected,
+protection/ruleset endpoints 403, squash and rebase merges enabled. FIX 9 does not change any host
+setting and makes no status check required.
+
+Failed approaches: a closed-world reader that counted every input statement as read let an invented
+`missing_inputs` path hide a retraction (fixed c2d592a4, d150f975); a duplicated-test-name probe and a
+malformed H10 mutant (syntax error) were corrected; a commit helper that took an absolute message path
+committed with a stale message once (amended before anything else built on it).
+## Hostile remediation round 1 — final matrix and hardened recertification, 2026-10-14
+
+Late fixes after the first entry: 313bbf1e (harness: a FAILED line is attributed to its own nodeid --
+the 3.12 "xdist flake" since Phase 0 was a real parsing bug in tests/mutation_guards.py and the xdist
+test driver, reproduced by terminal width: passes at COLUMNS 40/80, failed at 200; mutation HX-M1/M2
+killed) and 05522b59 (no unadmitted skips: a provider liveness check that skipped without psutil now
+reads the POSIX kernel, the case-twin ownership test runs on any filesystem; SK-M1..M3 killed; no skip
+rule added).
+
+Final matrix at ae25aed9 (`gates.sh phase11d`, integration clone): regression exit 0; FAST 3.11 10362
+passed / 2 failed; FAST 3.12 10361 / 3; SCIENTIFIC 3.12 10934 / 3; FULL 3.12 10938 / 3 -- failures are
+the two certificate-drift tests (resolved by recertification) and the xdist test fixed in 313bbf1e.
+
+Hardened recertification (`python -m tools.certification.local_assurance run --reuse --repository
+sharq-labs/forge --python311 .forge/venvs/3.11/bin/python --python312 .forge/venvs/3.12/bin/python`):
+- run at ae25aed9 with system python3.11: REFUSED in 0 s (no pytest) -- wrong interpreter flag.
+- run at ae25aed9 with venv interpreters: REFUSED at FAST 3.12 on the xdist parsing bug.
+- run at 313bbf1e: every execution gate passed (FAST 3.11/3.12 10347, SCIENTIFIC 10920, campaign 4,
+  regression 256, Formal 284/284 killed, V4 every entry at its declared verdict, trust 0 survived);
+  REFUSED on two skips with no committed admission rule.
+- run at 05522b59 (first attempt lost to a WSL restart mid-Formal; re-run): **SOURCE_PASS**, wall
+  12422 s. FAST 3.11 10350 / 3.12 10350 passed, SCIENTIFIC 10923, campaign 4, regression 256, Formal
+  284/284, V4 8 shards all at declared verdicts, trust 0 survived. SKIP_ADMISSION skipped 468, accepted
+  468, unexpected 0. RECEIPT_SHA256 efe9d0940d2c2be94c8dca3a1850a02bc7f9289277c52dcc227171f0584e0cfc.
+- certificate-only child b1eea81b "certification: recertify hardened core";
+  `python -m tools.certification.local_assurance verify`: 22 deferred certificate/freeze self-checks
+  passed; **LOCAL_ASSURANCE: PASS**, SOURCE_SHA 05522b59, CERTIFICATE_CHILD_SHA b1eea81b,
+  RECEIPT_SHA256 51b42770425ad168b61bc4b7c8a850e34f0e794f0c50c16c6e24c9d5f7984d3a.
+- fresh process, `env -u PYTHONPATH python -m tools.certification.core_certificate --verify --certificate
+  certification/current_core_v2.json`: "certificate matches the tree", OK, exit 0. The certificate
+  binds 05522b59 (clean) and adds the verdict_authority and system_runtime_authority areas and the
+  production-registry pin (456 evidence-code files). Old target 39d43456 superseded.
+
+Not pushed, not merged (user instruction). Host branch protection not re-verified.
 ## 2026-10-14 — User-requested gaps catalogue (docs only)
 
 Created seven Arabic Markdown files under gaps/, preserving all five research

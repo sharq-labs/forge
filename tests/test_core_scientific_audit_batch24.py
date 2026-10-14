@@ -126,10 +126,12 @@ def test_r39_a_comparison_with_something_outside_the_model_is_still_validated():
     from engcore.mcp.evidence import evidence_basis_of
 
     assert ValidationLevel.EXPERIMENTALLY_VALIDATED in VALIDATION_LEVELS
-    assert ValidationLevel.BENCHMARK_VALIDATED in VALIDATION_LEVELS
+    # F4 (hostile review 2026-10-13): a benchmark is a published reference SOLUTION; agreeing with it is
+    # verification, for the same reason R-39 gave for cross-solver agreement. Only the measurement remains.
+    assert VALIDATION_LEVELS == frozenset({ValidationLevel.EXPERIMENTALLY_VALIDATED})
+    assert evidence_basis_of({ValidationLevel.BENCHMARK_VALIDATED, ValidationLevel.NUMERICALLY_CONVERGED}) == "VERIFICATION_ONLY"
     # over the rule rather than over a report, because neither level can be ISSUED in this tree:
     # `oracles._TRUSTED_ORACLE_DECLARATIONS` is empty, so a check claiming one names no verifiable issuer
     # and a report carrying it is refused. That is the residual this batch's protocol states -- after the
     # reclassification, VALIDATED is unreachable in production, which is the honest state of the tree.
-    for level in (ValidationLevel.EXPERIMENTALLY_VALIDATED, ValidationLevel.BENCHMARK_VALIDATED):
-        assert evidence_basis_of({level, ValidationLevel.NUMERICALLY_CONVERGED}) == "VALIDATED"
+    assert evidence_basis_of({ValidationLevel.EXPERIMENTALLY_VALIDATED, ValidationLevel.NUMERICALLY_CONVERGED}) == "VALIDATED"

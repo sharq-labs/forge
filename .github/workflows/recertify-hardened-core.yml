@@ -1,9 +1,11 @@
 name: Recertify Hardened Core
 
-# Manual reference/fallback workflow only. Automatic GitHub recertification is
-# intentionally disabled; tools/certification/local_assurance.py is the
-# authoritative execution path for hardened-core assurance.
+# Every pull request runs the recertification classifier; it recertifies only
+# when the change is certificate-sensitive (certified or trust-sensitive files)
+# and is a no-op otherwise. Manual dispatch remains an explicit fallback
+# (hostile review F8). Local assurance is unchanged.
 on:
+  pull_request:
   workflow_dispatch:
 
 permissions:

@@ -230,6 +230,14 @@ class AuthorizedMultiphysicsRun:
             raise TypeError(
                 "authorized run requires MultiphysicsRunRecord"
             )
+        # F5 (fourth review): required conservation is authoritative wherever an authorized run comes into being --
+        # executed, read back with from_dict, or migrated -- not only on the execution path.
+        from ..execution.multiphysics.runtime import MultiphysicsExecutionError, require_conservation
+
+        try:
+            require_conservation(self.run)
+        except MultiphysicsExecutionError as exc:
+            raise InvalidScientificProblem(f"the executed graph is not an admissible coupled result: {exc}") from exc
         self._bind_scenario()
         validations = tuple(self.system_validation)
         if any(
@@ -927,6 +935,14 @@ def execute_authorized_graph_plan(
         # SCENARIO IDENTITY IS NOT CONDITIONAL ON EVENTS (Sprint 1 P0).
         scenario_digest="" if scenario is None else scenario.digest,
     )
+    # F5: required conservation is authoritative -- refused here, before any output is read, and again when the
+    # AuthorizedMultiphysicsRun below is constructed (which also covers from_dict and migration).
+    from ..execution.multiphysics.runtime import MultiphysicsExecutionError, require_conservation
+
+    try:
+        require_conservation(run)
+    except MultiphysicsExecutionError as exc:
+        raise InvalidScientificProblem(f"the executed graph is not an admissible coupled result: {exc}") from exc
 
     validation: list[AuthorizedSystemValidation] = []
     for protocol in composition.validation_protocols:

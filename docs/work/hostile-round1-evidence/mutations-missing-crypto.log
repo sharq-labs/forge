@@ -1,0 +1,1030 @@
+HVAC affected tests 47 HVAC-specific []
+HVAC unresolved () narrowing refusal ()
+HVAC bytes restored 54a69815bc43a5a7cb66040c298322adfecf7944edb1a4462fb463dfa70fef8a
+FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFFFFFF                                     [100%]
+================================== FAILURES ===================================
+_ test_the_issuer_bound_path_admits_a_correctly_attested_record_and_nothing_else _
+
+    def test_the_issuer_bound_path_admits_a_correctly_attested_record_and_nothing_else():
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:92:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+__________ test_an_unopened_unanchored_or_foreign_ledger_is_refused ___________
+
+    def test_an_unopened_unanchored_or_foreign_ledger_is_refused():                 # checkpoint A B1
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:102:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+___________ test_forged_and_unknown_issuers_never_reach_the_ledger ____________
+
+    def test_forged_and_unknown_issuers_never_reach_the_ledger():
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:120:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_____ test_a_key_is_registered_only_by_its_holder_in_its_providers_class ______
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_a_key_is_registered_only_0')
+
+    def test_a_key_is_registered_only_by_its_holder_in_its_providers_class(tmp_path):                 # checkpoint A H1
+        with pytest.raises(AuthorityRefused, match="minted by a key provider"):
+            Signer("root", "production", "00" * 32, object())
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:136:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+__ test_wrong_role_wrong_result_wrong_receipt_and_wrong_context_are_refused ___
+
+    def test_wrong_role_wrong_result_wrong_receipt_and_wrong_context_are_refused():
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:157:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+____ test_self_issued_support_is_refused_from_any_executor_of_the_receipt _____
+
+    def test_self_issued_support_is_refused_from_any_executor_of_the_receipt():                        # incl. checkpoint A L1
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:176:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+___ test_negative_records_cap_and_defeat_even_from_the_results_own_executor ___
+
+    def test_negative_records_cap_and_defeat_even_from_the_results_own_executor():                    # checkpoint A M1, L8
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:197:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_____ test_an_attested_falsification_follows_the_result_not_the_node_name _____
+
+    def test_an_attested_falsification_follows_the_result_not_the_node_name():                        # checkpoint A H2
+        from engcore.claims.redteam import (
+            AttackDimension,
+            AttackKind,
+            AttackPlan,
+            AttackSpace,
+            ClaimSubject,
+            Route,
+            RouteResult,
+            Sense,
+            run_red_team,
+        )
+        x = AttackDimension("F", AttackKind.INPUT_PARAMETER, "spec", low=0.0, high=1.0, unit="1")
+        space = AttackSpace("result", (x,))
+        broken = (Route("a", "f", 1, lambda p: RouteResult(5.0)), Route("b", "g", 2, lambda p: RouteResult(5.0)))
+        falsified = run_red_team(ClaimSubject("result", "y", "1", Sense.AT_MOST, 1.0, broken, "a"), space, AttackPlan(space.digest, 200, "s"))
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:240:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+______________ test_attested_records_cannot_be_edited_in_memory _______________
+
+    def test_attested_records_cannot_be_edited_in_memory():                                            # checkpoint A M2
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:248:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+____________________ test_revocation_rotation_and_history _____________________
+
+    def test_revocation_rotation_and_history():
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:262:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+________________ test_persistence_restart_and_tamper_detection ________________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_persistence_restart_and_t0')
+
+    def test_persistence_restart_and_tamper_detection(tmp_path):
+>       keys, path, led = _file_ledger(tmp_path)
+                          ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_integrity.py:298:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_integrity.py:287: in _file_ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_______ test_a_second_writer_or_a_failed_append_never_forks_the_ledger ________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_a_second_writer_or_a_fail0')
+
+    def test_a_second_writer_or_a_failed_append_never_forks_the_ledger(tmp_path):                     # checkpoint A M3
+>       keys, path, led = _file_ledger(tmp_path)
+                          ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_integrity.py:335:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_integrity.py:287: in _file_ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_ test_negative_records_are_read_from_the_ledger_whatever_the_caller_supplies _
+
+    def test_negative_records_are_read_from_the_ledger_whatever_the_caller_supplies():
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:356:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+___________ test_a_copied_record_or_a_mutated_result_backs_nothing ____________
+
+    def test_a_copied_record_or_a_mutated_result_backs_nothing():
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:367:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_________________________ test_key_material_placement _________________________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_key_material_placement0')
+
+    def test_key_material_placement(tmp_path):
+        keydir = tmp_path / "keys"
+>       generate_key_files(keydir, "exec")
+
+tests\foundations\test_authority_integrity.py:375:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\engcore\authority\keys.py:258: in generate_key_files
+    serialization = _crypto()[1]
+                    ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+____ test_an_attested_failed_check_without_a_level_caps_its_roles_factors _____
+
+    def test_an_attested_failed_check_without_a_level_caps_its_roles_factors():                       # re-review H-1
+        bad = _failed_balance()
+        assert bad.outcome is ValidationOutcome.FAIL and bad.establishes is None          # the real producer's shape
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:418:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_ test_an_attested_negative_report_counts_on_its_attested_subject_whatever_digest_it_carries _
+
+    def test_an_attested_negative_report_counts_on_its_attested_subject_whatever_digest_it_carries():  # re-review H-2
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:433:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+______________________ test_a_ledger_subclass_is_refused ______________________
+
+    def test_a_ledger_subclass_is_refused():                                                           # re-review M-1
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:450:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_ test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_path _
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_residual_the_anchor_is_th0')
+
+    def test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_path(tmp_path):   # re-review M-1 (pinned)
+        """issuer_bound rests on WHO chose the anchor's root key: a caller that mints its own root, opens its own ledger and
+        passes that ledger's anchor gets issuer_bound.  So the anchor must be operator configuration -- and no MCP / planner
+        path may forward ``authority`` / ``trust_anchor`` / ``allow_test_profile``."""
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:467:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+__________________ test_a_minted_signer_cannot_be_relabelled __________________
+
+    def test_a_minted_signer_cannot_be_relabelled():                                                   # re-review M-2
+        import copy
+        import dataclasses
+>       s = EphemeralKeyProvider().signer("r")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_integrity.py:482:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+________ test_a_compromise_window_withdraws_what_the_key_signed_in_it _________
+
+    def test_a_compromise_window_withdraws_what_the_key_signed_in_it():                                # re-review M-5
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:493:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+____ test_an_issuer_that_produced_the_same_output_elsewhere_is_self_issued ____
+
+    def test_an_issuer_that_produced_the_same_output_elsewhere_is_self_issued():                      # re-review L-2
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:517:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_______________ test_an_attestation_subject_output_is_a_string ________________
+
+    def test_an_attestation_subject_output_is_a_string():                                              # re-review L-1
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:526:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+____________ test_a_retired_key_can_still_be_declared_compromised _____________
+
+    def test_a_retired_key_can_still_be_declared_compromised():                                         # combined review M-6
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:534:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+______ test_a_later_narrower_window_never_narrows_a_declared_compromise _______
+
+    def test_a_later_narrower_window_never_narrows_a_declared_compromise():                            # C2 LOW-1
+>       w = World()
+            ^^^^^^^
+
+tests\foundations\test_authority_integrity.py:550:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\authority_helpers.py:48: in __init__
+    self.root = self.keys.signer("root")
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+________________ test_a_campaign_resumes_exactly_after_restart ________________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_a_campaign_resumes_exactl0')
+
+    def test_a_campaign_resumes_exactly_after_restart(tmp_path):
+>       keys, led, camp, h, ticket, item, refuted = run_campaign(tmp_path)
+                                                    ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:86:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:58: in ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_______ test_restart_detects_dropped_reordered_or_rewritten_operations ________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_restart_detects_dropped_r0')
+
+    def test_restart_detects_dropped_reordered_or_rewritten_operations(tmp_path):
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:106:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:58: in ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_______ test_another_key_or_issuer_cannot_resume_or_extend_the_campaign _______
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_another_key_or_issuer_can0')
+
+    def test_another_key_or_issuer_cannot_resume_or_extend_the_campaign(tmp_path):
+>       keys, led, camp, h, *_ = run_campaign(tmp_path)
+                                 ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:130:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:58: in ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+___________ test_a_mutation_around_the_journal_is_refused_not_lost ____________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_a_mutation_around_the_jou0')
+
+    def test_a_mutation_around_the_journal_is_refused_not_lost(tmp_path):
+>       keys, led, camp, h, ticket, *_ = run_campaign(tmp_path)
+                                         ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:150:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:58: in ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_______ test_a_verdict_judged_before_restart_is_the_same_verdict_after ________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_a_verdict_judged_before_r0')
+
+    def test_a_verdict_judged_before_restart_is_the_same_verdict_after(tmp_path):
+>       keys, led, camp, h, *_ = run_campaign(tmp_path)
+                                 ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:157:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:58: in ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_______ test_the_same_campaign_id_cannot_restart_its_multiplicity_count _______
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_the_same_campaign_id_cann0')
+
+    def test_the_same_campaign_id_cannot_restart_its_multiplicity_count(tmp_path):                       # checkpoint A H3
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:168:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:58: in ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+________ test_foreign_journal_entries_cannot_squat_or_brick_a_campaign ________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_foreign_journal_entries_c0')
+
+    def test_foreign_journal_entries_cannot_squat_or_brick_a_campaign(tmp_path):                           # checkpoint A M4
+        from engcore.authority import Attestation
+        from engcore.claims.durable_campaign import campaign_subject
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:186:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:58: in ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+______ test_a_dropped_journal_tail_after_the_operators_anchor_is_refused ______
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_a_dropped_journal_tail_af0')
+
+    def test_a_dropped_journal_tail_after_the_operators_anchor_is_refused(tmp_path):                       # checkpoint A M5
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:200:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:58: in ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_______ test_a_second_exposure_issuer_cannot_fork_or_squat_the_campaign _______
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_a_second_exposure_issuer_0')
+
+    def test_a_second_exposure_issuer_cannot_fork_or_squat_the_campaign(tmp_path):                    # re-review M-4
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:222:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:58: in ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+_______ test_a_journal_signed_in_a_compromise_window_cannot_be_resumed ________
+
+tmp_path = WindowsPath('D:/forge-hostile-genesis-mutant-temp/test_a_journal_signed_in_a_com0')
+
+    def test_a_journal_signed_in_a_compromise_window_cannot_be_resumed(tmp_path):                     # combined review M-3
+>       keys, led, camp, *_ = run_campaign(tmp_path)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\foundations\test_authority_durable_campaign.py:237:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\foundations\test_authority_durable_campaign.py:67: in run_campaign
+    led = ledger(tmp_path, keys)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests\foundations\test_authority_durable_campaign.py:58: in ledger
+    root = keys.signer("root")
+           ^^^^^^^^^^^^^^^^^^^
+src\engcore\authority\keys.py:174: in signer
+    self._signers[name] = _signer_from_private(name, "test", _ed25519().Ed25519PrivateKey.generate())
+                                                             ^^^^^^^^^^
+src\engcore\authority\keys.py:56: in _ed25519
+    return _crypto()[0]
+           ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _crypto() -> tuple[object, object]:
+        ed25519, serialization, absent = _probe_crypto()
+        if ed25519 is None:
+>           raise AuthorityUnavailable(f"issuer-bound authority needs the optional [authority] extra (cryptography): {absent}")
+E           engcore.authority.keys.AuthorityUnavailable: issuer-bound authority needs the optional [authority] extra (cryptography): ModuleNotFoundError("No module named 'cryptography'")
+
+src\engcore\authority\keys.py:51: AuthorityUnavailable
+=========================== short test summary info ===========================
+FAILED tests/foundations/test_authority_integrity.py::test_the_issuer_bound_path_admits_a_correctly_attested_record_and_nothing_else
+FAILED tests/foundations/test_authority_integrity.py::test_an_unopened_unanchored_or_foreign_ledger_is_refused
+FAILED tests/foundations/test_authority_integrity.py::test_forged_and_unknown_issuers_never_reach_the_ledger
+FAILED tests/foundations/test_authority_integrity.py::test_a_key_is_registered_only_by_its_holder_in_its_providers_class
+FAILED tests/foundations/test_authority_integrity.py::test_wrong_role_wrong_result_wrong_receipt_and_wrong_context_are_refused
+FAILED tests/foundations/test_authority_integrity.py::test_self_issued_support_is_refused_from_any_executor_of_the_receipt
+FAILED tests/foundations/test_authority_integrity.py::test_negative_records_cap_and_defeat_even_from_the_results_own_executor
+FAILED tests/foundations/test_authority_integrity.py::test_an_attested_falsification_follows_the_result_not_the_node_name
+FAILED tests/foundations/test_authority_integrity.py::test_attested_records_cannot_be_edited_in_memory
+FAILED tests/foundations/test_authority_integrity.py::test_revocation_rotation_and_history
+FAILED tests/foundations/test_authority_integrity.py::test_persistence_restart_and_tamper_detection
+FAILED tests/foundations/test_authority_integrity.py::test_a_second_writer_or_a_failed_append_never_forks_the_ledger
+FAILED tests/foundations/test_authority_integrity.py::test_negative_records_are_read_from_the_ledger_whatever_the_caller_supplies
+FAILED tests/foundations/test_authority_integrity.py::test_a_copied_record_or_a_mutated_result_backs_nothing
+FAILED tests/foundations/test_authority_integrity.py::test_key_material_placement
+FAILED tests/foundations/test_authority_integrity.py::test_an_attested_failed_check_without_a_level_caps_its_roles_factors
+FAILED tests/foundations/test_authority_integrity.py::test_an_attested_negative_report_counts_on_its_attested_subject_whatever_digest_it_carries
+FAILED tests/foundations/test_authority_integrity.py::test_a_ledger_subclass_is_refused
+FAILED tests/foundations/test_authority_integrity.py::test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_path
+FAILED tests/foundations/test_authority_integrity.py::test_a_minted_signer_cannot_be_relabelled
+FAILED tests/foundations/test_authority_integrity.py::test_a_compromise_window_withdraws_what_the_key_signed_in_it
+FAILED tests/foundations/test_authority_integrity.py::test_an_issuer_that_produced_the_same_output_elsewhere_is_self_issued
+FAILED tests/foundations/test_authority_integrity.py::test_an_attestation_subject_output_is_a_string
+FAILED tests/foundations/test_authority_integrity.py::test_a_retired_key_can_still_be_declared_compromised
+FAILED tests/foundations/test_authority_integrity.py::test_a_later_narrower_window_never_narrows_a_declared_compromise
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_campaign_resumes_exactly_after_restart
+FAILED tests/foundations/test_authority_durable_campaign.py::test_restart_detects_dropped_reordered_or_rewritten_operations
+FAILED tests/foundations/test_authority_durable_campaign.py::test_another_key_or_issuer_cannot_resume_or_extend_the_campaign
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_mutation_around_the_journal_is_refused_not_lost
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_verdict_judged_before_restart_is_the_same_verdict_after
+FAILED tests/foundations/test_authority_durable_campaign.py::test_the_same_campaign_id_cannot_restart_its_multiplicity_count
+FAILED tests/foundations/test_authority_durable_campaign.py::test_foreign_journal_entries_cannot_squat_or_brick_a_campaign
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_dropped_journal_tail_after_the_operators_anchor_is_refused
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_second_exposure_issuer_cannot_fork_or_squat_the_campaign
+FAILED tests/foundations/test_authority_durable_campaign.py::test_a_journal_signed_in_a_compromise_window_cannot_be_resumed
+35 failed, 1 passed in 1.94s
+GENESIS MUTATION pytest exit 1

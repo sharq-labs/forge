@@ -16,6 +16,7 @@ import pathlib
 import pytest
 
 from claims_support import battery_inputs, claim, et_inputs
+from engcore.product.runtime import CALLER_AUTHORED_CRITERIA
 from engcore.claims import ClaimTarget, DecisionBinding, EvidenceRequirement, QuantityOfInterest, assess_claim
 from engcore.mcp import example_electrothermal_payload, run_electrothermal_case
 from engcore.mcp.battery import example_battery_payload, run_battery_case
@@ -105,6 +106,11 @@ PARITY = [
 ]
 
 
+def _caller_authored(record):
+    """The canonical record plus exactly the F1-G annotation every MCP structured-claim tool adds, and nothing else."""
+    return {**record, "criteria_authority": dict(CALLER_AUTHORED_CRITERIA)}
+
+
 @pytest.mark.parametrize("system, quantity, level", PARITY, ids=[f"{s}:{q}:{l.value}" for s, q, l in PARITY])
 def test_a_level_attained_for_another_quantity_is_never_borrowed(system, quantity, level):
     case, report, inputs = (
@@ -115,7 +121,7 @@ def test_a_level_attained_for_another_quantity_is_never_borrowed(system, quantit
     mcp = assess_claim_tool(_request(system, case, quantity, level, target))
     canonical = _canonical(system, inputs, quantity, level, target)
     assert canonical["verdict"] == "insufficient_evidence"
-    assert mcp == canonical
+    assert mcp == _caller_authored(canonical)
     assert mcp["assurance"]["verdict"] != "valid"
 
 
@@ -125,7 +131,7 @@ def test_a_false_decision_statement_is_contradicted_not_valid():
     target = Quantity(310.0, "kelvin")
     mcp = assess_claim_tool(_request("electrothermal", ET_CASE, "final_temperature", L.ANALYTICALLY_VERIFIED, target, statement=statement))
     canonical = _canonical("electrothermal", et_inputs(), "final_temperature", L.ANALYTICALLY_VERIFIED, target, statement=statement)
-    assert mcp == canonical
+    assert mcp == _caller_authored(canonical)
     assert mcp["verdict"] == "contradicted" and mcp["comparison"]["outcome"] == "violated"
     assert mcp["result"]["value"]["magnitude"] > 310.0
 
@@ -148,7 +154,7 @@ def test_every_comparison_shape_matches_the_canonical_path(operator, target, tol
                                      operator=operator, tolerance=tolerance))
     canonical = _canonical("electrothermal", et_inputs(), "final_temperature", L.ANALYTICALLY_VERIFIED, target,
                            operator=operator, tolerance=tolerance)
-    assert mcp == canonical and mcp["verdict"] in ("supported", "contradicted")
+    assert mcp == _caller_authored(canonical) and mcp["verdict"] in ("supported", "contradicted")
 
 
 def test_the_uncertainty_demand_is_never_made_for_the_caller():
@@ -189,7 +195,7 @@ def test_an_insufficient_credibility_report_stays_insufficient():
 
 def test_the_claim_shape_is_exactly_assess_scientific_claim():
     payload = claim(operating_context={}, known_inputs=et_inputs()).to_dict()
-    assert assess_claim_request({"claim": payload}) == assess_scientific_claim(payload)
+    assert _caller_authored(assess_claim_request({"claim": payload})) == assess_scientific_claim(payload)
 
 
 def test_a_free_text_statement_without_a_comparison_is_refused():

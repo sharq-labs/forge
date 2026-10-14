@@ -2410,15 +2410,16 @@ def _validate_declarations() -> None:
 
 def _copy_tree(repo: pathlib.Path, work: pathlib.Path) -> None:
     from tools.certification.mutation_workspace import require_isolated
+    from tools.certification.ownership import copy_ignore
 
     require_isolated(repo, work)
     work.mkdir(parents=True, exist_ok=False)
+    # Repository-owned content only: an environment root holding nothing tracked is never copied.
+    ignore = copy_ignore(repo, "__pycache__", "*.pyc")
     for item in _COPIED:
         source, target = repo / item, work / item
         if source.is_dir():
-            shutil.copytree(
-                source, target, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"), symlinks=True
-            )
+            shutil.copytree(source, target, ignore=ignore, symlinks=True)
         else:
             shutil.copy2(source, target, follow_symlinks=False)
 
@@ -2566,9 +2567,24 @@ def _run(where: pathlib.Path, scratch: pathlib.Path, *, telemetry=None, workspac
             raise WorkspaceError("pytest-xdist infrastructure failure, no mutation credit: "
                                  + "; ".join(found))
     lines = [l for l in done.stdout.splitlines() if l.strip()]
-    failed = [l.split("::")[-1].split()[0]
-              for l in done.stdout.splitlines() if l.startswith("FAILED")]
-    return done.returncode, (lines[-1] if lines else "?"), failed, done.stdout
+    return done.returncode, (lines[-1] if lines else "?"), failed_test_names(done.stdout), done.stdout
+
+
+def failed_test_names(stdout: str) -> list[str]:
+    """The test names (last nodeid component, parameter id included) of pytest's ``FAILED`` summary lines.
+
+    The nodeid is everything before the `` - `` that introduces the message. Splitting the WHOLE line on
+    ``::`` (as this harness did) took the name from the message whenever the message itself named a nodeid
+    -- an xdist crash report does ("[gw0] node down ... tests/test_alpha.py::test_guard_na...", cut to the
+    terminal width) -- so a kill could be denied, or credited to whichever guard the message named.
+    """
+    names = []
+    for line in stdout.splitlines():
+        if not line.startswith("FAILED "):
+            continue
+        nodeid = line[len("FAILED "):].split(" - ", 1)[0].strip()
+        names.append(nodeid.split("::")[-1])
+    return names
 
 
 #: Flags of the serial "alone" runs that back an xdist kill: no cache, so nothing the xdist run

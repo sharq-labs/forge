@@ -51,6 +51,8 @@ from ...scenarios.timeline import canonical_digest
 from ...scientific.composition.conversion import EnergyConversion
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.units.quantity import Quantity
+from ..admissibility import InvariantEvaluation, InvariantRelation, PhysicalInvariant, PhysicallyInadmissible, evaluate_invariant, require_admissible
+from ..aerospace.multirotor.rotor_hover import ideal_induced_hover_power
 from .template import ProductTemplate, TemplateRefusal
 
 ADAPTER_ID = "forge.drone_coupled_hover"
@@ -98,6 +100,30 @@ SHAFT = EnergyConversion("rigid_shaft", "mechanical", "mechanical", "W", 1.0, de
     "the shaft transmits the propeller's absorbed power whole; bearing and windage losses are carried by the motor's no-load current"))
 LOSS_TO_HEAT = EnergyConversion("motor_loss_to_winding_node", "motor_loss", "heat", "W", 1.0, description=(
     "by the lumped model's definition: motor_thermal_resistance is declared per watt of TOTAL motor loss, so all of it enters the node"))
+
+#: Hostile review F6: a hover state is admissible only if each rotor absorbs at least the ideal induced power of
+#: actuator-disk momentum theory. Static coefficients can describe a propeller that does not exist (C_P too small
+#: for its C_T); every model downstream would then be evaluated "correctly" on an impossible state.
+HOVER_POWER_FLOOR = PhysicalInvariant(
+    "rotor.hover.momentum_theory_power_floor",
+    "the shaft power a rotor absorbs in hover is at least the ideal induced power T^(3/2) / sqrt(2 rho A) of an "
+    "actuator disk (figure of merit <= 1)",
+    "Rankine-Froude momentum theory of the actuator disk; any real rotor adds profile and non-ideal induced losses",
+    InvariantRelation.AT_LEAST,
+)
+
+
+def hover_power_floor(x: Mapping[str, float]) -> InvariantEvaluation:
+    """The per-rotor shaft power from the declared coefficients against the momentum-theory ideal, in SI."""
+    n_rot = int(x["rotor_count"])
+    thrust = x["takeoff_mass"] * x["gravity"] / n_rot
+    rho, diameter = x["air_density"], x["rotor_diameter"]
+    speed = math.sqrt(thrust / (x["prop_thrust_coefficient"] * rho * diameter ** 4))  # rev/s
+    shaft = Quantity(x["prop_power_coefficient"] * rho * speed ** 3 * diameter ** 5, "W")
+    ideal = ideal_induced_hover_power(thrust=Quantity(thrust, "N"), disk_area=Quantity(math.pi * diameter ** 2 / 4, "m^2"),
+                                      air_density=Quantity(rho, "kg/m^3"))
+    return evaluate_invariant(HOVER_POWER_FLOOR, shaft, ideal)
+
 
 _UNKNOWN = Uncertainty.unknown("coupled hover screening: output uncertainty not quantified (declared inputs carry none)")
 
@@ -174,6 +200,11 @@ def build_runtime(template: ProductTemplate) -> tuple[MultiphysicsRuntime, dict[
         n = math.sqrt(thrust / (x["prop_thrust_coefficient"] * rho * D ** 4))  # rev/s
         power = x["prop_power_coefficient"] * rho * n ** 3 * D ** 5
         return {"shaft_power": Quantity(power, "W"), "shaft_speed": Quantity(2 * math.pi * n, "rad/s")}
+
+    try:
+        require_admissible([hover_power_floor(x)])
+    except PhysicallyInadmissible as exc:
+        raise TemplateRefusal(f"the declared propeller is physically inadmissible, so no hover state is computed: {exc}") from exc
 
     kv = x["motor_kv"]  # rad/s/V
     kt = 1.0 / kv       # N*m/A (SI motor constant equality)
@@ -319,6 +350,7 @@ def coupled_hover_screening(template: ProductTemplate) -> dict[str, Any]:
         "duty": Quantity(duty, "dimensionless"), "bus_power": bus, "pack_current": pack, "bus_voltage": q("battery_ecm.bus_voltage", "V"),
         "winding_temperature": tw, "motor_heat": q("motor_esc.motor_heat", "W"), "battery_heat": q("battery_ecm.battery_heat", "W"),
         "rated_capacity_over_current": Quantity(x["battery_capacity"] / pack.magnitude_in("A"), "h"),
+        "physical_admissibility": [hover_power_floor(x).to_dict()],
         "bus_power_balance_residual": balances["bus_power_balance_residual"],
         "winding_heat_balance_residual": balances["winding_heat_balance_residual"],
         "uncertainty": "UNKNOWN",
@@ -356,4 +388,5 @@ def coupling_balances(out: Mapping[str, Any], x: Mapping[str, float]) -> dict[st
     return {"bus_power_balance_residual": Quantity(bus, "W"), "winding_heat_balance_residual": Quantity(heat, "K")}
 
 
-__all__ = ["ADAPTER_ID", "ADAPTER_VERSION", "CLASSIFICATION", "COUPLED_INPUTS", "build_runtime", "coupled_hover_screening", "coupling_balances"]
+__all__ = ["ADAPTER_ID", "ADAPTER_VERSION", "CLASSIFICATION", "COUPLED_INPUTS", "HOVER_POWER_FLOOR", "build_runtime",
+           "coupled_hover_screening", "coupling_balances", "hover_power_floor"]

@@ -1,10 +1,16 @@
 name: Tests
 
-# Manual reference workflow only. FORGE does not run automatic GitHub CI.
-# The authoritative assurance path is tools/certification/local_assurance.py,
-# which binds local evidence to the exact source commit before SAFE_TO_PUSH.
+# Every pull request is classified by the repository's single assurance
+# ownership policy. Ordinary changes run the normal suite here; certified or
+# trust-sensitive changes are delegated to the recertification workflow.
+# Pushes to main run the full ordinary suite again against the merged bytes.
+# Manual dispatch remains an explicit fallback (hostile review F8). Local
+# assurance (tools/certification/local_assurance.py) is unchanged.
 
 on:
+  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:

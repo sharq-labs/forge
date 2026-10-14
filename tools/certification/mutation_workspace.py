@@ -145,6 +145,44 @@ def snapshot(tree, *, identity=None, telemetry=None, area=None):
     return dict(sorted(rows.items()))
 
 
+def owned_snapshot(root, *, telemetry=None, area=None):
+    """A manifest of a SOURCE checkout: only repository-owned files (tracked, or untracked outside
+    environment roots), never an environment tree such as ``.forge/venvs``.
+
+    :func:`snapshot` stays a complete record of a seed or worker -- that is integrity checking, and a
+    worker that grew an environment must show it. A traversal of the checkout itself is an ownership
+    question, answered once by :mod:`tools.certification.ownership`; a refused symlink fails it.
+    """
+    from tools.certification.ownership import owned_files
+
+    owned = owned_files(root)
+    if owned.refused:
+        raise WorkspaceError(f"source checkout holds symlinks that are never followed: {list(owned.refused)}")
+    rows = {}
+    for relative in owned.files:
+        path = pathlib.Path(owned.root) / relative
+        info = path.lstat()
+        rows[relative] = Entry("file", stat.S_IMODE(info.st_mode),
+                               _digest(path, telemetry=telemetry, area=area, relative=relative),
+                               links=info.st_nlink, size=info.st_size)
+    return dict(sorted(rows.items()))
+
+
+def environment_trees(tree):
+    """Environment roots present in a populated tree (an explicit external root, or a directory that IS an env)."""
+    from tools.certification.ownership import EXTERNAL_ROOTS, is_environment_dir
+
+    tree = pathlib.Path(tree)
+    found = [name for name in EXTERNAL_ROOTS if (tree / name).exists()]
+    for directory, dirnames, _files in os.walk(tree, followlinks=False):
+        for name in list(dirnames):
+            path = pathlib.Path(directory) / name
+            if is_environment_dir(path):
+                found.append(path.relative_to(tree).as_posix())
+                dirnames.remove(name)
+    return sorted(set(found))
+
+
 def manifest_digest(rows):
     blob = json.dumps({name: asdict(entry) for name, entry in rows.items()},
                       sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
@@ -365,6 +403,10 @@ class PersistentWorkspace:
             self.telemetry.stage("seed_population_started")
             with self.telemetry.measure("seed_population"):
                 self.populate(self.root, self.seed)
+            # Scanner ownership (hostile review): mutation evidence is about repository source, never a toolchain.
+            carried = environment_trees(self.seed)
+            if carried:
+                raise WorkspaceError(f"the populated seed carries environment trees {carried}; refused")
             self.telemetry.stage("seed_created")
             self.telemetry.stage("seed_indexing_started")
             with self.telemetry.measure("seed_indexing"):

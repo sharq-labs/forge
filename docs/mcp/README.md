@@ -62,12 +62,14 @@ of accuracy. That is what this record reports.
 | `CROSS_SOLVER_VALIDATED` | agreement with an independent implementation |
 | `EXPERIMENTALLY_VALIDATED` | agreement with measurement |
 
-Loosely, the first three or four sit on the **verification** side of the
-V&V 10/20 distinction — *did we solve the equations right* — and the last two
-on the **validation** side — *did we solve the right equations, against the
-world*. That correspondence is stated loosely on purpose. It is not a mapping
-any of these standards defines, the boundary between the two sides is
-genuinely arguable for `BENCHMARK_VALIDATED` and `CROSS_SOLVER_VALIDATED`, and
+The first five sit on the **verification** side of the V&V 10/20 distinction —
+*did we solve the equations right* — and only `EXPERIMENTALLY_VALIDATED` on the
+**validation** side — *did we solve the right equations, against the world*.
+`CROSS_SOLVER_VALIDATED` (R-39) and `BENCHMARK_VALIDATED` (F4, hostile review
+2026-10-13) keep their legacy names but are counted as verification by the Core
+(`VALIDATION_LEVELS` / `VERIFICATION_LEVELS`): two solvers, or a solver and a
+published reference solution, agreeing says the equations were solved, never
+that they describe reality. It is not a mapping any of these standards defines, and
 the levels are attained *independently* rather than climbed in order — so they
 do not form a single ordinal grade the way a credibility assessment scale's
 factors are each scored.

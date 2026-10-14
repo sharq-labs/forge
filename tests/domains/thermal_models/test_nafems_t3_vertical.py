@@ -71,7 +71,8 @@ def test_t3_credibility_requires_and_attains_benchmark_validation() -> None:
     report = run_nafems_t3_credibility(run_id="t3-credibility")
 
     assert report.verdict is CredibilityVerdict.SUPPORTED
-    assert report.evidence_basis == "VALIDATED"
+    # F4: agreement with the NAFEMS reference solution is (strong) verification, not validation
+    assert report.evidence_basis == "VERIFICATION_ONLY"
     assert ValidationLevel.BENCHMARK_VALIDATED in report.attained_levels
     assert report.required_levels == (ValidationLevel.BENCHMARK_VALIDATED,)
 

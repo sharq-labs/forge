@@ -19,8 +19,10 @@ flag: each adapter reports PRODUCED only for evidence whose standing is
 ADMISSIBLE, and NO_EVIDENCE -- naming every weaker record's reasons -- otherwise.
 
 A note on BENCHMARK. A simulation *compared with* a trusted benchmark is still
-SIMULATION evidence -- the benchmark comparison is a validation check inside
-its credibility report (NAFEMS T3 earns BENCHMARK_VALIDATED that way). A
+SIMULATION evidence -- the benchmark comparison is a VERIFICATION check inside
+its credibility report (NAFEMS T3 earns BENCHMARK_VALIDATED that way; despite
+the legacy name it says the equations were solved, not that they describe
+reality). A
 BENCHMARK-class record is the published benchmark value itself standing as
 evidence about the quantity at the oracle's own conditions; it grants no level.
 """

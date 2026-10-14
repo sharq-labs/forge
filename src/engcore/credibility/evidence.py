@@ -188,7 +188,10 @@ __all__ = [
 
 #: Every model definition this package can reach, by ``(model_id, version)``.
 #:
-#: Built by walking ``engcore`` once, lazily, on first use. Lazily because
+#: Built by walking ``engcore.domains`` -- where every model is declared -- once, lazily, on first use.
+#: Not the whole of ``engcore`` (hostile review F2, third pass B1): a module anywhere in the tree that
+#: happened to be walked first could shadow a real model's definition, exclusions and all, from outside
+#: every certified area. Two different definitions under one key are refused, not resolved by walk order. Lazily because
 #: this module is imported *from* that tree and a walk at import time would
 #: close the cycle; once because the walk costs more than the lookup and a
 #: report may carry many records.
@@ -215,22 +218,28 @@ def _declared_models() -> Mapping[tuple[str, str], Any]:
         # exists to stop. The frozen spelling is an alias for the canonical
         # modules now (`src/__init__.py`), so there is one name; deriving it
         # from `__name__` costs nothing and stays right if that ever changes.
-        root_name = __name__.rsplit(".", 2)[0]
+        root_name = __name__.rsplit(".", 2)[0] + ".domains"
         root = importlib.import_module(root_name)
 
         index: dict[tuple[str, str], Any] = {}
         for found in pkgutil.walk_packages(root.__path__, f"{root_name}."):
             try:
                 module = importlib.import_module(found.name)
-            except Exception:  # pragma: no cover - an optional dependency
-                # A module that will not import contributes no models, and a
-                # report is not the place to raise about it. The repo-wide
-                # guard over the same walk is where an unimportable domain
-                # module is a failure.
-                continue
+            except Exception as exc:
+                # Fourth review: skipping it would drop that module's models -- and their exclusions --
+                # from every report without a word. An index that is not complete is not an index.
+                raise CredibilityEvidenceError(
+                    f"model index incomplete: {found.name} does not import ({type(exc).__name__}: {exc}); its "
+                    f"models' exclusions cannot be reported"
+                ) from exc
             for value in vars(module).values():
                 if isinstance(value, ScientificModelDefinition):
-                    index.setdefault(value.key, value)
+                    existing = index.setdefault(value.key, value)
+                    if existing is not value and existing != value:
+                        raise CredibilityEvidenceError(
+                            f"two different model definitions are declared as {value.key!r} (one found in "
+                            f"{found.name}); a model's exclusions would depend on which was walked first"
+                        )
         _MODEL_INDEX = index
     return _MODEL_INDEX
 

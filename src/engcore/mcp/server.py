@@ -45,6 +45,7 @@ from ..product import (
     run_proposed_simulation as _run_proposed_simulation,
     run_simulation as _run_simulation,
 )
+from ..product.runtime import CALLER_AUTHORED_CRITERIA  # noqa: F401 - re-exported for transports
 from ..systems.electrothermal import coupled as cp
 from .errors import (
     MalformedPayloadError,
@@ -200,7 +201,8 @@ _BASIS_GUIDANCE: Mapping[tuple[CredibilityVerdict, str], Mapping[str, str]] = {
     (CredibilityVerdict.SUPPORTED, "VALIDATED"): {
         "means": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["means"]
                  + " At least one of those levels compares the model with something outside "
-                   "itself: a benchmark, an experiment, or an independently implemented solver.",
+                   "itself: an independent physical measurement (experimental validation). A "
+                   "benchmark reference solution or a second solver is verification, not this.",
         "does_not_mean": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["does_not_mean"],
         "action": _VERDICT_GUIDANCE[CredibilityVerdict.SUPPORTED]["action"],
     },
@@ -211,9 +213,11 @@ _BASIS_GUIDANCE: Mapping[tuple[CredibilityVerdict, str], Mapping[str, str]] = {
                  "correctly. This report contains no comparison of the model with the world.",
         "does_not_mean": "It does not mean the model describes the part, that the equations are the "
                          "right equations, or that any measurement agrees with the answer. Nothing "
-                         "here was compared with a benchmark, an experiment, or an independently "
-                         "implemented solver. A correct solution of the wrong model is exactly what "
-                         "this verdict cannot distinguish. Read the attained levels, the conditions "
+                         "here was compared with an experiment; agreement with a benchmark reference "
+                         "solution or an independently implemented solver, if attained, shows the "
+                         "equations were solved, not that they describe reality. A correct solution of "
+                         "the wrong model is exactly what this verdict cannot distinguish. Read the "
+                         "attained levels, the conditions "
                          "each model was judged against, and decide.",
         "action": "Read the evidence and decide, and decide separately whether the model applies: "
                   "this report does not answer that. To demand more, set required_evidence_basis "
@@ -241,9 +245,10 @@ _BASIS_MEANS: Mapping[str, str] = {
     # most likely to be read as validation -- it used to be counted as one -- and because it is the only
     # level in this group that involves a second program rather than a second look at the same one.
     "VERIFICATION_ONLY": "Every attained level says the declared model was solved correctly. That includes "
-                         "agreement between two solvers of the same declared model, which compares two "
-                         "implementations and not the model with the world. Nothing here compares it with "
-                         "the world.",
+                         "agreement with a published benchmark reference solution (benchmark_validated is "
+                         "that level's legacy wire name) and agreement between two solvers of the same "
+                         "declared model: both compare the solution with another solution of the same "
+                         "equations, not the model with the world. Nothing here compares it with the world.",
     "NONE": "No check both passed and established an evidentiary level.",
 }
 
@@ -1300,6 +1305,7 @@ def assess_scientific_claim(
     record. An unexpected exception is a defect and is not caught.
     """
     # One decision path for every MCP claim tool (Trust Repair Pass 1, R3-02).
+    # The record itself says the criteria are the caller's (claims.assessment.CALLER_AUTHORED_CRITERIA).
     return assess_structured_claim(
         claim,
         external=external,
@@ -1390,9 +1396,13 @@ result is derived from the same capability registry used for execution."""
 _PRODUCT_PREPARE_DESCRIPTION = """Prepare a simulation proposed by an LLM without running physics.
 
 Pass the user's exact text, the provider's structured scientific-claim
-proposal, and source spans for every physical value. Values not grounded in the
-user text are moved to missing inputs. Authority fields are refused. The
-deterministic compiler returns READY, NEEDS_INPUT, AMBIGUOUS,
+proposal, and source spans: one per input (keyed by its input path) and one per
+decision criterion (keyed `claim.qoi`, `claim.operator`, `claim.target`,
+`claim.tolerance`, `claim.evidence`, `claim.uncertainty`, `claim.decision`, ...).
+Inputs not grounded in the user text are moved to missing inputs. A criterion
+the text does not state makes the proposal UNGROUNDED: nothing is compiled and
+the proposed value is returned as advisory only. Authority fields are refused.
+Otherwise the deterministic compiler returns READY, NEEDS_INPUT, AMBIGUOUS,
 UNSUPPORTED_CAPABILITY or REFUSED."""
 
 
@@ -1406,8 +1416,9 @@ record. The language model does not choose the verdict."""
 _PRODUCT_RUN_PROPOSED_DESCRIPTION = """Run the end-to-end product flow from an LLM proposal.
 
 Forge first grounds the proposal in the user's text and compiles it. Physics is
-executed only when the deterministic compiler returns READY. A non-ready
-proposal returns its missing inputs, ambiguity or refusal and never runs."""
+executed only when every decision criterion is grounded and the deterministic
+compiler returns READY. A non-ready proposal returns its missing inputs,
+ungrounded criteria, ambiguity or refusal and never runs."""
 
 
 _COMPILE_INTENT_DESCRIPTION = """\

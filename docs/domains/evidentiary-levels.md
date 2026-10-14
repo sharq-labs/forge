@@ -115,8 +115,12 @@ vertical. `BENCHMARK_VALIDATED` is therefore earned only through
 none of the local domain self-checks below can mint it.
 `EXPERIMENTALLY_VALIDATED` remains empty: there is still no reviewed laboratory
 measurement authority in the repository. This distinction is load-bearing —
-a published benchmark is external validation, but it is not an experiment on a
-physical article.
+a published benchmark is a reference SOLUTION of a stated mathematical problem.
+Since F4 (hostile review 2026-10-13) agreement with it is classified as
+**verification** (`VERIFICATION_LEVELS`): strong evidence that the declared
+equations were solved, and no evidence that they describe a physical article.
+The level keeps its legacy wire name `benchmark_validated`; a report resting on
+it is `VERIFICATION_ONLY`, and only `EXPERIMENTALLY_VALIDATED` is validation.
 
 **The gap between a domain's ladder and a report's ladder.** The DC solver's
 own report attains two levels, measured. The electro-thermal report the MCP

@@ -37,9 +37,10 @@ re-executes it.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from ..credibility.evidence import CredibilityEvidenceReport
 from ..credibility.sria_bridge import CredibilityReportCritic, evidence_from_credibility_report
@@ -422,6 +423,7 @@ def _build_record(
     studies: StudyOutcome | None = None,
     external: tuple[Any, ...] = (),
     trust: TrustedExternalRegistry = PRODUCTION_EXTERNAL_REGISTRY,
+    criteria_authority: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """The assessment record, and the live objects it was built from."""
     live: dict[str, Any] = {}
@@ -554,6 +556,12 @@ def _build_record(
             "evidence_basis": report.evidence_basis,
             "required": [l.value for l in claim.evidence.required_levels],
             "missing_required": [l.value for l in claim.evidence.required_levels if l not in set(report.attained_levels)],
+            # F4: "required" lists every required ValidationLevel (the Core's name for all evidentiary levels);
+            # this says which KIND each one is, so a missing benchmark is never read as missing validation.
+            "required_by_kind": {
+                "verification": [l.value for l in claim.evidence.required_levels if l in VERIFICATION_LEVELS],
+                "validation": [l.value for l in claim.evidence.required_levels if l in VALIDATION_LEVELS],
+            },
         },
         "uncertainty": None
         if report is None
@@ -605,6 +613,7 @@ def _build_record(
         if i.kind in (ExplanationKind.MISSING_EVIDENCE, ExplanationKind.VALIDATION_GAP, ExplanationKind.UNCERTAINTY_GAP)
     ]
     record["explanation"] = [i.to_dict() for i in items]
+    record["criteria_authority"] = json.loads(canonical_json(dict(criteria_authority or CALLER_AUTHORED_CRITERIA)))
     record["notice"] = (
         "A structured scientific assessment derived from the registered models' own validity, "
         "verification, validation and uncertainty records. Not a safety certification and not an "
@@ -620,6 +629,90 @@ def _build_record(
     live["basis"] = basis
     live["items"] = items
     return record, live
+
+
+#: Who authored the criteria a record judges (hostile review F1-G / re-review R9). Part of the record, so
+#: covered by its digest and re-derived on read-back: a structured claim's criteria are the CALLER's --
+#: nobody grounded them in a user's statement or a deployment policy -- and the record says so wherever
+#: it is stored, replayed or forwarded.
+CALLER_AUTHORED_CRITERIA: Mapping[str, Any] = {
+    "authority": "caller_authored",
+    "grounded": False,
+    "meaning": (
+        "The comparison, bound, tolerance, evidence bar and uncertainty demand were supplied by the "
+        "caller. Forge did not ground them in a user's statement or a deployment policy: the verdict "
+        "is about the criteria as written in this record, and the caller is accountable for whether "
+        "they are the user's. Use prepare_simulation / run_proposed_simulation to have criteria "
+        "grounded in the user's own text."
+    ),
+}
+
+
+def grounded_criteria(source_text: str, spans: Mapping[str, Sequence[int]], policy: Mapping[str, Any],
+                      provenance: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """The criteria authority of a claim the natural-language adapter compiled: re-derivable offline.
+
+    ``grounded`` only when no criterion is POLICY_BOUND. A policy travels inside the record and nothing
+    pins it to a deploying application (third review A3), so criteria a policy fixed are labelled
+    ``policy_bound`` and carry the policy's digest: the verdict is about that policy's criteria, and a
+    reader checks the digest against their own deployment.
+    """
+    plain_policy = json.loads(canonical_json(dict(policy)))
+    by_policy = sorted(str(item.get("field")) for item in provenance if item.get("provenance") == "policy_bound")
+    block: dict[str, Any] = {
+        "authority": "policy_bound" if by_policy else "grounded",
+        "grounded": not by_policy,
+        "source_text": str(source_text),
+        "spans": {key: [int(v) for v in spans[key]] for key in sorted(spans)},
+        "policy": plain_policy,
+        "provenance": [dict(item) for item in provenance],
+    }
+    if by_policy:
+        block["policy_fields"] = by_policy
+        block["policy_digest"] = hashlib.sha256(canonical_json(plain_policy).encode("utf-8")).hexdigest()
+        block["meaning"] = ("Criteria " + ", ".join(by_policy) + " were fixed by the deployment policy carried in "
+                            "this record, which nothing here pins to a deploying application: compare policy_digest "
+                            "with your deployment. The other criteria were read from the user's controlled sentences "
+                            "or derived from them; read-back re-runs the grounding.")
+    else:
+        block["meaning"] = ("Every decision criterion was read from the user's controlled sentences or derived "
+                            "from them; read-back re-runs the grounding.")
+    return block
+
+
+#: The criteria authorities a record may carry.
+CRITERIA_AUTHORITIES = ("caller_authored", "grounded", "policy_bound")
+
+
+def _verify_criteria_authority(record: Mapping[str, Any], claim: ScientificClaim | None, registry: CapabilityRegistry) -> None:
+    block = record.get("criteria_authority")
+    if not isinstance(block, Mapping):
+        raise AssessmentForgeryError("the record does not say who authored its criteria")
+    if block.get("authority") == "caller_authored":
+        if canonical_json(_plain(block)) != canonical_json(dict(CALLER_AUTHORED_CRITERIA)):
+            raise AssessmentForgeryError("the caller-authored criteria block is not the canonical one")
+        return
+    if block.get("authority") not in ("grounded", "policy_bound"):
+        raise AssessmentForgeryError(f"unknown criteria authority {block.get('authority')!r}")
+    from .adapters.nl import compile_natural_language
+
+    try:
+        source_text = str(block["source_text"])
+        spans = {k: tuple(v) for k, v in dict(block["spans"]).items()}
+        policy = _plain(block["policy"])
+        regrounded = compile_natural_language(source_text, _plain(record["claim"]), spans, registry, policy=policy)
+    except Exception as exc:  # any refusal of the stored grounding inputs is a forgery of the block
+        raise AssessmentForgeryError(f"the grounded criteria do not re-ground: {exc}") from exc
+    if regrounded.status != CompilationStatus.READY.value or claim is None or regrounded.compiled is None \
+            or regrounded.compiled.claim.identity_digest != claim.identity_digest:
+        raise AssessmentForgeryError("the record's criteria are not what its stored source text grounds")
+    if claim.statement != source_text.strip():
+        raise AssessmentForgeryError("the record's statement is not the source text its criteria were grounded in")
+    # The whole block re-derives -- authority label, policy digest, provenance, meaning -- so a record whose
+    # criteria a policy fixed cannot call itself grounded.
+    derived = grounded_criteria(source_text, spans, policy, [p.to_dict() for p in regrounded.provenance])
+    if canonical_json(derived) != canonical_json(_plain(block)):
+        raise AssessmentForgeryError("the record's criteria authority does not re-derive from its grounding")
 
 
 @dataclass(frozen=True)
@@ -680,14 +773,26 @@ def assess_claim(
         PRODUCTION_EMPIRICAL_OBSERVATIONS
     ),
     trust: TrustedExternalRegistry = PRODUCTION_EXTERNAL_REGISTRY,
+    criteria_authority: Mapping[str, Any] | None = None,
 ) -> ClaimAssessment:
     """Assess one structured claim end to end. Expected outcomes are records, never exceptions.
 
     ``external`` are measurement or literature records the caller offers; each is ingested and given a
     standing under ``trust`` (the repository's pins by default). Offering one never grants a level.
+
+    ``criteria_authority`` says who authored the claim's criteria and is part of the record: the caller
+    (the default, :data:`CALLER_AUTHORED_CRITERIA`) or the natural-language adapter's grounding
+    (:func:`grounded_criteria`), which read-back re-runs. It decides nothing in the verdict; it says what
+    the verdict is a verdict about.
     """
+    if criteria_authority is not None and criteria_authority.get("authority") not in CRITERIA_AUTHORITIES:
+        raise ClaimLayerError(f"unknown criteria authority {criteria_authority.get('authority')!r}")
     compiled = compile_claim(claim, registry)
     parsed = compiled.claim
+    if criteria_authority is not None:
+        # Third review A4: a criteria authority is verified when the record is built, not only on read-back.
+        _verify_criteria_authority({"criteria_authority": _plain(criteria_authority),
+                                    "claim": None if parsed is None else parsed.to_dict()}, parsed, registry)
     plan = execution = report = None
     view = None
     if compiled.status is CompilationStatus.READY:
@@ -708,7 +813,8 @@ def assess_claim(
             empirical_observation_trust=empirical_observation_trust,
         )
     offered = tuple(read_external_record(r) if isinstance(r, Mapping) else r for r in external)
-    record, live = _build_record(parsed, compiled, plan, view, report, registry, studies, offered, trust)
+    record, live = _build_record(parsed, compiled, plan, view, report, registry, studies, offered, trust,
+                                 criteria_authority)
     return ClaimAssessment(
         claim=parsed,
         compiled=compiled,
@@ -819,7 +925,9 @@ def verify_assessment(
         )
     except (ClaimLayerError, KeyError, TypeError) as exc:
         raise AssessmentForgeryError(f"external evidence: {exc}") from exc
-    rebuilt, live = _build_record(claim, compiled, plan, view, report, registry, studies, offered, trust)
+    _verify_criteria_authority(record, claim, registry)
+    rebuilt, live = _build_record(claim, compiled, plan, view, report, registry, studies, offered, trust,
+                                  _plain(record["criteria_authority"]))
     if canonical_json(rebuilt) != canonical_json(_plain(record)):
         differing = sorted(k for k in set(rebuilt) | set(record) if canonical_json(_plain(rebuilt.get(k))) != canonical_json(_plain(record.get(k))))
         raise AssessmentForgeryError(
@@ -870,8 +978,11 @@ __all__ = [
     "AssembledEvidence",
     "AssessmentForgeryError",
     "Assurance",
+    "CALLER_AUTHORED_CRITERIA",
+    "CRITERIA_AUTHORITIES",
     "ClaimAssessment",
     "assemble_evidence",
+    "grounded_criteria",
     "assess_claim",
     "assure",
     "verify_assessment",
