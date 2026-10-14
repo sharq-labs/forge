@@ -505,6 +505,12 @@
     "bias_mV": -25.090062747215256,
     "calibration_to_heldout_rmse_gap_mV": 20.249426905990028,
     "lag1_autocorrelation_mean": 0.9959380731567395,
+    "load_only_against_the_same_limits": {
+     "not_preregistered": true,
+     "p95_abs_mV": 50.733985583430645,
+     "rmse_mV": 28.873657719640597,
+     "would_pass": false
+    },
     "load_rmse_mV": 28.873657719640597,
     "load_samples": 299,
     "mae_mV": 25.334141694583668,
@@ -526,7 +532,7 @@
     "rmse_rint_minus_1rc_mV": 36.051513278542295,
     "scope": "windows/tests of ONE cell; the bootstrap does not generalize beyond them",
     "units": 1,
-    "verdict": "1RC_BETTER"
+    "verdict": "NOT_ASSESSABLE (fewer than 2 units: no interval)"
    },
    "comparison_load": {
     "ci95_mV": [
@@ -536,7 +542,7 @@
     "rmse_rint_minus_1rc_mV": 36.36058005587891,
     "scope": "windows/tests of ONE cell; the bootstrap does not generalize beyond them",
     "units": 1,
-    "verdict": "1RC_BETTER"
+    "verdict": "NOT_ASSESSABLE (fewer than 2 units: no interval)"
    },
    "comparison_rest": {
     "ci95_mV": [
@@ -546,7 +552,7 @@
     "rmse_rint_minus_1rc_mV": 0.0,
     "scope": "windows/tests of ONE cell; the bootstrap does not generalize beyond them",
     "units": 1,
-    "verdict": "NOT_DISTINGUISHED"
+    "verdict": "NOT_ASSESSABLE (fewer than 2 units: no interval)"
    },
    "parameter_uncertainty_1rc": {
     "band": "2.5-97.5 % of 200 joint bootstrap parameter sets",
@@ -568,6 +574,12 @@
     "bias_mV": -62.57746804020553,
     "calibration_to_heldout_rmse_gap_mV": 32.79119012991137,
     "lag1_autocorrelation_mean": 0.9943794032801212,
+    "load_only_against_the_same_limits": {
+     "not_preregistered": true,
+     "p95_abs_mV": 89.16444249906105,
+     "rmse_mV": 65.23423777551952,
+     "would_pass": false
+    },
     "load_rmse_mV": 65.23423777551952,
     "load_samples": 299,
     "mae_mV": 62.821546987573946,
@@ -584,6 +596,15 @@
    "route_validity": {
     "in_domain": 1
    },
+   "temperature_C": {
+    "calibration_range_unwidened": [
+     23.55551,
+     24.6071
+    ],
+    "in_domain_only_because_of_the_preregistered_1C_widening": true,
+    "max": 25.23805,
+    "min": 23.76583
+   },
    "units": 1
   },
   "heldout_pulses": {
@@ -592,6 +613,12 @@
     "bias_mV": -5.772922578991849,
     "calibration_to_heldout_rmse_gap_mV": 4.148241186921011,
     "lag1_autocorrelation_mean": 0.940023305452447,
+    "load_only_against_the_same_limits": {
+     "not_preregistered": true,
+     "p95_abs_mV": 39.23668954261077,
+     "rmse_mV": 19.72092671302645,
+     "would_pass": false
+    },
     "load_rmse_mV": 19.72092671302645,
     "load_samples": 2004,
     "mae_mV": 7.68688348849453,
@@ -886,6 +913,12 @@
     "bias_mV": -21.17997091991948,
     "calibration_to_heldout_rmse_gap_mV": -2.2738969399499993,
     "lag1_autocorrelation_mean": 0.9833166949021972,
+    "load_only_against_the_same_limits": {
+     "not_preregistered": true,
+     "p95_abs_mV": 53.90021700526846,
+     "rmse_mV": 26.839931762383934,
+     "would_pass": false
+    },
     "load_rmse_mV": 26.839931762383934,
     "load_samples": 2004,
     "mae_mV": 23.050684489911166,
@@ -920,6 +953,15 @@
    },
    "route_validity": {
     "in_domain": 20
+   },
+   "temperature_C": {
+    "calibration_range_unwidened": [
+     23.55551,
+     24.6071
+    ],
+    "in_domain_only_because_of_the_preregistered_1C_widening": false,
+    "max": 24.29162,
+    "min": 23.55551
    },
    "units": 20
   }

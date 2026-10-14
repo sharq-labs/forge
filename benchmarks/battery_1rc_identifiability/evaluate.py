@@ -127,16 +127,19 @@ def paired_bootstrap(res_a, res_b, b=2000, seed=0):
     diffs = 1000 * np.array(diffs)
     point = 1000 * (math.sqrt(sa.sum() / n.sum()) - math.sqrt(sb.sum() / n.sum()))
     ci = [float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))]
-    verdict = "1RC_BETTER" if ci[0] > 0 else "RINT_BETTER" if ci[1] < 0 else "NOT_DISTINGUISHED"
+    verdict = ("NOT_ASSESSABLE (fewer than 2 units: no interval)" if len(res_a) < 2
+               else "1RC_BETTER" if ci[0] > 0 else "RINT_BETTER" if ci[1] < 0 else "NOT_DISTINGUISHED")
     return {"rmse_rint_minus_1rc_mV": point, "ci95_mV": ci, "verdict": verdict, "units": len(res_a),
             "scope": "windows/tests of ONE cell; the bootstrap does not generalize beyond them"}
 
 
 def acceptance(m: dict[str, Any], limits: dict[str, float], outside: int) -> str:
+    """Applicability precedes evidence, in BOTH directions (review): a set holding any unit outside the validated
+    domain neither supports nor contradicts the model, so it is NOT_ASSESSABLE whatever its error."""
+    if outside:
+        return f"NOT_ASSESSABLE ({outside} outside the validated domain)"
     passed = m["rmse_mV"] <= limits["RMSE_mV_max"] and m["p95_abs_mV"] <= limits["P95_abs_mV_max"]
-    if not passed:
-        return "FAIL"
-    return f"NOT_ASSESSABLE ({outside} outside the validated domain)" if outside else "PASS"
+    return "PASS" if passed else "FAIL"
 
 
 def main() -> int:
@@ -198,6 +201,19 @@ def main() -> int:
         if limits:
             for m in ("1rc", "rint"):
                 entry[m]["acceptance"] = acceptance(entry[m], limits, outside)
+                load_only = np.concatenate([r[i > 0] for r, i in zip(res1 if m == "1rc" else resr, cur)])
+                rmse_load = 1000 * float(np.sqrt(np.mean(load_only ** 2)))
+                p95_load = 1000 * float(np.percentile(np.abs(load_only), 95))
+                entry[m]["load_only_against_the_same_limits"] = {
+                    "not_preregistered": True, "rmse_mV": rmse_load, "p95_abs_mV": p95_load,
+                    "would_pass": rmse_load <= limits["RMSE_mV_max"] and p95_load <= limits["P95_abs_mV_max"]}
+            temps = np.concatenate([w.temp for w in windows])
+            unwidened = [cal["parameter_set"]["temperature_range_C"][0] + 1.0,
+                         cal["parameter_set"]["temperature_range_C"][1] - 1.0]
+            entry["temperature_C"] = {"min": float(temps.min()), "max": float(temps.max()),
+                                      "calibration_range_unwidened": unwidened,
+                                      "in_domain_only_because_of_the_preregistered_1C_widening":
+                                          bool(temps.max() > unwidened[1] or temps.min() < unwidened[0])}
         else:
             entry["note"] = "calibration fit or descriptive-only set: no acceptance"
         out["roles"][role] = entry

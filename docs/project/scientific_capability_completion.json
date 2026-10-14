@@ -13,7 +13,7 @@
       "title": "Battery Thevenin 1RC",
       "owner": "src/engcore/domains/battery",
       "declared_stage": "FUNCTIONAL",
-      "summary": "Exact 1RC route with replay (FUNCTIONAL). NASA FY08Q4: NOT_IDENTIFIABLE at one current level. LG HG2 (one cell, measured OCV): IDENTIFIABLE; held-out pulses pass, the 1C constant-current test fails (MODEL_REJECTED by the frozen mapping). No cross-cell validation; measurement uncertainty not admitted.",
+      "summary": "Exact 1RC route with replay (FUNCTIONAL). Calibration PASS is SCOPED: one LG HG2 cell (SN62A4), 25 degC, pulse time scale, SOC >= 0.10, OCV measured not fitted, OCV-knot uncertainty not propagated. NASA FY08Q4 is NOT_IDENTIFIABLE. Held-out: pulses pass pooled limits (fail under load alone); the 1C constant-current test fails marginally (MODEL_REJECTED by the frozen mapping). No cross-cell validation; measurement uncertainty not admitted.",
       "next_actions": [
         "Cross-cell held-out evaluation on independent cells with measured OCV and pulse data (e.g. Kirkaldy 2024 RPTs, owner-approved download).",
         "Decide the model scope the constant-current failure allows (pulse-scale only) under a new preregistration.",
@@ -100,7 +100,7 @@
             "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_the_calibration_record_is_identifiable_and_rerun_stable",
             "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_the_fit_reads_only_the_calibration_role_and_the_ocv",
             "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_the_ocv_is_measured_and_never_extrapolated",
-            "benchmarks/battery_1rc_closure/results/CALIBRATION.json"
+            "benchmarks/battery_1rc_identifiability/README.md"
           ]
         },
         "independent_validation": {

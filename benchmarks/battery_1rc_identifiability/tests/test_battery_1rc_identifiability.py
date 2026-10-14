@@ -75,6 +75,11 @@ def test_reader_refuses_a_repeat_that_disagrees_beyond_instrument_accuracy(tmp_p
         lghg2.read(_csv(tmp_path, [_row(1.0, 4.1, -3.0), _row(1.0, 4.12, -3.0)]))
 
 
+def test_reader_refuses_rows_that_go_back_in_time_rather_than_reordering_them(tmp_path):
+    with pytest.raises(lghg2.LgHg2FileRefused, match="back in time"):
+        lghg2.read(_csv(tmp_path, [_row(1.0, 4.1, -3.0), _row(1.2, 4.0, -3.0), _row(1.1, 4.05, -3.0)]))
+
+
 def test_reader_refuses_a_file_without_the_digatron_header(tmp_path):
     p = tmp_path / "y.csv"
     p.write_bytes(b"not,a,cycler,export\n1,2,3\n")
@@ -141,7 +146,9 @@ def test_acceptance_is_applicability_gated():
     lim = {"RMSE_mV_max": 15.0, "P95_abs_mV_max": 30.0}
     assert acceptance({"rmse_mV": 10.0, "p95_abs_mV": 20.0}, lim, 0) == "PASS"
     assert acceptance({"rmse_mV": 10.0, "p95_abs_mV": 20.0}, lim, 2).startswith("NOT_ASSESSABLE")
-    assert acceptance({"rmse_mV": 20.0, "p95_abs_mV": 20.0}, lim, 2) == "FAIL"
+    assert acceptance({"rmse_mV": 20.0, "p95_abs_mV": 20.0}, lim, 0) == "FAIL"
+    # contradiction requires admissible evidence: an out-of-domain set rejects nothing either
+    assert acceptance({"rmse_mV": 20.0, "p95_abs_mV": 20.0}, lim, 2).startswith("NOT_ASSESSABLE")
 
 
 @pytest.mark.parametrize("ident, acc, expected", [
@@ -155,9 +162,19 @@ def test_the_outcome_mapping_is_the_preregistered_one(ident, acc, expected):
     assert ioutcome.decide(ident, acc) == expected
 
 
+def test_a_comparison_with_one_unit_carries_no_verdict():
+    from benchmarks.battery_1rc_identifiability.evaluate import paired_bootstrap
+    one = paired_bootstrap([np.full(5, 0.03)], [np.full(5, 0.01)], b=50)
+    assert one["verdict"].startswith("NOT_ASSESSABLE")
+    assert _pinned(RESULTS / "VALIDATION")["roles"]["heldout_cc"]["comparison"]["verdict"].startswith("NOT_ASSESSABLE")
+
+
 def test_the_recorded_outcome_is_model_rejected_and_says_why():
     out = _pinned(RESULTS / "OUTCOME")
     assert out["outcome"] == "MODEL_REJECTED"
+    assert out["outcome_without_the_preregistered_temperature_widening"] == "IDENTIFIABILITY_SUPPORTED"
+    assert "BUNDLE" in out["reading"]["rejected"] and "marginal" in out["reading"]["rejected"]
+    assert "under load alone" in out["reading"]["supported"]
     assert out["held_out_acceptance_1rc"] == {"heldout_pulses": "PASS", "heldout_cc": "FAIL"}
     assert "ONE unit" in out["reading"]["comparison_note"]
 

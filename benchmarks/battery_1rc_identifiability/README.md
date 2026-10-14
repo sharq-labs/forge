@@ -8,9 +8,9 @@ Local only: nothing is pushed or merged, no certificate is touched, and no recer
 
 | Item | Result |
 |---|---|
-| Experimental outcome (frozen mapping) | **MODEL_REJECTED**: identifiable, and the held-out pulses pass, but the held-out constant-current test fails |
+| Experimental outcome (frozen mapping) | **MODEL_REJECTED**: identifiable; the held-out pulses pass the pooled limits; the held-out constant-current test fails marginally. Without the preregistered ±1 °C temperature widening, that test would be out of domain and the outcome would be **IDENTIFIABILITY_SUPPORTED** |
 | Identifiability on qualified data | **IDENTIFIABLE**: R0 20.7 mΩ, R1 15.6 mΩ, C1 1586 F, τ 24.8 s |
-| Ledger | `calibration` PASS. `independent_validation` and `measurement_uq` remain MISSING. The computed stage is **FUNCTIONAL** (unchanged) |
+| Ledger | `calibration` PASS, **scoped**: one LG HG2 cell (SN62A4), 25 °C, pulse time scale, SOC ≥ 0.10, OCV measured rather than fitted, OCV-knot uncertainty not propagated. `independent_validation` and `measurement_uq` remain MISSING. The computed stage is **FUNCTIONAL** (unchanged) |
 | Battery 1RC | **NO-GO** for EVIDENCE_BACKED, claims integration or DomainPack integration. **GO** for one bounded next step: a cross-cell pulse-scale evaluation |
 
 ## 1. Independent verdict on the NASA results (WP1)
@@ -33,7 +33,8 @@ pins their four record digests, and they are not re-evaluated here.
 4. The 1RC advantage there is a rest-tail effect on few samples (39 cross-cell). The cross-cell body comparison is "1RC better by 0.4 mV [0.28, 0.51]", not a tie. The 1RC tail error is still 86–393 mV.
 5. Within-cell NOT_ASSESSABLE comes from a conservative gate added after the held-out data was opened. The PASS it replaced had a 0.26 mV margin.
 6. The comparison covers 2 cells (the calibration cells) and 1 cell. The hold convention moves R1 by 25 %. Measurement uncertainty is UNKNOWN.
-7. The closure's binding digests change on every rerun, because a timing field fed them. The raw-bytes rebuild there is opt-in and skips by default. This round avoids both: timings are kept in unpinned `TIMINGS_*.json` files, and a rerun reproduces `CALIBRATION.json` and `VALIDATION.json` byte for byte.
+7. The closure's binding digests change on every rerun, because a timing field fed them. The raw-bytes rebuild there is opt-in and skips by default. This round avoids both: timings are kept in unpinned `TIMINGS_*.json` files, and a manual rerun in this session reproduced `CALIBRATION.json` and `VALIDATION.json` byte for byte (recorded in PROGRESS; no test checks it).
+8. Found while reviewing this round: the closure's acceptance let an out-of-domain set FAIL. Its cross-cell FAIL includes 6 cycles the route judged out of domain, so under "contradiction requires admissible evidence" that FAIL is not admissible as a rejection. In-domain cycles only (descriptive): 1RC 77.5 mV, still above 50. This round's acceptance makes any out-of-domain set NOT_ASSESSABLE in both directions.
 
 ## 2. Candidate datasets (WP2)
 
@@ -82,9 +83,17 @@ pins their four record digests, and they are not re-evaluated here.
 | **Held-out 1C CC test (1)** | 1RC | **28.7** | **50.7** | −25.1 | 54 | 28.9 / 7.4 | **FAIL** (≤ 25 / 50) |
 | | Rint | 64.7 | 89.1 | −62.6 | 92 | 65.2 / 7.4 | FAIL |
 
+**Reading the PASS and the FAIL** (review corrections; the thresholds and the mapping are unchanged):
+- **The pulse PASS is pooled.** 83 % of the scored samples are rest samples, and they sit next to OCV knots logged minutes earlier in the same record. Under load alone, the 1RC RMSE is 19.7 mV, above 15 (reported in the record as not preregistered). The test covers current interpolation only.
+- **The constant-current FAIL is marginal.** It is over by 3.65 mV (RMSE) and 0.67 mV (P95), both below the ±5 mV voltage accuracy, which is not admitted.
+- **Its admissibility rests on the preregistered ±1 °C widening.** The case temperature was 23.77–25.24 °C against an unwidened calibration range of 23.56–24.61 °C.
+- **Its initial state rests on a 10 s visible rest**, weaker than the 590 s the pulse windows require.
+- **What is rejected is the bundle:** the parameters, the measured OCV, the Q_HPPC charge basis, z0 = 1 and v_p0 = 0. It is not "one RC" alone.
+- **The route does not enforce SOC ≥ 0.10.** Only the role builder does, so the route's `in_domain` does not certify SOC.
+
 **Comparison (paired window bootstrap, one cell):**
 - Held-out pulses: 1RC better by 17.1 mV [14.6, 20.0], both under load and at rest.
-- The constant-current set has **one** unit, so its "difference" is a point value, not an interval.
+- The constant-current set has **one** unit, so its verdict is NOT_ASSESSABLE: the difference is a point value, not an interval.
 
 **Parameter uncertainty:** the joint bootstrap band is ±1–2 mV and covers 23 % of held-out pulse samples. Model form dominates, and the residuals are structured (lag-1 autocorrelation 0.94).
 

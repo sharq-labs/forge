@@ -1,6 +1,7 @@
 """Read the LG HG2 (McMaster, doi:10.17632/cp3473x7xv.3, CC BY 4.0) Digatron CSV exports exactly as published.
 
-Bytes in, typed columns out. Declared byte-level rules: one NUL byte and CRLF line endings are tolerated. Rows that
+Bytes in, typed columns out. Declared byte-level rules: NUL bytes (the exports carry one) and CRLF line endings are
+tolerated; rows must arrive in non-decreasing Prog Time, and a row that goes back in time refuses the file. Rows that
 share a Prog Time are one logged sample written twice (the logger re-reads the last sample of a step): the first is
 kept when the repeats agree within the published instrument accuracy (0.1 % of full scale: 5 mV, 75 mA; step, status
 and temperature exactly; the Ah counter, which no analysis reads, may advance by one sample and is only recorded), and the file is refused otherwise. The count and the largest disagreement are recorded. Current is preserved as recorded (Digatron: negative = discharge). Nothing is fitted or labelled here.
@@ -84,11 +85,10 @@ def read(path: pathlib.Path) -> Record:
             repeats += 1
             worst_v, worst_i = max(worst_v, dv), max(worst_i, di)
             continue
+        if rows and t < rows[-1][2]:
+            raise LgHg2FileRefused(f"{path.name}: Prog Time {t} goes back in time; rows are refused, never reordered")
         times[t] = values
         rows.append(values)
-    rows.sort(key=lambda r: r[2])
-    if any(b[2] <= a[2] for a, b in zip(rows, rows[1:])):
-        raise LgHg2FileRefused(f"{path.name}: time is not strictly increasing after removing exact duplicates")
     arr = list(zip(*rows))
     out = Record(path.name, hashlib.sha256(raw).hexdigest(), len(raw), header, np.array(arr[0]), tuple(arr[1]),
                  np.array(arr[2]), np.array(arr[3]), np.array(arr[4]), np.array(arr[5]), np.array(arr[6]), dup, repeats,

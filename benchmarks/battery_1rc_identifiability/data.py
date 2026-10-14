@@ -147,6 +147,8 @@ def build(raw_dir: pathlib.Path) -> dict[str, dict[str, Any]]:
                             "current_A": ci[a:a + stop].tolist(), "voltage_V": cap.voltage_v[a:a + stop].tolist(),
                             "temperature_C": cap.temperature_c[a:a + stop].tolist(), "z0": 1.0})
     c20 = read(raw_dir / "549_C20DisCh.csv")
+    if c20.sha256 != files["549_C20DisCh.csv"]:
+        raise ValueError("549_C20DisCh.csv is not the preregistered file")
     if runs_of(c20)[0][3] != "PAU":
         excluded.append({"test": "549_C20DisCh", "sha256": c20.sha256,
                          "reason": "the file starts inside the discharge step (no preceding rest), so the "
