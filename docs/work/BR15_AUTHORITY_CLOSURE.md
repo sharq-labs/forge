@@ -5,7 +5,7 @@
 | Date | 2026-10-14 |
 | Base | `origin/main` = `e193e573` (PR #142 merge; contains PR #140 `623149f3`) |
 | Branch | `fix/br15-authority-closure`, clean worktree `D:/forge-br15`; Linux clone `~/forge-br15` (WSL) |
-| Commits | `dc26175d` red reproducer · `6d62e5cf` closure fix · `a49e8d12` harness fix · `01073787` review LOWs |
+| Commits | `dc26175d` red reproducer · `6d62e5cf` closure fix · `a49e8d12` harness fix · `01073787` review LOWs · `a22869d4` recertification-scope test · `20af0601` docs |
 | Not done | push, PR, merge, GitHub settings, hardened recertification (owner-run) |
 | **Outcome** | **PARTIALLY_CLOSED — BLOCKED_OWNER_RECERTIFICATION and BLOCKED_OWNER_GOVERNANCE** |
 
