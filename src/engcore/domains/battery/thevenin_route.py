@@ -60,6 +60,7 @@ from ...scientific.realizations.definition import (
 from ...scientific.results.provenance import ExecutionBinding, ProvenanceRecord
 from ...scientific.results.result import ScientificResult
 from ...scientific.results.uncertainty import Uncertainty
+from ...scientific.serialization import require_schema, schema_string
 from ...scientific.results.validation import (
     ValidationCheck,
     ValidationLevel,
@@ -95,7 +96,10 @@ SOLVER_ID = "engcore.battery.thevenin_1rc_march"
 SOLVER_VERSION = "0.1.0"
 BACKEND = "python.float"
 REPLAY_SCHEMA = "forge.battery.thevenin_1rc_replay/1"
-PARAMETER_SET_SCHEMA = "forge.battery.thevenin_1rc_parameter_set/1"
+PARAMETER_SET_SCHEMA = schema_string("battery_thevenin_1rc_parameter_set")
+INITIAL_STATE_SCHEMA = schema_string("battery_thevenin_1rc_initial_state")
+SEGMENT_SCHEMA = schema_string("battery_thevenin_1rc_profile_segment")
+PROFILE_SCHEMA = schema_string("battery_thevenin_1rc_profile")
 POSITIVE_DISCHARGE = "positive_discharge"
 
 #: Relative tolerance of the residual checks. They compare float arithmetic against an independent closed form,
@@ -328,8 +332,7 @@ class Thevenin1RCParameterSet:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "Thevenin1RCParameterSet":
-        if payload.get("schema") != PARAMETER_SET_SCHEMA:
-            raise InvalidScientificProblem(f"not a {PARAMETER_SET_SCHEMA} record: {payload.get('schema')!r}")
+        require_schema(payload, PARAMETER_SET_SCHEMA)
         return cls(
             parameter_set_id=payload["parameter_set_id"],
             cell=CellSpecification.from_dict(payload["cell"]),
@@ -368,11 +371,12 @@ class Thevenin1RCInitialState:
         return TheveninState(self.state_of_charge, self.polarization_voltage)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"state_of_charge": self.state_of_charge.to_dict(),
+        return {"schema": INITIAL_STATE_SCHEMA, "state_of_charge": self.state_of_charge.to_dict(),
                 "polarization_voltage": self.polarization_voltage.to_dict(), "basis": self.basis}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "Thevenin1RCInitialState":
+        require_schema(payload, INITIAL_STATE_SCHEMA)
         return cls(Quantity.from_dict(payload["state_of_charge"]), Quantity.from_dict(payload["polarization_voltage"]),
                    payload["basis"])
 
@@ -401,11 +405,12 @@ class ProfileSegment:
                            _quantity(self.cell_temperature, ctx.TEMPERATURE_UNIT, "segment cell_temperature"))
 
     def to_dict(self) -> dict[str, Any]:
-        return {"duration": self.duration.to_dict(), "current": self.current.to_dict(),
+        return {"schema": SEGMENT_SCHEMA, "duration": self.duration.to_dict(), "current": self.current.to_dict(),
                 "cell_temperature": self.cell_temperature.to_dict()}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ProfileSegment":
+        require_schema(payload, SEGMENT_SCHEMA)
         return cls(Quantity.from_dict(payload["duration"]), Quantity.from_dict(payload["current"]),
                    Quantity.from_dict(payload["cell_temperature"]))
 
@@ -433,11 +438,12 @@ class DischargeRestProfile:
         object.__setattr__(self, "segments", segments)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"profile_id": self.profile_id, "sign_convention": self.sign_convention,
+        return {"schema": PROFILE_SCHEMA, "profile_id": self.profile_id, "sign_convention": self.sign_convention,
                 "segments": [s.to_dict() for s in self.segments]}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "DischargeRestProfile":
+        require_schema(payload, PROFILE_SCHEMA)
         return cls(payload["profile_id"], tuple(ProfileSegment.from_dict(s) for s in payload["segments"]),
                    payload["sign_convention"])
 
