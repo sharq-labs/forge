@@ -159,6 +159,7 @@ class RunRecord:
     security_boundary: str = ""
     isolation: str = "in_process"
     host_start_seconds: float = 0.0
+    prereg_sha256: str = ""          # the benchmark identity this run was produced under (analysis refuses others)
 
     def invalid(self, reason: str) -> None:
         self.status = "INVALID_BENCHMARK"
@@ -178,6 +179,8 @@ def run_one(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_seed
     (a registry name, or ``module:function``); ``in_process`` runs ``arm`` here, where a hostile proposer can read the
     operator's secrets (tests/genesis_lite/test_genesis_lite_isolation.py)."""
     rec = RunRecord(arm_name, seed, campaign_id, presentation, memory_instrumented=measure_memory, isolation=isolation)
+    from .preregistration import PREREG_PATH  # noqa: PLC0415 - preregistration imports this module
+    rec.prereg_sha256 = PREREG_PATH.with_suffix(".sha256").read_bytes().split()[0].decode()
     if isolation not in ISOLATIONS:
         rec.invalid(f"unknown isolation {isolation!r}")
         return rec

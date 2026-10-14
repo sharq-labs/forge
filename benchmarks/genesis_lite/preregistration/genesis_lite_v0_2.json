@@ -7,7 +7,9 @@
    "no lift where no strong baseline exists: the candidate is capped at its comparator in out-of-family discoverable worlds and in REPRESENTATION_LIMITED cells",
    "credits must be values of DEFAULT_CREDIT that the independent evaluator agreed with",
    "one stimulus per world set shared by every arm; only the pseudonym is per run (harness.stimulus_key)",
-   "the bootstrap lower bound uses the floor order statistic"
+   "the bootstrap lower bound uses the floor order statistic",
+   "a world set that an arm-independent screen (literal leakage audit, trap validity) invalidates for every compared arm with identical reasons is excluded for all alike; more than 5% of the grid screened is a benchmark defect (first v0.2 pilot: the literal audit refused one world set for all 13 arms because a hidden exponent 0.642 equalled a public region bound 0.642)",
+   "every run record carries the preregistration digest it was produced under; credits must be the DEFAULT_CREDIT value of the recorded outcome"
   ],
   "earlier": {
    "identity": "genesis_lite.blindfold_l5.v0",
@@ -289,10 +291,10 @@
   "leakage_audit": "LITERAL only (NO_LITERAL_LEAK_FOUND / LITERAL_LEAK_FOUND); structural tells are measured separately and are never cleared by this audit"
  },
  "harness": {
-  "analysis.py": "667aed642fa2522e5da61b37029602776132e2d82588d1cdedaa3e2fa6d93d4f",
+  "analysis.py": "76eea7c01fa971e2ce0a8f462ff79e7ab3eb1611ba6af8878994c84d8e01a0a9",
   "answer_key.py": "46977bcb959ac737cdadb6bb7472f89ad434d4c4c513c2240bb58a77644e5db6",
   "arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
-  "harness.py": "a414f10e8fe24f940fb03c427629d89c299c1eefc9a9db7881be782b57fc9ee1",
+  "harness.py": "2a97f4aaf55fc845e2f190fcb6dac5983ade33aa93799ae13210c27bd9d944b4",
   "pilot.py": "f081e4c1cea462cd02625b4b2c9843f4ca1621f0a3b42b9d6a7b4bb707d92f64",
   "presentation.py": "bc83318e792ddc705976d34378512bae2f34b72af020e5c8e08beb357197a137",
   "primitives.py": "caaea4fc83c9a4ec0c89e104b401194ab3d48e2f5f0b55d8d328f954cae96f78",
@@ -330,7 +332,7 @@
   "escrow_refusal_codes": "residual in certified engcore.blindfold: the client classifies refusals by text ('rolled back'), and the escrow echoes caller input in refusal texts; Genesis-lite blocks the channel at the client, the structural fix (refusal codes) needs a certified change",
   "held_out_authoring": "v0.2 instances come from FORGE's own generator"
  },
- "pilot_root_commitment_sha256": "16ef6267a5695010dca8359c526c3886bdd9cbf6f79ba7a2744f244c5faa1875",
+ "pilot_root_commitment_sha256": "ad14af2f50582503ed2e7d01f2499998be6d4bd50175b12e62d65e5b2df00453",
  "primitive_library_digest": "281e1df0f46d0a0d25e63fef58e11f2681882492a37f1dd7551339e08edb8173",
  "representation_gap_rule": "v0.1 search arms cover only the monomial family; the generator also draws exponential, two-term and regime laws. The PRIMARY (joint) endpoint includes every world. Discovery credit is additionally reported split into in-family and out-of-family worlds, and the out-of-family share is labelled NO_STRONG_BASELINE (Genesis \u00a710.5 rule 4). In those worlds the candidate is capped at its comparator: no lift comes from them. v0.2 makes no discovery-only lift claim.",
  "representation_limited_rule": "a (kind, presentation) cell is REPRESENTATION_LIMITED when monomial_enumeration's full-credit rate has a cluster-bootstrap 95% lower bound >= 0.5 at the formal tier: that cell measures the representation, and no lift there is credited as reasoning (analysis.representation_limited; the candidate is capped at its comparator there). Pilot values are indicative only.",
@@ -420,7 +422,7 @@
     ]
    },
    "isolation": "proposer_process required and checked by analysis.coverage_problems; in addition the OD-20 deployment (operator, escrow and secrets under another OS account or container; the proposer cannot see operator processes or their command lines, has a read-only filesystem without the operator's files, no network, no ptrace, and every process it starts ends with the campaign) must be in place and verified by the isolation demo before any formal run: a same-account run is INVALID for the formal tier",
-   "lift_decision_rule": "analysis.lift_decision (digest above), all of: the preregistered grid; COMPLETE coverage (a VALID, isolated, content-paired run of the candidate and of EVERY registered non-adversarial arm on every world set of the grid, credits from DEFAULT_CREDIT agreed by the independent evaluator; an invalid world set blocks the claim, it is never dropped); no lift from out-of-family discoverable worlds or REPRESENTATION_LIMITED cells (capped at the comparator); pooled paired primary difference with cluster-bootstrap 95% lower bound > 0 and significant after Holm (alpha 0.05) over the FIXED family pooled, anonymous, renamed, paraphrased, trap; every presentation's paired primary lower bound > -0.6000000000000001; every kind's (discovery included) paired difference to the BEST arm on that kind has a lower bound > -0.1",
+   "lift_decision_rule": "analysis.lift_decision (digest above), all of: the preregistered grid; COMPLETE coverage (a VALID, isolated, content-paired run of the candidate and of EVERY registered non-adversarial arm on every world set of the grid, credits from DEFAULT_CREDIT agreed by the independent evaluator; an invalid world set blocks the claim, it is never dropped); no lift from out-of-family discoverable worlds or REPRESENTATION_LIMITED cells (capped at the comparator); screened world sets excluded for all arms alike up to the cap; records bound to this digest; pooled paired primary difference with cluster-bootstrap 95% lower bound > 0 and significant after Holm (alpha 0.05) over the FIXED family pooled, anonymous, renamed, paraphrased, trap; every presentation's paired primary lower bound > -0.6000000000000001; every kind's (discovery included) paired difference to the BEST arm on that kind has a lower bound > -0.1",
    "rules": [
     "every arm reported for every cell",
     "no post-result tuning of criteria",
@@ -431,7 +433,7 @@
    ],
    "seeds": 20,
    "start_condition": "G0 exit (OD-3), owner-approved compute budget (OD-18), evaluator decision (OD-8), OD-20 deployment in place and verified, this identity approved (OD-19)",
-   "strongest_baseline_rule": "the registered non-adversarial arm (competence, floor or sanity role) with the highest formal-tier PRIMARY score; every such arm must be complete; frozen in a baseline-freeze addendum (digest) BEFORE any Mind run",
+   "strongest_baseline_rule": "the registered non-adversarial arm (competence, floor or sanity role) with the highest formal-tier PRIMARY score; every such arm must be complete; frozen in a baseline-freeze addendum (digest) BEFORE any Mind run, which also names the ONE candidate arm and its code digest; one attempt per world set and name, every attempt in the append-only run log sent to the evaluator",
    "world_reuse": "one master root per world set, committed by sha256 before the campaign and revealed after, SHARED by every arm (paired lift) and NEVER reused across seeds, campaigns or presentations, so no proposer, stateful or not, sees a world twice; ids and names pseudonymised per run",
    "world_sets_per_presentation": 600,
    "worlds_per_kind_and_presentation": 600

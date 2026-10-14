@@ -138,3 +138,60 @@ def test_d7_two_arms_on_one_world_set_see_the_same_stimulus(monkeypatch, present
     strip = lambda cs: [json.dumps({k: v for k, v in c.items() if k != "universe_id"}, sort_keys=True) for c in cs]  # noqa: E731
     assert strip(cards["arm_a"]) == strip(cards["arm_b"])
     assert {c["universe_id"] for c in cards["arm_a"]}.isdisjoint(c["universe_id"] for c in cards["arm_b"])
+
+
+# ---- v0.2 pilot finding (2026-10-14): an arm-independent screen invalidates a world set for every arm -----------------
+from tests.genesis_lite.lift_records import SCREEN_REASON  # noqa: E402
+
+
+def _screened(rows, ws, reason=SCREEN_REASON, arms_hit=None):
+    for r in rows:
+        if (r["presentation"], r["campaign_id"], r["seed"]) == ws and (arms_hit is None or r["arm"] in arms_hit):
+            r["status"], r["reasons"] = "INVALID_BENCHMARK", [reason]
+    return rows
+
+
+def test_pilot_a_world_set_every_arm_lost_to_the_literal_screen_is_excluded_for_all_alike():
+    rows = _screened(_field() + _records("mind", BETTER), ("paraphrased", "c3", 1))
+    d = _decide(rows)
+    assert d["screened_world_sets"] == 1 and d["coverage_problems"] == [] and d["lift_claimed"] is True
+
+
+def test_pilot_a_screen_reason_on_the_candidate_alone_is_not_an_exclusion():
+    rows = _screened(_field() + _records("mind", BETTER), ("paraphrased", "c3", 1), arms_hit={"mind"})
+    assert _decide(rows)["lift_claimed"] is False
+
+
+def test_pilot_different_screen_reasons_across_arms_are_not_an_exclusion():
+    rows = _screened(_field() + _records("mind", BETTER), ("paraphrased", "c3", 1))
+    next(r for r in rows if r["arm"] == "careful" and r["campaign_id"] == "c3" and r["seed"] == 1
+         and r["presentation"] == "paraphrased")["reasons"] = ["leakage audit: something else"]
+    assert _decide(rows)["lift_claimed"] is False
+
+
+def test_pilot_an_arm_specific_failure_never_counts_as_a_screen():
+    rows = _screened(_field() + _records("mind", BETTER), ("paraphrased", "c3", 1), reason="run aborted: TimeoutError")
+    assert _decide(rows)["lift_claimed"] is False
+
+
+def test_pilot_too_many_screened_world_sets_is_a_benchmark_defect_not_a_result():
+    rows = _field() + _records("mind", BETTER)
+    for i in range(15):                                        # 15 of 240 world sets = 6.25% > the 5% cap
+        rows = _screened(rows, ("trap", f"c{i}", 0))
+    d = _decide(rows)
+    assert d["lift_claimed"] is False and any("screen" in p for p in d["coverage_problems"])
+
+
+def test_review_records_from_another_benchmark_identity_are_not_analysed_as_this_one():
+    mind = _records("mind", BETTER)
+    for r in mind:
+        r["prereg_sha256"] = "0" * 64
+    assert _decide(_field() + mind)["lift_claimed"] is False
+
+
+def test_review_a_credit_must_be_the_table_value_of_its_own_outcome():
+    mind = _records("mind", BETTER)
+    u = next(u for u in mind[0]["universes"] if u["credit"] == -1.0)
+    u["credit"] = 1.0                                        # outcome still law_fail
+    with pytest.raises(analysis.AnalysisRefused, match="outcome"):
+        _decide(_field() + mind)

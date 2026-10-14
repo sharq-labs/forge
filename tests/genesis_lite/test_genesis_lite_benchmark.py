@@ -335,12 +335,13 @@ def test_m1_the_pilot_refuses_a_stale_preregistration(monkeypatch, tmp_path):
 # ---- review H5: the world is the unit --------------------------------------------------------------------------------
 def test_h5_seeds_over_one_world_are_one_unit_not_many():
     from benchmarks.genesis_lite import pilot
+    from tests.genesis_lite.lift_records import outcome_for     # each kind's full-credit outcome (credit binding)
     recs = []
     for seed in range(5):
         r = harness.RunRecord("monomial_enumeration", seed, f"campaign-{seed}", "anonymous")   # campaign ids differ
         r.isolation = "proposer_process"
         r.universes = [{"kind": k, "credit": 1.0, "truth_in_searched_family": True, "region_tell": "box",
-                        "universe_id": f"u-{k}", "outcome": "law_pass"} for k in harness.KINDS]
+                        "universe_id": f"u-{k}", "outcome": outcome_for(k, 1.0)} for k in harness.KINDS]
         recs.append(r)
     summary = pilot.summarize(recs)
     cell = summary["cells"]["monomial_enumeration|discoverable|anonymous"]

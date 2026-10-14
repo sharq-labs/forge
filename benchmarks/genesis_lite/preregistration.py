@@ -100,7 +100,14 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
                         "out-of-family discoverable worlds and in REPRESENTATION_LIMITED cells",
                         "credits must be values of DEFAULT_CREDIT that the independent evaluator agreed with",
                         "one stimulus per world set shared by every arm; only the pseudonym is per run (harness.stimulus_key)",
-                        "the bootstrap lower bound uses the floor order statistic"],
+                        "the bootstrap lower bound uses the floor order statistic",
+                        "a world set that an arm-independent screen (literal leakage audit, trap validity) invalidates "
+                        "for every compared arm with identical reasons is excluded for all alike; more than "
+                        + f"{analysis.SCREEN_CAP:.0%}" + " of the grid screened is a benchmark defect (first v0.2 pilot: "
+                        "the literal audit refused one world set for all 13 arms because a hidden exponent 0.642 "
+                        "equalled a public region bound 0.642)",
+                        "every run record carries the preregistration digest it was produced under; credits must be "
+                        "the DEFAULT_CREDIT value of the recorded outcome"],
             "earlier": {"identity": "genesis_lite.blindfold_l5.v0", "preregistration_sha256": V0_PREREG_SHA256},
         },
         "v0_1_amendment_of_v0": {
@@ -207,14 +214,17 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
                              "strongest_baseline_rule": "the registered non-adversarial arm (competence, floor or sanity "
                                                         "role) with the highest formal-tier PRIMARY score; every such arm "
                                                         "must be complete; frozen in a baseline-freeze addendum (digest) "
-                                                        "BEFORE any Mind run",
+                                                        "BEFORE any Mind run, which also names the ONE candidate arm and "
+                                                        "its code digest; one attempt per world set and name, every "
+                                                        "attempt in the append-only run log sent to the evaluator",
                              "lift_decision_rule": "analysis.lift_decision (digest above), all of: the preregistered grid; "
                                                    "COMPLETE coverage (a VALID, isolated, content-paired run of the candidate "
                                                    "and of EVERY registered non-adversarial arm on every world set of the "
                                                    "grid, credits from DEFAULT_CREDIT agreed by the independent evaluator; "
                                                    "an invalid world set blocks the claim, it is never dropped); no lift "
                                                    "from out-of-family discoverable worlds or REPRESENTATION_LIMITED cells "
-                                                   "(capped at the comparator); pooled paired primary "
+                                                   "(capped at the comparator); screened world sets excluded for all arms "
+                                                   "alike up to the cap; records bound to this digest; pooled paired primary "
                                                    "difference with cluster-bootstrap 95% lower bound > 0 and significant "
                                                    "after Holm (alpha 0.05) over the FIXED family "
                                                    + ", ".join(analysis.PRIMARY_FAMILY) + "; every presentation's paired "

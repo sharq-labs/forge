@@ -29,6 +29,12 @@ inputs (D1-D7); v0.2 closes those channels. Every change makes a lift claim hard
   - per presentation, the paired primary difference has a lower bound > -PRESENTATION_MARGIN;
   - per kind -- discovery included (D3) -- against the BEST registered non-adversarial arm on that kind, the paired
     difference has a lower bound > -NONINFERIORITY_MARGIN.
+* SCREENED world sets (v0.2 pilot finding): the literal leakage audit and the trap-validity check depend only on the
+  shared stimulus and the answer key, never on an arm. A world set that one of these screens invalidates for EVERY
+  compared arm, with identical reasons, is excluded for all arms alike; any other invalid run blocks the claim. More
+  than SCREEN_CAP of the grid screened is a benchmark defect: no claim.
+* RECORDS are bound to this identity: a run written under another preregistration digest is never analysed as this
+  one, and every credit must be the DEFAULT_CREDIT value of the outcome recorded beside it.
 * Every per-cell rate stays a descriptive secondary metric; no claim rests on a single cell.
 """
 
@@ -56,6 +62,9 @@ REPRESENTATION_ARM = "monomial_enumeration"
 REPRESENTATION_LIMIT = 0.5
 FULL_CREDIT = 1.0
 ALLOWED_CREDIT = {k: frozenset({0.0, *map(float, DEFAULT_CREDIT[k].values())}) for k in KINDS}
+#: arm-independent screens (harness.py): the literal leakage audit and the trap-validity check
+SCREEN_PREFIXES = ("leakage audit: ", "trap ")
+SCREEN_CAP = 0.05
 
 WorldSet = tuple[str, str, int]          # (presentation, campaign_id, seed)
 
@@ -106,6 +115,12 @@ def world_credits(records: Iterable[Any]) -> dict[str, dict[WorldSet, dict[str, 
         if bad:
             raise AnalysisRefused(f"run {r['arm']}/{r['campaign_id']} carries a credit outside the frozen DEFAULT_CREDIT "
                                   f"table for {bad}")
+        mismatched = sorted(u["kind"] for u in r["universes"]
+                            if float(DEFAULT_CREDIT[u["kind"]].get(str(u.get("outcome")), 0.0)) != float(u["credit"])
+                            or "outcome" not in u)
+        if mismatched:
+            raise AnalysisRefused(f"run {r['arm']}/{r['campaign_id']}: credit is not the DEFAULT_CREDIT value of the "
+                                  f"recorded outcome for {mismatched}")
         ws = _ws(r)
         if ws in out.setdefault(r["arm"], {}):
             raise AnalysisRefused(f"arm {r['arm']} has two VALID records for world set {ws}: every arm runs it once")
@@ -181,13 +196,34 @@ def _capped(mine: Mapping[str, float], ref: Mapping[str, float], ws: WorldSet, l
             for k, c in mine.items()}
 
 
+def screened_world_sets(rows: Sequence[Mapping[str, Any]], arms: Iterable[str]) -> set[WorldSet]:
+    """World sets that an arm-independent screen invalidated for EVERY one of ``arms``, with identical reasons."""
+    by_ws: dict[WorldSet, dict[str, list[Mapping[str, Any]]]] = {}
+    for r in rows:
+        by_ws.setdefault(_ws(r), {}).setdefault(r["arm"], []).append(r)
+    out = set()
+    for ws, per_arm in by_ws.items():
+        recs = [per_arm.get(arm, []) for arm in arms]
+        if not all(len(x) == 1 for x in recs):
+            continue
+        reasons = {tuple(x[0].get("reasons") or ()) for x in recs}
+        statuses = {x[0]["status"] for x in recs}
+        if statuses == {"INVALID_BENCHMARK"} and len(reasons) == 1:
+            (shared,) = reasons
+            if shared and all(reason.startswith(SCREEN_PREFIXES) for reason in shared):
+                out.add(ws)
+    return out
+
+
 def coverage_problems(rows: Sequence[Mapping[str, Any]], arm: str, grid: frozenset[WorldSet],
-                      comparator: str | None = None) -> list[str]:
+                      comparator: str | None = None, identity: str | None = None) -> list[str]:
     """Why ``arm``'s evidence does not cover the preregistered grid (and, with a comparator, the same universes)."""
     mine = [r for r in rows if r["arm"] == arm]
     problems = []
     if not mine:
         return [f"{arm}: no records at all; a registered arm never leaves the comparison silently"]
+    if identity is not None and any(r.get("prereg_sha256") != identity for r in mine):
+        problems.append(f"{arm}: run(s) were not produced under this preregistration ({identity[:12]}...)")
     invalid = [r for r in mine if r["status"] != "VALID"]
     if invalid:
         problems.append(f"{arm}: {len(invalid)} run(s) are not VALID; an invalid world set is never dropped silently")
@@ -212,11 +248,11 @@ def coverage_problems(rows: Sequence[Mapping[str, Any]], arm: str, grid: frozens
     return problems
 
 
-def _code_problems() -> list[str]:
+def _code_problems() -> tuple[list[str], str]:
     from .pilot import prereg_matches_code  # noqa: PLC0415 - pilot imports this module
 
     ok, digest = prereg_matches_code()
-    return [] if ok else [f"the code does not rebuild the committed preregistration ({digest[:12]}...)"]
+    return ([] if ok else [f"the code does not rebuild the committed preregistration ({digest[:12]}...)"]), digest
 
 
 def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[WorldSet] | None = None) -> dict[str, Any]:
@@ -231,16 +267,23 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
         raise AnalysisRefused(f"records of unregistered arms: {strangers}; roles come from the frozen registry only")
     required = sorted(a for a, role in roles.items() if role in NON_ADVERSARIAL_ROLES)
     problems = [] if grid == FORMAL_GRID else ["the grid is not the preregistered formal grid: exploratory, no claim"]
-    problems += _code_problems()
+    code_problems, identity = _code_problems()
+    problems += code_problems
+    screened = screened_world_sets(rows, [*required, candidate]) & grid
+    if len(screened) > SCREEN_CAP * len(grid):
+        problems.append(f"{len(screened)} of {len(grid)} world sets were screened (cap {SCREEN_CAP:.0%}): a benchmark "
+                        f"defect, not a result")
+    rows = [r for r in rows if _ws(r) not in screened]
+    grid = grid - screened
     credits = world_credits(rows)
     off_family = out_of_family(rows)
     on_grid = {a: {w: k for w, k in sets.items() if w in grid} for a, sets in credits.items()}
     baseline, _scores = strongest_baseline({a: on_grid[a] for a in required if on_grid.get(a)}, roles)
     per_kind = best_per_kind({a: on_grid[a] for a in required if on_grid.get(a)}, roles)
     limited = representation_limited(on_grid.get(REPRESENTATION_ARM, {}))
-    problems += coverage_problems(rows, candidate, grid)
+    problems += coverage_problems(rows, candidate, grid, identity=identity)
     for arm in required:
-        problems += coverage_problems(rows, arm, grid, comparator=candidate)
+        problems += coverage_problems(rows, arm, grid, comparator=candidate, identity=identity)
     mine = on_grid.get(candidate, {})
     theirs = on_grid.get(baseline, {}) if baseline else {}
     shared = sorted(set(mine) & set(theirs))
@@ -268,6 +311,7 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
     claim = (not problems and baseline is not None and holm_ok["pooled"] and tests["pooled"]["lower95"] > 0
              and all(presentations_ok.values()) and all(v["ok"] for v in noninf.values()))
     return {"candidate": candidate, "strongest_baseline": baseline, "shared_world_sets": len(shared),
+            "screened_world_sets": len(screened),
             "coverage_problems": problems, "representation_limited_cells": sorted(limited),
             "out_of_family_world_sets": sum(off_family.get(w, False) for w in shared),
             "primary": tests, "holm_significant": holm_ok, "presentation_noninferiority": presentations_ok,
