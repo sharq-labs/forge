@@ -3576,3 +3576,4 @@ the pinned raw files.
     escrow, certificate/freeze-v4 manifests).
   - The other 2 (test_the_tree_is_core_freeze_v1, test_the_v3_contract_is_superseded...) failed only on
     tree.clean (uncommitted files). They were rerun after the commit; see below.
+- After commit 14d49ab6: `pytest tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`: 2 passed. The remaining 16 failures are the base's own Windows baseline.
