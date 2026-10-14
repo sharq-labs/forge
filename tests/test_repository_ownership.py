@@ -185,8 +185,10 @@ def test_c5_an_environment_marker_inside_tracked_source_is_refused_and_does_not_
 
 
 def test_c6_a_tracked_file_reached_under_another_case_is_listed_once(checkout, monkeypatch) -> None:
-    # Runs on any filesystem: a second spelling is created as a real file, and "the same file" is decided by
-    # samefile, which is what a case-insensitive filesystem answers True for.
+    # A second spelling is created as a real file and "the same file" is decided by samefile, which is what a
+    # case-insensitive filesystem answers True for. That needs a case-SENSITIVE filesystem to create the twin.
+    if (checkout / "src" / "pkg" / "MODEL.py").exists():
+        pytest.skip("case-insensitive filesystem: a second spelling would overwrite the tracked file")
     _write(checkout, "src/pkg/Model.py", "OTHER = 1\n")
     files = owned_files(checkout).files
     assert "src/pkg/model.py" in files and "src/pkg/Model.py" in files     # two files: both listed
