@@ -1,0 +1,379 @@
+{
+ "amends": {
+  "changes": [
+   "joint campaign credit as the primary endpoint (analysis.py)",
+   "strongest baseline over every non-adversarial arm (floors included)",
+   "control non-inferiority (margin 0.10) and a fixed Holm family",
+   "added arm fit_all_gated (raises the bar; no arm removed or weakened)",
+   "proposer_process isolation required",
+   "one master root per (campaign, presentation), shared by every arm and seed"
+  ],
+  "identity": "genesis_lite.blindfold_l5.v0",
+  "kept": "v0 preregistration and pilot results unchanged (historical evidence)",
+  "preregistration_sha256": "f99fcfbdc97aabcbea52fa72c12ad196d420e298237c5374184f537c67774ab0",
+  "reasons": [
+   "P-1: per-cell lift let a floor arm that always proposes win the discoverable cell (0.70 vs 0.27) while scoring -1 on every control; root cause = per-cell metric + over-conservative gated baselines + 70% of discoverable worlds inside the simple monomial family (not leakage, not a scoring defect: 5,760/5,760 universes independently re-scored in agreement)",
+   "OD-20: in-process proposers stole hidden laws by heap scan and stack walk (tested); v0.1 requires the isolated proposer process"
+  ]
+ },
+ "arms": {
+  "always_insufficient": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "floor: blanket refusal (existing)",
+   "observations": "presented card + observe client only",
+   "role": "floor",
+   "stochastic": false
+  },
+  "always_law": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "floor: always proposes (existing)",
+   "observations": "presented card + observe client only",
+   "role": "floor",
+   "stochastic": false
+  },
+  "always_refuse": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "floor: never proposes (existing)",
+   "observations": "presented card + observe client only",
+   "role": "floor",
+   "stochastic": false
+  },
+  "careful": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "experiment selection: random design + replicate/holdout (existing)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": false
+  },
+  "extrapolating_fit": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery that extrapolates outside the query box",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "extrapolation_pair": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "indistinguishable answer: fixed rival-pair heuristic",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "fit_all_gated": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery: all-variable fit behind the control checks (v0.1)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "greedy_forward": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "variable-primitive selection: greedy forward",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "historical_answer": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "adversarial: textbook answer for familiar vocabulary",
+   "observations": "presented card + observe client only",
+   "role": "adversarial",
+   "stochastic": false
+  },
+  "monomial_enumeration": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery: enumeration of the frozen v0 monomial family",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "random_structures": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery: constrained random structures (v0 family)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "single_setting": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "non-discoverer control (existing)",
+   "observations": "presented card + observe client only",
+   "role": "sanity",
+   "stochastic": false
+  },
+  "space_filling": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "experiment selection: space-filling design",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  }
+ },
+ "arms_not_run": {
+  "bo_botorch": {
+   "family": "experiment selection: BO/BoTorch-only on the same observable",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "discriminating_design": {
+   "family": "competing-mechanism falsification: fixed discriminating-design heuristic",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "full_grammar_enumeration": {
+   "family": "law recovery: enumeration of the full law grammar (exp / two-term / regime forms)",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "llm_ablation": {
+   "family": "AI-proposer contribution: Mind with LLM workers replaced (\u00a78.5)",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "mechanism_enumeration": {
+   "family": "coupled mechanism recovery (G1/G2): structure enumeration in a port grammar",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "pysindy": {
+   "family": "dynamics / inverse identification: PySINDy",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "pysr": {
+   "family": "law recovery: PySR symbolic regression",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  }
+ },
+ "benchmark_id": "genesis_lite.blindfold_l5.v0_1",
+ "campaign_mix": {
+  "confounded": 1,
+  "discoverable": 1,
+  "indistinguishable": 1,
+  "insufficient_evidence": 1,
+  "no_solution": 1,
+  "spurious_correlate": 1
+ },
+ "classes": {
+  "kinds": {
+   "confounded": "confounding control",
+   "discoverable": "G0/G5 law recovery (synthetic universe)",
+   "indistinguishable": "G3 (partial) observationally indistinguishable rival mechanism",
+   "insufficient_evidence": "G6 insufficient evidence",
+   "no_solution": "G6 no-solution",
+   "spurious_correlate": "spurious-correlation control"
+  },
+  "not_covered": {
+   "G1/G2 mechanism recovery": "needs the canonical port mechanism representation (Genesis Step 4)",
+   "G3 distinguishable rival falsification": "the Blindfold generator has no distinguishable-rival kind; adding one changes certified engcore.blindfold (owner decision)",
+   "G4 anonymous primitive selection over a mechanism library": "only variable selection is measured (greedy_forward); no mechanism-primitive library exists"
+  },
+  "presentations": {
+   "anonymous": "the escrow's invented names (synthetic universe, G5)",
+   "paraphrased": "renamed + reordered + reworded task text (G5 paraphrased)",
+   "renamed": "keyed renaming of every name (G5 transformed)",
+   "trap": "anti-historical trap vocabulary (Genesis \u00a710.2) on every kind; worlds where a law can earn credit are verified to defeat the textbook law"
+  },
+  "trap_templates": [
+   [
+    "metabolic_rate",
+    "body_mass",
+    0.75
+   ],
+   [
+    "orbital_period",
+    "semi_major_axis",
+    1.5
+   ],
+   [
+    "drag_force",
+    "flow_speed",
+    2.0
+   ],
+   [
+    "swing_period",
+    "pendulum_length",
+    0.5
+   ]
+  ]
+ },
+ "domain": "blindfold L5 synthetic scalar laws (one domain)",
+ "evaluator": {
+  "credit_digest": "cfb8d68c3a62b1714e567fc39fcc751a28fcf8f2d3c259982a45a786aff6e12e",
+  "escrow_config_digest": "437bbedab07aae0e05a09641cb4ef61a139dce980dec43fbbf8e615c3f13ab5c",
+  "files": {
+   "evaluator/__init__.py": "63362ec3e96626617404fb36b228b6bf3cffaccbdb066051323c8f3bfa785844",
+   "evaluator/expr.py": "78be1ff1df5b33beaa832bd9eef289871004be43bcbec148607a308c79636aa1",
+   "evaluator/score.py": "36cdeddc3e760f85308794bc4c2f3b228a8f72f3918de1a69da86cba1540d1f1"
+  },
+  "imports": "standard library only; never engcore (tested)",
+  "independence": "CODE independence only: a separate implementation by the same team. Outcome, credit and every per-law fraction within tolerance must equal the escrow's; the generator and truth function are shared (common-mode risk). Not third-party evaluation.",
+  "leakage_audit": "LITERAL only (NO_LITERAL_LEAK_FOUND / LITERAL_LEAK_FOUND); structural tells are measured separately and are never cleared by this audit"
+ },
+ "harness": {
+  "analysis.py": "5a964ef8af569dd6abb275a065346b260d48377b91816f31a895313cab9f58fa",
+  "answer_key.py": "46977bcb959ac737cdadb6bb7472f89ad434d4c4c513c2240bb58a77644e5db6",
+  "arms.py": "f0e5027d6aa4dd76f6050cb6e06511c1fb38cda6babe7850d8d3bc72233f5dfe",
+  "harness.py": "75c12ebcf089962085fd7578e921243c7ab59283a79bd0860d9bac2f19b8ca58",
+  "pilot.py": "951e961d9b4be5a093e675917ebb38ad9c8ee99f70414ad2d2d95e0134184e0a",
+  "presentation.py": "3f362d0e1a0583f89b8485a9aa00f901c5e876456d932249675520c859fbd32f",
+  "primitives.py": "caaea4fc83c9a4ec0c89e104b401194ab3d48e2f5f0b55d8d328f954cae96f78",
+  "proposer_host.py": "a4b9331780351232d3007596e6c9949eb9e6bdabcb88f7057c6c4e33b25c31a4"
+ },
+ "known_structural_tells": [
+  "a box-shaped assessment region rules out INDISTINGUISHABLE (Blindfold universe.py docstring)",
+  "an extended region pushed beyond near 0.5 / far 1.3 box spans can only be INDISTINGUISHABLE (_rival pushes the region out by 1.4x); measured per world as region_tell",
+  "the region's extension follows the first dimensionless group, hinting which inputs carry structure",
+  "public ranges identify a world across runs that share a master seed: the formal tier never reuses one"
+ ],
+ "metrics": {
+  "not_measured_in_v0": [
+   "proper prediction score / calibration (needs predictive distributions: the Mind)",
+   "information gain per provider call (needs a belief model)",
+   "invalidation precision/recall (needs the justification graph)"
+  ],
+  "primary": "JOINT campaign credit: per campaign (one world of every kind) the sum over kinds of the world's frozen DEFAULT_CREDIT, each world averaged over seeds; an arm's score is the mean over campaigns (benchmarks/genesis_lite/analysis.py, digest above)",
+  "secondary": [
+   "full-credit rate per (arm, kind, presentation) cell -- DESCRIPTIVE ONLY, never a claim",
+   "discovery credit and control (refusal) credit reported apart; correct-refusal rate on controls",
+   "mean credit (DEFAULT_CREDIT table)",
+   "credit over the best constant answer",
+   "inadmissible count",
+   "observe calls",
+   "wall seconds",
+   "presentation invariance (deterministic arms, paired worlds)"
+  ]
+ },
+ "owner_decisions_open": {
+  "OD-18 compute_budget": "formal tier from the v0.1 pilot ESTIMATE",
+  "OD-19 identity": "approve this v0.1 identity before any formal run",
+  "OD-20 escrow_deployment": "a separate OS account / container / host for the operator, escrow and secrets",
+  "OD-8 external_evaluator": "name an evaluator or a selection process with a deadline (Genesis \u00a726)",
+  "held_out_authoring": "v0.1 instances come from FORGE's own generator"
+ },
+ "pilot_root_commitment_sha256": "b80ae0be4142b504dfe2c3dee90008e32c32fd721fdd130e7787a25a95c94d0a",
+ "primitive_library_digest": "281e1df0f46d0a0d25e63fef58e11f2681882492a37f1dd7551339e08edb8173",
+ "representation_gap_rule": "v0 search arms cover only the monomial family; the generator also draws exponential, two-term and regime laws. For law-recovery cells (discoverable, spurious_correlate, confounded) there is NO STRONG APPLICABLE BASELINE for worlds whose truth is outside the family (Genesis \u00a710.5 rule 4). The rule is PER WORLD: out-of-family worlds are reported as NO_STRONG_BASELINE and excluded from every lift computation; a law-recovery cell enters the lift family only with >= 10 in-family worlds.",
+ "representation_limited_rule": "a (kind, presentation) cell is REPRESENTATION_LIMITED when monomial_enumeration's full-credit rate has a cluster-bootstrap 95% lower bound >= 0.5 at the formal tier: that cell measures the representation, and no lift there is credited as reasoning. Pilot values are indicative only.",
+ "reveal_protocol": [
+  "master seed derived from a pilot root committed here by sha256 before any run",
+  "proposals stored content-addressed and sealed by one escrow score each",
+  "answer key exported by the operator only after every universe is sealed",
+  "independent evaluator re-scores every sealed proposal; any disagreement invalidates the run",
+  "presented cards audited against the key; trap instances verified (textbook law must fail)",
+  "the pilot root is revealed with the pilot results (the pilot is not held out)"
+ ],
+ "schema": "forge.genesis_lite.preregistration/1",
+ "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN: the proposer runs in a separate process under the SAME OS account (heap scan, stack walk and environment attacks refused, tested; on Linux YAMA ptrace scope >= 1 refuses parent-memory reads); file reads by the same account are NOT prevented. No result counts as novel discovery.",
+ "statistics": {
+  "tier1_pilot": {
+   "campaigns_per_presentation": 10,
+   "isolation": "proposer_process",
+   "purpose": "cost and variance measurement ONLY; never a rate or lift claim",
+   "stochastic_seeds": [
+    0,
+    1,
+    2
+   ]
+  },
+  "tier2_formal": {
+   "campaigns_per_presentation": 30,
+   "isolation": "proposer_process required: every arm, the Mind included, runs each campaign in a fresh interpreter that never holds the escrow, the master seed or a hidden world; an in_process run is INVALID for the formal tier",
+   "lift_decision_rule": "analysis.lift_decision: the paired per-campaign difference to the strongest baseline has a cluster-bootstrap 95% lower bound > 0 for the pooled primary endpoint after Holm correction (alpha 0.05) over the FIXED family pooled, anonymous, renamed, paraphrased, trap; AND every control kind's paired mean difference has a lower bound > -0.1 (no trading control failures for discovery credit)",
+   "rules": [
+    "every arm reported for every cell",
+    "no post-result tuning of criteria",
+    "no compute-budget increase mid-campaign",
+    "a defective task is INVALID_BENCHMARK with a new identity and a rerun from preregistration",
+    "invalid runs are reported and never aggregated",
+    "arms may be ADDED by a new identity, never removed or weakened"
+   ],
+   "start_condition": "G0 exit (OD-3), owner-approved compute budget (OD-18), evaluator decision (OD-8), escrow deployment decision (OD-20), this identity approved (OD-19)",
+   "stochastic_seeds": 20,
+   "strongest_baseline_rule": "the non-adversarial arm (competence, floor or sanity role) with the highest formal-tier PRIMARY score; frozen in a baseline-freeze addendum (digest) BEFORE any Mind run",
+   "world_reuse": "one master root per (campaign, presentation), committed by sha256 before the campaign and revealed after, SHARED by every arm and every seed (paired lift); never reused across campaigns or presentations; ids and names pseudonymised per run",
+   "worlds_per_cell": 30
+  },
+  "unit_of_analysis": "the CAMPAIGN (one hidden world of every kind) for the primary endpoint; per world for descriptive cells. Seeds are averaged per world and never pooled as instances. Intervals: percentile bootstrap over campaigns (2000 resamples, Random(0))."
+ },
+ "status": "FREEZE_READY",
+ "substrate": {
+  "baselines.py": "35a4a964c236e0c4b7bee91abbd160a5659f32998d850a2b3af9411fa55daf42",
+  "escrow.py": "4d0ea70d40a9aafdb28ae19a233207bdad3068a2c7e75ba1003237e557047be3",
+  "expression.py": "dd8b77dd75d21b23a0e17dc227714e118dc5c42aadffa541ab9f14463b02c04c",
+  "roles.py": "b6ea638cdf2a062295c78c657bfaa366d7788c7e0306c97f88621198e823a2b4",
+  "universe.py": "360e0166b42c69fe2888be3a7544e6d0e94ef31b111e6582b5cb52022165b66d"
+ }
+}

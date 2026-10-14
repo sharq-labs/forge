@@ -3215,3 +3215,71 @@ Failed approaches, so they are not repeated:
 - Package-wide exclusions were replaced by importer edges.
 - The Windows `-n 4` runs of the certificate fixtures fail on `git add -A` (exit 128) on the base as well. It is an
   environment problem; run those serially on Windows.
+## 2026-10-14 — BR-16 Genesis-lite v0: preregistered benchmark layer and Tier-1 pilot
+
+Branch `feat/br16-genesis-lite-benchmark` (worktree `D:/forge-br16`, WSL clone `~/forge-br16`), base `origin/main`
+`e193e573`. Code commit `e493ff3f`. Not pushed. Report: [GENESIS_LITE_V0.md](../discovery/GENESIS_LITE_V0.md).
+Outcome: **PILOT_COMPLETE · BLOCKED_OWNER_APPROVAL**, not GENESIS_A1_PASS. G0 has not exited, the preregistration is
+frozen for the pilot only, the formal ≥20-seed runs have not started, and the budget and evaluator owner decisions are
+open.
+
+Scope:
+- `benchmarks/genesis_lite/` reuses `engcore.blindfold` unchanged; `tests/genesis_lite/` adds 42 tests. A1
+  preparation only.
+- Certificate scope check: 0 of the 15 changed files are pinned. The new tests are recertification *triggers* under
+  the conservative `tests/**` rule.
+
+Gates:
+
+| Run | Command | Result |
+|---|---|---|
+| Windows 3.14 | `pytest tests/genesis_lite -q` | 42 passed |
+| WSL 3.12, FAST at `e493ff3f` | `pytest -m "not expensive" -n 4` | 10416 passed, 156 skipped, 1 failed (`test_core_certificate.py::test_the_certificate_describes_this_tree`); base `e193e573` had 10374 passed + the same single failure |
+| WSL 3.12, regression | `python tools/forge_check.py --regression` | 256 passed, exit 0 |
+
+Hardened recertification: **NOT RUN** (and not required by any certified-file change).
+
+Pilot (WSL 3.12.3, 20 CPUs, preregistration `f99fcfbd…`, root commitment `07381465…`, now revealed):
+- Command: `python -m benchmarks.genesis_lite.pilot --root-file <root> --out ~/br16-evidence/pilot`.
+- Result: 960 runs, 0 invalid, 0 inadmissible, 85.07 s.
+- The separate evaluator agreed with the escrow on all 5,760 universes.
+- Run log sha256 `0c279655…`.
+- Formal baseline tier: 15,120 runs ≈ 1,185 s (ESTIMATED).
+
+Pilot findings (indicative; 10 worlds per cell):
+- P-1: the floor arm `always_law` dominates the discoverable cell (0.70 vs 0.27 for the best competence arm). The
+  formal lift rule needs the v0.1 amendment (OD-16).
+- P-2: the no_solution and insufficient_evidence cells look REPRESENTATION_LIMITED, and the confounded cell is solved
+  by a non-discoverer.
+- P-3: only 0.70, 0.50 and 0.40 of the discoverable, spurious and confounded worlds are inside the searched family.
+- P-4: only the pair heuristic reaches full credit on indistinguishable worlds (0.20).
+- P-5: the textbook answer failed in every trap world.
+
+Review (forge-scientific-reviewer, static):
+- Round 1: CHANGES REQUIRED, with 5 HIGH: cross-run linkage; monomial-only search; straw-man cells; no strongest-arm
+  or decision rule; pseudo-replication.
+- Round 2: 1 HIGH (paired lift impossible under distinct roots; Holm family not fixed) and 5 LOW.
+- All were fixed before the freeze.
+
+Failed approaches, so they are not repeated:
+1. Reusing escrow universe ids across presentations: a stateful proposer could merge budgets. Replaced by run-private
+   pseudonyms.
+2. Selecting the structure on the same hold-out the gate judges. Replaced by CV inside the training split.
+3. One master root per (arm, seed, presentation). That breaks paired lift; roots are now shared across arms.
+4. Long `python -c` strings with f-strings through bash. They were mangled; use script files.
+
+
+## 2026-10-14 -- BR-17 Minimal Mind: start gate BLOCKED_BY_PREREQUISITE
+
+The gate was checked against the live origin/main e193e573. All three prerequisites are unmet:
+- A1 has not passed: BR-16 is PILOT_COMPLETE / BLOCKED_OWNER_APPROVAL, and G0 has not exited because the certificate
+  fails on main.
+- No baseline identity is frozen for A1: v0 is frozen for the pilot only, and P-1 needs v0.1.
+- The active epic is still battery.thevenin_1rc, and no exception is open.
+
+No Mind code was written; the active epic and the ledger were not touched. Record and loop owner map:
+[BR17_MINIMAL_MIND_READINESS.md](../discovery/BR17_MINIMAL_MIND_READINESS.md). Tests: NOT RUN (documentation only).
+
+## 2026-10-14 -- BR-18: BLOCKED_BY_PREREQUISITE
+
+BR-17 has not passed (BLOCKED_BY_PREREQUISITE), and origin/main e193e573 has no Mind to evaluate. No BR-18 work was started. The verified-guard map is in [BR17_MINIMAL_MIND_READINESS.md](../discovery/BR17_MINIMAL_MIND_READINESS.md). Tests: NOT RUN (documentation only).

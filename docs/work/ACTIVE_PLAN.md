@@ -1,6 +1,17 @@
 # Active Plan
 
-## Active override — BR-15 authority boundary & certification closure (2026-10-14)
+## Active override — G0/A1 unblocking sprint (2026-10-14)
+
+Local integration branch `integration/g0-a1-unblock` (worktree `D:/forge-g0a1`) = `origin/main` `e193e573` + BR-15 +
+BR-16. Nothing is pushed or merged to `main`. Report: [G0_A1_UNBLOCKING.md](G0_A1_UNBLOCKING.md).
+
+- [x] G0 code gaps with reproducers: F-9 (restored stop-review outcome), F-7 (CI V4 shards vs checkout).
+- [x] Escrow leak: heap-scan and stack-walk attacks reproduced; isolated proposer process (same-account, NOT_PROVEN).
+- [x] Genesis-lite v0.1: P-1 root cause, joint-credit contract, new identity; v0 preserved.
+- [ ] Owner: OD-3 recertification of this integration HEAD; OD-8 evaluator; OD-18 budget; OD-19 v0.1 identity;
+      OD-20 escrow deployment; OD-6 active epic (exception or ledger change). BR-17/BR-18 stay closed until then.
+
+## Superseded override — BR-15 authority boundary & certification closure (2026-10-14)
 
 Branch `fix/br15-authority-closure`, base `origin/main` `e193e573`. No push, PR, merge, settings change or
 recertification without the owner. Report: [BR15_AUTHORITY_CLOSURE.md](BR15_AUTHORITY_CLOSURE.md).
@@ -15,6 +26,21 @@ recertification without the owner. Report: [BR15_AUTHORITY_CLOSURE.md](BR15_AUTH
       campaign records / restored `stop_review_outcome` (F-9). BR-16 is not started.
 
 Status: PARTIALLY_CLOSED — BLOCKED_OWNER_RECERTIFICATION, BLOCKED_OWNER_GOVERNANCE.
+
+## Superseded override — BR-16 Genesis-lite v0 preparation (2026-10-14)
+
+Branch `feat/br16-genesis-lite-benchmark` (worktree `D:/forge-br16`), base `origin/main` `e193e573`. This is A1
+preparation only: no certified file was touched and no Mind capability was added. Report:
+[GENESIS_LITE_V0.md](../discovery/GENESIS_LITE_V0.md). No push, PR or merge without the owner.
+
+- [x] Benchmark layer over `engcore.blindfold`: presentations (renamed, paraphrased, trap), equal-budget arms,
+      reveal step, separately implemented evaluator, leakage tests (Genesis F1–F8).
+- [x] Preregistration frozen for the pilot (`f99fcfbd…`); two review rounds, every finding fixed.
+- [x] Tier-1 cost pilot: 960 runs, 0 invalid, 85 s (MEASURED); formal baseline tier ≈ 1,185 s (ESTIMATE).
+- [ ] Owner: OD-3/G0 exit, OD-8 evaluator, OD-18 budget, OD-19 v0.1 identity (pilot finding P-1), OD-20 escrow
+      deployment (renumbered: open PR #130 uses OD-15..17). Formal ≥20-seed runs wait for all of these.
+
+Status: PILOT_COMPLETE · BLOCKED_OWNER_APPROVAL (not GENESIS_A1_PASS).
 
 ## Superseded override — hostile remediation round 1 (2026-10-13)
 
@@ -175,6 +201,9 @@ therapeutic work.
 | OD-11 | Branch and PR hygiene. | About 119 remote branches; stale PRs #24, #39, #107. |
 | OD-12 | Confirm the control-plane budget signal (Master Plan §5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |
 | OD-13 | Confirm the B1 demo system. | Drone recommended: the only executable product chain today. |
+| OD-18 | Approve the Genesis-lite formal compute budget. | Baselines: 15,120 campaign runs ≈ 1,185 s ESTIMATED from the BR-16 pilot; Mind/LLM arms UNMEASURED. |
+| OD-19 | Approve Genesis-lite v0.1 before any formal run. | Pilot finding P-1: the floor arm `always_law` dominates the discoverable cell (0.70 vs 0.27), so the lift bar must be the strongest non-adversarial arm, with no loss allowed in control cells. Optional: PySR/BoTorch, a full-grammar enumerator, a distinguishable-rival kind (certified change). |
+| OD-20 | Choose the escrow deployment for formal runs. | The in-process escrow leaks (attack test `test_l2_in_process…`); formal runs need the isolated escrow (isolation demo). |
 | OD-14 | Branch `perf/test-suite-runtime`: land it (needs the OD-3 recertification: it touches `certified:harness`, `inference_admission`, `certification_control`), and decide whether to add V4 mutation entries for the admission-record memo (changes the certified population count of 680). | Owner-requested. FAST 992 s -> 476 s, SCIENTIFIC 1448 s -> 1024 s, same failure sets (PROGRESS 2026-10-12). Review F1–F4 fixed; the memo's three mutants are killed by `tests/inference/test_admission_record_memo.py` today, outside the certified population. |
 
 ## Active-epic exceptions (open)
