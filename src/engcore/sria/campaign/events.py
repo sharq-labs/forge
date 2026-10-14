@@ -527,7 +527,13 @@ def stop_review_disagreements(
         if event.event_type is not CampaignEventType.STOP_REVIEWED:
             continue
         try:
-            outcomes.append((event.iteration, StopReview.from_dict(event.payload).outcome.value))
+            review = StopReview.from_dict(event.payload)
+            if review.approves and review.arbiter_verdict != "valid":
+                # an approval rests on a VALID Arbiter decision; a payload naming a real decision with another verdict
+                # contradicts itself (confirmation review of d118583d)
+                problems.append(f"the STOP_REVIEWED entry of iteration {event.iteration} approves a stop on a "
+                                f"{review.arbiter_verdict!r} Arbiter verdict")
+            outcomes.append((event.iteration, review.outcome.value))
         except (ValueError, KeyError, TypeError) as exc:
             problems.append(f"the STOP_REVIEWED entry of iteration {event.iteration} is not a valid stop review: {exc}")
     logged = outcomes[-1][1] if outcomes else ""
