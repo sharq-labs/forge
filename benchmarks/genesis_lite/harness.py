@@ -122,6 +122,24 @@ class ProposerHost:
         self._dir.cleanup()
 
 
+def _code_file_digest(path: pathlib.Path) -> str:
+    return hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+
+
+def code_identity() -> tuple[str, list[str]]:
+    """(committed preregistration digest, files whose bytes differ from the digests it records). A run is produced
+    under the identity only when the second element is empty (confirmation review A2: never copy the label alone)."""
+    from .preregistration import HERE, PREREG_PATH, ROOT  # noqa: PLC0415 - preregistration imports this module
+
+    committed = PREREG_PATH.read_bytes()
+    doc = json.loads(committed)
+    pinned = {**{HERE / n: d for n, d in doc["harness"].items()},
+              **{HERE / n: d for n, d in doc["evaluator"]["files"].items()},
+              **{ROOT / "src" / "engcore" / "blindfold" / n: d for n, d in doc["substrate"].items()}}
+    changed = sorted(str(path.relative_to(ROOT).as_posix()) for path, d in pinned.items() if _code_file_digest(path) != d)
+    return hashlib.sha256(committed).hexdigest(), changed
+
+
 def _digest(payload: Any) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
 
@@ -179,8 +197,11 @@ def run_one(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_seed
     (a registry name, or ``module:function``); ``in_process`` runs ``arm`` here, where a hostile proposer can read the
     operator's secrets (tests/genesis_lite/test_genesis_lite_isolation.py)."""
     rec = RunRecord(arm_name, seed, campaign_id, presentation, memory_instrumented=measure_memory, isolation=isolation)
-    from .preregistration import PREREG_PATH  # noqa: PLC0415 - preregistration imports this module
-    rec.prereg_sha256 = PREREG_PATH.with_suffix(".sha256").read_bytes().split()[0].decode()
+    identity, changed = code_identity()
+    if changed:
+        rec.invalid(f"the benchmark code differs from the preregistration ({identity[:12]}...): {changed[:5]}")
+        return rec
+    rec.prereg_sha256 = identity
     if isolation not in ISOLATIONS:
         rec.invalid(f"unknown isolation {isolation!r}")
         return rec

@@ -195,3 +195,21 @@ def test_review_a_credit_must_be_the_table_value_of_its_own_outcome():
     u["credit"] = 1.0                                        # outcome still law_fail
     with pytest.raises(analysis.AnalysisRefused, match="outcome"):
         _decide(_field() + mind)
+
+
+def test_review_a_run_whose_code_differs_from_the_preregistration_is_invalid_not_relabelled(monkeypatch):
+    """Confirmation review A2: the run-time identity was copied from the .sha256 file; edited code ran under it."""
+    real = getattr(harness, "_code_file_digest", None)
+
+    def edited(path):
+        return "0" * 64 if str(path).endswith("harness.py") else real(path)
+    monkeypatch.setattr(harness, "_code_file_digest", edited, raising=False)
+    rec = harness.run_one("careful", arms.ARMS["careful"][0], master_seed=MASTER, campaign_id="gl-test-9", presentation="renamed")
+    assert rec.status == "INVALID_BENCHMARK" and rec.prereg_sha256 == ""
+    assert any("differs from the preregistration" in r for r in rec.reasons)
+
+
+def test_review_an_unchanged_run_records_the_digest_its_code_rebuilds():
+    from tests.genesis_lite.lift_records import PREREG_SHA256
+    rec = harness.run_one("careful", arms.ARMS["careful"][0], master_seed=MASTER, campaign_id="gl-test-9", presentation="renamed")
+    assert rec.status == "VALID" and rec.prereg_sha256 == PREREG_SHA256

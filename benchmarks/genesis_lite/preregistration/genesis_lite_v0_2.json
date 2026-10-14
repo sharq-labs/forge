@@ -294,7 +294,7 @@
   "analysis.py": "76eea7c01fa971e2ce0a8f462ff79e7ab3eb1611ba6af8878994c84d8e01a0a9",
   "answer_key.py": "46977bcb959ac737cdadb6bb7472f89ad434d4c4c513c2240bb58a77644e5db6",
   "arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
-  "harness.py": "2a97f4aaf55fc845e2f190fcb6dac5983ade33aa93799ae13210c27bd9d944b4",
+  "harness.py": "fce0dc4289d615f62ee21f6d3210c8a0835c6969f3975f32ca1e75081469bce1",
   "pilot.py": "f081e4c1cea462cd02625b4b2c9843f4ca1621f0a3b42b9d6a7b4bb707d92f64",
   "presentation.py": "bc83318e792ddc705976d34378512bae2f34b72af020e5c8e08beb357197a137",
   "primitives.py": "caaea4fc83c9a4ec0c89e104b401194ab3d48e2f5f0b55d8d328f954cae96f78",
@@ -332,7 +332,7 @@
   "escrow_refusal_codes": "residual in certified engcore.blindfold: the client classifies refusals by text ('rolled back'), and the escrow echoes caller input in refusal texts; Genesis-lite blocks the channel at the client, the structural fix (refusal codes) needs a certified change",
   "held_out_authoring": "v0.2 instances come from FORGE's own generator"
  },
- "pilot_root_commitment_sha256": "ad14af2f50582503ed2e7d01f2499998be6d4bd50175b12e62d65e5b2df00453",
+ "pilot_root_commitment_sha256": "2ebf31ab09d6a5f12a51156585ab46923b6b62d2c46740967d316ea904666b9d",
  "primitive_library_digest": "281e1df0f46d0a0d25e63fef58e11f2681882492a37f1dd7551339e08edb8173",
  "representation_gap_rule": "v0.1 search arms cover only the monomial family; the generator also draws exponential, two-term and regime laws. The PRIMARY (joint) endpoint includes every world. Discovery credit is additionally reported split into in-family and out-of-family worlds, and the out-of-family share is labelled NO_STRONG_BASELINE (Genesis \u00a710.5 rule 4). In those worlds the candidate is capped at its comparator: no lift comes from them. v0.2 makes no discovery-only lift claim.",
  "representation_limited_rule": "a (kind, presentation) cell is REPRESENTATION_LIMITED when monomial_enumeration's full-credit rate has a cluster-bootstrap 95% lower bound >= 0.5 at the formal tier: that cell measures the representation, and no lift there is credited as reasoning (analysis.representation_limited; the candidate is capped at its comparator there). Pilot values are indicative only.",
