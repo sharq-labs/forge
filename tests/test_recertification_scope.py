@@ -88,6 +88,15 @@ def test_every_file_the_certificate_enumerates_requires_recertification(area):
     "src/engcore/__init__.py",
     # A mutation target outside every scope area (GUARD 14b/19a/20b).
     "src/engcore/credibility/evidence.py",
+    # BR-15: dependencies that decide what a certified module's result means.
+    "src/engcore/sria/decision/hypotheses.py",
+    "src/engcore/sria/decision/utility.py",
+    "src/engcore/sria/campaign/events.py",
+    "src/engcore/systems/twin_revision.py",
+    "src/engcore/scenarios/environment.py",
+    "src/engcore/materials/properties.py",
+    "src/engcore/multiscale/runtime.py",
+    "src/engcore/providers/records.py",
 ])
 def test_certified_and_trust_sensitive_paths_require_recertification(path):
     assert rs.requires_recertification(path), path
@@ -114,7 +123,7 @@ def test_every_file_a_certified_mutation_names_requires_recertification():
     "docs/TESTING.md",
     "src/engcore/domains/thermal/conduction1d/solver.py",
     "src/engcore/mcp/bundle.py",
-    "src/engcore/sria/decision/utility.py",
+    "src/engcore/design/history.py",
     "src/engcore/scientificx/module.py",
     "src/engcore/scientific.py",
     "experiments/thermal_t1/config.py",
