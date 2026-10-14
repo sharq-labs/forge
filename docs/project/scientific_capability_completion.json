@@ -13,13 +13,13 @@
       "title": "Battery Thevenin 1RC",
       "owner": "src/engcore/domains/battery",
       "declared_stage": "FUNCTIONAL",
-      "summary": "Exact 1RC route with replay (FUNCTIONAL). Real NASA FY08Q4 data is receipted and rebuilt from raw bytes; identification is NOT_IDENTIFIABLE at one 2 A current level; held-out cross-cell transfer fails acceptance for both 1RC and Rint; measurement uncertainty is UNKNOWN.",
+      "summary": "Exact 1RC route with replay (FUNCTIONAL). NASA FY08Q4: NOT_IDENTIFIABLE at one current level. LG HG2 (one cell, measured OCV): IDENTIFIABLE; held-out pulses pass, the 1C constant-current test fails (MODEL_REJECTED by the frozen mapping). No cross-cell validation; measurement uncertainty not admitted.",
       "next_actions": [
-        "OCV characterization and multi-level pulse/rest data at >= 1 Hz under a new preregistration (calibration).",
-        "Re-identify OCV/R0/R1/C1; then cross-cell held-out validation on independent cells.",
-        "Admissible measurement uncertainty for the measured channels.",
-        "Parameter and model-form uncertainty once parameters are identifiable.",
-        "Only then register 1RC in claims and BatteryDomainPack."
+        "Cross-cell held-out evaluation on independent cells with measured OCV and pulse data (e.g. Kirkaldy 2024 RPTs, owner-approved download).",
+        "Decide the model scope the constant-current failure allows (pulse-scale only) under a new preregistration.",
+        "Owner/review decision on publisher-stated Type B measurement accuracy.",
+        "Propagate OCV-knot uncertainty jointly with R0/R1/C1.",
+        "Only then claims and BatteryDomainPack integration."
       ],
       "gates": {
         "scientific_definition": {
@@ -93,25 +93,31 @@
           ]
         },
         "calibration": {
-          "status": "MISSING",
+          "status": "PASS",
           "evidence": [
+            "benchmarks/battery_1rc_identifiability/PREREGISTRATION.json",
+            "benchmarks/battery_1rc_identifiability/results/CALIBRATION.json",
+            "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_the_calibration_record_is_identifiable_and_rerun_stable",
+            "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_the_fit_reads_only_the_calibration_role_and_the_ocv",
+            "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_the_ocv_is_measured_and_never_extrapolated",
             "benchmarks/battery_1rc_closure/results/CALIBRATION.json"
-          ],
-          "next_action": "Identification ran on NASA FY08Q4 (B0005+B0007) and is NOT_IDENTIFIABLE: at one 2 A current level the OCV table absorbs the RC branch (fitted OCV reaches 4.5 V), R0/C1/tau profiles are flat, and the ~19 s switch-time ambiguity moves R1 by +25 %. Needs an OCV characterization (C/20 discharge or GITT rest points) and multi-level current pulses sampled >= 1 Hz with rests >= 5 tau, under a new preregistration."
+          ]
         },
         "independent_validation": {
           "status": "MISSING",
           "evidence": [
+            "benchmarks/battery_1rc_identifiability/results/VALIDATION.json",
+            "benchmarks/battery_1rc_identifiability/results/OUTCOME.json",
             "benchmarks/battery_1rc_closure/results/VALIDATION.json"
           ],
-          "next_action": "Held-out comparison ran (results/VALIDATION.json). Within-cell temporal holdout: 1RC meets the 50/90 mV thresholds over all cycles, but 12 of 20 cycles lie outside the route's validated domain, so acceptance is NOT_ASSESSABLE; Rint FAILS. Cross-cell transfer to B0006 FAILS for both models (1RC 89.2 mV, Rint 93.1 mV). Parameters are not identified. Needs identified parameters, an evidence-based applicability range and a passing cross-cell transfer on independent cells."
+          "next_action": "LG HG2 (one cell, 25 degC): held-out 2C/4C pulses PASS (1RC 12.6 mV) but the 1C constant-current test FAILS (28.7 mV, P95 50.7 mV): outcome MODEL_REJECTED. NASA: cross-cell transfer FAILS. Needs a cross-cell held-out evaluation on independent cells and a model scope that the constant-current test supports (or a preregistered narrower claim); no acceptance limit may move after these results."
         },
         "measurement_uq": {
           "status": "MISSING",
           "evidence": [
-            "benchmarks/battery_1rc_closure/results/UNCERTAINTY_REPORT.json"
+            "benchmarks/battery_1rc_identifiability/PREREGISTRATION.json"
           ],
-          "next_action": "NASA states no calibrated per-sample uncertainty, so measurement uncertainty stays UNKNOWN. The ~19 s current sampling also leaves the load switch time unknown (forward vs backward hold moves R1 by +25 %). Needs instrument calibration evidence for voltage, current, temperature and time, and higher-rate current sampling."
+          "next_action": "LG HG2 has a publisher-stated Type B instrument accuracy (+/-5 mV, +/-75 mA, +/-1 degC; readme), not a calibration certificate; NASA states none. Owner/review decision whether a publisher accuracy statement is admissible; until then MISSING."
         },
         "benchmark_metrics": {
           "status": "PASS",
@@ -124,9 +130,10 @@
         "parameter_uq": {
           "status": "MISSING",
           "evidence": [
-            "benchmarks/battery_1rc_closure/results/UNCERTAINTY_REPORT.json"
+            "benchmarks/battery_1rc_identifiability/results/CALIBRATION.json",
+            "benchmarks/battery_1rc_identifiability/results/VALIDATION.json"
           ],
-          "next_action": "A joint cycle-block bootstrap was propagated (band +-1.2 mV, covering 5-15 % of held-out samples) but it is NOT admissible for non-identified parameters. Needs identifiable parameters first (see calibration)."
+          "next_action": "LG HG2: identifiable parameters with a joint window bootstrap (CV 1-9 %) propagated to +/-1-2 mV; the measured OCV knots' own +/-5 mV accuracy is not yet propagated, and the band covers only 23 % of held-out pulse samples (model form dominates). Propagate OCV-knot uncertainty jointly before this can PASS."
         },
         "numerical_uq": {
           "status": "NOT_APPLICABLE",
