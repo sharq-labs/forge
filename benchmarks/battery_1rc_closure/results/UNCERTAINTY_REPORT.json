@@ -1,0 +1,145 @@
+{
+ "calibration_sha256": "a302989a9034fb5b169480bf1a1e031bca9706ed3d474bd17ce44a641b685530",
+ "combination": "none: the components are reported separately; UNKNOWN measurement uncertainty prevents any total, and no independence assumption is made",
+ "components": {
+  "applicability": {
+   "extrapolation_flags": {
+    "cross_cell_validation": {
+     "in_domain": 23,
+     "outside_validated_domain": 6
+    },
+    "within_cell_holdout": {
+     "in_domain": 8,
+     "outside_validated_domain": 12
+    }
+   },
+   "supported_regime": "2 A constant-current discharge plus rest, ~24 C ambient, cells of the NASA FY08Q4 batch within their first 30 discharges, SOC on the causal integrated-charge basis",
+   "transfer": "cross-cell transfer (B0006) FAILED the preregistered acceptance for both models",
+   "unsupported": [
+    "any other current, including pulses and charge",
+    "other temperatures",
+    "aged cells beyond ordinal 30",
+    "other cell types",
+    "parameter values as physical constants of the cell"
+   ]
+  },
+  "initial_state": {
+   "hold_convention_forward_vs_backward": {
+    "C1": 931.4579345615059,
+    "R0": 0.11757418897830821,
+    "R1": 0.2829103129765973,
+    "sse_ratio": 1.3372124827741498
+   },
+   "reason": "an initial polarization of 20 mA x R1 is immaterial (objective ratio 0.9994); the unknown load switch time within one ~19 s sample is NOT immaterial (objective ratio 1.337) and is not reduced by this data",
+   "status": "PARTIALLY_QUANTIFIED",
+   "vp0_plus_20mA_x_R1": {
+    "C1": 747.2460503750171,
+    "R0": 0.1309775503917797,
+    "R1": 0.22477121588948842,
+    "sse_ratio": 0.9993616402928561
+   }
+  },
+  "measurement": {
+   "evidence_required": "a calibration certificate (or manufacturer accuracy specification bound to the actual instruments and ranges used) for voltage, current, temperature and time, or an independent co-located reference measurement of the same records",
+   "reason": "NASA describes the voltmeter / ammeter / thermocouple suite but states no calibrated per-sample uncertainty or traceability for these records; a sensor description is not a calibrated uncertainty",
+   "status": "UNKNOWN"
+  },
+  "model_form": {
+   "empirical_held_out_residuals": {
+    "cross_cell_validation": {
+     "1rc": {
+      "bias_mV": -26.487268299929788,
+      "lag1_autocorrelation_mean": 0.92435293979791,
+      "max_abs_mV": 1104.0961260723577,
+      "p95_abs_mV": 115.65783960924821,
+      "rmse_mV": 89.22796908828245,
+      "tail_rmse_mV": 392.6018187066018
+     },
+     "rint": {
+      "bias_mV": -30.243779116279647,
+      "lag1_autocorrelation_mean": 0.8423115233920873,
+      "max_abs_mV": 1105.3924140921017,
+      "p95_abs_mV": 118.23422258164153,
+      "rmse_mV": 93.08463126973561,
+      "tail_rmse_mV": 492.5560462228202
+     }
+    },
+    "within_cell_holdout": {
+     "1rc": {
+      "bias_mV": 0.677358682937517,
+      "lag1_autocorrelation_mean": 0.7572372394984622,
+      "max_abs_mV": 869.3030594602376,
+      "p95_abs_mV": 59.11929717580988,
+      "rmse_mV": 49.74030725864969,
+      "tail_rmse_mV": 86.36802943782777
+     },
+     "rint": {
+      "bias_mV": -0.9403265620167703,
+      "lag1_autocorrelation_mean": 0.6651120557544561,
+      "max_abs_mV": 855.9957022695173,
+      "p95_abs_mV": 69.11393111720454,
+      "rmse_mV": 54.07879216336925,
+      "tail_rmse_mV": 148.74639135512794
+     }
+    }
+   },
+   "reason": "held-out 1RC residual RMSE is 79x and 41x the propagated parameter band half-width, and the residuals are strongly autocorrelated (lag-1 0.92, 0.76): the error is structured model-form and state error (OCV/resistance confounding, end-of-discharge knee, rest tail beyond one time constant), not noise. With measurement uncertainty UNKNOWN the discrepancy cannot be separated from it, so no discrepancy term is admitted; it is never zero",
+   "residual_rmse_over_band_half_width": {
+    "cross_cell_validation": 78.601068455211,
+    "within_cell_holdout": 41.20778622438487
+   },
+   "status": "NOT_QUANTIFIED_AS_ADMISSIBLE_UQ"
+  },
+  "numerical": {
+   "reason": "the update is exact for piecewise-constant current; agreement with an independent adaptive ODE integration is below 1e-9 V and the fitting transcription equals the route below 1e-12 V (tests); float rounding only",
+   "status": "NOT_APPLICABLE"
+  },
+  "parameter": {
+   "computed": {
+    "bootstrap": {
+     "C1": {
+      "cv": 0.028389395296499247,
+      "mean": 761.4079480896107,
+      "p2_5": 724.1510873003359,
+      "p97_5": 795.5546134860505,
+      "sd": 21.615911220212336
+     },
+     "R0": {
+      "cv": 0.05587312768923181,
+      "mean": 0.13523322652457076,
+      "p2_5": 0.1236636682538307,
+      "p97_5": 0.14850852331357356,
+      "sd": 0.007555903333434153
+     },
+     "R1": {
+      "cv": 0.056833359423369166,
+      "mean": 0.2205509579282679,
+      "p2_5": 0.20000528455916183,
+      "p97_5": 0.24233651265059067,
+      "sd": 0.01253465186310562
+     },
+     "tau": {
+      "cv": 0.07406762368358742,
+      "mean": 168.04639806131178,
+      "p2_5": 148.48252475023634,
+      "p97_5": 190.37543038425235,
+      "sd": 12.446797372987575
+     }
+    },
+    "bootstrap_sets": 40,
+    "held_out_band_coverage": {
+     "cross_cell_validation": 0.04538745387453875,
+     "within_cell_holdout": 0.15382528486163863
+    },
+    "held_out_band_median_half_width_mV": {
+     "cross_cell_validation": 1.1352004602727117,
+     "within_cell_holdout": 1.2070608934875438
+    }
+   },
+   "reason": "the parameters are NOT_IDENTIFIABLE: the cycle bootstrap varies near-replicate cycles and cannot see the OCV-resistance confounding (flat profiles) or the switch-time dependence (forward hold moves R1 by +25 %). Propagated jointly (no independence assumption), the band covers only a small fraction of the held-out measurements, so it must not be presented as the prediction uncertainty",
+   "status": "NOT_ADMISSIBLE"
+  }
+ },
+ "schema": "forge.battery_1rc_closure.uncertainty/1",
+ "validation_sha256": "e6a29d604145172d4e84838ae03a883da29ae1dd86c9ecd9e3fbd4ddb60cd085"
+}
