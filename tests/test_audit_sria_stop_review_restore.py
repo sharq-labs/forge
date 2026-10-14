@@ -104,3 +104,35 @@ def test_the_incremental_store_refuses_a_forged_outcome_when_read_directly():
     with pytest.raises(PersistenceIntegrityError, match="stop review"):
         forged.latest()
 
+
+def _approved():
+    runner = _stopping_campaign(CriticVerdict.PASS, criteria=(CRITERION,),
+                                evaluators={CRITERION.criterion_id: ToyStoppingEvaluator(CRITERION.criterion_id, CriticVerdict.PASS)},
+                                run_id="br15-f9-ok")
+    assert runner.stop_reviews[0].outcome is StopReviewOutcome.STOP_APPROVED
+    return runner
+
+
+def test_positive_control_an_honest_approval_restores():
+    runner = _approved()
+    assert runner.restore(_checkpoint(runner, runner.run)).stop_review_outcome == "stop_approved"
+
+
+def test_a_rejection_relabelled_as_an_approval_with_its_real_decision_id_is_refused():
+    from engcore.sria.campaign import CampaignEventLog, CampaignEventType
+    runner = _rejected()
+    forged_log = CampaignEventLog(runner.run.run_id)
+    for e in runner.events.events:
+        payload = dict(e.payload)
+        if e.event_type is CampaignEventType.STOP_REVIEWED:
+            assert payload["arbiter_decision_id"] and payload["arbiter_verdict"] != "valid"
+            payload.update(outcome="stop_approved", unmet_obligations=[], unassessed_aspects=[])
+        forged_log.append(e.event_type, iteration=e.iteration, payload=payload, at=e.at)
+    run = dataclasses.replace(runner.run, stop_review_outcome="stop_approved",
+                              iterations=tuple(dataclasses.replace(it, detail="stop_approved") if it.stop_proposed else it
+                                               for it in runner.run.iterations))
+    forged = CampaignCheckpoint(run=run, events=forged_log, budget=runner.budget, effects=runner.effects, plan=None,
+                                obligation_state=dict(runner._obligation_state))
+    with pytest.raises(ResumeViolation, match="Arbiter verdict"):
+        runner.restore(forged)
+
