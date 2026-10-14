@@ -3371,6 +3371,19 @@ Commands run (Windows `.venv` 3.14 unless stated):
   - `7cc71b13`: 1,560 runs, 13 INVALID on one world set (literal audit, 0.642 coincidence); log `6e70c72a...`.
   - `ddc7c3a6`: 1,560 runs, 0 invalid, 402.58 s; log `ca0716f3...`.
 
+Final gates on integration `7d6d398b` (WSL clone, Linux; the next commit adds only this record):
+- `python tools/forge_check.py --changed --base e193e573` (3.12): 10549 passed, 156 skipped, 582 deselected, 1 failed.
+- `python -m pytest -m "not expensive" -q -n 4`, 3.12: 10549 passed, 156 skipped, 1 failed (520 s).
+- The same command, 3.11: 10549 passed, 156 skipped, 1 failed (539 s).
+- In all three, the single failure is `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`.
+  - Cause: certified-file drift, plus classification/pattern changes in `assurance_admission` and `verdict_authority`.
+  - It is expected until OD-3 recertification.
+- Focused set (`tests/genesis_lite`, the F-9, F-7 and closure suites, `test_capability_completion.py`): 169 passed.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+- Pins: `certified_dependency_problems`, `authority_closure_problems`, `source_form_problems` and
+  `harness_pinning_problems` all `[]`.
+- `prereg_matches_code()` is `(True, 878e6812...)`.
+
 Failed approaches, so they are not repeated:
 1. A static loader deny-list grew by three review rounds and is still incomplete. Further spellings belong to a
    runtime audit-hook cross-check, not to more AST rules.

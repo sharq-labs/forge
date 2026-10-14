@@ -106,7 +106,9 @@ See PROGRESS for the exact commands. The final-HEAD results are filled in below 
 | Certified dependency closure | BR-15 `3c28bedf`, Windows 3.14 | 58 passed, 1 skipped (symlink test needs privileges) |
 | Certificate and BR-15 suites | BR-15 `aedc7b24`, Windows 3.14 | 193 passed, 1 skipped, 1 failed (`test_the_certificate_describes_this_tree`: expected drift until recertification) |
 | v0.2 pilot | `4a302959` | 1,560 runs, 0 invalid |
-| Final integration gates | see PROGRESS | — |
+| `forge_check --changed --base e193e573` | integration `7d6d398b`, WSL 3.12 | 10549 passed, 1 failed (the expected certificate test) |
+| FAST 3.12 and 3.11 | `7d6d398b`, WSL | each 10549 passed, 156 skipped, 1 failed (same test, expected) |
+| Focused set and regression | `7d6d398b`, WSL 3.12 | 169 passed; 256 passed, exit 0; every pin check `[]`; prereg rebuilds |
 | Hardened recertification, FULL local assurance, formal campaign | — | **NOT RUN** (owner) |
 
 ## 4. Owner decisions
