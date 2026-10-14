@@ -3162,3 +3162,56 @@ Result: PASS, exit 0; nine Markdown files, 75 unique table IDs, all local links 
 explicit anchors resolve. External URLs not checked. Scientific tests, regression,
 FAST, SCIENTIFIC and certification: **NOT RUN**, documentation-only.
 Command: git diff --cached --check. Result: PASS, exit 0 for the design/coupling proposal update.
+
+
+## 2026-10-14 — BR-15 authority boundary & certification closure
+
+Branch `fix/br15-authority-closure` (worktree `D:/forge-br15`; WSL clone `~/forge-br15`), base `origin/main`
+`e193e573`. Commits: `dc26175d` (red reproducer), `6d62e5cf` (closure fix), `a49e8d12` (harness fix), `01073787`
+(review LOWs) and `a22869d4` (recertification-scope test example). Not pushed. Report:
+[BR15_AUTHORITY_CLOSURE.md](BR15_AUTHORITY_CLOSURE.md). Outcome: **PARTIALLY_CLOSED**, blocked on owner
+recertification (OD-3) and on GitHub governance.
+
+Post-merge truth:
+- `core_certificate.py --verify` on `e193e573` FAILED: `tests/mutation_guards.py` and `tests/test_formal_xdist.py`
+  were changed by PR #142 after certificate child `b1eea81b`.
+- The PR #140 merge `623149f3` changed only docs and the certificate.
+- CI on `main`: FAST 3.11/3.12 and SCIENTIFIC each failed one test, `test_the_certificate_describes_this_tree`.
+  `reproduce` failed: the image has no `.git` and runs as root.
+- Recertify on PR #140 and #142: all 8 `v4_mutations` shards failed, because `actions/checkout` writes
+  `.git/config.worktree` and workspace admission refuses it.
+
+Reproducers (before the fix):
+- `pytest tests/test_certified_dependency_closure.py` against the `e193e573` verifier: 23 failed, 2 passed. The two
+  that passed are the controls.
+- At `dc26175d`: 14 failed, 2 passed.
+
+After the fix:
+
+| Run | Command | Result |
+|---|---|---|
+| Windows 3.14, serial | `pytest tests/test_certified_dependency_closure.py tests/test_certificate_verdict_scope.py tests/test_core_certificate.py` | 90 passed, 1 skipped, 1 failed (`test_the_certificate_describes_this_tree`, expected) |
+| Windows | `tests/test_recertification_scope.py` | 115 passed |
+| Windows | real tree | `certified_dependency_problems == []`, `authority_closure_problems == []` |
+| Windows | production registry pin | unchanged (456 `evidence_code` files, equal digests, `registry_problems == []`) |
+| WSL 3.12, FAST (`pytest -m "not expensive" -n 4`), base `e193e573` | | 10374 passed, 156 skipped, 1 failed (`test_the_certificate_describes_this_tree`) |
+| WSL 3.12, FAST, fix `a22869d4` | | 10415 passed, 156 skipped, 1 failed (same test) |
+| WSL 3.11, FAST, fix `a22869d4` | | 10415 passed, 156 skipped, 1 failed (same test) |
+| WSL 3.12, impact selection (31 modules) at `a49e8d12` | | 926 passed, 2 failed: the certificate test, plus `test_recertification_scope.py::test_non_core_paths_stay_ordinary[src/engcore/sria/decision/utility.py]` (a real consequence of pinning sria/decision; fixed in `a22869d4`) |
+| WSL 3.12, impact selection at `a22869d4` | | 940 passed, 1 skipped, 1 failed (the certificate test) |
+| WSL 3.12, regression at `a22869d4` | `python tools/forge_check.py --regression` | 256 passed, exit 0 |
+
+Hardened recertification, `local_assurance`, Formal and V4 mutation populations: **NOT RUN** (owner-run, OD-3).
+
+Independent review (forge-scientific-reviewer, static):
+- First pass: CHANGES REQUIRED. I-1 (package-wide exclusions) and I-2 (false multiscale and providers reasons) were
+  HIGH; I-3 and I-4 MEDIUM; I-5 and I-6 LOW. All were fixed.
+- Confirmation pass: ACCEPT, no BLOCKER or HIGH. Two of its LOWs were fixed. The LOW about `api_snapshot.py` being a
+  non-seed pinned file was recorded as a residual.
+
+Failed approaches, so they are not repeated:
+- A first fix declared `providers/**` and `multiscale/**` as non-authoritative. The reasons were false: the system
+  runtime commits multiscale state uncertainty and consumes provider records. Both were pinned instead.
+- Package-wide exclusions were replaced by importer edges.
+- The Windows `-n 4` runs of the certificate fixtures fail on `git add -A` (exit 128) on the base as well. It is an
+  environment problem; run those serially on Windows.
