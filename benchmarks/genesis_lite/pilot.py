@@ -146,17 +146,17 @@ def summarize(records: list[RunRecord]) -> dict[str, Any]:
     for name, camps in credits.items():
         disc = [k.get("discoverable", 0.0) for k in camps.values()]
         ctrl = [sum(v for kind, v in k.items() if kind != "discoverable") for k in camps.values()]
-        family = {True: [], False: []}
+        by_family = {True: [], False: []}
         for r in valid:
             if r.arm == name:
                 for u in r.universes:
                     if u["kind"] == "discoverable":
-                        family[bool(u["truth_in_searched_family"])].append(u["credit"])
+                        by_family[bool(u["truth_in_searched_family"])].append(u["credit"])
         split[name] = {"discovery_credit_per_campaign": round(statistics.fmean(disc), 4),
                        "control_credit_per_campaign": round(statistics.fmean(ctrl), 4),
-                       "discovery_credit_in_family": round(statistics.fmean(family[True]), 4) if family[True] else None,
+                       "discovery_credit_in_family": round(statistics.fmean(by_family[True]), 4) if by_family[True] else None,
                        "discovery_credit_out_of_family_NO_STRONG_BASELINE":
-                           round(statistics.fmean(family[False]), 4) if family[False] else None}
+                           round(statistics.fmean(by_family[False]), 4) if by_family[False] else None}
     for name in sorted({r.arm for r in valid}):
         outcome = {(r.seed, r.presentation, r.campaign_id, u["kind"]): u["outcome"] for r in valid if r.arm == name
                    for u in r.universes}
@@ -199,7 +199,8 @@ def estimate(cost: dict[str, Any]) -> dict[str, Any]:
             "interval95_seconds": [round(max(0.0, total_mean - half), 1), round(total_mean + half, 1)],
             "excludes": "Mind, LLM-ablation and model-swap arms (do not exist; their cost is UNMEASURED); a full-grammar "
                         "enumerator, PySR, BoTorch (not integrated); an isolated escrow transport (UNMEASURED)",
-            "assumes": "one process on the pilot machine, in-process escrow, distinct master roots do not change cost"}
+            "assumes": "the pilot machine; the escrow in the operator's process and each arm in an isolated proposer process (as "
+                       "measured); the OD-20 deployment (separate account/container) may add cost (UNMEASURED)"}
 
 
 def prereg_matches_code() -> tuple[bool, str]:
