@@ -331,8 +331,12 @@ def test_h5_seeds_over_one_world_are_one_unit_not_many():
         r.universes = [{"kind": k, "credit": 1.0, "truth_in_searched_family": True, "region_tell": "box",
                         "universe_id": f"u-{k}", "outcome": "law_pass"} for k in harness.KINDS]
         recs.append(r)
-    cell = pilot.summarize(recs)["cells"]["monomial_enumeration|discoverable|anonymous"]
+    summary = pilot.summarize(recs)
+    cell = summary["cells"]["monomial_enumeration|discoverable|anonymous"]
     assert cell["worlds"] == 1 and cell["runs"] == 5
+    # the summary's descriptive fields keep their shape (a shadowed variable once replaced this with raw lists)
+    assert all(v is None or isinstance(v, float) for v in summary["truth_in_searched_family_fraction"].values())
+    assert set(summary["truth_in_searched_family_fraction"]) == {"discoverable", "spurious_correlate", "confounded"}
 
 
 # ---- review M2 / H2 / H3 / L1 -----------------------------------------------------------------------------------------
