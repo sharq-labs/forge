@@ -44,6 +44,12 @@ DEPENDENCY_EDITS = {
     "src/engcore/materials/properties.py": (
         'Uncertainty.unknown(f"claim {d.claim.claim_id} states no uncertainty")',
         'Uncertainty.from_dict({"kind": "standard", "value": 0.0})'),
+    # review I-2: a provider output with no stated uncertainty reports a zero one to the system runtime
+    "src/engcore/providers/records.py": (
+        "uncertainty: Uncertainty = field(default_factory=lambda: Uncertainty.unknown(",
+        'uncertainty: Uncertainty = field(default_factory=lambda: Uncertainty.from_dict({"kind": "standard", "value": 0.0}) or Uncertainty.unknown('),
+    # review I-2: the multi-timescale slow state the system runtime commits silently drops a degradation step
+    "src/engcore/multiscale/runtime.py": ("            if step.applied:\n", "            if step.applied and False:\n"),
 }
 
 #: Declared non-authoritative: a committed edit is allowed not to move the certificate (positive control).
@@ -126,8 +132,16 @@ def test_no_declared_exclusion_is_reachable_from_a_verdict_or_authority_root() -
     closure = cc.authority_import_closure(ROOT)
     reached = [name for name in closure if cc._dependency_excluded(name)]
     assert reached == []
-    for pattern, why in cc.CERTIFIED_DEPENDENCY_EXCLUSIONS:
-        assert why and any(cc._dependency_excluded(p.relative_to(ROOT).as_posix()) for p in ROOT.glob(pattern)), pattern
+    for importer, imported, why in cc.CERTIFIED_DEPENDENCY_EXCLUSIONS:
+        assert why and list(ROOT.glob(importer)) and list(ROOT.glob(imported)), (importer, imported)
+
+
+def test_the_exemption_no_longer_covers_systems_as_a_whole() -> None:
+    """systems/** was 'answers' and held an evidence-binding vocabulary; the F6 mechanism is not exempted either."""
+    assert not cc._closure_exempt("src/engcore/systems/twin_revision.py")
+    assert not cc._closure_exempt("src/engcore/systems/admissibility.py")
+    assert not cc._closure_exempt("src/engcore/systems/new_vocabulary.py")
+    assert cc._closure_exempt("src/engcore/systems/products/drone.py")
 
 
 def _tree(root: pathlib.Path, files: dict[str, bytes]) -> None:
@@ -136,8 +150,9 @@ def _tree(root: pathlib.Path, files: dict[str, bytes]) -> None:
         (root / relative).write_bytes(data)
 
 
-#: A certified area holding one module that is not a verdict root.
-_SCOPE = [cc.ScopeArea("certified", "CORE_CERTIFIED", ("src/engcore/__init__.py", "src/engcore/certified/**/*.py"), "test")]
+#: A certified area holding one module that is not a verdict root; the package __init__ is control plane, as in SCOPE.
+_SCOPE = [cc.ScopeArea("certified", "CORE_CERTIFIED", ("src/engcore/certified/**/*.py",), "test"),
+          cc.ScopeArea("control", "CERTIFICATION_CONTROL", ("src/engcore/__init__.py",), "test")]
 
 
 def test_a_certified_non_root_module_importing_an_uncertified_decider_is_refused(tmp_path) -> None:
@@ -185,17 +200,75 @@ def test_an_exempt_answer_package_stays_exempt_but_its_init_does_not(tmp_path) -
     assert "src/engcore/domains/__init__.py" in problem and "solver.py" not in problem
 
 
-def test_a_declared_exclusion_never_excuses_a_verdict_root(tmp_path) -> None:
-    """An exclusion only says a certified NON-authority module reads it; the root closure ignores it."""
+_DESIGN = {
+    "src/engcore/claims/__init__.py": b"",
+    "src/engcore/claims/design_memory.py": b"from ..design.history import DesignHistory\n",
+    "src/engcore/design/__init__.py": b"",
+    "src/engcore/design/history.py": b"class DesignHistory:\n    pass\n",
+}
+_CLAIMS = [cc.ScopeArea("claims", "CORE_CERTIFIED", ("src/engcore/__init__.py", "src/engcore/claims/**/*.py"), "t")]
+
+
+def test_a_declared_edge_excuses_its_importer_and_only_its_importer(tmp_path) -> None:
+    """Review I-1: an exclusion is an edge, not a package-wide blind spot."""
+    _tree(tmp_path, _DESIGN)
+    assert cc.certified_dependency_problems(tmp_path, _CLAIMS) == []
+    _tree(tmp_path, {"src/engcore/claims/stop_rule.py": b"from ..design.history import DesignHistory\n"})
+    (problem,) = cc.certified_dependency_problems(tmp_path, _CLAIMS)
+    assert "src/engcore/design/history.py" in problem
+
+
+def test_a_declared_edge_never_excuses_a_verdict_root(tmp_path) -> None:
+    """The root closure does not read the table: a verdict that reaches design/** through design_memory fails."""
+    _tree(tmp_path, {**_DESIGN, "src/engcore/claims/verdict.py": b"from .design_memory import DesignHistory\n"})
+    assert cc.certified_dependency_problems(tmp_path, _CLAIMS) == []
+    assert any("src/engcore/design/history.py" in p for p in cc.authority_closure_problems(tmp_path, _CLAIMS))
+
+
+def test_an_uncertified_module_behind_an_exempt_one_is_reported(tmp_path) -> None:
+    """Review I-3: traversal continues through an exempt answer module."""
     _tree(tmp_path, {
-        "src/engcore/claims/__init__.py": b"",
-        "src/engcore/claims/verdict.py": b"from ..design.history import DesignHistory\n",
-        "src/engcore/design/__init__.py": b"",
-        "src/engcore/design/history.py": b"class DesignHistory:\n    pass\n",
+        "src/engcore/certified/__init__.py": b"",
+        "src/engcore/certified/run.py": b"from ..domains.solver import solve\n",
+        "src/engcore/domains/__init__.py": b"",
+        "src/engcore/domains/solver.py": b"from ..decider.rule import decide\n",
+        "src/engcore/decider/__init__.py": b"",
+        "src/engcore/decider/rule.py": b"def decide():\n    return 'admissible'\n",
     })
-    scope = [cc.ScopeArea("claims", "CORE_CERTIFIED", ("src/engcore/__init__.py", "src/engcore/claims/**/*.py"), "t")]
-    assert cc.certified_dependency_problems(tmp_path, scope) == []  # design/** is a declared exclusion here...
-    assert any("src/engcore/design/history.py" in p for p in cc.authority_closure_problems(tmp_path, scope))  # ...not for a verdict
+    (problem,) = cc.certified_dependency_problems(tmp_path, _SCOPE)
+    assert "src/engcore/decider/rule.py" in problem and "solver.py" not in problem
+
+
+def test_a_pinned_control_plane_package_init_is_a_seed(tmp_path) -> None:
+    """Review I-4: src/engcore/__init__.py runs on every engcore import, whatever its area's classification."""
+    _tree(tmp_path, {
+        "src/engcore/__init__.py": b"from . import product\n",
+        "src/engcore/certified/__init__.py": b"",
+        "src/engcore/product.py": b"VERDICT = 'supported'\n",
+    })
+    (problem,) = cc.certified_dependency_problems(tmp_path, _SCOPE)
+    assert "src/engcore/product.py" in problem
+
+
+@pytest.mark.parametrize("source", [
+    b"import builtins\nbuiltins.exec(open('rule.py').read())\n",
+    b"RULE = getattr(__import__('importlib'), 'import_module')('engcore.' + 'decider')\n",
+])
+def test_review_i5_loaders_the_detector_missed_are_refused(tmp_path, source) -> None:
+    _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", "src/engcore/certified/stop.py": source})
+    problems = cc.certified_dependency_problems(tmp_path, _SCOPE)
+    assert any("DYNAMIC_REACH" in p for p in problems), problems
+
+
+def test_review_i5_a_star_import_from_a_package_reaches_its_submodules(tmp_path) -> None:
+    _tree(tmp_path, {
+        "src/engcore/certified/__init__.py": b"",
+        "src/engcore/certified/stop.py": b"from ..decider import *\n",
+        "src/engcore/decider/__init__.py": b"__all__ = ['rule']\n",
+        "src/engcore/decider/rule.py": b"def decide():\n    return 'supported'\n",
+    })
+    (problem,) = cc.certified_dependency_problems(tmp_path, _SCOPE)
+    assert "src/engcore/decider/rule.py" in problem
 
 
 def test_the_closure_names_files_with_their_on_disk_spelling(tmp_path) -> None:
