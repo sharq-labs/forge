@@ -285,11 +285,11 @@
   "leakage_audit": "LITERAL only (NO_LITERAL_LEAK_FOUND / LITERAL_LEAK_FOUND); structural tells are measured separately and are never cleared by this audit"
  },
  "harness": {
-  "analysis.py": "c0a41d1619502d6c8011d038a099c83f9582c1e53ef39e550c505982e3ef9bef",
+  "analysis.py": "e389fc31d4fe08d1bef172bddf84e42b7a84ada5f317a1a5309c41faa7751089",
   "answer_key.py": "46977bcb959ac737cdadb6bb7472f89ad434d4c4c513c2240bb58a77644e5db6",
   "arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
   "harness.py": "75c12ebcf089962085fd7578e921243c7ab59283a79bd0860d9bac2f19b8ca58",
-  "pilot.py": "a7eeda73b4a5611ddbd26b6a4f8cc98bba1f69ef38bad5a0a36f790a96a09cd8",
+  "pilot.py": "e71625339a7ee868a5dc3d54b68895dadbda3f348dc525bcd86fc7536a8f5884",
   "presentation.py": "65a88265fc2e5eed441d4cde0c2b588438bf429ac71ee2f475c5e5cecb477900",
   "primitives.py": "caaea4fc83c9a4ec0c89e104b401194ab3d48e2f5f0b55d8d328f954cae96f78",
   "proposer_host.py": "a4b9331780351232d3007596e6c9949eb9e6bdabcb88f7057c6c4e33b25c31a4"
@@ -306,10 +306,10 @@
    "information gain per provider call (needs a belief model)",
    "invalidation precision/recall (needs the justification graph)"
   ],
-  "primary": "JOINT campaign credit: per campaign (one world of every kind) the sum over kinds of the world's frozen DEFAULT_CREDIT, each world averaged over seeds; an arm's score is the mean over campaigns (benchmarks/genesis_lite/analysis.py, digest above)",
+  "primary": "JOINT world-set credit: per world set (one campaign = one world of every kind, under one (presentation, seed) root) the sum over the six kinds of the frozen DEFAULT_CREDIT; an arm's score is the mean over the preregistered grid of world sets (benchmarks/genesis_lite/analysis.py, digest above)",
   "secondary": [
    "full-credit rate per (arm, kind, presentation) cell -- DESCRIPTIVE ONLY, never a claim",
-   "discovery credit and control (refusal) credit reported apart; correct-refusal rate on controls",
+   "discovery credit and control (refusal) credit reported apart; discovery credit split into in-family and out-of-family (NO_STRONG_BASELINE) worlds; correct-refusal rate on controls",
    "mean credit (DEFAULT_CREDIT table)",
    "credit over the best constant answer",
    "inadmissible count",

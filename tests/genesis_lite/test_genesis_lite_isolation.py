@@ -92,5 +92,5 @@ def test_an_unknown_isolation_is_an_invalid_run():
 @pytest.mark.parametrize("isolation", ["in_process", "proposer_process"])
 def test_review_a_crafted_setting_name_cannot_turn_a_run_invalid(isolation):
     rec = _run("crafted_setting", isolation)
-    assert rec.status == "VALID", rec.reasons
-    assert all(u["answer"] == "no_law" for u in rec.universes)
+    assert rec.status == "VALID", rec.reasons                      # the run is not invalidated...
+    assert all(u["outcome"] == "inadmissible" for u in rec.universes)  # ...the proposer's own failure is scored against it

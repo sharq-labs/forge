@@ -126,11 +126,13 @@ def build(pilot_root_commitment: str) -> dict[str, Any]:
             "the region's extension follows the first dimensionless group, hinting which inputs carry structure",
             "public ranges identify a world across runs that share a master seed: the formal tier never reuses one"],
         "metrics": {
-            "primary": "JOINT campaign credit: per campaign (one world of every kind) the sum over kinds of the world's frozen "
-                       "DEFAULT_CREDIT, each world averaged over seeds; an arm's score is the mean over campaigns "
-                       "(benchmarks/genesis_lite/analysis.py, digest above)",
+            "primary": "JOINT world-set credit: per world set (one campaign = one world of every kind, under one "
+                       "(presentation, seed) root) the sum over the six kinds of the frozen DEFAULT_CREDIT; an arm's score "
+                       "is the mean over the preregistered grid of world sets (benchmarks/genesis_lite/analysis.py, digest "
+                       "above)",
             "secondary": ["full-credit rate per (arm, kind, presentation) cell -- DESCRIPTIVE ONLY, never a claim",
-                          "discovery credit and control (refusal) credit reported apart; correct-refusal rate on controls",
+                          "discovery credit and control (refusal) credit reported apart; discovery credit split into "
+                          "in-family and out-of-family (NO_STRONG_BASELINE) worlds; correct-refusal rate on controls",
                           "mean credit (DEFAULT_CREDIT table)", "credit over the best constant answer", "inadmissible count",
                           "observe calls", "wall seconds", "presentation invariance (deterministic arms, paired worlds)"],
             "not_measured_in_v0": ["proper prediction score / calibration (needs predictive distributions: the Mind)",
