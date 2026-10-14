@@ -105,3 +105,79 @@ def test_a_changed_trajectory_file_is_refused(tmp_path, monkeypatch):
     monkeypatch.setattr(bdata, "DATA_DIR", tmp_path)
     with pytest.raises(ValueError, match="pinned digest"):
         bdata.load("calibration")
+
+
+# ---- result records: pinned, bound to the preregistration, and honest about what they show ---------------------------
+RESULTS = HERE / "results"
+
+
+def _pinned(name):
+    raw = (RESULTS / f"{name}.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == (RESULTS / f"{name}.sha256").read_bytes().split()[0].decode()
+    return json.loads(raw)
+
+
+def test_every_result_record_is_pinned_and_bound_to_preregistration_v2():
+    v2 = hashlib.sha256((HERE / "PREREGISTRATION_v2.json").read_bytes()).hexdigest()
+    cal, val = _pinned("CALIBRATION"), _pinned("VALIDATION")
+    unc = _pinned("UNCERTAINTY_REPORT")
+    assert cal["preregistration_sha256"] == val["preregistration_sha256"] == v2
+    assert val["calibration_sha256"] == unc["calibration_sha256"] == (RESULTS / "CALIBRATION.sha256").read_bytes().split()[0].decode()
+
+
+def test_no_held_out_cycle_leaks_into_calibration():
+    cal = {(c["cell"], c["ordinal"]) for c in bdata.load("calibration")["cycles"]}
+    within = {(c["cell"], c["ordinal"]) for c in bdata.load("within_cell_holdout")["cycles"]}
+    cross = {(c["cell"], c["ordinal"]) for c in bdata.load("cross_cell_validation")["cycles"]}
+    assert not cal & within and not cal & cross and not within & cross
+    assert {cell for cell, _ in cross}.isdisjoint({cell for cell, _ in cal})
+    assert max(o for _, o in cal) < min(o for _, o in within)          # temporal holdout lies strictly later
+
+
+def test_the_identifiability_result_is_a_refusal_not_a_quiet_pass():
+    ident = _pinned("CALIBRATION")["identifiability"]
+    assert ident["decision"] == "NOT_IDENTIFIABLE" and ident["calibration_gate"] == "NOT_PASSED"
+    assert not ident["per_parameter"]["C1"]["identified"] and not ident["per_parameter"]["tau"]["identified"]
+
+
+def test_the_profile_rule_refuses_a_flat_profile_and_accepts_a_rising_one():
+    flat = [{"factor": f, "sse_ratio": 1.0 + 0.02 * abs(f - 1)} for f in (1 / 3, 1 / 2, 2, 3)]
+    rising = [{"factor": f, "sse_ratio": 1.0 + 0.5 * abs(f - 1)} for f in (1 / 3, 1 / 2, 2, 3)]
+    one_sided = [{"factor": f, "sse_ratio": 1.5 if f > 1 else 1.01} for f in (1 / 3, 1 / 2, 2, 3)]
+    assert not bfit.profile_identified(flat) and bfit.profile_identified(rising)
+    assert not bfit.profile_identified(one_sided)
+
+
+def test_multistart_catches_a_start_that_converges_to_the_wrong_basin():
+    starts = _pinned("CALIBRATION")["models"]["1rc"]["starts"]
+    best = min(s["sse"] for s in starts)
+    assert max(s["sse"] for s in starts) > 1.2 * best              # a start ended in the R1 -> 0 (Rint-like) basin
+    assert _pinned("CALIBRATION")["models"]["1rc"]["sse_V2"] == best
+
+
+def test_rint_outperforming_1rc_would_be_reported_as_such():
+    from benchmarks.battery_1rc_closure.evaluate import comparison_verdict, paired_bootstrap
+    small = [np.full(50, 0.01) + 0.001 * k for k in range(8)]
+    large = [np.full(50, 0.03) + 0.001 * k for k in range(8)]
+    out = paired_bootstrap(small, large, b=400)                    # Rint residuals smaller
+    assert out["ci95_mV"][1] < 0 and comparison_verdict(out["ci95_mV"]) == "RINT_BETTER"
+    assert comparison_verdict([-1.0, 1.0]) == "NOT_DISTINGUISHED"
+
+
+def test_validation_claims_stay_inside_what_the_evidence_shows():
+    val = _pinned("VALIDATION")
+    assert "NOT a validation of parameter values" in val["claim_scope"]
+    cross = val["roles"]["cross_cell_validation"]
+    assert cross["1rc"]["acceptance"] == cross["rint"]["acceptance"] == "FAIL"
+    unc = _pinned("UNCERTAINTY_REPORT")["components"]
+    assert unc["measurement"]["status"] == "UNKNOWN" and unc["parameter"]["status"] == "NOT_ADMISSIBLE"
+    for role in ("within_cell_holdout", "cross_cell_validation"):
+        assert val["roles"][role]["parameter_uncertainty_1rc"]["coverage_of_measurements"] < 0.5   # no false precision
+
+
+def test_the_ledger_does_not_promote_what_the_evidence_does_not_support():
+    ledger = json.loads((HERE.parents[1] / "docs/project/scientific_capability_completion.json").read_bytes())
+    gates = next(c for c in ledger["capabilities"] if c["id"] == "battery.thevenin_1rc")["gates"]
+    for gate in ("calibration", "independent_validation", "measurement_uq", "parameter_uq", "model_discrepancy",
+                 "claims_integration", "domainpack_integration"):
+        assert gates[gate]["status"] == "MISSING", gate

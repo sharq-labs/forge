@@ -118,6 +118,11 @@ def paired_bootstrap(res_a: list[np.ndarray], res_b: list[np.ndarray], b=2000, s
                                                           float(np.percentile(diffs, 97.5))]}
 
 
+def comparison_verdict(ci) -> str:
+    """Preregistered: 1RC better iff the 95 % interval of RMSE_Rint - RMSE_1RC lies above 0, Rint better iff below."""
+    return "1RC_BETTER" if ci[0] > 0 else "RINT_BETTER" if ci[1] < 0 else "NOT_DISTINGUISHED"
+
+
 def svg_plot(path: pathlib.Path, title: str, t, series: list[tuple[str, np.ndarray, str]], ylabel: str) -> None:
     w, h, m = 760, 340, 55
     ys = np.concatenate([s for _, s, _ in series])
@@ -197,9 +202,7 @@ def main() -> int:
                  "parameter_uncertainty_1rc": {"band": "2.5-97.5 % of 40 joint bootstrap parameter sets",
                                                "median_half_width_mV": 1000 * float(np.median(halfwidth)),
                                                "coverage_of_measurements": float(inside.mean())}}
-        ci = entry["comparison"]["ci95_mV"]
-        entry["comparison"]["verdict"] = ("1RC_BETTER" if ci[0] > 0 else "RINT_BETTER" if ci[1] < 0
-                                          else "NOT_DISTINGUISHED")
+        entry["comparison"]["verdict"] = comparison_verdict(entry["comparison"]["ci95_mV"])
         for name, m in (("1rc", m1), ("rint", mr)):
             entry[name]["acceptance"] = ("PASS" if m["rmse_mV"] <= ACC["RMSE_mV_max"]
                                          and m["p95_abs_mV"] <= ACC["P95_abs_error_mV_max"] else "FAIL")
