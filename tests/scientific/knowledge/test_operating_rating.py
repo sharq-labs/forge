@@ -12,10 +12,10 @@ from engcore.scientific.knowledge import (
     MissionSupportability,
     RatingApplicability,
     RequestedOperatingCondition,
-    assess_manufacturer_rating_packet,
     assess_operating_rating,
     assess_operating_ratings,
 )
+from engcore.systems.products.drone_ratings import assess_manufacturer_rating_packet
 from engcore.scientific.units.quantity import Quantity
 
 REVISION = "a" * 40
@@ -338,3 +338,32 @@ def test_an_undated_magnitude_blocks_a_dated_sibling_rating():
     )
     assert direct.dimension("duration").status is RatingApplicability.SUPPORTED_WITHIN_RATING
     assert direct.status is RatingApplicability.INSUFFICIENT_EVIDENCE
+
+
+# ---- landing review 2026-10-16: a caller label is not an operating point ---------------------------------------------
+def test_an_admission_id_with_no_published_limit_to_compare_establishes_nothing():
+    """Reviewer counterexample: no published magnitude, a huge requested current and an admission id was SUPPORTED."""
+    rating = _rating(duration=Quantity(3600, "second"), current=None, power=None, voltage=None,
+                     rating_id="motor-1:3600s", stated_duty=None)
+    request = _admitted(duration=Quantity(60, "second"), current=Quantity(1000, "ampere"),
+                        operating_point_admission_id="x")
+    assessment = assess_operating_rating(rating, request, run_id=RUN, source_revision=REVISION)
+    assert assessment.status is not RatingApplicability.SUPPORTED_WITHIN_RATING
+    assert assessment.dimension("operating_point").status is RatingApplicability.OPERATING_POINT_NOT_ESTABLISHED
+    assert assessment.dimension("current").status is RatingApplicability.CONDITIONAL_APPLICABILITY_UNRESOLVED
+    mission = assess_operating_ratings((rating,), request, run_id=RUN, source_revision=REVISION)
+    assert mission.status is not MissionSupportability.SUPPORTED
+
+
+def test_the_operating_point_needs_a_compared_published_limit_of_the_same_kind():
+    # the rating publishes a current maximum only; the request states power only -> nothing compared
+    rating = _rating(duration=Quantity(3600, "second"), power=None, rating_id="motor-1:3600s", stated_duty=None)
+    request = _admitted(duration=Quantity(60, "second"), current=None, power=Quantity(100, "watt"))
+    assessment = assess_operating_rating(rating, request, run_id=RUN, source_revision=REVISION)
+    assert assessment.dimension("operating_point").status is RatingApplicability.OPERATING_POINT_NOT_ESTABLISHED
+    assert assessment.dimension("power").status is RatingApplicability.CONDITIONAL_APPLICABILITY_UNRESOLVED
+    # the same request with a current inside the published maximum is established on that comparison
+    within = _admitted(duration=Quantity(60, "second"), current=Quantity(10, "ampere"))
+    ok = assess_operating_rating(rating, within, run_id=RUN, source_revision=REVISION)
+    assert ok.dimension("operating_point").status is RatingApplicability.SUPPORTED_WITHIN_RATING
+    assert "current" in ok.dimension("operating_point").reason

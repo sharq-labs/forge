@@ -28,7 +28,6 @@ from .operating_rating import (
     MissionSupportability,
     RatingApplicability,
     RequestedOperatingCondition,
-    assess_manufacturer_rating_packet,
     assess_operating_rating,
     assess_operating_ratings,
 )
@@ -40,6 +39,6 @@ __all__ += [
     "ScientificKnowledgeRegistry",
     "ApplicabilityAssessment", "ManufacturerOperatingRating",
     "MissionRatingAssessment", "MissionSupportability", "RatingApplicability",
-    "RequestedOperatingCondition", "assess_manufacturer_rating_packet",
+    "RequestedOperatingCondition",
     "assess_operating_rating", "assess_operating_ratings",
 ]
