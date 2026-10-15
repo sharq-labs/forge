@@ -28,3 +28,8 @@ def test_an_undeclared_pair_is_not_read_as_independent():
 
 def test_a_single_component_needs_no_correlation():
     assert aggregate_uncertainty((UncertaintyComponent("a",UncertaintySource.MEASUREMENT,2),)).standard_uncertainty==2
+
+
+def test_explicit_zero_component_is_still_representable():
+    result = aggregate_uncertainty((UncertaintyComponent("exact", UncertaintySource.NUMERICAL, 0),))
+    assert result.standard_uncertainty == 0
