@@ -21,10 +21,25 @@ from .versioning import (
     compare_source_versions,
 )
 from .registry import ScientificKnowledgeRegistry
+from .operating_rating import (
+    ApplicabilityAssessment,
+    ManufacturerOperatingRating,
+    MissionRatingAssessment,
+    MissionSupportability,
+    RatingApplicability,
+    RequestedOperatingCondition,
+    assess_manufacturer_rating_packet,
+    assess_operating_rating,
+    assess_operating_ratings,
+)
 
 __all__ += [
     "KnowledgeQuery", "KnowledgeSetAssessment", "KnowledgeSetStatus",
     "assess_knowledge_set", "SourceVersionKey", "SourceVersionRelation",
     "SourceSupersession", "compare_source_versions",
     "ScientificKnowledgeRegistry",
+    "ApplicabilityAssessment", "ManufacturerOperatingRating",
+    "MissionRatingAssessment", "MissionSupportability", "RatingApplicability",
+    "RequestedOperatingCondition", "assess_manufacturer_rating_packet",
+    "assess_operating_rating", "assess_operating_ratings",
 ]

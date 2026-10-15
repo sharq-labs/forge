@@ -326,6 +326,10 @@ NON_CORE_PACKAGES = {
         "issuer-bound authority (Big Rocks: Authority Integrity): persistent signed issuer registry and attestation ledger "
         "over DIGESTS of existing records; imports nothing else from engcore, issues no scientific verdict"
     ),
+    "mind": (
+        "next-action selection above scientific authority; records dependencies and "
+        "chooses an admissible action or stop; issues no verdict, evidence, or validation"
+    ),
 }
 
 

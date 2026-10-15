@@ -3876,3 +3876,23 @@ Outcome: the remaining three requested code repairs are implemented and reviewed
 latest-main benchmark and additive challenge-summary repairs are preserved.
 Integration remains blocked by the actual red gates / certificate drift; no
 G0 PASS, certification, qualification or physical validation is claimed.
+
+## 2026-10-12 A1.5 manufacturer-rating applicability
+
+- Added `engcore.scientific.knowledge.operating_rating` on HEAD `8b028dcf`. No Mind, no catalog search, no multirotor redesign.
+- `python -m pytest tests/scientific/knowledge/test_operating_rating.py -q --tb=line` -> 15 passed in 4.61s. Python 3.11.17, venv `/home/dev_kaeem/forge-g0-repair-venv`.
+- Seal rerun of the same command -> 15 passed in 4.41s.
+- `python tools/forge_check.py --regression` -> 225 passed in 75.73s. No digest or certificate mismatch was reported by this gate. Pins were not republished.
+- Frozen packet `a1-packet-c.json` SHA-256 remained `e1df8cefcf1ae85e7633aca6db084b635b9ffa6703363b593e64dc766db0ac30` before and after the seal rerun. Mission status `insufficient_evidence`. Component statuses: kde-4012, tmotor-mn4010-kv370, and mad-5008-400-eee `outside_duration_envelope`; mad-5010-240-eee `operating_point_not_established`. Not a physical-infeasibility claim.
+- FAST / recertification: NOT RUN.
+
+## 2026-10-12 A2 minimal next-action mind
+
+- Substrate commit `67c6971113b88b2cdab953d8073406a746f472e7` on `feat/a1-5-operating-rating`. The Mind is uncommitted. It does not issue scientific verdicts.
+- `python -m pytest tests/mind/test_transition.py -q --tb=line` -> 18 passed in 1.93s, and the seal rerun -> 18 passed in 2.02s. Python 3.11.17, venv `/home/dev_kaeem/forge-g0-repair-venv`.
+- First `python tools/forge_check.py --regression` -> 1 failed, 224 passed in 80.64s. Failure: `tests/test_core_api_layering.py::test_every_package_under_engcore_is_classified_core_or_not`. `engcore.mind` was an unclassified package. It was recorded as non-Core because it issues no verdict. No digest or certificate was republished.
+- Second `python tools/forge_check.py --regression` -> 225 passed in 72.20s.
+- Frozen packets, scored after the review fixes: `a2-packet-1.json` `84baec613011f0063bed5a01500d9fcfb17df7b5f0aae314af38c1f908e6ad2b`; `a2-packet-2.json` `647d8a2232dca74df3277ada12a4da3086190d98fc910e2869d2b08bafffe8cb`; `a2-packet-3.json` `7a0c455fe88d82423179901aa920e5913e39bb11b539755f517a470ee583a352`. Bytes matched before and after scoring.
+- Selected actions: `request-operating-point`, `check-identifiability`, `stop`. Score 15/15 on the A2 denominator. Unsupported scientific claims 0. Authority override attempts 0. LLM calls 0. Scientific capability calls 0.
+- Belief revision after an operating-point availability observation: that dependency blocked, duration support and the three short-duration refusals unchanged, mission unresolved, next action `stop`.
+- Scientific review of the Mind: CHANGES REQUIRED, then PASS after the five corrections. A PASS is a review result only. Recertification: NOT RUN.
