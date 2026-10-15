@@ -31,7 +31,12 @@ The three window roles total about 67 MB, so they are **not committed**. Their `
 python -m benchmarks.battery_1rc_crosscell.data --raw-dir D:/forge-data/kirkaldy2024/bol25
 ```
 
-`FORGE_KIRKALDY_DIR=<dir>` enables the rebuild test.
+Two checks need files that are not shipped, so they are commands rather than tests the hardened gates could only skip:
+
+- `python -m benchmarks.battery_1rc_crosscell.data --verify-raw <bol25 dir>` rebuilds every role in memory and checks its pin.
+- `python -m benchmarks.battery_1rc_crosscell.evaluate --verify-route` checks the route against the vectorised transcription on real windows (it needs the rebuilt window roles).
+
+Each exits 1 and lists every problem. Tests check that both refuse when their inputs are absent, and a synthetic route-vs-transcription test always runs.
 
 ## Construction deviations (recorded before any fit)
 

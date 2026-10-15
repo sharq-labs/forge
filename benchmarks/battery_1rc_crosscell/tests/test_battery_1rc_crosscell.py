@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
-import os
 import pathlib
 
 import numpy as np
@@ -20,10 +19,6 @@ HERE = pathlib.Path(xprereg.__file__).resolve().parent
 RESULTS = HERE / "results"
 SMALL_ROLES = ("ocv_cal", "heldout_own_ocv", "exclusions")
 WINDOW_ROLES = ("calibration", "heldout_gitt25", "heldout_gitt5")
-RAW = os.environ.get("FORGE_KIRKALDY_DIR")
-have_windows = all((HERE / "data" / f"{n}.json").exists() for n in WINDOW_ROLES)
-needs_windows = pytest.mark.skipif(not have_windows, reason="window roles are rebuilt from the raw files: "
-                                                            "python -m benchmarks.battery_1rc_crosscell.data --raw-dir ...")
 
 
 def _pinned(path: pathlib.Path):
@@ -142,19 +137,14 @@ def test_the_calibration_record_is_rerun_stable_and_its_temperature_range_is_not
     assert "NOT widened" in cal["parameter_set"]["temperature_basis"]
 
 
-@needs_windows
-def test_the_vectorised_transcription_equals_the_route_on_real_windows():
-    from benchmarks.battery_1rc_crosscell.evaluate import Axis, load_calibration, predict_route
-    cal = load_calibration()
-    p = cal["models"]["1rc"]["parameters"]
-    ocv = xfit.Ocv(xdata.load("ocv_cal"))
-    for role in ("calibration", "heldout_gitt25", "heldout_gitt5"):
-        doc = xdata.load(role)
-        w = doc["windows"][0]
-        route, status, _ = predict_route(w, Axis(ocv), doc["q_Ah"], p, cal["parameter_set"], "test pin", "pin")
-        b = xfit.Batch([w], doc["q_Ah"])
-        fast = xfit.predict(b, ocv, p["R0"], p["R1"], p["C1"])[0][b.mask[0]]
-        assert np.max(np.abs(route - fast)) < 1e-9
+def test_the_real_window_route_check_refuses_without_the_window_roles(monkeypatch, tmp_path):
+    # The real-window check needs the rebuilt (uncommitted) window roles: it is the command
+    # ``python -m benchmarks.battery_1rc_crosscell.evaluate --verify-route`` (run results in PROGRESS.md), not a test
+    # the gates could only skip. The synthetic test above always runs. Without the roles it must report, never pass.
+    from benchmarks.battery_1rc_crosscell import evaluate as xeval
+    monkeypatch.setattr(xdata, "DATA", tmp_path)
+    problems = xeval.verify_route_on_real_windows()
+    assert problems and "cannot load the window roles" in problems[0]
 
 
 def test_acceptance_is_applicability_gated_and_needs_the_load_only_samples_too():
@@ -276,12 +266,11 @@ def test_the_ledger_gate_stays_missing_without_an_admitted_measurement_uncertain
     assert _pinned(RESULTS / "OUTCOME")["ledger_independent_validation"] == "MISSING"
 
 
-@pytest.mark.skipif(not RAW, reason="needs the 36 Kirkaldy RPT0 CSV files (set FORGE_KIRKALDY_DIR); see the README")
-def test_every_role_rebuilds_from_the_raw_bytes_and_matches_its_pin():
-    docs = xdata.build(pathlib.Path(RAW))
-    for name, doc in docs.items():
-        data = json.dumps(doc, sort_keys=True, separators=(",", ":")).encode() + b"\n"
-        assert hashlib.sha256(data).hexdigest() == (HERE / "data" / f"{name}.sha256").read_bytes().split()[0].decode()
+def test_the_raw_bytes_rebuild_check_refuses_when_the_raw_files_are_absent(tmp_path):
+    # The rebuild needs the 36 Kirkaldy CSVs, which are not shipped: it is the command
+    # ``python -m benchmarks.battery_1rc_crosscell.data --verify-raw <dir>``, not a test the gates could only skip.
+    problems = xdata.verify_raw(tmp_path / "absent")
+    assert problems and "cannot rebuild" in problems[0]
 
 
 def test_the_calibration_is_identifiable_from_cells_of_three_experiments():

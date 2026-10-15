@@ -225,7 +225,34 @@ def own_axis_descriptive(doc_windows, own_doc, p1, pr, q_cal):
     return out
 
 
+def verify_route_on_real_windows() -> list[str]:
+    """The vectorised transcription (used by the fit, the bootstrap bands and the descriptive set) against the engcore
+    route on the first and last window of every window role. Needs the rebuilt window roles: ``--verify-route``."""
+    problems = []
+    try:
+        cal = load_calibration()
+        ocv = bfit.Ocv(load("ocv_cal"))
+        docs = {role: load(role) for role in ("calibration", "heldout_gitt25", "heldout_gitt5")}
+    except (OSError, ValueError, KeyError) as exc:
+        return [f"cannot load the window roles: {type(exc).__name__}: {exc}"]
+    p = cal["models"]["1rc"]["parameters"]
+    for role, doc in docs.items():
+        for w in (doc["windows"][0], doc["windows"][-1]):
+            route, _, _ = predict_route(w, Axis(ocv), doc["q_Ah"], p, cal["parameter_set"], "verify", "verify")
+            b = bfit.Batch([w], doc["q_Ah"])
+            fast = bfit.predict(b, ocv, p["R0"], p["R1"], p["C1"])[0][b.mask[0]]
+            gap = float(np.max(np.abs(route - fast)))
+            if not gap < 1e-9:
+                problems.append(f"{role} {w['cell']} {w['pulse_start_s']:.1f}: route - transcription = {gap:.3e} V")
+    return problems
+
+
 def main() -> int:
+    import sys
+    if sys.argv[1:] == ["--verify-route"]:
+        problems = verify_route_on_real_windows()
+        print(json.dumps({"problems": problems}, indent=1))
+        return 1 if problems else 0
     cal = load_calibration()
     ocv = bfit.Ocv(load("ocv_cal"))
     axis = Axis(ocv)

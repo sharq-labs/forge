@@ -231,10 +231,33 @@ def load(name: str) -> dict[str, Any]:
     return doc
 
 
+def verify_raw(raw_dir: pathlib.Path) -> list[str]:
+    """Every role rebuilt in memory from the raw Kirkaldy bytes against its committed pin; returns the problems.
+    The raw files are not shipped, so this is the command ``--verify-raw``, not a test the gates could only skip."""
+    try:
+        docs = build(raw_dir)
+    except (OSError, ValueError, KeyError) as exc:
+        return [f"cannot rebuild from {raw_dir}: {type(exc).__name__}: {exc}"]
+    problems = []
+    for name, doc in docs.items():
+        data = json.dumps(doc, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+        if hashlib.sha256(data).hexdigest() != (DATA / f"{name}.sha256").read_bytes().split()[0].decode():
+            problems.append(f"{name}: the rebuild does not reproduce the committed pin")
+    return problems if docs else ["nothing was checked"]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--raw-dir", required=True, type=pathlib.Path)
-    docs = build(parser.parse_args().raw_dir)
+    parser.add_argument("--raw-dir", type=pathlib.Path)
+    parser.add_argument("--verify-raw", type=pathlib.Path)
+    args = parser.parse_args()
+    if args.verify_raw:
+        problems = verify_raw(args.verify_raw)
+        print(json.dumps({"problems": problems}, indent=1))
+        return 1 if problems else 0
+    if not args.raw_dir:
+        parser.error("--raw-dir is required unless --verify-raw is given")
+    docs = build(args.raw_dir)
     digests = write_all(docs)
     import collections
     print(json.dumps({"q_cal_Ah": docs["ocv_cal"]["q_cal_Ah"], "knots": len(docs["ocv_cal"]["knots_z_V_cells"]),
