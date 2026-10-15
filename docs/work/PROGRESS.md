@@ -3371,3 +3371,367 @@ Owner: the workflow edit needs OD-3 recertification. Nothing is pushed or merged
   itself: NOT RUN (its tree = `9e92573e`, whose FAST-tested parent `bfccb351` differs by one PROGRESS entry).
 - Failed approach: `git merge-tree` against #39 / #24 exited 128 ("no merge base"). That was the shallow clone, not
   unrelated histories. Use the GitHub compare API, or deepen the clone, before calling histories unrelated.
+
+
+## 2026-10-13 Final test infrastructure assurance closeout — BLOCKED
+
+Source origin/main 5d73e8f5118aa845f1957decc5aae986e72476a9, tree ed305a44e69429fe06bb1e92954237aadd005080. Dedicated Windows and Linux worktrees; original dirty checkout preserved. Full commands, exact failures, outcomes and limits: `docs/work/FINAL_TEST_INFRASTRUCTURE_ASSURANCE_2026-10-13.md`. Raw argv/results/JUnit: `D:/forge-final-assurance-evidence/executed-commands-and-results.json`.
+
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "tools.certification.core_certificate", "--verify"]`
+result: exit 1; wall 1.3 s; counts null; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "tools.certification.core_freeze_v4", "--verify"]`
+result: exit 1; wall 17.22 s; counts null; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.11/bin/python", "-c", "import sys,pytest,xdist,platform; print(sys.version); print(platform.platform()); print(\"pytest\",pytest.__version__,\"xdist\",xdist.__version__)"]`
+result: exit 0; wall 1.84 s; counts null; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.11/bin/python", "-m", "pytest", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "-q", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-guard-311.xml"]`
+result: exit 0; wall 9.22 s; counts {"tests": 1, "failures": 0, "errors": 0, "skipped": 0}; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.11/bin/python", "-m", "pytest", "-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-fast-311.xml"]`
+result: exit 1; wall 140.22 s; counts {"tests": 10185, "failures": 2, "errors": 0, "skipped": 157}; tracked byte drift 0; git status ''
+failure: `tests.test_core_certificate::test_the_certificate_describes_this_tree`
+failure: `tests.test_change_impact::test_the_old_gap_a_domain_models_own_tests_are_now_selected`
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-c", "import sys,pytest,xdist,platform; print(sys.version); print(platform.platform()); print(\"pytest\",pytest.__version__,\"xdist\",xdist.__version__)"]`
+result: exit 0; wall 1.21 s; counts null; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "pytest", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "-q", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-guard-312.xml"]`
+result: exit 0; wall 9.22 s; counts {"tests": 1, "failures": 0, "errors": 0, "skipped": 0}; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "pytest", "-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-fast-312.xml"]`
+result: exit 1; wall 132.22 s; counts {"tests": 10185, "failures": 2, "errors": 0, "skipped": 157}; tracked byte drift 0; git status ''
+failure: `tests.test_core_certificate::test_the_certificate_describes_this_tree`
+failure: `tests.test_change_impact::test_the_old_gap_a_domain_models_own_tests_are_now_selected`
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "pytest", "-m", "not campaign", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--deselect", "tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process", "--deselect", "tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure", "--deselect", "tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical", "--deselect", "benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates", "--deselect", "benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-scientific-312.xml"]`
+result: exit 1; wall 234.26 s; counts {"tests": 10758, "failures": 2, "errors": 0, "skipped": 157}; tracked byte drift 0; git status ''
+failure: `tests.test_change_impact::test_the_old_gap_a_domain_models_own_tests_are_now_selected`
+failure: `tests.test_core_certificate::test_the_certificate_describes_this_tree`
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "tools/forge_check.py", "--regression"]`
+result: exit 0; wall 11.21 s; counts null; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "pytest", "-q", "-n", "8", "--dist", "loadfile", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-full-312.xml"]`
+result: exit 1; wall 147.29 s; counts {"tests": 10768, "failures": 4, "errors": 0, "skipped": 157}; tracked byte drift 0; git status ''
+failure: `benchmarks.empirical_validation.tests.test_empirical_validation::test_rebuilding_everything_reproduces_the_published_gates`
+failure: `benchmarks.model_measurement_validation.tests.test_model_measurement_validation::test_rebuilding_everything_reproduces_the_published_gates`
+failure: `tests.test_core_certificate::test_the_certificate_describes_this_tree`
+failure: `tests.test_change_impact::test_the_old_gap_a_domain_models_own_tests_are_now_selected`
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "tools.certification.assert_clean_tree"]`
+result: exit 0; wall 1.21 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.core_certificate", "--verify"]`
+result: exit 1; wall 1.69 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.core_freeze_v4", "--verify"]`
+result: exit 1; wall 1.58 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "tools/forge_check.py", "--regression"]`
+result: exit 0; wall 20.72 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "-q", "--junitxml", "D:\\forge-final-assurance-evidence\\winretry-dependency-guard.xml"]`
+result: exit 0; wall 36.62 s; counts {"tests": 1, "failures": 0, "errors": 0, "skipped": 0}; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--junitxml", "D:\\forge-final-assurance-evidence\\winretry-fast.xml"]`
+result: exit 1; wall 222.2 s; counts {"tests": 10056, "failures": 256, "errors": 27, "skipped": 210}; tracked byte drift 0; git status ''
+failure: `::tests.domains.battery.test_audit_domains_battery_pulse`
+failure: `::tests.mcp.test_answer`
+failure: `::tests.mcp.test_audit_domains_electrothermal_transient`
+failure: `::tests.mcp.test_audit_domains_refused_coupling`
+failure: `::tests.mcp.test_claim_assessment`
+failure: `::tests.mcp.test_core_scientific_audit_batch8`
+failure: `tests.test_mutation_workspace::test_manifest_is_complete_deterministic_and_includes_git`
+failure: `tests.test_mutation_workspace::test_mutation_changes_worker_only_and_repairs_exact_bytes`
+failure: `tests.test_mutation_workspace::test_restore_repairs_all_contamination_types[deleted]`
+failure: `tests.test_mutation_workspace::test_restore_repairs_all_contamination_types[unexpected]`
+failure: `tests.test_mutation_workspace::test_restore_repairs_all_contamination_types[mode]`
+failure: `tests.test_mutation_workspace::test_restore_repairs_all_contamination_types[git]`
+failure: `tests.test_mutation_workspace::test_restore_repairs_all_contamination_types[replaced-directory]`
+failure: `tests.test_mutation_workspace::test_contamination_before_attempt_invalidates_without_entering`
+failure: `tests.test_mutation_workspace::test_restore_failure_cannot_issue_a_verdict_or_start_next_attempt`
+failure: `tests.test_mutation_workspace::test_seed_tampering_refuses_restore`
+failure: `tests.test_mutation_workspace::test_next_mutation_observes_pristine_identity`
+failure: `tests.test_mutation_workspace::test_failure_restores_then_cleans_owned_workspace[OSError]`
+failure: `tests.test_mutation_workspace::test_failure_restores_then_cleans_owned_workspace[KeyboardInterrupt]`
+failure: `tests.test_mutation_workspace::test_concurrent_shards_have_distinct_mutable_state`
+failure: `tests.test_mutation_workspace::test_worker_symlink_is_removed_without_touching_source`
+failure: `tests.test_mutation_workspace::test_seed_symlink_and_git_external_pointer_are_refused`
+failure: `tests.test_mutation_workspace::test_linked_artifacts_and_repository_local_storage_are_refused`
+failure: `tests.test_mutation_workspace::test_v4_population_once_and_existing_transcript_contract`
+failure: `tests.test_mutation_workspace::test_v4_failure_paths_restore_before_next_mutation[no-report]`
+failure: `tests.test_mutation_workspace::test_v4_failure_paths_restore_before_next_mutation[timeout]`
+failure: `tests.test_mutation_workspace::test_v4_failure_paths_restore_before_next_mutation[application-refusal]`
+failure: `tests.test_mutation_workspace::test_v4_restore_failure_never_returns_killed`
+failure: `tests.test_mutation_workspace::test_formal_control_first_single_population_and_guard_transcript`
+failure: `tests.test_mutation_workspace::test_local_telemetry_is_outside_manifest_and_cannot_verify_as_receipt`
+failure: `tests.test_mutation_workspace::test_detached_children_are_drained_after_adoption`
+failure: `tests.test_mutation_workspace::test_undrained_descendant_refuses_without_restoration_or_cleanup`
+failure: `tests.test_mutation_workspace::test_descendant_drain_timeout_is_not_a_mutation_verdict`
+failure: `tests.test_mutation_workspace::test_parent_retains_unreleased_worker_storage[False]`
+failure: `tests.test_mutation_workspace::test_parent_retains_unreleased_worker_storage[True]`
+failure: `tests.test_mutation_workspace::test_external_git_configuration_is_refused[[core]\nworktree = /external/source\n]`
+failure: `tests.test_mutation_workspace::test_external_git_configuration_is_refused[[Core]\nworktree = /external/source\n]`
+failure: `tests.test_mutation_workspace::test_external_git_configuration_is_refused[[cOrE]\nWorkTree = /external/source\n]`
+failure: `tests.test_mutation_workspace::test_external_git_configuration_is_refused[[include]\npath = /external/config\n]`
+failure: `tests.test_mutation_workspace::test_pristine_index_is_reused_without_retaining_file_bytes`
+failure: `tests.test_mutation_workspace::test_dirty_hints_do_not_hide_unrelated_same_size_and_restored_timestamp_bytes`
+failure: `tests.test_mutation_workspace::test_known_target_restore_is_sparse_but_worker_sha_remains_complete`
+failure: `tests.test_mutation_workspace::test_new_index_cannot_mask_seed_link_or_type_contamination[same-size-seed]`
+failure: `tests.test_mutation_workspace::test_new_index_cannot_mask_seed_link_or_type_contamination[hardlink]`
+failure: `tests.test_mutation_workspace::test_new_index_cannot_mask_seed_link_or_type_contamination[file-directory]`
+failure: `tests.test_mutation_workspace::test_seed_permissions_are_read_only_and_cleanup_never_follows_substituted_directory`
+failure: `tests.test_mutation_workspace::test_lifecycle_failure_diagnostics_preserve_exact_mutation_and_stage`
+failure: `tests.test_mutation_workspace::test_drain_failure_stage_retains_worker_and_cannot_authorize_reuse`
+failure: `tests.test_mutation_workspace::test_sparse_repair_does_not_chmod_through_symlink_ancestor`
+failure: `tests.test_mutation_workspace::test_invalid_dirty_hint_poisoning_refuses_next_attempt`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[bytes]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[deleted]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[unexpected]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[mode]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[symlink]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[hardlink]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[directory]`
+failure: `tests.test_mutation_workspace::test_restore_streams_seed_without_content_cache`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[core]\nhooksPath=/outside/hooks\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[Core]\nfsmonitor=/outside/monitor\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[extensions]\nworktreeConfig=true\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[includeIf "gitdir:/"]\npath=/outside/config\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[core ]\nworktree=/outside/work\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[core\t]\nworktree=/outside/work\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[extensions ]\nworktreeConfig=true\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[filter.driver]\nclean=/outside/helper\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[diff.driver]\ncommand=/outside/helper\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[filter "driver"]\nclean=/outside/helper\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[core]\nattributesFile=/outside/attrs\n]`
+failure: `tests.test_mutation_workspace::test_git_alternates_and_rewritten_history_are_refused[objects/info/alternates]`
+failure: `tests.test_mutation_workspace::test_git_alternates_and_rewritten_history_are_refused[objects/info/http-alternates]`
+failure: `tests.test_mutation_workspace::test_git_alternates_and_rewritten_history_are_refused[info/grafts]`
+failure: `tests.test_mutation_workspace::test_git_alternates_and_rewritten_history_are_refused[refs/replace/name]`
+failure: `tests.test_mutation_workspace::test_git_alternates_and_rewritten_history_are_refused[config.worktree]`
+failure: `tests.test_mutation_workspace::test_ambiguous_owner_retains_worker_and_blocks_next_attempt`
+failure: `tests.test_mutation_workspace::test_dedicated_process_contract_refuses_detectable_competing_owners[kernel-threads]`
+failure: `tests.test_mutation_workspace::test_dedicated_process_contract_refuses_detectable_competing_owners[sigchld-handler]`
+failure: `tests.test_mutation_workspace::test_dedicated_process_contract_refuses_detectable_competing_owners[sigchld-mask]`
+failure: `tests.test_mutation_workspace::test_dedicated_process_contract_refuses_detectable_competing_owners[children]`
+failure: `tests.test_mutation_workspace::test_dedicated_process_contract_refuses_detectable_competing_owners[subreaper]`
+failure: `tests.test_mutation_workspace::test_telemetry_counter_accounting_failure_cannot_change_workspace_identity`
+failure: `tests.test_mutation_workspace::test_seed_restore_open_descriptor_is_closed_on_write_failure`
+failure: `tests.test_mutation_workspace::test_authenticated_clean_dirty_candidates_are_not_recopied[unchanged-hint]`
+failure: `tests.test_mutation_workspace::test_authenticated_clean_dirty_candidates_are_not_recopied[mode-only]`
+failure: `tests.test_mutation_workspace::test_cli_scratch_existing_user_artifacts_are_never_cleared`
+failure: `tests.test_mutation_workspace::test_diagnostic_atomic_replacement_cannot_overwrite_link_target[symlink]`
+failure: `tests.test_mutation_workspace::test_diagnostic_parent_substitution_is_ignorable_without_outside_write`
+failure: `tests.test_mutation_workspace::test_git_lazy_fetch_and_unknown_formats_are_refused[[extensions]\npartialClone=origin\n]`
+failure: `tests.test_mutation_workspace::test_git_lazy_fetch_and_unknown_formats_are_refused[[EXTENSIONS]\nobjectformat=sha256\n]`
+failure: `tests.test_mutation_workspace::test_git_lazy_fetch_and_unknown_formats_are_refused[[remote "origin"]\npromisor=true\nurl=/outside/repo\n]`
+failure: `tests.test_mutation_workspace::test_git_lazy_fetch_and_unknown_formats_are_refused[[extensions]\nunknownextension=true\n]`
+failure: `tests.test_mutation_workspace::test_promisor_pack_marker_is_refused`
+failure: `tests.test_mutation_workspace::test_abnormal_parent_retains_entire_scratch_without_workspace_marker`
+failure: `tests.test_mutation_workspace::test_changed_sigchld_during_drain_retains_and_refuses`
+failure: `tests.test_mutation_workspace::test_substituted_artifact_root_cannot_clear_user_basetemp`
+failure: `tests.test_mutation_workspace::test_v4_infrastructure_exit_cannot_earn_named_junit_kill[2]`
+failure: `tests.test_mutation_workspace::test_v4_infrastructure_exit_cannot_earn_named_junit_kill[3]`
+failure: `tests.test_mutation_workspace::test_v4_infrastructure_exit_cannot_earn_named_junit_kill[4]`
+failure: `tests.test_mutation_workspace::test_v4_infrastructure_exit_cannot_earn_named_junit_kill[5]`
+failure: `tests.test_mutation_workspace::test_v4_infrastructure_exit_cannot_earn_named_junit_kill[-9]`
+failure: `tests.test_mutation_workspace::test_formal_infrastructure_exit_cannot_earn_transcript_credit[3]`
+failure: `tests.test_mutation_workspace::test_formal_infrastructure_exit_cannot_earn_transcript_credit[4]`
+failure: `tests.test_mutation_workspace::test_formal_infrastructure_exit_cannot_earn_transcript_credit[5]`
+failure: `tests.test_mutation_workspace::test_formal_infrastructure_exit_cannot_earn_transcript_credit[-9]`
+failure: `tests.test_core_guards::test_the_battery_march_runs_the_solver_it_names`
+failure: `tests.test_mutation_workspace::test_string_path_snapshot_equals_the_pathlib_manifest_and_counters`
+failure: `tests.test_mutation_workspace::test_mid_walk_failure_still_reports_entries_already_scanned`
+failure: `tests.test_core_guards::test_every_marched_step_carries_its_own_cell_report`
+failure: `tests.test_formal_xdist::test_every_infrastructure_defect_refuses[linked]`
+failure: `tests.test_formal_xdist::test_formal_run_credits_only_with_a_clean_sentinel[clean]`
+failure: `tests.test_formal_xdist::test_formal_run_credits_only_with_a_clean_sentinel[crash]`
+failure: `tests.test_formal_xdist::test_formal_run_credits_only_with_a_clean_sentinel[absent]`
+failure: `tests.test_formal_xdist::test_formal_run_credits_only_with_a_clean_sentinel[stale]`
+failure: `tests.test_formal_xdist::test_serial_formal_run_has_no_xdist`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[1-FAILED tests/t.py::test_guard[a] - boom\n-True]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[1-FAILED tests/t.py::test_other - boom\n-False]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[0-1 passed\n-False]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[5-no tests ran\n-False]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[2-Interrupted\n-False]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[3-INTERNALERROR\n-WorkspaceError]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[4-usage\n-WorkspaceError]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[-11--WorkspaceError]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[timeout--False]`
+failure: `tests.test_formal_xdist::test_confirmation_needs_the_pristine_tree_plus_exactly_the_declared_edit`
+failure: `tests.test_formal_xdist::test_confirmation_reads_the_name_from_the_nodeid_not_the_message`
+failure: `tests.test_formal_xdist::test_named_alone_control_refuses_a_copy_changed_between_its_runs`
+failure: `tests.test_formal_xdist::test_named_alone_control_selects_by_the_rule_and_voids_a_failing_guard[0]`
+failure: `tests.test_formal_xdist::test_named_alone_control_selects_by_the_rule_and_voids_a_failing_guard[1]`
+failure: `tests.test_formal_xdist::test_main_threads_workers_and_confirms_only_under_xdist`
+failure: `tests.test_formal_xdist::test_an_unconfirmed_xdist_kill_is_not_credit`
+failure: `tests.test_formal_xdist::test_import_refusal_attempts_stay_serial_with_a_serial_control`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[False-formal_mutations-4-1]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[False-formal_mutations-4-2]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[False-v4_mutations-8-1]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[False-v4_mutations-8-2]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[True-formal_mutations-4-1]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[True-formal_mutations-4-2]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[True-v4_mutations-8-1]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[True-v4_mutations-8-2]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[None-1]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[None-2]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[formal_mutations_1-1]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[formal_mutations_1-2]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[v4_mutations_3-1]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[v4_mutations_3-2]`
+failure: `tests.test_local_assurance::test_child_exit_during_forced_kill_preserves_stream_error`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_projection_is_complete_and_a_fully_evidenced_claim_meets_high`
+failure: `tests.foundations.test_v2_credibility_vector::test_levels_rest_on_issued_checks_and_registry_pinned_provenance`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_subject_is_bound_to_the_decision_context`
+failure: `tests.foundations.test_v2_credibility_vector::test_levels_need_support_of_the_subject_admissible_authority_and_context`
+failure: `tests.foundations.test_v2_credibility_vector::test_one_record_one_factor_is_decided_over_all_citations_and_removal_never_helps`
+failure: `tests.foundations.test_v2_credibility_vector::test_independence_must_be_shown_positively`
+failure: `tests.foundations.test_v2_credibility_vector::test_defeaters_block_and_only_a_newer_version_of_the_same_source_closes_one`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_outside_domain_finding_is_a_defeater_and_dominates`
+failure: `tests.foundations.test_v2_credibility_vector::test_and_takes_the_weakest_and_or_takes_one_whole_independent_branch`
+failure: `tests.foundations.test_v2_credibility_vector::test_adversarial_standing_needs_a_surviving_envelope_for_this_subject`
+failure: `tests.foundations.test_v2_credibility_vector::test_removing_evidence_never_raises_any_factor_or_meets_a_requirement`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_contradiction_of_the_subject_or_its_lineage_is_a_defeater_in_any_child_order`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_cited_contradicted_record_defeats_even_when_it_did_not_win_its_factor`
+failure: `tests.foundations.test_v2_credibility_vector::test_supersession_only_lowers_whatever_the_superseder_s_pin_or_standing`
+failure: `tests.foundations.test_v2_credibility_vector::test_applicability_and_uq_are_backed_by_existing_records_not_labels`
+failure: `tests.foundations.test_v2_credibility_vector::test_citing_an_outside_domain_record_twice_does_not_cancel_it`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_envelope_for_another_statement_of_the_claim_supplies_nothing`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_calibration_guard_follows_duplicate_content_and_lineage`
+failure: `tests.foundations.test_v2_credibility_vector::test_refused_records_leave_a_note_and_falsified_envelopes_of_other_claims_are_not_defeaters`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_outside_domain_finding_is_judged_like_a_defeater`
+failure: `tests.foundations.test_v2_credibility_vector::test_contradicted_calibration_data_defeats_and_nothing_is_dropped_silently`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_same_content_twin_does_not_escape_contradiction_or_supersession`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_report_binds_its_inputs_and_attested_negative_reports_count_on_their_subject`
+failure: `tests.foundations.test_v2_credibility_vector::test_test_mode_never_meets_a_decision_requirement`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_unknown_check_caps_applicability_and_an_outside_report_sets_the_level`
+failure: `tests.foundations.test_v2_credibility_vector::test_any_supersession_disqualifies_support_and_an_obsolete_subject_is_defeated`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_incoherent_envelope_backs_nothing`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_obsolete_subject_is_defeated_whatever_else_links_it_to_its_replacement`
+failure: `tests.foundations.test_v2_credibility_vector::test_or_never_meets_a_requirement_because_a_branch_lost_evidence`
+failure: `tests.foundations.test_v2_credibility_vector::test_independence_follows_shared_calibration_and_same_content_ancestry`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_calibration_guard_compares_the_validator_with_every_calibration_input`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_model_never_declares_its_own_model_form_discrepancy`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_contradiction_is_a_conflict_whichever_side_wrote_it`
+failure: `tests.foundations.test_v2_credibility_vector::test_fourth_review_lows`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_contradiction_inside_the_closure_needs_only_one_admissible_end`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_contradicted_twin_disqualifies_a_closing_superseder`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_closing_version_must_be_other_content_and_not_itself_obsolete`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_explicit_defeater_may_add_but_never_replace_a_computed_one`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_claim_s_own_records_never_close_its_defeaters`
+failure: `tests.test_core_certificate::test_the_certificate_describes_this_tree`
+failure: `tests.claims.test_claims_assessment::test_the_mcp_tool_returns_the_same_record`
+failure: `tests.foundations.test_authority_integrity::test_the_issuer_bound_path_admits_a_correctly_attested_record_and_nothing_else`
+failure: `tests.foundations.test_authority_integrity::test_an_unopened_unanchored_or_foreign_ledger_is_refused`
+failure: `tests.foundations.test_authority_integrity::test_forged_and_unknown_issuers_never_reach_the_ledger`
+failure: `tests.foundations.test_authority_integrity::test_a_key_is_registered_only_by_its_holder_in_its_providers_class`
+failure: `tests.foundations.test_authority_integrity::test_wrong_role_wrong_result_wrong_receipt_and_wrong_context_are_refused`
+failure: `tests.foundations.test_authority_integrity::test_self_issued_support_is_refused_from_any_executor_of_the_receipt`
+failure: `tests.foundations.test_authority_integrity::test_negative_records_cap_and_defeat_even_from_the_results_own_executor`
+failure: `tests.foundations.test_authority_integrity::test_an_attested_falsification_follows_the_result_not_the_node_name`
+failure: `tests.foundations.test_authority_integrity::test_attested_records_cannot_be_edited_in_memory`
+failure: `tests.foundations.test_authority_integrity::test_revocation_rotation_and_history`
+failure: `tests.foundations.test_authority_integrity::test_persistence_restart_and_tamper_detection`
+failure: `tests.foundations.test_authority_integrity::test_a_second_writer_or_a_failed_append_never_forks_the_ledger`
+failure: `tests.foundations.test_authority_integrity::test_negative_records_are_read_from_the_ledger_whatever_the_caller_supplies`
+failure: `tests.foundations.test_authority_integrity::test_a_copied_record_or_a_mutated_result_backs_nothing`
+failure: `tests.foundations.test_authority_integrity::test_key_material_placement`
+failure: `tests.foundations.test_authority_integrity::test_an_attested_failed_check_without_a_level_caps_its_roles_factors`
+failure: `tests.foundations.test_authority_integrity::test_an_attested_negative_report_counts_on_its_attested_subject_whatever_digest_it_carries`
+failure: `tests.foundations.test_authority_integrity::test_a_ledger_subclass_is_refused`
+failure: `tests.foundations.test_authority_integrity::test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_path`
+failure: `tests.foundations.test_authority_integrity::test_a_minted_signer_cannot_be_relabelled`
+failure: `tests.foundations.test_authority_integrity::test_a_compromise_window_withdraws_what_the_key_signed_in_it`
+failure: `tests.foundations.test_authority_integrity::test_an_issuer_that_produced_the_same_output_elsewhere_is_self_issued`
+failure: `tests.foundations.test_authority_integrity::test_an_attestation_subject_output_is_a_string`
+failure: `tests.foundations.test_authority_integrity::test_a_retired_key_can_still_be_declared_compromised`
+failure: `tests.foundations.test_authority_integrity::test_a_later_narrower_window_never_narrows_a_declared_compromise`
+failure: `tests.test_core_freeze_manifest::test_the_command_line_verifier_agrees_with_the_function`
+failure: `tests.test_core_freeze_manifest::test_a_descendant_that_keeps_the_contract_still_verifies`
+failure: `tests.claims.test_preregistration_exposure::test_frozen_revisions_chain_and_ignore_other_issuers`
+failure: `tests.claims.test_preregistration_exposure::test_the_gate_refuses_confirmatory_data_until_frozen_approved_and_sealed`
+failure: `tests.claims.test_preregistration_exposure::test_an_owner_who_also_operates_or_was_revoked_does_not_count`
+failure: `tests.claims.test_preregistration_exposure::test_a_row_is_released_only_if_it_matches_its_manifest_commitment`
+failure: `tests.claims.test_preregistration_exposure::test_a_second_manifest_cannot_repartition_a_registered_row`
+failure: `tests.claims.test_preregistration_exposure::test_the_gate_and_the_verifier_read_the_campaigns_own_issuer`
+failure: `tests.claims.test_preregistration_exposure::test_releasing_around_the_gate_is_detected_whatever_the_label`
+failure: `tests.claims.test_preregistration_exposure::test_the_gate_conditions_are_re_derived_at_the_first_confirmatory_release`
+failure: `tests.claims.test_preregistration_exposure::test_revising_or_sealing_after_exposure_makes_the_campaign_exploratory`
+failure: `tests.claims.test_preregistration_exposure::test_the_confirmatory_query_budget_and_multiplicity_come_from_the_journal`
+failure: `tests.claims.test_preregistration_exposure::test_an_untestable_declaration_is_an_abstention_not_a_drop`
+failure: `tests.claims.test_preregistration_exposure::test_untestable_is_not_a_choice_under_a_machine_readable_rule`
+failure: `tests.claims.test_preregistration_exposure::test_verify_passport_re_derives_every_field_counts_as_discovery_trusts`
+failure: `tests.claims.test_preregistration_exposure::test_a_released_value_is_re_checked_against_its_commitment_from_the_journal`
+failure: `tests.claims.test_preregistration_exposure::test_counts_without_n_and_compromised_or_foreign_records_are_not_trusted`
+failure: `tests.claims.test_preregistration_exposure::test_under_a_machine_readable_rule_a_seal_names_its_fit`
+failure: `tests.claims.test_preregistration_exposure::test_a_survived_envelope_never_hides_another_attested_attack_on_the_same_claim`
+failure: `tests.claims.test_preregistration_exposure::test_an_operator_role_falsification_is_counted_and_the_plan_is_bound`
+failure: `tests.claims.test_preregistration_exposure::test_a_pre_registration_without_a_plan_digest_never_verifies_an_attack`
+failure: `tests.foundations.test_escrow_boundary::test_budgets_submissions_and_query_ids_survive_an_escrow_restart`
+failure: `tests.foundations.test_escrow_boundary::test_a_tampered_journal_refuses_to_start_and_a_truncated_one_is_caught_by_the_client`
+failure: `tests.foundations.test_escrow_boundary::test_requests_are_capability_bound_and_never_carry_the_credential`
+failure: `tests.foundations.test_escrow_boundary::test_responses_are_signed_and_bound_to_their_request`
+failure: `tests.foundations.test_escrow_boundary::test_storage_is_private_and_outside_the_repository`
+failure: `tests.foundations.test_escrow_boundary::test_the_subprocess_escrow_resumes_its_journal_but_stays_unproven`
+failure: `tests.foundations.test_escrow_boundary::test_a_rolled_back_or_restored_journal_is_caught_by_a_durable_client_checkpoint`
+failure: `tests.foundations.test_escrow_boundary::test_a_replaced_history_at_the_same_length_is_refused`
+failure: `tests.foundations.test_escrow_boundary::test_a_deleted_journal_refuses_to_start`
+failure: `tests.foundations.test_escrow_boundary::test_noise_after_a_rollback_is_not_reproduced_for_another_request`
+failure: `tests.foundations.test_escrow_boundary::test_a_replaced_universe_refuses_to_start`
+failure: `tests.foundations.test_escrow_boundary::test_unauthenticated_requests_never_touch_a_campaign`
+failure: `tests.foundations.test_escrow_boundary::test_a_log_read_is_single_use_across_restarts`
+failure: `tests.foundations.test_escrow_boundary::test_clients_always_pin_the_escrow_key_and_integrity_is_not_a_refusal`
+failure: `tests.foundations.test_escrow_boundary::test_the_escrow_never_asserts_a_verified_boundary_and_query_keys_are_unambiguous`
+failure: `tests.test_core_api_snapshot::test_the_snapshot_is_byte_identical_across_fresh_processes`
+failure: `tests.foundations.test_v2_blindfold::test_the_observe_client_api_sends_only_observe_and_every_query_is_logged`
+failure: `tests.foundations.test_v2_blindfold::test_budget_mix_bounds_and_malformed_requests_are_refused_not_fatal`
+failure: `tests.foundations.test_v2_blindfold::test_indistinguishable_cannot_be_shotgunned_or_duplicated`
+failure: `tests.foundations.test_v2_blindfold::test_an_inadmissible_proposal_is_kept_and_costs_credit_never_a_refusal`
+failure: `tests.foundations.test_v2_blindfold::test_credit_is_reported_over_the_best_constant_answer`
+failure: `tests.foundations.test_v2_blindfold::test_replay_is_complete_identity_bound_and_never_calls_the_proposer`
+failure: `tests.foundations.test_v2_blindfold::test_the_subprocess_escrow_keeps_its_secrets_in_the_child`
+failure: `tests.test_core_scientific_audit_batch56::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see`
+failure: `tests.test_mutation_startup::test_environment_snapshot_is_independent_of_parent_and_each_child`
+failure: `tests.test_mutation_startup::test_interpreter_replacement_is_refused_with_same_size`
+failure: `tests.test_mutation_startup::test_venv_interpreter_symlink_spelling_is_preserved`
+failure: `tests.test_core_freeze_v4_manifest::test_the_tree_keeps_the_core_freeze_v4_contract`
+failure: `tests.test_core_freeze_v4_manifest::test_once_assured_the_full_verification_holds`
+failure: `tests.test_core_api_contracts::test_the_frozen_digest_is_identical_in_fresh_processes`
+failure: `tests.test_core_freeze_v4_manifest::test_the_deep_surface_carries_methods_and_member_positions`
+failure: `tests.test_core_freeze_v3_manifest::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_campaign_resumes_exactly_after_restart`
+failure: `tests.foundations.test_authority_durable_campaign::test_restart_detects_dropped_reordered_or_rewritten_operations`
+failure: `tests.foundations.test_authority_durable_campaign::test_another_key_or_issuer_cannot_resume_or_extend_the_campaign`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_mutation_around_the_journal_is_refused_not_lost`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_verdict_judged_before_restart_is_the_same_verdict_after`
+failure: `tests.foundations.test_authority_durable_campaign::test_the_same_campaign_id_cannot_restart_its_multiplicity_count`
+failure: `tests.foundations.test_authority_durable_campaign::test_foreign_journal_entries_cannot_squat_or_brick_a_campaign`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_dropped_journal_tail_after_the_operators_anchor_is_refused`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_second_exposure_issuer_cannot_fork_or_squat_the_campaign`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_journal_signed_in_a_compromise_window_cannot_be_resumed`
+failure: `flagships.tests.test_battery_blind_readiness::test_the_dry_run_walks_the_whole_chain_without_claiming_anything`
+failure: `flagships.tests.test_battery_blind_readiness::test_the_dry_run_records_every_abstention_with_its_rule_inputs`
+failure: `tests.test_core_scientific_audit_batch24::test_r39_the_word_says_that_agreement_between_solvers_is_one_of_the_things_it_covers`
+failure: `tests.domains.test_audit_domains_unscreened_claims::test_the_held_resistance_limitation_is_stated_where_a_caller_reads`
+failure: `providers.cantera.tests.test_cantera_provider::test_proof_b_adiabatic_equilibrium_with_mechanism_bytes_bound`
+failure: `providers.cantera.tests.test_cantera_provider::test_proof_b_transient_constant_pressure_reactor_on_a_big2_window`
+failure: `tests.foundations.test_escrow_isolation::test_the_isolated_deployment_reports_exactly_what_it_established`
+failure: `tests.foundations.test_escrow_isolation::test_the_leak_detector_catches_a_planted_partial_copy`
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--junitxml", "D:\\forge-final-assurance-evidence\\baselinewin-fast.xml"]`
+result: exit 15; wall 510.82 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.assert_clean_tree"]`
+result: exit 0; wall 1.37 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.core_certificate", "--verify"]`
+result: exit 1; wall 1.32 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.core_freeze_v4", "--verify"]`
+result: exit 1; wall 1.35 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "tools/forge_check.py", "--regression"]`
+result: exit 1; wall 15.34 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "-q", "--junitxml", "D:\\forge-final-assurance-evidence\\win-dependency-guard.xml"]`
+result: exit 0; wall 24.36 s; counts {"tests": 1, "failures": 0, "errors": 0, "skipped": 0}; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--junitxml", "D:\\forge-final-assurance-evidence\\win-fast.xml"]`
+result: exit 3; wall 1.35 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "-q", "-n", "8", "--dist", "loadfile", "--junitxml", "D:\\forge-final-assurance-evidence\\win-full.xml"]`
+result: exit 3; wall 1.35 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.assert_clean_tree"]`
+result: exit 0; wall 1.37 s; counts null; tracked byte drift 0; git status ''
+
+Regression pack: corrected primary 3.14 run 256 passed; isolated 3.12 run 256 passed. Supported FAST (both versions): 10026 passed, 2 failed, 157 skipped; SCIENTIFIC: 10599 passed, same 2 failed, 157 skipped; FULL: 10607 passed, 4 failed, 157 skipped. Dependency guards: PASS. Failure classifications and Windows limitations are in the closeout report; unsupported primary Windows failures are not asserted a product regression. Baseline scanner tests ran on clean 9ca337f9, 3.11 and 3.12: both FAIL the same named test. Windows same-environment baseline FAST and direct Cantera diagnostics: INCOMPLETE, stopped; NOT accepted as a baseline proof.
+
+command: `.forge/venvs/3.12/bin/python -m tools.certification.local_assurance run --repository sharq-labs/forge`
+result: REFUSED, exit 1, fast311: 10005 passed, 1 failed (tests/test_change_impact.py::test_the_old_gap_a_domain_models_own_tests_are_now_selected), 157 skipped. No certificate written; later owner gates and certificate-child verify NOT RUN. Failure receipt SHA256 a1965de5a5495082706237ba7c5c6c4e251fffff812ab92286b6cf272ecde488.
+
+Post-attempt commands: `.forge/venvs/3.12/bin/python -m tools.certification.core_certificate --verify` FAIL; `.forge/venvs/3.12/bin/python -m tools.certification.core_freeze_v4 --verify` FAIL only certificate.verifies; `.forge/venvs/3.12/bin/python tools/forge_check.py --regression` PASS 256 in 7.40s; `.forge/venvs/3.12/bin/python -m tools.certification.assert_clean_tree` PASS. Certificate unchanged: c22a012147c26183031b32b0e016c80ef86218ef3cd1664361be47d4cf2f186b, still names 39d43456cab918ed0748efe7f5b0ff5781474ffa.
+
+Failed approaches: Linux Git rejected Windows absolute worktree .git pointer; use a Linux-created worktree. Initial pytest temp permission error and misparsed backslash basetemp: use forward slashes in an external basetemp. Untracked temp folder moved intact after automatic deletion rejection; tracked drift zero. Owner run needs explicit --repository for this local clone. Windows FULL stalled at79%, empty XML; controller had no workers. No final count or pass claimed. All test trees clean before documentation. No scientific implementation or frozen artifacts changed.
+
+command: git diff --check
+result: PASS, exit 0, executed before documentation commit; no whitespace errors.
+Final additional Linux all-file hash replay: INCOMPLETE (new WSL invocation stalled and was stopped); prior per-tier 5514-file snapshots and post-owner assert_clean_tree remain the recorded integrity proofs. Windows final all-file hash replay: PASS, 5514 tracked files, drift0.

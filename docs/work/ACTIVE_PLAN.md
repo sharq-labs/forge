@@ -232,3 +232,10 @@ solver agreement as validation; change a tolerance or criterion after seeing a r
 - 2026-10-12 — landing pass closed: #126, #123, #117 merged (`2d0fa6c3`); #107, #39, #24 blocked (OD-11, OD-21).
   Verified state updated. Next agent-executable G0 action is unchanged: FAST on the OD-3 HEAD in a full-history
   checkout, then classify the 14 failures.
+
+
+## 2026-10-13 bounded test infrastructure closeout
+
+Owner-requested closeout measured origin/main `5d73e8f5118aa845f1957decc5aae986e72476a9` in clean dedicated trees. Outcome: **TEST_INFRASTRUCTURE_FINAL_ASSURANCE_BLOCKED**. Supported FAST/SCIENTIFIC retain certificate drift and the impact scanner parsing .forge/venvs; scanner failure reproduced before Round3 on both supported Python versions. Unrestricted supported FULL: 10607 passed, 4 failed, 157 skipped; added failures are documented benchmark digest baseline. Owner runner REFUSED at fast311 before certificate generation; no mutation completion, certificate child, push or current-main certification is claimed. Primary Windows attribution remains incomplete because the same-environment baseline and FULL stalled.
+
+Evidence and exact next bounded repair: `docs/work/FINAL_TEST_INFRASTRUCTURE_ASSURANCE_2026-10-13.md`; PROGRESS records commands/results. Do not mark Rounds1–3 assurance closed or continue new performance work on this evidence. No scientific verdict, evidence, UQ, Trust/Mind, numerical or frozen experiment change was made.
