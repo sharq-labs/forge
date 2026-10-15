@@ -23,6 +23,10 @@ from engcore.materials import (
     MaterialState, MaterialStateSchema, PropertyApplicability, PropertyDatum, PropertyDerivation,
     TransformationRecord, source_identity,
 )
+from engcore.materials.coverage import (
+    A_STATED_REQUIREMENT_HAS_NO_VALUE, EVERY_STATED_REQUIREMENT_HAS_A_VALUE, MaterialCoverageReport,
+    PropertyCoverageEntry, material_coverage_report,
+)
 from engcore.scenarios import (
     ChannelRepresentation, EnvironmentChannel, EnvironmentKindRegistry, EnvironmentSource,
     EnvironmentTimeline, HistoryEntry, InputBinding, NamedQuantity, QuantityHistory, ReferenceContext,
@@ -353,3 +357,122 @@ def test_condition_in_wrong_dimension_is_inadmissible_not_an_error():
     props, _ = _alloy_set()
     r = props.resolve("density", MaterialState(ALLOY, (NamedQuantity("temperature", Quantity(1, "m")),), "solid"))
     assert r.status == "unknown"
+
+
+# ---- X08: coverage of the properties a run states it consumes ---------------
+
+MODEL = "fixture.conduction_model"
+
+
+def _coverage(props, state, required, **kw):
+    return material_coverage_report(props, state, required, requirement_source=MODEL, **kw)
+
+
+def test_coverage_reports_how_each_stated_property_resolved():
+    props, _ = _alloy_set()
+    report = _coverage(props, _alloy_state(450), ("thermal_conductivity", "density"))
+    assert report.status == A_STATED_REQUIREMENT_HAS_NO_VALUE
+    by_id = {e.property_id: e for e in report.entries}
+    k = by_id["thermal_conductivity"]
+    assert k.resolved.derivation is PropertyDerivation.INTERPOLATED and k.uncertainty_kind == "unknown"
+    assert by_id["density"].resolved.status == "unknown" and "outside" in by_id["density"].resolved.reason
+    assert report.without_value == ("density",) and report.conflicted == ()
+    assert report.interpolated == ("thermal_conductivity",)
+    # an interpolated value never inherits the tabulated sigma
+    assert report.uncertainty_unknown == ("thermal_conductivity",)
+    payload = report.to_dict()
+    assert payload["classification"] == "resolution_report_not_evidence"
+    assert payload["requirement_source"] == MODEL
+    entry = payload["stated_requirements"][1]
+    assert entry["property_id"] == "thermal_conductivity" and entry["rule"]["variable_id"] == "temperature"
+    assert entry["value"]["value"]["magnitude"] == pytest.approx(215) and len(entry["claim_digests"]) == 2
+    assert payload["stated_requirements"][0]["value"] is None
+
+
+def test_coverage_is_recomputed_at_each_state_and_never_reuses_a_resolution():
+    props, _ = _alloy_set()
+    room = _coverage(props, _alloy_state(300), ("thermal_conductivity", "density"))
+    assert room.status == EVERY_STATED_REQUIREMENT_HAS_A_VALUE and room.without_value == ()
+    # density states no uncertainty: known value, UNKNOWN uncertainty, never zero
+    assert room.uncertainty_unknown == ("density",)
+    by_id = {e.property_id: e for e in room.entries}
+    assert by_id["thermal_conductivity"].uncertainty_kind == "standard"
+    assert by_id["thermal_conductivity"].uncertainty_source_kind == "unspecified"  # not silently "measurement"
+    hot = _coverage(props, _alloy_state(500), ("thermal_conductivity", "density"))
+    assert hot.state_digest != room.state_digest and hot.digest != room.digest
+    assert hot.without_value == ("density",)
+    undeclared = _coverage(props, _alloy_state(None), ("thermal_conductivity",))
+    assert undeclared.without_value == ("thermal_conductivity",)
+    assert "does not declare 'temperature'" in undeclared.entries[0].resolved.reason
+
+
+def test_coverage_never_judges_a_property_that_was_not_stated():
+    props, _ = _alloy_set()
+    report = _coverage(props, _alloy_state(300), ("thermal_conductivity",))
+    assert report.status == EVERY_STATED_REQUIREMENT_HAS_A_VALUE
+    assert report.unrequired_with_data == ("density",)
+    assert [e.property_id for e in report.entries] == ["thermal_conductivity"]
+    # a property with no data at all is a gap only when it is stated
+    missing = _coverage(props, _alloy_state(300), ("thermal_conductivity", "specific_heat"))
+    assert missing.without_value == ("specific_heat",) and "no data" in missing.entries[0].resolved.reason
+
+
+def test_the_runs_own_records_bind_the_statement():
+    props, _ = _alloy_set()
+    hot = _alloy_state(500)
+    used = (props.resolve("thermal_conductivity", hot), props.resolve("density", hot))
+    # under-declaring what the run consumed is refused, never reported as covered
+    with pytest.raises(InvalidScientificProblem, match="not stated as required"):
+        _coverage(props, hot, ("thermal_conductivity",), consumed=used)
+    report = _coverage(props, hot, ("thermal_conductivity", "density"), consumed=used)
+    assert report.without_value == ("density",)
+    # a record the run resolved at another state does not describe this state
+    stale = (props.resolve("density", _alloy_state(293.15)),)
+    with pytest.raises(InvalidScientificProblem, match="not what this set resolves"):
+        _coverage(props, hot, ("density",), consumed=stale)
+
+
+def test_coverage_keeps_conflicts_and_assumptions_visible():
+    extra = (("k400b", "thermal_conductivity", Quantity(212.0, K_UNIT), None, (point("temperature", T(400)),), "solid", "measured", None),)
+    conflicted, _ = _alloy_set(extra)
+    report = _coverage(conflicted, _alloy_state(400), ("thermal_conductivity",))
+    assert report.without_value == ("thermal_conductivity",) and report.conflicted == ("thermal_conductivity",)
+    entry = report.to_dict()["stated_requirements"][0]
+    assert entry["conflicted"] is True and len(entry["claim_digests"]) == 2  # both claims stay named
+    out_of_range = _coverage(conflicted, _alloy_state(650), ("thermal_conductivity",))
+    assert out_of_range.without_value == ("thermal_conductivity",) and out_of_range.conflicted == ()
+    rows = [("k-assumed", "thermal_conductivity", Quantity(150.0, K_UNIT), None, (ApplicabilityRange("temperature", T(250), T(350)),), "solid", "assumed", None)]
+    assumed, _ = _dataset(ALLOY, rows, source_id="fixture-assumed", locator="tests::assumed", set_id="assumed")
+    report = _coverage(assumed, _alloy_state(300), ("thermal_conductivity",))
+    assert report.status == EVERY_STATED_REQUIREMENT_HAS_A_VALUE  # a value exists ...
+    assert report.assumed == ("thermal_conductivity",)  # ... and the reader is told it is an assumption
+    assert report.to_dict()["stated_requirements"][0]["origins"] == ["assumed"]
+
+
+def test_coverage_refuses_an_unstated_or_malformed_requirement():
+    props, _ = _alloy_set()
+    for bad in ((), ("density", "density"), ("density", " density"), "density", ("",)):
+        with pytest.raises(InvalidScientificProblem):
+            _coverage(props, _alloy_state(300), bad)
+    with pytest.raises(InvalidScientificProblem, match="requirement_source"):
+        material_coverage_report(props, _alloy_state(300), ("density",), requirement_source="")
+    other = MaterialIdentity("steel", specification="FIXTURE-SPEC-B", grade="Y", condition="annealed")
+    with pytest.raises(InvalidScientificProblem, match="different material"):
+        _coverage(props, MaterialState(other, (NamedQuantity("temperature", T(300)),), "solid"), ("density",))
+
+
+def test_a_report_cannot_be_assembled_around_the_checks():
+    props, _ = _alloy_set()
+    room, hot = _alloy_state(293.15), _alloy_state(773.15)
+    # full coverage of nothing
+    with pytest.raises(InvalidScientificProblem, match="at least one"):
+        MaterialCoverageReport(MODEL, props.digest, ALLOY.digest, room.digest, (), ())
+    # a room-temperature resolution presented as the state at 773 K
+    entry = PropertyCoverageEntry(props.resolve("density", room))
+    with pytest.raises(InvalidScientificProblem, match="another state"):
+        MaterialCoverageReport(MODEL, props.digest, ALLOY.digest, hot.digest, (entry,), ())
+    with pytest.raises(InvalidScientificProblem, match="disjoint"):
+        MaterialCoverageReport(MODEL, props.digest, ALLOY.digest, room.digest, (entry,), ("density",))
+    k = PropertyCoverageEntry(props.resolve("thermal_conductivity", room))
+    with pytest.raises(InvalidScientificProblem, match="sorted"):
+        MaterialCoverageReport(MODEL, props.digest, ALLOY.digest, room.digest, (k, entry), ())
