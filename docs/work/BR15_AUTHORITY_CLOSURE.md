@@ -118,7 +118,7 @@ GitHub checks remain transport, not attestation. Scientific assurance stays with
 3. Do not merge a PR that changes a certified file until `local_assurance` has produced a certificate child for it.
    PR #142 is the counterexample.
 4. Run hardened recertification (OD-3) on the intended HEAD: this branch after review, or `main` plus this branch.
-   In the WSL clone, use `python -m tools.certification.local_assurance run --reuse --repository sharq-labs/forge
+   In the WSL clone, use `.forge/venvs/3.12/bin/python -m tools.certification.local_assurance run --reuse --repository sharq-labs/forge
    --python311 .forge/venvs/3.11/bin/python --python312 .forge/venvs/3.12/bin/python` (about 3.4 h).
 5. Decide on F-7 (CI V4 workspace admission vs `actions/checkout`) and on F-9 (keyed campaign records) as the next
    bounded tasks.
