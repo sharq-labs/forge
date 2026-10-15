@@ -3614,3 +3614,37 @@ can never run in the gates, because the raw files are not shipped.
 refuses the whole run after ~3.5 h. Raw-data rebuilds belong in a command.
 
 **Next.** One hardened local-assurance run on this new source commit, in a fresh WSL clone.
+
+## 2026-10-15 -- Hardened run on 0bc8b1cb: all 18 gates passed, REFUSED at certificate generation (environment)
+
+Run: fresh WSL clone ~/forge-cons-assure-2, `/usr/bin/python3.12 -m tools.certification.local_assurance run --reuse
+--repository sharq-labs/forge --python311 .forge/venvs/3.11/bin/python --python312 .forge/venvs/3.12/bin/python`,
+2026-10-15T02:06Z to 05:39Z, EXIT=1.
+
+Result: `LOCAL_ASSURANCE: REFUSED`, `REFUSED_BY: CertificationError`, `SAFE_TO_PUSH: NO`. Failure record sha256
+abba1c6a....
+- Every execution gate completed:
+  - fast311 and fast312: 10602 passed, 156 skipped;
+  - scientific312: 11175 passed, 156 skipped;
+  - campaign312 and regression312;
+  - formal_mutations_0-3 and v4_mutations_0-7;
+  - trust_mutations: 0 survived.
+- Skip admission accepted every skip. The two raw-data skips that refused 5847345e are gone, and each gate gained the
+  2 replacement tests.
+- `failed_gate: certificate_generation`: "the production registry could not be read from the tree:
+  ModuleNotFoundError: No module named 'pint'".
+
+**Cause** (environment, not source):
+- `core_certificate.production_registry_identity` (BR-15) re-runs `sys.executable -E -s -P`, so it uses the OUTER
+  interpreter.
+- The outer interpreter was `/usr/bin/python3.12`, which has no project dependencies. Checked read-only:
+  - `/usr/bin/python3.12 -E -s -P -c "import pint"` gives ModuleNotFoundError;
+  - `.forge/venvs/3.12/bin/python` with the same flags imports pint, numpy and scipy.
+- The last local PASS (Pass 13) predates the BR-15 probe, so the outer system interpreter never mattered before.
+
+**Remedy, not yet run:**
+- Launch `local_assurance run` with `.forge/venvs/3.12/bin/python` as the outer interpreter, in a fresh clone, so run 2's
+  evidence is preserved.
+- There is no resume: `--reuse` discards evidence and re-runs every gate (~3.5 h).
+- The certification source stays 0bc8b1cb.
+- Waiting for owner approval.
