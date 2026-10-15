@@ -20,7 +20,7 @@ This module answers whether a published rating envelope covers a requested
 operating condition. Those are different questions, and collapsing them would
 make a duration refusal look like a model failure.
 
-The assessment does not claim physical impossibility, motor failure, or a
+The assessment does not claim physical impossibility, component failure, or a
 maximum flight duration. ``OUTSIDE_DURATION_ENVELOPE`` means the requested
 duration is outside the published interval.
 """
