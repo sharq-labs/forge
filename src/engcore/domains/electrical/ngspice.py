@@ -545,16 +545,20 @@ class NgspiceDCSolver(DeclaredSupport):
         """
         if not problem.models:
             return ("the problem names no model, so nothing is realized here",)
+        # Matched by (model_id, version): a realization implements one version,
+        # so a problem naming model@99 is not realized by the code for model@1.
         realized = {
-            r.model.model_id for r in realizations_for_models(problem.models)
+            r.model.key for r in realizations_for_models(problem.models)
         }
         unrealized = sorted(
-            {model.model_id for model in problem.models} - realized
+            f"{model.model_id}@{model.version}"
+            for model in problem.models
+            if model.key not in realized
         )
         if unrealized:
             return (
-                f"{unrealized} have no declared MNA realization in this "
-                f"domain, so this adapter cannot claim to perform their "
+                f"{unrealized} have no declared MNA realization at that version "
+                f"in this domain, so this adapter cannot claim to perform their "
                 f"computation",
             )
         return ()
@@ -1098,14 +1102,14 @@ def solve_circuit_with_ngspice(
     model_identities = tuple((m.model_id, m.version) for m in active_models)
     assumptions = assumptions_for_models(active_models)
 
-    realizations = {r.model.model_id: r for r in realizations_for_models(active_models)}
+    realizations = {r.model.key: r for r in realizations_for_models(active_models)}
     identity = solver.identity
     bindings = tuple(
         ExecutionBinding(
             model=ModelReference(model.model_id, model.version),
             realization=(
-                realizations[model.model_id].reference()
-                if model.model_id in realizations
+                realizations[model.key].reference()
+                if model.key in realizations
                 else None
             ),
             solver=identity,
