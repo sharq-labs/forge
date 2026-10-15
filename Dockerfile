@@ -3,13 +3,14 @@
 # benchmark score, no host state.
 #
 #     docker build -t crafty-repro .
-#     docker run --rm -v "$PWD/.git:/crafty/.git:ro" crafty-repro
+#     docker run --rm -v "$PWD/.git:/mnt/history:ro" crafty-repro
 #
 # The image carries no history (.dockerignore drops .git), but the FAST tier
 # reads it: the certificate, freeze-manifest and replay tests resolve the
 # repository root, HEAD and committed snapshots such as V1's at af43c896. So
 # the checkout's own FULL history (not a depth-1 clone) is mounted read-only
-# at run time; the reproduce script refuses to start without it.
+# at run time and copied to /crafty/.git; the reproduce script refuses to start
+# without it.
 #
 # See docs/reproduce.md for the expected output and the runtime.
 
@@ -34,11 +35,12 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends ngspice git \
  && rm -rf /var/lib/apt/lists/*
 
-# The mounted .git belongs to the host user (uid 1001 on a GitHub runner)
-# while the tests run as root, so git would otherwise refuse the repository as
-# "dubious ownership". --system rather than --global so a test that points
-# HOME elsewhere still sees it. This trusts exactly /crafty, nothing else.
-RUN git config --system --add safe.directory /crafty
+# The tests run as an ordinary user, as they do on a hosted runner. Under root
+# a chmod-000 directory stays readable, so tests that prove a walk fails closed
+# on an unreadable entry cannot pass (test_mutation_workspace's mid-walk test
+# did not, in run 38544091505).
+RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin crafty \
+ && install -d -o crafty -g crafty /crafty
 
 # The provider's default invocation is ("wsl.exe", "-e", "ngspice") -- the
 # author's Windows host, src/engcore/domains/electrical/ngspice.py:191. On
@@ -52,14 +54,14 @@ WORKDIR /crafty
 
 # Dependency metadata first, so an edit to a case or a test does not invalidate
 # the layer that downloads scipy.
-COPY pyproject.toml requirements.txt README.md ./
-COPY src ./src
+COPY --chown=crafty:crafty pyproject.toml requirements.txt README.md ./
+COPY --chown=crafty:crafty src ./src
 # Install every declared test/benchmark extra the reproducibility image can
 # reach. A bare image must not accidentally rely on packages present on the
 # author's host.
 RUN pip install --no-cache-dir -e ".[dev,mcp,oracles,benchmarks]"
 
-COPY . .
+COPY --chown=crafty:crafty . .
 
 # One command, and it prints what it measured against as well as what it
 # measured. The case-set digest and the split rule come from the scorer's own
@@ -72,19 +74,30 @@ COPY . .
 # --split dev: the hold-out stays sealed. Scoring it needs --open-holdout and
 # writes a dated record; see benchmarks/hard/split_hard.py.
 #
+# History is COPIED from the read-only mount, not used in place: the mounted
+# files belong to the host user, and git refuses a repository it does not own
+# ("dubious ownership"). safe.directory cannot cover that, because the
+# certification tools run git with global and system config switched off. The
+# copy belongs to `crafty`, and the host's .git is never written.
+#
 # The history checks fail closed before anything is measured: a run with no
-# .git, a shallow one, or one whose HEAD does not describe the image's tree
+# history, a shallow one, or one whose HEAD does not describe the image's tree
 # would turn history-reading tests red for a reason that is not the code's,
 # or green against a commit the image was not built from.
 RUN printf '%s\n' \
   '#!/bin/sh' \
   'set -e' \
+  'if [ ! -d /mnt/history ] || [ -e /crafty/.git ]; then' \
+  '  echo "refused: mount the checkout history read-only at /mnt/history: docker run --rm -v <checkout>/.git:/mnt/history:ro crafty-repro (docs/reproduce.md)" >&2' \
+  '  exit 2' \
+  'fi' \
+  'cp -R /mnt/history /crafty/.git' \
   'if ! git rev-parse --verify -q HEAD >/dev/null; then' \
-  '  echo "refused: no git history at /crafty/.git; run with -v <checkout>/.git:/crafty/.git:ro (docs/reproduce.md)" >&2' \
+  '  echo "refused: /mnt/history holds no readable commit" >&2' \
   '  exit 2' \
   'fi' \
   'if [ "$(git rev-parse --is-shallow-repository)" != false ]; then' \
-  '  echo "refused: /crafty/.git is shallow; the freeze and certificate tests read full history (fetch-depth: 0)" >&2' \
+  '  echo "refused: /mnt/history is shallow; the freeze and certificate tests read full history (fetch-depth: 0)" >&2' \
   '  exit 2' \
   'fi' \
   'if [ -n "$(git status --porcelain --untracked-files=no)" ]; then' \
@@ -106,5 +119,7 @@ RUN printf '%s\n' \
   '  --cases benchmarks/hard/cases_hard --workers 4 --split dev \' \
   '  --results /tmp/results_dev.json' \
   > /usr/local/bin/reproduce && chmod +x /usr/local/bin/reproduce
+
+USER crafty
 
 CMD ["reproduce"]
