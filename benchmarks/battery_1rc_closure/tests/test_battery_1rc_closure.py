@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import os
 import hashlib
 import json
 import pathlib
@@ -214,17 +213,11 @@ def test_every_held_out_prediction_is_bound_to_a_reproducible_route_replay_recor
     assert _m.isfinite(entry["per_cycle"][0]["rmse_1rc_mV"])
 
 
-@pytest.mark.skipif(not os.environ.get("FORGE_NASA_FY08Q4_DIR"),
-                    reason="needs the receipted NASA FY08Q4 .mat files (set FORGE_NASA_FY08Q4_DIR); see README")
-def test_every_trajectory_file_rebuilds_from_the_raw_nasa_bytes(tmp_path):
-    from tools.nasa_battery_aging import ingest_mat_file, write_canonical_json
-    raw_dir = pathlib.Path(os.environ["FORGE_NASA_FY08Q4_DIR"])
-    for role in ("calibration", "within_cell_holdout", "cross_cell_validation"):
-        pinned = bdata.load(role)
-        for cell, meta in pinned["cells"].items():
-            record = ingest_mat_file(raw_dir / f"{cell}.mat", cell_id=cell)
-            assert record["source"] == meta["source"] and record["canonical_sha256"] == meta["canonical_sha256"]
-            write_canonical_json(record, tmp_path / f"{cell}.canonical.json")
-        rebuilt = bdata.build_role(role, tmp_path)
-        assert json.dumps(rebuilt["cycles"], sort_keys=True) == json.dumps(pinned["cycles"], sort_keys=True)
-        assert rebuilt["refused"] == pinned["refused"]
+def test_the_raw_bytes_rebuild_check_refuses_when_the_raw_files_are_absent(tmp_path):
+    # The rebuild itself needs the receipted NASA .mat files, which are not shipped: it is the command
+    # ``python -m benchmarks.battery_1rc_closure.data --verify-raw <dir>`` (run results in docs/work/PROGRESS.md),
+    # not a test that the gates could only ever skip. Here: without the files it must report, never pass silently.
+    (tmp_path / "scratch").mkdir()
+    problems = bdata.verify_raw(tmp_path / "absent", tmp_path / "scratch")
+    assert len(problems) == len(bdata.VERIFIED_ROLES)
+    assert all("cannot rebuild" in p for p in problems)

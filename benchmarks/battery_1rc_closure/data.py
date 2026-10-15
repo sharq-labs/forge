@@ -1,7 +1,9 @@
 """Build one role's measured trajectories from the importer's canonical records, exactly as preregistered.
 
 ``python -m benchmarks.battery_1rc_closure.data --role calibration --canonical-dir <dir>`` writes
-``data/<role>.json`` (+ .sha256). Nothing is fitted here. Every refusal is recorded with its reason; a refused cycle
+``data/<role>.json`` (+ .sha256). ``--verify-raw <dir of B0005.mat ...>`` instead re-ingests the receipted NASA
+files and reports every way a pinned role fails to rebuild from them (exit 1 on any). The raw files are not shipped,
+so this check is a command, not a test the gates would only ever skip. Nothing is fitted here. Every refusal is recorded with its reason; a refused cycle
 is never repaired.
 """
 
@@ -116,12 +118,50 @@ def load(role: str) -> dict[str, Any]:
     return doc
 
 
+VERIFIED_ROLES = ("calibration", "within_cell_holdout", "cross_cell_validation")
+
+
+def verify_raw(raw_dir: pathlib.Path, scratch: pathlib.Path) -> list[str]:
+    """Every pinned role rebuilt from the raw NASA bytes; returns the problems, never an empty list by accident."""
+    from tools.nasa_battery_aging import ingest_mat_file, write_canonical_json
+    problems: list[str] = []
+    checked = 0
+    for role in VERIFIED_ROLES:
+        pinned = load(role)
+        try:
+            for cell, meta in pinned["cells"].items():
+                record = ingest_mat_file(raw_dir / f"{cell}.mat", cell_id=cell)
+                if record["source"] != meta["source"] or record["canonical_sha256"] != meta["canonical_sha256"]:
+                    problems.append(f"{role}/{cell}: the raw file is not the receipted one")
+                write_canonical_json(record, scratch / f"{cell}.canonical.json")
+            rebuilt = build_role(role, scratch)
+        except (OSError, ValueError, KeyError) as exc:
+            problems.append(f"{role}: cannot rebuild from {raw_dir}: {type(exc).__name__}: {exc}")
+            continue
+        if json.dumps(rebuilt["cycles"], sort_keys=True) != json.dumps(pinned["cycles"], sort_keys=True):
+            problems.append(f"{role}: rebuilt cycles differ from the pinned ones")
+        if rebuilt["refused"] != pinned["refused"]:
+            problems.append(f"{role}: rebuilt refusals differ from the pinned ones")
+        checked += 1
+    if checked == 0 and not problems:
+        problems.append("nothing was checked")
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--role", required=True, choices=sorted(PREREG["roles"].keys() - {"capacity_source_only",
-                                                                                          "ageing_window"}))
-    parser.add_argument("--canonical-dir", required=True, type=pathlib.Path)
+    parser.add_argument("--verify-raw", type=pathlib.Path)
+    parser.add_argument("--role", choices=sorted(PREREG["roles"].keys() - {"capacity_source_only", "ageing_window"}))
+    parser.add_argument("--canonical-dir", type=pathlib.Path)
     args = parser.parse_args()
+    if args.verify_raw:
+        import tempfile
+        with tempfile.TemporaryDirectory() as scratch:
+            problems = verify_raw(args.verify_raw, pathlib.Path(scratch))
+        print(json.dumps({"verified_roles": VERIFIED_ROLES, "problems": problems}, indent=1))
+        return 1 if problems else 0
+    if not (args.role and args.canonical_dir):
+        parser.error("--role and --canonical-dir are required unless --verify-raw is given")
     doc = build_role(args.role, args.canonical_dir)
     digest = write(doc, args.role)
     print(json.dumps({"role": args.role, "cycles": len(doc["cycles"]), "refused": doc["refused"], "sha256": digest}))

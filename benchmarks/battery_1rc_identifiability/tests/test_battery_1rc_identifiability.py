@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
-import os
 import pathlib
 
 import numpy as np
@@ -179,13 +178,12 @@ def test_the_recorded_outcome_is_model_rejected_and_says_why():
     assert "ONE unit" in out["reading"]["comparison_note"]
 
 
-@pytest.mark.skipif(not os.environ.get("FORGE_LGHG2_DIR"),
-                    reason="needs the five LG HG2 CSV files (set FORGE_LGHG2_DIR); see the README")
-def test_every_role_rebuilds_from_the_raw_lg_hg2_bytes():
-    docs = idata.build(pathlib.Path(os.environ["FORGE_LGHG2_DIR"]))
-    for name, doc in docs.items():
-        pinned = idata.load(name)
-        assert json.dumps(doc, sort_keys=True) == json.dumps(pinned, sort_keys=True), name
+def test_the_raw_bytes_rebuild_check_refuses_when_the_raw_files_are_absent(tmp_path):
+    # The rebuild needs the five LG HG2 CSVs, which are not shipped: it is the command
+    # ``python -m benchmarks.battery_1rc_identifiability.data --verify-raw <dir>`` (run results in PROGRESS.md),
+    # not a test that the gates could only ever skip. Without the files it must report, never pass silently.
+    problems = idata.verify_raw(tmp_path / "absent")
+    assert problems and "cannot rebuild" in problems[0]
 
 
 def test_the_measurement_uncertainty_decision_is_owner_admitted_and_scoped():

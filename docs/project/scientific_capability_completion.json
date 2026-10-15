@@ -89,7 +89,8 @@
             "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_the_calibration_trajectories_are_pinned_to_this_preregistration",
             "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_no_held_out_cycle_leaks_into_calibration",
             "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_malformed_or_misleading_cycles_are_refused_not_repaired",
-            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_every_trajectory_file_rebuilds_from_the_raw_nasa_bytes"
+            "benchmarks/battery_1rc_closure/data.py",
+            "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_the_raw_bytes_rebuild_check_refuses_when_the_raw_files_are_absent"
           ]
         },
         "calibration": {

@@ -179,10 +179,30 @@ def load(name: str) -> dict[str, Any]:
     return doc
 
 
+def verify_raw(raw_dir: pathlib.Path) -> list[str]:
+    """Every pinned role rebuilt from the five raw LG HG2 CSVs; returns the problems (the raw files are not shipped,
+    so this is a command, ``--verify-raw``, not a test the gates would only ever skip)."""
+    try:
+        docs = build(raw_dir)
+    except (OSError, ValueError, KeyError) as exc:
+        return [f"cannot rebuild from {raw_dir}: {type(exc).__name__}: {exc}"]
+    problems = [f"{name}: rebuilt role differs from the pinned one" for name, doc in docs.items()
+                if json.dumps(doc, sort_keys=True) != json.dumps(load(name), sort_keys=True)]
+    return problems if docs else ["nothing was checked"]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--raw-dir", required=True, type=pathlib.Path)
-    docs = build(parser.parse_args().raw_dir)
+    parser.add_argument("--raw-dir", type=pathlib.Path)
+    parser.add_argument("--verify-raw", type=pathlib.Path)
+    args = parser.parse_args()
+    if args.verify_raw:
+        problems = verify_raw(args.verify_raw)
+        print(json.dumps({"problems": problems}, indent=1))
+        return 1 if problems else 0
+    if not args.raw_dir:
+        parser.error("--raw-dir is required unless --verify-raw is given")
+    docs = build(args.raw_dir)
     digests = write_all(docs)
     summary = {n: (len(d.get("windows", d.get("tests", d.get("knots_z_V_sample", d.get("excluded", []))))))
                for n, d in docs.items()}

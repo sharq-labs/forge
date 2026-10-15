@@ -121,7 +121,8 @@ There are no changes to `src/`: the existing route, the importer and the reader 
 lives under `benchmarks/battery_1rc_identifiability/`:
 - an LG HG2 byte reader with declared repeat rules;
 - the role builder, the fit (OCV fixed), the evaluation and the outcome;
-- 19 adversarial tests, plus an opt-in raw-bytes rebuild (`FORGE_LGHG2_DIR`).
+- 19 adversarial tests, plus the raw-bytes rebuild as a command (`python -m benchmarks.battery_1rc_identifiability.data
+  --verify-raw <dir>`); a test checks that it refuses when the files are absent.
 
 Two pinned tests were updated to the new ledger state: the closure's ledger-honesty test and the active-epic pin.
 
@@ -148,4 +149,5 @@ Run Python with `PYTHONPATH="<wt>/src;<wt>"`.
 1. Get the five LG HG2 CSVs: either `git show origin/claude/domain-real-data:benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/<f>`, or a download from Mendeley. Check their sha256 against `PREREGISTRATION.json`.
 2. Run `python -m benchmarks.battery_1rc_identifiability.data --raw-dir <dir>`.
 3. Run `python -m benchmarks.battery_1rc_identifiability.fit`, then `python -m benchmarks.battery_1rc_identifiability.evaluate`, then `python -m benchmarks.battery_1rc_identifiability.outcome`.
-4. Run the tests: `FORGE_LGHG2_DIR=<dir> pytest benchmarks/battery_1rc_identifiability/tests`.
+4. Run the tests (`pytest benchmarks/battery_1rc_identifiability/tests`) and the raw-bytes check
+   (`python -m benchmarks.battery_1rc_identifiability.data --verify-raw <dir>`, exit 0 means every role rebuilt).
