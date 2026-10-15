@@ -3579,3 +3579,38 @@ the pinned raw files.
 - After commit 14d49ab6: `pytest tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`: 2 passed. The remaining 16 failures are the base's own Windows baseline.
 
 - Follow-up (same day): the two env/file-gated cross-cell tests became the commands `data --verify-raw` and `evaluate --verify-route` (see the 5847345e recertification refusal entry). Run: `data --verify-raw D:/forge-data/kirkaldy2024/bol25` problems [], exit 0; `evaluate --verify-route` problems [], exit 0; `pytest -rs benchmarks/battery_1rc_crosscell/tests` 29 passed, 0 skipped.
+## 2026-10-15 -- Hardened recertification of 5847345e: REFUSED (skip admission); source fix
+
+**The run.** `local_assurance prepare` + `run --reuse --repository sharq-labs/forge` in the fresh WSL clone
+~/forge-cons-assure, 2026-10-14T22:27Z to 2026-10-15T02:00Z, EXIT=1.
+- Result: `LOCAL_ASSURANCE: REFUSED`, `REFUSAL_KIND: EXPECTED_ASSURANCE_REFUSAL`, `SAFE_TO_PUSH: NO`. Failure record
+  sha256 f12457aa....
+- All six refusal lines are `UNEXPECTED_SKIP ... no committed rule covers this node id`, in fast311, fast312 and
+  scientific312, for the two opt-in raw-data tests:
+  - `benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_every_trajectory_file_rebuilds_from_the_raw_nasa_bytes`;
+  - `benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_every_role_rebuilds_from_the_raw_lg_hg2_bytes`.
+- The trust mutation population finished with 0 survived. No certificate was written and nothing was pushed.
+
+**Why not a skip rule.** The admission policy (tools/certification/skip_admission.py, certification tooling) admits
+rule paths only under tests/, providers/ and flagships/. Widening it would weaken a certified gate to admit tests that
+can never run in the gates, because the raw files are not shipped.
+
+**Fix** (benchmarks only, no certified file touched):
+- Each raw-bytes rebuild is now a command:
+  - `python -m benchmarks.battery_1rc_closure.data --verify-raw <dir>`;
+  - `python -m benchmarks.battery_1rc_identifiability.data --verify-raw <dir>`.
+  - Each exits 1 and lists every problem.
+- An always-running test checks that each command refuses when the files are absent.
+- The ledger evidence and both READMEs follow.
+- Commands run (Windows .venv, this worktree):
+  - `... closure.data --verify-raw "D:/forge-data/nasa_pcoe_battery/extracted/1. BatteryAgingARC-FY08Q4"`: problems [],
+    exit 0.
+  - `... identifiability.data --verify-raw D:/forge-data/lg_hg2/raw`: problems [], exit 0.
+  - `... identifiability.data --verify-raw D:/forge-data/nonexistent`: one "cannot rebuild" problem, exit 1.
+  - `pytest -q -p no:cacheprovider --basetemp=<tmp> -rs benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py tests/domains/test_battery_thevenin_route.py tests/test_core_guards.py`:
+    345 passed, 0 skipped.
+
+**Failed approach recorded.** An env-gated `pytest.mark.skipif` raw-data test always skips in the hardened gates and
+refuses the whole run after ~3.5 h. Raw-data rebuilds belong in a command.
+
+**Next.** One hardened local-assurance run on this new source commit, in a fresh WSL clone.

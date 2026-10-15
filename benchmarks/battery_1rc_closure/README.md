@@ -121,7 +121,7 @@ Recorded in `results/UNCERTAINTY_REPORT.json` and `results/SENSITIVITY.json`. No
 
 ## 7–8. Tests
 
-- `benchmarks/battery_1rc_closure/tests` has 22 tests: identities, the transcription equals the route on real cycles, malformed and misleading cycles, a changed data file, a rebuild from the raw NASA `.mat` bytes (opt-in: `FORGE_NASA_FY08Q4_DIR`), applicability-gated acceptance, replay binding of held-out predictions, leakage, identifiability refusal, the multistart basin, Rint-better reporting, claim scope, and ledger honesty.
+- `benchmarks/battery_1rc_closure/tests` has 22 tests: identities, the transcription equals the route on real cycles, malformed and misleading cycles, a changed data file, the refusal of the raw-bytes rebuild check when the `.mat` files are absent, applicability-gated acceptance, replay binding of held-out predictions, leakage, identifiability refusal, the multistart basin, Rint-better reporting, claim scope, and ledger honesty.
 - `tests/domains/test_battery_thevenin_route.py` has 24 tests.
 - Rerunning fit → evaluate → uq reproduces every scientific number bit for bit. Only the wall-clock timing fields differ.
 
@@ -138,4 +138,6 @@ Run Python with `PYTHONPATH="<worktree>/src;<worktree>"` (Windows) or `<worktree
 5. Run `python -m benchmarks.battery_1rc_closure.sensitivity`.
 6. Run `python -m benchmarks.battery_1rc_closure.evaluate`.
 7. Run `python -m benchmarks.battery_1rc_closure.uq`.
-8. Optionally, run the raw-bytes check: `FORGE_NASA_FY08Q4_DIR=<dir with B0005.mat…> pytest benchmarks/battery_1rc_closure/tests`.
+8. Run the raw-bytes check: `python -m benchmarks.battery_1rc_closure.data --verify-raw <dir with B0005.mat…>`. It
+   exits 1 and lists every problem if any pinned role fails to rebuild. It is a command rather than a test because the
+   raw files are not shipped, and the hardened gates admit no unexplained skip.
