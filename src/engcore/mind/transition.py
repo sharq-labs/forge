@@ -35,6 +35,9 @@ from typing import Any, Mapping
 
 
 SOFTWARE_VERSION = "engcore.mind.transition/1.0.0"
+#: Versioned schema of a serialized MindState. Its nested records (problem, hypotheses, dependencies, actions) carry
+#: no schema of their own and are read only through MindState.from_dict, which checks this one.
+MIND_STATE_SCHEMA = "forge.mind.state/1"
 
 _TERMINAL = "supported_by_authority", "refuted_by_authority"
 _OPEN_QUESTION = "unresolved", "active"
@@ -549,15 +552,19 @@ class MindState:
             "dependencies": [item.to_dict() for item in self.dependencies],
             "hypotheses": [item.to_dict() for item in self.hypotheses],
             "problem": self.problem.to_dict(),
+            "schema": MIND_STATE_SCHEMA,
             "software_version": SOFTWARE_VERSION,
         }
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "MindState":
         data = _mapping(payload, "state")
+        if data.get("schema") != MIND_STATE_SCHEMA:
+            raise MindRefusal(f"schema {data.get('schema')!r} is not {MIND_STATE_SCHEMA}")
         _require_fields(
             data,
             {
+                "schema",
                 "problem",
                 "hypotheses",
                 "dependencies",

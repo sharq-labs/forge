@@ -665,3 +665,16 @@ def test_a_matching_proposal_payload_is_not_interpreted():
     assert record.payload_interpreted is False
     assert select_next_action(state).action_id == "request-point"
     assert state.hypothesis("mission").status is HypothesisStatus.UNRESOLVED
+
+
+def test_a_state_payload_without_its_schema_is_refused():
+    payload = _state_with_open_evidence().to_dict()
+    assert payload["schema"] == "forge.mind.state/1"
+    for bad in (None, "forge.mind.state/2", "something.else/1"):
+        tampered = dict(payload)
+        if bad is None:
+            tampered.pop("schema")
+        else:
+            tampered["schema"] = bad
+        with pytest.raises(MindRefusal, match="schema"):
+            MindState.from_dict(tampered)

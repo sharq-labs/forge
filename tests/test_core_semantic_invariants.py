@@ -352,6 +352,11 @@ _NESTED_WITHOUT_SCHEMA_AT = frozenset({
     # written only nested inside the multiscale macro-step records and digests;
     # nothing in the tree reads it back, so any future reader goes through a parent
     ("RepresentativeWindow", "src/engcore/multiscale/windows.py"),
+    # MindState.from_dict checks MIND_STATE_SCHEMA
+    ("MindProblem", "src/engcore/mind/transition.py"),
+    ("MindHypothesis", "src/engcore/mind/transition.py"),
+    ("Dependency", "src/engcore/mind/transition.py"),
+    ("CandidateAction", "src/engcore/mind/transition.py"),
 })
 _SCHEMA_CHECKERS = frozenset({"require_schema", "require_schema_any"})
 
@@ -464,6 +469,10 @@ _NESTED_READ_ONLY_BY = {
     "LevelEntry": {("src/engcore/engineering/ladder.py", "VerificationLadder.from_dict")},
     "VerificationLadder": {("src/engcore/engineering/bundle.py", "_verify_rest")},
     "RepresentativeWindow": set(),  # no reader at all
+    "MindProblem": {("src/engcore/mind/transition.py", "MindState.from_dict")},
+    "MindHypothesis": {("src/engcore/mind/transition.py", "MindState.from_dict")},
+    "Dependency": {("src/engcore/mind/transition.py", "MindState.from_dict")},
+    "CandidateAction": {("src/engcore/mind/transition.py", "MindState.from_dict")},
 }
 
 
