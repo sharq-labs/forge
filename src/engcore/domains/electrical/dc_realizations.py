@@ -212,7 +212,10 @@ MNA_REALIZATIONS = (
     IDEAL_VOLTAGE_SOURCE_MNA_REALIZATION,
 )
 
-_BY_MODEL_ID = {r.model.model_id: r for r in MNA_REALIZATIONS}
+#: Keyed by ``(model_id, version)``. A realization is the computation of one
+#: model version; matching on the id alone would hand model@2 the code for
+#: model@1 (the defect the core's served-model check was written to stop).
+_BY_MODEL_KEY = {r.model.key: r for r in MNA_REALIZATIONS}
 
 
 def dc_realizations() -> RealizationRegistry:
@@ -226,12 +229,11 @@ def realizations_for_models(models) -> tuple[ModelRealizationDefinition, ...]:
     Returns nothing for a model this module does not realize, rather than
     raising or substituting: a model with no declared realization is the state
     the whole DC domain was in before this module existed, and it is honest.
+    A realization matches a model VERSION, not merely its id.
     """
     found = []
     for model in models:
-        realization = _BY_MODEL_ID.get(
-            getattr(model, "model_id", getattr(model, "model_id", None))
-        )
+        realization = _BY_MODEL_KEY.get((model.model_id, model.version))
         if realization is not None:
             found.append(realization)
     return tuple(found)

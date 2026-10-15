@@ -1433,3 +1433,16 @@ works.
 - Continue reducing the remaining flat claim modules only after PR #65 is
   verified.
 - Do not expand the frozen Scientific Core for repository-layout aesthetics.
+
+## 2026-10-15 - Solver support-gate review fixes
+
+- Finding: ngspice DC adapter matched realizations by model id only (served_models=()), so a problem naming electrical.dc.kcl@99.0 was accepted while the native solver refused it.
+- Finding: the native DC adapter accepted a problem naming a served model alongside an unknown one; the unknown model was silently never assessed.
+- Fix: dc_realizations.py keys realizations by (model_id, version); ngspice.py gate and binding use the version key; dc/solver.py adds additional_support_gap refusing any named model it does not serve. The core protocol.py was NOT changed (pinned by certification/current_core_v2.json, digest-protected).
+- Tests added: tests/domains/electrical/test_support_version_gate.py (6 tests; 4 fail on the committed files, confirmed by swap).
+- Command: .venv/Scripts/python.exe -m pytest tests/domains/electrical tests/test_heterogeneous_ngspice.py -q -p no:cacheprovider --basetemp=<scratch>
+  Result: 393 passed.
+- Command: .venv/Scripts/python.exe -m pytest <127 test files referencing electrical/ngspice/consensus> -m "not expensive and not campaign" -q -n 4
+  Result: 3084 passed, 3 skipped, 13 failed, 1 error. All 13 failures and the error are pre-existing harness issues: ModuleNotFoundError for bare sibling test imports (test_cross_solver_consensus, test_trusted_consensus_gate, mutation_guards) and two guard tests (test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green, test_the_domain_names_were_derived_from_the_packages_not_listed) that also fail on the committed files.
+- Not run: the full FAST/SCIENTIFIC tiers and the core certificate test (protocol.py untouched).
+- Open (not fixed): DC validation _worst_against skips NaN residuals (electrical/dc/validation.py); CSTR sampled-extrema admission in cstr/solver.py bundle path; the core rule "any-overlap" in scientific/solvers/protocol.py needs a core-freeze decision.
