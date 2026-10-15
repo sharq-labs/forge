@@ -3230,3 +3230,5 @@ produced no result. Its process tree was killed by PID.
 
 Not done: the Docker `reproduce` fix (needs OD-3 for `tests.yml`); X08 is not wired into any engineering or
 system-runtime report yet; SCIENTIFIC tier, regression pack and Linux runs **NOT RUN**.
+
+Rerun after commit `aa160b6d` (clean tree): `python -m pytest tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks tests/test_materials_engine.py -q` -> 25 passed. The branch's FAST failure set therefore equals the pristine base's (153 failed, 22 errors on Windows); no failure is attributable to this change.
