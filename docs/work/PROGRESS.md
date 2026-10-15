@@ -3162,3 +3162,67 @@ Result: PASS, exit 0; nine Markdown files, 75 unique table IDs, all local links 
 explicit anchors resolve. External URLs not checked. Scientific tests, regression,
 FAST, SCIENTIFIC and certification: **NOT RUN**, documentation-only.
 Command: git diff --cached --check. Result: PASS, exit 0 for the design/coupling proposal update.
+
+## 2026-10-15 — Red `reproduce` job: full read-only history, non-root user, trixie ngspice (branch `fix/ci-reproduce-docker-history`, worktree `D:/forge-reproduce`, local only)
+
+Base `origin/main` @ `e193e573`. Tests run `38544091505`, job `reproduce` (115786199600):
+161 FAST failures (10164 passed, 178 skipped). On the same commit, hosted `fast (py 3.12)` failed only
+`tests/test_core_certificate.py::test_the_certificate_describes_this_tree` (OD-3 drift:
+`tests/test_formal_xdist.py`, `tests/mutation_guards.py`).
+
+Causes, from the job log:
+- **149 history.** `.dockerignore` drops `.git` and the checkout is depth 1. Errors included
+  `no repository root above /crafty/...`, `git rev-parse HEAD` exiting 128, `af43c896`/`7876bd9f`
+  snapshots unreadable, and replay `NOT_REPRODUCIBLE` (no commit identity).
+- **1 root.** `test_mutation_workspace.py::test_mid_walk_failure_still_reports_entries_already_scanned`
+  reported *DID NOT RAISE PermissionError*: chmod 000 does not stop root. The earlier "150 history"
+  count included this one.
+- **11 ngspice.** In `tests/oracles/test_oracle_ngspice_dc.py`, bookworm's ngspice-39 printed the
+  correct OP and exited 1 (*no simulations run*). In `src/main.c` at tag ngspice-39 there is no
+  `sim_status` branch. At tags 42 and 44.2 the batch-exit block is byte-identical and returns
+  `EXIT_NORMAL` after a `.control` simulation. Debian trixie ships `44.2+ds-1`, whose only patch is
+  `fixes/spelling-Fix-misspelled-word-unkown.patch` (read from sources.debian.org).
+
+Change (`Dockerfile`, `.github/workflows/tests.yml` reproduce job, `docs/reproduce.md`):
+- `python:3.12-slim-trixie`.
+- The job checks out with `fetch-depth: 0` and `persist-credentials: false`, then runs
+  `docker run --rm -v "${GITHUB_WORKSPACE}/.git:/mnt/history:ro"`.
+- The script copies `/mnt/history` to `/crafty/.git` and runs as `crafty` (uid 10001).
+- It refuses (exit 2) when history is missing, mounted at the old `/crafty/.git`, shallow, or
+  when `HEAD` does not match the image tree.
+- The oracle's `returncode == 0` assertion is unchanged, and nothing is deselected.
+
+**Failed approach, do not repeat:** mounting `.git` in place with
+`git config --system --add safe.directory /crafty`. `tools/certification/ownership.py` runs git with
+global and system config switched off, so `git ls-files` still refused the foreign-owned mount as
+*dubious ownership*. Exporting `GIT_CONFIG_SYSTEM` in the test environment trips admission instead
+(*inherited Git overrides refused*).
+
+Executed (WSL Ubuntu 24.04, CPython 3.12.3, ngspice-42; no Docker anywhere locally):
+- Emulation v1 (in-place ro bind mount, safe.directory via `GIT_CONFIG_SYSTEM`, run as root):
+  `python -m pytest -m "not expensive" -q -n 4 --dist loadfile`.
+  Result: FAIL, 7 failed / 4 errors, 10365 passed, 155 skipped.
+  - 6 `OwnershipError` dubious ownership: `test_change_impact` ×4 errors + f7,
+    `test_repository_ownership::test_the_real_checkout_graph_never_contains_an_environment`.
+  - Root: `test_mutation_workspace::test_mid_walk...`.
+  - Emulation artifacts: `test_local_telemetry...` (env override) and `test_escrow_isolation` ×2
+    (WSL root can `unshare`).
+  - OD-3: the certificate test.
+- Emulation v2, the shipped design: tree owned by uid 1000, history a root-owned copy unwritable by
+  uid 1000, reproduce script generated from the Dockerfile's `printf` block.
+  - Refusal controls: no history, old mount point, depth-1 history and tree drift each exit 2;
+    the control exits 0; the source history is not writable by the test user.
+  - The generated `reproduce`: `1 failed, 10375 passed, 155 skipped in 168.40s`. FAILED:
+    `test_the_certificate_describes_this_tree` (drift: `.github/workflows/tests.yml` from this
+    change, plus main's two files). This is the hosted failure set plus this change's certified file.
+  - `pytest tests/oracles/test_oracle_ngspice_dc.py tests/test_mutation_workspace.py::test_mid_walk... tests/test_recertification_scope.py -q -rs`:
+    117 passed, 0 skipped.
+  - `python tools/forge_check.py --changed --base e193e573 --workers 4`: exit 0, 279 passed.
+    It reports `.github/workflows/tests.yml` as RECERTIFICATION_REQUIRED (`certified:certification_control`)
+    and `Dockerfile` as unclassified reach.
+- **NOT RUN:** `docker build` / `docker run`, an ngspice-44.2 binary, SCIENTIFIC, hardened
+  recertification. The first pushed `reproduce` run is the measurement. While main's certificate
+  is stale, expect exactly the OD-3 certificate failure there; the benchmark stage does not run
+  under `set -e`.
+
+Owner: the workflow edit needs OD-3 recertification. Nothing is pushed or merged.
