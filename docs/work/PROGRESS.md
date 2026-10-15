@@ -3162,3 +3162,71 @@ Result: PASS, exit 0; nine Markdown files, 75 unique table IDs, all local links 
 explicit anchors resolve. External URLs not checked. Scientific tests, regression,
 FAST, SCIENTIFIC and certification: **NOT RUN**, documentation-only.
 Command: git diff --cached --check. Result: PASS, exit 0 for the design/coupling proposal update.
+
+## 2026-10-15 — Quick wins: G0 CI record on `main` and catalogue item X08 (user-requested)
+
+User request: read the plan and the Markdown files, then implement the easiest and quickest items.
+Branch `fix/ci-reproduce-and-g0-record`, worktree `D:/forge-quickwins`, base `origin/main` `e193e573`.
+No certified file, threshold, criterion, certificate or frozen artifact was changed.
+
+### 1. The restored CI triggers did run on `main` (ACTIVE_PLAN item ticked)
+
+Read-only `gh run list` / `gh run view --log` for `sharq-labs/forge`. On push of `e193e573` (PR #142),
+2026-10-14: Tests run 38544091505, Branch Policy run 38544091368. Classification:
+
+| Job | Result | Cause | Class |
+|---|---|---|---|
+| fast (3.11), fast (3.12) | 1 failed, 10359 passed, 170 skipped | `test_the_certificate_describes_this_tree` | GOVERNANCE: certificate does not bind `main` (OD-3) |
+| scientific | 1 failed, 10946 passed, 156 skipped | same single test | same (OD-3) |
+| Branch Policy | exit 1 | `gh api .../rules/branches/main` HTTP 403 (needs Pro or a public repo) | OD-1 |
+| reproduce (Docker) | 161 failed, 10164 passed, 178 skipped | 150 need git history (`.dockerignore` drops `.git`; checkout is depth 1): no repository root, `git rev-parse` 128, freeze manifests, replay `NOT_REPRODUCIBLE` for a missing commit identity; 11 `test_oracle_ngspice_dc` because the image's ngspice-39 exits 1 after a correct `.control`/`op` run (ngspice-42 on the hosted runner exits 0) | CI environment, not a product regression; the fix needs `fetch-depth: 0` plus a `.git` mount in certified `tests.yml` (`certified:certification_control`), so it waits for OD-3 |
+| mutations | cancelled at 6 h 0 m | GitHub job time limit | infrastructure |
+| tests-gate | failure | aggregates the above | — |
+
+No `SCIENTIFIC_CORRECTNESS` failure was found in these runs. This is a classification from the logs,
+not a rerun.
+
+### 2. X08 first slice: `engcore.materials.coverage` (gaps/07, ease 4/5)
+
+`material_coverage_report(property_set, state, required, *, requirement_source, consumed=())` re-resolves
+each STATED requirement through the existing `MaterialPropertySet.resolve` at one `MaterialState` and lists
+`without_value`, `conflicted`, `uncertainty_unknown`, `assumed`, `interpolated` and `unrequired_with_data`
+(named, not resolved, not judged). Classification `resolution_report_not_evidence`; status
+`every_stated_requirement_has_a_value` / `a_stated_requirement_has_no_value`. No new resolution logic,
+evidence, uncertainty vocabulary or provenance. Nothing in production imports it yet.
+
+Independent `forge-scientific-review` (read-only): no BLOCKER; CHANGES REQUIRED for
+- M1: the report was not bound to the run, so a caller could under-declare `required`. Fixed: statuses and
+  fields renamed to say "stated"; a required `requirement_source`; an optional `consumed` list of the run's
+  own `ResolvedProperty` records refuses an unstated consumed property and a record that does not equal a
+  fresh resolution at this state.
+- M2: the public constructors were unchecked. Fixed: `MaterialCoverageReport.__post_init__` refuses empty,
+  unsorted or duplicate entries, entries resolved at another state or from another set, and overlap with
+  `unrequired_with_data`.
+- M3: the first draft re-exported the module from `src/engcore/materials/__init__.py`, an evidence-code file
+  pinned by the certificate. Fixed: the re-export was reverted; `__init__.py` is byte-identical to base and
+  the module is reachable by path only.
+- Minor m1–m5 and m7 also fixed (uncertainty `source_kind`, structured `conflicted`, value and rule in the
+  entry, stronger serialization assertions, a whitespace-duplicate case). m6 (an ASSUMED input to a
+  FITTED/DERIVED datum resolves as SOURCED) is inherited from `properties.py` and is not changed here.
+
+Commands (Windows, `.venv` Python 3.14, `PYTHONPATH="<wt>/src;<wt>"`, `--basetemp` on D:):
+
+- `python -m pytest tests/test_materials_engine.py -q -p no:cacheprovider` -> 23 passed.
+- Targeted mutation script (9 mutants of `coverage.py`, apply, run, restore): 8 KILLED. SURVIVED: removing
+  the factory's duplicate check, an equivalent mutant because the report constructor refuses the same input.
+- `tools/forge_check.py --changed --dry-run` selected the whole FAST tier, so FAST was run:
+  `python -m pytest -m "not expensive" -q -n 4` -> branch (uncommitted): 155 failed, 10172 passed,
+  189 skipped, 22 errors. Same command on a pristine `origin/main` worktree: 153 failed, 10167 passed,
+  189 skipped, 22 errors. The failure sets are identical apart from two tests present only on the branch:
+  `test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1` and
+  `test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`.
+  Both report `tree.clean -- uncommitted`. Their rerun after the commit is recorded below. The 153 shared
+  failures are the known Windows / certification baseline (mutation workspace, escrow, authority, formal
+  xdist, local assurance, certificate and freeze self-checks); none is in `materials`.
+
+Failed approach: the first `forge_check --changed` run started before the review fixes and was stopped; it
+produced no result. Its process tree was killed by PID.
+
+Not done: the Docker `reproduce` fix (needs OD-3 for `tests.yml`); X08 is not wired into any engineering or
+system-runtime report yet; SCIENTIFIC tier, regression pack and Linux runs **NOT RUN**.

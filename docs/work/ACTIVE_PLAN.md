@@ -14,7 +14,12 @@ This bounded task supersedes the older executable queue below for this branch.
 - [x] Run supported 3.11/3.12 tiers and exact failure attribution (no REAL_REGRESSION).
 - [x] Hardened recertification: SOURCE_PASS at 05522b59, certificate child b1eea81b, LOCAL_ASSURANCE: PASS.
 - [x] Merged to `main` as PR #140 (623149f3) after resolving a docs-only PROGRESS conflict.
-- [ ] Confirm the restored CI triggers ran on `main` (Actions billing may block runners).
+- [x] Confirm the restored CI triggers ran on `main`: they did, on push of `e193e573` (PR #142), 2026-10-14
+      (Tests run 38544091505, Branch Policy run 38544091368). Results, classified 2026-10-15 in PROGRESS:
+      FAST 3.11 / 3.12 and SCIENTIFIC fail only `test_the_certificate_describes_this_tree` (certificate does not
+      bind `main`: OD-3); Branch Policy fails on the rulesets 403 (OD-1); `reproduce` (Docker) has 161
+      environment failures (no `.git` in the image, ngspice-39 exit status) whose fix touches certified
+      `tests.yml` (OD-3); `mutations` hit the 6 h job limit (cancelled).
 - [ ] Independent review of 659da048, 313bbf1e, 05522b59 (mutation-proven, not yet reviewed).
 - [ ] Owner decisions: the certified-imports-uncertified scope gap (PROGRESS, eighth review); host
       branch protection (no required status checks; not re-verified this session).
