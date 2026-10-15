@@ -3366,7 +3366,7 @@ Owner: the workflow edit needs OD-3 recertification. Nothing is pushed or merged
     - Two (`test_result_is_usable_only_when_every_declared_model_is_in_domain`, in both PRs) are a real semantic
       difference. `main` deliberately excludes validity from `ScientificResult.is_usable`
       (`docs/assurance/CORE_SEMANTIC_INVARIANTS.md`, truth table pinned by test). Changing that in frozen Core is a
-      scientific-design decision: OD-15.
+      scientific-design decision: OD-21 (numbered OD-15 on its branch; renumbered at the 2026-10-16 landing).
 - Post-pass state: open PRs #107, #39, #24. Hardened recertification of `main`: NOT RUN (OD-3). FAST on `2d0fa6c3`
   itself: NOT RUN (its tree = `9e92573e`, whose FAST-tested parent `bfccb351` differs by one PROGRESS entry).
 - Failed approach: `git merge-tree` against #39 / #24 exited 128 ("no merge base"). That was the shallow clone, not
