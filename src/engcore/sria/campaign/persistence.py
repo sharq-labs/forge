@@ -39,7 +39,7 @@ from .checkpoint import (
     IterationPlan,
     ResumeViolation,
 )
-from .events import CampaignEvent, CampaignEventLog, assurance_disagreements
+from .events import CampaignEvent, CampaignEventLog, assurance_disagreements, stop_review_disagreements
 from .state import CampaignRun, ExecutionState, IterationRecord, PauseReason
 
 PERSISTENCE_SCHEMA = schema_string("sria_campaign_persistence_store", 2)
@@ -1644,6 +1644,10 @@ class IncrementalCheckpointStore:
             events.events,
             obligation_state=checkpoint.obligation_state,
             iterations=iterations,
+        )
+        # BR-15 F-9: a store read directly must not return a stop-review outcome the log does not record.
+        problems = list(problems) + stop_review_disagreements(
+            events.events, stop_review_outcome=run.stop_review_outcome, iterations=iterations
         )
         if problems:
             raise PersistenceIntegrityError(

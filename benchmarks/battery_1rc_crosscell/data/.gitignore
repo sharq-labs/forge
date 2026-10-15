@@ -1,0 +1,4 @@
+# rebuilt from the pinned raw files by data.py; the committed .sha256 files pin them
+calibration.json
+heldout_gitt25.json
+heldout_gitt5.json

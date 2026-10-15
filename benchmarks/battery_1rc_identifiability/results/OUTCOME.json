@@ -1,0 +1,36 @@
+{
+ "calibration_sha256": "0bcec32d774ec3465bb86a9dc2254424c5a0524c9fbbd9fc74d2d3cab7b8bf9e",
+ "held_out_acceptance_1rc": {
+  "heldout_cc": "FAIL",
+  "heldout_pulses": "PASS"
+ },
+ "held_out_acceptance_rint": {
+  "heldout_cc": "FAIL",
+  "heldout_pulses": "FAIL"
+ },
+ "identifiability": "IDENTIFIABLE",
+ "mapping": {
+  "IDENTIFIABILITY_SUPPORTED": "IDENTIFIABLE, and a held-out set is NOT_ASSESSABLE",
+  "INSUFFICIENT_MEASUREMENT_EVIDENCE": "WEAKLY_IDENTIFIABLE or NOT_IDENTIFIABLE",
+  "MODEL_REJECTED": "IDENTIFIABLE and a held-out set FAILS for the 1RC",
+  "MODEL_VALIDATION_SUPPORTED": "IDENTIFIABLE and every held-out set PASSES for the 1RC",
+  "ledger_rule": "an outcome is a report, not a promotion. calibration may PASS only on IDENTIFIABLE; independent_validation stays MISSING with one cell (no cross-cell transfer); measurement_uq is decided by review of the Type B evidence, not by this script"
+ },
+ "outcome": "MODEL_REJECTED",
+ "outcome_without_the_preregistered_temperature_widening": "IDENTIFIABILITY_SUPPORTED",
+ "reading": {
+  "applicability_not_enforced_by_the_route": "SOC >= 0.10 is enforced by the role builder only; the route's validity domain does not carry it, so its in_domain does not certify SOC",
+  "comparison_note": "the constant-current comparison has ONE unit; its interval is degenerate and is a point difference, not a statistical result",
+  "hypotheses_not_evidence": [
+   "slower diffusion beyond one time constant",
+   "rate-dependent OCV/hysteresis offset",
+   "a capacity-basis offset between the HPPC day and the 1C test day",
+   "cell self-heating"
+  ],
+  "not_tested": "cross-cell transfer (one cell), other temperatures, charge and regenerative drive cycles",
+  "rejected": "the BUNDLE (this parameter set, the measured OCV, the Q_HPPC charge basis, z0 = 1 and v_p0 = 0) fails the frozen constant-current acceptance on the one 1C capacity test (RMSE 28.7 mV, P95 50.7 mV, bias -25.1 mV). The failure is marginal: 3.65 mV and 0.67 mV over, both below the +/-5 mV voltage accuracy (which is not admitted). The test is in domain only because of the preregistered +/-1 degC widening (case 23.77-25.24 degC against an unwidened 23.56-24.61 degC); without it the outcome would be IDENTIFIABILITY_SUPPORTED. Its initial state (z0 = 1, v_p0 = 0) rests on a 10 s visible rest, a weaker basis than the pulse windows' 590 s",
+  "supported": "R0, R1, C1 and tau are identifiable from 1C/6C HPPC pulses GIVEN the measured OCV (one cell, 25 degC, SOC >= 0.10). The held-out 2C/4C pulse windows pass the preregistered pooled limits (RMSE 12.5 / P95 27.4 mV), but this tests current interpolation only, shares the OCV knots logged minutes earlier in the same record, is 83 % rest samples, and under load alone the RMSE is 19.7 mV (above 15)"
+ },
+ "schema": "forge.battery_1rc_identifiability.outcome/1",
+ "validation_sha256": "90eb67f7897aad05fbe31a4fdfa77067d017555ce9e5375329eaf45b4335ff4a"
+}

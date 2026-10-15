@@ -1,0 +1,143 @@
+{
+ "capability": "battery.thevenin_1rc",
+ "construction": {
+  "gitt25_window": "the last 60 s of the rest before a 2.5 A discharge pulse, the pulse (~288 s, 0.1 s sampling) and the first 600 s of the rest after it",
+  "gitt5_window": "the same for the 5-pulse GITT (~1440 s pulses)",
+  "hold": "BACKWARD; forward hold is a sensitivity only",
+  "initial_state": "z from the coulomb count; v_p0 = 0 with basis: the preceding rest is >= 3000 s; screen: the voltage moves <= 1 mV over the last 60 s of that rest, otherwise excluded",
+  "ocv": "measured: the last sample of every rest >= 3000 s in each calibration cell's 25-pulse GITT (and of the post-charge rest at z = 1), z on Q_cal; the calibration OCV is the mean, knot by knot, over the calibration cells that reach that knot; linear between knots; never extrapolated",
+  "q_basis": "Q_cal = the mean, over the CALIBRATION cells, of each cell's net 25-pulse-GITT discharge to its cutoff; used for every cell in the primary evaluation",
+  "rest_band_A": 0.05,
+  "rest_band_basis": "the protocol has only 0 or |I| >= 0.5 A in these tests; 50 mA separates them",
+  "sign": "Forge current [A] = -Current[mA] / 1000",
+  "soc": "per cell, z = 1 at the end of the post-charge rest (the first discharge-pulse step's preceding rest) and z decreases by the integrated discharge over Q",
+  "soc_scope": "windows whose z stays in [max(0.10, lowest knot), 1]; others are excluded and counted",
+  "temperature_dropouts": "a Temperature sample outside [15, 40] degC in a 25 degC base-cooled test is a sensor dropout: it is excluded from the applicability check and counted; a window with any dropout inside its pulse is excluded"
+ },
+ "data": {
+  "cells": "LG M50T (LG GBM50T2170) 21700, base-cooled at 25 degC; 12 cells, beginning of life (RPT0, before any ageing set)",
+  "channels": "Time (s), Voltage (V), Current (mA; negative = discharge), Charge (mA.h), Temperature (degC)",
+  "dataset": "Kirkaldy et al. 2024, 'Lithium-ion battery degradation: comprehensive cycle ageing data and analysis for commercial 21700 cells', Zenodo 10.5281/zenodo.10637534 (CC BY 4.0); J. Power Sources (2024) 234185",
+  "files_sha256": {
+   "Expt 1 - cell D - RPT0 - 0.1C discharge data.csv": "c4bbeef4d25f29ca83d67eb6061fc79e63867b7d72069b73d9bc0a86c6628b73",
+   "Expt 1 - cell D - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "b458f129f74bdf92f6073e5360869036367f089e593fd0e23ecc8f27ef02d56d",
+   "Expt 1 - cell D - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "a01be484d0b53c3c356e4eed7c978b20c65666570a8b2ffae78aeeccfe104460",
+   "Expt 1 - cell E - RPT0 - 0.1C discharge data.csv": "488135a32b895775e4a395ccd001b7821930d4933b458ff5533504b7aaad199a",
+   "Expt 1 - cell E - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "e27a42d09dc73d3c4e6c5a944c15815dff7bb2de97c395fceb3d706d331e040e",
+   "Expt 1 - cell E - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "df3bf19e86227988610e4145d6361065612106186bfa0ccfbe703dd27f659234",
+   "Expt 1 - cell F - RPT0 - 0.1C discharge data.csv": "67113b75aeb9075bab7f5eb70b73fd1a128a669e7ca6961d5f72a3cad078ef4b",
+   "Expt 1 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "9f46ffed4b18fa1a4aa327658ad333ab0e04b8d43291b52fd5ba47015ea7b92b",
+   "Expt 1 - cell F - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "316be1b57bf6cffaaadf4441948e60d23e77e471ace4dd95f106eb940f05ca8c",
+   "Expt 2,2 - cell C - RPT0 - 0.1C discharge data.csv": "d2215c01f4c09ede30551c0f7985b278da29b77ed87a4d6bff8597d7bbf18228",
+   "Expt 2,2 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "af90339be40e29f46bcfaa80b64a4a7887c85ffc94c42596a1fb92ce6dc4b1e2",
+   "Expt 2,2 - cell C - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "d668d2cbb191a2902dad6cd981bd4a10aa19cf71ba91e22b76bc3d82c536c617",
+   "Expt 2,2 - cell D - RPT0 - 0.1C discharge data.csv": "966166df526ea5cb1a69940f4fcd2045e5b9c00cd916868146b496558908ab69",
+   "Expt 2,2 - cell D - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "ed9873b629e52dbce66a4c42c383ac930c7b9cfa3620f70bfff1a4c7fdc55222",
+   "Expt 2,2 - cell D - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "ab6d269ff8a325eaf39f8934a963a123d30d1a61bb546cd6da5daa18253b5709",
+   "Expt 3 - cell D - RPT0 - 0.1C discharge data.csv": "20dac02b99d46831d052fe518d99e9330c3777f998dbd13518862374bd0313b3",
+   "Expt 3 - cell D - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "730a22f0b4cc566351466cf9f0b1b57f5a157765457a2d5996c809cc77171f53",
+   "Expt 3 - cell D - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "f557e0b6e30d4ccd928da3c271cd5c66716f2fdc36167a9db8326ad1d3725fb5",
+   "Expt 3 - cell E - RPT0 - 0.1C discharge data.csv": "3b155e47bde9515851bef73954776118a5cc4ba208c2fa956e10594100c688b2",
+   "Expt 3 - cell E - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "21e53ca6199d8781b54e2d5494cbe2a640a08c9173507226ab337a879bd54aca",
+   "Expt 3 - cell E - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "5a9d6f996539faa452bd3a1b409740584c59c15040242c0b92fb6355a879a3db",
+   "Expt 3 - cell F - RPT0 - 0.1C discharge data.csv": "dace222ea4ff75e90a7515c73c1ac1149dd237ab57667a86af18b98b0adc5c21",
+   "Expt 3 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "32fabd52c6325369e8b94f2dd10dd12a4297801d9ac0fd00b6fd460b5e941782",
+   "Expt 3 - cell F - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "a7facda1b6bb511b45e0855cbd2c2788e23ee759586abbe060c75102cf77fe0a",
+   "Expt 4 - cell D - RPT0 - 0.1C discharge data.csv": "b774df3bb59d01d0c25e24d138a6829e575df68a0fdb22996562e9fd8b9b59e3",
+   "Expt 4 - cell D - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "92d01995c35db9fd983cd82704ef0a33b1be7a088cabc63440c7cc29743912a6",
+   "Expt 4 - cell D - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "bd4e5de94a3c4414fc708f82e561733d99a24de875c501d04b83d08136369c4d",
+   "Expt 4 - cell E - RPT0 - 0.1C discharge data.csv": "22d7a4f675fe43236304b3180ff48925fe501c68269fc37795e568241ff353c9",
+   "Expt 4 - cell E - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "210c3343f2e193d3ba87e52474012da1308f578e1f159c4ad1289bd27894a455",
+   "Expt 4 - cell E - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "44d6d47ec24c807b778655d3fa75e4228fbb5bf0fa89d56bdaeb5c058b5931d9",
+   "Expt 5 - cell D - RPT0 - 0.1C discharge data.csv": "36e9d9d67e87650ad211f4d34629f5eaf6dc22c14f91e8fb75c7ac7a771e3f5b",
+   "Expt 5 - cell D - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "9bffee10dfc48b0eb443f6863e7ab0a0917e5cf40d2f748e4812dcae4c66fba6",
+   "Expt 5 - cell D - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "12c274f79d0ac140bb53e0eece98fc8ee87124ad39b662be6a81725dcf9c56f8",
+   "Expt 5 - cell E - RPT0 - 0.1C discharge data.csv": "8ed93c1a700b6dd01d3988398de5557d8973ce4931dd074bd02c2fdf657712a6",
+   "Expt 5 - cell E - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "065ec982579c8547074eded1af454bf147740fdac79dd19893fa304f2d0b3c74",
+   "Expt 5 - cell E - RPT0 - 5-pulse GITT 0.5C discharge data.csv": "3d4fba2e4e16525e3a8d7e72da9c5b88d211dd6811321a90629c9f1ce5d665e0"
+  },
+  "measurement_uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (not read from the paper); never set to zero",
+  "retrieval": "HTTP range requests on the five experiment archives: the zip central directory, then only the selected members, each CRC32-checked against the directory (owner-approved partial download, 2026-10-15)"
+ },
+ "frozen_before": "any parameter fit and any comparison on these data",
+ "identifiability": {
+  "decision": "IDENTIFIABLE if R0, R1 and C1 are each identified; WEAKLY_IDENTIFIABLE if tau or R0 is but R1 or C1 is not; NOT_IDENTIFIABLE otherwise",
+  "parameter_identified_if": "profile rise >= 10 % within a factor of 3 on both sides, AND cell-block bootstrap (B = 200, seed 0, resampling calibration CELLS) CV <= 0.25, AND not on a bound, AND the hold-convention shift <= 10 %"
+ },
+ "inspected_before_freeze": "the step structure (currents, durations, sampling, voltage and temperature ranges) of cell Expt 5/D's RPT0 files only, a CALIBRATION cell; no voltage was compared with any model",
+ "models": {
+  "1rc": "calibration OCV + R0 + R1 + C1 (engcore thevenin_route)",
+  "bounds": {
+   "C1_F": [
+    1.0,
+    10000000.0
+   ],
+   "R0_ohm": [
+    0.001,
+    0.2
+   ],
+   "R1_ohm": [
+    0.0001,
+    0.2
+   ]
+  },
+  "objective": "sum of squared voltage residuals over every scored calibration sample",
+  "optimizer": "scipy least_squares (trf), log-parameters, 8 fixed starts",
+  "parameter_set_max_current": "the largest calibration current",
+  "parameter_set_temperature_range": "min and max of the valid (non-dropout) calibration temperature samples; NOT widened (no admitted sensor accuracy)",
+  "rint": "calibration OCV + R0"
+ },
+ "outcome_mapping": {
+  "IDENTIFIABILITY_SUPPORTED": "IDENTIFIABLE, no set FAILS, and a set is NOT_ASSESSABLE",
+  "INSUFFICIENT_MEASUREMENT_EVIDENCE": "WEAKLY_IDENTIFIABLE or NOT_IDENTIFIABLE",
+  "MODEL_REJECTED": "IDENTIFIABLE and the primary or secondary set FAILS for the 1RC",
+  "MODEL_VALIDATION_SUPPORTED": "IDENTIFIABLE, and the primary and secondary sets PASS for the 1RC",
+  "ledger_rule": "an outcome is a report, not a promotion. independent_validation may PASS only on MODEL_VALIDATION_SUPPORTED AND with an admitted measurement uncertainty for THIS dataset; Kirkaldy's is UNKNOWN, so the gate stays MISSING unless the owner admits one"
+ },
+ "preregistration_id": "battery_1rc_crosscell.kirkaldy2024_m50t_25c_bol.v1",
+ "preserved": [
+  "benchmarks/battery_1rc_closure (NASA)",
+  "benchmarks/battery_1rc_identifiability (LG HG2)"
+ ],
+ "roles": {
+  "calibration_cells": [
+   "Expt 3/D",
+   "Expt 3/E",
+   "Expt 3/F",
+   "Expt 4/D",
+   "Expt 4/E",
+   "Expt 5/D",
+   "Expt 5/E"
+  ],
+  "heldout_cells": [
+   "Expt 1/D",
+   "Expt 1/E",
+   "Expt 1/F",
+   "Expt 2,2/C",
+   "Expt 2,2/D"
+  ],
+  "independence_unit": "cell; the held-out cells are other physical cells from other experiments' rigs",
+  "split_rule": "by experiment number, fixed before any fit: experiments 3-5 calibrate, 1-2 are held out"
+ },
+ "schema": "forge.battery_1rc_crosscell.preregistration/1",
+ "validation": {
+  "acceptance": {
+   "applicability": "a set holding any window outside the validated domain is NOT_ASSESSABLE in both directions",
+   "basis": "the LG HG2 limits, kept; and since the LG HG2 review showed that pooling rest samples can hide a load miss, the load-only samples must meet the same limits",
+   "primary": {
+    "P95_abs_mV_max": 30.0,
+    "RMSE_mV_max": 15.0,
+    "also_load_only": true
+   },
+   "secondary": {
+    "P95_abs_mV_max": 50.0,
+    "RMSE_mV_max": 25.0,
+    "also_load_only": true
+   }
+  },
+  "comparison": "cell-block paired bootstrap over held-out cells (B = 2000, seed 0) of RMSE_Rint - RMSE_1RC; fewer than 2 units: NOT_ASSESSABLE",
+  "descriptive_only": "the same held-out windows with each held-out cell's own measured OCV and own Q (parameter transfer only)",
+  "primary": "held-out cells' 25-pulse GITT windows, STRICT TRANSFER (calibration OCV, Q_cal, parameters)",
+  "secondary": "held-out cells' 5-pulse GITT windows (long constant-current pulses), strict transfer"
+ }
+}

@@ -1,0 +1,6 @@
+{
+ "cpu_count": 20,
+ "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+ "prereg_sha256": "f99fcfbdc97aabcbea52fa72c12ad196d420e298237c5374184f537c67774ab0",
+ "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
+}

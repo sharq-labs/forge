@@ -3896,3 +3896,489 @@ G0 PASS, certification, qualification or physical validation is claimed.
 - Selected actions: `request-operating-point`, `check-identifiability`, `stop`. Score 15/15 on the A2 denominator. Unsupported scientific claims 0. Authority override attempts 0. LLM calls 0. Scientific capability calls 0.
 - Belief revision after an operating-point availability observation: that dependency blocked, duration support and the three short-duration refusals unchanged, mission unresolved, next action `stop`.
 - Scientific review of the Mind: CHANGES REQUIRED, then PASS after the five corrections. A PASS is a review result only. Recertification: NOT RUN.
+
+
+## 2026-10-14 — BR-15 authority boundary & certification closure
+
+Branch `fix/br15-authority-closure` (worktree `D:/forge-br15`; WSL clone `~/forge-br15`), base `origin/main`
+`e193e573`. Commits: `dc26175d` (red reproducer), `6d62e5cf` (closure fix), `a49e8d12` (harness fix), `01073787`
+(review LOWs) and `a22869d4` (recertification-scope test example). Not pushed. Report:
+[BR15_AUTHORITY_CLOSURE.md](BR15_AUTHORITY_CLOSURE.md). Outcome: **PARTIALLY_CLOSED**, blocked on owner
+recertification (OD-3) and on GitHub governance.
+
+Post-merge truth:
+- `core_certificate.py --verify` on `e193e573` FAILED: `tests/mutation_guards.py` and `tests/test_formal_xdist.py`
+  were changed by PR #142 after certificate child `b1eea81b`.
+- The PR #140 merge `623149f3` changed only docs and the certificate.
+- CI on `main`: FAST 3.11/3.12 and SCIENTIFIC each failed one test, `test_the_certificate_describes_this_tree`.
+  `reproduce` failed: the image has no `.git` and runs as root.
+- Recertify on PR #140 and #142: all 8 `v4_mutations` shards failed, because `actions/checkout` writes
+  `.git/config.worktree` and workspace admission refuses it.
+
+Reproducers (before the fix):
+- `pytest tests/test_certified_dependency_closure.py` against the `e193e573` verifier: 23 failed, 2 passed. The two
+  that passed are the controls.
+- At `dc26175d`: 14 failed, 2 passed.
+
+After the fix:
+
+| Run | Command | Result |
+|---|---|---|
+| Windows 3.14, serial | `pytest tests/test_certified_dependency_closure.py tests/test_certificate_verdict_scope.py tests/test_core_certificate.py` | 90 passed, 1 skipped, 1 failed (`test_the_certificate_describes_this_tree`, expected) |
+| Windows | `tests/test_recertification_scope.py` | 115 passed |
+| Windows | real tree | `certified_dependency_problems == []`, `authority_closure_problems == []` |
+| Windows | production registry pin | unchanged (456 `evidence_code` files, equal digests, `registry_problems == []`) |
+| WSL 3.12, FAST (`pytest -m "not expensive" -n 4`), base `e193e573` | | 10374 passed, 156 skipped, 1 failed (`test_the_certificate_describes_this_tree`) |
+| WSL 3.12, FAST, fix `a22869d4` | | 10415 passed, 156 skipped, 1 failed (same test) |
+| WSL 3.11, FAST, fix `a22869d4` | | 10415 passed, 156 skipped, 1 failed (same test) |
+| WSL 3.12, impact selection (31 modules) at `a49e8d12` | | 926 passed, 2 failed: the certificate test, plus `test_recertification_scope.py::test_non_core_paths_stay_ordinary[src/engcore/sria/decision/utility.py]` (a real consequence of pinning sria/decision; fixed in `a22869d4`) |
+| WSL 3.12, impact selection at `a22869d4` | | 940 passed, 1 skipped, 1 failed (the certificate test) |
+| WSL 3.12, regression at `a22869d4` | `python tools/forge_check.py --regression` | 256 passed, exit 0 |
+
+Hardened recertification, `local_assurance`, Formal and V4 mutation populations: **NOT RUN** (owner-run, OD-3).
+
+Independent review (forge-scientific-reviewer, static):
+- First pass: CHANGES REQUIRED. I-1 (package-wide exclusions) and I-2 (false multiscale and providers reasons) were
+  HIGH; I-3 and I-4 MEDIUM; I-5 and I-6 LOW. All were fixed.
+- Confirmation pass: ACCEPT, no BLOCKER or HIGH. Two of its LOWs were fixed. The LOW about `api_snapshot.py` being a
+  non-seed pinned file was recorded as a residual.
+
+Failed approaches, so they are not repeated:
+- A first fix declared `providers/**` and `multiscale/**` as non-authoritative. The reasons were false: the system
+  runtime commits multiscale state uncertainty and consumes provider records. Both were pinned instead.
+- Package-wide exclusions were replaced by importer edges.
+- The Windows `-n 4` runs of the certificate fixtures fail on `git add -A` (exit 128) on the base as well. It is an
+  environment problem; run those serially on Windows.
+## 2026-10-14 — BR-16 Genesis-lite v0: preregistered benchmark layer and Tier-1 pilot
+
+Branch `feat/br16-genesis-lite-benchmark` (worktree `D:/forge-br16`, WSL clone `~/forge-br16`), base `origin/main`
+`e193e573`. Code commit `e493ff3f`. Not pushed. Report: [GENESIS_LITE_V0.md](../discovery/GENESIS_LITE_V0.md).
+Outcome: **PILOT_COMPLETE · BLOCKED_OWNER_APPROVAL**, not GENESIS_A1_PASS. G0 has not exited, the preregistration is
+frozen for the pilot only, the formal ≥20-seed runs have not started, and the budget and evaluator owner decisions are
+open.
+
+Scope:
+- `benchmarks/genesis_lite/` reuses `engcore.blindfold` unchanged; `tests/genesis_lite/` adds 42 tests. A1
+  preparation only.
+- Certificate scope check: 0 of the 15 changed files are pinned. The new tests are recertification *triggers* under
+  the conservative `tests/**` rule.
+
+Gates:
+
+| Run | Command | Result |
+|---|---|---|
+| Windows 3.14 | `pytest tests/genesis_lite -q` | 42 passed |
+| WSL 3.12, FAST at `e493ff3f` | `pytest -m "not expensive" -n 4` | 10416 passed, 156 skipped, 1 failed (`test_core_certificate.py::test_the_certificate_describes_this_tree`); base `e193e573` had 10374 passed + the same single failure |
+| WSL 3.12, regression | `python tools/forge_check.py --regression` | 256 passed, exit 0 |
+
+Hardened recertification: **NOT RUN** (and not required by any certified-file change).
+
+Pilot (WSL 3.12.3, 20 CPUs, preregistration `f99fcfbd…`, root commitment `07381465…`, now revealed):
+- Command: `python -m benchmarks.genesis_lite.pilot --root-file <root> --out ~/br16-evidence/pilot`.
+- Result: 960 runs, 0 invalid, 0 inadmissible, 85.07 s.
+- The separate evaluator agreed with the escrow on all 5,760 universes.
+- Run log sha256 `0c279655…`.
+- Formal baseline tier: 15,120 runs ≈ 1,185 s (ESTIMATED).
+
+Pilot findings (indicative; 10 worlds per cell):
+- P-1: the floor arm `always_law` dominates the discoverable cell (0.70 vs 0.27 for the best competence arm). The
+  formal lift rule needs the v0.1 amendment (OD-16).
+- P-2: the no_solution and insufficient_evidence cells look REPRESENTATION_LIMITED, and the confounded cell is solved
+  by a non-discoverer.
+- P-3: only 0.70, 0.50 and 0.40 of the discoverable, spurious and confounded worlds are inside the searched family.
+- P-4: only the pair heuristic reaches full credit on indistinguishable worlds (0.20).
+- P-5: the textbook answer failed in every trap world.
+
+Review (forge-scientific-reviewer, static):
+- Round 1: CHANGES REQUIRED, with 5 HIGH: cross-run linkage; monomial-only search; straw-man cells; no strongest-arm
+  or decision rule; pseudo-replication.
+- Round 2: 1 HIGH (paired lift impossible under distinct roots; Holm family not fixed) and 5 LOW.
+- All were fixed before the freeze.
+
+Failed approaches, so they are not repeated:
+1. Reusing escrow universe ids across presentations: a stateful proposer could merge budgets. Replaced by run-private
+   pseudonyms.
+2. Selecting the structure on the same hold-out the gate judges. Replaced by CV inside the training split.
+3. One master root per (arm, seed, presentation). That breaks paired lift; roots are now shared across arms.
+4. Long `python -c` strings with f-strings through bash. They were mangled; use script files.
+
+
+## 2026-10-14 -- BR-17 Minimal Mind: start gate BLOCKED_BY_PREREQUISITE
+
+The gate was checked against the live origin/main e193e573. All three prerequisites are unmet:
+- A1 has not passed: BR-16 is PILOT_COMPLETE / BLOCKED_OWNER_APPROVAL, and G0 has not exited because the certificate
+  fails on main.
+- No baseline identity is frozen for A1: v0 is frozen for the pilot only, and P-1 needs v0.1.
+- The active epic is still battery.thevenin_1rc, and no exception is open.
+
+No Mind code was written; the active epic and the ledger were not touched. Record and loop owner map:
+[BR17_MINIMAL_MIND_READINESS.md](../discovery/BR17_MINIMAL_MIND_READINESS.md). Tests: NOT RUN (documentation only).
+
+## 2026-10-14 -- BR-18: BLOCKED_BY_PREREQUISITE
+
+BR-17 has not passed (BLOCKED_BY_PREREQUISITE), and origin/main e193e573 has no Mind to evaluate. No BR-18 work was started. The verified-guard map is in [BR17_MINIMAL_MIND_READINESS.md](../discovery/BR17_MINIMAL_MIND_READINESS.md). Tests: NOT RUN (documentation only).
+
+
+## 2026-10-14 -- G0/A1 unblocking sprint (integration/g0-a1-unblock, local only)
+
+Integration branch `integration/g0-a1-unblock` (worktree `D:/forge-g0a1`) = `origin/main` `e193e573` + BR-15
+(`9df87275`) + BR-16 (`0f69a453`). Report: [G0_A1_UNBLOCKING.md](G0_A1_UNBLOCKING.md). Nothing pushed or merged.
+Hardened recertification and FULL local assurance: NOT RUN (owner, OD-3).
+
+Fixed with reproducers that fail first:
+- F-9: a restored campaign could carry a stop-review outcome different from the one in its own log.
+  Fix: `stop_review_disagreements`, used in both runner restore and `IncrementalCheckpointStore.materialize`.
+  Test: `tests/test_audit_sria_stop_review_restore.py`.
+- F-7: the CI V4 shards refused the `config.worktree` that `actions/checkout` writes.
+  Fix: a workflow step removes exactly the three sparse-checkout defaults. Test: `tests/test_ci_v4_checkout_admission.py`.
+  Not yet observed on GitHub.
+- Escrow leak: in-process heap-scan and stack-walk attacks stole hidden laws while the runs stayed VALID.
+  Fix: `isolation="proposer_process"` (`benchmarks/genesis_lite/proposer_host.py`).
+  Test: `tests/genesis_lite/test_genesis_lite_isolation.py`. Same-account boundary only: SECURITY_BOUNDARY_NOT_PROVEN; OD-20.
+- Crafted setting name (`rolled back`) that turned a losing run INVALID: refused at the client; `lift_decision`
+  refuses incomplete coverage.
+- P-1: the root cause comes from the v0 run log (per-cell metric, gated arms over-refusing, mostly in-family worlds;
+  neither leakage nor scoring). Fix: the v0.1 joint-credit contract in `benchmarks/genesis_lite/analysis.py`, identity
+  `genesis_lite.blindfold_l5.v0_1`, preregistration `94efff08...`. v0 (`f99fcfbd...`) is preserved byte for byte.
+
+Gates on `5ead8312` (WSL clone, Linux):
+- `python -m pytest -m "not expensive" -q -n 4` (3.12): 10493 passed, 156 skipped, 1 failed:
+  `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` (expected until OD-3).
+- Same command, 3.11: 10493 passed, 156 skipped, 1 failed (same test).
+- `python -m pytest tests/genesis_lite tests/test_audit_sria_stop_review_restore.py tests/test_ci_v4_checkout_admission.py tests/test_certified_dependency_closure.py -q`: 108 passed.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+- Certificate pre-checks: dependency, authority, harness and registry problems all `[]`.
+  `--verify` reports only the expected drift.
+
+v0.1 Tier-1 cost pilot, BR-16 `90a970cf`/`ed65ef3c`, WSL 3.12, `python -m benchmarks.genesis_lite.pilot`:
+- 1,560 runs, 0 invalid, 0 inadmissible, 374.6 s (MEASURED). The `90a970cf` run had 384.95 s, before the
+  summary-shadowing fix.
+- Strongest baseline `space_filling` (+3.175); `always_law` last (-4.642).
+- Formal ESTIMATE: 31,200 runs, about 6,451 s.
+
+Gates on the final code HEAD `eb2720f9` (WSL clone, Linux; the next commit adds only this record):
+- `python -m pytest -m "not expensive" -q -n 4` (3.12): 10493 passed, 156 skipped, 1 failed:
+  `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` (expected until OD-3); 395.9 s.
+- Same command, 3.11: 10493 passed, 156 skipped, 1 failed (same test); 327.0 s.
+- Focused set (same command as above): 108 passed.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+
+Failed approaches, so they are not repeated:
+1. `git stash` in a worktree applies another session's stash. Use `git show rev:path > path` for fail-before runs.
+2. Pilot concurrent with a FAST run: contaminated timing; killed by PID and rerun alone.
+3. Environment scan by broad patterns (`ROOT`): SYSTEMROOT false positive; narrowed.
+
+
+## 2026-10-14 -- G0/A1 final closure (integration/g0-a1-unblock, local only)
+
+Report: [G0_A1_FINAL_CLOSURE.md](G0_A1_FINAL_CLOSURE.md). OD-6 package:
+[OD6_GENESIS_EPIC_MIGRATION_PACKAGE.md](OD6_GENESIS_EPIC_MIGRATION_PACKAGE.md). Nothing pushed or merged.
+Hardened recertification, FULL local assurance and the formal campaign: NOT RUN (owner).
+
+Fixed, each with a reproducer committed red first:
+- BR-15 certificate (tool 2.6.0):
+  - C1, C2 and C3: `bb4f08d9` (red), fixed in `aedc7b24` and `a87ab594`.
+  - Nine further loader forms and planted bytecode: `912539ac` (red), fixed in `26f2505c`.
+  - Private importlib API, symlinks, and the registry probe's pycache: fixed in `3c28bedf`.
+  - Static loader completeness stays UNRESOLVED (declared).
+- Genesis-lite v0.2 (`genesis_lite.blindfold_l5.v0_2`, preregistration `878e6812...`):
+  - D1-D7, credit binding and candidate naming: `a1b5ab9b` (red), fixed in `f3ca0e63`.
+  - Screened world sets, record identity and outcome binding: `e7616785` (red), fixed in `80f798ba`.
+  - Run identity from the code digests: `f18bc4fc` (red), fixed in `4a302959`.
+  - Pilot evidence: `427dd66b`.
+- Escrow (measured, not fixable in code):
+  - A same-account proposer read `/proc/<ppid>/cmdline`, then the root file, and stole 5 of 6 laws in a VALID run.
+  - It also had network access, a child that outlived the campaign, and writable benchmark code.
+  - Remedy: the OD-20 deployment. Evidence: `D:/forge-g0a1-final-evidence/escrow_probe_2026-10-14.txt`.
+
+Commands run (Windows `.venv` 3.14 unless stated):
+- BR-16 `4a302959`: `python -m pytest tests/genesis_lite -n 4`: 94 passed.
+  - WSL 3.12 (in `pilot02.sh`): 94 passed.
+- BR-15 `3c28bedf`: `python -m pytest tests/test_certified_dependency_closure.py`: 58 passed, 1 skipped (symlink privilege).
+- BR-15 `aedc7b24`, with the certificate, recertification-scope, F-9 and F-7 suites: 193 passed, 1 skipped, 1 failed.
+  - The failure is `test_the_certificate_describes_this_tree`: certified-file drift and an uncommitted edit, expected until OD-3.
+- Real tree at `3c28bedf`: `certified_dependency_problems`, `authority_closure_problems` and `source_form_problems` all `[]`.
+- v0.2 Tier-1 pilot, WSL 3.12: `python -m benchmarks.genesis_lite.pilot --root-file <operator> --out <dir>`.
+  - 1,560 runs, 0 invalid, 384.79 s; run log sha256 `d504f2e3...`.
+  - Formal ESTIMATE: 6,608.1 s (95% 6,597.7-6,618.4).
+- Superseded pilots (not committed; roots retired):
+  - `7cc71b13`: 1,560 runs, 13 INVALID on one world set (literal audit, 0.642 coincidence); log `6e70c72a...`.
+  - `ddc7c3a6`: 1,560 runs, 0 invalid, 402.58 s; log `ca0716f3...`.
+
+Final gates on integration `7d6d398b` (WSL clone, Linux; the next commit adds only this record):
+- `python tools/forge_check.py --changed --base e193e573` (3.12): 10549 passed, 156 skipped, 582 deselected, 1 failed.
+- `python -m pytest -m "not expensive" -q -n 4`, 3.12: 10549 passed, 156 skipped, 1 failed (520 s).
+- The same command, 3.11: 10549 passed, 156 skipped, 1 failed (539 s).
+- In all three, the single failure is `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`.
+  - Cause: certified-file drift, plus classification/pattern changes in `assurance_admission` and `verdict_authority`.
+  - It is expected until OD-3 recertification.
+- Focused set (`tests/genesis_lite`, the F-9, F-7 and closure suites, `test_capability_completion.py`): 169 passed.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+- Pins: `certified_dependency_problems`, `authority_closure_problems`, `source_form_problems` and
+  `harness_pinning_problems` all `[]`.
+- `prereg_matches_code()` is `(True, 878e6812...)`.
+
+Failed approaches, so they are not repeated:
+1. A static loader deny-list grew by three review rounds and is still incomplete. Further spellings belong to a
+   runtime audit-hook cross-check, not to more AST rules.
+2. Strict completeness plus a strict literal audit made a formal lift impossible. An arm-independent screen must exclude
+   a world set for every arm alike, not block the claim.
+3. Reusing a pilot root after a code change. A new preregistration needs a fresh root; three roots are retired.
+4. `cat > file` with no input inside a Bash tool command blocks on stdin until the timeout.
+5. A sandbox launcher for the proposer was started and abandoned; OD-20 stays a deployment decision.
+
+## 2026-10-14 -- Battery 1RC scientific closure (feat/battery-1rc-scientific-closure, local only)
+
+Evidence package: [benchmarks/battery_1rc_closure/README.md](../../benchmarks/battery_1rc_closure/README.md).
+Nothing is pushed or merged, and no recertification has been run. The owner approved the NASA archive download
+(209,708,670 bytes, sha256 82302a7d..., outside the repo).
+
+Ledger (`python -m tools.capability_maturity`, coherent): battery.thevenin_1rc computes **FUNCTIONAL** (was FOUNDATION).
+- PASS with evidence: execution, provenance_replay, real_data, benchmark_metrics.
+- MISSING with measured blockers: calibration (NOT_IDENTIFIABLE), independent_validation (cross-cell FAIL; within-cell
+  NOT_ASSESSABLE), measurement_uq (UNKNOWN), parameter_uq, model_discrepancy, claims_integration,
+  domainpack_integration.
+
+Order of record (the commit history is the evidence):
+1. Preregistration v1 `f02bdedb`, then v2 `2301632c`. v2 changes the capacity basis, before any fit.
+2. Calibration data `653b243f`.
+3. Calibration and identifiability `dadafae4`.
+4. Held-out data `0f01baa3`.
+5. Held-out evaluation `8a1b406d`.
+6. UQ `5aa5c493`.
+7. Review corrections `d5d85743`, re-reported from the same frozen calibration with no data reopened.
+
+Gates on `d5d85743` (WSL clone, Linux):
+- `python -m pytest -m "not expensive" -q -n 4`, 3.12: 10426 passed, 157 skipped, 1 failed.
+- The same command, 3.11: 10426 passed, 157 skipped, 1 failed.
+  - On both versions the failure is `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`: the
+    certificate is stale and the new model definition changes the registry pin. Expected until recertification.
+- `python tools/forge_check.py --changed --base e193e573`: the same single failure. It lists four
+  RECERTIFICATION_REQUIRED test files: test_battery_thevenin_route.py, test_evidentiary_level_audit.py,
+  test_capability_completion.py and test_core_guards.py.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+- Focused set (closure, route, kernel, battery domain, capability, audit, guards, NASA importer/adapter): 682 passed,
+  1 skipped. The skip is the opt-in raw-bytes test.
+- On Windows `.venv` 3.14 with `FORGE_NASA_FY08Q4_DIR` set, the closure tests pass 22 of 22, including the rebuild of
+  every trajectory file from the raw `.mat` bytes.
+- Rerunning fit -> evaluate -> uq reproduces every scientific number bit for bit; only the timing fields differ.
+
+Scientific review (forge-scientific-reviewer): CHANGES REQUIRED. F1 HIGH, F2-F5 MEDIUM and L1-L4 were fixed in
+`d5d85743`. Deferred: F6, the caller-declared applicability range; it must be bound to a calibration record before
+claims integration (recorded in the ledger). Not analysed: sensitivity to the rest band.
+
+Failed approaches, so they are not repeated:
+1. A capacity basis from NASA's `Capacity` field is wrong for cells that discharge below 2.7 V.
+2. A parameter-set range equal to the calibration min/max is tripped by measurement-level excursions. Declare the range
+   from evidence in the next preregistration, never by widening it after results.
+3. Running benchmark modules without `PYTHONPATH="<wt>/src;<wt>"` imports the shared checkout's engcore.
+4. `pytest ... | tail` in a command chain hides pytest's exit code; one commit went in with a red test, fixed in `a130a0e1`.
+
+## 2026-10-14 -- Battery 1RC identifiability and independent evidence (feat/battery-1rc-identifiability, local only)
+
+Evidence package: [benchmarks/battery_1rc_identifiability/README.md](../../benchmarks/battery_1rc_identifiability/README.md).
+The branch is stacked on the closure branch (50671ebd), which is unchanged. Nothing is pushed or merged, and no
+recertification has been run.
+
+WP1. An independent review of the NASA closure found it SOUND_WITH_CAVEATS (eight caveats in the README). Its four
+result digests are pinned unchanged by a test.
+
+WP2. Dataset qualification:
+- LG HG2 (McMaster, CC BY 4.0) is qualified and used. It is one cell; its bytes match Mendeley's published sha256.
+- Kirkaldy 2024 is the cross-cell candidate. It is not acquired: a multi-GB download that needs owner approval.
+- Jahn A123, Panasonic 18650PF, Chen 2020 and NASA were assessed.
+
+WP3/4. Order of record (the commits are the evidence):
+1. Preregistration f06905dc (d8acfb26...).
+2. Data roles a4e83f72.
+3. Calibration 6e69f0c9.
+4. Held-out evaluation ec788c2f, opened once.
+5. Tests and outcome 709a46de.
+6. Ledger c99b1781.
+7. README 7a2698d4.
+8. Review corrections d35cecb0: re-reported from the same frozen records, with no threshold or mapping change.
+
+Results:
+- IDENTIFIABLE: R0 20.7 mOhm, R1 15.6 mOhm, C1 1586 F, tau 24.8 s, with the OCV measured from relaxed rests.
+- Held-out 2C/4C pulses PASS the pooled limits (12.6 mV), but fail under load alone (19.7 mV).
+- The 1C constant-current test FAILS marginally (28.7 mV, P95 50.7 mV).
+- Outcome MODEL_REJECTED. Without the preregistered +/-1 degC widening it would be IDENTIFIABILITY_SUPPORTED.
+- Ledger: calibration PASS (scoped); the computed stage stays FUNCTIONAL.
+
+Commands and results:
+- Windows .venv 3.14, `FORGE_LGHG2_DIR=<raw> pytest benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py`:
+  47 passed, 1 skipped (the closure's opt-in raw-bytes test). This includes the rebuild of every role from the raw
+  LG HG2 bytes.
+- Manual rerun of fit -> evaluate -> outcome reproduced CALIBRATION.json and VALIDATION.json byte for byte; only the
+  unpinned TIMINGS files changed.
+- Trial merge of integration/g0-a1-unblock with this branch:
+  - conflicts only in docs/work/ACTIVE_PLAN.md and PROGRESS.md;
+  - certified_dependency, authority_closure, source_form and harness_pinning problems all [];
+  - 498 passed, 3 skipped (guards, audit, route, both battery benchmarks, closure tests, genesis_lite).
+- WSL gates on d35cecb0:
+  - `pytest -m "not expensive" -n 4`, 3.12: 10446 passed, 158 skipped, 1 failed.
+  - The same, 3.11: 10446 passed, 158 skipped, 1 failed.
+  - On both, the failure is `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`: the
+    certificate is stale and the closure branch adds a model definition, so recertification is needed.
+  - `forge_check --changed --base e193e573`: the same single failure, and the four RECERTIFICATION_REQUIRED test files.
+  - `forge_check --regression`: 256 passed.
+  - Focused set: 702 passed, 2 skipped (the opt-in raw-bytes tests).
+
+Failed approaches, so they are not repeated:
+1. Letting an out-of-domain set FAIL broke "contradiction requires admissible evidence". Out-of-domain is now
+   NOT_ASSESSABLE in both directions. The closure's cross-cell FAIL carries this caveat and is not edited.
+2. Pooling rest samples hid a load-only miss. Report load and rest separately alongside any pooled acceptance.
+3. Comparisons with one unit need no verdict field, only a point difference.
+
+## 2026-10-15 -- Owner decisions and the consolidated source (integration/g0a1-battery-1rc, local)
+
+Owner reply "approved" (2026-10-15), applied to the three listed decisions:
+1. The LG HG2 publisher-stated Type B accuracy is admitted for its own channels only
+   (benchmarks/battery_1rc_identifiability/MEASUREMENT_UNCERTAINTY_DECISION.json). NASA stays UNKNOWN.
+   - battery.thevenin_1rc measurement_uq is PASS.
+   - The computed stage stays FUNCTIONAL: independent_validation (cross-cell) is the only gate left before
+     EVIDENCE_BACKED.
+   - No frozen acceptance or outcome changed.
+2. Push and one hardened recertification of the consolidated source.
+3. The Kirkaldy 2024 download: the exact files and sizes are listed for confirmation before any byte is fetched.
+
+Consolidated source: `integration/g0a1-battery-1rc` (worktree `D:/forge-consolidated`). It is
+`integration/g0-a1-unblock` (d1c96ae4) merged with `feat/battery-1rc-identifiability` (a4d4c24b) in 37674bfc. The
+union resolution touched only docs/work/ACTIVE_PLAN.md and PROGRESS.md.
+- `pytest benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py`
+  (Windows): 47 passed, 2 skipped (the opt-in raw-bytes tests).
+
+
+## 2026-10-15 -- Battery 1RC cross-cell evaluation on Kirkaldy 2024 (feat/battery-1rc-crosscell, local only)
+
+**Data.**
+- Owner-approved partial download ("Partial: 25°C BoL tests"): the 36 RPT0 CSVs of the 12 LG M50T cells at 25 °C, about
+  250 MB, read from the five Zenodo 10637534 archives by HTTP range. Each file was CRC32-checked.
+- Location: D:/forge-data/kirkaldy2024/bol25 (receipts in bol25.sha256).
+
+**Commits** (worktree D:/forge-battery-xcell, based on the certified source 5847345e, which is unchanged):
+- cc4d1256: preregistration PREREGISTRATION.json b1704515..., frozen before any fit. After the freeze, and before
+  data.py was written, a temperature-only dropout census over the 24 GITT files was run. It read no voltages.
+- a5ad3523: roles.
+  - The first roles commit, 256679db, was reset and never pushed. It committed the 85 MB window JSONs. The three window
+    roles are now gitignored and pinned by their committed .sha256; a rebuild must reproduce them byte for byte.
+  - Each build takes ~1 min.
+  - The first build excluded 50 Expt 2,2 windows as "not relaxed". Reading the raw step edges of those HELD-OUT cells
+    found a zero-current on-load transition record. Deviation 2 drops it by a uniform rule.
+  - This partly unblinded the Expt 2,2 cells (on-load drops of 67-84 mV seen) before the fit. No model had run, and the
+    fit had no free choice left.
+  - Deviation 1 (exclude any window holding a temperature dropout) removed no window on these files.
+- 3c865540: calibration on the 7 calibration cells, committed before the held-out evaluation ran.
+  - IDENTIFIABLE: R0 33.1 mΩ, R1 20.2 mΩ, C1 5307 F, τ 107 s. Cell-block bootstrap CV ≤ 6.1 %.
+- Held-out (5 cells, strict transfer through the engcore route):
+  - Primary: 32/99 windows outside the unwidened calibration domain.
+  - Secondary: 8/17 windows outside.
+  - Causes: temperature down to 17.61 °C against a 23.19 °C minimum, and current up to 0.52 mA above the calibration
+    maximum.
+  - Both sets are NOT_ASSESSABLE, so the outcome is **IDENTIFIABILITY_SUPPORTED**. The ledger's independent_validation
+    stays MISSING; the computed stage stays FUNCTIONAL.
+  - Descriptive only (no verdict): in-domain-only 1RC RMSE is 9.5 mV primary and 11.8 mV secondary.
+- evaluate.py ran four times after the held-out cells were opened.
+  - Runs 2-4 added descriptive fields, gated the comparison verdict (stricter only), and applied the review fixes.
+  - Every run-1 metric and acceptance value is unchanged; a test checks this.
+  - Superseded records: results/superseded/VALIDATION_run{1,2,3}.json.
+
+**Independent review** (forge-scientific-reviewer): CHANGES REQUIRED, no blocker. All findings fixed:
+- M1: disclosure of the post-opening changes (VALIDATION.json post_opening_changes, README section).
+- m1/m2: no verdict token in a NOT_ASSESSABLE comparison; the calibration comparison is IN_SAMPLE.
+- m3: dropout counts and the split dropout reason.
+- m4: partial-unblinding wording; "50 windows" corrected.
+- m5: this entry.
+- m6: a cycler accuracy cannot close the temperature gap (25 of 32 primary windows); the ledger was reworded.
+- m7: the current excess is derived.
+- m8: calibrated_z_span recorded (min 0.130).
+- m9: the descriptive subsets are labelled as not neutral / all-window.
+- m10: the OCV source wording.
+- m11: tests added for synthetic route-vs-transcription, comparison gating, held-out leakage, knot-structure refusal,
+  and absolute LG HG2 digests.
+
+**Failed approach.** Committing native-0.1 s window JSONs (85 MB) does not scale. Pin them by digest and rebuild from
+the pinned raw files.
+
+**Tests** (Windows, this worktree):
+- `FORGE_KIRKALDY_DIR=D:/forge-data/kirkaldy2024/bol25 python -m pytest -q -p no:cacheprovider --basetemp=<tmp> benchmarks/battery_1rc_crosscell/tests benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py tests/domains/test_battery_thevenin_route.py tests/test_core_guards.py`
+  - Result: 372 passed, 2 skipped. This includes the byte-for-byte rebuild of every role from the raw files.
+- `python tools/forge_check.py --changed` (no --basetemp, so the Windows default temp root applies):
+  - Result: 9868 passed, 18 failed, 734 errors.
+  - The errors are all tmp_path PermissionError (known environment issue).
+  - Running the same 18 on the untouched base 5847345e: 16 fail there too (mutation_workspace POSIX-only, blindfold
+    escrow, certificate/freeze-v4 manifests).
+  - The other 2 (test_the_tree_is_core_freeze_v1, test_the_v3_contract_is_superseded...) failed only on
+    tree.clean (uncommitted files). They were rerun after the commit; see below.
+- After commit 14d49ab6: `pytest tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`: 2 passed. The remaining 16 failures are the base's own Windows baseline.
+
+- Follow-up (same day): the two env/file-gated cross-cell tests became the commands `data --verify-raw` and `evaluate --verify-route` (see the 5847345e recertification refusal entry). Run: `data --verify-raw D:/forge-data/kirkaldy2024/bol25` problems [], exit 0; `evaluate --verify-route` problems [], exit 0; `pytest -rs benchmarks/battery_1rc_crosscell/tests` 29 passed, 0 skipped.
+## 2026-10-15 -- Hardened recertification of 5847345e: REFUSED (skip admission); source fix
+
+**The run.** `local_assurance prepare` + `run --reuse --repository sharq-labs/forge` in the fresh WSL clone
+~/forge-cons-assure, 2026-10-14T22:27Z to 2026-10-15T02:00Z, EXIT=1.
+- Result: `LOCAL_ASSURANCE: REFUSED`, `REFUSAL_KIND: EXPECTED_ASSURANCE_REFUSAL`, `SAFE_TO_PUSH: NO`. Failure record
+  sha256 f12457aa....
+- All six refusal lines are `UNEXPECTED_SKIP ... no committed rule covers this node id`, in fast311, fast312 and
+  scientific312, for the two opt-in raw-data tests:
+  - `benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_every_trajectory_file_rebuilds_from_the_raw_nasa_bytes`;
+  - `benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_every_role_rebuilds_from_the_raw_lg_hg2_bytes`.
+- The trust mutation population finished with 0 survived. No certificate was written and nothing was pushed.
+
+**Why not a skip rule.** The admission policy (tools/certification/skip_admission.py, certification tooling) admits
+rule paths only under tests/, providers/ and flagships/. Widening it would weaken a certified gate to admit tests that
+can never run in the gates, because the raw files are not shipped.
+
+**Fix** (benchmarks only, no certified file touched):
+- Each raw-bytes rebuild is now a command:
+  - `python -m benchmarks.battery_1rc_closure.data --verify-raw <dir>`;
+  - `python -m benchmarks.battery_1rc_identifiability.data --verify-raw <dir>`.
+  - Each exits 1 and lists every problem.
+- An always-running test checks that each command refuses when the files are absent.
+- The ledger evidence and both READMEs follow.
+- Commands run (Windows .venv, this worktree):
+  - `... closure.data --verify-raw "D:/forge-data/nasa_pcoe_battery/extracted/1. BatteryAgingARC-FY08Q4"`: problems [],
+    exit 0.
+  - `... identifiability.data --verify-raw D:/forge-data/lg_hg2/raw`: problems [], exit 0.
+  - `... identifiability.data --verify-raw D:/forge-data/nonexistent`: one "cannot rebuild" problem, exit 1.
+  - `pytest -q -p no:cacheprovider --basetemp=<tmp> -rs benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py tests/domains/test_battery_thevenin_route.py tests/test_core_guards.py`:
+    345 passed, 0 skipped.
+
+**Failed approach recorded.** An env-gated `pytest.mark.skipif` raw-data test always skips in the hardened gates and
+refuses the whole run after ~3.5 h. Raw-data rebuilds belong in a command.
+
+**Next.** One hardened local-assurance run on this new source commit, in a fresh WSL clone.
+
+## 2026-10-15 -- Hardened run on 0bc8b1cb: all 18 gates passed, REFUSED at certificate generation (environment)
+
+Run: fresh WSL clone ~/forge-cons-assure-2, `/usr/bin/python3.12 -m tools.certification.local_assurance run --reuse
+--repository sharq-labs/forge --python311 .forge/venvs/3.11/bin/python --python312 .forge/venvs/3.12/bin/python`,
+2026-10-15T02:06Z to 05:39Z, EXIT=1.
+
+Result: `LOCAL_ASSURANCE: REFUSED`, `REFUSED_BY: CertificationError`, `SAFE_TO_PUSH: NO`. Failure record sha256
+abba1c6a....
+- Every execution gate completed:
+  - fast311 and fast312: 10602 passed, 156 skipped;
+  - scientific312: 11175 passed, 156 skipped;
+  - campaign312 and regression312;
+  - formal_mutations_0-3 and v4_mutations_0-7;
+  - trust_mutations: 0 survived.
+- Skip admission accepted every skip. The two raw-data skips that refused 5847345e are gone, and each gate gained the
+  2 replacement tests.
+- `failed_gate: certificate_generation`: "the production registry could not be read from the tree:
+  ModuleNotFoundError: No module named 'pint'".
+
+**Cause** (environment, not source):
+- `core_certificate.production_registry_identity` (BR-15) re-runs `sys.executable -E -s -P`, so it uses the OUTER
+  interpreter.
+- The outer interpreter was `/usr/bin/python3.12`, which has no project dependencies. Checked read-only:
+  - `/usr/bin/python3.12 -E -s -P -c "import pint"` gives ModuleNotFoundError;
+  - `.forge/venvs/3.12/bin/python` with the same flags imports pint, numpy and scipy.
+- The last local PASS (Pass 13) predates the BR-15 probe, so the outer system interpreter never mattered before.
+
+**Remedy, not yet run:**
+- Launch `local_assurance run` with `.forge/venvs/3.12/bin/python` as the outer interpreter, in a fresh clone, so run 2's
+  evidence is preserved.
+- There is no resume: `--reuse` discards evidence and re-runs every gate (~3.5 h).
+- The certification source stays 0bc8b1cb.
+- Waiting for owner approval.

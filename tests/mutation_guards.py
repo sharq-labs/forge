@@ -2581,14 +2581,15 @@ def failed_test_names(stdout: str) -> list[str]:
     # Only the short test summary block is read (review of 313bbf1e): a "FAILED ...::name" line printed
     # inside captured output, or inside an untrimmed crash message, is text, not pytest's verdict. No
     # summary block means no name: a kill is never credited from text pytest did not mark as a summary.
+    # BR-15: pytest's own block is the LAST one. A failing test that prints a nested pytest run carries a
+    # complete summary block inside its captured output, before pytest's own; reading the first block
+    # credited the nested FAILED lines and never reached the real ones.
     names = []
-    in_summary = False
-    for line in stdout.splitlines():
-        if "short test summary info" in line and line.startswith("="):
-            in_summary = True
-            continue
-        if not in_summary:
-            continue
+    lines = stdout.splitlines()
+    headers = [i for i, line in enumerate(lines) if "short test summary info" in line and line.startswith("=")]
+    if not headers:
+        return names
+    for line in lines[headers[-1] + 1:]:
         if line.startswith("=") and line.rstrip().endswith("="):
             break  # the closing "=== N failed ... ===" line ends the block
         if not line.startswith("FAILED "):
