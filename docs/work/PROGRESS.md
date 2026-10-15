@@ -3309,3 +3309,37 @@ Owner: the workflow edit needs OD-3 recertification. Nothing is pushed or merged
   Result: 3084 passed, 3 skipped, 13 failed, 1 error. All 13 failures and the error are pre-existing harness issues: ModuleNotFoundError for bare sibling test imports (test_cross_solver_consensus, test_trusted_consensus_gate, mutation_guards) and two guard tests (test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green, test_the_domain_names_were_derived_from_the_packages_not_listed) that also fail on the committed files.
 - Not run: the full FAST/SCIENTIFIC tiers and the core certificate test (protocol.py untouched).
 - Open (not fixed): DC validation _worst_against skips NaN residuals (electrical/dc/validation.py); CSTR sampled-extrema admission in cstr/solver.py bundle path; the core rule "any-overlap" in scientific/solvers/protocol.py needs a core-freeze decision.
+
+## 2026-10-12 G0 evidence: FAST on `main` @ `8b028dc` in a supported Python, and failure attribution
+
+- Command: `env -u GIT_* <py3.12 venv>/bin/python -m pytest -m "not expensive" -q -n 2 -p no:cacheprovider` in a clean
+  worktree of `main` @ `8b028dc` (CPython 3.12.13 via uv, pytest 9.1.1, `.[dev,oracles,benchmarks,symbolic]`, the
+  container's `GIT_CONFIG_*` proxy variables removed, running as root). Result: 7 failed, 9507 passed, 192 skipped,
+  5 errors, 992 s. Tree clean afterwards.
+- Re-run of those 12 node ids with `mcp>=2.1 anyio>=4.0` added: 2 failed, 41 passed. **So on a supported Python with
+  the extras CI installs, FAST on `main` has exactly two failures:**
+  - `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` — GOVERNANCE_ONLY candidate (evidence
+    record not yet complete): areas `certification_control` (`skip_admission.py`, `test_skip_admission.py`), `harness`
+    (`test_core_guards.py`) and `runtime_dependencies` (`pyproject.toml`) changed after recertification `d383eed0`.
+  - `tests/test_mutation_workspace.py::test_mid_walk_failure_still_reports_entries_already_scanned` — ENVIRONMENT:
+    `chmod(0)` does not deny root; the container runs as uid 0.
+- Attribution of the earlier 3.13 drift set (same tests, same tree):
+  - six freeze-v4 / batch56 failures are **Python-version artefacts**: `tools/certification/api_surface_v4.py` records
+    methods Forge classes inherit from builtins; on 3.13 that adds 106 (`str.format`, `format_map`,
+    `BaseException.add_note`, `with_traceback`, ...) and changes 29 (`str.replace` `count` became keyword-capable),
+    with zero differences in Forge-defined members. The v4 surface is therefore only verifiable on <= 3.12.
+  - `test_local_telemetry_is_outside_manifest_and_cannot_verify_as_receipt` is the `GIT_*` environment refusal in
+    `local_assurance._assurance_lock`, not a defect.
+- Without the `[mcp]` extra, 5 modules fail to import and 5 tests fail (`server.py` imports the SDK; several tests
+  import it without `importorskip`, and five modules import helpers from `tests/mcp/test_battery_boundary.py`, which
+  skips at module level). `pyproject.toml` states the suite must stay green without `[mcp]`; CI always installs it,
+  so the rule is untested and currently false.
+- Benchmark rounds `model_measurement_validation` and `empirical_validation` pin `EXPECTED_SCIENTIFIC_DIGEST` (a digest
+  of live `src/engcore/scientific`); it last matched at `89b6eb31` and broke at `10bcbb65` (PR #21, 2026-09-12). Their
+  "rebuild reproduces the published gates" tests have failed since, and the MV one rewrites the committed
+  `SAFETY_GATES.json`.
+- Checked and NOT a problem: a cProfile run attributed 478 s to one HiGHS call; measured directly it is 12 `linprog`
+  calls totalling 0.07 s (profiler artefact). Test collection imports cost 8 s for 571 modules.
+- Measured, not changed: `_distributions_providing` calls `importlib.metadata.packages_distributions()` per module
+  (26 calls, ~612k file lookups each run) and `test_core_api_contracts._guard_module()` re-executes
+  `test_core_guards.py` per call; caching both took the four dependency-hygiene tests from 75 s to 30 s (same result).
