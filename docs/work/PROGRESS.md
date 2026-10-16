@@ -4479,8 +4479,10 @@ Findings (details and sources are in the record):
   execution gate had passed. Three were refused by skip admission, one by the runner interpreter at
   `certificate_generation`. Each was detectable with existing tools within 16 s to 20 min of the start.
 - **Worker flags.** `run --workers 4 --mutation-workers 4 --formal-pytest-workers 2` ran in 2h42m–2h47m on the
-  WSL host (PR #119, PR #123, Pass 13). Later runs, with no recorded flags, took 3h27m to ~3h30m. The
-  documented `run` command carries no worker flags.
+  WSL host (Pass 13; PR #119). Three later runs used the default flags (`--mutation-workers 2
+  --formal-pytest-workers 1`; their recorded commands carry no worker flags): 05522b59 took 3h27m, 5847345e
+  3h33m and 0bc8b1cb 3h33m. The documented `run` command carries no worker flags.
+- Facts and line references were re-checked against `main` at `91b44e22` (after PR #146).
 - **CI mutations job.** The `mutations` job in `tests.yml` runs all 284 Formal mutations in one job. It cannot
   finish inside GitHub's 6 h job limit; PR #143 records the cancellation.
 - **PR #145 check.** The suggested check `(cd /tmp && .forge/venvs/3.12/bin/python ...)` uses a relative
@@ -4515,3 +4517,5 @@ Failed approach: a bytecode cache.
 - Do not pursue it.
 - `python tools/forge_check.py --changed` (sandbox, `PYTHONDONTWRITEBYTECODE=1`): both files classified
   `doc_only`; 85 passed in 9.88 s; exit 0.
+- After merging `main` at `91b44e22`: `python tools/forge_check.py --changed --base origin/main`: both files
+  classified `doc_only`; 158 passed in 11.87 s; exit 0.

@@ -11,15 +11,24 @@
 > passed. Each was refused for a reason detectable in seconds to minutes: the runner's interpreter, or skip
 > admission. Fail-fast checks are therefore worth more than any speed change.
 >
-> **Second finding.** The command used on 8–9 October
-> (`--mutation-workers 4 --formal-pytest-workers 2`) ran in 2:42–2:47 on the same host. The later runs, whose
-> flags were not recorded, took 3:27–3:30.
+> **Second finding.** The command used on 7–8 October
+> (`--mutation-workers 4 --formal-pytest-workers 2`) ran in 2:42–2:47 on the same host. Three later runs with
+> the default flags (`--mutation-workers 2 --formal-pytest-workers 1`) took 3:27–3:33.
 >
-> Nothing was run on the owner's machine. No assurance run, certificate, commit or push was made.
+> Nothing was run on the owner's machine. No assurance run or certificate was made. `main` later moved to
+> `91b44e22` (PR #146); every fact and line reference below was re-checked against it (§0).
 
 ## 0. النطاق ومصدر كل رقم
 
 - **شجرة المصدر:** `main` عند `e193e573`. ده `05522b59` (آخر SOURCE_PASS) زائد تعديل `tests/mutation_guards.py` بتاع PR #142 (14 سطر).
+- **إعادة فحص على `91b44e22`:** `main` اتحرك بعد القياسات (PR #146). من ملفات الـ pipeline اتغير:
+  - `core_certificate.py`: الـ registry probe، ولسه بيشغّل `sys.executable`.
+  - `tests/mutation_guards.py`: قراءة آخر summary block. مالوش أثر على الوقت.
+  - `tests.yml`: job الـ `reproduce` بس.
+  - `recertify-hardened-core.yml`: خطوة تنظيف sparse-checkout في jobs الـ V4.
+  - `LOCAL_ASSURANCE.md`: PR #145.
+
+  `local_assurance.py` و `hardening_assurance.py` و `skip_admission.py` ما اتغيروش. أرقام السطور في الملف ده على `91b44e22`.
 - **التصنيفات المستخدمة في الملف:**
   - **مقاس:** اتنفذ في الجلسة دي في الـ sandbox.
   - **مسجّل:** موجود في المستودع أو في جسم PR.
@@ -31,7 +40,7 @@
 ## 1. الخلاصة
 
 1. **أكبر هدر هو الرفض المتأخر، مش السرعة.** من 7 لـ 15 أكتوبر، 4 تشغيلات كاملة اترفضت **بعد ما كل الـ gates عدّت**. الأسباب كانت ممكن تتكشف في 16 ثانية إلى 20 دقيقة (§4).
-2. **أمر 8 أكتوبر أسرع بقياس حقيقي على نفس الجهاز.** `--workers 4 --mutation-workers 4 --formal-pytest-workers 2` أخد 2:46:53 و 2:44 و 2:42. التشغيلات الأحدث أخدت 3:27 و ~3:30، وإعداداتها مش مسجلة. والأمر الرسمي في `LOCAL_ASSURANCE.md` مالوش flags عمّال (§3).
+2. **أمر 8 أكتوبر أسرع بقياس حقيقي على نفس الجهاز.** `--workers 4 --mutation-workers 4 --formal-pytest-workers 2` أخد 2:42 و 2:46:53. تلات تشغيلات أحدث بالافتراضي (`--mutation-workers 2 --formal-pytest-workers 1`) أخدت 3:27 و 3:33 و 3:33. والأمر الرسمي في `LOCAL_ASSURANCE.md` لسه مالوش flags عمّال (§3).
 3. **Formal هو المسار الحرج (~80–85%).** وقت كل طفرة تقريبًا ثابت، لأن كل محاولة بتشغّل نفس الـ 48 ملف. والجدولة الذكية مش هتفيد (§5–6).
 4. **xdist (n=2) اتقاس بالأداة الحقيقية: −35% على 4 طفرات** بنفس الأحكام. على shard كامل التقدير −27% إلى −35%، بسبب تكاليف ثابتة لكل shard (§6.2).
 5. **job الـ `mutations` في CI عمره ما بيخلص.** بيشغّل 284 طفرة في job واحد، والحد 6 ساعات (§7).
@@ -76,9 +85,9 @@
 | 13–14 أكتوبر | `ae25aed9` | — | 0 ث / عند FAST 3.12 | رفض مبكر (مفسّر غلط، ثم bug في xdist) | PROGRESS |
 | 14 أكتوبر | `313bbf1e` | مش مسجلة | تشغيل كامل | **اترفض بعد كل الـ gates** (2 skips من غير قاعدة قبول) | PROGRESS |
 | 14 أكتوبر | `05522b59` (1) | مش مسجلة | ضاع في نص Formal | restart لـ WSL | PROGRESS |
-| 14 أكتوبر | `05522b59` (2) | مش مسجلة (الأمر المسجّل من غير flags عمّال) | **3:27** (12,422 ث) | SOURCE_PASS ← PASS | PROGRESS |
-| 15 أكتوبر | integration (A) | مش مسجلة | تشغيل كامل | **اترفض في assurance build** (skip تحت `benchmarks/`) | PR #145 |
-| 15 أكتوبر | integration (B) | الـ runner بـ `/usr/bin/python3.12` | **~3:30** | الـ 18 gate كلها عدّت، و**اترفض في `certificate_generation`** (`pint` مش موجود) | PR #145 |
+| 14 أكتوبر | `05522b59` (2) | **الافتراضي** (الأمر المسجّل من غير flags عمّال) | **3:27** (12,422 ث) | SOURCE_PASS ← PASS | PROGRESS |
+| 14–15 أكتوبر | `5847345e` | **الافتراضي** (`run --reuse --repository …`) | **3:33** (22:27Z → 02:00Z) | **اترفض في assurance build**: 2 skips لاختبارات raw-data تحت `benchmarks/`، ظهروا في `fast311` و `fast312` و `scientific312` | PROGRESS (2026-10-15) |
+| 15 أكتوبر | `0bc8b1cb` | **الافتراضي**، والـ runner بـ `/usr/bin/python3.12` | **3:33** (02:06Z → 05:39Z) | الـ 18 gate كلها عدّت (FAST 10,602، SCI 11,175)، و**اترفض في `certificate_generation`** (`pint` مش موجود) | PROGRESS (`a0e7db31`)، PR #145 |
 
 **سقف المدة من وقت الـ commits** (المصدر ← الـ certificate child):
 
@@ -90,26 +99,28 @@
 | `05522b59` | 364 د | فيه المحاولة اللي ضاعت |
 
 **ملاحظات:**
+- تشغيل `0bc8b1cb` هو نفس التشغيل اللي اتطلب التحقيق ده وهو شغال؛ أرقام FAST و SCI بتطابق الطلب.
+- **مقارنة على نفس الجهاز:** الافتراضي 3:27 / 3:33 / 3:33، وأمر 8 أكتوبر 2:42 / 2:46:53. الفرق 45–51 دقيقة لكل تشغيل، مع إن اختبارات 7–8 أكتوبر كانت أتقل.
 - `--formal-pytest-workers 2` **اتعمل بيه فعلًا في شهادة معتمدة** (`4f610514`، PR #119). يعني قرار xdist اتاخد عمليًا في 8 أكتوبر.
 - اختبارات 8–9 أكتوبر كانت **أتقل**، لأن `577451c7` (12 أكتوبر) قلّل تكلفة 3 من أتقل 4 ملفات في Formal. ومع كده الأمر ده كان أسرع بـ 40+ دقيقة.
-- الأمر الرسمي في `docs/assurance/LOCAL_ASSURANCE.md` (سطر 60 على `main`، وكمان بعد PR #145) **مالوش flags عمّال**. يعني بيشتغل بالافتراضي `--mutation-workers 2 --formal-pytest-workers 1`. في نفس الوقت، سطر 339 بيوصي بـ `--mutation-workers 4`.
+- الأمر الرسمي في `docs/assurance/LOCAL_ASSURANCE.md` (سطر 61 على `91b44e22`، بعد دمج PR #145) **مالوش flags عمّال**. يعني بيشتغل بالافتراضي `--mutation-workers 2 --formal-pytest-workers 1`. في نفس الوقت، سطر 366 بيوصي بـ `--mutation-workers 4`.
 
 ## 4. الاكتشاف الأهم: الرفض المتأخر
 
 | سبب الرفض | عدد المرات | اتكشف بعد | ممكن يتكشف بعد | بإيه |
 |---|---|---|---|---|
-| مفسّر الـ runner مش قادر يقرأ الـ production registry | 1 | ~3.5 ساعة | **~16 ث** | `core_certificate.production_registry_identity(root)` في أول التشغيل (اتقاس: 15.8 ث) |
-| skip بره قواعد القبول | 3 | 2.7–3.5 ساعة | **~5–20 دقيقة** | `skip_admission audit` على JUnit بتاع FAST/SCI أول ما الـ gate يخلص (اتقاس: probe 1.2 ث + audit 0.3 ث) |
+| مفسّر الـ runner مش قادر يقرأ الـ production registry (`0bc8b1cb`) | 1 | 3:33 | **~16 ث** | `core_certificate.production_registry_identity(root)` في أول التشغيل (اتقاس: 15.8 ث) |
+| skip بره قواعد القبول (`d5d886f9`، `313bbf1e`، `5847345e`) | 3 | 2:42 – 3:33 | **~5–20 دقيقة**؛ في `5847345e` كانت ظاهرة من أول gate (`fast311`) | `skip_admission audit` على JUnit بتاع FAST/SCI أول ما الـ gate يخلص (اتقاس: probe 1.2 ث + audit 0.3 ث) |
 | restart لـ WSL | 1 | — | مش قابل للكشف | تشغيلي: منع النوم وتحديثات Windows وقت التشغيل |
 
 **ساعات الجهاز لكل شهادة، 7–15 أكتوبر (تقدير):**
 - النجاحات: 4 تشغيلات، حوالي 11.7 ساعة.
-- الرفض المتأخر: 4 تشغيلات، حوالي 13 ساعة (مدة اتنين منهم تقدير).
+- الرفض المتأخر: 4 تشغيلات، حوالي 13.2 ساعة (2:42 + 3:33 + 3:33 مسجّلين، و `313bbf1e` تقدير).
 - ضياع WSL: حوالي 1.5 ساعة (تقدير).
 
 | المقياس | قبل | بعد الـ fail-fast | بعد fail-fast + أمر 8 أكتوبر |
 |---|---|---|---|
-| ساعات الجهاز لكل شهادة | **~6.5 س** | ~3.5 س | ~3.2 س |
+| ساعات الجهاز لكل شهادة | **~6.6 س** | ~3.4 س | ~3.1 س |
 
 الـ fail-fast ما بيشيلش أي فحص. الفحوص النهائية في `build_assurance` والشهادة زي ما هي، والفكرة إن نفس القواعد تتنفذ كمان بدري.
 
@@ -222,7 +233,7 @@
 | # | التحسين | قبل | بعد | الدليل | المطلوب |
 |---|---|---|---|---|---|
 | **0** | Fail-fast: registry probe في الأول + skip audit بعد كل gate وظيفي | الرفض بعد 2.7–3.5 س | الرفض بعد 16 ث – 20 د | §3، §4 | checklist يدوي النهارده؛ والكود مع إعادة الاعتماد |
-| 1 | أمر 8 أكتوبر (`--mutation-workers 4 --formal-pytest-workers 2`) | 3:27 – 3:30 | **2:42 – 2:47 مسجّل**، وغالبًا أقل دلوقتي | PR #119 و #123؛ §6.2 | flags بس |
+| 1 | أمر 8 أكتوبر (`--mutation-workers 4 --formal-pytest-workers 2`) | **3:27 – 3:33** (الافتراضي، 3 تشغيلات مسجلة) | **2:42 – 2:47 مسجّل**، وغالبًا أقل دلوقتي | §3؛ §6.2 | flags بس |
 | 2 | n=3 بدل n=2 | — | حوالي −9 د (تقدير) | §6.3 | تجربة |
 | 3 | `--workers 8` لـ FAST و SCI و regression | ~20 د | ~16–17 د | `TESTING.md` | flag + تجربة (ذاكرة) |
 | 4 | pool واحد لـ Formal و V4 و trust (5–6 workers) | V4 بعد Formal | V4 جوه وقت Formal (−6 إلى −9 د) | §5.2 | `local_assurance.py` + إعادة اعتماد |
@@ -247,8 +258,8 @@
 
 | السيناريو | بيشمل | مدة التشغيل الناجح | ساعات الجهاز لكل شهادة | الجهد |
 |---|---|---|---|---|
-| الوضع الحالي | — | 3:27 – 3:30 | ~6.5 س (تقدير) | — |
-| **محافظ (من غير كود)** | #0 يدوي + #1 + انضباط الجهاز | ~2:20 – 2:45 (تقدير؛ 2:42–2:47 مسجّل على كود أتقل) | ~3.2 س | دقايق |
+| الوضع الحالي | — | 3:27 – 3:33 | ~6.6 س (تقدير) | — |
+| **محافظ (من غير كود)** | #0 يدوي + #1 + انضباط الجهاز | ~2:20 – 2:45 (تقدير؛ 2:42–2:47 مسجّل على كود أتقل) | ~3.1 س | دقايق |
 | متوازن | المحافظ + #0 في الكود + #3 + #4 + #5 + #6 في إعادة اعتماد واحدة | ~2:05 – 2:30 | ~2.8 س | يوم ليومين + إعادة اعتماد |
 | جريء | المتوازن + #2 + #8 + #9 | ~1:20 – 1:45 | — | أسبوع لأسبوعين + مراجعة عدائية |
 
@@ -295,18 +306,18 @@
 
 ## 15. مراجعة: أسرع المشاكل اللي ممكن نخلص منها
 
-الترتيب حسب وقت الإصلاح، وبعده الأثر. كل بند اتأكد منه في الكود على `e193e573`. **ولا إصلاح منهم اتنفذ.**
+الترتيب حسب وقت الإصلاح، وبعده الأثر. كل بند اتأكد منه في الكود، وأرقام السطور على `91b44e22`. **ولا إصلاح منهم اتنفذ.**
 
 ### المستوى A: النهارده، من غير كود ومن غير إعادة اعتماد
 
 | # | المشكلة | الدليل | الإصلاح | وقته | بيوفّر |
 |---|---|---|---|---|---|
-| A1 | التشغيلات الأخيرة اشتغلت بإعدادات أبطأ من أمر 8 أكتوبر | §3؛ `LOCAL_ASSURANCE.md:60` مالوش flags عمّال | التشغيل الجاي بالأمر اللي تحت الجدول | 0 | ~40–60 د لكل تشغيل |
-| A2 | فحص PR #145 مكتوب `(cd /tmp && .forge/venvs/3.12/bin/python …)`. المسار نسبي بعد `cd`، فالأمر **بيفشل دايمًا** بـ exit 127 حتى لو البيئة سليمة | اتجرّب في الـ sandbox (§14) | قبل الدمج: نحفظ المسار المطلق قبل `cd` (أوامر A3)، وبعدين ندمج PR #145 | 5 د | بيمنع تكرار رفض 15 أكتوبر (~3.5 س) |
-| A3 | الـ registry probe بيتعمل في `certificate_generation` بس، يعني في آخر التشغيل | `core_certificate.py:1093`، وسطر `:1111` بيشغّل `sys.executable -E -s -P` | preflight قبل البداية (~16 ث) | 2 د | لحد 3.5 س لكل تشغيل محكوم عليه |
+| A1 | التشغيلات الأخيرة اشتغلت بالافتراضي، وهو أبطأ من أمر 8 أكتوبر | §3: الافتراضي 3:27–3:33 مقابل 2:42–2:47؛ `LOCAL_ASSURANCE.md:61` مالوش flags عمّال | التشغيل الجاي بالأمر اللي تحت الجدول | 0 | ~45–50 د لكل تشغيل |
+| A2 | فحص PR #145 (**اتدمج على `main`** في `LOCAL_ASSURANCE.md:75`) مكتوب `(cd /tmp && .forge/venvs/3.12/bin/python …)`. المسار نسبي بعد `cd`، فالأمر **بيفشل دايمًا** بـ exit 127 حتى لو البيئة سليمة | اتجرّب في الـ sandbox (§14) | PR docs صغير: نحفظ المسار المطلق قبل `cd` (أوامر A3) | 5 د | بيخلّي الفحص يشتغل فعلًا، فبيمنع تكرار رفض 15 أكتوبر (3:33) |
+| A3 | الـ registry probe بيتعمل في `certificate_generation` بس، يعني في آخر التشغيل | `core_certificate.py:1423`، وسطر `:1443` بيشغّل `sys.executable -E -s -P` | preflight قبل البداية (~16 ث) | 2 د | لحد 3.5 س لكل تشغيل محكوم عليه |
 | A4 | skip admission بيتعمل في `build_assurance` بس، بعد ~3 ساعات | `hardening_assurance.py:364`، واللي بيندهها `local_assurance.py:840` | `skip_admission audit` يدوي على أدلة التشغيل نفسه أول ما `gate-scientific312.json` يظهر (~20 د). قراءة بس | 1 د | 2.5–3 س لكل تشغيل محكوم عليه (اتكرر 3 مرات في أسبوع) |
 | A5 | restart لـ WSL ضيّع تشغيل في نص Formal | PROGRESS (14 أكتوبر) | خطة طاقة من غير sleep أو hibernate، وإيقاف تحديثات Windows مؤقتًا، ومفيش `wsl --shutdown` ولا تحديث Docker Desktop وقت التشغيل | 5 د | تشغيل كامل |
-| A6 | `LOCAL_ASSURANCE.md` بيناقض نفسه: الأمر (سطر 60) بيشتغل بالافتراضي 2 workers، والتوصية (سطر 339) بتقول 4 | `LOCAL_ASSURANCE.md:60` و `:339`؛ ومفيش اختبار بيقرأ الملف ده | نحدّث الأمر الرسمي بالـ flags، ونضيف checklist A3/A4 (تصنيف `ordinary`)، ونسجّل n=2 كقرار مالك في `ACTIVE_PLAN.md` | 15–30 د | بيمنع إن A1 يرجع تاني |
+| A6 | `LOCAL_ASSURANCE.md` بيناقض نفسه: الأمر (سطر 61) بيشتغل بالافتراضي 2 workers، والتوصية (سطر 366) بتقول 4 | `LOCAL_ASSURANCE.md:61` و `:366`؛ ومفيش اختبار بيقرأ الملف ده | نحدّث الأمر الرسمي بالـ flags، ونضيف checklist A3/A4 (تصنيف `ordinary`)، ونسجّل n=2 كقرار مالك في `ACTIVE_PLAN.md` | 15–30 د | بيمنع إن A1 يرجع تاني |
 
 أمر A1، من جذر المستودع:
 
@@ -353,7 +364,7 @@ done
 | B1 | الـ runner ما بيعملش registry probe في الأول | `local_assurance.py:803`، جنب فحص `ngspice` | ننده `core_certificate.production_registry_identity(root)` قبل أول gate، ونرفض بنفس `CertificationError` | ~10 سطور + spec | `forge-scientific-review` (سلوك assurance) |
 | B2 | الـ skip admission بتيجي متأخرة | بعد `local_assurance.py:495` و `:523` | بعد كل gate وظيفي (fast311 و fast312 و scientific312): نفس منطق `skip_admission audit` (`skip_admission.py:911–955`)، ورفض فوري. الفحص النهائي في `build_assurance` يفضل زي ما هو | ~30–50 سطر + specs | `forge-scientific-review` |
 | B3 | الإيصال وسجل الفشل ما بيسجلوش الـ flags ولا مفسّر الـ runner | `local_assurance.py:884–911` والدالة `_persist` (`:342`) | حقل `invocation` فيه `workers` و `mutation_workers` و `formal_pytest_workers` و `sys.executable`. الإيصال مش جزء من الشهادة، فمفيش تغيير schema | ~10 سطور + spec | عادية |
-| B4 | job الـ `mutations` في CI بيتلغي عند 6 ساعات | `.github/workflows/tests.yml:116–130` | matrix من 4 shards بـ `mutation_population select --index i --count 4`، زي `recertify-hardened-core.yml:333–344` | ~30 سطر YAML | عادية |
+| B4 | job الـ `mutations` في CI بيتلغي عند 6 ساعات (ما اتغيرش في #146) | `.github/workflows/tests.yml:116–130` | matrix من 4 shards بـ `mutation_population select --index i --count 4`، زي `recertify-hardened-core.yml:335–344` | ~30 سطر YAML | عادية |
 | B5 | الافتراضيات 2/1 أبطأ من الممارسة المعتمدة | `local_assurance.py:64–67`؛ `tests/test_local_assurance.py:336–352` | نغيرها لـ 4/2. اختياري لو A6 اتعمل | ~5 سطور + specs | قرار مالك |
 
 **قرار التوقيت.** إعادة الاعتماد الجاية لازمة أصلًا: الشهادة بتربط `05522b59`، و PR #142 غيّر `tests/mutation_guards.py` اللي هو مثبّت، و PR #143 بيبين إن `test_the_certificate_describes_this_tree` بيفشل على `main`.
@@ -369,7 +380,7 @@ pool موحد لـ Formal و V4 و trust، وتجربة n=3، و clone منفص�
 
 ### خارج النطاق (اتلاحظ في PR #143)
 
-- **`reproduce` (Docker):** `.dockerignore` بيشيل `.git` عن قصد ("Host state must not enter the image")، و 150 اختبار محتاجين تاريخ git. ده قرار تصميم، مش إصلاح سريع.
+- **`reproduce` (Docker):** 150 اختبار كانوا محتاجين تاريخ git، و `.dockerignore` بيشيل `.git` عن قصد. **اتعالج في PR #146:** التاريخ بيتعمله mount للقراءة بس (`tests.yml:221–232`). ما شغّلتهوش هنا.
 - **Branch Policy:** HTTP 403، محتاج GitHub Pro أو مستودع عام. قرار مالك (OD-1).
 
 ## 16. المراجع
