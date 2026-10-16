@@ -947,7 +947,9 @@ _LOADER_MODULES = frozenset({"importlib", "importlib.util", "importlib.metadata"
 #: size -- plus everything else the result depends on: the module's package for its imports, the rule tables for
 #: its dynamic loads. The bytes hashed are the bytes parsed. In-process only: nothing is written to disk or shared
 #: with another process, and whatever the filesystem decides (a star-imported package's submodules, how a file is
-#: spelled on disk) is read again by every verification.
+#: spelled on disk) is read again by every verification. The warnings filter is not in the key: a file whose fresh
+#: parse raises under -W error (an invalid escape) is answered from the memo once parsed without it, and that
+#: answer still describes the bytes on disk.
 _ANALYSES: dict[tuple[Any, ...], Any] = {}
 _ANALYSES_LIMIT = 1 << 16
 
@@ -1515,8 +1517,10 @@ REGISTRY_ENTRY = "src/engcore/product/capabilities.py"
 #: "Private" is checked through POSIX mode bits, which do not show ACLs (macOS); on Windows it rests on the
 #: owner-only ACL mkdtemp applies since CPython 3.12.4 (CVE-2024-4030) -- older Windows interpreters get the one-shot
 #: prefix -- and a temporary root on FAT or exFAT keeps no ACL at all. Both directories are checked right after
-#: mkdtemp and before every use, not continuously: on a temporary root where another account may rename this user's
-#: entries (no sticky bit), a directory swapped for a link after its check is followed, as it was before.
+#: mkdtemp and before every use, not continuously. On a temporary root where another account may rename this user's
+#: entries (no sticky bit): a directory swapped for a link after its check is followed, as it was before; on Windows,
+#: where no owner is checked, a real directory swapped in before the identity is read is accepted; and the one-shot
+#: directory is checked only for being a link, as before.
 _PROBE_LOCK = threading.Lock()
 _PROBE_WORKSPACE: dict[str, Any] = {}
 

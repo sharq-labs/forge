@@ -808,11 +808,12 @@ def test_without_a_private_mkdtemp_the_probe_gets_a_one_shot_prefix(tmp_path, mo
 
 
 @needs_private_mkdtemp
-@pytest.mark.parametrize("where", ["below the mirror", "at the mirror"])
+@pytest.mark.parametrize("where", ["below the mirror", "at the mirror", "above the mirror", "at the prefix"])
 def test_the_seeding_never_walks_writes_or_deletes_through_a_link_in_the_prefix(tmp_path, monkeypatch, where) -> None:
-    """Reviews Ob-1 and LOW-F: os.walk enters a Windows junction, and a link at the walk's top is entered on every
-    platform, so a link planted in the tree's part of the prefix would turn the seeding into writing and deleting this
-    user's files elsewhere. The seeding refuses instead, and the probe gets a fresh prefix."""
+    """Reviews Ob-1, LOW-F and LOW-H: os.walk enters a Windows junction, and a link at the walk's top is entered on
+    every platform, so a link planted in the tree's part of the prefix -- below the mirror, at it, between it and the
+    prefix, or at the prefix itself -- would turn the seeding into writing and deleting this user's files elsewhere.
+    The seeding refuses instead, and the probe gets a fresh prefix."""
     root = _registry_tree(tmp_path / "tree")
     victim = tmp_path / "victim"
     victim.mkdir()
@@ -820,7 +821,7 @@ def test_the_seeding_never_walks_writes_or_deletes_through_a_link_in_the_prefix(
     workspace: dict = {}
     monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
     probes = _record_probes(monkeypatch)
-    planted = None
+    planted = moved = None
     try:
         assert cc.production_registry_identity(root)["digest"] == "honest"
         reused = probes[-1].prefix
@@ -828,6 +829,13 @@ def test_the_seeding_never_walks_writes_or_deletes_through_a_link_in_the_prefix(
         if where == "at the mirror":
             shutil.rmtree(mirror)
             planted = mirror
+        elif where == "above the mirror":   # strictly between the prefix and the mirror
+            planted = mirror.parent
+            shutil.rmtree(planted)
+        elif where == "at the prefix":   # the original kept elsewhere, so nothing in it is lost
+            moved = reused.with_name(reused.name + "-moved")
+            reused.rename(moved)
+            planted = reused
         else:
             planted = mirror / "planted"
         _link_directory(planted, victim)
@@ -839,6 +847,8 @@ def test_the_seeding_never_walks_writes_or_deletes_through_a_link_in_the_prefix(
             planted.unlink()
         elif planted is not None and planted.exists():
             os.rmdir(planted)   # a junction: removes the link, never what it points at
+        if moved is not None:
+            shutil.rmtree(moved, ignore_errors=True)
         if workspace:
             cc._remove_probe_directory(os.getpid(), workspace["base"], workspace["identity"])
 
