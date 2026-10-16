@@ -47,6 +47,13 @@ one process, seed 7. "50.7 useful promotions per compute-hour" is `ESTIMATED`: t
 the high-fidelity cost is a DECLARED 60 s. The Genesis campaign size (Genesis §10.6) is `ESTIMATED`. The 10 / 100 /
 1,000 / 10,000 campaign ladder is `UNMEASURED`.
 
+Genesis-lite v0 Tier-1 pilot (BR-16, 2026-10-14, commit `e493ff3f`, WSL2 Python 3.12.3, 20 logical CPUs, one process,
+in-process escrow): 960 baseline campaign runs (12 arms x 4 presentations x 10 campaigns, 3 seeds for stochastic arms) in
+85.07 s; per-campaign cost 0.015 s (refusal floors) to 0.088 s (structure search), `MEASURED`. The formal baseline tier
+(15,120 campaign runs, about 1,185 s) is `ESTIMATED` from it. The Mind and LLM arms are `UNMEASURED`. This is NOT a ladder
+rung: no strong-scaling, cache-correctness or per-tier result was produced, so the ladder stays `UNMEASURED`. Evidence:
+`docs/discovery/GENESIS_LITE_V0.md` §6.
+
 ## Compute staging
 
 Compute capability is added only when a measured workload requires it:

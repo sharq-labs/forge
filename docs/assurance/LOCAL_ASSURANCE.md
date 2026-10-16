@@ -54,10 +54,33 @@ and installs `.[dev,mcp,oracles]` into both.
 
 Commit the source change first. The working tree must be clean.
 
-Then run:
+Then run, **with the prepared 3.12 environment as the interpreter that runs the
+runner itself**:
 
 ```bash
-python -m tools.certification.local_assurance run
+.forge/venvs/3.12/bin/python -m tools.certification.local_assurance run \
+  --python311 .forge/venvs/3.11/bin/python \
+  --python312 .forge/venvs/3.12/bin/python
+```
+
+`--python311` and `--python312` choose the gate interpreters only. Certificate
+generation (and `verify`) reads the production registry by re-running the
+interpreter that runs the runner (`sys.executable -E -s -P`), so that
+interpreter must be able to import the project's dependencies. Under a bare
+system `python3.12` every gate passes and the run is then refused at
+`certificate_generation` with `ModuleNotFoundError: No module named 'pint'`
+(2026-10-15, after ~3.5 h). Check it before starting:
+
+```bash
+(cd /tmp && .forge/venvs/3.12/bin/python -E -s -P -c "import pint, numpy, scipy")
+```
+
+Also confirm that nothing under `benchmarks/` skips: the skip-admission policy
+admits no rule there, so one env-gated skip refuses the whole run at assurance
+build.
+
+```bash
+.forge/venvs/3.12/bin/python -m pytest benchmarks -m "not expensive" -q -rs -p no:cacheprovider
 ```
 
 The runner records the exact source SHA and tree SHA before execution and
@@ -117,8 +140,10 @@ Do not include another path in this commit.
 Run:
 
 ```bash
-python -m tools.certification.local_assurance verify
+.forge/venvs/3.12/bin/python -m tools.certification.local_assurance verify
 ```
+
+(the same interpreter rule as `run`: `verify` re-reads the production registry)
 
 This step verifies:
 
@@ -169,7 +194,9 @@ discard the prior local evidence for the same source and execute every source
 gate again:
 
 ```bash
-python -m tools.certification.local_assurance run --reuse
+.forge/venvs/3.12/bin/python -m tools.certification.local_assurance run --reuse \
+  --python311 .forge/venvs/3.11/bin/python \
+  --python312 .forge/venvs/3.12/bin/python
 ```
 
 `--reuse` means "discard admission and re-run"; it does not reuse prior gate

@@ -77,7 +77,7 @@ a real one goes unnoticed.
 `design`, `credibility`, `mcp`, `claims`, `assembly`, `compositionpacks`,
 `executionpacks`, `planning`, `product`, `scenarios`, `materials`,
 `numerical`, `spatial`, `pde`, `coupling`, `providers`, `multiscale`,
-`system_runtime`, `engineering`, `blindfold`, and `authority`.
+`system_runtime`, `engineering`, `blindfold`, `authority`, and `mind`.
 They live under `engcore` and are not part of the frozen Core API. Recorded in
 `tests/test_core_api_layering.py::NON_CORE_PACKAGES`, because a package that is
 neither frozen nor experimental nor explicitly excluded is an accidental public

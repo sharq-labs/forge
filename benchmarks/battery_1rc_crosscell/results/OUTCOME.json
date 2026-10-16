@@ -1,0 +1,122 @@
+{
+ "calibration_sha256": "748fc1bd911b5946dde6fcef1c31238031abb75e2dd6538529fc7cf81d89e7ee",
+ "held_out_acceptance_1rc": {
+  "heldout_gitt25": "NOT_ASSESSABLE (32 outside the validated domain)",
+  "heldout_gitt5": "NOT_ASSESSABLE (8 outside the validated domain)"
+ },
+ "held_out_acceptance_rint": {
+  "heldout_gitt25": "NOT_ASSESSABLE (32 outside the validated domain)",
+  "heldout_gitt5": "NOT_ASSESSABLE (8 outside the validated domain)"
+ },
+ "held_out_summary": {
+  "heldout_gitt25": {
+   "acceptance": "NOT_ASSESSABLE (32 outside the validated domain)",
+   "bias_mV": -4.446179843579784,
+   "cells": [
+    "Expt 1/D",
+    "Expt 1/E",
+    "Expt 1/F",
+    "Expt 2,2/C",
+    "Expt 2,2/D"
+   ],
+   "comparison_vs_rint": "NOT_ASSESSABLE (32 windows outside the validated domain)",
+   "current_A": {
+    "calibration_max": 2.5016553,
+    "excess_mA": 0.5150999999998795,
+    "heldout_max": 2.5021704
+   },
+   "limits": {
+    "P95_abs_mV_max": 30.0,
+    "RMSE_mV_max": 15.0,
+    "also_load_only": true
+   },
+   "load_only_p95_abs_mV": 21.500785167710777,
+   "load_only_rmse_mV": 12.068808308125764,
+   "out_of_domain_attribution": {
+    "current_above_calibration_max": 7,
+    "in_domain": 67,
+    "temperature_below_calibration_min": 20,
+    "temperature_below_calibration_min+current_above_calibration_max": 5
+   },
+   "p95_abs_mV": 20.883355578458968,
+   "rmse_mV": 11.067438609119439,
+   "route_validity": {
+    "in_domain": 67,
+    "outside_validated_domain": 32
+   },
+   "windows": 99
+  },
+  "heldout_gitt5": {
+   "acceptance": "NOT_ASSESSABLE (8 outside the validated domain)",
+   "bias_mV": -4.063962985044643,
+   "cells": [
+    "Expt 1/D",
+    "Expt 1/E",
+    "Expt 1/F",
+    "Expt 2,2/C",
+    "Expt 2,2/D"
+   ],
+   "comparison_vs_rint": "NOT_ASSESSABLE (8 windows outside the validated domain)",
+   "current_A": {
+    "calibration_max": 2.5016553,
+    "excess_mA": 0.5150999999998795,
+    "heldout_max": 2.5021704
+   },
+   "limits": {
+    "P95_abs_mV_max": 50.0,
+    "RMSE_mV_max": 25.0,
+    "also_load_only": true
+   },
+   "load_only_p95_abs_mV": 21.488038978882873,
+   "load_only_rmse_mV": 11.666500232574785,
+   "out_of_domain_attribution": {
+    "current_above_calibration_max": 3,
+    "in_domain": 9,
+    "temperature_above_calibration_max": 1,
+    "temperature_above_calibration_max+current_above_calibration_max": 1,
+    "temperature_below_calibration_min": 1,
+    "temperature_below_calibration_min+current_above_calibration_max": 2
+   },
+   "p95_abs_mV": 21.41087993943524,
+   "rmse_mV": 11.494850523901599,
+   "route_validity": {
+    "in_domain": 9,
+    "outside_validated_domain": 8
+   },
+   "windows": 17
+  }
+ },
+ "identifiability": "IDENTIFIABLE",
+ "ledger_independent_validation": "MISSING",
+ "ledger_reason": "Kirkaldy measurement uncertainty is UNKNOWN (not admitted); the preregistered rule keeps the gate MISSING whatever the outcome",
+ "mapping": {
+  "IDENTIFIABILITY_SUPPORTED": "IDENTIFIABLE, no set FAILS, and a set is NOT_ASSESSABLE",
+  "INSUFFICIENT_MEASUREMENT_EVIDENCE": "WEAKLY_IDENTIFIABLE or NOT_IDENTIFIABLE",
+  "MODEL_REJECTED": "IDENTIFIABLE and the primary or secondary set FAILS for the 1RC",
+  "MODEL_VALIDATION_SUPPORTED": "IDENTIFIABLE, and the primary and secondary sets PASS for the 1RC",
+  "ledger_rule": "an outcome is a report, not a promotion. independent_validation may PASS only on MODEL_VALIDATION_SUPPORTED AND with an admitted measurement uncertainty for THIS dataset; Kirkaldy's is UNKNOWN, so the gate stays MISSING unless the owner admits one"
+ },
+ "outcome": "IDENTIFIABILITY_SUPPORTED",
+ "parameters": {
+  "C1": 5307.467128345033,
+  "R0": 0.033123614231194295,
+  "R1": 0.020167211026574358,
+  "tau_s": 107.0368095939409
+ },
+ "reading": {
+  "applicability_not_enforced_by_the_route": "the SOC scope is enforced by the role builder only; the route's validity domain does not carry it",
+  "blindness_spent": "the held-out cells were partly unblinded while building the roles (raw step edges of the Expt 2,2 cells were read; on-load drops seen before the calibration fit, which had no free choice left) and fully opened by the evaluation; a later evaluation on them (for example after an owner-admitted measurement uncertainty widens the domain) would not be blind and must say so. A blind cross-cell verdict needs cells not yet opened",
+  "descriptive_only": "NOT preregistered, NO verdict: on the in-domain windows only, the 1RC errors are 9.5 / 19.5 mV (primary, 67 windows; load-only 10.2 / 19.7) and 11.8 / 21.1 mV (secondary, 9 windows from 3 cells). The subset is not neutral: the excluded windows carry larger errors (full primary set 11.1 mV). A post-hoc subset selected after the held-out cells were opened cannot replace the preregistered set",
+  "hypotheses_not_evidence": [
+   "the held-out rigs (experiments 1 and 2,2) ran colder at times than the calibration rigs",
+   "Expt 2,2/D's larger strict-transfer error tracks its lower own capacity (Q_own below Q_cal)"
+  ],
+  "not_assessable": "neither held-out set can support or contradict the model: 32 of 99 primary and 8 of 17 secondary windows leave the unwidened calibration domain (23.19-29.66 degC, <= 2.5017 A): held-out cells ran as cold as 17.61 degC, and the held-out pulse current exceeds the calibration maximum by up to 0.52 mA in some windows. The preregistration keeps the range unwidened because the BioLogic accuracy is not admitted; it is not widened after the fact",
+  "not_tested": "other temperatures, ageing, charge, drive cycles, currents other than 2.5 A, SOC below the scope; the pulse current equals the calibration current, so this is cross-cell transfer, not current extrapolation",
+  "supported": "R0, R1, C1 and tau are IDENTIFIABLE from the 25-pulse GITT windows of 7 calibration cells in three experiments (cell-block bootstrap CV 6.1 % at most), with the calibration-mean measured OCV fixed",
+  "what_an_admitted_accuracy_would_and_would_not_change": "an owner-admitted cycler current accuracy could cover the sub-mA current excess, but NOT the temperature gap (several degC, and the thermocouple is not the cycler's current channel): 25 primary windows are outside on temperature, so the primary set would stay NOT_ASSESSABLE. Closing the temperature gap needs calibration data that spans the held-out temperatures, or held-out cells inside the calibrated range, under a new preregistration"
+ },
+ "schema": "forge.battery_1rc_crosscell.outcome/1",
+ "scope": "LG M50T at 25 degC base cooling, beginning of life; 2.5 A discharge pulses and rests; SOC >= max(0.10, lowest knot); held-out cells from experiments 1 and 2,2",
+ "validation_sha256": "284381b19ce2bf3d3d5de9e0bea7fa816fcc1e4230dc2f657e333bc7dbba245e"
+}

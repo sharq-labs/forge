@@ -1,0 +1,38 @@
+{
+ "answer": "approved (owner, in the session chat)",
+ "basis": "dataset readme: 'voltage and current accuracy of 0.1% of full scale'; 'AD592 +/-1degC accuracy'",
+ "components": {
+  "case_temperature": {
+   "distribution": "uniform",
+   "half_width_degC": 1.0,
+   "standard_uncertainty_degC": 0.5773502691896258
+  },
+  "charge_counter": "UNKNOWN (never read)",
+  "current": {
+   "distribution": "uniform",
+   "half_width_A": 0.075,
+   "standard_uncertainty_A": 0.04330127018922193
+  },
+  "time": "UNKNOWN (no stated accuracy; 0.1 s logging)",
+  "voltage": {
+   "distribution": "uniform",
+   "half_width_V": 0.005,
+   "standard_uncertainty_V": 0.002886751345948129
+  }
+ },
+ "decided_by": "owner",
+ "decided_on": "2026-10-15",
+ "decision": "ADMITTED_TYPE_B",
+ "limits": [
+  "a publisher accuracy statement for the instrument channel, not a calibration certificate for the unit used",
+  "uniform distribution and independence between channels are declared, not measured",
+  "does NOT apply to NASA PCoE FY08Q4, which stays UNKNOWN",
+  "admitting it changes no frozen acceptance or outcome: the 1C constant-current FAIL margin (3.65 mV RMSE, 0.67 mV P95) lies within the admitted +/-5 mV voltage accuracy, which is now stated, not used to overturn the frozen result"
+ ],
+ "question": "whether a data publisher's stated instrument accuracy (LG HG2: +/-5 mV, +/-75 mA, +/-1 degC) counts as admissible measurement uncertainty",
+ "schema": "forge.battery_1rc_identifiability.measurement_uncertainty_decision/1",
+ "scope": {
+  "dataset": "LG 18650HG2, McMaster, doi:10.17632/cp3473x7xv.3, the five preregistered CSV files",
+  "instrument": "Digatron Firing Circuits Universal Battery Tester, 75 A / 5 V channel; AD592 case sensor"
+ }
+}

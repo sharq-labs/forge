@@ -68,6 +68,7 @@ from .events import (
     CampaignEventLog,
     CampaignEventType,
     assurance_disagreements,
+    stop_review_disagreements,
     derive_obligation_state,
 )
 from .executor import ExecutionRecord, SimulationExecutor, require_simulation
@@ -1608,9 +1609,15 @@ class CampaignRunner:
         verdicts and admissions must be what its own event log says (audit
         SRIA-06 / SER-01).
         """
-        problems = assurance_disagreements(
+        problems = list(assurance_disagreements(
             checkpoint.events.events,
             obligation_state=checkpoint.obligation_state,
+            iterations=checkpoint.run.iterations,
+        ))
+        # BR-15 F-9: the stop review's outcome is assurance state too.
+        problems += stop_review_disagreements(
+            checkpoint.events.events,
+            stop_review_outcome=checkpoint.run.stop_review_outcome,
             iterations=checkpoint.run.iterations,
         )
         if problems:

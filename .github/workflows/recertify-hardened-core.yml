@@ -547,6 +547,23 @@ jobs:
           python -m tools.certification.mutation_population v4-select
           --index "$SHARD_INDEX" --count 8
           --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      # actions/checkout disables sparse checkout, which writes .git/config.worktree; the pristine-workspace admission
+      # refuses any worktree pointer (tools/certification/mutation_workspace.py). Remove it ONLY when it holds exactly the
+      # three sparse-checkout defaults checkout writes; anything else fails the job (BR-15 F-7).
+      - name: Remove the sparse-checkout worktree config the checkout action leaves
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=.git/config.worktree
+          if [ -e "$f" ]; then
+            got="$(git config --file "$f" --list | LC_ALL=C sort)"
+            want="$(printf 'core.sparsecheckout=false\ncore.sparsecheckoutcone=false\nindex.sparse=false\n' | LC_ALL=C sort)"
+            if [ "$got" != "$want" ]; then echo "unexpected $f content: $got" >&2; exit 1; fi
+            rm -- "$f"
+          fi
+          if git config --local --get extensions.worktreeConfig >/dev/null; then
+            echo "extensions.worktreeConfig is still set" >&2; exit 1
+          fi
       - name: Certified V4 false-confidence mutation shard
         shell: bash
         run: |
@@ -599,6 +616,23 @@ jobs:
           python -m tools.certification.mutation_population v4-select
           --index "$SHARD_INDEX" --count 8
           --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      # actions/checkout disables sparse checkout, which writes .git/config.worktree; the pristine-workspace admission
+      # refuses any worktree pointer (tools/certification/mutation_workspace.py). Remove it ONLY when it holds exactly the
+      # three sparse-checkout defaults checkout writes; anything else fails the job (BR-15 F-7).
+      - name: Remove the sparse-checkout worktree config the checkout action leaves
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=.git/config.worktree
+          if [ -e "$f" ]; then
+            got="$(git config --file "$f" --list | LC_ALL=C sort)"
+            want="$(printf 'core.sparsecheckout=false\ncore.sparsecheckoutcone=false\nindex.sparse=false\n' | LC_ALL=C sort)"
+            if [ "$got" != "$want" ]; then echo "unexpected $f content: $got" >&2; exit 1; fi
+            rm -- "$f"
+          fi
+          if git config --local --get extensions.worktreeConfig >/dev/null; then
+            echo "extensions.worktreeConfig is still set" >&2; exit 1
+          fi
       - name: Certified V4 false-confidence mutation shard
         shell: bash
         run: |
@@ -651,6 +685,23 @@ jobs:
           python -m tools.certification.mutation_population v4-select
           --index "$SHARD_INDEX" --count 8
           --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      # actions/checkout disables sparse checkout, which writes .git/config.worktree; the pristine-workspace admission
+      # refuses any worktree pointer (tools/certification/mutation_workspace.py). Remove it ONLY when it holds exactly the
+      # three sparse-checkout defaults checkout writes; anything else fails the job (BR-15 F-7).
+      - name: Remove the sparse-checkout worktree config the checkout action leaves
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=.git/config.worktree
+          if [ -e "$f" ]; then
+            got="$(git config --file "$f" --list | LC_ALL=C sort)"
+            want="$(printf 'core.sparsecheckout=false\ncore.sparsecheckoutcone=false\nindex.sparse=false\n' | LC_ALL=C sort)"
+            if [ "$got" != "$want" ]; then echo "unexpected $f content: $got" >&2; exit 1; fi
+            rm -- "$f"
+          fi
+          if git config --local --get extensions.worktreeConfig >/dev/null; then
+            echo "extensions.worktreeConfig is still set" >&2; exit 1
+          fi
       - name: Certified V4 false-confidence mutation shard
         shell: bash
         run: |
@@ -703,6 +754,23 @@ jobs:
           python -m tools.certification.mutation_population v4-select
           --index "$SHARD_INDEX" --count 8
           --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      # actions/checkout disables sparse checkout, which writes .git/config.worktree; the pristine-workspace admission
+      # refuses any worktree pointer (tools/certification/mutation_workspace.py). Remove it ONLY when it holds exactly the
+      # three sparse-checkout defaults checkout writes; anything else fails the job (BR-15 F-7).
+      - name: Remove the sparse-checkout worktree config the checkout action leaves
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=.git/config.worktree
+          if [ -e "$f" ]; then
+            got="$(git config --file "$f" --list | LC_ALL=C sort)"
+            want="$(printf 'core.sparsecheckout=false\ncore.sparsecheckoutcone=false\nindex.sparse=false\n' | LC_ALL=C sort)"
+            if [ "$got" != "$want" ]; then echo "unexpected $f content: $got" >&2; exit 1; fi
+            rm -- "$f"
+          fi
+          if git config --local --get extensions.worktreeConfig >/dev/null; then
+            echo "extensions.worktreeConfig is still set" >&2; exit 1
+          fi
       - name: Certified V4 false-confidence mutation shard
         shell: bash
         run: |
@@ -755,6 +823,23 @@ jobs:
           python -m tools.certification.mutation_population v4-select
           --index "$SHARD_INDEX" --count 8
           --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      # actions/checkout disables sparse checkout, which writes .git/config.worktree; the pristine-workspace admission
+      # refuses any worktree pointer (tools/certification/mutation_workspace.py). Remove it ONLY when it holds exactly the
+      # three sparse-checkout defaults checkout writes; anything else fails the job (BR-15 F-7).
+      - name: Remove the sparse-checkout worktree config the checkout action leaves
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=.git/config.worktree
+          if [ -e "$f" ]; then
+            got="$(git config --file "$f" --list | LC_ALL=C sort)"
+            want="$(printf 'core.sparsecheckout=false\ncore.sparsecheckoutcone=false\nindex.sparse=false\n' | LC_ALL=C sort)"
+            if [ "$got" != "$want" ]; then echo "unexpected $f content: $got" >&2; exit 1; fi
+            rm -- "$f"
+          fi
+          if git config --local --get extensions.worktreeConfig >/dev/null; then
+            echo "extensions.worktreeConfig is still set" >&2; exit 1
+          fi
       - name: Certified V4 false-confidence mutation shard
         shell: bash
         run: |
@@ -807,6 +892,23 @@ jobs:
           python -m tools.certification.mutation_population v4-select
           --index "$SHARD_INDEX" --count 8
           --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      # actions/checkout disables sparse checkout, which writes .git/config.worktree; the pristine-workspace admission
+      # refuses any worktree pointer (tools/certification/mutation_workspace.py). Remove it ONLY when it holds exactly the
+      # three sparse-checkout defaults checkout writes; anything else fails the job (BR-15 F-7).
+      - name: Remove the sparse-checkout worktree config the checkout action leaves
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=.git/config.worktree
+          if [ -e "$f" ]; then
+            got="$(git config --file "$f" --list | LC_ALL=C sort)"
+            want="$(printf 'core.sparsecheckout=false\ncore.sparsecheckoutcone=false\nindex.sparse=false\n' | LC_ALL=C sort)"
+            if [ "$got" != "$want" ]; then echo "unexpected $f content: $got" >&2; exit 1; fi
+            rm -- "$f"
+          fi
+          if git config --local --get extensions.worktreeConfig >/dev/null; then
+            echo "extensions.worktreeConfig is still set" >&2; exit 1
+          fi
       - name: Certified V4 false-confidence mutation shard
         shell: bash
         run: |
@@ -859,6 +961,23 @@ jobs:
           python -m tools.certification.mutation_population v4-select
           --index "$SHARD_INDEX" --count 8
           --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      # actions/checkout disables sparse checkout, which writes .git/config.worktree; the pristine-workspace admission
+      # refuses any worktree pointer (tools/certification/mutation_workspace.py). Remove it ONLY when it holds exactly the
+      # three sparse-checkout defaults checkout writes; anything else fails the job (BR-15 F-7).
+      - name: Remove the sparse-checkout worktree config the checkout action leaves
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=.git/config.worktree
+          if [ -e "$f" ]; then
+            got="$(git config --file "$f" --list | LC_ALL=C sort)"
+            want="$(printf 'core.sparsecheckout=false\ncore.sparsecheckoutcone=false\nindex.sparse=false\n' | LC_ALL=C sort)"
+            if [ "$got" != "$want" ]; then echo "unexpected $f content: $got" >&2; exit 1; fi
+            rm -- "$f"
+          fi
+          if git config --local --get extensions.worktreeConfig >/dev/null; then
+            echo "extensions.worktreeConfig is still set" >&2; exit 1
+          fi
       - name: Certified V4 false-confidence mutation shard
         shell: bash
         run: |
@@ -911,6 +1030,23 @@ jobs:
           python -m tools.certification.mutation_population v4-select
           --index "$SHARD_INDEX" --count 8
           --out "${RUNNER_TEMP}/v4-mutation-ids-${SHARD_INDEX}.txt"
+      # actions/checkout disables sparse checkout, which writes .git/config.worktree; the pristine-workspace admission
+      # refuses any worktree pointer (tools/certification/mutation_workspace.py). Remove it ONLY when it holds exactly the
+      # three sparse-checkout defaults checkout writes; anything else fails the job (BR-15 F-7).
+      - name: Remove the sparse-checkout worktree config the checkout action leaves
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=.git/config.worktree
+          if [ -e "$f" ]; then
+            got="$(git config --file "$f" --list | LC_ALL=C sort)"
+            want="$(printf 'core.sparsecheckout=false\ncore.sparsecheckoutcone=false\nindex.sparse=false\n' | LC_ALL=C sort)"
+            if [ "$got" != "$want" ]; then echo "unexpected $f content: $got" >&2; exit 1; fi
+            rm -- "$f"
+          fi
+          if git config --local --get extensions.worktreeConfig >/dev/null; then
+            echo "extensions.worktreeConfig is still set" >&2; exit 1
+          fi
       - name: Certified V4 false-confidence mutation shard
         shell: bash
         run: |

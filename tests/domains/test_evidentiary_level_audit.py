@@ -44,6 +44,7 @@ FROZEN_TREE = DOMAINS / "thermal"
 LEVELLED = {
     "dimensional_consistency": "DIMENSIONALLY_VALID",
     "metric_dimensions": "DIMENSIONALLY_VALID",
+    "thevenin_metric_dimensions": "DIMENSIONALLY_VALID",
     "linear_system_residual": "NUMERICALLY_CONVERGED",
     "tolerance_independence": "NUMERICALLY_CONVERGED",
     "analytic_invariant_agreement": "ANALYTICALLY_VERIFIED",
@@ -60,6 +61,10 @@ ESTABLISHES_NOTHING = {
     # battery/solver.py
     "coulomb_balance_residual": "never",
     "rint_terminal_residual": "earnable later",
+    # battery/thevenin_route.py (2026-10-14)
+    "thevenin_coulomb_balance_residual": "never",
+    "thevenin_polarization_superposition_residual": "earnable later",
+    "thevenin_terminal_relation_residual": "never",
     # electrical/dc/validation.py
     "kirchhoff_current_law": "never",
     "resistor_metric_consistency": "never",
@@ -286,6 +291,7 @@ def test_the_document_carries_a_row_for_every_audited_check():
     for name in ESTABLISHES_NOTHING:
         assert f"`{name}`" in text, f"{name} has no row in {AUDIT.name}"
     # 22 after the trusted-consensus hardening withheld the CSTR independent
-    # solver level until route independence is backed by verified artifacts.
-    assert "Checks that pass today while establishing nothing: 22" in text
-    assert str(len(ESTABLISHES_NOTHING)) == "22"
+    # solver level until route independence is backed by verified artifacts;
+    # 25 after the battery 1RC route added three residuals (2026-10-14).
+    assert "Checks that pass today while establishing nothing: 25" in text
+    assert str(len(ESTABLISHES_NOTHING)) == "25"

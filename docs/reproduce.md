@@ -7,17 +7,86 @@ author's laptop. This page answers it, including where the answer is **no**.
 
 ## The one command
 
+From a checkout with **full** history (not `--depth 1`):
+
 ```bash
-docker build -t crafty-repro . && docker run --rm crafty-repro
+docker build -t crafty-repro .
 ```
 
-`Dockerfile` goes from `python:3.12-slim-bookworm` to: apt-install ngspice,
-`pip install -e ".[dev]"`, FAST test tier, benchmark score on the development
-split. No host state — `.dockerignore` keeps `.git`, `.venv` and every cache
-out of the build context.
+```bash
+docker run --rm -v "$PWD/.git:/mnt/history:ro" crafty-repro
+```
 
-It prints the interpreter, the platform, the ngspice version, the pinned
-package versions, then the two measurements.
+`Dockerfile` goes from `python:3.12-slim-trixie` to: apt-install ngspice and
+git, `pip install -e ".[dev,mcp,oracles,benchmarks]"`, FAST test tier,
+benchmark score on the development split, run as the unprivileged user
+`crafty` (uid 10001). No host state in the image — `.dockerignore` keeps
+`.git`, `.venv` and every cache out of the build context.
+
+The repository's history is the one thing mounted in, read-only, because the
+FAST tier reads it: the certificate, freeze-manifest and replay tests resolve
+the repository root and `HEAD`, and read committed snapshots such as V1's at
+`af43c896`. The script **copies** `/mnt/history` to `/crafty/.git` rather than
+mounting it there: the mounted files belong to the host user, git refuses a
+repository it does not own, and `safe.directory` cannot help because the
+certification tools (`tools/certification/ownership.py`, the mutation
+workspace) run git with global and system config switched off. The copy
+belongs to `crafty`; the host's `.git` is never written.
+
+Before measuring anything the script **refuses** (exit 2) a run with no
+history at `/mnt/history`, one that still mounts at the old `/crafty/.git`, a
+shallow history, or one whose `HEAD` does not describe the image's tree, so a
+history-reading test can neither fail for a reason that is not the code's nor
+pass against a commit the image was not built from.
+
+The tests run as a non-root user, as on a hosted runner: under root a
+chmod-000 directory stays readable, so a test that proves a walk fails closed
+on an unreadable entry cannot pass.
+
+It prints the commit, the interpreter, the platform, the ngspice version, the
+pinned package versions, then the two measurements.
+
+### Why trixie, a non-root user and the history mount (2026-10-15)
+
+On `main` at `e193e573`, Tests run
+[`38544091505`](https://github.com/sharq-labs/forge/actions/runs/38544091505),
+job `reproduce` failed **161** FAST tests that the hosted `fast (py 3.12)` job
+on the same commit passed (that job failed one, the certificate self-check):
+
+* **149** read history the image did not have: `.dockerignore` drops `.git`
+  and the job checked out at depth 1, so `core_certificate` raised *no repository root above
+  /crafty/...*, `git rev-parse HEAD` exited 128, and committed snapshots
+  (`af43c896`, `7876bd9f`) could not be read. The job now checks out with
+  `fetch-depth: 0` and `persist-credentials: false` (no token in the mounted
+  `.git/config`), mounts `.git` read-only and copies it in.
+* **1**, `test_mutation_workspace.py::test_mid_walk_failure_still_reports_entries_already_scanned`,
+  ran as root: *DID NOT RAISE PermissionError*. The image now runs the tests as
+  `crafty`.
+* **11** in `tests/oracles/test_oracle_ngspice_dc.py`: bookworm's
+  **ngspice-39** printed the correct operating point and then exited **1**
+  (*No ".plot", ".print", or ".fourier" lines; no simulations run*). Its
+  `src/main.c` has no `sim_status` check, so a `.control`-only batch deck always
+  ends in `EXIT_BAD`. ngspice-42 (the hosted runner, the author's WSL) and
+  trixie's **44.2+ds-1** carry the same batch-exit block, which exits 0 once a
+  `.control` simulation ran; Debian's only patch to 44.2 is a spelling fix.
+  The oracle's `returncode == 0` assertion is unchanged and nothing is
+  deselected.
+
+**Not yet run in Docker.** No Docker is available where this was prepared. The
+history and non-root halves were exercised by emulating the container in WSL
+(Ubuntu 24.04, CPython 3.12.3, ngspice-42). The tree was owned by the test user
+and the history by root, unwritable by that user, and the reproduce script was
+generated from the Dockerfile's own `printf` block. That run gave
+`1 failed, 10375 passed, 155 skipped`, and the one failure is the certificate
+self-check the hosted job also fails. A first emulation that mounted `.git`
+in place with `safe.directory` instead failed six ownership-listing tests,
+which is why the history is copied. See `docs/work/PROGRESS.md` for both runs.
+The ngspice-44.2 half rests on the source comparison above and on ngspice-42
+exiting 0 for the oracle's deck. The first pushed `reproduce` run is the
+measurement.
+
+The runs below were made on bookworm with ngspice-39 against older trees. They
+are records of what ran then, not evidence about the trixie image.
 
 ---
 
@@ -310,15 +379,19 @@ first on every machine anyone tried.
 
 ## Expected output and runtime
 
-Once `mcp` is declared, `docker run --rm crafty-repro` should print:
+With the history mounted (see **The one command**), `docker run` should print:
 
 | Stage | Expected | Runtime |
 |---|---|---|
-| `docker build` | base image + ngspice + `pip install -e ".[dev]"` | 2–4 min cold, seconds cached |
-| FAST tier | `2146 passed` (0 skipped, 0 errors) | ~20–35 s at `-n 4` |
+| `docker build` | base image + ngspice + git + `pip install -e ".[dev,mcp,oracles,benchmarks]"` | 2–4 min cold, seconds cached |
+| FAST tier | the same failure set as the hosted `fast (py 3.12)` job on the same commit; a test that fails only here is an image defect | ~9–10 min at `-n 4` on a hosted runner (run `38544091505`) |
 | Benchmark, dev split | `1282/1400 (91.6%)`, catch `99.1%`, FA `0.86%`, FR `0.4%` | ~20–90 s at `--workers 4` |
 
-The image installs `.[dev,mcp]`, so it should reach `2146 passed`. The benchmark
+The `2146 passed` FAST counts in the older runs above are from a much smaller
+suite; at `e193e573` the hosted FAST job ran ~10,500 tests. The script is
+`set -e`, so the benchmark stage only runs once FAST is green; while `main`'s
+certificate is stale (the owner's OD-3 recertification), the certificate
+self-check fails here as it does on the hosted job. The benchmark
 numbers are the ones to check against; the case-set digest `476976c1…` must
 match, and a run that prints a different digest is a run against different
 cases, not a different result. The image has been built and does print exactly

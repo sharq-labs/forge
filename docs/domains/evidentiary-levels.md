@@ -38,12 +38,12 @@ point of the table rather than a shortfall in it.
 
 | Category | Count | of which added this pass |
 |---|---|---|
-| earnable now (implemented) | **1** | **0** |
-| earnable later | **6** | **2** |
-| never earnable by this check | **20** | **12** |
-| **total audited** | **27** | **14** |
+| earnable now (implemented) | **2** | **1** |
+| earnable later | **7** | **1** |
+| never earnable by this check | **22** | **2** |
+| **total audited** | **31** | **4** |
 
-**Checks that pass today while establishing nothing: 22.** The count rose first
+**Checks that pass today while establishing nothing: 25.** The count rose first
 when IND-04 withdrew `CROSS_SOLVER_VALIDATED` from
 `independent_steady_state_agreement`, and again when the trusted-consensus
 hardening required route independence to be backed by verified artifact bytes.
@@ -132,6 +132,18 @@ exists and does not travel. Recorded under *Found while auditing*.
 ---
 
 ## The table
+
+### Battery 1RC route — `src/engcore/domains/battery/thevenin_route.py` (added 2026-10-14)
+
+This pass added four rows and raised the establishing-nothing count from 22 to 25. The 1RC route is not registered
+in the production registry, the MCP boundary or the domain pack; these checks verify its arithmetic and nothing else.
+
+| Check | Category | Decision |
+|---|---|---|
+| `thevenin_metric_dimensions` | **earnable now — DONE** | Every produced metric against the dimension the `THEVENIN_1RC_MODEL` output specs declare; the solver did not write those specs. Earns `DIMENSIONALLY_VALID`, as `metric_dimensions` does. |
+| `thevenin_coulomb_balance_residual` | **never earnable by this check** | The final SOC against `z0 - (sum I dt)/(eta Q)` computed in one sum. The march computes the same affine quantity interval by interval, so agreement is algebra; it guards a flipped sign or a dropped efficiency and is not evidence. |
+| `thevenin_polarization_superposition_residual` | **earnable later** | The final polarization voltage against the superposition (convolution) integral of the RC branch over all intervals, which shares no recursion with the exact zero-order-hold update. It could support `ANALYTICALLY_VERIFIED` only once route independence is declared and verified through `scientific/consensus.py`; until then it establishes nothing. |
+| `thevenin_terminal_relation_residual` | **never earnable by this check** | Every interval end against `V = OCV(z) - I R0 - v_p`, the relation the march evaluates; agreement is algebra. |
 
 ### Battery — `src/engcore/domains/battery/solver.py`
 

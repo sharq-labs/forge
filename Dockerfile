@@ -2,23 +2,45 @@
 # author's laptop. This image answers it from a bare base: install, FAST tier,
 # benchmark score, no host state.
 #
-#     docker build -t crafty-repro . && docker run --rm crafty-repro
+#     docker build -t crafty-repro .
+#     docker run --rm -v "$PWD/.git:/mnt/history:ro" crafty-repro
+#
+# The image carries no history (.dockerignore drops .git), but the FAST tier
+# reads it: the certificate, freeze-manifest and replay tests resolve the
+# repository root, HEAD and committed snapshots such as V1's at af43c896. So
+# the checkout's own FULL history (not a depth-1 clone) is mounted read-only
+# at run time and copied to /crafty/.git; the reproduce script refuses to start
+# without it.
 #
 # See docs/reproduce.md for the expected output and the runtime.
 
 # Pinned to a minor version, not `latest` and not `3`. A base image that
 # floats is a base image that can move a number without anyone touching the
 # code, which is the exact failure this whole round exists to close.
-FROM python:3.12-slim-bookworm
+#
+# trixie, not bookworm, for ngspice. Bookworm ships ngspice-39, whose batch
+# mode exits 1 after a correct `.control` / `op` / `print` run ("No .plot ...
+# lines; no simulations run"): src/main.c only learned to read `sim_status`
+# in later releases. ngspice-42 (the hosted runner, the author's WSL) and
+# trixie's 44.2+ds-1 share the same batch-exit block and exit 0, so
+# tests/oracles/test_oracle_ngspice_dc.py keeps its returncode == 0 assertion.
+FROM python:3.12-slim-trixie
 
-# ngspice is installed so that NOTHING is skipped. The FAST tier does not
-# launch the provider -- tests/conftest.py keeps the process-launching
-# ngspice tests in the `expensive` tier and only the source-reading ones in
-# FAST -- but the SCIENTIFIC tier does, and an image that could not run it
+# ngspice is installed so that NOTHING is skipped. Most process-launching
+# ngspice tests sit in the `expensive` tier (tests/conftest.py), but the
+# independent DC oracle runs in FAST whenever ngspice is on PATH, and the
+# SCIENTIFIC tier launches the provider; an image that could not run them
 # would be answering a smaller question than the one that was asked.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ngspice git \
  && rm -rf /var/lib/apt/lists/*
+
+# The tests run as an ordinary user, as they do on a hosted runner. Under root
+# a chmod-000 directory stays readable, so tests that prove a walk fails closed
+# on an unreadable entry cannot pass (test_mutation_workspace's mid-walk test
+# did not, in run 38544091505).
+RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin crafty \
+ && install -d -o crafty -g crafty /crafty
 
 # The provider's default invocation is ("wsl.exe", "-e", "ngspice") -- the
 # author's Windows host, src/engcore/domains/electrical/ngspice.py:191. On
@@ -32,14 +54,14 @@ WORKDIR /crafty
 
 # Dependency metadata first, so an edit to a case or a test does not invalidate
 # the layer that downloads scipy.
-COPY pyproject.toml requirements.txt README.md ./
-COPY src ./src
+COPY --chown=crafty:crafty pyproject.toml requirements.txt README.md ./
+COPY --chown=crafty:crafty src ./src
 # Install every declared test/benchmark extra the reproducibility image can
 # reach. A bare image must not accidentally rely on packages present on the
 # author's host.
 RUN pip install --no-cache-dir -e ".[dev,mcp,oracles,benchmarks]"
 
-COPY . .
+COPY --chown=crafty:crafty . .
 
 # One command, and it prints what it measured against as well as what it
 # measured. The case-set digest and the split rule come from the scorer's own
@@ -51,10 +73,40 @@ COPY . .
 #
 # --split dev: the hold-out stays sealed. Scoring it needs --open-holdout and
 # writes a dated record; see benchmarks/hard/split_hard.py.
+#
+# History is COPIED from the read-only mount, not used in place: the mounted
+# files belong to the host user, and git refuses a repository it does not own
+# ("dubious ownership"). safe.directory cannot cover that, because the
+# certification tools run git with global and system config switched off. The
+# copy belongs to `crafty`, and the host's .git is never written.
+#
+# The history checks fail closed before anything is measured: a run with no
+# history, a shallow one, or one whose HEAD does not describe the image's tree
+# would turn history-reading tests red for a reason that is not the code's,
+# or green against a commit the image was not built from.
 RUN printf '%s\n' \
   '#!/bin/sh' \
   'set -e' \
+  'if [ ! -d /mnt/history ] || [ -e /crafty/.git ]; then' \
+  '  echo "refused: mount the checkout history read-only at /mnt/history: docker run --rm -v <checkout>/.git:/mnt/history:ro crafty-repro (docs/reproduce.md)" >&2' \
+  '  exit 2' \
+  'fi' \
+  'cp -R /mnt/history /crafty/.git' \
+  'if ! git rev-parse --verify -q HEAD >/dev/null; then' \
+  '  echo "refused: /mnt/history holds no readable commit" >&2' \
+  '  exit 2' \
+  'fi' \
+  'if [ "$(git rev-parse --is-shallow-repository)" != false ]; then' \
+  '  echo "refused: /mnt/history is shallow; the freeze and certificate tests read full history (fetch-depth: 0)" >&2' \
+  '  exit 2' \
+  'fi' \
+  'if [ -n "$(git status --porcelain --untracked-files=no)" ]; then' \
+  '  echo "refused: the mounted HEAD does not describe this image tree:" >&2' \
+  '  git status --short --untracked-files=no | head -20 >&2' \
+  '  exit 2' \
+  'fi' \
   'echo "== environment =="' \
+  'echo "commit $(git rev-parse HEAD)"' \
   'python -c "import sys,platform; print(sys.version); print(platform.platform())"' \
   'ngspice --version 2>&1 | sed -n 2p' \
   'pip freeze | grep -Ei "^(numpy|scipy|scikit-learn|pint|pytest|pytest-xdist)=="' \
@@ -67,5 +119,7 @@ RUN printf '%s\n' \
   '  --cases benchmarks/hard/cases_hard --workers 4 --split dev \' \
   '  --results /tmp/results_dev.json' \
   > /usr/local/bin/reproduce && chmod +x /usr/local/bin/reproduce
+
+USER crafty
 
 CMD ["reproduce"]

@@ -221,8 +221,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # The image carries no .git; the certificate, freeze and replay tests
+          # read full history, which is mounted read-only below and copied
+          # inside the container. No token is left in .git/config, so the
+          # container never sees one.
+          fetch-depth: 0
+          persist-credentials: false
       - run: docker build -t crafty-repro .
-      - run: docker run --rm crafty-repro
+      - run: docker run --rm -v "${GITHUB_WORKSPACE}/.git:/mnt/history:ro" crafty-repro
 
   benchmark:
     if: github.event_name != 'pull_request'
