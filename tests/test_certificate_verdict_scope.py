@@ -270,10 +270,27 @@ def test_fourth_review_the_registry_pin_covers_source_bytes_and_model_modules() 
 
 
 def test_fourth_review_the_registry_probe_is_not_steered_by_the_environment(monkeypatch) -> None:
+    probes = []
+    real_run = subprocess.run
+
+    def recording(args, *positional, **keywords):
+        result = real_run(args, *positional, **keywords)
+        if cc._REGISTRY_PROBE in list(args):
+            probes.append((list(args), dict(keywords.get("env") or {}), result.returncode))
+        return result
+
+    monkeypatch.setattr(cc.subprocess, "run", recording)
     baseline = cc.production_registry_identity(ROOT)
     monkeypatch.setenv("FORGE_DOMAIN_PACKS", "some.external:pack")
     monkeypatch.setenv("PYTHONPATH", "/nonexistent-shadow")
     assert cc.production_registry_identity(ROOT) == baseline
+    # FAST regression fix (2026-10-16): the probe's bytecode prefix is reused within a process, its result never is --
+    # each identity above was read by a real probe of the tree, with nothing from the environment
+    assert [returncode for _, _, returncode in probes] == [0, 0]
+    for args, env, _ in probes:
+        assert {"-E", "-s", "-P"} <= set(args) and any(arg.startswith("pycache_prefix=") for arg in args)
+        assert not any(arg.startswith("--check-hash-based-pycs") for arg in args)   # the import checks the seeded .pyc
+        assert not [key for key in env if key.upper().startswith(("PYTHON", "FORGE"))]
 
 
 def test_fourth_review_a_claims_tree_without_its_registry_entry_cannot_be_certified(tmp_path) -> None:

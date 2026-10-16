@@ -4464,3 +4464,202 @@ not 0bc8b1cb.
 - Pristine main e193e573: 10374 passed, 1 failed (`test_the_certificate_describes_this_tree`), 156 skipped.
 - Landing tree bd927d8a: 10719 passed, 2 failed, 156 skipped, tracked tree clean afterwards. The only failure not present on main is `test_the_certificate_records_the_v1_relationship_truthfully` (expected certificate staleness, above). Earlier landing trees: 4f7576e0 had 3 failures (the third was the mind schema invariant, fixed in eecef67b); eecef67b had the same 2.
 - Windows .venv 3.14 targeted runs: `tests/mind tests/test_core_semantic_invariants.py tests/test_core_api_layering.py tests/test_core_guards.py` 417 passed; `tests/scientific/knowledge tests/test_core_guards.py` 309 passed; `tests/uq/budget tests/claims/test_unassessable_compilation.py tests/foundations/test_discovery_deadline.py` 20 passed, 11 skipped (POSIX-only).
+
+## 2026-10-16 -- FAST slowdown attribution across PR #146 (measurement only)
+
+**Who measured this.** The attribution session ("Profile FAST slowdown on main 91b44e22") measured these figures on
+2026-10-16, on Windows with .venv CPython 3.14.2, using `-n 4 --dist loadfile`; the N-* pair below used `--dist load`.
+None of it was re-run for this entry.
+- Raw data: `D:/pf/runs`.
+- Full analysis: side-session note `fast-slowdown-attribution-2026-10-16.md`.
+- The fix is the next entry.
+
+**Headline numbers:**
+- ABBA FAST wall, e193e573 -> 91b44e22: 267.6 -> 573.8 s (x2.14).
+- Summed test time: +795.7 s, 97% of it in eight certification modules.
+- One `verify_certificate` in isolation: 7.15 -> 27.2 s.
+- A scratch prototype brought a repeated verify back to 7.2 s, with results identical to the shipped code. It used a
+  byte-keyed memo, a per-call listdir memo and one private probe prefix per process.
+
+**Exact commands run:**
+```
+# all: cwd=<worktree>, PYTHONDONTWRITEBYTECODE unset (except N-*), PYTHONPATH='<wt>\src;<wt>', TMP/TEMP/TMPDIR=D:\pft\<label>
+.venv/Scripts/python.exe -m pytest -m "not expensive" -q -n 4 --dist loadfile --basetemp=D:\pfb\<label> --durations=40 --junitxml=D:\pf\runs\<label>\junit.xml
+#   A1-old e193e573 243.9 s: 153 failed, 10167 passed, 189 skipped, 22 errors
+#   B1-new 91b44e22 550.0 s: 154 failed, 10500 passed, 201 skipped, 22 errors
+#   B2-new 91b44e22 597.6 s: same;  A2-old e193e573 291.2 s: same as A1
+#   I-old / I-new (+ -p probe_metrics): 279.6 s / 577.6 s, same outcomes
+# N-*: --dist load, PYTHONDONTWRITEBYTECODE=1, pycache-free worktrees
+#   N-new 653.8 s: 154 failed, 10500 passed;  N-old 312.8 s: 153 failed, 10167 passed
+# Only-new failure: tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
+```
+
+## 2026-10-16 -- FAST slowdown fix: verifier analysis memo and per-process probe prefix (perf/cert-closure-memo, local only)
+
+**Why.** PR #146 (main 91b44e22) made FAST about 2.1x slower on Windows: 97% of the delta sat in eight certification
+modules, and one `verify_certificate(require_current_scope=True)` went from 7.15 s (e193e573) to 27.2 s. The cause was
+in `tools/certification/core_certificate.py` (BR-15 6d62e5cf, aedc7b24, 26f2505c, 3c28bedf):
+- the authority, certified-dependency and evidence-code closures re-parsed the same files on every call;
+- `_spelled_on_disk` made about 220,000 `os.listdir` calls per verify;
+- the registry probe compiled the interpreter's library, numpy, scipy and pint into a fresh pycache prefix on every
+  probe.
+
+Attribution: the previous entry, and side-session note `fast-slowdown-attribution-2026-10-16.md`.
+
+**What changed** (certification-pinned; branch `perf/cert-closure-memo` from 91b44e22, worktree `D:/forge-cert-memo`):
+- **Analysis memo.** `dynamic_imports` and `_engcore_imports` are memoized in-process. The key is the SHA-256 of the
+  exact bytes parsed, plus the package (imports) or the rule tables (dynamic loads), plus `sys.get_int_max_str_digits()`.
+  - Star-package listings, `is_file` and on-disk spelling are read on every call.
+  - No disk, nothing shared across processes, no mtime keys.
+- **Directory listings.** `_spelled_on_disk` reads them from a dict that lives for ONE closure walk; failed listings
+  are not kept.
+- **Probe prefix: one private directory per process.**
+  - Made by `mkdtemp`, with only its parent resolved; never inside the tree; one prefix per interpreter (cache tag,
+    magic number, executable).
+  - Reused, and removed at exit, only while it is still the directory this process made: same lstat dev/inode, not a
+    link or junction, and on POSIX this user's with no group/other bits. Never adopted by a forked child.
+  - On Windows, used only where `mkdtemp` is private (CPython >= 3.12.4, or 3.13 from 3.13.0b1).
+- **Seeding before EVERY probe.** A clean interpreter started like the probe (`-E -s -P -B -X pycache_prefix`):
+  - compiles every `.py` under the resolved `src/` into the prefix as CHECKED_HASH `.pyc`, from the bytes it reads;
+  - keeps a `.pyc` only when the source SHA-256 and the `.pyc` SHA-256 both match its record;
+  - removes every other file under the tree's (and `src/`'s) part of the prefix;
+  - refuses a link or junction anywhere from the prefix down.
+- **Failure paths.** Any seeding failure gives the probe a one-shot prefix, as before. A one-shot directory swapped for
+  a link fails the probe. Each probe gets a fresh working directory, probe results are never cached, and the tree's
+  `__pycache__` is still never read.
+
+**Results identical to the shipped verifier.** `equiv.py` (session scratchpad) takes the code from one tree and verifies
+the pristine 91b44e22 tree. It compares 10 result groups:
+- `verify_certificate` x3 (the full VerificationResult);
+- `production_registry_identity` x2 (including 457 evidence-code digests);
+- `authority_import_closure`, `authority_closure_problems`, `certified_dependency_problems`;
+- `dynamic_imports` and `_engcore_imports` of all 726 files under `src/`.
+
+All 10 were identical at 6749f1cd, a0e0ce4a, 32976cf4, eb7b0c9f, 4c3383de and the branch's last commit.
+
+**Measured** (Windows, .venv CPython 3.14.2; host idle by `D:/pf/scripts/busy.py` before each run):
+- **Isolation.** `D:/pf/scripts/iso.py <tree> <out> --freeze`, ABBA twice (A = pristine 91b44e22, B = this branch at
+  6749f1cd and a0e0ce4a):
+
+  | call | A | B |
+  |---|---|---|
+  | `verify_certificate(require_clean=False, require_commit=False)` | 25.4-29.5 s | 7.2-7.6 s |
+  | `production_registry_identity`, warm | 11.6-12.6 s | 3.3-3.9 s |
+  | `core_freeze_v4.verify()` | 50.7-60.5 s | 16.2-18.4 s |
+  | `core_freeze.collect_live` | 25.1-29.5 s | 7.8-8.3 s |
+  | `certified_dependency_problems` | 9.9-11.0 s | 4.6-5.0 s |
+
+  The first `production_registry_identity` in a process still takes 11.2-13.3 s on B. For reference, e193e573's
+  `core_freeze_v4.verify()` was 17.0 s.
+- **FAST.** `fastrun_memo.py`, a copy of the attribution's runner, ran
+  `.venv/Scripts/python.exe -m pytest -m "not expensive" -q -n 4 --dist loadfile --basetemp=D:\pfb\memo-<label>
+  --durations=40 --junitxml=D:\pfm\runs\<label>\junit.xml`, with PYTHONDONTWRITEBYTECODE unset,
+  `PYTHONPATH='<wt>\src;<wt>'` and TMP/TEMP/TMPDIR=`D:\pft\memo-<label>`:
+
+  | run | tree | wall | result |
+  |---|---|---|---|
+  | FA1 | 91b44e22 | 567.8 s | 154 failed, 10500 passed, 201 skipped, 22 errors |
+  | FB1 | a0e0ce4a | 328.4 s | 154 failed, 10527 passed, 202 skipped, 22 errors |
+  | FB2 | a0e0ce4a | 306.1 s | as FB1 |
+  | FA2 | 91b44e22 | 517.7 s | as FA1 |
+  | FB3 | 32976cf4 | 314.9 s | same 176 failing ids as FA1 |
+  | FB4 | eb7b0c9f | 260.1 s | same 176 failing ids as FA1 |
+  | FB5 | 4c3383de | 260.2 s | same 176 failing ids as FA1 |
+
+  - Wall mean (FA vs FB1/FB2): 542.8 -> 317.2 s (x1.71). Summed test time: 1583.1 -> 1010.3 s (-572.8 s).
+  - The 176 failing ids are identical in all four ABBA runs, with none on one side only. They are the pre-existing
+    Windows/worktree/py3.14 failures from the attribution's runs, plus `test_the_certificate_describes_this_tree` and
+    `test_the_certificate_records_the_v1_relationship_truthfully` (expected on uncertified main).
+  - Per module, summed s: core_freeze_v4_manifest 293.1 -> 122.5, core_freeze_v3_manifest 230.0 -> 98.5,
+    certificate_verdict_scope 173.8 -> 64.9, core_freeze_manifest 134.8 -> 61.1, certification_control_plane
+    71.2 -> 26.5, core_scientific_audit_batch56 65.9 -> 25.1, core_certificate 41.0 -> 21.5,
+    certified_dependency_closure 27.9 -> 21.1. The new module adds 5.2 s.
+  - No `forge-registry-probe-*` directory was left in any run's TMP: the xdist workers run the exit cleanup.
+
+**Tests run** (exact commands, branch head):
+- **New module, Windows.** `PYTHONPATH='D:\forge-cert-memo\src;D:\forge-cert-memo' TMP=D:\pft\memo-unit
+  .venv/Scripts/python.exe -m pytest tests/test_certificate_verifier_memo.py -q -p no:cacheprovider -p no:randomly
+  --basetemp=D:/pfb/memo-unit -rs` -> 51 passed, 3 skipped. Two skips are symlinks, which need a privilege here; one
+  is the POSIX-only setgid test.
+- **Certification modules, Windows.** `... -m pytest tests/test_certified_dependency_closure.py
+  tests/test_certificate_verdict_scope.py tests/test_core_certificate.py tests/test_certificate_verifier_memo.py -q
+  -p no:cacheprovider -n 4 --dist loadfile --basetemp=D:/pfb/memo-cert -rfs` -> 2 failed, 173 passed, 5 skipped.
+  - The 2 failures are `test_the_certificate_describes_this_tree` and
+    `test_the_certificate_records_the_v1_relationship_truthfully`, which also fail on 91b44e22.
+  - The skips are symlink creation x4 and POSIX setgid.
+- **New module, POSIX.** WSL Ubuntu, CPython 3.11.17, using the `~/forge-hostile-remediation/.forge/venvs/3.11` venv
+  read-only with PYTHONDONTWRITEBYTECODE=1: `PYTHONPATH=/mnt/d/forge-cert-memo/src:/mnt/d/forge-cert-memo
+  TMPDIR=/tmp/memo-posix-tmp python -m pytest tests/test_certificate_verifier_memo.py -q -p no:cacheprovider
+  -p no:randomly --basetemp=/tmp/memo-posix-bt -rs` -> 54 passed, 0 skipped.
+- **Flaw checks.** Scratch `mutate_check6.py` and `D:/pfm/mutate_posix.py` apply 42 deliberate flaws to
+  `core_certificate.py` one at a time. Each run executes the tests that name the flaw, then restores the original
+  bytes and checks their SHA-256.
+  - Windows 3.14: 39 caught. Missed: M17 (mkdtemp result not resolved; equivalent on 3.12+), M26 (privacy back to
+    exactly 0o700; its test is POSIX-only), M31 (file links not reported; needs a file symlink).
+  - Linux 3.11: 41 of 42 caught (the first 41 run at 4c3383de, M32 at the last commit; the code between them
+    differs only in comments). Missed: M23b (no reparse-point check; Linux has no junctions).
+  - Every flaw is caught on at least one of the two platforms.
+
+**Scientific review** (`forge-scientific-review`, read-only; no BLOCKER, HIGH or MEDIUM in any pass):
+
+| reviewed | verdict | items | fixed in |
+|---|---|---|---|
+| 6749f1cd | CHANGES REQUIRED | I1-I6 (LOW) | a0e0ce4a |
+| a0e0ce4a | CHANGES REQUIRED (I1-I6 closed) | LOW-1..3, O1-O4 | 32976cf4 |
+| 32976cf4 | CHANGES REQUIRED (LOW-1..3 closed) | LOW-A..C, Ob-1..5 | eb7b0c9f |
+| eb7b0c9f | CHANGES REQUIRED (LOW-A..C closed) | LOW-D..G, Ob-6..9 | 4c3383de |
+| 4c3383de | **PASS** | LOW-H, Ob-10..12 | branch's last commit |
+
+What each round of fixes did:
+- a0e0ce4a: seeding moved into a clean interpreter; whole-tree sweep; fresh cwd per probe; directory identity check;
+  resolved mkdtemp; failed listings not kept; more tests.
+- 32976cf4: `src/` mirror swept when it lies outside the tree; privacy means no group/other bits, checked right after
+  mkdtemp; residuals stated; tests for a forged checked-hash `.pyc` and a failed seeding.
+- eb7b0c9f: parent-only resolve; junctions refused; Windows version gate; link pre-check in the seeding; setgid and
+  mode tests.
+- 4c3383de: the one-shot fallback refuses a swapped link; the gate excludes non-CPython and the 3.13 alphas; `-B` for
+  the seeding; a same-owner private replacement test; file links refused.
+- Branch's last commit: LOW-H, the link check between the prefix and the mirror, gets tests with the link above the
+  mirror and at the prefix (they catch flaw M32 on both platforms); residual wording; the memo key's omission of the
+  warnings filter is documented.
+- The PASS came from the reviewer reading the code; the reviewer executed nothing.
+
+**Residuals** (stated beside the code):
+- Library bytecode carried over between probes is shared by every probe in a process, so tree code one probe runs
+  could leave bytecode a later probe runs.
+- Between seeding and import, a source is tied to its `.pyc` only by CPython's 64-bit source hash.
+- A venv inside the tree is swept with it: the shared checkout's `.venv`, and the local_assurance clones'
+  `.forge/venvs`. Those runs keep the analysis speed-up but recompile the library on each probe.
+- What "private" rests on:
+  - POSIX mode bits, which do not show macOS ACLs;
+  - on Windows, mkdtemp's ACL;
+  - nothing at all on a FAT/exFAT temp root.
+- On a temp root where others can rename this user's entries:
+  - a directory swapped for a link after its check is followed, as before;
+  - on Windows, a real directory swapped in before the identity is read is accepted.
+- A forked child that exits via `os._exit` leaks its directory, and a fork while `_PROBE_LOCK` is held deadlocks the
+  child.
+- The memo key leaves out the warnings filter. A file whose fresh parse raises under `-W error` is answered from the
+  memo; the answer still describes the bytes on disk.
+
+Not addressed (measured, out of scope): a warm `certified_dependency_problems` still spends about 3 s in pathlib
+`relative_to` (3.14) and `is_file`. Those code paths are unchanged.
+
+**Failed approaches (do not repeat):**
+- Compiling the probe's bytecode in the verifier process with a reimplemented `cache_from_source` mapping. The
+  verifier's own state (the integer-digit limit, a patched `compile`, `-O`, future flags) reached the probe (review I3).
+- Sweeping only `src/`'s part of the prefix, and reusing the persistent directory as the probe's cwd (review I4).
+- `.resolve()` on mkdtemp's result: it follows a link swapped in for the new directory (reviews LOW-A and LOW-D).
+- Measurement mistakes:
+  - the first equivalence run overlapped another session's WSL preflight FAST, so its timings were discarded;
+  - `wsl.exe -d Ubuntu` used to inspect WSL processes boots the distro; rely on busy.py instead;
+  - a bash heredoc turned `\\n` into newlines in a generated script; write scripts with the editor.
+
+**RECERTIFICATION_REQUIRED (OD-3).** `tools/certification/core_certificate.py` is in the `certification_control` area
+(`tools/certification/*.py`), so the certificate's control-area digest moves. Main already needs OD-3 recertification.
+
+**TOOL_VERSION decision: unchanged at 2.6.0.** There is no algorithm or certificate-shape change (the results above are
+identical), and the implementation is pinned by its bytes. Note that 26f2505c and 3c28bedf changed detection behaviour
+without a bump, so the owner may prefer a single bump (e.g. 2.7.0) at recertification to cover those.
+
+Nothing has been pushed, no PR opened, and no recertification run.
