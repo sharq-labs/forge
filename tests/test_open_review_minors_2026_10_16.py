@@ -374,3 +374,46 @@ def test_a_junction_is_recognised_from_its_reparse_tag_without_is_junction(tmp_p
     _windows_scandir(monkeypatch, lambda real: _Entry(real, info=tagged if real.name == "linked" else None))
     entries = mw.snapshot(seed)
     assert entries["linked"].kind == "special" and "linked/inner.py" not in entries
+
+
+# --- second review N-1..N-3 ----------------------------------------------------------------------------------
+
+
+def test_a_global_core_worktree_cannot_vouch_for_a_foreign_git_directory(checkout, tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    impostor = tmp_path / "impostor"
+    _write(impostor, "src/pkg/__init__.py", "")
+    _write(impostor, ".git", f"gitdir: {(checkout / '.git').as_posix()}\n")
+    _write(home, ".gitconfig", f"[core]\n\tworktree = {impostor.as_posix()}\n")
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    probe = subprocess.run(["git", "config", "--global", "--get", "core.worktree"], capture_output=True, text=True)
+    assert probe.stdout.strip() == impostor.as_posix()  # the attack is in place
+    with pytest.raises(OwnershipError, match="does not name this checkout back"):
+        tracked_files(impostor)
+
+
+def test_an_empty_git_directory_under_a_parent_repository_is_refused(tmp_path):
+    parent = tmp_path / "parent"
+    sub = parent / "sub"
+    _write(sub, "a.py")
+    _git(parent, "init", "-q")
+    _git(parent, "config", "core.worktree", str(sub))
+    _git(parent, "add", "-A")
+    (sub / ".git").mkdir()  # not a repository: Git skips it and finds the parent's Git directory
+    with pytest.raises(OwnershipError, match="resolves to"):
+        tracked_files(sub)
+
+
+def test_is_link_recognises_a_junction_from_its_reparse_tag_without_isjunction(checkout, tmp_path, monkeypatch):
+    impostor = tmp_path / "impostor"
+    (impostor / ".git").mkdir(parents=True)
+    real_lstat = os.lstat
+    tagged = types.SimpleNamespace(st_mode=stat.S_IFDIR | 0o755, st_reparse_tag=ownership._IO_REPARSE_TAG_MOUNT_POINT)
+    monkeypatch.delattr(os.path, "isjunction", raising=False)
+    monkeypatch.setattr(ownership.os, "lstat",
+                        lambda p, *a, **k: tagged if pathlib.Path(p) == impostor / ".git" else real_lstat(p, *a, **k))
+    assert ownership.is_link(impostor / ".git")
+    assert not ownership.is_link(checkout / ".git")
+    with pytest.raises(OwnershipError, match="is a link"):
+        tracked_files(impostor)

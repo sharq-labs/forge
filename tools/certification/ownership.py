@@ -172,7 +172,10 @@ def _require_worktree_link(root: pathlib.Path) -> None:
             return
     else:
         try:
-            worktree = subprocess.run(["git", "-C", str(root), "config", "--get", "core.worktree"],
+            # Only the repository's own config sets its worktree: a system or global core.worktree would
+            # otherwise vouch for any checkout.
+            worktree = subprocess.run(["git", "config", "--file", str(pathlib.Path(git_dir) / "config"),
+                                       "--get", "core.worktree"],
                                       capture_output=True, env=_git_environment()).stdout
         except OSError:
             worktree = b""
