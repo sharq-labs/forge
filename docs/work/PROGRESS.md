@@ -4663,3 +4663,89 @@ identical), and the implementation is pinned by its bytes. Note that 26f2505c an
 without a bump, so the owner may prefer a single bump (e.g. 2.7.0) at recertification to cover those.
 
 Nothing has been pushed, no PR opened, and no recertification run.
+
+## 2026-10-13 Check of `main` @ `5d73e8f5` on Python 3.12 (cloud session, Linux; read-only except this entry)
+
+Environment: Linux container, 2 CPUs, CPython 3.12.13 (uv venv) with full history fetched; `pip install -e
+".[dev,mcp,oracles]"`. Python 3.11: NOT RUN. SCIENTIFIC, FULL and hardened recertification: NOT RUN.
+
+| Command | Result |
+|---|---|
+| `python tools/forge_check.py --regression` | 256 passed (37.6 s) |
+| `python -m pytest -m "not expensive" -q -n 2 --dist loadfile` | 5 failed, 10010 passed, 171 skipped (310 s) |
+| `python tools/certification/core_certificate.py --verify` | FAILED: certified `39d43456`, HEAD `5d73e8f5`; 15 files in 5 areas (certification_control, execution_trust, harness, inference_admission, runtime_dependencies) |
+
+FAST failures, classified:
+- `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` — certificate drift (OD-3); the only
+  failure that reflects the tree.
+- `tests/test_mutation_workspace.py::{test_local_telemetry_is_outside_manifest_and_cannot_verify_as_receipt,
+  test_mid_walk_failure_still_reports_entries_already_scanned}` — environment: run as root, so the read-only
+  directory these tests build does not raise `PermissionError`.
+- `tests/foundations/test_escrow_isolation.py::{test_the_isolated_deployment_reports_exactly_what_it_established,
+  test_the_leak_detector_catches_a_planted_partial_copy}` — environment: inside the namespace only the interpreter
+  prefix is mounted, and a uv venv keeps `cryptography` outside it. Both pass with the system interpreter
+  (CPython 3.13.16): `python -m pytest tests/foundations/test_escrow_isolation.py` 2 passed.
+
+Observed on 2026-10-12 with CPython 3.13 and a shallow clone (`2d0fa6c3`): 27 FAST failures, of which 18 came from
+the shallow history and 6 from the V4 deep API surface gaining `format`/`format_map` (str enums) and
+`add_note`/`with_traceback` (exceptions) under 3.13; the same tests pass on 3.12. The V4 surface is therefore
+interpreter-dependent. The owner's local interpreter is 3.14 (REMEDIATION_2026-10-13); 3.14: NOT RUN here (OD-2).
+
+## 2026-10-16 — Local Assurance performance investigation (read-only; documentation only)
+
+Record: `docs/work/LOCAL_ASSURANCE_PERFORMANCE_INVESTIGATION_2026-10-16.md` (Arabic, with an English summary).
+Base: `main` at `e193e573`.
+
+No source, test, certified file, threshold, workflow or certificate was changed. Nothing was run on the
+owner's WSL host. FULL_LOCAL_ASSURANCE: NOT RUN. Certificate: NOT GENERATED.
+
+Findings (details and sources are in the record):
+
+- **Late refusals.** Four full local runs between 2026-10-07 and 2026-10-15 were refused only after every
+  execution gate had passed. Three were refused by skip admission, one by the runner interpreter at
+  `certificate_generation`. Each was detectable with existing tools within 16 s to 20 min of the start.
+- **Worker flags.** `run --workers 4 --mutation-workers 4 --formal-pytest-workers 2` ran in 2h42m–2h47m on the
+  WSL host (Pass 13; PR #119). Three later runs used the default flags (`--mutation-workers 2
+  --formal-pytest-workers 1`; their recorded commands carry no worker flags): 05522b59 took 3h27m, 5847345e
+  3h33m and 0bc8b1cb 3h33m. The documented `run` command carries no worker flags.
+- Facts and line references were re-checked against `main` at `91b44e22` (after PR #146).
+- **CI mutations job.** The `mutations` job in `tests.yml` runs all 284 Formal mutations in one job. It cannot
+  finish inside GitHub's 6 h job limit; PR #143 records the cancellation.
+- **PR #145 check.** The suggested check `(cd /tmp && .forge/venvs/3.12/bin/python ...)` uses a relative
+  interpreter path after `cd`. It exits 127 whatever the environment.
+
+Commands. These ran in a 2-vCPU Linux sandbox (CPython 3.12.3, pytest 9.1.1, pytest-xdist 3.8.0) and are not
+certification evidence.
+
+- `python -X utf8 tests/mutation_guards.py <scratch> G1b G2a G6a G12c`
+  -> exit 0, 580.1 s, 4/4 killed.
+- `python -X utf8 tests/mutation_guards.py --pytest-workers 2 <scratch> G1b G2a G6a G12c`
+  -> exit 0, 379.3 s, 4/4 killed, same failure counts as the serial run.
+- `python -m tools.certification.mutation_v4_runner --scratch <s> --ids <V4 shard 0 of 8> --log <l>`
+  -> exit 0, 273.6 s, 85/85 entries reached their declared verdict, CONTROL GREEN.
+- `python benchmarks/trust_hardening/audit/mutations.py --json <j> --scratch <s>`
+  -> exit 0, 47.4 s, 20 killed / 0 survived / 0 invalid.
+- `python -X utf8 -m pytest <48 Formal TARGETS> -q -p no:randomly -p no:cacheprovider --continue-on-collection-errors`
+  in a seed copy, with the child environment of the production harness -> exit 0, 1140 passed, 1 skipped,
+  127.43 s.
+- `core_certificate.production_registry_identity(root)` -> OK (456 evidence-code files), 15.8 s.
+- `python -m tools.certification.core_certificate --verify --certificate certification/current_core_v2.json`
+  -> exit 1, as expected: the certificate binds `05522b59` and HEAD is `e193e573`. Used for timing only
+  (10.4 s).
+
+Failed approach: a bytecode cache.
+
+- A checked-hash pyc cache in an external `PYTHONPYCACHEPREFIX` does not speed up mutation children. Importing
+  718 `engcore` modules took 4.89–4.93 s with it, against 4.05–4.26 s with no pyc. Timestamp pycs took
+  2.72–2.75 s but are unsafe.
+- `compileall -j 0` with `-X pycache_prefix` wrote 720 pyc files into the copied tree, because its forkserver
+  workers do not inherit the prefix.
+- Do not pursue it.
+- `python tools/forge_check.py --changed` (sandbox, `PYTHONDONTWRITEBYTECODE=1`): both files classified
+  `doc_only`; 85 passed in 9.88 s; exit 0.
+- After merging `main` at `91b44e22`: `python tools/forge_check.py --changed --base origin/main`: both files
+  classified `doc_only`; 158 passed in 11.87 s; exit 0.
+
+## 2026-10-16 — Recent-branch documentation reconciliation
+
+Copied the previously unmerged historical check record from `docs/main-check-2026-10-13` and the performance-investigation record from PR #147 into a documentation-only integration branch based on `36306da51`. These remain historical execution records. Scientific models, certificate identities, workflows and acceptance thresholds are unchanged by this reconciliation. TESTS: NOT RUN in this integration session. HARDENED RECERTIFICATION: NOT RUN. No claim of certified or passing CI is made.
