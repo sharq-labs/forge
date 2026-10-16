@@ -289,6 +289,7 @@ def test_fourth_review_the_registry_probe_is_not_steered_by_the_environment(monk
     assert [returncode for _, _, returncode in probes] == [0, 0]
     for args, env, _ in probes:
         assert {"-E", "-s", "-P"} <= set(args) and any(arg.startswith("pycache_prefix=") for arg in args)
+        assert not any(arg.startswith("--check-hash-based-pycs") for arg in args)   # the import checks the seeded .pyc
         assert not [key for key in env if key.upper().startswith(("PYTHON", "FORGE"))]
 
 

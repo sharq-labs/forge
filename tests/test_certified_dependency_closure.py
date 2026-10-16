@@ -445,8 +445,11 @@ def test_final_review_round3_a_symlink_under_engcore_is_refused(tmp_path) -> Non
 def test_final_review_round3_the_registry_probe_never_reads_the_trees_bytecode_caches(tmp_path, monkeypatch) -> None:
     """A planted timestamp .pyc with a matching header would run instead of pinned source; the probe uses its own prefix."""
     seen = {}
+    real_run = subprocess.run
 
     def capture(args, **kwargs):
+        if cc._REGISTRY_PROBE not in list(args):
+            return real_run(args, **kwargs)   # the run that seeds the probe's own prefix (FAST regression fix)
         seen["args"] = list(args)
         raise RuntimeError("captured")
 

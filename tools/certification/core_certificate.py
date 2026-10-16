@@ -71,11 +71,11 @@ import contextlib
 import hashlib
 import importlib.util
 import json
-import marshal
 import os
 import pathlib
 import platform
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -953,8 +953,9 @@ _ANALYSES_LIMIT = 1 << 16
 
 
 def _analysis(kind: str, data: bytes, context: tuple[Any, ...], compute: Any) -> Any:
-    """``compute(data)``, memoized by ``kind``, the SHA-256 of ``data`` and ``context``."""
-    key = (kind, hashlib.sha256(data).digest(), context)
+    """``compute(data)``, memoized by ``kind``, the SHA-256 of ``data``, ``context`` and the parser's integer-digit
+    limit (which decides whether a file with a long literal parses at all)."""
+    key = (kind, hashlib.sha256(data).digest(), context, sys.get_int_max_str_digits())
     try:
         return _ANALYSES[key]
     except KeyError:
@@ -1102,7 +1103,7 @@ def _dynamic_import_lines(data: bytes) -> tuple[int, ...]:
 
 
 def _spelled_on_disk(src: pathlib.Path, candidate: pathlib.Path,
-                     listings: dict[str, frozenset[str] | None] | None = None) -> bool:
+                     listings: dict[str, frozenset[str]] | None = None) -> bool:
     """``candidate`` exists under ``src`` with exactly this spelling (BR-15).
 
     On a case-insensitive filesystem ``results/Uncertainty.py`` "is a file" when ``results/uncertainty.py``
@@ -1122,22 +1123,25 @@ def _spelled_on_disk(src: pathlib.Path, candidate: pathlib.Path,
     return True
 
 
-def _listing(directory: pathlib.Path, listings: dict[str, frozenset[str] | None] | None) -> frozenset[str] | None:
-    """The names in ``directory``, or None when it cannot be listed; from ``listings`` when it holds them."""
+def _listing(directory: pathlib.Path, listings: dict[str, frozenset[str]] | None) -> frozenset[str] | None:
+    """The names in ``directory``, or None when it cannot be listed; from ``listings`` when it holds them.
+
+    A listing that fails is not remembered: the next lookup lists the directory again, as before the memo.
+    """
     key = os.fspath(directory)
     if listings is not None and key in listings:
         return listings[key]
     try:
-        names: frozenset[str] | None = frozenset(os.listdir(directory))
+        names = frozenset(os.listdir(directory))
     except OSError:
-        names = None
+        return None
     if listings is not None:
         listings[key] = names
     return names
 
 
 def _engcore_module_file(src: pathlib.Path, module: str,
-                         listings: dict[str, frozenset[str] | None] | None = None) -> pathlib.Path | None:
+                         listings: dict[str, frozenset[str]] | None = None) -> pathlib.Path | None:
     base = src.joinpath(*module.split("."))
     for candidate in (base.with_suffix(".py"), base / "__init__.py"):
         if candidate.is_file() and _spelled_on_disk(src, candidate, listings):
@@ -1205,7 +1209,7 @@ def authority_import_closure(root: pathlib.Path, roots: Sequence[str] | None = N
     patterns = AUTHORITY_ROOTS if roots is None else tuple(roots)
     queue = [path for pattern in patterns for path in sorted(root.glob(pattern)) if path.is_file()]
     seen: set[pathlib.Path] = set()
-    listings: dict[str, frozenset[str] | None] = {}   # this walk's directory listings, dropped with it
+    listings: dict[str, frozenset[str]] = {}   # this walk's directory listings, dropped with it
     while queue:
         current = queue.pop()
         if current in seen or _excluded(current.relative_to(root)):
@@ -1325,7 +1329,7 @@ def certified_dependency_problems(root: pathlib.Path, scope: Sequence[ScopeArea]
     seen: set[str] = set()
     queue = sorted(seeds)
     reach = {file: pattern for file, pattern, _ in DYNAMIC_REACH if pattern.startswith("src/engcore/")}
-    listings: dict[str, frozenset[str] | None] = {}   # this walk's directory listings, dropped with it
+    listings: dict[str, frozenset[str]] = {}   # this walk's directory listings, dropped with it
     while queue:
         current = queue.pop()
         if current in seen:
@@ -1497,125 +1501,146 @@ REGISTRY_ENTRY = "src/engcore/product/capabilities.py"
 #: -X pycache_prefix naming a directory this verifier created. FAST regression (2026-10-16): a new prefix per probe made
 #: every probe recompile the interpreter's library, numpy, scipy and pint as well as the tree (~3 s), so the directory
 #: is created once per process -- tempfile.mkdtemp (owner-only), never inside the tree being certified, one prefix per
-#: interpreter inside it, removed at exit, never adopted by a forked child -- and before EVERY probe
-#: :func:`_seed_probe_bytecode` makes the bytecode for the tree's sources the CHECKED_HASH compilation of the bytes on
-#: disk at that moment. Only the library's own bytecode carries over from one probe to the next. A probe's result is
-#: never reused.
+#: interpreter inside it, reused only while it is still the directory this process created, removed at exit, never
+#: adopted by a forked child -- and before EVERY probe :data:`_SEED_PROBE_BYTECODE` makes the bytecode for the tree's
+#: sources the CHECKED_HASH compilation of the bytes on disk at that moment and removes every other file under the
+#: tree's part of the prefix. What carries over from one probe to the next is the bytecode of code outside the tree
+#: (the interpreter's library and installed packages, which no certificate covers). Each probe gets a fresh working
+#: directory, and a probe's result is never reused.
 _PROBE_LOCK = threading.Lock()
 _PROBE_WORKSPACE: dict[str, Any] = {}
-_CHECKED_HASH_PYC = (0b11).to_bytes(4, "little")   # PEP 552 flags: hash-based, checked against the source
-_PATH_SEPARATORS = os.sep + (os.altsep or "")
+
+#: Run before every probe in an interpreter started exactly as the probe is (-E -s -P -X pycache_prefix=<prefix>), so
+#: what it writes is what the probe's interpreter would compile itself -- its flags and limits, its loader, its own
+#: cache_from_source paths -- and nothing of the verifier's process (future flags, -O, the integer-digit limit, a
+#: patched compile) reaches that bytecode. argv: the tree's src/ and the tree, both resolved; stdin: the records of the
+#: last seeding into this prefix, {.pyc path: [source SHA-256, .pyc SHA-256]}. Each .py under src/ is read once; its
+#: .pyc is kept only when it was compiled from exactly those bytes and is still byte-identical to what was written, and
+#: is compiled from the bytes just read otherwise. Every other file under the tree's part of the prefix -- bytecode a
+#: probe wrote for a module it compiled itself, for tree code outside src/, or for a file since deleted -- is removed.
+#: A directory that cannot be listed fails the seeding, and the probe then gets a fresh prefix.
+_SEED_PROBE_BYTECODE = r"""
+import hashlib, importlib.util, json, marshal, os, sys
+from importlib.machinery import SourceFileLoader
+src, tree = sys.argv[1], sys.argv[2]
+records = json.loads(sys.stdin.read())
+errors = []
+
+def sha256(path):
+    try:
+        with open(path, "rb") as handle:
+            return hashlib.sha256(handle.read()).hexdigest()
+    except OSError:
+        return None
+
+kept = {}
+for directory, subdirectories, files in os.walk(src, onerror=errors.append):
+    subdirectories[:] = [name for name in subdirectories if name != "__pycache__"]
+    for name in files:
+        if not name.endswith(".py"):
+            continue
+        source = os.path.join(directory, name)
+        target = importlib.util.cache_from_source(source)
+        loader = SourceFileLoader("_seeded", source)
+        try:
+            data = loader.get_data(source)
+        except OSError:
+            continue  # unreadable for the probe too; bytecode left for it is removed below
+        digest = hashlib.sha256(data).hexdigest()
+        record = records.get(target)
+        if record is None or record[0] != digest or sha256(target) != record[1]:
+            try:
+                code = loader.source_to_code(data, source)
+            except Exception:
+                continue  # the probe compiles it itself, and fails, if it imports it
+            pyc = (importlib.util.MAGIC_NUMBER + (0b11).to_bytes(4, "little")  # PEP 552: hash-based, checked
+                   + importlib.util.source_hash(data) + marshal.dumps(code))
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            pending = target + "." + str(os.getpid()) + ".tmp"
+            with open(pending, "wb") as handle:
+                handle.write(pyc)
+            os.replace(pending, target)
+            record = [digest, hashlib.sha256(pyc).hexdigest()]
+        kept[target] = record
+mirror = os.path.dirname(importlib.util.cache_from_source(os.path.join(tree, "_.py")))
+for directory, _, files in os.walk(mirror, onerror=errors.append) if os.path.isdir(mirror) else ():
+    for name in files:
+        if os.path.join(directory, name) not in kept:
+            os.unlink(os.path.join(directory, name))
+print(json.dumps({"kept": kept, "errors": [str(error) for error in errors]}))
+"""
 
 
-def _probe_workspace(root: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, dict[str, tuple[bytes, bytes]]] | None:
-    """This process's probe directory, its bytecode prefix for this interpreter, and what was compiled into it.
+def _probe_workspace(root: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, dict[str, list[str]]] | None:
+    """This process's probe directory, its bytecode prefix for this interpreter, and the last seeding's records.
 
     None when it cannot be used, and the probe then gets a one-shot directory as before: an interpreter with no
     bytecode cache tag, or a temporary directory inside the tree being certified, where a directory that outlives
-    the probe would become part of the tree.
+    the probe would become part of the tree. A directory that is no longer the one this process created -- removed,
+    replaced, a link, or (POSIX) no longer owned by this user and private to it -- is never adopted: a new one is made.
     """
     tag = sys.implementation.cache_tag
     if tag is None:
         return None
     tree = root.resolve()
     state = _PROBE_WORKSPACE
-    if state.get("pid") == os.getpid() and state["base"].is_dir():
-        if state["base"].resolve().is_relative_to(tree):
-            shutil.rmtree(state["base"], ignore_errors=True)
+    if state.get("pid") == os.getpid() and _is_probe_directory(state["base"], state["identity"]):
+        if state["base"].is_relative_to(tree):
+            _remove_probe_directory(state["pid"], state["base"], state["identity"])
             state.clear()
             return None
     elif pathlib.Path(tempfile.gettempdir()).resolve().is_relative_to(tree):
         return None
     else:
-        base = pathlib.Path(tempfile.mkdtemp(prefix="forge-registry-probe-"))
-        atexit.register(_remove_probe_directory, os.getpid(), base)
+        base = pathlib.Path(tempfile.mkdtemp(prefix="forge-registry-probe-")).resolve()   # absolute on 3.11 too
+        identity = _directory_identity(base)
+        atexit.register(_remove_probe_directory, os.getpid(), base, identity)
         state.clear()
-        state.update(pid=os.getpid(), base=base, compiled={})
+        state.update(pid=os.getpid(), base=base, identity=identity, records={})
     interpreter = hashlib.sha256("\0".join((tag, importlib.util.MAGIC_NUMBER.hex(), sys.executable))
                                  .encode("utf-8")).hexdigest()[:16]
-    return state["base"], state["base"] / f"pycache-{interpreter}", state["compiled"]
+    return state["base"], state["base"] / f"pycache-{interpreter}", state["records"]
 
 
-def _remove_probe_directory(pid: int, base: pathlib.Path) -> None:
-    """At exit: remove the probe directory this process created -- never one its parent created before a fork."""
-    if os.getpid() == pid:
+def _directory_identity(path: pathlib.Path) -> tuple[int, int]:
+    found = os.lstat(path)
+    return found.st_dev, found.st_ino
+
+
+def _is_probe_directory(base: pathlib.Path, identity: tuple[int, int]) -> bool:
+    """``base`` is still the directory this process created: the same directory, not a link, and on POSIX still owned
+    by this user with no access for anyone else."""
+    try:
+        found = os.lstat(base)
+    except OSError:
+        return False
+    if not stat.S_ISDIR(found.st_mode) or (found.st_dev, found.st_ino) != identity:
+        return False
+    return os.name != "posix" or (found.st_uid == os.getuid() and stat.S_IMODE(found.st_mode) == 0o700)
+
+
+def _remove_probe_directory(pid: int, base: pathlib.Path, identity: tuple[int, int]) -> None:
+    """Remove the probe directory this process created -- never one its parent created before a fork, and never
+    whatever has replaced it since."""
+    if os.getpid() == pid and _is_probe_directory(base, identity):
         shutil.rmtree(base, ignore_errors=True)
 
 
-def _probe_bytecode_path(prefix: str, source: str) -> str:
-    """Where an interpreter run with ``-X pycache_prefix=<prefix>`` and no -O keeps the bytecode of ``source``.
-
-    importlib.util.cache_from_source's rule when sys.pycache_prefix is set -- the source's absolute directory, its
-    drive removed, under the prefix -- applied here because setting sys.pycache_prefix would redirect this process's
-    own imports. ``source`` is absolute.
-    """
-    cut = max(source.rfind(separator) for separator in _PATH_SEPARATORS)
-    head, tail = (source[:cut], source[cut + 1:]) if cut >= 0 else ("", source)
-    name = os.path.basename(importlib.util.cache_from_source(tail, optimization=""))
-    if head[1:2] == ":" and head[0:1] not in _PATH_SEPARATORS:
-        head = head[2:]
-    return os.path.join(prefix, head.lstrip(_PATH_SEPARATORS), name)
-
-
-def _sha256_or_none(path: str) -> bytes | None:
+def _seed_probe_bytecode(root: pathlib.Path, prefix: pathlib.Path, records: dict[str, list[str]],
+                         scratch: pathlib.Path, env: Mapping[str, str]) -> bool:
+    """Run :data:`_SEED_PROBE_BYTECODE` for the tree at ``root``; False when ``prefix`` cannot be trusted for this probe."""
     try:
-        with open(path, "rb") as handle:
-            return hashlib.sha256(handle.read()).digest()
-    except OSError:
-        return None
-
-
-def _seed_probe_bytecode(src: str, prefix: str, compiled: dict[str, tuple[bytes, bytes]]) -> bool:
-    """Make the bytecode under ``prefix`` for every source in ``src`` the compilation of the bytes on disk now.
-
-    Each .py is read once. Its CHECKED_HASH .pyc -- which an import still checks against the source's hash -- is
-    kept only when this process compiled it from exactly those bytes (SHA-256) and it is still byte-identical to
-    what was written; otherwise it is compiled from the bytes just read. Every other file under ``src``'s part of
-    the prefix -- bytecode a probe wrote for a module it compiled itself, or for a file since deleted -- is removed.
-    False when that cannot be guaranteed; the probe then gets a fresh prefix.
-    """
-    kept: set[str] = set()
-    for directory, subdirectories, files in os.walk(src):
-        subdirectories[:] = [name for name in subdirectories if name not in EXCLUDED_DIR_PARTS]
-        for name in files:
-            if not name.endswith(".py"):
-                continue
-            source = os.path.join(directory, name)
-            target = _probe_bytecode_path(prefix, source)
-            try:
-                data = pathlib.Path(source).read_bytes()
-            except OSError:
-                continue   # unreadable for the probe too; bytecode left for it is removed below
-            digest = hashlib.sha256(data).digest()
-            record = compiled.get(target)
-            if record is None or record[0] != digest or _sha256_or_none(target) != record[1]:
-                try:
-                    code = compile(data, source, "exec", dont_inherit=True, optimize=0)
-                except Exception:  # noqa: BLE001 - not compilable: the probe compiles it itself, and fails, if it imports it
-                    continue
-                pyc = importlib.util.MAGIC_NUMBER + _CHECKED_HASH_PYC + importlib.util.source_hash(data) + marshal.dumps(code)
-                try:
-                    os.makedirs(os.path.dirname(target), exist_ok=True)
-                    pending = f"{target}.{os.getpid()}.tmp"
-                    with open(pending, "wb") as handle:
-                        handle.write(pyc)
-                    os.replace(pending, target)
-                except OSError:
-                    return False
-                compiled[target] = (digest, hashlib.sha256(pyc).digest())
-            kept.add(target)
-    for directory, _, files in os.walk(os.path.dirname(_probe_bytecode_path(prefix, os.path.join(src, "x.py")))):
-        for name in files:
-            path = os.path.join(directory, name)
-            if path in kept:
-                continue
-            compiled.pop(path, None)
-            try:
-                os.unlink(path)
-            except FileNotFoundError:
-                pass
-            except OSError:
-                return False
+        run = subprocess.run([sys.executable, "-E", "-s", "-P", "-X", f"pycache_prefix={prefix}",
+                              "-c", _SEED_PROBE_BYTECODE, os.fspath((root / "src").resolve()), os.fspath(root.resolve())],
+                             input=json.dumps(records), cwd=scratch, env=dict(env), capture_output=True, text=True,
+                             timeout=600)
+        result = json.loads(run.stdout.strip().splitlines()[-1]) if run.returncode == 0 else None
+    except (OSError, subprocess.SubprocessError, ValueError, IndexError):
+        return False
+    if not isinstance(result, dict) or result.get("errors") or not isinstance(result.get("kept"), dict):
+        return False
+    records.clear()
+    records.update(result["kept"])
     return True
 
 
@@ -1635,13 +1660,15 @@ def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
     # (-E -s -P, a scratch working directory), and only the tree's own engcore is accepted.
     env = {key: value for key, value in os.environ.items() if not key.upper().startswith(("PYTHON", "FORGE"))}
     with _PROBE_LOCK, contextlib.ExitStack() as stack:
+        prefix = None
         workspace = _probe_workspace(root)
-        # the probe resolves its argument the same way, so its imports look for exactly this bytecode
-        if workspace is not None and _seed_probe_bytecode(os.fspath((root / "src").resolve()), os.fspath(workspace[1]),
-                                                           workspace[2]):
-            scratch, prefix = workspace[0], workspace[1]
-        else:
-            scratch = pathlib.Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="forge-registry-probe-")))
+        if workspace is not None:
+            # a fresh working directory for every probe, inside this process's directory
+            scratch = pathlib.Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="run-", dir=workspace[0])))
+            if _seed_probe_bytecode(root, workspace[1], workspace[2], scratch, env):
+                prefix = workspace[1]
+        if prefix is None:
+            scratch = pathlib.Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="forge-registry-probe-"))).resolve()
             prefix = scratch / "pycache"
         # third confirmation review: a planted timestamp .pyc whose header matches the source's mtime and size runs
         # instead of it; with its own pycache prefix the probe never reads the tree's __pycache__ at all
@@ -1674,7 +1701,7 @@ def evidence_code_digests(root: pathlib.Path, identity: Mapping[str, Any]) -> di
                 seeds.add(str(item["source"]))
     queue = [root / name for name in sorted(seeds)]
     seen: set[pathlib.Path] = set()
-    listings: dict[str, frozenset[str] | None] = {}   # this walk's directory listings, dropped with it
+    listings: dict[str, frozenset[str]] = {}   # this walk's directory listings, dropped with it
     while queue:
         current = queue.pop()
         if current in seen or not current.is_file():

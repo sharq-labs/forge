@@ -6,11 +6,14 @@ call, and the registry probe recompiled the interpreter's library into a fresh b
 reuses three things, and each test below attacks one way that reuse could make a verification describe bytes other
 than the ones on disk:
 
-* the per-file analyses are memoized by the exact bytes read -- so a same-size, same-mtime edit is a new key;
-* directory listings live for one closure walk -- so a case-only rename between two calls is seen;
-* the probe keeps one private bytecode prefix per process -- created by the verifier, never another process's,
-  never inside the tree, and re-seeded from the bytes on disk before every probe, so a planted or stale .pyc never
-  runs in place of the source, whether it sits in the tree's __pycache__ or in the prefix itself.
+* the per-file analyses are memoized by the exact bytes read -- so a same-size, same-mtime edit is a new key -- and
+  by the module's package; what the filesystem decides (a star import's submodules) is never memoized;
+* directory listings live for one closure walk -- so a case-only rename between two calls is seen -- and a listing
+  that failed is tried again;
+* the probe keeps one private bytecode prefix per process -- created by the verifier, never another process's, never
+  adopted once replaced, never inside the tree -- and a clean interpreter re-seeds it from the bytes on disk before
+  every probe, so a planted or stale .pyc never runs in place of the source, whether it sits in the tree's
+  __pycache__ or in the prefix itself, and nothing of the verifier's own process reaches the bytecode.
 """
 
 from __future__ import annotations
@@ -61,6 +64,12 @@ def _rewrite_keeping_size_and_mtime(path: pathlib.Path, data: bytes) -> None:
     os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
     after = path.stat()
     assert (after.st_size, after.st_mtime_ns) == (before.st_size, before.st_mtime_ns)
+
+
+def _os_with(**replaced) -> types.SimpleNamespace:
+    """The os module as core_certificate sees it, with some functions replaced."""
+    return types.SimpleNamespace(**{**{name: getattr(os, name) for name in dir(os) if not name.startswith("__")},
+                                    **replaced})
 
 
 # ---- the per-file analyses: memoized by the exact bytes ------------------------------------------------------------
@@ -143,6 +152,27 @@ def test_the_same_bytes_are_parsed_once_and_changed_bytes_again(tmp_path, monkey
     assert parses() == 2
 
 
+def test_identical_bytes_in_two_packages_name_different_modules(tmp_path) -> None:
+    """The memo keys a module's imports by its package as well as its bytes: `from . import x` depends on both."""
+    root = _tree(tmp_path, {"src/engcore/one/__init__.py": b"", "src/engcore/one/m.py": b"from . import helper\n",
+                            "src/engcore/two/__init__.py": b"", "src/engcore/two/m.py": b"from . import helper\n"})
+    src = root / "src"
+    assert cc._engcore_imports(src, src / "engcore" / "one" / "m.py") == {"engcore.one", "engcore.one.helper"}
+    assert cc._engcore_imports(src, src / "engcore" / "two" / "m.py") == {"engcore.two", "engcore.two.helper"}
+
+
+@pytest.mark.parametrize("closure", sorted(_CLOSURES))
+def test_a_submodule_added_to_a_star_imported_package_between_verifications_is_seen(tmp_path, closure) -> None:
+    """The importer's bytes stay the same; what `from pkg import *` reaches does not, so it is never memoized."""
+    module = "src/engcore/certified/stop.py"
+    root = _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", module: b"from ..decider import *\n",
+                            "src/engcore/decider/__init__.py": b""})
+    observe = _CLOSURES[closure]
+    assert "src/engcore/decider/rule.py" not in observe(root, module)
+    (root / "src/engcore/decider/rule.py").write_bytes(b"def decide():\n    return 1\n")
+    assert "src/engcore/decider/rule.py" in observe(root, module)
+
+
 # ---- directory listings: one closure walk, never longer -------------------------------------------------------------
 @pytest.mark.parametrize("closure", sorted(_CLOSURES))
 def test_a_case_only_rename_between_two_verifications_is_seen(tmp_path, closure) -> None:
@@ -163,6 +193,24 @@ def test_a_case_only_rename_between_two_verifications_is_seen(tmp_path, closure)
     assert sorted(os.listdir(root / "src/engcore/decider")) == ["Rule.py", "__init__.py"]
     after = observe(root, module)
     assert "src/engcore/decider/Rule.py" in after and "src/engcore/decider/rule.py" not in after, after
+
+
+def test_a_directory_listing_that_fails_once_is_listed_again(tmp_path, monkeypatch) -> None:
+    """Review I5: one transient listing error must not drop a whole directory from the rest of the walk."""
+    module = "src/engcore/certified/stop.py"
+    root = _tree(tmp_path, {"src/engcore/certified/__init__.py": b"", module: _IMPORTS_A_DECIDER, **_DECIDER})
+    decider = os.fspath(root / "src" / "engcore" / "decider")
+    failed: list[str] = []
+
+    def listdir(path="."):
+        if os.fspath(path) == decider and not failed:
+            failed.append(os.fspath(path))
+            raise OSError("a transient listing error")
+        return os.listdir(path)
+
+    monkeypatch.setattr(cc, "os", _os_with(listdir=listdir))
+    (problem,) = cc.certified_dependency_problems(root, _SCOPE)
+    assert failed and "src/engcore/decider/rule.py" in problem
 
 
 # ---- the registry probe's private bytecode prefix -------------------------------------------------------------------
@@ -217,8 +265,8 @@ def _record_probes(monkeypatch) -> list[types.SimpleNamespace]:
         result = real_run(args, *positional, **keywords)
         if cc._REGISTRY_PROBE in list(args):
             prefix = next(a.split("=", 1)[1] for a in args if str(a).startswith("pycache_prefix="))
-            runs.append(types.SimpleNamespace(args=list(args), prefix=pathlib.Path(prefix), cwd=keywords.get("cwd"),
-                                              returncode=result.returncode))
+            runs.append(types.SimpleNamespace(args=list(args), prefix=pathlib.Path(prefix),
+                                              cwd=pathlib.Path(keywords["cwd"]), returncode=result.returncode))
         return result
 
     monkeypatch.setattr(cc.subprocess, "run", recording)
@@ -232,6 +280,15 @@ def _probe_without_a_prefix(root: pathlib.Path, cwd: pathlib.Path) -> dict:
                          cwd=cwd, env=env, capture_output=True, text=True, timeout=300)
     assert run.returncode == 0, run.stderr
     return json.loads(run.stdout.strip().splitlines()[-1])
+
+
+def _bytecode_path(prefix: pathlib.Path, source: pathlib.Path) -> pathlib.Path:
+    """Where an interpreter started like the probe keeps ``source``'s bytecode -- asked of such an interpreter."""
+    run = subprocess.run([sys.executable, "-E", "-s", "-P", "-X", f"pycache_prefix={prefix}", "-c",
+                          "import importlib.util, sys; print(importlib.util.cache_from_source(sys.argv[1]))",
+                          os.fspath(source)], capture_output=True, text=True, timeout=300)
+    assert run.returncode == 0, run.stderr
+    return pathlib.Path(run.stdout.strip())
 
 
 def test_a_planted_timestamp_pyc_in_the_trees_pycache_is_never_executed(tmp_path, monkeypatch) -> None:
@@ -258,17 +315,34 @@ def test_a_source_edit_between_two_probes_that_keeps_size_and_mtime_is_seen(tmp_
     probes = _record_probes(monkeypatch)
     assert cc.production_registry_identity(root)["digest"] == "honest"
     prefix = probes[-1].prefix
-    expected = pathlib.Path(cc._probe_bytecode_path(os.fspath(prefix), os.fspath(capabilities.resolve())))
-    # the probe ran the bytecode this process compiled -- hash-based, checked, bound to the source bytes -- and
-    # wrote none of its own for that module anywhere in the prefix
+    expected = _bytecode_path(prefix, capabilities.resolve())
+    # the probe ran the bytecode that was seeded -- hash-based, checked, bound to the source bytes, at the path the
+    # probe's own interpreter names -- and wrote none of its own for that module anywhere in the tree's part of it
     pyc = expected.read_bytes()
     assert int.from_bytes(pyc[4:8], "little") == 0b11
     assert pyc[8:16] == importlib.util.source_hash(capabilities.read_bytes())
-    mirror = pathlib.Path(cc._probe_bytecode_path(os.fspath(prefix), os.fspath((root / "src").resolve() / "x.py"))).parent
+    mirror = _bytecode_path(prefix, root.resolve() / "x.py").parent
     assert [p.resolve() for p in mirror.rglob(f"{capabilities.stem}.*")] == [expected.resolve()]
     _rewrite_keeping_size_and_mtime(capabilities, _CAPABILITIES % b"edited")
     assert cc.production_registry_identity(root)["digest"] == "edited"
     assert probes[-1].prefix == prefix and len(probes) == 2
+
+
+def test_a_source_edit_after_seeding_and_before_the_import_is_caught_by_the_probes_hash_check(tmp_path, monkeypatch) -> None:
+    """Review I6a: between seeding and the probe's import, only the interpreter's check of a CHECKED_HASH .pyc stands."""
+    root = _registry_tree(tmp_path / "tree")
+    capabilities = root / cc.REGISTRY_ENTRY
+    seeded: list[bool] = []
+    real_seed = cc._seed_probe_bytecode
+
+    def seed_then_edit(*args, **kwargs):
+        seeded.append(real_seed(*args, **kwargs))
+        _rewrite_keeping_size_and_mtime(capabilities, _CAPABILITIES % b"edited")
+        return seeded[-1]
+
+    monkeypatch.setattr(cc, "_seed_probe_bytecode", seed_then_edit)
+    assert cc.production_registry_identity(root)["digest"] == "edited"
+    assert seeded == [True]   # the seeded prefix was used, and its now-stale .pyc refused at import
 
 
 def test_bytecode_in_the_prefix_that_the_verifier_did_not_write_never_runs(tmp_path, monkeypatch) -> None:
@@ -277,12 +351,17 @@ def test_bytecode_in_the_prefix_that_the_verifier_did_not_write_never_runs(tmp_p
     capabilities = root / cc.REGISTRY_ENTRY
     probes = _record_probes(monkeypatch)
     assert cc.production_registry_identity(root)["digest"] == "honest"
-    target = pathlib.Path(cc._probe_bytecode_path(os.fspath(probes[-1].prefix), os.fspath(capabilities.resolve())))
+    prefix = probes[-1].prefix
+    target = _bytecode_path(prefix, capabilities.resolve())
     target.write_bytes(_timestamp_pyc(capabilities, _CAPABILITIES % b"planted"))
     stray = target.parent / f"stray.{sys.implementation.cache_tag}.pyc"
-    stray.write_bytes(_timestamp_pyc(capabilities, _CAPABILITIES % b"stray"))
+    stray.write_bytes(b"stray bytecode")
+    # review I4: tree code outside src/ (an editable install from the tree, say) is swept too
+    outside = _bytecode_path(prefix, root.resolve() / "providers" / "adapter.py")
+    outside.parent.mkdir(parents=True, exist_ok=True)
+    outside.write_bytes(b"stale bytecode")
     assert cc.production_registry_identity(root)["digest"] == "honest"
-    assert not stray.exists()
+    assert not stray.exists() and not outside.exists()
     assert target.read_bytes()[4:8] == (0b11).to_bytes(4, "little")
 
 
@@ -308,13 +387,27 @@ def test_the_bytecode_seeded_for_the_probe_is_what_the_interpreter_compiles_itse
     elsewhere = tmp_path / "cwd"
     elsewhere.mkdir()
     assert _probe_without_a_prefix(root, elsewhere)["digest"] == "evaluated-kept"   # compiled by the interpreter
-    assert cc.production_registry_identity(root)["digest"] == "evaluated-kept"     # seeded by this process
+    assert cc.production_registry_identity(root)["digest"] == "evaluated-kept"     # seeded for the probe
     optimized = subprocess.run(   # a verifier process running under -O seeds the same bytecode
         [sys.executable, "-O", "-c", "import pathlib, sys\nfrom tools.certification import core_certificate as cc\n"
                                      "print(cc.production_registry_identity(pathlib.Path(sys.argv[1]))['digest'])",
          str(root)], cwd=ROOT, capture_output=True, text=True, timeout=300)
     assert optimized.returncode == 0, optimized.stderr
     assert optimized.stdout.strip().splitlines()[-1] == "evaluated-kept"
+
+
+def test_the_verifiers_integer_digit_limit_does_not_reach_the_probe(tmp_path) -> None:
+    """Review I3: the probe's interpreter refuses a 5000-digit literal, so this registry cannot be read -- even when
+    the verifier's own process, with the limit lifted, would compile it."""
+    root = _registry_tree(tmp_path / "tree")
+    (root / "src/engcore/domains/big.py").write_bytes(b"N = " + b"7" * 5000 + b"\n")   # the probe imports every domain
+    limit = sys.get_int_max_str_digits()
+    sys.set_int_max_str_digits(0)
+    try:
+        with pytest.raises(cc.CertificationError, match="could not be read"):
+            cc.production_registry_identity(root)
+    finally:
+        sys.set_int_max_str_digits(limit)
 
 
 def test_the_probe_prefix_is_created_by_this_process_and_reused_only_by_it(tmp_path, monkeypatch) -> None:
@@ -324,10 +417,12 @@ def test_the_probe_prefix_is_created_by_this_process_and_reused_only_by_it(tmp_p
 
     def mkdtemp(*args, **kwargs):
         path = real_mkdtemp(*args, **kwargs)
-        created.append(pathlib.Path(path))
+        if kwargs.get("prefix") == "forge-registry-probe-":
+            created.append(pathlib.Path(path).resolve())
         return path
 
-    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", {})
+    workspace: dict = {}
+    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
     monkeypatch.setattr(tempfile, "mkdtemp", mkdtemp)
     probes = _record_probes(monkeypatch)
     try:
@@ -336,14 +431,16 @@ def test_the_probe_prefix_is_created_by_this_process_and_reused_only_by_it(tmp_p
         assert first == second and [run.returncode for run in probes] == [0, 0]
         (base,) = created
         assert {run.prefix for run in probes} == {probes[0].prefix} and probes[0].prefix.parent == base
-        assert {pathlib.Path(run.cwd) for run in probes} == {base}
+        # review I4: each probe works in a directory of its own, made inside the verifier's directory and removed
+        assert len({run.cwd for run in probes}) == 2 and all(run.cwd.parent == base for run in probes)
+        assert not any(run.cwd.exists() for run in probes)
         assert base.name.startswith("forge-registry-probe-")
-        assert not base.resolve().is_relative_to(root.resolve())
+        assert not base.is_relative_to(root.resolve())
         if os.name == "posix":
             assert stat.S_IMODE(base.stat().st_mode) == 0o700
     finally:
-        for base in created:
-            cc._remove_probe_directory(os.getpid(), base)
+        if workspace:
+            cc._remove_probe_directory(os.getpid(), workspace["base"], workspace["identity"])
     assert created and not any(base.exists() for base in created)
 
 
@@ -363,15 +460,16 @@ def test_another_process_creates_its_own_probe_directory_and_removes_it_at_exit(
 
 def test_a_forked_child_never_adopts_or_removes_its_parents_probe_directory(tmp_path, monkeypatch) -> None:
     root = _registry_tree(tmp_path / "tree")
-    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", {})
+    workspace: dict = {}
+    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
     parent = cc._probe_workspace(root)[0]
-    child_os = types.SimpleNamespace(**{name: getattr(os, name) for name in dir(os) if not name.startswith("__")})
-    child_os.getpid = lambda: os.getpid() + 1   # what a child forked after the parent's first probe sees
-    monkeypatch.setattr(cc, "os", child_os)
+    identity = workspace["identity"]
+    real_pid = os.getpid()
+    monkeypatch.setattr(cc, "os", _os_with(getpid=lambda: real_pid + 1))   # what a child forked after it sees
     child = None
     try:
         child = cc._probe_workspace(root)[0]
-        cc._remove_probe_directory(os.getpid(), parent)   # the parent's exit handler, inherited and run by the child
+        cc._remove_probe_directory(real_pid, parent, identity)   # the parent's exit handler, run by the child
         assert child != parent and parent.is_dir() and child.is_dir()
     finally:
         monkeypatch.undo()
@@ -380,21 +478,76 @@ def test_a_forked_child_never_adopts_or_removes_its_parents_probe_directory(tmp_
                 shutil.rmtree(base, ignore_errors=True)
 
 
+@pytest.mark.parametrize("replacement", ["directory", "symlink"])
+def test_a_probe_directory_that_was_replaced_is_never_adopted_or_removed(tmp_path, monkeypatch, replacement) -> None:
+    """Review I1: the directory can vanish while the process lives, and something else appear at its path."""
+    root = _registry_tree(tmp_path / "tree")
+    workspace: dict = {}
+    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
+    first = cc._probe_workspace(root)[0]
+    identity = workspace["identity"]
+    shutil.rmtree(first)
+    if replacement == "directory":
+        first.mkdir()
+        os.chmod(first, 0o755)
+    else:
+        elsewhere = tmp_path / "elsewhere"
+        elsewhere.mkdir()
+        try:
+            first.symlink_to(elsewhere, target_is_directory=True)
+        except OSError:
+            pytest.skip("this platform cannot create symbolic links")
+    (first / "kept").write_bytes(b"not the verifier's")
+    second = cc._probe_workspace(root)[0]
+    try:
+        assert second != first and workspace["base"] == second
+        cc._remove_probe_directory(os.getpid(), first, identity)   # the exit handler registered for the first
+        assert (first / "kept").exists()
+    finally:
+        cc._remove_probe_directory(os.getpid(), second, workspace["identity"])
+        if first.is_symlink():
+            first.unlink()
+        else:
+            shutil.rmtree(first, ignore_errors=True)
+
+
+def test_a_relative_temporary_directory_still_gives_the_probe_an_absolute_prefix(tmp_path, monkeypatch) -> None:
+    """Review I2: before 3.12, mkdtemp under a relative temp directory returns a path the probe resolves elsewhere."""
+    root = _registry_tree(tmp_path / "tree")
+    work = tmp_path / "work"
+    (work / "relative-temp").mkdir(parents=True)
+    monkeypatch.chdir(work)
+    workspace: dict = {}
+    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
+    monkeypatch.setattr(tempfile, "tempdir", "relative-temp")
+    probes = _record_probes(monkeypatch)
+    try:
+        assert cc.production_registry_identity(root)["digest"] == "honest"
+        _rewrite_keeping_size_and_mtime(root / cc.REGISTRY_ENTRY, _CAPABILITIES % b"edited")
+        assert cc.production_registry_identity(root)["digest"] == "edited"
+        assert workspace["base"].is_absolute()
+        assert all(run.prefix.is_absolute() and run.cwd.is_absolute() for run in probes)
+    finally:
+        if workspace:
+            cc._remove_probe_directory(os.getpid(), workspace["base"], workspace["identity"])
+
+
 def test_the_probe_never_leaves_a_directory_inside_the_tree_it_certifies(tmp_path, monkeypatch) -> None:
     """With the temporary directory inside the tree, a persistent prefix would make the tree dirty: one-shot instead."""
     root = _registry_tree(tmp_path / "tree")
     other = _registry_tree(tmp_path / "other")
     inside = root / "scratch"
     inside.mkdir()
-    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", {})
+    workspace: dict = {}
+    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
     monkeypatch.setattr(tempfile, "tempdir", str(inside))
     probes = _record_probes(monkeypatch)
     for _ in range(2):
         assert cc.production_registry_identity(root)["digest"] == "honest"
-    assert list(inside.iterdir()) == [] and cc._PROBE_WORKSPACE == {}
+    assert list(inside.iterdir()) == [] and workspace == {}
     assert len({run.prefix for run in probes}) == 2   # a fresh prefix per probe, as before the per-process prefix
     # a prefix created for another tree, which this tree turns out to contain, is not used for it either
     assert cc.production_registry_identity(other)["digest"] == "honest"
-    assert cc._PROBE_WORKSPACE and cc._PROBE_WORKSPACE["base"].resolve().is_relative_to(inside.resolve())
+    assert workspace and workspace["base"].is_relative_to(inside.resolve())
     assert cc.production_registry_identity(root)["digest"] == "honest"
-    assert list(inside.iterdir()) == [] and cc._PROBE_WORKSPACE == {}
+    assert list(inside.iterdir()) == [] and workspace == {}
