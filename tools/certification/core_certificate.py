@@ -687,9 +687,10 @@ OUT_OF_SCOPE: tuple[tuple[str, str], ...] = (
      "certified module imports unless a CERTIFIED_DEPENDENCY_EXCLUSIONS edge states why that importer's use "
      "cannot grant authority"),
     ("tests/** (except the harness area, the two self-check modules and the pinned regression manifest)",
-     "assurance for everything above, not part of what is certified. They "
-     "still trigger recertification (tools/certification/recertification_scope.py), "
-     "because the gates' results are claims about them"),
+     "assurance for everything above, not part of what is certified. Ordinary "
+     "domain/product tests are owned by the normal Tests workflow; only the "
+     "exact certified harness, its target suites and derived helper closure "
+     "trigger hardened-core recertification"),
     ("tests/conftest.py",
      "labels execution tiers only. The certificate child does not trust it to "
      "run the self-checks: it requires every deferred self-check to be "
