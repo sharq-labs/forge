@@ -4465,6 +4465,35 @@ not 0bc8b1cb.
 - Landing tree bd927d8a: 10719 passed, 2 failed, 156 skipped, tracked tree clean afterwards. The only failure not present on main is `test_the_certificate_records_the_v1_relationship_truthfully` (expected certificate staleness, above). Earlier landing trees: 4f7576e0 had 3 failures (the third was the mind schema invariant, fixed in eecef67b); eecef67b had the same 2.
 - Windows .venv 3.14 targeted runs: `tests/mind tests/test_core_semantic_invariants.py tests/test_core_api_layering.py tests/test_core_guards.py` 417 passed; `tests/scientific/knowledge tests/test_core_guards.py` 309 passed; `tests/uq/budget tests/claims/test_unassessable_compilation.py tests/foundations/test_discovery_deadline.py` 20 passed, 11 skipped (POSIX-only).
 
+## 2026-10-16 -- FAST slowdown attribution across PR #146 (measurement only)
+
+**Who measured this.** The attribution session ("Profile FAST slowdown on main 91b44e22") measured these figures on
+2026-10-16, on Windows with .venv CPython 3.14.2, using `-n 4 --dist loadfile`; the N-* pair below used `--dist load`.
+None of it was re-run for this entry.
+- Raw data: `D:/pf/runs`.
+- Full analysis: side-session note `fast-slowdown-attribution-2026-10-16.md`.
+- The fix is the next entry.
+
+**Headline numbers:**
+- ABBA FAST wall, e193e573 -> 91b44e22: 267.6 -> 573.8 s (x2.14).
+- Summed test time: +795.7 s, 97% of it in eight certification modules.
+- One `verify_certificate` in isolation: 7.15 -> 27.2 s.
+- A scratch prototype brought a repeated verify back to 7.2 s, with results identical to the shipped code. It used a
+  byte-keyed memo, a per-call listdir memo and one private probe prefix per process.
+
+**Exact commands run:**
+```
+# all: cwd=<worktree>, PYTHONDONTWRITEBYTECODE unset (except N-*), PYTHONPATH='<wt>\src;<wt>', TMP/TEMP/TMPDIR=D:\pft\<label>
+.venv/Scripts/python.exe -m pytest -m "not expensive" -q -n 4 --dist loadfile --basetemp=D:\pfb\<label> --durations=40 --junitxml=D:\pf\runs\<label>\junit.xml
+#   A1-old e193e573 243.9 s: 153 failed, 10167 passed, 189 skipped, 22 errors
+#   B1-new 91b44e22 550.0 s: 154 failed, 10500 passed, 201 skipped, 22 errors
+#   B2-new 91b44e22 597.6 s: same;  A2-old e193e573 291.2 s: same as A1
+#   I-old / I-new (+ -p probe_metrics): 279.6 s / 577.6 s, same outcomes
+# N-*: --dist load, PYTHONDONTWRITEBYTECODE=1, pycache-free worktrees
+#   N-new 653.8 s: 154 failed, 10500 passed;  N-old 312.8 s: 153 failed, 10167 passed
+# Only-new failure: tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
+```
+
 ## 2026-10-16 -- FAST slowdown fix: verifier analysis memo and per-process probe prefix (perf/cert-closure-memo, local only)
 
 **Why.** PR #146 (main 91b44e22) made FAST about 2.1x slower on Windows: 97% of the delta sat in eight certification
@@ -4475,7 +4504,7 @@ in `tools/certification/core_certificate.py` (BR-15 6d62e5cf, aedc7b24, 26f2505c
 - the registry probe compiled the interpreter's library, numpy, scipy and pint into a fresh pycache prefix on every
   probe.
 
-Attribution: side-session note `fast-slowdown-attribution-2026-10-16.md`.
+Attribution: the previous entry, and side-session note `fast-slowdown-attribution-2026-10-16.md`.
 
 **What changed** (certification-pinned; branch `perf/cert-closure-memo` from 91b44e22, worktree `D:/forge-cert-memo`):
 - **Analysis memo.** `dynamic_imports` and `_engcore_imports` are memoized in-process. The key is the SHA-256 of the
