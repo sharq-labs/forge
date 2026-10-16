@@ -4663,3 +4663,93 @@ identical), and the implementation is pinned by its bytes. Note that 26f2505c an
 without a bump, so the owner may prefer a single bump (e.g. 2.7.0) at recertification to cover those.
 
 Nothing has been pushed, no PR opened, and no recertification run.
+
+## 2026-10-16 -- Open problems pass: review MINORs, Windows FAST triage (fix/open-problems-2026-10-16, local only)
+
+**Scope.** The user asked for "all current problems" to be solved. Worktree `D:/forge-open-problems`, base `origin/main`
+`36306da5` (PR #148 merged). Commits `0bc9a892`, `7b84dce1`, `b12dc7c7`. Nothing pushed, no PR, no recertification.
+
+**What is owner-only and was not touched:** CI on `main` and on PRs fails in ~6 s with no runner (Actions billing),
+OD-3 recertification of `main` (`test_the_certificate_describes_this_tree` and
+`test_the_certificate_records_the_v1_relationship_truthfully`), branch-protection governance (OD-1), and the open
+owner decisions listed in ACTIVE_PLAN.
+
+**Fixed (each with a reproducer that fails on `36306da5`):**
+- `uq.budget.UncertaintyBudgetReport` built directly could be empty (UNKNOWN read as zero) or carry an aggregate
+  its components do not reproduce. `__post_init__` now re-aggregates and refuses both (landing-pass MINOR).
+- A NOT_ASSESSABLE applicability made `assess_claim` raise `KeyError: 'applicability_unassessable'` in
+  `explain()` (missing `_GAP_KIND` entry; found by the new test). Its gap was also labelled CAPABILITY_MISSING. The
+  compiler now marks that repair (`detail.applicability = not_assessable`); gap analysis reports
+  MODEL_APPLICABILITY_UNKNOWN (still blocking, verdict unchanged); the next step stays EXTEND_CAPABILITY.
+- `operating_rating.assess_operating_ratings`: any-of composition is now declared in the docstring (behaviour
+  unchanged).
+- `tools/certification/ownership.py` refuses: inventory names escaping the root; a Git top level other than the
+  root; a linked `.git` (symlink or junction); a `.git` directory whose Git directory is elsewhere; a `.git` file
+  whose Git directory does not name the checkout back (relative back-references are read against the Git directory;
+  `core.worktree` only from the repository's own config). A tracked file replaced by a directory is refused, with
+  a case-folded comparison.
+- `tools/certification/mutation_workspace.snapshot`: on Windows `os.scandir` reports `st_nlink == 0`, so every seed
+  was refused as "links or special files". It now re-reads with `os.lstat`. Junctions are recorded as special and
+  never walked (on 3.11 via reparse tag `0xA0000003`).
+- `tests/foundations/test_authority_integrity.py` read MCP sources with the locale codec (cp1252 decode error on
+  Windows); it now reads UTF-8.
+
+**Not fixed (recorded):**
+- `engcore.mind` `authority_result_id` is still an unchecked string. Binding it to a result record is a design
+  decision, and nothing consumes MindState as a verdict today.
+- Review I-5: any-of is declared, not enforced. A `composition` field would change the mission record schema
+  (owner decision).
+- Review N-4 (pre-existing): `ownership.copy_ignore` / `mutation_v4_runner.populate` never act on `owned.refused`.
+  Copytree follows junctions; clean-tree gates probably cover it (not confirmed).
+- Review N-5: two `is_link` definitions (`ownership` vs `core_certificate`); the case-fold skip can over-skip on a
+  case-sensitive filesystem. Both fail safe.
+- The remaining Windows FAST failures are by design or environment (see below).
+
+**Windows FAST failure triage** (150 failures + errors at `7b84dce1`, down from 179 at `36306da5`; 0 new):
+- POSIX-only by design: `fcntl` (authority ledger, durable campaign, battery blind readiness), `os.geteuid`
+  (escrow), `os.killpg`, and the Linux child-subreaper (the mutation workspace refuses to run elsewhere).
+- Environment: symlink creation without the Windows privilege (WinError 1314); escrow subprocess handshake;
+  executable-bit checks on the interpreter; `.gitignore` CRLF reported dirty by `local_assurance`.
+- Expected certification staleness (OD-3), plus py3.14-only deep-surface byte differences.
+- Baseline caveat: the `36306da5` Windows run overlapped my first edits, so its tree-clean freeze failures (and
+  one offline-revalidation race) are not fixed by this branch.
+
+**Tests run** (Windows: `.venv` CPython 3.14.2; Linux: WSL Ubuntu CPython 3.12 from
+`~/forge-cons-assure-2/.forge/venvs/3.12`, read-only, on a native clone `~/forge-open-problems`):
+```
+# Windows FAST, pristine 36306da5 (worktree D:/forge-open-problems before edits; edits began mid-run)
+PYTHONPATH='<wt>\src;<wt>' TMP=D:\pft\op-fast .venv/Scripts/python.exe -m pytest -m "not expensive" -q -n 4 --dist loadfile -p no:cacheprovider --basetemp=D:/pfb/op-fast -rfE
+#   157 failed, 10548 passed, 204 skipped, 22 errors
+# Windows FAST, 7b84dce1 (same command, D:/pft/op-fast3)
+#   128 failed, 10626 passed, 204 skipped, 22 errors; failure-id diff vs baseline: 0 new, 29 gone
+# Linux FAST, clean committed 7b84dce1
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=~/forge-open-problems/src:~/forge-open-problems python -m pytest -m "not expensive" -q -n 4 -p no:cacheprovider
+#   2 failed, 10802 passed, 156 skipped; tracked tree clean afterwards
+#   failures: test_the_certificate_describes_this_tree, test_the_certificate_records_the_v1_relationship_truthfully
+# Linux, pristine 36306da5, certificate + freeze modules: the same 2 failed, 73 passed, 1 skipped
+# Linux, b12dc7c7, targeted (new tests, ownership, mutation workspace, change impact, formal xdist, freeze, certificate, tests/claims, tests/uq)
+#   2 failed (the same certificate pair), 1379 passed, 1 skipped
+# Windows, b12dc7c7, targeted (new tests, ownership, change impact, tests/claims, tests/uq)
+#   2 failed (symlink privilege, baseline), 1104 passed, 1 skipped
+# Reproducers on pristine 36306da5: 16 of 22 first-round tests fail, 6 controls pass
+```
+- **Flaw checks.** `D:/pf/op/mutate_check.py` applies 10 deliberate flaws one at a time (linked .git, nlink
+  fallback, junction, relative back-reference, case-fold, foreign worktree, empty UQ, gap relabel, escaping names,
+  tracked-dir refusal), runs the tests that name each, and restores the bytes (SHA-256 checked): 10/10 caught. A
+  global `core.worktree` mutant (N-1) is also caught.
+
+**Scientific review** (`forge-scientific-review`, read-only):
+- First pass: CHANGES REQUIRED (I-1 linked `.git` bypass and I-2 untested snapshot change, both MEDIUM; I-3..I-6
+  LOW). All except I-5 were fixed.
+- Second pass: PASS, with N-1..N-5 LOW. N-1 (global `core.worktree` vouches for a checkout) was fixed and tested,
+  and N-2/N-3 were tested; N-4 and N-5 are recorded above.
+
+**Failed approaches (do not repeat):**
+- WSL pytest on a Windows git worktree: its `.git` file holds a Windows path, so commit identity is unavailable
+  and replay/ownership tests fail. Use a native WSL clone.
+- `stat.IO_REPARSE_TAG_MOUNT_POINT` exists only on Windows; use the constant `0xA0000003`.
+- A bash heredoc again turned `\n` inside a generated Python string into real newlines; write such files with the
+  editor.
+
+**RECERTIFICATION_REQUIRED (OD-3).** The touched src/tools files are pinned (`certification/current_core_v2.json`),
+and `main` already needs recertification.
