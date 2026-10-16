@@ -1504,13 +1504,17 @@ REGISTRY_ENTRY = "src/engcore/product/capabilities.py"
 #: interpreter inside it, reused only while it is still the directory this process created, removed at exit, never
 #: adopted by a forked child -- and before EVERY probe :data:`_SEED_PROBE_BYTECODE` makes the bytecode for the tree's
 #: sources the CHECKED_HASH compilation of the bytes on disk at that moment and removes every other file under the
-#: tree's part of the prefix. What carries over from one probe to the next is the bytecode of code outside the tree
-#: (the interpreter's library and installed packages, which no certificate covers). Each probe gets a fresh working
-#: directory, and a probe's result is never reused. Residuals the one-shot prefix did not have: that carried-over
+#: tree's part of the prefix (and src/'s, when src/ resolves outside the tree). What carries over from one probe to
+#: the next is the bytecode of code outside the tree (the interpreter's library and installed packages, which no
+#: certificate covers). Each probe gets a fresh working directory, and a probe's result is never reused. Residuals
+#: the one-shot prefix did not have: that carried-over
 #: bytecode is shared by every probe in the process, so code one probe runs -- the tree's own, as this user -- could
 #: leave bytecode a later probe of any tree runs; and between seeding and import a tree source is tied to its .pyc
 #: by the interpreter's 64-bit source hash, not by a recompile (enough for an edit, not for a concurrent forger).
 #: A virtual environment inside the tree is swept with it, so its bytecode is compiled again by every probe.
+#: "Private" is checked through POSIX mode bits, which do not show ACLs (macOS); on Windows it rests on the
+#: owner-only ACL mkdtemp applies since CPython 3.12.4 (CVE-2024-4030), and older Windows interpreters get the
+#: one-shot prefix.
 _PROBE_LOCK = threading.Lock()
 _PROBE_WORKSPACE: dict[str, Any] = {}
 
@@ -1522,10 +1526,11 @@ _PROBE_WORKSPACE: dict[str, Any] = {}
 #: .pyc is kept only when it was compiled from exactly those bytes and is still byte-identical to what was written, and
 #: is compiled from the bytes just read otherwise. Every other file under the tree's part of the prefix, and under
 #: src/'s part when src/ resolves outside the tree -- bytecode a probe wrote for a module it compiled itself, for tree
-#: code outside src/, or for a file since deleted -- is removed.
-#: A directory that cannot be listed fails the seeding, and the probe then gets a fresh prefix.
+#: code outside src/, or for a file since deleted -- is removed. A directory that cannot be listed, or a link or
+#: junction anywhere the seeding would write, walk or delete, fails the seeding (before anything is written, when
+#: it is already there), and the probe then gets a fresh prefix.
 _SEED_PROBE_BYTECODE = r"""
-import hashlib, importlib.util, json, marshal, os, sys
+import hashlib, importlib.util, json, marshal, os, stat, sys
 from importlib.machinery import SourceFileLoader
 src, tree = sys.argv[1], sys.argv[2]
 records = json.loads(sys.stdin.read())
@@ -1537,6 +1542,35 @@ def sha256(path):
             return hashlib.sha256(handle.read()).hexdigest()
     except OSError:
         return None
+
+def is_link(path):  # a symbolic link or a Windows junction: nothing is written, walked or deleted through one
+    try:
+        found = os.lstat(path)
+    except OSError:
+        return False
+    return stat.S_ISLNK(found.st_mode) or bool(getattr(found, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+
+def walk(top):  # os.walk that enters no link (it enters Windows junctions) and reports each one as an error
+    for directory, subdirectories, files in os.walk(top, onerror=errors.append) if os.path.isdir(top) else ():
+        for name in [name for name in subdirectories if is_link(os.path.join(directory, name))]:
+            errors.append("a link in the bytecode prefix: " + os.path.join(directory, name))
+            subdirectories.remove(name)
+        yield directory, files
+
+mirrors = [os.path.dirname(importlib.util.cache_from_source(os.path.join(top, "_.py"))) for top in (tree, src)]
+if (mirrors[1] + os.sep).startswith(mirrors[0] + os.sep):
+    mirrors.pop()  # src/ is inside the tree: one sweep covers both
+for mirror in mirrors:  # before anything is written: no link on the way down from the prefix, or below
+    path = mirror
+    while path.startswith(sys.pycache_prefix) and os.path.dirname(path) != path:
+        if is_link(path):
+            errors.append("a link in the bytecode prefix: " + path)
+        path = os.path.dirname(path)
+    for _ in walk(mirror):
+        pass
+if errors:
+    print(json.dumps({"kept": {}, "errors": [str(error) for error in errors]}))
+    raise SystemExit(0)
 
 kept = {}
 for directory, subdirectories, files in os.walk(src, onerror=errors.append):
@@ -1567,11 +1601,8 @@ for directory, subdirectories, files in os.walk(src, onerror=errors.append):
             os.replace(pending, target)
             record = [digest, hashlib.sha256(pyc).hexdigest()]
         kept[target] = record
-mirrors = [os.path.dirname(importlib.util.cache_from_source(os.path.join(top, "_.py"))) for top in (tree, src)]
-if (mirrors[1] + os.sep).startswith(mirrors[0] + os.sep):
-    mirrors.pop()  # src/ is inside the tree: one sweep covers both
 for mirror in mirrors:
-    for directory, _, files in os.walk(mirror, onerror=errors.append) if os.path.isdir(mirror) else ():
+    for directory, files in walk(mirror):
         for name in files:
             if os.path.join(directory, name) not in kept:
                 os.unlink(os.path.join(directory, name))
@@ -1583,13 +1614,14 @@ def _probe_workspace(root: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, di
     """This process's probe directory, its bytecode prefix for this interpreter, and the last seeding's records.
 
     None when it cannot be used, and the probe then gets a one-shot directory as before: an interpreter with no
-    bytecode cache tag, a temporary directory inside the tree being certified, where a directory that outlives the
-    probe would become part of the tree, or one that is not private to this user from the start. A directory that is
-    no longer the one this process created -- removed, replaced, a link, or (POSIX) no longer owned by this user and
-    private to it -- is never adopted: a new one is made.
+    bytecode cache tag or whose mkdtemp does not make a private directory, a temporary directory inside the tree being
+    certified, where a directory that outlives the probe would become part of the tree, or a directory that is not
+    private to this user from the start. A directory that is no longer the one this process created -- removed,
+    replaced, a link or junction, or (POSIX) no longer owned by this user and private to it -- is never adopted: a new
+    one is made.
     """
     tag = sys.implementation.cache_tag
-    if tag is None:
+    if tag is None or not _mkdtemp_is_private():
         return None
     tree = root.resolve()
     state = _PROBE_WORKSPACE
@@ -1601,7 +1633,9 @@ def _probe_workspace(root: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, di
     elif pathlib.Path(tempfile.gettempdir()).resolve().is_relative_to(tree):
         return None
     else:
-        base = pathlib.Path(tempfile.mkdtemp(prefix="forge-registry-probe-")).resolve()   # absolute on 3.11 too
+        # absolute on 3.11 too; only the parent is resolved, so a link put where the directory was is never followed
+        made = pathlib.Path(tempfile.mkdtemp(prefix="forge-registry-probe-"))
+        base = made.parent.resolve() / made.name
         identity = _directory_identity(base)
         if not _is_probe_directory(base, identity):   # a temporary root that grants others access, or maps owners
             with contextlib.suppress(OSError):
@@ -1621,15 +1655,22 @@ def _directory_identity(path: pathlib.Path) -> tuple[int, int]:
 
 
 def _is_probe_directory(base: pathlib.Path, identity: tuple[int, int]) -> bool:
-    """``base`` is still the directory this process created: the same directory, not a link, and on POSIX owned by
-    this user with no access for its group or anyone else."""
+    """``base`` is still the directory this process created: the same directory, not a link or junction, and on
+    POSIX owned by this user with no access for its group or anyone else."""
     try:
         found = os.lstat(base)
     except OSError:
         return False
-    if not stat.S_ISDIR(found.st_mode) or (found.st_dev, found.st_ino) != identity:
+    if (not stat.S_ISDIR(found.st_mode) or (found.st_dev, found.st_ino) != identity
+            or getattr(found, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT):   # a Windows junction
         return False
     return os.name != "posix" or (found.st_uid == os.getuid() and not stat.S_IMODE(found.st_mode) & 0o077)
+
+
+def _mkdtemp_is_private() -> bool:
+    """mkdtemp makes a directory only this user can open: by its mode on POSIX, and on Windows by an owner-only ACL,
+    which CPython applies only since 3.12.4 (CVE-2024-4030)."""
+    return os.name != "nt" or sys.version_info >= (3, 12, 4)
 
 
 def _remove_probe_directory(pid: int, base: pathlib.Path, identity: tuple[int, int]) -> None:
@@ -1684,7 +1725,9 @@ def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
             scratch = pathlib.Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="forge-registry-probe-"))).resolve()
             prefix = scratch / "pycache"
         # third confirmation review: a planted timestamp .pyc whose header matches the source's mtime and size runs
-        # instead of it; with its own pycache prefix the probe never reads the tree's __pycache__ at all
+        # instead of it; with its own pycache prefix the probe never reads the tree's __pycache__ at all. The probe
+        # resolves its argument itself: for an absolute root that is the src/ the seeding compiled, and for a
+        # relative one the probe fails exactly as it did before the per-process prefix
         run = subprocess.run([sys.executable, "-E", "-s", "-P", "-X", f"pycache_prefix={prefix}",
                               "-c", _REGISTRY_PROBE, str(root / "src")], cwd=scratch,
                              env=env, capture_output=True, text=True, timeout=600)
