@@ -1513,12 +1513,14 @@ REGISTRY_ENTRY = "src/engcore/product/capabilities.py"
 #: by the interpreter's 64-bit source hash, not by a recompile (enough for an edit, not for a concurrent forger).
 #: A virtual environment inside the tree is swept with it, so its bytecode is compiled again by every probe.
 #: "Private" is checked through POSIX mode bits, which do not show ACLs (macOS); on Windows it rests on the
-#: owner-only ACL mkdtemp applies since CPython 3.12.4 (CVE-2024-4030), and older Windows interpreters get the
-#: one-shot prefix.
+#: owner-only ACL mkdtemp applies since CPython 3.12.4 (CVE-2024-4030) -- older Windows interpreters get the one-shot
+#: prefix -- and a temporary root on FAT or exFAT keeps no ACL at all. Both directories are checked right after
+#: mkdtemp and before every use, not continuously: on a temporary root where another account may rename this user's
+#: entries (no sticky bit), a directory swapped for a link after its check is followed, as it was before.
 _PROBE_LOCK = threading.Lock()
 _PROBE_WORKSPACE: dict[str, Any] = {}
 
-#: Run before every probe in an interpreter started exactly as the probe is (-E -s -P -X pycache_prefix=<prefix>), so
+#: Run before every probe in an interpreter started as the probe is (-E -s -P -X pycache_prefix=<prefix>, plus -B), so
 #: what it writes is what the probe's interpreter would compile itself -- its flags and limits, its loader, its own
 #: cache_from_source paths -- and nothing of the verifier's process (future flags, -O, the integer-digit limit, a
 #: patched compile) reaches that bytecode. argv: the tree's src/ and the tree, both resolved; stdin: the records of the
@@ -1527,8 +1529,9 @@ _PROBE_WORKSPACE: dict[str, Any] = {}
 #: is compiled from the bytes just read otherwise. Every other file under the tree's part of the prefix, and under
 #: src/'s part when src/ resolves outside the tree -- bytecode a probe wrote for a module it compiled itself, for tree
 #: code outside src/, or for a file since deleted -- is removed. A directory that cannot be listed, or a link or
-#: junction anywhere the seeding would write, walk or delete, fails the seeding (before anything is written, when
-#: it is already there), and the probe then gets a fresh prefix.
+#: junction from the prefix down to where the seeding would write, walk or delete, fails the seeding (before anything
+#: is written, when it is already there: the interpreter runs with -B, so its own imports write nothing), and the
+#: probe then gets a fresh prefix.
 _SEED_PROBE_BYTECODE = r"""
 import hashlib, importlib.util, json, marshal, os, stat, sys
 from importlib.machinery import SourceFileLoader
@@ -1550,23 +1553,30 @@ def is_link(path):  # a symbolic link or a Windows junction: nothing is written,
         return False
     return stat.S_ISLNK(found.st_mode) or bool(getattr(found, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT)
 
-def walk(top):  # os.walk that enters no link (it enters Windows junctions) and reports each one as an error
+def walk(top):  # os.walk that enters no link (it enters Windows junctions) and reports each one, file or directory
     for directory, subdirectories, files in os.walk(top, onerror=errors.append) if os.path.isdir(top) else ():
         for name in [name for name in subdirectories if is_link(os.path.join(directory, name))]:
             errors.append("a link in the bytecode prefix: " + os.path.join(directory, name))
             subdirectories.remove(name)
+        for name in [name for name in files if is_link(os.path.join(directory, name))]:
+            errors.append("a link in the bytecode prefix: " + os.path.join(directory, name))
+            files.remove(name)
         yield directory, files
 
 mirrors = [os.path.dirname(importlib.util.cache_from_source(os.path.join(top, "_.py"))) for top in (tree, src)]
 if (mirrors[1] + os.sep).startswith(mirrors[0] + os.sep):
     mirrors.pop()  # src/ is inside the tree: one sweep covers both
-for mirror in mirrors:  # before anything is written: no link on the way down from the prefix, or below
-    path = mirror
+for mirror in mirrors:  # before anything is written (-B: nothing is, by this interpreter's own imports either):
+    if not mirror.startswith(sys.pycache_prefix):  # no link on the way down from the prefix, at the mirror, or below
+        errors.append("a bytecode directory outside the prefix: " + mirror)
+        continue
+    path, linked = mirror, False
     while path.startswith(sys.pycache_prefix) and os.path.dirname(path) != path:
         if is_link(path):
             errors.append("a link in the bytecode prefix: " + path)
+            linked = True
         path = os.path.dirname(path)
-    for _ in walk(mirror):
+    for _ in () if linked else walk(mirror):
         pass
 if errors:
     print(json.dumps({"kept": {}, "errors": [str(error) for error in errors]}))
@@ -1596,7 +1606,11 @@ for directory, subdirectories, files in os.walk(src, onerror=errors.append):
                    + importlib.util.source_hash(data) + marshal.dumps(code))
             os.makedirs(os.path.dirname(target), exist_ok=True)
             pending = target + "." + str(os.getpid()) + ".tmp"
-            with open(pending, "wb") as handle:
+            try:
+                os.unlink(pending)  # a leftover, or a link: removed, never written through
+            except FileNotFoundError:
+                pass
+            with open(pending, "xb") as handle:
                 handle.write(pyc)
             os.replace(pending, target)
             record = [digest, hashlib.sha256(pyc).hexdigest()]
@@ -1654,6 +1668,15 @@ def _directory_identity(path: pathlib.Path) -> tuple[int, int]:
     return found.st_dev, found.st_ino
 
 
+def _is_link(path: pathlib.Path) -> bool:
+    """A symbolic link or a Windows junction (a reparse point), which lstat reports as the directory it is not."""
+    try:
+        found = os.lstat(path)
+    except OSError:
+        return False
+    return stat.S_ISLNK(found.st_mode) or bool(getattr(found, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+
+
 def _is_probe_directory(base: pathlib.Path, identity: tuple[int, int]) -> bool:
     """``base`` is still the directory this process created: the same directory, not a link or junction, and on
     POSIX owned by this user with no access for its group or anyone else."""
@@ -1669,8 +1692,11 @@ def _is_probe_directory(base: pathlib.Path, identity: tuple[int, int]) -> bool:
 
 def _mkdtemp_is_private() -> bool:
     """mkdtemp makes a directory only this user can open: by its mode on POSIX, and on Windows by an owner-only ACL,
-    which CPython applies only since 3.12.4 (CVE-2024-4030)."""
-    return os.name != "nt" or sys.version_info >= (3, 12, 4)
+    which CPython applies only since 3.12.4 and 3.13.0b1 (CVE-2024-4030)."""
+    if os.name != "nt":
+        return True
+    version = tuple(sys.version_info)
+    return sys.implementation.name == "cpython" and ((3, 12, 4) <= version < (3, 13) or version >= (3, 13, 0, "beta"))
 
 
 def _remove_probe_directory(pid: int, base: pathlib.Path, identity: tuple[int, int]) -> None:
@@ -1684,7 +1710,7 @@ def _seed_probe_bytecode(root: pathlib.Path, prefix: pathlib.Path, records: dict
                          scratch: pathlib.Path, env: Mapping[str, str]) -> bool:
     """Run :data:`_SEED_PROBE_BYTECODE` for the tree at ``root``; False when ``prefix`` cannot be trusted for this probe."""
     try:
-        run = subprocess.run([sys.executable, "-E", "-s", "-P", "-X", f"pycache_prefix={prefix}",
+        run = subprocess.run([sys.executable, "-E", "-s", "-P", "-B", "-X", f"pycache_prefix={prefix}",
                               "-c", _SEED_PROBE_BYTECODE, os.fspath((root / "src").resolve()), os.fspath(root.resolve())],
                              input=json.dumps(records), cwd=scratch, env=dict(env), capture_output=True, text=True,
                              timeout=600)
@@ -1722,7 +1748,12 @@ def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
             if _seed_probe_bytecode(root, workspace[1], workspace[2], scratch, env):
                 prefix = workspace[1]
         if prefix is None:
-            scratch = pathlib.Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="forge-registry-probe-"))).resolve()
+            made = pathlib.Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="forge-registry-probe-",
+                                                                                ignore_cleanup_errors=True)))
+            scratch = made.parent.resolve() / made.name   # as for the per-process directory: only the parent
+            if _is_link(scratch):
+                raise CertificationError(f"the registry probe's scratch directory {scratch} was replaced by a link; "
+                                         "the probe would run, and write bytecode, wherever it points")
             prefix = scratch / "pycache"
         # third confirmation review: a planted timestamp .pyc whose header matches the source's mtime and size runs
         # instead of it; with its own pycache prefix the probe never reads the tree's __pycache__ at all. The probe

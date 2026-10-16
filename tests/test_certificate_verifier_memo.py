@@ -38,6 +38,10 @@ from tools.certification import core_certificate as cc
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
+#: The tests of the per-process probe directory, which an interpreter whose mkdtemp is not private never makes.
+needs_private_mkdtemp = pytest.mark.skipif(not cc._mkdtemp_is_private(),
+                                           reason="this interpreter's mkdtemp is not private: every probe is one-shot")
+
 #: A certified area holding one module that is not a verdict root; the package __init__ is control plane, as in SCOPE.
 _SCOPE = [cc.ScopeArea("certified", "CORE_CERTIFIED", ("src/engcore/certified/**/*.py",), "test"),
           cc.ScopeArea("control", "CERTIFICATION_CONTROL", ("src/engcore/__init__.py",), "test")]
@@ -308,6 +312,7 @@ def test_a_planted_timestamp_pyc_in_the_trees_pycache_is_never_executed(tmp_path
     assert all(not run.prefix.resolve().is_relative_to(root.resolve()) for run in probes)
 
 
+@needs_private_mkdtemp
 def test_a_source_edit_between_two_probes_that_keeps_size_and_mtime_is_seen(tmp_path, monkeypatch) -> None:
     """The prefix outlives a probe; what it holds for the tree is the compilation of the bytes on disk now."""
     root = _registry_tree(tmp_path / "tree")
@@ -328,6 +333,7 @@ def test_a_source_edit_between_two_probes_that_keeps_size_and_mtime_is_seen(tmp_
     assert probes[-1].prefix == prefix and len(probes) == 2
 
 
+@needs_private_mkdtemp
 def test_a_source_edit_after_seeding_and_before_the_import_is_caught_by_the_probes_hash_check(tmp_path, monkeypatch) -> None:
     """Review I6a: between seeding and the probe's import, only the interpreter's check of a CHECKED_HASH .pyc stands."""
     root = _registry_tree(tmp_path / "tree")
@@ -345,6 +351,7 @@ def test_a_source_edit_after_seeding_and_before_the_import_is_caught_by_the_prob
     assert seeded == [True]   # the seeded prefix was used, and its now-stale .pyc refused at import
 
 
+@needs_private_mkdtemp
 def test_bytecode_in_the_prefix_that_the_verifier_did_not_write_never_runs(tmp_path, monkeypatch) -> None:
     """A probe writes bytecode for what it compiles itself; the next seeding replaces or removes all of it."""
     root = _registry_tree(tmp_path / "tree")
@@ -410,6 +417,7 @@ def test_the_verifiers_integer_digit_limit_does_not_reach_the_probe(tmp_path) ->
         sys.set_int_max_str_digits(limit)
 
 
+@needs_private_mkdtemp
 def test_the_probe_prefix_is_created_by_this_process_and_reused_only_by_it(tmp_path, monkeypatch) -> None:
     root = _registry_tree(tmp_path / "tree")
     created: list[pathlib.Path] = []
@@ -444,6 +452,7 @@ def test_the_probe_prefix_is_created_by_this_process_and_reused_only_by_it(tmp_p
     assert created and not any(base.exists() for base in created)
 
 
+@needs_private_mkdtemp
 def test_another_process_creates_its_own_probe_directory_and_removes_it_at_exit(tmp_path) -> None:
     root = _registry_tree(tmp_path / "tree")
     ours = cc._probe_workspace(root)[0]
@@ -458,6 +467,7 @@ def test_another_process_creates_its_own_probe_directory_and_removes_it_at_exit(
     assert ours.is_dir()
 
 
+@needs_private_mkdtemp
 def test_a_forked_child_never_adopts_or_removes_its_parents_probe_directory(tmp_path, monkeypatch) -> None:
     root = _registry_tree(tmp_path / "tree")
     workspace: dict = {}
@@ -478,7 +488,8 @@ def test_a_forked_child_never_adopts_or_removes_its_parents_probe_directory(tmp_
                 shutil.rmtree(base, ignore_errors=True)
 
 
-@pytest.mark.parametrize("replacement", ["directory", "symlink"])
+@needs_private_mkdtemp
+@pytest.mark.parametrize("replacement", ["directory", "private-directory", "symlink"])
 def test_a_probe_directory_that_was_replaced_is_never_adopted_or_removed(tmp_path, monkeypatch, replacement) -> None:
     """Review I1: the directory can vanish while the process lives, and something else appear at its path."""
     root = _registry_tree(tmp_path / "tree")
@@ -486,11 +497,17 @@ def test_a_probe_directory_that_was_replaced_is_never_adopted_or_removed(tmp_pat
     monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
     first = cc._probe_workspace(root)[0]
     identity = workspace["identity"]
-    shutil.rmtree(first)
+    moved = first.with_name(first.name + "-moved")
+    if replacement == "private-directory":   # review LOW-G: owner and mode match; only the identity differs
+        first.rename(moved)
+        first.mkdir()
+        os.chmod(first, 0o700)
+    else:
+        shutil.rmtree(first)
     if replacement == "directory":
         first.mkdir()
         os.chmod(first, 0o755)
-    else:
+    elif replacement == "symlink":
         elsewhere = tmp_path / "elsewhere"
         elsewhere.mkdir()
         try:
@@ -509,8 +526,10 @@ def test_a_probe_directory_that_was_replaced_is_never_adopted_or_removed(tmp_pat
             first.unlink()
         else:
             shutil.rmtree(first, ignore_errors=True)
+        shutil.rmtree(moved, ignore_errors=True)
 
 
+@needs_private_mkdtemp
 def test_a_relative_temporary_directory_still_gives_the_probe_an_absolute_prefix(tmp_path, monkeypatch) -> None:
     """Review I2: before 3.12, mkdtemp under a relative temp directory returns a path the probe resolves elsewhere."""
     root = _registry_tree(tmp_path / "tree")
@@ -532,6 +551,7 @@ def test_a_relative_temporary_directory_still_gives_the_probe_an_absolute_prefix
             cc._remove_probe_directory(os.getpid(), workspace["base"], workspace["identity"])
 
 
+@needs_private_mkdtemp
 def test_the_probe_never_leaves_a_directory_inside_the_tree_it_certifies(tmp_path, monkeypatch) -> None:
     """With the temporary directory inside the tree, a persistent prefix would make the tree dirty: one-shot instead."""
     root = _registry_tree(tmp_path / "tree")
@@ -570,6 +590,7 @@ def _probe_with_prefix(root: pathlib.Path, prefix: pathlib.Path, cwd: pathlib.Pa
     return json.loads(run.stdout.strip().splitlines()[-1])
 
 
+@needs_private_mkdtemp
 def test_a_forged_checked_hash_pyc_in_the_prefix_never_runs(tmp_path, monkeypatch) -> None:
     """Review LOW-1a: the import compares only the header's hash with the source's, so a .pyc carrying the right hash
     and other code passes it. Only the seeding's record of the bytes it wrote replaces it."""
@@ -591,6 +612,7 @@ def test_a_forged_checked_hash_pyc_in_the_prefix_never_runs(tmp_path, monkeypatc
             cc._remove_probe_directory(os.getpid(), workspace["base"], workspace["identity"])
 
 
+@needs_private_mkdtemp
 @pytest.mark.parametrize("seeder", [
     # a record that would be accepted, from a run that then fails: only the exit status refuses it
     "print('{\"kept\": {}, \"errors\": []}'); raise SystemExit(1)",
@@ -646,6 +668,7 @@ def _link_directory(link: pathlib.Path, target: pathlib.Path) -> None:
         pytest.skip("this platform cannot create a directory link")
 
 
+@needs_private_mkdtemp
 def test_a_src_that_resolves_outside_the_tree_is_swept_too(tmp_path, monkeypatch) -> None:
     """Review LOW-3: the probe imports from the resolved src/, so that part of the prefix is swept even when it is not
     under the tree's part -- or bytecode for what the seeding does not compile would carry into the next probe."""
@@ -668,6 +691,7 @@ def test_a_src_that_resolves_outside_the_tree_is_swept_too(tmp_path, monkeypatch
             os.rmdir(root / "src")   # a junction: removes the link, never what it points at
 
 
+@needs_private_mkdtemp
 @pytest.mark.parametrize("mode", [0o750, 0o705])   # group access, other access
 def test_a_probe_directory_that_is_not_private_from_the_start_is_never_used(tmp_path, monkeypatch, mode) -> None:
     """Second review O3: a temporary root that grants others access (setgid, a default ACL) is caught right after
@@ -722,10 +746,12 @@ def test_posix_a_setgid_probe_directory_is_private_and_is_used_reused_and_remove
     assert not base.exists()
 
 
-def test_a_link_put_where_the_new_directory_was_is_never_followed(tmp_path, monkeypatch) -> None:
-    """Review LOW-A: on a temporary root others can write to, the directory mkdtemp just made can be swapped for a link
-    to a private directory of this user before its identity is read. Nothing is then written there, and nothing in it
-    is removed -- not by the failure path, not at exit."""
+@needs_private_mkdtemp
+@pytest.mark.parametrize("swap", ["per-process", "per-process and one-shot"])
+def test_a_link_put_where_the_new_directory_was_is_never_followed(tmp_path, monkeypatch, swap) -> None:
+    """Reviews LOW-A and LOW-D: on a temporary root others can write to, a directory mkdtemp just made can be swapped
+    for a link to a private directory of this user before it is checked. Nothing is then written there and nothing in
+    it is removed: the per-process directory is refused for a one-shot one, and a swapped one-shot one fails the probe."""
     root = _registry_tree(tmp_path / "tree")
     victim = tmp_path / "victim"
     victim.mkdir()
@@ -736,7 +762,9 @@ def test_a_link_put_where_the_new_directory_was_is_never_followed(tmp_path, monk
 
     def mkdtemp(*args, **kwargs):
         path = real_mkdtemp(*args, **kwargs)
-        if kwargs.get("prefix") == "forge-registry-probe-":
+        per_process = kwargs.get("prefix") == "forge-registry-probe-"
+        one_shot = args[1:2] == ("forge-registry-probe-",)   # TemporaryDirectory passes (suffix, prefix, dir)
+        if per_process or (one_shot and "one-shot" in swap):
             os.rmdir(path)
             _link_directory(pathlib.Path(path), victim)
             swapped.append(pathlib.Path(path))
@@ -747,10 +775,16 @@ def test_a_link_put_where_the_new_directory_was_is_never_followed(tmp_path, monk
     monkeypatch.setattr(tempfile, "mkdtemp", mkdtemp)
     probes = _record_probes(monkeypatch)
     try:
-        assert cc.production_registry_identity(root)["digest"] == "honest"
-        assert swapped and workspace == {}
+        if "one-shot" in swap:
+            with pytest.raises(cc.CertificationError, match="replaced by a link"):
+                cc.production_registry_identity(root)
+            assert len(swapped) == 2 and probes == []
+        else:
+            assert cc.production_registry_identity(root)["digest"] == "honest"
+            assert len(swapped) == 1
+            assert not probes[-1].prefix.resolve().is_relative_to(victim.resolve())
+        assert workspace == {}
         assert sorted(path.name for path in victim.iterdir()) == ["sentinel"]
-        assert not probes[-1].prefix.resolve().is_relative_to(victim.resolve())
     finally:
         for link in swapped:
             if link.is_symlink():
@@ -773,9 +807,12 @@ def test_without_a_private_mkdtemp_the_probe_gets_a_one_shot_prefix(tmp_path, mo
     assert not any(run.prefix.exists() for run in probes)
 
 
-def test_the_seeding_never_walks_writes_or_deletes_through_a_link_in_the_prefix(tmp_path, monkeypatch) -> None:
-    """Review Ob-1: os.walk enters a Windows junction, so a link planted in the tree's part of the prefix would turn
-    the sweep into deleting this user's files elsewhere. The seeding refuses instead, and the probe gets a fresh prefix."""
+@needs_private_mkdtemp
+@pytest.mark.parametrize("where", ["below the mirror", "at the mirror"])
+def test_the_seeding_never_walks_writes_or_deletes_through_a_link_in_the_prefix(tmp_path, monkeypatch, where) -> None:
+    """Reviews Ob-1 and LOW-F: os.walk enters a Windows junction, and a link at the walk's top is entered on every
+    platform, so a link planted in the tree's part of the prefix would turn the seeding into writing and deleting this
+    user's files elsewhere. The seeding refuses instead, and the probe gets a fresh prefix."""
     root = _registry_tree(tmp_path / "tree")
     victim = tmp_path / "victim"
     victim.mkdir()
@@ -787,8 +824,12 @@ def test_the_seeding_never_walks_writes_or_deletes_through_a_link_in_the_prefix(
     try:
         assert cc.production_registry_identity(root)["digest"] == "honest"
         reused = probes[-1].prefix
-        planted = _bytecode_path(reused, root.resolve() / "planted" / "x.py").parent
-        planted.parent.mkdir(parents=True, exist_ok=True)
+        mirror = _bytecode_path(reused, root.resolve() / "x.py").parent
+        if where == "at the mirror":
+            shutil.rmtree(mirror)
+            planted = mirror
+        else:
+            planted = mirror / "planted"
         _link_directory(planted, victim)
         assert cc.production_registry_identity(root)["digest"] == "honest"
         assert [path.name for path in victim.iterdir()] == [f"stray.{sys.implementation.cache_tag}.pyc"]
@@ -798,5 +839,82 @@ def test_the_seeding_never_walks_writes_or_deletes_through_a_link_in_the_prefix(
             planted.unlink()
         elif planted is not None and planted.exists():
             os.rmdir(planted)   # a junction: removes the link, never what it points at
+        if workspace:
+            cc._remove_probe_directory(os.getpid(), workspace["base"], workspace["identity"])
+
+
+@pytest.mark.parametrize("name, implementation, version, private", [
+    ("nt", "cpython", (3, 11, 9, "final", 0), False),
+    ("nt", "cpython", (3, 12, 3, "final", 0), False),
+    ("nt", "cpython", (3, 12, 4, "final", 0), True),
+    ("nt", "cpython", (3, 13, 0, "alpha", 6), False),
+    ("nt", "cpython", (3, 13, 0, "beta", 1), True),
+    ("nt", "cpython", (3, 14, 2, "final", 0), True),
+    ("nt", "pypy", (3, 14, 2, "final", 0), False),
+    ("posix", "cpython", (3, 11, 0, "final", 0), True),
+])
+def test_review_low_e_mkdtemp_is_private_only_where_cpython_restricts_it(monkeypatch, name, implementation, version,
+                                                                          private) -> None:
+    """Review LOW-E: on Windows mkdtemp's directory is private to this user only in CPython 3.12.4+ and 3.13.0b1+
+    (CVE-2024-4030); everywhere else the probe is one-shot."""
+    monkeypatch.setattr(cc, "os", _os_with(name=name))
+    monkeypatch.setattr(cc, "sys", types.SimpleNamespace(version_info=version,
+                                                         implementation=types.SimpleNamespace(name=implementation)))
+    assert cc._mkdtemp_is_private() is private
+
+
+@needs_private_mkdtemp
+def test_review_ob6_a_file_link_in_the_prefix_fails_the_seeding(tmp_path, monkeypatch) -> None:
+    """Review Ob-6: a file link in the tree's part of the prefix is refused like a directory link."""
+    root = _registry_tree(tmp_path / "tree")
+    victim = tmp_path / "victim.pyc"
+    victim.write_bytes(b"this user's own file")
+    workspace: dict = {}
+    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
+    probes = _record_probes(monkeypatch)
+    link = None
+    try:
+        assert cc.production_registry_identity(root)["digest"] == "honest"
+        reused = probes[-1].prefix
+        link = _bytecode_path(reused, root.resolve() / "src" / "engcore" / "linked.py")
+        try:
+            link.symlink_to(victim)
+        except OSError:
+            link = None
+            pytest.skip("this platform cannot create symbolic links")
+        assert cc.production_registry_identity(root)["digest"] == "honest"
+        assert probes[-1].prefix != reused and victim.read_bytes() == b"this user's own file"
+    finally:
+        if link is not None and link.is_symlink():
+            link.unlink()
+        if workspace:
+            cc._remove_probe_directory(os.getpid(), workspace["base"], workspace["identity"])
+
+
+@needs_private_mkdtemp
+def test_review_low_f_the_seeding_interpreter_writes_no_bytecode_of_its_own(tmp_path, monkeypatch) -> None:
+    """Review LOW-F: the seeding checks the prefix for links before writing, but an interpreter writes the bytecode of
+    its own imports before its first line runs; it runs with -B, so all it ever writes is the tree's seeded bytecode."""
+    root = _registry_tree(tmp_path / "tree")
+    workspace: dict = {}
+    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
+    real_run = subprocess.run
+    seen: dict = {}
+
+    def run(args, *positional, **keywords):
+        if cc._REGISTRY_PROBE in list(args):
+            seen["prefix"] = pathlib.Path(next(a.split("=", 1)[1] for a in args if str(a).startswith("pycache_prefix=")))
+            raise RuntimeError("stopped before the probe")
+        return real_run(args, *positional, **keywords)
+
+    monkeypatch.setattr(cc.subprocess, "run", run)
+    try:
+        with pytest.raises(RuntimeError, match="stopped before the probe"):
+            cc.production_registry_identity(root)
+        written = [path for path in seen["prefix"].rglob("*") if path.is_file()]   # before anything else runs there
+        mirror = _bytecode_path(seen["prefix"], root.resolve() / "x.py").parent
+        assert written and all(path.is_relative_to(mirror) for path in written), \
+            [str(path) for path in written if not path.is_relative_to(mirror)][:5]
+    finally:
         if workspace:
             cc._remove_probe_directory(os.getpid(), workspace["base"], workspace["identity"])
