@@ -1506,7 +1506,11 @@ REGISTRY_ENTRY = "src/engcore/product/capabilities.py"
 #: sources the CHECKED_HASH compilation of the bytes on disk at that moment and removes every other file under the
 #: tree's part of the prefix. What carries over from one probe to the next is the bytecode of code outside the tree
 #: (the interpreter's library and installed packages, which no certificate covers). Each probe gets a fresh working
-#: directory, and a probe's result is never reused.
+#: directory, and a probe's result is never reused. Residuals the one-shot prefix did not have: that carried-over
+#: bytecode is shared by every probe in the process, so code one probe runs -- the tree's own, as this user -- could
+#: leave bytecode a later probe of any tree runs; and between seeding and import a tree source is tied to its .pyc
+#: by the interpreter's 64-bit source hash, not by a recompile (enough for an edit, not for a concurrent forger).
+#: A virtual environment inside the tree is swept with it, so its bytecode is compiled again by every probe.
 _PROBE_LOCK = threading.Lock()
 _PROBE_WORKSPACE: dict[str, Any] = {}
 
@@ -1516,8 +1520,9 @@ _PROBE_WORKSPACE: dict[str, Any] = {}
 #: patched compile) reaches that bytecode. argv: the tree's src/ and the tree, both resolved; stdin: the records of the
 #: last seeding into this prefix, {.pyc path: [source SHA-256, .pyc SHA-256]}. Each .py under src/ is read once; its
 #: .pyc is kept only when it was compiled from exactly those bytes and is still byte-identical to what was written, and
-#: is compiled from the bytes just read otherwise. Every other file under the tree's part of the prefix -- bytecode a
-#: probe wrote for a module it compiled itself, for tree code outside src/, or for a file since deleted -- is removed.
+#: is compiled from the bytes just read otherwise. Every other file under the tree's part of the prefix, and under
+#: src/'s part when src/ resolves outside the tree -- bytecode a probe wrote for a module it compiled itself, for tree
+#: code outside src/, or for a file since deleted -- is removed.
 #: A directory that cannot be listed fails the seeding, and the probe then gets a fresh prefix.
 _SEED_PROBE_BYTECODE = r"""
 import hashlib, importlib.util, json, marshal, os, sys
@@ -1562,11 +1567,14 @@ for directory, subdirectories, files in os.walk(src, onerror=errors.append):
             os.replace(pending, target)
             record = [digest, hashlib.sha256(pyc).hexdigest()]
         kept[target] = record
-mirror = os.path.dirname(importlib.util.cache_from_source(os.path.join(tree, "_.py")))
-for directory, _, files in os.walk(mirror, onerror=errors.append) if os.path.isdir(mirror) else ():
-    for name in files:
-        if os.path.join(directory, name) not in kept:
-            os.unlink(os.path.join(directory, name))
+mirrors = [os.path.dirname(importlib.util.cache_from_source(os.path.join(top, "_.py"))) for top in (tree, src)]
+if (mirrors[1] + os.sep).startswith(mirrors[0] + os.sep):
+    mirrors.pop()  # src/ is inside the tree: one sweep covers both
+for mirror in mirrors:
+    for directory, _, files in os.walk(mirror, onerror=errors.append) if os.path.isdir(mirror) else ():
+        for name in files:
+            if os.path.join(directory, name) not in kept:
+                os.unlink(os.path.join(directory, name))
 print(json.dumps({"kept": kept, "errors": [str(error) for error in errors]}))
 """
 
@@ -1575,9 +1583,10 @@ def _probe_workspace(root: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, di
     """This process's probe directory, its bytecode prefix for this interpreter, and the last seeding's records.
 
     None when it cannot be used, and the probe then gets a one-shot directory as before: an interpreter with no
-    bytecode cache tag, or a temporary directory inside the tree being certified, where a directory that outlives
-    the probe would become part of the tree. A directory that is no longer the one this process created -- removed,
-    replaced, a link, or (POSIX) no longer owned by this user and private to it -- is never adopted: a new one is made.
+    bytecode cache tag, a temporary directory inside the tree being certified, where a directory that outlives the
+    probe would become part of the tree, or one that is not private to this user from the start. A directory that is
+    no longer the one this process created -- removed, replaced, a link, or (POSIX) no longer owned by this user and
+    private to it -- is never adopted: a new one is made.
     """
     tag = sys.implementation.cache_tag
     if tag is None:
@@ -1594,6 +1603,10 @@ def _probe_workspace(root: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, di
     else:
         base = pathlib.Path(tempfile.mkdtemp(prefix="forge-registry-probe-")).resolve()   # absolute on 3.11 too
         identity = _directory_identity(base)
+        if not _is_probe_directory(base, identity):   # a temporary root that grants others access, or maps owners
+            with contextlib.suppress(OSError):
+                os.rmdir(base)
+            return None
         atexit.register(_remove_probe_directory, os.getpid(), base, identity)
         state.clear()
         state.update(pid=os.getpid(), base=base, identity=identity, records={})
@@ -1608,15 +1621,15 @@ def _directory_identity(path: pathlib.Path) -> tuple[int, int]:
 
 
 def _is_probe_directory(base: pathlib.Path, identity: tuple[int, int]) -> bool:
-    """``base`` is still the directory this process created: the same directory, not a link, and on POSIX still owned
-    by this user with no access for anyone else."""
+    """``base`` is still the directory this process created: the same directory, not a link, and on POSIX owned by
+    this user with no access for its group or anyone else."""
     try:
         found = os.lstat(base)
     except OSError:
         return False
     if not stat.S_ISDIR(found.st_mode) or (found.st_dev, found.st_ino) != identity:
         return False
-    return os.name != "posix" or (found.st_uid == os.getuid() and stat.S_IMODE(found.st_mode) == 0o700)
+    return os.name != "posix" or (found.st_uid == os.getuid() and not stat.S_IMODE(found.st_mode) & 0o077)
 
 
 def _remove_probe_directory(pid: int, base: pathlib.Path, identity: tuple[int, int]) -> None:

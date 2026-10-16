@@ -551,3 +551,141 @@ def test_the_probe_never_leaves_a_directory_inside_the_tree_it_certifies(tmp_pat
     assert workspace and workspace["base"].is_relative_to(inside.resolve())
     assert cc.production_registry_identity(root)["digest"] == "honest"
     assert list(inside.iterdir()) == [] and workspace == {}
+
+
+# ---- second review (LOW-1..LOW-3) -------------------------------------------------------------------------------------
+def _checked_pyc(source: pathlib.Path, planted: bytes) -> bytes:
+    """A CHECKED_HASH .pyc of ``planted`` that carries ``source``'s own hash: the import's check accepts it."""
+    code = compile(planted, str(source), "exec", dont_inherit=True)
+    return (importlib.util.MAGIC_NUMBER + (0b11).to_bytes(4, "little")
+            + importlib.util.source_hash(source.read_bytes()) + marshal.dumps(code))
+
+
+def _probe_with_prefix(root: pathlib.Path, prefix: pathlib.Path, cwd: pathlib.Path) -> dict:
+    """The registry probe exactly as the verifier runs it, reading ``prefix`` with no seeding first."""
+    env = {key: value for key, value in os.environ.items() if not key.upper().startswith(("PYTHON", "FORGE"))}
+    run = subprocess.run([sys.executable, "-E", "-s", "-P", "-X", f"pycache_prefix={prefix}", "-c", cc._REGISTRY_PROBE,
+                          str(root / "src")], cwd=cwd, env=env, capture_output=True, text=True, timeout=300)
+    assert run.returncode == 0, run.stderr
+    return json.loads(run.stdout.strip().splitlines()[-1])
+
+
+def test_a_forged_checked_hash_pyc_in_the_prefix_never_runs(tmp_path, monkeypatch) -> None:
+    """Review LOW-1a: the import compares only the header's hash with the source's, so a .pyc carrying the right hash
+    and other code passes it. Only the seeding's record of the bytes it wrote replaces it."""
+    root = _registry_tree(tmp_path / "tree")
+    capabilities = root / cc.REGISTRY_ENTRY
+    workspace: dict = {}
+    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
+    probes = _record_probes(monkeypatch)
+    try:
+        assert cc.production_registry_identity(root)["digest"] == "honest"
+        prefix = probes[-1].prefix
+        _bytecode_path(prefix, capabilities.resolve()).write_bytes(_checked_pyc(capabilities, _CAPABILITIES % b"planted"))
+        elsewhere = tmp_path / "cwd"
+        elsewhere.mkdir()
+        assert _probe_with_prefix(root, prefix, elsewhere)["digest"] == "planted"   # positive control: it passes
+        assert cc.production_registry_identity(root)["digest"] == "honest"
+    finally:
+        if workspace:
+            cc._remove_probe_directory(os.getpid(), workspace["base"], workspace["identity"])
+
+
+@pytest.mark.parametrize("seeder", ["import sys; sys.exit(1)",
+                                    "print('{\"kept\": {}, \"errors\": [\"a directory could not be listed\"]}')"])
+def test_a_seeding_that_fails_gives_the_probe_a_fresh_prefix(tmp_path, monkeypatch, seeder) -> None:
+    """Review LOW-1b: a prefix whose seeding did not complete is never handed to the probe."""
+    root = _registry_tree(tmp_path / "tree")
+    capabilities = root / cc.REGISTRY_ENTRY
+    workspace: dict = {}
+    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
+    probes = _record_probes(monkeypatch)
+    try:
+        assert cc.production_registry_identity(root)["digest"] == "honest"
+        reused = probes[-1].prefix
+        _bytecode_path(reused, capabilities.resolve()).write_bytes(_checked_pyc(capabilities, _CAPABILITIES % b"planted"))
+        monkeypatch.setattr(cc, "_SEED_PROBE_BYTECODE", seeder)
+        assert cc.production_registry_identity(root)["digest"] == "honest"
+        assert probes[-1].prefix != reused and not probes[-1].prefix.exists()   # one-shot, removed after the probe
+    finally:
+        if workspace:
+            cc._remove_probe_directory(os.getpid(), workspace["base"], workspace["identity"])
+
+
+def test_the_analysis_memo_is_keyed_by_the_parsers_integer_digit_limit(tmp_path) -> None:
+    """Review LOW-2: whether a file with a long literal parses at all depends on the limit, so the memo does too."""
+    path = tmp_path / "big.py"
+    path.write_bytes(b"N = " + b"7" * 5000 + b"  # " + uuid.uuid4().hex.encode() + b"\n")
+    limit = sys.get_int_max_str_digits()
+    sys.set_int_max_str_digits(0)
+    try:
+        assert cc.dynamic_imports(path) == []
+    finally:
+        sys.set_int_max_str_digits(limit)
+    with pytest.raises(SyntaxError, match="digits"):
+        cc.dynamic_imports(path)
+
+
+def _link_directory(link: pathlib.Path, target: pathlib.Path) -> None:
+    """A directory link at ``link``: a symbolic link, or on Windows without that privilege a junction."""
+    try:
+        link.symlink_to(target, target_is_directory=True)
+        return
+    except OSError:
+        pass
+    if os.name != "nt":
+        pytest.skip("this platform cannot create a directory link")
+    import _winapi
+
+    try:
+        _winapi.CreateJunction(str(target), str(link))
+    except OSError:
+        pytest.skip("this platform cannot create a directory link")
+
+
+def test_a_src_that_resolves_outside_the_tree_is_swept_too(tmp_path, monkeypatch) -> None:
+    """Review LOW-3: the probe imports from the resolved src/, so that part of the prefix is swept even when it is not
+    under the tree's part -- or bytecode for what the seeding does not compile would carry into the next probe."""
+    elsewhere = _registry_tree(tmp_path / "elsewhere")
+    root = tmp_path / "tree"
+    root.mkdir()
+    _link_directory(root / "src", elsewhere / "src")
+    try:
+        assert not (root / "src").resolve().is_relative_to(root.resolve())
+        probes = _record_probes(monkeypatch)
+        assert cc.production_registry_identity(root)["digest"] == "honest"
+        stray = _bytecode_path(probes[-1].prefix, (root / "src").resolve() / "engcore" / "stray.py")
+        stray.write_bytes(b"stray bytecode")
+        assert cc.production_registry_identity(root)["digest"] == "honest"
+        assert not stray.exists()
+    finally:
+        if (root / "src").is_symlink():
+            (root / "src").unlink()
+        else:
+            os.rmdir(root / "src")   # a junction: removes the link, never what it points at
+
+
+def test_a_probe_directory_that_is_not_private_from_the_start_is_never_used(tmp_path, monkeypatch) -> None:
+    """Second review O3: a temporary root that grants others access (setgid, a default ACL) is caught right after
+    mkdtemp; the probe then gets a one-shot prefix instead of a directory its own exit handler would refuse to remove."""
+    root = _registry_tree(tmp_path / "tree")
+    created: list[pathlib.Path] = []
+    real_mkdtemp = tempfile.mkdtemp
+
+    def mkdtemp(*args, **kwargs):
+        path = real_mkdtemp(*args, **kwargs)
+        if kwargs.get("prefix") == "forge-registry-probe-":
+            created.append(pathlib.Path(path))
+            if os.name == "posix":
+                os.chmod(path, 0o750)
+        return path
+
+    workspace: dict = {}
+    monkeypatch.setattr(cc, "_PROBE_WORKSPACE", workspace)
+    monkeypatch.setattr(tempfile, "mkdtemp", mkdtemp)
+    if os.name != "posix":   # Windows has no mode bits to check: make the directory fail the identity check instead
+        monkeypatch.setattr(cc, "_directory_identity", lambda path: (-1, -1))
+    probes = _record_probes(monkeypatch)
+    assert cc.production_registry_identity(root)["digest"] == "honest"
+    assert created and not any(path.exists() for path in created) and workspace == {}
+    assert not probes[-1].prefix.exists()   # the one-shot prefix, removed after the probe
