@@ -4382,3 +4382,85 @@ abba1c6a....
 - There is no resume: `--reuse` discards evidence and re-runs every gate (~3.5 h).
 - The certification source stays 0bc8b1cb.
 - Waiting for owner approval.
+
+## 2026-10-16 -- Landing pass: recent active work merged into main (integration/main-landing-2026-10-16)
+
+**Owner direction (2026-10-16).**
+- "Merge everything not merged and resolve the conflicts."
+- Scope: recent active work. September and early-October stale branches are skipped.
+- Certified files: merge now, recertify later.
+
+**Merged, by merge commit** (branch heads kept, so the PRs show as merged):
+- #145 `docs/local-assurance-interpreter`;
+- #143 `fix/ci-reproduce-and-g0-record`, and `fix/ci-reproduce-docker-history` (local);
+- #144 `fix/electrical-support-gates`;
+- #130 `perf/test-suite-runtime` and #131 `claude/adoring-cray-jj367z` (docs);
+- `codex/final-test-assurance-closeout`, `codex/repair-scientific-boundaries` and `feat/a1-5-operating-rating` (local);
+- the chain `feat/battery-1rc-crosscell`. It carries:
+  - `integration/g0a1-battery-1rc` (0bc8b1cb);
+  - `integration/g0-a1-unblock`;
+  - `fix/br15-authority-closure`;
+  - `feat/br16-genesis-lite-benchmark`;
+  - `feat/battery-1rc-scientific-closure`;
+  - `feat/battery-1rc-identifiability`;
+  - the Kirkaldy cross-cell experiment.
+
+**Not merged:**
+- `fix/final-assurance-blockers`, which is superseded:
+  - Its `tools/test_impact.py` scanner conflicts with main's newer `tools.certification.ownership` design.
+  - Its 7 tests in `tests/test_impact_repository_scope.py` encode the replaced contract (ValueError) and fail against
+    main.
+  - Its benchmark digest re-pin targets the scientific tree at 5d73e8f5 (OD-17).
+- Stale branches, left untouched and listed for OD-11 hygiene:
+  - September: provider-architecture-pybamm-pybop, battery-voltage-s3-recovery, battery-thermal-flagship-sprint-3,
+    domain-real-data, multidomain-science-hardening, wip/applicability-screens-and-prerequisites, evidence-v11,
+    fix-bisect-table, #39 core/p0-trust-boundaries-v2, #24 chatgpt/core-v2-trust-repair-1-4,
+    codex/critical-production-closure, p0 fixes, docs/blind-rediscovery-benchmark-v1, docs/main-check-2026-10-13;
+  - early October: #107 ci/self-hosted-heavy-runner, ci/local-only-assurance, ci/incremental-hardened-recertification.
+
+**Conflict resolutions:**
+- `docs/work/PROGRESS.md` and `ACTIVE_PLAN.md`: union of both sides.
+- #130 and #131 both numbered a new decision OD-15. #131's `is_usable` decision is now **OD-21**: OD-15 stays #130's
+  CI-policy decision, and OD-18..20 belong to the G0/A1 chain. References were updated, and the duplicate OD-14 row is
+  gone.
+- `uq/budget/aggregation.py`: the auto-merge produced two empty-budget refusals. Main's ("an empty budget is UNKNOWN,
+  not zero") is kept. The branch's serializer refusal and its explicit-zero test are kept.
+- `CORE_FREEZE_POLICY.md` and `test_core_api_layering.py`: both new non-Core packages are kept (`authority`, `mind`).
+
+**Fixes needed to make the combination honest:**
+- Core purity: the `operating_rating.py` docstring said "motor"/"flight", which is thing vocabulary.
+- The schema-reader invariant: `engcore.mind` records read payloads with no schema. `MindState` now writes and checks
+  `forge.mind.state/1`, and its nested records are path-qualified exemptions read only through it.
+- Scientific review (forge-scientific-reviewer, CHANGES REQUIRED) of the a1-5 Core module:
+  - MAJOR 1: a caller admission id plus an unpublished quantity yielded SUPPORTED_WITHIN_RATING. The operating point
+    now needs a compared, same-kind published limit.
+  - MAJOR 2: the packet and multirotor mission adapter moved to `engcore.systems.products.drone_ratings`.
+  - Both fixed, with the counterexample pinned by a test.
+- The BR-15 recertification instruction names the venv interpreter.
+
+**Open review MINORs** (not fixed in this pass):
+- `UncertaintyBudgetReport` has no `__post_init__`, so an empty, zero report can be constructed directly. This hole
+  pre-exists the pass.
+- `claims/compiler.py` labels every NOT_ASSESSABLE applicability as CAPABILITY_MISSING. That is conservative, but
+  mislabelled.
+- In `operating_rating`, any one supported component makes the mission SUPPORTED. The any-of/all-of semantics are not
+  declared.
+- `engcore.mind`'s `authority_result_id` is an unchecked string. It is harmless while nothing consumes MindState as a
+  verdict.
+- Main's ownership module misses three hostile cases from the unmerged branch:
+  - inventory names escaping the root;
+  - worktree `.git` pointing at another repository;
+  - a tracked `.py` replaced by a directory.
+
+**Certification state.** `main` now carries uncertified changes to certified files: BR-15 certification tooling, the
+battery 1RC route in the production registry, and the Core module `scientific/knowledge/operating_rating.py`. The owner
+accepted recertifying afterwards. `test_the_certificate_records_the_v1_relationship_truthfully` now fails with the
+expected staleness (the V1-compatible Core digest moved), and `test_the_certificate_describes_this_tree` already failed
+on main. The hardened run (prepared `~/cons-assure-3.sh` + `~/assurance-preflight.sh`) must target the new main HEAD,
+not 0bc8b1cb.
+
+**Tests** (WSL, CPython 3.12 venv, `PYTHONPATH=<tree>/src:<tree>`):
+- `python -m pytest -m "not expensive" -q -n 4 -p no:cacheprovider -p no:randomly`.
+- Pristine main e193e573: 10374 passed, 1 failed (`test_the_certificate_describes_this_tree`), 156 skipped.
+- Landing tree bd927d8a: 10719 passed, 2 failed, 156 skipped, tracked tree clean afterwards. The only failure not present on main is `test_the_certificate_records_the_v1_relationship_truthfully` (expected certificate staleness, above). Earlier landing trees: 4f7576e0 had 3 failures (the third was the mind schema invariant, fixed in eecef67b); eecef67b had the same 2.
+- Windows .venv 3.14 targeted runs: `tests/mind tests/test_core_semantic_invariants.py tests/test_core_api_layering.py tests/test_core_guards.py` 417 passed; `tests/scientific/knowledge tests/test_core_guards.py` 309 passed; `tests/uq/budget tests/claims/test_unassessable_compilation.py tests/foundations/test_discovery_deadline.py` 20 passed, 11 skipped (POSIX-only).
