@@ -41,7 +41,6 @@ from __future__ import annotations
 
 import os
 import pathlib
-import stat
 import subprocess
 from dataclasses import dataclass
 
@@ -117,6 +116,10 @@ def _inventory_name(name: str) -> str:
     return name
 
 
+#: Windows ``IO_REPARSE_TAG_MOUNT_POINT`` (a junction). ``stat`` defines it only on Windows; only Windows sets the tag.
+_IO_REPARSE_TAG_MOUNT_POINT = 0xA0000003
+
+
 def is_link(path: pathlib.Path | str) -> bool:
     """A symlink or a Windows junction (a directory link that ``is_symlink`` does not report). Never followed."""
     path = pathlib.Path(path)
@@ -129,7 +132,7 @@ def is_link(path: pathlib.Path | str) -> bool:
         tag = getattr(os.lstat(path), "st_reparse_tag", 0)  # Python 3.11 on Windows
     except OSError:
         return False
-    return bool(tag) and tag == getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", -1)
+    return tag == _IO_REPARSE_TAG_MOUNT_POINT
 
 
 def _same_path(left: str, right: pathlib.Path, *, base: pathlib.Path | None = None) -> bool:

@@ -370,7 +370,7 @@ def test_a_junction_is_recognised_from_its_reparse_tag_without_is_junction(tmp_p
     seed = tmp_path / "seed"
     _write(seed, "linked/inner.py")
     tagged = types.SimpleNamespace(st_mode=stat.S_IFDIR | 0o755, st_nlink=1, st_size=0,
-                                   st_reparse_tag=stat.IO_REPARSE_TAG_MOUNT_POINT)
+                                   st_reparse_tag=mw._IO_REPARSE_TAG_MOUNT_POINT)
     _windows_scandir(monkeypatch, lambda real: _Entry(real, info=tagged if real.name == "linked" else None))
     entries = mw.snapshot(seed)
     assert entries["linked"].kind == "special" and "linked/inner.py" not in entries

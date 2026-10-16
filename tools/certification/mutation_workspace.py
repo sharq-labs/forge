@@ -99,13 +99,16 @@ def _digest(path, *, telemetry=None, area=None, relative=None):
     return digest.hexdigest()
 
 
+#: Windows ``IO_REPARSE_TAG_MOUNT_POINT`` (a junction). ``stat`` defines it only on Windows; only Windows sets the tag.
+_IO_REPARSE_TAG_MOUNT_POINT = 0xA0000003
+
+
 def _is_junction(entry, info):
     """A Windows junction: ``DirEntry.is_junction`` on 3.12+, the stat reparse tag on 3.11. Never walked."""
     probe = getattr(entry, "is_junction", None)
     if probe is not None:
         return probe()
-    tag = getattr(info, "st_reparse_tag", 0)
-    return bool(tag) and tag == getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", -1)
+    return getattr(info, "st_reparse_tag", 0) == _IO_REPARSE_TAG_MOUNT_POINT
 
 
 def snapshot(tree, *, identity=None, telemetry=None, area=None):
