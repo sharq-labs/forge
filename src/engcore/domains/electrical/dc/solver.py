@@ -139,6 +139,28 @@ class ElectricalDCSolver(DeclaredSupport):
     serves_capabilities = frozenset({ELECTRICAL_DC_LINEAR.name})
     served_models = DC_MODELS
 
+    def additional_support_gap(self, problem) -> tuple[str, ...]:
+        """Every model the problem names must be one this solver implements.
+
+        The core's served-model check asks only whether the problem names *one*
+        served model, so a problem naming a served model alongside an unknown
+        one was accepted and the unknown model was silently never assessed. The
+        result's ``models`` come from the circuit, so nothing would show it.
+        Refused here, by (model_id, version), until the core's rule is changed.
+        """
+        served = {model.key for model in DC_MODELS}
+        unserved = sorted(
+            f"{model.model_id}@{model.version}"
+            for model in problem.models
+            if model.key not in served
+        )
+        if unserved:
+            return (
+                f"the problem names {unserved}, which this solver does not "
+                f"implement; a result would silently omit them",
+            )
+        return ()
+
     def prepare(self, problem: ScientificProblem) -> PreparedSolve:
         circuit = self.bound_circuit(problem.problem_id)
         if circuit is None:

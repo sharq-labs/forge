@@ -3232,3 +3232,1235 @@ Not done: the Docker `reproduce` fix (needs OD-3 for `tests.yml`); X08 is not wi
 system-runtime report yet; SCIENTIFIC tier, regression pack and Linux runs **NOT RUN**.
 
 Rerun after commit `aa160b6d` (clean tree): `python -m pytest tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks tests/test_materials_engine.py -q` -> 25 passed. The branch's FAST failure set therefore equals the pristine base's (153 failed, 22 errors on Windows); no failure is attributable to this change.
+
+## 2026-10-15 — Red `reproduce` job: full read-only history, non-root user, trixie ngspice (branch `fix/ci-reproduce-docker-history`, worktree `D:/forge-reproduce`, local only)
+
+Base `origin/main` @ `e193e573`. Tests run `38544091505`, job `reproduce` (115786199600):
+161 FAST failures (10164 passed, 178 skipped). On the same commit, hosted `fast (py 3.12)` failed only
+`tests/test_core_certificate.py::test_the_certificate_describes_this_tree` (OD-3 drift:
+`tests/test_formal_xdist.py`, `tests/mutation_guards.py`).
+
+Causes, from the job log:
+- **149 history.** `.dockerignore` drops `.git` and the checkout is depth 1. Errors included
+  `no repository root above /crafty/...`, `git rev-parse HEAD` exiting 128, `af43c896`/`7876bd9f`
+  snapshots unreadable, and replay `NOT_REPRODUCIBLE` (no commit identity).
+- **1 root.** `test_mutation_workspace.py::test_mid_walk_failure_still_reports_entries_already_scanned`
+  reported *DID NOT RAISE PermissionError*: chmod 000 does not stop root. The earlier "150 history"
+  count included this one.
+- **11 ngspice.** In `tests/oracles/test_oracle_ngspice_dc.py`, bookworm's ngspice-39 printed the
+  correct OP and exited 1 (*no simulations run*). In `src/main.c` at tag ngspice-39 there is no
+  `sim_status` branch. At tags 42 and 44.2 the batch-exit block is byte-identical and returns
+  `EXIT_NORMAL` after a `.control` simulation. Debian trixie ships `44.2+ds-1`, whose only patch is
+  `fixes/spelling-Fix-misspelled-word-unkown.patch` (read from sources.debian.org).
+
+Change (`Dockerfile`, `.github/workflows/tests.yml` reproduce job, `docs/reproduce.md`):
+- `python:3.12-slim-trixie`.
+- The job checks out with `fetch-depth: 0` and `persist-credentials: false`, then runs
+  `docker run --rm -v "${GITHUB_WORKSPACE}/.git:/mnt/history:ro"`.
+- The script copies `/mnt/history` to `/crafty/.git` and runs as `crafty` (uid 10001).
+- It refuses (exit 2) when history is missing, mounted at the old `/crafty/.git`, shallow, or
+  when `HEAD` does not match the image tree.
+- The oracle's `returncode == 0` assertion is unchanged, and nothing is deselected.
+
+**Failed approach, do not repeat:** mounting `.git` in place with
+`git config --system --add safe.directory /crafty`. `tools/certification/ownership.py` runs git with
+global and system config switched off, so `git ls-files` still refused the foreign-owned mount as
+*dubious ownership*. Exporting `GIT_CONFIG_SYSTEM` in the test environment trips admission instead
+(*inherited Git overrides refused*).
+
+Executed (WSL Ubuntu 24.04, CPython 3.12.3, ngspice-42; no Docker anywhere locally):
+- Emulation v1 (in-place ro bind mount, safe.directory via `GIT_CONFIG_SYSTEM`, run as root):
+  `python -m pytest -m "not expensive" -q -n 4 --dist loadfile`.
+  Result: FAIL, 7 failed / 4 errors, 10365 passed, 155 skipped.
+  - 6 `OwnershipError` dubious ownership: `test_change_impact` ×4 errors + f7,
+    `test_repository_ownership::test_the_real_checkout_graph_never_contains_an_environment`.
+  - Root: `test_mutation_workspace::test_mid_walk...`.
+  - Emulation artifacts: `test_local_telemetry...` (env override) and `test_escrow_isolation` ×2
+    (WSL root can `unshare`).
+  - OD-3: the certificate test.
+- Emulation v2, the shipped design: tree owned by uid 1000, history a root-owned copy unwritable by
+  uid 1000, reproduce script generated from the Dockerfile's `printf` block.
+  - Refusal controls: no history, old mount point, depth-1 history and tree drift each exit 2;
+    the control exits 0; the source history is not writable by the test user.
+  - The generated `reproduce`: `1 failed, 10375 passed, 155 skipped in 168.40s`. FAILED:
+    `test_the_certificate_describes_this_tree` (drift: `.github/workflows/tests.yml` from this
+    change, plus main's two files). This is the hosted failure set plus this change's certified file.
+  - `pytest tests/oracles/test_oracle_ngspice_dc.py tests/test_mutation_workspace.py::test_mid_walk... tests/test_recertification_scope.py -q -rs`:
+    117 passed, 0 skipped.
+  - `python tools/forge_check.py --changed --base e193e573 --workers 4`: exit 0, 279 passed.
+    It reports `.github/workflows/tests.yml` as RECERTIFICATION_REQUIRED (`certified:certification_control`)
+    and `Dockerfile` as unclassified reach.
+- **NOT RUN:** `docker build` / `docker run`, an ngspice-44.2 binary, SCIENTIFIC, hardened
+  recertification. The first pushed `reproduce` run is the measurement. While main's certificate
+  is stale, expect exactly the OD-3 certificate failure there; the benchmark stage does not run
+  under `set -e`.
+
+Owner: the workflow edit needs OD-3 recertification. Nothing is pushed or merged.
+
+## 2026-10-15 - Solver support-gate review fixes
+
+- Finding: ngspice DC adapter matched realizations by model id only (served_models=()), so a problem naming electrical.dc.kcl@99.0 was accepted while the native solver refused it.
+- Finding: the native DC adapter accepted a problem naming a served model alongside an unknown one; the unknown model was silently never assessed.
+- Fix: dc_realizations.py keys realizations by (model_id, version); ngspice.py gate and binding use the version key; dc/solver.py adds additional_support_gap refusing any named model it does not serve. The core protocol.py was NOT changed (pinned by certification/current_core_v2.json, digest-protected).
+- Tests added: tests/domains/electrical/test_support_version_gate.py (6 tests; 4 fail on the committed files, confirmed by swap).
+- Command: .venv/Scripts/python.exe -m pytest tests/domains/electrical tests/test_heterogeneous_ngspice.py -q -p no:cacheprovider --basetemp=<scratch>
+  Result: 393 passed.
+- Command: .venv/Scripts/python.exe -m pytest <127 test files referencing electrical/ngspice/consensus> -m "not expensive and not campaign" -q -n 4
+  Result: 3084 passed, 3 skipped, 13 failed, 1 error. All 13 failures and the error are pre-existing harness issues: ModuleNotFoundError for bare sibling test imports (test_cross_solver_consensus, test_trusted_consensus_gate, mutation_guards) and two guard tests (test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green, test_the_domain_names_were_derived_from_the_packages_not_listed) that also fail on the committed files.
+- Not run: the full FAST/SCIENTIFIC tiers and the core certificate test (protocol.py untouched).
+- Open (not fixed): DC validation _worst_against skips NaN residuals (electrical/dc/validation.py); CSTR sampled-extrema admission in cstr/solver.py bundle path; the core rule "any-overlap" in scientific/solvers/protocol.py needs a core-freeze decision.
+
+## 2026-10-12 G0 evidence: FAST on `main` @ `8b028dc` in a supported Python, and failure attribution
+
+- Command: `env -u GIT_* <py3.12 venv>/bin/python -m pytest -m "not expensive" -q -n 2 -p no:cacheprovider` in a clean
+  worktree of `main` @ `8b028dc` (CPython 3.12.13 via uv, pytest 9.1.1, `.[dev,oracles,benchmarks,symbolic]`, the
+  container's `GIT_CONFIG_*` proxy variables removed, running as root). Result: 7 failed, 9507 passed, 192 skipped,
+  5 errors, 992 s. Tree clean afterwards.
+- Re-run of those 12 node ids with `mcp>=2.1 anyio>=4.0` added: 2 failed, 41 passed. **So on a supported Python with
+  the extras CI installs, FAST on `main` has exactly two failures:**
+  - `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` — GOVERNANCE_ONLY candidate (evidence
+    record not yet complete): areas `certification_control` (`skip_admission.py`, `test_skip_admission.py`), `harness`
+    (`test_core_guards.py`) and `runtime_dependencies` (`pyproject.toml`) changed after recertification `d383eed0`.
+  - `tests/test_mutation_workspace.py::test_mid_walk_failure_still_reports_entries_already_scanned` — ENVIRONMENT:
+    `chmod(0)` does not deny root; the container runs as uid 0.
+- Attribution of the earlier 3.13 drift set (same tests, same tree):
+  - six freeze-v4 / batch56 failures are **Python-version artefacts**: `tools/certification/api_surface_v4.py` records
+    methods Forge classes inherit from builtins; on 3.13 that adds 106 (`str.format`, `format_map`,
+    `BaseException.add_note`, `with_traceback`, ...) and changes 29 (`str.replace` `count` became keyword-capable),
+    with zero differences in Forge-defined members. The v4 surface is therefore only verifiable on <= 3.12.
+  - `test_local_telemetry_is_outside_manifest_and_cannot_verify_as_receipt` is the `GIT_*` environment refusal in
+    `local_assurance._assurance_lock`, not a defect.
+- Without the `[mcp]` extra, 5 modules fail to import and 5 tests fail (`server.py` imports the SDK; several tests
+  import it without `importorskip`, and five modules import helpers from `tests/mcp/test_battery_boundary.py`, which
+  skips at module level). `pyproject.toml` states the suite must stay green without `[mcp]`; CI always installs it,
+  so the rule is untested and currently false.
+- Benchmark rounds `model_measurement_validation` and `empirical_validation` pin `EXPECTED_SCIENTIFIC_DIGEST` (a digest
+  of live `src/engcore/scientific`); it last matched at `89b6eb31` and broke at `10bcbb65` (PR #21, 2026-09-12). Their
+  "rebuild reproduces the published gates" tests have failed since, and the MV one rewrites the committed
+  `SAFETY_GATES.json`.
+- Checked and NOT a problem: a cProfile run attributed 478 s to one HiGHS call; measured directly it is 12 `linprog`
+  calls totalling 0.07 s (profiler artefact). Test collection imports cost 8 s for 571 modules.
+- Measured, not changed: `_distributions_providing` calls `importlib.metadata.packages_distributions()` per module
+  (26 calls, ~612k file lookups each run) and `test_core_api_contracts._guard_module()` re-executes
+  `test_core_guards.py` per call; caching both took the four dependency-hygiene tests from 75 s to 30 s (same result).
+
+## 2026-10-12 PR landing pass — outcome (owner direction: resolve conflicts, merge what passes every gate)
+
+- Merged, one at a time, each by a merge commit after merging `main` into the PR branch (no rebase, no force push, no
+  force merge; each landing gate is recorded in the PR's own entry above):
+  - #126 -> `17444e14`;
+  - #123 -> `21b7d20f`;
+  - #117 -> `2d0fa6c3`.
+  After each merge, `main`'s tree was checked identical to the tested PR head (`git rev-parse origin/main^{tree}`).
+- Blocked (not merged, no branch changed):
+  - #107 (self-hosted heavy CI runner, 237 behind). `certification/current_core_v2.json` conflicts between two
+    owner certificates. Resolving that means choosing one or editing a certified artifact. It also rewrites
+    `tests.yml` / `recertify-hardened-core.yml` and adds self-hosted runners that read secrets: an owner decision (OD-11).
+  - #39 (draft) and #24 (base `claude/core-v2-hybrid-uq`), 1,530 / 1,569 behind `main` (GitHub compare). They are not
+    unrelated histories: the missing merge base came from this session's shallow clone. Their regression tests,
+    copied onto `main` `2d0fa6c3` and removed afterwards:
+    - `python -m pytest -q tests/_stale39_* tests/_stale24_*` -> 6 failed, 14 passed.
+    - Two are API drift: hybrid `considered` rows; calibration `residuals` key.
+    - Two are wording only: `main` already refuses the same non-finite / inconsistent predictive UQ inputs, with
+      different messages.
+    - Two (`test_result_is_usable_only_when_every_declared_model_is_in_domain`, in both PRs) are a real semantic
+      difference. `main` deliberately excludes validity from `ScientificResult.is_usable`
+      (`docs/assurance/CORE_SEMANTIC_INVARIANTS.md`, truth table pinned by test). Changing that in frozen Core is a
+      scientific-design decision: OD-21 (numbered OD-15 on its branch; renumbered at the 2026-10-16 landing).
+- Post-pass state: open PRs #107, #39, #24. Hardened recertification of `main`: NOT RUN (OD-3). FAST on `2d0fa6c3`
+  itself: NOT RUN (its tree = `9e92573e`, whose FAST-tested parent `bfccb351` differs by one PROGRESS entry).
+- Failed approach: `git merge-tree` against #39 / #24 exited 128 ("no merge base"). That was the shallow clone, not
+  unrelated histories. Use the GitHub compare API, or deepen the clone, before calling histories unrelated.
+
+
+## 2026-10-13 Final test infrastructure assurance closeout — BLOCKED
+
+Source origin/main 5d73e8f5118aa845f1957decc5aae986e72476a9, tree ed305a44e69429fe06bb1e92954237aadd005080. Dedicated Windows and Linux worktrees; original dirty checkout preserved. Full commands, exact failures, outcomes and limits: `docs/work/FINAL_TEST_INFRASTRUCTURE_ASSURANCE_2026-10-13.md`. Raw argv/results/JUnit: `D:/forge-final-assurance-evidence/executed-commands-and-results.json`.
+
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "tools.certification.core_certificate", "--verify"]`
+result: exit 1; wall 1.3 s; counts null; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "tools.certification.core_freeze_v4", "--verify"]`
+result: exit 1; wall 17.22 s; counts null; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.11/bin/python", "-c", "import sys,pytest,xdist,platform; print(sys.version); print(platform.platform()); print(\"pytest\",pytest.__version__,\"xdist\",xdist.__version__)"]`
+result: exit 0; wall 1.84 s; counts null; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.11/bin/python", "-m", "pytest", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "-q", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-guard-311.xml"]`
+result: exit 0; wall 9.22 s; counts {"tests": 1, "failures": 0, "errors": 0, "skipped": 0}; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.11/bin/python", "-m", "pytest", "-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-fast-311.xml"]`
+result: exit 1; wall 140.22 s; counts {"tests": 10185, "failures": 2, "errors": 0, "skipped": 157}; tracked byte drift 0; git status ''
+failure: `tests.test_core_certificate::test_the_certificate_describes_this_tree`
+failure: `tests.test_change_impact::test_the_old_gap_a_domain_models_own_tests_are_now_selected`
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-c", "import sys,pytest,xdist,platform; print(sys.version); print(platform.platform()); print(\"pytest\",pytest.__version__,\"xdist\",xdist.__version__)"]`
+result: exit 0; wall 1.21 s; counts null; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "pytest", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "-q", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-guard-312.xml"]`
+result: exit 0; wall 9.22 s; counts {"tests": 1, "failures": 0, "errors": 0, "skipped": 0}; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "pytest", "-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-fast-312.xml"]`
+result: exit 1; wall 132.22 s; counts {"tests": 10185, "failures": 2, "errors": 0, "skipped": 157}; tracked byte drift 0; git status ''
+failure: `tests.test_core_certificate::test_the_certificate_describes_this_tree`
+failure: `tests.test_change_impact::test_the_old_gap_a_domain_models_own_tests_are_now_selected`
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "pytest", "-m", "not campaign", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--deselect", "tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process", "--deselect", "tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure", "--deselect", "tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical", "--deselect", "benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates", "--deselect", "benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-scientific-312.xml"]`
+result: exit 1; wall 234.26 s; counts {"tests": 10758, "failures": 2, "errors": 0, "skipped": 157}; tracked byte drift 0; git status ''
+failure: `tests.test_change_impact::test_the_old_gap_a_domain_models_own_tests_are_now_selected`
+failure: `tests.test_core_certificate::test_the_certificate_describes_this_tree`
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "tools/forge_check.py", "--regression"]`
+result: exit 0; wall 11.21 s; counts null; tracked byte drift 0; git status ''
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "pytest", "-q", "-n", "8", "--dist", "loadfile", "--junitxml", "/mnt/d/forge-final-assurance-evidence/linux-full-312.xml"]`
+result: exit 1; wall 147.29 s; counts {"tests": 10768, "failures": 4, "errors": 0, "skipped": 157}; tracked byte drift 0; git status ''
+failure: `benchmarks.empirical_validation.tests.test_empirical_validation::test_rebuilding_everything_reproduces_the_published_gates`
+failure: `benchmarks.model_measurement_validation.tests.test_model_measurement_validation::test_rebuilding_everything_reproduces_the_published_gates`
+failure: `tests.test_core_certificate::test_the_certificate_describes_this_tree`
+failure: `tests.test_change_impact::test_the_old_gap_a_domain_models_own_tests_are_now_selected`
+command argv: `["/home/dev_kaeem/forge-final-assurance/.forge/venvs/3.12/bin/python", "-m", "tools.certification.assert_clean_tree"]`
+result: exit 0; wall 1.21 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.core_certificate", "--verify"]`
+result: exit 1; wall 1.69 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.core_freeze_v4", "--verify"]`
+result: exit 1; wall 1.58 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "tools/forge_check.py", "--regression"]`
+result: exit 0; wall 20.72 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "-q", "--junitxml", "D:\\forge-final-assurance-evidence\\winretry-dependency-guard.xml"]`
+result: exit 0; wall 36.62 s; counts {"tests": 1, "failures": 0, "errors": 0, "skipped": 0}; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--junitxml", "D:\\forge-final-assurance-evidence\\winretry-fast.xml"]`
+result: exit 1; wall 222.2 s; counts {"tests": 10056, "failures": 256, "errors": 27, "skipped": 210}; tracked byte drift 0; git status ''
+failure: `::tests.domains.battery.test_audit_domains_battery_pulse`
+failure: `::tests.mcp.test_answer`
+failure: `::tests.mcp.test_audit_domains_electrothermal_transient`
+failure: `::tests.mcp.test_audit_domains_refused_coupling`
+failure: `::tests.mcp.test_claim_assessment`
+failure: `::tests.mcp.test_core_scientific_audit_batch8`
+failure: `tests.test_mutation_workspace::test_manifest_is_complete_deterministic_and_includes_git`
+failure: `tests.test_mutation_workspace::test_mutation_changes_worker_only_and_repairs_exact_bytes`
+failure: `tests.test_mutation_workspace::test_restore_repairs_all_contamination_types[deleted]`
+failure: `tests.test_mutation_workspace::test_restore_repairs_all_contamination_types[unexpected]`
+failure: `tests.test_mutation_workspace::test_restore_repairs_all_contamination_types[mode]`
+failure: `tests.test_mutation_workspace::test_restore_repairs_all_contamination_types[git]`
+failure: `tests.test_mutation_workspace::test_restore_repairs_all_contamination_types[replaced-directory]`
+failure: `tests.test_mutation_workspace::test_contamination_before_attempt_invalidates_without_entering`
+failure: `tests.test_mutation_workspace::test_restore_failure_cannot_issue_a_verdict_or_start_next_attempt`
+failure: `tests.test_mutation_workspace::test_seed_tampering_refuses_restore`
+failure: `tests.test_mutation_workspace::test_next_mutation_observes_pristine_identity`
+failure: `tests.test_mutation_workspace::test_failure_restores_then_cleans_owned_workspace[OSError]`
+failure: `tests.test_mutation_workspace::test_failure_restores_then_cleans_owned_workspace[KeyboardInterrupt]`
+failure: `tests.test_mutation_workspace::test_concurrent_shards_have_distinct_mutable_state`
+failure: `tests.test_mutation_workspace::test_worker_symlink_is_removed_without_touching_source`
+failure: `tests.test_mutation_workspace::test_seed_symlink_and_git_external_pointer_are_refused`
+failure: `tests.test_mutation_workspace::test_linked_artifacts_and_repository_local_storage_are_refused`
+failure: `tests.test_mutation_workspace::test_v4_population_once_and_existing_transcript_contract`
+failure: `tests.test_mutation_workspace::test_v4_failure_paths_restore_before_next_mutation[no-report]`
+failure: `tests.test_mutation_workspace::test_v4_failure_paths_restore_before_next_mutation[timeout]`
+failure: `tests.test_mutation_workspace::test_v4_failure_paths_restore_before_next_mutation[application-refusal]`
+failure: `tests.test_mutation_workspace::test_v4_restore_failure_never_returns_killed`
+failure: `tests.test_mutation_workspace::test_formal_control_first_single_population_and_guard_transcript`
+failure: `tests.test_mutation_workspace::test_local_telemetry_is_outside_manifest_and_cannot_verify_as_receipt`
+failure: `tests.test_mutation_workspace::test_detached_children_are_drained_after_adoption`
+failure: `tests.test_mutation_workspace::test_undrained_descendant_refuses_without_restoration_or_cleanup`
+failure: `tests.test_mutation_workspace::test_descendant_drain_timeout_is_not_a_mutation_verdict`
+failure: `tests.test_mutation_workspace::test_parent_retains_unreleased_worker_storage[False]`
+failure: `tests.test_mutation_workspace::test_parent_retains_unreleased_worker_storage[True]`
+failure: `tests.test_mutation_workspace::test_external_git_configuration_is_refused[[core]\nworktree = /external/source\n]`
+failure: `tests.test_mutation_workspace::test_external_git_configuration_is_refused[[Core]\nworktree = /external/source\n]`
+failure: `tests.test_mutation_workspace::test_external_git_configuration_is_refused[[cOrE]\nWorkTree = /external/source\n]`
+failure: `tests.test_mutation_workspace::test_external_git_configuration_is_refused[[include]\npath = /external/config\n]`
+failure: `tests.test_mutation_workspace::test_pristine_index_is_reused_without_retaining_file_bytes`
+failure: `tests.test_mutation_workspace::test_dirty_hints_do_not_hide_unrelated_same_size_and_restored_timestamp_bytes`
+failure: `tests.test_mutation_workspace::test_known_target_restore_is_sparse_but_worker_sha_remains_complete`
+failure: `tests.test_mutation_workspace::test_new_index_cannot_mask_seed_link_or_type_contamination[same-size-seed]`
+failure: `tests.test_mutation_workspace::test_new_index_cannot_mask_seed_link_or_type_contamination[hardlink]`
+failure: `tests.test_mutation_workspace::test_new_index_cannot_mask_seed_link_or_type_contamination[file-directory]`
+failure: `tests.test_mutation_workspace::test_seed_permissions_are_read_only_and_cleanup_never_follows_substituted_directory`
+failure: `tests.test_mutation_workspace::test_lifecycle_failure_diagnostics_preserve_exact_mutation_and_stage`
+failure: `tests.test_mutation_workspace::test_drain_failure_stage_retains_worker_and_cannot_authorize_reuse`
+failure: `tests.test_mutation_workspace::test_sparse_repair_does_not_chmod_through_symlink_ancestor`
+failure: `tests.test_mutation_workspace::test_invalid_dirty_hint_poisoning_refuses_next_attempt`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[bytes]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[deleted]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[unexpected]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[mode]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[symlink]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[hardlink]`
+failure: `tests.test_mutation_workspace::test_seed_mismatch_stops_before_first_restore_and_next_attempt[directory]`
+failure: `tests.test_mutation_workspace::test_restore_streams_seed_without_content_cache`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[core]\nhooksPath=/outside/hooks\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[Core]\nfsmonitor=/outside/monitor\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[extensions]\nworktreeConfig=true\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[includeIf "gitdir:/"]\npath=/outside/config\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[core ]\nworktree=/outside/work\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[core\t]\nworktree=/outside/work\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[extensions ]\nworktreeConfig=true\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[filter.driver]\nclean=/outside/helper\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[diff.driver]\ncommand=/outside/helper\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[filter "driver"]\nclean=/outside/helper\n]`
+failure: `tests.test_mutation_workspace::test_git_external_helpers_and_worktree_config_are_refused[[core]\nattributesFile=/outside/attrs\n]`
+failure: `tests.test_mutation_workspace::test_git_alternates_and_rewritten_history_are_refused[objects/info/alternates]`
+failure: `tests.test_mutation_workspace::test_git_alternates_and_rewritten_history_are_refused[objects/info/http-alternates]`
+failure: `tests.test_mutation_workspace::test_git_alternates_and_rewritten_history_are_refused[info/grafts]`
+failure: `tests.test_mutation_workspace::test_git_alternates_and_rewritten_history_are_refused[refs/replace/name]`
+failure: `tests.test_mutation_workspace::test_git_alternates_and_rewritten_history_are_refused[config.worktree]`
+failure: `tests.test_mutation_workspace::test_ambiguous_owner_retains_worker_and_blocks_next_attempt`
+failure: `tests.test_mutation_workspace::test_dedicated_process_contract_refuses_detectable_competing_owners[kernel-threads]`
+failure: `tests.test_mutation_workspace::test_dedicated_process_contract_refuses_detectable_competing_owners[sigchld-handler]`
+failure: `tests.test_mutation_workspace::test_dedicated_process_contract_refuses_detectable_competing_owners[sigchld-mask]`
+failure: `tests.test_mutation_workspace::test_dedicated_process_contract_refuses_detectable_competing_owners[children]`
+failure: `tests.test_mutation_workspace::test_dedicated_process_contract_refuses_detectable_competing_owners[subreaper]`
+failure: `tests.test_mutation_workspace::test_telemetry_counter_accounting_failure_cannot_change_workspace_identity`
+failure: `tests.test_mutation_workspace::test_seed_restore_open_descriptor_is_closed_on_write_failure`
+failure: `tests.test_mutation_workspace::test_authenticated_clean_dirty_candidates_are_not_recopied[unchanged-hint]`
+failure: `tests.test_mutation_workspace::test_authenticated_clean_dirty_candidates_are_not_recopied[mode-only]`
+failure: `tests.test_mutation_workspace::test_cli_scratch_existing_user_artifacts_are_never_cleared`
+failure: `tests.test_mutation_workspace::test_diagnostic_atomic_replacement_cannot_overwrite_link_target[symlink]`
+failure: `tests.test_mutation_workspace::test_diagnostic_parent_substitution_is_ignorable_without_outside_write`
+failure: `tests.test_mutation_workspace::test_git_lazy_fetch_and_unknown_formats_are_refused[[extensions]\npartialClone=origin\n]`
+failure: `tests.test_mutation_workspace::test_git_lazy_fetch_and_unknown_formats_are_refused[[EXTENSIONS]\nobjectformat=sha256\n]`
+failure: `tests.test_mutation_workspace::test_git_lazy_fetch_and_unknown_formats_are_refused[[remote "origin"]\npromisor=true\nurl=/outside/repo\n]`
+failure: `tests.test_mutation_workspace::test_git_lazy_fetch_and_unknown_formats_are_refused[[extensions]\nunknownextension=true\n]`
+failure: `tests.test_mutation_workspace::test_promisor_pack_marker_is_refused`
+failure: `tests.test_mutation_workspace::test_abnormal_parent_retains_entire_scratch_without_workspace_marker`
+failure: `tests.test_mutation_workspace::test_changed_sigchld_during_drain_retains_and_refuses`
+failure: `tests.test_mutation_workspace::test_substituted_artifact_root_cannot_clear_user_basetemp`
+failure: `tests.test_mutation_workspace::test_v4_infrastructure_exit_cannot_earn_named_junit_kill[2]`
+failure: `tests.test_mutation_workspace::test_v4_infrastructure_exit_cannot_earn_named_junit_kill[3]`
+failure: `tests.test_mutation_workspace::test_v4_infrastructure_exit_cannot_earn_named_junit_kill[4]`
+failure: `tests.test_mutation_workspace::test_v4_infrastructure_exit_cannot_earn_named_junit_kill[5]`
+failure: `tests.test_mutation_workspace::test_v4_infrastructure_exit_cannot_earn_named_junit_kill[-9]`
+failure: `tests.test_mutation_workspace::test_formal_infrastructure_exit_cannot_earn_transcript_credit[3]`
+failure: `tests.test_mutation_workspace::test_formal_infrastructure_exit_cannot_earn_transcript_credit[4]`
+failure: `tests.test_mutation_workspace::test_formal_infrastructure_exit_cannot_earn_transcript_credit[5]`
+failure: `tests.test_mutation_workspace::test_formal_infrastructure_exit_cannot_earn_transcript_credit[-9]`
+failure: `tests.test_core_guards::test_the_battery_march_runs_the_solver_it_names`
+failure: `tests.test_mutation_workspace::test_string_path_snapshot_equals_the_pathlib_manifest_and_counters`
+failure: `tests.test_mutation_workspace::test_mid_walk_failure_still_reports_entries_already_scanned`
+failure: `tests.test_core_guards::test_every_marched_step_carries_its_own_cell_report`
+failure: `tests.test_formal_xdist::test_every_infrastructure_defect_refuses[linked]`
+failure: `tests.test_formal_xdist::test_formal_run_credits_only_with_a_clean_sentinel[clean]`
+failure: `tests.test_formal_xdist::test_formal_run_credits_only_with_a_clean_sentinel[crash]`
+failure: `tests.test_formal_xdist::test_formal_run_credits_only_with_a_clean_sentinel[absent]`
+failure: `tests.test_formal_xdist::test_formal_run_credits_only_with_a_clean_sentinel[stale]`
+failure: `tests.test_formal_xdist::test_serial_formal_run_has_no_xdist`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[1-FAILED tests/t.py::test_guard[a] - boom\n-True]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[1-FAILED tests/t.py::test_other - boom\n-False]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[0-1 passed\n-False]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[5-no tests ran\n-False]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[2-Interrupted\n-False]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[3-INTERNALERROR\n-WorkspaceError]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[4-usage\n-WorkspaceError]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[-11--WorkspaceError]`
+failure: `tests.test_formal_xdist::test_serial_confirmation_only_credits_a_named_failure_alone[timeout--False]`
+failure: `tests.test_formal_xdist::test_confirmation_needs_the_pristine_tree_plus_exactly_the_declared_edit`
+failure: `tests.test_formal_xdist::test_confirmation_reads_the_name_from_the_nodeid_not_the_message`
+failure: `tests.test_formal_xdist::test_named_alone_control_refuses_a_copy_changed_between_its_runs`
+failure: `tests.test_formal_xdist::test_named_alone_control_selects_by_the_rule_and_voids_a_failing_guard[0]`
+failure: `tests.test_formal_xdist::test_named_alone_control_selects_by_the_rule_and_voids_a_failing_guard[1]`
+failure: `tests.test_formal_xdist::test_main_threads_workers_and_confirms_only_under_xdist`
+failure: `tests.test_formal_xdist::test_an_unconfirmed_xdist_kill_is_not_credit`
+failure: `tests.test_formal_xdist::test_import_refusal_attempts_stay_serial_with_a_serial_control`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[False-formal_mutations-4-1]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[False-formal_mutations-4-2]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[False-v4_mutations-8-1]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[False-v4_mutations-8-2]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[True-formal_mutations-4-1]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[True-formal_mutations-4-2]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[True-v4_mutations-8-1]`
+failure: `tests.test_local_assurance::test_shards_are_bounded_isolated_and_fail_closed[True-v4_mutations-8-2]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[None-1]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[None-2]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[formal_mutations_1-1]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[formal_mutations_1-2]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[v4_mutations_3-1]`
+failure: `tests.test_local_assurance::test_source_gate_orchestration_preserves_checkout[v4_mutations_3-2]`
+failure: `tests.test_local_assurance::test_child_exit_during_forced_kill_preserves_stream_error`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_projection_is_complete_and_a_fully_evidenced_claim_meets_high`
+failure: `tests.foundations.test_v2_credibility_vector::test_levels_rest_on_issued_checks_and_registry_pinned_provenance`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_subject_is_bound_to_the_decision_context`
+failure: `tests.foundations.test_v2_credibility_vector::test_levels_need_support_of_the_subject_admissible_authority_and_context`
+failure: `tests.foundations.test_v2_credibility_vector::test_one_record_one_factor_is_decided_over_all_citations_and_removal_never_helps`
+failure: `tests.foundations.test_v2_credibility_vector::test_independence_must_be_shown_positively`
+failure: `tests.foundations.test_v2_credibility_vector::test_defeaters_block_and_only_a_newer_version_of_the_same_source_closes_one`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_outside_domain_finding_is_a_defeater_and_dominates`
+failure: `tests.foundations.test_v2_credibility_vector::test_and_takes_the_weakest_and_or_takes_one_whole_independent_branch`
+failure: `tests.foundations.test_v2_credibility_vector::test_adversarial_standing_needs_a_surviving_envelope_for_this_subject`
+failure: `tests.foundations.test_v2_credibility_vector::test_removing_evidence_never_raises_any_factor_or_meets_a_requirement`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_contradiction_of_the_subject_or_its_lineage_is_a_defeater_in_any_child_order`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_cited_contradicted_record_defeats_even_when_it_did_not_win_its_factor`
+failure: `tests.foundations.test_v2_credibility_vector::test_supersession_only_lowers_whatever_the_superseder_s_pin_or_standing`
+failure: `tests.foundations.test_v2_credibility_vector::test_applicability_and_uq_are_backed_by_existing_records_not_labels`
+failure: `tests.foundations.test_v2_credibility_vector::test_citing_an_outside_domain_record_twice_does_not_cancel_it`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_envelope_for_another_statement_of_the_claim_supplies_nothing`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_calibration_guard_follows_duplicate_content_and_lineage`
+failure: `tests.foundations.test_v2_credibility_vector::test_refused_records_leave_a_note_and_falsified_envelopes_of_other_claims_are_not_defeaters`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_outside_domain_finding_is_judged_like_a_defeater`
+failure: `tests.foundations.test_v2_credibility_vector::test_contradicted_calibration_data_defeats_and_nothing_is_dropped_silently`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_same_content_twin_does_not_escape_contradiction_or_supersession`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_report_binds_its_inputs_and_attested_negative_reports_count_on_their_subject`
+failure: `tests.foundations.test_v2_credibility_vector::test_test_mode_never_meets_a_decision_requirement`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_unknown_check_caps_applicability_and_an_outside_report_sets_the_level`
+failure: `tests.foundations.test_v2_credibility_vector::test_any_supersession_disqualifies_support_and_an_obsolete_subject_is_defeated`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_incoherent_envelope_backs_nothing`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_obsolete_subject_is_defeated_whatever_else_links_it_to_its_replacement`
+failure: `tests.foundations.test_v2_credibility_vector::test_or_never_meets_a_requirement_because_a_branch_lost_evidence`
+failure: `tests.foundations.test_v2_credibility_vector::test_independence_follows_shared_calibration_and_same_content_ancestry`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_calibration_guard_compares_the_validator_with_every_calibration_input`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_model_never_declares_its_own_model_form_discrepancy`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_contradiction_is_a_conflict_whichever_side_wrote_it`
+failure: `tests.foundations.test_v2_credibility_vector::test_fourth_review_lows`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_contradiction_inside_the_closure_needs_only_one_admissible_end`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_contradicted_twin_disqualifies_a_closing_superseder`
+failure: `tests.foundations.test_v2_credibility_vector::test_a_closing_version_must_be_other_content_and_not_itself_obsolete`
+failure: `tests.foundations.test_v2_credibility_vector::test_an_explicit_defeater_may_add_but_never_replace_a_computed_one`
+failure: `tests.foundations.test_v2_credibility_vector::test_the_claim_s_own_records_never_close_its_defeaters`
+failure: `tests.test_core_certificate::test_the_certificate_describes_this_tree`
+failure: `tests.claims.test_claims_assessment::test_the_mcp_tool_returns_the_same_record`
+failure: `tests.foundations.test_authority_integrity::test_the_issuer_bound_path_admits_a_correctly_attested_record_and_nothing_else`
+failure: `tests.foundations.test_authority_integrity::test_an_unopened_unanchored_or_foreign_ledger_is_refused`
+failure: `tests.foundations.test_authority_integrity::test_forged_and_unknown_issuers_never_reach_the_ledger`
+failure: `tests.foundations.test_authority_integrity::test_a_key_is_registered_only_by_its_holder_in_its_providers_class`
+failure: `tests.foundations.test_authority_integrity::test_wrong_role_wrong_result_wrong_receipt_and_wrong_context_are_refused`
+failure: `tests.foundations.test_authority_integrity::test_self_issued_support_is_refused_from_any_executor_of_the_receipt`
+failure: `tests.foundations.test_authority_integrity::test_negative_records_cap_and_defeat_even_from_the_results_own_executor`
+failure: `tests.foundations.test_authority_integrity::test_an_attested_falsification_follows_the_result_not_the_node_name`
+failure: `tests.foundations.test_authority_integrity::test_attested_records_cannot_be_edited_in_memory`
+failure: `tests.foundations.test_authority_integrity::test_revocation_rotation_and_history`
+failure: `tests.foundations.test_authority_integrity::test_persistence_restart_and_tamper_detection`
+failure: `tests.foundations.test_authority_integrity::test_a_second_writer_or_a_failed_append_never_forks_the_ledger`
+failure: `tests.foundations.test_authority_integrity::test_negative_records_are_read_from_the_ledger_whatever_the_caller_supplies`
+failure: `tests.foundations.test_authority_integrity::test_a_copied_record_or_a_mutated_result_backs_nothing`
+failure: `tests.foundations.test_authority_integrity::test_key_material_placement`
+failure: `tests.foundations.test_authority_integrity::test_an_attested_failed_check_without_a_level_caps_its_roles_factors`
+failure: `tests.foundations.test_authority_integrity::test_an_attested_negative_report_counts_on_its_attested_subject_whatever_digest_it_carries`
+failure: `tests.foundations.test_authority_integrity::test_a_ledger_subclass_is_refused`
+failure: `tests.foundations.test_authority_integrity::test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_path`
+failure: `tests.foundations.test_authority_integrity::test_a_minted_signer_cannot_be_relabelled`
+failure: `tests.foundations.test_authority_integrity::test_a_compromise_window_withdraws_what_the_key_signed_in_it`
+failure: `tests.foundations.test_authority_integrity::test_an_issuer_that_produced_the_same_output_elsewhere_is_self_issued`
+failure: `tests.foundations.test_authority_integrity::test_an_attestation_subject_output_is_a_string`
+failure: `tests.foundations.test_authority_integrity::test_a_retired_key_can_still_be_declared_compromised`
+failure: `tests.foundations.test_authority_integrity::test_a_later_narrower_window_never_narrows_a_declared_compromise`
+failure: `tests.test_core_freeze_manifest::test_the_command_line_verifier_agrees_with_the_function`
+failure: `tests.test_core_freeze_manifest::test_a_descendant_that_keeps_the_contract_still_verifies`
+failure: `tests.claims.test_preregistration_exposure::test_frozen_revisions_chain_and_ignore_other_issuers`
+failure: `tests.claims.test_preregistration_exposure::test_the_gate_refuses_confirmatory_data_until_frozen_approved_and_sealed`
+failure: `tests.claims.test_preregistration_exposure::test_an_owner_who_also_operates_or_was_revoked_does_not_count`
+failure: `tests.claims.test_preregistration_exposure::test_a_row_is_released_only_if_it_matches_its_manifest_commitment`
+failure: `tests.claims.test_preregistration_exposure::test_a_second_manifest_cannot_repartition_a_registered_row`
+failure: `tests.claims.test_preregistration_exposure::test_the_gate_and_the_verifier_read_the_campaigns_own_issuer`
+failure: `tests.claims.test_preregistration_exposure::test_releasing_around_the_gate_is_detected_whatever_the_label`
+failure: `tests.claims.test_preregistration_exposure::test_the_gate_conditions_are_re_derived_at_the_first_confirmatory_release`
+failure: `tests.claims.test_preregistration_exposure::test_revising_or_sealing_after_exposure_makes_the_campaign_exploratory`
+failure: `tests.claims.test_preregistration_exposure::test_the_confirmatory_query_budget_and_multiplicity_come_from_the_journal`
+failure: `tests.claims.test_preregistration_exposure::test_an_untestable_declaration_is_an_abstention_not_a_drop`
+failure: `tests.claims.test_preregistration_exposure::test_untestable_is_not_a_choice_under_a_machine_readable_rule`
+failure: `tests.claims.test_preregistration_exposure::test_verify_passport_re_derives_every_field_counts_as_discovery_trusts`
+failure: `tests.claims.test_preregistration_exposure::test_a_released_value_is_re_checked_against_its_commitment_from_the_journal`
+failure: `tests.claims.test_preregistration_exposure::test_counts_without_n_and_compromised_or_foreign_records_are_not_trusted`
+failure: `tests.claims.test_preregistration_exposure::test_under_a_machine_readable_rule_a_seal_names_its_fit`
+failure: `tests.claims.test_preregistration_exposure::test_a_survived_envelope_never_hides_another_attested_attack_on_the_same_claim`
+failure: `tests.claims.test_preregistration_exposure::test_an_operator_role_falsification_is_counted_and_the_plan_is_bound`
+failure: `tests.claims.test_preregistration_exposure::test_a_pre_registration_without_a_plan_digest_never_verifies_an_attack`
+failure: `tests.foundations.test_escrow_boundary::test_budgets_submissions_and_query_ids_survive_an_escrow_restart`
+failure: `tests.foundations.test_escrow_boundary::test_a_tampered_journal_refuses_to_start_and_a_truncated_one_is_caught_by_the_client`
+failure: `tests.foundations.test_escrow_boundary::test_requests_are_capability_bound_and_never_carry_the_credential`
+failure: `tests.foundations.test_escrow_boundary::test_responses_are_signed_and_bound_to_their_request`
+failure: `tests.foundations.test_escrow_boundary::test_storage_is_private_and_outside_the_repository`
+failure: `tests.foundations.test_escrow_boundary::test_the_subprocess_escrow_resumes_its_journal_but_stays_unproven`
+failure: `tests.foundations.test_escrow_boundary::test_a_rolled_back_or_restored_journal_is_caught_by_a_durable_client_checkpoint`
+failure: `tests.foundations.test_escrow_boundary::test_a_replaced_history_at_the_same_length_is_refused`
+failure: `tests.foundations.test_escrow_boundary::test_a_deleted_journal_refuses_to_start`
+failure: `tests.foundations.test_escrow_boundary::test_noise_after_a_rollback_is_not_reproduced_for_another_request`
+failure: `tests.foundations.test_escrow_boundary::test_a_replaced_universe_refuses_to_start`
+failure: `tests.foundations.test_escrow_boundary::test_unauthenticated_requests_never_touch_a_campaign`
+failure: `tests.foundations.test_escrow_boundary::test_a_log_read_is_single_use_across_restarts`
+failure: `tests.foundations.test_escrow_boundary::test_clients_always_pin_the_escrow_key_and_integrity_is_not_a_refusal`
+failure: `tests.foundations.test_escrow_boundary::test_the_escrow_never_asserts_a_verified_boundary_and_query_keys_are_unambiguous`
+failure: `tests.test_core_api_snapshot::test_the_snapshot_is_byte_identical_across_fresh_processes`
+failure: `tests.foundations.test_v2_blindfold::test_the_observe_client_api_sends_only_observe_and_every_query_is_logged`
+failure: `tests.foundations.test_v2_blindfold::test_budget_mix_bounds_and_malformed_requests_are_refused_not_fatal`
+failure: `tests.foundations.test_v2_blindfold::test_indistinguishable_cannot_be_shotgunned_or_duplicated`
+failure: `tests.foundations.test_v2_blindfold::test_an_inadmissible_proposal_is_kept_and_costs_credit_never_a_refusal`
+failure: `tests.foundations.test_v2_blindfold::test_credit_is_reported_over_the_best_constant_answer`
+failure: `tests.foundations.test_v2_blindfold::test_replay_is_complete_identity_bound_and_never_calls_the_proposer`
+failure: `tests.foundations.test_v2_blindfold::test_the_subprocess_escrow_keeps_its_secrets_in_the_child`
+failure: `tests.test_core_scientific_audit_batch56::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see`
+failure: `tests.test_mutation_startup::test_environment_snapshot_is_independent_of_parent_and_each_child`
+failure: `tests.test_mutation_startup::test_interpreter_replacement_is_refused_with_same_size`
+failure: `tests.test_mutation_startup::test_venv_interpreter_symlink_spelling_is_preserved`
+failure: `tests.test_core_freeze_v4_manifest::test_the_tree_keeps_the_core_freeze_v4_contract`
+failure: `tests.test_core_freeze_v4_manifest::test_once_assured_the_full_verification_holds`
+failure: `tests.test_core_api_contracts::test_the_frozen_digest_is_identical_in_fresh_processes`
+failure: `tests.test_core_freeze_v4_manifest::test_the_deep_surface_carries_methods_and_member_positions`
+failure: `tests.test_core_freeze_v3_manifest::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_campaign_resumes_exactly_after_restart`
+failure: `tests.foundations.test_authority_durable_campaign::test_restart_detects_dropped_reordered_or_rewritten_operations`
+failure: `tests.foundations.test_authority_durable_campaign::test_another_key_or_issuer_cannot_resume_or_extend_the_campaign`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_mutation_around_the_journal_is_refused_not_lost`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_verdict_judged_before_restart_is_the_same_verdict_after`
+failure: `tests.foundations.test_authority_durable_campaign::test_the_same_campaign_id_cannot_restart_its_multiplicity_count`
+failure: `tests.foundations.test_authority_durable_campaign::test_foreign_journal_entries_cannot_squat_or_brick_a_campaign`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_dropped_journal_tail_after_the_operators_anchor_is_refused`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_second_exposure_issuer_cannot_fork_or_squat_the_campaign`
+failure: `tests.foundations.test_authority_durable_campaign::test_a_journal_signed_in_a_compromise_window_cannot_be_resumed`
+failure: `flagships.tests.test_battery_blind_readiness::test_the_dry_run_walks_the_whole_chain_without_claiming_anything`
+failure: `flagships.tests.test_battery_blind_readiness::test_the_dry_run_records_every_abstention_with_its_rule_inputs`
+failure: `tests.test_core_scientific_audit_batch24::test_r39_the_word_says_that_agreement_between_solvers_is_one_of_the_things_it_covers`
+failure: `tests.domains.test_audit_domains_unscreened_claims::test_the_held_resistance_limitation_is_stated_where_a_caller_reads`
+failure: `providers.cantera.tests.test_cantera_provider::test_proof_b_adiabatic_equilibrium_with_mechanism_bytes_bound`
+failure: `providers.cantera.tests.test_cantera_provider::test_proof_b_transient_constant_pressure_reactor_on_a_big2_window`
+failure: `tests.foundations.test_escrow_isolation::test_the_isolated_deployment_reports_exactly_what_it_established`
+failure: `tests.foundations.test_escrow_isolation::test_the_leak_detector_catches_a_planted_partial_copy`
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--junitxml", "D:\\forge-final-assurance-evidence\\baselinewin-fast.xml"]`
+result: exit 15; wall 510.82 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.assert_clean_tree"]`
+result: exit 0; wall 1.37 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.core_certificate", "--verify"]`
+result: exit 1; wall 1.32 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.core_freeze_v4", "--verify"]`
+result: exit 1; wall 1.35 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "tools/forge_check.py", "--regression"]`
+result: exit 1; wall 15.34 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "-q", "--junitxml", "D:\\forge-final-assurance-evidence\\win-dependency-guard.xml"]`
+result: exit 0; wall 24.36 s; counts {"tests": 1, "failures": 0, "errors": 0, "skipped": 0}; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "-m", "not expensive", "-q", "-n", "4", "--dist", "loadfile", "--deselect", "tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared", "--junitxml", "D:\\forge-final-assurance-evidence\\win-fast.xml"]`
+result: exit 3; wall 1.35 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "pytest", "-q", "-n", "8", "--dist", "loadfile", "--junitxml", "D:\\forge-final-assurance-evidence\\win-full.xml"]`
+result: exit 3; wall 1.35 s; counts null; tracked byte drift 0; git status ''
+command argv: `["C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe", "-m", "tools.certification.assert_clean_tree"]`
+result: exit 0; wall 1.37 s; counts null; tracked byte drift 0; git status ''
+
+Regression pack: corrected primary 3.14 run 256 passed; isolated 3.12 run 256 passed. Supported FAST (both versions): 10026 passed, 2 failed, 157 skipped; SCIENTIFIC: 10599 passed, same 2 failed, 157 skipped; FULL: 10607 passed, 4 failed, 157 skipped. Dependency guards: PASS. Failure classifications and Windows limitations are in the closeout report; unsupported primary Windows failures are not asserted a product regression. Baseline scanner tests ran on clean 9ca337f9, 3.11 and 3.12: both FAIL the same named test. Windows same-environment baseline FAST and direct Cantera diagnostics: INCOMPLETE, stopped; NOT accepted as a baseline proof.
+
+command: `.forge/venvs/3.12/bin/python -m tools.certification.local_assurance run --repository sharq-labs/forge`
+result: REFUSED, exit 1, fast311: 10005 passed, 1 failed (tests/test_change_impact.py::test_the_old_gap_a_domain_models_own_tests_are_now_selected), 157 skipped. No certificate written; later owner gates and certificate-child verify NOT RUN. Failure receipt SHA256 a1965de5a5495082706237ba7c5c6c4e251fffff812ab92286b6cf272ecde488.
+
+Post-attempt commands: `.forge/venvs/3.12/bin/python -m tools.certification.core_certificate --verify` FAIL; `.forge/venvs/3.12/bin/python -m tools.certification.core_freeze_v4 --verify` FAIL only certificate.verifies; `.forge/venvs/3.12/bin/python tools/forge_check.py --regression` PASS 256 in 7.40s; `.forge/venvs/3.12/bin/python -m tools.certification.assert_clean_tree` PASS. Certificate unchanged: c22a012147c26183031b32b0e016c80ef86218ef3cd1664361be47d4cf2f186b, still names 39d43456cab918ed0748efe7f5b0ff5781474ffa.
+
+Failed approaches: Linux Git rejected Windows absolute worktree .git pointer; use a Linux-created worktree. Initial pytest temp permission error and misparsed backslash basetemp: use forward slashes in an external basetemp. Untracked temp folder moved intact after automatic deletion rejection; tracked drift zero. Owner run needs explicit --repository for this local clone. Windows FULL stalled at79%, empty XML; controller had no workers. No final count or pass claimed. All test trees clean before documentation. No scientific implementation or frozen artifacts changed.
+
+command: git diff --check
+result: PASS, exit 0, executed before documentation commit; no whitespace errors.
+Final additional Linux all-file hash replay: INCOMPLETE (new WSL invocation stalled and was stopped); prior per-tier 5514-file snapshots and post-owner assert_clean_tree remain the recorded integrity proofs. Windows final all-file hash replay: PASS, 5514 tracked files, drift0.
+
+
+## 2026-10-13 Owner-requested scientific boundary repairs
+
+Base `origin/main` `c4e05ee6`; isolated worktree, branch
+`codex/repair-scientific-boundaries`. The shared checkout and its existing edits
+are preserved. Scope: empty UQ budgets, discovery timeout, benchmark output
+isolation, challenge summary, and unassessable applicability compilation.
+
+Compatibility decision: keep frozen Core signatures, record field names, schema
+strings and valid-budget serialization unchanged. Empty or missing budget
+components are refused rather than interpreted as zero. The non-Core challenge
+summary gains `inconclusive_attempted_challenges`; its existing digest formula
+stays unchanged, but corrected summaries intentionally change the digest. Existing
+historical records are not rewritten. The non-Core compiler gains an explicit
+applicability gap and refuses readiness on evaluator failure.
+
+Failed environment approaches: forge-runner WSL cannot start because its D:
+virtual disk is unavailable. A venv under /tmp disappeared between WSL starts;
+retry under the persistent Ubuntu user home succeeded (Python 3.12.3). Initial
+forge_check launch did not execute tests because the /tmp interpreter was missing.
+Tests: NOT RUN at the environment-preparation checkpoint; results appended below.
+
+2026-10-13 — initial adversarial tests (Ubuntu Python 3.12.3; mounted Windows source)
+command: `/home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q tests/uq/budget tests/claims/test_challenge_summary.py tests/claims/test_unassessable_compilation.py tests/foundations/test_discovery_deadline.py --tb=short`
+result: FAIL — 30 passed, 1 failed in 13.21 s.
+failure: `test_timeout_covers_handshake_output_and_inherited_pipes` (leader exits, descendant pipes).
+Cause: test expected a killed orphan's process group to disappear immediately; a zombie may persist until init reaps it. Corrected the assertion to reject any live member; no deadline or production behavior relaxed.
+
+command: `/home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --changed --workers 4` (mounted Windows worktree)
+result: BLOCKED — no tests executed; Linux git cannot resolve the Windows .git worktree path.
+Correction: created a task-owned native Linux Git clone at `/home/dev_kaeem/forge-repair-src`, pinned at c4e05ee6, and copied only the repair changes with Git-normalized LF bytes. Python environment installed against that clone. Native checkout has its own Git identities and Linux-supported execution.
+
+command: `/home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --changed --workers 4` (native Linux clone)
+result: FAIL — 3889 passed, 59 skipped, 2 failed in 73.37 s.
+failures: `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`; `tests/claims/test_sensitivity_robustness_challenge.py::test_a_claim_that_holds_across_its_declared_range_survives`.
+Certificate failure names the pre-existing certified-area drift plus changed UQ/harness bytes and the uncommitted tree; no certificate regenerated. Challenge failure was an obsolete expected summary: real surviving range probes coexist with another INCONCLUSIVE challenge. Updated the test to assert both surviving routes and an honest overall inconclusive status; this is the requested behavior correction.
+
+Independent read-only forge-scientific-review: PASS. Initial request for task-write/final-wait stall tests addressed; reviewer inspected them. No tests executed by reviewer, no scientific validation claimed. Pre-existing direct UncertaintyBudgetReport dataclass construction can carry arbitrary fields; no authority consumer found by reviewer, recorded as scope limitation. Aggregation/build/loading paths are hardened.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q tests/uq/budget tests/claims/test_challenge_summary.py tests/claims/test_unassessable_compilation.py tests/claims/test_sensitivity_robustness_challenge.py tests/foundations/test_discovery_deadline.py tests/test_benchmark_output_isolation.py --tb=short` (native Linux clone)
+result: PASS — 60 passed in 40.20 s.
+Published benchmark JSON/Markdown bytes were compared before and after both builds by the isolation tests. Mutating/deleting the private generated result was detected instead of reading a published fallback. These are software tests, not physical validation.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --regression --workers 4` (native Linux clone)
+result: PASS — 241 passed in 6.07 s.
+
+command: `python3 .pytest-review-temp/compare_api.py` (WSL Ubuntu; script invokes `/home/dev_kaeem/forge-repair-venv/bin/python -X utf8 -m engcore.api_snapshot --frozen` with each checkout's own src on PYTHONPATH)
+result: PASS — base c4e05ee6 and repair frozen API output bytes identical; SHA256 `0cfcaca6290cfe910e13d851986b62bbe55ae732a2e7a9f43174c5a319916072`.
+This comparison establishes unchanged frozen API shape, not certificate validity.
+
+
+Latest-main steering checkpoint: user requested a fresh check. Fetched `origin/main`
+`5d73e8f5` (PRs #133–#135). Updated repair branch by fast-forward; upstream
+benchmark isolation and additive challenge outcome_summary supersede the overlapping
+local changes, which remain recoverable in the repair stash. Kept only empty-budget,
+NOT_ASSESSABLE compiler and Discovery read-deadline repairs plus their tests.
+The 60-test result and 241-test regression above describe the previous c4e05ee6
+base, not this new base. Prior FAST run was interrupted before a result/XML was
+available (lost exec session, partial log at 97%); result BLOCKED, never PASS.
+New-baseline gates and scientific review follow below.
+
+2026-10-13 — updated-main gate (`5d73e8f5` base)
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --changed --workers 4`
+result: FAIL — 3940 passed, 61 skipped, 1 failed in 44.50 s.
+failure: `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`.
+The remaining defect tests pass; certificate verification still reports certified-area byte drift, including the explicit UQ repair and earlier main changes. Not recertified, not accepted as a clean integration gate.
+Independent read-only review of the updated-base, narrowed diff: PASS. No outstanding finding; review did not execute tests or establish physical validation.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --regression --workers 4` (updated base 5d73e8f5)
+result: PASS — 256 passed in 5.22 s.
+
+command: `wsl -d Ubuntu -- python3 /mnt/c/Users/dev_kaeem/.codex/worktrees/repair-scientific-boundaries/phyx/.pytest-review-temp/compare_latest_api.py`
+result: PASS — latest base 5d73e8f5 and repair frozen API output bytes identical; SHA256 `0cfcaca6290cfe910e13d851986b62bbe55ae732a2e7a9f43174c5a319916072`.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -m "not expensive" -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-latest-fast.xml`
+result: FAIL — 10041 passed, 157 skipped, 7 failed in 117.32 s.
+Raw log and XML are in the task-owned Ubuntu user home. Failure names and base attribution appended after SCIENTIFIC completes; no result waived or certificate rewritten.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -m "not campaign" -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-latest-scientific.xml`
+result: FAIL — 10617 passed, 157 skipped, 9 failed in 209.85 s.
+Failure names (FAST plus SCIENTIFIC union):
+- benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+- benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+- tests/test_core_certificate.py::test_the_certificate_describes_this_tree
+- tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
+- tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
+- tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks
+- tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree
+- tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract
+- tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds
+Attribution run on pristine base 5d73e8f5 is underway. Dirty-tree failures are not called scientific regressions without this comparison; source/evidence replay remains bound to its actual checkout.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice PYTHONPATH=/home/dev_kaeem/forge-repair-latest-base/src:/home/dev_kaeem/forge-repair-latest-base /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-base-attribution.xml <the nine failure node IDs listed above>`
+result: FAIL — 3 failed, 6 passed in 26.35 s on pristine 5d73e8f5.
+Base failures: certificate_describes_this_tree and both historical benchmark rebuild tests. The six freeze tests pass on the clean base and reject the uncommitted repair tree specifically at tree.clean; a committed repair rerun will determine their status. No scientific regression was inferred from those dirty-tree failures; no gate was waived.
+
+Exact base-attribution subprocess command (cwd `/home/dev_kaeem/forge-repair-latest-base`; PYTHONPATH set to that checkout src/root; CRAFTY_NGSPICE_ARGV=ngspice):
+`/home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-base-attribution.xml benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates tests/test_core_certificate.py::test_the_certificate_describes_this_tree tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract`
+
+
+## 2026-10-13 Final committed repair gates
+
+Implementation commit: `cf0f31f1a0718b3921dc47e0bae71ea19bf39554`, base `5d73e8f5`.
+Ubuntu / Python 3.12.3; all commands below ran sequentially against the clean,
+Git-native clone of that exact implementation commit. No source change since the
+independent latest-base review PASS. Valid frozen API output remains byte-identical
+to base. Hardened recertification: NOT RUN (OD-3, owner-run).
+
+Failed transport approach: fetching the implementation commit through the Windows
+managed worktree path failed because Linux Git cannot resolve its Windows .git
+pointer. The mistakenly started base-only runner was stopped and its partial
+results were not used. Fetching the branch through the primary repository's .git
+worked. The final runner asserts the exact HEAD and a clean tree before any test.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --regression --workers 4`
+result: PASS — 256 passed in 5.19 s.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -m "not expensive" -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-latest-fast.xml`
+result: FAIL — 10047 passed, 157 skipped, 1 failed in 119.30 s.
+failure: `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`.
+
+command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -m "not campaign" -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-latest-scientific.xml`
+result: FAIL — 10623 passed, 157 skipped, 3 failed in 204.95 s.
+failures: certificate_describes_this_tree and both historical benchmark rebuild
+nodes listed above. All three also fail on pristine 5d73e8f5; XML failure-ID union
+comparison matched exactly. The six freeze checks that rejected the dirty tree
+pass on the committed repair. No certificate, threshold, skip rule, reference
+artifact or published negative result was rewritten to clear a gate.
+
+command: `wsl -d Ubuntu -- python3 /mnt/c/Users/dev_kaeem/.codex/worktrees/repair-scientific-boundaries/phyx/.pytest-review-temp/compare_final_failures.py`
+result: PASS — final FAST/SCIENTIFIC failure union equals the three failures from
+the pristine-main attribution run. This is failure attribution, not a passing tier.
+
+command: `/home/dev_kaeem/forge-repair-venv/bin/python -m tools.certification.assert_clean_tree`
+result: PASS — `/home/dev_kaeem/forge-repair-src` byte-identical to HEAD after all tiers.
+
+Outcome: the remaining three requested code repairs are implemented and reviewed;
+latest-main benchmark and additive challenge-summary repairs are preserved.
+Integration remains blocked by the actual red gates / certificate drift; no
+G0 PASS, certification, qualification or physical validation is claimed.
+
+## 2026-10-12 A1.5 manufacturer-rating applicability
+
+- Added `engcore.scientific.knowledge.operating_rating` on HEAD `8b028dcf`. No Mind, no catalog search, no multirotor redesign.
+- `python -m pytest tests/scientific/knowledge/test_operating_rating.py -q --tb=line` -> 15 passed in 4.61s. Python 3.11.17, venv `/home/dev_kaeem/forge-g0-repair-venv`.
+- Seal rerun of the same command -> 15 passed in 4.41s.
+- `python tools/forge_check.py --regression` -> 225 passed in 75.73s. No digest or certificate mismatch was reported by this gate. Pins were not republished.
+- Frozen packet `a1-packet-c.json` SHA-256 remained `e1df8cefcf1ae85e7633aca6db084b635b9ffa6703363b593e64dc766db0ac30` before and after the seal rerun. Mission status `insufficient_evidence`. Component statuses: kde-4012, tmotor-mn4010-kv370, and mad-5008-400-eee `outside_duration_envelope`; mad-5010-240-eee `operating_point_not_established`. Not a physical-infeasibility claim.
+- FAST / recertification: NOT RUN.
+
+## 2026-10-12 A2 minimal next-action mind
+
+- Substrate commit `67c6971113b88b2cdab953d8073406a746f472e7` on `feat/a1-5-operating-rating`. The Mind is uncommitted. It does not issue scientific verdicts.
+- `python -m pytest tests/mind/test_transition.py -q --tb=line` -> 18 passed in 1.93s, and the seal rerun -> 18 passed in 2.02s. Python 3.11.17, venv `/home/dev_kaeem/forge-g0-repair-venv`.
+- First `python tools/forge_check.py --regression` -> 1 failed, 224 passed in 80.64s. Failure: `tests/test_core_api_layering.py::test_every_package_under_engcore_is_classified_core_or_not`. `engcore.mind` was an unclassified package. It was recorded as non-Core because it issues no verdict. No digest or certificate was republished.
+- Second `python tools/forge_check.py --regression` -> 225 passed in 72.20s.
+- Frozen packets, scored after the review fixes: `a2-packet-1.json` `84baec613011f0063bed5a01500d9fcfb17df7b5f0aae314af38c1f908e6ad2b`; `a2-packet-2.json` `647d8a2232dca74df3277ada12a4da3086190d98fc910e2869d2b08bafffe8cb`; `a2-packet-3.json` `7a0c455fe88d82423179901aa920e5913e39bb11b539755f517a470ee583a352`. Bytes matched before and after scoring.
+- Selected actions: `request-operating-point`, `check-identifiability`, `stop`. Score 15/15 on the A2 denominator. Unsupported scientific claims 0. Authority override attempts 0. LLM calls 0. Scientific capability calls 0.
+- Belief revision after an operating-point availability observation: that dependency blocked, duration support and the three short-duration refusals unchanged, mission unresolved, next action `stop`.
+- Scientific review of the Mind: CHANGES REQUIRED, then PASS after the five corrections. A PASS is a review result only. Recertification: NOT RUN.
+
+
+## 2026-10-14 — BR-15 authority boundary & certification closure
+
+Branch `fix/br15-authority-closure` (worktree `D:/forge-br15`; WSL clone `~/forge-br15`), base `origin/main`
+`e193e573`. Commits: `dc26175d` (red reproducer), `6d62e5cf` (closure fix), `a49e8d12` (harness fix), `01073787`
+(review LOWs) and `a22869d4` (recertification-scope test example). Not pushed. Report:
+[BR15_AUTHORITY_CLOSURE.md](BR15_AUTHORITY_CLOSURE.md). Outcome: **PARTIALLY_CLOSED**, blocked on owner
+recertification (OD-3) and on GitHub governance.
+
+Post-merge truth:
+- `core_certificate.py --verify` on `e193e573` FAILED: `tests/mutation_guards.py` and `tests/test_formal_xdist.py`
+  were changed by PR #142 after certificate child `b1eea81b`.
+- The PR #140 merge `623149f3` changed only docs and the certificate.
+- CI on `main`: FAST 3.11/3.12 and SCIENTIFIC each failed one test, `test_the_certificate_describes_this_tree`.
+  `reproduce` failed: the image has no `.git` and runs as root.
+- Recertify on PR #140 and #142: all 8 `v4_mutations` shards failed, because `actions/checkout` writes
+  `.git/config.worktree` and workspace admission refuses it.
+
+Reproducers (before the fix):
+- `pytest tests/test_certified_dependency_closure.py` against the `e193e573` verifier: 23 failed, 2 passed. The two
+  that passed are the controls.
+- At `dc26175d`: 14 failed, 2 passed.
+
+After the fix:
+
+| Run | Command | Result |
+|---|---|---|
+| Windows 3.14, serial | `pytest tests/test_certified_dependency_closure.py tests/test_certificate_verdict_scope.py tests/test_core_certificate.py` | 90 passed, 1 skipped, 1 failed (`test_the_certificate_describes_this_tree`, expected) |
+| Windows | `tests/test_recertification_scope.py` | 115 passed |
+| Windows | real tree | `certified_dependency_problems == []`, `authority_closure_problems == []` |
+| Windows | production registry pin | unchanged (456 `evidence_code` files, equal digests, `registry_problems == []`) |
+| WSL 3.12, FAST (`pytest -m "not expensive" -n 4`), base `e193e573` | | 10374 passed, 156 skipped, 1 failed (`test_the_certificate_describes_this_tree`) |
+| WSL 3.12, FAST, fix `a22869d4` | | 10415 passed, 156 skipped, 1 failed (same test) |
+| WSL 3.11, FAST, fix `a22869d4` | | 10415 passed, 156 skipped, 1 failed (same test) |
+| WSL 3.12, impact selection (31 modules) at `a49e8d12` | | 926 passed, 2 failed: the certificate test, plus `test_recertification_scope.py::test_non_core_paths_stay_ordinary[src/engcore/sria/decision/utility.py]` (a real consequence of pinning sria/decision; fixed in `a22869d4`) |
+| WSL 3.12, impact selection at `a22869d4` | | 940 passed, 1 skipped, 1 failed (the certificate test) |
+| WSL 3.12, regression at `a22869d4` | `python tools/forge_check.py --regression` | 256 passed, exit 0 |
+
+Hardened recertification, `local_assurance`, Formal and V4 mutation populations: **NOT RUN** (owner-run, OD-3).
+
+Independent review (forge-scientific-reviewer, static):
+- First pass: CHANGES REQUIRED. I-1 (package-wide exclusions) and I-2 (false multiscale and providers reasons) were
+  HIGH; I-3 and I-4 MEDIUM; I-5 and I-6 LOW. All were fixed.
+- Confirmation pass: ACCEPT, no BLOCKER or HIGH. Two of its LOWs were fixed. The LOW about `api_snapshot.py` being a
+  non-seed pinned file was recorded as a residual.
+
+Failed approaches, so they are not repeated:
+- A first fix declared `providers/**` and `multiscale/**` as non-authoritative. The reasons were false: the system
+  runtime commits multiscale state uncertainty and consumes provider records. Both were pinned instead.
+- Package-wide exclusions were replaced by importer edges.
+- The Windows `-n 4` runs of the certificate fixtures fail on `git add -A` (exit 128) on the base as well. It is an
+  environment problem; run those serially on Windows.
+## 2026-10-14 — BR-16 Genesis-lite v0: preregistered benchmark layer and Tier-1 pilot
+
+Branch `feat/br16-genesis-lite-benchmark` (worktree `D:/forge-br16`, WSL clone `~/forge-br16`), base `origin/main`
+`e193e573`. Code commit `e493ff3f`. Not pushed. Report: [GENESIS_LITE_V0.md](../discovery/GENESIS_LITE_V0.md).
+Outcome: **PILOT_COMPLETE · BLOCKED_OWNER_APPROVAL**, not GENESIS_A1_PASS. G0 has not exited, the preregistration is
+frozen for the pilot only, the formal ≥20-seed runs have not started, and the budget and evaluator owner decisions are
+open.
+
+Scope:
+- `benchmarks/genesis_lite/` reuses `engcore.blindfold` unchanged; `tests/genesis_lite/` adds 42 tests. A1
+  preparation only.
+- Certificate scope check: 0 of the 15 changed files are pinned. The new tests are recertification *triggers* under
+  the conservative `tests/**` rule.
+
+Gates:
+
+| Run | Command | Result |
+|---|---|---|
+| Windows 3.14 | `pytest tests/genesis_lite -q` | 42 passed |
+| WSL 3.12, FAST at `e493ff3f` | `pytest -m "not expensive" -n 4` | 10416 passed, 156 skipped, 1 failed (`test_core_certificate.py::test_the_certificate_describes_this_tree`); base `e193e573` had 10374 passed + the same single failure |
+| WSL 3.12, regression | `python tools/forge_check.py --regression` | 256 passed, exit 0 |
+
+Hardened recertification: **NOT RUN** (and not required by any certified-file change).
+
+Pilot (WSL 3.12.3, 20 CPUs, preregistration `f99fcfbd…`, root commitment `07381465…`, now revealed):
+- Command: `python -m benchmarks.genesis_lite.pilot --root-file <root> --out ~/br16-evidence/pilot`.
+- Result: 960 runs, 0 invalid, 0 inadmissible, 85.07 s.
+- The separate evaluator agreed with the escrow on all 5,760 universes.
+- Run log sha256 `0c279655…`.
+- Formal baseline tier: 15,120 runs ≈ 1,185 s (ESTIMATED).
+
+Pilot findings (indicative; 10 worlds per cell):
+- P-1: the floor arm `always_law` dominates the discoverable cell (0.70 vs 0.27 for the best competence arm). The
+  formal lift rule needs the v0.1 amendment (OD-16).
+- P-2: the no_solution and insufficient_evidence cells look REPRESENTATION_LIMITED, and the confounded cell is solved
+  by a non-discoverer.
+- P-3: only 0.70, 0.50 and 0.40 of the discoverable, spurious and confounded worlds are inside the searched family.
+- P-4: only the pair heuristic reaches full credit on indistinguishable worlds (0.20).
+- P-5: the textbook answer failed in every trap world.
+
+Review (forge-scientific-reviewer, static):
+- Round 1: CHANGES REQUIRED, with 5 HIGH: cross-run linkage; monomial-only search; straw-man cells; no strongest-arm
+  or decision rule; pseudo-replication.
+- Round 2: 1 HIGH (paired lift impossible under distinct roots; Holm family not fixed) and 5 LOW.
+- All were fixed before the freeze.
+
+Failed approaches, so they are not repeated:
+1. Reusing escrow universe ids across presentations: a stateful proposer could merge budgets. Replaced by run-private
+   pseudonyms.
+2. Selecting the structure on the same hold-out the gate judges. Replaced by CV inside the training split.
+3. One master root per (arm, seed, presentation). That breaks paired lift; roots are now shared across arms.
+4. Long `python -c` strings with f-strings through bash. They were mangled; use script files.
+
+
+## 2026-10-14 -- BR-17 Minimal Mind: start gate BLOCKED_BY_PREREQUISITE
+
+The gate was checked against the live origin/main e193e573. All three prerequisites are unmet:
+- A1 has not passed: BR-16 is PILOT_COMPLETE / BLOCKED_OWNER_APPROVAL, and G0 has not exited because the certificate
+  fails on main.
+- No baseline identity is frozen for A1: v0 is frozen for the pilot only, and P-1 needs v0.1.
+- The active epic is still battery.thevenin_1rc, and no exception is open.
+
+No Mind code was written; the active epic and the ledger were not touched. Record and loop owner map:
+[BR17_MINIMAL_MIND_READINESS.md](../discovery/BR17_MINIMAL_MIND_READINESS.md). Tests: NOT RUN (documentation only).
+
+## 2026-10-14 -- BR-18: BLOCKED_BY_PREREQUISITE
+
+BR-17 has not passed (BLOCKED_BY_PREREQUISITE), and origin/main e193e573 has no Mind to evaluate. No BR-18 work was started. The verified-guard map is in [BR17_MINIMAL_MIND_READINESS.md](../discovery/BR17_MINIMAL_MIND_READINESS.md). Tests: NOT RUN (documentation only).
+
+
+## 2026-10-14 -- G0/A1 unblocking sprint (integration/g0-a1-unblock, local only)
+
+Integration branch `integration/g0-a1-unblock` (worktree `D:/forge-g0a1`) = `origin/main` `e193e573` + BR-15
+(`9df87275`) + BR-16 (`0f69a453`). Report: [G0_A1_UNBLOCKING.md](G0_A1_UNBLOCKING.md). Nothing pushed or merged.
+Hardened recertification and FULL local assurance: NOT RUN (owner, OD-3).
+
+Fixed with reproducers that fail first:
+- F-9: a restored campaign could carry a stop-review outcome different from the one in its own log.
+  Fix: `stop_review_disagreements`, used in both runner restore and `IncrementalCheckpointStore.materialize`.
+  Test: `tests/test_audit_sria_stop_review_restore.py`.
+- F-7: the CI V4 shards refused the `config.worktree` that `actions/checkout` writes.
+  Fix: a workflow step removes exactly the three sparse-checkout defaults. Test: `tests/test_ci_v4_checkout_admission.py`.
+  Not yet observed on GitHub.
+- Escrow leak: in-process heap-scan and stack-walk attacks stole hidden laws while the runs stayed VALID.
+  Fix: `isolation="proposer_process"` (`benchmarks/genesis_lite/proposer_host.py`).
+  Test: `tests/genesis_lite/test_genesis_lite_isolation.py`. Same-account boundary only: SECURITY_BOUNDARY_NOT_PROVEN; OD-20.
+- Crafted setting name (`rolled back`) that turned a losing run INVALID: refused at the client; `lift_decision`
+  refuses incomplete coverage.
+- P-1: the root cause comes from the v0 run log (per-cell metric, gated arms over-refusing, mostly in-family worlds;
+  neither leakage nor scoring). Fix: the v0.1 joint-credit contract in `benchmarks/genesis_lite/analysis.py`, identity
+  `genesis_lite.blindfold_l5.v0_1`, preregistration `94efff08...`. v0 (`f99fcfbd...`) is preserved byte for byte.
+
+Gates on `5ead8312` (WSL clone, Linux):
+- `python -m pytest -m "not expensive" -q -n 4` (3.12): 10493 passed, 156 skipped, 1 failed:
+  `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` (expected until OD-3).
+- Same command, 3.11: 10493 passed, 156 skipped, 1 failed (same test).
+- `python -m pytest tests/genesis_lite tests/test_audit_sria_stop_review_restore.py tests/test_ci_v4_checkout_admission.py tests/test_certified_dependency_closure.py -q`: 108 passed.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+- Certificate pre-checks: dependency, authority, harness and registry problems all `[]`.
+  `--verify` reports only the expected drift.
+
+v0.1 Tier-1 cost pilot, BR-16 `90a970cf`/`ed65ef3c`, WSL 3.12, `python -m benchmarks.genesis_lite.pilot`:
+- 1,560 runs, 0 invalid, 0 inadmissible, 374.6 s (MEASURED). The `90a970cf` run had 384.95 s, before the
+  summary-shadowing fix.
+- Strongest baseline `space_filling` (+3.175); `always_law` last (-4.642).
+- Formal ESTIMATE: 31,200 runs, about 6,451 s.
+
+Gates on the final code HEAD `eb2720f9` (WSL clone, Linux; the next commit adds only this record):
+- `python -m pytest -m "not expensive" -q -n 4` (3.12): 10493 passed, 156 skipped, 1 failed:
+  `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` (expected until OD-3); 395.9 s.
+- Same command, 3.11: 10493 passed, 156 skipped, 1 failed (same test); 327.0 s.
+- Focused set (same command as above): 108 passed.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+
+Failed approaches, so they are not repeated:
+1. `git stash` in a worktree applies another session's stash. Use `git show rev:path > path` for fail-before runs.
+2. Pilot concurrent with a FAST run: contaminated timing; killed by PID and rerun alone.
+3. Environment scan by broad patterns (`ROOT`): SYSTEMROOT false positive; narrowed.
+
+
+## 2026-10-14 -- G0/A1 final closure (integration/g0-a1-unblock, local only)
+
+Report: [G0_A1_FINAL_CLOSURE.md](G0_A1_FINAL_CLOSURE.md). OD-6 package:
+[OD6_GENESIS_EPIC_MIGRATION_PACKAGE.md](OD6_GENESIS_EPIC_MIGRATION_PACKAGE.md). Nothing pushed or merged.
+Hardened recertification, FULL local assurance and the formal campaign: NOT RUN (owner).
+
+Fixed, each with a reproducer committed red first:
+- BR-15 certificate (tool 2.6.0):
+  - C1, C2 and C3: `bb4f08d9` (red), fixed in `aedc7b24` and `a87ab594`.
+  - Nine further loader forms and planted bytecode: `912539ac` (red), fixed in `26f2505c`.
+  - Private importlib API, symlinks, and the registry probe's pycache: fixed in `3c28bedf`.
+  - Static loader completeness stays UNRESOLVED (declared).
+- Genesis-lite v0.2 (`genesis_lite.blindfold_l5.v0_2`, preregistration `878e6812...`):
+  - D1-D7, credit binding and candidate naming: `a1b5ab9b` (red), fixed in `f3ca0e63`.
+  - Screened world sets, record identity and outcome binding: `e7616785` (red), fixed in `80f798ba`.
+  - Run identity from the code digests: `f18bc4fc` (red), fixed in `4a302959`.
+  - Pilot evidence: `427dd66b`.
+- Escrow (measured, not fixable in code):
+  - A same-account proposer read `/proc/<ppid>/cmdline`, then the root file, and stole 5 of 6 laws in a VALID run.
+  - It also had network access, a child that outlived the campaign, and writable benchmark code.
+  - Remedy: the OD-20 deployment. Evidence: `D:/forge-g0a1-final-evidence/escrow_probe_2026-10-14.txt`.
+
+Commands run (Windows `.venv` 3.14 unless stated):
+- BR-16 `4a302959`: `python -m pytest tests/genesis_lite -n 4`: 94 passed.
+  - WSL 3.12 (in `pilot02.sh`): 94 passed.
+- BR-15 `3c28bedf`: `python -m pytest tests/test_certified_dependency_closure.py`: 58 passed, 1 skipped (symlink privilege).
+- BR-15 `aedc7b24`, with the certificate, recertification-scope, F-9 and F-7 suites: 193 passed, 1 skipped, 1 failed.
+  - The failure is `test_the_certificate_describes_this_tree`: certified-file drift and an uncommitted edit, expected until OD-3.
+- Real tree at `3c28bedf`: `certified_dependency_problems`, `authority_closure_problems` and `source_form_problems` all `[]`.
+- v0.2 Tier-1 pilot, WSL 3.12: `python -m benchmarks.genesis_lite.pilot --root-file <operator> --out <dir>`.
+  - 1,560 runs, 0 invalid, 384.79 s; run log sha256 `d504f2e3...`.
+  - Formal ESTIMATE: 6,608.1 s (95% 6,597.7-6,618.4).
+- Superseded pilots (not committed; roots retired):
+  - `7cc71b13`: 1,560 runs, 13 INVALID on one world set (literal audit, 0.642 coincidence); log `6e70c72a...`.
+  - `ddc7c3a6`: 1,560 runs, 0 invalid, 402.58 s; log `ca0716f3...`.
+
+Final gates on integration `7d6d398b` (WSL clone, Linux; the next commit adds only this record):
+- `python tools/forge_check.py --changed --base e193e573` (3.12): 10549 passed, 156 skipped, 582 deselected, 1 failed.
+- `python -m pytest -m "not expensive" -q -n 4`, 3.12: 10549 passed, 156 skipped, 1 failed (520 s).
+- The same command, 3.11: 10549 passed, 156 skipped, 1 failed (539 s).
+- In all three, the single failure is `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`.
+  - Cause: certified-file drift, plus classification/pattern changes in `assurance_admission` and `verdict_authority`.
+  - It is expected until OD-3 recertification.
+- Focused set (`tests/genesis_lite`, the F-9, F-7 and closure suites, `test_capability_completion.py`): 169 passed.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+- Pins: `certified_dependency_problems`, `authority_closure_problems`, `source_form_problems` and
+  `harness_pinning_problems` all `[]`.
+- `prereg_matches_code()` is `(True, 878e6812...)`.
+
+Failed approaches, so they are not repeated:
+1. A static loader deny-list grew by three review rounds and is still incomplete. Further spellings belong to a
+   runtime audit-hook cross-check, not to more AST rules.
+2. Strict completeness plus a strict literal audit made a formal lift impossible. An arm-independent screen must exclude
+   a world set for every arm alike, not block the claim.
+3. Reusing a pilot root after a code change. A new preregistration needs a fresh root; three roots are retired.
+4. `cat > file` with no input inside a Bash tool command blocks on stdin until the timeout.
+5. A sandbox launcher for the proposer was started and abandoned; OD-20 stays a deployment decision.
+
+## 2026-10-14 -- Battery 1RC scientific closure (feat/battery-1rc-scientific-closure, local only)
+
+Evidence package: [benchmarks/battery_1rc_closure/README.md](../../benchmarks/battery_1rc_closure/README.md).
+Nothing is pushed or merged, and no recertification has been run. The owner approved the NASA archive download
+(209,708,670 bytes, sha256 82302a7d..., outside the repo).
+
+Ledger (`python -m tools.capability_maturity`, coherent): battery.thevenin_1rc computes **FUNCTIONAL** (was FOUNDATION).
+- PASS with evidence: execution, provenance_replay, real_data, benchmark_metrics.
+- MISSING with measured blockers: calibration (NOT_IDENTIFIABLE), independent_validation (cross-cell FAIL; within-cell
+  NOT_ASSESSABLE), measurement_uq (UNKNOWN), parameter_uq, model_discrepancy, claims_integration,
+  domainpack_integration.
+
+Order of record (the commit history is the evidence):
+1. Preregistration v1 `f02bdedb`, then v2 `2301632c`. v2 changes the capacity basis, before any fit.
+2. Calibration data `653b243f`.
+3. Calibration and identifiability `dadafae4`.
+4. Held-out data `0f01baa3`.
+5. Held-out evaluation `8a1b406d`.
+6. UQ `5aa5c493`.
+7. Review corrections `d5d85743`, re-reported from the same frozen calibration with no data reopened.
+
+Gates on `d5d85743` (WSL clone, Linux):
+- `python -m pytest -m "not expensive" -q -n 4`, 3.12: 10426 passed, 157 skipped, 1 failed.
+- The same command, 3.11: 10426 passed, 157 skipped, 1 failed.
+  - On both versions the failure is `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`: the
+    certificate is stale and the new model definition changes the registry pin. Expected until recertification.
+- `python tools/forge_check.py --changed --base e193e573`: the same single failure. It lists four
+  RECERTIFICATION_REQUIRED test files: test_battery_thevenin_route.py, test_evidentiary_level_audit.py,
+  test_capability_completion.py and test_core_guards.py.
+- `python tools/forge_check.py --regression`: 256 passed, exit 0.
+- Focused set (closure, route, kernel, battery domain, capability, audit, guards, NASA importer/adapter): 682 passed,
+  1 skipped. The skip is the opt-in raw-bytes test.
+- On Windows `.venv` 3.14 with `FORGE_NASA_FY08Q4_DIR` set, the closure tests pass 22 of 22, including the rebuild of
+  every trajectory file from the raw `.mat` bytes.
+- Rerunning fit -> evaluate -> uq reproduces every scientific number bit for bit; only the timing fields differ.
+
+Scientific review (forge-scientific-reviewer): CHANGES REQUIRED. F1 HIGH, F2-F5 MEDIUM and L1-L4 were fixed in
+`d5d85743`. Deferred: F6, the caller-declared applicability range; it must be bound to a calibration record before
+claims integration (recorded in the ledger). Not analysed: sensitivity to the rest band.
+
+Failed approaches, so they are not repeated:
+1. A capacity basis from NASA's `Capacity` field is wrong for cells that discharge below 2.7 V.
+2. A parameter-set range equal to the calibration min/max is tripped by measurement-level excursions. Declare the range
+   from evidence in the next preregistration, never by widening it after results.
+3. Running benchmark modules without `PYTHONPATH="<wt>/src;<wt>"` imports the shared checkout's engcore.
+4. `pytest ... | tail` in a command chain hides pytest's exit code; one commit went in with a red test, fixed in `a130a0e1`.
+
+## 2026-10-14 -- Battery 1RC identifiability and independent evidence (feat/battery-1rc-identifiability, local only)
+
+Evidence package: [benchmarks/battery_1rc_identifiability/README.md](../../benchmarks/battery_1rc_identifiability/README.md).
+The branch is stacked on the closure branch (50671ebd), which is unchanged. Nothing is pushed or merged, and no
+recertification has been run.
+
+WP1. An independent review of the NASA closure found it SOUND_WITH_CAVEATS (eight caveats in the README). Its four
+result digests are pinned unchanged by a test.
+
+WP2. Dataset qualification:
+- LG HG2 (McMaster, CC BY 4.0) is qualified and used. It is one cell; its bytes match Mendeley's published sha256.
+- Kirkaldy 2024 is the cross-cell candidate. It is not acquired: a multi-GB download that needs owner approval.
+- Jahn A123, Panasonic 18650PF, Chen 2020 and NASA were assessed.
+
+WP3/4. Order of record (the commits are the evidence):
+1. Preregistration f06905dc (d8acfb26...).
+2. Data roles a4e83f72.
+3. Calibration 6e69f0c9.
+4. Held-out evaluation ec788c2f, opened once.
+5. Tests and outcome 709a46de.
+6. Ledger c99b1781.
+7. README 7a2698d4.
+8. Review corrections d35cecb0: re-reported from the same frozen records, with no threshold or mapping change.
+
+Results:
+- IDENTIFIABLE: R0 20.7 mOhm, R1 15.6 mOhm, C1 1586 F, tau 24.8 s, with the OCV measured from relaxed rests.
+- Held-out 2C/4C pulses PASS the pooled limits (12.6 mV), but fail under load alone (19.7 mV).
+- The 1C constant-current test FAILS marginally (28.7 mV, P95 50.7 mV).
+- Outcome MODEL_REJECTED. Without the preregistered +/-1 degC widening it would be IDENTIFIABILITY_SUPPORTED.
+- Ledger: calibration PASS (scoped); the computed stage stays FUNCTIONAL.
+
+Commands and results:
+- Windows .venv 3.14, `FORGE_LGHG2_DIR=<raw> pytest benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py`:
+  47 passed, 1 skipped (the closure's opt-in raw-bytes test). This includes the rebuild of every role from the raw
+  LG HG2 bytes.
+- Manual rerun of fit -> evaluate -> outcome reproduced CALIBRATION.json and VALIDATION.json byte for byte; only the
+  unpinned TIMINGS files changed.
+- Trial merge of integration/g0-a1-unblock with this branch:
+  - conflicts only in docs/work/ACTIVE_PLAN.md and PROGRESS.md;
+  - certified_dependency, authority_closure, source_form and harness_pinning problems all [];
+  - 498 passed, 3 skipped (guards, audit, route, both battery benchmarks, closure tests, genesis_lite).
+- WSL gates on d35cecb0:
+  - `pytest -m "not expensive" -n 4`, 3.12: 10446 passed, 158 skipped, 1 failed.
+  - The same, 3.11: 10446 passed, 158 skipped, 1 failed.
+  - On both, the failure is `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`: the
+    certificate is stale and the closure branch adds a model definition, so recertification is needed.
+  - `forge_check --changed --base e193e573`: the same single failure, and the four RECERTIFICATION_REQUIRED test files.
+  - `forge_check --regression`: 256 passed.
+  - Focused set: 702 passed, 2 skipped (the opt-in raw-bytes tests).
+
+Failed approaches, so they are not repeated:
+1. Letting an out-of-domain set FAIL broke "contradiction requires admissible evidence". Out-of-domain is now
+   NOT_ASSESSABLE in both directions. The closure's cross-cell FAIL carries this caveat and is not edited.
+2. Pooling rest samples hid a load-only miss. Report load and rest separately alongside any pooled acceptance.
+3. Comparisons with one unit need no verdict field, only a point difference.
+
+## 2026-10-15 -- Owner decisions and the consolidated source (integration/g0a1-battery-1rc, local)
+
+Owner reply "approved" (2026-10-15), applied to the three listed decisions:
+1. The LG HG2 publisher-stated Type B accuracy is admitted for its own channels only
+   (benchmarks/battery_1rc_identifiability/MEASUREMENT_UNCERTAINTY_DECISION.json). NASA stays UNKNOWN.
+   - battery.thevenin_1rc measurement_uq is PASS.
+   - The computed stage stays FUNCTIONAL: independent_validation (cross-cell) is the only gate left before
+     EVIDENCE_BACKED.
+   - No frozen acceptance or outcome changed.
+2. Push and one hardened recertification of the consolidated source.
+3. The Kirkaldy 2024 download: the exact files and sizes are listed for confirmation before any byte is fetched.
+
+Consolidated source: `integration/g0a1-battery-1rc` (worktree `D:/forge-consolidated`). It is
+`integration/g0-a1-unblock` (d1c96ae4) merged with `feat/battery-1rc-identifiability` (a4d4c24b) in 37674bfc. The
+union resolution touched only docs/work/ACTIVE_PLAN.md and PROGRESS.md.
+- `pytest benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py`
+  (Windows): 47 passed, 2 skipped (the opt-in raw-bytes tests).
+
+
+## 2026-10-15 -- Battery 1RC cross-cell evaluation on Kirkaldy 2024 (feat/battery-1rc-crosscell, local only)
+
+**Data.**
+- Owner-approved partial download ("Partial: 25°C BoL tests"): the 36 RPT0 CSVs of the 12 LG M50T cells at 25 °C, about
+  250 MB, read from the five Zenodo 10637534 archives by HTTP range. Each file was CRC32-checked.
+- Location: D:/forge-data/kirkaldy2024/bol25 (receipts in bol25.sha256).
+
+**Commits** (worktree D:/forge-battery-xcell, based on the certified source 5847345e, which is unchanged):
+- cc4d1256: preregistration PREREGISTRATION.json b1704515..., frozen before any fit. After the freeze, and before
+  data.py was written, a temperature-only dropout census over the 24 GITT files was run. It read no voltages.
+- a5ad3523: roles.
+  - The first roles commit, 256679db, was reset and never pushed. It committed the 85 MB window JSONs. The three window
+    roles are now gitignored and pinned by their committed .sha256; a rebuild must reproduce them byte for byte.
+  - Each build takes ~1 min.
+  - The first build excluded 50 Expt 2,2 windows as "not relaxed". Reading the raw step edges of those HELD-OUT cells
+    found a zero-current on-load transition record. Deviation 2 drops it by a uniform rule.
+  - This partly unblinded the Expt 2,2 cells (on-load drops of 67-84 mV seen) before the fit. No model had run, and the
+    fit had no free choice left.
+  - Deviation 1 (exclude any window holding a temperature dropout) removed no window on these files.
+- 3c865540: calibration on the 7 calibration cells, committed before the held-out evaluation ran.
+  - IDENTIFIABLE: R0 33.1 mΩ, R1 20.2 mΩ, C1 5307 F, τ 107 s. Cell-block bootstrap CV ≤ 6.1 %.
+- Held-out (5 cells, strict transfer through the engcore route):
+  - Primary: 32/99 windows outside the unwidened calibration domain.
+  - Secondary: 8/17 windows outside.
+  - Causes: temperature down to 17.61 °C against a 23.19 °C minimum, and current up to 0.52 mA above the calibration
+    maximum.
+  - Both sets are NOT_ASSESSABLE, so the outcome is **IDENTIFIABILITY_SUPPORTED**. The ledger's independent_validation
+    stays MISSING; the computed stage stays FUNCTIONAL.
+  - Descriptive only (no verdict): in-domain-only 1RC RMSE is 9.5 mV primary and 11.8 mV secondary.
+- evaluate.py ran four times after the held-out cells were opened.
+  - Runs 2-4 added descriptive fields, gated the comparison verdict (stricter only), and applied the review fixes.
+  - Every run-1 metric and acceptance value is unchanged; a test checks this.
+  - Superseded records: results/superseded/VALIDATION_run{1,2,3}.json.
+
+**Independent review** (forge-scientific-reviewer): CHANGES REQUIRED, no blocker. All findings fixed:
+- M1: disclosure of the post-opening changes (VALIDATION.json post_opening_changes, README section).
+- m1/m2: no verdict token in a NOT_ASSESSABLE comparison; the calibration comparison is IN_SAMPLE.
+- m3: dropout counts and the split dropout reason.
+- m4: partial-unblinding wording; "50 windows" corrected.
+- m5: this entry.
+- m6: a cycler accuracy cannot close the temperature gap (25 of 32 primary windows); the ledger was reworded.
+- m7: the current excess is derived.
+- m8: calibrated_z_span recorded (min 0.130).
+- m9: the descriptive subsets are labelled as not neutral / all-window.
+- m10: the OCV source wording.
+- m11: tests added for synthetic route-vs-transcription, comparison gating, held-out leakage, knot-structure refusal,
+  and absolute LG HG2 digests.
+
+**Failed approach.** Committing native-0.1 s window JSONs (85 MB) does not scale. Pin them by digest and rebuild from
+the pinned raw files.
+
+**Tests** (Windows, this worktree):
+- `FORGE_KIRKALDY_DIR=D:/forge-data/kirkaldy2024/bol25 python -m pytest -q -p no:cacheprovider --basetemp=<tmp> benchmarks/battery_1rc_crosscell/tests benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py tests/domains/test_battery_thevenin_route.py tests/test_core_guards.py`
+  - Result: 372 passed, 2 skipped. This includes the byte-for-byte rebuild of every role from the raw files.
+- `python tools/forge_check.py --changed` (no --basetemp, so the Windows default temp root applies):
+  - Result: 9868 passed, 18 failed, 734 errors.
+  - The errors are all tmp_path PermissionError (known environment issue).
+  - Running the same 18 on the untouched base 5847345e: 16 fail there too (mutation_workspace POSIX-only, blindfold
+    escrow, certificate/freeze-v4 manifests).
+  - The other 2 (test_the_tree_is_core_freeze_v1, test_the_v3_contract_is_superseded...) failed only on
+    tree.clean (uncommitted files). They were rerun after the commit; see below.
+- After commit 14d49ab6: `pytest tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`: 2 passed. The remaining 16 failures are the base's own Windows baseline.
+
+- Follow-up (same day): the two env/file-gated cross-cell tests became the commands `data --verify-raw` and `evaluate --verify-route` (see the 5847345e recertification refusal entry). Run: `data --verify-raw D:/forge-data/kirkaldy2024/bol25` problems [], exit 0; `evaluate --verify-route` problems [], exit 0; `pytest -rs benchmarks/battery_1rc_crosscell/tests` 29 passed, 0 skipped.
+## 2026-10-15 -- Hardened recertification of 5847345e: REFUSED (skip admission); source fix
+
+**The run.** `local_assurance prepare` + `run --reuse --repository sharq-labs/forge` in the fresh WSL clone
+~/forge-cons-assure, 2026-10-14T22:27Z to 2026-10-15T02:00Z, EXIT=1.
+- Result: `LOCAL_ASSURANCE: REFUSED`, `REFUSAL_KIND: EXPECTED_ASSURANCE_REFUSAL`, `SAFE_TO_PUSH: NO`. Failure record
+  sha256 f12457aa....
+- All six refusal lines are `UNEXPECTED_SKIP ... no committed rule covers this node id`, in fast311, fast312 and
+  scientific312, for the two opt-in raw-data tests:
+  - `benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py::test_every_trajectory_file_rebuilds_from_the_raw_nasa_bytes`;
+  - `benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py::test_every_role_rebuilds_from_the_raw_lg_hg2_bytes`.
+- The trust mutation population finished with 0 survived. No certificate was written and nothing was pushed.
+
+**Why not a skip rule.** The admission policy (tools/certification/skip_admission.py, certification tooling) admits
+rule paths only under tests/, providers/ and flagships/. Widening it would weaken a certified gate to admit tests that
+can never run in the gates, because the raw files are not shipped.
+
+**Fix** (benchmarks only, no certified file touched):
+- Each raw-bytes rebuild is now a command:
+  - `python -m benchmarks.battery_1rc_closure.data --verify-raw <dir>`;
+  - `python -m benchmarks.battery_1rc_identifiability.data --verify-raw <dir>`.
+  - Each exits 1 and lists every problem.
+- An always-running test checks that each command refuses when the files are absent.
+- The ledger evidence and both READMEs follow.
+- Commands run (Windows .venv, this worktree):
+  - `... closure.data --verify-raw "D:/forge-data/nasa_pcoe_battery/extracted/1. BatteryAgingARC-FY08Q4"`: problems [],
+    exit 0.
+  - `... identifiability.data --verify-raw D:/forge-data/lg_hg2/raw`: problems [], exit 0.
+  - `... identifiability.data --verify-raw D:/forge-data/nonexistent`: one "cannot rebuild" problem, exit 1.
+  - `pytest -q -p no:cacheprovider --basetemp=<tmp> -rs benchmarks/battery_1rc_identifiability/tests benchmarks/battery_1rc_closure/tests tests/test_capability_completion.py tests/domains/test_battery_thevenin_route.py tests/test_core_guards.py`:
+    345 passed, 0 skipped.
+
+**Failed approach recorded.** An env-gated `pytest.mark.skipif` raw-data test always skips in the hardened gates and
+refuses the whole run after ~3.5 h. Raw-data rebuilds belong in a command.
+
+**Next.** One hardened local-assurance run on this new source commit, in a fresh WSL clone.
+
+## 2026-10-15 -- Hardened run on 0bc8b1cb: all 18 gates passed, REFUSED at certificate generation (environment)
+
+Run: fresh WSL clone ~/forge-cons-assure-2, `/usr/bin/python3.12 -m tools.certification.local_assurance run --reuse
+--repository sharq-labs/forge --python311 .forge/venvs/3.11/bin/python --python312 .forge/venvs/3.12/bin/python`,
+2026-10-15T02:06Z to 05:39Z, EXIT=1.
+
+Result: `LOCAL_ASSURANCE: REFUSED`, `REFUSED_BY: CertificationError`, `SAFE_TO_PUSH: NO`. Failure record sha256
+abba1c6a....
+- Every execution gate completed:
+  - fast311 and fast312: 10602 passed, 156 skipped;
+  - scientific312: 11175 passed, 156 skipped;
+  - campaign312 and regression312;
+  - formal_mutations_0-3 and v4_mutations_0-7;
+  - trust_mutations: 0 survived.
+- Skip admission accepted every skip. The two raw-data skips that refused 5847345e are gone, and each gate gained the
+  2 replacement tests.
+- `failed_gate: certificate_generation`: "the production registry could not be read from the tree:
+  ModuleNotFoundError: No module named 'pint'".
+
+**Cause** (environment, not source):
+- `core_certificate.production_registry_identity` (BR-15) re-runs `sys.executable -E -s -P`, so it uses the OUTER
+  interpreter.
+- The outer interpreter was `/usr/bin/python3.12`, which has no project dependencies. Checked read-only:
+  - `/usr/bin/python3.12 -E -s -P -c "import pint"` gives ModuleNotFoundError;
+  - `.forge/venvs/3.12/bin/python` with the same flags imports pint, numpy and scipy.
+- The last local PASS (Pass 13) predates the BR-15 probe, so the outer system interpreter never mattered before.
+
+**Remedy, not yet run:**
+- Launch `local_assurance run` with `.forge/venvs/3.12/bin/python` as the outer interpreter, in a fresh clone, so run 2's
+  evidence is preserved.
+- There is no resume: `--reuse` discards evidence and re-runs every gate (~3.5 h).
+- The certification source stays 0bc8b1cb.
+- Waiting for owner approval.
+
+## 2026-10-16 -- Landing pass: recent active work merged into main (integration/main-landing-2026-10-16)
+
+**Owner direction (2026-10-16).**
+- "Merge everything not merged and resolve the conflicts."
+- Scope: recent active work. September and early-October stale branches are skipped.
+- Certified files: merge now, recertify later.
+
+**Merged, by merge commit** (branch heads kept, so the PRs show as merged):
+- #145 `docs/local-assurance-interpreter`;
+- #143 `fix/ci-reproduce-and-g0-record`, and `fix/ci-reproduce-docker-history` (local);
+- #144 `fix/electrical-support-gates`;
+- #130 `perf/test-suite-runtime` and #131 `claude/adoring-cray-jj367z` (docs);
+- `codex/final-test-assurance-closeout`, `codex/repair-scientific-boundaries` and `feat/a1-5-operating-rating` (local);
+- the chain `feat/battery-1rc-crosscell`. It carries:
+  - `integration/g0a1-battery-1rc` (0bc8b1cb);
+  - `integration/g0-a1-unblock`;
+  - `fix/br15-authority-closure`;
+  - `feat/br16-genesis-lite-benchmark`;
+  - `feat/battery-1rc-scientific-closure`;
+  - `feat/battery-1rc-identifiability`;
+  - the Kirkaldy cross-cell experiment.
+
+**Not merged:**
+- `fix/final-assurance-blockers`, which is superseded:
+  - Its `tools/test_impact.py` scanner conflicts with main's newer `tools.certification.ownership` design.
+  - Its 7 tests in `tests/test_impact_repository_scope.py` encode the replaced contract (ValueError) and fail against
+    main.
+  - Its benchmark digest re-pin targets the scientific tree at 5d73e8f5 (OD-17).
+- Stale branches, left untouched and listed for OD-11 hygiene:
+  - September: provider-architecture-pybamm-pybop, battery-voltage-s3-recovery, battery-thermal-flagship-sprint-3,
+    domain-real-data, multidomain-science-hardening, wip/applicability-screens-and-prerequisites, evidence-v11,
+    fix-bisect-table, #39 core/p0-trust-boundaries-v2, #24 chatgpt/core-v2-trust-repair-1-4,
+    codex/critical-production-closure, p0 fixes, docs/blind-rediscovery-benchmark-v1, docs/main-check-2026-10-13;
+  - early October: #107 ci/self-hosted-heavy-runner, ci/local-only-assurance, ci/incremental-hardened-recertification.
+
+**Conflict resolutions:**
+- `docs/work/PROGRESS.md` and `ACTIVE_PLAN.md`: union of both sides.
+- #130 and #131 both numbered a new decision OD-15. #131's `is_usable` decision is now **OD-21**: OD-15 stays #130's
+  CI-policy decision, and OD-18..20 belong to the G0/A1 chain. References were updated, and the duplicate OD-14 row is
+  gone.
+- `uq/budget/aggregation.py`: the auto-merge produced two empty-budget refusals. Main's ("an empty budget is UNKNOWN,
+  not zero") is kept. The branch's serializer refusal and its explicit-zero test are kept.
+- `CORE_FREEZE_POLICY.md` and `test_core_api_layering.py`: both new non-Core packages are kept (`authority`, `mind`).
+
+**Fixes needed to make the combination honest:**
+- Core purity: the `operating_rating.py` docstring said "motor"/"flight", which is thing vocabulary.
+- The schema-reader invariant: `engcore.mind` records read payloads with no schema. `MindState` now writes and checks
+  `forge.mind.state/1`, and its nested records are path-qualified exemptions read only through it.
+- Scientific review (forge-scientific-reviewer, CHANGES REQUIRED) of the a1-5 Core module:
+  - MAJOR 1: a caller admission id plus an unpublished quantity yielded SUPPORTED_WITHIN_RATING. The operating point
+    now needs a compared, same-kind published limit.
+  - MAJOR 2: the packet and multirotor mission adapter moved to `engcore.systems.products.drone_ratings`.
+  - Both fixed, with the counterexample pinned by a test.
+- The BR-15 recertification instruction names the venv interpreter.
+
+**Open review MINORs** (not fixed in this pass):
+- `UncertaintyBudgetReport` has no `__post_init__`, so an empty, zero report can be constructed directly. This hole
+  pre-exists the pass.
+- `claims/compiler.py` labels every NOT_ASSESSABLE applicability as CAPABILITY_MISSING. That is conservative, but
+  mislabelled.
+- In `operating_rating`, any one supported component makes the mission SUPPORTED. The any-of/all-of semantics are not
+  declared.
+- `engcore.mind`'s `authority_result_id` is an unchecked string. It is harmless while nothing consumes MindState as a
+  verdict.
+- Main's ownership module misses three hostile cases from the unmerged branch:
+  - inventory names escaping the root;
+  - worktree `.git` pointing at another repository;
+  - a tracked `.py` replaced by a directory.
+
+**Certification state.** `main` now carries uncertified changes to certified files: BR-15 certification tooling, the
+battery 1RC route in the production registry, and the Core module `scientific/knowledge/operating_rating.py`. The owner
+accepted recertifying afterwards. `test_the_certificate_records_the_v1_relationship_truthfully` now fails with the
+expected staleness (the V1-compatible Core digest moved), and `test_the_certificate_describes_this_tree` already failed
+on main. The hardened run (prepared `~/cons-assure-3.sh` + `~/assurance-preflight.sh`) must target the new main HEAD,
+not 0bc8b1cb.
+
+**Tests** (WSL, CPython 3.12 venv, `PYTHONPATH=<tree>/src:<tree>`):
+- `python -m pytest -m "not expensive" -q -n 4 -p no:cacheprovider -p no:randomly`.
+- Pristine main e193e573: 10374 passed, 1 failed (`test_the_certificate_describes_this_tree`), 156 skipped.
+- Landing tree bd927d8a: 10719 passed, 2 failed, 156 skipped, tracked tree clean afterwards. The only failure not present on main is `test_the_certificate_records_the_v1_relationship_truthfully` (expected certificate staleness, above). Earlier landing trees: 4f7576e0 had 3 failures (the third was the mind schema invariant, fixed in eecef67b); eecef67b had the same 2.
+- Windows .venv 3.14 targeted runs: `tests/mind tests/test_core_semantic_invariants.py tests/test_core_api_layering.py tests/test_core_guards.py` 417 passed; `tests/scientific/knowledge tests/test_core_guards.py` 309 passed; `tests/uq/budget tests/claims/test_unassessable_compilation.py tests/foundations/test_discovery_deadline.py` 20 passed, 11 skipped (POSIX-only).

@@ -625,3 +625,14 @@ def test_a_failed_line_outside_the_summary_block_is_never_credited(monkeypatch):
            + "FAILED tests/c.py::test_guard_named\n")
     assert mg.failed_test_names(out) == ["test_other"]
     assert mg.failed_test_names("FAILED tests/b.py::test_guard_named\n") == []  # no summary block: no credit
+
+
+def test_a_nested_summary_block_in_captured_output_is_never_credited(monkeypatch):
+    """BR-15 review of f869a737: a failing test that prints a nested pytest run's output carries a whole
+    'short test summary info' block inside its captured stdout, BEFORE pytest's own summary. Reading the first
+    block credited the nested FAILED line and never reached the real one."""
+    mg = _mg(monkeypatch)
+    out = ("tests/a.py F\n" + "=" * 10 + " FAILURES " + "=" * 10 + "\n---- Captured stdout call ----\n"
+           + SUMMARY + "FAILED tests/b.py::test_guard_named - x\n" + "=" * 10 + " 1 failed in 0.1s " + "=" * 10 + "\n"
+           + SUMMARY + "FAILED tests/a.py::test_other - x\n" + "=" * 10 + " 1 failed in 0.2s " + "=" * 10 + "\n")
+    assert mg.failed_test_names(out) == ["test_other"]
