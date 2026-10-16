@@ -111,6 +111,20 @@ def _capability(record: Mapping[str, Any], registry: CapabilityRegistry):
     return declaration if declaration.digest == ref["digest"] else None
 
 
+def _not_assessable_repair(repairs: list[Mapping[str, Any]], source: str) -> Mapping[str, Any] | None:
+    """The extend_capability repair a gap was read from, when it marks an applicability evaluator failure."""
+    prefix = "/repair_actions/"
+    if not source.startswith(prefix) or not source[len(prefix):].isdigit():
+        return None
+    index = int(source[len(prefix):])
+    if index >= len(repairs):
+        return None
+    repair = repairs[index]
+    if repair.get("kind") != "extend_capability" or (repair.get("detail") or {}).get("applicability") != "not_assessable":
+        return None
+    return repair
+
+
 def _stated(record: Mapping[str, Any]) -> dict[str, Any]:
     claim = record.get("claim") or {}
     out = dict(claim.get("known_inputs") or {})
@@ -149,7 +163,12 @@ def recommend_next(record: Mapping[str, Any], registry: CapabilityRegistry, anal
 
     for gap in analysis.of_kind(GapClass.MODEL_APPLICABILITY_UNKNOWN):
         paths = [(i, r) for i, r in enumerate(repairs) if r["kind"] == "supply_validity_evidence" and any(gap.target in q for q in r["required_for"])]
-        if paths:
+        evaluator = _not_assessable_repair(repairs, gap.source)
+        if evaluator is not None:
+            # The applicability evaluator itself failed: no input or run closes this, only a capability repair.
+            add(ExperimentAction.EXTEND_CAPABILITY, gap.target, [gap], capability=None, evidence="capability_declaration", forge=False,
+                executions=None, reason=evaluator["reason"], source=gap.source)
+        elif paths:
             for i, repair in paths:
                 add(ExperimentAction.ESTABLISH_APPLICABILITY, repair["target"], [gap], evidence=f"input:{repair['target']}", forge=True,
                     executions=1, reason=f"{repair['reason']} (unlocks the applicability of {gap.target})", source=f"/repair_actions/{i}")

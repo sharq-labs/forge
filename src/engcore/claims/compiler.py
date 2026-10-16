@@ -458,6 +458,9 @@ def _predicted_gaps(claim: ScientificClaim, declaration: CapabilityDeclaration, 
                 "repair the declared applicability evaluator; no missing input or successful run is assumed to close this gap",
                 required_for=(f"model:{target}",),
                 source=source,
+                # The capability exists; its applicability evaluator could not decide. Gap analysis reads this
+                # marker to report the gap as applicability UNKNOWN rather than as a missing capability.
+                detail={"applicability": "not_assessable"},
             ))
         for condition in model.unknown_of(UnknownBasis.PENDING_EXECUTION):
             if not condition.advisory_inputs:

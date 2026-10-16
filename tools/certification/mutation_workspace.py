@@ -99,6 +99,15 @@ def _digest(path, *, telemetry=None, area=None, relative=None):
     return digest.hexdigest()
 
 
+def _is_junction(entry, info):
+    """A Windows junction: ``DirEntry.is_junction`` on 3.12+, the stat reparse tag on 3.11. Never walked."""
+    probe = getattr(entry, "is_junction", None)
+    if probe is not None:
+        return probe()
+    tag = getattr(info, "st_reparse_tag", 0)
+    return bool(tag) and tag == getattr(stat, "IO_REPARSE_TAG_MOUNT_POINT", -1)
+
+
 def snapshot(tree, *, identity=None, telemetry=None, area=None):
     """Complete deterministic relative manifest; never follow directory links."""
     tree = pathlib.Path(tree)
@@ -117,9 +126,16 @@ def snapshot(tree, *, identity=None, telemetry=None, area=None):
         for child in children:
             relative = prefix + child.name
             info = child.stat(follow_symlinks=False)
+            if info.st_nlink == 0:
+                # Windows: a scandir entry's stat always reports st_nlink 0 (and no inode); a hard link is
+                # only visible to a real lstat. Never read 0 as "not linked" -- ask the filesystem.
+                info = os.lstat(child.path)
             mode = stat.S_IMODE(info.st_mode)
             scanned["entries_structurally_scanned"] += 1
-            if stat.S_ISDIR(info.st_mode):
+            if _is_junction(child, info):
+                # A Windows junction is a directory link that S_ISDIR does not distinguish; never walked.
+                rows[relative] = Entry("special", mode)
+            elif stat.S_ISDIR(info.st_mode):
                 rows[relative] = Entry("directory", mode)
                 walk(child.path, relative + "/")
             elif stat.S_ISREG(info.st_mode):

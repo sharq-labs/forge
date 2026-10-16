@@ -139,6 +139,9 @@ def analyze_gaps(record: Mapping[str, Any]) -> EvidenceGapAnalysis:
                 continue  # relative to no selected capability: a consequence of CAPABILITY_MISSING, not a gap of its own
             elif kind in ("correct_input", "remove_unaccepted_input", "restate_claim", "select_instance"):
                 add(GapClass.INPUT_INVALID, repair["target"], repair["reason"], f"/repair_actions/{i}")
+            elif kind == "extend_capability" and (repair.get("detail") or {}).get("applicability") == "not_assessable":
+                # The capability exists and its applicability could not be assessed: UNKNOWN, not a missing capability.
+                add(GapClass.MODEL_APPLICABILITY_UNKNOWN, repair["target"], repair["reason"], f"/repair_actions/{i}")
             elif kind == "extend_capability":
                 add(GapClass.CAPABILITY_MISSING, repair["target"], repair["reason"], f"/repair_actions/{i}")
         # A candidate the selection rejected because a stated value lies outside its model's validated domain
@@ -152,7 +155,7 @@ def analyze_gaps(record: Mapping[str, Any]) -> EvidenceGapAnalysis:
                         f"/compilation/selection/candidates/{ci}/models/{mi}")
         if status == "ambiguous":
             add(GapClass.CLAIM_AMBIGUOUS, "capability", "; ".join(_get(record, "compilation", "reasons") or []), "/compilation/reasons")
-        elif status == "unsupported_capability" and not any(g.kind in (GapClass.CAPABILITY_MISSING, GapClass.MODEL_OUTSIDE_DOMAIN) for g in gaps):
+        elif status == "unsupported_capability" and not any(g.kind in (GapClass.CAPABILITY_MISSING, GapClass.MODEL_OUTSIDE_DOMAIN, GapClass.MODEL_APPLICABILITY_UNKNOWN) for g in gaps):
             add(GapClass.CAPABILITY_MISSING, "capability", "; ".join(_get(record, "compilation", "reasons") or []), "/compilation/reasons")
         elif status == "refused" and not gaps:
             add(GapClass.CLAIM_REFUSED, "claim", str(_get(record, "compilation", "claim_error") or "; ".join(_get(record, "compilation", "reasons") or [])), "/compilation")

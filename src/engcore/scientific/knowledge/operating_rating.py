@@ -709,6 +709,12 @@ def assess_operating_ratings(
 ) -> MissionRatingAssessment:
     """A mission is supported only when one rating establishes every required dimension.
 
+    Composition is any-of: each ``component_id`` is an alternative candidate for the
+    same requirement, so one supported candidate supports the mission. This function
+    does not express all-of composition (a system that needs every listed part at
+    once); a caller with jointly required parts must assess each part's requirement
+    separately and must not read this result as support for their combination.
+
     Ratings that fall outside a published duration do not combine into a
     physical-impossibility claim. A sibling rating whose duration contains the
     mission, but whose operating point is not established, keeps the mission
