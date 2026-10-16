@@ -66,13 +66,20 @@ from __future__ import annotations
 
 import argparse
 import ast
+import atexit
+import contextlib
 import hashlib
+import importlib.util
 import json
+import marshal
 import os
 import pathlib
 import platform
+import shutil
 import subprocess
 import sys
+import tempfile
+import threading
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -934,6 +941,30 @@ _IMPORT_STATE = frozenset({"path", "meta_path", "path_hooks", "path_importer_cac
 _LOADER_MODULES = frozenset({"importlib", "importlib.util", "importlib.metadata", "importlib.machinery", "pkgutil",
                              "runpy", "pydoc", "importlib._bootstrap", "importlib._bootstrap_external"})
 
+#: What a file's bytes say about its imports does not depend on when they are read (FAST regression, 2026-10-16:
+#: the three closures re-parsed the same files on every verification). So the authority, certified-dependency and
+#: evidence-code closures share this memo, keyed by the SHA-256 of the exact bytes read -- never by path, mtime or
+#: size -- plus everything else the result depends on: the module's package for its imports, the rule tables for
+#: its dynamic loads. The bytes hashed are the bytes parsed. In-process only: nothing is written to disk or shared
+#: with another process, and whatever the filesystem decides (a star-imported package's submodules, how a file is
+#: spelled on disk) is read again by every verification.
+_ANALYSES: dict[tuple[Any, ...], Any] = {}
+_ANALYSES_LIMIT = 1 << 16
+
+
+def _analysis(kind: str, data: bytes, context: tuple[Any, ...], compute: Any) -> Any:
+    """``compute(data)``, memoized by ``kind``, the SHA-256 of ``data`` and ``context``."""
+    key = (kind, hashlib.sha256(data).digest(), context)
+    try:
+        return _ANALYSES[key]
+    except KeyError:
+        pass
+    value = compute(data)
+    if len(_ANALYSES) >= _ANALYSES_LIMIT:
+        _ANALYSES.clear()
+    _ANALYSES[key] = value
+    return value
+
 
 def dynamic_imports(path: pathlib.Path) -> list[int]:
     """Lines where ``path`` loads a module the static closure cannot name.
@@ -941,9 +972,15 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
     ``import_module``/``__import__`` with anything but an absolute string literal; any call in
     :data:`_LOADER_CALLS`; the builtins ``exec``/``compile``/``eval``; ``getattr`` on a loader module; and
     any of these reached through an alias (``from importlib import import_module as load``). A literal
-    absolute name is not dynamic: :func:`_engcore_imports` follows it.
+    absolute name is not dynamic: :func:`_engcore_imports` follows it. Memoized by the exact bytes read
+    and the rule tables that read them (:data:`_ANALYSES`).
     """
-    tree = ast.parse(path.read_bytes().decode("utf-8"))
+    rules = (_LOADER_CALLS, _QUALIFIED_LOADERS, _MUTATORS, _CODE_BUILTINS, _IMPORT_STATE, _LOADER_MODULES)
+    return list(_analysis("dynamic_imports", path.read_bytes(), rules, _dynamic_import_lines))
+
+
+def _dynamic_import_lines(data: bytes) -> tuple[int, ...]:
+    tree = ast.parse(data.decode("utf-8"))
     aliases: dict[str, str] = {}
     modules: set[str] = set()
     builtin_names = {"builtins", "__builtins__"}
@@ -1061,41 +1098,79 @@ def dynamic_imports(path: pathlib.Path) -> list[int]:
               and _call_name(node.func.value.func) == "vars" and node.func.value.args
               and isinstance(node.func.value.args[0], ast.Name) and node.func.value.args[0].id in modules):
             lines.append(node.lineno)  # BR-15 confirmation review: vars(importlib)["import_module"](name)
-    return sorted(set(lines))
+    return tuple(sorted(set(lines)))
 
 
-def _spelled_on_disk(src: pathlib.Path, candidate: pathlib.Path) -> bool:
+def _spelled_on_disk(src: pathlib.Path, candidate: pathlib.Path,
+                     listings: dict[str, frozenset[str] | None] | None = None) -> bool:
     """``candidate`` exists under ``src`` with exactly this spelling (BR-15).
 
     On a case-insensitive filesystem ``results/Uncertainty.py`` "is a file" when ``results/uncertainty.py``
     is, so ``from .results import Uncertainty`` -- a symbol -- named a module that does not exist, and
     which spelling the closure kept depended on set order: the same tree verified or failed by hash seed.
+
+    ``listings`` holds the directory listings of ONE closure walk, which a caller creates empty for that walk
+    and drops after it, so a case-only rename between two verifications is always seen. Keyed by the exact
+    path string: a Windows path compares case-insensitively, and two spellings are two directories.
     """
     current = src
     for part in candidate.relative_to(src).parts:
-        try:
-            if part not in os.listdir(current):
-                return False
-        except OSError:
+        names = _listing(current, listings)
+        if names is None or part not in names:
             return False
         current = current / part
     return True
 
 
-def _engcore_module_file(src: pathlib.Path, module: str) -> pathlib.Path | None:
+def _listing(directory: pathlib.Path, listings: dict[str, frozenset[str] | None] | None) -> frozenset[str] | None:
+    """The names in ``directory``, or None when it cannot be listed; from ``listings`` when it holds them."""
+    key = os.fspath(directory)
+    if listings is not None and key in listings:
+        return listings[key]
+    try:
+        names: frozenset[str] | None = frozenset(os.listdir(directory))
+    except OSError:
+        names = None
+    if listings is not None:
+        listings[key] = names
+    return names
+
+
+def _engcore_module_file(src: pathlib.Path, module: str,
+                         listings: dict[str, frozenset[str] | None] | None = None) -> pathlib.Path | None:
     base = src.joinpath(*module.split("."))
     for candidate in (base.with_suffix(".py"), base / "__init__.py"):
-        if candidate.is_file() and _spelled_on_disk(src, candidate):
+        if candidate.is_file() and _spelled_on_disk(src, candidate, listings):
             return candidate
     return None
 
 
 def _engcore_imports(src: pathlib.Path, path: pathlib.Path) -> set[str]:
-    """Every ``engcore`` module ``path`` names, absolute or relative, including imports inside functions."""
+    """Every ``engcore`` module ``path`` names, absolute or relative, including imports inside functions.
+
+    What the bytes name is memoized by the exact bytes and the module's package (:data:`_ANALYSES`); whether
+    a star-imported package exists, and which submodules it holds, is read from the filesystem on every call.
+    """
     relative = path.relative_to(src).with_suffix("")
-    package = list(relative.parts[:-1])
+    package = tuple(relative.parts[:-1])
+    named, stars = _analysis("engcore_imports", path.read_bytes(), package,
+                             lambda data: _named_imports(data, list(package)))
+    found = set(named)
+    for module in stars:
+        star_package = src.joinpath(*module.split("."))
+        if (star_package / "__init__.py").is_file():
+            # BR-15 review: `from pkg import *` imports whatever pkg.__all__ names, submodules included;
+            # every direct submodule is taken as reached rather than reading __all__.
+            found.update(f"{module}.{child.stem if child.suffix else child.name}" for child in sorted(star_package.iterdir())
+                         if (child.suffix == ".py" and child.name != "__init__.py") or (child / "__init__.py").is_file())
+    return {name for name in found if name == "engcore" or name.startswith("engcore.")}
+
+
+def _named_imports(data: bytes, package: list[str]) -> tuple[frozenset[str], tuple[str, ...]]:
+    """The module names ``data`` imports from inside ``package``, and the modules it star-imports from."""
     found: set[str] = set()
-    for node in ast.walk(ast.parse(path.read_bytes().decode("utf-8"))):
+    stars: list[str] = []
+    for node in ast.walk(ast.parse(data.decode("utf-8"))):
         if isinstance(node, ast.Import):
             found.update(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom):
@@ -1106,19 +1181,15 @@ def _engcore_imports(src: pathlib.Path, path: pathlib.Path) -> set[str]:
                 module = node.module or ""
             found.add(module)
             found.update(f"{module}.{alias.name}" for alias in node.names if alias.name != "*")
-            star_package = src.joinpath(*module.split("."))
-            if any(alias.name == "*" for alias in node.names) and (star_package / "__init__.py").is_file():
-                # BR-15 review: `from pkg import *` imports whatever pkg.__all__ names, submodules included;
-                # every direct submodule is taken as reached rather than reading __all__.
-                found.update(f"{module}.{child.stem if child.suffix else child.name}" for child in sorted(star_package.iterdir())
-                             if (child.suffix == ".py" and child.name != "__init__.py") or (child / "__init__.py").is_file())
+            if any(alias.name == "*" for alias in node.names):
+                stars.append(module)
         elif isinstance(node, ast.Call) and node.args and isinstance(node.args[0], ast.Constant) \
                 and isinstance(node.args[0].value, str):
             # importlib.import_module("engcore.x") is an import with a literal name: followed like one.
             name = _call_name(node.func)
             if name.endswith("import_module") or name == "__import__":
                 found.add(node.args[0].value)
-    return {name for name in found if name == "engcore" or name.startswith("engcore.")}
+    return frozenset(found), tuple(stars)
 
 
 def authority_import_closure(root: pathlib.Path, roots: Sequence[str] | None = None) -> list[str]:
@@ -1134,6 +1205,7 @@ def authority_import_closure(root: pathlib.Path, roots: Sequence[str] | None = N
     patterns = AUTHORITY_ROOTS if roots is None else tuple(roots)
     queue = [path for pattern in patterns for path in sorted(root.glob(pattern)) if path.is_file()]
     seen: set[pathlib.Path] = set()
+    listings: dict[str, frozenset[str] | None] = {}   # this walk's directory listings, dropped with it
     while queue:
         current = queue.pop()
         if current in seen or _excluded(current.relative_to(root)):
@@ -1142,7 +1214,7 @@ def authority_import_closure(root: pathlib.Path, roots: Sequence[str] | None = N
         for module in _engcore_imports(src, current):
             parts = module.split(".")
             for length in range(1, len(parts) + 1):
-                target = _engcore_module_file(src, ".".join(parts[:length]))
+                target = _engcore_module_file(src, ".".join(parts[:length]), listings)
                 if target is not None and target not in seen:
                     queue.append(target)
     return sorted((path.relative_to(root).as_posix() for path in seen), key=lambda text: text.encode("utf-8"))
@@ -1253,6 +1325,7 @@ def certified_dependency_problems(root: pathlib.Path, scope: Sequence[ScopeArea]
     seen: set[str] = set()
     queue = sorted(seeds)
     reach = {file: pattern for file, pattern, _ in DYNAMIC_REACH if pattern.startswith("src/engcore/")}
+    listings: dict[str, frozenset[str] | None] = {}   # this walk's directory listings, dropped with it
     while queue:
         current = queue.pop()
         if current in seen:
@@ -1272,7 +1345,7 @@ def certified_dependency_problems(root: pathlib.Path, scope: Sequence[ScopeArea]
         for module in _engcore_imports(src, root / current):
             parts = module.split(".")
             for length in range(1, len(parts) + 1):
-                target = _engcore_module_file(src, ".".join(parts[:length]))
+                target = _engcore_module_file(src, ".".join(parts[:length]), listings)
                 if target is None or _excluded(target.relative_to(root)):
                     continue
                 name = target.relative_to(root).as_posix()
@@ -1419,6 +1492,132 @@ print(json.dumps({
 #: The file whose presence says this tree has a production registry to pin.
 REGISTRY_ENTRY = "src/engcore/product/capabilities.py"
 
+#: The registry probe's bytecode. Third confirmation review: a planted timestamp .pyc whose header matches the source's
+#: mtime and size runs instead of the source, so the probe never reads the tree's __pycache__; it runs with
+#: -X pycache_prefix naming a directory this verifier created. FAST regression (2026-10-16): a new prefix per probe made
+#: every probe recompile the interpreter's library, numpy, scipy and pint as well as the tree (~3 s), so the directory
+#: is created once per process -- tempfile.mkdtemp (owner-only), never inside the tree being certified, one prefix per
+#: interpreter inside it, removed at exit, never adopted by a forked child -- and before EVERY probe
+#: :func:`_seed_probe_bytecode` makes the bytecode for the tree's sources the CHECKED_HASH compilation of the bytes on
+#: disk at that moment. Only the library's own bytecode carries over from one probe to the next. A probe's result is
+#: never reused.
+_PROBE_LOCK = threading.Lock()
+_PROBE_WORKSPACE: dict[str, Any] = {}
+_CHECKED_HASH_PYC = (0b11).to_bytes(4, "little")   # PEP 552 flags: hash-based, checked against the source
+_PATH_SEPARATORS = os.sep + (os.altsep or "")
+
+
+def _probe_workspace(root: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path, dict[str, tuple[bytes, bytes]]] | None:
+    """This process's probe directory, its bytecode prefix for this interpreter, and what was compiled into it.
+
+    None when it cannot be used, and the probe then gets a one-shot directory as before: an interpreter with no
+    bytecode cache tag, or a temporary directory inside the tree being certified, where a directory that outlives
+    the probe would become part of the tree.
+    """
+    tag = sys.implementation.cache_tag
+    if tag is None:
+        return None
+    tree = root.resolve()
+    state = _PROBE_WORKSPACE
+    if state.get("pid") == os.getpid() and state["base"].is_dir():
+        if state["base"].resolve().is_relative_to(tree):
+            shutil.rmtree(state["base"], ignore_errors=True)
+            state.clear()
+            return None
+    elif pathlib.Path(tempfile.gettempdir()).resolve().is_relative_to(tree):
+        return None
+    else:
+        base = pathlib.Path(tempfile.mkdtemp(prefix="forge-registry-probe-"))
+        atexit.register(_remove_probe_directory, os.getpid(), base)
+        state.clear()
+        state.update(pid=os.getpid(), base=base, compiled={})
+    interpreter = hashlib.sha256("\0".join((tag, importlib.util.MAGIC_NUMBER.hex(), sys.executable))
+                                 .encode("utf-8")).hexdigest()[:16]
+    return state["base"], state["base"] / f"pycache-{interpreter}", state["compiled"]
+
+
+def _remove_probe_directory(pid: int, base: pathlib.Path) -> None:
+    """At exit: remove the probe directory this process created -- never one its parent created before a fork."""
+    if os.getpid() == pid:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def _probe_bytecode_path(prefix: str, source: str) -> str:
+    """Where an interpreter run with ``-X pycache_prefix=<prefix>`` and no -O keeps the bytecode of ``source``.
+
+    importlib.util.cache_from_source's rule when sys.pycache_prefix is set -- the source's absolute directory, its
+    drive removed, under the prefix -- applied here because setting sys.pycache_prefix would redirect this process's
+    own imports. ``source`` is absolute.
+    """
+    cut = max(source.rfind(separator) for separator in _PATH_SEPARATORS)
+    head, tail = (source[:cut], source[cut + 1:]) if cut >= 0 else ("", source)
+    name = os.path.basename(importlib.util.cache_from_source(tail, optimization=""))
+    if head[1:2] == ":" and head[0:1] not in _PATH_SEPARATORS:
+        head = head[2:]
+    return os.path.join(prefix, head.lstrip(_PATH_SEPARATORS), name)
+
+
+def _sha256_or_none(path: str) -> bytes | None:
+    try:
+        with open(path, "rb") as handle:
+            return hashlib.sha256(handle.read()).digest()
+    except OSError:
+        return None
+
+
+def _seed_probe_bytecode(src: str, prefix: str, compiled: dict[str, tuple[bytes, bytes]]) -> bool:
+    """Make the bytecode under ``prefix`` for every source in ``src`` the compilation of the bytes on disk now.
+
+    Each .py is read once. Its CHECKED_HASH .pyc -- which an import still checks against the source's hash -- is
+    kept only when this process compiled it from exactly those bytes (SHA-256) and it is still byte-identical to
+    what was written; otherwise it is compiled from the bytes just read. Every other file under ``src``'s part of
+    the prefix -- bytecode a probe wrote for a module it compiled itself, or for a file since deleted -- is removed.
+    False when that cannot be guaranteed; the probe then gets a fresh prefix.
+    """
+    kept: set[str] = set()
+    for directory, subdirectories, files in os.walk(src):
+        subdirectories[:] = [name for name in subdirectories if name not in EXCLUDED_DIR_PARTS]
+        for name in files:
+            if not name.endswith(".py"):
+                continue
+            source = os.path.join(directory, name)
+            target = _probe_bytecode_path(prefix, source)
+            try:
+                data = pathlib.Path(source).read_bytes()
+            except OSError:
+                continue   # unreadable for the probe too; bytecode left for it is removed below
+            digest = hashlib.sha256(data).digest()
+            record = compiled.get(target)
+            if record is None or record[0] != digest or _sha256_or_none(target) != record[1]:
+                try:
+                    code = compile(data, source, "exec", dont_inherit=True, optimize=0)
+                except Exception:  # noqa: BLE001 - not compilable: the probe compiles it itself, and fails, if it imports it
+                    continue
+                pyc = importlib.util.MAGIC_NUMBER + _CHECKED_HASH_PYC + importlib.util.source_hash(data) + marshal.dumps(code)
+                try:
+                    os.makedirs(os.path.dirname(target), exist_ok=True)
+                    pending = f"{target}.{os.getpid()}.tmp"
+                    with open(pending, "wb") as handle:
+                        handle.write(pyc)
+                    os.replace(pending, target)
+                except OSError:
+                    return False
+                compiled[target] = (digest, hashlib.sha256(pyc).digest())
+            kept.add(target)
+    for directory, _, files in os.walk(os.path.dirname(_probe_bytecode_path(prefix, os.path.join(src, "x.py")))):
+        for name in files:
+            path = os.path.join(directory, name)
+            if path in kept:
+                continue
+            compiled.pop(path, None)
+            try:
+                os.unlink(path)
+            except FileNotFoundError:
+                pass
+            except OSError:
+                return False
+    return True
+
 
 def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
     """The production registry's declaration digest and code identities, read from the tree at ``root``.
@@ -1435,12 +1634,18 @@ def production_registry_identity(root: pathlib.Path) -> dict[str, Any] | None:
     # Fourth review: nothing from the environment steers the probe -- no PYTHON*/FORGE*/user-site/cwd entries
     # (-E -s -P, a scratch working directory), and only the tree's own engcore is accepted.
     env = {key: value for key, value in os.environ.items() if not key.upper().startswith(("PYTHON", "FORGE"))}
-    import tempfile  # noqa: PLC0415 - only the probe needs a scratch directory
-
-    with tempfile.TemporaryDirectory(prefix="forge-registry-probe-") as scratch:
+    with _PROBE_LOCK, contextlib.ExitStack() as stack:
+        workspace = _probe_workspace(root)
+        # the probe resolves its argument the same way, so its imports look for exactly this bytecode
+        if workspace is not None and _seed_probe_bytecode(os.fspath((root / "src").resolve()), os.fspath(workspace[1]),
+                                                           workspace[2]):
+            scratch, prefix = workspace[0], workspace[1]
+        else:
+            scratch = pathlib.Path(stack.enter_context(tempfile.TemporaryDirectory(prefix="forge-registry-probe-")))
+            prefix = scratch / "pycache"
         # third confirmation review: a planted timestamp .pyc whose header matches the source's mtime and size runs
-        # instead of it; with a fresh pycache prefix the probe never reads the tree's __pycache__ at all
-        run = subprocess.run([sys.executable, "-E", "-s", "-P", "-X", f"pycache_prefix={pathlib.Path(scratch) / 'pycache'}",
+        # instead of it; with its own pycache prefix the probe never reads the tree's __pycache__ at all
+        run = subprocess.run([sys.executable, "-E", "-s", "-P", "-X", f"pycache_prefix={prefix}",
                               "-c", _REGISTRY_PROBE, str(root / "src")], cwd=scratch,
                              env=env, capture_output=True, text=True, timeout=600)
     if run.returncode != 0:
@@ -1469,6 +1674,7 @@ def evidence_code_digests(root: pathlib.Path, identity: Mapping[str, Any]) -> di
                 seeds.add(str(item["source"]))
     queue = [root / name for name in sorted(seeds)]
     seen: set[pathlib.Path] = set()
+    listings: dict[str, frozenset[str] | None] = {}   # this walk's directory listings, dropped with it
     while queue:
         current = queue.pop()
         if current in seen or not current.is_file():
@@ -1477,7 +1683,7 @@ def evidence_code_digests(root: pathlib.Path, identity: Mapping[str, Any]) -> di
         for module in _engcore_imports(src, current):
             parts = module.split(".")
             for length in range(1, len(parts) + 1):
-                target = _engcore_module_file(src, ".".join(parts[:length]))
+                target = _engcore_module_file(src, ".".join(parts[:length]), listings)
                 if target is not None and target not in seen:
                     queue.append(target)
     declared = {file for file, _, _ in DYNAMIC_REACH}
