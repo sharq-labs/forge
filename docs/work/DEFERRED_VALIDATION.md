@@ -12,7 +12,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-1 | BR1 + BR11 adaptive coupling windows (incl. step-size memory) | New tests | `pytest tests/test_multiphysics_window_control.py -q` | NOT RUN |
 | DV-2 | BR1 | Existing multiphysics runtime suites (exception subclass, plan serialization, run-record shape) | `pytest tests/test_stateful_multiphysics_runtime.py tests/test_big9_review_runtime_fixes.py tests/test_multiphysics_conservation_history.py tests/test_multiphysics_fan_in_units.py tests/test_external_participant_checkpoints.py tests/test_coupled_transport_admission.py -q` | NOT RUN |
 | DV-3 | BR1 | Stored plan/run fingerprints unchanged for plans without window control (any test or benchmark that pins a `CouplingPlan.fingerprint()` or run digest) | FAST tier, diffed against a pristine baseline | NOT RUN |
-| DV-8 | BR2 joint IQN-ILS | New tests (hand-computed expectations) | `pytest tests/test_multiphysics_iqn_ils.py -q` | NOT RUN |
+| DV-8 | BR2 + BR16 joint IQN-ILS | New tests (hand-computed expectations, QR filter) | `pytest tests/test_multiphysics_iqn_ils.py -q` | NOT RUN |
 | DV-9 | BR2 | Field-valued (mesh) edges under IQN-ILS: no test exists yet; write one with a registered mesh | new test | NOT WRITTEN |
 | DV-10 | BR3 error accounting | New tests (includes estimate >= true error on an exact linear contraction) | `pytest tests/test_multiphysics_numerical_error_accounting.py -q` | NOT RUN |
 | DV-11 | BR4 splitting estimate | New tests (exact first-order model problem; determinism of an identical re-run) | `pytest tests/test_multiphysics_splitting_estimate.py -q` | NOT RUN |
@@ -52,8 +52,8 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 - Joint IQN-ILS is exact for linear maps once enough independent secant pairs span the interface. Its behaviour on
   the nonlinear couplings in this repository is unmeasured, including the electrothermal feedback, which uses an
   EXPLICIT scheme today and does not reach it.
-- `np.linalg.lstsq` with the default `rcond` is the only conditioning filter. There is no QR column filtering as in
-  preCICE, so near-dependent secant pairs are handled only by the truncated SVD.
+- (Superseded by BR16) Near-dependent secant pairs are now dropped by a newest-first QR filter (`iqn_filter`). The
+  filter threshold is a numerical choice, declared in the policy and recorded with it.
 - An edge whose residual is zero at every iteration keeps weight 1. Its rows are identically zero, so this does not
   affect the step.
 - Uncertainty through an IQN step is UNKNOWN by design. A converged coupled value therefore carries no propagated

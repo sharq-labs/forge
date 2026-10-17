@@ -27,7 +27,8 @@ ledger capability).
 - [ ] Owner: the coupling error budget calls a round-trip L2 residual a relative_bound (it is not a bound on the forward transfer).
 - [x] BR14 defect fix: coupled nodes may not run unreported external providers, tests NOT RUN.
 - [x] BR15 fallback solver routes start at their own refinement level (F-5), tests NOT RUN.
-- [ ] BR16 onward: keep building (owner instruction 2026-10-17).
+- [x] BR16 QR filtering of near-dependent IQN-ILS secant pairs, tests NOT RUN.
+- [ ] BR17 onward: keep building (owner instruction 2026-10-17).
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)

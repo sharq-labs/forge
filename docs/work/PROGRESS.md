@@ -5248,3 +5248,12 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   `max_refinements` counts per route. This was the pre-existing finding F-5 from the Phase 1 review.
 - Test appended to `tests/execution/orchestration/test_checkpoint_routing.py`.
 - Owner instruction (2026-10-17): keep building Big Rocks continuously, without asking between them.
+
+### BR16 -- QR filtering of near-dependent IQN-ILS secant pairs (tests NOT RUN)
+- `relaxation.RelaxationController._qr_filter` runs newest-first modified Gram-Schmidt over the scaled V columns. A
+  column is dropped when its new direction is below `iqn_filter` times its norm, and W keeps the same columns.
+- `RelaxationPolicy.iqn_filter` defaults to 1e-10 and is IQN-only (refused on other kinds), serialized with
+  `iqn_columns`. Non-IQN identity was confirmed unchanged by reading the policy dicts.
+- This closes the BR2 assumption "lstsq rcond is the only conditioning filter".
+- Tests appended to `tests/test_multiphysics_iqn_ils.py`: parallel columns keep only the newest, and independent
+  columns are all kept.
