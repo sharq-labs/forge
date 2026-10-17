@@ -117,7 +117,8 @@ class MultiphysicsAuthority(_Base):
                  graph: Any = None, plan: Any = None, runtime_factory: Callable[[NodeCall], Any] | None = None,
                  state_outputs: Mapping[str, tuple[str, str]] | None = None,
                  extractors: Mapping[str, Callable[[Any, NodeCall], Quantity]] | None = None,
-                 artifacts: Callable[[Any, NodeCall], tuple[ArtifactRef, ...]] | None = None) -> None:
+                 artifacts: Callable[[Any, NodeCall], tuple[ArtifactRef, ...]] | None = None,
+                 allow_mock_participants: bool = False) -> None:
         """Either a fixed ``runtime``, or ``graph`` + ``plan`` + ``runtime_factory(call)`` for a participant that must be built from the committed
         state (for example a cell constructed with its initial state of charge).  Identity covers the graph and plan fingerprints and ``config``."""
         if (runtime is None) == (runtime_factory is None):
@@ -130,7 +131,12 @@ class MultiphysicsAuthority(_Base):
             "graph": graph.fingerprint(), "plan": plan.fingerprint(), "outputs": dict(sorted(outputs.items())),
             "state_outputs": {k: list(v) for k, v in sorted((state_outputs or {}).items())},
             "extractors": sorted(extractors or {}), "artifacts": artifacts is not None,
-            "state_owners": dict(sorted((state_owners or {}).items())), "config": dict(config or {})})
+            "state_owners": dict(sorted((state_owners or {}).items())), "config": dict(config or {}),
+            # absent unless allowed: authorities that never admit mocks keep their identity
+            **({"allow_mock_participants": True} if allow_mock_participants else {})})
+        if not isinstance(allow_mock_participants, bool):
+            raise InvalidScientificProblem("allow_mock_participants must be boolean")
+        self._allow_mock = allow_mock_participants
         self._extractors, self._artifacts = dict(extractors or {}), artifacts
         self._graph_fingerprint = graph.fingerprint()
         self._plan_fingerprint = plan.fingerprint()
@@ -155,7 +161,8 @@ class MultiphysicsAuthority(_Base):
         return out
 
     @staticmethod
-    def _untraced_external_providers(runtime: Any, records: tuple[ProviderRecordRef, ...]) -> str:
+    def _untraced_external_providers(runtime: Any, records: tuple[ProviderRecordRef, ...], *,
+                                     skip_mocks: bool = False) -> str:
         """Why an external provider inside the coupled run is untraceable, or ''.
 
         The executor already refuses a node that names provider bindings but
@@ -170,7 +177,7 @@ class MultiphysicsAuthority(_Base):
         participants = getattr(runtime, "participants", None) or {}
         external = sorted(
             (pid, p.provider_identity) for pid, p in dict(participants).items()
-            if isinstance(p, ExternalSolverParticipant)
+            if isinstance(p, ExternalSolverParticipant) and not (skip_mocks and p.is_mock)
         )
         if not external:
             return ""
@@ -224,8 +231,18 @@ class MultiphysicsAuthority(_Base):
         if not assessment.completed:
             return NodeOutcome.failed(f"the coupled run did not complete; nothing is exposed ({'; '.join(assessment.problems)})")
         explicit = assessment.outcome is CouplingRunOutcome.COMPLETED_EXPLICIT
+        # Phase 2 BR12: a mock external participant is never evidence that a real provider executed; it is
+        # refused unless this authority explicitly admits mocks, and then it is labelled (it has no provider
+        # record to trace, so only an admitted, labelled mock is exempt from the trace requirement below)
+        from ..execution.multiphysics.external import ExternalSolverParticipant
+
+        mocks = sorted(pid for pid, p in dict(getattr(runtime, "participants", None) or {}).items()
+                       if isinstance(p, ExternalSolverParticipant) and p.is_mock)
+        if mocks and not self._allow_mock:
+            return NodeOutcome.failed(f"the coupled run used MOCK external participants {mocks}; a mock is not a "
+                                      f"provider execution and this authority does not admit mocks")
         provider_records = () if self._providers is None else tuple(self._providers(run))
-        untraced = self._untraced_external_providers(runtime, provider_records)
+        untraced = self._untraced_external_providers(runtime, provider_records, skip_mocks=self._allow_mock)
         if untraced:
             return NodeOutcome.failed(untraced)
         outputs: dict[str, OutputValue] = {}
@@ -270,7 +287,8 @@ class MultiphysicsAuthority(_Base):
             artifacts=() if self._artifacts is None else self._artifacts(run, call),
             resource_usage=ResourceUsage(wall_seconds=wall), diagnostics={"windows": str(len(run.windows)),
                                                                         "iterations": str(sum(len(w.iterations) for w in run.windows)),
-                                                                        "coupling_outcome": assessment.outcome.value})
+                                                                        "coupling_outcome": assessment.outcome.value,
+                                                                        **({"mock_participants": ",".join(mocks)} if mocks else {})})
 
 
 class MultiscaleAuthority(_Base):

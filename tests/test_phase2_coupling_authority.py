@@ -59,8 +59,14 @@ def test_exactly_one_coupling_authority_is_declared_and_it_is_the_runtime():
 
 
 def test_every_declared_coupling_path_names_a_module_that_exists():
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parents[1]
     for path in COUPLING_PATHS:
-        importlib.import_module(path.module)
+        if path.module.startswith("engcore."):
+            importlib.import_module(path.module)
+        else:  # a provider package outside src (forge_precice): it exists in the repository
+            assert any(root.glob(f"providers/*/{path.module}/__init__.py")), path.module
 
 
 def test_the_electrothermal_loop_is_declared_not_migrated_with_its_remaining_work():

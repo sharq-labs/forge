@@ -52,6 +52,8 @@ class CouplingPathStatus(str, Enum):
     NOT_MIGRATED = "not_migrated"
     #: sequences solves without any fixed point (one-way coupling); nothing to migrate
     NOT_A_COUPLING_LOOP = "not_a_coupling_loop"
+    #: an external coupling library iterates; Forge renders its contract and re-checks the residual itself
+    EXTERNAL_ENGINE = "external_engine"
 
 
 @dataclass(frozen=True)
@@ -66,7 +68,7 @@ class CouplingPath:
         object.__setattr__(self, "status", CouplingPathStatus(self.status))
         if not str(self.path_id).strip() or not str(self.module).strip() or not str(self.semantics).strip():
             raise InvalidScientificProblem("a coupling path names its id, module and semantics")
-        if self.status is CouplingPathStatus.NOT_MIGRATED and not str(self.remaining).strip():
+        if self.status in (CouplingPathStatus.NOT_MIGRATED, CouplingPathStatus.EXTERNAL_ENGINE) and not str(self.remaining).strip():
             raise InvalidScientificProblem(f"coupling path {self.path_id!r} is not migrated and must say what remains")
 
     def to_dict(self) -> dict[str, Any]:
@@ -112,6 +114,83 @@ COUPLING_PATHS: tuple[CouplingPath, ...] = (
         "battery_cell_body_march", "engcore.domains.battery.coupling", CouplingPathStatus.NOT_A_COUPLING_LOOP,
         "one-way cell -> body march: the body does not drive the cell back, so there is no fixed point",
     ),
+    CouplingPath(
+        "provider_participants", "engcore.coupling.adapters", CouplingPathStatus.DELEGATES,
+        "provider_participant / field_port / mapped_input wrap provider solves (FEniCSx, PyBaMM, ...) as participants "
+        "of MultiphysicsRuntime; the runtime decides convergence",
+    ),
+    CouplingPath(
+        "precice_scalar_two_way", "forge_precice", CouplingPathStatus.EXTERNAL_ENGINE,
+        "preCICE runs the iterations between separate participant processes from a Forge-rendered "
+        "ScalarTwoWayContract; Forge accepts the record only if preCICE converged AND its own fixed-point residual "
+        "check on the exchanged values passes",
+        remaining=(
+            "a second convergence check outside the runtime: its acceptance is a provider record, not a runtime run; "
+            "scalar two-way only; owner decision whether preCICE becomes a participant transport under the runtime "
+            "or stays a separate external engine"
+        ),
+    ),
+)
+
+
+class CouplingMaturity(str, Enum):
+    NOT_IMPLEMENTED = "not_implemented"
+    IMPLEMENTED_UNEXECUTED = "implemented_unexecuted"
+    #: executed in an earlier tree with a recorded result; not re-run on the current tree
+    EXECUTED_HISTORICALLY = "executed_historically"
+    BLOCKED = "blocked"
+
+
+@dataclass(frozen=True)
+class ExternalCouplingMaturity:
+    """Three separate claims per provider: adaptation, field exchange, and end-to-end coupled execution."""
+
+    provider_id: str
+    adaptation: CouplingMaturity
+    field_exchange: CouplingMaturity
+    coupled_execution: CouplingMaturity
+    basis: str
+
+    def __post_init__(self) -> None:
+        for label in ("adaptation", "field_exchange", "coupled_execution"):
+            object.__setattr__(self, label, CouplingMaturity(getattr(self, label)))
+        if not str(self.basis).strip():
+            raise InvalidScientificProblem("a coupling maturity statement cites its basis")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"provider_id": self.provider_id, "adaptation": self.adaptation.value,
+                "field_exchange": self.field_exchange.value, "coupled_execution": self.coupled_execution.value,
+                "basis": self.basis}
+
+
+#: Phase 2 BR12: what is known about each external provider's coupling, stated per claim.  An adapter's
+#: code existing is not proof that a coupled simulation executes; nothing here is a maturity stage of the ledger.
+EXTERNAL_PROVIDER_COUPLING: tuple[ExternalCouplingMaturity, ...] = (
+    ExternalCouplingMaturity(
+        "fenicsx", CouplingMaturity.EXECUTED_HISTORICALLY, CouplingMaturity.EXECUTED_HISTORICALLY,
+        CouplingMaturity.EXECUTED_HISTORICALLY,
+        "providers/fenicsx/tests (incl. test_coupling_fenicsx: FEniCSx thermal <-> SciPy electrical on the runtime, "
+        "mapped fields, conservation audit) recorded 133 passed in the WSL fenicsx env on a BIG-14-era tree "
+        "(docs/work/PROGRESS.md); not re-run on this tree",
+    ),
+    ExternalCouplingMaturity(
+        "openfoam", CouplingMaturity.EXECUTED_HISTORICALLY, CouplingMaturity.NOT_IMPLEMENTED,
+        CouplingMaturity.NOT_IMPLEMENTED,
+        "forge_openfoam runs one icoFoam cavity case to endTime (process provider, executed in the battery env "
+        "historically); it has no time-window session, no boundary-condition update between windows and no "
+        "interface-field read-back, so it cannot be a coupled participant",
+    ),
+    ExternalCouplingMaturity(
+        "su2", CouplingMaturity.EXECUTED_HISTORICALLY, CouplingMaturity.NOT_IMPLEMENTED,
+        CouplingMaturity.NOT_IMPLEMENTED,
+        "forge_su2 runs one case per execution (process provider); no window session or interface exchange",
+    ),
+    ExternalCouplingMaturity(
+        "fe_cfd_conjugate_heat_transfer", CouplingMaturity.BLOCKED, CouplingMaturity.BLOCKED, CouplingMaturity.BLOCKED,
+        "a real FE <-> CFD conjugate heat-transfer coupling is a new capability foundation under the active-epic "
+        "policy (no ledger capability exists; EXC-1 is open, so a second exception triggers the anti-loophole "
+        "review): blocked pending an owner decision. Prerequisites are recorded in DEFERRED_VALIDATION.md (P2-BR12)",
+    ),
 )
 
 
@@ -145,8 +224,11 @@ def fixed_point_outcome(outcome: Any) -> CouplingRunOutcome:
 
 __all__ = [
     "COUPLING_PATHS",
+    "CouplingMaturity",
     "CouplingPath",
     "CouplingPathStatus",
+    "EXTERNAL_PROVIDER_COUPLING",
+    "ExternalCouplingMaturity",
     "coupling_authority",
     "fixed_point_outcome",
 ]

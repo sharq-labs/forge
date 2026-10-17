@@ -516,3 +516,47 @@ are NOT resolved by Phase 2 unless a row below says so.
 - Boundary-condition kinds, regimes and equation classes are matched through qualification scope tokens because
   `ProviderCapability` does not declare them; the tokens' meaning is the issuing route's.
 - Numerical error of each side is not part of a corroboration; agreement within tolerance says nothing about it.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-60 | P2-BR12 external-participant infrastructure | New tests with LABELLED MOCK sessions: end-to-end field-mapped run (closes DV-34 as WRITTEN), interface contract, mock refusal/admission, failure classification, maturity table | `pytest tests/test_phase2_external_coupling.py -q` | NOT RUN |
+| DV-34 | P1-BR2 (carried) | End-to-end field-mapped coupled run through `TransferEngine` | written as `tests/test_phase2_external_coupling.py::test_a_field_coupled_run_maps_the_flux_conservatively_and_records_it` | NOT RUN (now written) |
+| DV-61 | P2-BR12 | Re-run the real FEniCSx coupling suite on THIS tree (last recorded: 133 passed on a BIG-14-era tree); the interface contract applied to its thermal <-> electrical graph | WSL: `FORGE_PROVIDER_ENVS=$HOME/mm/root/envs $HOME/mm/root/envs/fenicsx/bin/python -m pytest -q providers/fenicsx/tests` | NOT RUN |
+| DV-62 | P2-BR12 | Real FE <-> CFD coupled execution (FEniCSx solid + OpenFOAM or SU2 fluid, conjugate heat transfer) | BLOCKED (policy) | NOT WRITTEN |
+| DV-63 | P2 all | Performance and memory regressions of the Phase 2 paths (indexed search, tet overlap, selection) | owner-authorized benchmark | NOT RUN |
+
+### P2-BR12 status: PARTIAL / UNVERIFIED (end-to-end FE/CFD BLOCKED)
+
+Implemented (provider-neutral infrastructure, policy-permitted):
+- `ExternalProviderIdentity.mock`: a labelled mock is part of the sealed identity (real identities unchanged);
+  `MultiphysicsAuthority` refuses mock external participants unless `allow_mock_participants=True`, then labels them
+  (`mock_participants` diagnostic) and exempts only them from the provider-record trace requirement.
+- `ExternalProviderFailure`: any non-scientific exception from a session (process, file, library) is a classified
+  refusal naming build and phase; scientific errors -- including the retryable `CouplingWindowNotConverged` -- keep
+  their type.
+- `execution/multiphysics/interface_exchange.py`: `InterfaceContract` types each interface edge as FLUX_DENSITY
+  (field-valued, conservative or identity mapping, ratio-scale unit, declared sign convention) or INTENSIVE; a two-way
+  interface needs one flux edge and one intensive edge back between the same participants;
+  `interface_flux_balance` reads the per-window transfer conservation residuals as DIAGNOSTICS (UNKNOWN where none
+  was recorded), never bounds.
+- `authority.EXTERNAL_PROVIDER_COUPLING`: per provider, adaptation / field exchange / coupled execution stated
+  separately (FEniCSx executed historically on an older tree; OpenFOAM and SU2 adaptation only; FE/CFD BLOCKED);
+  `COUPLING_PATHS` now also declares the provider-participant adapters and the preCICE external engine.
+
+BLOCKED -- real FE <-> CFD conjugate heat transfer (owner decision OD-P2-1):
+- Policy: a new capability foundation under the active epic `battery.thevenin_1rc`; EXC-1 is open, so a second
+  exception triggers the anti-loophole review. Not authorized by this prompt.
+- Engineering prerequisites, recorded so they are not rediscovered: (1) an OpenFOAM (or SU2) time-window session --
+  case restart per window, a boundary-condition file update for the interface (temperature or flux) before each
+  window, read-back of the interface boundary field after it, deterministic snapshot/restore of the time directory;
+  (2) a FEniCSx boundary-trace output of the conduction flux on the interface facets; (3) interface meshes as
+  `UnstructuredMesh` supports (2D triangles/quads on a shared surface, or matching tetrahedral layers) so the
+  conservative remap applies; (4) a declared conjugate-heat-transfer model with applicability conditions in the
+  ledger; (5) the WSL envs (`~/mm/root/envs/fenicsx`, the `battery` env with OpenFOAM v2412 / SU2 8.5.0) on PATH via
+  `tools/wsl_env.sh`, `MSYS_NO_PATHCONV=1` for `/mnt/d` paths.
+
+### Unverified assumptions (P2-BR12)
+
+- The mock sessions in the tests exercise transfer and record mechanics only; no conclusion about any real solver
+  follows from them.
+- `forge_precice` keeps its own fixed-point residual check outside the runtime (declared EXTERNAL_ENGINE).
