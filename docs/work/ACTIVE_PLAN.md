@@ -21,7 +21,9 @@ ledger capability).
 - [x] BR9 multiscale: opt-in macro-window rejection on fast non-convergence, tests NOT RUN.
 - [x] BR10 composition-pack templates declare window control (carried into plans), tests NOT RUN.
 - [x] BR11 step-size memory for adaptive coupling windows, tests NOT RUN.
-- [ ] BR12: owner to choose.
+- [x] BR12 defect fix: event-aligned windows keep their own failure outcome, tests NOT RUN.
+- [ ] Owner: MultiphysicsAuthority provider reporting for external participants (D5) and its rejection of explicit_completed/event_aligned windows.
+- [ ] BR13: owner to choose.
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)

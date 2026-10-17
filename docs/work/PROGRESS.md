@@ -5189,3 +5189,24 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   - Width changes are logged.
 - Tests appended to `tests/test_multiphysics_window_control.py`. A hand-traced stiff case: 8 subdivisions over 2 s
   without memory, 4 with growth 2, every accepted window <= the 0.25 s stability limit, rollback still exact.
+
+### BR12 -- event-aligned windows keep their own failure outcome (defect fix, tests NOT RUN)
+- **Defect, found by static review and NOT reproduced by execution (build phase):** `runtime._window` re-ran an
+  implicit window up to a terminal event and always labelled the result `EVENT_ALIGNED`.
+  - With `fail_on_nonconvergence=False`, a re-run that ended at its iteration limit was recorded as a completed
+    window: false convergence.
+  - It also defeated BR1 retries and BR3 accounting.
+  - Fix: only a completed re-run is `EVENT_ALIGNED`; otherwise the re-run's outcome is kept and the event is still
+    recorded.
+- Tests written: `tests/test_multiphysics_event_aligned_outcome.py`.
+  - A diverging loop with a mid-window trip must record `ITERATION_LIMIT`.
+  - Accounting must mark window 0 UNBOUNDED.
+  - A converging control stays `EVENT_ALIGNED`.
+- Also surveyed (D5 from the first provider survey), not changed:
+  - `MultiphysicsAuthority` reports no provider executions unless given a `providers` callable, so external
+    providers inside a coupled node are not checked against the request's bindings.
+  - No production code constructs `MultiphysicsAuthority` or uses `ExternalSolverParticipant`.
+  - Deriving provider records from participants would be new evidence semantics: owner decision.
+  - The authority also fails every window whose outcome is not `converged`, including `explicit_completed` and
+    `event_aligned`. That looks unintended for explicit coupling, and is recorded for the owner rather than changed
+    in the build phase.
