@@ -5145,3 +5145,19 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   - A SciPy-version-dependent check that the sweep exercises the hybr false refusal.
 - Owner decision (2026-10-17): `tests/multiscale_reference.py` stays on `root_method="lm"`, so its evidence is
   unchanged. The hybr->lm chain is available opt-in only.
+
+### BR9 -- multi-timescale: opt-in macro-window rejection on fast non-convergence (tests NOT RUN)
+- Gap: the macro-step loop rejected and shortened windows for slow-state change, threshold localization and
+  representativity, but not when the fast execution failed numerically. A non-converging coupled fast run refused the
+  whole multi-timescale run, even though a shorter macro window shortens the resolved fast window.
+- What changed:
+  - `multiscale/windows.py`: `MacroStepPolicy.retry_fast_nonconvergence`, default off and serialized only when on.
+  - `multiscale/fast.py`: the typed signal `FastExecutionNotConverged`.
+  - `multiscale/runtime.py`: rejection kind `fast_nonconvergence`, recorded as a `RefinementDecision` with subject
+    `fast_execution`, within the existing divisor, minimum window and rejection bound. Other refusals are never
+    retried, and no accounting counter is added.
+- Static checks caught a defect before commit: the text patch had put the existing `@dataclass(frozen=True)`
+  decorator on the new exception class. It was fixed, and an AST scan of all 21 changed src files found no other
+  decorated exception class.
+- Tests written: `tests/test_multiscale_fast_nonconvergence.py`, using the unchanged reference fixture with a
+  fail-first-N fast system. Static checks only.

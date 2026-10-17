@@ -23,6 +23,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-16 | BR7 nonlinear robustness | New tests (fake basin provider + one real scipy root) | `pytest tests/numerical/test_robust_nonlinear.py -q` | NOT RUN |
 | DV-17 | BR8 heater chain | New tests (200-state exact-equality sweep; SciPy-1.18-dependent fallback check) | `pytest tests/domains/electrical/test_heater_root_chain.py -q` | NOT RUN |
 | DV-18 | BR8 | Multiscale suites still pass with the fixture unchanged (identity unchanged by construction) | `pytest tests/test_multiscale_runtime.py tests/test_multiscale_review_fixes.py tests/test_big11_review_fixes.py -q` | NOT RUN |
+| DV-19 | BR9 multiscale fast non-convergence | New tests + existing multiscale suites (policy digest unchanged by default) | `pytest tests/test_multiscale_fast_nonconvergence.py tests/test_multiscale_runtime.py tests/test_multiscale_review_fixes.py -q` | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -107,3 +108,11 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
   single-method result bit-for-bit. The exact-equality test relies on this.
 - The 200-state sweep contains at least one hybr false refusal under SciPy 1.18, as recorded in project memory but
   not re-measured.
+
+## Unverified assumptions (BR9)
+
+- The retry assumes a shorter macro window can change the fast execution's outcome: through the slow state
+  consumed, the resolved window, or the representative selection. A fast failure independent of all three
+  exhausts the rejection bound and refuses, as before, just later.
+- No real fast system raises `FastExecutionNotConverged` yet. The reference heater system's coupled loop failures
+  reach the macro loop only if they propagate as `CouplingWindowNotConverged` (BR1); that path is untested.
