@@ -9,7 +9,8 @@ ledger capability).
 
 - [x] BR1 adaptive coupling-window control (`af7ea219`), tests NOT RUN.
 - [x] BR2 joint IQN-ILS coupling acceleration, Jacobi only (`35d8f557`), tests NOT RUN.
-- [ ] BR3 (next): nonlinear-solver robustness in the electrothermal fixed point (systems/electrothermal/coupled.py).
+- [x] BR3 coupling numerical-error accounting derived from run records, tests NOT RUN.
+- [ ] BR4: owner to choose (see the BR3 report).
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)

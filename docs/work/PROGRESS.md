@@ -5028,3 +5028,19 @@ Deferred tests and checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md).
 **Failed approach (do not repeat):** the first BR2 draft was per-edge IQN inside the serial Gauss-Seidel path. Working
 the algorithm by hand showed each edge's secant history sees a map the other edge's update keeps changing, so it is
 not a sound method there. Joint IQN over the Jacobi interface vector replaced it.
+
+### BR3 -- coupling numerical-error accounting (tests NOT RUN)
+- New `execution/multiphysics/numerical_error.py`: `assess_coupling_numerical_error(run)` derives an accounting from
+  an existing run record and leaves the record unchanged.
+  - Statuses: QUANTIFIED (the mapping bounds), ESTIMATED, UNQUANTIFIED, UNBOUNDED.
+  - ESTIMATED is the q/(1-q) r_k iteration error of a converged plain fixed-point window. It is not a bound and is
+    never summed into the bound.
+  - UNQUANTIFIED: explicit splitting, accelerated or single-iteration windows.
+  - UNBOUNDED: windows that ended at their iteration limit.
+  - Verdict: BOUNDED / ESTIMATED / INCOMPLETE / UNBOUNDED / NO_COUPLING.
+- Why derived rather than recorded: folding these sources into `final_outputs["_coupling_error"]` would change the
+  serialized identity of every existing run. Whether to record it in runs is a later, explicit versioning decision.
+- Gap this addresses: the run's `coupling_error_bound` sums mapping error only, so it read as the whole coupling error
+  of runs that also staggered explicitly or stopped at an iteration limit. Nothing in `src` consumes that bound
+  today.
+- Tests written: `tests/test_multiphysics_numerical_error_accounting.py`. Static checks only.

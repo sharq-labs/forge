@@ -14,6 +14,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-3 | BR1 | Stored plan/run fingerprints unchanged for plans without window control (any test or benchmark that pins a `CouplingPlan.fingerprint()` or run digest) | FAST tier, diffed against a pristine baseline | NOT RUN |
 | DV-8 | BR2 joint IQN-ILS | New tests (hand-computed expectations) | `pytest tests/test_multiphysics_iqn_ils.py -q` | NOT RUN |
 | DV-9 | BR2 | Field-valued (mesh) edges under IQN-ILS: no test exists yet; write one with a registered mesh | new test | NOT WRITTEN |
+| DV-10 | BR3 error accounting | New tests (includes estimate >= true error on an exact linear contraction) | `pytest tests/test_multiphysics_numerical_error_accounting.py -q` | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -42,3 +43,11 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
   affect the step.
 - Uncertainty through an IQN step is UNKNOWN by design. A converged coupled value therefore carries no propagated
   uncertainty under IQN, where constant or Aitken relaxation would propagate a declared one.
+
+## Unverified assumptions (BR3)
+
+- The contraction ratio q comes from the last two residuals of one edge. On nonlinear or non-monotone convergence
+  the estimate can under-state the error; it is labelled ESTIMATED for that reason.
+- A residual-based estimate assumes the recorded residual is the unrelaxed fixed-point residual, which the runtime
+  guarantees for implicit windows (`raw_out`).
+- Splitting error is reported once per explicit run, not per window or per edge.
