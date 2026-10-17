@@ -483,3 +483,36 @@ are NOT resolved by Phase 2 unless a row below says so.
   it cannot verify it. Backends that state none keep the pre-Phase-2 behaviour (ambiguity refuses only a checkpoint
   that does record a build).
 - PyBaMM's solution state digest (`last_state.y` bytes) is assumed to identify the restorable state, as before.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-57 | P2-BR11 problem identity, corroboration, selection | New tests (equivalent and non-equivalent representations, excluded aspects, corroboration refusals, equal provider digests not trusted, qualified deterministic selection) | `pytest tests/test_phase2_solver_selection_and_identity.py -q` | NOT RUN |
+| DV-58 | P2-BR11 | Existing comparison suites and the flagships that call `compare_providers` (serialized form unchanged when no equivalence is attached) | `pytest tests/test_provider_boundary.py tests/test_big11_second_rereview_fixes.py flagships -q` | NOT RUN |
+| DV-59 | P2-BR11 | Selection with REAL admitted qualifications (route runs + ledger) instead of the patched admission used in the unit tests | new test | NOT WRITTEN |
+
+### P2-BR11 status: IMPLEMENTED / UNVERIFIED
+
+- `providers/problem_identity.py`: `CanonicalProblem` (ten provider-independent aspects; quantities canonicalized to
+  base units with the repository identity rule; absolute vs difference kept apart; discretization, mesh, solver,
+  solver configuration, tolerances and provider inputs refused as aspects); `compare_problems` -> SAME_PROBLEM /
+  DIFFERENT_PROBLEM (names the aspects) / UNDETERMINED (never promoted); `ProblemBinding` records an adapter's
+  declared translation of a canonical problem into one execution.
+- `providers/compare.corroborate`: compares only after SAME_PROBLEM and one binding per record naming its execution
+  and its side's canonical problem; the record states what it establishes and what it does not (validation,
+  physical truth, model form, translation fidelity, numerical error). Independence and unit rules unchanged.
+- `providers/selection.py`: `SolverRequirement` (scope mandatory), `select_solvers` -> `SolverSelection` record:
+  available, capability covers the requirement, an admitted qualification of the exact build and adapter covers the
+  scope; deterministic order = explicit preference, then provider id.
+- False-support pathway found and contained, not removed: `compare_providers` still compares two records with no
+  same-problem check (each side's `problem_digest` is provider-specific). Its comparisons now report
+  `same_problem_established = False`; making that a refusal changes flagship level-5 evidence (owner decision
+  OD-P2-3).
+
+### Unverified assumptions (P2-BR11)
+
+- A canonical declaration is as faithful as its author; two authors can state one problem differently (a false
+  DIFFERENT_PROBLEM) -- the safe direction. A false SAME_PROBLEM needs two identical declarations of different
+  problems, i.e. a declaration that omits what differs; requiring every aspect bounds but does not exclude that.
+- Boundary-condition kinds, regimes and equation classes are matched through qualification scope tokens because
+  `ProviderCapability` does not declare them; the tokens' meaning is the issuing route's.
+- Numerical error of each side is not part of a corroboration; agreement within tolerance says nothing about it.
