@@ -5315,3 +5315,30 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
 - Next slice (needs an EXC-1 amendment or a new exception): a non-uniform finite-difference conduction solver that
   `adapt_grid` can drive, plus wiring into a capability.
 - Tests written: `tests/numerical/test_mesh_adaptation.py`.
+
+### BR21 -- adaptive mesh control slice 3: non-uniform steady 1D conduction solver (EXC-1 A2, tests NOT RUN)
+- EXC-1 amendment A2 (owner-approved 2026-10-17, commit 9e28c753) adds
+  `domains/thermal_models/conduction1d_nonuniform.py` and its tests.
+- Placement:
+  - `domains/thermal` is pinned by set equality (adding a file breaks `test_every_thermal_source_file_is_pinned`),
+    so the new solver lives in `thermal_models`, next to `conduction1d_bulk` and `conduction1d_schemes`.
+  - No glob pin covers `thermal_models`; each existing file there is pinned individually.
+  - It is imported by path; the pinned `thermal_models/__init__.py` is untouched.
+- The solver (commit 1060175f):
+  - steady `-(k u')' = q` on a `Grid1D` that must span exactly [0, L];
+  - vertex-centred finite volumes, `k` at cell midpoints, `q` at nodes times the control-volume width;
+  - explicit temperature or inward-heat-flux ends, never defaulted; two flux ends are refused;
+  - `k` must be positive and finite at every face; Thomas solve;
+  - exact at the nodes for constant `k` and constant `q` on any grid, flux ends included (checked by hand
+    algebra, not by execution).
+- Adaptation: `temperature_evaluator(problem)` gives the `adapt_grid` callable (a fresh solve per grid), and
+  `adapt_conduction` is that call with `value_unit="kelvin"`.
+- Guards checked by reading, not by running:
+  - no `ValidationCheck`, `ScientificModelDefinition`, `ScientificSolver` or `ScientificResult` construction;
+  - no `pint` import and no `_rel_tol` / `_atol` parameters;
+  - the domain import of `engcore.numerical` has a precedent in `electrical/heater_circuit.py`.
+- Static checks run: py_compile, an import of the new module from the worktree's src, the undefined-name checker,
+  and `git diff --check`. pytest NOT RUN.
+- Tests written: `tests/domains/thermal_models/test_conduction1d_nonuniform.py`.
+- Next slice (needs an owner decision): declare the non-uniform path as a capability or realization, and/or a
+  transient solver. Both are still prohibited under A2.

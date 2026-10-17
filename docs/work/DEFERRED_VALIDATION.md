@@ -33,6 +33,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-26 | BR18 electrothermal relaxation | New tests + existing electrothermal suites (plan identity unchanged by default) | `pytest tests/test_electrothermal_fixed_point_relaxation.py tests/domains/thermal_models/test_lumped_applicability.py tests/test_electrothermal_vertical.py -q` | NOT RUN |
 | DV-27 | BR19 adaptive resolution (EXC-1 exit gate) | New tests + scientific review of the slice | `pytest tests/claims/test_adaptive_resolution.py -q` + forge-scientific-review | NOT RUN |
 | DV-28 | BR20 1D mesh adaptation (EXC-1 exit gate, with DV-27) | New tests + scientific review | `pytest tests/numerical/test_mesh_adaptation.py -q` + forge-scientific-review | NOT RUN |
+| DV-29 | BR21 non-uniform steady 1D conduction (EXC-1 exit gate, with DV-27/28) | New tests + scientific review | `pytest tests/domains/thermal_models/test_conduction1d_nonuniform.py -q` + forge-scientific-review | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -155,3 +156,15 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 - Boundary nodes copy their neighbour's curvature estimate, which is exact for quadratics and first-order otherwise.
 - Gradation uses repeated single bisections until no violation remains. It terminates because every bisection halves
   a cell above `minimum_cell`, but its node cost on extreme layers is unmeasured.
+
+## Unverified assumptions (BR21)
+- The wall-layer test assumes `adapt_conduction` (theta 0.5, tolerance 1e-2 K) meets TOLERANCE_MET_ESTIMATED
+  within 50 cycles and 10 000 nodes. The cycle count was estimated (about nine bisection levels at the wall), not
+  measured.
+- The adapted grid beating a uniform grid of the same node count on NODAL error is the expected behaviour for a
+  boundary layer. The indicator estimates interpolation error, not nodal error, so this is a behavioural claim
+  the test checks, not a property the indicator guarantees.
+- The second-order ratio (> 3 between 17 and 33 nodes for k = 1 + x) follows from the midpoint rule's
+  per-cell O(h**3) flux error. It has not been executed.
+- At a discontinuity in k, the curvature the indicator reads is not the solution's. The adaptation record's
+  notice covers this; no test exercises a k jump.

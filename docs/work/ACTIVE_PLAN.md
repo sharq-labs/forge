@@ -32,7 +32,8 @@ ledger capability).
 - [x] BR18 opt-in under-relaxation of the electrothermal fixed point, tests NOT RUN.
 - [x] BR19 adaptive resolution (mesh control slice 1) under EXC-1, tests NOT RUN (DV-27 is the EXC-1 exit gate).
 - [x] BR20 1D local mesh adaptation kernel (mesh control slice 2) under EXC-1 A1, tests NOT RUN (DV-28).
-- [ ] Owner: wiring adaptive resolution into uq_studies (changes which run carries a claim's evidence); slice 3 (non-uniform solver).
+- [x] BR21 non-uniform steady 1D conduction solver driven by adapt_grid (mesh control slice 3) under EXC-1 A2, tests NOT RUN (DV-29).
+- [ ] Owner: wiring adaptive resolution into uq_studies (changes which run carries a claim's evidence); declaring the non-uniform path as a capability/realization; a transient non-uniform solver.
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)
