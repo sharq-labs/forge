@@ -5591,3 +5591,54 @@ targets a changed line.
 - OD-P3-6: schedule-forced windows below `minimum_window` (open since P1-BR4): still recorded, not refused.
 - OD-P3-7: whether `l2_measure` or window error control should become mandatory anywhere (identity change).
 - Still open: OD-P2-1..OD-P2-5, Phase 1 items, OD-3.
+
+## 2026-10-18 -- Phase 3.5: engineering foundation completion (build phase; feat/phase35-engineering-foundation-completion, local only)
+
+Worktree `D:/forge-phase35`, on Phase 3 `7389f4b4` (re-verified 2026-10-18: Phase 1 -> 2 -> 3 ancestry intact; none in
+`origin/main` `de11dffa`; no phase branch on the remote; all worktrees clean). Owner direction: complete the unfinished
+foundations within policy, execute no test, no push/PR/merge/certification, stop before Phase 4.
+
+### Commits (all local)
+
+`8a76dbe2` WS1, `e740f208` WS2, `feb1f34e` WS3, `e30c33c0` policy proposals, `e01bc051` review fixes, then this docs
+commit. Per-workstream status, DV rows and review dispositions: DEFERRED_VALIDATION.md "Phase 3.5".
+
+### What was executed
+
+- `python -m py_compile` on every changed source and test file; import checks (`PYTHONPATH=D:/forge-phase35/src;D:/forge-phase35/flagships`);
+  `git diff --check`: clean.
+- A read-only scientific review of the Phase 3.5 diff (subagent, Read/Grep/Glob only): 2 BLOCKER (stale test
+  expectations), 3 MAJOR, 8 MINOR; all BLOCKERs and MAJORs fixed in `e01bc051`; MINORs fixed or recorded.
+- No pytest, FAST, SCIENTIFIC, mutation, benchmark, real-provider run or certification: **NOT RUN**.
+
+### Policy boundary (what was and was not done)
+
+- Permitted and implemented: WS1 (owner-directed false-support fix, closes OD-P2-3), WS2 (runtime engineering under the
+  existing coupling authority), WS3 provider-neutral infrastructure.
+- Policy-blocked, NOT implemented: WS3 real FE/CFD adapters (OD-P2-1), WS4 transient 1D adaptation / conservative 1D
+  transfer / coarsening / triangle refinement, WS5 nonlinear PDE template, WS6 ALE formulation. Drafts:
+  `docs/work/PHASE_3_5_POLICY_PROPOSALS.md` (P35-A4, P35-A5 as EXC-1 amendments; P35-E1..E3 as new exceptions that
+  trigger the OD-6 active-epic review). None is active.
+- Technically blocked even if approved: no OpenFOAM time-window session or interface read-back; no FEniCSx boundary-trace
+  flux output; no Newton path in `forge_fenicsx`.
+
+### Failed approaches (do not repeat)
+
+- A stored same-problem admission checked only for shape could be forged consistently by adding four keys: store the
+  canonical problems and re-derive.
+- Flagship canonical problems built from the flagship's shared constants declare SAME for sides given different
+  inputs: derive each from the problem object the provider was handed.
+- Making the runtime refuse a failed SINK result by default would break native parity; making it accept one by default
+  would weaken the generic runtime: the tolerance is an explicit adapter opt-in.
+
+### Owner decisions recorded, not taken
+
+- OD-P35-1: approve, amend or reject P35-A4 / P35-A5 (EXC-1 amendments; EXC-1 expires 2026-10-31).
+- OD-P35-2: decide OD-6 (active-epic change or program review) before any of P35-E1..E3 can start.
+- OD-P35-3: regenerate the cavity and structure flagship bundles with the real providers (DV-93); until then their
+  committed level-5 statements are stale and their bundles are refused.
+- OD-P35-4: after DV-88..DV-90 pass, set `RUNTIME_PATH_PARITY_VERIFIED` and decide whether the product path delegates;
+  whether `CouplingEvidence` should carry a structural marker for candidate runs.
+- OD-P35-5: whether the Core consensus path and the verification ladder's V5 mapping must also require canonical
+  same-problem admission (Core freeze implications).
+- Still open: OD-P3-1..OD-P3-7, OD-P2-1/2/4/5, Phase 1 items, OD-3.

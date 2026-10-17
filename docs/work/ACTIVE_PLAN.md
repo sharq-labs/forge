@@ -1,5 +1,19 @@
 # Active Plan
 
+## Active override — Phase 3.5: engineering foundation completion, build phase (2026-10-18)
+
+Branch `feat/phase35-engineering-foundation-completion` (worktree `D:/forge-phase35`), on Phase 3 `7389f4b4`. Local
+commits only; no test execution, push, PR, merge or certification. Deferred checks: DEFERRED_VALIDATION.md DV-87..DV-98
+(all earlier DV rows preserved). Policy drafts: [PHASE_3_5_POLICY_PROPOSALS.md](PHASE_3_5_POLICY_PROPOSALS.md). Phase 4 not started.
+
+- [x] WS1 mandatory same-problem admission for corroboration (`8a76dbe2`, review fixes `e01bc051`), tests NOT RUN; closes OD-P2-3.
+- [x] WS2 electrothermal migration candidate on the runtime, NATIVE default, parity-gated (`e740f208`) -- PARTIAL until DV-88..DV-90 pass.
+- [x] WS3 conjugate-interface admission and provider-pair maturity (`feb1f34e`) -- PARTIAL: real FE/CFD BLOCKED (P35-E2).
+- [ ] WS4 transient 1D adaptation, conservative transfer, coarsening, triangle refinement -- BLOCKED (P35-A4/A5).
+- [ ] WS5 provider-backed nonlinear PDE -- BLOCKED (P35-E1, needs OD-6).
+- [ ] WS6 ALE formulation -- BLOCKED (P35-E3, needs OD-6).
+- [ ] Owner: OD-P35-1..OD-P35-5 (PROGRESS 2026-10-18); regenerate two flagship bundles (DV-93); authorize deferred validation; OD-3.
+
 ## Active override — Phase 3: advanced numerical & multiphysics engine, build phase (2026-10-17)
 
 Branch `feat/phase3-advanced-numerical-multiphysics` (worktree `D:/forge-phase3`), stacked on Phase 2 `2661b640`.
