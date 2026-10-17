@@ -5013,3 +5013,18 @@ Deferred tests and checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md).
   divergence). Static checks only: py_compile, import of every test import (none missing), `git diff --check`.
 - UNCERTIFIED: `plan.py`, `runtime.py` and both `__init__.py` files are pinned in
   `certification/current_core_v2.json`.
+
+### BR2 -- joint IQN-ILS coupling acceleration (`35d8f557`, tests NOT RUN)
+- `scientific/multiphysics/plan.py`: `RelaxationKind.IQN_ILS` and `RelaxationPolicy.iqn_columns` (1..50, serialized
+  only for IQN). Admitted for JACOBI semantics only.
+- `execution/multiphysics/relaxation.py`: `RelaxationController.relax_joint` takes one quasi-Newton step over the
+  concatenated interface vector, with per-edge residual-RMS scaling and a constant-relaxation fallback. History
+  resets every window. `propagate_uncertainty` returns UNKNOWN for IQN.
+- `execution/multiphysics/runtime.py`: the Jacobi path calls `relax_joint`; IQN iterations record no scalar factor.
+- Tests written: `tests/test_multiphysics_iqn_ils.py`. Expected values are hand-computed:
+  (290,290) -> (285,290) -> (280,288) -> (300,300) for x = 2y - 300, y = x.
+- Static checks only: py_compile, test-import resolution, an AST name-resolution check of the touched modules.
+
+**Failed approach (do not repeat):** the first BR2 draft was per-edge IQN inside the serial Gauss-Seidel path. Working
+the algorithm by hand showed each edge's secant history sees a map the other edge's update keeps changing, so it is
+not a sound method there. Joint IQN over the Jacobi interface vector replaced it.
