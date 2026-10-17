@@ -33,6 +33,7 @@ from enum import Enum
 import math
 from typing import TYPE_CHECKING, Any
 
+from ...scenarios.timeline import canonical_digest
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.multiphysics import (
     CouplingScheme,
@@ -45,6 +46,20 @@ if TYPE_CHECKING:
     from .splitting import SplittingErrorEstimate
 
 ASSESSMENT_KIND = "coupling_numerical_error_assessment"
+
+#: Window outcomes after which a window's coupled state is a solution of the
+#: window; anything else (iteration limit, a refused participant or transfer)
+#: is not controlled at all.
+_COMPLETED_OUTCOMES = frozenset({
+    WindowOutcome.CONVERGED,
+    WindowOutcome.EXPLICIT_COMPLETED,
+    WindowOutcome.EVENT_ALIGNED,
+})
+
+
+def run_digest(run: MultiphysicsRunRecord) -> str:
+    """The digest coupling evidence binds to: canonical JSON of the run record."""
+    return canonical_digest(run.to_dict())
 
 
 class ErrorSourceStatus(str, Enum):
@@ -99,8 +114,28 @@ class NumericalErrorSource:
 
 @dataclass(frozen=True)
 class CouplingNumericalErrorAssessment:
+    """Produced by :func:`assess_coupling_numerical_error` from a run record, never assembled by hand.
+
+    ``run_digest`` binds it to the exact run; ``coupled`` comes from the run's
+    graph, so an empty source list can never pass for "no coupling".
+    """
+
     run_id: str
+    run_digest: str
+    coupled: bool
     sources: tuple[NumericalErrorSource, ...]
+
+    def __post_init__(self) -> None:
+        digest = str(self.run_digest)
+        if not str(self.run_id).strip() or len(digest) != 64 or set(digest) - set("0123456789abcdef"):
+            raise InvalidScientificProblem("an assessment names its run and the run record's sha256 digest")
+        if not isinstance(self.coupled, bool):
+            raise InvalidScientificProblem("coupled must be a bool derived from the run graph")
+        object.__setattr__(self, "sources", tuple(self.sources))
+        if any(not isinstance(s, NumericalErrorSource) for s in self.sources):
+            raise InvalidScientificProblem("assessment sources must be NumericalErrorSource records")
+        if not self.coupled and self.sources:
+            raise InvalidScientificProblem("a run without coupling edges has no coupling error source")
 
     def _total(self, status: ErrorSourceStatus) -> float | None:
         values = [s.relative for s in self.sources if s.status is status]
@@ -119,8 +154,11 @@ class CouplingNumericalErrorAssessment:
     @property
     def verdict(self) -> ErrorAccountingVerdict:
         statuses = {s.status for s in self.sources}
-        if not self.sources:
+        if not self.coupled:
             return ErrorAccountingVerdict.NO_COUPLING
+        if not self.sources:
+            # a coupled run always carries a coupling error source; none found is not "none"
+            return ErrorAccountingVerdict.INCOMPLETE
         if ErrorSourceStatus.UNBOUNDED in statuses:
             return ErrorAccountingVerdict.UNBOUNDED
         if ErrorSourceStatus.UNQUANTIFIED in statuses:
@@ -133,6 +171,8 @@ class CouplingNumericalErrorAssessment:
         return {
             "kind": ASSESSMENT_KIND,
             "run_id": self.run_id,
+            "run_digest": self.run_digest,
+            "coupled": self.coupled,
             "verdict": self.verdict.value,
             "quantified_relative_bound": self.quantified_relative_bound,
             "estimated_relative": self.estimated_relative,
@@ -164,14 +204,14 @@ def _iteration_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]
         if not window.iterations:
             continue
         label = f"window:{window.index}"
-        if window.outcome is WindowOutcome.ITERATION_LIMIT:
+        if window.outcome not in _COMPLETED_OUTCOMES:
             last = window.iterations[-1]
             worst = max((r.relative for r in last.residuals), default=None)
             sources.append(NumericalErrorSource(
                 source=f"{label}:iteration", kind="iteration", status=ErrorSourceStatus.UNBOUNDED, relative=None,
-                method="iteration_limit",
-                detail=(f"window ended at its iteration limit ({len(window.iterations)} iterations); last relative "
-                        f"residual {worst!r} is a residual, not an error bound"),
+                method=f"window_{window.outcome.value}",
+                detail=(f"window ended {window.outcome.value} after {len(window.iterations)} iteration(s); last "
+                        f"relative residual {worst!r} is a residual, not an error bound"),
             ))
             continue
         if plan.scheme is not CouplingScheme.IMPLICIT:
@@ -230,7 +270,7 @@ def _splitting_sources(
             raise InvalidScientificProblem("a splitting estimate applies to an explicit coupled run only")
         return []
     if splitting is not None:
-        from .splitting import SplittingErrorEstimate, run_digest
+        from .splitting import SplittingErrorEstimate
 
         if not isinstance(splitting, SplittingErrorEstimate):
             raise InvalidScientificProblem("splitting must be a SplittingErrorEstimate")
@@ -271,9 +311,10 @@ def assess_coupling_numerical_error(
     """
     if not isinstance(run, MultiphysicsRunRecord):
         raise InvalidScientificProblem("assess_coupling_numerical_error takes a MultiphysicsRunRecord")
+    digest = run_digest(run)
     if not run.graph.edges:
         if splitting is not None:
             raise InvalidScientificProblem("a run without coupling edges has no splitting error to estimate")
-        return CouplingNumericalErrorAssessment(run.run_id, ())
+        return CouplingNumericalErrorAssessment(run.run_id, digest, False, ())
     sources = _mapping_sources(run) + _iteration_sources(run) + _splitting_sources(run, splitting)
-    return CouplingNumericalErrorAssessment(run.run_id, tuple(sources))
+    return CouplingNumericalErrorAssessment(run.run_id, digest, True, tuple(sources))

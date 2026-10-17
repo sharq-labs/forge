@@ -164,9 +164,11 @@ def test_non_asymptotic_refinement_leaves_the_quantity_unquantified():
     assert statuses == {ErrorSourceStatus.UNQUANTIFIED}
 
 
-def test_an_unaffected_quantity_is_estimated_as_zero_not_skipped():
+def test_identical_levels_resolve_no_order_and_never_invent_a_zero_estimate():
+    # review F6: the claims-layer refinement rule refuses a zero-width answer at round-off; so does this
     _, estimate = _estimate(quantities=("a.z",))
-    assert estimate.quantities[0].relative == 0.0
+    item = estimate.quantities[0]
+    assert not item.estimated and item.relative is None and "round-off" in item.detail
 
 
 def test_unknown_or_duplicate_quantities_are_refused():

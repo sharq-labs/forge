@@ -30,18 +30,18 @@ from dataclasses import dataclass
 import math
 from typing import Any, Callable, Mapping, Sequence
 
-from ...scenarios.timeline import canonical_digest
+import sys
+
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.multiphysics import CouplingScheme, MultiphysicsRunRecord
 from ...scientific.units.quantity import Quantity, base_unit
+from .numerical_error import run_digest  # noqa: F401  (one digest rule, re-exported)
 from .runtime import MultiphysicsRuntime
 
 ESTIMATE_KIND = "coupling_splitting_error_estimate"
-
-
-def run_digest(run: MultiphysicsRunRecord) -> str:
-    """The digest a splitting estimate binds to (canonical JSON of the run record)."""
-    return canonical_digest(run.to_dict())
+#: the round-off floor of the claims-layer refinement rule (claims.numerical_uq): below
+#: 64 ulp of the largest value a difference is not resolved, and a zero would be invented
+_ROUNDOFF_ULPS = 64.0
 
 
 @dataclass(frozen=True)
@@ -101,12 +101,16 @@ def _value(run: MultiphysicsRunRecord, quantity: str, unit: str | None) -> tuple
 def _estimate(quantity: str, unit: str, values: list[float], order: float | None, basis_observed: bool) -> SplittingQuantityEstimate:
     v0, v1 = values[0], values[1]
     d1 = v1 - v0
+    floor = _ROUNDOFF_ULPS * sys.float_info.epsilon * max(abs(v) for v in values)
+    if abs(d1) <= floor:
+        # identical (or round-off-equal) levels resolve no order: a zero-width estimate would be invented
+        return SplittingQuantityEstimate(
+            quantity, unit, tuple(values), None, None,
+            f"the first refinement difference {d1!r} is at round-off ({floor:.3g}); no estimate is made",
+        )
     if basis_observed:
         d2 = values[2] - v1
-        if d1 == 0.0 and d2 == 0.0:
-            order = None
-            error = 0.0
-        elif d1 == 0.0 or d2 == 0.0 or d2 / d1 <= 0.0 or abs(d2) >= abs(d1):
+        if abs(d2) <= floor or d2 / d1 <= 0.0 or abs(d2) >= abs(d1):
             return SplittingQuantityEstimate(
                 quantity, unit, tuple(values), None, None,
                 f"not in the asymptotic range: successive refinements differ by {d1!r} then {d2!r}",
@@ -128,7 +132,8 @@ def _estimate(quantity: str, unit: str, values: list[float], order: float | None
         return SplittingQuantityEstimate(quantity, unit, tuple(values), order, None, "estimate is not finite")
     return SplittingQuantityEstimate(
         quantity, unit, tuple(values), order, relative,
-        "identical at every level" if error == 0.0 else f"Richardson estimate of the base-window error with p = {order:.6g}",
+        f"Richardson estimate of the base-window error with p = {order:.6g} (an estimate; no safety factor, "
+        f"not the claims-layer GCI)",
     )
 
 

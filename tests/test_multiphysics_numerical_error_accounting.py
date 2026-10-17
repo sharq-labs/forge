@@ -119,7 +119,26 @@ def test_a_window_at_its_iteration_limit_is_unbounded():
     run = _implicit(max_iterations=5, fail=False, gain=2.0)
     assessment = assess_coupling_numerical_error(run)
     assert assessment.verdict is ErrorAccountingVerdict.UNBOUNDED
-    assert any(s.status is ErrorSourceStatus.UNBOUNDED and s.method == "iteration_limit" for s in assessment.sources)
+    assert any(s.status is ErrorSourceStatus.UNBOUNDED and s.method == "window_iteration_limit" for s in assessment.sources)
+
+
+def test_a_coupled_run_is_never_reported_as_having_no_coupling_and_the_assessment_binds_its_digest():
+    run = _implicit()
+    assessment = assess_coupling_numerical_error(run)
+    assert assessment.coupled and assessment.verdict is not ErrorAccountingVerdict.NO_COUPLING
+    from engcore.execution.multiphysics.numerical_error import run_digest
+    assert assessment.run_digest == run_digest(run)
+
+
+def test_an_assessment_cannot_claim_no_coupling_for_sources_or_skip_its_digest():
+    from engcore.execution.multiphysics.numerical_error import CouplingNumericalErrorAssessment
+    with pytest.raises(InvalidScientificProblem):
+        CouplingNumericalErrorAssessment("r", "not-a-digest", True, ())
+    with pytest.raises(InvalidScientificProblem):
+        CouplingNumericalErrorAssessment(
+            "r", "a" * 64, False, (NumericalErrorSource("s", "splitting", ErrorSourceStatus.UNQUANTIFIED, None, "m"),))
+    # a coupled run with no assessed source is INCOMPLETE, never NO_COUPLING
+    assert CouplingNumericalErrorAssessment("r", "a" * 64, True, ()).verdict is ErrorAccountingVerdict.INCOMPLETE
 
 
 def test_a_run_without_coupling_edges_has_no_coupling_error_source():
