@@ -94,9 +94,12 @@ class MappingDiagnostics:
     residual of mapping forward and back; it does not bound the error of the
     forward transfer.  ``conservation_relative_error`` is the computed
     integral imbalance of the transferred field; it says nothing about the
-    field's pointwise accuracy.  ``provenance`` (absent for methods that do not
-    record it, so their identity is unchanged) names the method, the geometry
-    it was computed on and the measured coverage and conservation residuals.
+    field's pointwise accuracy.  ``provenance`` names the method, the supports
+    and locations it was computed on and, for a conservative transfer, the
+    measured coverage and conservation residuals.  Phase 2 BR9: every method of
+    the runtime engine records it, so diagnostics -- and run records carrying
+    them -- written before Phase 2 differ in form from new ones; a record without
+    provenance still loads (the field is optional).
     """
 
     mapping_id: str

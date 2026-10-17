@@ -39,7 +39,7 @@ FIVE_VOLUMES = (1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 3)
 
 
 def _kuhn():
-    """The six Kuhn tetrahedra of the unit cube (0 -> 7 along each axis permutation), volume 1/6 each."""
+    """The six Kuhn tetrahedra of the unit cube: (0,0,0) to (1,1,1) along each axis permutation, volume 1/6 each."""
     index = {tuple(map(int, v)): k for k, v in enumerate(CUBE)}
     tets = []
     for axes in itertools.permutations(range(3)):

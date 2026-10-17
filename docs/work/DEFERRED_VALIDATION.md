@@ -560,3 +560,26 @@ BLOCKED -- real FE <-> CFD conjugate heat transfer (owner decision OD-P2-1):
 - The mock sessions in the tests exercise transfer and record mechanics only; no conclusion about any real solver
   follows from them.
 - `forge_precice` keeps its own fixed-point residual check outside the runtime (declared EXTERNAL_ENGINE).
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-64 | P2 review | Regression tests for the four review MAJORs (forward tear, asserted identity, canonical numbers, fresh-restore build pin) | `pytest tests/test_phase2_review_regressions.py -q` | NOT RUN |
+
+### Phase 2 static review (read-only, nothing executed) and what it changed
+
+| # | Severity | Finding | Disposition |
+| --- | --- | --- | --- |
+| M1 | MAJOR | A redundant (forward) tear made the runtime build read a torn value in the same sweep, unlike the native lag | Fixed: `runtime_equivalent` refuses forward tears (before `check_against`). |
+| M2 | MAJOR | `corroborate` accepted a caller-built or narrowed `ProblemEquivalence` | Fixed: it takes the two `CanonicalProblem`s and derives identity with every aspect required; `same_problem_established` also requires the full aspect set. |
+| M3 | MAJOR | Provenance on every mapping method changes the serialized form of field-mapped run records (certified file; the docstring promised otherwise) | Kept deliberately (exact field/mesh provenance is a BR9 requirement); docstring corrected; recorded as an identity change for OD-3 (DV-52). No committed JSON pins these records. |
+| M4 | MAJOR | A fresh provider participant restored a checkpoint of any build and adopted whatever ran next | Fixed: the restore pins the checkpoint's build tag and the first execution must match it. Untagged checkpoints are pre-execution state (declared state only) and still restore. |
+| m | MINOR | `require_build` ran before the `succeeded` check, hiding failure reasons | Fixed (failure first). |
+| m | MINOR | `"1.0"` and `1.0` collided, `1` and `1.0` differed | Fixed: plain numbers canonicalized by value (12 significant digits) and tagged apart from text. |
+| m | MINOR | Cold-start note repeated per refinement attempt | Fixed (once per solver). |
+| m | MINOR | An admitted mock was labelled only in diagnostics | Fixed: every output's UNKNOWN note names the mock participants. |
+| m | MINOR | `ResultParticipant` treats a failed termination as a numerical failure; the native loop ignores termination | Documented in the adapter's correspondence list. |
+| m | MINOR | Serial CONSTANT/AITKEN relaxation requires every edge, but a deferred edge may not carry a criterion | Recorded limit: such plans are refused at initialization; seed every edge to use them. |
+| m | MINOR | A termination condition on a deferred steady output refuses at start with a misleading message, participants not finalized on that raise | Recorded (refusal, not a silent pass); not changed. |
+| m | MINOR | Pre-Phase-2 PyBaMM checkpoints (no build tag) are refused; provider_state_id of new checkpoints changes | Recorded (DV-55); in-process checkpoints only, none stored. |
+| m | MINOR | `sign_convention` is metadata only; INTENSIVE edges unchecked | Recorded: the contract checks mapping/unit/pairing, not the sign of transferred values. |
+| m | MINOR | Mock refusal happens after the run executes; build-drift break consumes an attempt; `converted_resume_point` does not re-check the problem (safe only because the caller checked it); legacy unbound checkpoints resume on any build; BoxIndex O(n^2) registrations for domain-sized boxes; `session.identity` read not classified | Recorded, not changed. |

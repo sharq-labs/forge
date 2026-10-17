@@ -146,11 +146,13 @@ def run_adaptive_plan(
                     conversions=conversions,
                     accepts_converted=bool(getattr(backend, "accepts_converted_checkpoints", False)),
                 )
-                problems.append(
+                note = (
                     f"{capability.solver_id}:resume_via_conversion_{conversion.conversion_id}"
                     if conversion is not None
                     else f"{capability.solver_id}:cold_start_from_admitted_problem"
                 )
+                if note not in problems:
+                    problems.append(note)
             try:
                 outcome = backend.run_advanced(
                     attempt_id=attempt_id,

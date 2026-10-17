@@ -254,6 +254,8 @@ class MultiphysicsAuthority(_Base):
             outputs[name] = OutputValue(match[0].value, match[0].uncertainty, f"multiphysics:{run.run_id}:{participant}.{variable}")
         coupling_note = ("explicit coupling: windows completed, no convergence claim, splitting error not quantified"
                          if explicit else "convergence is numerical, not uncertainty")
+        if mocks:
+            coupling_note += f"; produced with MOCK participants {mocks}, not by real providers"
         for name, key in self._outputs.items():
             if key not in run.final_outputs:
                 return NodeOutcome.failed(f"coupled run produced no final output {key!r}")

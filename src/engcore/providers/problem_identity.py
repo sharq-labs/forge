@@ -36,7 +36,13 @@ from enum import Enum
 from typing import Any, Iterable, Mapping
 
 from ..scientific.errors import InvalidScientificProblem
-from ..scientific.units.quantity import Quantity, base_unit, canonical_magnitude, is_delta_unit
+from ..scientific.units.quantity import (
+    IDENTITY_SIGNIFICANT_DIGITS,
+    Quantity,
+    base_unit,
+    canonical_magnitude,
+    is_delta_unit,
+)
 
 PROBLEM_IDENTITY_SCHEMA = "engcore.providers.canonical_problem/1"
 
@@ -76,12 +82,13 @@ def canonical_value(value: Any) -> Any:
         return canonical_value(value.value)
     if isinstance(value, bool) or value is None or isinstance(value, str):
         return value
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        if not math.isfinite(value):
+    if isinstance(value, (int, float)):
+        # one number, one form: 1 and 1.0 agree, the text "1.0" does not; quantized like a Quantity
+        number = float(value)
+        if not math.isfinite(number):
             raise InvalidScientificProblem("a canonical problem declaration is finite")
-        return repr(0.0 if value == 0.0 else value)
+        number = float(f"{number:.{IDENTITY_SIGNIFICANT_DIGITS}g}")
+        return {"number": repr(0.0 if number == 0.0 else number)}
     if isinstance(value, Mapping):
         return {str(k): canonical_value(v) for k, v in sorted(value.items(), key=lambda item: str(item[0]))}
     if isinstance(value, (list, tuple)):

@@ -30,7 +30,14 @@ import numpy as np
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.units.quantity import Quantity, is_ratio_scale
 from .identity import content_digest
-from .problem_identity import ProblemBinding, ProblemEquivalence, ProblemIdentityVerdict
+from .problem_identity import (
+    DEFAULT_REQUIRED,
+    CanonicalProblem,
+    ProblemBinding,
+    ProblemEquivalence,
+    ProblemIdentityVerdict,
+    compare_problems,
+)
 from .records import ProviderExecutionRecord
 
 _HEX = frozenset("0123456789abcdef")
@@ -213,6 +220,7 @@ class ProviderComparison:
         return (
             self.problem_equivalence is not None
             and self.problem_equivalence.verdict is ProblemIdentityVerdict.SAME_PROBLEM
+            and tuple(self.problem_equivalence.required) == tuple(sorted(DEFAULT_REQUIRED))
             and len(self.problem_bindings) == 2
         )
 
@@ -304,16 +312,20 @@ def compare_providers(declaration: ComparisonDeclaration, a: Any, a_output: str,
 
 
 def corroborate(declaration: ComparisonDeclaration, a: Any, a_output: str, b: Any, b_output: str, *,
-                problems: ProblemEquivalence, bindings: tuple[ProblemBinding, ProblemBinding],
+                problems: tuple[CanonicalProblem, CanonicalProblem], bindings: tuple[ProblemBinding, ProblemBinding],
                 a_select: OutputSelection = OutputSelection(), b_select: OutputSelection = OutputSelection()) -> ProviderComparison:
     """Cross-solver corroboration: compare only after the two records are admitted as solving ONE problem.
 
-    Refused unless ``problems`` is SAME_PROBLEM and each binding names its
-    record's execution identity and the canonical problem on its side.  The
-    usual independence and unit rules of :func:`compare_providers` apply.
+    ``problems`` are the two CANONICAL problems; their equivalence is derived
+    here with every aspect required (a caller-built equivalence, or one
+    narrowed to a few aspects, is not accepted).  Refused unless that is
+    SAME_PROBLEM and each binding names its record's execution identity and the
+    canonical problem on its side.  The usual independence and unit rules of
+    :func:`compare_providers` apply.
     """
-    if not isinstance(problems, ProblemEquivalence):
-        raise InvalidScientificProblem("corroboration needs a ProblemEquivalence of the two canonical problems")
+    if len(problems) != 2 or any(not isinstance(p, CanonicalProblem) for p in problems):
+        raise InvalidScientificProblem("corroboration takes the two CanonicalProblem records, not a verdict")
+    problems = compare_problems(problems[0], problems[1], required=DEFAULT_REQUIRED)
     if problems.verdict is not ProblemIdentityVerdict.SAME_PROBLEM:
         raise InvalidScientificProblem(
             f"the two records are not admitted as solving one problem ({problems.verdict.value}: differing "

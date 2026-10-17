@@ -33,6 +33,12 @@ The correspondence, and where it stops
   Forward edges carry no initial value: their source runs first in every sweep.
 * **Time.**  Steady participants ignore it; the plan is one formal window
   ``[0, 1] s``.  It is not a time level, as in the native loop.
+* **A tear must be a lag.**  A torn edge that runs forward in the sweep order
+  (a redundant tear) is refused: the runtime would read it in the same sweep.
+* **Termination states.**  ``ResultParticipant`` treats a result whose solver
+  reports a failed termination as a numerical failure of the window; the
+  native loop ignores termination states (every executor here reports
+  CONVERGED or NOT_APPLICABLE, so this does not differ in practice).
 * **Refused, not approximated.**  A plan with ``relaxation_factor`` is refused:
   the runtime's serial relaxation mixes EVERY edge, the native loop only the
   torn values, so the iterates differ.  A transfer refusal is raised by the
@@ -111,13 +117,25 @@ def runtime_equivalent(
     problems = cp.coupled_problems(
         system, {stage.component_id: stage.conductor.reference_resistance for stage in system.stages}
     )
-    issues = plan.check_against(problems)
-    if issues:
-        raise InvalidScientificProblem(f"coupling plan {plan.plan_id!r} does not fit this composition: " + "; ".join(issues))
     problem_ids = [p.problem_id for p in problems]
     order = cp.execution_order(problem_ids, plan.uncut)
     if not order:
         raise InvalidScientificProblem(f"coupling plan {plan.plan_id!r} leaves a cycle after its tears")
+    position = {pid: k for k, pid in enumerate(order)}
+    forward = sorted(
+        cp.edge_key(e.dependency) for e in plan.torn
+        if position[e.dependency.source_problem_id] < position[e.dependency.target_problem_id]
+    )
+    if forward:
+        # the native loop lags every torn value (seed, then the previous sweep); in a serial
+        # runtime sweep a forward edge reads THIS sweep's value, so the iteration would differ
+        raise InvalidScientificProblem(
+            f"torn edges {forward} run forward in the sweep order {list(order)}: the runtime would read them in "
+            f"the same sweep while the native loop lags them; only tears of the cycle are reproduced"
+        )
+    issues = plan.check_against(problems)
+    if issues:
+        raise InvalidScientificProblem(f"coupling plan {plan.plan_id!r} does not fit this composition: " + "; ".join(issues))
     executors = cp._executors(system, problems)
 
     inputs: dict[str, dict[str, str]] = {pid: {} for pid in problem_ids}

@@ -115,7 +115,7 @@ def test_corroboration_on_one_problem_records_what_it_does_and_does_not_establis
     pa, pb = _problem("slab-a"), _problem("slab-b")
     a = _record("alpha", {"t": Quantity(325.0, "K")}, {"alpha-mesh": 40})
     b = _record("beta", {"t": Quantity(325.004, "K")}, {"beta-grid": [11, 11]})
-    made = corroborate(DECLARATION, a, "t", b, "t", problems=compare_problems(pa, pb), bindings=_bindings(a, b, pa, pb))
+    made = corroborate(DECLARATION, a, "t", b, "t", problems=(pa, pb), bindings=_bindings(a, b, pa, pb))
     assert made.same_problem_established and made.within_tolerance
     payload = made.to_dict()
     assert "validation" in payload["does_not_establish"] and payload["problem_equivalence"]["verdict"] == "same_problem"
@@ -127,7 +127,7 @@ def test_equal_provider_problem_digests_do_not_make_two_problems_the_same():
     b = _record("beta", {"t": Quantity(325.0, "K")}, {"p": 1})
     assert a.identity.problem_digest == b.identity.problem_digest
     with pytest.raises(InvalidScientificProblem, match="not admitted as solving one problem"):
-        corroborate(DECLARATION, a, "t", b, "t", problems=compare_problems(pa, pb), bindings=_bindings(a, b, pa, pb))
+        corroborate(DECLARATION, a, "t", b, "t", problems=(pa, pb), bindings=_bindings(a, b, pa, pb))
 
 
 def test_undetermined_identity_refuses_corroboration():
@@ -135,7 +135,7 @@ def test_undetermined_identity_refuses_corroboration():
     a = _record("alpha", {"t": Quantity(325.0, "K")}, {"a": 1})
     b = _record("beta", {"t": Quantity(325.0, "K")}, {"b": 1})
     with pytest.raises(InvalidScientificProblem, match="undetermined"):
-        corroborate(DECLARATION, a, "t", b, "t", problems=compare_problems(pa, pb), bindings=_bindings(a, b, pa, pb))
+        corroborate(DECLARATION, a, "t", b, "t", problems=(pa, pb), bindings=_bindings(a, b, pa, pb))
 
 
 def test_a_binding_of_another_execution_is_refused():
@@ -144,7 +144,7 @@ def test_a_binding_of_another_execution_is_refused():
     b = _record("beta", {"t": Quantity(325.0, "K")}, {"b": 1})
     other = _record("gamma", {"t": Quantity(1.0, "K")}, {"g": 1})
     with pytest.raises(InvalidScientificProblem, match="another execution"):
-        corroborate(DECLARATION, a, "t", b, "t", problems=compare_problems(pa, pb), bindings=_bindings(other, b, pa, pb))
+        corroborate(DECLARATION, a, "t", b, "t", problems=(pa, pb), bindings=_bindings(other, b, pa, pb))
 
 
 def test_a_plain_comparison_does_not_claim_one_problem_and_keeps_its_serialized_form():

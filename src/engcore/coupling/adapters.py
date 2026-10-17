@@ -236,7 +236,7 @@ def provider_participant(
     admitted = None if expected_build is None else {k: str(expected_build.get(k, "")).strip() for k in build_keys}
     if admitted is not None and not all(admitted.values()):
         raise CouplingRefusal(f"expected_build of {spec.participant_id!r} must state {list(build_keys)}")
-    observed: dict[str, Any] = {"build": admitted}
+    observed: dict[str, Any] = {"build": admitted, "pinned_tag": None}
 
     def build_tag(build: Mapping[str, str]) -> str:
         return hashlib.sha256(json.dumps(dict(build), sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -251,6 +251,10 @@ def provider_participant(
                     f"it cannot be shown to be the admitted one")
             return
         if observed["build"] is None:
+            if observed["pinned_tag"] is not None and build_tag(build) != observed["pinned_tag"]:
+                raise CouplingRefusal(
+                    f"participant {spec.participant_id!r} restored state of another provider build and is now "
+                    f"executing {build}; a restored solver state continues only on the build that wrote it")
             observed["build"] = build
         elif build != observed["build"]:
             raise CouplingRefusal(
@@ -321,9 +325,9 @@ def provider_participant(
             "input_uncertainty_kinds": {k: u.kind.value for k, u in dict(request.input_uncertainty).items()},
         }
         log.entries.append(entry)
-        require_build(record)
         if not entry["succeeded"]:
             raise CouplingRefusal(f"participant {spec.participant_id!r} execution failed: {entry['reason']}")
+        require_build(record)
         if evolved or next_state:
             held["state"] = {**held["state"], **next_state_values(next_state)}
         return AdvanceResult(request.end, to_runtime(outputs), {p.port_id: unknown for p in spec.outputs}, 1, True,
@@ -359,6 +363,10 @@ def provider_participant(
         tags = [part.split(":", 1)[1] for part in str(cp.record.provider_state_id or "").split(";") if part.startswith("build:")]
         if tags and observed["build"] is not None and tags[0] != build_tag(observed["build"]):
             raise CouplingRefusal(f"checkpoint of {spec.participant_id!r} was produced by another provider build")
+        if tags and observed["build"] is None:
+            # nothing has executed here yet: the next execution must be the build this state came from
+            observed["pinned_tag"] = tags[0]
+        # an untagged checkpoint was taken before any execution: it holds declared state only
         held["state"] = token
 
     if not state_definitions:

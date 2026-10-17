@@ -1,5 +1,20 @@
 # Active Plan
 
+## Active override — Phase 2: unified solver & multiphysics architecture, build phase (2026-10-17)
+
+Branch `feat/phase2-unified-solver-architecture` (worktree `D:/forge-phase2`), stacked on Phase 1 `6249c2d2`. Local
+commits only: no push, PR, merge, certificate or test execution (owner direction). Rocks are P2-BR8..P2-BR12. Deferred
+checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md) DV-48..DV-64 (and Phase 1 DV-31..DV-47, unchanged).
+
+- [x] P2-BR8 one declared coupling authority; steady result participants; electrothermal runtime build (`e4dec400`) -- PARTIAL: product path not migrated.
+- [x] P2-BR9 unified field-transfer engine: admission table, indexed search, tet->tet conservative remap (`54ff4321`), tests NOT RUN.
+- [x] P2-BR10 build- and problem-bound checkpoints; qualified conversion contract; provider/PyBaMM restore guards (`17dd89b6`), tests NOT RUN.
+- [x] P2-BR11 canonical problem identity, corroboration after same-problem admission, qualified selection (`77634711`), tests NOT RUN.
+- [x] P2-BR12 external-participant infrastructure (mock labels, failure classes, interface contract) (`e9d18d63`) -- PARTIAL: FE/CFD BLOCKED.
+- [ ] Owner: OD-P2-1 (FE/CFD conjugate heat transfer vs active epic), OD-P2-2 (electrothermal delegation, relaxation semantics),
+      OD-P2-3 (compare_providers refuses without same-problem admission), OD-P2-4 (preCICE role), OD-P2-5 (hex / mixed 3D remap).
+- [ ] Owner: authorize Phase 1 + Phase 2 deferred validation; push/PR; OD-3. Phase 3 not started (waits for authorization).
+
 ## Active override — Phase 1: scientific & numerical correctness, build phase (2026-10-17)
 
 Branch `fix/phase1-scientific-numerical-correctness` (worktree `D:/forge-phase1`), base `origin/main` `de11dffa`.
@@ -71,8 +86,8 @@ locally as `04b12344` (owner direction). No push, PR, merge, certificate or hard
       `tree.clean` check of the uncommitted tree); real-ngspice electrothermal integration 357 passed.
 - [ ] Owner: push/PR decision; OD-3 recertification (pinned files touched); policy decisions on qualification
       gating and provider-build binding for `CallbackParticipant` adapters.
-- [ ] Next (smallest high-impact): bind provider build + token digest into `coupling/adapters.py::provider_participant`
-      and the PyBaMM coupling adapter checkpoints, with a real-provider (PyBaMM, 3.13 env) restore test.
+- [x] Bind provider build + token digest into `coupling/adapters.py::provider_participant` and the PyBaMM coupling
+      adapter checkpoints: done in Phase 2 P2-BR10 (`17dd89b6`), tests NOT RUN; the real-provider restore test is DV-55.
 
 ## Active override — Open problems pass (2026-10-16)
 
