@@ -4981,7 +4981,14 @@ tree clean, the two fix-only FAST failures (`test_core_freeze_manifest::test_the
 `pytest <those two ids> -q` -> 2 passed in 37.8 s. The fix branch's FAST failure set therefore equals the
 baseline's.
 
-## 2026-10-17 -- Engineering Runtime V1 Big Rocks (build phase; feat/engrt-v1-big-rocks, local only)
+## 2026-10-17 -- Engineering Runtime V1 Big Rocks (build phase; feat/engrt-v1-big-rocks, pushed, no PR)
+- Pushed 2026-10-17 on owner instruction. Branch only: no PR, no merge, no certificate.
+  - `origin/feat/engrt-v1-big-rocks` = `23fb2bb1c1f9ebd5a12f7cad4f202af4e64e51ee`.
+  - `origin/fix/engrt-v1-phase1-interop` = `423fb46714114d2a5aa2208804e96a65024c28e2`.
+  - Both refs were checked against `git ls-remote`.
+- Not pushed: `fix/engrt-v1-callback-checkpoint-identity` (`debce509`). Another session made it.
+- Everything BR1-BR22 claims is still IMPLEMENTED / UNVERIFIED. The push runs no tests. The 16 pinned files the
+  branch changes stay UNCERTIFIED until OD-3.
 
 Owner direction (2026-10-17): build the Big Rocks first.
 - No pytest, FAST, SCIENTIFIC, regression, mutation, benchmark or hardened run until the owner authorizes one.
