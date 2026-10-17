@@ -406,6 +406,32 @@ conduction1d untouched)").
   - everything in item 8 and A1.
 - **Exit and expiry:** unchanged, plus DV-29 for this slice.
 
+**EXC-1 amendment A3 (2026-10-17): slice 4.** The owner approved it in the session ("Amend EXC-1 for slice 4:
+declare the non-uniform conduction path as a capability/realization").
+- **Scope added:**
+  - in `domains/thermal_models/conduction1d_nonuniform.py`, the scientific-layer declaration of the BR21 path:
+    - one `ScientificModelDefinition` for steady 1D conduction with position-dependent k and q;
+    - a domain `ScientificCapability` and a domain `SolverCapability`;
+    - one `ModelRealizationDefinition`;
+    - fresh local model and realization registries (no global singleton), the pattern of `lumped.py` and
+      `conduction1d_schemes.py`;
+  - the exact count `EXPECTED_MODELS` 18 -> 19 in `tests/test_core_guards.py`.
+- **Certification consequence:** `tests/test_core_guards.py` is certification-pinned, so this edit makes it
+  UNCERTIFIED until OD-3. The count is updated deliberately, as its comment requires, not to silence a failure.
+- **Allowed work added:**
+  - The model declares NO validity conditions, so its applicability is UNKNOWN by construction. Absence of declared
+    limits is not applicability. This also leaves `EXPECTED_CONDITION_NAMES` and `EXPECTED_RESERVED_NAMES`
+    unchanged.
+  - Its validation status stays UNVALIDATED.
+  - The solution record names the realization it came from.
+- **Still prohibited:**
+  - a claims-layer `CapabilityDeclaration` or any `CapabilityRegistry` / planning production-registry entry, so the
+    path stays unreachable from claims, SRIA and MCP;
+  - `ValidationCheck`, `ScientificSolver` or `ScientificResult` construction;
+  - validity conditions or thresholds (each needs a sourced bound and moves pinned counts);
+  - everything in item 8, A1 and A2.
+- **Exit and expiry:** unchanged, plus DV-30 for this slice.
+
 ## Stop conditions
 
 Stop and surface a blocker if a change would: weaken UNKNOWN or fail-closed semantics; change a frozen serialized
