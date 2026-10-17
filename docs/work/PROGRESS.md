@@ -5269,3 +5269,15 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
 - Tests appended to `tests/test_multiphysics_window_control.py`:
   - x = y + 5 (constant 5 K step) is rejected after 4 of 200 iterations.
   - A contracting loop is never flagged.
+
+### BR18 -- opt-in under-relaxation of the electrothermal fixed point (tests NOT RUN)
+- The integration target's loop (`systems/electrothermal/coupled.py::run_fixed_point`) is separate from the
+  multiphysics runtime and had no relaxation.
+- `FixedPointCouplingPlan.relaxation_factor` (in (0, 1), serialized only when declared).
+  - The next sweep's torn values are under-relaxed.
+  - The stopping test stays the unrelaxed change.
+  - A converged run reports the unrelaxed transported values.
+  - The no-factor path is unchanged.
+- Tests written: `tests/test_electrothermal_fixed_point_relaxation.py`, using the existing electrothermal fixture.
+  - Relaxed and plain runs must agree within 1e-4 K.
+  - The factor is recorded only when declared.
