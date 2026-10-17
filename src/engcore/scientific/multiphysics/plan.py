@@ -49,6 +49,11 @@ class RelaxationKind(str, Enum):
     NONE = "none"
     CONSTANT = "constant"
     AITKEN = "aitken"
+    #: Interface quasi-Newton with inverse least-squares Jacobian over the
+    #: joint interface vector of every edge (Jacobi coupling only; history
+    #: reset every window).  Its update is not a scalar mix of two iterates, so
+    #: no scalar factor is recorded and propagated uncertainty is UNKNOWN.
+    IQN_ILS = "iqn_ils"
 
 
 def _time(value: Quantity, *, label: str, allow_zero: bool = False) -> Quantity:
@@ -161,6 +166,9 @@ class RelaxationPolicy:
     factor: float = 1.0
     minimum_factor: float = 0.05
     maximum_factor: float = 1.0
+    #: IQN-ILS only: how many secant pairs (iterate differences) the
+    #: least-squares Jacobian keeps; 0 for every other kind.
+    iqn_columns: int = 0
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", RelaxationKind(self.kind))
@@ -182,6 +190,14 @@ class RelaxationPolicy:
             raise InvalidScientificProblem("relaxation factor must lie inside its bounds")
         if self.kind is RelaxationKind.NONE and factor != 1.0:
             raise InvalidScientificProblem("NONE relaxation has factor 1")
+        columns = self.iqn_columns
+        if isinstance(columns, bool) or not isinstance(columns, int) or columns < 0:
+            raise InvalidScientificProblem("iqn_columns must be a non-negative int")
+        if self.kind is RelaxationKind.IQN_ILS:
+            if not 1 <= columns <= 50:
+                raise InvalidScientificProblem("IQN-ILS requires iqn_columns in [1, 50]")
+        elif columns != 0:
+            raise InvalidScientificProblem("iqn_columns applies to IQN-ILS relaxation only")
         object.__setattr__(self, "factor", factor)
         object.__setattr__(self, "minimum_factor", minimum)
         object.__setattr__(self, "maximum_factor", maximum)
@@ -193,6 +209,12 @@ class RelaxationPolicy:
             "factor": self.factor,
             "minimum_factor": self.minimum_factor,
             "maximum_factor": self.maximum_factor,
+            # absent for every other kind: existing policies keep their fingerprints
+            **(
+                {"iqn_columns": self.iqn_columns}
+                if self.kind is RelaxationKind.IQN_ILS
+                else {}
+            ),
         }
 
     @classmethod
@@ -203,6 +225,7 @@ class RelaxationPolicy:
             factor=payload.get("factor", 1.0),
             minimum_factor=payload.get("minimum_factor", 0.05),
             maximum_factor=payload.get("maximum_factor", 1.0),
+            iqn_columns=payload.get("iqn_columns", 0),
         )
 
 
@@ -318,6 +341,14 @@ class CouplingPlan:
                 raise InvalidScientificProblem("explicit coupling has no coupling-convergence criteria")
             if self.relaxation.kind is not RelaxationKind.NONE:
                 raise InvalidScientificProblem("explicit coupling does not relax an iteration")
+        if (
+            self.relaxation.kind is RelaxationKind.IQN_ILS
+            and self.iteration_semantics is not IterationSemantics.JACOBI
+        ):
+            raise InvalidScientificProblem(
+                "IQN-ILS updates the joint interface vector after every participant has run "
+                "(Jacobi); serial Gauss-Seidel relaxes edges one at a time and is not supported"
+            )
         elif not criteria:
             raise InvalidScientificProblem("implicit coupling requires convergence criteria")
         if self.window_control is not None:

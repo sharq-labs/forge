@@ -26,6 +26,7 @@ from ...scientific.multiphysics import (
     PortDirection,
     PortRef,
     ReachedScheduledEvent,
+    RelaxationKind,
     ScheduledEventRecord,
     TransferMeasure,
     WindowOutcome,
@@ -706,7 +707,7 @@ class MultiphysicsRuntime:
                     value,
                     unit=target_port.unit,
                 )
-                uncertainty = relax_uncertainty(
+                uncertainty = self.relaxation.propagate_uncertainty(
                     previous_uncertainty[edge.edge_id],
                     uncertainty,
                     factor=factor,
@@ -829,12 +830,41 @@ class MultiphysicsRuntime:
                 raw_uncertainty.update(uncertainty)
                 raw_transfers.update(transfers)
 
+            joint: dict[str, CouplingValue] = {}
+            if implicit and self.plan.relaxation.kind is RelaxationKind.IQN_ILS:
+                joint = self.relaxation.relax_joint({
+                    edge.edge_id: (
+                        edge_values[edge.edge_id],
+                        raw_values[edge.edge_id],
+                        self.graph.participant(edge.target.participant_id)
+                        .port(edge.target.port_id).unit,
+                    )
+                    for edge in self.graph.edges
+                })
             for edge in self.graph.edges:
                 value = raw_values[edge.edge_id]
                 uncertainty = raw_uncertainty[edge.edge_id]
                 transfer = raw_transfers[edge.edge_id]
                 unrelaxed[edge.edge_id] = value
-                if implicit:
+                if implicit and joint:
+                    value = joint[edge.edge_id]
+                    uncertainty = self.relaxation.propagate_uncertainty(
+                        edge_uncertainty[edge.edge_id],
+                        uncertainty,
+                        factor=None,
+                        unit=self.graph.participant(edge.target.participant_id)
+                        .port(edge.target.port_id).unit,
+                        edge_id=edge.edge_id,
+                    )
+                    transfer = TransferResult(
+                        transfer.edge_id,
+                        value,
+                        transfer.source_value,
+                        transfer.losses,
+                        uncertainty,
+                        transfer.mapping,
+                    )
+                elif implicit:
                     target_port = self.graph.participant(
                         edge.target.participant_id
                     ).port(edge.target.port_id)
@@ -844,7 +874,7 @@ class MultiphysicsRuntime:
                         value,
                         unit=target_port.unit,
                     )
-                    uncertainty = relax_uncertainty(
+                    uncertainty = self.relaxation.propagate_uncertainty(
                         edge_uncertainty[edge.edge_id],
                         uncertainty,
                         factor=factor,
