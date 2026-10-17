@@ -2927,3 +2927,24 @@ spaces emitted by pytest traceback transcripts. Normalized transcript trailing
 whitespace only; raw originals retained outside the worktree. No evidence values,
 failure IDs or source bytes changed. Rerun required below before final checkpoint.
 `git diff --cached --check`: PASS after transcript whitespace normalization, exit 0.
+
+## Assurance environment recovery — 2026-10-13, environment only
+
+No production, certificate, branch or scientific change. WSL (2.6.3) had been unresponsive
+(only `wsl --version` answered; WMI also timing out); after an out-of-session service recovery
+`wsl --status` / `wsl -l -v` answer (Ubuntu, forge-runner; both v2). `D:\WSL` (the .wslconfig
+swapFile parent and forge-runner BasePath) was missing; recreated empty so the VM can create
+swap. forge-runner's ext4.vhdx was not found on C:/D:/K: and is NOT recovered.
+
+Linux clone: `/home/dev_kaeem/forge-hostile-remediation` (git clone --no-local of this branch),
+HEAD 4b0ad013fd51119fe36346e613805edd477c5dbd, fix/hostile-review-p0-p1, porcelain empty before and after.
+Interpreters: python3.11 3.11.17 (~/.local/bin -> forge-assurance pythons), python3.12 3.12.3 (/usr/bin).
+
+Commands executed (WSL Ubuntu 24.04.3, TMPDIR outside repo):
+- `python3.12 -m tools.certification.local_assurance prepare --python311 $(command -v python3.11) --python312 $(command -v python3.12)`: exit 0, `LOCAL_ASSURANCE_PREPARE: PASS`, ngspice-42 found; envs `.forge/venvs/3.11`, `.forge/venvs/3.12`.
+- `.forge/venvs/3.12/bin/python tools/forge_check.py --help`: exit 0.
+- `.forge/venvs/3.12/bin/python -m pytest --collect-only -q -p no:cacheprovider`: exit 0, 10768 tests collected in 16.01s.
+- `.forge/venvs/3.12/bin/python -m tools.certification.core_certificate --verify`: exit 1, FAILED; certified 39d43456cab9 vs HEAD 4b0ad013; drift areas certification_control, execution_trust, harness, inference_admission, runtime_dependencies (same as round 1). Verify only; no certificate built.
+- `.forge/venvs/3.12/bin/python tools/forge_check.py --regression`: exit 0, 256 passed in 7.13s.
+
+FAST/SCIENTIFIC/FULL on 3.11/3.12, mutations, local_assurance run, recertification: NOT RUN.
