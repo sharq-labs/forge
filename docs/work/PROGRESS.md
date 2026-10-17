@@ -5342,3 +5342,41 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
 - Tests written: `tests/domains/thermal_models/test_conduction1d_nonuniform.py`.
 - Next slice (needs an owner decision): declare the non-uniform path as a capability or realization, and/or a
   transient solver. Both are still prohibited under A2.
+
+### BR22 -- adaptive mesh control slice 4: the non-uniform path declared as model + realization (EXC-1 A3, tests NOT RUN)
+- EXC-1 amendment A3 (owner-approved 2026-10-17, commit 9f998024).
+- Survey:
+  - A `ModelRealizationDefinition` must reference a model.
+  - The only conduction model, `thermal.conduction1d.linear_diffusion`, is transient, constant-diffusivity and
+    source-free. A realization of it would misstate what this solver computes, so a new model record was needed.
+  - Domain realizations follow `lumped.py` / `conduction1d_schemes.py`: a domain capability, a domain solver
+    capability, and a fresh local registry.
+- Declared in `conduction1d_nonuniform.py` (commit 89b9e7c3):
+  - `STEADY_CONDUCTION_MODEL` = `thermal.conduction1d.steady_variable_conductivity@0.1.0`:
+    - k and q are declared curves against `position` (`varies_with`);
+    - four optional end inputs (temperature or inward flux, per end);
+    - six exclusions;
+    - NO validity conditions, so applicability assesses UNKNOWN (no limit has been sourced);
+    - UNVALIDATED.
+  - `NONUNIFORM_FV_REALIZATION`, which provides `thermal:steady_conduction_1d` and requires
+    `thermal:nonuniform_steady_conduction_1d` + `core:linear_system`.
+  - `steady_conduction_models()`, `nonuniform_conduction_realizations()` and
+    `nonuniform_conduction_solver_capabilities()`.
+  - The solution record now names its model and realization.
+- Guard moves:
+  - `tests/test_core_guards.py::EXPECTED_MODELS` 18 -> 19, deliberately. That file is certification-pinned, so it is
+    UNCERTIFIED until OD-3.
+  - Unchanged, because the model has no conditions and no derived quantities: `EXPECTED_CONDITION_NAMES`,
+    `EXPECTED_RESERVED_NAMES` and `EXPECTED_RESERVING_MODELS`.
+  - `EXPECTED_SOLVER_CLASSES` is unchanged (no `ScientificSolver`), and so is the evidentiary audit (no
+    `ValidationCheck`).
+  - API snapshots do not cover `engcore.domains`.
+- Not done (still prohibited under A3): a claims-layer `CapabilityDeclaration`, a planning production-registry entry,
+  and validity conditions. The path is unreachable from claims, SRIA and MCP.
+- Static checks run:
+  - py_compile;
+  - an import of the module from the worktree's src (this constructs the module-level records);
+  - the undefined-name checker;
+  - `git diff --check`.
+  pytest NOT RUN.
+- Tests added to `tests/domains/thermal_models/test_conduction1d_nonuniform.py`.

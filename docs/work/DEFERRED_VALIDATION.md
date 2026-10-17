@@ -34,6 +34,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-27 | BR19 adaptive resolution (EXC-1 exit gate) | New tests + scientific review of the slice | `pytest tests/claims/test_adaptive_resolution.py -q` + forge-scientific-review | NOT RUN |
 | DV-28 | BR20 1D mesh adaptation (EXC-1 exit gate, with DV-27) | New tests + scientific review | `pytest tests/numerical/test_mesh_adaptation.py -q` + forge-scientific-review | NOT RUN |
 | DV-29 | BR21 non-uniform steady 1D conduction (EXC-1 exit gate, with DV-27/28) | New tests + scientific review | `pytest tests/domains/thermal_models/test_conduction1d_nonuniform.py -q` + forge-scientific-review | NOT RUN |
+| DV-30 | BR22 model + realization declaration (EXC-1 exit gate, with DV-27/28/29) | New tests + the model census and per-model guards + scientific review | `pytest tests/domains/thermal_models/test_conduction1d_nonuniform.py tests/test_core_guards.py tests/test_blind_challenge_guards.py tests/test_model0r_realization_foundation.py -q` + forge-scientific-review; test_core_guards is certified, so OD-3 too | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -168,3 +169,13 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
   per-cell O(h**3) flux error. It has not been executed.
 - At a discontinuity in k, the curvature the indicator reads is not the solution's. The adaptation record's
   notice covers this; no test exercises a k jump.
+
+## Unverified assumptions (BR22)
+- `EXPECTED_MODELS` 19 assumes the package walk finds exactly one new model record. Nothing else in this
+  branch adds or removes one. Not run.
+- The per-model guards in `test_core_guards.py` (classified condition names, assembler refusal, declared
+  exclusions, conservative screens, condition dependencies) were read, not run, against the new record.
+- `varies_with="position"` names an axis that is not itself a model input. The only other use (battery) names
+  a declared input. Nothing found requires that, but no test exercises a curve handed to these inputs.
+- Zero validity conditions is a deliberate UNKNOWN. A scientific reviewer may instead require sourced
+  conditions (for example, a Biot or aspect-ratio screen for 1D applicability) before any claim use.
