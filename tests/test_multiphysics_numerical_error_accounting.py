@@ -163,3 +163,49 @@ def test_assessment_leaves_the_run_record_unchanged():
 def test_assessment_refuses_anything_but_a_run_record():
     with pytest.raises(InvalidScientificProblem):
         assess_coupling_numerical_error({"final_outputs": {}})
+
+
+# ---- BR13: mapping extrapolation and unverified mappings are open sources -----------------------
+
+
+def _mapped_run(mapping, *, budget=()):
+    """Minimal stand-in carrying exactly what _mapping_sources reads (the recorded diagnostic shape)."""
+    from types import SimpleNamespace
+
+    iteration = SimpleNamespace(mapping_diagnostics=({"edge_id": "e_field", "mapping": mapping},))
+    return SimpleNamespace(final_outputs={"_coupling_error": {"contributions": list(budget)}},
+                           windows=(SimpleNamespace(index=0, iterations=(iteration,)),
+                                    SimpleNamespace(index=1, iterations=())))
+
+
+def _diag(extrapolated=0, round_trip=1e-3, conservation=None, target=10):
+    return {"extrapolated_count": extrapolated, "target_count": target,
+            "coverage_fraction": 1.0 - extrapolated / target,
+            "round_trip_relative_l2": round_trip, "conservation_relative_error": conservation}
+
+
+def test_extrapolated_mapping_sites_are_an_open_source_beside_the_budget_bound():
+    from engcore.execution.multiphysics.numerical_error import _mapping_sources
+
+    budget = ({"source": "edge:e_field:occurrence:1", "relative_bound": 1e-3, "method": "mapping_round_trip"},)
+    sources = _mapping_sources(_mapped_run(_diag(extrapolated=2), budget=budget))
+    by_method = {s.method: s for s in sources}
+    assert by_method["mapping_round_trip"].status is ErrorSourceStatus.QUANTIFIED
+    assert by_method["mapping_extrapolation"].status is ErrorSourceStatus.UNQUANTIFIED
+    assert "2/10" in by_method["mapping_extrapolation"].detail
+
+
+def test_a_mapping_with_no_declared_verification_is_an_open_source():
+    from engcore.execution.multiphysics.numerical_error import _mapping_sources
+
+    sources = _mapping_sources(_mapped_run(_diag(round_trip=None, conservation=None)))
+    assert [s.method for s in sources] == ["mapping_unverified"]
+    assert sources[0].relative is None
+
+
+def test_a_fully_covered_verified_mapping_adds_only_its_budget_contribution():
+    from engcore.execution.multiphysics.numerical_error import _mapping_sources
+
+    budget = ({"source": "edge:e_field:occurrence:1", "relative_bound": 1e-3, "method": "mapping_round_trip"},)
+    sources = _mapping_sources(_mapped_run(_diag(), budget=budget))
+    assert [s.method for s in sources] == ["mapping_round_trip"]

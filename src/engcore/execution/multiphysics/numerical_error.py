@@ -186,14 +186,40 @@ class CouplingNumericalErrorAssessment:
 
 
 def _mapping_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]:
+    """The budget's quantified mapping contributions, plus what the budget cannot see.
+
+    The budget sums declared round-trip / conservation residuals only.  From
+    the same last-iteration mapping diagnostics it is built from, two more
+    sources are open: sites the mapping EXTRAPOLATED to (no residual covers
+    them), and a field mapping declared with neither verification at all.
+    """
     budget = run.final_outputs.get("_coupling_error") or {}
-    return [
+    sources = [
         NumericalErrorSource(
             source=str(item["source"]), kind="mapping", status=ErrorSourceStatus.QUANTIFIED,
             relative=float(item["relative_bound"]), method=str(item["method"]),
         )
         for item in budget.get("contributions", ())
     ]
+    for window in run.windows:
+        for item in (window.iterations[-1].mapping_diagnostics if window.iterations else ()):
+            edge_id, mapping = item.get("edge_id"), item.get("mapping") or {}
+            label = f"window:{window.index}:edge:{edge_id}"
+            extrapolated = int(mapping.get("extrapolated_count") or 0)
+            if extrapolated > 0:
+                sources.append(NumericalErrorSource(
+                    source=f"{label}:mapping_extrapolation", kind="mapping", status=ErrorSourceStatus.UNQUANTIFIED,
+                    relative=None, method="mapping_extrapolation",
+                    detail=(f"{extrapolated}/{mapping.get('target_count')} target sites lie outside the source support "
+                            f"(coverage {mapping.get('coverage_fraction')!r}); no declared residual covers them"),
+                ))
+            if mapping.get("round_trip_relative_l2") is None and mapping.get("conservation_relative_error") is None:
+                sources.append(NumericalErrorSource(
+                    source=f"{label}:mapping_unverified", kind="mapping", status=ErrorSourceStatus.UNQUANTIFIED,
+                    relative=None, method="mapping_unverified",
+                    detail="the mapping declared neither a round-trip nor a conservation verification",
+                ))
+    return sources
 
 
 def _iteration_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]:
