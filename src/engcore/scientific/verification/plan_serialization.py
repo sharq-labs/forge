@@ -28,7 +28,10 @@ def plan_to_dict(plan:VerificationPlan)->dict[str,Any]:
         "policy":{"minimum_level":int(plan.policy.minimum_level),
                   "minimum_independence":plan.policy.minimum_independence.value,
                   "minimum_routes":plan.policy.minimum_routes,
-                  "require_external":plan.policy.require_external},
+                  "require_external":plan.policy.require_external,
+                  # absent when not declared: legacy policies keep their serialized form
+                  **({"required_categories":[c.value for c in plan.policy.required_categories]}
+                     if plan.policy.required_categories else {})},
         "selected":[x.candidate.route.route_id for x in plan.selected],
         "rejected":[list(x) for x in plan.rejected],
         "complete":plan.complete}
@@ -37,7 +40,8 @@ def plan_from_dict(payload:Mapping[str,Any])->VerificationPlan:
     require_schema(payload,VERIFICATION_PLAN_SCHEMA)
     pp=payload["policy"]
     policy=VerificationPolicy(VerificationLevel(pp["minimum_level"]),
-        IndependenceLevel(pp["minimum_independence"]),pp["minimum_routes"],pp["require_external"])
+        IndependenceLevel(pp["minimum_independence"]),pp["minimum_routes"],pp["require_external"],
+        tuple(pp.get("required_categories",())))
     candidates=tuple(VerificationCandidate(
         _route_from_dict(x["route"]),RouteDependencyManifest.from_dict(x["dependencies"]))
         for x in payload.get("candidates",()))

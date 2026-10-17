@@ -11,12 +11,18 @@ says which of those the run quantified, estimated, left open, or knows to be
 unbounded.  This module applies that assessment to the study's NUMERICAL record:
 
 1. **It never quantifies or widens anything.**  A coupling bound is not a bound
-   on the claim's quantity (a mapping bound is a relative FIELD norm) and an
+   on the claim's quantity (a mapping residual is a relative FIELD norm, and a
+   diagnostic rather than a bound) and an
    estimate is not a bound, so no number moves from the assessment into the
    channel.  The study's record passes unchanged or the channel is UNKNOWN.
 2. **UNKNOWN never improves**: an UNKNOWN study record stays UNKNOWN.
 3. **Every coupling error source vetoes** unless it is QUANTIFIED as exactly
-   zero.  Nothing a caller says can cover a source.  Declared coverage by the
+   zero.  A DIAGNOSTIC (a mapping round-trip or conservation residual) is not
+   an error source: it bounds nothing, so it can neither close a source nor
+   pass the channel -- the forward error of the mapping it describes is its
+   own UNQUANTIFIED source (Phase 1 BR3).  Before BR3 a conservation residual
+   of 0.0 was read as a QUANTIFIED zero and passed a field-mapped run.
+   Nothing a caller says can cover a source.  Declared coverage by the
    study's own ladder (a capability declaration bound into the plan digest and
    checked against the ladder) is a deferred design item, not supported here.
 4. **Nothing is taken on trust.**  The assessment is computed here from the
@@ -155,12 +161,13 @@ def condition_numerical_uncertainty(
             CouplingConditionAction.VETOED,
             f"unbounded coupling error: {unbounded}",
         )
+    error_sources = [s for s in assessment.sources if s.status is not ErrorSourceStatus.DIAGNOSTIC]
     open_sources = [
         f"{s.source} ({s.status.value})"
-        for s in assessment.sources
+        for s in error_sources
         if not (s.status is ErrorSourceStatus.QUANTIFIED and s.relative == 0.0)
     ]
-    if open_sources or not assessment.sources:
+    if open_sources or not error_sources:
         return result(
             Uncertainty.unknown(
                 f"numerical uncertainty not quantified: coupling error not shown to be zero ({open_sources or 'none assessed'})"

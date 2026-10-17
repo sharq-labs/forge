@@ -179,3 +179,210 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
   a declared input. Nothing found requires that, but no test exercises a curve handed to these inputs.
 - Zero validity conditions is a deliberate UNKNOWN. A scientific reviewer may instead require sourced
   conditions (for example, a Biot or aspect-ratio screen for 1D applicability) before any claim use.
+
+## Phase 1 — Scientific & numerical correctness (2026-10-17)
+
+Branch `fix/phase1-scientific-numerical-correctness` (worktree `D:/forge-phase1`), base `origin/main` `de11dffa`.
+Local commits only. The rocks are numbered P1-BR1..P1-BR7 here so they are not confused with the Engineering
+Runtime V1 BR1..BR22 above. **No test of any kind was executed in this phase** (owner direction): only `py_compile`
+and `git diff --check`. Every capability changed here is IMPLEMENTED / UNVERIFIED and every touched
+certification-pinned file is UNCERTIFIED until OD-3.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-31 | P1-BR1 coverage, explicit plans, non-finite residuals | New tests | `pytest tests/test_phase1_coupling_convergence_coverage.py -q` | NOT RUN |
+| DV-32 | P1-BR1 | Existing suites that build EXPLICIT plans (all refused on `main` since `35d8f557`) or implicit plans with partial criteria (now refused); expect outcome changes in both directions | `pytest tests/test_multiphysics_window_control.py tests/test_multiphysics_iqn_ils.py tests/test_multiphysics_splitting_estimate.py tests/test_multiphysics_event_aligned_outcome.py tests/test_big9_review_runtime_fixes.py tests/test_stateful_multiphysics_runtime.py tests/compositionpacks -q` | NOT RUN |
+
+### Unverified assumptions (P1-BR1)
+
+- Serial forward edges without relaxation are treated as consistent by construction. The runtime delivers
+  `old + 1.0 * (new - old)`, which equals `new` only up to one rounding; the policy accepts that rounding.
+- Every existing implicit plan in `src/`, `flagships/` and `tests/multiscale_reference.py` was read against the
+  coverage policy and monitors its required edges (drone hover: `bus_voltage`, `winding_temperature`; battery
+  cooling and the heater board monitor every edge). Plans inside other test files were not audited; DV-32 finds them.
+- The field residual `l2` stays the root mean square over stored values. On a non-uniform support it is not a
+  mesh-weighted L2 norm; that is documented, not changed (changing it would move convergence decisions).
+- Non-finite participant outputs are refused when the `Quantity` / `FieldValue` is built, before any residual;
+  that refusal is not retried by window control. Only an overflowing residual is a retryable numerical failure.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-33 | P1-BR2 conservative cell remap | New tests (hand-computed overlap oracles, refusals, diagnostics identity) | `pytest tests/test_phase1_conservative_cell_mapping.py -q` | NOT RUN |
+| DV-34 | P1-BR2 | A field-mapped coupled run through `TransferEngine` with a conservative edge (mapping provenance reaches the run record); none written | new test | NOT WRITTEN |
+| DV-35 | P1-BR2 | Cost of the polygon path (O(source x target) candidate search in Python) on a realistic interface mesh; owner-authorized measurement only | benchmark | NOT RUN |
+
+### Supported geometry (P1-BR2)
+
+- Two axis-aligned `StructuredMesh` grids of any spacing: exact separable overlaps (`kron` of 1D overlaps).
+- Any pair of planar 2D supports made of triangles, strictly convex quadrilaterals or structured rectangles:
+  Sutherland-Hodgman intersection of convex polygons in the target cell's local frame.
+- Refused: node fields, offset-scale units (degC, degF), any coverage deficit above the declared round-off
+  allowance in either direction (no extrapolation, no dropped source integral), 3D cells, non-convex or
+  degenerate cells, `ExtrapolationPolicy.NEAREST` on a conservative definition. No nearest-site fallback.
+
+### Unverified assumptions (P1-BR2)
+
+- `CONSERVATIVE_COVERAGE_ROUNDOFF = 1e-9` (relative to the cell measure) absorbs float64 intersection
+  round-off. Measured deficits are recorded in provenance; the value itself is a numerical choice, not a measurement.
+- First order only: a piecewise-constant remap is conservative, not accurate; its pointwise error is
+  unquantified and stays so in the numerical-error accounting (P1-BR3).
+- The structured path assumes `axis_coordinates()` partitions are sorted and gap-free, which the record
+  guarantees by construction.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-36 | P1-BR3 error semantics | New tests + the three rewritten `_mapping_sources` tests and one new identity test in the ERT V1 BR3 file | `pytest tests/test_phase1_numerical_error_semantics.py tests/test_multiphysics_numerical_error_accounting.py tests/claims/test_coupling_numerical_condition.py -q` | NOT RUN |
+| DV-37 | P1-BR3 | Every run digest changes (`_coupling_error` payload and `coupling_error_bound=None`); any test pinning a run digest or the old budget shape moves | FAST tier diffed against a pristine baseline | NOT RUN |
+
+### Semantics after P1-BR3
+
+| Evidence | Status | Summed into a bound? | Closes a source? |
+| --- | --- | --- | --- |
+| Mapping round-trip residual | DIAGNOSTIC | never | never |
+| Mapping conservation residual | DIAGNOSTIC | never | never |
+| Forward error of a non-identity field mapping | UNQUANTIFIED | -- | -- (vetoes the claims NUMERICAL channel) |
+| Identity mapping on one support | no source (exact) | -- | -- |
+| Fixed-point contraction estimate | ESTIMATED (unchanged) | never | never |
+| Explicit splitting without an estimate | UNQUANTIFIED (unchanged) | -- | -- |
+| Window not completed | UNBOUNDED (unchanged) | -- | -- |
+| Mathematical bound | QUANTIFIED -- nothing in the coupling runtime produces one today | yes | yes, if exactly zero |
+
+### Unverified assumptions (P1-BR3)
+
+- `MultiphysicsRunRecord.coupling_error_bound` stays in the schema for reading old records; the runtime writes
+  None. A stored non-None value is not re-interpreted anywhere; nothing in `src/` reads the field.
+- The claims condition's behaviour on a real field-mapped coupled run is unexercised (no claims capability
+  produces a multiphysics run record yet); the new tests patch the assessment.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-38 | P1-BR4 exact window boundaries | New tests (exact ends, long horizon, absorbed remainder, event shift, one-ulp event pair refused, determinism) | `pytest tests/test_phase1_exact_time_windows.py -q` | NOT RUN |
+| DV-39 | P1-BR4 | Window-control, event-alignment, scenario and multiscale suites: window ends and window-control log floats can move by an ulp; STEP samples off the exact grid (e.g. built as `k * 0.1` in float) are now refused | `pytest tests/test_multiphysics_window_control.py tests/test_big9_review_runtime_fixes.py tests/test_stateful_multiphysics_runtime.py tests/test_multidomain_science_hardening.py tests/test_multiscale_runtime.py -q` | NOT RUN |
+
+### Rules after P1-BR4
+
+- Boundaries are exact `Fraction` seconds from `exact_seconds` (`SAME_INSTANT_RULE`); records and participants
+  still receive `float(boundary)`, which is correctly rounded and never accumulated.
+- A nominal window is `current + width` in exact arithmetic. Events, STEP-input and operating-condition change
+  instants and the horizon cut it exactly; after any non-nominal end the grid restarts from that exact instant
+  (the pre-existing shift semantics are kept).
+- A forced boundary beyond the nominal end by no more than the float64 resolution of the grid since its last
+  anchor (one ulp of the anchor, one ulp of the width per window, one ulp of the boundary) is absorbed into the
+  window and logged in `final_outputs["_time_grid"]` (absent otherwise, so other runs keep their identity).
+- A window no wider than one ulp of each of its boundaries is refused (`MultiphysicsExecutionError`): the schedule
+  cannot be represented consistently. A subdivision retry that narrow ends the subdivision.
+- Subdivision, minimum window and step-size memory compute in exact arithmetic (`Fraction(repr(factor))`);
+  `minimum_window` is compared exactly, without the old `1 - 1e-12` slack.
+- STEP sample alignment is exact: `(instant - start) % width == 0`.
+
+### Unverified assumptions (P1-BR4)
+
+- A participant's reported end and terminal-event instants are still compared with the pre-existing
+  `1e-12 * max(1, |t|)` tolerance (`_advance_one`, `_terminal_event`, `_checkpoint_all`). That is a participant
+  reporting contract, not the window grid; for sub-microsecond windows it is loose and is recorded as open.
+- `minimum_window` governs subdivision only. A window forced short by an event, an input change or the horizon
+  may be shorter than it; whether such a schedule should be refused under window control is an owner decision.
+- `float(Fraction)` is correctly rounded in CPython; the determinism test relies on it.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-40 | P1-BR5 typed verification | New tests + the existing verification suites (all existing policies use V1/V2/V4 with route kinds the table keeps; expected unchanged) | `pytest tests/scientific/verification tests/execution/test_verification_runner_v2.py tests/execution/test_verification_runner_identity_v2.py tests/credibility/test_assurance_manifest_v2.py tests/compositionpacks -q` | NOT RUN |
+| DV-41 | P1-BR5 | Mutation population V4: mutant **N60d** pins the removed ordinal line of `plan_verification` and can no longer apply; N60e, N60f and N60i lines are byte-identical. The population is certification-pinned, so the replacement mutant (typed admission -> `if False`, killed by `test_a_legacy_v2_requirement_is_not_met_by_validation_model_form_or_reproduction`) needs OD-3 | owner recertification | NOT RUN |
+
+### Category table (P1-BR5)
+
+| Category | Provided by route kinds | Legacy `minimum_level` that names it |
+| --- | --- | --- |
+| repeatability | same_solver_rerun | V0 |
+| solution_verification | different_algorithm | V1 |
+| code_verification | different_implementation, external_solver, analytical_reference | V2 |
+| model_form_comparison | different_model | V3 |
+| analytical_comparison | analytical_reference | V4 |
+| independent_solver_corroboration | external_solver | V5 |
+| experimental_validation | experimental_measurement | V6 |
+| reproducibility | independent_reproduction | V7 |
+
+The only many-to-one entry is code verification (code-to-code comparison and comparison with an exact solution of
+the same model). Every promotion the ordinal check allowed beyond this table is now refused, including
+V6/V7 for V2, V5 for V4 and V3 for V1/V2.
+
+### Unverified assumptions (P1-BR5)
+
+- Admitting `analytical_reference` and `external_solver` for code verification is a scientific judgement (Roache /
+  Oberkampf code-to-code and exact-solution comparison). An owner may narrow it; nothing else is many-to-one.
+- A plan whose candidate was rejected for its level now carries a different rejection text; any stored
+  `verification_plan` payload with such a rejection would be refused as stale by `plan_from_dict`. No stored payload
+  was found in `benchmarks/`, `certification/` or `tests/`.
+- `minimum_level=V0` used to admit every route kind; it now requires repeatability. No policy in `src/` uses V0.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-42 | P1-BR6 sparse correctness | New tests (a `NeverDense` matrix fails on any densification; structure/dtype/finiteness refusals; canonical digest; exact vs estimated vs unresolved conditioning; dense-provider bound) | `pytest tests/numerical/test_phase1_sparse_correctness.py -q` | NOT RUN |
+| DV-43 | P1-BR6 | Existing numerical-provider suites: records of sparse systems with 1000 < n <= 2000 change from an exact number to a labelled estimate or UNRESOLVED; larger ones from no record to one | `pytest tests -q -k "numerical or provider" -m "not expensive"` (diff against a pristine baseline) | NOT RUN |
+| DV-44 | P1-BR6 | Memory/time of admission and conditioning on a large sparse system (no performance claim is made here) | owner-authorized benchmark | NOT RUN |
+
+### Policy after P1-BR6
+
+| Operand | Admission | Condition record |
+| --- | --- | --- |
+| dense | finiteness of every value (unchanged) | exact 2-norm, `numpy.linalg.cond (2-norm)` (unchanged label) |
+| sparse, n <= 1000 | stored entries only: full structure check, real numeric dtype, finite stored values | exact 2-norm after a bounded dense conversion (same label as dense) |
+| sparse, n > 1000, nnz <= 5e6, direct method | as above | deterministic Hager/Higham 1-norm LOWER-BOUND estimate on one SuperLU factorization, labelled ESTIMATED: above the threshold it proves ill-conditioning; below it, UNRESOLVED (never well-conditioned) |
+| sparse, iterative method (GMRES) above n = 1000 | as above | UNRESOLVED: no factorization is forced on an iterative method |
+| sparse, nnz > 5e6 | as above | UNRESOLVED (factorization policy) |
+| sparse into `dense_lu` | densified only up to n = 4096 (128 MiB), else refused | -- |
+
+`array_digest` hashes a canonical CSR copy (duplicates summed, indices sorted, explicit zeros kept; the caller's
+matrix is not modified). An already canonical matrix hashes exactly as before.
+
+### Unverified assumptions (P1-BR6)
+
+- SciPy's `onenormest` was not used because it draws random starting columns; the in-module estimator is the
+  deterministic LAPACK xLACON scheme. Its estimate is a lower bound in exact arithmetic; with LU round-off it is
+  approximately one.
+- The limits (1000, 5e6 stored entries, 4096) are memory-budget choices, not measurements.
+- Index dtype (int32 vs int64) is still part of a sparse digest; two otherwise identical canonical matrices with
+  different index dtypes hash differently. The messy-vs-canonical test assumes SciPy picks int32 for both.
+- `SuperLU` fill-in is not bounded by the nnz limit; a `MemoryError` is reported unresolved, other failures propagate.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-45 | P1-BR7 outcome semantics | New tests (typed assessment, forged label, authority success/refusal paths) | `pytest tests/test_phase1_system_runtime_outcomes.py -q` | NOT RUN |
+| DV-46 | P1-BR7 | Existing authority suites. Expected: explicit-run nodes that used to FAIL now SUCCEED (`test_multiphysics_conservation_history.py` STEADY case still passes by its own assertion); `test_system_runtime_big13_additions.py` (stub at line 64) and `tests/test_system_runtime_review_fixes.py::test_h2_*` / `test_r2_*` drive the authority with a SimpleNamespace "converged" stub and is now refused ("no run record") -- it must be rewritten on a real run record, not the check weakened | `pytest tests/test_multiphysics_conservation_history.py tests/test_system_runtime_external_providers.py tests/test_system_runtime_big13_additions.py tests/test_system_runtime_review_fixes.py flagships -q` | NOT RUN |
+| DV-47 | P1-BR7 | Rewrite of the H2 state-uncertainty tests on a real stateful coupled run | new test | NOT WRITTEN |
+
+### Outcome semantics after P1-BR7
+
+| Plan | Window outcomes | Run outcome | Node |
+| --- | --- | --- | --- |
+| explicit | explicit_completed / event_aligned | COMPLETED_EXPLICIT (no convergence claim; splitting error open) | succeeds, `coupling_outcome=completed_explicit`, every output UNKNOWN with that note |
+| implicit | converged / event_aligned, final iteration satisfied and every required edge measured | CONVERGED (fixed-point residual only) | succeeds, `coupling_outcome=converged` |
+| either | any iteration_limit / participant_refused / transfer_refused | NOT_COMPLETED | fails, nothing exposed |
+| either | a label the plan cannot produce, an unmeasured required edge, a gap between windows, a plan that does not validate against the graph | NOT_COMPLETED | fails, nothing exposed |
+
+Unchanged and still enforced first: graph and plan fingerprints, required conservation, untraced external providers.
+New: a non-record return is refused even for a fixed runtime, and the record's `run_id` must be the one this call
+requested. `assess_coupling_numerical_error` turns an inconsistent, unmonitored or unconverged label into an
+UNBOUNDED source.
+
+### Unverified assumptions (P1-BR7)
+
+- Window contiguity is checked by exact float equality of consecutive boundaries; records produced by this runtime
+  (before or after P1-BR4) satisfy it by construction.
+- `assess_run_outcome` lives in the certified `runtime.py` so the certified authority gains no new import edge; the
+  lazy import from `numerical_error.py` adds an uncertified -> certified edge only.
+
+### Phase 1 static review (read-only, nothing executed) and what it changed
+
+| # | Severity | Finding | Disposition |
+| --- | --- | --- | --- |
+| 1 | MAJOR | Mutant N60d no longer matches `planning.py`; `tests/test_mutation_population_v4.py::test_every_folded_mutation_still_matches_the_source_it_names` will fail | Recorded (DV-41). The population is certification-pinned; replacement mutant on the typed admission line needs OD-3. Not edited. |
+| 2 | MAJOR | Authority tests that feed a `SimpleNamespace` stub run (`tests/test_system_runtime_review_fixes.py` `_coupled_stub`: `test_h2_*`, `test_r2_*`; `tests/test_system_runtime_big13_additions.py:64` extractor/artifact test) will get "no run record" | Recorded (DV-46, DV-47). The refusal is the fix (a stub's "converged" is a caller assertion); those tests need a real run record. Not rewritten in Phase 1. |
+| 3 | MINOR | `test_multiphysics_conservation_history.py` comment described pre-BR7 behaviour | Fixed (comment only; assertion unchanged). |
+| 4 | MINOR | `assess_run_outcome` fell back to no required edges when the plan did not validate | Fixed: an implicit plan that does not validate requires every edge. |
+| 5 | MINOR | Window-gap check used float equality | Fixed: `exact_seconds` on both sides. |
+| 6 | MINOR | STEP inputs were aligned exactly while events got ulp absorption | Fixed: STEP alignment uses the same resolution as the run loop (k ulps of the width, one of the start, one of the instant); the loop then lands on the sample. |
+| 7 | MINOR | A stored implicit record whose criteria miss a lagged edge no longer loads (record validates its plan) | Recorded; none found in the repository. |
+| 8 | MINOR | `MappingDiagnostics.provenance` was a mutable dict | Fixed: frozen on construction, `detach`ed on serialization. |
+| 9 | MINOR | Conditioning of sparse 1000 < n <= 2000 (and GMRES) now estimated or unresolved; `stability.py` then records "singular or unresolved" | Recorded (DV-43): the safe direction; stability decisions change. |
+| 10 | MINOR | degC refused for conservative remap although an exactly covering first-order remap is affine-invariant | Kept as a design choice (no conservation claim for an offset scale); owner may relax. |

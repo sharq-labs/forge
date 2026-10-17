@@ -549,6 +549,9 @@ class MultiphysicsRunRecord:
     initial_coupling: tuple[InitialCouplingRecord, ...]
     windows: tuple[CouplingWindowRecord, ...]
     final_outputs: Mapping[str, Any]
+    #: Phase 1 BR3: the runtime writes None.  Earlier records summed mapping
+    #: round-trip and conservation residuals here; that sum was never a bound,
+    #: and no reader may treat a stored value as one.
     coupling_error_bound: float | None = None
     initial_state_receipts: tuple[InitialStateReceipt, ...] = ()
     scheduled_events: tuple[ScheduledEventRecord, ...] = ()

@@ -3,6 +3,16 @@
 The runtime keeps field values content-addressed. This module resolves them only
 while a transfer is being executed, validates the source/target support, maps
 the values, then stores a new content-addressed FieldRecord.
+
+``CONSERVATIVE_CELL`` (Phase 1 BR2) is a first-order remap by exact cell
+intersection, implemented for exactly these supports: two axis-aligned
+structured grids (any spacing and origin), and any pair of planar 2D supports
+whose cells are triangles, strictly convex quadrilaterals or structured
+rectangles.  Both supports must cover each other; 3D cells, non-convex cells,
+node fields, offset-scale units and any extrapolation are refused.  It never
+falls back to the nearest-site path.  Intersection candidates are found by
+bounding boxes, so the polygon path is O(source cells x target cells) in the
+worst case and is meant for interface meshes of moderate size.
 """
 
 from __future__ import annotations
@@ -12,6 +22,7 @@ import math
 from typing import Mapping
 
 import numpy as np
+import scipy.sparse as sp
 
 from ...data.field import FieldValue
 from ...data.mesh import UnstructuredMeshData
@@ -33,6 +44,7 @@ from ...scientific.multiphysics import (
     FieldMappingMethod,
     MappingDiagnostics,
 )
+from ...scientific.units.quantity import is_ratio_scale
 
 
 @dataclass(frozen=True)
@@ -335,102 +347,169 @@ def _bilinear_map(
     return target.reshape(-1, source.shape[1])
 
 
-def _triangle_area(vertices: np.ndarray) -> float:
-    a, b, c = vertices
-    if vertices.shape[1] == 2:
-        return 0.5 * abs(
-            float(
-                (b[0] - a[0]) * (c[1] - a[1])
-                - (b[1] - a[1]) * (c[0] - a[0])
-            )
-        )
-    return 0.5 * float(
-        np.linalg.norm(np.cross(b - a, c - a))
+#: Geometric round-off allowance on the COVERAGE of a cell by the cells that
+#: overlap it, relative to the cell's own measure.  Intersections of float64
+#: rectangles and convex polygons are not exact; this is not a physical
+#: tolerance, it never admits extrapolation (a larger deficit is refused) and
+#: every measured deficit is recorded in the mapping provenance.
+CONSERVATIVE_COVERAGE_ROUNDOFF = 1e-9
+
+#: The conservative method this module implements, as recorded in provenance.
+CONSERVATIVE_METHOD = "first_order_intersection_remap"
+
+
+def _interval_overlaps(source_edges: np.ndarray, target_edges: np.ndarray) -> sp.csr_matrix:
+    """Exact overlap lengths of two sorted 1D partitions, as a sparse (n_source, n_target) matrix."""
+    rows: list[int] = []
+    cols: list[int] = []
+    values: list[float] = []
+    for a in range(len(source_edges) - 1):
+        lo, hi = float(source_edges[a]), float(source_edges[a + 1])
+        first = max(0, int(np.searchsorted(target_edges, lo, side="right")) - 1)
+        for b in range(first, len(target_edges) - 1):
+            t_lo, t_hi = float(target_edges[b]), float(target_edges[b + 1])
+            if t_lo >= hi:
+                break
+            length = min(hi, t_hi) - max(lo, t_lo)
+            if length > 0.0:
+                rows.append(a)
+                cols.append(b)
+                values.append(length)
+    return sp.csr_matrix(
+        (values, (rows, cols)), shape=(len(source_edges) - 1, len(target_edges) - 1)
     )
 
 
-def _tetra_volume(vertices: np.ndarray) -> float:
-    a, b, c, d = vertices
-    matrix = np.column_stack((b - a, c - a, d - a))
-    return abs(float(np.linalg.det(matrix))) / 6.0
+def _structured_overlap(source: StructuredMesh, target: StructuredMesh) -> sp.csr_matrix:
+    """Cell-overlap areas of two axis-aligned rectangle grids (row-major cell order, y rows)."""
+    sx, sy = (np.asarray(axis, dtype=np.float64) for axis in source.axis_coordinates())
+    tx, ty = (np.asarray(axis, dtype=np.float64) for axis in target.axis_coordinates())
+    # kron(Oy, Ox)[ay*ncx_s + ax, jy*ncx_t + jx] = Oy[ay, jy] * Ox[ax, jx]: the
+    # overlap of two rectangles is the product of their axis overlaps.
+    return sp.kron(_interval_overlaps(sy, ty), _interval_overlaps(sx, tx), format="csr")
 
 
-def _cell_measures(
-    mesh: MeshSupport,
-    resolver: BulkDataResolver,
-) -> np.ndarray:
+def _signed_area(polygon: np.ndarray) -> float:
+    x, y = polygon[:, 0], polygon[:, 1]
+    return 0.5 * float(np.dot(x, np.roll(y, -1)) - np.dot(np.roll(x, -1), y))
+
+
+def _convex_cells(mesh: MeshSupport, resolver: BulkDataResolver) -> list[np.ndarray]:
+    """Every cell of a 2D support as a counter-clockwise convex polygon; anything else is refused."""
     if isinstance(mesh, StructuredMesh):
-        area = (
-            mesh.spacing_x.magnitude_in("meter")
-            * mesh.spacing_y.magnitude_in("meter")
+        xs, ys = (np.asarray(axis, dtype=np.float64) for axis in mesh.axis_coordinates())
+        return [
+            np.array(((xs[i], ys[j]), (xs[i + 1], ys[j]), (xs[i + 1], ys[j + 1]), (xs[i], ys[j + 1])))
+            for j in range(len(ys) - 1)
+            for i in range(len(xs) - 1)
+        ]
+    if mesh.cell_type not in (CellType.TRIANGLE, CellType.QUADRILATERAL):
+        raise InvalidScientificProblem(
+            f"conservative_cell mapping is implemented for 2D triangle and convex quadrilateral cells and "
+            f"axis-aligned structured grids; mesh {mesh.mesh_id!r} has {mesh.cell_type.value} cells"
         )
-        return np.full(mesh.cell_count, area, dtype=np.float64)
-
     coords, cells = _unstructured_geometry(mesh, resolver)
-    vertices = coords[cells]
-    measures = np.empty(mesh.cell_count, dtype=np.float64)
-    for index, cell in enumerate(vertices):
-        if mesh.cell_type is CellType.TRIANGLE:
-            measure = _triangle_area(cell)
-        elif mesh.cell_type is CellType.QUADRILATERAL:
-            measure = (
-                _triangle_area(cell[[0, 1, 2]])
-                + _triangle_area(cell[[0, 2, 3]])
-            )
-        elif mesh.cell_type is CellType.TETRAHEDRON:
-            measure = _tetra_volume(cell)
-        else:
-            measure = sum(
-                _tetra_volume(cell[list(indices)])
-                for indices in _HEX_TETS
-            )
-        if not math.isfinite(measure) or measure <= 0.0:
+    if coords.ndim != 2 or coords.shape[1] != 2:
+        raise InvalidScientificProblem(
+            f"conservative_cell mapping needs planar 2D coordinates; mesh {mesh.mesh_id!r} has "
+            f"coordinates of shape {coords.shape}"
+        )
+    polygons: list[np.ndarray] = []
+    for index, cell in enumerate(coords[cells]):
+        polygon = np.array(cell, dtype=np.float64)
+        area = _signed_area(polygon)
+        if not math.isfinite(area) or area == 0.0:
             raise InvalidScientificProblem(
-                f"unstructured mesh {mesh.mesh_id!r} cell {index} "
-                f"has non-positive measure {measure!r}"
+                f"mesh {mesh.mesh_id!r} cell {index} is degenerate (signed area {area!r})"
             )
-        measures[index] = measure
-    return measures
-
-
-def _conserve_integral(
-    source_values: np.ndarray,
-    target_values: np.ndarray,
-    source_measures: np.ndarray,
-    target_measures: np.ndarray,
-) -> tuple[np.ndarray, float]:
-    source_integral = np.sum(
-        source_values * source_measures[:, np.newaxis],
-        axis=0,
-    )
-    target_integral = np.sum(
-        target_values * target_measures[:, np.newaxis],
-        axis=0,
-    )
-    corrected = np.array(target_values, copy=True)
-    tiny = np.finfo(np.float64).tiny
-
-    for component in range(corrected.shape[1]):
-        source_total = float(source_integral[component])
-        target_total = float(target_integral[component])
-        if abs(target_total) > tiny:
-            corrected[:, component] *= source_total / target_total
-        else:
-            correction = (
-                source_total
-                / float(np.sum(target_measures))
+        if area < 0.0:
+            polygon = polygon[::-1].copy()
+        edges = np.roll(polygon, -1, axis=0) - polygon
+        turns = edges[:, 0] * np.roll(edges, -1, axis=0)[:, 1] - edges[:, 1] * np.roll(edges, -1, axis=0)[:, 0]
+        if np.any(turns <= 0.0):
+            raise InvalidScientificProblem(
+                f"mesh {mesh.mesh_id!r} cell {index} is not strictly convex; the intersection remap "
+                f"is implemented for convex cells only"
             )
-            corrected[:, component] += correction
+        polygons.append(polygon)
+    return polygons
 
-    final_integral = np.sum(
-        corrected * target_measures[:, np.newaxis],
-        axis=0,
+
+def _clip(subject: np.ndarray, clip: np.ndarray) -> np.ndarray:
+    """Sutherland-Hodgman intersection of two counter-clockwise convex polygons."""
+    output = [point for point in subject]
+    count = len(clip)
+    for k in range(count):
+        if not output:
+            break
+        a, b = clip[k], clip[(k + 1) % count]
+        ex, ey = b[0] - a[0], b[1] - a[1]
+        points, output = output, []
+        for index, current in enumerate(points):
+            previous = points[index - 1]
+            s_cur = ex * (current[1] - a[1]) - ey * (current[0] - a[0])
+            s_prev = ex * (previous[1] - a[1]) - ey * (previous[0] - a[0])
+            if s_cur >= 0.0:
+                if s_prev < 0.0:
+                    output.append(previous + (s_prev / (s_prev - s_cur)) * (current - previous))
+                output.append(current)
+            elif s_prev >= 0.0:
+                output.append(previous + (s_prev / (s_prev - s_cur)) * (current - previous))
+    return np.array(output) if len(output) >= 3 else np.zeros((0, 2))
+
+
+def _polygon_overlap(
+    source: list[np.ndarray], target: list[np.ndarray]
+) -> sp.csr_matrix:
+    """Exact (up to round-off) intersection areas of two convex 2D partitions."""
+    lower = np.array([p.min(axis=0) for p in source])
+    upper = np.array([p.max(axis=0) for p in source])
+    rows: list[int] = []
+    cols: list[int] = []
+    values: list[float] = []
+    for j, cell in enumerate(target):
+        t_lower, t_upper = cell.min(axis=0), cell.max(axis=0)
+        candidates = np.nonzero(np.all(lower < t_upper, axis=1) & np.all(upper > t_lower, axis=1))[0]
+        origin = cell[0]
+        local_target = cell - origin  # local frame: less cancellation far from the origin
+        for i in candidates:
+            piece = _clip(source[int(i)] - origin, local_target)
+            if len(piece):
+                area = _signed_area(piece)
+                if area > 0.0:
+                    rows.append(int(i))
+                    cols.append(j)
+                    values.append(area)
+    return sp.csr_matrix((values, (rows, cols)), shape=(len(source), len(target)))
+
+
+def _overlap_geometry(
+    source_mesh: MeshSupport, target_mesh: MeshSupport, resolver: BulkDataResolver
+) -> tuple[sp.csr_matrix, np.ndarray, np.ndarray, str]:
+    """(overlap matrix, source cell measures, target cell measures, geometry name)."""
+    if isinstance(source_mesh, StructuredMesh) and isinstance(target_mesh, StructuredMesh):
+        sx, sy = (np.diff(np.asarray(a, dtype=np.float64)) for a in source_mesh.axis_coordinates())
+        tx, ty = (np.diff(np.asarray(a, dtype=np.float64)) for a in target_mesh.axis_coordinates())
+        return (
+            _structured_overlap(source_mesh, target_mesh),
+            np.outer(sy, sx).reshape(-1),
+            np.outer(ty, tx).reshape(-1),
+            "axis_aligned_rectangles",
+        )
+    for mesh in (source_mesh, target_mesh):
+        if mesh.spatial_dimension != 2:
+            raise InvalidScientificProblem(
+                f"conservative_cell mapping is implemented in 2D only; mesh {mesh.mesh_id!r} is "
+                f"{mesh.spatial_dimension}D (3D intersection is not implemented)"
+            )
+    source = _convex_cells(source_mesh, resolver)
+    target = _convex_cells(target_mesh, resolver)
+    return (
+        _polygon_overlap(source, target),
+        np.array([_signed_area(p) for p in source]),
+        np.array([_signed_area(p) for p in target]),
+        "convex_polygons_2d",
     )
-    scale = np.maximum(np.abs(source_integral), tiny)
-    error = float(
-        np.max(np.abs(final_integral - source_integral) / scale)
-    )
-    return corrected, error
 
 
 def _relative_l2(
@@ -510,6 +589,13 @@ class FieldMapper:
                 ),
             )
 
+        if definition.method is FieldMappingMethod.CONSERVATIVE_CELL:
+            # never the site-based path below: a nearest-site value rescaled
+            # to the global integral is not a conservative transfer
+            return self._conservative(
+                record, source, source_mesh, target_definition, target_mesh, definition
+            )
+
         source_sites, _, _ = _sites(
             source_mesh,
             source.definition.location,
@@ -571,31 +657,6 @@ class FieldMapper:
             )
 
         conservation_error = None
-        if (
-            definition.method
-            is FieldMappingMethod.CONSERVATIVE_CELL
-        ):
-            if (
-                source.definition.location is not FieldLocation.CELL
-                or target_definition.location
-                is not FieldLocation.CELL
-            ):
-                raise InvalidScientificProblem(
-                    "conservative_cell mapping requires cell-centered "
-                    "source and target fields"
-                )
-            source_measures = _cell_measures(
-                source_mesh, self.resolver
-            )
-            target_measures = _cell_measures(
-                target_mesh, self.resolver
-            )
-            mapped, conservation_error = _conserve_integral(
-                source_values,
-                mapped,
-                source_measures,
-                target_measures,
-            )
 
         round_trip = None
         if definition.verify_round_trip:
@@ -673,6 +734,160 @@ class FieldMapper:
                 ),
                 round_trip_relative_l2=round_trip,
                 conservation_relative_error=conservation_error,
+            ),
+        )
+
+    def _conservative(
+        self,
+        record: FieldRecord,
+        source: FieldValue,
+        source_mesh: MeshSupport,
+        target_definition: FieldDefinition,
+        target_mesh: MeshSupport,
+        definition: FieldMappingDefinition,
+    ) -> FieldMappingResult:
+        """First-order conservative remap by exact cell intersection (Phase 1 BR2).
+
+        ``T_j = sum_i S_i |A_i n B_j| / |B_j|``: every source cell's integral
+        ``S_i |A_i|`` is distributed over the target cells it overlaps, in
+        proportion to the overlap measure.  When the two supports cover each
+        other exactly, every source integral is accounted for locally and the
+        total is conserved without any rescaling; a constant field maps to the
+        same constant.  Anything the method cannot do honestly is refused:
+        node fields, offset-scale units, partial coverage in either direction,
+        3D cells and non-convex cells.
+        """
+        if (
+            source.definition.location is not FieldLocation.CELL
+            or target_definition.location is not FieldLocation.CELL
+        ):
+            raise InvalidScientificProblem(
+                "conservative_cell mapping requires cell-centered "
+                "source and target fields"
+            )
+        for unit in (record.definition.unit, target_definition.unit):
+            if not is_ratio_scale(unit):
+                # the integral of an offset-scale value depends on where its
+                # zero was put: no conservation statement survives that
+                raise InvalidScientificProblem(
+                    f"conservative_cell mapping refuses offset-scale unit {unit!r}: the integral "
+                    f"of a quantity whose zero is a convention is not conserved by any transfer; "
+                    f"map an absolute-scale quantity (kelvin, or the extensive quantity itself)"
+                )
+        if source_mesh.spatial_dimension != target_mesh.spatial_dimension:
+            raise InvalidScientificProblem(
+                f"field mapping crosses spatial dimensions "
+                f"{source_mesh.spatial_dimension}D -> {target_mesh.spatial_dimension}D"
+            )
+        overlap, source_measures, target_measures, geometry = _overlap_geometry(
+            source_mesh, target_mesh, self.resolver
+        )
+        components = source.definition.components
+        values = _component_view(source.values, components).reshape(-1, components)
+        if values.shape[0] != overlap.shape[0] or len(target_measures) != overlap.shape[1]:
+            raise InvalidScientificProblem(
+                f"mapping {definition.mapping_id!r}: {values.shape[0]} source values for "
+                f"{overlap.shape[0]} source cells and {target_definition.expected_count(target_mesh)} "
+                f"target values for {overlap.shape[1]} target cells"
+            )
+        source_deficit = np.abs(1.0 - np.asarray(overlap.sum(axis=1)).reshape(-1) / source_measures)
+        target_deficit = np.abs(1.0 - np.asarray(overlap.sum(axis=0)).reshape(-1) / target_measures)
+        uncovered_targets = int(np.count_nonzero(target_deficit > CONSERVATIVE_COVERAGE_ROUNDOFF))
+        if uncovered_targets:
+            raise InvalidScientificProblem(
+                f"mapping {definition.mapping_id!r} would extrapolate: {uncovered_targets}/"
+                f"{len(target_measures)} target cells are not covered by source support "
+                f"{source_mesh.mesh_id!r} (largest deficit {float(target_deficit.max()):.3g} of a cell)"
+            )
+        uncovered_sources = int(np.count_nonzero(source_deficit > CONSERVATIVE_COVERAGE_ROUNDOFF))
+        if uncovered_sources:
+            raise InvalidScientificProblem(
+                f"mapping {definition.mapping_id!r} cannot conserve: {uncovered_sources}/"
+                f"{len(source_measures)} source cells lie partly outside target support "
+                f"{target_mesh.mesh_id!r} (largest deficit {float(source_deficit.max()):.3g} of a cell), "
+                f"so part of their integral would be dropped"
+            )
+
+        mapped = np.asarray(overlap.T @ values) / target_measures[:, np.newaxis]
+        source_integral = (values * source_measures[:, np.newaxis]).sum(axis=0)
+        target_integral = (mapped * target_measures[:, np.newaxis]).sum(axis=0)
+        # signed fields: the scale is the L1 mass, so a field that integrates
+        # to zero is judged against its own magnitude, never divided by ~0
+        scale = (np.abs(values) * source_measures[:, np.newaxis]).sum(axis=0)
+        residual = np.abs(target_integral - source_integral)
+        relative = [
+            0.0 if s == 0.0 and r == 0.0 else (float(r / s) if s > 0.0 else math.inf)
+            for r, s in zip(residual, scale)
+        ]
+        if not all(math.isfinite(x) for x in relative) or not np.all(np.isfinite(mapped)):
+            raise InvalidScientificProblem(
+                f"mapping {definition.mapping_id!r} produced a non-finite transfer or conservation residual"
+            )
+        conservation_error = max(relative)
+
+        round_trip = None
+        if definition.verify_round_trip:
+            reverse = np.asarray(overlap @ mapped) / source_measures[:, np.newaxis]
+            weights = source_measures[:, np.newaxis]
+            numerator = math.sqrt(float(np.sum(weights * (values - reverse) ** 2)))
+            denominator = max(
+                math.sqrt(float(np.sum(weights * values ** 2))),
+                np.finfo(np.float64).tiny,
+            )
+            round_trip = numerator / denominator
+            if (
+                definition.relative_error_limit is not None
+                and round_trip > definition.relative_error_limit
+            ):
+                raise InvalidScientificProblem(
+                    f"mapping {definition.mapping_id!r} round-trip "
+                    f"relative L2 {round_trip:g} exceeds "
+                    f"{definition.relative_error_limit:g}"
+                )
+
+        base_shape = target_definition.expected_shape(target_mesh)
+        result = FieldValue(
+            target_definition,
+            target_mesh,
+            _restore_components(
+                mapped,
+                base_shape[:-1] if target_definition.components > 1 else base_shape,
+                target_definition.components,
+            ),
+        )
+        record_out, _ = result.store(self.store)
+        provenance = {
+            "method": CONSERVATIVE_METHOD,
+            "geometry": geometry,
+            "order": "first (piecewise-constant per cell)",
+            "local_conservation": (
+                "each source cell's integral is distributed over the target cells it "
+                "overlaps by exact intersection measure; no global rescaling"
+            ),
+            "overlap_pairs": int(overlap.nnz),
+            "coverage_roundoff_allowance": CONSERVATIVE_COVERAGE_ROUNDOFF,
+            "max_source_coverage_deficit": float(source_deficit.max()) if source_deficit.size else 0.0,
+            "max_target_coverage_deficit": float(target_deficit.max()) if target_deficit.size else 0.0,
+            "conservation_absolute_residual": [float(x) for x in residual],
+            "conservation_scale_l1": [float(x) for x in scale],
+            "conservation_unit": f"{target_definition.unit} * meter ** 2",
+            "round_trip_norm": "measure_weighted_l2" if round_trip is not None else None,
+            "notice": (
+                "conservation and round-trip residuals are diagnostics of this transfer; "
+                "neither bounds the pointwise error of the transferred field"
+            ),
+        }
+        return FieldMappingResult(
+            record_out,
+            MappingDiagnostics(
+                mapping_id=definition.mapping_id,
+                source_count=source.count,
+                target_count=result.count,
+                extrapolated_count=0,
+                coverage_fraction=1.0,
+                round_trip_relative_l2=round_trip,
+                conservation_relative_error=conservation_error,
+                provenance=provenance,
             ),
         )
 

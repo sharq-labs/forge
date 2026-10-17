@@ -5493,3 +5493,68 @@ runs used the WSL conda env `~/mm/root/envs/battery`, which has the same PyBaMM 
 **RECERTIFICATION_REQUIRED (OD-3).** `src/engcore/execution/multiphysics/external.py` is pinned in
 `certification/current_core_v2.json`, and the new tests fall under the pinned `tests/**` area.
 `coupling/adapters.py` and `providers/pybamm` are not pinned. No touched file is in the frozen API snapshot.
+
+## 2026-10-17 -- Phase 1: scientific & numerical correctness (build phase; fix/phase1-scientific-numerical-correctness, local only)
+
+Worktree `D:/forge-phase1`, base `origin/main` `de11dffa` (re-verified with `git fetch`; still HEAD). Owner direction:
+build all seven rocks, write regression tests, **execute no test of any kind**, no push/PR/merge/certification, stop
+after Phase 1. Rocks are numbered P1-BR1..P1-BR7 so they are not confused with ERT V1 BR1..BR22.
+
+### Reconciliation against `main` (what already existed)
+
+| Area | Existing and correct | Confirmed defect fixed here |
+| --- | --- | --- |
+| Coupling plan | criteria/relaxation validation, window control | `35d8f557` (ERT BR2) attached the implicit "requires criteria" check to the IQN-ILS test: every EXPLICIT plan was refused, including both built-in composition packs |
+| Convergence | unrelaxed fixed-point residual, divergence/stagnation (opt-in) | no required-coverage policy: an implicit window could be CONVERGED with an iterated interface never measured |
+| Conservative mapping | cell measures, extrapolation refusal for other methods | nearest-site values rescaled to the global integral (locally wrong, ~0 division for signed fields, not offset-unit invariant) |
+| Error accounting | ESTIMATED/UNQUANTIFIED/UNBOUNDED split, run binding | round-trip + conservation residuals summed into a `relative_bound`, stored as `coupling_error_bound`, read as QUANTIFIED; the claims channel PASSED a mapped run on a 0.0 conservation residual |
+| Time windows | event/change boundaries, step-size memory | float running sum, 1e-15 / 1e-12 tolerances, sliver final windows |
+| Verification planning | dependency-derived independence, require_external | ordinal `level < minimum_level`: V6 experiment / V7 reproduction satisfied V2, V5 satisfied V4 |
+| Sparse numerics | sparse digests, SciPy sparse providers | `.toarray()` on admission and in `condition_of`; storage-order-dependent digests |
+| System runtime | graph/plan fingerprints, conservation refusal, untraced providers (ERT BR14) | only `converged` windows exposed: explicit and event-aligned runs always failed; a stub saying `converged` passed |
+
+### Commits (all local)
+
+`a1b6a87e` P1-BR1, `61226343` P1-BR2, `b7a3a032` P1-BR3, `b71eeb3e` P1-BR4, `56cd0e01` P1-BR5, `71085685` P1-BR6,
+`20aa9503` P1-BR7, then a docs commit. Details, rules and assumptions per rock: DEFERRED_VALIDATION.md "Phase 1".
+
+### What was executed
+
+- `python -m py_compile` on every changed source and test file: OK (no output).
+- `git diff --check` after every rock: clean. CR count of every changed file: 0.
+- Import check (`PYTHONPATH=D:/forge-phase1/src`, `engcore.__file__` confirmed in the worktree) of the 15 changed or
+  dependent modules, including both built-in composition packs: `imports ok`.
+- No pytest, FAST, SCIENTIFIC, regression pack, hardened assurance, mutation, benchmark or certification. **NOT RUN.**
+- A read-only static review of the full diff (subagent, no execution): 2 MAJOR, 8 MINOR; dispositions in
+  DEFERRED_VALIDATION.md "Phase 1 static review". Findings 3, 4, 5, 6 and 8 fixed in the review-fix commit
+  (py_compile, import check and `git diff --check` re-run: clean); 1 and 2 need OD-3 / test rewrites.
+
+### Failed approaches (do not repeat)
+
+- A half-ulp representability threshold for window boundaries (BR4) misses windows between ADJACENT doubles,
+  because `exact_seconds` reads the shortest decimal `repr`, which can sit up to half an ulp from the double. One
+  ulp per value is the resolution actually available.
+- `scipy.sparse.linalg.onenormest` draws random starting columns (t > 1) and random resamples; its estimate would
+  make execution records non-deterministic. The in-module xLACON (Hager/Higham, t = 1) estimator is used instead.
+- A bash heredoc for a long patch script failed with an unmatched quote (project memory already warns); patch
+  scripts were written with the Write tool.
+
+### Certification-pinned files touched (UNCERTIFIED until OD-3)
+
+All in `certification/current_core_v2.json`: `execution/multiphysics/{__init__,convergence,error,mapping,runtime}.py`,
+`numerical/{core,providers}.py`, `planning/verification.py`, `scientific/multiphysics/{mapping,plan,report}.py`,
+`scientific/verification/{__init__,ladder,plan_serialization,planning}.py`, `system_runtime/authorities.py`. Mutation
+population V4: N60d pins the removed ordinal line in `planning.py` (DV-41); N60e/N60f/N60i lines are byte-identical.
+No new certified -> uncertified import edge (new targets `scenarios/timeline.py` and `scientific/units/quantity.py`
+are pinned; `numerical_error.py` -> `runtime.py` is uncertified -> certified).
+
+### Owner decisions recorded, not taken
+
+1. P1-BR4: should a schedule-forced window shorter than `minimum_window` be refused under window control?
+2. P1-BR4: the participant reporting tolerance `1e-12 * max(1, |t|)` is loose for sub-microsecond windows.
+3. P1-BR5: admitting `external_solver` and `analytical_reference` as code verification (the only many-to-one entry).
+4. P1-BR1: a mesh-measure-weighted field residual norm (today `l2` is the RMS over stored values).
+5. P1-BR2: 3D (tet/hex) intersection, non-convex cells, and a "restricted conservative" variant for one-sided coverage.
+6. P1-BR6: the dense-conversion and factorization limits (1000, 4096, 5e6 stored entries) are memory-budget choices.
+7. P1-BR7: rewrite of the stub-run authority tests (`test_h2_*`, `test_r2_*`, big13 extractor test) on real run records (DV-46/47).
+8. Still open from ERT V1: mandatory conditioning of coupled claims; DV-24 closure; OD-3.

@@ -1,15 +1,21 @@
 """Which coupling-induced numerical errors a run quantified, estimated, or left open.
 
-``CouplingErrorBudget`` (``final_outputs["_coupling_error"]``) sums the
-numerical errors the runtime QUANTIFIED -- today, field-mapping round-trip and
-conservation residuals.  Read alone, its ``relative_bound`` can look like the
-whole coupling error of a run that also staggered its participants explicitly
-or stopped a window at its iteration limit.  This module derives, from an
-existing :class:`MultiphysicsRunRecord` and without changing it, every
-coupling error source the run carries and what is known about each:
+``final_outputs["_coupling_error"]`` holds the field-mapping DIAGNOSTICS a
+run measured (round-trip and conservation residuals).  Phase 1 BR3: those are
+diagnostics, not bounds -- a round-trip residual does not bound the forward
+transfer error and a conservation residual does not bound the field error.
+This module derives, from an existing :class:`MultiphysicsRunRecord` and
+without changing it, every coupling error source the run carries and what is
+known about each:
 
 ``QUANTIFIED``
-    a bound the runtime computed (mapping contributions);
+    a mathematically justified bound.  Nothing in the coupling runtime
+    produces one today; the status exists so that a future proven bound has a
+    place that is not an estimate;
+``DIAGNOSTIC``
+    a measured residual that is evidence about a transfer but bounds nothing
+    (mapping round-trip and conservation residuals).  Never summed into a
+    bound, never counted as an estimate, and never closes a source;
 ``ESTIMATED``
     an a-posteriori estimate that is NOT a bound: the iteration error of a
     converged plain fixed-point window, ``q / (1 - q) * r_k`` with the
@@ -17,7 +23,8 @@ coupling error source the run carries and what is known about each:
 ``UNQUANTIFIED``
     present and not estimated (explicit splitting error unless an opt-in
     refinement estimate for THIS run is supplied; accelerated or
-    single-iteration windows);
+    single-iteration windows; the forward error of every non-identity field
+    mapping);
 ``UNBOUNDED``
     known not to be controlled (a window that ended at its iteration limit).
 
@@ -37,6 +44,7 @@ from ...scenarios.timeline import canonical_digest
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.multiphysics import (
     CouplingScheme,
+    FieldMappingMethod,
     MultiphysicsRunRecord,
     RelaxationKind,
     WindowOutcome,
@@ -64,6 +72,8 @@ def run_digest(run: MultiphysicsRunRecord) -> str:
 
 class ErrorSourceStatus(str, Enum):
     QUANTIFIED = "quantified"
+    #: Phase 1 BR3: measured evidence that bounds nothing (mapping residuals)
+    DIAGNOSTIC = "diagnostic"
     ESTIMATED = "estimated"
     UNQUANTIFIED = "unquantified"
     UNBOUNDED = "unbounded"
@@ -95,7 +105,9 @@ class NumericalErrorSource:
         object.__setattr__(self, "status", ErrorSourceStatus(self.status))
         if not str(self.source).strip() or not str(self.kind).strip() or not str(self.method).strip():
             raise InvalidScientificProblem("a numerical error source names its source, kind and method")
-        carries_value = self.status in (ErrorSourceStatus.QUANTIFIED, ErrorSourceStatus.ESTIMATED)
+        carries_value = self.status in (
+            ErrorSourceStatus.QUANTIFIED, ErrorSourceStatus.DIAGNOSTIC, ErrorSourceStatus.ESTIMATED
+        )
         if carries_value:
             if self.relative is None or not math.isfinite(float(self.relative)) or float(self.relative) < 0.0:
                 raise InvalidScientificProblem(
@@ -153,10 +165,12 @@ class CouplingNumericalErrorAssessment:
 
     @property
     def verdict(self) -> ErrorAccountingVerdict:
-        statuses = {s.status for s in self.sources}
+        # a diagnostic is evidence about a transfer, not an error source: it
+        # neither opens nor closes anything
+        statuses = {s.status for s in self.sources if s.status is not ErrorSourceStatus.DIAGNOSTIC}
         if not self.coupled:
             return ErrorAccountingVerdict.NO_COUPLING
-        if not self.sources:
+        if not statuses:
             # a coupled run always carries a coupling error source; none found is not "none"
             return ErrorAccountingVerdict.INCOMPLETE
         if ErrorSourceStatus.UNBOUNDED in statuses:
@@ -179,32 +193,50 @@ class CouplingNumericalErrorAssessment:
             "sources": [s.to_dict() for s in self.sources],
             "notice": (
                 "Coupling-induced numerical error only. Estimates are not bounds and are never added to "
-                "the quantified bound; an unquantified or unbounded source is open, never zero. Not "
+                "the quantified bound; diagnostics (mapping round-trip and conservation residuals) bound "
+                "nothing and close no source; an unquantified or unbounded source is open, never zero. Not "
                 "physical, parameter, measurement or model-form uncertainty, and not validation."
             ),
         }
 
 
 def _mapping_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]:
-    """The budget's quantified mapping contributions, plus what the budget cannot see.
+    """The recorded mapping diagnostics, and the mapping error sources they cannot close.
 
-    The budget sums declared round-trip / conservation residuals only.  From
-    the same last-iteration mapping diagnostics it is built from, two more
-    sources are open: sites the mapping EXTRAPOLATED to (no residual covers
-    them), and a field mapping declared with neither verification at all.
+    Round-trip and conservation residuals are DIAGNOSTIC.  For every field
+    mapping in a window's last iteration, the forward transfer error is open
+    (UNQUANTIFIED) unless the mapping is the identity on one support, which is
+    exact and contributes no source.  Sites the mapping EXTRAPOLATED to and a
+    mapping declared with neither verification are named as well.  A stored
+    contribution written before Phase 1 (``relative_bound``) is read as the
+    same diagnostic: it never was a bound.
     """
-    budget = run.final_outputs.get("_coupling_error") or {}
+    recorded = run.final_outputs.get("_coupling_error") or {}
     sources = [
         NumericalErrorSource(
-            source=str(item["source"]), kind="mapping", status=ErrorSourceStatus.QUANTIFIED,
-            relative=float(item["relative_bound"]), method=str(item["method"]),
+            source=str(item["source"]), kind="mapping", status=ErrorSourceStatus.DIAGNOSTIC,
+            relative=float(item["relative_value"] if "relative_value" in item else item["relative_bound"]),
+            method=str(item["method"]),
+            detail="a measured mapping residual; it bounds neither the forward transfer nor the field error",
         )
-        for item in budget.get("contributions", ())
+        for item in recorded.get("contributions", ())
     ]
+    methods = {
+        edge.edge_id: (edge.mapping.method if edge.mapping is not None else None)
+        for edge in run.graph.edges
+    }
     for window in run.windows:
         for item in (window.iterations[-1].mapping_diagnostics if window.iterations else ()):
             edge_id, mapping = item.get("edge_id"), item.get("mapping") or {}
             label = f"window:{window.index}:edge:{edge_id}"
+            method = methods.get(edge_id)
+            if method is not FieldMappingMethod.IDENTITY:
+                sources.append(NumericalErrorSource(
+                    source=f"{label}:mapping_forward_error", kind="mapping", status=ErrorSourceStatus.UNQUANTIFIED,
+                    relative=None, method="mapping_forward_error",
+                    detail=(f"the {getattr(method, 'value', method)!s} transfer's pointwise error is not bounded by "
+                            f"any recorded quantity; its round-trip and conservation residuals are diagnostics"),
+                ))
             extrapolated = int(mapping.get("extrapolated_count") or 0)
             if extrapolated > 0:
                 sources.append(NumericalErrorSource(
@@ -222,14 +254,27 @@ def _mapping_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]:
     return sources
 
 
-def _iteration_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]:
+def _iteration_sources(
+    run: MultiphysicsRunRecord, classification: dict[int, str] | None = None
+) -> list[NumericalErrorSource]:
     plan = run.plan
     sources: list[NumericalErrorSource] = []
     plain = plan.relaxation.kind is RelaxationKind.NONE
+    classification = classification or {}
     for window in run.windows:
         if not window.iterations:
             continue
         label = f"window:{window.index}"
+        verdict = classification.get(window.index)
+        if verdict in ("inconsistent", "unmonitored", "not_converged"):
+            # Phase 1 BR7: a completed-looking label the run's own plan does not support
+            sources.append(NumericalErrorSource(
+                source=f"{label}:iteration", kind="iteration", status=ErrorSourceStatus.UNBOUNDED, relative=None,
+                method=f"window_{verdict}",
+                detail=(f"window labelled {window.outcome.value} is {verdict} against its plan "
+                        f"(see assess_run_outcome); its coupled state is not controlled"),
+            ))
+            continue
         if window.outcome not in _COMPLETED_OUTCOMES:
             last = window.iterations[-1]
             worst = max((r.relative for r in last.residuals), default=None)
@@ -342,5 +387,8 @@ def assess_coupling_numerical_error(
         if splitting is not None:
             raise InvalidScientificProblem("a run without coupling edges has no splitting error to estimate")
         return CouplingNumericalErrorAssessment(run.run_id, digest, False, ())
-    sources = _mapping_sources(run) + _iteration_sources(run) + _splitting_sources(run, splitting)
+    from .runtime import assess_run_outcome
+
+    classification = {item["window_index"]: item["classification"] for item in assess_run_outcome(run).windows}
+    sources = _mapping_sources(run) + _iteration_sources(run, classification) + _splitting_sources(run, splitting)
     return CouplingNumericalErrorAssessment(run.run_id, digest, True, tuple(sources))

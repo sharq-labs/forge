@@ -1,5 +1,22 @@
 # Active Plan
 
+## Active override — Phase 1: scientific & numerical correctness, build phase (2026-10-17)
+
+Branch `fix/phase1-scientific-numerical-correctness` (worktree `D:/forge-phase1`), base `origin/main` `de11dffa`.
+Local commits only: no push, PR, merge, certificate or test execution (owner direction). Rocks are P1-BR1..P1-BR7
+(not the ERT V1 BR numbers below). Deferred checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md) DV-31..DV-47.
+Every changed capability is IMPLEMENTED / UNVERIFIED; every touched pinned file is UNCERTIFIED until OD-3.
+
+- [x] P1-BR1 coupling convergence coverage; explicit plans valid again (`a1b6a87e`), tests NOT RUN.
+- [x] P1-BR2 conservative cell remap by exact intersection, 2D + structured only (`61226343`), tests NOT RUN.
+- [x] P1-BR3 mapping residuals are diagnostics, never bounds (`b7a3a032`), tests NOT RUN.
+- [x] P1-BR4 exact rational coupling-window boundaries (`b71eeb3e`), tests NOT RUN.
+- [x] P1-BR5 typed verification evidence categories (`56cd0e01`), tests NOT RUN; mutant N60d needs OD-3 (DV-41).
+- [x] P1-BR6 sparse admission, canonical digests, exact/estimated conditioning (`71085685`), tests NOT RUN.
+- [x] P1-BR7 typed coupled-run outcomes in MultiphysicsAuthority (`20aa9503`), tests NOT RUN.
+- [ ] Owner: authorize the Phase 1 deferred validation (DV-31..DV-47); push/PR; OD-3 recertification.
+- [ ] Owner decisions recorded in PROGRESS 2026-10-17 "Phase 1" (Phase 2 not started; waits for authorization).
+
 ## Active override — Engineering Runtime V1 Big Rocks, build phase (2026-10-17)
 
 Branch `feat/engrt-v1-big-rocks` (worktree `D:/forge-engrt-br`), stacked on `fix/engrt-v1-phase1-interop`. Local
@@ -22,9 +39,11 @@ ledger capability).
 - [x] BR10 composition-pack templates declare window control (carried into plans), tests NOT RUN.
 - [x] BR11 step-size memory for adaptive coupling windows, tests NOT RUN.
 - [x] BR12 defect fix: event-aligned windows keep their own failure outcome, tests NOT RUN.
-- [ ] Owner: MultiphysicsAuthority provider reporting for external participants (D5) and its rejection of explicit_completed/event_aligned windows.
+- [x] MultiphysicsAuthority rejection of explicit_completed/event_aligned windows: fixed in Phase 1 P1-BR7 (owner-directed
+      2026-10-17), tests NOT RUN. Provider reporting for external participants (D5) stays as BR14 left it.
 - [x] BR13 mapping extrapolation / unverified mappings are open coupling-error sources, tests NOT RUN.
-- [ ] Owner: the coupling error budget calls a round-trip L2 residual a relative_bound (it is not a bound on the forward transfer).
+- [x] The coupling error budget's round-trip relative_bound: fixed in Phase 1 P1-BR3 (owner-directed 2026-10-17), tests
+      NOT RUN.
 - [x] BR14 defect fix: coupled nodes may not run unreported external providers, tests NOT RUN.
 - [x] BR15 fallback solver routes start at their own refinement level (F-5), tests NOT RUN.
 - [x] BR16 QR filtering of near-dependent IQN-ILS secant pairs, tests NOT RUN.
