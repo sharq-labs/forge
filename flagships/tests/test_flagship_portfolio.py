@@ -107,8 +107,13 @@ def test_gate_h_a_flagship_result_cannot_be_promoted_by_its_own_ladder():
     from engcore.engineering import EvidenceLink, LevelEntry, LevelStatus
     from engcore.scientific.errors import InvalidScientificProblem
     sha = hashlib.sha256(b"x").hexdigest()
-    agreement = EvidenceLink.of_record("provider_comparison", {"classification": "solver_corroboration_not_validation", "within_tolerance": True, "probe": sha},
-                                       "solver_corroboration_not_validation", "met")
+    from engcore.providers.problem_identity import DEFAULT_REQUIRED
+    admission = {"a_identity": "a" * 64, "b_identity": "b" * 64, "same_problem_established": True,   # Phase 3.5 WS1
+                 "problem_equivalence": {"a_problem": sha, "b_problem": sha, "verdict": "same_problem", "required": sorted(DEFAULT_REQUIRED),
+                                         "differing": [], "undeclared": []},
+                 "problem_bindings": [{"execution_identity": "a" * 64, "problem_digest": sha}, {"execution_identity": "b" * 64, "problem_digest": sha}]}
+    agreement = EvidenceLink.of_record("provider_comparison", {"classification": "solver_corroboration_not_validation", "within_tolerance": True, "probe": sha,
+                                                               **admission}, "solver_corroboration_not_validation", "met")
     benchmark = EvidenceLink.of_record("reference_comparison", {"classification": "numerical_benchmark_comparison_not_validation_grant", "outcome": "met", "probe": sha},
                                        "numerical_benchmark_comparison_not_validation_grant", "met")
     LevelEntry(5, LevelStatus.REACHED, (agreement,))                                                                                      # the links themselves are valid ...

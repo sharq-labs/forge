@@ -17,6 +17,19 @@ cross-solver corroboration entry point: it requires a SAME_PROBLEM
 each record's declared :class:`~.problem_identity.ProblemBinding`, and records
 what the comparison does and does not establish.  A comparison made without
 them reports ``same_problem_established = False``.
+
+Phase 3.5 WS1 (owner direction, closes OD-P2-3): same-problem admission is
+MANDATORY for corroboration.  A comparison made by :func:`compare_providers`
+alone is a DIAGNOSTIC: it is classified
+``diagnostic_numerical_comparison_not_corroboration`` and can never reach the
+independent-provider level of a verification ladder.  Only :func:`corroborate`
+(a derived SAME_PROBLEM of two canonical problems, every aspect required, and
+one binding per record) yields ``solver_corroboration_not_validation``.
+DIFFERENT_PROBLEM and UNDETERMINED are refused there.  A STORED comparison
+record is re-checked by :func:`corroboration_admission_problems` wherever it
+is consumed, so a record written before this rule -- classified as
+corroboration without an admission -- is refused, never promoted.  Equal
+provider-input digests and matching outputs are never admission.
 """
 
 from __future__ import annotations
@@ -42,6 +55,9 @@ from .records import ProviderExecutionRecord
 
 _HEX = frozenset("0123456789abcdef")
 _ENVIRONMENTS = ("conda-environment", "python-environment")
+
+CORROBORATION_CLASS = "solver_corroboration_not_validation"
+DIAGNOSTIC_CLASS = "diagnostic_numerical_comparison_not_corroboration"
 
 
 @dataclass(frozen=True)
@@ -226,7 +242,9 @@ class ProviderComparison:
 
     @property
     def classification(self) -> str:
-        return "post_hoc_solver_corroboration_not_validation" if self.declaration.post_hoc else "solver_corroboration_not_validation"
+        # Phase 3.5 WS1: without a derived same-problem admission a comparison is a diagnostic, never corroboration
+        base = CORROBORATION_CLASS if self.same_problem_established else DIAGNOSTIC_CLASS
+        return f"post_hoc_{base}" if self.declaration.post_hoc else base
 
     def to_dict(self) -> dict[str, Any]:
         return {"classification": self.classification, "declaration": self.declaration.to_dict(),
@@ -236,7 +254,9 @@ class ProviderComparison:
                 "b_selection": self.b_selection.to_dict(), "values_digest": self.values_digest,
                 "points": self.points, "max_absolute": repr(self.max_absolute), "max_relative": repr(self.max_relative),
                 "within_tolerance": self.within_tolerance,
-                # absent unless corroborate() admitted the problems: earlier comparisons keep their digests
+                # Phase 3.5 WS1: always stated (a deliberate identity change of every comparison record)
+                "same_problem_established": self.same_problem_established,
+                # absent unless corroborate() admitted the problems
                 **({"problem_equivalence": self.problem_equivalence.to_dict(),
                     "problem_bindings": [b.to_dict() for b in self.problem_bindings],
                     "establishes": "numerical agreement (or not) of two independent provider paths on one declared "
@@ -273,11 +293,14 @@ def shared_dependencies(a: ExecutionRef, b: ExecutionRef) -> list[str]:
 
 def compare_providers(declaration: ComparisonDeclaration, a: Any, a_output: str, b: Any, b_output: str, *,
                       a_select: OutputSelection = OutputSelection(), b_select: OutputSelection = OutputSelection()) -> ProviderComparison:
-    """Compare the named outputs of two execution records after the declared selections/maps.
+    """A DIAGNOSTIC numerical comparison of the named outputs of two execution records.
 
     ``a``/``b`` are execution records (provider records, or Forge-internal BIG 6 /
     BIG 8 records).  Values AND units are read from the records; the caller
-    supplies only the declared, digest-bound :class:`OutputSelection`.
+    supplies only the declared, digest-bound :class:`OutputSelection`.  The
+    result is classified ``diagnostic_numerical_comparison_not_corroboration``
+    (Phase 3.5 WS1): it says how two numbers differ, not that two solvers agreed
+    on one problem.  For corroboration use :func:`corroborate`.
     """
     ra, rb = ExecutionRef.of(a), ExecutionRef.of(b)
     for ref in (ra, rb):
@@ -342,4 +365,46 @@ def corroborate(declaration: ComparisonDeclaration, a: Any, a_output: str, b: An
     made = compare_providers(declaration, a, a_output, b, b_output, a_select=a_select, b_select=b_select)
     from dataclasses import replace
 
-    return replace(made, problem_equivalence=problems, problem_bindings=tuple(bindings))
+    admitted = replace(made, problem_equivalence=problems, problem_bindings=tuple(bindings))
+    problems_found = corroboration_admission_problems(admitted.to_dict())
+    if problems_found:  # pragma: no cover - corroborate builds an admitted record by construction
+        raise InvalidScientificProblem(f"internal: an admitted comparison fails its own re-check: {problems_found}")
+    return admitted
+
+
+#: Phase 3.5 WS1: the one authoritative re-check of a STORED comparison record
+def corroboration_admission_problems(record: Mapping[str, Any]) -> list[str]:
+    """Why ``record`` (a ``ProviderComparison.to_dict()``, possibly read back from storage) is NOT admitted corroboration.
+
+    Empty only when the record carries a SAME_PROBLEM equivalence with every
+    aspect required, nothing differing or undeclared, the two canonical digests
+    equal, and exactly two problem bindings that name the record's two
+    executions and that canonical problem.  It re-checks consistency; it cannot
+    prove that the declarations are faithful (see ``problem_identity``).
+    """
+    problems: list[str] = []
+    equivalence = record.get("problem_equivalence")
+    bindings = record.get("problem_bindings")
+    if not isinstance(equivalence, Mapping):
+        return ["no same-problem admission is recorded (a diagnostic comparison, or a record from before mandatory "
+                "admission)"]
+    if equivalence.get("verdict") != ProblemIdentityVerdict.SAME_PROBLEM.value:
+        problems.append(f"the recorded problem identity is {equivalence.get('verdict')!r}, not same_problem")
+    if sorted(equivalence.get("required") or ()) != sorted(DEFAULT_REQUIRED):
+        problems.append("the admission did not require every problem aspect")
+    if equivalence.get("differing") or equivalence.get("undeclared"):
+        problems.append("the admission records differing or undeclared aspects")
+    a_problem, b_problem = equivalence.get("a_problem"), equivalence.get("b_problem")
+    if not a_problem or a_problem != b_problem:
+        problems.append("the two canonical problem digests differ")
+    if not isinstance(bindings, (list, tuple)) or len(bindings) != 2:
+        problems.append("corroboration needs exactly two problem bindings")
+    else:
+        for binding, side in zip(bindings, ("a_identity", "b_identity")):
+            if not isinstance(binding, Mapping) or binding.get("execution_identity") != record.get(side):
+                problems.append(f"the binding for {side} names another execution")
+            elif binding.get("problem_digest") != a_problem:
+                problems.append(f"the binding for {side} names another canonical problem")
+    if record.get("same_problem_established") is not True:
+        problems.append("the record does not state same_problem_established = true")
+    return problems

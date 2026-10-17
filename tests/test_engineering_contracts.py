@@ -54,8 +54,20 @@ def _link(cls, outcome="met", kind="probe", **extra):
     return EvidenceLink.of_record(kind, {"probe": kind, "class": cls, **extra}, cls, outcome)
 
 
+def _admission(a="a" * 64, b="b" * 64, problem="c" * 64):
+    """Phase 3.5 WS1: the same-problem admission a corroboration record must carry (shape of corroborate()'s record)."""
+    from engcore.providers.problem_identity import DEFAULT_REQUIRED
+    return {"same_problem_established": True,
+            "problem_equivalence": {"kind": "problem_equivalence", "a_problem": problem, "b_problem": problem, "verdict": "same_problem",
+                                    "required": sorted(DEFAULT_REQUIRED), "differing": [], "undeclared": []},
+            "problem_bindings": [{"execution_identity": a, "problem_digest": problem, "translator": "t"},
+                                 {"execution_identity": b, "problem_digest": problem, "translator": "t"}]}
+
+
 def _provider_link(cls="solver_corroboration_not_validation", within=True):
-    return EvidenceLink.of_record("provider_comparison", {"classification": cls, "within_tolerance": within}, cls, "met" if within else "not_met")
+    # Phase 3.5 WS1: a corroboration link carries its same-problem admission (without one, level 5 refuses it)
+    return EvidenceLink.of_record("provider_comparison", {"classification": cls, "within_tolerance": within, "a_identity": "a" * 64,
+                                                          "b_identity": "b" * 64, **_admission()}, cls, "met" if within else "not_met")
 
 
 def test_a_reference_states_its_kind_source_and_conditions_and_has_a_content_identity():
@@ -642,7 +654,8 @@ def test_a_bundle_needs_the_reference_of_every_comparison_it_reports(tmp_path):
 def _provider_record(*, within=True, max_absolute="0.0009", post_hoc=False, a="a" * 64, b="b" * 64, rel=0.0, pa="openfoam", pb="su2"):
     cls = "post_hoc_solver_corroboration_not_validation" if post_hoc else "solver_corroboration_not_validation"
     return {"classification": cls, "a_identity": a, "b_identity": b, "a_provider": pa, "b_provider": pb, "max_absolute": max_absolute, "within_tolerance": within,
-            "declaration": {"post_hoc": post_hoc, "relative_tolerance": rel, "absolute_tolerance": Quantity(0.03, DIMLESS).to_dict(), "unit": DIMLESS}}
+            "declaration": {"post_hoc": post_hoc, "relative_tolerance": rel, "absolute_tolerance": Quantity(0.03, DIMLESS).to_dict(), "unit": DIMLESS},
+            **_admission(a, b)}   # Phase 3.5 WS1: corroboration records carry their admission
 
 
 def test_a_provider_comparison_must_name_executions_the_run_recorded_and_an_outcome_that_follows_from_its_own_maximum_difference():

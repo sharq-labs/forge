@@ -852,7 +852,9 @@ def test_comparison_takes_units_from_records_and_refuses_stand_ins_same_provider
     b = _record("beta", {"v_mv": Quantity(3700.4, "mV")})
     cmp = compare_providers(decl, a, "v", b, "v_mv")  # values AND units come from the records (mV here)
     assert cmp.within_tolerance and abs(cmp.max_absolute - 4e-4) < 1e-9
-    assert cmp.to_dict()["classification"] == "solver_corroboration_not_validation" and len(cmp.values_digest) == 64
+    # Phase 3.5 WS1: without same-problem admission a comparison is a DIAGNOSTIC, never corroboration
+    assert cmp.to_dict()["classification"] == "diagnostic_numerical_comparison_not_corroboration" and len(cmp.values_digest) == 64
+    assert cmp.to_dict()["same_problem_established"] is False
 
     class StandIn:
         succeeded, execution_identity = True, "d" * 64

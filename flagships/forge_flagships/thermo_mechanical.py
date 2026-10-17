@@ -250,6 +250,8 @@ class Exchange:
         self.solutions: dict[str, dict[str, Any]] = {}
         self.files: dict[str, bytes] = {}
         self.comparisons: dict[str, Any] = {}
+        #: Phase 3.5 WS1: the canonical problem each structural provider node was asked, from its own inputs
+        self.canonical: dict[str, Any] = {}
 
 
 PROP_OUT = (("ux_max", "m"), ("disp_max", "m"), ("ux_mid", "m"), ("sxx_mid", "Pa"), ("vm_max", "Pa"), ("section_force_spread", "dimensionless"),
@@ -395,7 +397,11 @@ def build_structure(case: StructCase, registry=None, *, providers: tuple[str, ..
         q = structural_qoi(mesh, mat, u, np.asarray(T.values), native)
         rec_s = element_stress_of(mesh, mat, u, np.asarray(T.values))
         ex.solutions[call.execution_identity] = {"u": np.asarray(u, dtype=float), "native": None if native is None else np.asarray(native, dtype=float), "record": record,
-                                                 "temperature": np.asarray(T.values)}
+                                                 "temperature": np.asarray(T.values), "provider": provider}
+        from .canonical import plate_problem
+        ex.canonical[call.execution_identity] = plate_problem(
+            declared=declared, t_ref_k=T_REF, temperature_values=np.asarray(T.values),
+            material_records=(mat.youngs.digest, mat.poisson.digest, mat.expansion.digest))
         outputs = {n: OutputValue(q[n], UNKNOWN, f"{provider} plate displacement/stress") for n, _ in PROP_OUT}
         vtu = write_vtu(mesh, point_data={"temperature": ("K", np.asarray(T.values)), "displacement": ("m", u)},
                         cell_data={"von_mises": ("Pa", rec_s.von_mises if native is None else np.sqrt(np.maximum(
@@ -434,20 +440,25 @@ def build_structure(case: StructCase, registry=None, *, providers: tuple[str, ..
 
     def compare(a, b):
         def run(call):
-            from engcore.providers import ComparisonDeclaration, OutputSelection, compare_providers
+            from engcore.providers import ComparisonDeclaration, OutputSelection, compare_providers, corroborate
+            from .canonical import bind
             sa, sb = ex.solutions[call.inputs["ux_a"].producer_identity], ex.solutions[call.inputs["ux_b"].producer_identity]
+            ca, cb = ex.canonical[call.inputs["ux_a"].producer_identity], ex.canonical[call.inputs["ux_b"].producer_identity]
+            admitted = dict(problems=(ca, cb), bindings=(bind(sa["record"], ca, f"forge_flagships.thermo_mechanical:{a}"),
+                                                         bind(sb["record"], cb, f"forge_flagships.thermo_mechanical:{b}")))
             ra, rb = sa["record"], sb["record"]
             out_name = lambda r: "displacement"  # noqa: E731
             decl = ComparisonDeclaration(f"nodal displacement vector, all nodes ({a} vs {b})", "m", "identity: both solve on the same mesh nodes (P1 / CPS3 / TRIA3)",
                                          DISP_AGREEMENT_TOL, 0.0, f"plate {case.nx}x{case.ny}, mesh {mesh.digest[:12]}, temperature field {sa['temperature'].tobytes().hex()[:8]}")
-            cmp_u = compare_providers(decl, ra, out_name(ra), rb, out_name(rb))
+            # Phase 3.5 WS1: corroboration only after same-problem admission (refused otherwise)
+            cmp_u = corroborate(decl, ra, out_name(ra), rb, out_name(rb), **admitted)
             ex.comparisons[f"{a}~{b}"] = cmp_u
             outs = {"max_abs_displacement_difference": OutputValue(Quantity(cmp_u.max_absolute, "m"), UNKNOWN, "compare_providers"),
                     "displacement_within_tolerance": OutputValue(Quantity(1.0 if cmp_u.within_tolerance else 0.0, "dimensionless"), UNKNOWN, "pre-registered")}
             if sa["native"] is not None and sb["native"] is not None:
                 sdecl = ComparisonDeclaration(f"element stress components (sxx, syy, sxy), all elements ({a} vs {b})", "Pa", "identity: same triangles", STRESS_AGREEMENT_TOL, 0.0,
                                               f"plate {case.nx}x{case.ny}")
-                cmp_s = compare_providers(sdecl, ra, "stress", rb, "stress")
+                cmp_s = corroborate(sdecl, ra, "stress", rb, "stress", **admitted)
                 ex.comparisons[f"{a}~{b}:stress"] = cmp_s
                 outs["max_abs_stress_difference"] = OutputValue(Quantity(cmp_s.max_absolute, "Pa"), UNKNOWN, "compare_providers")
             return NodeOutcome("succeeded", outs)
@@ -771,6 +782,8 @@ def run_structure(case_name: str, registry=None, *, verification: bool = False, 
     if any(o.value is not None for o in pair_flags) or st.exchange.comparisons:
         links = [EvidenceLink.of_provider_comparison(cmp_, k) for k, cmp_ in sorted(st.exchange.comparisons.items())]
         unmet = [link.note for link in links if link.outcome != "met"]
+        # Phase 3.5 WS1: only same-problem-admitted comparisons can reach level 5
+        unmet += [f"{k} (no same-problem admission)" for k, cmp_ in sorted(st.exchange.comparisons.items()) if not cmp_.same_problem_established]
         flags_ok = all(o.value is not None and o.value.value.magnitude == 1.0 for o in pair_flags)
         reached = flags_ok and bool(links) and not unmet
         disp_parts = [result.observable(f"disp_max_{p}") for p in ("fenicsx", "calculix", "code_aster")]

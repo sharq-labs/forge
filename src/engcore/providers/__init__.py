@@ -23,6 +23,7 @@ from .catalog import (
     distribution_digest, executable_probe, python_package_probe,
 )
 from .compare import ComparisonDeclaration, ExecutionRef, OutputSelection, ProviderComparison, compare_providers, shared_dependencies
+from .compare import corroborate, corroboration_admission_problems
 from .identity import ProviderExecutionIdentity, canonical_json, content_digest
 from .process import (
     GeneratedFile, ProcessExecutionRecord, ProcessInvocation, ProcessWorkspace, conda_environment_of, minimal_environment,
@@ -38,6 +39,7 @@ __all__ = [
     "ProviderUnavailable", "Availability", "ProviderCapability", "ProviderMode", "ProviderRegistry", "ProviderStatus",
     "default_registry", "distribution_digest", "require_library_unchanged", "executable_probe", "python_package_probe",
     "ComparisonDeclaration", "ExecutionRef", "OutputSelection", "ProviderComparison", "compare_providers", "shared_dependencies",
+    "corroborate", "corroboration_admission_problems",
     "ProviderExecutionIdentity", "canonical_json", "content_digest",
     "GeneratedFile", "ProcessExecutionRecord", "ProcessInvocation", "ProcessWorkspace", "conda_environment_of", "minimal_environment", "safe_relative",
     "ProviderExecutionRecord", "ProviderRefusal", "QuantitySeries", "failed",

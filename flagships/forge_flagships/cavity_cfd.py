@@ -143,6 +143,8 @@ class Exchange:
         self.comparisons: dict[str, Any] = {}
         self.profiles: dict[str, dict] = {}
         self.fluid: dict[str, Any] = {}
+        #: Phase 3.5 WS1: the canonical problem each provider node was asked, from its own inputs
+        self.canonical: dict[str, Any] = {}
 
 
 def system_definition():
@@ -253,6 +255,9 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
             ex.records[call.execution_identity] = rec
             ex.fields[call.execution_identity] = {"cells_xy": cells, "mesh": fields["velocity"].mesh, "kind": "cell", "n": n, "u_lid": u_lid,
                                                   "pressure": np.asarray(fields["pressure"].values), "record": rec}
+            from .canonical import cavity_problem
+            ex.canonical[call.execution_identity] = cavity_problem(side_m=SIDE, lid_velocity_m_s=u_lid, kinematic_viscosity_m2_s=nu,
+                                                                   density_record=rho.digest, viscosity_record=mu.digest)
             out = analyse(call, n, "openfoam", u_lid, cells, line, rec, ref_id, ())
             prof = ex.profiles[call.execution_identity]
             vtu = write_vtu(fields["velocity"].mesh, cell_data={"velocity": ("m/s", cells), "kinematic_pressure": ("m^2/s^2", np.asarray(fields["pressure"].values))},
@@ -280,6 +285,11 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
             ex.records[call.execution_identity] = rec
             ex.fields[call.execution_identity] = {"cells_xy": cells, "nodes_xy": nodes, "kind": "node", "n": n, "u_lid": u_lid, "pressure": np.asarray(rec.arrays["pressure"][1]),
                                                   "record": rec}
+            from .canonical import cavity_problem
+            ex.canonical[call.execution_identity] = cavity_problem(
+                side_m=SIDE, lid_velocity_m_s=u_lid,
+                kinematic_viscosity_m2_s=mu.value.magnitude_in("Pa*s") / rho.value.magnitude_in("kg/m^3"),
+                density_record=rho.digest, viscosity_record=mu.digest)
             out = analyse(call, n, "su2", u_lid, cells, line, rec, ref_id, ())
             prof = ex.profiles[call.execution_identity]
             from forge_openfoam import CavityProblem, cavity_mesh  # the same declared quadrilateral mesh
@@ -295,16 +305,23 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
 
     def make_compare(n):
         def run(call):
-            from engcore.providers import ComparisonDeclaration, OutputSelection, compare_providers
+            from engcore.providers import ComparisonDeclaration, OutputSelection, compare_providers, corroborate
+            from .canonical import bind
             a = ex.fields[call.inputs["ofx"].producer_identity]
             b = ex.fields[call.inputs["su2x"].producer_identity]
+            ca = ex.canonical[call.inputs["ofx"].producer_identity]
+            cb = ex.canonical[call.inputs["su2x"].producer_identity]
             mesh = a["mesh"]
             u_lid = a["u_lid"]
             corners = tuple(tuple((int(k), 0.25) for k in cell) for cell in mesh.cells)
             decl = ComparisonDeclaration(f"cell-centre velocity (x, y) of the lid-driven cavity, WHOLE FIELD, {n}x{n}", "m/s",
                                          "SU2 nodal velocity -> OpenFOAM cell centres by the mean of the 4 cell corners", Quantity(WHOLE_FIELD_TOL * u_lid, "m/s"), 0.0,
                                          f"Re={reynolds:g}, {n}x{n}, water 20 C from CoolProp {cp_status.version}")
-            whole = compare_providers(decl, a["record"], "velocity", b["record"], "velocity", b_select=OutputSelection(weights=corners))
+            # Phase 3.5 WS1: the pre-registered whole-field comparison is CORROBORATION only after same-problem admission
+            # (refused for DIFFERENT_PROBLEM / UNDETERMINED); the post-hoc lower half below stays a diagnostic
+            whole = corroborate(decl, a["record"], "velocity", b["record"], "velocity", problems=(ca, cb),
+                                bindings=(bind(a["record"], ca, "forge_openfoam.run_cavity"), bind(b["record"], cb, "forge_su2.run_cavity")),
+                                b_select=OutputSelection(weights=corners))
             ex.comparisons[f"whole_{n}"] = whole
             cy = mesh.coordinates[mesh.cells].mean(axis=1)[:, 1]
             rows = tuple(int(i) for i in np.flatnonzero(cy < SIDE / 2))
@@ -422,13 +439,15 @@ def level5_entry(levels, flags: dict, whole: dict, lower: dict, details: dict) -
         if whole.get(n) is not None:
             links.append(EvidenceLink.of_provider_comparison(whole[n], details.get(n, "")))
         else:
-            links.append(EvidenceLink.of_record("whole_field_missing", {"mesh": f"{n}x{n}", "comparison_produced": False}, "solver_corroboration_not_validation", "not_met",
+            links.append(EvidenceLink.of_record("whole_field_missing", {"mesh": f"{n}x{n}", "comparison_produced": False}, "missing_comparison_not_corroboration", "not_met",
                                                 f"whole field {n}x{n}: no comparison was produced (a provider execution failed or was refused)"))
     produced = [n for n in levels if whole.get(n) is not None]
     if not produced:
         # the comparisons were attempted (the level was requested) and none was produced: that is recorded, not read as never attempted
         return LevelEntry(5, LevelStatus.ATTEMPTED_NOT_REACHED, tuple(links), f"no whole-field comparison was produced at {[f'{n}x{n}' for n in levels]}")
     unmet = [f"{n}x{n}" for n in levels if whole.get(n) is None or flags.get(n) != 1.0]
+    # Phase 3.5 WS1: agreement counts only for comparisons admitted as one problem
+    unmet += [f"{n}x{n} (no same-problem admission)" for n in produced if not whole[n].same_problem_established]
     ok = not unmet
     if not ok:
         links += [EvidenceLink.of_provider_comparison(lower[n], f"POST HOC lower half {n}x{n}") for n in levels if lower.get(n) is not None]
