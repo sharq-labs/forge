@@ -153,17 +153,11 @@ class UnstructuredMeshData:
             raise InvalidScientificProblem(
                 "unstructured mesh data requires UnstructuredMesh"
             )
-        coordinates = np.asarray(
-            resolver.resolve(mesh.coordinates),
-            dtype=np.float64,
-        ).reshape(
+        coordinates = resolver.resolve_array(mesh.coordinates).reshape(
             mesh.node_count,
             mesh.spatial_dimension,
         )
-        connectivity = np.asarray(
-            resolver.resolve(mesh.connectivity),
-            dtype=np.float64,
-        ).reshape(
+        connectivity = resolver.resolve_array(mesh.connectivity).reshape(
             mesh.cell_count,
             mesh.vertices_per_cell,
         )

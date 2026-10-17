@@ -18,6 +18,8 @@ genuinely stored empty and verifies is a real answer and is returned as one.
 
 from __future__ import annotations
 
+import numpy as np
+
 from ..scientific.results.data_reference import (
     FLOAT64,
     ScientificDataReference,
@@ -104,6 +106,25 @@ class BulkDataResolver:
                 f"resolver decodes {FLOAT64!r} only"
             )
         return decode_float64(self.read_bytes(reference))
+
+    def resolve_array(self, reference: ScientificDataReference) -> np.ndarray:
+        """The verified values of ``reference`` as a float64 array (Phase 2 BR9).
+
+        The same verified bytes and the same decoding as :meth:`resolve`
+        (little-endian IEEE-754 float64), without building a Python tuple of
+        floats on the way.  The array owns its memory.
+        """
+        if reference.dtype != FLOAT64:
+            raise BulkDataIntegrityError(
+                f"{reference.name!r} declares dtype {reference.dtype!r}; this "
+                f"resolver decodes {FLOAT64!r} only"
+            )
+        payload = self.read_bytes(reference)
+        if len(payload) % 8:
+            raise BulkDataIntegrityError(
+                f"{reference.name!r}: {len(payload)} bytes is not a whole number of float64 elements"
+            )
+        return np.frombuffer(payload, dtype="<f8").astype(np.float64, copy=True)
 
 
 def relocate(

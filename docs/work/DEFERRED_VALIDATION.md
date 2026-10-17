@@ -421,3 +421,35 @@ are NOT resolved by Phase 2 unless a row below says so.
 - `ResultParticipant` sets `internal_converged` from the result's convergence state (stricter than the native loop,
   which ignores it); every electrothermal executor reports CONVERGED or NOT_APPLICABLE, so parity is expected.
 - A steady participant's deferred initial outputs are never read on forward serial edges; any other edge is refused.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-51 | P2-BR9 transfer engine | New tests (supported table, tet->tet conservation/range/permutation, degenerate refusal, vector components, KD-tree and bucket index vs brute force, provenance, array digests) + the Phase 1 conservative suite (its 3D refusal test now refuses hexahedra; tet->tet is supported) | `pytest tests/test_phase2_field_transfer.py tests/test_phase1_conservative_cell_mapping.py -q` | NOT RUN |
+| DV-52 | P2-BR9 | Existing mapping, field and mesh suites: every non-identity mapping now records provenance (run digests of field-mapped runs change); nearest/point location now go through the indexes (values must be unchanged) | `pytest tests -q -k "mapping or field or mesh or spatial" -m "not expensive"` | NOT RUN |
+| DV-53 | P2-BR9 | Time and memory of the indexed searches and the tetrahedral overlap on a realistic interface (no performance claim is made) | owner-authorized benchmark | NOT RUN |
+| DV-34 | P1-BR2 (carried) | End-to-end field-mapped coupled run through `TransferEngine` | new test | NOT WRITTEN (still) |
+
+### P2-BR9 status: IMPLEMENTED / UNVERIFIED (scope as declared, not universal)
+
+- Authoritative engine: `execution/multiphysics/mapping.FieldMapper`; `transfer_support` admits only the rows of
+  `SUPPORTED_TRANSFERS`; `FIELD_TRANSFER_PATHS` declares the other mapping code (P1 interpolation on `SpatialMesh`,
+  a separate data model used by `coupling/adapters`; the structured support-contract checker).
+- Conservative remap now: structured/structured, 2D triangle/convex-quad/structured pairs (Phase 1), and
+  tetrahedron -> tetrahedron (exact convex-polytope intersection: vertex-in-other plus edge-facet points, Qhull
+  hull volume). Refused: hexahedra (a trilinear hex is not convex in general), 2D<->3D, node fields, offset units,
+  partial coverage. Vector fields: component by component in one shared frame.
+- Search: exact bucket index (superset, ascending) for point location and overlap candidates; KD-tree nearest with
+  the exhaustive lowest-index tie rule. Acceptance is always the unchanged exact test.
+- Provenance on every method (supports, locations, components, search; interpolations say they are not conservative).
+- Data plane: `FieldValue.store` passes a float64 array (byte-identical encoding); `BulkDataResolver.resolve_array`
+  reads without a Python tuple; meshes and fields read through it.
+
+### Unverified assumptions (P2-BR9)
+
+- Qhull returns the convex-hull volume of the collected points to round-off and raises only for degenerate (flat)
+  sets; duplicate points (shared vertices) are tolerated. A 1e-12 * cell-size inside tolerance admits boundary points.
+- The bucket grid is capped at 256 buckets per axis; a mesh with very uneven cell sizes registers large cells in
+  many buckets (memory not bounded by cell count alone).
+- `nearest_sites` reproduces the exhaustive choice whenever the KD-tree distance and the einsum distance agree to
+  16 eps relative, which bounds their rounding difference for coordinates of ordinary magnitude.
+- Forward mapping error stays UNQUANTIFIED for every non-identity method (P1-BR3); nothing here bounds it.

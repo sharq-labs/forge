@@ -4,15 +4,23 @@ The runtime keeps field values content-addressed. This module resolves them only
 while a transfer is being executed, validates the source/target support, maps
 the values, then stores a new content-addressed FieldRecord.
 
-``CONSERVATIVE_CELL`` (Phase 1 BR2) is a first-order remap by exact cell
-intersection, implemented for exactly these supports: two axis-aligned
-structured grids (any spacing and origin), and any pair of planar 2D supports
-whose cells are triangles, strictly convex quadrilaterals or structured
-rectangles.  Both supports must cover each other; 3D cells, non-convex cells,
+Phase 2 BR9: :class:`FieldMapper` is THE field-transfer engine of the
+coupling runtime.  Every transfer is first admitted against
+:data:`SUPPORTED_TRANSFERS` (:func:`transfer_support`); a combination that is
+not listed is refused before any value is touched.  The other field-mapping
+code in the repository is declared in :data:`FIELD_TRANSFER_PATHS`.
+
+``CONSERVATIVE_CELL`` (Phase 1 BR2, extended in Phase 2 BR9) is a first-order
+remap by exact cell intersection on: two axis-aligned structured grids (any
+spacing and origin); any pair of planar 2D supports whose cells are
+triangles, strictly convex quadrilaterals or structured rectangles; and two
+3D tetrahedral meshes (exact convex-polytope intersection volumes).  Both
+supports must cover each other; hexahedra, mixed 2D/3D, non-convex cells,
 node fields, offset-scale units and any extrapolation are refused.  It never
-falls back to the nearest-site path.  Intersection candidates are found by
-bounding boxes, so the polygon path is O(source cells x target cells) in the
-worst case and is meant for interface meshes of moderate size.
+falls back to the nearest-site path.  Candidates come from an exact bucket
+index (:mod:`.spatial_index`); acceptance is always the exact geometric test.
+Vector fields are remapped component by component, which is the conservative
+remap of each Cartesian component in the one frame both fields share.
 """
 
 from __future__ import annotations
@@ -45,6 +53,7 @@ from ...scientific.multiphysics import (
     MappingDiagnostics,
 )
 from ...scientific.units.quantity import is_ratio_scale
+from .spatial_index import BoxIndex, nearest_sites
 
 
 @dataclass(frozen=True)
@@ -226,12 +235,16 @@ def _inside_unstructured(
     cell_vertices = coords[cells]
     cell_lower = np.min(cell_vertices, axis=1) - tolerance
     cell_upper = np.max(cell_vertices, axis=1) + tolerance
+    # Phase 2 BR9: candidates from an exact bucket index (a superset, ascending),
+    # then the same box test and point-in-cell test as the exhaustive scan
+    index_of_cells = BoxIndex(cell_lower, cell_upper)
 
     for index, point in enumerate(points):
-        candidates = np.where(
-            np.all(point >= cell_lower, axis=1)
-            & np.all(point <= cell_upper, axis=1)
-        )[0]
+        nearby = index_of_cells.query_point(point)
+        candidates = nearby[
+            np.all(point >= cell_lower[nearby], axis=1)
+            & np.all(point <= cell_upper[nearby], axis=1)
+        ] if len(nearby) else nearby
         for cell_index in candidates:
             if _cell_contains(
                 point,
@@ -286,15 +299,9 @@ def _nearest_map(
     source_sites: np.ndarray,
     target_sites: np.ndarray,
 ) -> np.ndarray:
-    target = np.empty(
-        (len(target_sites), source_values.shape[1]),
-        dtype=np.float64,
-    )
-    for index, point in enumerate(target_sites):
-        delta = source_sites - point
-        distance2 = np.einsum("ij,ij->i", delta, delta)
-        target[index] = source_values[int(np.argmin(distance2))]
-    return target
+    # Phase 2 BR9: a KD-tree finds the candidates; the chosen site is the one
+    # the exhaustive scan chose (lowest index among exact minimal distances)
+    return np.asarray(source_values[nearest_sites(source_sites, target_sites)], dtype=np.float64)
 
 
 def _bracket(
@@ -464,12 +471,17 @@ def _polygon_overlap(
     """Exact (up to round-off) intersection areas of two convex 2D partitions."""
     lower = np.array([p.min(axis=0) for p in source])
     upper = np.array([p.max(axis=0) for p in source])
+    boxes = BoxIndex(lower, upper)
     rows: list[int] = []
     cols: list[int] = []
     values: list[float] = []
     for j, cell in enumerate(target):
         t_lower, t_upper = cell.min(axis=0), cell.max(axis=0)
-        candidates = np.nonzero(np.all(lower < t_upper, axis=1) & np.all(upper > t_lower, axis=1))[0]
+        # superset from the index, then the same strict overlap test as before
+        nearby = boxes.query_box(t_lower, t_upper)
+        candidates = nearby[
+            np.all(lower[nearby] < t_upper, axis=1) & np.all(upper[nearby] > t_lower, axis=1)
+        ] if len(nearby) else nearby
         origin = cell[0]
         local_target = cell - origin  # local frame: less cancellation far from the origin
         for i in candidates:
@@ -480,6 +492,92 @@ def _polygon_overlap(
                     rows.append(int(i))
                     cols.append(j)
                     values.append(area)
+    return sp.csr_matrix((values, (rows, cols)), shape=(len(source), len(target)))
+
+
+_TET_FACES = ((1, 2, 3), (0, 3, 2), (0, 1, 3), (0, 2, 1))
+_TET_EDGES = ((0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3))
+
+
+def _tetrahedra(mesh: MeshSupport, resolver: BulkDataResolver) -> np.ndarray:
+    """``(n, 4, 3)`` vertices of a tetrahedral mesh; degenerate cells refused."""
+    coords, cells = _unstructured_geometry(mesh, resolver)
+    tets = np.asarray(coords[cells], dtype=np.float64)
+    volumes = np.abs(np.einsum("ij,ij->i", tets[:, 1] - tets[:, 0],
+                               np.cross(tets[:, 2] - tets[:, 0], tets[:, 3] - tets[:, 0]))) / 6.0
+    bad = np.flatnonzero(~np.isfinite(volumes) | (volumes <= 0.0))
+    if len(bad):
+        raise InvalidScientificProblem(f"mesh {mesh.mesh_id!r} has degenerate tetrahedra {bad[:5].tolist()}")
+    return tets
+
+
+def _half_spaces(tet: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Outward unit normals and offsets of a tetrahedron: x is inside iff normals @ x <= offsets."""
+    centroid = tet.mean(axis=0)
+    normals = np.empty((4, 3))
+    offsets = np.empty(4)
+    for k, (a, b, c) in enumerate(_TET_FACES):
+        n = np.cross(tet[b] - tet[a], tet[c] - tet[a])
+        n = n / np.linalg.norm(n)
+        if n @ (centroid - tet[a]) > 0.0:
+            n = -n
+        normals[k], offsets[k] = n, n @ tet[a]
+    return normals, offsets
+
+
+def _tet_overlap_volume(a: np.ndarray, b: np.ndarray, tolerance: float) -> float:
+    """Volume of the intersection of two tetrahedra (convex polytopes), exact up to round-off.
+
+    Every vertex of the intersection is the meet of three facet planes, so it
+    is a vertex of one tetrahedron inside the other, or an edge of one meeting
+    a facet of the other.  Those points are collected and the intersection is
+    their convex hull; a hull Qhull cannot build (fewer than four points, or
+    all coplanar) has zero volume.
+    """
+    from scipy.spatial import ConvexHull, QhullError
+
+    na, ca = _half_spaces(a)
+    nb, cb = _half_spaces(b)
+    points: list[np.ndarray] = []
+    points += [p for p in a if np.all(nb @ p <= cb + tolerance)]
+    points += [p for p in b if np.all(na @ p <= ca + tolerance)]
+    for (verts, normals, offsets, own_n, own_c) in ((a, nb, cb, na, ca), (b, na, ca, nb, cb)):
+        for i, j in _TET_EDGES:
+            p, q = verts[i], verts[j]
+            for n, c in zip(normals, offsets):
+                dp, dq = n @ p - c, n @ q - c
+                if (dp < 0.0 < dq) or (dq < 0.0 < dp):
+                    x = p + (dp / (dp - dq)) * (q - p)
+                    if np.all(normals @ x <= offsets + tolerance) and np.all(own_n @ x <= own_c + tolerance):
+                        points.append(x)
+    if len(points) < 4:
+        return 0.0
+    try:
+        return float(ConvexHull(np.array(points)).volume)
+    except QhullError:
+        return 0.0
+
+
+def _tet_overlap(source: np.ndarray, target: np.ndarray) -> sp.csr_matrix:
+    lower, upper = source.min(axis=1), source.max(axis=1)
+    boxes = BoxIndex(lower, upper)
+    rows: list[int] = []
+    cols: list[int] = []
+    values: list[float] = []
+    for j, cell in enumerate(target):
+        t_lower, t_upper = cell.min(axis=0), cell.max(axis=0)
+        origin = cell[0]
+        scale = float(np.max(t_upper - t_lower))
+        nearby = boxes.query_box(t_lower, t_upper)
+        candidates = nearby[
+            np.all(lower[nearby] < t_upper, axis=1) & np.all(upper[nearby] > t_lower, axis=1)
+        ] if len(nearby) else nearby
+        for i in candidates:
+            volume = _tet_overlap_volume(source[int(i)] - origin, cell - origin, 1e-12 * scale)
+            if volume > 0.0:
+                rows.append(int(i))
+                cols.append(j)
+                values.append(volume)
     return sp.csr_matrix((values, (rows, cols)), shape=(len(source), len(target)))
 
 
@@ -496,11 +594,24 @@ def _overlap_geometry(
             np.outer(ty, tx).reshape(-1),
             "axis_aligned_rectangles",
         )
+    if source_mesh.spatial_dimension == 3 and target_mesh.spatial_dimension == 3:
+        kinds = {getattr(m, "cell_type", None) for m in (source_mesh, target_mesh)}
+        if kinds != {CellType.TETRAHEDRON}:
+            raise InvalidScientificProblem(
+                f"3D conservative_cell mapping is implemented for tetrahedron-tetrahedron supports only; got "
+                f"{sorted(k.value for k in kinds if k is not None)} (hexahedra are refused: a trilinear "
+                f"hexahedron is not a convex polytope in general)"
+            )
+        source = _tetrahedra(source_mesh, resolver)
+        target = _tetrahedra(target_mesh, resolver)
+        volume = lambda t: np.abs(np.einsum("ij,ij->i", t[:, 1] - t[:, 0],  # noqa: E731
+                                            np.cross(t[:, 2] - t[:, 0], t[:, 3] - t[:, 0]))) / 6.0
+        return _tet_overlap(source, target), volume(source), volume(target), "convex_polyhedra_3d_tetrahedra"
     for mesh in (source_mesh, target_mesh):
         if mesh.spatial_dimension != 2:
             raise InvalidScientificProblem(
-                f"conservative_cell mapping is implemented in 2D only; mesh {mesh.mesh_id!r} is "
-                f"{mesh.spatial_dimension}D (3D intersection is not implemented)"
+                f"conservative_cell mapping between a {source_mesh.spatial_dimension}D and a "
+                f"{target_mesh.spatial_dimension}D support is not defined"
             )
     source = _convex_cells(source_mesh, resolver)
     target = _convex_cells(target_mesh, resolver)
@@ -524,8 +635,73 @@ def _relative_l2(
     return numerator / denominator
 
 
+#: Phase 2 BR9: every (method, source support, target support, location) combination the engine
+#: admits.  Anything else is refused by :func:`transfer_support` before any value is read.
+SUPPORTED_TRANSFERS: tuple[dict[str, str], ...] = (
+    {"method": "identity", "supports": "the same support (fingerprint)", "locations": "the same location"},
+    {"method": "nearest", "supports": "any two supports of one spatial dimension", "locations": "node or cell, either way"},
+    {"method": "bilinear", "supports": "structured -> structured", "locations": "node or cell, either way"},
+    {"method": "conservative_cell", "supports": "structured -> structured", "locations": "cell -> cell"},
+    {"method": "conservative_cell", "supports": "2D: triangle / convex quadrilateral / structured, any pair",
+     "locations": "cell -> cell"},
+    {"method": "conservative_cell", "supports": "3D: tetrahedron -> tetrahedron", "locations": "cell -> cell"},
+)
+
+#: Every field-mapping implementation in the repository and its relation to this engine.
+FIELD_TRANSFER_PATHS: tuple[dict[str, str], ...] = (
+    {"path": "engcore.execution.multiphysics.mapping.FieldMapper", "status": "authoritative",
+     "scope": "FieldRecord values between declared supports inside coupled runs"},
+    {"path": "engcore.spatial.fields.interpolate_p1_to_mesh / node_to_cell_average", "status": "separate data model",
+     "scope": "P1 node fields on SpatialMesh (used by engcore.coupling.adapters); not routed through FieldMapper"},
+    {"path": "engcore.scientific.fields.transfer.check_field_transfer", "status": "contract check only",
+     "scope": "support-compatibility verdicts between structured supports; maps no values"},
+)
+
+
+def _support_kind(mesh: MeshSupport) -> str:
+    if isinstance(mesh, StructuredMesh):
+        return "structured"
+    return mesh.cell_type.value
+
+
+def transfer_support(
+    definition: FieldMappingDefinition,
+    source_mesh: MeshSupport,
+    target_mesh: MeshSupport,
+    source_location: FieldLocation,
+    target_location: FieldLocation,
+) -> str:
+    """The supported combination a transfer falls under, or a refusal naming why it is not supported."""
+    method = definition.method
+    kinds = (_support_kind(source_mesh), _support_kind(target_mesh))
+    if source_mesh.spatial_dimension != target_mesh.spatial_dimension:
+        raise InvalidScientificProblem(
+            f"mapping {definition.mapping_id!r}: no method maps a {source_mesh.spatial_dimension}D support onto a "
+            f"{target_mesh.spatial_dimension}D one"
+        )
+    if method is FieldMappingMethod.IDENTITY:
+        if source_mesh.fingerprint() != target_mesh.fingerprint() or source_location is not target_location:
+            raise InvalidScientificProblem("identity mapping requires identical support and field location")
+        return "identity"
+    if method is FieldMappingMethod.NEAREST:
+        return f"nearest:{kinds[0]}->{kinds[1]}"
+    if method is FieldMappingMethod.BILINEAR:
+        if kinds != ("structured", "structured"):
+            raise InvalidScientificProblem("bilinear mapping is defined only for structured rectilinear supports")
+        return "bilinear:structured->structured"
+    if source_location is not FieldLocation.CELL or target_location is not FieldLocation.CELL:
+        raise InvalidScientificProblem("conservative_cell mapping requires cell-centered source and target fields")
+    planar = {"structured", CellType.TRIANGLE.value, CellType.QUADRILATERAL.value}
+    if set(kinds) <= planar or kinds == (CellType.TETRAHEDRON.value, CellType.TETRAHEDRON.value):
+        return f"conservative_cell:{kinds[0]}->{kinds[1]}"
+    raise InvalidScientificProblem(
+        f"conservative_cell mapping is not implemented for {kinds[0]} -> {kinds[1]}; supported: "
+        f"structured/triangle/convex-quadrilateral in 2D and tetrahedron -> tetrahedron in 3D"
+    )
+
+
 class FieldMapper:
-    """Maps FieldRecord values across declared mesh supports."""
+    """Maps FieldRecord values across declared mesh supports (the authoritative engine, Phase 2 BR9)."""
 
     def __init__(
         self,
@@ -558,6 +734,17 @@ class FieldMapper:
             source_mesh.fingerprint()
             == target_mesh.fingerprint()
         )
+        combination = transfer_support(
+            definition, source_mesh, target_mesh, source.definition.location, target_definition.location
+        )
+        provenance = {
+            "method": combination,
+            "source_support": source_mesh.fingerprint(),
+            "target_support": target_mesh.fingerprint(),
+            "source_location": source.definition.location.value,
+            "target_location": target_definition.location.value,
+            "components": target_definition.components,
+        }
         if definition.method is FieldMappingMethod.IDENTITY:
             if (
                 not same_support
@@ -586,6 +773,7 @@ class FieldMapper:
                         0.0 if definition.verify_round_trip else None
                     ),
                     conservation_relative_error=0.0,
+                    provenance={**provenance, "exact": "values copied on one support"},
                 ),
             )
 
@@ -734,6 +922,12 @@ class FieldMapper:
                 ),
                 round_trip_relative_l2=round_trip,
                 conservation_relative_error=conservation_error,
+                provenance={
+                    **provenance,
+                    "search": "kd_tree" if definition.method is FieldMappingMethod.NEAREST else "direct",
+                    "conservative": False,
+                    "notice": "an interpolation; its forward error is not bounded by any recorded quantity",
+                },
             ),
         )
 
@@ -870,7 +1064,10 @@ class FieldMapper:
             "max_target_coverage_deficit": float(target_deficit.max()) if target_deficit.size else 0.0,
             "conservation_absolute_residual": [float(x) for x in residual],
             "conservation_scale_l1": [float(x) for x in scale],
-            "conservation_unit": f"{target_definition.unit} * meter ** 2",
+            "conservation_unit": f"{target_definition.unit} * meter ** {source_mesh.spatial_dimension}",
+            "source_support": source_mesh.fingerprint(),
+            "target_support": target_mesh.fingerprint(),
+            "search": "bucket_index",
             "round_trip_norm": "measure_weighted_l2" if round_trip is not None else None,
             "notice": (
                 "conservation and round-trip residuals are diagnostics of this transfer; "
