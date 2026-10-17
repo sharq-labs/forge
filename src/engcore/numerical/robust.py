@@ -147,11 +147,18 @@ def solve_with_method_chain(
     if len(set(keys)) != len(keys):
         raise NumericalRefusal("a method chain must not repeat an identical method")
     if acceptance is None:
-        tolerances = {repr(sorted(dict(m.settings.tolerances).items())) for m in methods}
-        if len(tolerances) != 1:
+        # tolerances AND the options the provider declares acceptance-relevant (e.g. residual scales)
+        relevant = getattr(provider, "acceptance_options", frozenset())
+        criteria = {
+            repr((sorted(dict(m.settings.tolerances).items()),
+                  sorted((k, repr(v)) for k, v in dict(m.settings.options).items() if k in relevant)))
+            for m in methods
+        }
+        if len(criteria) != 1:
             raise NumericalRefusal(
-                "the methods of a chain declare different tolerances; a later method could accept what an "
-                "earlier one rejected. Declare identical tolerances, or a ChainAcceptance the whole chain is held to"
+                "the methods of a chain declare different tolerances or acceptance options; a later method could "
+                "accept what an earlier one rejected. Declare identical ones, or a ChainAcceptance the whole chain "
+                "is held to"
             )
     elif not isinstance(acceptance, ChainAcceptance):
         raise NumericalRefusal("acceptance must be a ChainAcceptance")

@@ -60,7 +60,7 @@ def test_quality_is_one_for_the_regular_cells_and_falls_for_a_sliver():
     square = np.array([(0, 0), (1, 0), (1, 1), (0, 1)], float)
     assert shape_quality("quadrilateral", square, [(0, 1, 2, 3)])[0] == pytest.approx(1.0)
     sliver = np.array([(0.0, 0.0), (1.0, 0.0), (0.5, 1e-3)])
-    # q = 4 sqrt(3) * 5e-4 / (1 + 2 * 0.25000025) ~ 2.3e-3
+    # q = 4 sqrt(3) * 5e-4 / (1 + 2 * 0.250001) ~ 2.3e-3
     assert shape_quality("triangle", sliver, [(0, 1, 2)])[0] == pytest.approx(4 * math.sqrt(3) * 5e-4 / (1 + 2 * 0.250001),
                                                                              rel=1e-6)
 

@@ -391,18 +391,9 @@ class MultiphysicsRuntime:
         )
         error_control = None if plan.window_control is None else plan.window_control.error_control
         if error_control is not None:
-            # Phase 3 BR15: step doubling restores every participant to the window start AND to the
-            # coarse window's end; a participant that cannot be restored deterministically would be
-            # advanced three times and recorded once
-            unrestorable = sorted(
-                spec.participant_id for spec in graph.participants
-                if not (spec.checkpointable and spec.deterministic_restore)
-            )
-            if unrestorable:
-                raise InvalidScientificProblem(
-                    f"window error control re-executes every window; participants {unrestorable} are not "
-                    f"checkpointable with deterministic restore"
-                )
+            # Phase 3 BR15: every participant is already required to be checkpointable with deterministic
+            # restore by CouplingPlan.validate_against for any window_control plan (step doubling restores to
+            # the window start and to the coarse end).  Here: the monitored outputs and their tolerance units.
             for item in error_control.outputs:
                 spec = graph.participant(item.participant_id)
                 port = spec.port(item.port_id)
@@ -410,6 +401,13 @@ class MultiphysicsRuntime:
                     raise InvalidScientificProblem(
                         f"window error control monitors {item.participant_id}.{item.port_id}, which is not an output"
                     )
+                try:
+                    item.absolute_tolerance.magnitude_as_spread_in(base_unit(port.unit))
+                except ScientificCoreError as exc:
+                    raise InvalidScientificProblem(
+                        f"monitored output {item.participant_id}.{item.port_id} tolerance "
+                        f"{item.absolute_tolerance.units} is not a spread of the port unit {port.unit}: {exc}"
+                    ) from exc
 
     def _external_by_participant(
         self,
@@ -718,12 +716,17 @@ class MultiphysicsRuntime:
         ``_time_grid``, plan order, so the record is deterministic).  A terminal
         event explains an early stop and is not a clock disagreement.
         """
-        if any(event.terminal for event in result.events):
+        if any(event.terminal for event in result.events) or self._clock_suspended:
             return
         reported, requested = exact_seconds(result.end), exact_seconds(end)
-        if reported != requested:
+        key = (self._clock_window, self._clock_attempt, participant_id, requested, reported)
+        if reported != requested and key not in self._clock_seen:
+            # once per window attempt (not per coupling iteration); never from step-doubling half windows
+            self._clock_seen.add(key)
             self._time_grid_log.append({
                 "action": "participant_clock_disagreement",
+                "window_index": self._clock_window,
+                "attempt": self._clock_attempt,
                 "participant_id": participant_id,
                 "window_start_s": self._seconds(start),
                 "requested_end": f"{requested.numerator}/{requested.denominator}",
@@ -1585,6 +1588,7 @@ class MultiphysicsRuntime:
         control = self.plan.window_control
         self._accepted_end_exact = None
         start_x, end_x = exact if exact is not None else (exact_seconds(start), exact_seconds(end))
+        self._clock_window, self._clock_attempt = index, 0
         if control is None:
             self._attempt_duration = end_x - start_x
             try:
@@ -1616,6 +1620,7 @@ class MultiphysicsRuntime:
             failure: CouplingWindowNotConverged | None = None
             result: tuple[Any, ...] | None = None
             self._attempt_duration = attempt_end_x - start_x
+            self._clock_attempt = subdivisions
             try:
                 result = self._window(index, start, attempt_end, *state)
             except CouplingWindowNotConverged as exc:
@@ -1626,10 +1631,15 @@ class MultiphysicsRuntime:
             error_rejection = ""
             if result is not None and result[0].outcome is not WindowOutcome.ITERATION_LIMIT:
                 if control.error_control is not None:
-                    error_rejection = self._assess_window_error(
-                        control.error_control, index, start, attempt_end, start_x, attempt_end_x,
-                        result, state, checkpoints,
-                    )
+                    try:
+                        error_rejection = self._assess_window_error(
+                            control.error_control, index, start, attempt_end, start_x, attempt_end_x,
+                            result, state, checkpoints,
+                        )
+                    except BaseException:
+                        self.relaxation.end_window(accepted=False, converged=False,
+                                                   reason="the window error assessment raised")
+                        raise
                 if not error_rejection:
                     self.relaxation.end_window(accepted=True, converged=result[0].outcome is WindowOutcome.CONVERGED)
                     self._accepted_end_exact = attempt_end_x
@@ -1749,10 +1759,15 @@ class MultiphysicsRuntime:
         window continues the scheduled run.  Every assessment is logged.
         """
         window = coarse[0]
+        notice = ("step-doubling difference: an indicator of the window's local time-discretization error, not a "
+                  "bound; for an order >= 1 scheme in its asymptotic range the coarse local error is between 1x and "
+                  "2x this difference, and neither the order nor the regime is verified")
         entry: dict[str, Any] = {"window_index": index, "action": "error_indicator",
                                  "start_s": float(start_x), "end_s": float(end_x)}
         if window.outcome is WindowOutcome.EVENT_ALIGNED:
-            entry.update({"status": "not_assessed", "reason": "the window was cut by a terminal event"})
+            # accepted WITHOUT an error assessment, and recorded as such (never as a met tolerance)
+            entry.update({"status": "not_assessed", "reason": "the window was cut by a terminal event",
+                          "accepted": True, "error_assessed": False, "notice": notice})
             self._window_control_log.append(entry)
             return ""
         half_x = start_x + (end_x - start_x) / 2
@@ -1763,6 +1778,8 @@ class MultiphysicsRuntime:
         coarse_end = self._checkpoint_all(window.end)
         accelerator = copy.deepcopy(self.relaxation.accelerator)
         saved_duration = self._attempt_duration
+        # the half windows are a measurement, not part of the run: their clocks are not recorded
+        self._clock_suspended = True
         half = Quantity(float(half_x), "second")
         rejection = ""
         try:
@@ -1798,10 +1815,10 @@ class MultiphysicsRuntime:
             self._restore_all(coarse_end)
             self.relaxation.accelerator = accelerator
             self._attempt_duration = saved_duration
+            self._clock_suspended = False
         entry["accepted"] = not rejection
-        entry["notice"] = ("step-doubling difference: an indicator of the window's local time-discretization error, "
-                           "not a bound; between 1x and 2x the local error only for an order >= 1 scheme in its "
-                           "asymptotic range, which is not verified")
+        entry["error_assessed"] = entry.get("status") == "assessed"
+        entry["notice"] = notice
         self._window_control_log.append(entry)
         return rejection
 
@@ -2069,6 +2086,11 @@ class MultiphysicsRuntime:
             self.plan.relaxation, self.relaxation.resolver, self.relaxation.store, self.meshes
         )
         self._attempt_duration: Fraction | None = None
+        # Phase 3 BR15: participant clock records, once per (window, attempt, participant, instants)
+        self._clock_window: int | None = None
+        self._clock_attempt = 0
+        self._clock_seen: set[tuple[Any, ...]] = set()
+        self._clock_suspended = False
 
         requested_state = {} if initial_state is None else dict(initial_state)
         unknown_state_owners = set(requested_state) - set(self.participants)
@@ -2461,7 +2483,9 @@ class MultiphysicsRuntime:
         if self.concurrency is not None:
             final_outputs["_concurrency"] = self.concurrency.to_dict()
         if self._time_grid_log:
-            # absent unless a remainder was absorbed: other runs keep their identity
+            # absent unless a remainder was absorbed or (Phase 3 BR15, a deliberate identity change for those
+            # runs only) a participant reported an end that differs from the synchronization instant within
+            # the reporting tolerance: other runs keep their identity
             final_outputs["_time_grid"] = {"rule": SAME_INSTANT_RULE, "events": list(self._time_grid_log)}
         acceleration = self.relaxation.acceleration_record()
         if acceleration is not None:

@@ -494,6 +494,9 @@ class NumericalProvider(ABC):
     identity: SolverIdentity
     kinds: frozenset[ProblemKind]
     methods: frozenset[str]
+    #: Phase 3 BR13: method OPTIONS that change what the provider accepts as converged (not only how
+    #: it iterates); a fallback chain compares them like tolerances
+    acceptance_options: frozenset[str] = frozenset()
     #: why the backend is unavailable, as observed (an import error's type and text);
     #: carried into the refusal so a broken install is not reported as an absent one
     unavailable_reason: str = "backend is not installed"

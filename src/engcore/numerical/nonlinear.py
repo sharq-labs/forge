@@ -95,6 +95,8 @@ class DampedNewtonProvider(NumericalProvider):
     identity = SolverIdentity("forge.numerical.newton", "1", backend="numpy.linalg.solve / scipy.sparse.linalg.spsolve")
     kinds = frozenset({ProblemKind.NONLINEAR_ROOT})
     methods = frozenset({"newton", "newton_armijo"})
+    #: the declared scales define the acceptance measure itself
+    acceptance_options = frozenset({"residual_scales"})
 
     # ---- configuration ---------------------------------------------------------------------
 

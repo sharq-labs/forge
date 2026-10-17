@@ -173,8 +173,17 @@ def admit_nonlinear_execution(
     convergence: ConvergenceState,
     steps: tuple[NewtonStepRecord, ...],
     spec: NonlinearSolveSpec,
+    *,
+    expected_steps: int,
 ) -> NonlinearAdmission:
-    """Re-derive convergence from the recorded Newton histories; refuse a CONVERGED claim they do not support."""
+    """Re-derive convergence from the recorded Newton histories; refuse a CONVERGED claim they do not support.
+
+    ``expected_steps`` is the number of (time) steps the problem declares (1 for a steady solve); a CONVERGED
+    claim must carry exactly one history for each of the steps ``0 .. expected_steps - 1``, so a record that lists
+    only the steps that converged is refused.
+    """
+    if isinstance(expected_steps, bool) or not isinstance(expected_steps, int) or expected_steps < 1:
+        raise PDERefusal("expected_steps must be a positive int (1 for a steady solve)")
     convergence = ConvergenceState(convergence)
     if convergence is ConvergenceState.NOT_APPLICABLE:
         raise PDERefusal("a nonlinear solve converges or fails; NOT_APPLICABLE is not a nonlinear termination state")
@@ -182,6 +191,9 @@ def admit_nonlinear_execution(
     problems: list[str] = []
     if claimed and not steps:
         problems.append("no Newton history was recorded")
+    indices = [record.step for record in steps]
+    if claimed and sorted(indices) != list(range(expected_steps)):
+        problems.append(f"the histories cover steps {sorted(indices)}, not exactly 0..{expected_steps - 1}")
     for record in steps:
         norms = record.residual_norms
         if not norms:
@@ -191,6 +203,9 @@ def admit_nonlinear_execution(
             problems.append(f"step {record.step}: a residual norm is negative or not finite")
             continue
         iterations = len(norms) - 1
+        factors = record.line_search_factors
+        if (spec.method == "newton_backtracking" or factors) and len(factors) != iterations:
+            problems.append(f"step {record.step}: {len(factors)} line-search factor(s) for {iterations} iteration(s)")
         if iterations > spec.max_iterations:
             problems.append(f"step {record.step}: {iterations} iterations exceed max_iterations {spec.max_iterations}")
         if spec.method == "newton" and record.line_search_factors and any(f != 1.0 for f in record.line_search_factors):

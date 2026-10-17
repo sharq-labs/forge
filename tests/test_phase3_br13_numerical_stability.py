@@ -223,6 +223,15 @@ def test_a_chain_of_methods_with_different_tolerances_is_refused_without_a_chain
         solve_with_method_chain(DampedNewtonProvider(), problem, (strict, loose))
 
 
+def test_a_chain_cannot_loosen_acceptance_through_residual_scales_either():
+    # identical tolerances, but the second method's scales (1e6) make its measure 1e6 times smaller
+    problem = _problem(lambda x: np.array([x[0] - 1.0]), jacobian=lambda x: np.array([[1.0]]))
+    plain = _newton()
+    scaled = _newton("newton_armijo", residual_scales=(1e6,))
+    with pytest.raises(NumericalRefusal, match="acceptance options"):
+        solve_with_method_chain(DampedNewtonProvider(), problem, (plain, scaled))
+
+
 def test_a_looser_methods_convergence_is_rejected_by_the_chain_acceptance():
     # x^3 - 8 from 3: one Newton step gives 3 - 19/27 = 2.296, residual 4.11 -- within a 5.0 tolerance, so the
     # loose method converges; the chain's 1e-9 acceptance refuses it and moves on to the strict method.

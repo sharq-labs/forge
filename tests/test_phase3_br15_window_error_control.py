@@ -125,7 +125,8 @@ def test_window_control_without_error_control_keeps_its_serialized_form():
 
 
 def test_error_control_is_refused_for_a_participant_that_cannot_be_restored():
-    with pytest.raises(InvalidScientificProblem, match="deterministic restore"):
+    # refused by CouplingPlan.validate_against for every window-control plan (step doubling relies on it)
+    with pytest.raises(InvalidScientificProblem, match="deterministic checkpoint/restore"):
         _runtime(_control(_error_control()), restorable_copy=False)
 
 

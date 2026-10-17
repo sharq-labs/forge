@@ -102,7 +102,7 @@ def weighted_rms(values: np.ndarray, weights: np.ndarray, components: int) -> fl
             f"field has {flat.size} stored values; the support measures {w.size // max(1, int(components))} "
             f"sites x {components} component(s)"
         )
-    total = float(np.sum(w))
+    total = float(np.sum(weights))  # sum over SITES: |v_i| is the site's vector norm
     with np.errstate(over="ignore", invalid="ignore"):
         return float(np.sqrt(np.sum(w * flat * flat) / total))
 

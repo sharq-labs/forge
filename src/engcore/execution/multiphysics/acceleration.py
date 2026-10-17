@@ -208,7 +208,13 @@ class InterfaceQuasiNewton:
             if edge_id not in self._scales:
                 part = residual[offset:offset + size]
                 scale = float(np.linalg.norm(part)) / np.sqrt(max(1, size))
-                if scale > 0.0 and np.isfinite(scale):
+                resolved = True
+                if self.imvj:
+                    # Phase 3 review M5: a round-off residual (after a window already landed on its fixed point)
+                    # would set a ~1e13 weight that amplifies round-off into the CARRIED approximation
+                    image = float(np.linalg.norm(new[offset:offset + size])) / np.sqrt(max(1, size))
+                    resolved = scale > 64.0 * np.finfo(np.float64).eps * max(image, np.finfo(np.float64).tiny)
+                if scale > 0.0 and np.isfinite(scale) and resolved:
                     self._scales[edge_id] = scale
             weights.append(np.full(size, 1.0 / self._scales.get(edge_id, 1.0)))
             offset += size

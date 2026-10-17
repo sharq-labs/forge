@@ -72,10 +72,10 @@ SPEC = NonlinearSolveSpec("newton", residual_atol=1e-10, residual_rtol=1e-8, max
 
 def test_a_converged_claim_is_admitted_only_when_every_history_meets_the_declared_test():
     good = (NewtonStepRecord(0, (1.0, 1e-3, 1e-9)), NewtonStepRecord(1, (2.0, 1e-11)))
-    assert admit_nonlinear_execution(ConvergenceState.CONVERGED, good, SPEC).accepted
+    assert admit_nonlinear_execution(ConvergenceState.CONVERGED, good, SPEC, expected_steps=2).accepted
     # max(atol 1e-10, rtol 1e-8 x 1.0) = 1e-8: a final 1e-7 does not meet it
     with pytest.raises(PDERefusal, match="false convergence"):
-        admit_nonlinear_execution(ConvergenceState.CONVERGED, (NewtonStepRecord(0, (1.0, 1e-7)),), SPEC)
+        admit_nonlinear_execution(ConvergenceState.CONVERGED, (NewtonStepRecord(0, (1.0, 1e-7)),), SPEC, expected_steps=1)
 
 
 @pytest.mark.parametrize("steps", [
@@ -87,14 +87,30 @@ def test_a_converged_claim_is_admitted_only_when_every_history_meets_the_declare
 ])
 def test_unsupported_converged_claims_are_refused(steps):
     with pytest.raises(PDERefusal, match="false convergence"):
-        admit_nonlinear_execution(ConvergenceState.CONVERGED, steps, SPEC)
+        admit_nonlinear_execution(ConvergenceState.CONVERGED, steps, SPEC, expected_steps=1)
+
+
+def test_a_converged_claim_must_cover_every_declared_step_and_count_its_line_searches():
+    # three declared time steps; the record lists only the two that converged
+    partial = (NewtonStepRecord(0, (1.0, 1e-12)), NewtonStepRecord(2, (1.0, 1e-12)))
+    with pytest.raises(PDERefusal, match="not exactly 0..2"):
+        admit_nonlinear_execution(ConvergenceState.CONVERGED, partial, SPEC, expected_steps=3)
+    damped = NonlinearSolveSpec("newton_backtracking", residual_atol=1e-10, residual_rtol=1e-8, max_iterations=5,
+                                jacobian="exact_linearization", max_backtracks=10, armijo_c1=1e-4)
+    # two iterations, one line-search factor
+    with pytest.raises(PDERefusal, match="line-search factor"):
+        admit_nonlinear_execution(ConvergenceState.CONVERGED, (NewtonStepRecord(0, (1.0, 0.1, 1e-12), (0.5,)),),
+                                  damped, expected_steps=1)
+    assert admit_nonlinear_execution(ConvergenceState.CONVERGED, (NewtonStepRecord(0, (1.0, 0.1, 1e-12), (0.5, 1.0)),),
+                                     damped, expected_steps=1).accepted
 
 
 def test_a_failed_solve_is_recorded_as_failed_and_not_applicable_is_refused():
-    out = admit_nonlinear_execution(ConvergenceState.MAX_ITERATIONS, (NewtonStepRecord(0, (1.0, 0.9)),), SPEC)
+    out = admit_nonlinear_execution(ConvergenceState.MAX_ITERATIONS, (NewtonStepRecord(0, (1.0, 0.9)),), SPEC,
+                                    expected_steps=1)
     assert not out.accepted and "max_iterations" in out.reason
     with pytest.raises(PDERefusal, match="NOT_APPLICABLE"):
-        admit_nonlinear_execution(ConvergenceState.NOT_APPLICABLE, (), SPEC)
+        admit_nonlinear_execution(ConvergenceState.NOT_APPLICABLE, (), SPEC, expected_steps=1)
 
 
 def test_an_initial_guess_is_declared_never_assumed():

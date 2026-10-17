@@ -112,8 +112,12 @@ class MeshConfiguration:
         coords = np.asarray(self.coordinates, dtype=np.float64)
         if coords.ndim == 1:
             coords = coords.reshape(-1, 1)
+        raw = np.asarray(self.connectivity)
+        if not np.issubdtype(raw.dtype, np.integer) and (
+                not np.all(np.isfinite(raw)) or not np.all(raw == np.round(raw))):
+            raise MeshQualityRefusal("connectivity must hold integer vertex indices")
         object.__setattr__(self, "coordinates", _frozen(coords, np.float64))
-        object.__setattr__(self, "connectivity", _frozen(self.connectivity, np.int64))
+        object.__setattr__(self, "connectivity", _frozen(raw, np.int64))
         signed_measures(self.cell_type, self.coordinates, self.connectivity)  # shape, index and finiteness refusals
 
     @property
