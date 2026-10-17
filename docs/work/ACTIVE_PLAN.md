@@ -2,7 +2,7 @@
 
 ## Active override — Open problems pass (2026-10-16)
 
-Branch `fix/open-problems-2026-10-16` (worktree `D:/forge-open-problems`), base `origin/main` `36306da5`. Local only.
+Branch `fix/open-problems-2026-10-16` (worktree `D:/forge-open-problems`), base `origin/main` `36306da5`, merged with `062e1153`; pushed for a PR.
 Details and exact commands: PROGRESS, 2026-10-16 "Open problems pass".
 
 - [x] Landing-pass review MINORs: empty/forged UQ budget, NOT_ASSESSABLE gap label (and the `assess_claim` KeyError
@@ -10,7 +10,7 @@ Details and exact commands: PROGRESS, 2026-10-16 "Open problems pass".
 - [x] Windows `snapshot` link count (`st_nlink` 0 refused every seed) and junctions; one UTF-8 test read.
 - [x] Scientific review: first pass CHANGES REQUIRED, fixed; second pass PASS (N-4, N-5 LOW recorded).
 - [x] Linux FAST on the committed tree: only the two OD-3 certificate failures. Windows FAST: 0 new failures, 29 fewer.
-- [ ] Owner: push/PR of this branch; OD-3 recertification (touched pinned files; `main` already needs it); CI
+- [ ] Owner: review/merge of the PR; OD-3 recertification (touched pinned files; `main` already needs it); CI
       billing; `authority_result_id` binding and any-of enforcement are design decisions.
 
 ## Active override — Battery 1RC identifiability (2026-10-14)

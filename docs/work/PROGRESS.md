@@ -4750,10 +4750,10 @@ Failed approach: a bytecode cache.
 
 Copied the previously unmerged historical check record from `docs/main-check-2026-10-13` and the performance-investigation record from PR #147 into a documentation-only integration branch based on `36306da51`. These remain historical execution records. Scientific models, certificate identities, workflows and acceptance thresholds are unchanged by this reconciliation. TESTS: NOT RUN in this integration session. HARDENED RECERTIFICATION: NOT RUN. No claim of certified or passing CI is made.
 
-## 2026-10-16 -- Open problems pass: review MINORs, Windows FAST triage (fix/open-problems-2026-10-16, local only)
+## 2026-10-16 -- Open problems pass: review MINORs, Windows FAST triage (fix/open-problems-2026-10-16)
 
 **Scope.** The user asked for "all current problems" to be solved. Worktree `D:/forge-open-problems`, base `origin/main`
-`36306da5` (PR #148 merged). Commits `0bc9a892`, `7b84dce1`, `b12dc7c7`. Nothing pushed, no PR, no recertification.
+`36306da5` (PR #148 merged). Commits `0bc9a892`, `7b84dce1`, `b12dc7c7`; merged with `origin/main` `062e1153` (PROGRESS-only conflict) and pushed for a PR on 2026-10-17. No recertification.
 
 **What is owner-only and was not touched:** CI on `main` and on PRs fails in ~6 s with no runner (Actions billing),
 OD-3 recertification of `main` (`test_the_certificate_describes_this_tree` and
