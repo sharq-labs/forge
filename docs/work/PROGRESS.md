@@ -4974,3 +4974,9 @@ python tools/forge_check.py --regression --workers 4            -> 256 passed in
 **RECERTIFICATION_REQUIRED (OD-3).** All touched src files are pinned in `certification/current_core_v2.json`:
 orchestration, multiphysics external/transfer/relaxation, and scientific multiphysics graph. The new orchestration
 test falls under a pinned glob. No touched file is in the frozen API snapshot. `main` already needs recertification.
+
+**Committed (owner direction, local only, not pushed):** `04b12344` on `fix/engrt-v1-phase1-interop`. With the
+tree clean, the two fix-only FAST failures (`test_core_freeze_manifest::test_the_tree_is_core_freeze_v1`,
+`test_core_freeze_v3_manifest::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`) pass:
+`pytest <those two ids> -q` -> 2 passed in 37.8 s. The fix branch's FAST failure set therefore equals the
+baseline's.
