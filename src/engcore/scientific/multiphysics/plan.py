@@ -41,8 +41,16 @@ class IterationSemantics(str, Enum):
 
 
 class ResidualNorm(str, Enum):
+    #: max over stored values
     LINF = "linf"
+    #: root mean square over STORED VALUES (every site weighted equally); on a
+    #: non-uniform support this is not a measure-weighted L2 norm
     L2 = "l2"
+    #: Phase 3 BR13: measure-weighted root mean square,
+    #: sqrt(sum_i w_i d_i^2 / sum_i w_i), with w_i the cell measure (cell
+    #: fields) or the lumped P1/Q1 nodal measure (node fields) of the support.
+    #: Defined only for the supports the runtime can measure; refused elsewhere.
+    L2_MEASURE = "l2_measure"
 
 
 class RelaxationKind(str, Enum):

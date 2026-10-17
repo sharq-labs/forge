@@ -397,9 +397,16 @@ class NumericalDiagnostics:
     health: NumericHealth | None = None
     termination_message: str = ""
     warnings: tuple[str, ...] = ()
+    #: Phase 3 BR13: why a failed execution failed (a ``numerical.health.NumericalFailureClass``
+    #: value).  ``None`` when the provider does not classify; absent from the record then, so
+    #: existing executions keep their identity.
+    failure_class: str | None = None
+    #: Phase 3 BR13: accepted step-length factors of a damped iteration, one per iteration
+    #: (1.0 = full step); absent when the method takes no damped steps.
+    step_lengths: tuple[float, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "residual_norm": self.residual_norm, "residual_history": list(self.residual_history),
             "iterations": self.iterations, "objective_value": self.objective_value, "function_evaluations": self.function_evaluations,
             "jacobian_evaluations": self.jacobian_evaluations, "accepted_steps": self.accepted_steps,
@@ -408,6 +415,11 @@ class NumericalDiagnostics:
             "health": None if self.health is None else {"status": self.health.status.value, "nonfinite_count": self.health.nonfinite_count},
             "termination_message": self.termination_message, "warnings": list(self.warnings),
         }
+        if self.failure_class is not None:
+            out["failure_class"] = self.failure_class
+        if self.step_lengths:
+            out["step_lengths"] = list(self.step_lengths)
+        return out
 
 
 _SUCCESS = (ConvergenceState.CONVERGED, ConvergenceState.NOT_APPLICABLE)

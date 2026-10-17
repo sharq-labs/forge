@@ -10,7 +10,11 @@ Method chain
     attempt's iterate (a non-converged execution exposes none).  Every attempt
     is recorded.  A refusal (unsupported method, unavailable provider) is a
     configuration error and propagates; only numerical non-convergence moves to
-    the next method.
+    the next method.  Phase 3 BR13: a fallback never loosens acceptance -- the
+    methods declare identical tolerances, or the chain declares one
+    :class:`ChainAcceptance` re-checked on every converged attempt (the only
+    acceptance rule a strategy adds, and it can only refuse).  Each attempt
+    carries its provider's failure class when the provider classifies one.
 
 Parameter continuation
     The caller declares a family ``lam -> NumericalProblem`` from a problem it
@@ -40,6 +44,8 @@ from .core import (
     NumericalRefusal,
     ProblemKind,
 )
+from .health import ResidualScaling
+from .nonlinear import acceptance_measure
 
 
 @dataclass(frozen=True)
@@ -49,10 +55,44 @@ class NonlinearAttempt:
     method: str
     lam: float | None
     record: NumericalExecutionRecord
+    #: Phase 3 BR13: why the strategy refused a CONVERGED execution (the chain's declared
+    #: acceptance re-check failed); empty when the provider's own verdict stood
+    rejected_by_acceptance: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        return {"method": self.method, "lam": self.lam, "convergence": self.record.convergence.value,
-                "execution_digest": self.record.digest, "reason": self.record.reason}
+        out = {"method": self.method, "lam": self.lam, "convergence": self.record.convergence.value,
+               "execution_digest": self.record.digest, "reason": self.record.reason}
+        # Phase 3 BR13: absent unless set, so existing strategy records keep their identity
+        if self.record.diagnostics.failure_class is not None:
+            out["failure_class"] = self.record.diagnostics.failure_class
+        if self.rejected_by_acceptance:
+            out["rejected_by_acceptance"] = self.rejected_by_acceptance
+        return out
+
+
+@dataclass(frozen=True)
+class ChainAcceptance:
+    """Phase 3 BR13: one acceptance test the whole chain is held to, re-evaluated on every converged attempt.
+
+    The problem's own ``residual`` operand is re-evaluated at the attempt's
+    outputs and its declared measure (``health.ResidualScaling``) must be at
+    most ``residual_atol``.  A method whose own criterion is looser than the
+    chain's therefore cannot make the chain succeed.
+    """
+
+    residual_atol: float
+    scaling: ResidualScaling = ResidualScaling()
+
+    def __post_init__(self) -> None:
+        value = self.residual_atol
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0.0:
+            raise NumericalRefusal("chain residual_atol must be finite and non-negative")
+        object.__setattr__(self, "residual_atol", float(value))
+        if not isinstance(self.scaling, ResidualScaling):
+            raise NumericalRefusal("chain acceptance scaling must be a ResidualScaling")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"residual_atol": self.residual_atol, **self.scaling.to_dict()}
 
 
 @dataclass(frozen=True)
@@ -62,13 +102,14 @@ class RobustSolveRecord:
     attempts: tuple[NonlinearAttempt, ...]
     accepted: NumericalExecutionRecord | None
     reason: str
+    acceptance: ChainAcceptance | None = None
 
     @property
     def succeeded(self) -> bool:
         return self.accepted is not None and self.accepted.succeeded
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "classification": "numerical_execution_not_scientific_evidence",
             "strategy": self.strategy,
             "target_problem_digest": self.target_problem_digest,
@@ -77,30 +118,62 @@ class RobustSolveRecord:
             "succeeded": self.succeeded,
             "reason": self.reason,
         }
+        if self.acceptance is not None:  # absent when not declared: existing records keep their identity
+            out["acceptance"] = self.acceptance.to_dict()
+        return out
 
 
 def solve_with_method_chain(
     provider: NumericalProvider,
     problem: NumericalProblem,
     methods: Sequence[NumericalMethod],
+    *,
+    acceptance: ChainAcceptance | None = None,
 ) -> RobustSolveRecord:
-    """Try the declared methods in order on the same problem; accept the first that converges."""
+    """Try the declared methods in order on the same problem; accept the first that converges.
+
+    Phase 3 BR13 -- a fallback must not loosen the acceptance test:
+
+    * without ``acceptance`` every method must declare IDENTICAL tolerances, so
+      each attempt is judged by the same provider criterion;
+    * with ``acceptance`` the methods may differ, and every converged attempt
+      is re-checked against the one declared chain test; a failed re-check is
+      recorded on the attempt and the chain moves on.
+    """
     methods = tuple(methods)
     if not 1 <= len(methods) <= 8 or any(not isinstance(m, NumericalMethod) for m in methods):
         raise NumericalRefusal("a method chain declares 1..8 NumericalMethod entries")
     keys = [repr(sorted(m.to_dict().items())) for m in methods]
     if len(set(keys)) != len(keys):
         raise NumericalRefusal("a method chain must not repeat an identical method")
+    if acceptance is None:
+        tolerances = {repr(sorted(dict(m.settings.tolerances).items())) for m in methods}
+        if len(tolerances) != 1:
+            raise NumericalRefusal(
+                "the methods of a chain declare different tolerances; a later method could accept what an "
+                "earlier one rejected. Declare identical tolerances, or a ChainAcceptance the whole chain is held to"
+            )
+    elif not isinstance(acceptance, ChainAcceptance):
+        raise NumericalRefusal("acceptance must be a ChainAcceptance")
     attempts: list[NonlinearAttempt] = []
     for method in methods:
         record = provider.execute(problem, method)  # refusals propagate: they are not numerical failures
+        if record.succeeded and acceptance is not None:
+            measure = acceptance_measure(problem, record, acceptance.scaling)
+            if not measure <= acceptance.residual_atol:
+                attempts.append(NonlinearAttempt(method.method, None, record, (
+                    f"the chain's {acceptance.scaling.label} residual {measure:.3e} at this solution exceeds the "
+                    f"chain residual_atol {acceptance.residual_atol:g}")))
+                continue
         attempts.append(NonlinearAttempt(method.method, None, record))
         if record.succeeded:
             return RobustSolveRecord("method_chain", problem.digest, tuple(attempts), record,
-                                     f"accepted method {method.method!r} after {len(attempts)} attempt(s)")
-    reasons = "; ".join(f"{a.method}: {a.record.convergence.value} ({a.record.reason})" for a in attempts)
+                                     f"accepted method {method.method!r} after {len(attempts)} attempt(s)", acceptance)
+    reasons = "; ".join(
+        f"{a.method}: {a.record.convergence.value} ({a.rejected_by_acceptance or a.record.reason})" for a in attempts
+    )
     return RobustSolveRecord("method_chain", problem.digest, tuple(attempts), None,
-                             f"every declared method failed: {reasons}")
+                             f"every declared method failed: {reasons}", acceptance)
 
 
 def _same_except_initial(a: NumericalProblem, b: NumericalProblem) -> bool:

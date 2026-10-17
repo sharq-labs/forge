@@ -7,8 +7,12 @@ solution, and it does not establish physical conservation.
 
 Field residuals compare the stored values site by site.  ``l2`` is therefore
 the root mean square over stored values, not a mesh-measure-weighted L2 norm;
-on a non-uniform support the two differ.  Two fields are compared only on the
-same support, location and component count.
+on a non-uniform support the two differ.  Phase 3 BR13 adds ``l2_measure``: the
+same root mean square weighted by each site's cell or lumped nodal measure
+(:mod:`.field_measures`), defined only on the supports listed there and refused
+for scalar coupling values, which have no support.  The recorded ``norm`` names
+which one was used.  Two fields are compared only on the same support,
+location and component count.
 """
 
 from __future__ import annotations
@@ -28,6 +32,7 @@ from ...scientific.multiphysics import (
     ResidualNorm,
 )
 from ...scientific.units.quantity import Quantity, base_unit
+from .field_measures import site_measures, weighted_rms
 from .participant import CouplingValue
 
 
@@ -47,6 +52,19 @@ class ResidualCalculator:
     ) -> None:
         self.resolver = resolver
         self.meshes = dict(meshes)
+        # Phase 3 BR13: site measures per (support fingerprint, location), computed once
+        self._measures: dict[tuple[str, str], np.ndarray] = {}
+
+    def _site_measures(self, value: FieldRecord) -> np.ndarray:
+        mesh = self.meshes.get(value.definition.mesh_id)
+        if mesh is None:
+            raise InvalidScientificProblem(
+                f"no mesh registered for field {value.definition.field_id!r}"
+            )
+        key = (mesh.fingerprint(), value.definition.location.value)
+        if key not in self._measures:
+            self._measures[key] = site_measures(mesh, value.definition.location, self.resolver)[0]
+        return self._measures[key]
 
     def _field_array(
         self,
@@ -83,6 +101,13 @@ class ResidualCalculator:
             )
 
         comparison_unit = base_unit(unit)
+        weights: np.ndarray | None = None
+        components = 1
+        if isinstance(previous, Quantity) and criterion.norm is ResidualNorm.L2_MEASURE:
+            raise InvalidScientificProblem(
+                f"criterion on edge {criterion.edge_id!r} declares the measure-weighted norm, but the edge "
+                f"carries a scalar value with no support to measure; declare linf or l2"
+            )
         if isinstance(previous, Quantity):
             old = np.asarray(
                 [previous.magnitude_in(comparison_unit)],
@@ -113,6 +138,9 @@ class ResidualCalculator:
                 raise InvalidScientificProblem(
                     "coupling field changed shape between iterations"
                 )
+            if criterion.norm is ResidualNorm.L2_MEASURE:
+                weights = self._site_measures(current)
+                components = int(after.components)
 
         # overflow is detected below and refused, never silently propagated
         with np.errstate(over="ignore", invalid="ignore"):
@@ -128,6 +156,10 @@ class ResidualCalculator:
                     if new.size
                     else 0.0
                 )
+            elif criterion.norm is ResidualNorm.L2_MEASURE:
+                assert weights is not None
+                absolute = weighted_rms(delta, weights, components)
+                scale = weighted_rms(new, weights, components)
             else:
                 absolute = float(
                     np.linalg.norm(delta)
