@@ -580,6 +580,13 @@ class CouplingPolicyTemplate:
                     "window_control divergence_factor applies to implicit coupling only"
                 )
             if (
+                control.stagnation_iterations is not None
+                and self.scheme is not CouplingScheme.IMPLICIT
+            ):
+                raise InvalidScientificProblem(
+                    "window_control stagnation_iterations applies to implicit coupling only"
+                )
+            if (
                 self.coupling_window is not None
                 and control.minimum_window.magnitude_in("second")
                 > self.coupling_window.magnitude_in("second")

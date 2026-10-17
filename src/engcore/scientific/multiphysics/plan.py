@@ -265,6 +265,12 @@ class WindowControlPolicy:
     width and grow by this factor per accepted window, up to the nominal
     coupling window.  Unset, every window starts again at the nominal width.
     Events and input-change instants still cut windows exactly as before.
+
+    ``stagnation_iterations`` (optional, int in [2, 1000], implicit only): an
+    implicit window whose largest edge residual (normalized by its first
+    iteration) has not improved on its earlier best for this many consecutive
+    iterations is rejected early as stagnating, instead of spending
+    ``max_iterations``.
     """
 
     minimum_window: Quantity
@@ -272,6 +278,7 @@ class WindowControlPolicy:
     max_subdivisions: int = 4
     divergence_factor: float | None = None
     growth_factor: float | None = None
+    stagnation_iterations: int | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -292,6 +299,12 @@ class WindowControlPolicy:
             if not math.isfinite(divergence) or divergence <= 1.0:
                 raise InvalidScientificProblem("divergence_factor must be finite and > 1")
             object.__setattr__(self, "divergence_factor", divergence)
+        if self.stagnation_iterations is not None and (
+            isinstance(self.stagnation_iterations, bool)
+            or not isinstance(self.stagnation_iterations, int)
+            or not 2 <= self.stagnation_iterations <= 1000
+        ):
+            raise InvalidScientificProblem("stagnation_iterations must be an int in [2, 1000]")
         if self.growth_factor is not None:
             growth = float(self.growth_factor)
             if not math.isfinite(growth) or not 1.0 < growth <= 10.0:
@@ -307,6 +320,7 @@ class WindowControlPolicy:
             "divergence_factor": self.divergence_factor,
             # absent when unset: policies without step-size memory keep their identity
             **({"growth_factor": self.growth_factor} if self.growth_factor is not None else {}),
+            **({"stagnation_iterations": self.stagnation_iterations} if self.stagnation_iterations is not None else {}),
         }
 
     @classmethod
@@ -318,6 +332,7 @@ class WindowControlPolicy:
             max_subdivisions=payload["max_subdivisions"],
             divergence_factor=payload.get("divergence_factor"),
             growth_factor=payload.get("growth_factor"),
+            stagnation_iterations=payload.get("stagnation_iterations"),
         )
 
 
@@ -391,6 +406,13 @@ class CouplingPlan:
             ):
                 raise InvalidScientificProblem(
                     "divergence_factor applies to implicit coupling iterations only"
+                )
+            if (
+                self.window_control.stagnation_iterations is not None
+                and self.scheme is not CouplingScheme.IMPLICIT
+            ):
+                raise InvalidScientificProblem(
+                    "stagnation_iterations applies to implicit coupling iterations only"
                 )
 
     def resolved_order(self, graph: PhysicsGraph) -> tuple[str, ...]:

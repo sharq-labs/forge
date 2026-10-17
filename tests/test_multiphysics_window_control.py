@@ -307,3 +307,41 @@ def test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_
 def test_without_growth_factor_no_width_change_is_logged():
     run = _run(_explicit_runtime(_policy(minimum=0.1), end=2.0)[0])
     assert all(e["action"] != "width_changed" for e in run.final_outputs["_window_control"]["events"])
+
+
+# ---- BR17: stagnation detection ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize("value", [1, 1001, True, 2.5])
+def test_stagnation_iterations_is_bounded(value):
+    with pytest.raises(InvalidScientificProblem, match="stagnation_iterations"):
+        WindowControlPolicy(_q(0.1), 0.5, 4, None, None, value)
+
+
+def test_stagnation_detection_on_an_explicit_plan_is_refused():
+    with pytest.raises(InvalidScientificProblem, match="implicit"):
+        CouplingPlan("p", CouplingScheme.EXPLICIT, IterationSemantics.SERIAL, TimePolicy(_q(0), _q(1), _q(0.5)),
+                     window_control=WindowControlPolicy(_q(0.1), 0.5, 4, None, None, 3))
+
+
+def test_policies_without_stagnation_detection_keep_their_identity():
+    assert "stagnation_iterations" not in _policy().to_dict()
+    stagnation = WindowControlPolicy(_q(0.1), 0.5, 4, None, None, 3)
+    assert WindowControlPolicy.from_dict(stagnation.to_dict()) == stagnation
+
+
+def test_a_stagnating_window_is_rejected_long_before_its_iteration_limit():
+    # x = y + 5: every iteration moves by exactly 5 K, so the residual never improves
+    control = WindowControlPolicy(_q(1.0), 0.5, 1, None, None, 3)
+    runtime, a, _ = _implicit_runtime(control, gain=lambda _w: 1.0, max_iterations=200)
+    with pytest.raises(CouplingWindowNotConverged, match="stagnating"):
+        _run_implicit(runtime)
+    assert a.calls <= 5  # 4 iterations reveal stagnation (best 1.0, then three more at 1.0)
+
+
+def test_a_contracting_window_is_never_called_stagnating():
+    control = WindowControlPolicy(_q(0.125), 0.5, 4, None, None, 3)
+    runtime, _, _ = _implicit_runtime(control, gain=lambda _w: 0.5)
+    run = _run_implicit(runtime)
+    assert all(w.outcome is WindowOutcome.CONVERGED for w in run.windows)
+    assert not any("stagnating" in str(e.get("reason", "")) for e in run.final_outputs["_window_control"]["events"])

@@ -1182,6 +1182,12 @@ class MultiphysicsRuntime:
                     f"coupling window {index} [{start}, {end}] is diverging: "
                     f"{diverging}"
                 )
+            stagnating = self._stagnating(iterations)
+            if stagnating:
+                raise CouplingWindowNotConverged(
+                    f"coupling window {index} [{start}, {end}] is stagnating: "
+                    f"{stagnating}"
+                )
 
             if outcome.event is not None and self.plan.time.align_events:
                 event_time = Quantity.from_dict(outcome.event["instant"])
@@ -1374,6 +1380,45 @@ class MultiphysicsRuntime:
                 "reason": "accepted after subdivision" if subdivided else f"grown by {control.growth_factor:g}",
             })
         return new
+
+    def _stagnating(self, iterations: list[CouplingIterationRecord]) -> str:
+        """Why an implicit window stopped improving, or '' (only with stagnation_iterations).
+
+        Progress is the largest edge residual normalized by that edge's
+        first-iteration residual.  Stagnation: none of the last ``n`` values
+        improves on the best value seen before them.
+        """
+        control = self.plan.window_control
+        if (
+            control is None
+            or control.stagnation_iterations is None
+            or self.plan.scheme is not CouplingScheme.IMPLICIT
+        ):
+            return ""
+        n = control.stagnation_iterations
+        if len(iterations) <= n:
+            return ""
+        first = {item.edge_id: item.absolute for item in iterations[0].residuals}
+        progress: list[float] = []
+        for record in iterations:
+            ratios = []
+            for item in record.residuals:
+                reference = first.get(item.edge_id)
+                if reference is None:
+                    continue
+                base = reference.magnitude_in(str(item.absolute.units))
+                if base > 0.0:
+                    ratios.append(item.absolute.magnitude / base)
+            if not ratios:
+                return ""
+            progress.append(max(ratios))
+        best_before = min(progress[:-n])
+        if min(progress[-n:]) >= best_before:
+            return (
+                f"the largest normalized edge residual has not improved on {best_before:.3g} "
+                f"for {n} consecutive iterations"
+            )
+        return ""
 
     def _controlled_window(
         self,
