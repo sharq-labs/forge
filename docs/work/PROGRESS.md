@@ -4980,3 +4980,36 @@ tree clean, the two fix-only FAST failures (`test_core_freeze_manifest::test_the
 `test_core_freeze_v3_manifest::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`) pass:
 `pytest <those two ids> -q` -> 2 passed in 37.8 s. The fix branch's FAST failure set therefore equals the
 baseline's.
+
+## 2026-10-17 -- Engineering Runtime V1 Big Rocks (build phase; feat/engrt-v1-big-rocks, local only)
+
+Owner direction (2026-10-17): build the Big Rocks first.
+- No pytest, FAST, SCIENTIFIC, regression, mutation, benchmark or hardened run until the owner authorizes one.
+  Only `py_compile` and import checks.
+- Tests are written but NOT executed.
+- Logical local commits; no push or PR.
+- Owner decision on the active-epic policy: Big Rocks are runtime/platform engineering (no new tracked scientific
+  capability, no ledger change). Anything adding new physics, models or a ledger capability stops for owner approval.
+
+Branch `feat/engrt-v1-big-rocks` (worktree `D:/forge-engrt-br`), stacked on `fix/engrt-v1-phase1-interop`
+`423fb467`. The linked session "Bind provider builds into adapter checkpoints" owns `coupling/adapters.py`,
+`providers/pybamm/**`, `execution/multiphysics/external.py` and `participant.py`; this branch does not touch them.
+Deferred tests and checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md).
+
+### BR1 -- adaptive coupling-window control (`af7ea219`, tests NOT RUN)
+- `scientific/multiphysics/plan.py`: `WindowControlPolicy` on `CouplingPlan` (optional, trailing).
+  - Fields: `minimum_window` (required, no default), `reduction_factor`, `max_subdivisions`, and an optional
+    `divergence_factor` (implicit only).
+  - Serialized only when set.
+  - Admission requires deterministic checkpoint/restore on every participant.
+- `execution/multiphysics/runtime.py`:
+  - `CouplingWindowNotConverged` (a subclass of `MultiphysicsExecutionError`) is raised for an iteration limit,
+    for divergence, and for a participant's internal non-convergence.
+  - `_controlled_window` rolls back and retries only numerical failures.
+  - `_diverging_edge` implements the early divergence stop.
+  - The log is surfaced in `final_outputs["_window_control"]`.
+- Tests written: `tests/test_multiphysics_window_control.py` (policy bounds, serialization identity, admission,
+  rollback accounting, exhaustion, refusal-not-retried, implicit subdivision, ITERATION_LIMIT never relabelled,
+  divergence). Static checks only: py_compile, import of every test import (none missing), `git diff --check`.
+- UNCERTIFIED: `plan.py`, `runtime.py` and both `__init__.py` files are pinned in
+  `certification/current_core_v2.json`.

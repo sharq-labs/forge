@@ -1,5 +1,16 @@
 # Active Plan
 
+## Active override — Engineering Runtime V1 Big Rocks, build phase (2026-10-17)
+
+Branch `feat/engrt-v1-big-rocks` (worktree `D:/forge-engrt-br`), stacked on `fix/engrt-v1-phase1-interop`. Local
+commits only. **Build phase:** tests are written, not run, until the owner authorizes stabilization; see
+[DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md). Big Rocks are runtime engineering by owner decision (no new
+ledger capability).
+
+- [x] BR1 adaptive coupling-window control (`af7ea219`), tests NOT RUN.
+- [ ] BR2 quasi-Newton (IQN-ILS) coupling acceleration.
+- [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
+
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)
 
 Branch `fix/engrt-v1-phase1-interop` (worktree `D:/forge-engrt-p1`), base `origin/main` `de7527fd`, committed
