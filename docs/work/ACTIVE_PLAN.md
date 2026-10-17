@@ -20,7 +20,8 @@ ledger capability).
 - [x] Owner decision (2026-10-17): tests/multiscale_reference.py stays on root_method="lm" (evidence identical); the chain stays opt-in.
 - [x] BR9 multiscale: opt-in macro-window rejection on fast non-convergence, tests NOT RUN.
 - [x] BR10 composition-pack templates declare window control (carried into plans), tests NOT RUN.
-- [ ] BR11: owner to choose.
+- [x] BR11 step-size memory for adaptive coupling windows, tests NOT RUN.
+- [ ] BR12: owner to choose.
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)

@@ -5175,3 +5175,17 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
 - Deliberately not exposed: BR5 concurrency. Packs may not pin executors, and thread-safety belongs to the executor.
 - Tests written: `tests/compositionpacks/test_template_window_control.py`, using the real built-in electrothermal
   pack objects. Static checks only.
+
+### BR11 -- step-size memory for adaptive coupling windows (tests NOT RUN)
+- Replay check first: `assembly/replay.compare_runs` skips underscore-prefixed outputs and compares `window_count`
+  and the plan fingerprint. A concurrent run (BR5, `_concurrency`) and a window-controlled run (BR1) therefore
+  replay-compare correctly. No defect found.
+- Gap closed (BR1's recorded remaining work): after a subdivision the next window jumped back to the full width, so
+  a stiff stretch repeated fail -> halve -> succeed every window.
+- What changed:
+  - `WindowControlPolicy.growth_factor` (optional, in (1, 10], serialized only when set).
+  - `runtime._next_window_width` remembers the width a subdivided or exhausted window was accepted at, and grows it
+    by the factor per accepted window up to the nominal width. Event and input-change cuts do not shrink it.
+  - Width changes are logged.
+- Tests appended to `tests/test_multiphysics_window_control.py`. A hand-traced stiff case: 8 subdivisions over 2 s
+  without memory, 4 with growth 2, every accepted window <= the 0.25 s stability limit, rollback still exact.

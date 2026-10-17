@@ -9,7 +9,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 
 | ID | Big Rock | Deferred test / check | Command (when authorized) | Status |
 | --- | --- | --- | --- | --- |
-| DV-1 | BR1 adaptive coupling windows | New tests | `pytest tests/test_multiphysics_window_control.py -q` | NOT RUN |
+| DV-1 | BR1 + BR11 adaptive coupling windows (incl. step-size memory) | New tests | `pytest tests/test_multiphysics_window_control.py -q` | NOT RUN |
 | DV-2 | BR1 | Existing multiphysics runtime suites (exception subclass, plan serialization, run-record shape) | `pytest tests/test_stateful_multiphysics_runtime.py tests/test_big9_review_runtime_fixes.py tests/test_multiphysics_conservation_history.py tests/test_multiphysics_fan_in_units.py tests/test_external_participant_checkpoints.py tests/test_coupled_transport_admission.py -q` | NOT RUN |
 | DV-3 | BR1 | Stored plan/run fingerprints unchanged for plans without window control (any test or benchmark that pins a `CouplingPlan.fingerprint()` or run digest) | FAST tier, diffed against a pristine baseline | NOT RUN |
 | DV-8 | BR2 joint IQN-ILS | New tests (hand-computed expectations) | `pytest tests/test_multiphysics_iqn_ils.py -q` | NOT RUN |
@@ -124,3 +124,10 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
   positive test builds a restorable blueprint this way.
 - No built-in pack participant is deterministically restorable, so no built-in system can use window control
   without adapter work. That is outside this change.
+
+## Unverified assumptions (BR11)
+
+- The remembered width is a numerical heuristic, not an error estimate. It only changes where windows start; every
+  window is still held to the same criteria and logged.
+- Growth applies per accepted window, including windows cut short by an event. A long run of event-cut windows can
+  regrow the width without exercising it.
