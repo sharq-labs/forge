@@ -386,3 +386,38 @@ UNBOUNDED source.
 | 8 | MINOR | `MappingDiagnostics.provenance` was a mutable dict | Fixed: frozen on construction, `detach`ed on serialization. |
 | 9 | MINOR | Conditioning of sparse 1000 < n <= 2000 (and GMRES) now estimated or unresolved; `stability.py` then records "singular or unresolved" | Recorded (DV-43): the safe direction; stability decisions change. |
 | 10 | MINOR | degC refused for conservative remap although an exactly covering first-order remap is affine-invariant | Kept as a design choice (no conservation claim for an offset scale); owner may relax. |
+
+## Phase 2 — Unified solver & multiphysics architecture (2026-10-17)
+
+Branch `feat/phase2-unified-solver-architecture` (worktree `D:/forge-phase2`), stacked on Phase 1 `6249c2d2`
+(itself on `origin/main` `de11dffa`; neither pushed nor merged). Rocks are P2-BR8..P2-BR12. **No test of any kind
+was executed** (owner direction): only `py_compile`, import checks and `git diff --check`. Every changed capability
+is IMPLEMENTED / UNVERIFIED at most; every touched pinned file is UNCERTIFIED until OD-3. The Phase 1 items above
+(N60d, stub-run tests, DV-34, 3D remap, mesh-weighted residual, participant time tolerance, no coupling-error bound)
+are NOT resolved by Phase 2 unless a row below says so.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-48 | P2-BR8 authority, deferred outputs, isolation, exact NONE relaxation | New tests | `pytest tests/test_phase2_coupling_authority.py -q` | NOT RUN |
+| DV-49 | P2-BR8 | Electrothermal parity: native loop vs runtime build (outcome, iterations, outputs <= 1e-9) on NOMINAL and TWO_STAGE; iteration-limit parity | included in DV-48 | NOT RUN |
+| DV-50 | P2-BR8 | Existing suites touched by the NONE-relaxation change (implicit unrelaxed runs now deliver the transfer bit-exactly; iterates may move by an ulp) and the electrothermal provenance text (unrelaxed runs unchanged) | `pytest tests/test_electrothermal_vertical.py tests/test_electrothermal_fixed_point_relaxation.py tests/test_stateful_multiphysics_runtime.py tests/test_big9_review_runtime_fixes.py tests/test_multiphysics_window_control.py -q` | NOT RUN |
+
+### P2-BR8 status: PARTIAL / UNVERIFIED
+
+- Authority: `MultiphysicsRuntime`, declared in `execution/multiphysics/authority.py` (`COUPLING_PATHS`,
+  `coupling_authority()`); one outcome vocabulary (`fixed_point_outcome`).
+- Not migrated: the electrothermal fixed point (`systems/electrothermal/coupled.py`) still decides its own
+  convergence on the product path. A runtime-equivalent build exists (`systems/electrothermal/runtime_adapter.py`)
+  for unrelaxed plans only. Remaining: execute parity (DV-49); relaxation semantics (runtime relaxes every serial
+  edge, the native loop only torn values); TRANSFER_REFUSED as a recorded stop; `credibility.CouplingEvidence` on the
+  runtime record.
+- Fixed in passing: the native loop's provenance claimed "no relaxation" for relaxed runs (false support); NONE
+  relaxation rounded `old + 1*(new-old)`; one participant object under two concurrent ids was not refused.
+
+### Unverified assumptions (P2-BR8)
+
+- The runtime compares the torn change in the port's base unit, the native loop in the plan's ratio-scale unit; they
+  can disagree only by rounding at the tolerance boundary.
+- `ResultParticipant` sets `internal_converged` from the result's convergence state (stricter than the native loop,
+  which ignores it); every electrothermal executor reports CONVERGED or NOT_APPLICABLE, so parity is expected.
+- A steady participant's deferred initial outputs are never read on forward serial edges; any other edge is refused.

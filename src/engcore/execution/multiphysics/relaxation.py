@@ -216,6 +216,13 @@ class RelaxationController:
                 "IQN-ILS updates the joint interface vector (relax_joint); it has no per-edge step"
             )
         residual = new - old
+        if self.policy.kind is RelaxationKind.NONE:
+            # Phase 2 BR8: no relaxation delivers the transferred value itself
+            # (in the target unit), not old + 1.0 * (new - old), which differs
+            # from it by rounding (the Phase 1 BR1 recorded approximation)
+            self._omega[edge_id] = 1.0
+            self._previous_residual[edge_id] = residual.copy()
+            return self._from_vector(raw, new, unit=unit), 1.0
         omega = self.factor(edge_id)
 
         if self.policy.kind is RelaxationKind.AITKEN and edge_id in self._previous_residual:
@@ -233,8 +240,6 @@ class RelaxationController:
                         self.policy.maximum_factor,
                         max(self.policy.minimum_factor, candidate),
                     )
-        elif self.policy.kind is RelaxationKind.NONE:
-            omega = 1.0
 
         relaxed = old + omega * residual
         self._omega[edge_id] = omega
