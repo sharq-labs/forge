@@ -388,6 +388,23 @@ mesh-control slice 2"). It is the same exception, not a second one.
   - Everything else in item 8 above.
 - **Exit and expiry:** unchanged. DV-27 and the new DV-28 must run, and the scientific review must cover both slices.
 
+**EXC-1 amendment A2 (2026-10-17): slice 3.** The owner approved it in the session ("Amend EXC-1 for slice 3: a
+non-uniform finite-difference 1D conduction solver that adapt_grid can drive (new solver path, existing uniform
+conduction1d untouched)").
+- **Scope added:** a new module `src/engcore/domains/thermal_models/conduction1d_nonuniform.py` and its tests. It is
+  imported by its own path; the pinned `thermal_models/__init__.py` is not touched.
+- **Allowed work added:**
+  - a STEADY 1D conduction solver, -(k u')' = q, on a non-uniform `Grid1D`;
+  - vertex-centred finite volumes, conductivity k(x) evaluated at faces, source q(x);
+  - explicit boundary conditions at both ends (temperature or heat flux), never defaulted;
+  - an evaluator `grid -> nodal temperatures` that `adapt_grid` drives.
+- **Still prohibited:**
+  - any change to `conduction1d`, `conduction1d_schemes` or any pinned file;
+  - registering a model, capability or `ValidationCheck` (evidentiary audit and exact-count guards);
+  - a transient solver; claims or `uq_studies` wiring;
+  - everything in item 8 and A1.
+- **Exit and expiry:** unchanged, plus DV-29 for this slice.
+
 ## Stop conditions
 
 Stop and surface a blocker if a change would: weaken UNKNOWN or fail-closed semantics; change a frozen serialized
