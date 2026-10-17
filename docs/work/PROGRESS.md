@@ -4464,3 +4464,42 @@ not 0bc8b1cb.
 - Pristine main e193e573: 10374 passed, 1 failed (`test_the_certificate_describes_this_tree`), 156 skipped.
 - Landing tree bd927d8a: 10719 passed, 2 failed, 156 skipped, tracked tree clean afterwards. The only failure not present on main is `test_the_certificate_records_the_v1_relationship_truthfully` (expected certificate staleness, above). Earlier landing trees: 4f7576e0 had 3 failures (the third was the mind schema invariant, fixed in eecef67b); eecef67b had the same 2.
 - Windows .venv 3.14 targeted runs: `tests/mind tests/test_core_semantic_invariants.py tests/test_core_api_layering.py tests/test_core_guards.py` 417 passed; `tests/scientific/knowledge tests/test_core_guards.py` 309 passed; `tests/uq/budget tests/claims/test_unassessable_compilation.py tests/foundations/test_discovery_deadline.py` 20 passed, 11 skipped (POSIX-only).
+
+## 2026-10-16 -- Performance audit follow-up: hardened-run settings and agent test commands
+
+The owner approved the top three items of a read-only performance audit of main (bdf95e0f, then 91b44e22):
+
+- `~/cons-assure-3.sh` (WSL home, outside the repository) now passes `--mutation-workers 4`, the invocation that
+  `docs/assurance/LOCAL_ASSURANCE.md` recommends.
+  - The 05522b59 receipt ran at the default of 2 workers: 3.45 h in total, ~3.1 h of it the Formal group, as two waves
+    of two shards.
+  - One wave of four is estimated at ~2.05 h in total. NOT RUN.
+  - The script still pins 0bc8b1cb; retarget it before launch (see the landing pass above).
+- `~/assurance-preflight.sh` (outside the repository) gains three checks:
+  - the shards' own `.git` admission (`mutation_workspace._check_git_seed`);
+  - MemAvailable >= 8 GB;
+  - FAST under both gate interpreters with the gate's flags and deselects, followed by `skip_admission audit` on each
+    JUnit. `PREFLIGHT_FAST=0` skips this step.
+- `CLAUDE.md`:
+  - the per-edit gate is `python tools/forge_check.py --dev`, because plain `--changed` runs serially;
+  - the integration tiers pass `--dist loadfile`.
+  - `recertification_scope explain CLAUDE.md` -> ordinary.
+
+**Checks** (not tests):
+- `bash -n` passes on both scripts, and both keep LF line endings.
+- The admission snippet exits 0 on `~/forge-cons-assure-2`. It refuses `~/forge-local-assurance-72bf7c4c` (`.git/worktrees`)
+  with the shards' message.
+- The full preflight was run as a check of the script, not as a launch.
+  - Command (WSL): `bash ~/assurance-preflight.sh ~/forge-cons-assure-2 0bc8b1cb422edb05931c9fff923453dcd5597b8b`, on the
+    prepared run-2 clone.
+  - Result: PREFLIGHT: PASS, exit 0, 584 s wall. Benchmark tests: 375 passed, 0 skipped. FAST 3.11: 10602 passed, 156 skipped
+    in 211 s. FAST 3.12: 10602 passed, 156 skipped in 238 s. Skip admission on both: 156 accepted, 0 unexpected.
+  - The tracked tree was clean afterwards, with no new untracked files.
+  - The FAST times match run 2's gate times on the same commit (215 s / 238 s).
+- Negative check: `skip_admission audit` on that JUnit plus one injected pytest-format skip in tests/test_core_guards.py
+  exits 1 with "a hardened-core trust test skipped; no rule can admit it".
+- Not checked: the hardened run itself (not launched), and a preflight on main 91b44e22. There, FAST is about 2x slower
+  until the certificate-closure speed-up lands, so expect roughly 15-18 min.
+
+**Tests** (Windows .venv 3.14, worktree at 91b44e22 + this change):
+- `python -m pytest tests/test_agent_workflow_contract.py -q -p no:cacheprovider` -> 2 passed.

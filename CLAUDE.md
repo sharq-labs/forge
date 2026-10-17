@@ -83,8 +83,12 @@ uses the canonical implementation path.
 For a normal code change, start with:
 
 ```bash
-python tools/forge_check.py --changed
+python tools/forge_check.py --dev
 ```
+
+`--dev` is `python tools/forge_check.py --changed` with safe-auto pytest-xdist
+workers. Plain `--changed` runs serially, which is several times slower
+whenever its selection widens to the whole FAST tier.
 
 For the fixed scientific regression pack:
 
@@ -95,9 +99,12 @@ python tools/forge_check.py --regression
 Then, when the change is ready for integration, use the repository tiers:
 
 ```bash
-python -m pytest -m "not expensive" -q -n 4
-python -m pytest -m "not campaign" -q -n 4
+python -m pytest -m "not expensive" -q -n 4 --dist loadfile
+python -m pytest -m "not campaign" -q -n 4 --dist loadfile
 ```
+
+`--dist loadfile` keeps each test module on one worker, so module-scoped
+fixtures are built once rather than once per worker (`docs/TESTING.md`).
 
 Certification / hardened recertification is a separate manual operation.
 
