@@ -446,6 +446,12 @@ class FixedPointCouplingPlan:
     torn: tuple[TornEndpoint, ...]
     absolute_tolerance: Quantity
     max_iterations: int
+    #: Optional under-relaxation of the torn values carried into the next
+    #: sweep: ``x <- x + w * (H(x) - x)`` with ``0 < w < 1``.  The stopping
+    #: test is always the UNRELAXED change ``|H(x) - x|``, and a converged run
+    #: reports the unrelaxed transported values, so relaxation only changes the
+    #: path, never what "converged" means.  Serialized only when declared.
+    relaxation_factor: float | None = None
 
     def __post_init__(self) -> None:
         plan_id = str(self.plan_id).strip()
@@ -536,6 +542,11 @@ class FixedPointCouplingPlan:
                     )
 
         object.__setattr__(self, "max_iterations", int(self.max_iterations))
+        if self.relaxation_factor is not None:
+            factor = float(self.relaxation_factor)
+            if isinstance(self.relaxation_factor, bool) or not math.isfinite(factor) or not 0.0 < factor < 1.0:
+                raise InvalidScientificProblem("relaxation_factor must lie in (0, 1) (under-relaxation)")
+            object.__setattr__(self, "relaxation_factor", factor)
 
     @property
     def comparison_unit(self) -> str:
@@ -634,6 +645,12 @@ class FixedPointCouplingPlan:
             "torn": [e.to_dict() for e in self.torn],
             "absolute_tolerance": self.absolute_tolerance.to_dict(),
             "max_iterations": self.max_iterations,
+            # absent when undeclared: existing plans and run records keep their identity
+            **(
+                {"relaxation_factor": self.relaxation_factor}
+                if self.relaxation_factor is not None
+                else {}
+            ),
         }
 
     @classmethod
@@ -647,6 +664,7 @@ class FixedPointCouplingPlan:
             torn=tuple(TornEndpoint.from_dict(e) for e in payload["torn"]),
             absolute_tolerance=Quantity.from_dict(payload["absolute_tolerance"]),
             max_iterations=payload["max_iterations"],
+            relaxation_factor=payload.get("relaxation_factor"),
         )
 
 
@@ -2149,7 +2167,18 @@ def run_fixed_point(
                 )
             )
             break
-        current = updated
+        if largest <= tolerance or plan.relaxation_factor is None:
+            current = updated  # a converged run reports the unrelaxed transported values
+        else:
+            omega = plan.relaxation_factor
+            current = {
+                key: Quantity(
+                    current[key].magnitude_in(unit)
+                    + omega * (value.magnitude_in(unit) - current[key].magnitude_in(unit)),
+                    unit,
+                ).to(str(value.units))
+                for key, value in updated.items()
+            }
         if largest <= tolerance:
             outcome = CouplingOutcome.CRITERION_MET
             break
