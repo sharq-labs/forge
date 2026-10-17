@@ -179,3 +179,28 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
   a declared input. Nothing found requires that, but no test exercises a curve handed to these inputs.
 - Zero validity conditions is a deliberate UNKNOWN. A scientific reviewer may instead require sourced
   conditions (for example, a Biot or aspect-ratio screen for 1D applicability) before any claim use.
+
+## Phase 1 — Scientific & numerical correctness (2026-10-17)
+
+Branch `fix/phase1-scientific-numerical-correctness` (worktree `D:/forge-phase1`), base `origin/main` `de11dffa`.
+Local commits only. The rocks are numbered P1-BR1..P1-BR7 here so they are not confused with the Engineering
+Runtime V1 BR1..BR22 above. **No test of any kind was executed in this phase** (owner direction): only `py_compile`
+and `git diff --check`. Every capability changed here is IMPLEMENTED / UNVERIFIED and every touched
+certification-pinned file is UNCERTIFIED until OD-3.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-31 | P1-BR1 coverage, explicit plans, non-finite residuals | New tests | `pytest tests/test_phase1_coupling_convergence_coverage.py -q` | NOT RUN |
+| DV-32 | P1-BR1 | Existing suites that build EXPLICIT plans (all refused on `main` since `35d8f557`) or implicit plans with partial criteria (now refused); expect outcome changes in both directions | `pytest tests/test_multiphysics_window_control.py tests/test_multiphysics_iqn_ils.py tests/test_multiphysics_splitting_estimate.py tests/test_multiphysics_event_aligned_outcome.py tests/test_big9_review_runtime_fixes.py tests/test_stateful_multiphysics_runtime.py tests/compositionpacks -q` | NOT RUN |
+
+### Unverified assumptions (P1-BR1)
+
+- Serial forward edges without relaxation are treated as consistent by construction. The runtime delivers
+  `old + 1.0 * (new - old)`, which equals `new` only up to one rounding; the policy accepts that rounding.
+- Every existing implicit plan in `src/`, `flagships/` and `tests/multiscale_reference.py` was read against the
+  coverage policy and monitors its required edges (drone hover: `bus_voltage`, `winding_temperature`; battery
+  cooling and the heater board monitor every edge). Plans inside other test files were not audited; DV-32 finds them.
+- The field residual `l2` stays the root mean square over stored values. On a non-uniform support it is not a
+  mesh-weighted L2 norm; that is documented, not changed (changing it would move convergence decisions).
+- Non-finite participant outputs are refused when the `Quantity` / `FieldValue` is built, before any residual;
+  that refusal is not retried by window control. Only an overflowing residual is a retryable numerical failure.

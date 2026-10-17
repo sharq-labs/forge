@@ -382,6 +382,10 @@ class CouplingPlan:
                 raise InvalidScientificProblem("explicit coupling has no coupling-convergence criteria")
             if self.relaxation.kind is not RelaxationKind.NONE:
                 raise InvalidScientificProblem("explicit coupling does not relax an iteration")
+        elif not criteria:
+            # Phase 1 BR1: this check belongs to the scheme test.  Attached to
+            # the IQN-ILS test below (as it was), it refused every explicit plan.
+            raise InvalidScientificProblem("implicit coupling requires convergence criteria")
         if (
             self.relaxation.kind is RelaxationKind.IQN_ILS
             and self.iteration_semantics is not IterationSemantics.JACOBI
@@ -390,8 +394,6 @@ class CouplingPlan:
                 "IQN-ILS updates the joint interface vector after every participant has run "
                 "(Jacobi); serial Gauss-Seidel relaxes edges one at a time and is not supported"
             )
-        elif not criteria:
-            raise InvalidScientificProblem("implicit coupling requires convergence criteria")
         if self.window_control is not None:
             if not isinstance(self.window_control, WindowControlPolicy):
                 raise InvalidScientificProblem("window_control must be a WindowControlPolicy")
@@ -455,6 +457,44 @@ class CouplingPlan:
             raise InvalidScientificProblem("failed to derive serial order from graph")
         return tuple(order)
 
+    def required_convergence_edges(self, graph: PhysicsGraph) -> tuple[str, ...]:
+        """The edges whose fixed-point residual an IMPLICIT plan must monitor.
+
+        An implicit window is a fixed-point iteration ``x = H(x)`` over the
+        interface vector.  The window is a solution of the coupled equations
+        only if every input a participant CONSUMED equals the transfer of the
+        output it consumed.  Which edges can violate that is a property of the
+        iteration semantics, so the policy is derived, never declared:
+
+        * JACOBI: every edge.  Each participant reads the frozen previous
+          iterate, so every edge is lagged by one iteration.
+        * SERIAL with NONE relaxation: every LAGGED edge -- its target runs at
+          or before its source in the resolved order (self-loops included), so
+          the target read the previous iterate.  A forward edge delivers this
+          iteration's transfer to a target that runs later in the same
+          iteration; it is consistent by construction (up to the rounding of
+          ``old + (new - old)``) and needs no criterion.
+        * SERIAL with CONSTANT or AITKEN relaxation: every edge.  A relaxed
+          forward edge delivers a mix of two iterates, not the transfer.
+
+        EXPLICIT plans make no convergence claim and require nothing.  The
+        residual is an iterate-consistency measure: it is not the solution's
+        error, and it says nothing about physical conservation.
+        """
+        if self.scheme is CouplingScheme.EXPLICIT:
+            return ()
+        if (
+            self.iteration_semantics is IterationSemantics.JACOBI
+            or self.relaxation.kind is not RelaxationKind.NONE
+        ):
+            return tuple(sorted(edge.edge_id for edge in graph.edges))
+        position = {pid: index for index, pid in enumerate(self.resolved_order(graph))}
+        return tuple(sorted(
+            edge.edge_id
+            for edge in graph.edges
+            if position[edge.target.participant_id] <= position[edge.source.participant_id]
+        ))
+
     def validate_against(self, graph: PhysicsGraph) -> None:
         self.resolved_order(graph)
         for criterion in self.criteria:
@@ -466,6 +506,19 @@ class CouplingPlan:
                     f"[{criterion.absolute_tolerance.dimensionality}] but edge transports "
                     f"[{source.dimension}]"
                 )
+        missing = sorted(
+            set(self.required_convergence_edges(graph))
+            - {criterion.edge_id for criterion in self.criteria}
+        )
+        if missing:
+            # Phase 1 BR1: a window could otherwise be labelled CONVERGED while
+            # an interface the iteration updates was never measured.
+            raise InvalidScientificProblem(
+                f"implicit {self.iteration_semantics.value} coupling with "
+                f"{self.relaxation.kind.value} relaxation must monitor edges {missing}: "
+                f"they carry a lagged or relaxed iterate, and an unmonitored one can "
+                f"leave the coupled equations unsatisfied in a window reported as converged"
+            )
         if self.scheme is CouplingScheme.IMPLICIT:
             bad = [
                 participant.participant_id

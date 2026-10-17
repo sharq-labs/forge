@@ -5,7 +5,7 @@ from .admission import (
     MultiphysicsExecutionAdmission,
     admit_multiphysics_execution,
 )
-from .convergence import ResidualCalculator
+from .convergence import NonFiniteCouplingResidual, ResidualCalculator
 from .error import CouplingErrorBudget, CouplingErrorContribution
 from .external import (
     ExternalProviderIdentity,
@@ -85,6 +85,7 @@ __all__ = [
     "MultiphysicsExecutionError",
     "CouplingWindowNotConverged",
     "MultiphysicsRuntime",
+    "NonFiniteCouplingResidual",
     "ParticipantEvent",
     "ParticipantFactory",
     "ParticipantFactoryCoverage",

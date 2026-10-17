@@ -50,7 +50,7 @@ from ...scenarios import (
     ScenarioEvent,
     TerminationCondition,
 )
-from .convergence import ResidualCalculator
+from .convergence import NonFiniteCouplingResidual, ResidualCalculator
 from .concurrency import ConcurrentAdvancePolicy, advance_in_plan_order, validate_policy
 from .error import CouplingErrorBudget
 from .factory import ParticipantFactoryRegistry
@@ -299,6 +299,7 @@ class MultiphysicsRuntime:
         concurrency: ConcurrentAdvancePolicy | None = None,
     ) -> None:
         plan.validate_against(graph)
+        self._required_edges = frozenset(plan.required_convergence_edges(graph))
         # opt-in, declared per participant; validated before anything is allocated
         validate_policy(
             concurrency,
@@ -978,14 +979,21 @@ class MultiphysicsRuntime:
                         f"{criterion.edge_id!r}; the fixed-point residual "
                         f"cannot be measured"
                     )
-                residuals.append(
-                    self.residuals.compare(
-                        criterion,
-                        edge_values[criterion.edge_id],
-                        unrelaxed[criterion.edge_id],
-                        unit=target_port.unit,
+                try:
+                    residuals.append(
+                        self.residuals.compare(
+                            criterion,
+                            edge_values[criterion.edge_id],
+                            unrelaxed[criterion.edge_id],
+                            unit=target_port.unit,
+                        )
                     )
-                )
+                except NonFiniteCouplingResidual as exc:
+                    # a lost iterate is a numerical failure of the window: it is
+                    # never recorded as an ITERATION_LIMIT the plan may accept
+                    raise CouplingWindowNotConverged(
+                        f"coupling iteration {iteration} [{start}, {end}]: {exc}"
+                    ) from exc
 
         mapping_diagnostics = [
             {"edge_id": edge_id, "mapping": transfer.mapping.to_dict()}
@@ -1289,6 +1297,14 @@ class MultiphysicsRuntime:
                 )
 
             if outcome.record.converged:
+                monitored = {item.edge_id for item in outcome.record.residuals}
+                unmonitored = sorted(self._required_edges - monitored)
+                if unmonitored:
+                    # validate_against refuses such a plan; this guards the label itself
+                    raise MultiphysicsExecutionError(
+                        f"coupling window {index} [{start}, {end}] would be labelled "
+                        f"converged with required interfaces {unmonitored} unmeasured"
+                    )
                 return (
                     CouplingWindowRecord(
                         index,
