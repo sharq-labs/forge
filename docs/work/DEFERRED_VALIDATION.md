@@ -283,3 +283,34 @@ certification-pinned file is UNCERTIFIED until OD-3.
 - `minimum_window` governs subdivision only. A window forced short by an event, an input change or the horizon
   may be shorter than it; whether such a schedule should be refused under window control is an owner decision.
 - `float(Fraction)` is correctly rounded in CPython; the determinism test relies on it.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-40 | P1-BR5 typed verification | New tests + the existing verification suites (all existing policies use V1/V2/V4 with route kinds the table keeps; expected unchanged) | `pytest tests/scientific/verification tests/execution/test_verification_runner_v2.py tests/execution/test_verification_runner_identity_v2.py tests/credibility/test_assurance_manifest_v2.py tests/compositionpacks -q` | NOT RUN |
+| DV-41 | P1-BR5 | Mutation population V4: mutant **N60d** pins the removed ordinal line of `plan_verification` and can no longer apply; N60e, N60f and N60i lines are byte-identical. The population is certification-pinned, so the replacement mutant (typed admission -> `if False`, killed by `test_a_legacy_v2_requirement_is_not_met_by_validation_model_form_or_reproduction`) needs OD-3 | owner recertification | NOT RUN |
+
+### Category table (P1-BR5)
+
+| Category | Provided by route kinds | Legacy `minimum_level` that names it |
+| --- | --- | --- |
+| repeatability | same_solver_rerun | V0 |
+| solution_verification | different_algorithm | V1 |
+| code_verification | different_implementation, external_solver, analytical_reference | V2 |
+| model_form_comparison | different_model | V3 |
+| analytical_comparison | analytical_reference | V4 |
+| independent_solver_corroboration | external_solver | V5 |
+| experimental_validation | experimental_measurement | V6 |
+| reproducibility | independent_reproduction | V7 |
+
+The only many-to-one entry is code verification (code-to-code comparison and comparison with an exact solution of
+the same model). Every promotion the ordinal check allowed beyond this table is now refused, including
+V6/V7 for V2, V5 for V4 and V3 for V1/V2.
+
+### Unverified assumptions (P1-BR5)
+
+- Admitting `analytical_reference` and `external_solver` for code verification is a scientific judgement (Roache /
+  Oberkampf code-to-code and exact-solution comparison). An owner may narrow it; nothing else is many-to-one.
+- A plan whose candidate was rejected for its level now carries a different rejection text; any stored
+  `verification_plan` payload with such a rejection would be refused as stale by `plan_from_dict`. No stored payload
+  was found in `benchmarks/`, `certification/` or `tests/`.
+- `minimum_level=V0` used to admit every route kind; it now requires repeatability. No policy in `src/` uses V0.

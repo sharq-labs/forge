@@ -14,7 +14,12 @@ from typing import Any, Iterable, Mapping
 
 from ..scientific.serialization import require_schema, schema_string
 from ..scientific.verification.independence import IndependenceEvidence, IndependenceLevel
-from ..scientific.verification.ladder import VerificationLevel, level_for_route
+from ..scientific.verification.ladder import (
+    VerificationEvidenceCategory,
+    VerificationLevel,
+    category_for_route,
+    level_for_route,
+)
 from ..scientific.verification.route import VerificationRouteKind
 
 VERIFICATION_OPTION_SCHEMA = schema_string("engineering_verification_option")
@@ -50,7 +55,13 @@ class VerificationPlanningOption:
 
     @property
     def verification_level(self) -> VerificationLevel:
+        """The route kind's number; not an ordinal strength (see ``evidence_category``)."""
         return level_for_route(self.route_kind)
+
+    @property
+    def evidence_category(self) -> VerificationEvidenceCategory:
+        """The kind of evidence this route provides (Phase 1 BR5); planning compares categories, not levels."""
+        return category_for_route(self.route_kind)
 
     def supports_independence(self, minimum: IndependenceLevel = IndependenceLevel.STRONG) -> bool:
         return _INDEPENDENCE_RANK[self.independence.level] >= _INDEPENDENCE_RANK[IndependenceLevel(minimum)]

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from .dependencies import RouteDependencyManifest,derive_independence
 from .independence import IndependenceEvidence,IndependenceLevel
-from .ladder import VerificationLevel,level_for_route
+from .ladder import VerificationEvidenceCategory,VerificationLevel,category_for_level,category_for_route,level_for_route,provides
 from .route import VerificationRoute
 
 
@@ -13,10 +13,19 @@ _INDEPENDENCE_RANK={IndependenceLevel.NONE:0,IndependenceLevel.PARTIAL:1,
 
 @dataclass(frozen=True)
 class VerificationPolicy:
+    """What a verification plan must contain (Phase 1 BR5: typed, never ordinal).
+
+    ``required_categories`` names the kinds of evidence required; every one
+    must be provided by a selected route (:data:`~.ladder.CATEGORY_PROVIDERS`).
+    Left empty, the policy requires the single category named by
+    ``minimum_level`` -- the legacy field is read as "evidence of THIS kind",
+    never as "this level or any higher-numbered one".
+    """
     minimum_level:VerificationLevel=VerificationLevel.V2
     minimum_independence:IndependenceLevel=IndependenceLevel.STRONG
     minimum_routes:int=1
     require_external:bool=False
+    required_categories:tuple[VerificationEvidenceCategory,...]=()
 
     def __post_init__(self)->None:
         object.__setattr__(self,"minimum_level",VerificationLevel(self.minimum_level))
@@ -24,6 +33,15 @@ class VerificationPolicy:
         if isinstance(self.minimum_routes,bool) or int(self.minimum_routes)<1: raise ValueError("minimum_routes must be >=1")
         object.__setattr__(self,"minimum_routes",int(self.minimum_routes))
         if not isinstance(self.require_external,bool): raise ValueError("require_external must be bool")
+        if isinstance(self.required_categories,(str,bytes)): raise ValueError("required_categories must be a sequence of categories")
+        categories=tuple(VerificationEvidenceCategory(item) for item in self.required_categories)
+        if len(set(categories))!=len(categories): raise ValueError("required_categories must not repeat a category")
+        object.__setattr__(self,"required_categories",tuple(sorted(categories,key=lambda item:item.value)))
+
+    @property
+    def categories(self)->tuple[VerificationEvidenceCategory,...]:
+        """The categories this policy requires (explicit, or the one ``minimum_level`` names)."""
+        return self.required_categories or (category_for_level(self.minimum_level),)
 
 
 @dataclass(frozen=True)
@@ -53,6 +71,9 @@ class VerificationPlan:
     def complete(self)->bool:
         if len(self.selected)<self.policy.minimum_routes: return False
         if self.policy.require_external and not any(x.independence.level is IndependenceLevel.EXTERNAL for x in self.selected): return False
+        # Phase 1 BR5: every required category is provided by a selected route
+        covered={c for x in self.selected for c in self.policy.categories if provides(x.candidate.route.kind,c)}
+        if covered!=set(self.policy.categories): return False
         return True
 
 
@@ -65,8 +86,12 @@ def plan_verification(primary_route:VerificationRoute,primary_dependencies:Route
             rejected.append((candidate.route.route_id,"same route as primary"));continue
         level=level_for_route(candidate.route.kind)
         independence=derive_independence(primary_dependencies,candidate.dependencies)
-        if level<policy.minimum_level:
-            rejected.append((candidate.route.route_id,f"verification level V{int(level)} below required V{int(policy.minimum_level)}"));continue
+        # Phase 1 BR5: typed admission.  An unrelated higher-numbered level is
+        # not the required evidence (an experiment does not verify code).
+        if not any(provides(candidate.route.kind,c) for c in policy.categories):
+            rejected.append((candidate.route.route_id,f"verification route kind {candidate.route.kind.value} (V{int(level)}) provides "
+                             f"{category_for_route(candidate.route.kind).value} evidence, not the required "
+                             f"{[c.value for c in policy.categories]}"));continue
         if _INDEPENDENCE_RANK[independence.level]<_INDEPENDENCE_RANK[policy.minimum_independence]:
             rejected.append((candidate.route.route_id,f"independence {independence.level.value} below required {policy.minimum_independence.value}"));continue
         selected.append(PlannedVerificationRoute(candidate,independence))
