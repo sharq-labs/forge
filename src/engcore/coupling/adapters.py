@@ -204,17 +204,24 @@ def provider_participant(
     first coupling iteration; they are labelled as such in diagnostics and are
     never reported as results.
 
+    Checkpoints are sealed as ``ExternalSolverParticipant``'s are
+    (:class:`~engcore.execution.multiphysics.external.CheckpointSeal`): the
+    record names the provider build the spec declares (solver and adapter id
+    and version, labelled as a declaration), and restore admits only a
+    checkpoint this participant object issued for that build, with the record
+    it was issued with, whose held state still hashes to that record's digest.
+
     Output uncertainty is UNKNOWN: a provider's convergence says nothing about
     model or input uncertainty, and none is invented here.  Incoming
     uncertainty kinds are recorded, never upgraded.
     """
     import hashlib
     import json
+    from types import MappingProxyType
 
     from ..execution.multiphysics import InitialStateReceipt, InitialStateValue
-    from ..execution.multiphysics.participant import RuntimeCheckpoint
+    from ..execution.multiphysics.external import CheckpointSeal, ExternalProviderIdentity, checkpoint_scope
     from ..scientific.multiphysics.receipts import StateVariableValue
-    from ..scientific.multiphysics.state import CheckpointRecord
 
     log = log if log is not None else CouplingExecutionLog()
     held: dict[str, Any] = {"state": {}}
@@ -228,6 +235,11 @@ def provider_participant(
         "no checkpoint-completeness declaration was made for this participant")
     if (contract.participant_id, contract.declared_state, contract.evolved_state) != (spec.participant_id, tuple(sorted(definitions)), evolved):
         raise CouplingRefusal(f"state contract of {spec.participant_id!r} does not match its declared/evolved state")
+    # the provider build whose state a checkpoint holds: the one the spec DECLARES (no session verifies it here, so
+    # the scope says so and never reads as an ExternalSolverParticipant's verified identity)
+    build = ExternalProviderIdentity(spec.solver_id, spec.solver_version, spec.adapter_id, spec.adapter_version)
+    seal = CheckpointSeal(spec.participant_id, checkpoint_scope({**build.to_dict(), "build_basis": "participant_spec_declaration"}))
+    slot = f"completeness:{contract.completeness.value}"
 
     def to_runtime(values: Mapping[str, Any]) -> dict[str, Any]:
         out = {}
@@ -290,21 +302,25 @@ def provider_participant(
         return AdvanceResult(request.end, to_runtime(outputs), {p.port_id: unknown for p in spec.outputs}, 1, True,
                              diagnostics={k: v for k, v in entry.items() if k != "input_uncertainty_kinds"})
 
-    def state_digest() -> str:
+    def digest_of(state: Mapping[str, Any]) -> str:
         # value, unit AND uncertainty: a changed uncertainty is a changed state
-        payload = [held["state"][k].to_dict() for k in sorted(held["state"])]
+        payload = [state[k].to_dict() for k in sorted(state)]
         return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
+    def state_digest() -> str:
+        return digest_of(held["state"])
+
     def checkpoint(instant):
-        return RuntimeCheckpoint(
-            CheckpointRecord(spec.participant_id, instant, state_digest(), spec.deterministic_restore,
-                             provider_state_id=f"completeness:{contract.completeness.value}"),
-            dict(held["state"]))
+        # a read-only copy: issued state cannot be edited after its digest was recorded
+        return seal.seal(instant, state_digest=state_digest(), deterministic_restore=spec.deterministic_restore, slot=slot,
+                         state=MappingProxyType(dict(held["state"])))
 
     def restore(cp):
         if cp.record.participant_id != spec.participant_id:
             raise CouplingRefusal("checkpoint belongs to another participant")
-        held["state"] = dict(cp.token)
+        # the digest is recomputed from the token's own state, never taken from the record alone
+        state = seal.admit(cp, slot_of=lambda _state: slot, digest_of=digest_of, state_type=MappingProxyType, label="provider")
+        held["state"] = dict(state)
 
     if not state_definitions:
         participant = CallbackParticipant(spec, initialize=initialize, advance=advance, checkpoint=checkpoint, restore=restore,
