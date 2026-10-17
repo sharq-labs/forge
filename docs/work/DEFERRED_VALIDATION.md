@@ -314,3 +314,33 @@ V6/V7 for V2, V5 for V4 and V3 for V1/V2.
   `verification_plan` payload with such a rejection would be refused as stale by `plan_from_dict`. No stored payload
   was found in `benchmarks/`, `certification/` or `tests/`.
 - `minimum_level=V0` used to admit every route kind; it now requires repeatability. No policy in `src/` uses V0.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-42 | P1-BR6 sparse correctness | New tests (a `NeverDense` matrix fails on any densification; structure/dtype/finiteness refusals; canonical digest; exact vs estimated vs unresolved conditioning; dense-provider bound) | `pytest tests/numerical/test_phase1_sparse_correctness.py -q` | NOT RUN |
+| DV-43 | P1-BR6 | Existing numerical-provider suites: records of sparse systems with 1000 < n <= 2000 change from an exact number to a labelled estimate or UNRESOLVED; larger ones from no record to one | `pytest tests -q -k "numerical or provider" -m "not expensive"` (diff against a pristine baseline) | NOT RUN |
+| DV-44 | P1-BR6 | Memory/time of admission and conditioning on a large sparse system (no performance claim is made here) | owner-authorized benchmark | NOT RUN |
+
+### Policy after P1-BR6
+
+| Operand | Admission | Condition record |
+| --- | --- | --- |
+| dense | finiteness of every value (unchanged) | exact 2-norm, `numpy.linalg.cond (2-norm)` (unchanged label) |
+| sparse, n <= 1000 | stored entries only: full structure check, real numeric dtype, finite stored values | exact 2-norm after a bounded dense conversion (same label as dense) |
+| sparse, n > 1000, nnz <= 5e6, direct method | as above | deterministic Hager/Higham 1-norm LOWER-BOUND estimate on one SuperLU factorization, labelled ESTIMATED: above the threshold it proves ill-conditioning; below it, UNRESOLVED (never well-conditioned) |
+| sparse, iterative method (GMRES) above n = 1000 | as above | UNRESOLVED: no factorization is forced on an iterative method |
+| sparse, nnz > 5e6 | as above | UNRESOLVED (factorization policy) |
+| sparse into `dense_lu` | densified only up to n = 4096 (128 MiB), else refused | -- |
+
+`array_digest` hashes a canonical CSR copy (duplicates summed, indices sorted, explicit zeros kept; the caller's
+matrix is not modified). An already canonical matrix hashes exactly as before.
+
+### Unverified assumptions (P1-BR6)
+
+- SciPy's `onenormest` was not used because it draws random starting columns; the in-module estimator is the
+  deterministic LAPACK xLACON scheme. Its estimate is a lower bound in exact arithmetic; with LU round-off it is
+  approximately one.
+- The limits (1000, 5e6 stored entries, 4096) are memory-budget choices, not measurements.
+- Index dtype (int32 vs int64) is still part of a sparse digest; two otherwise identical canonical matrices with
+  different index dtypes hash differently. The messy-vs-canonical test assumes SciPy picks int32 for both.
+- `SuperLU` fill-in is not bounded by the nnz limit; a `MemoryError` is reported unresolved, other failures propagate.

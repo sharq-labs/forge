@@ -24,7 +24,8 @@ from ..scientific.solvers.protocol import ConvergenceState, SolverIdentity
 from ..scientific.units.quantity import Quantity
 from .core import (
     NumericalDiagnostics, NumericalExecutionRecord, NumericalMethod, NumericalProblem, NumericalProvider,
-    NumericalRefusal, ProblemKind, ProviderUnavailable, condition_of, failed, health_of,
+    DENSE_CONVERSION_LIMIT, NumericalRefusal, ProblemKind, ProviderUnavailable, bounded_dense, canonical_csr,
+    condition_of, failed, health_of,
 )
 
 
@@ -62,7 +63,8 @@ class NumPyDenseLinearProvider(NumericalProvider):
     def _execute(self, problem, method):
         _tol(method, "residual_rtol")  # required before any work, not discovered after
         a = problem.operands["matrix"]
-        a = a.toarray() if hasattr(a, "toarray") else np.asarray(a, dtype=float)
+        # Phase 1 BR6: a dense method densifies a sparse operand only within a declared bound
+        a = bounded_dense(a, limit=DENSE_CONVERSION_LIMIT, purpose="dense_lu")
         b = np.asarray(problem.operands["rhs"], dtype=float).reshape(-1)
         cond = condition_of(a)
         try:
@@ -86,7 +88,9 @@ class SciPyLinearProvider(NumericalProvider):
     def _execute(self, problem, method):
         a = sp.csr_matrix(problem.operands["matrix"])
         b = np.asarray(problem.operands["rhs"], dtype=float).reshape(-1)
-        cond = condition_of(a) if a.shape[0] <= 2000 else None
+        # Phase 1 BR6: exact only within a bounded dense conversion; larger systems get a labelled
+        # lower-bound estimate (direct) or an unresolved record (GMRES must not be made to factorize)
+        cond = condition_of(a, allow_factorization=method.method == "sparse_direct")
         if method.method == "sparse_direct":
             _tol(method, "residual_rtol")
             x = spla.spsolve(a.tocsc(), b)
@@ -269,7 +273,8 @@ class PETScLinearProvider(NumericalProvider):
     def _execute(self, problem, method):  # pragma: no cover - requires petsc4py
         from petsc4py import PETSc
 
-        a = sp.csr_matrix(problem.operands["matrix"])
+        # canonical (summed duplicates, sorted indices) before handing raw CSR arrays to AIJ
+        a = canonical_csr(sp.csr_matrix(problem.operands["matrix"]))
         b = np.asarray(problem.operands["rhs"], dtype=float).reshape(-1)
         maxiter = _opt(method, "max_iterations")
         if not isinstance(maxiter, int) or maxiter < 1:
