@@ -16,6 +16,8 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-9 | BR2 | Field-valued (mesh) edges under IQN-ILS: no test exists yet; write one with a registered mesh | new test | NOT WRITTEN |
 | DV-10 | BR3 error accounting | New tests (includes estimate >= true error on an exact linear contraction) | `pytest tests/test_multiphysics_numerical_error_accounting.py -q` | NOT RUN |
 | DV-11 | BR4 splitting estimate | New tests (exact first-order model problem; determinism of an identical re-run) | `pytest tests/test_multiphysics_splitting_estimate.py -q` | NOT RUN |
+| DV-12 | BR5 concurrent Jacobi | New tests (Barrier proof of overlap, sequential equivalence of the run record, first-in-order failure) | `pytest tests/test_multiphysics_concurrent_jacobi.py -q` | NOT RUN |
+| DV-13 | BR5 | Wall-time measurement on a provider-bound Jacobi coupling (the only reason to use it); none exists yet | benchmark, owner-authorized | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -63,3 +65,15 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 - Estimate-to-run binding relies on run records being byte-identical across a deterministic re-run, i.e. no hidden
   nondeterminism in `run.to_dict()`. The test relies on this and it is unverified.
 - Only scalar outputs at the horizon end are estimated. Field outputs and time histories are not.
+
+## Unverified assumptions (BR5)
+
+- Unit conversion (Pint registry, `lru_cache`d canonicalization) is assumed safe under concurrent use from worker
+  threads. `functools.lru_cache` is thread-safe; the registry's own caches have not been checked for it.
+- The GIL means pure-Python participants gain nothing. The benefit is expected only for participants that release
+  the GIL: external processes (ngspice via WSL, providers), and NumPy or SciPy solves. Unmeasured (DV-13).
+- A declared participant's thread-safety is the declarer's claim. Shared `BulkDataStore` writes by two declared
+  participants are not guarded here.
+- When one concurrent participant fails, the others in the same batch have already advanced. This is the same
+  situation as a sequential failure after earlier participants advanced. Window control (BR1) rolls all of them
+  back; without it the run fails.

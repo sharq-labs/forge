@@ -5060,3 +5060,19 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
 - Tests written: `tests/test_multiphysics_splitting_estimate.py`. The exact model problem is hand-derived: a right
   Riemann sum with x = 0.625, 0.5625, 0.53125, observed order 1, and an estimate equal to the true error 0.125.
 - Static checks only. No certified file was touched.
+
+### BR5 -- opt-in concurrent participant advance in Jacobi iterations (tests NOT RUN)
+- New `execution/multiphysics/concurrency.py`:
+  - `ConcurrentAdvancePolicy(participants, max_workers, basis)` declares thread-safety per participant, with a
+    basis; it is never inferred.
+  - `advance_in_plan_order` runs undeclared participants alone and first, and declared ones in a thread pool. Results
+    are keyed in plan order, and the first failure in plan order is raised after all workers join.
+- `runtime.py`:
+  - `MultiphysicsRuntime(..., concurrency=)` and `from_factory_registry(..., concurrency=)`.
+  - Admitted for JACOBI only.
+  - The Jacobi loop prepares inputs in order and applies results in order.
+  - `final_outputs["_concurrency"]` is written only when a policy is set.
+- Why a runtime option rather than a spec field: thread-safety is a property of the executable participant, not of
+  the scientific spec. A `ParticipantSpec` field would move every graph fingerprint, and `participant.py` is owned by
+  the linked adapter session.
+- Tests written: `tests/test_multiphysics_concurrent_jacobi.py`. Static checks only.
