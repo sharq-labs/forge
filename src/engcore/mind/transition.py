@@ -5,13 +5,17 @@ its hypotheses, and the dependencies those statuses left open. It then
 admits or rejects candidate actions. An optional language-model proposal is
 advisory: it is recorded and cannot change the selected action.
 
-No function in this module writes ``supported_by_authority`` or
-``refuted_by_authority``. A caller who already holds such a status may put
-it in the input state, with the authority result id that issued it. The
-transition refuses to replace it. Evidence becoming unavailable blocks the
-named dependency and leaves every non-descendant where it was. It does not
-convert a refusal into physical infeasibility, and it does not revive a
-dead branch. An availability result does not rewrite hypothesis status.
+A caller who already holds ``supported_by_authority`` or
+``refuted_by_authority`` may put it in the input state, with the authority
+result id that issued it. The transition does not replace a refuted
+hypothesis with support, and it does not clear a supported hypothesis.
+The only new terminal support it copies is ``benchmark_validated``, and only
+onto a hypothesis whose subject is the NAFEMS T3 benchmark subject cited by
+``engcore.product.nafems_t3``. Advisory ``not_supported`` does not become a
+refutation. A ledger maturity pass does not resolve a scientific dependency.
+Evidence becoming unavailable blocks the named dependency and leaves every
+other hypothesis where it was. It does not convert a refusal into physical
+infeasibility, and it does not revive a dead branch.
 
 A capability action is not admissible while an applicability, identifiability,
 or operating-point dependency that blocks the same question is anything
@@ -19,10 +23,13 @@ other than resolved. Resolved here means the dependency record is closed.
 It does not mean the model is applicable. A negative outcome has to already
 be present as a hypothesis status.
 
-Information gain is a category, not a number. When more than one action
-would address an open dependency of the unresolved question, the tie-break
-is dependency id then action id. That order is replay identity, not a
-scientific value ranking.
+Information gain is a category, not a number. Among admissible actions,
+planning policy prefers a blocking dependency, then direct evidence, then a
+downstream inspection. Optional evidence does not keep an investigation
+going. Within one category, the dependency that is a prerequisite of more
+other open dependencies is preferred. That count is planning structure, not
+a scientific utility. When the category and that count are both equal, the
+transition refuses instead of using action id.
 """
 
 from __future__ import annotations
@@ -34,7 +41,11 @@ from enum import Enum
 from typing import Any, Mapping
 
 
-SOFTWARE_VERSION = "engcore.mind.transition/1.0.0"
+SOFTWARE_VERSION = "engcore.mind.transition/1.2.0"
+POLICY_VERSION = "engcore.mind.planning/1.0.0"
+NAFEMS_SUBJECT = "thermal.nafems_t3.benchmark_verification"
+NAFEMS_MODULE = "engcore.product.nafems_t3"
+NAFEMS_CAPABILITY = "run:thermal.nafems_t3"
 
 _TERMINAL = "supported_by_authority", "refuted_by_authority"
 _OPEN_QUESTION = "unresolved", "active"
@@ -57,6 +68,7 @@ class DependencyKind(str, Enum):
     IDENTIFIABILITY = "identifiability"
     APPLICABILITY = "applicability"
     CAPABILITY_EXECUTION = "capability_execution"
+    EVIDENCE_REQUEST = "evidence_request"
 
 
 class DependencyStatus(str, Enum):
@@ -99,8 +111,17 @@ class InformationGain(str, Enum):
     STOP = "stop"
 
 
+class DecisionValue(str, Enum):
+    BLOCKING_DEPENDENCY = "blocking_dependency"
+    DIRECT_EVIDENCE = "direct_evidence"
+    DOWNSTREAM_ONLY = "downstream_only"
+    REDUNDANT = "redundant"
+    OPTIONAL = "optional"
+
+
 class ResultKind(str, Enum):
     EVIDENCE_UNAVAILABLE = "evidence_unavailable"
+    AUTHORITY_STATUS = "authority_status"
 
 
 _ACTION_FOR_KIND = {
@@ -108,6 +129,7 @@ _ACTION_FOR_KIND = {
     DependencyKind.IDENTIFIABILITY: ActionType.CHECK_IDENTIFIABILITY,
     DependencyKind.APPLICABILITY: ActionType.CHECK_APPLICABILITY,
     DependencyKind.CAPABILITY_EXECUTION: ActionType.RUN_CAPABILITY,
+    DependencyKind.EVIDENCE_REQUEST: ActionType.REQUEST_EVIDENCE,
 }
 
 _GATE_KINDS = frozenset({
@@ -115,6 +137,35 @@ _GATE_KINDS = frozenset({
     DependencyKind.IDENTIFIABILITY,
     DependencyKind.OPERATING_POINT_EVIDENCE,
 })
+
+_SUPPORT_TOKENS = frozenset({
+    "benchmark_validated",
+})
+_ABSENCE_TOKENS = frozenset({
+    "missing",
+    "insufficient_evidence",
+    "operating_point_not_established",
+    "evidence_unavailable",
+})
+_NONTERMINAL_TOKENS = frozenset({
+    "ledger_observed",
+    "not_applicable",
+    "not_supported",
+})
+_SELECTABLE = (
+    DecisionValue.BLOCKING_DEPENDENCY,
+    DecisionValue.DIRECT_EVIDENCE,
+    DecisionValue.DOWNSTREAM_ONLY,
+)
+
+
+def _history(values: Any, field: str) -> tuple[str, ...]:
+    if not isinstance(values, (list, tuple)):
+        raise MindRefusal(f"{field} must be a list of ids")
+    cleaned = tuple(_text(item, field) for item in values)
+    if len(set(cleaned)) != len(cleaned):
+        raise MindRefusal(f"{field} contains a duplicate id")
+    return cleaned
 
 
 def _text(value: Any, field: str) -> str:
@@ -222,6 +273,10 @@ class MindHypothesis:
     status: HypothesisStatus
     statement: str
     authority_result_id: str | None = None
+    authority_token: str | None = None
+    prior_authority_result_ids: tuple[str, ...] = ()
+    stale_result_id: str | None = None
+    subject_id: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "hypothesis_id", _text(self.hypothesis_id, "hypothesis_id"))
@@ -229,24 +284,43 @@ class MindHypothesis:
         status = _enum(HypothesisStatus, self.status, "hypothesis status")
         object.__setattr__(self, "status", status)
         authority = _optional_text(self.authority_result_id, "authority_result_id")
+        token = _optional_text(self.authority_token, "authority_token")
+        stale = _optional_text(self.stale_result_id, "stale_result_id")
+        subject = _optional_text(self.subject_id, "subject_id")
         object.__setattr__(self, "authority_result_id", authority)
+        object.__setattr__(self, "authority_token", token)
+        object.__setattr__(self, "stale_result_id", stale)
+        object.__setattr__(self, "subject_id", subject)
+        object.__setattr__(
+            self,
+            "prior_authority_result_ids",
+            _history(self.prior_authority_result_ids, "prior_authority_result_ids"),
+        )
         if status.value in _TERMINAL and authority is None:
             raise MindRefusal(
                 f"hypothesis {self.hypothesis_id} carries {status.value} "
                 "without an authority result id"
             )
-        if status.value in _OPEN_QUESTION and authority is not None:
+        if status.value in _OPEN_QUESTION and (authority is not None or token is not None):
             raise MindRefusal(
                 f"hypothesis {self.hypothesis_id} is {status.value} and cannot "
                 "carry an authority result id"
             )
+        if stale is not None and status is not HypothesisStatus.STALE:
+            raise MindRefusal("only a stale hypothesis cites the result that made it stale")
+        if status is HypothesisStatus.STALE and authority is None:
+            raise MindRefusal("a stale hypothesis keeps the authority result it is no longer using")
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "authority_result_id": self.authority_result_id,
+            "authority_token": self.authority_token,
             "hypothesis_id": self.hypothesis_id,
+            "prior_authority_result_ids": list(self.prior_authority_result_ids),
+            "stale_result_id": self.stale_result_id,
             "statement": self.statement,
             "status": self.status.value,
+            "subject_id": self.subject_id,
         }
 
     @classmethod
@@ -254,7 +328,9 @@ class MindHypothesis:
         data = _mapping(payload, "hypothesis")
         _require_fields(
             data,
-            {"hypothesis_id", "status", "statement", "authority_result_id"},
+            {"hypothesis_id", "status", "statement", "authority_result_id",
+             "authority_token", "prior_authority_result_ids", "stale_result_id",
+             "subject_id"},
             "hypothesis",
         )
         return cls(
@@ -262,6 +338,10 @@ class MindHypothesis:
             status=data["status"],
             statement=data["statement"],
             authority_result_id=data["authority_result_id"],
+            authority_token=data["authority_token"],
+            prior_authority_result_ids=tuple(data["prior_authority_result_ids"]),
+            stale_result_id=data["stale_result_id"],
+            subject_id=data["subject_id"],
         )
 
 
@@ -430,11 +510,16 @@ class ActionResult:
     source_revision: str
     state_digest: str
     physical_infeasibility_claimed: bool
+    authority_token: str | None = None
+    authority_result_id: str | None = None
+    target_hypothesis_id: str | None = None
+    producing_module: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "result_id", _text(self.result_id, "result_id"))
         object.__setattr__(self, "action_id", _text(self.action_id, "action_id"))
-        object.__setattr__(self, "kind", _enum(ResultKind, self.kind, "result kind"))
+        kind = _enum(ResultKind, self.kind, "result kind")
+        object.__setattr__(self, "kind", kind)
         object.__setattr__(
             self,
             "target_dependency_id",
@@ -456,6 +541,25 @@ class ActionResult:
             raise MindRefusal(
                 "an evidence-availability result cannot claim physical infeasibility"
             )
+        token = _optional_text(self.authority_token, "authority_token")
+        authority_id = _optional_text(self.authority_result_id, "authority_result_id")
+        target = _optional_text(self.target_hypothesis_id, "target_hypothesis_id")
+        module = _optional_text(self.producing_module, "producing_module")
+        object.__setattr__(self, "authority_token", token)
+        object.__setattr__(self, "authority_result_id", authority_id)
+        object.__setattr__(self, "target_hypothesis_id", target)
+        object.__setattr__(self, "producing_module", module)
+        cited = (token, authority_id, target, module)
+        if kind is ResultKind.EVIDENCE_UNAVAILABLE and any(item is not None for item in cited):
+            raise MindRefusal("an availability result cannot carry an authority verdict")
+        if kind is ResultKind.AUTHORITY_STATUS:
+            if any(item is None for item in cited):
+                raise MindRefusal("an authority result must cite its token, id, hypothesis, and module")
+            allowed = _SUPPORT_TOKENS | _ABSENCE_TOKENS | _NONTERMINAL_TOKENS
+            if token not in allowed:
+                raise MindRefusal(f"unknown authority token {token!r}")
+            if module.startswith("engcore.mind"):
+                raise MindRefusal("the mind cannot be the producing module of an authority result")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -464,11 +568,15 @@ class ActionResult:
             "observation_id": self.observation_id,
             "physical_infeasibility_claimed": False,
             "problem_id": self.problem_id,
+            "producing_module": self.producing_module,
             "result_id": self.result_id,
             "run_id": self.run_id,
             "source_revision": self.source_revision,
             "state_digest": self.state_digest,
             "target_dependency_id": self.target_dependency_id,
+            "target_hypothesis_id": self.target_hypothesis_id,
+            "authority_result_id": self.authority_result_id,
+            "authority_token": self.authority_token,
         }
 
 
@@ -606,11 +714,13 @@ class ActionDecision:
     admissible: bool
     information_gain: InformationGain
     reason: str
+    decision_value: DecisionValue | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "action_id": self.action_id,
             "admissible": self.admissible,
+            "decision_value": None if self.decision_value is None else self.decision_value.value,
             "information_gain": self.information_gain.value,
             "reason": self.reason,
         }
@@ -625,12 +735,14 @@ class Selection:
     reason: str
     state_digest: str
     decisions: tuple[ActionDecision, ...]
+    decision_value: DecisionValue | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "action_id": self.action_id,
             "action_type": self.action_type.value,
             "decisions": [item.to_dict() for item in self.decisions],
+            "decision_value": None if self.decision_value is None else self.decision_value.value,
             "dependency_id": self.dependency_id,
             "information_gain": self.information_gain.value,
             "reason": self.reason,
@@ -693,8 +805,9 @@ def _decision(
     reason: str,
     *,
     admissible: bool,
+    decision_value: DecisionValue | None = None,
 ) -> ActionDecision:
-    return ActionDecision(action.action_id, admissible, gain, reason)
+    return ActionDecision(action.action_id, admissible, gain, reason, decision_value)
 
 
 def _classify(state: MindState, action: CandidateAction) -> ActionDecision:
@@ -744,12 +857,18 @@ def _classify(state: MindState, action: CandidateAction) -> ActionDecision:
         )
     for prerequisite_id in dependency.prerequisite_ids:
         prerequisite = state.dependency(prerequisite_id)
-        if prerequisite.status is not DependencyStatus.RESOLVED:
+        if prerequisite.status is DependencyStatus.RESOLVED:
+            continue
+        if (
+            dependency.kind is DependencyKind.CAPABILITY_EXECUTION
+            or prerequisite.status in {DependencyStatus.BLOCKED, DependencyStatus.DEAD}
+        ):
             return _decision(
                 action,
                 InformationGain.PREREQUISITE_OPEN,
                 f"prerequisite {prerequisite_id} is {prerequisite.status.value}",
                 admissible=False,
+                decision_value=DecisionValue.REDUNDANT,
             )
     if dependency.kind is DependencyKind.CAPABILITY_EXECUTION:
         gate = _unresolved_gate(state)
@@ -789,19 +908,52 @@ def _classify(state: MindState, action: CandidateAction) -> ActionDecision:
             "a stale question is not revived by another action",
             admissible=False,
         )
-    if question.hypothesis_id not in dependency.blocks:
+    category = _planning_category(state, dependency)
+    if category is DecisionValue.OPTIONAL:
         return _decision(
             action,
             InformationGain.NOT_ON_QUESTION,
-            "dependency does not block the question hypothesis",
-            admissible=False,
+            "dependency does not block the question and does not outrank a stop",
+            admissible=True,
+            decision_value=category,
         )
     return _decision(
         action,
         InformationGain.OPEN_DEPENDENCY,
-        f"dependency {dependency.dependency_id} is open on {question.hypothesis_id}",
+        f"dependency {dependency.dependency_id} is {category.value} for {question.hypothesis_id}",
         admissible=True,
+        decision_value=category,
     )
+
+
+def _planning_category(state: MindState, dependency: Dependency) -> DecisionValue:
+    """Planning rank for an otherwise open, type-matched action.
+
+    This is not a scientific utility. It only says which admissible action
+    addresses the question's blocking dependency most directly.
+    """
+    question_id = state.problem.question_hypothesis_id
+    if question_id not in dependency.blocks:
+        return DecisionValue.OPTIONAL
+    unresolved_prerequisite = any(
+        state.dependency(item).status is DependencyStatus.OPEN
+        for item in dependency.prerequisite_ids
+    )
+    if unresolved_prerequisite:
+        return DecisionValue.DOWNSTREAM_ONLY
+    unblocks_other_work = any(
+        dependency.dependency_id in other.prerequisite_ids and other.status is DependencyStatus.OPEN
+        for other in state.dependencies
+    )
+    another_open_blocker = any(
+        other.dependency_id != dependency.dependency_id
+        and other.status is DependencyStatus.OPEN
+        and question_id in other.blocks
+        for other in state.dependencies
+    )
+    if unblocks_other_work or not another_open_blocker:
+        return DecisionValue.BLOCKING_DEPENDENCY
+    return DecisionValue.DIRECT_EVIDENCE
 
 
 def _unresolved_gate(state: MindState) -> Dependency | None:
@@ -820,19 +972,44 @@ def _unresolved_gate(state: MindState) -> Dependency | None:
 def select_next_action(state: MindState) -> Selection:
     """Return the admissible next action. Does not mutate ``state``."""
     decisions = tuple(_classify(state, action) for action in state.actions)
-    by_id = {action.action_id: action for action in state.actions}
+    by_id = {decision.action_id: decision for decision in decisions}
+    by_action = {action.action_id: action for action in state.actions}
     workable = [
-        by_id[decision.action_id]
+        by_action[decision.action_id]
         for decision in decisions
-        if decision.admissible and decision.information_gain is InformationGain.OPEN_DEPENDENCY
+        if decision.admissible and decision.decision_value in _SELECTABLE
     ]
     if workable:
-        chosen = min(workable, key=lambda action: (action.dependency_id or "", action.action_id))
+        best = min(_SELECTABLE.index(by_id[action.action_id].decision_value) for action in workable)
+        shortlisted = [
+            action
+            for action in workable
+            if _SELECTABLE.index(by_id[action.action_id].decision_value) == best
+        ]
+
+        def _unblocked(action: CandidateAction) -> int:
+            dependency = state.dependency(action.dependency_id or "")
+            return sum(
+                1
+                for other in state.dependencies
+                if dependency.dependency_id in other.prerequisite_ids
+                and other.status is DependencyStatus.OPEN
+            )
+
+        widest = max(_unblocked(action) for action in shortlisted)
+        chosen_set = [action for action in shortlisted if _unblocked(action) == widest]
+        if len(chosen_set) != 1:
+            raise MindRefusal(
+                "planning policy tie; refusing alphabetical or action-id selection"
+            )
+        chosen = chosen_set[0]
         gain = InformationGain.OPEN_DEPENDENCY
-        reason = f"open dependency {chosen.dependency_id} blocks the question"
+        value = by_id[chosen.action_id].decision_value
+        reason = f"{value.value} dependency {chosen.dependency_id} is the next planning step"
     else:
         chosen = next(action for action in state.actions if action.action_type is ActionType.STOP)
         gain = InformationGain.STOP
+        value = None
         question = state.hypothesis(state.problem.question_hypothesis_id)
         if question.status.value in _TERMINAL:
             reason = (
@@ -851,58 +1028,207 @@ def select_next_action(state: MindState) -> Selection:
         reason=reason,
         state_digest=canonical_digest(state.to_dict()),
         decisions=decisions,
+        decision_value=value,
     )
 
 
 def apply_result(state: MindState, result: ActionResult) -> MindState:
-    """Block one open dependency after an evidence-availability observation.
+    """Ingest one typed result bound to this problem, run, revision, and state.
 
-    Hypothesis statuses are copied unchanged. The observation is bound to this
-    problem, run, revision, and the digest of the state it was applied to.
+    An availability result blocks one dependency and copies every hypothesis.
+    An authority result copies the cited token onto the cited hypothesis.
+    This function never chooses a scientific status that the result did not carry.
     """
-    if result.problem_id != state.problem.problem_id:
-        raise MindRefusal("availability result is for a different problem")
-    if result.run_id != state.problem.run_id:
-        raise MindRefusal("availability result is for a different run")
-    if result.source_revision != state.problem.source_revision:
-        raise MindRefusal("availability result is for a different source revision")
-    if result.state_digest != canonical_digest(state.to_dict()):
-        raise MindRefusal("availability result does not match this state")
-    if result.action_id not in {item.action_id for item in state.actions}:
-        raise MindRefusal(f"result names unknown action {result.action_id}")
+    _bound_to_state(state, result)
     dependency = state.dependency(result.target_dependency_id)
     action = state.action(result.action_id)
     if action.dependency_id != dependency.dependency_id:
         raise MindRefusal("result action does not address the target dependency")
     decision = _classify(state, action)
-    if not decision.admissible or decision.information_gain is not InformationGain.OPEN_DEPENDENCY:
+    if not decision.admissible or decision.decision_value not in _SELECTABLE:
         raise MindRefusal(
-            f"action {action.action_id} is not an admissible open-dependency action"
+            f"action {action.action_id} is not an admissible planning action"
         )
-    dependencies = []
-    for item in state.dependencies:
-        if item.dependency_id == dependency.dependency_id:
-            dependencies.append(
-                Dependency(
-                    dependency_id=item.dependency_id,
-                    kind=item.kind,
-                    status=DependencyStatus.BLOCKED,
-                    blocks=item.blocks,
-                    upstream_result_ids=item.upstream_result_ids,
-                    prerequisite_ids=item.prerequisite_ids,
-                    availability_observation_id=result.observation_id,
-                    availability_result_id=result.result_id,
-                )
-            )
-        else:
-            dependencies.append(item)
+    if result.kind is ResultKind.EVIDENCE_UNAVAILABLE:
+        hypotheses = state.hypotheses
+        dependencies = _replace_dependency(
+            state,
+            _blocked_dependency(dependency, result),
+        )
+    elif result.kind is ResultKind.AUTHORITY_STATUS:
+        hypotheses, dependencies = _consume_authority(state, dependency, action, result)
+    else:
+        raise MindRefusal(f"result kind {result.kind.value} is not ingested")
     attempted = tuple(sorted({*state.attempted_action_ids, result.action_id}))
     return MindState(
         problem=state.problem,
-        hypotheses=state.hypotheses,
-        dependencies=tuple(dependencies),
+        hypotheses=hypotheses,
+        dependencies=dependencies,
         actions=state.actions,
         attempted_action_ids=attempted,
+    )
+
+
+def _bound_to_state(state: MindState, result: ActionResult) -> None:
+    if result.problem_id != state.problem.problem_id:
+        raise MindRefusal("result is for a different problem")
+    if result.run_id != state.problem.run_id:
+        raise MindRefusal("result is for a different run")
+    if result.source_revision != state.problem.source_revision:
+        raise MindRefusal("result is for a different source revision")
+    if result.state_digest != canonical_digest(state.to_dict()):
+        raise MindRefusal("result does not match this state")
+    if result.action_id not in {item.action_id for item in state.actions}:
+        raise MindRefusal(f"result names unknown action {result.action_id}")
+
+
+def _replace_dependency(state: MindState, updated: Dependency) -> tuple[Dependency, ...]:
+    return tuple(
+        updated if item.dependency_id == updated.dependency_id else item
+        for item in state.dependencies
+    )
+
+
+def _blocked_dependency(dependency: Dependency, result: ActionResult) -> Dependency:
+    return Dependency(
+        dependency_id=dependency.dependency_id,
+        kind=dependency.kind,
+        status=DependencyStatus.BLOCKED,
+        blocks=dependency.blocks,
+        upstream_result_ids=dependency.upstream_result_ids,
+        prerequisite_ids=dependency.prerequisite_ids,
+        availability_observation_id=result.observation_id,
+        availability_result_id=result.result_id,
+    )
+
+
+def _closed_dependency(
+    dependency: Dependency,
+    status: DependencyStatus,
+    result: ActionResult,
+) -> Dependency:
+    authority_id = result.authority_result_id or ""
+    upstream = dependency.upstream_result_ids
+    if authority_id and authority_id not in upstream:
+        upstream = tuple(sorted((*upstream, authority_id)))
+    return Dependency(
+        dependency_id=dependency.dependency_id,
+        kind=dependency.kind,
+        status=status,
+        blocks=dependency.blocks,
+        upstream_result_ids=upstream,
+        prerequisite_ids=dependency.prerequisite_ids,
+    )
+
+
+def _consume_authority(
+    state: MindState,
+    dependency: Dependency,
+    action: CandidateAction,
+    result: ActionResult,
+) -> tuple[tuple[MindHypothesis, ...], tuple[Dependency, ...]]:
+    token = result.authority_token or ""
+    if result.target_hypothesis_id not in dependency.blocks:
+        raise MindRefusal("authority result targets a hypothesis this dependency does not block")
+    target = state.hypothesis(result.target_hypothesis_id or "")
+    if token in _NONTERMINAL_TOKENS:
+        if token == "not_supported" and target.status is HypothesisStatus.SUPPORTED_BY_AUTHORITY:
+            raise MindRefusal(
+                "a supported authority result cannot become unsupported through planner mutation"
+            )
+        revised = target
+        updated = _closed_dependency(dependency, dependency.status, result)
+    else:
+        revised = _copy_authority(target, action, result)
+        updated = _dependency_after_authority(dependency, result, revised)
+    hypotheses = tuple(
+        revised if item.hypothesis_id == target.hypothesis_id else item
+        for item in state.hypotheses
+    )
+    return hypotheses, _replace_dependency(state, updated)
+
+
+def _dependency_after_authority(
+    dependency: Dependency,
+    result: ActionResult,
+    revised: MindHypothesis,
+) -> Dependency:
+    token = result.authority_token or ""
+    if token in _ABSENCE_TOKENS:
+        return _blocked_dependency(dependency, result)
+    if revised.status is HypothesisStatus.STALE or token in _SUPPORT_TOKENS:
+        return _closed_dependency(dependency, DependencyStatus.RESOLVED, result)
+    raise MindRefusal(f"authority token {token!r} was not consumed")
+
+
+def _copy_authority(
+    item: MindHypothesis,
+    action: CandidateAction,
+    result: ActionResult,
+) -> MindHypothesis:
+    token = result.authority_token or ""
+    authority_id = result.authority_result_id or ""
+    if token in _ABSENCE_TOKENS:
+        if item.status in {HypothesisStatus.SUPPORTED_BY_AUTHORITY, HypothesisStatus.REFUTED_BY_AUTHORITY}:
+            return item
+        if item.status is HypothesisStatus.STALE:
+            raise MindRefusal("a stale hypothesis is not rewritten by a missing-evidence token")
+        if item.status is HypothesisStatus.ACTIVE:
+            return MindHypothesis(
+                hypothesis_id=item.hypothesis_id,
+                status=HypothesisStatus.UNRESOLVED,
+                statement=item.statement,
+                subject_id=item.subject_id,
+            )
+        return item
+    if token in _SUPPORT_TOKENS:
+        _require_benchmark_binding(item, action, result)
+        if item.status is HypothesisStatus.REFUTED_BY_AUTHORITY:
+            raise MindRefusal("a refuted hypothesis cannot be resurrected")
+        if item.status is HypothesisStatus.SUPPORTED_BY_AUTHORITY:
+            return _mark_stale(item, authority_id)
+        if item.status is HypothesisStatus.STALE:
+            raise MindRefusal("a stale hypothesis is not revived by another support token")
+        return MindHypothesis(
+            hypothesis_id=item.hypothesis_id,
+            status=HypothesisStatus.SUPPORTED_BY_AUTHORITY,
+            statement=item.statement,
+            authority_result_id=authority_id,
+            authority_token=token,
+            prior_authority_result_ids=item.prior_authority_result_ids,
+            subject_id=item.subject_id,
+        )
+    raise MindRefusal(f"authority token {token!r} is not copied")
+
+
+def _require_benchmark_binding(
+    item: MindHypothesis,
+    action: CandidateAction,
+    result: ActionResult,
+) -> None:
+    if action.capability_id != NAFEMS_CAPABILITY:
+        raise MindRefusal("benchmark result is not bound to the NAFEMS capability")
+    if result.producing_module != NAFEMS_MODULE:
+        raise MindRefusal("benchmark result is not bound to the NAFEMS authority")
+    if item.subject_id != NAFEMS_SUBJECT:
+        raise MindRefusal("benchmark result is not this hypothesis subject")
+
+
+def _mark_stale(item: MindHypothesis, new_result_id: str) -> MindHypothesis:
+    if item.authority_result_id == new_result_id:
+        return item
+    prior = item.prior_authority_result_ids
+    if item.authority_result_id and item.authority_result_id not in prior:
+        prior = prior + (item.authority_result_id,)
+    return MindHypothesis(
+        hypothesis_id=item.hypothesis_id,
+        status=HypothesisStatus.STALE,
+        statement=item.statement,
+        authority_result_id=item.authority_result_id,
+        authority_token=item.authority_token,
+        prior_authority_result_ids=prior,
+        stale_result_id=new_result_id,
+        subject_id=item.subject_id,
     )
 
 

@@ -493,7 +493,7 @@ def test_the_module_does_not_import_scientific_authority():
         elif isinstance(node, ast.ImportFrom) and node.module:
             imported.append(node.module)
     assert imported == [] or all(not name.startswith("engcore") for name in imported)
-    assert SOFTWARE_VERSION == "engcore.mind.transition/1.0.0"
+    assert SOFTWARE_VERSION == "engcore.mind.transition/1.2.0"
 
 
 def test_a_resolved_refusal_is_not_reopened_by_a_new_authority_status_field():
@@ -629,7 +629,7 @@ def test_a_refuted_question_selects_stop():
     assert state.hypothesis("q").status is HypothesisStatus.REFUTED_BY_AUTHORITY
 
 
-def test_same_kind_actions_tie_break_on_action_id():
+def test_equal_planning_categories_are_refused_instead_of_action_id_order():
     state = MindState(
         problem=_problem("q"),
         hypotheses=(MindHypothesis("q", HypothesisStatus.UNRESOLVED, "open"),),
@@ -647,7 +647,108 @@ def test_same_kind_actions_tie_break_on_action_id():
             _stop(),
         ),
     )
-    assert select_next_action(state).action_id == "a-request"
+    with pytest.raises(MindRefusal, match="planning policy tie"):
+        select_next_action(state)
+
+
+def test_a_later_blocking_action_outranks_an_earlier_optional_action():
+    state = MindState(
+        problem=_problem("q"),
+        hypotheses=(
+            MindHypothesis("q", HypothesisStatus.UNRESOLVED, "open"),
+            MindHypothesis("side", HypothesisStatus.ACTIVE, "not the question"),
+        ),
+        dependencies=(
+            Dependency(
+                "optional-dep",
+                DependencyKind.EVIDENCE_REQUEST,
+                DependencyStatus.OPEN,
+                blocks=("side",),
+            ),
+            Dependency(
+                "blocking-dep",
+                DependencyKind.OPERATING_POINT_EVIDENCE,
+                DependencyStatus.OPEN,
+                blocks=("q",),
+            ),
+        ),
+        actions=(
+            CandidateAction(
+                "a-optional",
+                ActionType.REQUEST_EVIDENCE,
+                "optional evidence",
+                "optional-dep",
+                capability_id="evidence:side",
+            ),
+            CandidateAction(
+                "z-blocking",
+                ActionType.REQUEST_EVIDENCE,
+                "blocking evidence",
+                "blocking-dep",
+                capability_id="evidence:point",
+            ),
+            _stop(),
+        ),
+    )
+    selected = select_next_action(state)
+    assert selected.action_id == "z-blocking"
+    assert selected.decision_value.value == "blocking_dependency"
+
+
+def test_wider_fan_out_wins_inside_one_planning_category():
+    state = MindState(
+        problem=_problem("q"),
+        hypotheses=(
+            MindHypothesis("q", HypothesisStatus.UNRESOLVED, "open"),
+            MindHypothesis("side-a", HypothesisStatus.ACTIVE, "side"),
+            MindHypothesis("side-b", HypothesisStatus.ACTIVE, "side"),
+            MindHypothesis("side-c", HypothesisStatus.ACTIVE, "side"),
+        ),
+        dependencies=(
+            Dependency(
+                "wide",
+                DependencyKind.EVIDENCE_REQUEST,
+                DependencyStatus.OPEN,
+                blocks=("q",),
+            ),
+            Dependency(
+                "narrow",
+                DependencyKind.EVIDENCE_REQUEST,
+                DependencyStatus.OPEN,
+                blocks=("q",),
+            ),
+            Dependency(
+                "child-a",
+                DependencyKind.EVIDENCE_REQUEST,
+                DependencyStatus.OPEN,
+                blocks=("side-a",),
+                prerequisite_ids=("wide",),
+            ),
+            Dependency(
+                "child-b",
+                DependencyKind.EVIDENCE_REQUEST,
+                DependencyStatus.OPEN,
+                blocks=("side-b",),
+                prerequisite_ids=("wide",),
+            ),
+            Dependency(
+                "child-c",
+                DependencyKind.EVIDENCE_REQUEST,
+                DependencyStatus.OPEN,
+                blocks=("side-c",),
+                prerequisite_ids=("narrow",),
+            ),
+        ),
+        actions=(
+            CandidateAction("a-narrow", ActionType.REQUEST_EVIDENCE, "narrow", "narrow"),
+            CandidateAction("z-wide", ActionType.REQUEST_EVIDENCE, "wide", "wide"),
+            CandidateAction("child-a", ActionType.REQUEST_EVIDENCE, "child", "child-a"),
+            CandidateAction("child-b", ActionType.REQUEST_EVIDENCE, "child", "child-b"),
+            CandidateAction("child-c", ActionType.REQUEST_EVIDENCE, "child", "child-c"),
+            _stop(),
+        ),
+    )
+    assert select_next_action(state).action_id == "z-wide"
 
 
 def test_a_matching_proposal_payload_is_not_interpreted():
