@@ -40,23 +40,26 @@ def test_active_epic_is_the_engineering_foundations_program_with_every_gate_open
     assert data["active_epic"] == "engrt.numerical_foundations"
     program = _program(data)
     assert program["kind"] == "research_program"
-    assert [g["id"] for g in program["gates"]] == ["G0", "M1", "M2", "E1", "E2", "E3"]
+    assert [g["id"] for g in program["gates"]] == ["DV0", "M1", "M2", "E1", "E2", "E3"]
     assert all(g["status"] == "MISSING" for g in program["gates"])          # nothing is claimed by the migration
     assert {g["id"]: g["requires"] for g in program["gates"]}["E3"] == ["M1"]
     assert data["policy"]["horizontal_expansion_paused"] is True             # still paused OUTSIDE the program scope
 
 
-def test_g0_gates_no_other_work_and_requires_only_order_decisions() -> None:
-    """Build-first (owner, 2026-10-18): the deferred-validation gate G0 is required by no gate, so building any gate's
+def test_dv0_gates_no_other_work_and_requires_only_order_decisions() -> None:
+    """Build-first (owner, 2026-10-18): the deferred-validation gate DV0 is required by no gate, so building any gate's
     scope never waits for a test run; M2 and E3 wait only for M1's DECISION."""
     program = _program(maturity.load_ledger())
     requires = {g["id"]: g["requires"] for g in program["gates"]}
-    assert all("G0" not in deps for deps in requires.values())
-    assert requires == {"G0": [], "M1": [], "M2": ["M1"], "E1": [], "E2": [], "E3": ["M1"]}
-    assert all("build-first" in g["next_action"] for g in program["gates"] if g["id"] != "G0")
-    # deciding a gate before its requirement passes is refused; leaving it built-but-MISSING is not
-    data = deepcopy(maturity.load_ledger())
-    assert maturity.validate(data) == ()
+    assert all("DV0" not in deps for deps in requires.values())
+    assert requires == {"DV0": [], "M1": [], "M2": ["M1"], "E1": [], "E2": [], "E3": ["M1"]}
+    assert all("build-first" in g["next_action"] for g in program["gates"] if g["id"] != "DV0")
+    # M1 still MISSING (built or not): deciding M2 is refused, leaving M2 MISSING is allowed
+    def decide_m2(d):
+        next(g for g in _program(d)["gates"] if g["id"] == "M2").update(
+            status="PASS", evidence=["docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md"])
+    assert any("needs 'M1' PASS first" in e for e in _with(decide_m2))
+    assert _with(lambda d: None) == ()
 
 
 def test_battery_1rc_stays_functional_with_its_evidence() -> None:
@@ -182,6 +185,40 @@ def test_a_decided_program_cannot_stay_the_active_epic() -> None:
     assert any("the owner names the next epic" in e for e in _with(decide_all))
 
 
+def test_every_decided_gate_needs_evidence_and_blocked_follows_a_failed_requirement() -> None:
+    blocked_without_evidence = _with(lambda d: _program(d)["gates"][0].update(status="BLOCKED_WITH_EVIDENCE"))
+    assert any("BLOCKED_WITH_EVIDENCE requires evidence" in e for e in blocked_without_evidence)
+    evidence = ["docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md"]
+
+    def m1_failed_m2_blocked(d):
+        gates = {g["id"]: g for g in _program(d)["gates"]}
+        gates["M1"].update(status="FAIL", evidence=evidence)
+        gates["M2"].update(status="BLOCKED_WITH_EVIDENCE", evidence=evidence)
+    assert _with(m1_failed_m2_blocked) == ()                              # the exit stays reachable after a FAIL
+
+    def m1_failed_m2_failed(d):
+        gates = {g["id"]: g for g in _program(d)["gates"]}
+        gates["M1"].update(status="FAIL", evidence=evidence)
+        gates["M2"].update(status="FAIL", evidence=evidence)
+    assert any("needs 'M1' PASS first" in e for e in _with(m1_failed_m2_failed))
+
+
+def test_a_deferred_gate_states_why_and_paths_stay_inside_the_repository() -> None:
+    assert any("DEFERRED_BY_OWNER requires next_action" in e
+               for e in _with(lambda d: _program(d)["gates"][1].update(status="DEFERRED_BY_OWNER", next_action="")))
+    assert any("repository-relative" in e
+               for e in _with(lambda d: _program(d)["gates"][1].update(status="PASS", evidence=["C:/Windows/win.ini"])))
+    assert any("repository-relative" in e
+               for e in _with(lambda d: _program(d)["gates"][1].update(status="PASS", evidence=["../outside.json"])))
+
+
+def test_two_programs_with_one_id_and_duplicate_planned_capabilities_are_refused() -> None:
+    assert any("research program ids must be unique" in e
+               for e in _with(lambda d: d["research_programs"].append(deepcopy(_program(d)))))
+    assert any("planned_capabilities must be unique" in e
+               for e in _with(lambda d: _program(d)["planned_capabilities"].append(_program(d)["planned_capabilities"][0])))
+
+
 def test_a_superseded_schema_is_refused_not_read(tmp_path) -> None:
     data = maturity.load_ledger()
     data["schema"] = "forge.scientific_capability_completion/1"
@@ -200,3 +237,5 @@ def test_the_governance_documents_name_the_ledgers_active_epic() -> None:
     assert f"The current active epic is **{epic}**" in policy
     assert f"`{epic}`" in template.splitlines()[2]
     assert f"Active completion epic: {epic} " in matrix
+    plan = (root / "docs/work/ACTIVE_PLAN.md").read_bytes().decode()
+    assert f"Active epic: `{epic}`" in plan.splitlines()[2]

@@ -17,19 +17,24 @@ repository evidence, and climbs only through those gates.
 
 The owner's strategy is to build every foundation first and validate afterwards. The program encodes exactly that:
 
-- **Any gate's scope may be written and implemented at any time** -- before G0, before any other gate, and in any
+- **Any gate's scope may be written and implemented at any time** -- before DV0, before any other gate, and in any
   order. Nothing in the ledger, the checker or this contract makes building wait for a test run.
-- **G0 gates nothing.** No gate `requires` G0; G0 is the deferred-validation gate for the work already built (ERT V1,
-  Phases 1-3.5). Running it is an owner decision, and it never blocks M1, M2, E1, E2 or E3 work.
-- A gate's `requires` constrains only when that gate may be **decided** (PASS, FAIL or BLOCKED_WITH_EVIDENCE): M2 and
-  E3 can be built now, but are decided only after M1 has PASSED.
+- **DV0 gates nothing.** No gate `requires` DV0; DV0 is the deferred-validation gate for the work already built (ERT
+  V1, Phases 1-3.5). Running it is an owner decision, and it never blocks M1, M2, E1, E2 or E3 work. (DV0 is not the
+  plan's "G0 Trust lane".)
+- A gate's `requires` constrains only when that gate may be **decided**: PASS or FAIL after every required gate PASSED;
+  BLOCKED_WITH_EVIDENCE after every required gate is decided either way (a FAILED M1 may block M2 and E3). M2 and E3
+  can be built now.
+- Every decided gate (PASS, FAIL, BLOCKED_WITH_EVIDENCE) cites existing repository evidence; a DEFERRED_BY_OWNER gate
+  states why in its next action and keeps the program open until the owner decides it or names the next epic.
 - A gate is decided only on **executed evidence** that exists in the repository; until then it is MISSING (built and
   unverified work is MISSING, never PASS). Building something never changes a maturity stage (Gate H).
 
 ## Why
 
-The Engineering Runtime V1 program and Phases 1–3.5 built the runtime foundations (coupling authority, field transfer,
-window control, acceleration, numerical health, mesh validity, moving-mesh kinematics, admission contracts). Five
+The Engineering Runtime V1 program (on `main`) and Phases 1–3.5 (local branches, not yet merged) built the runtime
+foundations (coupling authority, field transfer, window control, acceleration, numerical health, mesh validity,
+moving-mesh kinematics, admission contracts). Five
 remaining foundations are new scientific capabilities that the battery epic paused: a provider-backed nonlinear PDE,
 real FE ↔ CFD conjugate heat transfer, a bounded ALE formulation, and the adaptive-mesh extensions that EXC-1 did not
 cover. Serial exceptions for them would be the "exceptions as the roadmap" the anti-loophole rule forbids, so the epic
@@ -39,12 +44,12 @@ itself is re-pointed.
 
 | Gate | Work allowed | Code areas |
 | --- | --- | --- |
-| G0 | Execute the deferred validation of ERT V1 and Phases 1–3.5 (DV-1..DV-98), fix what fails, record every failure | the whole tree, as defect work |
+| DV0 | Execute the deferred validation for every DV row present in `docs/work/DEFERRED_VALIDATION.md` when the gate is decided (DV-1..DV-30 on `main`; DV-31..DV-98 once the Phase branches land), fix what fails, record every failure | the whole tree, as defect work |
 | M1 | Transient non-uniform 1D conduction (vertex-centred FV, backward Euler, declared order 1, explicit boundaries, sourced initial condition); conservative transfer of the cell-integrated energy between `Grid1D`s by exact interval overlap (conservative vs intensive declared; affine units refused; coverage and conservation residual recorded); coarsening only by undoing recorded bisections; an adaptive transient loop recording every grid version, parent and transfer, invalidating stale fields and coupling-acceleration history | `src/engcore/numerical/{mesh_adaptation,interval_transfer}.py`, `src/engcore/domains/thermal_models/conduction1d_nonuniform.py` |
 | M2 | Conforming triangle refinement (newest-vertex bisection, conformity closure, quality and inversion refusal, recorded parent-child versions, cell-average transfer through the existing conservative 2D remap) | `src/engcore/numerical/triangle_refinement.py` |
-| E1 | One nonlinear Forge template: steady `-div(k(u) grad u) = f`, `k(u) = k0 (1 + beta (u - u0))`, 2D affine triangles, P1/P2; admissibility `k(u) > 0` over the admitted range; a FEniCSx Newton path (exact UFL Jacobian) returning per-step Newton histories for `pde.nonlinear.admit_nonlinear_execution`; a manufactured-solution test | `src/engcore/pde/**`, `providers/fenicsx/**` |
+| E1 | (Precondition, not a ledger `requires`: Phase 3 `pde/nonlinear.py` has landed on `main`.) One nonlinear Forge template: steady `-div(k(u) grad u) = f`, `k(u) = k0 (1 + beta (u - u0))`, 2D affine triangles, P1/P2; admissibility `k(u) > 0` over the admitted range; a FEniCSx Newton path (exact UFL Jacobian) returning per-step Newton histories for `pde.nonlinear.admit_nonlinear_execution`; a manufactured-solution test | `src/engcore/pde/**`, `providers/fenicsx/**` |
 | E2 | Conjugate heat transfer for one pair and one geometry (a planar wall between a solid slab and a laminar channel): a FEniCSx transient-diffusion window session with boundary-trace flux output; an OpenFOAM energy-equation window session (restart per window, interface boundary update, read-back, time-directory snapshot/restore); interface supports as 2D `UnstructuredMesh` surfaces; one declared CHT model with sourced applicability conditions; an end-to-end run | `src/engcore/execution/multiphysics/**`, `src/engcore/coupling/**`, `providers/fenicsx/**`, `providers/openfoam/**` |
-| E3 | 1D transient diffusion on a moving domain `[0, L(t)]` in ALE form with a declared linear mesh-motion law, material velocity 0, vertex-centred FV on `numerical.moving_mesh`, a GCL-consistent time rule, linear solves through `SciPyLinearProvider`; tests for constant-state preservation, GCL, a known moving-boundary solution and rollback | `src/engcore/numerical/**`, `src/engcore/domains/thermal_models/**` |
+| E3 | (Precondition, not a ledger `requires`: Phase 3 `numerical/moving_mesh.py` has landed on `main`.) 1D transient diffusion on a moving domain `[0, L(t)]` in ALE form with a declared linear mesh-motion law, material velocity 0, vertex-centred FV on `numerical.moving_mesh`, a GCL-consistent time rule, linear solves through `SciPyLinearProvider`; tests for constant-state preservation, GCL, a known moving-boundary solution and rollback | `src/engcore/numerical/**`, one new module under `src/engcore/domains/thermal_models/` named in the E3 PR |
 
 Planned capabilities (enter `capabilities` only at FOUNDATION): `numerics.adaptive_mesh_1d_transient`,
 `numerics.triangle_refinement`, `pde.nonlinear_diffusion_fenicsx`, `coupling.cht_fenicsx_openfoam`,
@@ -65,11 +70,13 @@ Planned capabilities (enter `capabilities` only at FOUNDATION): `numerics.adapti
 - `battery.thevenin_1rc` stays a tracked capability at its computed stage (FUNCTIONAL, 2026-10-18) with every gate,
   evidence path and next action unchanged; it is no longer the epic. Defect, stabilization and evidence work on it stay
   allowed; a new battery capability foundation needs an exception.
-- EXC-1 (adaptive mesh control) is superseded by this program on merge: its slices 1–4 and its exit gate (DV-27..DV-30)
-  become part of G0 and M1.
+- EXC-1 (adaptive mesh control) is superseded by this program on merge: its slices 1–4 (including
+  `claims/adaptive_resolution.py`, now in `allowed_scope`) and its exit gate (DV-27..DV-30) become part of DV0 and M1.
 - Genesis (`genesis.scientific_reasoning`) is not active; A2 still needs an epic change or an exception.
 - Horizontal expansion OUTSIDE `allowed_scope` stays paused.
 
 ## Exit
 
-Every program gate is PASS, FAIL or BLOCKED_WITH_EVIDENCE; the owner then names the next epic.
+Every program gate is PASS, FAIL or BLOCKED_WITH_EVIDENCE (a deferred gate keeps the program open); the owner then
+names the next epic. Landing order: this governance change may merge alone; E1 and E3 additionally need the Phase
+branches on `main` before they can be decided.

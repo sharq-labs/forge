@@ -13,7 +13,7 @@
 
 ## Active-epic exception
 
-If this PR starts a new capability foundation while the active epic is below `PRODUCTION_READY`, explain the reviewed exception here. Otherwise write `N/A`.
+If this PR starts a new capability foundation outside the active epic's scope (for a research program, its `allowed_scope`) before the epic is finished, explain the reviewed exception here. Otherwise write `N/A`.
 
 ## Verification
 

@@ -3,7 +3,7 @@
   "policy": {
     "completion_rule": "A capability is complete only when its computed stage reaches PRODUCTION_READY; file/class existence is never completion.",
     "horizontal_expansion_paused": true,
-    "exception_process": "Any new capability foundation before the active epic is PRODUCTION_READY requires an explicit reviewed exception in the PR rationale."
+    "exception_process": "Any new capability foundation outside the active epic's scope (for a research program, its allowed_scope) before the epic is finished requires an explicit reviewed exception in the PR rationale."
   },
   "active_epic": "engrt.numerical_foundations",
   "capabilities": [
@@ -920,6 +920,7 @@
         "src/engcore/execution/multiphysics/**",
         "src/engcore/coupling/**",
         "src/engcore/domains/thermal_models/conduction1d_nonuniform.py",
+        "src/engcore/claims/adaptive_resolution.py",
         "src/engcore/domains/thermal_models/<one new ALE module, named in the E3 PR>",
         "providers/fenicsx/**",
         "providers/openfoam/**",
@@ -942,8 +943,8 @@
       ],
       "gates": [
         {
-          "id": "G0",
-          "title": "ERT V1 and Phases 1-3.5 deferred validation executed (DV-1..DV-98), failures fixed or recorded",
+          "id": "DV0",
+          "title": "Deferred validation executed for every DV row in docs/work/DEFERRED_VALIDATION.md when the gate is decided (on main today DV-1..DV-30; DV-31..DV-98 once the Phase 1-3.5 branches land); failures fixed or recorded",
           "requires": [],
           "status": "MISSING",
           "evidence": [],

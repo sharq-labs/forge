@@ -94,6 +94,17 @@ def missing_for_next_stage(capability: dict[str, Any]) -> tuple[str, ...]:
     )
 
 
+def _relative_path_problem(owner: str, label: str, path_text: str) -> str | None:
+    """A repository path: relative, inside the repository, existing."""
+    candidate = Path(path_text)
+    if (candidate.is_absolute() or path_text.startswith(("/", "\\")) or ".." in candidate.parts
+            or (len(path_text) > 1 and path_text[1] == ":")):          # a drive path, on any host OS
+        return f"{owner}: {label} must be a repository-relative path, got {path_text}"
+    if not (ROOT / path_text).exists():
+        return f"{owner}: {label} path does not exist: {path_text}"
+    return None
+
+
 def _evidence_problems(owner: str, evidence: Any) -> list[str]:
     problems: list[str] = []
     if not isinstance(evidence, list):
@@ -102,9 +113,9 @@ def _evidence_problems(owner: str, evidence: Any) -> list[str]:
         if not isinstance(reference, str) or not reference.strip():
             problems.append(f"{owner}: evidence entries must be non-empty paths")
             continue
-        path_text = reference.split("::", 1)[0]
-        if not (ROOT / path_text).exists():
-            problems.append(f"{owner}: evidence path does not exist: {path_text}")
+        problem = _relative_path_problem(owner, "evidence", reference.split("::", 1)[0])
+        if problem:
+            problems.append(problem)
     return problems
 
 
@@ -130,15 +141,19 @@ def validate_programs(programs: Any) -> list[str]:
                 errors.append(f"{pid}: {field_name} must be non-empty")
         for field_name in ("contract", "owner"):
             path_text = str(program.get(field_name, "")).strip()
-            if path_text and not (ROOT / path_text).exists():
-                errors.append(f"{pid}: {field_name} path does not exist: {path_text}")
+            if path_text:
+                problem = _relative_path_problem(pid, field_name, path_text)
+                if problem:
+                    errors.append(problem)
         for field_name in ("allowed_scope", "prohibited", "gates"):
             value = program.get(field_name)
             if not isinstance(value, list) or not value:
                 errors.append(f"{pid}: {field_name} must be a non-empty array")
         planned = program.get("planned_capabilities", [])
-        if not isinstance(planned, list):
-            errors.append(f"{pid}: planned_capabilities must be an array")
+        if not isinstance(planned, list) or any(not isinstance(c, str) or not c.strip() for c in planned):
+            errors.append(f"{pid}: planned_capabilities must be an array of capability ids")
+        elif len(set(planned)) != len(planned):
+            errors.append(f"{pid}: planned_capabilities must be unique")
         gates = program.get("gates")
         if not isinstance(gates, list):
             continue
@@ -167,13 +182,18 @@ def validate_programs(programs: Any) -> list[str]:
             for required in requires:
                 if required not in seen:
                     errors.append(f"{where}: requires {required!r}, which is not an EARLIER gate")
-                elif status in DECIDED and seen[required] != "PASS":
+                elif status in ("PASS", "FAIL") and seen[required] != "PASS":
+                    # a gate is judged only on top of what it builds on
                     errors.append(f"{where}: {status} needs {required!r} PASS first (it is {seen[required]})")
+                elif status == "BLOCKED_WITH_EVIDENCE" and seen[required] not in DECIDED:
+                    # blocked is allowed once the requirement is decided either way (a FAILED M1 may block M2),
+                    # so the program exit stays reachable
+                    errors.append(f"{where}: {status} needs {required!r} decided first (it is {seen[required]})")
             evidence = gate.get("evidence", [])
             errors += _evidence_problems(where, evidence)
-            if status in ("PASS", "FAIL") and not evidence:
+            if status in DECIDED and not evidence:
                 errors.append(f"{where}: {status} requires evidence")
-            if status in ("MISSING", "BLOCKED_WITH_EVIDENCE") and not str(gate.get("next_action", "")).strip():
+            if status in ("MISSING", "BLOCKED_WITH_EVIDENCE", "DEFERRED_BY_OWNER") and not str(gate.get("next_action", "")).strip():
                 errors.append(f"{where}: {status} requires next_action")
             seen[gid] = status
     return errors

@@ -5397,7 +5397,8 @@ Owner decision in the Claude Code session: re-point the active epic from `batter
 research-program mechanism of the OD-6 package (Option C) with this program instead of Genesis. Implemented as the
 canonical separate change on a branch from `origin/main` `de11dffa`; **in force only when reviewed and merged.**
 
-- Ledger schema /2: `research_programs` with one entry (gates G0, M1, M2, E1, E2, E3, all MISSING); `active_epic` names
+- Ledger schema /2: `research_programs` with one entry (gates DV0, M1, M2, E1, E2, E3, all MISSING; build-first: no gate
+  requires DV0, `requires` orders decisions only); `active_epic` names
   it; every capability, battery included, byte-identical in meaning.
 - `tools/capability_maturity.py`: refuses /1 ("migrate"); validates programs (exact fields, own statuses, ordered
   `requires`, evidence paths, no maturity vocabulary, unique ids across both arrays); a decided program cannot stay the
@@ -5409,3 +5410,5 @@ canonical separate change on a branch from `origin/main` `de11dffa`; **in force 
 
 Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN: `pytest tests/test_capability_completion.py`,
 `python -m tools.capability_maturity` (check) and `--write` (the matrix must be regenerated or confirmed).
+- Read-only merge review: 0 BLOCKER, 4 MAJOR, ~10 MINOR, fixed except one recorded limit; package:
+  `docs/work/OD6_MERGE_REVIEW.md`. Merge preview against `origin/main`: clean. Nothing executed, no PR, nothing merged.
