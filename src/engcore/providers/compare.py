@@ -8,6 +8,15 @@ tolerance.  The exact compared values are digest-bound.  Agreement is
 corroboration between the two numerical paths -- never truth, never
 validation.  A comparison whose region/selection was chosen after seeing the
 data is labelled ``post_hoc`` and classified as such.
+
+Phase 2 BR11: :func:`compare_providers` compares outputs; it does not know
+whether the two records solved the same scientific problem (each side's
+``problem_digest`` is what ONE provider was asked).  :func:`corroborate` is the
+cross-solver corroboration entry point: it requires a SAME_PROBLEM
+:class:`~.problem_identity.ProblemEquivalence` of two canonical problems and
+each record's declared :class:`~.problem_identity.ProblemBinding`, and records
+what the comparison does and does not establish.  A comparison made without
+them reports ``same_problem_established = False``.
 """
 
 from __future__ import annotations
@@ -21,6 +30,14 @@ import numpy as np
 from ..scientific.errors import InvalidScientificProblem
 from ..scientific.units.quantity import Quantity, is_ratio_scale
 from .identity import content_digest
+from .problem_identity import (
+    DEFAULT_REQUIRED,
+    CanonicalProblem,
+    ProblemBinding,
+    ProblemEquivalence,
+    ProblemIdentityVerdict,
+    compare_problems,
+)
 from .records import ProviderExecutionRecord
 
 _HEX = frozenset("0123456789abcdef")
@@ -194,6 +211,18 @@ class ProviderComparison:
     max_absolute: float
     max_relative: float
     within_tolerance: bool
+    #: Phase 2 BR11: set only by :func:`corroborate`; absent, nothing says the records solved one problem
+    problem_equivalence: ProblemEquivalence | None = None
+    problem_bindings: tuple[ProblemBinding, ...] = ()
+
+    @property
+    def same_problem_established(self) -> bool:
+        return (
+            self.problem_equivalence is not None
+            and self.problem_equivalence.verdict is ProblemIdentityVerdict.SAME_PROBLEM
+            and tuple(self.problem_equivalence.required) == tuple(sorted(DEFAULT_REQUIRED))
+            and len(self.problem_bindings) == 2
+        )
 
     @property
     def classification(self) -> str:
@@ -206,7 +235,16 @@ class ProviderComparison:
                 "b_identity": self.b.execution_identity, "b_problem": self.b.problem_digest, "b_output": self.b_output,
                 "b_selection": self.b_selection.to_dict(), "values_digest": self.values_digest,
                 "points": self.points, "max_absolute": repr(self.max_absolute), "max_relative": repr(self.max_relative),
-                "within_tolerance": self.within_tolerance}
+                "within_tolerance": self.within_tolerance,
+                # absent unless corroborate() admitted the problems: earlier comparisons keep their digests
+                **({"problem_equivalence": self.problem_equivalence.to_dict(),
+                    "problem_bindings": [b.to_dict() for b in self.problem_bindings],
+                    "establishes": "numerical agreement (or not) of two independent provider paths on one declared "
+                                   "canonical problem, within the declared tolerance",
+                    "does_not_establish": ["validation", "physical truth", "model-form adequacy",
+                                           "that either provider input faithfully translates the canonical problem",
+                                           "either side's numerical error"]}
+                   if self.problem_equivalence is not None else {})}
 
     @property
     def digest(self) -> str:
@@ -271,3 +309,37 @@ def compare_providers(declaration: ComparisonDeclaration, a: Any, a_output: str,
     values_digest = content_digest({"a": [repr(float(x)) for x in av], "b": [repr(float(x)) for x in bv]})
     return ProviderComparison(declaration, ra, rb, a_output, b_output, a_select, b_select, values_digest, int(av.size),
                               float(diff.max()), float(rel.max()), ok)
+
+
+def corroborate(declaration: ComparisonDeclaration, a: Any, a_output: str, b: Any, b_output: str, *,
+                problems: tuple[CanonicalProblem, CanonicalProblem], bindings: tuple[ProblemBinding, ProblemBinding],
+                a_select: OutputSelection = OutputSelection(), b_select: OutputSelection = OutputSelection()) -> ProviderComparison:
+    """Cross-solver corroboration: compare only after the two records are admitted as solving ONE problem.
+
+    ``problems`` are the two CANONICAL problems; their equivalence is derived
+    here with every aspect required (a caller-built equivalence, or one
+    narrowed to a few aspects, is not accepted).  Refused unless that is
+    SAME_PROBLEM and each binding names its record's execution identity and the
+    canonical problem on its side.  The usual independence and unit rules of
+    :func:`compare_providers` apply.
+    """
+    if len(problems) != 2 or any(not isinstance(p, CanonicalProblem) for p in problems):
+        raise InvalidScientificProblem("corroboration takes the two CanonicalProblem records, not a verdict")
+    problems = compare_problems(problems[0], problems[1], required=DEFAULT_REQUIRED)
+    if problems.verdict is not ProblemIdentityVerdict.SAME_PROBLEM:
+        raise InvalidScientificProblem(
+            f"the two records are not admitted as solving one problem ({problems.verdict.value}: differing "
+            f"{list(problems.differing)}, undeclared {list(problems.undeclared)}); their outputs are not compared"
+        )
+    if len(bindings) != 2 or any(not isinstance(item, ProblemBinding) for item in bindings):
+        raise InvalidScientificProblem("corroboration needs one ProblemBinding per record")
+    ra, rb = ExecutionRef.of(a), ExecutionRef.of(b)
+    for ref, binding, side in ((ra, bindings[0], problems.a_problem), (rb, bindings[1], problems.b_problem)):
+        if binding.execution_identity != ref.execution_identity:
+            raise InvalidScientificProblem(f"the problem binding of {ref.provider_id} names another execution")
+        if binding.problem_digest != side:
+            raise InvalidScientificProblem(f"{ref.provider_id}'s execution is bound to another canonical problem")
+    made = compare_providers(declaration, a, a_output, b, b_output, a_select=a_select, b_select=b_select)
+    from dataclasses import replace
+
+    return replace(made, problem_equivalence=problems, problem_bindings=tuple(bindings))

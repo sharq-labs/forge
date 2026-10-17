@@ -4,6 +4,21 @@ The multiphysics core never imports OpenFOAM, FEniCS, SPICE, PyBaMM or another
 provider-specific type. A provider session implements this protocol and the
 adapter turns it into the same ExecutableParticipant lifecycle every domain
 uses.
+
+Phase 2 BR12:
+
+* **Mocks are labelled.**  ``ExternalProviderIdentity.mock`` marks a session
+  that is not a real provider (a test double, a replay of canned values).  The
+  label is part of the identity a checkpoint is sealed to, and
+  ``system_runtime.MultiphysicsAuthority`` refuses a run with a mock external
+  participant unless its caller explicitly allows mocks.  A mock is never
+  evidence that a real provider executes.
+* **Failures are classified.**  A session that raises anything other than a
+  scientific refusal (a crashed process, a missing file, a library error) is
+  reported as :class:`ExternalProviderFailure`, naming the provider build and
+  the lifecycle phase.  It is a refusal of the window, never retried as a
+  numerical non-convergence; numerical non-convergence is the session's
+  ``internal_converged=False``, which the runtime may retry.
 """
 
 from __future__ import annotations
@@ -14,7 +29,7 @@ import weakref
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Protocol, runtime_checkable
 
-from ...scientific.errors import InvalidScientificProblem
+from ...scientific.errors import InvalidScientificProblem, ScientificCoreError
 from ...scientific.multiphysics import CheckpointRecord, ParticipantSpec
 from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.units.quantity import Quantity
@@ -36,8 +51,12 @@ class ExternalProviderIdentity:
     provider_version: str
     adapter_id: str
     adapter_version: str
+    #: True for a session that is not a real provider (labelled, never evidence of real execution)
+    mock: bool = False
 
     def __post_init__(self) -> None:
+        if not isinstance(self.mock, bool):
+            raise InvalidScientificProblem("external provider identity mock flag must be boolean")
         for label in (
             "provider_id",
             "provider_version",
@@ -66,6 +85,8 @@ class ExternalProviderIdentity:
             "provider_version": self.provider_version,
             "adapter_id": self.adapter_id,
             "adapter_version": self.adapter_version,
+            # absent for real providers: their state scope and checkpoints keep their identity
+            **({"mock": True} if self.mock else {}),
         }
 
 
@@ -244,6 +265,33 @@ class CheckpointSeal:
         return token.snapshot
 
 
+class ExternalProviderFailure(InvalidScientificProblem):
+    """An external session failed for a non-scientific reason (process, file, library); a refusal, never a retry."""
+
+    def __init__(self, message: str, *, identity: "ExternalProviderIdentity", phase: str) -> None:
+        super().__init__(message)
+        self.identity = identity
+        self.phase = phase
+
+
+def _classified(participant: "ExternalSolverParticipant", phase: str, call, *args):
+    try:
+        return call(*args)
+    except ScientificCoreError:
+        # a scientific refusal, or a numerical failure the runtime classifies and may retry
+        # (CouplingWindowNotConverged), keeps its own type
+        raise
+    except Exception as exc:  # noqa: BLE001 - every other failure is a provider failure, named
+        identity = participant.provider_identity
+        raise ExternalProviderFailure(
+            f"external provider {identity.provider_id}@{identity.provider_version} "
+            f"(adapter {identity.adapter_id}@{identity.adapter_version}) failed during {phase} of participant "
+            f"{participant.spec.participant_id!r}: {type(exc).__name__}: {exc}",
+            identity=identity,
+            phase=phase,
+        ) from exc
+
+
 @runtime_checkable
 class ExternalSolverSession(Protocol):
     @property
@@ -334,10 +382,8 @@ class ExternalSolverParticipant(ExecutableParticipant):
             external_inputs,
             external_uncertainty,
         )
-        result = self._session.initialize(
-            instant,
-            external_inputs,
-            external_uncertainty,
+        result = _classified(
+            self, "initialize", self._session.initialize, instant, external_inputs, external_uncertainty
         )
         self._require_same_build()  # a build switched inside the call is refused too
         if not isinstance(result, InitializationResult):
@@ -361,7 +407,7 @@ class ExternalSolverParticipant(ExecutableParticipant):
             request.inputs,
             request.input_uncertainty,
         )
-        result = self._session.advance(request)
+        result = _classified(self, "advance", self._session.advance, request)
         self._require_same_build()  # a build switched inside the call is refused too
         if not isinstance(result, AdvanceResult):
             raise InvalidScientificProblem(
@@ -381,7 +427,7 @@ class ExternalSolverParticipant(ExecutableParticipant):
                 f"participant {self.spec.participant_id!r} is not checkpointable"
             )
         self._require_same_build()
-        snapshot = self._session.snapshot(instant)
+        snapshot = _classified(self, "snapshot", self._session.snapshot, instant)
         self._require_same_build()  # never seal a snapshot under a build it was not taken from
         if not isinstance(snapshot, ExternalSnapshot):
             raise InvalidScientificProblem(
@@ -413,8 +459,12 @@ class ExternalSolverParticipant(ExecutableParticipant):
             state_type=ExternalSnapshot,
             label="external",
         )
-        self._session.restore(snapshot)
+        _classified(self, "restore", self._session.restore, snapshot)
         self._require_same_build()
 
+    @property
+    def is_mock(self) -> bool:
+        return self._identity.mock
+
     def finalize(self) -> None:
-        self._session.finalize()
+        _classified(self, "finalize", self._session.finalize)

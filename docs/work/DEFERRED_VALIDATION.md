@@ -386,3 +386,200 @@ UNBOUNDED source.
 | 8 | MINOR | `MappingDiagnostics.provenance` was a mutable dict | Fixed: frozen on construction, `detach`ed on serialization. |
 | 9 | MINOR | Conditioning of sparse 1000 < n <= 2000 (and GMRES) now estimated or unresolved; `stability.py` then records "singular or unresolved" | Recorded (DV-43): the safe direction; stability decisions change. |
 | 10 | MINOR | degC refused for conservative remap although an exactly covering first-order remap is affine-invariant | Kept as a design choice (no conservation claim for an offset scale); owner may relax. |
+
+## Phase 2 — Unified solver & multiphysics architecture (2026-10-17)
+
+Branch `feat/phase2-unified-solver-architecture` (worktree `D:/forge-phase2`), stacked on Phase 1 `6249c2d2`
+(itself on `origin/main` `de11dffa`; neither pushed nor merged). Rocks are P2-BR8..P2-BR12. **No test of any kind
+was executed** (owner direction): only `py_compile`, import checks and `git diff --check`. Every changed capability
+is IMPLEMENTED / UNVERIFIED at most; every touched pinned file is UNCERTIFIED until OD-3. The Phase 1 items above
+(N60d, stub-run tests, DV-34, 3D remap, mesh-weighted residual, participant time tolerance, no coupling-error bound)
+are NOT resolved by Phase 2 unless a row below says so.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-48 | P2-BR8 authority, deferred outputs, isolation, exact NONE relaxation | New tests | `pytest tests/test_phase2_coupling_authority.py -q` | NOT RUN |
+| DV-49 | P2-BR8 | Electrothermal parity: native loop vs runtime build (outcome, iterations, outputs <= 1e-9) on NOMINAL and TWO_STAGE; iteration-limit parity | included in DV-48 | NOT RUN |
+| DV-50 | P2-BR8 | Existing suites touched by the NONE-relaxation change (implicit unrelaxed runs now deliver the transfer bit-exactly; iterates may move by an ulp) and the electrothermal provenance text (unrelaxed runs unchanged) | `pytest tests/test_electrothermal_vertical.py tests/test_electrothermal_fixed_point_relaxation.py tests/test_stateful_multiphysics_runtime.py tests/test_big9_review_runtime_fixes.py tests/test_multiphysics_window_control.py -q` | NOT RUN |
+
+### P2-BR8 status: PARTIAL / UNVERIFIED
+
+- Authority: `MultiphysicsRuntime`, declared in `execution/multiphysics/authority.py` (`COUPLING_PATHS`,
+  `coupling_authority()`); one outcome vocabulary (`fixed_point_outcome`).
+- Not migrated: the electrothermal fixed point (`systems/electrothermal/coupled.py`) still decides its own
+  convergence on the product path. A runtime-equivalent build exists (`systems/electrothermal/runtime_adapter.py`)
+  for unrelaxed plans only. Remaining: execute parity (DV-49); relaxation semantics (runtime relaxes every serial
+  edge, the native loop only torn values); TRANSFER_REFUSED as a recorded stop; `credibility.CouplingEvidence` on the
+  runtime record.
+- Fixed in passing: the native loop's provenance claimed "no relaxation" for relaxed runs (false support); NONE
+  relaxation rounded `old + 1*(new-old)`; one participant object under two concurrent ids was not refused.
+
+### Unverified assumptions (P2-BR8)
+
+- The runtime compares the torn change in the port's base unit, the native loop in the plan's ratio-scale unit; they
+  can disagree only by rounding at the tolerance boundary.
+- `ResultParticipant` sets `internal_converged` from the result's convergence state (stricter than the native loop,
+  which ignores it); every electrothermal executor reports CONVERGED or NOT_APPLICABLE, so parity is expected.
+- A steady participant's deferred initial outputs are never read on forward serial edges; any other edge is refused.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-51 | P2-BR9 transfer engine | New tests (supported table, tet->tet conservation/range/permutation, degenerate refusal, vector components, KD-tree and bucket index vs brute force, provenance, array digests) + the Phase 1 conservative suite (its 3D refusal test now refuses hexahedra; tet->tet is supported) | `pytest tests/test_phase2_field_transfer.py tests/test_phase1_conservative_cell_mapping.py -q` | NOT RUN |
+| DV-52 | P2-BR9 | Existing mapping, field and mesh suites: every non-identity mapping now records provenance (run digests of field-mapped runs change); nearest/point location now go through the indexes (values must be unchanged) | `pytest tests -q -k "mapping or field or mesh or spatial" -m "not expensive"` | NOT RUN |
+| DV-53 | P2-BR9 | Time and memory of the indexed searches and the tetrahedral overlap on a realistic interface (no performance claim is made) | owner-authorized benchmark | NOT RUN |
+| DV-34 | P1-BR2 (carried) | End-to-end field-mapped coupled run through `TransferEngine` | new test | NOT WRITTEN (still) |
+
+### P2-BR9 status: IMPLEMENTED / UNVERIFIED (scope as declared, not universal)
+
+- Authoritative engine: `execution/multiphysics/mapping.FieldMapper`; `transfer_support` admits only the rows of
+  `SUPPORTED_TRANSFERS`; `FIELD_TRANSFER_PATHS` declares the other mapping code (P1 interpolation on `SpatialMesh`,
+  a separate data model used by `coupling/adapters`; the structured support-contract checker).
+- Conservative remap now: structured/structured, 2D triangle/convex-quad/structured pairs (Phase 1), and
+  tetrahedron -> tetrahedron (exact convex-polytope intersection: vertex-in-other plus edge-facet points, Qhull
+  hull volume). Refused: hexahedra (a trilinear hex is not convex in general), 2D<->3D, node fields, offset units,
+  partial coverage. Vector fields: component by component in one shared frame.
+- Search: exact bucket index (superset, ascending) for point location and overlap candidates; KD-tree nearest with
+  the exhaustive lowest-index tie rule. Acceptance is always the unchanged exact test.
+- Provenance on every method (supports, locations, components, search; interpolations say they are not conservative).
+- Data plane: `FieldValue.store` passes a float64 array (byte-identical encoding); `BulkDataResolver.resolve_array`
+  reads without a Python tuple; meshes and fields read through it.
+
+### Unverified assumptions (P2-BR9)
+
+- Qhull returns the convex-hull volume of the collected points to round-off and raises only for degenerate (flat)
+  sets; duplicate points (shared vertices) are tolerated. A 1e-12 * cell-size inside tolerance admits boundary points.
+- The bucket grid is capped at 256 buckets per axis; a mesh with very uneven cell sizes registers large cells in
+  many buckets (memory not bounded by cell count alone).
+- `nearest_sites` reproduces the exhaustive choice whenever the KD-tree distance and the einsum distance agree to
+  16 eps relative, which bounds their rounding difference for coordinates of ordinary magnitude.
+- Forward mapping error stays UNQUANTIFIED for every non-identity method (P1-BR3); nothing here bounds it.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-54 | P2-BR10 checkpoint identity and recovery | New tests (build/problem binding, drift, ambiguity, cold start on record, qualified conversion, provider-participant build drift and token corruption) + existing routing suite | `pytest tests/execution/orchestration -q` | NOT RUN |
+| DV-55 | P2-BR10 | Real PyBaMM restore with the new build tag and content check (needs the 3.13 / WSL battery env) and the battery-cooling flagship (provider_state_id of its cell checkpoints changes) | `pytest flagships tests/test_multiscale_runtime.py -q` in the provider env | NOT RUN |
+| DV-56 | P2-BR10 | External-provider failure and recovery end to end (an ExternalSolverParticipant failing inside a window, rollback, retry on a shorter window, provider records) | new test | NOT WRITTEN |
+
+### P2-BR10 status: IMPLEMENTED / UNVERIFIED
+
+- Orchestration (`execution/orchestration/checkpoint.py`, both runners, `SimulationPlan.problem_digest`): a
+  checkpoint is bound to solver id, solver build and problem digest; adoption refuses another build or problem;
+  resume refuses build drift, another problem, and ambiguity (recorded build or problem vs none stated); a backend
+  whose stated build changes between attempts is refused; a fallback cold-starts and the cold start is recorded;
+  failed/diverged attempts never supply state (unchanged).
+- `CheckpointConversion`: the only route for one solver's state into another -- both builds named, a stated
+  qualification, and a target backend that declares `accepts_converted_checkpoints`. No conversion exists in the
+  repository, so every cross-solver fallback cold-starts today.
+- `coupling/adapters.provider_participant` (the open ERT item): execution builds must stay the first (and, with
+  `expected_build`, the admitted) build; checkpoints carry a build tag; restore refuses another participant, another
+  build, and a token whose content does not hash to the record's state digest.
+- PyBaMM `cell_participant`: restore refuses another participant, a checkpoint without this build's tag (including
+  pre-Phase-2 checkpoints), and a token whose solution does not hash to the recorded digest.
+- `ExternalSolverParticipant` sealing (ERT Phase 1) was reviewed and left unchanged.
+
+### Unverified assumptions (P2-BR10)
+
+- A backend's `solver_build` string is its own statement of build identity; the runner compares it and records it,
+  it cannot verify it. Backends that state none keep the pre-Phase-2 behaviour (ambiguity refuses only a checkpoint
+  that does record a build).
+- PyBaMM's solution state digest (`last_state.y` bytes) is assumed to identify the restorable state, as before.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-57 | P2-BR11 problem identity, corroboration, selection | New tests (equivalent and non-equivalent representations, excluded aspects, corroboration refusals, equal provider digests not trusted, qualified deterministic selection) | `pytest tests/test_phase2_solver_selection_and_identity.py -q` | NOT RUN |
+| DV-58 | P2-BR11 | Existing comparison suites and the flagships that call `compare_providers` (serialized form unchanged when no equivalence is attached) | `pytest tests/test_provider_boundary.py tests/test_big11_second_rereview_fixes.py flagships -q` | NOT RUN |
+| DV-59 | P2-BR11 | Selection with REAL admitted qualifications (route runs + ledger) instead of the patched admission used in the unit tests | new test | NOT WRITTEN |
+
+### P2-BR11 status: IMPLEMENTED / UNVERIFIED
+
+- `providers/problem_identity.py`: `CanonicalProblem` (ten provider-independent aspects; quantities canonicalized to
+  base units with the repository identity rule; absolute vs difference kept apart; discretization, mesh, solver,
+  solver configuration, tolerances and provider inputs refused as aspects); `compare_problems` -> SAME_PROBLEM /
+  DIFFERENT_PROBLEM (names the aspects) / UNDETERMINED (never promoted); `ProblemBinding` records an adapter's
+  declared translation of a canonical problem into one execution.
+- `providers/compare.corroborate`: compares only after SAME_PROBLEM and one binding per record naming its execution
+  and its side's canonical problem; the record states what it establishes and what it does not (validation,
+  physical truth, model form, translation fidelity, numerical error). Independence and unit rules unchanged.
+- `providers/selection.py`: `SolverRequirement` (scope mandatory), `select_solvers` -> `SolverSelection` record:
+  available, capability covers the requirement, an admitted qualification of the exact build and adapter covers the
+  scope; deterministic order = explicit preference, then provider id.
+- False-support pathway found and contained, not removed: `compare_providers` still compares two records with no
+  same-problem check (each side's `problem_digest` is provider-specific). Its comparisons now report
+  `same_problem_established = False`; making that a refusal changes flagship level-5 evidence (owner decision
+  OD-P2-3).
+
+### Unverified assumptions (P2-BR11)
+
+- A canonical declaration is as faithful as its author; two authors can state one problem differently (a false
+  DIFFERENT_PROBLEM) -- the safe direction. A false SAME_PROBLEM needs two identical declarations of different
+  problems, i.e. a declaration that omits what differs; requiring every aspect bounds but does not exclude that.
+- Boundary-condition kinds, regimes and equation classes are matched through qualification scope tokens because
+  `ProviderCapability` does not declare them; the tokens' meaning is the issuing route's.
+- Numerical error of each side is not part of a corroboration; agreement within tolerance says nothing about it.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-60 | P2-BR12 external-participant infrastructure | New tests with LABELLED MOCK sessions: end-to-end field-mapped run (closes DV-34 as WRITTEN), interface contract, mock refusal/admission, failure classification, maturity table | `pytest tests/test_phase2_external_coupling.py -q` | NOT RUN |
+| DV-34 | P1-BR2 (carried) | End-to-end field-mapped coupled run through `TransferEngine` | written as `tests/test_phase2_external_coupling.py::test_a_field_coupled_run_maps_the_flux_conservatively_and_records_it` | NOT RUN (now written) |
+| DV-61 | P2-BR12 | Re-run the real FEniCSx coupling suite on THIS tree (last recorded: 133 passed on a BIG-14-era tree); the interface contract applied to its thermal <-> electrical graph | WSL: `FORGE_PROVIDER_ENVS=$HOME/mm/root/envs $HOME/mm/root/envs/fenicsx/bin/python -m pytest -q providers/fenicsx/tests` | NOT RUN |
+| DV-62 | P2-BR12 | Real FE <-> CFD coupled execution (FEniCSx solid + OpenFOAM or SU2 fluid, conjugate heat transfer) | BLOCKED (policy) | NOT WRITTEN |
+| DV-63 | P2 all | Performance and memory regressions of the Phase 2 paths (indexed search, tet overlap, selection) | owner-authorized benchmark | NOT RUN |
+
+### P2-BR12 status: PARTIAL / UNVERIFIED (end-to-end FE/CFD BLOCKED)
+
+Implemented (provider-neutral infrastructure, policy-permitted):
+- `ExternalProviderIdentity.mock`: a labelled mock is part of the sealed identity (real identities unchanged);
+  `MultiphysicsAuthority` refuses mock external participants unless `allow_mock_participants=True`, then labels them
+  (`mock_participants` diagnostic) and exempts only them from the provider-record trace requirement.
+- `ExternalProviderFailure`: any non-scientific exception from a session (process, file, library) is a classified
+  refusal naming build and phase; scientific errors -- including the retryable `CouplingWindowNotConverged` -- keep
+  their type.
+- `execution/multiphysics/interface_exchange.py`: `InterfaceContract` types each interface edge as FLUX_DENSITY
+  (field-valued, conservative or identity mapping, ratio-scale unit, declared sign convention) or INTENSIVE; a two-way
+  interface needs one flux edge and one intensive edge back between the same participants;
+  `interface_flux_balance` reads the per-window transfer conservation residuals as DIAGNOSTICS (UNKNOWN where none
+  was recorded), never bounds.
+- `authority.EXTERNAL_PROVIDER_COUPLING`: per provider, adaptation / field exchange / coupled execution stated
+  separately (FEniCSx executed historically on an older tree; OpenFOAM and SU2 adaptation only; FE/CFD BLOCKED);
+  `COUPLING_PATHS` now also declares the provider-participant adapters and the preCICE external engine.
+
+BLOCKED -- real FE <-> CFD conjugate heat transfer (owner decision OD-P2-1):
+- Policy: a new capability foundation under the active epic `battery.thevenin_1rc`; EXC-1 is open, so a second
+  exception triggers the anti-loophole review. Not authorized by this prompt.
+- Engineering prerequisites, recorded so they are not rediscovered: (1) an OpenFOAM (or SU2) time-window session --
+  case restart per window, a boundary-condition file update for the interface (temperature or flux) before each
+  window, read-back of the interface boundary field after it, deterministic snapshot/restore of the time directory;
+  (2) a FEniCSx boundary-trace output of the conduction flux on the interface facets; (3) interface meshes as
+  `UnstructuredMesh` supports (2D triangles/quads on a shared surface, or matching tetrahedral layers) so the
+  conservative remap applies; (4) a declared conjugate-heat-transfer model with applicability conditions in the
+  ledger; (5) the WSL envs (`~/mm/root/envs/fenicsx`, the `battery` env with OpenFOAM v2412 / SU2 8.5.0) on PATH via
+  `tools/wsl_env.sh`, `MSYS_NO_PATHCONV=1` for `/mnt/d` paths.
+
+### Unverified assumptions (P2-BR12)
+
+- The mock sessions in the tests exercise transfer and record mechanics only; no conclusion about any real solver
+  follows from them.
+- `forge_precice` keeps its own fixed-point residual check outside the runtime (declared EXTERNAL_ENGINE).
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-64 | P2 review | Regression tests for the four review MAJORs (forward tear, asserted identity, canonical numbers, fresh-restore build pin) | `pytest tests/test_phase2_review_regressions.py -q` | NOT RUN |
+
+### Phase 2 static review (read-only, nothing executed) and what it changed
+
+| # | Severity | Finding | Disposition |
+| --- | --- | --- | --- |
+| M1 | MAJOR | A redundant (forward) tear made the runtime build read a torn value in the same sweep, unlike the native lag | Fixed: `runtime_equivalent` refuses forward tears (before `check_against`). |
+| M2 | MAJOR | `corroborate` accepted a caller-built or narrowed `ProblemEquivalence` | Fixed: it takes the two `CanonicalProblem`s and derives identity with every aspect required; `same_problem_established` also requires the full aspect set. |
+| M3 | MAJOR | Provenance on every mapping method changes the serialized form of field-mapped run records (certified file; the docstring promised otherwise) | Kept deliberately (exact field/mesh provenance is a BR9 requirement); docstring corrected; recorded as an identity change for OD-3 (DV-52). No committed JSON pins these records. |
+| M4 | MAJOR | A fresh provider participant restored a checkpoint of any build and adopted whatever ran next | Fixed: the restore pins the checkpoint's build tag and the first execution must match it. Untagged checkpoints are pre-execution state (declared state only) and still restore. |
+| m | MINOR | `require_build` ran before the `succeeded` check, hiding failure reasons | Fixed (failure first). |
+| m | MINOR | `"1.0"` and `1.0` collided, `1` and `1.0` differed | Fixed: plain numbers canonicalized by value (12 significant digits) and tagged apart from text. |
+| m | MINOR | Cold-start note repeated per refinement attempt | Fixed (once per solver). |
+| m | MINOR | An admitted mock was labelled only in diagnostics | Fixed: every output's UNKNOWN note names the mock participants. |
+| m | MINOR | `ResultParticipant` treats a failed termination as a numerical failure; the native loop ignores termination | Documented in the adapter's correspondence list. |
+| m | MINOR | Serial CONSTANT/AITKEN relaxation requires every edge, but a deferred edge may not carry a criterion | Recorded limit: such plans are refused at initialization; seed every edge to use them. |
+| m | MINOR | A termination condition on a deferred steady output refuses at start with a misleading message, participants not finalized on that raise | Recorded (refusal, not a silent pass); not changed. |
+| m | MINOR | Pre-Phase-2 PyBaMM checkpoints (no build tag) are refused; provider_state_id of new checkpoints changes | Recorded (DV-55); in-process checkpoints only, none stored. |
+| m | MINOR | `sign_convention` is metadata only; INTENSIVE edges unchecked | Recorded: the contract checks mapping/unit/pairing, not the sign of transferred values. |
+| m | MINOR | Mock refusal happens after the run executes; build-drift break consumes an attempt; `converted_resume_point` does not re-check the problem (safe only because the caller checked it); legacy unbound checkpoints resume on any build; BoxIndex O(n^2) registrations for domain-sized boxes; `session.identity` read not classified | Recorded, not changed. |

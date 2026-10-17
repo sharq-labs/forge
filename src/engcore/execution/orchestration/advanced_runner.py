@@ -15,7 +15,15 @@ from .capabilities import (
     SolverCapability,
     rank_solver_capabilities,
 )
-from .checkpoint import CheckpointReference, adopt_checkpoint, resume_owner, resume_point_for
+from .checkpoint import (
+    CheckpointConversion,
+    CheckpointReference,
+    adopt_checkpoint,
+    converted_resume_point,
+    resume_owner,
+    resume_point_for,
+    resume_refusal,
+)
 from .plan import SimulationPlan
 from .refinement import RefinementRequest
 from .resources import ResourceBudget, ResourceUsage
@@ -30,8 +38,21 @@ def run_adaptive_plan(
     *,
     resource_budget: ResourceBudget = ResourceBudget(),
     checkpoint: CheckpointReference | None = None,
+    conversions: tuple[CheckpointConversion, ...] = (),
 ) -> AdvancedOrchestrationReport:
+    """Run the capable declared solvers in rank order until one is accepted.
+
+    Phase 2 BR10 recovery rules: a checkpoint resumes only the solver build and
+    problem it was produced for (:func:`resume_refusal`); a fallback solver
+    cold-starts from the admitted problem unless a declared, qualified
+    :class:`CheckpointConversion` exists and its backend declares
+    ``accepts_converted_checkpoints``; a backend whose stated build changes
+    between attempts is refused (build drift); every resume, conversion and
+    cold start is recorded in ``problems``.
+    """
     owner = resume_owner(checkpoint)
+    if any(not isinstance(item, CheckpointConversion) for item in conversions):
+        raise TypeError("conversions must be CheckpointConversion records")
     ranked = rank_solver_capabilities(capabilities, requirements)
     declared = set(plan.solver_candidates)
     ranked = tuple(cap for cap in ranked if cap.solver_id in declared)
@@ -51,6 +72,23 @@ def run_adaptive_plan(
             checkpoint,
             (f"resume_checkpoint_owner_{owner}_not_a_capable_declared_solver",),
         )
+    if checkpoint is not None:
+        refused = resume_refusal(
+            checkpoint,
+            solver_build=str(getattr(backends.get(owner), "solver_build", "")),
+            problem_digest=plan.problem_digest,
+        )
+        if refused:
+            # the caller asked to CONTINUE this state; continuing it on an
+            # incompatible build or problem would not be a continuation
+            return AdvancedOrchestrationReport(
+                (),
+                ResourceUsage(),
+                AdvancedStopReason.NO_CAPABLE_SOLVER,
+                checkpoint,
+                (f"resume_checkpoint_refused: {refused}",),
+            )
+    builds_seen: dict[str, str] = {}
 
     attempts: list[AdvancedAttemptRecord] = []
     total = ResourceUsage()
@@ -90,9 +128,31 @@ def run_adaptive_plan(
                 f"{plan.plan_id}:{attempt_number}:{capability.solver_id}:"
                 f"r{refinement_level}"
             )
-            # a checkpoint is solver state: only the solver that produced it
-            # may resume from it, so a fallback solver starts cold
-            resume_from = resume_point_for(current_checkpoint, capability.solver_id)
+            build = str(getattr(backend, "solver_build", "")).strip()
+            first = builds_seen.setdefault(capability.solver_id, build)
+            if build != first:
+                problems.append(f"{capability.solver_id}:build_drift_{first}_to_{build}_refused")
+                break
+            # a checkpoint is solver state: only the solver build that produced
+            # it may resume from it; a fallback solver starts cold unless a
+            # qualified conversion is declared for exactly this pair of builds
+            resume_from = resume_point_for(
+                current_checkpoint, capability.solver_id,
+                solver_build=build, problem_digest=plan.problem_digest,
+            )
+            if resume_from is None and current_checkpoint is not None:
+                resume_from, conversion = converted_resume_point(
+                    current_checkpoint, solver_id=capability.solver_id, solver_build=build,
+                    conversions=conversions,
+                    accepts_converted=bool(getattr(backend, "accepts_converted_checkpoints", False)),
+                )
+                note = (
+                    f"{capability.solver_id}:resume_via_conversion_{conversion.conversion_id}"
+                    if conversion is not None
+                    else f"{capability.solver_id}:cold_start_from_admitted_problem"
+                )
+                if note not in problems:
+                    problems.append(note)
             try:
                 outcome = backend.run_advanced(
                     attempt_id=attempt_id,
@@ -137,6 +197,8 @@ def run_adaptive_plan(
                 outcome.checkpoint,
                 solver_id=capability.solver_id,
                 state=outcome.state,
+                solver_build=build,
+                problem_digest=plan.problem_digest,
             )
             if problem:
                 problems.append(problem)

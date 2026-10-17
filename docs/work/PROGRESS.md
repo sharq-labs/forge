@@ -5558,3 +5558,68 @@ are pinned; `numerical_error.py` -> `runtime.py` is uncertified -> certified).
 6. P1-BR6: the dense-conversion and factorization limits (1000, 4096, 5e6 stored entries) are memory-budget choices.
 7. P1-BR7: rewrite of the stub-run authority tests (`test_h2_*`, `test_r2_*`, big13 extractor test) on real run records (DV-46/47).
 8. Still open from ERT V1: mandatory conditioning of coupled claims; DV-24 closure; OD-3.
+
+## 2026-10-17 -- Phase 2: unified solver & multiphysics architecture (build phase; feat/phase2-unified-solver-architecture, local only)
+
+Worktree `D:/forge-phase2`, stacked on Phase 1 `6249c2d2` (re-verified: Phase 1 not pushed, not merged; `origin/main`
+still `de11dffa`). Owner direction: build BR8..BR12 (numbered P2-BR8..P2-BR12), write tests, **execute no test**, no
+push/PR/merge/certification, stop after Phase 2. Phase 1 deferred items are preserved, not resolved, except DV-34
+(now written, still not run).
+
+### Commits (all local)
+
+`e4dec400` P2-BR8, `54ff4321` P2-BR9, `17dd89b6` P2-BR10, `77634711` P2-BR11, `e9d18d63` P2-BR12, then a review-fix /
+docs commit. Per-rock scope, rules, limitations and assumptions: DEFERRED_VALIDATION.md "Phase 2".
+
+### What was executed
+
+- `python -m py_compile` on every changed source and test file: OK. `git diff --check` after every rock: clean;
+  CR count of every changed file: 0.
+- Import check (`PYTHONPATH=D:/forge-phase2/src;D:/forge-phase2/providers/pybamm`, `engcore.__file__` in the worktree)
+  of 21 changed or dependent modules: `imports ok 21`.
+- Three one-line arithmetic checks to choose test fixtures (float pairs where `old + (new - old) != new`).
+- A read-only static review of the Phase 2 diff (subagent, no execution): 4 MAJOR, ~14 MINOR. M1, M2, M4 and six
+  MINORs fixed in the review-fix commit; M3 kept deliberately as a recorded identity change. Dispositions:
+  DEFERRED_VALIDATION.md "Phase 2 static review". `py_compile`, import check and `git diff --check` re-run: clean.
+- No pytest, FAST, SCIENTIFIC, hardened assurance, mutation, benchmark, real external solver or certification:
+  **NOT RUN**.
+
+### Reconciliation (what existed, what was wrong)
+
+| Area | Existing | Found and fixed here |
+| --- | --- | --- |
+| Coupling owners | `MultiphysicsRuntime`; electrothermal Picard loop; preCICE engine; provider participants | no declaration of which owns convergence; electrothermal provenance claimed "no relaxation" for relaxed runs (false support); NONE relaxation rounded the transfer; one object under two concurrent ids not refused |
+| Field transfer | `FieldMapper` (runtime), P1 interpolation on `SpatialMesh`, structured contract checker | no admission table; O(N*M) scans; no 3D conservative remap; provenance only on conservative; arrays round-tripped through Python lists/tuples |
+| Checkpoints | solver-id binding, failed-attempt discard, cold fallback (ERT Phase 1) | no build or problem binding; `provider_participant` and PyBaMM `restore` accepted any token (no content digest, no build check) -- the open ERT item |
+| Comparison | `compare_providers` with independence and unit rules | no same-problem admission at all (provider problem digests are provider-specific) |
+| External solvers | `ExternalSolverParticipant` sealing; FEniCSx via `provider_participant` | no mock label, no failure classes, no interface conservation semantics |
+
+### Failed approaches (do not repeat)
+
+- Driving the electrothermal composition through the runtime with invented initial outputs: a steady result has no
+  value before its first solve; the runtime now accepts deferred outputs only where a serial sweep overwrites them.
+- Mapping the native relaxed loop onto runtime relaxation: the runtime relaxes every serial edge, the native loop only
+  torn values; the adapter refuses relaxed plans instead.
+- Putting the mock check after the provider-trace check in `MultiphysicsAuthority`: every mock was refused as
+  untraced, so an explicit admission could never take effect.
+- `scipy.sparse.linalg.onenormest` (Phase 1) and KD-tree tie-breaking were not trusted for determinism; the KD-tree
+  only bounds the search radius and the exhaustive arithmetic decides.
+
+### Certification-pinned files touched (UNCERTIFIED until OD-3)
+
+`current_core_v2.json`: `data/{field,mesh,resolver}.py`, `execution/multiphysics/{external,mapping,relaxation,runtime}.py`,
+`execution/orchestration/{advanced_runner,checkpoint,plan,runner}.py`, `system_runtime/authorities.py`,
+`systems/electrothermal/coupled.py`. New certified -> uncertified import edge: `execution/multiphysics/mapping.py` ->
+`execution/multiphysics/spatial_index.py` (must be pinned or declared). No mutant of the V4 population pins a changed
+line (N60d remains the Phase 1 item).
+
+### Owner decisions recorded, not taken
+
+- OD-P2-1: real FE <-> CFD conjugate heat transfer is a new capability foundation (active epic; EXC-1 open) -- BLOCKED.
+- OD-P2-2: electrothermal migration: whether the product path may delegate to the runtime after parity (DV-49), and
+  which relaxation semantics (torn-only vs every serial edge) the unified runtime should offer.
+- OD-P2-3: make `compare_providers` refuse without same-problem admission (changes flagship level-5 evidence).
+- OD-P2-4: preCICE: a participant transport under the runtime, or a declared external engine (today).
+- OD-P2-5: hexahedral and mixed 3D conservative remap (a trilinear hex is not convex); 3D node fields.
+- Still open from Phase 1: N60d / OD-3, stub-run tests, mesh-weighted residual, participant time tolerance, no
+  mathematical coupling-error bound.

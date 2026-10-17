@@ -163,14 +163,14 @@ def test_node_fields_are_refused():
         mapper.execute(record, source, _target(target), target, _conservative())
 
 
-def test_three_dimensional_cells_are_refused():
+def test_hexahedral_cells_are_refused():
+    # Phase 2 BR9 implements tetrahedron -> tetrahedron; hexahedra stay refused (see the Phase 2 tests for tets)
     store = InMemoryBulkStore()
-    tet = UnstructuredMeshData("tet", CellType.TETRAHEDRON, np.array([(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)], float),
-                               np.array([(0, 1, 2, 3)])).store(store)
-    other = UnstructuredMeshData("tet2", CellType.TETRAHEDRON, np.array([(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)], float),
-                                 np.array([(0, 1, 2, 3)])).store(store)
-    with pytest.raises(InvalidScientificProblem, match="2D only"):
-        _map(store, _cell_field(store, tet, [1.0]), tet, other)
+    cube = np.array([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)], float)
+    hexa = UnstructuredMeshData("hex", CellType.HEXAHEDRON, cube, np.array([tuple(range(8))])).store(store)
+    other = UnstructuredMeshData("hex2", CellType.HEXAHEDRON, cube, np.array([tuple(range(8))])).store(store)
+    with pytest.raises(InvalidScientificProblem, match="not implemented"):
+        _map(store, _cell_field(store, hexa, [1.0]), hexa, other)
 
 
 def test_a_non_convex_quadrilateral_is_refused():

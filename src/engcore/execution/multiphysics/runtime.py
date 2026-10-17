@@ -321,6 +321,19 @@ class MultiphysicsRuntime:
             participant_ids={p.participant_id: p for p in graph.participants},
             jacobi=plan.iteration_semantics is IterationSemantics.JACOBI,
         )
+        if concurrency is not None:
+            # Phase 2 BR8: one object registered under two ids would advance
+            # twice at once on the same state -- a declaration cannot make that safe
+            seen: dict[int, str] = {}
+            for participant_id in concurrency.participants:
+                if participants.get(participant_id) is None:
+                    continue  # the participant/graph mismatch is refused below
+                other = seen.setdefault(id(participants[participant_id]), participant_id)
+                if other != participant_id:
+                    raise InvalidScientificProblem(
+                        f"concurrent participants {other!r} and {participant_id!r} are the same "
+                        f"object; concurrent advance requires isolated participant instances"
+                    )
         self.concurrency = concurrency
         # F5: every declared balance is REQUIRED unless the model that declared it names it DIAGNOSTIC here.
         # A name that is not a declared balance is refused: a typo must not quietly demote nothing.
@@ -445,6 +458,15 @@ class MultiphysicsRuntime:
                 receipts.append(made.initial_state_receipt)
             else:
                 made = participant.initialize(start, external[participant_id], external_uncertainty[participant_id])
+            if not made.outputs and not made.uncertainty and not participant.spec.transient and not state:
+                # Phase 2 BR8: a STEADY participant whose outputs are computed
+                # from its coupling inputs has nothing to report before its first
+                # solve.  It reports nothing rather than an invented value; every
+                # edge out of it must then be seeded or overwritten before it is
+                # read (checked in _initial_transfers).
+                outputs[participant_id] = {}
+                uncertainty[participant_id] = {}
+                continue
             validate_outputs(
                 participant.spec,
                 made.outputs,
@@ -509,6 +531,21 @@ class MultiphysicsRuntime:
             source_uq = output_uncertainty.get(
                 edge.source.participant_id, {}
             ).get(edge.source.port_id)
+            if (
+                source is None
+                and not outputs.get(edge.source.participant_id)
+                and self._overwritten_before_read(edge)
+            ):
+                # deferred initial output of a steady participant on a forward
+                # serial edge: the source runs, and this edge is written, before
+                # its target reads it in every iteration -- no value is invented
+                if any(c.edge_id == edge.edge_id for c in self.plan.criteria):
+                    raise InvalidScientificProblem(
+                        f"edge {edge.edge_id!r} carries a convergence criterion but has no "
+                        f"initial value: its first-iteration residual has nothing to compare "
+                        f"against; seed it with an initial coupling value"
+                    )
+                continue
             if source is None or source_uq is None:
                 raise MultiphysicsExecutionError(
                     f"edge {edge.edge_id!r} has no initial source output/uncertainty "
@@ -525,6 +562,23 @@ class MultiphysicsRuntime:
             uncertainty[edge.edge_id] = transfer.uncertainty
 
         return values, uncertainty, transfers
+
+    def _overwritten_before_read(self, edge: Any) -> bool:
+        """Whether an edge is always written in an iteration before its target reads it.
+
+        True only for a SERIAL plan where the edge's source participant comes
+        strictly before its target in the resolved order and is steady (it has
+        no state a restore could leave behind).  Jacobi reads the frozen
+        previous iterate, so no Jacobi edge qualifies.
+        """
+        if self.plan.iteration_semantics is not IterationSemantics.SERIAL:
+            return False
+        order = self.plan.resolved_order(self.graph)
+        source, target = edge.source.participant_id, edge.target.participant_id
+        return (
+            not self.graph.participant(source).transient
+            and order.index(source) < order.index(target)
+        )
 
     def _inputs_for(
         self,
