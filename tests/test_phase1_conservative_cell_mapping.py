@@ -120,7 +120,7 @@ def test_a_signed_field_that_integrates_to_zero_is_conserved_without_division_by
     values, diagnostics = _map(store, _cell_field(store, source, [5.0, -5.0]), source, target)
     np.testing.assert_allclose(values, [[0.0]], rtol=0, atol=1e-13)
     assert diagnostics.conservation_relative_error <= 1e-14
-    assert diagnostics.provenance["conservation_scale_l1"] == [pytest.approx(5.0)]
+    assert list(diagnostics.provenance["conservation_scale_l1"]) == [pytest.approx(5.0)]
 
 
 # ---- refusals --------------------------------------------------------------------------------

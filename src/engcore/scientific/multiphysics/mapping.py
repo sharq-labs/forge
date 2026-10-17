@@ -8,6 +8,7 @@ import math
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
+from ..results.immutable import detach, freeze
 from ..serialization import require_schema, schema_string
 
 FIELD_MAPPING_SCHEMA = schema_string("multiphysics_field_mapping")
@@ -111,7 +112,7 @@ class MappingDiagnostics:
         if self.provenance is not None:
             if not isinstance(self.provenance, Mapping) or not self.provenance.get("method"):
                 raise InvalidScientificProblem("mapping provenance must be a mapping that names its method")
-            object.__setattr__(self, "provenance", dict(self.provenance))
+            object.__setattr__(self, "provenance", freeze(dict(self.provenance)))
         if not str(self.mapping_id).strip():
             raise InvalidScientificProblem("mapping diagnostics require mapping_id")
         for label in ("source_count", "target_count", "extrapolated_count"):
@@ -145,7 +146,7 @@ class MappingDiagnostics:
             "round_trip_relative_l2": self.round_trip_relative_l2,
             "conservation_relative_error": self.conservation_relative_error,
             # absent unless recorded: earlier diagnostics keep their identity
-            **({"provenance": dict(self.provenance)} if self.provenance is not None else {}),
+            **({"provenance": detach(self.provenance)} if self.provenance is not None else {}),
         }
 
     @classmethod

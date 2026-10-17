@@ -348,7 +348,7 @@ matrix is not modified). An already canonical matrix hashes exactly as before.
 | ID | Rock | Deferred test / check | Command (when authorized) | Status |
 | --- | --- | --- | --- | --- |
 | DV-45 | P1-BR7 outcome semantics | New tests (typed assessment, forged label, authority success/refusal paths) | `pytest tests/test_phase1_system_runtime_outcomes.py -q` | NOT RUN |
-| DV-46 | P1-BR7 | Existing authority suites. Expected: explicit-run nodes that used to FAIL now SUCCEED (`test_multiphysics_conservation_history.py` STEADY case still passes by its own assertion); `tests/test_system_runtime_review_fixes.py::test_h2_*` drives the authority with a SimpleNamespace "converged" stub and is now refused ("no run record") -- it must be rewritten on a real run record, not the check weakened | `pytest tests/test_multiphysics_conservation_history.py tests/test_system_runtime_external_providers.py tests/test_system_runtime_big13_additions.py tests/test_system_runtime_review_fixes.py flagships -q` | NOT RUN |
+| DV-46 | P1-BR7 | Existing authority suites. Expected: explicit-run nodes that used to FAIL now SUCCEED (`test_multiphysics_conservation_history.py` STEADY case still passes by its own assertion); `test_system_runtime_big13_additions.py` (stub at line 64) and `tests/test_system_runtime_review_fixes.py::test_h2_*` / `test_r2_*` drive the authority with a SimpleNamespace "converged" stub and is now refused ("no run record") -- it must be rewritten on a real run record, not the check weakened | `pytest tests/test_multiphysics_conservation_history.py tests/test_system_runtime_external_providers.py tests/test_system_runtime_big13_additions.py tests/test_system_runtime_review_fixes.py flagships -q` | NOT RUN |
 | DV-47 | P1-BR7 | Rewrite of the H2 state-uncertainty tests on a real stateful coupled run | new test | NOT WRITTEN |
 
 ### Outcome semantics after P1-BR7
@@ -371,3 +371,18 @@ UNBOUNDED source.
   (before or after P1-BR4) satisfy it by construction.
 - `assess_run_outcome` lives in the certified `runtime.py` so the certified authority gains no new import edge; the
   lazy import from `numerical_error.py` adds an uncertified -> certified edge only.
+
+### Phase 1 static review (read-only, nothing executed) and what it changed
+
+| # | Severity | Finding | Disposition |
+| --- | --- | --- | --- |
+| 1 | MAJOR | Mutant N60d no longer matches `planning.py`; `tests/test_mutation_population_v4.py::test_every_folded_mutation_still_matches_the_source_it_names` will fail | Recorded (DV-41). The population is certification-pinned; replacement mutant on the typed admission line needs OD-3. Not edited. |
+| 2 | MAJOR | Authority tests that feed a `SimpleNamespace` stub run (`tests/test_system_runtime_review_fixes.py` `_coupled_stub`: `test_h2_*`, `test_r2_*`; `tests/test_system_runtime_big13_additions.py:64` extractor/artifact test) will get "no run record" | Recorded (DV-46, DV-47). The refusal is the fix (a stub's "converged" is a caller assertion); those tests need a real run record. Not rewritten in Phase 1. |
+| 3 | MINOR | `test_multiphysics_conservation_history.py` comment described pre-BR7 behaviour | Fixed (comment only; assertion unchanged). |
+| 4 | MINOR | `assess_run_outcome` fell back to no required edges when the plan did not validate | Fixed: an implicit plan that does not validate requires every edge. |
+| 5 | MINOR | Window-gap check used float equality | Fixed: `exact_seconds` on both sides. |
+| 6 | MINOR | STEP inputs were aligned exactly while events got ulp absorption | Fixed: STEP alignment uses the same resolution as the run loop (k ulps of the width, one of the start, one of the instant); the loop then lands on the sample. |
+| 7 | MINOR | A stored implicit record whose criteria miss a lagged edge no longer loads (record validates its plan) | Recorded; none found in the repository. |
+| 8 | MINOR | `MappingDiagnostics.provenance` was a mutable dict | Fixed: frozen on construction, `detach`ed on serialization. |
+| 9 | MINOR | Conditioning of sparse 1000 < n <= 2000 (and GMRES) now estimated or unresolved; `stability.py` then records "singular or unresolved" | Recorded (DV-43): the safe direction; stability decisions change. |
+| 10 | MINOR | degC refused for conservative remap although an exactly covering first-order remap is affine-invariant | Kept as a design choice (no conservation claim for an offset scale); owner may relax. |

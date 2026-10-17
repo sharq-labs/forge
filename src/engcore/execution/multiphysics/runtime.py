@@ -1586,7 +1586,16 @@ class MultiphysicsRuntime:
                 # Phase 1 BR4: exact, under the same-instant rule -- an instant
                 # declared as 0.30000000000000004 s is not the boundary 0.3 s
                 instant = exact_seconds(sample.instant)
-                aligned = (instant - start_exact) % width_exact == 0
+                # aligned with grid point k when within the float64 resolution
+                # the run loop absorbs (k ulps of the width, one of the start,
+                # one of the instant); the run loop then lands on the sample
+                k = round((instant - start_exact) / width_exact)
+                resolution = (
+                    k * _float_spacing(width_exact)
+                    + _float_spacing(start_exact)
+                    + _float_spacing(instant)
+                )
+                aligned = abs(instant - (start_exact + k * width_exact)) <= resolution
                 if not aligned and instant != end_exact:
                     raise InvalidScientificProblem(
                         f"STEP input {item.input_id!r} changes at {sample.instant}, away from "
@@ -2459,17 +2468,18 @@ def assess_run_outcome(run: MultiphysicsRunRecord) -> RunOutcomeAssessment:
         plan.validate_against(graph)
         required = frozenset(plan.required_convergence_edges(graph))
     except InvalidScientificProblem as exc:
-        required = frozenset()
+        # fail toward more monitoring, never toward none
+        required = frozenset(edge.edge_id for edge in graph.edges) if implicit else frozenset()
         problems.append(f"the recorded plan does not validate against the recorded graph: {exc}")
     if not run.windows:
         problems.append("the run records no coupling window")
     classified: list[dict[str, Any]] = []
-    previous_end = run.started_at.magnitude_in("second")
+    previous_end = exact_seconds(run.started_at)
     for window in run.windows:
         label = f"window {window.index}"
-        if window.start.magnitude_in("second") != previous_end:
-            problems.append(f"{label} starts at {window.start} but the previous boundary is {previous_end!r} s")
-        previous_end = window.end.magnitude_in("second")
+        if exact_seconds(window.start) != previous_end:
+            problems.append(f"{label} starts at {window.start} but the previous boundary is {float(previous_end)!r} s")
+        previous_end = exact_seconds(window.end)
         outcome = window.outcome
         if outcome in _REFUSED_OUTCOMES:
             classification = "not_completed"
