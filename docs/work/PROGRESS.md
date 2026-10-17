@@ -4986,7 +4986,9 @@ baseline's.
   - `origin/feat/engrt-v1-big-rocks` = `23fb2bb1c1f9ebd5a12f7cad4f202af4e64e51ee`.
   - `origin/fix/engrt-v1-phase1-interop` = `423fb46714114d2a5aa2208804e96a65024c28e2`.
   - Both refs were checked against `git ls-remote`.
-- Not pushed: `fix/engrt-v1-callback-checkpoint-identity` (`debce509`). Another session made it.
+- Also pushed later on 2026-10-17, on owner instruction: `origin/fix/engrt-v1-callback-checkpoint-identity` =
+  `debce509091949987fd51f387e5a0d4342772b1d`, made by another session. Pushed without upstream tracking, so that
+  session's worktree is unchanged.
 - Everything BR1-BR22 claims is still IMPLEMENTED / UNVERIFIED. The push runs no tests. The 16 pinned files the
   branch changes stay UNCERTIFIED until OD-3.
 
