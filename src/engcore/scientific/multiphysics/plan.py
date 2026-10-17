@@ -248,12 +248,19 @@ class WindowControlPolicy:
     ``divergence_factor`` (optional, > 1): an implicit window whose residual on
     some edge grows past this multiple of its first-iteration residual is
     rejected early as diverging instead of exhausting ``max_iterations``.
+
+    ``growth_factor`` (optional, in (1, 10]): step-size memory.  After a
+    subdivided window is accepted, the following windows start at the accepted
+    width and grow by this factor per accepted window, up to the nominal
+    coupling window.  Unset, every window starts again at the nominal width.
+    Events and input-change instants still cut windows exactly as before.
     """
 
     minimum_window: Quantity
     reduction_factor: float = 0.5
     max_subdivisions: int = 4
     divergence_factor: float | None = None
+    growth_factor: float | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -274,6 +281,11 @@ class WindowControlPolicy:
             if not math.isfinite(divergence) or divergence <= 1.0:
                 raise InvalidScientificProblem("divergence_factor must be finite and > 1")
             object.__setattr__(self, "divergence_factor", divergence)
+        if self.growth_factor is not None:
+            growth = float(self.growth_factor)
+            if not math.isfinite(growth) or not 1.0 < growth <= 10.0:
+                raise InvalidScientificProblem("growth_factor must lie in (1, 10]")
+            object.__setattr__(self, "growth_factor", growth)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -282,6 +294,8 @@ class WindowControlPolicy:
             "reduction_factor": self.reduction_factor,
             "max_subdivisions": self.max_subdivisions,
             "divergence_factor": self.divergence_factor,
+            # absent when unset: policies without step-size memory keep their identity
+            **({"growth_factor": self.growth_factor} if self.growth_factor is not None else {}),
         }
 
     @classmethod
@@ -292,6 +306,7 @@ class WindowControlPolicy:
             reduction_factor=payload["reduction_factor"],
             max_subdivisions=payload["max_subdivisions"],
             divergence_factor=payload.get("divergence_factor"),
+            growth_factor=payload.get("growth_factor"),
         )
 
 

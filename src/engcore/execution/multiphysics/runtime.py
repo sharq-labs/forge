@@ -1334,6 +1334,33 @@ class MultiphysicsRuntime:
                 )
         return ""
 
+    def _next_window_width(
+        self, window: CouplingWindowRecord, width: float, nominal: float
+    ) -> float:
+        """Step-size memory: restart from the width a subdivided window was accepted at, then grow back.
+
+        Only a SUBDIVISION shortens the remembered width; a window cut short by
+        an event or an input change is not a numerical signal and leaves it.
+        """
+        control = self.plan.window_control
+        assert control is not None and control.growth_factor is not None
+        subdivided = any(
+            event["window_index"] == window.index
+            and event["action"] in ("accepted_after_subdivision", "exhausted")
+            for event in self._window_control_log
+        )
+        accepted = self._seconds(window.end) - self._seconds(window.start)
+        new = accepted if subdivided else min(nominal, width * control.growth_factor)
+        if new != width:
+            self._window_control_log.append({
+                "window_index": window.index,
+                "action": "width_changed",
+                "from_s": width,
+                "to_s": new,
+                "reason": "accepted after subdivision" if subdivided else f"grown by {control.growth_factor:g}",
+            })
+        return new
+
     def _controlled_window(
         self,
         index: int,
@@ -1961,6 +1988,8 @@ class MultiphysicsRuntime:
                     )
                 identities = after
                 current_time = new_time
+                if self.plan.window_control is not None and self.plan.window_control.growth_factor is not None:
+                    width = self._next_window_width(window, width, width_seconds)
                 index += 1
 
                 termination = self._evaluate_termination(

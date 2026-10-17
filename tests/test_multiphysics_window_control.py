@@ -268,3 +268,42 @@ def test_divergence_is_detected_before_the_iteration_limit_is_spent():
         _run_implicit(runtime)
     # residual grows 3x per iteration: past 10x within a handful of iterations, far below 200
     assert a.calls < 20
+
+
+# ---- BR11: step-size memory (growth_factor) --------------------------------------------------
+
+
+@pytest.mark.parametrize("growth", [1.0, 0.5, 10.5, float("nan")])
+def test_growth_factor_is_bounded(growth):
+    with pytest.raises(InvalidScientificProblem, match="growth_factor"):
+        WindowControlPolicy(_q(0.1), 0.5, 4, None, growth)
+
+
+def test_policies_without_step_size_memory_keep_their_identity():
+    assert "growth_factor" not in _policy().to_dict()
+    remembered = WindowControlPolicy(_q(0.1), 0.5, 4, None, 2.0)
+    assert WindowControlPolicy.from_dict(remembered.to_dict()) == remembered
+    assert remembered.to_dict()["growth_factor"] == 2.0
+
+
+def _subdivisions(run):
+    return sum(1 for e in run.final_outputs["_window_control"]["events"] if e["action"] == "subdivided")
+
+
+def test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable():
+    without, _, _ = _explicit_runtime(_policy(minimum=0.1), end=2.0)
+    remembered_runtime, src, sink = _explicit_runtime(WindowControlPolicy(_q(0.1), 0.5, 4, None, 2.0), end=2.0)
+    plain, remembered = _run(without), _run(remembered_runtime)
+    # nominal 0.5 s always fails (> 0.25 s): 8 subdivisions without memory; with growth 2, every other window
+    assert _subdivisions(plain) == 8 and _subdivisions(remembered) == 4
+    widths = [w.end.magnitude_in("s") - w.start.magnitude_in("s") for w in remembered.windows]
+    assert all(width <= 0.25 + 1e-12 for width in widths)
+    assert remembered.ended_at.magnitude_in("s") == pytest.approx(2.0)
+    assert sink.state["integrated_s"] == pytest.approx(2.0)  # rollback still exact
+    changes = [e for e in remembered.final_outputs["_window_control"]["events"] if e["action"] == "width_changed"]
+    assert changes and {c["reason"] for c in changes} >= {"accepted after subdivision", "grown by 2"}
+
+
+def test_without_growth_factor_no_width_change_is_logged():
+    run = _run(_explicit_runtime(_policy(minimum=0.1), end=2.0)[0])
+    assert all(e["action"] != "width_changed" for e in run.final_outputs["_window_control"]["events"])
