@@ -5113,3 +5113,5 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
     estimate levels, study runs and `<run_id>~numerical~k` must agree, values included. Two tamper tests were added.
   - R2 LOW, recorded: the study-to-run binding is a run-id string convention. A digest link needs `uq_studies` to
     record the reported report's digest, which belongs to the same owner decision as F4.
+- Owner decision (2026-10-17): coupling conditioning stays OPT-IN for now. F4 (mandatory conditioning, including the
+  electrothermal `CouplingEvidence` path) remains an open owner decision; R2 (digest link) goes with it.

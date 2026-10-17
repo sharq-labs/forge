@@ -13,7 +13,8 @@ ledger capability).
 - [x] BR4 opt-in splitting-error estimate by window refinement, tests NOT RUN.
 - [x] BR5 opt-in concurrent participant advance in Jacobi iterations, tests NOT RUN.
 - [x] BR6 coupling numerical error conditions the claims NUMERICAL channel (review fixes applied), tests NOT RUN.
-- [ ] Owner: mandatory conditioning of coupled claims (incl. electrothermal CouplingEvidence) and capability-declared ladder coverage (review F4).
+- [ ] Owner, OPEN (2026-10-17: keep opt-in for now): mandatory conditioning of coupled claims (incl. electrothermal
+      CouplingEvidence), capability-declared ladder coverage, and a digest link from study to coupled run (review F4, R2).
 - [ ] BR7: owner to choose.
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
