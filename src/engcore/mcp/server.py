@@ -68,7 +68,12 @@ from .planning import plan_engineering_intent
 from .answer import summarize_engineering_run
 from .scenario_uq import scenario_envelope
 from .context import evaluate_context
-from .probabilistic_uq import build_deterministic_samples, predictive_intervals
+from .probabilistic_uq import (
+    PROBABILISTIC_UQ_SCHEMA,
+    build_deterministic_samples,
+    latin_hypercube_provenance,
+    predictive_intervals,
+)
 from .problem import (
     CaseDescription,
     build_electrothermal_system,
@@ -884,10 +889,15 @@ def answer_engineering_uncertainty(
     system_name: str | None = None,
     sample_count: int = 32,
     credible_mass: float = 0.95,
+    seed: int = 0,
 ) -> dict[str, Any]:
     """Propagate caller-declared independent distributions, fail closed."""
     samples = build_deterministic_samples(
-        uncertain_inputs, sample_count=sample_count, dependence=dependence
+        uncertain_inputs, sample_count=sample_count, dependence=dependence,
+        seed=seed,
+    )
+    sampling = latin_hypercube_provenance(
+        seed=seed, sample_count=len(samples), dimension=len(uncertain_inputs)
     )
     base = dict(declarations or {})
     answers = [
@@ -902,7 +912,7 @@ def answer_engineering_uncertainty(
     ]
     uq = (
         {
-            "schema": "engineering_probabilistic_uq/1",
+            "schema": PROBABILISTIC_UQ_SCHEMA,
             "status": "incomplete",
             "sample_count": len(samples),
             "incomplete_sample_indices": incomplete,
@@ -910,11 +920,13 @@ def answer_engineering_uncertainty(
         }
         if incomplete else predictive_intervals(answers, credible_mass=credible_mass)
     )
+    uq = {**uq, "sampling": sampling}
     return {
         "schema": "engineering_uncertainty_answer/1",
         "status": uq["status"],
         "dependence": dependence,
         "declared_inputs": uncertain_inputs,
+        "sampling": sampling,
         "uncertainty": uq,
         "samples": [
             {
@@ -1485,7 +1497,12 @@ insufficient. Scenario bounds that straddle a threshold produce
 
 _PROBABILISTIC_UQ_DESCRIPTION = """\
 Propagate caller-declared uniform or normal input distributions through an
-engineering system using deterministic stratified Latin-hypercube samples.
+engineering system using seeded Latin-hypercube samples
+(scipy.stats.qmc.LatinHypercube). `seed` defaults to 0; the seed actually used,
+the sampler and the library versions are returned under `sampling`, so the
+same declarations and seed reproduce the same sample design under the
+recorded scipy and numpy versions. Support, refusal and intervals are facts
+about that one sample design, not about the declared distributions as a whole.
 
 The caller must explicitly declare `dependence="independent"`; this version
 refuses correlated inputs rather than silently ignoring correlation. Every

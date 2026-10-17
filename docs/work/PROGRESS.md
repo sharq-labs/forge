@@ -1750,3 +1750,73 @@ fast-forwarded.
   every path changed against main: ordinary. The committed study record is byte-identical to
   `D:/forge-data/kirkaldy2024/study/kirkaldy_fade_study.json`; the study was not re-run and nothing was re-downloaded.
   Local Assurance / recertification: NOT RUN (no protected path changed).
+
+## 2026-10-09 Review fixes B1/B2/B4/B5 (branch `fix/review-b1-b2-b4-b5`, base origin/main `44637065`) — uncommitted
+
+Worktree `D:/forge-review-fixes`. Run in parallel with a Full Local Assurance elsewhere, so only tiny targeted tests ran,
+sequentially (`-n 0`). Every finding was reproduced before it was fixed; none turned out incorrect.
+
+- **B1 reproduced** (`engcore.mcp.probabilistic_uq`). The fixed modular-stride column permutation coupled the inputs: for
+  independent N(0,1), rho(X0,X1) = 0.429 (n=64) / 0.421 (n=256), rho(X0,X2) = 0.21 / 0.28. That gave sd(X0+X1) = 1.69 and
+  sd(X0-X1) = 1.07 against sqrt(2) = 1.414, at both n, so the bias is systematic. Replaced by
+  `scipy.stats.qmc.LatinHypercube(scramble=False)` driven by `numpy.random.default_rng(seed)`, with a fallback for
+  SciPy < 1.15, where the argument is named `seed`.
+  - `seed` is a required keyword of `build_deterministic_samples`. The MCP tool takes `seed: int = 0`.
+  - A `sampling` provenance block (sampler, seed, generator, scipy/numpy versions, n, dimension) is returned at top level and
+    inside `uncertainty`.
+  - Schema `engineering_probabilistic_uq/1` -> `/2`. Method renamed `seeded_latin_hypercube_midpoint_empirical_central_interval`.
+  - `does_not_include` adds finite-sample endpoint error and cross-design variation; `conditional_on` names the one design.
+  - Tests: all 9 discriminating tests fail when the old design is patched back in. At the fixed seeds the worst statistic sits
+    at no more than 0.65 of its 4-sigma bound.
+- **B2 reproduced** (`claims.analysis.model_discrepancy`). `PairedObservation.from_dict` used `Mapping` without importing it.
+  A real round trip crashes `verify_assessment` with NameError. The round trip used the battery `open_circuit_voltage`
+  declaration plus MODEL_FORM in a test-local registry and the six pinned S-OCV records, going
+  object -> dict -> JSON -> verify_assessment -> verify_study_records.
+  - Fixing the import exposed a second latent defect: `verify_study_records` parsed the recorded qualification only on the
+    branch that reaches promotion. Every early-stop record (unusable runs, no pairs, no source) failed replay with
+    UnboundLocalError.
+  - Fix: parse the qualification before branching. A malformed one is now an `UncertaintyStudyError`, surfaced as
+    `AssessmentForgeryError`.
+  - No test planned a `model_form_empirical` study before, because no production capability declares MODEL_FORM. That is why
+    both defects survived.
+- **B4 reproduced** (`domains.electrical.ngspice`). A probe that printed `** ngspice-42` and exited 3 produced
+  `SolverIdentity(version='42')`, and a timed-out probe escaped as raw `subprocess.TimeoutExpired`.
+  - Fix, following the provider catalog's `executable_probe` rule:
+    - a non-zero exit -> `NgspiceExecutionFailure`;
+    - a timeout -> `NgspiceExecutionFailure`;
+    - an `OSError` -> `NgspiceUnavailable`.
+  - No second probing framework. Real ngspice 42 via WSL exits 0 on `--version` (checked once). All 4 mutation anchors on
+    touched files still match exactly once.
+- **B5 reproduced** (`domainpacks.multiphysics`): `load_multiphysics_extension` died with NameError on `warnings`. Fixed by
+  the import alone.
+  - The function and `MultiphysicsPackExtension` have no importer in src/tests/tools/docs and no package re-export. They look
+    removable, but no removal was made in this pass.
+- forge-scientific-review round 1: CHANGES REQUIRED, no BLOCKER.
+  - Applied: I-3 (schema/method identity), I-4 (sum/diff test resized: per-seed 2/sqrt(n-1), mean vs 2S at 4 sigma), I-5
+    (reproducibility stated per library version), I-6 (malformed qualification -> forgery; flipped `qualification_trusted`
+    and malformed-qualification tests), I-8 (non-default and invalid seed at the MCP tool). I-2 (seed shopping) is
+    addressed in wording only: description, `conditional_on` and the refusal reason say support/refusal are facts about
+    one design.
+  - Open (not fixed, out of this pass):
+    - I-1 HIGH, pre-existing: central intervals from few midpoint samples under-cover, e.g. n=4 at "0.95" covers 71%. Needs a
+      resolvability refusal.
+    - I-2 structural fix: replicate designs.
+    - I-7: `NgspiceInvocation.run` still catches only FileNotFoundError.
+    - I-9: B5's admission code is still untested.
+- forge-scientific-review round 2 (narrow, on the round-1 fixes): PASS. It raised two optional LOWs, both applied:
+  - the incomplete branch's schema and provenance are now asserted at the MCP tool;
+  - replay refuses a recorded qualification that differs from its canonical `to_dict()`, since `from_dict` normalises
+    whitespace and case, so displayed text could differ from what was digested.
+- Commands (Windows, phyx/.venv CPython 3.14.2, scipy 1.18.1; PYTHONPATH=D:/forge-review-fixes/src; TMP=D:/ftmp;
+  `-q -n 0 -p no:cacheprovider --basetemp=D:/fbt-rf`):
+  - `tests/mcp/test_probabilistic_uq.py`: 19 passed.
+  - `tests/claims/test_model_form_study_replay.py`: 10 passed.
+  - `tests/test_ngspice_version_probe.py`: 10 passed.
+  - `tests/domainpacks/test_multiphysics_extension_deprecation.py`: 3 passed.
+  - `tests/claims/test_model_form_discrepancy.py`: 8 passed.
+  - `tests/domainpacks/test_domain_pack_v1.py`: 11 passed.
+  - `tests/mcp/test_server.py -k "probabilistic or usable_schemas or descriptions_say"`: 4 passed.
+  - DEFERRED (assurance running): `tools/forge_check.py --changed`, `--regression`, FAST/SCIENTIFIC tiers,
+    `tests/test_heterogeneous_ngspice.py` (real provider), the rest of `tests/mcp/test_server.py`, `tests/claims/`, and Formal
+    TARGETS (new test files may trip the string-form dependency guard).
+  - Local Assurance / recertification: NOT RUN.

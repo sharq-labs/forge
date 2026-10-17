@@ -2,21 +2,66 @@
 
 from __future__ import annotations
 
-import math
+import operator
 from typing import Any, Mapping, Sequence
 
 import numpy as np
+import scipy
 from scipy.special import ndtri
+from scipy.stats import qmc
 
 from ..scientific.units.quantity import Quantity
 
 __all__ = [
+    "LATIN_HYPERCUBE_SAMPLER",
     "PROBABILISTIC_UQ_SCHEMA",
     "build_deterministic_samples",
+    "latin_hypercube_provenance",
     "predictive_intervals",
 ]
 
-PROBABILISTIC_UQ_SCHEMA = "engineering_probabilistic_uq/1"
+# /2: seeded Latin hypercube with a `sampling` provenance block. /1 records came
+# from a fixed-stride design that coupled the inputs (review finding B1).
+PROBABILISTIC_UQ_SCHEMA = "engineering_probabilistic_uq/2"
+LATIN_HYPERCUBE_SAMPLER = "scipy.stats.qmc.LatinHypercube"
+
+
+def _sampling_seed(seed: Any) -> int:
+    if isinstance(seed, bool):
+        raise TypeError("seed must be an explicit non-negative integer")
+    try:
+        value = operator.index(seed)
+    except TypeError:
+        raise TypeError("seed must be an explicit non-negative integer") from None
+    if value < 0:
+        raise ValueError("seed must be an explicit non-negative integer")
+    return value
+
+
+def _unit_hypercube(count: int, dimension: int, seed: int) -> np.ndarray:
+    """Centred Latin hypercube: independent random stratum permutations per column."""
+    generator = np.random.default_rng(seed)
+    try:
+        engine = qmc.LatinHypercube(d=dimension, scramble=False, rng=generator)
+    except TypeError:  # SciPy < 1.15 names the generator argument ``seed``.
+        engine = qmc.LatinHypercube(d=dimension, scramble=False, seed=generator)
+    return engine.random(count)
+
+
+def latin_hypercube_provenance(
+    *, seed: int, sample_count: int, dimension: int,
+) -> dict[str, Any]:
+    """The record that, with the declared inputs, reproduces the sample design."""
+    return {
+        "sampler": LATIN_HYPERCUBE_SAMPLER,
+        "scramble": False,
+        "seed": _sampling_seed(seed),
+        "generator": "numpy.random.default_rng",
+        "scipy_version": scipy.__version__,
+        "numpy_version": np.__version__,
+        "sample_count": int(sample_count),
+        "dimension": int(dimension),
+    }
 
 
 def _declared_quantity(spec: Mapping[str, Any], name: str) -> Quantity:
@@ -28,9 +73,17 @@ def _declared_quantity(spec: Mapping[str, Any], name: str) -> Quantity:
 
 def build_deterministic_samples(
     inputs: Sequence[Mapping[str, Any]], *, sample_count: int,
-    dependence: str,
+    dependence: str, seed: int,
 ) -> list[dict[str, str]]:
-    """Deterministic stratified samples; never infer a dependence structure."""
+    """Seeded Latin-hypercube samples; never infer a dependence structure.
+
+    Each column is an independent random permutation of the stratum
+    midpoints, so every marginal has one point per equal-mass stratum and no
+    input is coupled to another by construction. The seed is a required
+    argument here; a boundary that defaults it (the MCP tool uses 0) must
+    report the seed it used through ``latin_hypercube_provenance``.
+    """
+    seed = _sampling_seed(seed)
     if dependence != "independent":
         raise ValueError(
             "dependence must be explicitly 'independent'; correlated inputs "
@@ -44,19 +97,17 @@ def build_deterministic_samples(
 
     paths: set[str] = set()
     samples = [dict() for _ in range(count)]
-    base_quantiles = (np.arange(count, dtype=float) + 0.5) / count
+    # A fixed modular stride per column was used here before; it coupled the
+    # columns (rho ~ 0.42 between the first two at every n), which biased the
+    # propagated variance of any output that combines two inputs.
+    unit_samples = _unit_hypercube(count, len(inputs), seed)
     for column, spec in enumerate(inputs):
         path = str(spec.get("path", "")).strip()
         distribution = str(spec.get("distribution", "")).strip().lower()
         if not path or path in paths:
             raise ValueError("uncertain input paths must be non-empty and unique")
         paths.add(path)
-        # A deterministic permutation gives every marginal one point in every
-        # stratum without pretending the points are random observations.
-        stride = 2 * column + 1
-        while math.gcd(stride, count) != 1:
-            stride += 2
-        quantiles = base_quantiles[(np.arange(count) * stride + column) % count]
+        quantiles = unit_samples[:, column]
 
         if distribution == "uniform":
             lower = _declared_quantity(spec, "lower")
@@ -107,7 +158,9 @@ def predictive_intervals(
             "intervals": [],
             "reason": (
                 "At least one equal-mass sample was not SUPPORTED. Refusing "
-                "silent conditioning or a predictive interval over partial support."
+                "silent conditioning or a predictive interval over partial support. "
+                "The refusal is a fact about this one seeded sample design, not "
+                "about the declared distributions as a whole."
             ),
         }
 
@@ -140,7 +193,7 @@ def predictive_intervals(
                 float(np.quantile(magnitudes, 1.0 - tail)), unit
             ).to_dict(),
             "credible_mass": mass,
-            "method": "deterministic_latin_hypercube_empirical_central_interval",
+            "method": "seeded_latin_hypercube_midpoint_empirical_central_interval",
             "sample_count": len(values),
         })
     return {
@@ -150,11 +203,16 @@ def predictive_intervals(
         "rejected_sample_indices": [],
         "sample_verdicts": verdicts,
         "intervals": intervals,
-        "conditional_on": "declared independent input distributions",
+        "conditional_on": (
+            "declared independent input distributions, evaluated on one seeded "
+            "Latin-hypercube sample design (see sampling)"
+        ),
         "does_not_include": [
             "input correlation",
             "model-form uncertainty",
             "observation or measurement noise unless represented as an input",
             "probability outside the declared distribution families",
+            "finite-sample estimation error of the interval endpoints",
+            "variation across sample designs (other seeds)",
         ],
     }

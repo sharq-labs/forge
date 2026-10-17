@@ -230,7 +230,7 @@ def test_the_server_exposes_one_run_tool_per_system_with_usable_schemas():
     probabilistic = tools["answer_engineering_uncertainty"]
     assert list(probabilistic.input_schema["properties"]) == [
         "description", "uncertain_inputs", "dependence", "declarations",
-        "system_name", "sample_count", "credible_mass",
+        "system_name", "sample_count", "credible_mass", "seed",
     ]
     assert probabilistic.input_schema["required"] == [
         "description", "uncertain_inputs", "dependence"
@@ -510,6 +510,49 @@ def test_probabilistic_tool_propagates_declared_distribution_only():
     )
     assert interval["credible_mass"] == 0.8
     assert interval["sample_count"] == 8
+    # The sample design is reproducible only if the seed travels with it.
+    assert response["sampling"]["sampler"] == "scipy.stats.qmc.LatinHypercube"
+    assert response["sampling"]["seed"] == 0
+    assert response["uncertainty"]["sampling"] == response["sampling"]
+    assert response["uncertainty"]["schema"] == "engineering_probabilistic_uq/2"
+
+
+def test_probabilistic_tool_runs_and_records_the_seed_it_was_given():
+    from engcore.mcp.probabilistic_uq import build_deterministic_samples
+
+    uncertain = [{
+        "path": "stages[0].body.ambient_temperature",
+        "distribution": "uniform",
+        "lower": "298 kelvin",
+        "upper": "302 kelvin",
+    }]
+    response = call("answer_engineering_uncertainty", {
+        "description": "electrothermal resistor",
+        "declarations": {},
+        "dependence": "independent",
+        "sample_count": 8,
+        "seed": 5,
+        "uncertain_inputs": uncertain,
+    }).structured_content
+    assert response["sampling"]["seed"] == 5
+    # No declarations, so the runs cannot complete: the refusal branch must
+    # carry the same schema and provenance as a completed one.
+    assert response["status"] == "incomplete"
+    assert response["uncertainty"]["schema"] == "engineering_probabilistic_uq/2"
+    assert response["uncertainty"]["sampling"] == response["sampling"]
+    ran = [sample["declarations"] for sample in response["samples"]]
+    design = lambda seed: build_deterministic_samples(  # noqa: E731
+        uncertain, sample_count=8, dependence="independent", seed=seed
+    )
+    assert ran == design(5)
+    assert ran != design(0)
+
+    # A seed that is not a non-negative integer is refused before any run.
+    for bad, error in ((-1, ValueError), (1.5, TypeError), (True, TypeError)):
+        with pytest.raises(error, match="seed"):
+            server.answer_engineering_uncertainty(
+                "electrothermal resistor", uncertain, "independent", seed=bad
+            )
 
 
 # =====================================================================
