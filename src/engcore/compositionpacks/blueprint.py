@@ -25,6 +25,7 @@ from ..scientific.multiphysics import (
     PhysicsGraph,
     RelaxationPolicy,
     TimePolicy,
+    WindowControlPolicy,
 )
 from ..scientific.serialization import (
     require_schema,
@@ -452,6 +453,10 @@ class CouplingPolicyTemplate:
     relaxation: RelaxationPolicy = RelaxationPolicy()
     max_iterations: int = 1
     fail_on_nonconvergence: bool = True
+    #: Optional adaptive subdivision of non-converging coupling windows, carried
+    #: unchanged into every materialized CouplingPlan.  Serialized only when
+    #: declared, so existing templates keep their identity.
+    window_control: WindowControlPolicy | None = None
 
     def __post_init__(self) -> None:
         for label in ("template_id", "version", "blueprint_id"):
@@ -560,6 +565,28 @@ class CouplingPolicyTemplate:
             raise InvalidScientificProblem(
                 "implicit coupling policy requires convergence criteria"
             )
+        control = self.window_control
+        if control is not None:
+            # refuse at declaration what CouplingPlan would refuse at materialization
+            if not isinstance(control, WindowControlPolicy):
+                raise InvalidScientificProblem(
+                    "coupling policy window_control must be WindowControlPolicy"
+                )
+            if (
+                control.divergence_factor is not None
+                and self.scheme is not CouplingScheme.IMPLICIT
+            ):
+                raise InvalidScientificProblem(
+                    "window_control divergence_factor applies to implicit coupling only"
+                )
+            if (
+                self.coupling_window is not None
+                and control.minimum_window.magnitude_in("second")
+                > self.coupling_window.magnitude_in("second")
+            ):
+                raise InvalidScientificProblem(
+                    "window_control minimum_window exceeds the fixed coupling window"
+                )
 
     @property
     def key(self) -> tuple[str, str]:
@@ -596,6 +623,7 @@ class CouplingPolicyTemplate:
             relaxation=self.relaxation,
             max_iterations=self.max_iterations,
             fail_on_nonconvergence=self.fail_on_nonconvergence,
+            window_control=self.window_control,
         )
 
     def validate_against_blueprint(
@@ -614,6 +642,18 @@ class CouplingPolicyTemplate:
             raise InvalidScientificProblem(
                 "coupling template participant_order does not match blueprint"
             )
+        if self.window_control is not None:
+            # window subdivision rolls every participant back to the window start
+            missing = sorted(
+                item.participant_id
+                for item in blueprint.participants
+                if not item.checkpointable or not item.deterministic_restore
+            )
+            if missing:
+                raise InvalidScientificProblem(
+                    f"coupling template window_control requires deterministic "
+                    f"checkpoint/restore on every blueprint participant; missing on {missing}"
+                )
         edge_ids = {item.edge_id for item in blueprint.edges}
         unknown = sorted(
             item.edge_id
@@ -641,6 +681,12 @@ class CouplingPolicyTemplate:
             "relaxation": self.relaxation.to_dict(),
             "max_iterations": self.max_iterations,
             "fail_on_nonconvergence": self.fail_on_nonconvergence,
+            # absent when undeclared: existing templates keep their identity
+            **(
+                {"window_control": self.window_control.to_dict()}
+                if self.window_control is not None
+                else {}
+            ),
         }
 
     @classmethod
@@ -689,6 +735,11 @@ class CouplingPolicyTemplate:
             fail_on_nonconvergence=payload.get(
                 "fail_on_nonconvergence",
                 True,
+            ),
+            window_control=(
+                WindowControlPolicy.from_dict(payload["window_control"])
+                if payload.get("window_control") is not None
+                else None
             ),
         )
 
