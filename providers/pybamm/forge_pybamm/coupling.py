@@ -7,6 +7,12 @@ generation (``heat``, W).  Its state between windows is PyBaMM's own solution
 start solution, so implicit iterations re-solve the same window.  State identity
 is the sha256 of y; completeness is DECLARED (basis recorded): PyBaMM continues a
 solution from exactly that state vector through ``solver.step``.
+
+A Solution is meaningful only to the build that produced it (library, model,
+parameter set, declared configuration), so checkpoints are sealed with that build
+(``CheckpointSeal``, as ``ExternalSolverParticipant`` seals its snapshots): the
+record names it and restore admits only this participant's own checkpoints of it,
+whose state vector hashes to the record's digest.
 """
 
 from __future__ import annotations
@@ -19,10 +25,9 @@ import numpy as np
 
 from engcore.coupling import ParticipantStateContract, StateCompleteness
 from engcore.execution.multiphysics import AdvanceResult, CallbackParticipant, InitializationResult
-from engcore.execution.multiphysics.participant import RuntimeCheckpoint
+from engcore.execution.multiphysics.external import CheckpointSeal, checkpoint_scope
 from engcore.providers import ProviderExecutionIdentity, ProviderRefusal, require_library_unchanged
 from engcore.scientific.multiphysics.receipts import StateVariableValue
-from engcore.scientific.multiphysics.state import CheckpointRecord
 from engcore.scientific.results.uncertainty import Uncertainty
 from engcore.scientific.units.quantity import Quantity
 
@@ -46,6 +51,9 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
     """
     status = registry.require("pybamm")
     require_library_unchanged(status, "pybamm")  # the library that runs is the one discovery bound (BIG 14 M1)
+    if (spec.solver_id, spec.solver_version) != (status.capability.provider_id, status.version):
+        raise ProviderRefusal(f"participant {spec.participant_id!r} declares solver {spec.solver_id!r} {spec.solver_version!r}; "
+                              f"the discovered provider is {status.capability.provider_id!r} {status.version!r}")
     import pybamm
 
     require_library_unchanged(status, "pybamm")  # and the module that was just imported is that library (M-3)
@@ -79,18 +87,40 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
     log = log if log is not None else []
     unknown = Uncertainty.unknown("PyBaMM output uncertainty is not quantified")
     contract = ParticipantStateContract(spec.participant_id, ("soc",), ("soc",), StateCompleteness.DECLARED_COMPLETE, COMPLETENESS_BASIS)
+    # the build a Solution belongs to: everything fixed per participant that gives its state vector a meaning
+    build = {"build_basis": "provider_discovery", "provider_id": status.capability.provider_id, "provider_version": status.version,
+             "provider_digest": status.digest,
+             # the coupling adapter the spec declares (not reconciled with ADAPTER: they name different layers)
+             "declared_coupling_adapter": [spec.adapter_id, spec.adapter_version],
+             "provider_dependencies": [list(d) for d in status.dependencies], "adapter_id": ADAPTER[0], "adapter_version": ADAPTER[1],
+             "configuration": {"model": model, "parameter_set": pset.digest, "initial_soc": repr(float(initial_soc)),
+                               "capacity_fade": repr(float(capacity_fade)), "fade_mapping": FADE_MAPPING, "soc_definition": SOC_DEFINITION,
+                               "model_options": dict(sorted(options.items())), "active_material_balance": [repr(b) for b in balance],
+                               "solver": {"solver": "IDAKLUSolver", "rtol": "1e-6", "atol": "1e-8", "points": points}}}
+    seal = CheckpointSeal(spec.participant_id, checkpoint_scope(build), integrity_of=lambda sol: integrity_of(sol))
+    slot = "completeness:declared_complete"
 
     def soc_of(solution) -> float:
         if solution is None:
             return initial_soc
         return initial_soc - float(solution["Discharge capacity [A.h]"].entries[-1]) / (c_nom * (1.0 - capacity_fade))
 
-    def digest() -> str:
-        sol = held["solution"]
+    def digest_of(sol) -> str:
         if sol is None:
             suffix = f":{sorted(declared.items())!r}" if declared else ""
             return hashlib.sha256(f"initial:{pset.digest}:{initial_soc!r}:{capacity_fade!r}{suffix}".encode()).hexdigest()
         return hashlib.sha256(np.ascontiguousarray(np.asarray(sol.last_state.y, dtype="<f8")).tobytes()).hexdigest()
+
+    def digest() -> str:
+        return digest_of(held["solution"])
+
+    def integrity_of(sol) -> str:
+        # what solver.step continues from beyond y: the solution's clock (an in-place edit of it is otherwise invisible
+        # to the y-only state identity, and moves the next window); not part of the recorded state identity
+        if sol is None:
+            return "none"
+        arrays = (sol.last_state.y, sol.last_state.t, sol.t[-1:])
+        return hashlib.sha256(b"".join(np.ascontiguousarray(np.asarray(a, dtype="<f8")).tobytes() for a in arrays)).hexdigest()
 
     def initialize(_instant, _inputs, _uq):
         return InitializationResult({"heat": Quantity(0.1, "W")}, {"heat": unknown},
@@ -132,11 +162,14 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
                              diagnostics={"execution_identity": ident.digest, "soc_end": repr(soc_of(sol))})
 
     def checkpoint(instant):
-        return RuntimeCheckpoint(CheckpointRecord(spec.participant_id, instant, digest(), True, provider_state_id="completeness:declared_complete"),
-                                 held["solution"])
+        return seal.seal(instant, state_digest=digest(), deterministic_restore=True, slot=slot, state=held["solution"])
 
     def restore(cp):
-        held["solution"] = cp.token
+        # The digest (and the y/t integrity fingerprint) is recomputed from the token's own Solution, never taken from
+        # the record alone.  The issued Solution is held as is, not copied: solver.step starts a new Solution from it,
+        # and an issued y or t edited in place fails this recomputation on the next restore (executed tests).
+        held["solution"] = seal.admit(cp, slot_of=lambda _sol: slot, digest_of=digest_of, state_type=(type(None), pybamm.Solution),
+                                      label="PyBaMM")
 
     participant = CallbackParticipant(
         spec, initialize=initialize, advance=advance, checkpoint=checkpoint, restore=restore, state_identity=lambda _t: digest(),

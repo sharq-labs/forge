@@ -225,6 +225,15 @@ def test_build_switched_inside_a_call_is_refused_before_its_result_is_used(where
         call()
 
 
+def test_issued_token_under_a_record_with_another_digest_is_refused():
+    participant, session = _participant()
+    issued = participant.checkpoint(Quantity(0, "s"))
+    other = hashlib.sha256(b"another state").hexdigest()
+    with pytest.raises(InvalidScientificProblem, match="record and provider snapshot digest disagree"):
+        participant.restore(RuntimeCheckpoint(replace(issued.record, state_digest=other), issued.token))
+    assert session.restored == []
+
+
 def test_wrapper_not_issued_by_the_participant_is_refused_even_with_its_scope():
     from engcore.execution.multiphysics.external import _ScopedSnapshot
 

@@ -15,8 +15,10 @@ locally as `04b12344` (owner direction). No push, PR, merge, certificate or hard
       `tree.clean` check of the uncommitted tree); real-ngspice electrothermal integration 357 passed.
 - [ ] Owner: push/PR decision; OD-3 recertification (pinned files touched); policy decisions on qualification
       gating and provider-build binding for `CallbackParticipant` adapters.
-- [ ] Next (smallest high-impact): bind provider build + token digest into `coupling/adapters.py::provider_participant`
-      and the PyBaMM coupling adapter checkpoints, with a real-provider (PyBaMM, 3.13 env) restore test.
+- [x] Bind provider build + token digest into `coupling/adapters.py::provider_participant` and the PyBaMM coupling
+      adapter checkpoints (I-8). Branch `fix/engrt-v1-callback-checkpoint-identity` on top of this one, local commits
+      `1439b470`, `28ff37dc`; real-PyBaMM restore tests in the WSL battery env (the 3.13 provider env is gone).
+      PROGRESS: 2026-10-17 "Phase 1 follow-up". Needs the same OD-3 recertification (`external.py` touched again).
 
 ## Active override — Open problems pass (2026-10-16)
 

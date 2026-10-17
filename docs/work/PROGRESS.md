@@ -4980,3 +4980,107 @@ tree clean, the two fix-only FAST failures (`test_core_freeze_manifest::test_the
 `test_core_freeze_v3_manifest::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`) pass:
 `pytest <those two ids> -q` -> 2 passed in 37.8 s. The fix branch's FAST failure set therefore equals the
 baseline's.
+
+## 2026-10-17 -- Engineering Runtime V1, Phase 1 follow-up: CallbackParticipant provider checkpoints bound to their build (fix/engrt-v1-callback-checkpoint-identity, local only)
+
+Branch `fix/engrt-v1-callback-checkpoint-identity`, Claude worktree `.claude/worktrees/recursing-lichterman-6220f6`,
+base `423fb467` (tip of `fix/engrt-v1-phase1-interop`, Phase 1 commit `04b12344`). Local commits `1439b470` and
+`28ff37dc`; not pushed, no PR, no merge, no certificate, no hardened run. Closes Phase 1 limitation I-8. Defect fix
+inside the Battery 1RC active-epic policy (no new capability foundation). Pristine comparison worktree:
+`D:/forge-cbck-base` (detached `423fb467`). Logs: `D:/cbck-logs/`.
+
+**Confirmed defects (reproduced before the fix):**
+1. `coupling/adapters.py::provider_participant` restore set the held state from `cp.token` without comparing it with
+   `cp.record.state_digest`. Only the runtime's re-checkpoint caught a mismatch, and only for deterministic_restore
+   participants. The record named no provider build, so a checkpoint of a participant declaring `thermo@1.0` restored
+   into one declaring `thermo@2.0` with the same participant id.
+2. `forge_pybamm/coupling.py::cell_participant` restore accepted any token. With REAL PyBaMM 26.8.0.0, a Solution
+   checkpointed by an SPM / fade 0.0 cell restored into a cell built with fade 0.2, or with SPMe. It also accepted a
+   twin cell's token, a bare Solution, and a record with another digest. A spec naming another solver build was not
+   refused.
+
+**Fix (reuses Phase 1's pattern, no parallel provenance):**
+- Phase 1's inline seal in `ExternalSolverParticipant` is now the reusable `CheckpointSeal` plus `checkpoint_scope`
+  in `execution/multiphysics/external.py`. `ExternalSolverParticipant` uses it with its unchanged scope.
+- The registry holds nonce -> (the issued state object, the record issued with it, an optional integrity
+  fingerprint). Its entries are dropped by `weakref.finalize` when the token dies.
+- `admit` checks, in order:
+  1. token type;
+  2. build scope and record slot;
+  3. the state is the issued object;
+  4. the record equals the issued record;
+  5. the recomputed digest equals the issued digest, and so does the fingerprint.
+- `provider_participant`: the scope is the spec-declared solver and adapter identity, labelled
+  `build_basis: participant_spec_declaration` (a declaration, not a session-verified identity). The token state is a
+  read-only `MappingProxyType` copy, and restore recomputes the digest from it.
+- PyBaMM: the scope is `build_basis: provider_discovery` plus PyBaMM id, version, digest and dependencies, the
+  adapter, the declared coupling adapter, and the configuration (model, parameter-set digest, initial SOC, fade,
+  fade mapping, SOC definition, options, balance, solver settings). Restore recomputes sha256(y). A fingerprint of
+  `last_state.y`, `last_state.t` and `t[-1]` is taken at issue; it is not part of the state identity, so no state
+  digest moved. A spec whose solver id or version differs from the discovered provider is refused.
+
+**Scientific review** (`forge-scientific-review` contract, run through the read-only reviewer agent because the
+skill was not registered in this session; static only):
+- Pass 1: CHANGES REQUIRED.
+  - I-1 MEDIUM: the seal bound the token to the participant, not to its issued record. A mutable issued state edited
+    in place, plus a re-made record, would be admitted.
+  - I-2 LOW: PyBaMM restore aliases the issued Solution.
+  - I-3 LOW: the declared build looked like a verified identity.
+  - I-4 LOW: the PyBaMM spec adapter was not recorded.
+  - I-5: test gaps.
+  - All fixed and tested.
+- Pass 2 (confirmation): PASS, with LOW notes.
+  - R-1: two refusals shared the "digest disagree" phrase. Reworded, and tests match the full phrase.
+  - R-2: unverified PyBaMM internals. An executed probe showed that in-place edits of `y` and `all_ys` were refused,
+    but an edit of `Solution.t` was ADMITTED and moved the next window's heat. Fixed with the integrity fingerprint;
+    an executed test now covers both edits.
+  - R-3: opaque `ExternalSnapshot` tokens cannot be re-digested. Documented on `ExternalSnapshot`.
+  - No third pass ran after the R-2 fingerprint, so that fix is verified by its tests only.
+
+```text
+# reproducers on the unfixed tree (423fb467)
+.venv/Scripts/python.exe -m pytest tests/test_provider_participant_checkpoints.py -q   (first version, before the
+    seal tests existed)                                         -> 7 failed, 3 passed (controls); failures DID NOT RAISE
+WSL ~/mm/root/envs/battery (Python 3.12.14, PyBaMM 26.8.0.0), cwd D:/forge-cbck-base with the final test file copied in:
+  pytest providers/pybamm/tests/test_pybamm_checkpoint_identity.py   -> 8 failed, 1 passed (own round-trip control)
+# final tree (28ff37dc)
+pytest tests/test_provider_participant_checkpoints.py tests/test_external_participant_checkpoints.py -q -> 33 passed
+pytest tests/test_provider_participant_checkpoints.py tests/test_external_participant_checkpoints.py
+  tests/test_multiscale_runtime.py -q (1439b470)                     -> 50 passed
+# EXECUTED PROVIDER, WSL battery env, -p no:cacheprovider -rfs:
+pytest providers/pybamm/tests (28ff37dc)                              -> 49 passed, 0 skipped in 183 s
+pytest flagships/tests/test_flagship_battery.py (28ff37dc)            -> 22 passed in 1446 s (gate A, rollback, gate F replay)
+# EXECUTED PROVIDER, WSL ~/mm/root/envs/fenicsx (dolfinx 0.11.0), providers/fenicsx/tests/test_coupling_fenicsx.py:
+#   fix (before review) 7 passed, 2 failed; pristine base 7 passed, 2 failed -- the same two KeyError failures
+#   (test_two_way_thermal_electrical_converges..., test_conservation_audit_passes_only_when...), pre-existing
+python tools/forge_check.py --regression --workers 4                  -> 256 passed in 13.9 s
+# FAST, Windows venv 3.14, -m "not expensive" -q -n 4 -p no:cacheprovider --basetemp=D:/fbt-cbck/<x> -rfE
+#   baseline 423fb467 : 128 failed, 10690 passed, 204 skipped, 22 errors in 374 s (150 failing ids; equals the
+#                       Phase 1 baseline set)
+#   fix 28ff37dc      : 129 failed, 10706 passed, 215 skipped, 22 errors in 546 s (151 failing ids)
+#   only in fix: tests/test_test_timing.py::test_the_plugin_records_telemetry_and_never_changes_an_outcome
+#     -> environmental: the module key is '' when the worktree (C:) and basetemp (D:) are on different drives; it
+#        passes on this tree with a C: basetemp (1 passed) and on the base worktree, which is on D:
+#   only in baseline: none
+#   +11 skips = the new PyBaMM test file, which skips on 3.14 (no PyBaMM there)
+# SCIENTIFIC tier (-m "not campaign"): NOT RUN
+```
+
+**Environment:** the 3.13 provider env `D:/forge-prov-tools/provenv` no longer exists on D:. The executed-provider
+runs used the WSL conda env `~/mm/root/envs/battery`, which has the same PyBaMM version (26.8.0.0) and Python 3.12.
+
+**Failed approaches (do not repeat):**
+- Bash heredocs with long Python patch scripts failed again (`unexpected EOF`); short ones and editor writes worked.
+- Comparing only the state-identity digest misses continuation state outside it (the PyBaMM clock). Fingerprint
+  that state at issue instead of widening the identity, which would move recorded digests.
+
+**Remaining limitations:**
+- `ExternalSolverParticipant` tokens are opaque, so their integrity rests on the session contract (documented).
+- PyBaMM state outside y and t (for example the inputs carried on the Solution) is not fingerprinted. It is fixed
+  per participant (scope) or re-supplied each window.
+- `systems/products/drone_coupled.py` checkpoints a stateless CallbackParticipant with no build (token None). It is
+  not a provider adapter and holds no state, so it was left unchanged.
+
+**RECERTIFICATION_REQUIRED (OD-3).** `src/engcore/execution/multiphysics/external.py` is pinned in
+`certification/current_core_v2.json`, and the new tests fall under the pinned `tests/**` area.
+`coupling/adapters.py` and `providers/pybamm` are not pinned. No touched file is in the frozen API snapshot.
