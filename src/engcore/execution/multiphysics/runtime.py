@@ -326,6 +326,11 @@ class MultiphysicsRuntime:
     ) -> None:
         plan.validate_against(graph)
         self._required_edges = frozenset(plan.required_convergence_edges(graph))
+        # Phase 3.5 WS2: a relaxation restricted to the lagged edges relaxes exactly the edges a serial sweep
+        # lags (the required ones); None = every edge, the previous behaviour
+        self._relaxed_edges = (
+            frozenset(self._required_edges) if plan.relaxation.scope == "lagged_edges" else None
+        )
         # opt-in, declared per participant; validated before anything is allocated
         validate_policy(
             concurrency,
@@ -837,7 +842,9 @@ class MultiphysicsRuntime:
             if raw_out is not None:
                 raw_out[edge.edge_id] = value
 
-            if implicit and edge.edge_id in previous:
+            if implicit and edge.edge_id in previous and (
+                self._relaxed_edges is None or edge.edge_id in self._relaxed_edges
+            ):
                 target_port = self.graph.participant(
                     edge.target.participant_id
                 ).port(edge.target.port_id)

@@ -76,6 +76,12 @@ class RelaxationKind(str, Enum):
 #: Phase 3 BR14: the relaxation kinds that update the joint interface vector
 IQN_KINDS = frozenset({RelaxationKind.IQN_ILS, RelaxationKind.IQN_IMVJ})
 
+#: Phase 3.5 WS2: which edges a scalar-mix relaxation (CONSTANT / AITKEN) mixes in a SERIAL sweep.
+#: ``every_edge`` (the default and the previous behaviour); ``lagged_edges``: only the edges whose
+#: target runs at or before their source (the torn values of a Gauss-Seidel sweep) -- a forward edge
+#: then delivers this sweep's transfer unrelaxed, so it needs no criterion, exactly as under NONE.
+RELAXATION_SCOPES = ("every_edge", "lagged_edges")
+
 
 def _time(value: Quantity, *, label: str, allow_zero: bool = False) -> Quantity:
     if not isinstance(value, Quantity) or dimensionality(value.units) != dimensionality("second"):
@@ -202,9 +208,15 @@ class RelaxationPolicy:
     #: windows may contribute to one carried approximation before it restarts
     #: from zero (bounded reuse of stale secant information).
     imvj_reuse_windows: int = 0
+    #: Phase 3.5 WS2: :data:`RELAXATION_SCOPES`; ``lagged_edges`` for CONSTANT / AITKEN only
+    scope: str = "every_edge"
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", RelaxationKind(self.kind))
+        if self.scope not in RELAXATION_SCOPES:
+            raise InvalidScientificProblem(f"relaxation scope must be one of {RELAXATION_SCOPES}")
+        if self.scope == "lagged_edges" and self.kind not in (RelaxationKind.CONSTANT, RelaxationKind.AITKEN):
+            raise InvalidScientificProblem("relaxation scope lagged_edges applies to CONSTANT or AITKEN relaxation only")
         factor = float(self.factor)
         minimum = float(self.minimum_factor)
         maximum = float(self.maximum_factor)
@@ -270,6 +282,8 @@ class RelaxationPolicy:
                 if self.kind is RelaxationKind.IQN_IMVJ
                 else {}
             ),
+            # Phase 3.5 WS2: absent for the default scope, so existing policies keep their fingerprints
+            **({"scope": self.scope} if self.scope != "every_edge" else {}),
         }
 
     @classmethod
@@ -284,6 +298,7 @@ class RelaxationPolicy:
             iqn_filter=payload.get("iqn_filter", 1e-10),
             imvj_max_dimension=payload.get("imvj_max_dimension", 0),
             imvj_reuse_windows=payload.get("imvj_reuse_windows", 0),
+            scope=payload.get("scope", "every_edge"),
         )
 
 
@@ -544,6 +559,12 @@ class CouplingPlan:
                 f"{self.relaxation.kind.value} updates the joint interface vector after every participant has run "
                 "(Jacobi); serial Gauss-Seidel relaxes edges one at a time and is not supported"
             )
+        if self.relaxation.scope == "lagged_edges" and (
+            self.scheme is not CouplingScheme.IMPLICIT or self.iteration_semantics is not IterationSemantics.SERIAL
+        ):
+            raise InvalidScientificProblem(
+                "relaxation scope lagged_edges is defined for IMPLICIT SERIAL plans (in a Jacobi sweep every edge is lagged)"
+            )
         if self.window_control is not None:
             if not isinstance(self.window_control, WindowControlPolicy):
                 raise InvalidScientificProblem("window_control must be a WindowControlPolicy")
@@ -635,9 +656,11 @@ class CouplingPlan:
             return ()
         if (
             self.iteration_semantics is IterationSemantics.JACOBI
-            or self.relaxation.kind is not RelaxationKind.NONE
+            or (self.relaxation.kind is not RelaxationKind.NONE and self.relaxation.scope == "every_edge")
         ):
             return tuple(sorted(edge.edge_id for edge in graph.edges))
+        # NONE, or a relaxation restricted to the lagged edges (Phase 3.5 WS2): forward edges carry this
+        # sweep's unrelaxed transfer and are consistent by construction
         position = {pid: index for index, pid in enumerate(self.resolved_order(graph))}
         return tuple(sorted(
             edge.edge_id
