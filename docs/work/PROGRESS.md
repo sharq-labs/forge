@@ -5389,3 +5389,23 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   - `git diff --check`.
   pytest NOT RUN.
 - Tests added to `tests/domains/thermal_models/test_conduction1d_nonuniform.py`.
+
+## 2026-10-18 -- OD-6 decided: the active epic becomes the engineering foundations program (branch feat/od6-engineering-program-epic, local only)
+
+Owner decision in the Claude Code session: re-point the active epic from `battery.thevenin_1rc` to the research program
+`engrt.numerical_foundations` (contract `docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md`), using the schema /2
+research-program mechanism of the OD-6 package (Option C) with this program instead of Genesis. Implemented as the
+canonical separate change on a branch from `origin/main` `de11dffa`; **in force only when reviewed and merged.**
+
+- Ledger schema /2: `research_programs` with one entry (gates G0, M1, M2, E1, E2, E3, all MISSING); `active_epic` names
+  it; every capability, battery included, byte-identical in meaning.
+- `tools/capability_maturity.py`: refuses /1 ("migrate"); validates programs (exact fields, own statuses, ordered
+  `requires`, evidence paths, no maturity vocabulary, unique ids across both arrays); a decided program cannot stay the
+  epic; renders a programs table.
+- `tests/test_capability_completion.py`: the battery pin replaced by the program pin plus a battery snapshot (stage,
+  statuses, evidence counts may only grow); negative cases for every back door. **This test edit is a recertification
+  trigger (OD-3).**
+- Policy, PR template, matrix (hand-edited to the renderer's format) and ACTIVE_PLAN's OD-6 row updated.
+
+Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN: `pytest tests/test_capability_completion.py`,
+`python -m tools.capability_maturity` (check) and `--write` (the matrix must be regenerated or confirmed).

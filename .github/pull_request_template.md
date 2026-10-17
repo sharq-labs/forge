@@ -1,6 +1,6 @@
 ## Capability impact
 
-- [ ] Advances the active epic (`battery.thevenin_1rc`)
+- [ ] Advances the active epic (`engrt.numerical_foundations`, research program) or is G0 / defect work
 - [ ] Stabilization / defect fix / prerequisite only
 - [ ] Changes maturity gates for an existing tracked capability
 - [ ] Starts a new capability foundation

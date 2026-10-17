@@ -1,11 +1,11 @@
 {
-  "schema": "forge.scientific_capability_completion/1",
+  "schema": "forge.scientific_capability_completion/2",
   "policy": {
     "completion_rule": "A capability is complete only when its computed stage reaches PRODUCTION_READY; file/class existence is never completion.",
     "horizontal_expansion_paused": true,
     "exception_process": "Any new capability foundation before the active epic is PRODUCTION_READY requires an explicit reviewed exception in the PR rationale."
   },
-  "active_epic": "battery.thevenin_1rc",
+  "active_epic": "engrt.numerical_foundations",
   "capabilities": [
     {
       "id": "battery.thevenin_1rc",
@@ -905,6 +905,96 @@
           ]
         }
       }
+    }
+  ],
+  "research_programs": [
+    {
+      "id": "engrt.numerical_foundations",
+      "kind": "research_program",
+      "title": "Engineering foundations: nonlinear PDE, conjugate heat transfer, ALE and adaptive mesh control",
+      "contract": "docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md",
+      "owner": "docs/project",
+      "allowed_scope": [
+        "src/engcore/numerical/**",
+        "src/engcore/pde/**",
+        "src/engcore/execution/multiphysics/**",
+        "src/engcore/coupling/**",
+        "src/engcore/domains/thermal_models/conduction1d_nonuniform.py",
+        "src/engcore/domains/thermal_models/<one new ALE module, named in the E3 PR>",
+        "providers/fenicsx/**",
+        "providers/openfoam/**",
+        "tests for the above"
+      ],
+      "prohibited": [
+        "any capability maturity change from a program gate result (Gate H)",
+        "claims, SRIA or MCP reachability of a new capability before its computed stage is FUNCTIONAL",
+        "validation or benchmark claims without executed evidence; mocks presented as real runs",
+        "tetrahedral or hexahedral refinement; multi-dimensional or fluid ALE; turbulence models; further nonlinear templates or provider pairs",
+        "certified-area change without recertification",
+        "LLM authority over models, thresholds, evidence or verdicts"
+      ],
+      "planned_capabilities": [
+        "numerics.adaptive_mesh_1d_transient",
+        "numerics.triangle_refinement",
+        "pde.nonlinear_diffusion_fenicsx",
+        "coupling.cht_fenicsx_openfoam",
+        "thermal.ale_moving_domain_1d"
+      ],
+      "gates": [
+        {
+          "id": "G0",
+          "title": "ERT V1 and Phases 1-3.5 deferred validation executed (DV-1..DV-98), failures fixed or recorded",
+          "requires": [],
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "owner authorizes the deferred validation; run the DV tables of docs/work/DEFERRED_VALIDATION.md"
+        },
+        {
+          "id": "M1",
+          "title": "Transient non-uniform 1D adaptation with conservative state transfer and coarsening",
+          "requires": [],
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "build per the program contract (M1), then execute its tests"
+        },
+        {
+          "id": "M2",
+          "title": "Conforming triangle refinement with conservative cell-average transfer",
+          "requires": [
+            "M1"
+          ],
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "after M1: build per the program contract (M2)"
+        },
+        {
+          "id": "E1",
+          "title": "Provider-backed nonlinear PDE (k(u) diffusion through FEniCSx Newton), manufactured solution",
+          "requires": [],
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "build per the program contract (E1), then execute in the WSL FEniCSx env"
+        },
+        {
+          "id": "E2",
+          "title": "Real FEniCSx <-> OpenFOAM conjugate heat transfer on one planar wall",
+          "requires": [],
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "build the two window sessions per the program contract (E2), then execute the coupled run"
+        },
+        {
+          "id": "E3",
+          "title": "Bounded 1D ALE moving-domain diffusion with GCL-consistent time stepping",
+          "requires": [
+            "M1"
+          ],
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "after M1: build per the program contract (E3)"
+        }
+      ],
+      "exit": "every gate is PASS, FAIL or BLOCKED_WITH_EVIDENCE; the owner then names the next epic"
     }
   ]
 }

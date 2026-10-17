@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from copy import deepcopy
+
+import pytest
 
 from tools import capability_maturity as maturity
 
@@ -14,16 +17,46 @@ def test_checked_in_capability_ledger_is_valid_and_matrix_is_current() -> None:
     assert maturity.check() == ()
 
 
-def test_active_epic_is_battery_1rc_and_still_incomplete() -> None:
-    data = maturity.load_ledger()
-    active = next(cap for cap in data["capabilities"] if cap["id"] == data["active_epic"])
+# OD-6 (owner, 2026-10-18): the active epic is the research program engrt.numerical_foundations
+# (docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md).  These two tests replace the battery pin; the battery
+# capability itself must keep every stage, gate and piece of evidence it had.
+BATTERY_SNAPSHOT = {
+    "scientific_definition": ("PASS", 1), "applicability": ("PASS", 2), "implementation": ("PASS", 1),
+    "regression_tests": ("PASS", 1), "execution": ("PASS", 4), "verification": ("PASS", 2), "failure_cases": ("PASS", 2),
+    "provenance_replay": ("PASS", 4), "real_data": ("PASS", 9), "calibration": ("PASS", 6),
+    "independent_validation": ("MISSING", 5), "measurement_uq": ("PASS", 3), "benchmark_metrics": ("PASS", 3),
+    "parameter_uq": ("MISSING", 2), "numerical_uq": ("NOT_APPLICABLE", 0), "model_discrepancy": ("MISSING", 1),
+    "claims_integration": ("MISSING", 0), "domainpack_integration": ("MISSING", 0), "documentation": ("PASS", 1),
+}
 
-    assert data["active_epic"] == "battery.thevenin_1rc"
+
+def _program(data):
+    return next(p for p in data["research_programs"] if p["id"] == "engrt.numerical_foundations")
+
+
+def test_active_epic_is_the_engineering_foundations_program_with_every_gate_open() -> None:
+    data = maturity.load_ledger()
+    assert data["schema"] == "forge.scientific_capability_completion/2"
+    assert data["active_epic"] == "engrt.numerical_foundations"
+    program = _program(data)
+    assert program["kind"] == "research_program"
+    assert [g["id"] for g in program["gates"]] == ["G0", "M1", "M2", "E1", "E2", "E3"]
+    assert all(g["status"] == "MISSING" for g in program["gates"])          # nothing is claimed by the migration
+    assert {g["id"]: g["requires"] for g in program["gates"]}["E3"] == ["M1"]
+    assert data["policy"]["horizontal_expansion_paused"] is True             # still paused OUTSIDE the program scope
+
+
+def test_battery_1rc_stays_functional_with_its_evidence() -> None:
+    data = maturity.load_ledger()
+    battery = next(cap for cap in data["capabilities"] if cap["id"] == "battery.thevenin_1rc")
     # FUNCTIONAL since 2026-10-14. Calibration PASSES on LG HG2 (identifiable with a measured OCV); held-out
     # validation does not (MODEL_REJECTED on the constant-current test, no cross-cell transfer).
-    assert maturity.computed_stage(active) == "FUNCTIONAL"
-    assert active["declared_stage"] == "FUNCTIONAL"
-    assert "independent_validation" in maturity.missing_for_next_stage(active)
+    assert maturity.computed_stage(battery) == "FUNCTIONAL" and battery["declared_stage"] == "FUNCTIONAL"
+    assert "independent_validation" in maturity.missing_for_next_stage(battery)
+    for name, (status, count) in BATTERY_SNAPSHOT.items():
+        gate = battery["gates"][name]
+        assert gate["status"] == status, name
+        assert len(gate.get("evidence", [])) >= count, name          # evidence may grow, never shrink
 
 
 def test_declared_stage_cannot_exceed_supported_gates() -> None:
@@ -67,3 +100,90 @@ def test_incomplete_capability_must_keep_concrete_next_actions() -> None:
         "platform.domain_pack: incomplete capability must have next_actions" in error
         for error in errors
     )
+
+
+# ---- OD-6 negative cases: a research program cannot become a back door ---------------------------------------------
+
+
+def _with(mutate):
+    data = deepcopy(maturity.load_ledger())
+    mutate(data)
+    return maturity.validate(data)
+
+
+def test_an_unknown_active_epic_is_refused() -> None:
+    errors = _with(lambda d: d.update(active_epic="engrt.nope"))
+    assert any("must identify a tracked capability or research program" in e for e in errors)
+
+
+@pytest.mark.parametrize("field", ["contract", "allowed_scope", "prohibited", "gates"])
+def test_an_incomplete_program_contract_is_refused(field) -> None:
+    assert _with(lambda d: _program(d).pop(field))
+
+
+def test_a_program_contract_path_must_exist_and_statuses_are_its_own() -> None:
+    assert any("contract path does not exist" in e for e in _with(lambda d: _program(d).update(contract="docs/nope.md")))
+    assert any("invalid status" in e for e in _with(lambda d: _program(d)["gates"][0].update(status="FUNCTIONAL")))
+
+
+def test_ids_are_unique_across_capabilities_and_programs() -> None:
+    errors = _with(lambda d: _program(d).update(id="battery.thevenin_1rc"))
+    assert any("unique across capabilities and research programs" in e for e in errors)
+
+
+def test_a_program_pass_needs_existing_evidence() -> None:
+    assert any("PASS requires evidence" in e for e in _with(lambda d: _program(d)["gates"][1].update(status="PASS")))
+    errors = _with(lambda d: _program(d)["gates"][1].update(status="PASS", evidence=["docs/does/not/exist.json"]))
+    assert any("evidence path does not exist" in e for e in errors)
+
+
+def test_a_program_carries_no_maturity_vocabulary_and_never_moves_a_capability() -> None:
+    assert any("no maturity vocabulary" in e for e in _with(lambda d: _program(d).update(declared_stage="FUNCTIONAL")))
+    assert any("maturity vocabulary" in e for e in _with(lambda d: _program(d)["gates"][0].update(id="calibration")))
+    data = deepcopy(maturity.load_ledger())
+    before = {c["id"]: maturity.computed_stage(c) for c in data["capabilities"]}
+    for gate in _program(data)["gates"]:
+        gate.update(status="PASS", evidence=["docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md"])
+    assert {c["id"]: maturity.computed_stage(c) for c in data["capabilities"]} == before
+    battery = next(c for c in data["capabilities"] if c["id"] == "battery.thevenin_1rc")
+    battery["declared_stage"] = "EVIDENCE_BACKED"                         # "because the program passed"
+    assert any("declares EVIDENCE_BACKED but gates support only FUNCTIONAL" in e for e in maturity.validate(data))
+
+
+@pytest.mark.parametrize("status", ["PASS", "FAIL", "BLOCKED_WITH_EVIDENCE"])
+def test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes(status) -> None:
+    def decide_e3(d):
+        e3 = next(g for g in _program(d)["gates"] if g["id"] == "E3")
+        e3.update(status=status, evidence=["docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md"])
+    assert any("needs 'M1' PASS first" in e for e in _with(decide_e3))
+
+
+def test_a_deferred_gate_may_wait_on_an_open_requirement() -> None:
+    assert _with(lambda d: next(g for g in _program(d)["gates"] if g["id"] == "E3").update(status="DEFERRED_BY_OWNER")) == ()
+
+
+def test_a_decided_program_cannot_stay_the_active_epic() -> None:
+    def decide_all(d):
+        for gate in _program(d)["gates"]:
+            gate.update(status="PASS", evidence=["docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md"])
+    assert any("the owner names the next epic" in e for e in _with(decide_all))
+
+
+def test_a_superseded_schema_is_refused_not_read(tmp_path) -> None:
+    data = maturity.load_ledger()
+    data["schema"] = "forge.scientific_capability_completion/1"
+    path = tmp_path / "ledger.json"
+    path.write_bytes(json.dumps(data).encode())
+    with pytest.raises(ValueError, match="migrate the ledger"):
+        maturity.load_ledger(path)
+
+
+def test_the_governance_documents_name_the_ledgers_active_epic() -> None:
+    epic = maturity.load_ledger()["active_epic"]
+    root = maturity.ROOT
+    policy = (root / "docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md").read_bytes().decode()
+    template = (root / ".github/pull_request_template.md").read_bytes().decode()
+    matrix = (root / "docs/SCIENTIFIC_CAPABILITY_MATRIX.md").read_bytes().decode()
+    assert f"The current active epic is **{epic}**" in policy
+    assert f"`{epic}`" in template.splitlines()[2]
+    assert f"Active completion epic: {epic} " in matrix

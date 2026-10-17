@@ -1,4 +1,9 @@
-"""Capability completion ledger validation and matrix rendering."""
+"""Capability completion ledger validation and matrix rendering.
+
+Schema /2 (OD-6, 2026-10-18): besides ``capabilities`` (maturity stages, 19 gates) the ledger holds
+``research_programs`` -- entries with their OWN gate vocabulary and NO stage -- and ``active_epic`` may name
+either.  A research program result never promotes a capability: programs never enter ``computed_stage``.
+"""
 
 from __future__ import annotations
 
@@ -11,7 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 LEDGER = ROOT / "docs" / "project" / "scientific_capability_completion.json"
 MATRIX = ROOT / "docs" / "SCIENTIFIC_CAPABILITY_MATRIX.md"
 
-SCHEMA = "forge.scientific_capability_completion/1"
+SCHEMA = "forge.scientific_capability_completion/2"
+PREVIOUS_SCHEMA = "forge.scientific_capability_completion/1"
 STAGES = ("FOUNDATION", "FUNCTIONAL", "EVIDENCE_BACKED", "PRODUCTION_READY")
 RANK = {name: i for i, name in enumerate(STAGES)}
 STATUSES = {"PASS", "MISSING", "NOT_APPLICABLE"}
@@ -23,6 +29,14 @@ GATES = (
     "benchmark_metrics", "parameter_uq", "numerical_uq", "model_discrepancy",
     "claims_integration", "domainpack_integration", "documentation",
 )
+
+PROGRAM_FIELDS = frozenset({
+    "id", "kind", "title", "contract", "owner", "allowed_scope", "prohibited", "planned_capabilities", "gates", "exit",
+})
+PROGRAM_GATE_FIELDS = frozenset({"id", "title", "requires", "status", "evidence", "next_action"})
+PROGRAM_STATUSES = frozenset({"PASS", "FAIL", "MISSING", "BLOCKED_WITH_EVIDENCE", "DEFERRED_BY_OWNER"})
+#: a program gate outcome that decides the gate (MISSING and DEFERRED_BY_OWNER decide nothing)
+DECIDED = frozenset({"PASS", "FAIL", "BLOCKED_WITH_EVIDENCE"})
 
 REQUIREMENTS = {
     "FOUNDATION": (
@@ -44,6 +58,8 @@ REQUIREMENTS = {
 
 def load_ledger(path: Path = LEDGER) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
+    if data.get("schema") == PREVIOUS_SCHEMA:
+        raise ValueError(f"capability completion schema {PREVIOUS_SCHEMA} is superseded: migrate the ledger to {SCHEMA}")
     if data.get("schema") != SCHEMA:
         raise ValueError("unsupported capability completion schema")
     return data
@@ -78,6 +94,96 @@ def missing_for_next_stage(capability: dict[str, Any]) -> tuple[str, ...]:
     )
 
 
+def _evidence_problems(owner: str, evidence: Any) -> list[str]:
+    problems: list[str] = []
+    if not isinstance(evidence, list):
+        return [f"{owner}: evidence must be an array"]
+    for reference in evidence:
+        if not isinstance(reference, str) or not reference.strip():
+            problems.append(f"{owner}: evidence entries must be non-empty paths")
+            continue
+        path_text = reference.split("::", 1)[0]
+        if not (ROOT / path_text).exists():
+            problems.append(f"{owner}: evidence path does not exist: {path_text}")
+    return problems
+
+
+def validate_programs(programs: Any) -> list[str]:
+    """Research programs: gates with their own vocabulary, never a maturity stage (OD-6)."""
+    errors: list[str] = []
+    if not isinstance(programs, list):
+        return ["research_programs must be an array"]
+    for program in programs:
+        if not isinstance(program, dict):
+            errors.append("every research program must be an object")
+            continue
+        pid = str(program.get("id", "")).strip() or "<missing>"
+        forbidden = sorted(({"declared_stage"} | set(GATES)) & set(program))
+        if forbidden:
+            errors.append(f"{pid}: a research program carries no maturity vocabulary ({forbidden})")
+        if set(program) != PROGRAM_FIELDS:
+            errors.append(f"{pid}: research program fields must be exactly {sorted(PROGRAM_FIELDS)}")
+        if program.get("kind") != "research_program":
+            errors.append(f"{pid}: kind must be research_program")
+        for field_name in ("title", "contract", "owner", "exit"):
+            if not str(program.get(field_name, "")).strip():
+                errors.append(f"{pid}: {field_name} must be non-empty")
+        for field_name in ("contract", "owner"):
+            path_text = str(program.get(field_name, "")).strip()
+            if path_text and not (ROOT / path_text).exists():
+                errors.append(f"{pid}: {field_name} path does not exist: {path_text}")
+        for field_name in ("allowed_scope", "prohibited", "gates"):
+            value = program.get(field_name)
+            if not isinstance(value, list) or not value:
+                errors.append(f"{pid}: {field_name} must be a non-empty array")
+        planned = program.get("planned_capabilities", [])
+        if not isinstance(planned, list):
+            errors.append(f"{pid}: planned_capabilities must be an array")
+        gates = program.get("gates")
+        if not isinstance(gates, list):
+            continue
+        seen: dict[str, str] = {}
+        for gate in gates:
+            if not isinstance(gate, dict):
+                errors.append(f"{pid}: every gate must be an object")
+                continue
+            gid = str(gate.get("id", "")).strip() or "<missing>"
+            where = f"{pid}.{gid}"
+            if set(gate) != PROGRAM_GATE_FIELDS:
+                errors.append(f"{where}: gate fields must be exactly {sorted(PROGRAM_GATE_FIELDS)}")
+            if gid in GATES or gid in RANK:
+                errors.append(f"{where}: a program gate may not reuse maturity vocabulary")
+            if gid in seen:
+                errors.append(f"{pid}: gate ids must be unique ({gid})")
+            status = gate.get("status")
+            if status not in PROGRAM_STATUSES:
+                errors.append(f"{where}: invalid status {status!r}")
+                seen[gid] = "MISSING"
+                continue
+            requires = gate.get("requires")
+            if not isinstance(requires, list):
+                errors.append(f"{where}: requires must be an array")
+                requires = []
+            for required in requires:
+                if required not in seen:
+                    errors.append(f"{where}: requires {required!r}, which is not an EARLIER gate")
+                elif status in DECIDED and seen[required] != "PASS":
+                    errors.append(f"{where}: {status} needs {required!r} PASS first (it is {seen[required]})")
+            evidence = gate.get("evidence", [])
+            errors += _evidence_problems(where, evidence)
+            if status in ("PASS", "FAIL") and not evidence:
+                errors.append(f"{where}: {status} requires evidence")
+            if status in ("MISSING", "BLOCKED_WITH_EVIDENCE") and not str(gate.get("next_action", "")).strip():
+                errors.append(f"{where}: {status} requires next_action")
+            seen[gid] = status
+    return errors
+
+
+def _program_decided(program: dict[str, Any]) -> bool:
+    gates = program.get("gates") or []
+    return bool(gates) and all(isinstance(g, dict) and g.get("status") in DECIDED for g in gates)
+
+
 def validate(data: dict[str, Any]) -> tuple[str, ...]:
     errors: list[str] = []
     capabilities = data.get("capabilities")
@@ -87,6 +193,13 @@ def validate(data: dict[str, Any]) -> tuple[str, ...]:
     ids = [str(cap.get("id", "")).strip() for cap in capabilities if isinstance(cap, dict)]
     if len(ids) != len(set(ids)):
         errors.append("capability ids must be unique")
+    programs = data.get("research_programs", [])
+    errors += validate_programs(programs)
+    program_ids = [str(p.get("id", "")).strip() for p in programs if isinstance(p, dict)] if isinstance(programs, list) else []
+    if len(program_ids) != len(set(program_ids)):
+        errors.append("research program ids must be unique")
+    if set(program_ids) & set(ids):
+        errors.append(f"ids must be unique across capabilities and research programs: {sorted(set(program_ids) & set(ids))}")
 
     for cap in capabilities:
         if not isinstance(cap, dict):
@@ -159,12 +272,16 @@ def validate(data: dict[str, Any]) -> tuple[str, ...]:
             errors.append(f"{cid}: incomplete capability must have next_actions")
 
     active = data.get("active_epic")
-    if active not in ids:
-        errors.append("active_epic must identify a tracked capability")
-    else:
+    if active in ids and active not in program_ids:
         active_cap = next(cap for cap in capabilities if cap["id"] == active)
         if computed_stage(active_cap) == "PRODUCTION_READY":
             errors.append("active_epic is already PRODUCTION_READY; choose the next epic")
+    elif active in program_ids and active not in ids:
+        active_program = next(p for p in programs if isinstance(p, dict) and p.get("id") == active)
+        if _program_decided(active_program):
+            errors.append("active_epic is a research program whose every gate is decided; the owner names the next epic")
+    else:
+        errors.append("active_epic must identify a tracked capability or research program")
 
     policy = data.get("policy")
     if not isinstance(policy, dict) or policy.get("horizontal_expansion_paused") is not True:
@@ -184,7 +301,7 @@ def render(data: dict[str, Any]) -> str:
         "Generated from docs/project/scientific_capability_completion.json.",
         "A capability is not complete because a class or file exists.",
         "",
-        f"Active completion epic: {data['active_epic']}",
+        f"Active completion epic: {data['active_epic']} ({_epic_kind(data)})",
         "",
         "Stages: FOUNDATION -> FUNCTIONAL -> EVIDENCE_BACKED -> PRODUCTION_READY.",
         "",
@@ -218,16 +335,38 @@ def render(data: dict[str, Any]) -> str:
             + " |"
         )
 
+    programs = data.get("research_programs", [])
+    if programs:
+        lines += [
+            "",
+            "## Research programs",
+            "",
+            "| Program | Gate | Status | Requires | Next action |",
+            "|---|---|---|---|---|",
+        ]
+        for program in programs:
+            for gate in program["gates"]:
+                lines.append("| " + " | ".join((
+                    program["id"], gate["id"], gate["status"], ", ".join(gate["requires"]) or "-",
+                    gate.get("next_action", "") or "-",
+                )) + " |")
+
     lines += [
         "",
         "## Policy",
         "",
-        "The active epic is finished only when its computed stage reaches PRODUCTION_READY.",
-        "Until then, horizontal expansion into new capability foundations is paused unless an explicit exception is recorded.",
+        "A capability epic is finished only when its computed stage reaches PRODUCTION_READY; a research-program epic when every program gate is decided.",
+        "Until then, horizontal expansion into new capability foundations outside the epic's scope is paused unless an explicit exception is recorded.",
+        "A research program has gates, not maturity stages. A research result never promotes a capability.",
         "Every MISSING gate must carry a concrete next action. NOT_APPLICABLE requires a rationale.",
         "",
     ]
     return "\n".join(lines)
+
+
+def _epic_kind(data: dict[str, Any]) -> str:
+    programs = {p["id"] for p in data.get("research_programs", [])}
+    return "research program" if data["active_epic"] in programs else "capability"
 
 
 def check() -> tuple[str, ...]:
