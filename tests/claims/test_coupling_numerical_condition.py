@@ -172,6 +172,21 @@ def test_a_study_about_another_run_is_refused():
         condition_numerical_uncertainty(_study(run_id="other"), _explicit())
 
 
+def test_relabelling_only_the_study_runs_cannot_credit_another_runs_estimate_here():
+    # confirmation review R1: a genuine record for run "other", with only runs[0] relabelled
+    record = _study(run_id="other")
+    record["runs"][0] = dict(record["runs"][0], run_id="coupled~numerical~0")
+    with pytest.raises(CouplingConditionError, match="not about this coupled run"):
+        condition_numerical_uncertainty(record, _uncoupled())
+
+
+def test_a_study_run_value_that_differs_from_its_estimate_level_is_refused():
+    record = _study()
+    record["runs"][1] = dict(record["runs"][1], value=3.5)
+    with pytest.raises(CouplingConditionError, match="not about this coupled run"):
+        condition_numerical_uncertainty(record, _uncoupled())
+
+
 def test_an_edited_study_interval_is_refused():
     record = _study()
     record["uncertainty"] = dict(record["uncertainty"], upper={**record["uncertainty"]["upper"], "magnitude": 99.0})

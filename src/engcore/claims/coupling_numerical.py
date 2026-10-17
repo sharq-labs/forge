@@ -104,6 +104,17 @@ def _study_uncertainty(study_record: Mapping[str, Any], run_id: str) -> Uncertai
         estimate = estimate_from_dict(dict(study_record["estimate"]))
     except (KeyError, NumericalUQError) as exc:
         raise CouplingConditionError(f"the refinement study record does not re-derive: {exc}") from exc
+    # every level the estimate was computed from is a run of THIS study, about THIS run, with the recorded value
+    expected_ids = [f"{run_id}~numerical~{k}" for k in range(len(estimate.levels))]
+    if (
+        [level.run_id for level in estimate.levels] != expected_ids
+        or [r.get("run_id") for r in runs] != expected_ids
+        or [level.value for level in estimate.levels] != [r.get("value") for r in runs]
+    ):
+        raise CouplingConditionError(
+            "the study's runs and the levels its estimate was computed from are not the same runs of this coupled "
+            "run; the study is not about this coupled run"
+        )
     numerical = estimate.to_uncertainty()
     if numerical.to_dict() != dict(study_record.get("uncertainty") or {}):
         raise CouplingConditionError("the study record's uncertainty is not the one its estimate derives")

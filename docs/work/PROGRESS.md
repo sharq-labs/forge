@@ -5108,3 +5108,8 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
 - **Failed approach (do not repeat):** a first BR6 design widened the claim interval by the coupling bound. Mapping
   bounds are relative FIELD norms, not QoI errors, so widening would invent a propagation rule. A second draft let
   callers declare coverage, which was the review's BLOCKER.
+- Confirmation review: F1, F2, F5, F6 and F8 fixed; F4 open as an owner decision.
+  - R1 MEDIUM: the binding check read `runs[0]` while the re-derived estimate carries its own level run ids. Fixed:
+    estimate levels, study runs and `<run_id>~numerical~k` must agree, values included. Two tamper tests were added.
+  - R2 LOW, recorded: the study-to-run binding is a run-id string convention. A digest link needs `uq_studies` to
+    record the reported report's digest, which belongs to the same owner decision as F4.
