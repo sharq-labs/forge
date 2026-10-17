@@ -6,6 +6,19 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Integration — Codex handoff (2026-10-18)
+
+By owner confirmation in chat, branch `integration/codex-handoff-2026-10-18` merges into `main`, in order: I-8
+(`fix/engrt-v1-phase1-interop` `c68f9fc1`), Phase 1, Phase 2, Phase 3, Phase 3.5, the CDAR fixtures and OD-6, plus
+[CODEX_HANDOFF.md](CODEX_HANDOFF.md). Everything lands **IMPLEMENTED / UNVERIFIED and UNCERTIFIED**; no test ran. The
+"local commits only" lines of the overrides below describe how the work was built, not where it now is; OD-6 is in
+force from this merge.
+
+- [x] Merge in dependency order; conflicts resolved by hand (CODEX_HANDOFF.md section 1), including the I-8 vs
+      P2-BR10 checkpoint authority (I-8's seal wins; cross-object restore refused) -- owner review.
+- [ ] Owner: authorize DV-31..DV-100; OD-3 recertification of the new `main` HEAD; route the preserved, unintegrated
+      `preserve/*` and battery Pass 1 branches.
+
 ## Active override — Phase 3.5: engineering foundation completion, build phase (2026-10-18)
 
 Branch `feat/phase35-engineering-foundation-completion` (worktree `D:/forge-phase35`), on Phase 3 `7389f4b4`. Local

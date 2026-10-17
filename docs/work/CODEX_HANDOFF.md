@@ -11,15 +11,18 @@ Read first, in this order: `CLAUDE.md` (the working contract; its rules apply to
 
 ## 1. Where the work is (state at handoff)
 
-`origin/main` = `de11dffa` (PR #156, ERT V1 Big Rocks). Main is **uncertified** for every certification-pinned file
-changed since the last certificate (PRs #146, #154, #156; OD-3 pending) and its own certificate tests fail on it.
+Before this integration `origin/main` was `de11dffa` (PR #156, ERT V1 Big Rocks). Main is **uncertified** for every
+certification-pinned file changed since the last certificate (PRs #146, #154, #156 and this integration; OD-3 pending)
+and its own certificate tests fail on it.
 
-This branch, `handoff/codex-2026-10-18`, is `test/cdar-architectural-fixtures` (`ff66daef`) plus this page. It holds
-the whole linear stack below. Two pieces are NOT in it and are on their own branches:
+**Integrated 2026-10-18 by owner confirmation in chat**, through branch `integration/codex-handoff-2026-10-18` and one
+pull request merged with a merge commit (the PR number and the resulting `main` SHA are in the PR and in
+`docs/work/PROGRESS.md` on any later commit). Everything below landed **UNVERIFIED / UNCERTIFIED**: no test, tier,
+mutation run or certification ran for it. The branches, in merge order:
 
 | Order | Branch (all on `origin`) | Tip | Base | Content | Status |
 | --- | --- | --- | --- | --- | --- |
-| 0 | `fix/engrt-v1-phase1-interop` | `c68f9fc1` | main lineage (`423fb467` is in main) | I-8: CallbackParticipant checkpoint identity (PR #155, reviewed, merged into this branch after #154 landed) | not in main; integration merge prepared on `integration/codex-handoff-2026-10-18` (`b35445ad`, PROGRESS union-resolved) |
+| 0 | `fix/engrt-v1-phase1-interop` | `c68f9fc1` | main lineage (`423fb467` is in main) | I-8: CallbackParticipant checkpoint identity (PR #155, reviewed, merged into this branch after #154 landed) | IMPLEMENTED / UNVERIFIED in this integration (its own gates ran in its session, see PROGRESS 2026-10-17) |
 | 1 | `fix/phase1-scientific-numerical-correctness` | `6249c2d2` | `de11dffa` | Phase 1, P1-BR1..BR7 | IMPLEMENTED / UNVERIFIED; DV-31..DV-47 NOT RUN |
 | 2 | `feat/phase2-unified-solver-architecture` | `2661b640` | Phase 1 | Phase 2, P2-BR8..BR12 | IMPLEMENTED / UNVERIFIED (BR8, BR12 PARTIAL); DV-48..DV-64 NOT RUN |
 | 3 | `feat/phase3-advanced-numerical-multiphysics` | `7389f4b4` | Phase 2 | Phase 3, P3-BR13..BR17 | IMPLEMENTED / UNVERIFIED (BR16, BR17 PARTIAL); DV-65..DV-86 NOT RUN |
@@ -27,15 +30,39 @@ the whole linear stack below. Two pieces are NOT in it and are on their own bran
 | 5 | `test/cdar-architectural-fixtures` | `ff66daef` | Phase 3.5 | CDAR fixtures + gap pins (test code only) | NOT RUN (DV-99) |
 | 6 | `feat/od6-engineering-program-epic` | `670d94a0` | `de11dffa` | OD-6 governance: research-program epic, CDAR-1..10, audit A-1..A-13 | in force only on merge; its own checks NOT RUN (`docs/work/OD6_MERGE_REVIEW.md`) |
 
-Dependency order for integration: 0 (independent of 1-5; only `docs/work/PROGRESS.md` conflicts) -> 1 -> 2 -> 3 -> 4
--> 5 -> 6. Branch 6 is independent of 1-5; a merge preview against Phase 3.5 showed one docs-only conflict
-(`docs/work/PROGRESS.md`, both sides append: keep both). On `main` every EXPLICIT coupling plan is refused (commit
-`35d8f557`) until Phase 1 lands, which is why 5 is stacked on 4 rather than on 6.
+Dependency order: 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 (1-5 are a linear stack; 0 and 6 are independent of it). On the
+old `main` every EXPLICIT coupling plan was refused (commit `35d8f557`) until Phase 1, which is why 5 is stacked on 4.
 
-**Integration into `origin/main` was NOT performed in the Claude session.** The I-8 merge was prepared; the Phase 1
-merge was refused by the agent's permission guard as a merge of unreviewed work, and the remaining merges were not
-attempted. Repository policy (`docs/assurance/BRANCH_PROTECTION.md`): changes reach `main` through a pull request,
-merge commit only, no required status checks; certification comes from the local assurance path, not from GitHub.
+Integration merge commits on `integration/codex-handoff-2026-10-18`: I-8 `b35445ad`, Phase 1 `0ae939f7`, Phase 2
+`0356dbdf`, Phase 3 `29d37bf3`, Phase 3.5 `2e800f6e`, CDAR `a2a5123f`, OD-6 `0ae96d3e`, this page `c4f3453e`
+(record commits follow). Repository policy (`docs/assurance/BRANCH_PROTECTION.md`): changes reach `main` through a pull
+request, merge commit only, no required status checks; certification comes from the local assurance path, not GitHub.
+Phase 1-3.5, CDAR and OD-6 had read-only reviews in their own sessions but no pull-request review; the owner confirmed
+the merge knowing that.
+
+### Conflict resolutions (by hand; NOT RUN)
+
+- `docs/work/PROGRESS.md` (I-8, Phase 1 and OD-6 merges): append-only; both sides kept, in merge order.
+- `docs/work/ACTIVE_PLAN.md` (Phase 2 merge): the I-8 and P2-BR10 rows for the same item merged into one row naming
+  both. (OD-6 merge): OD-6's epic line kept as line 3, where `tests/test_capability_completion.py` pins it; the Phase
+  overrides follow.
+- **Checkpoint authority, I-8 vs Phase 2 P2-BR10 -- a scientific-design decision for owner review.** Both bound
+  provider checkpoints to their build, independently:
+  - `src/engcore/execution/multiphysics/external.py`: I-8's `CheckpointSeal` kept; Phase 2's mock label,
+    `ExternalProviderFailure` and `_classified` lifecycle calls kept, now wrapping the sealed snapshot and restore.
+  - `src/engcore/coupling/adapters.py::provider_participant`: I-8's seal is the restore authority (same participant
+    object, issued record, recomputed digest); Phase 2's observed-build drift refusal kept; Phase 2's build tag kept in
+    the checkpoint slot (`completeness:...;build:<sha256>` once a build has executed) and re-checked after the seal.
+    Consequence: a checkpoint of ANOTHER participant object is refused even for the same build, which is stricter
+    than P2-BR10's cross-object restore with a build pin. Three Phase 2 tests were rewritten to that rule
+    (`tests/execution/orchestration/test_phase2_checkpoint_recovery.py::test_a_corrupted_checkpoint_token_is_refused`
+    and `::test_a_checkpoint_of_another_build_is_refused_on_restore`;
+    `tests/test_phase2_review_regressions.py::test_a_restored_fresh_participant_refuses_to_continue_on_another_build`).
+    If cross-object resume (recovery in a new process) is required, it needs a designed, persistent issue record --
+    not a relaxation of the seal.
+  - `providers/pybamm/forge_pybamm/coupling.py`: I-8 side kept; its seal scope already holds the full provider build
+    (id, version, digest, adapter, configuration), which subsumes P2-BR10's build tag.
+  - DV-100 records the tests that must run for this resolution.
 
 ### Preserved, not integrated (all pushed to `origin`)
 
@@ -153,6 +180,7 @@ mutant N60d of the certified V4 population is stale after P1-BR5 (DV-41, needs O
 | DV-65..DV-86 | Phase 3 |
 | DV-87..DV-98 | Phase 3.5 (DV-93 real-provider bundle regeneration; DV-94..DV-97 blocked/not written; DV-98 structural guards and FAST/SCIENTIFIC diffed against a pristine baseline) |
 | DV-99 | CDAR fixtures: `pytest tests/architecture/test_cross_domain_fixtures.py -q` |
+| DV-100 | Integration conflict resolution (I-8 vs P2-BR10 checkpoint authority): see `DEFERRED_VALIDATION.md` |
 | OD-6 | `docs/work/OD6_MERGE_REVIEW.md`: `pytest tests/test_capability_completion.py benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py -q`; `python -m tools.capability_maturity` (the matrix was hand-edited); `python tools/forge_check.py --changed` |
 
 Certification impact: `tests/test_capability_completion.py` and many Phase 1..3.5 files are recertification triggers
@@ -168,7 +196,7 @@ Windows injects CRLF and breaks SHA-256 byte pins (write bytes).
 
 ## 7. Owner decisions open
 
-- Integrate the stack above into `main` (PR, merge commit) and record that it lands UNVERIFIED / UNCERTIFIED.
+- Confirm or revise the I-8 vs P2-BR10 checkpoint-authority resolution (section 1).
 - OD-3: recertify the resulting `main` HEAD.
 - OD-6: merge `feat/od6-engineering-program-epic`; accept CDAR as binding acceptance criteria of M1..E3.
 - OD-P2-1, OD-P2-2, OD-P2-4, OD-P2-5 (OD-P2-3 closed by WS1); OD-P3-1..OD-P3-7; OD-P35-1 (EXC-1 amendments;
@@ -177,16 +205,15 @@ Windows injects CRLF and breaks SHA-256 byte pins (write bytes).
 - Core compatibility review of A-1, A-2, A-3, A-4, A-7, A-9, A-13.
 - Routing of the preserved, unintegrated work listed in section 1 (battery Pass 1, rating fixes, review follow-ups,
   `engcore.mind` loop, electrical support-version gate).
-- Authorize the deferred validation campaign (DV-31..DV-99) and Phase 4.
+- Authorize the deferred validation campaign (DV-31..DV-100) and Phase 4.
 - Supply the roadmap for Phases 4..8 / BR18..BR32.
 
 ## 8. Next priorities for Codex
 
-1. With the owner's approval, open one integration PR in the order of section 1 (or land each branch as its own PR),
-   merge commits only, marked UNVERIFIED / UNCERTIFIED. Resolve `docs/work/PROGRESS.md` conflicts by keeping both
-   sides; inspect every source conflict by hand.
-2. When the owner authorizes validation: run DV-99 and the DV-31..DV-98 recipes, cheapest first, recording exact
-   commands and failures in `docs/work/PROGRESS.md`; diff FAST/SCIENTIFIC against a pristine baseline.
+1. When the owner authorizes validation: run DV-100 (the integration's checkpoint-authority tests) and DV-99 first,
+   then the DV-31..DV-98 recipes, cheapest first, recording exact commands and failures in `docs/work/PROGRESS.md`;
+   diff FAST/SCIENTIFIC against a pristine baseline. Expect failures: nothing in this stack has executed as a test.
+2. Route the preserved, unintegrated work of section 1 (each piece needs rebasing onto the new `main` and a review).
 3. Then OD-3 recertification of main HEAD.
 4. Program work under OD-6 (after merge): M1 (declared-kind 1D adaptation and state transfer), then M2 / E1 / E2 / E3,
    each built physics-agnostic per CDAR; take the Core gaps through review before deciding M2 / E2.

@@ -5824,3 +5824,31 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
 - Found while writing the fixtures on `test/cdar-architectural-fixtures` (`D:/forge-cdar`, `2e8434b7`); pinned there by
   `test_gap_a_force_edge_must_speak_in_energy_terms`. Fixture next-step bullet updated; `OD6_MERGE_REVIEW.md` gap range.
 - Docs only. Verification: `git diff --check` only; no test was run.
+
+### 2026-10-18 -- Codex handoff: preservation and integration into main (owner direction)
+
+- Inventory: 111 local branches, 77 worktrees, 2 stashes in the Windows repo; WSL clones under `~/forge-*`. Only the
+  work below existed outside GitHub; all of it is now pushed (a final `git rev-list <branch> --not --remotes=origin`
+  over every local branch returned nothing).
+- Pushed: the Phase 1 / 2 / 3 / 3.5 branches, `test/cdar-architectural-fixtures`, `feat/od6-engineering-program-epic`,
+  `feat/battery-real-data-identifiability` (`7e923e75`, fetched from the WSL clone), `fix/final-assurance-blockers`,
+  `evidence-v11`, `fix-bisect-table`, two September battery branches, `codex/multidomain-science-hardening`
+  (fast-forward), `preserve/ci-local-only-assurance-local-2026-10-06` (diverged local branch), six
+  `preserve/wip-*` snapshots of uncommitted worktree work (temporary index; worktrees untouched; UNREVIEWED, NOT RUN),
+  four `preserve/stash-*` refs, `handoff/codex-2026-10-18`. Secret scan of every pushed range (file names and
+  token/key patterns): none. Excluded: regenerated benchmark JSON in `forge-g0-main`, pytest temp directories.
+- Integration branch `integration/codex-handoff-2026-10-18` from `origin/main` `de11dffa`: merges I-8 (`b35445ad`),
+  Phase 1 (`0ae939f7`), Phase 2 (`0356dbdf`), Phase 3 (`29d37bf3`), Phase 3.5 (`2e800f6e`), CDAR (`a2a5123f`), OD-6
+  (`0ae96d3e`), handoff page (`c4f3453e`). Conflicts and their resolutions: `docs/work/CODEX_HANDOFF.md` section 1.
+  The I-8 vs P2-BR10 checkpoint-authority resolution makes cross-object restore a refusal and rewrites three Phase 2
+  tests to that rule; it is a scientific-design decision for owner review (DV-100).
+- Not integrated (preserved on GitHub): battery Practical Pass 1, the `preserve/wip-*` snapshots, stale September
+  branches, `fix/final-assurance-blockers` (superseded), open PRs #107 / #39 / #24 (OD-11).
+- The CDAR fixture docstring now cites audit gap A-13 (scalar edges, not field-only) (`ff66daef`).
+- Verification: `py_compile` of the resolved files, `git diff --check`, conflict-marker scans and merge previews only.
+  No pytest, tier, mutation, benchmark or certification ran: everything integrated is UNVERIFIED / UNCERTIFIED.
+
+### Failed approaches (do not repeat)
+
+- Fetching from a WSL *worktree* over `\\wsl.localhost`: its `.git` file names a Linux path; fetch from the clone's
+  common git dir instead (`git rev-parse --git-common-dir`).
