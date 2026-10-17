@@ -12,7 +12,7 @@ never evidence for electrical, mechanical or chemical capability.  Participants 
 
 Each fixture has two kinds of test:
 * an expectation of what the generic structure already does, derived by hand in the comments (closed form);
-* a GAP PIN (``test_gap_...``) that asserts the gap as it stands today, citing the audit row (gaps A-1..A-12 of
+* a GAP PIN (``test_gap_...``) that asserts the gap as it stands today, citing the audit row (gaps A-1..A-13 of
   docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md, which lands with the OD-6 branch).  It goes red the day the gap is
   closed, and must then be rewritten as the requirement's own test.  Gap pins are ordinary tests, not ``xfail``: an
   xfail is reported as a skip of type ``pytest.xfail``, which hardened recertification refuses as an UNEXPECTED_SKIP
@@ -241,8 +241,9 @@ def test_spring_mass_force_and_displacement_move_with_the_exact_discrete_invaria
 
 
 def test_gap_a_force_edge_must_speak_in_energy_terms():
-    """Design finding (CDAR-1 / CDAR-2; the audit names the energy-density rule for FIELD edges only): an undeclared
-    scalar force edge is refused as "a density of energy or power" crossing silently.  This is deliberate -- the rule
+    """Design finding, audit gap A-13 (CDAR-1 / CDAR-2): the energy-density rule applies to SCALAR edges too, not only
+    to field edges -- graph.py builds a QuantityDependency for every scalar edge -- so an undeclared scalar force edge
+    is refused as "a density of energy or power" crossing silently.  This is deliberate -- the rule
     refuses silence, not mechanics, and its message names the force case -- but because a dimension cannot tell a
     force from an energy per length, every mechanical edge must answer it in free prose rather than a declared role."""
     spring, mass = _spring_mass_specs()
