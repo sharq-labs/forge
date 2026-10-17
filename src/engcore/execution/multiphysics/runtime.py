@@ -1224,12 +1224,26 @@ class MultiphysicsRuntime:
                     external_uncertainty,
                     transfers,
                 )
+                # The aligned re-run is labelled EVENT_ALIGNED only if it
+                # COMPLETED.  A re-run that ended at its iteration limit (the
+                # plan allows that without failing) keeps that outcome: the
+                # event explains where the window ends, never whether it
+                # converged.
+                aligned_completed = aligned.outcome in (
+                    WindowOutcome.CONVERGED,
+                    WindowOutcome.EXPLICIT_COMPLETED,
+                    WindowOutcome.EVENT_ALIGNED,
+                )
                 return (
                     CouplingWindowRecord(
                         index=aligned.index,
                         start=aligned.start,
                         end=aligned.end,
-                        outcome=WindowOutcome.EVENT_ALIGNED,
+                        outcome=(
+                            WindowOutcome.EVENT_ALIGNED
+                            if aligned_completed
+                            else aligned.outcome
+                        ),
                         iterations=aligned.iterations,
                         event=aligned.event or outcome.event,
                     ),
