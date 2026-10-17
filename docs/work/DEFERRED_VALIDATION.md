@@ -228,3 +228,28 @@ certification-pinned file is UNCERTIFIED until OD-3.
   unquantified and stays so in the numerical-error accounting (P1-BR3).
 - The structured path assumes `axis_coordinates()` partitions are sorted and gap-free, which the record
   guarantees by construction.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-36 | P1-BR3 error semantics | New tests + the three rewritten `_mapping_sources` tests and one new identity test in the ERT V1 BR3 file | `pytest tests/test_phase1_numerical_error_semantics.py tests/test_multiphysics_numerical_error_accounting.py tests/claims/test_coupling_numerical_condition.py -q` | NOT RUN |
+| DV-37 | P1-BR3 | Every run digest changes (`_coupling_error` payload and `coupling_error_bound=None`); any test pinning a run digest or the old budget shape moves | FAST tier diffed against a pristine baseline | NOT RUN |
+
+### Semantics after P1-BR3
+
+| Evidence | Status | Summed into a bound? | Closes a source? |
+| --- | --- | --- | --- |
+| Mapping round-trip residual | DIAGNOSTIC | never | never |
+| Mapping conservation residual | DIAGNOSTIC | never | never |
+| Forward error of a non-identity field mapping | UNQUANTIFIED | -- | -- (vetoes the claims NUMERICAL channel) |
+| Identity mapping on one support | no source (exact) | -- | -- |
+| Fixed-point contraction estimate | ESTIMATED (unchanged) | never | never |
+| Explicit splitting without an estimate | UNQUANTIFIED (unchanged) | -- | -- |
+| Window not completed | UNBOUNDED (unchanged) | -- | -- |
+| Mathematical bound | QUANTIFIED -- nothing in the coupling runtime produces one today | yes | yes, if exactly zero |
+
+### Unverified assumptions (P1-BR3)
+
+- `MultiphysicsRunRecord.coupling_error_bound` stays in the schema for reading old records; the runtime writes
+  None. A stored non-None value is not re-interpreted anywhere; nothing in `src/` reads the field.
+- The claims condition's behaviour on a real field-mapped coupled run is unexercised (no claims capability
+  produces a multiphysics run record yet); the new tests patch the assessment.

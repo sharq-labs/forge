@@ -2172,7 +2172,9 @@ class MultiphysicsRuntime:
             initial_coupling=initial_records,
             windows=tuple(windows),
             final_outputs=final_outputs,
-            coupling_error_bound=error_budget.relative_bound,
+            # Phase 1 BR3: no mathematically justified coupling error bound is
+            # computed; the mapping diagnostics are not one (see error.py)
+            coupling_error_bound=None,
             initial_state_receipts=initial_state_receipts,
             scheduled_events=scheduled_records,
             reached_scheduled_events=tuple(reached_records),
