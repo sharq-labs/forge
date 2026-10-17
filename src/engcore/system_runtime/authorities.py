@@ -149,6 +149,34 @@ class MultiphysicsAuthority(_Base):
                 raise InvalidScientificProblem(f"system state has no owner {owner_id!r} for participant {participant!r}") from None
         return out
 
+    @staticmethod
+    def _untraced_external_providers(runtime: Any, records: tuple[ProviderRecordRef, ...]) -> str:
+        """Why an external provider inside the coupled run is untraceable, or ''.
+
+        The executor already refuses a node that names provider bindings but
+        reports no execution.  A coupled node can run external providers
+        through ``ExternalSolverParticipant``s without naming any; then every
+        admitted provider identity must appear among the reported provider
+        records, or the node fails.  Nothing is derived here: an unreported
+        provider is refused, never reconstructed.
+        """
+        from ..execution.multiphysics.external import ExternalSolverParticipant
+
+        participants = getattr(runtime, "participants", None) or {}
+        external = sorted(
+            (pid, p.provider_identity) for pid, p in dict(participants).items()
+            if isinstance(p, ExternalSolverParticipant)
+        )
+        if not external:
+            return ""
+        reported = {(r.provider_id, r.provider_version) for r in records}
+        missing = [f"{pid} ({ident.provider_id}@{ident.provider_version})" for pid, ident in external
+                   if (ident.provider_id, ident.provider_version) not in reported]
+        if missing:
+            return (f"external provider participant(s) {missing} ran without a reported provider execution; "
+                    f"an unreported provider is untraceable")
+        return ""
+
     def execute(self, call: NodeCall) -> NodeOutcome:
         kwargs = dict(self._kwargs(call))
         runtime = self._factory(call) if self._factory is not None else self.runtime
@@ -176,6 +204,10 @@ class MultiphysicsAuthority(_Base):
         elif self._declares_conservation or self._factory is not None:
             # a built runtime must prove which graph and plan it ran; a declared balance must be checkable
             return NodeOutcome.failed("the runtime returned no run record to check its graph, plan and conservation on")
+        provider_records = () if self._providers is None else tuple(self._providers(run))
+        untraced = self._untraced_external_providers(runtime, provider_records)
+        if untraced:
+            return NodeOutcome.failed(untraced)
         outputs: dict[str, OutputValue] = {}
         for name, (participant, variable) in self._state_outputs.items():
             last = [t for t in run.state_transitions if t.participant_id == participant]
@@ -214,7 +246,7 @@ class MultiphysicsAuthority(_Base):
             proposal = StateProposal(run.ended_at, tuple(updates))
         return NodeOutcome(
             "succeeded", outputs, applicability=() if self._applicability is None else self._applicability(run, call), state_proposal=proposal,
-            provider_records=() if self._providers is None else self._providers(run), delegated_record_digest=digest_of(run.to_dict()),
+            provider_records=provider_records, delegated_record_digest=digest_of(run.to_dict()),
             artifacts=() if self._artifacts is None else self._artifacts(run, call),
             resource_usage=ResourceUsage(wall_seconds=wall), diagnostics={"windows": str(len(run.windows)),
                                                                         "iterations": str(sum(len(w.iterations) for w in run.windows))})
