@@ -136,6 +136,16 @@ def _state_list(values: Mapping[str, Mapping[str, StateVariableValue]]) -> list[
     return [{"participant_id": pid, "value": values[pid][k].to_dict()} for pid in sorted(values) for k in sorted(values[pid])]
 
 
+class FastExecutionNotConverged(InvalidScientificProblem):
+    """A fast execution failed NUMERICALLY (its solve did not converge) -- not a refusal.
+
+    The only fast failure a macro-step policy with ``retry_fast_nonconvergence``
+    may answer with a shorter macro window.  Raise it only for numerical
+    non-convergence; anything that would be wrong at every window length
+    (units, applicability, missing inputs) must stay a plain refusal.
+    """
+
+
 @dataclass(frozen=True)
 class FastExecutionRequest:
     """Exact identity of one fast execution (the cache key for exact reuse).

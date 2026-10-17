@@ -1,5 +1,42 @@
 # Active Plan
 
+## Active override — Engineering Runtime V1 Big Rocks, build phase (2026-10-17)
+
+Branch `feat/engrt-v1-big-rocks` (worktree `D:/forge-engrt-br`), stacked on `fix/engrt-v1-phase1-interop`. Local
+commits only. **Build phase:** tests are written, not run, until the owner authorizes stabilization; see
+[DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md). Big Rocks are runtime engineering by owner decision (no new
+ledger capability).
+
+- [x] BR1 adaptive coupling-window control (`af7ea219`), tests NOT RUN.
+- [x] BR2 joint IQN-ILS coupling acceleration, Jacobi only (`35d8f557`), tests NOT RUN.
+- [x] BR3 coupling numerical-error accounting derived from run records, tests NOT RUN.
+- [x] BR4 opt-in splitting-error estimate by window refinement, tests NOT RUN.
+- [x] BR5 opt-in concurrent participant advance in Jacobi iterations, tests NOT RUN.
+- [x] BR6 coupling numerical error conditions the claims NUMERICAL channel (review fixes applied), tests NOT RUN.
+- [ ] Owner, OPEN (2026-10-17: keep opt-in for now): mandatory conditioning of coupled claims (incl. electrothermal
+      CouplingEvidence), capability-declared ladder coverage, and a digest link from study to coupled run (review F4, R2).
+- [x] BR7 nonlinear robustness: declared method chain and parameter continuation (numerical/robust.py), tests NOT RUN.
+- [x] BR8 opt-in hybr->lm root-method chain for the heater KVL, tests NOT RUN.
+- [x] Owner decision (2026-10-17): tests/multiscale_reference.py stays on root_method="lm" (evidence identical); the chain stays opt-in.
+- [x] BR9 multiscale: opt-in macro-window rejection on fast non-convergence, tests NOT RUN.
+- [x] BR10 composition-pack templates declare window control (carried into plans), tests NOT RUN.
+- [x] BR11 step-size memory for adaptive coupling windows, tests NOT RUN.
+- [x] BR12 defect fix: event-aligned windows keep their own failure outcome, tests NOT RUN.
+- [ ] Owner: MultiphysicsAuthority provider reporting for external participants (D5) and its rejection of explicit_completed/event_aligned windows.
+- [x] BR13 mapping extrapolation / unverified mappings are open coupling-error sources, tests NOT RUN.
+- [ ] Owner: the coupling error budget calls a round-trip L2 residual a relative_bound (it is not a bound on the forward transfer).
+- [x] BR14 defect fix: coupled nodes may not run unreported external providers, tests NOT RUN.
+- [x] BR15 fallback solver routes start at their own refinement level (F-5), tests NOT RUN.
+- [x] BR16 QR filtering of near-dependent IQN-ILS secant pairs, tests NOT RUN.
+- [x] BR17 stagnation detection for implicit coupling windows, tests NOT RUN.
+- [x] BR18 opt-in under-relaxation of the electrothermal fixed point, tests NOT RUN.
+- [x] BR19 adaptive resolution (mesh control slice 1) under EXC-1, tests NOT RUN (DV-27 is the EXC-1 exit gate).
+- [x] BR20 1D local mesh adaptation kernel (mesh control slice 2) under EXC-1 A1, tests NOT RUN (DV-28).
+- [x] BR21 non-uniform steady 1D conduction solver driven by adapt_grid (mesh control slice 3) under EXC-1 A2, tests NOT RUN (DV-29).
+- [x] BR22 non-uniform path declared as model + realization (mesh control slice 4) under EXC-1 A3, tests NOT RUN (DV-30); test_core_guards.py UNCERTIFIED.
+- [ ] Owner: wiring adaptive resolution into uq_studies (changes which run carries a claim's evidence); a claims-layer CapabilityDeclaration for the steady path; sourced validity conditions; a transient non-uniform solver.
+- [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
+
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)
 
 Branch `fix/engrt-v1-phase1-interop` (worktree `D:/forge-engrt-p1`), base `origin/main` `de7527fd`, committed
@@ -309,8 +346,92 @@ therapeutic work.
 
 ## Active-epic exceptions (open)
 
-None. An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start,
-exit, expiry, owner approval, prohibitions).
+An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
+expiry, owner approval, prohibitions).
+
+### EXC-1 -- adaptive mesh control, slice 1: adaptive resolution (Engineering Runtime V1 BR19)
+
+1. **Exact scope:** a new module `src/engcore/claims/adaptive_resolution.py` and its tests, on branch
+   `feat/engrt-v1-big-rocks`. It may import `claims/numerical_uq.py` (the canonical GCI estimator) but may not modify
+   it.
+2. **Allowed capability work:** an adaptive uniform-refinement driver. It solves at successively finer resolutions
+   (counts x ratio^k) and stops when the canonical GCI half-width meets a declared target, or when a declared level
+   budget is exhausted. The result is the finest run's value with its quantified NUMERICAL uncertainty (or UNKNOWN),
+   recorded per level.
+3. **Reason:** owner-directed Engineering Runtime V1 program (adaptive numerical execution and mesh control). The
+   owner approved this exception on 2026-10-17 rather than waiting for the battery epic.
+4. **Start condition:** owner approval in chat, 2026-10-17; build-phase rules apply (no test execution until
+   authorized).
+5. **Exit condition:** the slice is built; its deferred tests (DV-27) are executed and pass, or every failure is
+   recorded; and a scientific review finds no false-support issue. Or the owner closes the exception.
+6. **Expiry / timebox:** 2026-10-31. **Proposed by Claude, not set by the owner**; the owner may amend it.
+7. **Owner approval:** the repository owner, in the Claude Code session, 2026-10-17 ("Approve an active-epic exception
+   for adaptive mesh control as a new capability foundation").
+8. **Still prohibited:**
+   - local AMR, new mesh or field record types, or solver changes (a later slice needs its own scope);
+   - changes to any capability declaration, the ledger (`scientific_capability_completion.json`) or maturity stages;
+   - treating a met accuracy target as validation, or as a stage promotion;
+   - any change to the battery 1RC epic or its pins;
+   - a second concurrent exception, which would trigger the anti-loophole owner review.
+
+**EXC-1 amendment A1 (2026-10-17): slice 2.** The owner approved it in the session ("Continue EXC-1: build
+mesh-control slice 2"). It is the same exception, not a second one.
+- **Scope added:** a new module `src/engcore/numerical/mesh_adaptation.py` and its tests.
+- **Allowed work added:**
+  - a non-uniform 1D grid record local to that module;
+  - piecewise-linear a-posteriori error indicators;
+  - Doerfler marking, bisection with gradation control, and an adaptation loop around a caller-supplied evaluator.
+  - These are pure numerics: estimates labelled as estimates, no authority.
+- **Still prohibited:**
+  - changes to any domain solver (the uniform-grid `conduction1d` is untouched);
+  - changes to Core mesh or field records (`scientific/fields`), capability declarations or the ledger;
+  - wiring adaptive resolution into `uq_studies`. That would make a finer run than the claim's reported run carry
+    its evidence, which is an owner decision.
+  - Everything else in item 8 above.
+- **Exit and expiry:** unchanged. DV-27 and the new DV-28 must run, and the scientific review must cover both slices.
+
+**EXC-1 amendment A2 (2026-10-17): slice 3.** The owner approved it in the session ("Amend EXC-1 for slice 3: a
+non-uniform finite-difference 1D conduction solver that adapt_grid can drive (new solver path, existing uniform
+conduction1d untouched)").
+- **Scope added:** a new module `src/engcore/domains/thermal_models/conduction1d_nonuniform.py` and its tests. It is
+  imported by its own path; the pinned `thermal_models/__init__.py` is not touched.
+- **Allowed work added:**
+  - a STEADY 1D conduction solver, -(k u')' = q, on a non-uniform `Grid1D`;
+  - vertex-centred finite volumes, conductivity k(x) evaluated at faces, source q(x);
+  - explicit boundary conditions at both ends (temperature or heat flux), never defaulted;
+  - an evaluator `grid -> nodal temperatures` that `adapt_grid` drives.
+- **Still prohibited:**
+  - any change to `conduction1d`, `conduction1d_schemes` or any pinned file;
+  - registering a model, capability or `ValidationCheck` (evidentiary audit and exact-count guards);
+  - a transient solver; claims or `uq_studies` wiring;
+  - everything in item 8 and A1.
+- **Exit and expiry:** unchanged, plus DV-29 for this slice.
+
+**EXC-1 amendment A3 (2026-10-17): slice 4.** The owner approved it in the session ("Amend EXC-1 for slice 4:
+declare the non-uniform conduction path as a capability/realization").
+- **Scope added:**
+  - in `domains/thermal_models/conduction1d_nonuniform.py`, the scientific-layer declaration of the BR21 path:
+    - one `ScientificModelDefinition` for steady 1D conduction with position-dependent k and q;
+    - a domain `ScientificCapability` and a domain `SolverCapability`;
+    - one `ModelRealizationDefinition`;
+    - fresh local model and realization registries (no global singleton), the pattern of `lumped.py` and
+      `conduction1d_schemes.py`;
+  - the exact count `EXPECTED_MODELS` 18 -> 19 in `tests/test_core_guards.py`.
+- **Certification consequence:** `tests/test_core_guards.py` is certification-pinned, so this edit makes it
+  UNCERTIFIED until OD-3. The count is updated deliberately, as its comment requires, not to silence a failure.
+- **Allowed work added:**
+  - The model declares NO validity conditions, so its applicability is UNKNOWN by construction. Absence of declared
+    limits is not applicability. This also leaves `EXPECTED_CONDITION_NAMES` and `EXPECTED_RESERVED_NAMES`
+    unchanged.
+  - Its validation status stays UNVALIDATED.
+  - The solution record names the realization it came from.
+- **Still prohibited:**
+  - a claims-layer `CapabilityDeclaration` or any `CapabilityRegistry` / planning production-registry entry, so the
+    path stays unreachable from claims, SRIA and MCP;
+  - `ValidationCheck`, `ScientificSolver` or `ScientificResult` construction;
+  - validity conditions or thresholds (each needs a sourced bound and moves pinned counts);
+  - everything in item 8, A1 and A2.
+- **Exit and expiry:** unchanged, plus DV-30 for this slice.
 
 ## Stop conditions
 

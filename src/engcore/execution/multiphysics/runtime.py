@@ -20,12 +20,14 @@ from ...scientific.multiphysics import (
     InitialCouplingRecord,
     InitialStateReceipt,
     InitialStateValue,
+    IterationSemantics,
     MultiphysicsRunRecord,
     ParticipantStepRecord,
     PhysicsGraph,
     PortDirection,
     PortRef,
     ReachedScheduledEvent,
+    RelaxationKind,
     ScheduledEventRecord,
     TransferMeasure,
     WindowOutcome,
@@ -49,6 +51,7 @@ from ...scenarios import (
     TerminationCondition,
 )
 from .convergence import ResidualCalculator
+from .concurrency import ConcurrentAdvancePolicy, advance_in_plan_order, validate_policy
 from .error import CouplingErrorBudget
 from .factory import ParticipantFactoryRegistry
 from .participant import (
@@ -80,6 +83,15 @@ class MultiphysicsExecutionError(ScientificCoreError):
     """A coupled execution cannot continue without inventing state or science."""
 
 
+class CouplingWindowNotConverged(MultiphysicsExecutionError):
+    """A window failed NUMERICALLY: iteration limit, divergence, or a participant's internal solve.
+
+    The only failure a :class:`WindowControlPolicy` may retry over a shorter
+    window.  Refusals (units, missing inputs, provenance, admission) are never
+    of this type, so they are never retried.
+    """
+
+
 @dataclass(frozen=True)
 class _IterationOutcome:
     edge_values: Mapping[str, CouplingValue]
@@ -102,6 +114,7 @@ class MultiphysicsRuntime:
         resolver: BulkDataResolver,
         store: BulkDataStore,
         diagnostic_balances: Iterable[str] = (),
+        concurrency: ConcurrentAdvancePolicy | None = None,
     ) -> "MultiphysicsRuntime":
         """Materialize exact graph participants and construct the runtime."""
         if not isinstance(registry, ParticipantFactoryRegistry):
@@ -120,6 +133,7 @@ class MultiphysicsRuntime:
                 resolver=resolver,
                 store=store,
                 diagnostic_balances=diagnostic_balances,
+                concurrency=concurrency,
             )
         except Exception:
             for participant_id in sorted(participants, reverse=True):
@@ -282,8 +296,16 @@ class MultiphysicsRuntime:
         resolver: BulkDataResolver,
         store: BulkDataStore,
         diagnostic_balances: Iterable[str] = (),
+        concurrency: ConcurrentAdvancePolicy | None = None,
     ) -> None:
         plan.validate_against(graph)
+        # opt-in, declared per participant; validated before anything is allocated
+        validate_policy(
+            concurrency,
+            participant_ids={p.participant_id: p for p in graph.participants},
+            jacobi=plan.iteration_semantics is IterationSemantics.JACOBI,
+        )
+        self.concurrency = concurrency
         # F5: every declared balance is REQUIRED unless the model that declared it names it DIAGNOSTIC here.
         # A name that is not a declared balance is refused: a typo must not quietly demote nothing.
         declared = {item.balance_id for item in graph.conservation}
@@ -294,6 +316,7 @@ class MultiphysicsRuntime:
         self.diagnostic_balances = diagnostic
         self.graph = graph
         self.plan = plan
+        self._window_control_log: list[dict[str, Any]] = []
         self.participants = dict(participants)
         self.resolver = resolver
         self.store = store
@@ -567,7 +590,7 @@ class MultiphysicsRuntime:
                 f"participant {participant_id!r} advanced beyond synchronization time"
             )
         if not result.internal_converged:
-            raise MultiphysicsExecutionError(
+            raise CouplingWindowNotConverged(
                 f"participant {participant_id!r} did not converge internally"
             )
         if actual < requested - tolerance:
@@ -696,7 +719,7 @@ class MultiphysicsRuntime:
                     value,
                     unit=target_port.unit,
                 )
-                uncertainty = relax_uncertainty(
+                uncertainty = self.relaxation.propagate_uncertainty(
                     previous_uncertainty[edge.edge_id],
                     uncertainty,
                     factor=factor,
@@ -773,21 +796,32 @@ class MultiphysicsRuntime:
             frozen_edges = dict(current_edges)
             frozen_uncertainty = dict(current_edge_uncertainty)
 
-            for participant_id in order:
-                inputs, input_uncertainty = self._inputs_for(
+            prepared = {
+                participant_id: self._inputs_for(
                     participant_id,
                     frozen_edges,
                     frozen_uncertainty,
                     external,
                     external_uncertainty,
                 )
-                result = self._advance_one(
+                for participant_id in order
+            }
+            # every Jacobi participant reads the frozen iterate: declared
+            # participants may advance concurrently; results apply in plan order
+            advanced = advance_in_plan_order(
+                order,
+                frozenset(self.concurrency.participants) if self.concurrency else frozenset(),
+                self.concurrency.max_workers if self.concurrency else 1,
+                lambda participant_id: self._advance_one(
                     participant_id,
                     start,
                     end,
-                    inputs,
-                    input_uncertainty,
-                )
+                    prepared[participant_id][0],
+                    prepared[participant_id][1],
+                ),
+            )
+            for participant_id in order:
+                result = advanced[participant_id]
                 results[participant_id] = result
                 current_outputs[participant_id] = dict(result.outputs)
                 current_output_uncertainty[participant_id] = dict(
@@ -819,12 +853,41 @@ class MultiphysicsRuntime:
                 raw_uncertainty.update(uncertainty)
                 raw_transfers.update(transfers)
 
+            joint: dict[str, CouplingValue] = {}
+            if implicit and self.plan.relaxation.kind is RelaxationKind.IQN_ILS:
+                joint = self.relaxation.relax_joint({
+                    edge.edge_id: (
+                        edge_values[edge.edge_id],
+                        raw_values[edge.edge_id],
+                        self.graph.participant(edge.target.participant_id)
+                        .port(edge.target.port_id).unit,
+                    )
+                    for edge in self.graph.edges
+                })
             for edge in self.graph.edges:
                 value = raw_values[edge.edge_id]
                 uncertainty = raw_uncertainty[edge.edge_id]
                 transfer = raw_transfers[edge.edge_id]
                 unrelaxed[edge.edge_id] = value
-                if implicit:
+                if implicit and joint:
+                    value = joint[edge.edge_id]
+                    uncertainty = self.relaxation.propagate_uncertainty(
+                        edge_uncertainty[edge.edge_id],
+                        uncertainty,
+                        factor=None,
+                        unit=self.graph.participant(edge.target.participant_id)
+                        .port(edge.target.port_id).unit,
+                        edge_id=edge.edge_id,
+                    )
+                    transfer = TransferResult(
+                        transfer.edge_id,
+                        value,
+                        transfer.source_value,
+                        transfer.losses,
+                        uncertainty,
+                        transfer.mapping,
+                    )
+                elif implicit:
                     target_port = self.graph.participant(
                         edge.target.participant_id
                     ).port(edge.target.port_id)
@@ -834,7 +897,7 @@ class MultiphysicsRuntime:
                         value,
                         unit=target_port.unit,
                     )
-                    uncertainty = relax_uncertainty(
+                    uncertainty = self.relaxation.propagate_uncertainty(
                         edge_uncertainty[edge.edge_id],
                         uncertainty,
                         factor=factor,
@@ -1113,6 +1176,18 @@ class MultiphysicsRuntime:
                 checkpoints,
             )
             iterations.append(outcome.record)
+            diverging = self._diverging_edge(iterations)
+            if diverging:
+                raise CouplingWindowNotConverged(
+                    f"coupling window {index} [{start}, {end}] is diverging: "
+                    f"{diverging}"
+                )
+            stagnating = self._stagnating(iterations)
+            if stagnating:
+                raise CouplingWindowNotConverged(
+                    f"coupling window {index} [{start}, {end}] is stagnating: "
+                    f"{stagnating}"
+                )
 
             if outcome.event is not None and self.plan.time.align_events:
                 event_time = Quantity.from_dict(outcome.event["instant"])
@@ -1155,12 +1230,26 @@ class MultiphysicsRuntime:
                     external_uncertainty,
                     transfers,
                 )
+                # The aligned re-run is labelled EVENT_ALIGNED only if it
+                # COMPLETED.  A re-run that ended at its iteration limit (the
+                # plan allows that without failing) keeps that outcome: the
+                # event explains where the window ends, never whether it
+                # converged.
+                aligned_completed = aligned.outcome in (
+                    WindowOutcome.CONVERGED,
+                    WindowOutcome.EXPLICIT_COMPLETED,
+                    WindowOutcome.EVENT_ALIGNED,
+                )
                 return (
                     CouplingWindowRecord(
                         index=aligned.index,
                         start=aligned.start,
                         end=aligned.end,
-                        outcome=WindowOutcome.EVENT_ALIGNED,
+                        outcome=(
+                            WindowOutcome.EVENT_ALIGNED
+                            if aligned_completed
+                            else aligned.outcome
+                        ),
                         iterations=aligned.iterations,
                         event=aligned.event or outcome.event,
                     ),
@@ -1223,7 +1312,7 @@ class MultiphysicsRuntime:
             tuple(iterations),
         )
         if self.plan.fail_on_nonconvergence:
-            raise MultiphysicsExecutionError(
+            raise CouplingWindowNotConverged(
                 f"coupling window {index} [{start}, {end}] reached "
                 f"{self.plan.max_iterations} iterations without convergence"
             )
@@ -1235,6 +1324,178 @@ class MultiphysicsRuntime:
             current_output_uncertainty,
             current_transfers,
         )
+
+    def _diverging_edge(
+        self, iterations: list[CouplingIterationRecord]
+    ) -> str:
+        """Name an edge whose residual grew past the declared divergence factor, or ''."""
+        control = self.plan.window_control
+        if (
+            control is None
+            or control.divergence_factor is None
+            or self.plan.scheme is not CouplingScheme.IMPLICIT
+            or len(iterations) < 2
+        ):
+            return ""
+        first = {item.edge_id: item.absolute for item in iterations[0].residuals}
+        for item in iterations[-1].residuals:
+            reference = first.get(item.edge_id)
+            if reference is None:
+                continue
+            base = reference.magnitude_in(str(item.absolute.units))
+            if base <= 0.0:
+                continue
+            ratio = item.absolute.magnitude / base
+            if ratio > control.divergence_factor:
+                return (
+                    f"edge {item.edge_id!r} residual grew {ratio:.3g}x over "
+                    f"{len(iterations)} iterations (declared limit "
+                    f"{control.divergence_factor:g}x)"
+                )
+        return ""
+
+    def _next_window_width(
+        self, window: CouplingWindowRecord, width: float, nominal: float
+    ) -> float:
+        """Step-size memory: restart from the width a subdivided window was accepted at, then grow back.
+
+        Only a SUBDIVISION shortens the remembered width; a window cut short by
+        an event or an input change is not a numerical signal and leaves it.
+        """
+        control = self.plan.window_control
+        assert control is not None and control.growth_factor is not None
+        subdivided = any(
+            event["window_index"] == window.index
+            and event["action"] in ("accepted_after_subdivision", "exhausted")
+            for event in self._window_control_log
+        )
+        accepted = self._seconds(window.end) - self._seconds(window.start)
+        new = accepted if subdivided else min(nominal, width * control.growth_factor)
+        if new != width:
+            self._window_control_log.append({
+                "window_index": window.index,
+                "action": "width_changed",
+                "from_s": width,
+                "to_s": new,
+                "reason": "accepted after subdivision" if subdivided else f"grown by {control.growth_factor:g}",
+            })
+        return new
+
+    def _stagnating(self, iterations: list[CouplingIterationRecord]) -> str:
+        """Why an implicit window stopped improving, or '' (only with stagnation_iterations).
+
+        Progress is the largest edge residual normalized by that edge's
+        first-iteration residual.  Stagnation: none of the last ``n`` values
+        improves on the best value seen before them.
+        """
+        control = self.plan.window_control
+        if (
+            control is None
+            or control.stagnation_iterations is None
+            or self.plan.scheme is not CouplingScheme.IMPLICIT
+        ):
+            return ""
+        n = control.stagnation_iterations
+        if len(iterations) <= n:
+            return ""
+        first = {item.edge_id: item.absolute for item in iterations[0].residuals}
+        progress: list[float] = []
+        for record in iterations:
+            ratios = []
+            for item in record.residuals:
+                reference = first.get(item.edge_id)
+                if reference is None:
+                    continue
+                base = reference.magnitude_in(str(item.absolute.units))
+                if base > 0.0:
+                    ratios.append(item.absolute.magnitude / base)
+            if not ratios:
+                return ""
+            progress.append(max(ratios))
+        best_before = min(progress[:-n])
+        if min(progress[-n:]) >= best_before:
+            return (
+                f"the largest normalized edge residual has not improved on {best_before:.3g} "
+                f"for {n} consecutive iterations"
+            )
+        return ""
+
+    def _controlled_window(
+        self,
+        index: int,
+        start: Quantity,
+        end: Quantity,
+        *state: Any,
+    ) -> tuple[Any, ...]:
+        """One coupling window under the plan's optional WindowControlPolicy.
+
+        Without a policy this is exactly ``_window``.  With one, a window that
+        fails numerically (:class:`CouplingWindowNotConverged`, or an
+        ITERATION_LIMIT outcome) is rolled back to ``start`` and retried over
+        a shorter window.  The shorter window is held to the same criteria; a
+        window that still fails is reported exactly as without the policy.
+        Every rejected attempt is logged in ``_window_control``.
+        """
+        control = self.plan.window_control
+        if control is None:
+            return self._window(index, start, end, *state)
+        start_s = self._seconds(start)
+        minimum_s = self._seconds(control.minimum_window)
+        checkpoints = self._checkpoint_all(start)
+        attempt_end = end
+        subdivisions = 0
+        while True:
+            failure: CouplingWindowNotConverged | None = None
+            result: tuple[Any, ...] | None = None
+            try:
+                result = self._window(index, start, attempt_end, *state)
+            except CouplingWindowNotConverged as exc:
+                failure = exc
+            if result is not None and result[0].outcome is not WindowOutcome.ITERATION_LIMIT:
+                if subdivisions:
+                    self._window_control_log.append({
+                        "window_index": index,
+                        "action": "accepted_after_subdivision",
+                        "start_s": start_s,
+                        "end_s": self._seconds(result[0].end),
+                        "subdivisions": subdivisions,
+                    })
+                return result
+            reason = (
+                str(failure) if failure is not None
+                else f"iteration limit ({self.plan.max_iterations}) without convergence"
+            )
+            width = self._seconds(attempt_end) - start_s
+            next_width = width * control.reduction_factor
+            if (
+                subdivisions >= control.max_subdivisions
+                or next_width < minimum_s * (1.0 - 1e-12)
+            ):
+                self._window_control_log.append({
+                    "window_index": index,
+                    "action": "exhausted",
+                    "start_s": start_s,
+                    "attempted_end_s": self._seconds(attempt_end),
+                    "subdivisions": subdivisions,
+                    "reason": reason,
+                })
+                if failure is not None:
+                    raise CouplingWindowNotConverged(
+                        f"{failure} (after {subdivisions} window subdivision(s); "
+                        f"minimum window {control.minimum_window})"
+                    ) from failure
+                return result  # ITERATION_LIMIT, as the plan allows without failing
+            self._restore_all(checkpoints)
+            subdivisions += 1
+            self._window_control_log.append({
+                "window_index": index,
+                "action": "subdivided",
+                "start_s": start_s,
+                "attempted_end_s": self._seconds(attempt_end),
+                "retry_end_s": start_s + next_width,
+                "reason": reason,
+            })
+            attempt_end = Quantity(start_s + next_width, "second")
 
     # =================================================================
     # SCENARIO-DRIVEN EXECUTION
@@ -1483,6 +1744,7 @@ class MultiphysicsRuntime:
         run_id = str(run_id).strip()
         if not run_id:
             raise InvalidScientificProblem("multiphysics run requires run_id")
+        self._window_control_log: list[dict[str, Any]] = []
 
         requested_state = {} if initial_state is None else dict(initial_state)
         unknown_state_owners = set(requested_state) - set(self.participants)
@@ -1747,7 +2009,7 @@ class MultiphysicsRuntime:
                     outputs,
                     output_uq,
                     transfers,
-                ) = self._window(
+                ) = self._controlled_window(
                     index,
                     Quantity(current_time, "second"),
                     Quantity(target, "second"),
@@ -1785,6 +2047,8 @@ class MultiphysicsRuntime:
                     )
                 identities = after
                 current_time = new_time
+                if self.plan.window_control is not None and self.plan.window_control.growth_factor is not None:
+                    width = self._next_window_width(window, width, width_seconds)
                 index += 1
 
                 termination = self._evaluate_termination(
@@ -1833,6 +2097,14 @@ class MultiphysicsRuntime:
                 conservation_history, self.diagnostic_balances
             )
         final_outputs["_coupling_error"] = error_budget.to_dict()
+        if self.concurrency is not None:
+            final_outputs["_concurrency"] = self.concurrency.to_dict()
+        if self.plan.window_control is not None:
+            # rejected attempts are part of the numerical record, never hidden
+            final_outputs["_window_control"] = {
+                "policy": self.plan.window_control.to_dict(),
+                "events": list(self._window_control_log),
+            }
 
         ended_at = Quantity(current_time, "second")
         qoi_records = tuple(

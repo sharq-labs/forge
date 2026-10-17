@@ -27,6 +27,7 @@ TIME_POLICY_SCHEMA = schema_string("multiphysics_time_policy")
 CONVERGENCE_CRITERION_SCHEMA = schema_string("multiphysics_convergence_criterion")
 RELAXATION_POLICY_SCHEMA = schema_string("multiphysics_relaxation_policy")
 COUPLING_PLAN_SCHEMA = schema_string("multiphysics_coupling_plan")
+WINDOW_CONTROL_SCHEMA = schema_string("multiphysics_window_control")
 
 
 class CouplingScheme(str, Enum):
@@ -48,6 +49,11 @@ class RelaxationKind(str, Enum):
     NONE = "none"
     CONSTANT = "constant"
     AITKEN = "aitken"
+    #: Interface quasi-Newton with inverse least-squares Jacobian over the
+    #: joint interface vector of every edge (Jacobi coupling only; history
+    #: reset every window).  Its update is not a scalar mix of two iterates, so
+    #: no scalar factor is recorded and propagated uncertainty is UNKNOWN.
+    IQN_ILS = "iqn_ils"
 
 
 def _time(value: Quantity, *, label: str, allow_zero: bool = False) -> Quantity:
@@ -160,6 +166,13 @@ class RelaxationPolicy:
     factor: float = 1.0
     minimum_factor: float = 0.05
     maximum_factor: float = 1.0
+    #: IQN-ILS only: how many secant pairs (iterate differences) the
+    #: least-squares Jacobian keeps; 0 for every other kind.
+    iqn_columns: int = 0
+    #: IQN-ILS only: QR filter threshold.  A secant column whose component
+    #: orthogonal to the newer kept columns is below this fraction of its own
+    #: norm adds (almost) nothing and is dropped; recorded in the policy.
+    iqn_filter: float = 1e-10
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", RelaxationKind(self.kind))
@@ -181,6 +194,20 @@ class RelaxationPolicy:
             raise InvalidScientificProblem("relaxation factor must lie inside its bounds")
         if self.kind is RelaxationKind.NONE and factor != 1.0:
             raise InvalidScientificProblem("NONE relaxation has factor 1")
+        columns = self.iqn_columns
+        if isinstance(columns, bool) or not isinstance(columns, int) or columns < 0:
+            raise InvalidScientificProblem("iqn_columns must be a non-negative int")
+        if self.kind is RelaxationKind.IQN_ILS:
+            if not 1 <= columns <= 50:
+                raise InvalidScientificProblem("IQN-ILS requires iqn_columns in [1, 50]")
+        elif columns != 0:
+            raise InvalidScientificProblem("iqn_columns applies to IQN-ILS relaxation only")
+        qr_filter = float(self.iqn_filter)
+        if not math.isfinite(qr_filter) or not 0.0 <= qr_filter < 1.0:
+            raise InvalidScientificProblem("iqn_filter must lie in [0, 1)")
+        if self.kind is not RelaxationKind.IQN_ILS and qr_filter != 1e-10:
+            raise InvalidScientificProblem("iqn_filter applies to IQN-ILS relaxation only")
+        object.__setattr__(self, "iqn_filter", qr_filter)
         object.__setattr__(self, "factor", factor)
         object.__setattr__(self, "minimum_factor", minimum)
         object.__setattr__(self, "maximum_factor", maximum)
@@ -192,6 +219,12 @@ class RelaxationPolicy:
             "factor": self.factor,
             "minimum_factor": self.minimum_factor,
             "maximum_factor": self.maximum_factor,
+            # absent for every other kind: existing policies keep their fingerprints
+            **(
+                {"iqn_columns": self.iqn_columns, "iqn_filter": self.iqn_filter}
+                if self.kind is RelaxationKind.IQN_ILS
+                else {}
+            ),
         }
 
     @classmethod
@@ -202,6 +235,104 @@ class RelaxationPolicy:
             factor=payload.get("factor", 1.0),
             minimum_factor=payload.get("minimum_factor", 0.05),
             maximum_factor=payload.get("maximum_factor", 1.0),
+            iqn_columns=payload.get("iqn_columns", 0),
+            iqn_filter=payload.get("iqn_filter", 1e-10),
+        )
+
+
+@dataclass(frozen=True)
+class WindowControlPolicy:
+    """Bounded subdivision of a coupling window that did not converge.
+
+    When a window ends at its iteration limit, diverges, or a participant
+    reports that it did not converge internally, every participant is restored
+    to the window start and the window is retried over
+    ``reduction_factor`` times its previous width, at most
+    ``max_subdivisions`` times and never below ``minimum_window``.  A window
+    that still fails is reported exactly as it would be without this policy.
+
+    Nothing here changes what a converged window means: the same criteria are
+    applied to the shorter window, and every rejected attempt is recorded.
+    ``minimum_window`` has no default -- how short a window may become is a
+    numerical decision the plan states, not one the runtime makes.
+
+    ``divergence_factor`` (optional, > 1): an implicit window whose residual on
+    some edge grows past this multiple of its first-iteration residual is
+    rejected early as diverging instead of exhausting ``max_iterations``.
+
+    ``growth_factor`` (optional, in (1, 10]): step-size memory.  After a
+    subdivided window is accepted, the following windows start at the accepted
+    width and grow by this factor per accepted window, up to the nominal
+    coupling window.  Unset, every window starts again at the nominal width.
+    Events and input-change instants still cut windows exactly as before.
+
+    ``stagnation_iterations`` (optional, int in [2, 1000], implicit only): an
+    implicit window whose largest edge residual (normalized by its first
+    iteration) has not improved on its earlier best for this many consecutive
+    iterations is rejected early as stagnating, instead of spending
+    ``max_iterations``.
+    """
+
+    minimum_window: Quantity
+    reduction_factor: float = 0.5
+    max_subdivisions: int = 4
+    divergence_factor: float | None = None
+    growth_factor: float | None = None
+    stagnation_iterations: int | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "minimum_window", _time(self.minimum_window, label="minimum_window")
+        )
+        factor = float(self.reduction_factor)
+        if not math.isfinite(factor) or not 0.0 < factor < 1.0:
+            raise InvalidScientificProblem("window reduction_factor must lie in (0, 1)")
+        object.__setattr__(self, "reduction_factor", factor)
+        if (
+            isinstance(self.max_subdivisions, bool)
+            or not isinstance(self.max_subdivisions, int)
+            or not 1 <= self.max_subdivisions <= 64
+        ):
+            raise InvalidScientificProblem("max_subdivisions must be an int in [1, 64]")
+        if self.divergence_factor is not None:
+            divergence = float(self.divergence_factor)
+            if not math.isfinite(divergence) or divergence <= 1.0:
+                raise InvalidScientificProblem("divergence_factor must be finite and > 1")
+            object.__setattr__(self, "divergence_factor", divergence)
+        if self.stagnation_iterations is not None and (
+            isinstance(self.stagnation_iterations, bool)
+            or not isinstance(self.stagnation_iterations, int)
+            or not 2 <= self.stagnation_iterations <= 1000
+        ):
+            raise InvalidScientificProblem("stagnation_iterations must be an int in [2, 1000]")
+        if self.growth_factor is not None:
+            growth = float(self.growth_factor)
+            if not math.isfinite(growth) or not 1.0 < growth <= 10.0:
+                raise InvalidScientificProblem("growth_factor must lie in (1, 10]")
+            object.__setattr__(self, "growth_factor", growth)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": WINDOW_CONTROL_SCHEMA,
+            "minimum_window": self.minimum_window.to_dict(),
+            "reduction_factor": self.reduction_factor,
+            "max_subdivisions": self.max_subdivisions,
+            "divergence_factor": self.divergence_factor,
+            # absent when unset: policies without step-size memory keep their identity
+            **({"growth_factor": self.growth_factor} if self.growth_factor is not None else {}),
+            **({"stagnation_iterations": self.stagnation_iterations} if self.stagnation_iterations is not None else {}),
+        }
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "WindowControlPolicy":
+        require_schema(payload, WINDOW_CONTROL_SCHEMA)
+        return cls(
+            minimum_window=Quantity.from_dict(payload["minimum_window"]),
+            reduction_factor=payload["reduction_factor"],
+            max_subdivisions=payload["max_subdivisions"],
+            divergence_factor=payload.get("divergence_factor"),
+            growth_factor=payload.get("growth_factor"),
+            stagnation_iterations=payload.get("stagnation_iterations"),
         )
 
 
@@ -216,6 +347,8 @@ class CouplingPlan:
     relaxation: RelaxationPolicy = RelaxationPolicy()
     max_iterations: int = 1
     fail_on_nonconvergence: bool = True
+    #: Optional adaptive subdivision of non-converging windows (None: fixed windows).
+    window_control: WindowControlPolicy | None = None
 
     def __post_init__(self) -> None:
         plan_id = str(self.plan_id).strip()
@@ -249,8 +382,38 @@ class CouplingPlan:
                 raise InvalidScientificProblem("explicit coupling has no coupling-convergence criteria")
             if self.relaxation.kind is not RelaxationKind.NONE:
                 raise InvalidScientificProblem("explicit coupling does not relax an iteration")
+        if (
+            self.relaxation.kind is RelaxationKind.IQN_ILS
+            and self.iteration_semantics is not IterationSemantics.JACOBI
+        ):
+            raise InvalidScientificProblem(
+                "IQN-ILS updates the joint interface vector after every participant has run "
+                "(Jacobi); serial Gauss-Seidel relaxes edges one at a time and is not supported"
+            )
         elif not criteria:
             raise InvalidScientificProblem("implicit coupling requires convergence criteria")
+        if self.window_control is not None:
+            if not isinstance(self.window_control, WindowControlPolicy):
+                raise InvalidScientificProblem("window_control must be a WindowControlPolicy")
+            if (
+                self.window_control.minimum_window.magnitude_in("second")
+                > self.time.coupling_window.magnitude_in("second")
+            ):
+                raise InvalidScientificProblem("minimum_window exceeds the coupling window")
+            if (
+                self.window_control.divergence_factor is not None
+                and self.scheme is not CouplingScheme.IMPLICIT
+            ):
+                raise InvalidScientificProblem(
+                    "divergence_factor applies to implicit coupling iterations only"
+                )
+            if (
+                self.window_control.stagnation_iterations is not None
+                and self.scheme is not CouplingScheme.IMPLICIT
+            ):
+                raise InvalidScientificProblem(
+                    "stagnation_iterations applies to implicit coupling iterations only"
+                )
 
     def resolved_order(self, graph: PhysicsGraph) -> tuple[str, ...]:
         declared = tuple(self.participant_order)
@@ -314,6 +477,17 @@ class CouplingPlan:
                     f"implicit coupling replays a time window and requires deterministic "
                     f"checkpoint/restore on every participant; missing on {bad}"
                 )
+        if self.window_control is not None:
+            bad = [
+                participant.participant_id
+                for participant in graph.participants
+                if not participant.checkpointable or not participant.deterministic_restore
+            ]
+            if bad:
+                raise InvalidScientificProblem(
+                    f"window subdivision rolls every participant back to the window start; "
+                    f"deterministic checkpoint/restore is required on all participants: {bad}"
+                )
         if self.time.align_events and any(p.event_capable for p in graph.participants):
             bad = [
                 participant.participant_id
@@ -338,6 +512,12 @@ class CouplingPlan:
             "relaxation": self.relaxation.to_dict(),
             "max_iterations": self.max_iterations,
             "fail_on_nonconvergence": self.fail_on_nonconvergence,
+            # absent when unset: plans without window control keep their fingerprints
+            **(
+                {"window_control": self.window_control.to_dict()}
+                if self.window_control is not None
+                else {}
+            ),
         }
 
     def fingerprint(self) -> str:
@@ -361,4 +541,9 @@ class CouplingPlan:
             relaxation=RelaxationPolicy.from_dict(payload["relaxation"]),
             max_iterations=payload.get("max_iterations", 1),
             fail_on_nonconvergence=payload.get("fail_on_nonconvergence", True),
+            window_control=(
+                WindowControlPolicy.from_dict(payload["window_control"])
+                if payload.get("window_control") is not None
+                else None
+            ),
         )

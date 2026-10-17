@@ -4980,3 +4980,412 @@ tree clean, the two fix-only FAST failures (`test_core_freeze_manifest::test_the
 `test_core_freeze_v3_manifest::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`) pass:
 `pytest <those two ids> -q` -> 2 passed in 37.8 s. The fix branch's FAST failure set therefore equals the
 baseline's.
+
+## 2026-10-17 -- Engineering Runtime V1 Big Rocks (build phase; feat/engrt-v1-big-rocks, pushed, no PR)
+- Pushed 2026-10-17 on owner instruction. Branch only: no PR, no merge, no certificate.
+  - `origin/feat/engrt-v1-big-rocks` = `23fb2bb1c1f9ebd5a12f7cad4f202af4e64e51ee`.
+  - `origin/fix/engrt-v1-phase1-interop` = `423fb46714114d2a5aa2208804e96a65024c28e2`.
+  - Both refs were checked against `git ls-remote`.
+- Also pushed later on 2026-10-17, on owner instruction: `origin/fix/engrt-v1-callback-checkpoint-identity` =
+  `debce509091949987fd51f387e5a0d4342772b1d`, made by another session. Pushed without upstream tracking, so that
+  session's worktree is unchanged.
+- Everything BR1-BR22 claims is still IMPLEMENTED / UNVERIFIED. The push runs no tests. The 16 pinned files the
+  branch changes stay UNCERTIFIED until OD-3.
+
+Owner direction (2026-10-17): build the Big Rocks first.
+- No pytest, FAST, SCIENTIFIC, regression, mutation, benchmark or hardened run until the owner authorizes one.
+  Only `py_compile` and import checks.
+- Tests are written but NOT executed.
+- Logical local commits; no push or PR.
+- Owner decision on the active-epic policy: Big Rocks are runtime/platform engineering (no new tracked scientific
+  capability, no ledger change). Anything adding new physics, models or a ledger capability stops for owner approval.
+
+Branch `feat/engrt-v1-big-rocks` (worktree `D:/forge-engrt-br`), stacked on `fix/engrt-v1-phase1-interop`
+`423fb467`. The linked session "Bind provider builds into adapter checkpoints" owns `coupling/adapters.py`,
+`providers/pybamm/**`, `execution/multiphysics/external.py` and `participant.py`; this branch does not touch them.
+Deferred tests and checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md).
+
+### BR1 -- adaptive coupling-window control (`af7ea219`, tests NOT RUN)
+- `scientific/multiphysics/plan.py`: `WindowControlPolicy` on `CouplingPlan` (optional, trailing).
+  - Fields: `minimum_window` (required, no default), `reduction_factor`, `max_subdivisions`, and an optional
+    `divergence_factor` (implicit only).
+  - Serialized only when set.
+  - Admission requires deterministic checkpoint/restore on every participant.
+- `execution/multiphysics/runtime.py`:
+  - `CouplingWindowNotConverged` (a subclass of `MultiphysicsExecutionError`) is raised for an iteration limit,
+    for divergence, and for a participant's internal non-convergence.
+  - `_controlled_window` rolls back and retries only numerical failures.
+  - `_diverging_edge` implements the early divergence stop.
+  - The log is surfaced in `final_outputs["_window_control"]`.
+- Tests written: `tests/test_multiphysics_window_control.py` (policy bounds, serialization identity, admission,
+  rollback accounting, exhaustion, refusal-not-retried, implicit subdivision, ITERATION_LIMIT never relabelled,
+  divergence). Static checks only: py_compile, import of every test import (none missing), `git diff --check`.
+- UNCERTIFIED: `plan.py`, `runtime.py` and both `__init__.py` files are pinned in
+  `certification/current_core_v2.json`.
+
+### BR2 -- joint IQN-ILS coupling acceleration (`35d8f557`, tests NOT RUN)
+- `scientific/multiphysics/plan.py`: `RelaxationKind.IQN_ILS` and `RelaxationPolicy.iqn_columns` (1..50, serialized
+  only for IQN). Admitted for JACOBI semantics only.
+- `execution/multiphysics/relaxation.py`: `RelaxationController.relax_joint` takes one quasi-Newton step over the
+  concatenated interface vector, with per-edge residual-RMS scaling and a constant-relaxation fallback. History
+  resets every window. `propagate_uncertainty` returns UNKNOWN for IQN.
+- `execution/multiphysics/runtime.py`: the Jacobi path calls `relax_joint`; IQN iterations record no scalar factor.
+- Tests written: `tests/test_multiphysics_iqn_ils.py`. Expected values are hand-computed:
+  (290,290) -> (285,290) -> (280,288) -> (300,300) for x = 2y - 300, y = x.
+- Static checks only: py_compile, test-import resolution, an AST name-resolution check of the touched modules.
+
+**Failed approach (do not repeat):** the first BR2 draft was per-edge IQN inside the serial Gauss-Seidel path. Working
+the algorithm by hand showed each edge's secant history sees a map the other edge's update keeps changing, so it is
+not a sound method there. Joint IQN over the Jacobi interface vector replaced it.
+
+### BR3 -- coupling numerical-error accounting (tests NOT RUN)
+- New `execution/multiphysics/numerical_error.py`: `assess_coupling_numerical_error(run)` derives an accounting from
+  an existing run record and leaves the record unchanged.
+  - Statuses: QUANTIFIED (the mapping bounds), ESTIMATED, UNQUANTIFIED, UNBOUNDED.
+  - ESTIMATED is the q/(1-q) r_k iteration error of a converged plain fixed-point window. It is not a bound and is
+    never summed into the bound.
+  - UNQUANTIFIED: explicit splitting, accelerated or single-iteration windows.
+  - UNBOUNDED: windows that ended at their iteration limit.
+  - Verdict: BOUNDED / ESTIMATED / INCOMPLETE / UNBOUNDED / NO_COUPLING.
+- Why derived rather than recorded: folding these sources into `final_outputs["_coupling_error"]` would change the
+  serialized identity of every existing run. Whether to record it in runs is a later, explicit versioning decision.
+- Gap this addresses: the run's `coupling_error_bound` sums mapping error only, so it read as the whole coupling error
+  of runs that also staggered explicitly or stopped at an iteration limit. Nothing in `src` consumes that bound
+  today.
+- Tests written: `tests/test_multiphysics_numerical_error_accounting.py`. Static checks only.
+
+### BR4 -- opt-in splitting-error estimate by coupling-window refinement (tests NOT RUN)
+- New `execution/multiphysics/splitting.py`: `estimate_splitting_error(build, coupling_window=, run_id=,
+  run_kwargs=, quantities=, levels=3 | 2 + declared order and basis)`.
+  - Re-executes the explicit problem at dt, dt/2 (and dt/4) and applies Richardson extrapolation to named scalar
+    outputs at the horizon end.
+  - Three levels observe the order; two levels need a declared order with its basis.
+  - A quantity outside the asymptotic range stays UNQUANTIFIED.
+  - Refinements may change only the coupling window (graph, plan and end time are checked).
+  - The estimate is bound to `canonical_digest(base_run.to_dict())`.
+  - Cost: 3x the base run (two levels) or 7x (three levels).
+- `numerical_error.assess_coupling_numerical_error(run, splitting=)` accepts the estimate only for that exact run.
+  It turns the open splitting source into per-quantity ESTIMATED or UNQUANTIFIED sources, never a bound.
+- Tests written: `tests/test_multiphysics_splitting_estimate.py`. The exact model problem is hand-derived: a right
+  Riemann sum with x = 0.625, 0.5625, 0.53125, observed order 1, and an estimate equal to the true error 0.125.
+- Static checks only. No certified file was touched.
+
+### BR5 -- opt-in concurrent participant advance in Jacobi iterations (tests NOT RUN)
+- New `execution/multiphysics/concurrency.py`:
+  - `ConcurrentAdvancePolicy(participants, max_workers, basis)` declares thread-safety per participant, with a
+    basis; it is never inferred.
+  - `advance_in_plan_order` runs undeclared participants alone and first, and declared ones in a thread pool. Results
+    are keyed in plan order, and the first failure in plan order is raised after all workers join.
+- `runtime.py`:
+  - `MultiphysicsRuntime(..., concurrency=)` and `from_factory_registry(..., concurrency=)`.
+  - Admitted for JACOBI only.
+  - The Jacobi loop prepares inputs in order and applies results in order.
+  - `final_outputs["_concurrency"]` is written only when a policy is set.
+- Why a runtime option rather than a spec field: thread-safety is a property of the executable participant, not of
+  the scientific spec. A `ParticipantSpec` field would move every graph fingerprint, and `participant.py` is owned by
+  the linked adapter session.
+- Tests written: `tests/test_multiphysics_concurrent_jacobi.py`. Static checks only.
+
+### BR6 -- coupling numerical error as a condition on the claims NUMERICAL channel (tests NOT RUN)
+- New `claims/coupling_numerical.py`: `condition_numerical_uncertainty(study_record, run, splitting=None)`.
+  - The input is a `uq_studies` refinement record. It is re-derived through `numerical_uq.estimate_from_dict`, and
+    its level 0 must be `<run_id>~numerical~0`.
+  - The coupling assessment is computed from the `MultiphysicsRunRecord` inside the call.
+  - The study's NUMERICAL record passes unchanged only when the run has no coupling edge, or every coupling source
+    is quantified as exactly 0. Otherwise the channel becomes UNKNOWN: estimates, open sources, non-zero bounds and
+    incomplete windows all veto.
+  - It never quantifies or widens. The vetoed record reaches `claims.uncertainty.transport` as an UNKNOWN NUMERICAL
+    channel.
+- Static scientific review (read-only agent; the review skill and reviewer agent type were unavailable):
+  CHANGES REQUIRED. Fixed in `e4b5809c` and `33cefed8`:
+  - F1 BLOCKER: caller-declared coverage was an authority leak. Removed.
+  - F2 HIGH: binding by run_id only, and a hand-built assessment. The assessment is now computed from the run and
+    stamps `run_digest` and `coupled`.
+  - F3 HIGH: the NUMERICAL record was not tied to the run. Now re-derived and level-0-bound.
+  - F5 MEDIUM: refused windows were assessed as converged. Now UNBOUNDED.
+  - F6 MEDIUM: BR4 invented a zero for identical levels. It now applies the round-off floor and reports
+    UNQUANTIFIED.
+  - F7: tests rewritten.
+  - F8: the claims -> execution edge is new and intentional (the architecture tests allow it).
+- **Owner decisions (review F4, not fixed):**
+  - Conditioning is opt-in. Making it mandatory for every claim built on a coupled run would change the NUMERICAL
+    verdict of the existing electrothermal capability (`CouplingEvidence`). No claims capability yet produces a
+    `MultiphysicsRunRecord`.
+  - Capability-declared coverage (a `RefinementStudy` stating which coupling kinds its ladder refines, bound by the
+    plan digest and checked against the ladder) is a design item. Iteration error is not coverable by today's
+    integer-count ladders.
+- **Failed approach (do not repeat):** a first BR6 design widened the claim interval by the coupling bound. Mapping
+  bounds are relative FIELD norms, not QoI errors, so widening would invent a propagation rule. A second draft let
+  callers declare coverage, which was the review's BLOCKER.
+- Confirmation review: F1, F2, F5, F6 and F8 fixed; F4 open as an owner decision.
+  - R1 MEDIUM: the binding check read `runs[0]` while the re-derived estimate carries its own level run ids. Fixed:
+    estimate levels, study runs and `<run_id>~numerical~k` must agree, values included. Two tamper tests were added.
+  - R2 LOW, recorded: the study-to-run binding is a run-id string convention. A digest link needs `uq_studies` to
+    record the reported report's digest, which belongs to the same owner decision as F4.
+- Owner decision (2026-10-17): coupling conditioning stays OPT-IN for now. F4 (mandatory conditioning, including the
+  electrothermal `CouplingEvidence` path) remains an open owner decision; R2 (digest link) goes with it.
+
+### BR7 -- nonlinear robustness: declared method chain and parameter continuation (tests NOT RUN)
+- New `numerical/robust.py`. It composes `NumericalProvider.execute` only: no new algorithm, no new acceptance rule.
+  - `solve_with_method_chain(provider, problem, methods)`: the same problem for every method, each starting from the
+    declared initial values. Every attempt is recorded, and refusals propagate. This replaces callers hard-coding
+    `lm` (the `hybr` false refusals in project memory) with a declared, recorded chain.
+  - `solve_by_continuation(provider, family, method, initial_step=, minimum_step=, max_steps=)`: warm starts come only
+    from converged outputs. A failed step halves the increment and is never reused. The accepted problem must equal
+    `family(1)` except for its initial values.
+- Tests written: `tests/numerical/test_robust_nonlinear.py`, using a deterministic fake "basin" provider plus one
+  real `SciPyRootProvider` case. Static checks only.
+- Not done: no caller uses these yet. The heater KVL `root_method="lm"` workaround is unchanged; migrating it is a
+  separate change to a domain file.
+
+### BR8 -- declared hybr -> lm root-method chain for the heater KVL (tests NOT RUN)
+- `domains/electrical/heater_circuit.py`: `root_methods` (opt-in chain) and `solve_with_attempts`.
+  - The chain uses `numerical.robust.solve_with_method_chain`, with the same problem, initial current and settings
+    for every method.
+  - The chain is named in the identity only when declared.
+  - Without a chain, identity, operator digest and records are unchanged byte-for-byte.
+- **Why the workaround caller was not migrated:** the only `root_method="lm"` caller is the test fixture
+  `tests/multiscale_reference.py`. Migrating it changes its declared participant solver version (`lm`), its
+  configuration identity (`"root_method": "lm"`), and its last-bit results wherever hybr converges first.
+  Identical evidence (owner requirement) and migration are mutually exclusive; owner decision pending.
+- Tests written: `tests/domains/electrical/test_heater_root_chain.py`.
+  - Exact-equality invariant over a 200-state sweep: the chain's result equals the accepted method's own result,
+    and the chain never fails where either method alone succeeds.
+  - A SciPy-version-dependent check that the sweep exercises the hybr false refusal.
+- Owner decision (2026-10-17): `tests/multiscale_reference.py` stays on `root_method="lm"`, so its evidence is
+  unchanged. The hybr->lm chain is available opt-in only.
+
+### BR9 -- multi-timescale: opt-in macro-window rejection on fast non-convergence (tests NOT RUN)
+- Gap: the macro-step loop rejected and shortened windows for slow-state change, threshold localization and
+  representativity, but not when the fast execution failed numerically. A non-converging coupled fast run refused the
+  whole multi-timescale run, even though a shorter macro window shortens the resolved fast window.
+- What changed:
+  - `multiscale/windows.py`: `MacroStepPolicy.retry_fast_nonconvergence`, default off and serialized only when on.
+  - `multiscale/fast.py`: the typed signal `FastExecutionNotConverged`.
+  - `multiscale/runtime.py`: rejection kind `fast_nonconvergence`, recorded as a `RefinementDecision` with subject
+    `fast_execution`, within the existing divisor, minimum window and rejection bound. Other refusals are never
+    retried, and no accounting counter is added.
+- Static checks caught a defect before commit: the text patch had put the existing `@dataclass(frozen=True)`
+  decorator on the new exception class. It was fixed, and an AST scan of all 21 changed src files found no other
+  decorated exception class.
+- Tests written: `tests/test_multiscale_fast_nonconvergence.py`, using the unchanged reference fixture with a
+  fail-first-N fast system. Static checks only.
+
+### BR10 -- composition-pack templates declare window control (tests NOT RUN)
+- Gap: BR1 window control could not be reached from any declared system. The composition-pack
+  `CouplingPolicyTemplate` materialized plans without it. IQN-ILS (BR2) was already reachable through the template's
+  `RelaxationPolicy`.
+- `compositionpacks/blueprint.py`: `CouplingPolicyTemplate.window_control`.
+  - Optional, and serialized only when declared; the built-in packs' identity was confirmed unchanged by reading the
+    object.
+  - Carried into `materialize()`.
+  - Refused at declaration where the plan would refuse it, and refused by `validate_against_blueprint` unless every
+    participant is deterministically restorable. No built-in blueprint participant is today.
+- Deliberately not exposed: BR5 concurrency. Packs may not pin executors, and thread-safety belongs to the executor.
+- Tests written: `tests/compositionpacks/test_template_window_control.py`, using the real built-in electrothermal
+  pack objects. Static checks only.
+
+### BR11 -- step-size memory for adaptive coupling windows (tests NOT RUN)
+- Replay check first: `assembly/replay.compare_runs` skips underscore-prefixed outputs and compares `window_count`
+  and the plan fingerprint. A concurrent run (BR5, `_concurrency`) and a window-controlled run (BR1) therefore
+  replay-compare correctly. No defect found.
+- Gap closed (BR1's recorded remaining work): after a subdivision the next window jumped back to the full width, so
+  a stiff stretch repeated fail -> halve -> succeed every window.
+- What changed:
+  - `WindowControlPolicy.growth_factor` (optional, in (1, 10], serialized only when set).
+  - `runtime._next_window_width` remembers the width a subdivided or exhausted window was accepted at, and grows it
+    by the factor per accepted window up to the nominal width. Event and input-change cuts do not shrink it.
+  - Width changes are logged.
+- Tests appended to `tests/test_multiphysics_window_control.py`. A hand-traced stiff case: 8 subdivisions over 2 s
+  without memory, 4 with growth 2, every accepted window <= the 0.25 s stability limit, rollback still exact.
+
+### BR12 -- event-aligned windows keep their own failure outcome (defect fix, tests NOT RUN)
+- **Defect, found by static review and NOT reproduced by execution (build phase):** `runtime._window` re-ran an
+  implicit window up to a terminal event and always labelled the result `EVENT_ALIGNED`.
+  - With `fail_on_nonconvergence=False`, a re-run that ended at its iteration limit was recorded as a completed
+    window: false convergence.
+  - It also defeated BR1 retries and BR3 accounting.
+  - Fix: only a completed re-run is `EVENT_ALIGNED`; otherwise the re-run's outcome is kept and the event is still
+    recorded.
+- Tests written: `tests/test_multiphysics_event_aligned_outcome.py`.
+  - A diverging loop with a mid-window trip must record `ITERATION_LIMIT`.
+  - Accounting must mark window 0 UNBOUNDED.
+  - A converging control stays `EVENT_ALIGNED`.
+- Also surveyed (D5 from the first provider survey), not changed:
+  - `MultiphysicsAuthority` reports no provider executions unless given a `providers` callable, so external
+    providers inside a coupled node are not checked against the request's bindings.
+  - No production code constructs `MultiphysicsAuthority` or uses `ExternalSolverParticipant`.
+  - Deriving provider records from participants would be new evidence semantics: owner decision.
+  - The authority also fails every window whose outcome is not `converged`, including `explicit_completed` and
+    `event_aligned`. That looks unintended for explicit coupling, and is recorded for the owner rather than changed
+    in the build phase.
+
+### BR13 -- mapping extrapolation and unverified mappings as open error sources (tests NOT RUN)
+- Survey: `execution/multiphysics/mapping.py` handles coverage soundly. `ExtrapolationPolicy.REFUSE` refuses, and
+  allowed extrapolation is recorded (`extrapolated_count`, `coverage_fraction`).
+- Gap in BR3: `_mapping_sources` read only the budget, which covers declared round-trip/conservation residuals.
+  - Extrapolated sites, and mappings with no declared verification, produced no source at all.
+  - They now produce UNQUANTIFIED sources, read from the same last-iteration diagnostics the budget uses.
+  - BR6 then vetoes the claims NUMERICAL channel for them automatically.
+- Owner item (recorded, not changed): the coupling error budget names a round-trip L2 residual a `relative_bound`.
+  A round-trip residual measures information loss, not the forward transfer error.
+- Tests appended to `tests/test_multiphysics_numerical_error_accounting.py` (stand-in runs). A real field-mapped
+  coupled run is deferred (DV-22).
+
+### BR14 -- coupled nodes may not run unreported external providers (defect fix, tests NOT RUN)
+- `system_runtime/authorities.py`, `MultiphysicsAuthority._untraced_external_providers`: a coupled node whose
+  runtime contains `ExternalSolverParticipant`s fails unless every admitted provider identity (id and version) is
+  among its reported provider records.
+  - This extends the executor's existing "an unreported provider is untraceable" rule to the case it missed (D5).
+  - No record is derived.
+  - It is a no-op for every current caller (none uses external participants).
+- The D5 owner item is narrowed to whether provider records should ever be derived from participants. That remains
+  open; this change only refuses.
+- Tests written: `tests/test_system_runtime_external_providers.py` (mock sessions in a real implicit runtime).
+- **Recertification note (from this pass):** certified modules may not import uncertified ones (BR-15 rule). Two
+  Big Rock edges need pinning at recertification: `execution/multiphysics/runtime.py -> concurrency.py` (BR5) and
+  `claims/coupling_numerical.py -> execution/multiphysics/numerical_error.py` (BR6; claims/** is a certified glob).
+  The BR14 edge `authorities.py -> execution/multiphysics/external.py` is already pinned.
+
+### BR15 -- fallback solver routes start at their own refinement level (review F-5, tests NOT RUN)
+- Surveyed and not changed:
+  - `execution/multiphysics/admission.py` is a plan-compatibility and factory-coverage report that
+    `from_factory_registry` already enforces; it is not an applicability gate, so there is no gap.
+  - Concurrent multiscale representative windows were rejected for now: `_execute` mutates shared accounting and the
+    result cache, and a macro attempt usually holds one representative window.
+- Fix: `run_adaptive_plan` resets `refinement` and `refinement_level` on every solver-route change, so
+  `max_refinements` counts per route. This was the pre-existing finding F-5 from the Phase 1 review.
+- Test appended to `tests/execution/orchestration/test_checkpoint_routing.py`.
+- Owner instruction (2026-10-17): keep building Big Rocks continuously, without asking between them.
+
+### BR16 -- QR filtering of near-dependent IQN-ILS secant pairs (tests NOT RUN)
+- `relaxation.RelaxationController._qr_filter` runs newest-first modified Gram-Schmidt over the scaled V columns. A
+  column is dropped when its new direction is below `iqn_filter` times its norm, and W keeps the same columns.
+- `RelaxationPolicy.iqn_filter` defaults to 1e-10 and is IQN-only (refused on other kinds), serialized with
+  `iqn_columns`. Non-IQN identity was confirmed unchanged by reading the policy dicts.
+- This closes the BR2 assumption "lstsq rcond is the only conditioning filter".
+- Tests appended to `tests/test_multiphysics_iqn_ils.py`: parallel columns keep only the newest, and independent
+  columns are all kept.
+
+### BR17 -- stagnation detection for implicit coupling windows (tests NOT RUN)
+- `WindowControlPolicy.stagnation_iterations` (implicit only, serialized only when set) and
+  `runtime._stagnating`.
+  - Progress is the largest edge residual normalized by its first-iteration value.
+  - When the last n iterations do not improve on the earlier best, the window raises `CouplingWindowNotConverged`
+    ("stagnating") and BR1 subdivision takes over.
+  - The plan and the BR10 template refuse it on explicit coupling.
+- This closes BR1's assumption that slow non-improvement went undetected.
+- Tests appended to `tests/test_multiphysics_window_control.py`:
+  - x = y + 5 (constant 5 K step) is rejected after 4 of 200 iterations.
+  - A contracting loop is never flagged.
+
+### BR18 -- opt-in under-relaxation of the electrothermal fixed point (tests NOT RUN)
+- The integration target's loop (`systems/electrothermal/coupled.py::run_fixed_point`) is separate from the
+  multiphysics runtime and had no relaxation.
+- `FixedPointCouplingPlan.relaxation_factor` (in (0, 1), serialized only when declared).
+  - The next sweep's torn values are under-relaxed.
+  - The stopping test stays the unrelaxed change.
+  - A converged run reports the unrelaxed transported values.
+  - The no-factor path is unchanged.
+- Tests written: `tests/test_electrothermal_fixed_point_relaxation.py`, using the existing electrothermal fixture.
+  - Relaxed and plain runs must agree within 1e-4 K.
+  - The factor is recorded only when declared.
+
+### BR19 -- adaptive mesh control slice 1: adaptive resolution (EXC-1, tests NOT RUN)
+- Owner approved active-epic exception EXC-1 on 2026-10-17. All eight fields are recorded in ACTIVE_PLAN; the
+  expiry of 2026-10-31 is Claude's proposal.
+- Survey: `StructuredMesh` is uniform and states it has no refinement, and no local refinement exists anywhere. The
+  claims refinement study measures a FIXED ladder; nothing chooses resolution.
+- New `claims/adaptive_resolution.py`, `adapt_resolution(solve, policy, quantity=, units=)`:
+  - refines `baseline * ratio**k`;
+  - after each level, applies the CANONICAL `numerical_uq` estimator to the three finest levels;
+  - TARGET_MET only on a quantified half-width within the target, otherwise BUDGET_EXHAUSTED (keeps the honest
+    interval) or UNKNOWN;
+  - an unusable level ends the search;
+  - the target is a spread.
+- Not done (next slices, same exception or a new one): wiring into `uq_studies` and capability declarations; local
+  AMR (non-uniform mesh records, error indicators, solver support).
+- Tests written: `tests/claims/test_adaptive_resolution.py`. Exact first-order model: n = 4, 8, 16, 32 meets a
+  0.05 target with half-width 0.0390625 and extrapolate 1.0.
+
+### BR20 -- adaptive mesh control slice 2: 1D local refinement kernel (EXC-1 A1, tests NOT RUN)
+- EXC-1 amendment A1 (owner-approved 2026-10-17) adds `numerical/mesh_adaptation.py` to the scope. Still
+  prohibited: solver changes, Core mesh records, and wiring adaptive resolution into `uq_studies` (owner decision:
+  it would make a finer run than the claim's reported run carry its evidence).
+- Survey: `conduction1d` is uniform-grid only (single dx, `linspace`), so local AMR cannot drive it without a
+  solver change.
+- The kernel:
+  - `Grid1D`, a non-uniform grid;
+  - P1 indicators `h**2/8 * max|u''|`, exact for quadratics;
+  - deterministic Doerfler marking;
+  - bisection with a minimum cell and gradation;
+  - `adapt_grid`, which re-evaluates fresh values every cycle. Its statuses are TOLERANCE_MET_ESTIMATED,
+    BUDGET_EXHAUSTED, NODE_BUDGET and RESOLUTION_FLOOR, and the record is classified not-evidence.
+- Next slice (needs an EXC-1 amendment or a new exception): a non-uniform finite-difference conduction solver that
+  `adapt_grid` can drive, plus wiring into a capability.
+- Tests written: `tests/numerical/test_mesh_adaptation.py`.
+
+### BR21 -- adaptive mesh control slice 3: non-uniform steady 1D conduction solver (EXC-1 A2, tests NOT RUN)
+- EXC-1 amendment A2 (owner-approved 2026-10-17, commit 9e28c753) adds
+  `domains/thermal_models/conduction1d_nonuniform.py` and its tests.
+- Placement:
+  - `domains/thermal` is pinned by set equality (adding a file breaks `test_every_thermal_source_file_is_pinned`),
+    so the new solver lives in `thermal_models`, next to `conduction1d_bulk` and `conduction1d_schemes`.
+  - No glob pin covers `thermal_models`; each existing file there is pinned individually.
+  - It is imported by path; the pinned `thermal_models/__init__.py` is untouched.
+- The solver (commit 1060175f):
+  - steady `-(k u')' = q` on a `Grid1D` that must span exactly [0, L];
+  - vertex-centred finite volumes, `k` at cell midpoints, `q` at nodes times the control-volume width;
+  - explicit temperature or inward-heat-flux ends, never defaulted; two flux ends are refused;
+  - `k` must be positive and finite at every face; Thomas solve;
+  - exact at the nodes for constant `k` and constant `q` on any grid, flux ends included (checked by hand
+    algebra, not by execution).
+- Adaptation: `temperature_evaluator(problem)` gives the `adapt_grid` callable (a fresh solve per grid), and
+  `adapt_conduction` is that call with `value_unit="kelvin"`.
+- Guards checked by reading, not by running:
+  - no `ValidationCheck`, `ScientificModelDefinition`, `ScientificSolver` or `ScientificResult` construction;
+  - no `pint` import and no `_rel_tol` / `_atol` parameters;
+  - the domain import of `engcore.numerical` has a precedent in `electrical/heater_circuit.py`.
+- Static checks run: py_compile, an import of the new module from the worktree's src, the undefined-name checker,
+  and `git diff --check`. pytest NOT RUN.
+- Tests written: `tests/domains/thermal_models/test_conduction1d_nonuniform.py`.
+- Next slice (needs an owner decision): declare the non-uniform path as a capability or realization, and/or a
+  transient solver. Both are still prohibited under A2.
+
+### BR22 -- adaptive mesh control slice 4: the non-uniform path declared as model + realization (EXC-1 A3, tests NOT RUN)
+- EXC-1 amendment A3 (owner-approved 2026-10-17, commit 9f998024).
+- Survey:
+  - A `ModelRealizationDefinition` must reference a model.
+  - The only conduction model, `thermal.conduction1d.linear_diffusion`, is transient, constant-diffusivity and
+    source-free. A realization of it would misstate what this solver computes, so a new model record was needed.
+  - Domain realizations follow `lumped.py` / `conduction1d_schemes.py`: a domain capability, a domain solver
+    capability, and a fresh local registry.
+- Declared in `conduction1d_nonuniform.py` (commit 89b9e7c3):
+  - `STEADY_CONDUCTION_MODEL` = `thermal.conduction1d.steady_variable_conductivity@0.1.0`:
+    - k and q are declared curves against `position` (`varies_with`);
+    - four optional end inputs (temperature or inward flux, per end);
+    - six exclusions;
+    - NO validity conditions, so applicability assesses UNKNOWN (no limit has been sourced);
+    - UNVALIDATED.
+  - `NONUNIFORM_FV_REALIZATION`, which provides `thermal:steady_conduction_1d` and requires
+    `thermal:nonuniform_steady_conduction_1d` + `core:linear_system`.
+  - `steady_conduction_models()`, `nonuniform_conduction_realizations()` and
+    `nonuniform_conduction_solver_capabilities()`.
+  - The solution record now names its model and realization.
+- Guard moves:
+  - `tests/test_core_guards.py::EXPECTED_MODELS` 18 -> 19, deliberately. That file is certification-pinned, so it is
+    UNCERTIFIED until OD-3.
+  - Unchanged, because the model has no conditions and no derived quantities: `EXPECTED_CONDITION_NAMES`,
+    `EXPECTED_RESERVED_NAMES` and `EXPECTED_RESERVING_MODELS`.
+  - `EXPECTED_SOLVER_CLASSES` is unchanged (no `ScientificSolver`), and so is the evidentiary audit (no
+    `ValidationCheck`).
+  - API snapshots do not cover `engcore.domains`.
+- Not done (still prohibited under A3): a claims-layer `CapabilityDeclaration`, a planning production-registry entry,
+  and validity conditions. The path is unreachable from claims, SRIA and MCP.
+- Static checks run:
+  - py_compile;
+  - an import of the module from the worktree's src (this constructs the module-level records);
+  - the undefined-name checker;
+  - `git diff --check`.
+  pytest NOT RUN.
+- Tests added to `tests/domains/thermal_models/test_conduction1d_nonuniform.py`.

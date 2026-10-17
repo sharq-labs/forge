@@ -232,3 +232,13 @@ def test_non_terminal_attempt_never_supplies_a_resume_point(state):
         (SolverCapability("a", (ProblemKind.ODE,)),), {"a": a}, AdaptiveRefinementPolicy(target_error=1e-3, max_refinement_level=0))
     assert not report.successful
     assert report.final_checkpoint is None and report.attempts[0].checkpoint is None
+
+
+def test_a_fallback_route_starts_at_its_own_refinement_level_zero():
+    # review F-5: solver a refined to level 1 and diverged; b must not inherit a's refinement request
+    report, a, b = _adaptive([_adv(AttemptState.CONVERGED, 1.0), _adv(AttemptState.DIVERGED, None, None, "nan")],
+                             [_adv(AttemptState.CONVERGED, 1e-4)])
+    assert report.stop_reason is AdvancedStopReason.ERROR_TARGET_SATISFIED
+    last = report.attempts[-1]
+    assert last.solver_id == "b" and last.refinement is None and last.attempt.refinement_level == 0
+    assert last.attempt.attempt_id.endswith(":b:r0")

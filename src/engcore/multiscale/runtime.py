@@ -53,7 +53,11 @@ from ._common import fraction_text, identifier, time_seconds, window_seconds
 from .aggregation import AggregationRecord, AggregationSpec, aggregate
 from .approximation import ApproximationEntry, ApproximationLedger, ComponentStatus, ErrorComponent
 from .checkpoint import MacroCheckpoint, state_to_list
-from .fast import FastExecutionRequest, FastExecutionResult, FastSystem, check_material_reresolution, slow_state_digest
+from ..execution.multiphysics.runtime import CouplingWindowNotConverged
+from .fast import (
+    FastExecutionNotConverged, FastExecutionRequest, FastExecutionResult, FastSystem, check_material_reresolution,
+    slow_state_digest,
+)
 from .scales import ScaleHierarchy, ScaleRole
 from .windows import AdaptationDecision, AdaptationTrigger, MacroStepPolicy, RefinementDecision, RepresentativeWindow, SelectionMethod
 
@@ -600,6 +604,10 @@ class MultiTimescaleRuntime:
                         outcome = self._attempt(index, macro, slow, fast, acc)
                     except RepresentativityRejected as exc:
                         kind, detail = "representativity_rejected", str(exc)
+                    except (FastExecutionNotConverged, CouplingWindowNotConverged) as exc:
+                        if not self.policy.retry_fast_nonconvergence:
+                            raise  # a refusal of the run, exactly as before (the outer handler records it)
+                        kind, detail = "fast_nonconvergence", f"{type(exc).__name__}: {exc}"
                     if not kind:
                         executions, results, aggregates, degradation, new_slow = outcome
                         not_applied = [d for d in degradation if d.status is not StepStatus.APPLIED]
@@ -635,11 +643,13 @@ class MultiTimescaleRuntime:
                         outcome = None
                         break
                     new_duration = max(minimum, duration / self.policy.rejection_divisor)
+                    subject = {"representativity_rejected": "inputs", "fast_nonconvergence": "fast_execution"}.get(kind, "slow_state")
                     refinements.append(RefinementDecision(kind, TimePoint(basis, t), TimePoint(basis, attempt_end),
-                                                          TimePoint(basis, t + new_duration), "slow_state" if kind != "representativity_rejected" else "inputs",
-                                                          detail))
-                    _add(acc, {"state_change_rejected": "rejections", "threshold_localization": "threshold_localizations",
-                               "representativity_rejected": "representativity_rejections"}[kind], 1)
+                                                          TimePoint(basis, t + new_duration), subject, detail))
+                    counter = {"state_change_rejected": "rejections", "threshold_localization": "threshold_localizations",
+                               "representativity_rejected": "representativity_rejections"}.get(kind)
+                    if counter is not None:  # fast_nonconvergence has no counter: a new one would change every run's accounting
+                        _add(acc, counter, 1)
                     attempt_end = t + new_duration
                 if outcome is None:
                     break
