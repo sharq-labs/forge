@@ -178,6 +178,7 @@ def provider_participant(
     state_definitions: tuple = (),
     evolved_state: tuple[str, ...] = (),
     state_contract: ParticipantStateContract | None = None,
+    expected_build: Mapping[str, str] | None = None,
 ) -> CallbackParticipant:
     """Wrap a provider solve into a runtime participant.
 
@@ -207,6 +208,19 @@ def provider_participant(
     Output uncertainty is UNKNOWN: a provider's convergence says nothing about
     model or input uncertainty, and none is invented here.  Incoming
     uncertainty kinds are recorded, never upgraded.
+
+    Phase 2 BR10 -- provider build and checkpoint content:
+
+    * Every execution's build (provider id, version and digest, adapter id and
+      version, read from ``record.identity``) must be the one the participant
+      first executed with, and -- when ``expected_build`` states the build that
+      was admitted -- that one.  A drift is refused, not recorded under the
+      admitted identity; a record that states no identity under an
+      ``expected_build`` is refused as ambiguous.
+    * A checkpoint names the build its state was produced by.  ``restore``
+      refuses a checkpoint of another participant, a token whose content does
+      not hash to the checkpoint's state digest (corruption or substitution),
+      and a checkpoint of another build.
     """
     import hashlib
     import json
@@ -218,6 +232,30 @@ def provider_participant(
 
     log = log if log is not None else CouplingExecutionLog()
     held: dict[str, Any] = {"state": {}}
+    build_keys = ("provider_id", "provider_version", "provider_digest", "adapter_id", "adapter_version")
+    admitted = None if expected_build is None else {k: str(expected_build.get(k, "")).strip() for k in build_keys}
+    if admitted is not None and not all(admitted.values()):
+        raise CouplingRefusal(f"expected_build of {spec.participant_id!r} must state {list(build_keys)}")
+    observed: dict[str, Any] = {"build": admitted}
+
+    def build_tag(build: Mapping[str, str]) -> str:
+        return hashlib.sha256(json.dumps(dict(build), sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+    def require_build(record: Any) -> None:
+        identity = getattr(record, "identity", None)
+        build = None if identity is None else {k: str(getattr(identity, k, "")).strip() for k in build_keys}
+        if build is None or not all(build.values()):
+            if observed["build"] is not None:
+                raise CouplingRefusal(
+                    f"participant {spec.participant_id!r}: the execution record states no complete provider build; "
+                    f"it cannot be shown to be the admitted one")
+            return
+        if observed["build"] is None:
+            observed["build"] = build
+        elif build != observed["build"]:
+            raise CouplingRefusal(
+                f"participant {spec.participant_id!r} executed provider build {build} after {observed['build']}; "
+                f"a build drift is refused, never recorded under the earlier identity")
     unknown = Uncertainty.unknown(output_uncertainty)
     definitions = {d.variable_id: d for d in state_definitions}
     evolved = tuple(sorted(evolved_state))
@@ -283,6 +321,7 @@ def provider_participant(
             "input_uncertainty_kinds": {k: u.kind.value for k, u in dict(request.input_uncertainty).items()},
         }
         log.entries.append(entry)
+        require_build(record)
         if not entry["succeeded"]:
             raise CouplingRefusal(f"participant {spec.participant_id!r} execution failed: {entry['reason']}")
         if evolved or next_state:
@@ -290,21 +329,37 @@ def provider_participant(
         return AdvanceResult(request.end, to_runtime(outputs), {p.port_id: unknown for p in spec.outputs}, 1, True,
                              diagnostics={k: v for k, v in entry.items() if k != "input_uncertainty_kinds"})
 
-    def state_digest() -> str:
+    def state_digest(state: Mapping[str, Any] | None = None) -> str:
         # value, unit AND uncertainty: a changed uncertainty is a changed state
-        payload = [held["state"][k].to_dict() for k in sorted(held["state"])]
+        state = held["state"] if state is None else state
+        payload = [state[k].to_dict() for k in sorted(state)]
         return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
     def checkpoint(instant):
+        scope = f"completeness:{contract.completeness.value}"
+        if observed["build"] is not None:
+            scope += f";build:{build_tag(observed['build'])}"
         return RuntimeCheckpoint(
             CheckpointRecord(spec.participant_id, instant, state_digest(), spec.deterministic_restore,
-                             provider_state_id=f"completeness:{contract.completeness.value}"),
+                             provider_state_id=scope),
             dict(held["state"]))
 
     def restore(cp):
         if cp.record.participant_id != spec.participant_id:
             raise CouplingRefusal("checkpoint belongs to another participant")
-        held["state"] = dict(cp.token)
+        token = dict(cp.token or {})
+        try:
+            content = state_digest(token)
+        except AttributeError as exc:
+            raise CouplingRefusal(f"checkpoint token of {spec.participant_id!r} is not participant state: {exc}") from exc
+        if content != cp.record.state_digest:
+            raise CouplingRefusal(
+                f"checkpoint of {spec.participant_id!r} does not hold the state its record names "
+                f"(content {content[:12]}..., record {cp.record.state_digest[:12]}...)")
+        tags = [part.split(":", 1)[1] for part in str(cp.record.provider_state_id or "").split(";") if part.startswith("build:")]
+        if tags and observed["build"] is not None and tags[0] != build_tag(observed["build"]):
+            raise CouplingRefusal(f"checkpoint of {spec.participant_id!r} was produced by another provider build")
+        held["state"] = token
 
     if not state_definitions:
         participant = CallbackParticipant(spec, initialize=initialize, advance=advance, checkpoint=checkpoint, restore=restore,

@@ -453,3 +453,33 @@ are NOT resolved by Phase 2 unless a row below says so.
 - `nearest_sites` reproduces the exhaustive choice whenever the KD-tree distance and the einsum distance agree to
   16 eps relative, which bounds their rounding difference for coordinates of ordinary magnitude.
 - Forward mapping error stays UNQUANTIFIED for every non-identity method (P1-BR3); nothing here bounds it.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-54 | P2-BR10 checkpoint identity and recovery | New tests (build/problem binding, drift, ambiguity, cold start on record, qualified conversion, provider-participant build drift and token corruption) + existing routing suite | `pytest tests/execution/orchestration -q` | NOT RUN |
+| DV-55 | P2-BR10 | Real PyBaMM restore with the new build tag and content check (needs the 3.13 / WSL battery env) and the battery-cooling flagship (provider_state_id of its cell checkpoints changes) | `pytest flagships tests/test_multiscale_runtime.py -q` in the provider env | NOT RUN |
+| DV-56 | P2-BR10 | External-provider failure and recovery end to end (an ExternalSolverParticipant failing inside a window, rollback, retry on a shorter window, provider records) | new test | NOT WRITTEN |
+
+### P2-BR10 status: IMPLEMENTED / UNVERIFIED
+
+- Orchestration (`execution/orchestration/checkpoint.py`, both runners, `SimulationPlan.problem_digest`): a
+  checkpoint is bound to solver id, solver build and problem digest; adoption refuses another build or problem;
+  resume refuses build drift, another problem, and ambiguity (recorded build or problem vs none stated); a backend
+  whose stated build changes between attempts is refused; a fallback cold-starts and the cold start is recorded;
+  failed/diverged attempts never supply state (unchanged).
+- `CheckpointConversion`: the only route for one solver's state into another -- both builds named, a stated
+  qualification, and a target backend that declares `accepts_converted_checkpoints`. No conversion exists in the
+  repository, so every cross-solver fallback cold-starts today.
+- `coupling/adapters.provider_participant` (the open ERT item): execution builds must stay the first (and, with
+  `expected_build`, the admitted) build; checkpoints carry a build tag; restore refuses another participant, another
+  build, and a token whose content does not hash to the record's state digest.
+- PyBaMM `cell_participant`: restore refuses another participant, a checkpoint without this build's tag (including
+  pre-Phase-2 checkpoints), and a token whose solution does not hash to the recorded digest.
+- `ExternalSolverParticipant` sealing (ERT Phase 1) was reviewed and left unchanged.
+
+### Unverified assumptions (P2-BR10)
+
+- A backend's `solver_build` string is its own statement of build identity; the runner compares it and records it,
+  it cannot verify it. Backends that state none keep the pre-Phase-2 behaviour (ambiguity refuses only a checkpoint
+  that does record a build).
+- PyBaMM's solution state digest (`last_state.y` bytes) is assumed to identify the restorable state, as before.

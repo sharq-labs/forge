@@ -85,8 +85,13 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
             return initial_soc
         return initial_soc - float(solution["Discharge capacity [A.h]"].entries[-1]) / (c_nom * (1.0 - capacity_fade))
 
-    def digest() -> str:
-        sol = held["solution"]
+    # Phase 2 BR10: the build a checkpoint's state was produced by (provider id, version, content digest, adapter)
+    build = hashlib.sha256(
+        f"{status.capability.provider_id}:{status.version}:{status.digest}:{ADAPTER[0]}:{ADAPTER[1]}".encode()
+    ).hexdigest()
+
+    def digest(solution=...) -> str:
+        sol = held["solution"] if solution is ... else solution
         if sol is None:
             suffix = f":{sorted(declared.items())!r}" if declared else ""
             return hashlib.sha256(f"initial:{pset.digest}:{initial_soc!r}:{capacity_fade!r}{suffix}".encode()).hexdigest()
@@ -132,10 +137,20 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
                              diagnostics={"execution_identity": ident.digest, "soc_end": repr(soc_of(sol))})
 
     def checkpoint(instant):
-        return RuntimeCheckpoint(CheckpointRecord(spec.participant_id, instant, digest(), True, provider_state_id="completeness:declared_complete"),
+        return RuntimeCheckpoint(CheckpointRecord(spec.participant_id, instant, digest(), True,
+                                                  provider_state_id=f"completeness:declared_complete;build:{build}"),
                                  held["solution"])
 
     def restore(cp):
+        # Phase 2 BR10: only this participant's own state, produced by this build, holding what its record names
+        if cp.record.participant_id != spec.participant_id:
+            raise ProviderRefusal(f"checkpoint of {cp.record.participant_id!r} cannot restore {spec.participant_id!r}")
+        tags = [p.split(":", 1)[1] for p in str(cp.record.provider_state_id or "").split(";") if p.startswith("build:")]
+        if tags != [build]:
+            raise ProviderRefusal("checkpoint does not name this PyBaMM build (another build, or none recorded); "
+                                  "a solver state is not restored across builds")
+        if digest(cp.token) != cp.record.state_digest:
+            raise ProviderRefusal("checkpoint token does not hold the state its record names (corrupted or substituted)")
         held["solution"] = cp.token
 
     participant = CallbackParticipant(
