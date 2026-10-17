@@ -23,7 +23,9 @@ ledger capability).
 - [x] BR11 step-size memory for adaptive coupling windows, tests NOT RUN.
 - [x] BR12 defect fix: event-aligned windows keep their own failure outcome, tests NOT RUN.
 - [ ] Owner: MultiphysicsAuthority provider reporting for external participants (D5) and its rejection of explicit_completed/event_aligned windows.
-- [ ] BR13: owner to choose.
+- [x] BR13 mapping extrapolation / unverified mappings are open coupling-error sources, tests NOT RUN.
+- [ ] Owner: the coupling error budget calls a round-trip L2 residual a relative_bound (it is not a bound on the forward transfer).
+- [ ] BR14: owner to choose.
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)

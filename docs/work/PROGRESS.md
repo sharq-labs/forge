@@ -5210,3 +5210,15 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   - The authority also fails every window whose outcome is not `converged`, including `explicit_completed` and
     `event_aligned`. That looks unintended for explicit coupling, and is recorded for the owner rather than changed
     in the build phase.
+
+### BR13 -- mapping extrapolation and unverified mappings as open error sources (tests NOT RUN)
+- Survey: `execution/multiphysics/mapping.py` handles coverage soundly. `ExtrapolationPolicy.REFUSE` refuses, and
+  allowed extrapolation is recorded (`extrapolated_count`, `coverage_fraction`).
+- Gap in BR3: `_mapping_sources` read only the budget, which covers declared round-trip/conservation residuals.
+  - Extrapolated sites, and mappings with no declared verification, produced no source at all.
+  - They now produce UNQUANTIFIED sources, read from the same last-iteration diagnostics the budget uses.
+  - BR6 then vetoes the claims NUMERICAL channel for them automatically.
+- Owner item (recorded, not changed): the coupling error budget names a round-trip L2 residual a `relative_bound`.
+  A round-trip residual measures information loss, not the forward transfer error.
+- Tests appended to `tests/test_multiphysics_numerical_error_accounting.py` (stand-in runs). A real field-mapped
+  coupled run is deferred (DV-22).
