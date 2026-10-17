@@ -5115,3 +5115,16 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
     record the reported report's digest, which belongs to the same owner decision as F4.
 - Owner decision (2026-10-17): coupling conditioning stays OPT-IN for now. F4 (mandatory conditioning, including the
   electrothermal `CouplingEvidence` path) remains an open owner decision; R2 (digest link) goes with it.
+
+### BR7 -- nonlinear robustness: declared method chain and parameter continuation (tests NOT RUN)
+- New `numerical/robust.py`. It composes `NumericalProvider.execute` only: no new algorithm, no new acceptance rule.
+  - `solve_with_method_chain(provider, problem, methods)`: the same problem for every method, each starting from the
+    declared initial values. Every attempt is recorded, and refusals propagate. This replaces callers hard-coding
+    `lm` (the `hybr` false refusals in project memory) with a declared, recorded chain.
+  - `solve_by_continuation(provider, family, method, initial_step=, minimum_step=, max_steps=)`: warm starts come only
+    from converged outputs. A failed step halves the increment and is never reused. The accepted problem must equal
+    `family(1)` except for its initial values.
+- Tests written: `tests/numerical/test_robust_nonlinear.py`, using a deterministic fake "basin" provider plus one
+  real `SciPyRootProvider` case. Static checks only.
+- Not done: no caller uses these yet. The heater KVL `root_method="lm"` workaround is unchanged; migrating it is a
+  separate change to a domain file.

@@ -20,6 +20,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-13 | BR5 | Wall-time measurement on a provider-bound Jacobi coupling (the only reason to use it); none exists yet | benchmark, owner-authorized | NOT RUN |
 | DV-14 | BR6 claims condition | New tests + the BR3/BR4 tests changed by the review fixes | `pytest tests/claims/test_coupling_numerical_condition.py tests/test_multiphysics_numerical_error_accounting.py tests/test_multiphysics_splitting_estimate.py -q` | NOT RUN |
 | DV-15 | BR6 | Claims regression after a new claims module (architecture/layering, claims assessment suites) | `pytest tests/claims tests/test_repository_architecture.py tests/test_core_api_layering.py -q` | NOT RUN |
+| DV-16 | BR7 nonlinear robustness | New tests (fake basin provider + one real scipy root) | `pytest tests/numerical/test_robust_nonlinear.py -q` | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -88,3 +89,12 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 - Deterministic `run.to_dict()` (canonical digest) is assumed, as in BR4.
 - The study record shape is read as `uq_studies._refinement` writes it today. A change there must update this
   module.
+
+## Unverified assumptions (BR7)
+
+- Natural-parameter continuation cannot pass a turning point (fold) of the solution branch. Such a family ends as a
+  failure, never as a wrong root; pseudo-arclength continuation is not implemented.
+- A warm start assumes the converged outputs of the previous step are a valid initial guess for the next problem,
+  i.e. the family is continuous in lam. Nothing checks that continuity.
+- A method chain changes WHICH algorithm produced the accepted root. Two methods converging to different roots of a
+  multi-root problem are not compared; the first converged one is accepted and recorded.
