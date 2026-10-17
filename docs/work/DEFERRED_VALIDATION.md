@@ -9,7 +9,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 
 | ID | Big Rock | Deferred test / check | Command (when authorized) | Status |
 | --- | --- | --- | --- | --- |
-| DV-1 | BR1 + BR11 adaptive coupling windows (incl. step-size memory) | New tests | `pytest tests/test_multiphysics_window_control.py -q` | NOT RUN |
+| DV-1 | BR1 + BR11 + BR17 adaptive coupling windows (step-size memory, stagnation) | New tests | `pytest tests/test_multiphysics_window_control.py -q` | NOT RUN |
 | DV-2 | BR1 | Existing multiphysics runtime suites (exception subclass, plan serialization, run-record shape) | `pytest tests/test_stateful_multiphysics_runtime.py tests/test_big9_review_runtime_fixes.py tests/test_multiphysics_conservation_history.py tests/test_multiphysics_fan_in_units.py tests/test_external_participant_checkpoints.py tests/test_coupled_transport_admission.py -q` | NOT RUN |
 | DV-3 | BR1 | Stored plan/run fingerprints unchanged for plans without window control (any test or benchmark that pins a `CouplingPlan.fingerprint()` or run digest) | FAST tier, diffed against a pristine baseline | NOT RUN |
 | DV-8 | BR2 + BR16 joint IQN-ILS | New tests (hand-computed expectations, QR filter) | `pytest tests/test_multiphysics_iqn_ils.py -q` | NOT RUN |
@@ -46,6 +46,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
   deleted.
 - The divergence test compares each edge's latest absolute residual with its first-iteration residual. A
   residual that oscillates and then grows is caught; slow monotone growth below the factor is not.
+  (BR17 adds opt-in stagnation detection: no improvement on the earlier best for n iterations.)
 
 ## Unverified assumptions (BR2)
 

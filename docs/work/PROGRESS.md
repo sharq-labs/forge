@@ -5257,3 +5257,15 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
 - This closes the BR2 assumption "lstsq rcond is the only conditioning filter".
 - Tests appended to `tests/test_multiphysics_iqn_ils.py`: parallel columns keep only the newest, and independent
   columns are all kept.
+
+### BR17 -- stagnation detection for implicit coupling windows (tests NOT RUN)
+- `WindowControlPolicy.stagnation_iterations` (implicit only, serialized only when set) and
+  `runtime._stagnating`.
+  - Progress is the largest edge residual normalized by its first-iteration value.
+  - When the last n iterations do not improve on the earlier best, the window raises `CouplingWindowNotConverged`
+    ("stagnating") and BR1 subdivision takes over.
+  - The plan and the BR10 template refuse it on explicit coupling.
+- This closes BR1's assumption that slow non-improvement went undetected.
+- Tests appended to `tests/test_multiphysics_window_control.py`:
+  - x = y + 5 (constant 5 K step) is rejected after 4 of 200 iterations.
+  - A contracting loop is never flagged.
