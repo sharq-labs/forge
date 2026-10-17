@@ -5425,3 +5425,13 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
 - Test pin added (NOT RUN). Core gaps A-1, A-2, A-3, A-7, A-9 recorded for the Core compatibility review, not implemented.
 - Read-only review of the change: 0 BLOCKER, 2 MAJOR (fixture location/enforcement; M2/E2 dependence on Core review),
   minor wording and citations; all fixed.
+
+### 2026-10-18 -- Audit gap A-13 (force edges and the energy-density rule), from the CDAR fixtures
+
+- `CROSS_DOMAIN_ARCHITECTURE_AUDIT.md`: the edge-checks row now says the energy-density rule applies to scalar edges too
+  (`graph.py:301` builds a `QuantityDependency`; `composition/dependency.py:231, 241`), and its set
+  `ENERGY_DERIVED_DIMENSIONS` holds force, pressure and surface tension. New gap A-13 (CDAR-1, CDAR-2; Core review with
+  A-1 and A-2): a mechanical edge can answer that rule only with a prose `transport_declaration`.
+- Found while writing the fixtures on `test/cdar-architectural-fixtures` (`D:/forge-cdar`, `2e8434b7`); pinned there by
+  `test_gap_a_force_edge_must_speak_in_energy_terms`. Fixture next-step bullet updated; `OD6_MERGE_REVIEW.md` gap range.
+- Docs only. Verification: `git diff --check` only; no test was run.

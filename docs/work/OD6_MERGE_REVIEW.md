@@ -26,8 +26,8 @@ The program contract now carries ten requirements CDAR-1..CDAR-10 (physics-agnos
 first reference application), multi-domain acceptance criteria for M1, M2, E1, E2 and E3, and three architectural
 fixtures (RC circuit, spring-mass, chemical mixing) that must exist before any of those gates is decided. They are
 acceptance criteria, not a program or an exception. The evidence is the read-only audit
-`docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md` (of the Phase 3.5 tree). Core semantic gaps (A-1, A-2, A-3, A-7, A-9)
-are recorded for the Core compatibility review, not implemented. Pinned by
+`docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md` (of the Phase 3.5 tree). Core semantic gaps (A-1, A-2, A-3, A-4, A-7, A-9,
+A-13) are recorded for the Core compatibility review, not implemented. Pinned by
 `test_the_program_contract_carries_the_cross_domain_architecture_requirements` (NOT RUN).
 
 ## Files
@@ -39,7 +39,7 @@ are recorded for the Core compatibility review, not implemented. Pinned by
 | `tests/test_capability_completion.py` | program pin, build-first pin (DV0 required by no gate), battery snapshot (stage and statuses fixed, evidence may only grow), negative tests for every back door, governance-document consistency (policy, PR template, matrix, ACTIVE_PLAN) |
 | `docs/SCIENTIFIC_CAPABILITY_MATRIX.md` | **hand-edited** to the renderer's format (traced line by line by the review; confirm with the generator) |
 | `docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md` | new program contract: build-first, scope per gate, Cross-Domain Scientific Architecture Requirements and per-gate criteria, preconditions, prohibitions, battery / EXC-1 / Genesis relationships, exit |
-| `docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md` | new read-only audit: generic / thermal-biased / missing per area, gaps A-1..A-12 mapped to CDARs and owners |
+| `docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md` | new read-only audit: generic / thermal-biased / missing per area, gaps A-1..A-13 mapped to CDARs and owners (A-13, the force-edge energy-density rule, added from the fixtures) |
 | `docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md` | active-epic rule names the program; "Research program epics" section; A2 row |
 | `.github/pull_request_template.md` | line 3 and the exception section name the program's scope |
 | `docs/work/ACTIVE_PLAN.md`, `docs/work/PROGRESS.md` | epic line at the top, OD-6 row decided, stale battery / EXC-1 statements marked superseded on merge, progress entry |

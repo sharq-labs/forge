@@ -22,7 +22,7 @@ Thermal hard-coding exists in one admission module and one message.
 | Area | Generic (exists) | Thermal-biased | Missing |
 | --- | --- | --- | --- |
 | Port typing | `scientific/multiphysics/ports.py:24-35, 68-152` (kind, quantity, unit, algebra, frame); `scientific/fields/definition.py:30-41` (node / cell) | none | potential vs flow role; intensive vs extensive; density vs integrated; facet location |
-| Edge checks | `scientific/multiphysics/graph.py:248-371` (kind, dimension, algebra, components, frame transform) | energy/power-only field-edge rule (`graph.py:285-295`: energy-like field edges need a prose transport declaration; not thermal, belongs with A-2) | `quantity` not compared (`graph.py:252`); same-dimension, different-meaning pairs pass (`scientific/composition/conversion.py:127-132`) |
+| Edge checks | `scientific/multiphysics/graph.py:248-371` (kind, dimension, algebra, components, frame transform) | energy-centred, not thermal: the energy-density rule applies to field edges (`graph.py:285-295`) AND to every scalar edge, which `graph.py:301` builds into a `QuantityDependency` (`scientific/composition/dependency.py:231, 241`); its set `ENERGY_DERIVED_DIMENSIONS` (`conversion.py:133-149`) holds force (J/m), pressure (J/m^3) and surface tension (J/m^2), so a mechanical edge must state a prose transport (A-13; with A-2) | `quantity` not compared (`graph.py:252`); same-dimension, different-meaning pairs pass once that rule is answered (`scientific/composition/conversion.py:127-132`) |
 | Conservation | `scientific/conservation.py`, `scientific/multiphysics/conservation.py:26-29, 93`, runtime `_balance` | losses only with `EnergyConversion` (`graph.py:412-423`) | lossy mass / charge / species crossings; field-valued balances (refused, `graph.py:401-405`) |
 | Field transfer | `execution/multiphysics/mapping.py` (identity, nearest, bilinear, conservative cell), component-wise vectors | message text names kelvin (`mapping.py:969`) | a field-kind flag: conservative remap assumes a density (`mapping.py:1005, 1067`) |
 | Flux / intensive | `execution/multiphysics/interface_exchange.py:41-43` (P) | none | not wired into graph or runtime; sign convention never applied; no normal projection |
@@ -52,13 +52,16 @@ Thermal hard-coding exists in one admission module and one message.
 | A-10 | Domain-named MCP tools; packs without participants | 10 | later review | API |
 | A-11 | No ODE / DAE, chemical, multibody or structural participant | 4 | program fixtures; later specialization | runtime |
 | A-12 | Offset-scale refusal message suggests kelvin (`mapping.py:969`) | 3 | next code pass (message only) | text |
+| A-13 | Every force, pressure, stiffness or surface-tension edge (scalar or field) falls under the energy-density rule and can answer it only with a free-prose `transport_declaration`: a dimension cannot tell a force from an energy per length. Deliberate (the rule refuses silence, and its message names the force case), but mechanics has no declared way to say "no energy crosses". Found by the CDAR fixtures (pinned there by `test_gap_a_force_edge_must_speak_in_energy_terms`) | 1, 2 | Core review, with A-1 and A-2 | Core semantic change |
 
 ## Next steps (deferred, not done here)
 
-- Write the three architectural fixtures in `tests/architecture/test_cross_domain_fixtures.py` (test code only), unexecuted.
+- Run the three architectural fixtures, written 2026-10-18 on branch `test/cdar-architectural-fixtures` (`D:/forge-cdar`,
+  stacked on the Phase 3.5 branch; test code only; NOT RUN, DV-99 there). Gaps are pinned there by ordinary tests
+  (`test_gap_...`), not xfail.
 - Refactor `conjugate_interface.py` into a generic Dirichlet-Neumann admission with CHT as its instance (E2).
 - Generalize the `mapping.py:969` message (A-12).
-- Take A-1, A-2, A-3, A-4, A-7 and A-9 through the Core compatibility review (Core-package semantics; none of the
+- Take A-1, A-2, A-3, A-4, A-7, A-9 and A-13 through the Core compatibility review (Core-package semantics; none of the
   symbols is in the frozen API snapshot). Gates that depend on them (M2 on A-3, E2 on A-4) may be built before the
   review but are decided only after it; M1 declares its variable kind locally until A-3 is decided.
 - Update the stale "BLOCKED by policy (OD-P2-1)" docstring of `conjugate_interface.py` (P) when OD-6 merges.
