@@ -18,6 +18,8 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-11 | BR4 splitting estimate | New tests (exact first-order model problem; determinism of an identical re-run) | `pytest tests/test_multiphysics_splitting_estimate.py -q` | NOT RUN |
 | DV-12 | BR5 concurrent Jacobi | New tests (Barrier proof of overlap, sequential equivalence of the run record, first-in-order failure) | `pytest tests/test_multiphysics_concurrent_jacobi.py -q` | NOT RUN |
 | DV-13 | BR5 | Wall-time measurement on a provider-bound Jacobi coupling (the only reason to use it); none exists yet | benchmark, owner-authorized | NOT RUN |
+| DV-14 | BR6 claims condition | New tests + the BR3/BR4 tests changed by the review fixes | `pytest tests/claims/test_coupling_numerical_condition.py tests/test_multiphysics_numerical_error_accounting.py tests/test_multiphysics_splitting_estimate.py -q` | NOT RUN |
+| DV-15 | BR6 | Claims regression after a new claims module (architecture/layering, claims assessment suites) | `pytest tests/claims tests/test_repository_architecture.py tests/test_core_api_layering.py -q` | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -77,3 +79,12 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 - When one concurrent participant fails, the others in the same batch have already advanced. This is the same
   situation as a sequential failure after earlier participants advanced. Window control (BR1) rolls all of them
   back; without it the run fails.
+
+## Unverified assumptions (BR6)
+
+- Run binding: the coupled run's `run_id` names the study's level 0 (`<run_id>~numerical~0`), following the
+  `uq_studies` convention. Nothing yet ties a claims report to the digest of the coupled run that produced it. That
+  needs the capability integration that does not exist yet.
+- Deterministic `run.to_dict()` (canonical digest) is assumed, as in BR4.
+- The study record shape is read as `uq_studies._refinement` writes it today. A change there must update this
+  module.

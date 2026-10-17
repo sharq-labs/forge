@@ -5076,3 +5076,35 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   the scientific spec. A `ParticipantSpec` field would move every graph fingerprint, and `participant.py` is owned by
   the linked adapter session.
 - Tests written: `tests/test_multiphysics_concurrent_jacobi.py`. Static checks only.
+
+### BR6 -- coupling numerical error as a condition on the claims NUMERICAL channel (tests NOT RUN)
+- New `claims/coupling_numerical.py`: `condition_numerical_uncertainty(study_record, run, splitting=None)`.
+  - The input is a `uq_studies` refinement record. It is re-derived through `numerical_uq.estimate_from_dict`, and
+    its level 0 must be `<run_id>~numerical~0`.
+  - The coupling assessment is computed from the `MultiphysicsRunRecord` inside the call.
+  - The study's NUMERICAL record passes unchanged only when the run has no coupling edge, or every coupling source
+    is quantified as exactly 0. Otherwise the channel becomes UNKNOWN: estimates, open sources, non-zero bounds and
+    incomplete windows all veto.
+  - It never quantifies or widens. The vetoed record reaches `claims.uncertainty.transport` as an UNKNOWN NUMERICAL
+    channel.
+- Static scientific review (read-only agent; the review skill and reviewer agent type were unavailable):
+  CHANGES REQUIRED. Fixed in `e4b5809c` and `33cefed8`:
+  - F1 BLOCKER: caller-declared coverage was an authority leak. Removed.
+  - F2 HIGH: binding by run_id only, and a hand-built assessment. The assessment is now computed from the run and
+    stamps `run_digest` and `coupled`.
+  - F3 HIGH: the NUMERICAL record was not tied to the run. Now re-derived and level-0-bound.
+  - F5 MEDIUM: refused windows were assessed as converged. Now UNBOUNDED.
+  - F6 MEDIUM: BR4 invented a zero for identical levels. It now applies the round-off floor and reports
+    UNQUANTIFIED.
+  - F7: tests rewritten.
+  - F8: the claims -> execution edge is new and intentional (the architecture tests allow it).
+- **Owner decisions (review F4, not fixed):**
+  - Conditioning is opt-in. Making it mandatory for every claim built on a coupled run would change the NUMERICAL
+    verdict of the existing electrothermal capability (`CouplingEvidence`). No claims capability yet produces a
+    `MultiphysicsRunRecord`.
+  - Capability-declared coverage (a `RefinementStudy` stating which coupling kinds its ladder refines, bound by the
+    plan digest and checked against the ladder) is a design item. Iteration error is not coverable by today's
+    integer-count ladders.
+- **Failed approach (do not repeat):** a first BR6 design widened the claim interval by the coupling bound. Mapping
+  bounds are relative FIELD norms, not QoI errors, so widening would invent a propagation rule. A second draft let
+  callers declare coverage, which was the review's BLOCKER.
