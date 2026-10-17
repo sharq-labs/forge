@@ -24,6 +24,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-17 | BR8 heater chain | New tests (200-state exact-equality sweep; SciPy-1.18-dependent fallback check) | `pytest tests/domains/electrical/test_heater_root_chain.py -q` | NOT RUN |
 | DV-18 | BR8 | Multiscale suites still pass with the fixture unchanged (identity unchanged by construction) | `pytest tests/test_multiscale_runtime.py tests/test_multiscale_review_fixes.py tests/test_big11_review_fixes.py -q` | NOT RUN |
 | DV-19 | BR9 multiscale fast non-convergence | New tests + existing multiscale suites (policy digest unchanged by default) | `pytest tests/test_multiscale_fast_nonconvergence.py tests/test_multiscale_runtime.py tests/test_multiscale_review_fixes.py -q` | NOT RUN |
+| DV-20 | BR10 pack templates | New tests + composition-pack suites (template/pack digests unchanged) | `pytest tests/compositionpacks -q` | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -116,3 +117,10 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
   exhausts the rejection bound and refuses, as before, just later.
 - No real fast system raises `FastExecutionNotConverged` yet. The reference heater system's coupled loop failures
   reach the macro loop only if they propagate as `CouplingWindowNotConverged` (BR1); that path is untested.
+
+## Unverified assumptions (BR10)
+
+- `dataclasses.replace` on `SystemGraphBlueprint` and `ParticipantBlueprint` re-validates as construction does. The
+  positive test builds a restorable blueprint this way.
+- No built-in pack participant is deterministically restorable, so no built-in system can use window control
+  without adapter work. That is outside this change.

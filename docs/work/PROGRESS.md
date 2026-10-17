@@ -5161,3 +5161,17 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   decorated exception class.
 - Tests written: `tests/test_multiscale_fast_nonconvergence.py`, using the unchanged reference fixture with a
   fail-first-N fast system. Static checks only.
+
+### BR10 -- composition-pack templates declare window control (tests NOT RUN)
+- Gap: BR1 window control could not be reached from any declared system. The composition-pack
+  `CouplingPolicyTemplate` materialized plans without it. IQN-ILS (BR2) was already reachable through the template's
+  `RelaxationPolicy`.
+- `compositionpacks/blueprint.py`: `CouplingPolicyTemplate.window_control`.
+  - Optional, and serialized only when declared; the built-in packs' identity was confirmed unchanged by reading the
+    object.
+  - Carried into `materialize()`.
+  - Refused at declaration where the plan would refuse it, and refused by `validate_against_blueprint` unless every
+    participant is deterministically restorable. No built-in blueprint participant is today.
+- Deliberately not exposed: BR5 concurrency. Packs may not pin executors, and thread-safety belongs to the executor.
+- Tests written: `tests/compositionpacks/test_template_window_control.py`, using the real built-in electrothermal
+  pack objects. Static checks only.
