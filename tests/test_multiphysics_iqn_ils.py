@@ -236,3 +236,39 @@ def test_iqn_edge_uncertainty_is_unknown_where_constant_relaxation_propagates_it
     for edge_id in ("e_x", "e_y"):
         assert constant.final_outputs["_edge_uncertainty"][edge_id]["kind"] == "standard"
         assert iqn.final_outputs["_edge_uncertainty"][edge_id]["kind"] == "unknown"
+
+
+# ---- BR16: QR filtering of near-dependent secant pairs ------------------------------------------
+
+
+def test_non_iqn_policies_do_not_serialize_a_filter_and_iqn_policies_do():
+    assert "iqn_filter" not in _constant().to_dict()
+    assert _iqn().to_dict()["iqn_filter"] == 1e-10
+    assert RelaxationPolicy.from_dict(_iqn().to_dict()) == _iqn()
+
+
+@pytest.mark.parametrize("value", [-1e-3, 1.0, float("nan")])
+def test_iqn_filter_is_bounded(value):
+    with pytest.raises(InvalidScientificProblem, match="iqn_filter"):
+        RelaxationPolicy(RelaxationKind.IQN_ILS, 0.5, 0.05, 1.0, 3, value)
+
+
+def test_a_filter_on_a_scalar_mix_policy_is_refused():
+    with pytest.raises(InvalidScientificProblem, match="IQN-ILS relaxation only"):
+        RelaxationPolicy(RelaxationKind.CONSTANT, 0.5, 0.05, 1.0, 0, 1e-6)
+
+
+def test_qr_filter_keeps_the_newest_of_two_parallel_secant_columns():
+    import numpy as np
+
+    controller = _controller(_iqn())
+    parallel = np.asarray([[1.0, 2.0], [1.0, 2.0]])  # column 1 (newest) = 2 x column 0
+    assert controller._qr_filter(parallel) == [1]
+
+
+def test_qr_filter_keeps_independent_columns_and_skips_zero_ones():
+    import numpy as np
+
+    controller = _controller(_iqn())
+    assert controller._qr_filter(np.asarray([[1.0, 0.0], [0.0, 1.0]])) == [0, 1]
+    assert controller._qr_filter(np.asarray([[0.0, 1.0], [0.0, 1.0]])) == [1]

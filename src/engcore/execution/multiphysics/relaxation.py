@@ -64,6 +64,29 @@ class RelaxationController:
             )
         return relax_uncertainty(previous, raw, factor=factor, unit=unit, edge_id=edge_id)
 
+    def _qr_filter(self, scaled: np.ndarray) -> list[int]:
+        """Columns to keep, newest first: drop one whose new direction is negligible.
+
+        Modified Gram-Schmidt over the columns from newest to oldest; a column
+        is kept only when its component orthogonal to the kept ones exceeds
+        ``iqn_filter`` times its own norm.  The newest secant information wins
+        over older, near-parallel pairs.
+        """
+        basis: list[np.ndarray] = []
+        keep: list[int] = []
+        for index in range(scaled.shape[1] - 1, -1, -1):
+            column = scaled[:, index].astype(float).copy()
+            norm = float(np.linalg.norm(column))
+            if norm <= np.finfo(np.float64).tiny:
+                continue
+            for q in basis:
+                column -= float(q @ column) * q
+            remainder = float(np.linalg.norm(column))
+            if remainder > self.policy.iqn_filter * norm and remainder > 0.0:
+                basis.append(column / remainder)
+                keep.append(index)
+        return sorted(keep)
+
     def relax_joint(
         self,
         items: Mapping[str, tuple[CouplingValue, CouplingValue, str]],
@@ -129,12 +152,14 @@ class RelaxationController:
             )
             scaled = v * weight[:, None]
             if np.all(np.isfinite(scaled)) and float(np.max(np.abs(scaled))) > np.finfo(np.float64).tiny:
-                coefficients, *_ = np.linalg.lstsq(
-                    scaled, -residual * weight, rcond=None
-                )
-                candidate = new + w @ coefficients
-                if np.all(np.isfinite(candidate)):
-                    step = candidate
+                keep = self._qr_filter(scaled)
+                if keep:
+                    coefficients, *_ = np.linalg.lstsq(
+                        scaled[:, keep], -residual * weight, rcond=None
+                    )
+                    candidate = new + w[:, keep] @ coefficients
+                    if np.all(np.isfinite(candidate)):
+                        step = candidate
         out: dict[str, CouplingValue] = {}
         offset = 0
         for edge_id, size in layout:

@@ -169,6 +169,10 @@ class RelaxationPolicy:
     #: IQN-ILS only: how many secant pairs (iterate differences) the
     #: least-squares Jacobian keeps; 0 for every other kind.
     iqn_columns: int = 0
+    #: IQN-ILS only: QR filter threshold.  A secant column whose component
+    #: orthogonal to the newer kept columns is below this fraction of its own
+    #: norm adds (almost) nothing and is dropped; recorded in the policy.
+    iqn_filter: float = 1e-10
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", RelaxationKind(self.kind))
@@ -198,6 +202,12 @@ class RelaxationPolicy:
                 raise InvalidScientificProblem("IQN-ILS requires iqn_columns in [1, 50]")
         elif columns != 0:
             raise InvalidScientificProblem("iqn_columns applies to IQN-ILS relaxation only")
+        qr_filter = float(self.iqn_filter)
+        if not math.isfinite(qr_filter) or not 0.0 <= qr_filter < 1.0:
+            raise InvalidScientificProblem("iqn_filter must lie in [0, 1)")
+        if self.kind is not RelaxationKind.IQN_ILS and qr_filter != 1e-10:
+            raise InvalidScientificProblem("iqn_filter applies to IQN-ILS relaxation only")
+        object.__setattr__(self, "iqn_filter", qr_filter)
         object.__setattr__(self, "factor", factor)
         object.__setattr__(self, "minimum_factor", minimum)
         object.__setattr__(self, "maximum_factor", maximum)
@@ -211,7 +221,7 @@ class RelaxationPolicy:
             "maximum_factor": self.maximum_factor,
             # absent for every other kind: existing policies keep their fingerprints
             **(
-                {"iqn_columns": self.iqn_columns}
+                {"iqn_columns": self.iqn_columns, "iqn_filter": self.iqn_filter}
                 if self.kind is RelaxationKind.IQN_ILS
                 else {}
             ),
@@ -226,6 +236,7 @@ class RelaxationPolicy:
             minimum_factor=payload.get("minimum_factor", 0.05),
             maximum_factor=payload.get("maximum_factor", 1.0),
             iqn_columns=payload.get("iqn_columns", 0),
+            iqn_filter=payload.get("iqn_filter", 1e-10),
         )
 
 
