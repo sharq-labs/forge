@@ -26,7 +26,8 @@ ledger capability).
 - [x] BR13 mapping extrapolation / unverified mappings are open coupling-error sources, tests NOT RUN.
 - [ ] Owner: the coupling error budget calls a round-trip L2 residual a relative_bound (it is not a bound on the forward transfer).
 - [x] BR14 defect fix: coupled nodes may not run unreported external providers, tests NOT RUN.
-- [ ] BR15: owner to choose.
+- [x] BR15 fallback solver routes start at their own refinement level (F-5), tests NOT RUN.
+- [ ] BR16 onward: keep building (owner instruction 2026-10-17).
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)

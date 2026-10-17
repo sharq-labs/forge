@@ -5237,3 +5237,14 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   Big Rock edges need pinning at recertification: `execution/multiphysics/runtime.py -> concurrency.py` (BR5) and
   `claims/coupling_numerical.py -> execution/multiphysics/numerical_error.py` (BR6; claims/** is a certified glob).
   The BR14 edge `authorities.py -> execution/multiphysics/external.py` is already pinned.
+
+### BR15 -- fallback solver routes start at their own refinement level (review F-5, tests NOT RUN)
+- Surveyed and not changed:
+  - `execution/multiphysics/admission.py` is a plan-compatibility and factory-coverage report that
+    `from_factory_registry` already enforces; it is not an applicability gate, so there is no gap.
+  - Concurrent multiscale representative windows were rejected for now: `_execute` mutates shared accounting and the
+    result cache, and a macro attempt usually holds one representative window.
+- Fix: `run_adaptive_plan` resets `refinement` and `refinement_level` on every solver-route change, so
+  `max_refinements` counts per route. This was the pre-existing finding F-5 from the Phase 1 review.
+- Test appended to `tests/execution/orchestration/test_checkpoint_routing.py`.
+- Owner instruction (2026-10-17): keep building Big Rocks continuously, without asking between them.
