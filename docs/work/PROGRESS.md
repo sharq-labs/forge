@@ -5143,3 +5143,5 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   - Exact-equality invariant over a 200-state sweep: the chain's result equals the accepted method's own result,
     and the chain never fails where either method alone succeeds.
   - A SciPy-version-dependent check that the sweep exercises the hybr false refusal.
+- Owner decision (2026-10-17): `tests/multiscale_reference.py` stays on `root_method="lm"`, so its evidence is
+  unchanged. The hybr->lm chain is available opt-in only.
