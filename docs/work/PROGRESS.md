@@ -5128,3 +5128,18 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   real `SciPyRootProvider` case. Static checks only.
 - Not done: no caller uses these yet. The heater KVL `root_method="lm"` workaround is unchanged; migrating it is a
   separate change to a domain file.
+
+### BR8 -- declared hybr -> lm root-method chain for the heater KVL (tests NOT RUN)
+- `domains/electrical/heater_circuit.py`: `root_methods` (opt-in chain) and `solve_with_attempts`.
+  - The chain uses `numerical.robust.solve_with_method_chain`, with the same problem, initial current and settings
+    for every method.
+  - The chain is named in the identity only when declared.
+  - Without a chain, identity, operator digest and records are unchanged byte-for-byte.
+- **Why the workaround caller was not migrated:** the only `root_method="lm"` caller is the test fixture
+  `tests/multiscale_reference.py`. Migrating it changes its declared participant solver version (`lm`), its
+  configuration identity (`"root_method": "lm"`), and its last-bit results wherever hybr converges first.
+  Identical evidence (owner requirement) and migration are mutually exclusive; owner decision pending.
+- Tests written: `tests/domains/electrical/test_heater_root_chain.py`.
+  - Exact-equality invariant over a 200-state sweep: the chain's result equals the accepted method's own result,
+    and the chain never fails where either method alone succeeds.
+  - A SciPy-version-dependent check that the sweep exercises the hybr false refusal.

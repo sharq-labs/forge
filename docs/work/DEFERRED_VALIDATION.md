@@ -21,6 +21,8 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-14 | BR6 claims condition | New tests + the BR3/BR4 tests changed by the review fixes | `pytest tests/claims/test_coupling_numerical_condition.py tests/test_multiphysics_numerical_error_accounting.py tests/test_multiphysics_splitting_estimate.py -q` | NOT RUN |
 | DV-15 | BR6 | Claims regression after a new claims module (architecture/layering, claims assessment suites) | `pytest tests/claims tests/test_repository_architecture.py tests/test_core_api_layering.py -q` | NOT RUN |
 | DV-16 | BR7 nonlinear robustness | New tests (fake basin provider + one real scipy root) | `pytest tests/numerical/test_robust_nonlinear.py -q` | NOT RUN |
+| DV-17 | BR8 heater chain | New tests (200-state exact-equality sweep; SciPy-1.18-dependent fallback check) | `pytest tests/domains/electrical/test_heater_root_chain.py -q` | NOT RUN |
+| DV-18 | BR8 | Multiscale suites still pass with the fixture unchanged (identity unchanged by construction) | `pytest tests/test_multiscale_runtime.py tests/test_multiscale_review_fixes.py tests/test_big11_review_fixes.py -q` | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -98,3 +100,10 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
   i.e. the family is continuous in lam. Nothing checks that continuity.
 - A method chain changes WHICH algorithm produced the accepted root. Two methods converging to different roots of a
   multi-root problem are not compared; the first converged one is accepted and recorded.
+
+## Unverified assumptions (BR8)
+
+- MINPACK is deterministic for identical residual, initial value and options, so a chain attempt reproduces the
+  single-method result bit-for-bit. The exact-equality test relies on this.
+- The 200-state sweep contains at least one hybr false refusal under SciPy 1.18, as recorded in project memory but
+  not re-measured.
