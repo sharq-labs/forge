@@ -30,7 +30,7 @@ ledger capability).
 - [x] BR16 QR filtering of near-dependent IQN-ILS secant pairs, tests NOT RUN.
 - [x] BR17 stagnation detection for implicit coupling windows, tests NOT RUN.
 - [x] BR18 opt-in under-relaxation of the electrothermal fixed point, tests NOT RUN.
-- [ ] BR19 onward: keep building (owner instruction 2026-10-17).
+- [ ] BR19 adaptive resolution (mesh control slice 1) under EXC-1.
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)
@@ -342,8 +342,33 @@ therapeutic work.
 
 ## Active-epic exceptions (open)
 
-None. An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start,
-exit, expiry, owner approval, prohibitions).
+An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
+expiry, owner approval, prohibitions).
+
+### EXC-1 -- adaptive mesh control, slice 1: adaptive resolution (Engineering Runtime V1 BR19)
+
+1. **Exact scope:** a new module `src/engcore/claims/adaptive_resolution.py` and its tests, on branch
+   `feat/engrt-v1-big-rocks`. It may import `claims/numerical_uq.py` (the canonical GCI estimator) but may not modify
+   it.
+2. **Allowed capability work:** an adaptive uniform-refinement driver. It solves at successively finer resolutions
+   (counts x ratio^k) and stops when the canonical GCI half-width meets a declared target, or when a declared level
+   budget is exhausted. The result is the finest run's value with its quantified NUMERICAL uncertainty (or UNKNOWN),
+   recorded per level.
+3. **Reason:** owner-directed Engineering Runtime V1 program (adaptive numerical execution and mesh control). The
+   owner approved this exception on 2026-10-17 rather than waiting for the battery epic.
+4. **Start condition:** owner approval in chat, 2026-10-17; build-phase rules apply (no test execution until
+   authorized).
+5. **Exit condition:** the slice is built; its deferred tests (DV-27) are executed and pass, or every failure is
+   recorded; and a scientific review finds no false-support issue. Or the owner closes the exception.
+6. **Expiry / timebox:** 2026-10-31. **Proposed by Claude, not set by the owner**; the owner may amend it.
+7. **Owner approval:** the repository owner, in the Claude Code session, 2026-10-17 ("Approve an active-epic exception
+   for adaptive mesh control as a new capability foundation").
+8. **Still prohibited:**
+   - local AMR, new mesh or field record types, or solver changes (a later slice needs its own scope);
+   - changes to any capability declaration, the ledger (`scientific_capability_completion.json`) or maturity stages;
+   - treating a met accuracy target as validation, or as a stage promotion;
+   - any change to the battery 1RC epic or its pins;
+   - a second concurrent exception, which would trigger the anti-loophole owner review.
 
 ## Stop conditions
 
