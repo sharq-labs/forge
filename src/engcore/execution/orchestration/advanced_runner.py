@@ -15,7 +15,7 @@ from .capabilities import (
     SolverCapability,
     rank_solver_capabilities,
 )
-from .checkpoint import CheckpointReference
+from .checkpoint import CheckpointReference, adopt_checkpoint, resume_owner, resume_point_for
 from .plan import SimulationPlan
 from .refinement import RefinementRequest
 from .resources import ResourceBudget, ResourceUsage
@@ -31,6 +31,7 @@ def run_adaptive_plan(
     resource_budget: ResourceBudget = ResourceBudget(),
     checkpoint: CheckpointReference | None = None,
 ) -> AdvancedOrchestrationReport:
+    owner = resume_owner(checkpoint)
     ranked = rank_solver_capabilities(capabilities, requirements)
     declared = set(plan.solver_candidates)
     ranked = tuple(cap for cap in ranked if cap.solver_id in declared)
@@ -42,6 +43,14 @@ def run_adaptive_plan(
             checkpoint,
             ("no declared solver satisfies the simulation requirements",),
         )
+    if owner is not None and owner not in {cap.solver_id for cap in ranked}:
+        return AdvancedOrchestrationReport(
+            (),
+            ResourceUsage(),
+            AdvancedStopReason.NO_CAPABLE_SOLVER,
+            checkpoint,
+            (f"resume_checkpoint_owner_{owner}_not_a_capable_declared_solver",),
+        )
 
     attempts: list[AdvancedAttemptRecord] = []
     total = ResourceUsage()
@@ -52,6 +61,13 @@ def run_adaptive_plan(
     problems: list[str] = []
 
     for capability in ranked:
+        if owner is not None and capability.solver_id != owner:
+            # a resumed run continues ONE solver's state; another solver
+            # cannot continue it and is not run cold in its place
+            problems.append(
+                f"{capability.solver_id}:resume_checkpoint_belongs_to_{owner}"
+            )
+            continue
         backend = backends.get(capability.solver_id)
         if backend is None:
             problems.append(f"{capability.solver_id}:backend_missing")
@@ -68,11 +84,14 @@ def run_adaptive_plan(
                 f"{plan.plan_id}:{attempt_number}:{capability.solver_id}:"
                 f"r{refinement_level}"
             )
+            # a checkpoint is solver state: only the solver that produced it
+            # may resume from it, so a fallback solver starts cold
+            resume_from = resume_point_for(current_checkpoint, capability.solver_id)
             try:
                 outcome = backend.run_advanced(
                     attempt_id=attempt_id,
                     deterministic_seed=plan.deterministic_seed,
-                    checkpoint=current_checkpoint,
+                    checkpoint=resume_from,
                     refinement=refinement,
                 )
             except Exception as exc:
@@ -91,7 +110,7 @@ def run_adaptive_plan(
                         capability.solver_id,
                         ResourceUsage(),
                         refinement,
-                        current_checkpoint,
+                        None,
                     )
                 )
                 break
@@ -108,17 +127,26 @@ def run_adaptive_plan(
                 refinement_level,
                 outcome.failure_code,
             )
+            adopted, problem = adopt_checkpoint(
+                outcome.checkpoint,
+                solver_id=capability.solver_id,
+                state=outcome.state,
+            )
+            if problem:
+                problems.append(problem)
+            # the record carries only a checkpoint that was adopted: a refused
+            # one is named in ``problems`` and is never readable as usable
             attempts.append(
                 AdvancedAttemptRecord(
                     attempt,
                     capability.solver_id,
                     outcome.usage,
                     refinement,
-                    outcome.checkpoint,
+                    adopted,
                 )
             )
-            if outcome.checkpoint is not None:
-                current_checkpoint = outcome.checkpoint
+            if adopted is not None:
+                current_checkpoint = adopted
             if exceeded:
                 return AdvancedOrchestrationReport(
                     tuple(attempts),
@@ -142,11 +170,14 @@ def run_adaptive_plan(
                     refinement_level,
                 )
                 if decision is AdaptiveDecision.ACCEPT:
+                    # the accepted result's checkpoint is the one the ACCEPTED
+                    # attempt returned, never an earlier, rejected refinement's
+                    # or another route's
                     return AdvancedOrchestrationReport(
                         tuple(attempts),
                         total,
                         AdvancedStopReason.ERROR_TARGET_SATISFIED,
-                        current_checkpoint,
+                        adopted,
                         tuple(problems),
                     )
                 if decision is AdaptiveDecision.STOP:

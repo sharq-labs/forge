@@ -24,6 +24,7 @@ from ..fields import (
     read_mesh_support,
 )
 from ..serialization import require_schema, schema_string
+from ..units.quantity import is_ratio_scale
 from .conservation import CoupledConservation, TransferMeasure
 from .frames import FrameTransform
 from .mapping import FieldMappingDefinition
@@ -381,6 +382,15 @@ class PhysicsGraph:
                 raise InvalidScientificProblem(
                     f"fan-in to {target.key} requires one explicit reduction operator; "
                     f"found {[e.reduction.value for e in edges]}"
+                )
+            unit = self.participant(target.participant_id).port(target.port_id).unit
+            if ReductionOperator.SUM in reductions and not is_ratio_scale(unit):
+                # a sum of absolute values on a scale with a conventional zero
+                # depends on which unit it is computed in (two 300 K values sum
+                # to 600 K, or to 326.85 K in degC); MEAN/MIN/MAX do not
+                raise InvalidScientificProblem(
+                    f"fan-in SUM to {target.key} is declared in {unit!r}, a scale with a "
+                    f"conventional zero; the sum would depend on the unit chosen"
                 )
 
     def _validate_conservation(self) -> None:
