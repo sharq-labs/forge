@@ -114,9 +114,9 @@ ADDITIONAL_TRIGGERS: tuple[Trigger, ...] = (
     Trigger(
         "assurance_suites",
         ("tests/**",),
-        "every source gate's result is a claim about the suites it ran. A "
-        "changed or deleted test changes what FAST, SCIENTIFIC and each "
-        "mutation kill mean, whether or not it is pinned by the certificate",
+        "FAST, scientific, regression and mutation pass counts are claims about "
+        "the suites actually executed; changes to any test must invalidate the "
+        "previous certificate until the applicable gates are re-executed",
     ),
     Trigger(
         "trust_hardening_population",

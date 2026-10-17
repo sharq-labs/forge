@@ -75,6 +75,7 @@ def test_every_file_the_certificate_enumerates_requires_recertification(area):
     "src/engcore/execution/trusted.py",
     "benchmarks/trust_hardening/audit/mutations.py",
     "tests/test_anything.py",
+    "tests/domains/test_nasa_battery_aging_ingestion.py",
     "pyproject.toml",
     # Main audit: uq was out of scope while certified routes called its grid
     # refusal, and the SRIA admission chain had no certificate at all.
@@ -229,6 +230,20 @@ def test_an_ordinary_pull_request_uses_the_normal_tests(repo):
     assert ownership.mode == rs.ORDINARY
     assert ownership.outputs() | {} == {**ownership.outputs(), "recertification": "not_required",
                                         "delegate_to_recertify": "false", "certificate_child": "false"}
+
+
+@pytest.mark.parametrize("path", [
+    "tests/domains/test_nasa_battery_aging_ingestion.py",
+    "tests/test_anything.py",
+    "tests/mcp/test_audit_results_declarations.py",
+])
+def test_assurance_suite_edits_invalidate_the_previous_certificate(repo, path):
+    root, base = repo
+    ownership = _pull_request(root, base, (path, "def test_case():\n    assert True\n"))
+    assert ownership.mode == rs.RECERTIFY_SOURCE
+    assert path in ownership.changed
+    assert "assurance_suites" in ownership.reasons[path]
+    assert ownership.outputs()["delegate_to_recertify"] == "true"
 
 
 def test_a_main_push_uses_the_normal_tests(repo):
