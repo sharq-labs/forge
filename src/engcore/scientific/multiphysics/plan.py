@@ -62,6 +62,18 @@ class RelaxationKind(str, Enum):
     #: reset every window).  Its update is not a scalar mix of two iterates, so
     #: no scalar factor is recorded and propagated uncertainty is UNKNOWN.
     IQN_ILS = "iqn_ils"
+    #: Phase 3 BR14: interface quasi-Newton with a multi-vector inverse
+    #: Jacobian (Bogaers et al. 2014; Lindner, Mehl, Uekermann 2017): the
+    #: secant pairs of the current window update the approximation carried
+    #: from the previous accepted window, J = J_prev + (W - J_prev V) V^+,
+    #: instead of starting from zero.  Jacobi only; the dense approximation is
+    #: bounded by ``imvj_max_dimension`` and carried across at most
+    #: ``imvj_reuse_windows`` windows before it restarts.  Uncertainty UNKNOWN.
+    IQN_IMVJ = "iqn_imvj"
+
+
+#: Phase 3 BR14: the relaxation kinds that update the joint interface vector
+IQN_KINDS = frozenset({RelaxationKind.IQN_ILS, RelaxationKind.IQN_IMVJ})
 
 
 def _time(value: Quantity, *, label: str, allow_zero: bool = False) -> Quantity:
@@ -181,6 +193,14 @@ class RelaxationPolicy:
     #: orthogonal to the newer kept columns is below this fraction of its own
     #: norm adds (almost) nothing and is dropped; recorded in the policy.
     iqn_filter: float = 1e-10
+    #: Phase 3 BR14, IQN-IMVJ only (0 otherwise): the largest joint interface
+    #: dimension n whose dense n x n inverse-Jacobian approximation may be
+    #: held; a larger interface is refused, never truncated.
+    imvj_max_dimension: int = 0
+    #: Phase 3 BR14, IQN-IMVJ only (0 otherwise): how many consecutive accepted
+    #: windows may contribute to one carried approximation before it restarts
+    #: from zero (bounded reuse of stale secant information).
+    imvj_reuse_windows: int = 0
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", RelaxationKind(self.kind))
@@ -205,17 +225,28 @@ class RelaxationPolicy:
         columns = self.iqn_columns
         if isinstance(columns, bool) or not isinstance(columns, int) or columns < 0:
             raise InvalidScientificProblem("iqn_columns must be a non-negative int")
-        if self.kind is RelaxationKind.IQN_ILS:
+        if self.kind in IQN_KINDS:
             if not 1 <= columns <= 50:
-                raise InvalidScientificProblem("IQN-ILS requires iqn_columns in [1, 50]")
+                raise InvalidScientificProblem(f"{self.kind.value} requires iqn_columns in [1, 50]")
         elif columns != 0:
-            raise InvalidScientificProblem("iqn_columns applies to IQN-ILS relaxation only")
+            raise InvalidScientificProblem("iqn_columns applies to IQN-ILS relaxation only (and to IQN-IMVJ)")
         qr_filter = float(self.iqn_filter)
         if not math.isfinite(qr_filter) or not 0.0 <= qr_filter < 1.0:
             raise InvalidScientificProblem("iqn_filter must lie in [0, 1)")
-        if self.kind is not RelaxationKind.IQN_ILS and qr_filter != 1e-10:
-            raise InvalidScientificProblem("iqn_filter applies to IQN-ILS relaxation only")
+        if self.kind not in IQN_KINDS and qr_filter != 1e-10:
+            raise InvalidScientificProblem("iqn_filter applies to IQN-ILS relaxation only (and to IQN-IMVJ)")
         object.__setattr__(self, "iqn_filter", qr_filter)
+        for label, low, high in (("imvj_max_dimension", 1, 4096), ("imvj_reuse_windows", 1, 1000)):
+            value = getattr(self, label)
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise InvalidScientificProblem(f"{label} must be an int")
+            if self.kind is RelaxationKind.IQN_IMVJ:
+                if not low <= value <= high:
+                    raise InvalidScientificProblem(
+                        f"IQN-IMVJ requires {label} in [{low}, {high}]; it is never defaulted"
+                    )
+            elif value != 0:
+                raise InvalidScientificProblem(f"{label} applies to IQN-IMVJ relaxation only")
         object.__setattr__(self, "factor", factor)
         object.__setattr__(self, "minimum_factor", minimum)
         object.__setattr__(self, "maximum_factor", maximum)
@@ -230,7 +261,12 @@ class RelaxationPolicy:
             # absent for every other kind: existing policies keep their fingerprints
             **(
                 {"iqn_columns": self.iqn_columns, "iqn_filter": self.iqn_filter}
-                if self.kind is RelaxationKind.IQN_ILS
+                if self.kind in IQN_KINDS
+                else {}
+            ),
+            **(
+                {"imvj_max_dimension": self.imvj_max_dimension, "imvj_reuse_windows": self.imvj_reuse_windows}
+                if self.kind is RelaxationKind.IQN_IMVJ
                 else {}
             ),
         }
@@ -245,6 +281,8 @@ class RelaxationPolicy:
             maximum_factor=payload.get("maximum_factor", 1.0),
             iqn_columns=payload.get("iqn_columns", 0),
             iqn_filter=payload.get("iqn_filter", 1e-10),
+            imvj_max_dimension=payload.get("imvj_max_dimension", 0),
+            imvj_reuse_windows=payload.get("imvj_reuse_windows", 0),
         )
 
 
@@ -395,11 +433,13 @@ class CouplingPlan:
             # the IQN-ILS test below (as it was), it refused every explicit plan.
             raise InvalidScientificProblem("implicit coupling requires convergence criteria")
         if (
-            self.relaxation.kind is RelaxationKind.IQN_ILS
+            self.relaxation.kind in IQN_KINDS
             and self.iteration_semantics is not IterationSemantics.JACOBI
         ):
+            # Phase 3 BR14: the same holds for IQN-IMVJ; no Gauss-Seidel IQN variant
+            # is implemented, so none is admitted
             raise InvalidScientificProblem(
-                "IQN-ILS updates the joint interface vector after every participant has run "
+                f"{self.relaxation.kind.value} updates the joint interface vector after every participant has run "
                 "(Jacobi); serial Gauss-Seidel relaxes edges one at a time and is not supported"
             )
         if self.window_control is not None:

@@ -74,6 +74,7 @@ from .participant import (
     validate_port_value,
     validate_uncertainty,
 )
+from ...scientific.multiphysics.plan import IQN_KINDS
 from .relaxation import RelaxationController, relax_uncertainty
 from .transfer import (
     TransferEngine,
@@ -926,7 +927,7 @@ class MultiphysicsRuntime:
                 raw_transfers.update(transfers)
 
             joint: dict[str, CouplingValue] = {}
-            if implicit and self.plan.relaxation.kind is RelaxationKind.IQN_ILS:
+            if implicit and self.plan.relaxation.kind in IQN_KINDS:
                 joint = self.relaxation.relax_joint({
                     edge.edge_id: (
                         edge_values[edge.edge_id],
@@ -1226,7 +1227,9 @@ class MultiphysicsRuntime:
         checkpoints = (
             self._checkpoint_all(start) if needs_checkpoint else {}
         )
-        self.relaxation.reset_window()
+        # Phase 3 BR14: a new attempt; the accelerator decides (and records) whether a carried
+        # IMVJ approximation is valid for a window of this exact duration
+        self.relaxation.begin_window(index, self._attempt_duration)
 
         iterations: list[CouplingIterationRecord] = []
         current_edges = dict(edge_values)
@@ -1290,6 +1293,8 @@ class MultiphysicsRuntime:
                         f"every participant; missing for {uncovered}"
                     )
                 self._restore_all(checkpoints)
+                # Phase 3 BR14: the re-run ends at a participant-reported instant
+                self._attempt_duration = None
                 (
                     aligned,
                     edges2,
@@ -1525,9 +1530,16 @@ class MultiphysicsRuntime:
         """
         control = self.plan.window_control
         self._accepted_end_exact = None
-        if control is None:
-            return self._window(index, start, end, *state)
         start_x, end_x = exact if exact is not None else (exact_seconds(start), exact_seconds(end))
+        if control is None:
+            self._attempt_duration = end_x - start_x
+            try:
+                result = self._window(index, start, end, *state)
+            except BaseException:
+                self.relaxation.end_window(accepted=False, converged=False, reason="the window raised")
+                raise
+            self.relaxation.end_window(accepted=True, converged=result[0].outcome is WindowOutcome.CONVERGED)
+            return result
         start_s = float(start_x)
         minimum_x = exact_seconds(control.minimum_window)
         reduction = Fraction(repr(control.reduction_factor))
@@ -1538,11 +1550,16 @@ class MultiphysicsRuntime:
         while True:
             failure: CouplingWindowNotConverged | None = None
             result: tuple[Any, ...] | None = None
+            self._attempt_duration = attempt_end_x - start_x
             try:
                 result = self._window(index, start, attempt_end, *state)
             except CouplingWindowNotConverged as exc:
                 failure = exc
+            except BaseException:
+                self.relaxation.end_window(accepted=False, converged=False, reason="the window raised")
+                raise
             if result is not None and result[0].outcome is not WindowOutcome.ITERATION_LIMIT:
+                self.relaxation.end_window(accepted=True, converged=result[0].outcome is WindowOutcome.CONVERGED)
                 self._accepted_end_exact = attempt_end_x
                 if subdivisions:
                     self._window_control_log.append({
@@ -1573,12 +1590,15 @@ class MultiphysicsRuntime:
                     "reason": reason,
                 })
                 if failure is not None:
+                    self.relaxation.end_window(accepted=False, converged=False, reason=reason)
                     raise CouplingWindowNotConverged(
                         f"{failure} (after {subdivisions} window subdivision(s); "
                         f"minimum window {control.minimum_window})"
                     ) from failure
+                self.relaxation.end_window(accepted=True, converged=False)
                 self._accepted_end_exact = attempt_end_x
                 return result  # ITERATION_LIMIT, as the plan allows without failing
+            self.relaxation.end_window(accepted=False, converged=False, reason=reason)
             self._restore_all(checkpoints)
             subdivisions += 1
             self._window_control_log.append({
@@ -1850,6 +1870,12 @@ class MultiphysicsRuntime:
         if not run_id:
             raise InvalidScientificProblem("multiphysics run requires run_id")
         self._window_control_log: list[dict[str, Any]] = []
+        # Phase 3 BR14: a fresh relaxation controller per run, so no acceleration history
+        # (in particular a carried IMVJ approximation) survives from an earlier run: replay identity
+        self.relaxation = RelaxationController(
+            self.plan.relaxation, self.relaxation.resolver, self.relaxation.store, self.meshes
+        )
+        self._attempt_duration: Fraction | None = None
 
         requested_state = {} if initial_state is None else dict(initial_state)
         unknown_state_owners = set(requested_state) - set(self.participants)
@@ -2244,6 +2270,11 @@ class MultiphysicsRuntime:
         if self._time_grid_log:
             # absent unless a remainder was absorbed: other runs keep their identity
             final_outputs["_time_grid"] = {"rule": SAME_INSTANT_RULE, "events": list(self._time_grid_log)}
+        acceleration = self.relaxation.acceleration_record()
+        if acceleration is not None:
+            # Phase 3 BR14: always for IQN-IMVJ; for IQN-ILS only after a non-routine event
+            # (so routine IQN-ILS runs keep their identity)
+            final_outputs["_acceleration"] = acceleration
         if self.plan.window_control is not None:
             # rejected attempts are part of the numerical record, never hidden
             final_outputs["_window_control"] = {
