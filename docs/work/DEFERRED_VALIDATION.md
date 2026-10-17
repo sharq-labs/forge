@@ -27,6 +27,8 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-20 | BR10 pack templates | New tests + composition-pack suites (template/pack digests unchanged) | `pytest tests/compositionpacks -q` | NOT RUN |
 | DV-21 | BR12 aligned-window outcome | New tests + existing event-alignment tests (tests/test_big9_review_runtime_fixes.py) | `pytest tests/test_multiphysics_event_aligned_outcome.py tests/test_big9_review_runtime_fixes.py -q` | NOT RUN |
 | DV-22 | BR13 mapping sources | Integration test with a real field-mapped coupled run (extrapolating and unverified mappings); none written yet | new test | NOT WRITTEN |
+| DV-23 | BR14 untraced external providers | New tests + existing MultiphysicsAuthority suites | `pytest tests/test_system_runtime_external_providers.py tests/test_system_runtime_big13_additions.py tests/test_multiphysics_conservation_history.py -q` | NOT RUN |
+| DV-24 | all | Certified-imports-uncertified closure: runtime.py -> concurrency.py (BR5), claims/coupling_numerical.py -> numerical_error.py (BR6) must be pinned or declared before build/verify passes | owner recertification (OD-3) | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |

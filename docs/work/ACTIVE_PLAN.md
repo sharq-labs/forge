@@ -25,7 +25,8 @@ ledger capability).
 - [ ] Owner: MultiphysicsAuthority provider reporting for external participants (D5) and its rejection of explicit_completed/event_aligned windows.
 - [x] BR13 mapping extrapolation / unverified mappings are open coupling-error sources, tests NOT RUN.
 - [ ] Owner: the coupling error budget calls a round-trip L2 residual a relative_bound (it is not a bound on the forward transfer).
-- [ ] BR14: owner to choose.
+- [x] BR14 defect fix: coupled nodes may not run unreported external providers, tests NOT RUN.
+- [ ] BR15: owner to choose.
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)

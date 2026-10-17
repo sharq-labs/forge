@@ -5222,3 +5222,18 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   A round-trip residual measures information loss, not the forward transfer error.
 - Tests appended to `tests/test_multiphysics_numerical_error_accounting.py` (stand-in runs). A real field-mapped
   coupled run is deferred (DV-22).
+
+### BR14 -- coupled nodes may not run unreported external providers (defect fix, tests NOT RUN)
+- `system_runtime/authorities.py`, `MultiphysicsAuthority._untraced_external_providers`: a coupled node whose
+  runtime contains `ExternalSolverParticipant`s fails unless every admitted provider identity (id and version) is
+  among its reported provider records.
+  - This extends the executor's existing "an unreported provider is untraceable" rule to the case it missed (D5).
+  - No record is derived.
+  - It is a no-op for every current caller (none uses external participants).
+- The D5 owner item is narrowed to whether provider records should ever be derived from participants. That remains
+  open; this change only refuses.
+- Tests written: `tests/test_system_runtime_external_providers.py` (mock sessions in a real implicit runtime).
+- **Recertification note (from this pass):** certified modules may not import uncertified ones (BR-15 rule). Two
+  Big Rock edges need pinning at recertification: `execution/multiphysics/runtime.py -> concurrency.py` (BR5) and
+  `claims/coupling_numerical.py -> execution/multiphysics/numerical_error.py` (BR6; claims/** is a certified glob).
+  The BR14 edge `authorities.py -> execution/multiphysics/external.py` is already pinned.
