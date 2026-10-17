@@ -268,6 +268,11 @@ class MacroStepPolicy:
     #: On rejection the attempted window is divided by this integer.
     rejection_divisor: int = 2
     max_rejections_per_step: int = 12
+    #: Opt-in: a fast execution that fails NUMERICALLY (``FastExecutionNotConverged``,
+    #: or a coupled fast run's ``CouplingWindowNotConverged``) rejects the macro
+    #: window like any other rejection, within the same divisor, minimum window
+    #: and rejection bound.  False: such a failure refuses the run, as before.
+    retry_fast_nonconvergence: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "policy_id", identifier(self.policy_id, "policy_id"))
@@ -284,6 +289,8 @@ class MacroStepPolicy:
             raise InvalidScientificProblem("minimum macro window must be positive")
         if isinstance(self.rejection_divisor, bool) or not isinstance(self.rejection_divisor, int) or self.rejection_divisor < 2:
             raise InvalidScientificProblem("rejection divisor must be an integer >= 2")
+        if not isinstance(self.retry_fast_nonconvergence, bool):
+            raise InvalidScientificProblem("retry_fast_nonconvergence must be a bool")
 
     def select(self, elapsed: Fraction, slow_state: Mapping[tuple[str, str], Quantity]) -> tuple[Fraction, AdaptationRule, str]:
         """(window seconds, rule, reason) for a step starting ``elapsed`` seconds into the run."""
@@ -311,7 +318,9 @@ class MacroStepPolicy:
                 "minimum_window": self.minimum_window.to_dict(), "event_handling": self.event_handling.value,
                 "representative": self.representative.to_dict(), "state_change_limits": [x.to_dict() for x in self.state_change_limits],
                 "threshold_watches": [x.to_dict() for x in self.threshold_watches], "rejection_divisor": self.rejection_divisor,
-                "max_rejections_per_step": self.max_rejections_per_step}
+                "max_rejections_per_step": self.max_rejections_per_step,
+                # absent when off: existing policies keep their digests
+                **({"retry_fast_nonconvergence": True} if self.retry_fast_nonconvergence else {})}
 
     @property
     def digest(self) -> str:
@@ -341,7 +350,7 @@ class AdaptationDecision:
 class RefinementDecision:
     """An event, rejection or threshold that shortened or refused a macro window."""
 
-    kind: str  # "event_split" | "state_change_rejected" | "threshold_localization" | "representativity_rejected"
+    kind: str  # "event_split" | "state_change_rejected" | "threshold_localization" | "representativity_rejected" | "fast_nonconvergence"
     at: TimePoint
     attempted_end: TimePoint
     new_end: TimePoint | None
