@@ -31,6 +31,16 @@ Adaptation
     a smooth solution: at a jump in ``k`` the curvature it reads is not the
     solution's, and the record says so (an ESTIMATE, never a bound, never
     validation).
+
+Declaration (slice 4, EXC-1 amendment A3)
+    :data:`STEADY_CONDUCTION_MODEL` states the equation as a model record, and
+    :data:`NONUNIFORM_FV_REALIZATION` is this module's realization of it.  Both
+    sit in fresh local registries (no global singleton), as in ``lumped`` and
+    ``conduction1d_schemes``.  The model declares NO validity conditions, so its
+    applicability assesses as UNKNOWN: no applicability limit has been
+    sourced, and an absent limit is not an unlimited one.  It is UNVALIDATED.
+    No claims-layer capability declares it, so claims, SRIA and MCP cannot reach
+    it.
 """
 
 from __future__ import annotations
@@ -43,10 +53,148 @@ from typing import Any, Callable
 import numpy as np
 
 from ...numerical.mesh_adaptation import AdaptationPolicy, AdaptationRecord, Grid1D, adapt_grid
+from ...scientific.capabilities import ScientificCapability
 from ...scientific.errors import InvalidScientificProblem
+from ...scientific.ir.problem import ModelReference
+from ...scientific.models.definition import (
+    InputSourceKind,
+    ModelInputSpec,
+    ModelOutputSpec,
+    ModelType,
+    ScientificModelDefinition,
+    ValidityDomain,
+)
+from ...scientific.models.registry import ModelRegistry
+from ...scientific.realizations.definition import (
+    ImplementationReference,
+    ModelFormulation,
+    ModelRealizationDefinition,
+)
+from ...scientific.realizations.registry import RealizationRegistry
+from ...scientific.solvers.capability import CoreCapabilities, SolverCapability, SolverCapabilityId
 from ...scientific.units.quantity import Quantity
 
 _END_TOLERANCE = 1e-12  # relative: a grid end must sit on the slab face, not merely near it
+
+
+# =====================================================================
+# Declaration: model, capabilities, realization (slice 4)
+# =====================================================================
+
+#: What science the realization claims to provide: a steady temperature profile
+#: across a 1D slab.  Distinct from ``thermal:transient_conduction_1d``, which
+#: the two transient schemes provide: a steady profile does not satisfy a
+#: consumer of a transient, nor the reverse.
+STEADY_CONDUCTION_1D = ScientificCapability.parse("thermal:steady_conduction_1d")
+
+#: What a backend must be able to do: assemble and solve this module's
+#: non-uniform finite-volume system.  A *solver* capability.
+NONUNIFORM_STEADY_CONDUCTION = SolverCapability(
+    "thermal:nonuniform_steady_conduction_1d",
+    "Vertex-centred finite volumes for steady 1D conduction on a non-uniform grid",
+)
+
+STEADY_CONDUCTION_MODEL = ScientificModelDefinition(
+    model_id="thermal.conduction1d.steady_variable_conductivity",
+    version="0.1.0",
+    name="1D steady conduction with position-dependent conductivity and source",
+    domain="thermal",
+    # FUNDAMENTAL_RELATION: steady energy conservation with Fourier's law, as for
+    # the transient diffusion record.  The approximation is the discretisation,
+    # which belongs to the realization, not to the model.
+    model_type=ModelType.FUNDAMENTAL_RELATION,
+    description=(
+        "-(k(x) dT/dx)' = q(x) on [0, L], with an explicit temperature or inward heat flux at each end and a "
+        "temperature at one end at least."
+    ),
+    inputs=(
+        ModelInputSpec(name="length", source_kind=InputSourceKind.PARAMETER, unit_exemplar="meter",
+                       description="Slab thickness; strictly positive."),
+        ModelInputSpec(name="thermal_conductivity", source_kind=InputSourceKind.PARAMETER,
+                       unit_exemplar="watt/meter/kelvin", varies_with="position",
+                       description="k(x); strictly positive and finite on the slab."),
+        ModelInputSpec(name="volumetric_heat_source", source_kind=InputSourceKind.PARAMETER,
+                       unit_exemplar="watt/meter**3", varies_with="position",
+                       description="q(x); finite on the slab."),
+        ModelInputSpec(name="left_temperature", source_kind=InputSourceKind.PARAMETER, unit_exemplar="kelvin",
+                       required=False, description="Temperature at x = 0; exactly one of the two left inputs."),
+        ModelInputSpec(name="left_inward_heat_flux", source_kind=InputSourceKind.PARAMETER,
+                       unit_exemplar="watt/meter**2", required=False,
+                       description="Heat flux into the slab at x = 0; exactly one of the two left inputs."),
+        ModelInputSpec(name="right_temperature", source_kind=InputSourceKind.PARAMETER, unit_exemplar="kelvin",
+                       required=False, description="Temperature at x = L; exactly one of the two right inputs."),
+        ModelInputSpec(name="right_inward_heat_flux", source_kind=InputSourceKind.PARAMETER,
+                       unit_exemplar="watt/meter**2", required=False,
+                       description="Heat flux into the slab at x = L; exactly one of the two right inputs."),
+    ),
+    outputs=(
+        ModelOutputSpec(metric="temperature", unit_exemplar="kelvin",
+                        description="Steady temperature at the grid nodes."),
+    ),
+    assumptions=(
+        "one spatial dimension; no lateral transport",
+        "steady state",
+        "Fourier conduction with a conductivity that depends on position only",
+        "an explicit temperature or inward heat flux at each end, and a temperature at one end at least",
+    ),
+    exclusions=(
+        "temperature dependence of the conductivity",
+        "transient behaviour, thermal capacity and diffusivity",
+        "convection and radiation, except as an imposed boundary heat flux",
+        "contact resistance between layers",
+        "phase change",
+        "multidimensional conduction",
+    ),
+    validity=ValidityDomain(
+        description=(
+            "No applicability conditions are declared: none has been sourced.  Applicability therefore "
+            "assesses as UNKNOWN, never as valid."
+        ),
+    ),
+)
+
+NONUNIFORM_FV_REALIZATION = ModelRealizationDefinition(
+    realization_id="thermal.conduction1d.steady_variable_conductivity.nonuniform_fv",
+    version="0.1.0",
+    model=ModelReference(STEADY_CONDUCTION_MODEL.model_id, STEADY_CONDUCTION_MODEL.version),
+    # The model poses a two-point boundary-value ODE in x.  That is what
+    # `formulation` records; the realization discharges it with one linear solve.
+    formulation=ModelFormulation.ODE,
+    name="Vertex-centred finite volumes on a non-uniform grid",
+    description=(
+        "Face conductances k(midpoint)/h, the source at the node times the control-volume width, and one "
+        "tridiagonal solve (Thomas)."
+    ),
+    provided_capabilities=frozenset({STEADY_CONDUCTION_1D}),
+    required_solver_capabilities=frozenset({
+        SolverCapabilityId.coerce(NONUNIFORM_STEADY_CONDUCTION),
+        SolverCapabilityId.coerce(CoreCapabilities.LINEAR_SYSTEM),
+    }),
+    assumptions=(
+        "exact at the nodes for constant k and constant q on any grid",
+        "second order on smooth data; at a jump in k the error is not second order",
+        "the grid ends lie on the slab faces",
+    ),
+    implementation=ImplementationReference(
+        implementation_id="engcore.domains.thermal_models.conduction1d_nonuniform",
+        version="0.1.0",
+        reference="vertex-centred finite volumes; see module docstring",
+    ),
+)
+
+
+def steady_conduction_models() -> ModelRegistry:
+    """A fresh registry. No global singleton exists."""
+    return ModelRegistry((STEADY_CONDUCTION_MODEL,))
+
+
+def nonuniform_conduction_realizations() -> RealizationRegistry:
+    """A fresh registry. No global singleton exists."""
+    return RealizationRegistry((NONUNIFORM_FV_REALIZATION,))
+
+
+def nonuniform_conduction_solver_capabilities() -> frozenset[SolverCapability]:
+    return frozenset({NONUNIFORM_STEADY_CONDUCTION, CoreCapabilities.LINEAR_SYSTEM})
 
 
 class BoundaryKind(str, Enum):
@@ -103,7 +251,8 @@ class SteadyConductionProblem:
             raise InvalidScientificProblem("conductivity and source are functions of position (metres)")
         for label in ("left", "right"):
             if not isinstance(getattr(self, label), ConductionBoundary):
-                raise InvalidScientificProblem(f"the {label} boundary condition must be declared; it is never defaulted")
+                raise InvalidScientificProblem(
+                    f"the {label} boundary condition must be declared; it is never defaulted")
         if (self.left.kind is BoundaryKind.INWARD_HEAT_FLUX
                 and self.right.kind is BoundaryKind.INWARD_HEAT_FLUX):
             raise InvalidScientificProblem(
@@ -129,7 +278,11 @@ class NonUniformConductionSolution:
     temperatures_k: tuple[float, ...]
 
     def to_dict(self) -> dict[str, Any]:
-        return {"classification": "numerical_solution_not_scientific_evidence", "grid": self.grid.to_dict(),
+        return {"classification": "numerical_solution_not_scientific_evidence",
+                "model": {"id": STEADY_CONDUCTION_MODEL.model_id, "version": STEADY_CONDUCTION_MODEL.version},
+                "realization": {"id": NONUNIFORM_FV_REALIZATION.realization_id,
+                                "version": NONUNIFORM_FV_REALIZATION.version},
+                "grid": self.grid.to_dict(),
                 "temperatures": {"unit": "kelvin", "values": list(self.temperatures_k)},
                 "notice": ("the discrete solution of the declared equation on this grid; its discretisation error is "
                            "not quantified here; not validation")}
@@ -205,7 +358,7 @@ def solve_steady_conduction(problem: SteadyConductionProblem, grid: Grid1D) -> N
 
 
 def temperature_evaluator(problem: SteadyConductionProblem) -> Callable[[Grid1D], tuple[float, ...]]:
-    """``grid -> nodal temperatures in K``: a fresh solve on every grid, for ``adapt_grid(..., value_unit="kelvin")``."""
+    """``grid -> nodal temperatures (K)``: a fresh solve per grid, for ``adapt_grid(..., value_unit="kelvin")``."""
     if not isinstance(problem, SteadyConductionProblem):
         raise InvalidScientificProblem("the evaluator takes a SteadyConductionProblem")
 
@@ -221,11 +374,18 @@ def adapt_conduction(problem: SteadyConductionProblem, initial: Grid1D, policy: 
 
 
 __all__ = [
+    "NONUNIFORM_FV_REALIZATION",
+    "NONUNIFORM_STEADY_CONDUCTION",
+    "STEADY_CONDUCTION_1D",
+    "STEADY_CONDUCTION_MODEL",
     "BoundaryKind",
     "ConductionBoundary",
     "NonUniformConductionSolution",
     "SteadyConductionProblem",
     "adapt_conduction",
+    "nonuniform_conduction_realizations",
+    "nonuniform_conduction_solver_capabilities",
     "solve_steady_conduction",
+    "steady_conduction_models",
     "temperature_evaluator",
 ]

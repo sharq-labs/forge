@@ -196,7 +196,7 @@ RESERVING_IDS = [f"{m.model_id}@{m.version}" for m in RESERVING]
 #: directions and has to be updated deliberately, which is the moment somebody
 #: looks at the new record. `tests/test_pin_portability.py:_pinned_paths` is
 #: the pattern: derive the population, then assert its size.
-EXPECTED_MODELS = 18  # 18: battery.cell.thevenin_1rc (2026-10-14)
+EXPECTED_MODELS = 19  # 19: thermal.conduction1d.steady_variable_conductivity (2026-10-17)
 EXPECTED_RESERVING_MODELS = 16  # 16: battery.cell.thevenin_1rc
 # 64 -> 67 and 46 -> 49 in the capability-boundary round, which added one
 # condition to each of three records: linear_resistance_ratio on the

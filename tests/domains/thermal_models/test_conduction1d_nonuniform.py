@@ -1,4 +1,4 @@
-"""Steady 1D conduction on a non-uniform grid (adaptive mesh control slice 3, EXC-1 amendment A2; ERT V1 Big Rock 21).
+"""Steady 1D conduction on a non-uniform grid (mesh control slices 3-4, EXC-1 A2/A3; ERT V1 Big Rocks 21-22).
 
 Exact expectations: with constant k and constant q the solution is quadratic,
 and the vertex-centred scheme reproduces it at the nodes of ANY grid, flux ends
@@ -13,9 +13,14 @@ import numpy as np
 import pytest
 
 from engcore.domains.thermal_models.conduction1d_nonuniform import (
-    BoundaryKind, ConductionBoundary, SteadyConductionProblem, adapt_conduction, solve_steady_conduction,
+    NONUNIFORM_FV_REALIZATION, STEADY_CONDUCTION_1D, STEADY_CONDUCTION_MODEL, BoundaryKind, ConductionBoundary,
+    SteadyConductionProblem, adapt_conduction, nonuniform_conduction_realizations,
+    nonuniform_conduction_solver_capabilities, solve_steady_conduction, steady_conduction_models,
     temperature_evaluator,
 )
+from engcore.scientific.models.definition import ModelValidationStatus, ScientificModelDefinition, ValidityStatus
+from engcore.scientific.realizations.definition import ModelRealizationDefinition
+from engcore.scientific.solvers.capability import SolverCapabilityId
 from engcore.numerical.mesh_adaptation import AdaptationPolicy, AdaptationStatus, Grid1D
 from engcore.scientific.errors import InvalidScientificProblem, UnitCompatibilityError
 from engcore.scientific.units.quantity import Quantity
@@ -157,3 +162,59 @@ def test_the_solution_record_is_never_evidence():
     record = solve_steady_conduction(_problem(_temperature(300.0), _temperature(310.0)), IRREGULAR).to_dict()
     assert record["classification"] == "numerical_solution_not_scientific_evidence"
     assert "not validation" in record["notice"]
+
+
+# ---- the declaration (slice 4) ----------------------------------------------------------------
+
+
+def test_the_realization_is_declared_for_the_model_and_provides_the_steady_capability():
+    registry = nonuniform_conduction_realizations()
+    model = STEADY_CONDUCTION_MODEL
+    assert registry.for_model(model.model_id, model.version) == (NONUNIFORM_FV_REALIZATION,)
+    assert registry.providing(STEADY_CONDUCTION_1D) == (NONUNIFORM_FV_REALIZATION,)
+    assert registry.providing("thermal:transient_conduction_1d") == ()  # a steady profile is not a transient
+    assert steady_conduction_models().get(model.model_id, model.version) is model
+
+
+def test_the_solver_capabilities_cover_exactly_what_the_realization_requires():
+    provided = {SolverCapabilityId.coerce(c) for c in nonuniform_conduction_solver_capabilities()}
+    assert set(NONUNIFORM_FV_REALIZATION.required_solver_capabilities) == provided
+
+
+def test_applicability_is_unknown_because_no_limit_was_sourced():
+    model = STEADY_CONDUCTION_MODEL
+    assert model.validity.conditions == () and model.derived_quantities == frozenset()
+    assessment = model.assess_validity(declared={}, record_values=True)
+    assert assessment.status is ValidityStatus.UNKNOWN
+    assert model.validation_status is ModelValidationStatus.UNVALIDATED
+
+
+def test_the_model_says_what_it_leaves_out():
+    exclusions = " ".join(STEADY_CONDUCTION_MODEL.exclusions)
+    for phenomenon in ("temperature dependence", "transient", "radiation", "contact resistance", "phase change"):
+        assert phenomenon in exclusions
+
+
+def test_conductivity_and_source_are_declared_curves_against_position():
+    inputs = {spec.name: spec for spec in STEADY_CONDUCTION_MODEL.inputs}
+    assert inputs["thermal_conductivity"].varies_with == "position"
+    assert inputs["volumetric_heat_source"].varies_with == "position"
+    assert inputs["length"].varies_with is None
+    assert all(not inputs[f"{side}_{kind}"].required
+               for side in ("left", "right") for kind in ("temperature", "inward_heat_flux"))
+
+
+def test_the_records_round_trip():
+    assert ScientificModelDefinition.from_dict(STEADY_CONDUCTION_MODEL.to_dict()) == STEADY_CONDUCTION_MODEL
+    assert ModelRealizationDefinition.from_dict(NONUNIFORM_FV_REALIZATION.to_dict()) == NONUNIFORM_FV_REALIZATION
+
+
+def test_the_solution_names_the_realization_it_came_from():
+    record = solve_steady_conduction(_problem(_temperature(300.0), _temperature(310.0)), IRREGULAR).to_dict()
+    assert record["model"] == {"id": STEADY_CONDUCTION_MODEL.model_id, "version": "0.1.0"}
+    assert record["realization"] == {"id": NONUNIFORM_FV_REALIZATION.realization_id, "version": "0.1.0"}
+
+
+def test_registries_are_fresh_per_call():
+    assert nonuniform_conduction_realizations() is not nonuniform_conduction_realizations()
+    assert steady_conduction_models() is not steady_conduction_models()
