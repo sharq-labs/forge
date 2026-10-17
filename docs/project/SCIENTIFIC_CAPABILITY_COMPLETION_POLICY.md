@@ -61,7 +61,9 @@ The ledger's `active_epic` may name a capability (maturity stages, 19 gates) or 
 `BLOCKED_WITH_EVIDENCE`, `DEFERRED_BY_OWNER`); a gate is decided only after every gate it requires passed; PASS and
 FAIL need existing evidence; a program carries no maturity vocabulary. Gate dependencies order DECISIONS only:
 any work inside a program's scope may be built at any time, before any gate (including a validation gate) is run.
-Every decided gate cites existing evidence; BLOCKED_WITH_EVIDENCE is allowed once the gates it requires are decided. **A research result never promotes a
+Every decided gate cites existing evidence; BLOCKED_WITH_EVIDENCE is allowed once the gates it requires are decided.
+A program contract may carry acceptance requirements that bind every gate (for `engrt.numerical_foundations`: the
+Cross-Domain Scientific Architecture Requirements -- the shared structure stays physics-agnostic). **A research result never promotes a
 capability** (Gate H): every capability a program builds is tracked in `capabilities`, enters at FOUNDATION only when
 its four FOUNDATION gates pass, and climbs only through the maturity gates. `tools/capability_maturity.py` enforces
 this, and `tests/test_capability_completion.py` pins the epic and the negative cases.

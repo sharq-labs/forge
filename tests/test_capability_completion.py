@@ -219,6 +219,22 @@ def test_two_programs_with_one_id_and_duplicate_planned_capabilities_are_refused
                for e in _with(lambda d: _program(d)["planned_capabilities"].append(_program(d)["planned_capabilities"][0])))
 
 
+def test_the_program_contract_carries_the_cross_domain_architecture_requirements() -> None:
+    """Owner direction (2026-10-18): the shared structure is physics-agnostic; heat is the first reference application.
+    The requirements are part of the program's acceptance criteria and bind the program gates M1-E3 (not the 19
+    maturity gates of a capability)."""
+    contract = (maturity.ROOT / "docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md").read_bytes().decode()
+    assert "## Cross-Domain Scientific Architecture Requirements" in contract
+    for number in range(1, 11):
+        assert f"| CDAR-{number} |" in contract, number
+    section = contract.split("### Multi-domain acceptance criteria per gate", 1)[1].split("###", 1)[0]
+    for gate in ("M1", "M2", "E1", "E2", "E3"):
+        assert f"| {gate} |" in section, gate
+    assert "### Architectural fixtures" in contract
+    assert "tests/architecture/test_cross_domain_fixtures.py" in contract      # a named, test-only location
+    assert (maturity.ROOT / "docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md").exists()
+
+
 def test_a_superseded_schema_is_refused_not_read(tmp_path) -> None:
     data = maturity.load_ledger()
     data["schema"] = "forge.scientific_capability_completion/1"

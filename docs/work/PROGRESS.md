@@ -5412,3 +5412,16 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
 `python -m tools.capability_maturity` (check) and `--write` (the matrix must be regenerated or confirmed).
 - Read-only merge review: 0 BLOCKER, 4 MAJOR, ~10 MINOR, fixed except one recorded limit; package:
   `docs/work/OD6_MERGE_REVIEW.md`. Merge preview against `origin/main`: clean. Nothing executed, no PR, nothing merged.
+
+### 2026-10-18 -- Cross-Domain Scientific Architecture Requirements added to the program (owner direction)
+
+- Read-only audit of the Phase 3.5 tree (two Explore subagents, nothing executed):
+  `docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md`. The runtime core is mostly physics-agnostic (and a steady coupled
+  screening template spanning mechanical, electrical and thermal models exists); thermal hard-coding is confined to `conjugate_interface.py` (P) and
+  one message; the real gaps are undeclared semantics (port roles, field kind, non-energy losses), missing ODE / DAE /
+  chemical / mechanical participants, static frames, closed problem aspects.
+- `ENGINEERING_FOUNDATIONS_PROGRAM.md`: CDAR-1..CDAR-10, multi-domain acceptance criteria for M1-E3, three
+  architectural fixtures required before those gates are decided; one prohibition added. Policy: one sentence.
+- Test pin added (NOT RUN). Core gaps A-1, A-2, A-3, A-7, A-9 recorded for the Core compatibility review, not implemented.
+- Read-only review of the change: 0 BLOCKER, 2 MAJOR (fixture location/enforcement; M2/E2 dependence on Core review),
+  minor wording and citations; all fixed.

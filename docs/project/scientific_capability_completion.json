@@ -924,13 +924,14 @@
         "src/engcore/domains/thermal_models/<one new ALE module, named in the E3 PR>",
         "providers/fenicsx/**",
         "providers/openfoam/**",
-        "tests for the above"
+        "tests for the above, including tests/architecture/** (cross-domain architectural fixtures; test code only)"
       ],
       "prohibited": [
         "any capability maturity change from a program gate result (Gate H)",
         "claims, SRIA or MCP reachability of a new capability before its computed stage is FUNCTIONAL",
         "validation or benchmark claims without executed evidence; mocks presented as real runs",
         "tetrahedral or hexahedral refinement; multi-dimensional or fluid ALE; turbulence models; further nonlinear templates or provider pairs",
+        "a shared mechanism that hard-codes one physics's dimensions, units or names (CDAR rule); a Core semantic change without its compatibility review",
         "certified-area change without recertification",
         "LLM authority over models, thresholds, evidence or verdicts"
       ],

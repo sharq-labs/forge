@@ -2,7 +2,9 @@
 
 Active epic: `engrt.numerical_foundations` (research program; OD-6 decided 2026-10-18; in force when branch
 `feat/od6-engineering-program-epic` merges). Earlier entries below that call `battery.thevenin_1rc` the epic, list OD-6
-as open, or list EXC-1 as an open exception are superseded by that decision on merge.
+as open, or list EXC-1 as an open exception are superseded by that decision on merge. The program's gates M1-E3 are
+bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
+reference application).
 
 ## Active override — Engineering Runtime V1 Big Rocks, build phase (2026-10-17)
 

@@ -20,6 +20,16 @@ of Genesis.
 gate), so every gate's scope — M1, M2, E1, E2, E3 — may be written and implemented before any test runs. M2 and E3
 are only DECIDED after M1. Built-but-unverified work stays MISSING; nothing promotes a capability (Gate H).
 
+## Cross-Domain Scientific Architecture Requirements (added 2026-10-18, owner direction)
+
+The program contract now carries ten requirements CDAR-1..CDAR-10 (physics-agnostic shared structure; heat is the
+first reference application), multi-domain acceptance criteria for M1, M2, E1, E2 and E3, and three architectural
+fixtures (RC circuit, spring-mass, chemical mixing) that must exist before any of those gates is decided. They are
+acceptance criteria, not a program or an exception. The evidence is the read-only audit
+`docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md` (of the Phase 3.5 tree). Core semantic gaps (A-1, A-2, A-3, A-7, A-9)
+are recorded for the Core compatibility review, not implemented. Pinned by
+`test_the_program_contract_carries_the_cross_domain_architecture_requirements` (NOT RUN).
+
 ## Files
 
 | File | Change |
@@ -28,7 +38,8 @@ are only DECIDED after M1. Built-but-unverified work stays MISSING; nothing prom
 | `tools/capability_maturity.py` | /1 refused ("migrate"); program validation (exact fields, own statuses, ordered `requires`, every decided gate cites repository-relative existing evidence, no maturity vocabulary, unique ids across both arrays, planned ids unique); a decided program cannot stay the epic; programs table rendered |
 | `tests/test_capability_completion.py` | program pin, build-first pin (DV0 required by no gate), battery snapshot (stage and statuses fixed, evidence may only grow), negative tests for every back door, governance-document consistency (policy, PR template, matrix, ACTIVE_PLAN) |
 | `docs/SCIENTIFIC_CAPABILITY_MATRIX.md` | **hand-edited** to the renderer's format (traced line by line by the review; confirm with the generator) |
-| `docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md` | new program contract: build-first, scope per gate, preconditions, prohibitions, battery / EXC-1 / Genesis relationships, exit |
+| `docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md` | new program contract: build-first, scope per gate, Cross-Domain Scientific Architecture Requirements and per-gate criteria, preconditions, prohibitions, battery / EXC-1 / Genesis relationships, exit |
+| `docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md` | new read-only audit: generic / thermal-biased / missing per area, gaps A-1..A-12 mapped to CDARs and owners |
 | `docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md` | active-epic rule names the program; "Research program epics" section; A2 row |
 | `.github/pull_request_template.md` | line 3 and the exception section name the program's scope |
 | `docs/work/ACTIVE_PLAN.md`, `docs/work/PROGRESS.md` | epic line at the top, OD-6 row decided, stale battery / EXC-1 statements marked superseded on merge, progress entry |
@@ -71,6 +82,7 @@ python tools/forge_check.py --changed
 - [ ] Merge this branch ALONE into `main` (merge commit, no squash/rebase, per OD-4/OD-5 practice); do not merge the
       Phase 1–3.5 branches with it.
 - [ ] Record the recertification decision (OD-3).
+- [ ] Accept the Cross-Domain Scientific Architecture Requirements as binding acceptance criteria of M1-E3.
 - [ ] After merge: the Phase 3.5 proposals P35-A4/A5/E1/E2/E3 are covered by gates M1, M2, E1, E2, E3 — no separate
       exceptions; EXC-1 is superseded.
 
