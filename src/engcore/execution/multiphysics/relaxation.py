@@ -18,7 +18,7 @@ from ...scientific.results.uncertainty import (
     UncertaintyKind,
     UncertaintySource,
 )
-from ...scientific.units.quantity import Quantity
+from ...scientific.units.quantity import Quantity, base_unit, is_ratio_scale
 from .participant import CouplingValue
 
 
@@ -147,12 +147,15 @@ def relax_uncertainty(
     if raw.kind is UncertaintyKind.STANDARD:
         assert previous.standard_uncertainty is not None
         assert raw.standard_uncertainty is not None
-        old_width = previous.standard_uncertainty.magnitude_as_spread_in(unit)
-        raw_width = raw.standard_uncertainty.magnitude_as_spread_in(unit)
+        # a width is a spread: on a scale with a conventional zero (degC) it
+        # is stated in the ratio-scale base unit, never as an absolute point
+        spread_unit = unit if is_ratio_scale(unit) else base_unit(unit)
+        old_width = previous.standard_uncertainty.magnitude_as_spread_in(spread_unit)
+        raw_width = raw.standard_uncertainty.magnitude_as_spread_in(spread_unit)
         width = abs(a) * old_width + abs(b) * raw_width
         return Uncertainty(
             kind=UncertaintyKind.STANDARD,
-            standard_uncertainty=Quantity(width, unit),
+            standard_uncertainty=Quantity(width, spread_unit),
             source=source,
             source_kind=UncertaintySource.COMBINED,
             method="coupling_relaxation_linear_bound",
@@ -174,11 +177,19 @@ def relax_uncertainty(
         raw_terms = (b * raw_lo, b * raw_hi)
         lower = min(old_terms) + min(raw_terms)
         upper = max(old_terms) + max(raw_terms)
-        common_confidence = (
-            raw.confidence_level
-            if raw.confidence_level == previous.confidence_level
-            else None
-        )
+        # The relaxed bounds hold whenever every CONTRIBUTING iterate lies in
+        # its own interval; with no independence assumed only the union bound
+        # 1 - sum(1 - c_i) over the contributing terms is guaranteed.
+        levels = [
+            item.confidence_level
+            for coefficient, item in ((a, previous), (b, raw))
+            if coefficient != 0.0
+        ]
+        common_confidence = None
+        if levels and all(level is not None for level in levels):
+            bound = 1.0 - sum(1.0 - float(level) for level in levels)
+            if bound > 0.0:
+                common_confidence = bound
         return Uncertainty(
             kind=UncertaintyKind.INTERVAL,
             lower=Quantity(lower, unit),

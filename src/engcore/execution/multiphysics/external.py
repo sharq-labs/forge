@@ -8,6 +8,9 @@ uses.
 
 from __future__ import annotations
 
+import json
+import secrets
+import weakref
 from dataclasses import dataclass
 from typing import Any, Mapping, Protocol, runtime_checkable
 
@@ -48,6 +51,15 @@ class ExternalProviderIdentity:
                 )
             object.__setattr__(self, label, value)
 
+    @property
+    def state_scope(self) -> str:
+        """The provider build whose state a snapshot holds (bound into checkpoint records).
+
+        Canonical JSON of the four identity fields: unambiguous whatever
+        characters the fields contain.
+        """
+        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+
     def to_dict(self) -> dict[str, str]:
         return {
             "provider_id": self.provider_id,
@@ -79,6 +91,19 @@ class ExternalSnapshot:
             )
         object.__setattr__(self, "state_digest", digest)
         object.__setattr__(self, "provider_state_id", provider_state_id)
+
+
+@dataclass(frozen=True)
+class _ScopedSnapshot:
+    """A provider snapshot sealed by the participant with the build that wrote it.
+
+    ``nonce`` is the participant's own issue record: a wrapper built anywhere
+    else, even with the right scope, names no issued checkpoint and is refused.
+    """
+
+    scope: str
+    snapshot: ExternalSnapshot
+    nonce: str
 
 
 @runtime_checkable
@@ -137,6 +162,14 @@ class ExternalSolverParticipant(ExecutableParticipant):
                 f"{spec.adapter_version!r}, session exposes "
                 f"{identity.adapter_version!r}"
             )
+        # the identity verified against the spec; a session whose identity
+        # later changes is refused rather than re-read
+        self._identity = identity
+        # nonce -> the very snapshot object issued here (weak: an entry lives as
+        # long as some checkpoint still holds it, so the registry stays bounded)
+        self._issued: weakref.WeakValueDictionary[str, ExternalSnapshot] = (
+            weakref.WeakValueDictionary()
+        )
 
     @property
     def spec(self) -> ParticipantSpec:
@@ -144,7 +177,15 @@ class ExternalSolverParticipant(ExecutableParticipant):
 
     @property
     def provider_identity(self) -> ExternalProviderIdentity:
-        return self._session.identity
+        return self._identity
+
+    def _require_same_build(self) -> str:
+        if self._session.identity != self._identity:
+            raise InvalidScientificProblem(
+                f"external session of participant {self.spec.participant_id!r} "
+                f"changed provider identity after admission"
+            )
+        return self._identity.state_scope
 
     def initialize(
         self,
@@ -152,6 +193,7 @@ class ExternalSolverParticipant(ExecutableParticipant):
         external_inputs: Mapping[str, CouplingValue],
         external_uncertainty: Mapping[str, Uncertainty],
     ) -> InitializationResult:
+        self._require_same_build()
         validate_inputs(
             self.spec,
             external_inputs,
@@ -162,6 +204,7 @@ class ExternalSolverParticipant(ExecutableParticipant):
             external_inputs,
             external_uncertainty,
         )
+        self._require_same_build()  # a build switched inside the call is refused too
         if not isinstance(result, InitializationResult):
             raise InvalidScientificProblem(
                 f"external provider {self.provider_identity.provider_id!r} "
@@ -175,12 +218,16 @@ class ExternalSolverParticipant(ExecutableParticipant):
         return result
 
     def advance(self, request: AdvanceRequest) -> AdvanceResult:
+        # outputs are attributed to the admitted build: a session now running
+        # another build is refused, not recorded under the admitted identity
+        self._require_same_build()
         validate_inputs(
             self.spec,
             request.inputs,
             request.input_uncertainty,
         )
         result = self._session.advance(request)
+        self._require_same_build()  # a build switched inside the call is refused too
         if not isinstance(result, AdvanceResult):
             raise InvalidScientificProblem(
                 f"external provider {self.provider_identity.provider_id!r} "
@@ -198,20 +245,26 @@ class ExternalSolverParticipant(ExecutableParticipant):
             raise InvalidScientificProblem(
                 f"participant {self.spec.participant_id!r} is not checkpointable"
             )
+        scope = self._require_same_build()
         snapshot = self._session.snapshot(instant)
+        self._require_same_build()  # never seal a snapshot under a build it was not taken from
         if not isinstance(snapshot, ExternalSnapshot):
             raise InvalidScientificProblem(
                 "external solver snapshot must be ExternalSnapshot"
             )
+        nonce = secrets.token_hex(16)
+        self._issued[nonce] = snapshot
         return RuntimeCheckpoint(
             record=CheckpointRecord(
                 participant_id=self.spec.participant_id,
                 instant=instant,
                 state_digest=snapshot.state_digest,
                 deterministic_restore=self.spec.deterministic_restore,
-                provider_state_id=snapshot.provider_state_id,
+                # provider state is opaque to Forge and meaningful only to the
+                # provider build that wrote it: the record names that build
+                provider_state_id=f"{scope}#{snapshot.provider_state_id}",
             ),
-            token=snapshot,
+            token=_ScopedSnapshot(scope, snapshot, nonce),
         )
 
     def restore(self, checkpoint: RuntimeCheckpoint) -> None:
@@ -223,18 +276,38 @@ class ExternalSolverParticipant(ExecutableParticipant):
             raise InvalidScientificProblem(
                 "external participant cannot restore another participant checkpoint"
             )
-        if not isinstance(checkpoint.token, ExternalSnapshot):
+        scope = self._require_same_build()
+        token = checkpoint.token
+        if not isinstance(token, _ScopedSnapshot) or not isinstance(
+            token.snapshot, ExternalSnapshot
+        ):
             raise InvalidScientificProblem(
-                "external participant checkpoint token is not ExternalSnapshot"
+                "external participant checkpoint token was not sealed by an "
+                "external participant"
             )
         if (
-            checkpoint.token.state_digest
-            != checkpoint.record.state_digest
+            token.scope != scope
+            or checkpoint.record.provider_state_id
+            != f"{scope}#{token.snapshot.provider_state_id}"
         ):
+            raise InvalidScientificProblem(
+                f"external checkpoint holds state of provider build "
+                f"{token.scope}; participant {self.spec.participant_id!r} runs "
+                f"{scope} and never restores another provider's or build's state"
+            )
+        if token.snapshot.state_digest != checkpoint.record.state_digest:
             raise InvalidScientificProblem(
                 "external checkpoint record and provider snapshot digest disagree"
             )
-        self._session.restore(checkpoint.token)
+        # identity, not equality: a payload re-wrapped under an issued digest,
+        # slot and nonce is not the state that digest was recorded for
+        if self._issued.get(token.nonce) is not token.snapshot:
+            raise InvalidScientificProblem(
+                f"external checkpoint was not issued by participant "
+                f"{self.spec.participant_id!r}; only its own checkpoints restore"
+            )
+        self._session.restore(token.snapshot)
+        self._require_same_build()
 
     def finalize(self) -> None:
         self._session.finalize()

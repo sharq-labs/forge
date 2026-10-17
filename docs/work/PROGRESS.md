@@ -4839,3 +4839,138 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=~/forge-open-problems/src:~/forge-open-prob
 
 **RECERTIFICATION_REQUIRED (OD-3).** The touched src/tools files are pinned (`certification/current_core_v2.json`),
 and `main` already needs recertification.
+
+## 2026-10-17 -- Engineering Runtime V1, Phase 1: solver-interoperability defects (fix/engrt-v1-phase1-interop, local only)
+
+Branch `fix/engrt-v1-phase1-interop`, worktree `D:/forge-engrt-p1`, base `origin/main` `de7527fd`. Uncommitted, not
+pushed or merged; no certificate generated, no hardened run. Defect fixes only (no new capability foundation), so the
+Battery 1RC active-epic policy is respected. Pristine comparison worktree: `D:/forge-engrt-base` (detached `de7527fd`).
+Logs: `D:/engrt-logs/`.
+
+**Confirmed defects (each reproduced before the fix; the reproducers fail on `de7527fd`):**
+1. Orchestration checkpoints crossed solver boundaries (`execution/orchestration/runner.py`, `advanced_runner.py`).
+   `CheckpointReference` named no solver and `current_checkpoint` survived fallback, so solver B was resumed from
+   solver A's state. A FAILED/DIVERGED attempt's checkpoint replaced the last good one. On ERROR_TARGET_SATISFIED the
+   report carried another solver's diverged checkpoint (or a rejected refinement's) as `final_checkpoint`.
+   Fix: `CheckpointReference.solver_id` (trailing, default "") and `adopt_checkpoint` / `resume_owner` /
+   `resume_point_for` in `checkpoint.py`:
+   - a checkpoint resumes only the solver that produced it;
+   - adoption is an allow-list (converged, cancelled), so failed, diverged, planned and running attempts never supply
+     a resume point;
+   - an unbound caller checkpoint is refused with ValueError, never turned into a silent cold start;
+   - a caller checkpoint bound to S runs no other solver, and the skip is recorded;
+   - attempt records carry only adopted checkpoints;
+   - ACCEPT reports the accepted attempt's own checkpoint, or None;
+   - `run_plan` checks `backend.solver_id`, as the adaptive runner already did.
+2. A SUM fan-in over an offset unit was unit-dependent (`scientific/multiphysics/graph.py`). Two 300 K sources summed
+   into a port declared in degC delivered 53.7 degC (326.85 K); declared in K, the same sum was 600 K. It is now
+   refused at graph construction (`is_ratio_scale`). MEAN/MIN/MAX are affine-invariant and SUM of difference units
+   is unit-safe, so both stay admitted.
+3. Interval fan-in and iterate relaxation overstated coverage (`execution/multiphysics/transfer.py`, `relaxation.py`).
+   The combined bounds kept each source's own level, so 20 sources at 0.95 reported 0.95. They now report the union
+   bound 1 - sum(1 - c_i), or None when a level is undeclared or the bound is <= 0. Separately, a STANDARD width on an
+   offset target unit aborted because it was stated as a degC point; it is now stated in the ratio-scale base unit.
+   (Raised by the scientific review, then reproduced.)
+4. `ExternalSolverParticipant` restored another provider build's snapshot (`execution/multiphysics/external.py`).
+   A `thermo@1.0` checkpoint was accepted by a `thermo@2.0` participant with the same id, and the record did not name
+   the build. The participant now:
+   - seals each token with the canonical-JSON identity scope and a nonce from its own issue registry;
+   - binds the scope into `CheckpointRecord.provider_state_id`;
+   - refuses another build, a relabelled record, a bare token and a wrapper it did not issue;
+   - refuses a session whose identity changed, before or inside initialize/advance/snapshot/restore.
+
+   No in-tree caller used this adapter. The first runtime test of it (implicit coupling of two MOCK sessions with
+   per-iteration rollback) is in the new test file.
+
+**Investigated, not defects (or not fixable as a defect fix):**
+- Multiphysics runtime rollback: implicit coupling and event alignment already require deterministic checkpoint/restore
+  on every participant and re-checkpoint after restore. A NaN residual cannot satisfy a criterion, because non-finite
+  magnitudes are refused at construction.
+- Provider qualification never gates a run (`providers/health.py`: `executable` includes UNQUALIFIED). This is by
+  design and stated ("available is not qualified"); gating runs on qualification is an owner policy decision.
+- An unpinned provider binding accepts any build of its version (`system_runtime/executor.py::_check_providers`).
+  That is the request's own semantics. Build drift between preflight and execution is a TOCTOU limitation; pinning
+  `provider_digest` closes it.
+- `providers/compare.py` does not compare `problem_digest`. Provider-specific problem digests never match across
+  input formats; a declared problem-equivalence binding would be a new capability, not a defect fix.
+- The electrothermal fixed point accepts a mid-run solver change (`systems/electrothermal/coupled.py`). The final
+  residual is still the residual of the last solver's own map, and every binding is recorded.
+
+**Remaining limitations:**
+- `CallbackParticipant`-based provider adapters (`providers/pybamm/forge_pybamm/coupling.py`,
+  `coupling/adapters.py::provider_participant`) bind no provider build into their checkpoints.
+  `provider_participant.restore` does not compare its token with the record digest; only the runtime's re-checkpoint
+  catches that, and only for deterministic_restore participants.
+- The ngspice cross-check identity is a version banner, with no executable digest and no qualification.
+- `run_plan` has no problems channel (that would be a schema change).
+- The adaptive runner carries refinement level across fallback; this is a discretization request, not solver state.
+- The `_ScopedSnapshot` registry is per participant object and weak, so a checkpoint restores only into the
+  participant that issued it, and only while some holder keeps it alive.
+
+**Scientific review** (`forge-scientific-review` / `forge-scientific-reviewer`, read-only, static):
+- Pass 1: CHANGES REQUIRED.
+  - I-1 HIGH: unbound caller checkpoint became a silent cold start.
+  - I-2: accepted result carried a rejected attempt's checkpoint.
+  - I-3 HIGH: interval coverage overstated.
+  - I-4: build binding relied on the editable record string alone.
+  - I-5..I-7 LOW.
+  - All fixed; I-8 recorded above.
+- Pass 2: CHANGES REQUIRED (N-1 relaxation coverage and width, N-2 identity drift in advance, N-3..N-6 LOW). All fixed
+  and tested.
+- Pass 3: CHANGES REQUIRED.
+  - F-1: deny-list adoption.
+  - F-2: identity drift inside a call.
+  - F-3 LOW: unauthenticated seal.
+  - F-4 LOW: dropped problem text.
+  - F-5 LOW: pre-existing refinement carry-over.
+  - F-1..F-3 fixed and tested; F-4 documented in code; F-5 recorded above.
+- Pass 4 (confirmation): CHANGES REQUIRED. F-1, F-2 and F-4 confirmed; F-3 residual MEDIUM: the registry bound
+  only digest and slot, so a payload re-wrapped under an issued digest, slot and nonce restored. Fixed as the
+  reviewer prescribed: the registry holds the issued snapshot object (`WeakValueDictionary`, bounded by live
+  checkpoints) and restore requires identity. The reviewer's counterexample is now a test and is refused. No
+  fifth review pass ran (the reviewer agent was no longer available in the session), so this fix is verified by
+  its test only.
+
+```text
+# final tree, new tests + runtime neighbours (orchestration, external, fan-in, stateful runtime, big9 runtime,
+#   conservation history): 115 passed; forge_check --regression: 256 passed in 10.8 s
+# (the F-3 registry change came after the last FAST run; it touches only ExternalSolverParticipant)
+# targeted (new tests, before F-3): 63 passed
+TMPDIR=D:/ftmp PYTHONPATH='D:/forge-engrt-p1/src;D:/forge-engrt-p1' .venv/Scripts/python.exe -m pytest \
+  tests/execution/orchestration tests/test_external_participant_checkpoints.py tests/test_multiphysics_fan_in_units.py -q
+# reproducers copied into the pristine worktree D:/forge-engrt-base and run there:
+#   orchestration module: collection error (helpers absent); external + fan-in: 20 failed, 8 passed (controls)
+python tools/forge_check.py --regression --workers 4            -> 256 passed in 15.9 s
+# 109 interop-related test files, -m "not expensive" -n 4 (before the review-round fixes):
+#   11 failed, 3284 passed, 12 skipped -- all 11 in test_authority_integrity / test_local_assurance (also on baseline)
+# FAST, Windows venv 3.14, -m "not expensive" -q -n 4 -p no:cacheprovider --basetemp=D:/fbt-engrt -rfE
+#   baseline de7527fd : 128 failed, 10633 passed, 204 skipped, 22 errors in 431 s (150 failing ids)
+#   fix (after review passes 1-3): 130 failed, 10687 passed, 204 skipped, 22 errors in 447 s (152 failing ids)
+#   only in fix: test_core_freeze_manifest::test_the_tree_is_core_freeze_v1,
+#                test_core_freeze_v3_manifest::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks
+#     -> both are the verifier's `tree.clean` check listing the uncommitted files (baseline tree is clean)
+#   only in baseline: none
+#   V4 deep-surface failures: the built-vs-pinned surface diff is byte-identical on fix and baseline (859 entries,
+#     Python 3.14 builtin-method artifacts), so it is environmental
+# electrothermal + REAL ngspice (WSL /usr/bin/ngspice, version 42), no marker filter:
+#   tests/test_heterogeneous_ngspice.py tests/test_cross_solver_consensus.py tests/test_ngspice_version_probe.py
+#   tests/test_electrothermal_vertical.py tests/test_min_foundation_electrothermal.py
+#   tests/test_coupled_transport_admission.py tests/test_stateful_multiphysics_runtime.py
+#   tests/test_multiphysics_conservation_history.py tests/test_big9_review_runtime_fixes.py
+#   tests/test_field_composition.py tests/mcp/test_problem.py      -> 357 passed, 0 skipped in 20 s
+#   (these guard the existing electrothermal/ngspice route; they do not traverse the changed interop code, which
+#    is exercised only by in-process MOCK sessions)
+# SCIENTIFIC tier (-m "not campaign"): NOT RUN
+```
+
+**Failed approaches (do not repeat):**
+- Red-checking new tests by pointing `PYTHONPATH` at a pristine worktree does not work: `pyproject.toml` sets pytest's
+  `pythonpath`, so pytest imports the CURRENT worktree's `src` regardless. Copy the tests into the pristine worktree
+  and run them there.
+- Long bash heredocs again failed (`unexpected EOF`); patch scripts written with the editor work.
+- `forge_check.py --changed` with a touched `scientific/` file selects the whole FAST tier (more than 10 min on
+  Windows), so run FAST directly instead.
+
+**RECERTIFICATION_REQUIRED (OD-3).** All touched src files are pinned in `certification/current_core_v2.json`:
+orchestration, multiphysics external/transfer/relaxation, and scientific multiphysics graph. The new orchestration
+test falls under a pinned glob. No touched file is in the frozen API snapshot. `main` already needs recertification.

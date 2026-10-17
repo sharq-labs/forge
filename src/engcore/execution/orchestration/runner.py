@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 from .attempt import AttemptState, SimulationAttempt
 from .backend import BackendOutcome, SimulationBackend
-from .checkpoint import CheckpointReference
+from .checkpoint import CheckpointReference, adopt_checkpoint, resume_owner, resume_point_for
 from .plan import SimulationPlan
 from .policy import OrchestrationPolicy
 from .report import OrchestrationReport
@@ -18,22 +18,36 @@ def run_plan(
     policy:OrchestrationPolicy=OrchestrationPolicy(),
     checkpoint:CheckpointReference|None=None,
 )->OrchestrationReport:
+    owner=resume_owner(checkpoint)
     attempts=[]
     current_checkpoint=checkpoint
     for index,solver_id in enumerate(schedule_attempts(plan),start=1):
         backend=backends.get(solver_id)
         attempt_id=f"{plan.plan_id}:{index}:{solver_id}"
+        if owner is not None and solver_id!=owner:
+            # a resumed run continues ONE solver's state; another solver cannot continue it
+            attempts.append(SimulationAttempt(attempt_id,AttemptState.FAILED,index-1,f"resume_checkpoint_belongs_to_{owner}"))
+            if not policy.allow_solver_fallback:
+                break
+            continue
         if backend is None:
             attempts.append(SimulationAttempt(attempt_id,AttemptState.FAILED,index-1,"backend_missing"))
             if not policy.allow_solver_fallback:
                 break
             continue
+        if str(getattr(backend,"solver_id","")).strip()!=solver_id:
+            # a backend registered under another solver's name would receive that solver's state
+            attempts.append(SimulationAttempt(attempt_id,AttemptState.FAILED,index-1,"backend_solver_identity_mismatch"))
+            if not policy.allow_solver_fallback:
+                break
+            continue
         try:
+            # a checkpoint is solver state: only the solver that produced it may resume from it
             outcome=backend.run(
                 attempt_id=attempt_id,
                 refinement_level=index-1,
                 deterministic_seed=plan.deterministic_seed,
-                checkpoint=current_checkpoint,
+                checkpoint=resume_point_for(current_checkpoint,solver_id),
             )
         except Exception as exc:
             attempts.append(
@@ -57,8 +71,11 @@ def run_plan(
                 outcome.failure_code,
             )
         )
-        if outcome.checkpoint is not None:
-            current_checkpoint=outcome.checkpoint
+        # OrchestrationReport has no problems channel (a schema change); a refused checkpoint is simply never
+        # adopted, and in run_plan each solver runs once, so it could not have been resumed by anyone
+        adopted,_problem=adopt_checkpoint(outcome.checkpoint,solver_id=solver_id,state=outcome.state)
+        if adopted is not None:
+            current_checkpoint=adopted
         if outcome.state is AttemptState.CONVERGED:
             break
         if not policy.allow_solver_fallback:

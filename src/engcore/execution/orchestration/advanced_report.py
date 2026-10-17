@@ -37,6 +37,15 @@ class AdvancedAttemptRecord:
 
 @dataclass(frozen=True)
 class AdvancedOrchestrationReport:
+    """Outcome of an adaptive plan.
+
+    ``final_checkpoint``: on a successful stop, the checkpoint the ACCEPTED
+    attempt returned (or None); on any other stop, the last adopted resume
+    point, bound to the solver that produced it, or the caller's input when
+    none was adopted.  It is a resume point, never the result state of an
+    unsuccessful run and never evidence.
+    """
+
     attempts: tuple[AdvancedAttemptRecord, ...]
     total_usage: ResourceUsage
     stop_reason: AdvancedStopReason

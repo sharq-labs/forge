@@ -31,7 +31,7 @@ from ...scientific.results.uncertainty import (
     UncertaintyKind,
     UncertaintySource,
 )
-from ...scientific.units.quantity import Quantity
+from ...scientific.units.quantity import Quantity, base_unit, is_ratio_scale
 from ...scientific.results.uncertainty_mapping import (
     propagate_declared_mapping_uncertainty,
 )
@@ -413,12 +413,17 @@ def combine_fan_in_uncertainty(
                 "nonlinear and source-selection probabilities were not "
                 "declared"
             )
+        # a width is a spread: on a scale with a conventional zero (degC) it
+        # is stated in the ratio-scale base unit, never as an absolute point
+        spread_unit = (
+            target.unit if is_ratio_scale(target.unit) else base_unit(target.unit)
+        )
         widths = []
         for item in incoming:
             assert item.standard_uncertainty is not None
             widths.append(
                 item.standard_uncertainty.magnitude_as_spread_in(
-                    target.unit
+                    spread_unit
                 )
             )
         width = sum(widths)
@@ -426,7 +431,7 @@ def combine_fan_in_uncertainty(
             width /= len(widths)
         return Uncertainty(
             kind=UncertaintyKind.STANDARD,
-            standard_uncertainty=Quantity(width, target.unit),
+            standard_uncertainty=Quantity(width, spread_unit),
             source=source,
             source_kind=UncertaintySource.COMBINED,
             method="fan_in_linear_bound_no_independence",
@@ -466,12 +471,15 @@ def combine_fan_in_uncertainty(
                 "fan-in reduction has no uncertainty rule"
             )
 
-        common_confidence = (
-            confidence[0]
-            if confidence
-            and all(level == confidence[0] for level in confidence)
-            else None
-        )
+        # The propagated bounds hold whenever EVERY source lies in its own
+        # interval.  With no independence assumed, the coverage that can be
+        # guaranteed is the union bound 1 - sum(1 - c_i), not a source's own
+        # level; an undeclared level, or a bound at or below zero, states none.
+        common_confidence = None
+        if confidence and all(level is not None for level in confidence):
+            bound = 1.0 - sum(1.0 - float(level) for level in confidence)
+            if bound > 0.0:
+                common_confidence = bound
         return Uncertainty(
             kind=UncertaintyKind.INTERVAL,
             lower=Quantity(lower, target.unit),
@@ -483,7 +491,8 @@ def combine_fan_in_uncertainty(
             notes=(
                 "interval bounds were propagated through the monotone "
                 "fan-in operator without a distribution or independence "
-                "assumption"
+                "assumption; the confidence level is the union bound over "
+                "the sources' declared levels"
             ),
         )
 

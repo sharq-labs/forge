@@ -1,5 +1,23 @@
 # Active Plan
 
+## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)
+
+Branch `fix/engrt-v1-phase1-interop` (worktree `D:/forge-engrt-p1`), base `origin/main` `de7527fd`. Local and
+uncommitted: no commit, push, PR, merge, certificate or hardened run without the owner. Details: PROGRESS, 2026-10-17
+"Engineering Runtime V1, Phase 1".
+
+- [x] Orchestration checkpoints bound to their solver; fallback never resumes another solver's or a failed attempt's
+      state; unbound resume refused.
+- [x] SUM fan-in into an offset-scale port refused (it was unit-dependent).
+- [x] Union-bound coverage and spread-unit widths in fan-in and relaxation.
+- [x] `ExternalSolverParticipant` checkpoints sealed to the issuing participant and provider build.
+- [x] Scientific review passes 1-3 fixed; FAST diffed against the pristine baseline (no new failures beyond the
+      `tree.clean` check of the uncommitted tree); real-ngspice electrothermal integration 357 passed.
+- [ ] Owner: commit/PR decision; OD-3 recertification (pinned files touched); policy decisions on qualification
+      gating and provider-build binding for `CallbackParticipant` adapters.
+- [ ] Next (smallest high-impact): bind provider build + token digest into `coupling/adapters.py::provider_participant`
+      and the PyBaMM coupling adapter checkpoints, with a real-provider (PyBaMM, 3.13 env) restore test.
+
 ## Active override — Open problems pass (2026-10-16)
 
 Branch `fix/open-problems-2026-10-16` (worktree `D:/forge-open-problems`), base `origin/main` `36306da5`, merged with `062e1153`; pushed for a PR.
