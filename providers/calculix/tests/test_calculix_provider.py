@@ -85,7 +85,7 @@ def test_proof_d_e_calculix_and_fenicsx_corroborate_plane_stress_displacement():
     cmp = compare_providers(decl, fx, "displacement", ccx, "displacement", a_select=edge, b_select=edge)
     assert cmp.max_absolute == float(np.abs(u_fx[right, 0] - u_ccx[right, 0]).max())  # the records' own values
     print("PROOF_E", cmp.to_dict(), "metrics", dict(ccx.metrics))
-    assert cmp.to_dict()["classification"] == "solver_corroboration_not_validation"
+    assert cmp.to_dict()["classification"] == "diagnostic_numerical_comparison_not_corroboration"   # Phase 3.5 WS1: no admission
     assert cmp.within_tolerance, cmp.to_dict()
     # a changed case (thickness) changes the generated deck and therefore the execution identity
     thicker = PlaneStressProblem(mesh, mats, Quantity(2 * thickness.to("m").magnitude, "m"), "left", "right", traction)

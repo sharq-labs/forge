@@ -140,13 +140,24 @@ def test_level_two_of_the_structure_flagship_records_a_failing_reading_instead_o
 class _FakeProviderComparison:
     """A stand-in for a ProviderComparison (the link builder reads classification, within_tolerance, to_dict and digest)."""
 
-    def __init__(self, within: bool, post_hoc: bool = False, tag: str = "x"):
+    def __init__(self, within: bool, post_hoc: bool = False, tag: str = "x", admitted: bool = True):
         self.within_tolerance = within
-        self.classification = "post_hoc_solver_corroboration_not_validation" if post_hoc else "solver_corroboration_not_validation"
+        self.same_problem_established = admitted        # Phase 3.5 WS1: corroboration needs same-problem admission
+        base = "solver_corroboration_not_validation" if admitted else "diagnostic_numerical_comparison_not_corroboration"
+        self.classification = f"post_hoc_{base}" if post_hoc else base
         self.tag = tag
 
     def to_dict(self) -> dict:
-        return {"classification": self.classification, "within_tolerance": self.within_tolerance, "a_selection": {"rows": [1, 2]}, "b_selection": {"rows": [3]}, "tag": self.tag}
+        record = {"classification": self.classification, "within_tolerance": self.within_tolerance, "a_selection": {"rows": [1, 2]}, "b_selection": {"rows": [3]},
+                  "tag": self.tag, "a_identity": "a" * 64, "b_identity": "b" * 64, "same_problem_established": self.same_problem_established}
+        if self.same_problem_established:
+            from engcore.providers.problem_identity import CanonicalProblem, ProblemAspect, compare_problems
+            problem = CanonicalProblem("fixture", {aspect: f"fixture {aspect.value}" for aspect in ProblemAspect})
+            p = problem.digest
+            record["canonical_problems"] = [problem.to_dict(), problem.to_dict()]
+            record["problem_equivalence"] = compare_problems(problem, problem).to_dict()
+            record["problem_bindings"] = [{"execution_identity": "a" * 64, "problem_digest": p}, {"execution_identity": "b" * 64, "problem_digest": p}]
+        return record
 
     @property
     def digest(self) -> str:
@@ -173,6 +184,10 @@ def test_level_five_of_the_cavity_flagship_records_a_missing_or_failing_whole_fi
     assert partial.status is LevelStatus.ATTEMPTED_NOT_REACHED
     missing = [e for e in partial.evidence if e.kind == "whole_field_missing"]
     assert len(missing) == 1 and missing[0].outcome == "not_met" and "80x80" in partial.note
+    # Phase 3.5 WS1: agreement without same-problem admission never reaches level 5
+    unadmitted = {n: _FakeProviderComparison(True, tag=str(n), admitted=False) for n in LEVELS3}
+    diagnostic = cf.level5_entry(LEVELS3, dict(zip(LEVELS3, (1.0, 1.0, 1.0))), unadmitted, lower, details)
+    assert diagnostic.status is LevelStatus.ATTEMPTED_NOT_REACHED and "no same-problem admission" in diagnostic.note
     assert sum(e.kind == "provider_comparison" and not e.classification.startswith("post_hoc") for e in partial.evidence) == 2
     # a level missing while the others agree is still not a pass
     assert cf.level5_entry(LEVELS3, {20: 1.0, 40: 1.0, 80: None}, _whole((1, 1, None)), lower, details).status is LevelStatus.ATTEMPTED_NOT_REACHED

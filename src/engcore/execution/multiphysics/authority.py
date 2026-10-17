@@ -103,11 +103,12 @@ COUPLING_PATHS: tuple[CouplingPath, ...] = (
         "steady Gauss-Seidel (Picard) fixed point over ScientificResult records, torn-edge LINF criterion in one "
         "ratio-scale unit, optional under-relaxation of the TORN values only, TRANSFER_REFUSED stop",
         remaining=(
-            "a runtime-equivalent build exists (engcore.systems.electrothermal.runtime_adapter) for UNRELAXED plans; "
-            "before the product path may delegate: (1) execute the parity tests against the native loop; (2) decide "
-            "relaxation semantics -- the runtime relaxes every edge of a serial sweep, this loop only the torn ones, "
-            "so relaxed plans are refused by the adapter; (3) map TRANSFER_REFUSED (a recorded stop here, a raised "
-            "refusal in the runtime); (4) move credibility.CouplingEvidence onto the runtime run record"
+            "Phase 3.5 WS2: a code-complete migration candidate exists (runtime_adapter.run_coupled_via_runtime: "
+            "torn-only relaxation via RelaxationPolicy.scope='lagged_edges', TRANSFER_REFUSED mapped, a native-shaped "
+            "CoupledRun so credibility.CouplingEvidence reads it unchanged), selected by "
+            "runtime_adapter.run_electrothermal_coupling with NATIVE as the default; before the product path may "
+            "delegate: execute the parity tests (DV-49, DV-88..DV-90) and have the owner set "
+            "RUNTIME_PATH_PARITY_VERIFIED"
         ),
     ),
     CouplingPath(

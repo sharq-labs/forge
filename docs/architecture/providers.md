@@ -118,9 +118,14 @@ prefix (`FORGE_PROVIDER_ENVS`).
   dependency set (independence UNKNOWN, not assumed). An absolute
   tolerance is a spread (0.5 degC is 0.5 K), and a relative tolerance on an
   offset-scale unit is refused. The compared values are digest-bound. A comparison
-  whose region was chosen after looking at the data carries `post_hoc=True` and
-  is classified `post_hoc_solver_corroboration_not_validation`. Agreement is
-  otherwise `solver_corroboration_not_validation`, never validation.
+  whose region was chosen after looking at the data carries `post_hoc=True`.
+  Phase 3.5: a `compare_providers` result is a DIAGNOSTIC
+  (`[post_hoc_]diagnostic_numerical_comparison_not_corroboration`). Only `corroborate`
+  -- two `CanonicalProblem` declarations whose re-derived equivalence is SAME_PROBLEM
+  over every aspect, and one `ProblemBinding` per record -- yields
+  `[post_hoc_]solver_corroboration_not_validation`, never validation; the record
+  carries both canonical problems so every consumer re-derives the admission
+  (`corroboration_admission_problems`).
 * CoolProp: the reference state is process-global in CoolProp, so the adapter re-pins
   `DEF` on every call and records it. A state outside the equation of state's
   Tmin/Tmax/pmax is an UNKNOWN record. Transport correlations can have narrower

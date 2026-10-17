@@ -98,7 +98,7 @@ def test_proof_e_openfoam_vs_su2_lower_half_corroborate_and_converge_with_refine
         corners = tuple(tuple((int(k), 0.25) for k in cell) for cell in mesh.cells)
         cmp = compare_providers(decl, of_rec, "velocity", su2, "velocity", a_select=OutputSelection(rows=rows),
                                 b_select=OutputSelection(rows=rows, weights=corners))
-        assert cmp.classification == "post_hoc_solver_corroboration_not_validation"
+        assert cmp.classification == "post_hoc_diagnostic_numerical_comparison_not_corroboration"   # Phase 3.5 WS1: no admission
         print("PROOF_E_CFD_LOWER", n, cmp.to_dict()["max_absolute"], cmp.within_tolerance)
         diffs[n] = cmp.max_absolute
         assert cmp.within_tolerance

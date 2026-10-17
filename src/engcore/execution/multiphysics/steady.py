@@ -16,7 +16,9 @@ What it guarantees
   result has no value before its first solve.  The runtime accepts that only for
   edges a serial sweep overwrites before they are read, or that are seeded.
 * **The same transfer guard as the native loops.**  A result whose own
-  validation FAILED is refused (:class:`ResultRefused`); a result attributed to
+  validation FAILED is refused (:class:`ResultRefused`) when the participant
+  supplies a coupling value from it (a sink may record it instead when its adapter declares
+  ``refuse_failed_sink=False``, Phase 3.5); a result attributed to
   another problem is refused; a value is taken only by its declared quantity
   name.  A result whose solver reports a failed termination makes the advance
   ``internal_converged=False`` (a numerical failure the runtime may retry), never
@@ -72,6 +74,7 @@ class ResultParticipant(CallbackParticipant):
         solve: Callable[[Mapping[str, Quantity], str], ScientificResult],
         outputs: Mapping[str, str],
         run_prefix: str = "steady",
+        refuse_failed_sink: bool = True,
     ) -> None:
         if spec.transient:
             raise InvalidScientificProblem(
@@ -99,6 +102,9 @@ class ResultParticipant(CallbackParticipant):
         self._solve = solve
         self._outputs = mapped
         self._prefix = str(run_prefix).strip() or "steady"
+        if not isinstance(refuse_failed_sink, bool):
+            raise InvalidScientificProblem("refuse_failed_sink must be a bool")
+        self._refuse_failed_sink = refuse_failed_sink
         digest = hashlib.sha256(f"stateless:{spec.participant_id}:{self.problem_id}".encode()).hexdigest()
 
         super().__init__(
@@ -130,7 +136,11 @@ class ResultParticipant(CallbackParticipant):
                 f"{result.problem_id!r}; its values would be misattributed",
                 result=result,
             )
-        if result.validation.status is ValidationOutcome.FAIL:
+        # Phase 3.5 WS2: by default any failed result is refused.  ``refuse_failed_sink=False`` (declared by a
+        # migrating adapter whose native loop guards only where a value TRAVELS, ``coupled._transport``) lets a
+        # participant that supplies NO coupling value record its failed result (kept in ``results`` and the
+        # step diagnostics, carried by the adapter's own record) instead of refusing the run
+        if result.validation.status is ValidationOutcome.FAIL and (self._outputs or self._refuse_failed_sink):
             failed = ", ".join(check.name for check in result.validation.failures)
             raise ResultRefused(
                 f"result {result.result_id!r} of {self.problem_id!r} failed its own validation ({failed}); "

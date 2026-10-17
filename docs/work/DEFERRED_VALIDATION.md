@@ -773,3 +773,82 @@ an end that differs within tolerance gain `_time_grid`; the 1D adaptation record
 | m | MINOR | The adaptation record serializes its provenance keys unconditionally | Kept deliberately (the record is not pinned anywhere); recorded as an identity change. |
 | m | MINOR | `condition_limit` compares a 1-norm lower bound for large sparse Jacobians with an unqualified limit | Recorded (it can only refuse; the record names the method). |
 | m | MINOR | Hard (non-numerical) errors inside a half window abort the run | Recorded (a refusal, never a pass). |
+
+## Phase 3.5 — Engineering foundation completion (2026-10-18)
+
+Branch `feat/phase35-engineering-foundation-completion` (worktree `D:/forge-phase35`), on Phase 3 `7389f4b4` (on Phase 2
+`2661b640`, Phase 1 `6249c2d2`, `origin/main` `de11dffa`; none pushed or merged, re-verified 2026-10-18). **No test of
+any kind was executed**: only `py_compile`, import checks and `git diff --check`. DV-31..DV-86 are preserved and not
+resolved by Phase 3.5 unless a row says so. Policy-blocked scope: `docs/work/PHASE_3_5_POLICY_PROPOSALS.md`.
+
+| ID | Workstream / capability | Required test | Expected evidence | Affected claims | Certification impact | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| DV-87 | WS1 same-problem admission | `pytest tests/test_phase35_ws1_same_problem_admission.py -q` | every assertion passes: diagnostics never reach level 5; pre-rule, relabelled, tampered and hand-forged records refused; re-derivation from stored canonical problems | every level-5 (independent-provider) ladder claim | `providers/{compare,problem_identity}.py` in certified SCOPE (pattern): OD-3 | NOT RUN |
+| DV-92 | WS1 | Existing suites whose fixtures or expectations were updated: `pytest tests/test_engineering_contracts.py tests/test_engineering_round5_fixes.py tests/test_provider_boundary.py tests/test_phase2_solver_selection_and_identity.py flagships/tests/test_flagship_ladders.py flagships/tests/test_flagship_portfolio.py -q` | pass; `cavity_re100` and `structure_flagship` bundles REFUSED (`same-problem`), the other six verify | flagship ladders and committed bundles | test files pinned by recertification scope | NOT RUN |
+| DV-93 | WS1 | Regenerate the cavity (OpenFOAM/SU2) and structure (FEniCSx/CalculiX/Code_Aster) flagship bundles in their provider envs, so their level 5 is decided by admitted corroboration; update `BUNDLE_DIGESTS` and the reports; run `providers/su2`, `providers/calculix` and the flagship real-provider tests | regenerated bundles verify; level 5 REACHED only if within tolerance AND admitted | the two flagship reports' level-5 statements (currently STALE: the committed bundles no longer verify) | flagships are outside the core certificate | NOT RUN (real-provider runs) |
+| DV-88 | WS2 parity fixtures | `pytest tests/test_phase35_ws2_electrothermal_migration.py -q` | outcome, iteration count, per-iteration largest change and final values equal to the native loop within 1e-9 on NOMINAL, TWO_STAGE, relaxed, iteration-limit and refused-transfer cases | any claim that the runtime may replace the native electrothermal loop | `runtime.py`, `plan.py` (pinned list), `steady.py`, `authority.py` (SCOPE): OD-3 | NOT RUN |
+| DV-89 | WS2 | Existing coupling and electrothermal suites (relaxation scope default unchanged; adapter 0.2.0): `pytest tests/test_phase2_coupling_authority.py tests/test_phase2_review_regressions.py tests/test_electrothermal_vertical.py tests/test_electrothermal_fixed_point_relaxation.py tests/test_multiphysics_iqn_ils.py tests/test_multiphysics_window_control.py -q` | pass | as DV-88 | as DV-88 | NOT RUN |
+| DV-90 | WS2 | Candidate vs native on the golden pipeline and MCP electrothermal cases (U00048 refusal, relaxed product plans), boundary differences 1-7 measured | recorded differences only where the adapter lists them | migration decision (`RUNTIME_PATH_PARITY_VERIFIED`) | none beyond DV-88 | NOT WRITTEN |
+| DV-91 | WS3 conjugate interface admission, maturity | `pytest tests/test_phase35_ws3_conjugate_interface.py -q` | pass | none (infrastructure; no FE/CFD claim exists) | `execution/multiphysics/conjugate_interface.py` (SCOPE) | NOT RUN |
+| DV-94 | WS3 real FE <-> CFD coupling | real FEniCSx <-> OpenFOAM conjugate run, conservation diagnostics, analytic conjugate case | — | — | — | BLOCKED (policy, P35-E2) / NOT WRITTEN |
+| DV-95 | WS4 transient 1D adaptation, conservative 1D transfer, coarsening, triangle refinement | adaptation / conservation / temporal / replay tests | — | — | — | BLOCKED (policy, P35-A4/A5) / NOT WRITTEN |
+| DV-96 | WS5 provider-backed nonlinear PDE | manufactured solution, Newton failure, admission re-check through FEniCSx | — | — | — | BLOCKED (policy, P35-E1) / NOT WRITTEN |
+| DV-97 | WS6 ALE | constant-state preservation, GCL, known mesh motion, rollback | — | — | — | BLOCKED (policy, P35-E3) / NOT WRITTEN |
+| DV-98 | All | Structural guards: layering, certified-dependency closure, core purity, pin portability; FAST and SCIENTIFIC tiers on the Phase 1-3.5 tree diffed against a pristine baseline | pass or recorded failures | all | — | NOT RUN |
+
+### WS1 status: IMPLEMENTED / UNVERIFIED (closes OD-P2-3 by owner direction)
+
+- Inventory of cross-provider comparison and corroboration entry points: `providers.compare.compare_providers` (now a
+  DIAGNOSTIC), `providers.compare.corroborate` (the only corroboration), `engineering.ladder` level 5 and
+  `check_provider_comparison` (bundle and summary verification), flagships `cavity_cfd` and `thermo_mechanical` (the only
+  level-5 producers), `numerical.core.compare_executions` (agreement of two executions of ONE Forge problem digest; never
+  corroboration; unchanged). Not routed through the new admission, recorded: the Core `scientific.consensus`
+  (`CrossSolverConsensus`, domain-pinned routes such as `dc_consensus` that solve one declared problem object; Core frozen,
+  unchanged) and the scientific verification ladder's EXTERNAL_SOLVER -> V5 category mapping.
+- Stored records: a record re-derives its admission from the two canonical problems it carries; a pre-rule record
+  (no admission), a relabelled diagnostic, an admitted record relabelled as a diagnostic, a consistently forged
+  admission without canonical problems, or tampered problems are refused. Limit: two forged-but-identical canonical
+  declarations still derive SAME_PROBLEM -- declaration fidelity is the adapter's claim (`ProblemBinding`).
+- Identity changes (deliberate): every comparison record states `same_problem_established`; the diagnostic class;
+  admitted records carry `canonical_problems`. Two committed bundles no longer verify (DV-93).
+
+### WS2 status: PARTIAL / UNVERIFIED (code-complete candidate; migration gated on executed parity)
+
+- `RelaxationPolicy.scope = "lagged_edges"`; runtime relaxes only lagged edges; `ResultParticipant(refuse_failed_sink=...)`
+  (default unchanged); `runtime_adapter.run_coupled_via_runtime` returns a native `CoupledRun`;
+  `run_electrothermal_coupling` keeps NATIVE as default; the candidate refuses without `acknowledge_unverified_parity`
+  while `RUNTIME_PATH_PARITY_VERIFIED` is False. Seven boundary differences are listed in the adapter docstring.
+- The product path (`coupled.run_fixed_point_coupling`) is unchanged and remains the convergence authority in production.
+
+### WS3 status: PARTIAL / UNVERIFIED (infrastructure only; real FE/CFD BLOCKED)
+
+- `execution/multiphysics/conjugate_interface.py`: interface-condition admission and a seven-stage provider-pair maturity
+  record (`CHT_FENICSX_OPENFOAM`: no stage reached). No adapter, solver or mock numerical output.
+
+### WS4-WS6 status: BLOCKED (policy)
+
+Nothing implemented beyond Phase 3; narrow proposals P35-A4, P35-A5 (EXC-1 amendments) and P35-E1..E3 (new exceptions,
+which trigger the anti-loophole OD-6 review) are drafted, not active.
+
+### Phase 3.5 static review (read-only, nothing executed) and what it changed
+
+| # | Severity | Finding | Disposition |
+| --- | --- | --- | --- |
+| B1 | BLOCKER | Committed cavity/structure bundles no longer verify; portfolio and round-5 tests still expected them to | Tests now assert the refusal (digest pins kept); round-5 F1 downgrades the stored links before its attack; regeneration is DV-93 |
+| B2 | BLOCKER | Stale classification expectations (provider boundary, SU2, CalculiX tests) | Updated to the diagnostic class |
+| M1 | MAJOR | Stored admission checked for shape only; consistent forgery promoted a pre-rule record; hand-built equivalence possible | Fixed: canonical problems stored and re-derived; hand-built equivalence refused; tests added |
+| M2 | MAJOR | Flagship canonical problems mostly from shared constants | Fixed: derived from each provider's own problem object; equation class by provider problem type only |
+| M3 | MAJOR | Maturity record could claim validation without execution/verification | Fixed: every earlier stage required; evidence refs labelled unresolved |
+| m | MINOR | Undocumented boundary differences (undeclared-efficiency refusal; which failed result is named) | Documented (items 5-7) |
+| m | MINOR | Parity gate is a caller assertion; CouplingEvidence cannot tell a candidate run | Recorded as OD-P35-4 |
+| m | MINOR | `refuse_failed_sink=False` cannot let a value travel | Confirmed, no change |
+| m | MINOR | Docs lag (plan.py, Phase 2 test docstring, bundle.py, architecture docs) | Fixed |
+| m | MINOR | WS3: plan not validated, duplicate direction message, unused test parameter | Fixed |
+| m | MINOR | A stored plan rewritten to `lagged_edges` shrinks required edges | Recorded (same class as any stored-plan edit) |
+| m | MINOR | Core consensus / verification-ladder V5 not routed through admission | Recorded above (Core frozen) |
+
+Certification-pinned (`certification/current_core_v2.json`) files changed in Phase 3.5:
+`execution/multiphysics/runtime.py`, `scientific/multiphysics/plan.py`. Changed or new files inside certified SCOPE
+patterns: `providers/{compare,problem_identity,__init__}.py`, `execution/multiphysics/{steady,authority,conjugate_interface}.py`.
+No new import from a pinned-list file into an unpinned module. No V4 mutant targets a changed line (the G20a anchor in
+`systems/electrothermal/coupled.py` is untouched). OD-3 recertification required.

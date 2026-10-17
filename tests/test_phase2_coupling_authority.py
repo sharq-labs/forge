@@ -5,7 +5,7 @@
   NOT_MIGRATED with its remaining work.
 * The electrothermal composition builds as a runtime plan (``runtime_adapter``)
   whose outcome, iteration count and outputs must match the native loop
-  (parity), and a relaxed plan is refused because the two relax differently.
+  (parity); a relaxed plan is built with torn-only relaxation (Phase 3.5 WS2; it was refused before).
 * Steady participants may defer their initial outputs, only where a serial
   sweep overwrites them before they are read.
 * No relaxation now delivers the transfer exactly.
@@ -158,9 +158,11 @@ def test_the_torn_edges_are_exactly_the_edges_the_runtime_requires_criteria_on()
     assert {c.edge_id for c in built.plan.criteria} == set(built.torn_edges)
 
 
-def test_a_relaxed_native_plan_is_refused_by_the_runtime_build():
-    with pytest.raises(InvalidScientificProblem, match="relaxes only the torn values"):
-        runtime_equivalent(NOMINAL, _plan(NOMINAL, relaxation=0.5))
+def test_a_relaxed_native_plan_is_built_with_torn_only_relaxation():
+    # Phase 3.5 WS2 (was: refused): the runtime now relaxes exactly the lagged (= torn) edges, as the native loop
+    built = runtime_equivalent(NOMINAL, _plan(NOMINAL, relaxation=0.5))
+    assert built.plan.relaxation.scope == "lagged_edges" and built.plan.relaxation.factor == 0.5
+    assert set(built.plan.required_convergence_edges(built.graph)) == set(built.torn_edges)
 
 
 def test_a_relaxed_native_run_no_longer_claims_it_was_not_relaxed():
