@@ -30,7 +30,7 @@ ledger capability).
 - [x] BR16 QR filtering of near-dependent IQN-ILS secant pairs, tests NOT RUN.
 - [x] BR17 stagnation detection for implicit coupling windows, tests NOT RUN.
 - [x] BR18 opt-in under-relaxation of the electrothermal fixed point, tests NOT RUN.
-- [ ] BR19 adaptive resolution (mesh control slice 1) under EXC-1.
+- [x] BR19 adaptive resolution (mesh control slice 1) under EXC-1, tests NOT RUN (DV-27 is the EXC-1 exit gate).
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
 ## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)

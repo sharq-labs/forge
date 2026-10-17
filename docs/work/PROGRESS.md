@@ -5281,3 +5281,20 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
 - Tests written: `tests/test_electrothermal_fixed_point_relaxation.py`, using the existing electrothermal fixture.
   - Relaxed and plain runs must agree within 1e-4 K.
   - The factor is recorded only when declared.
+
+### BR19 -- adaptive mesh control slice 1: adaptive resolution (EXC-1, tests NOT RUN)
+- Owner approved active-epic exception EXC-1 on 2026-10-17. All eight fields are recorded in ACTIVE_PLAN; the
+  expiry of 2026-10-31 is Claude's proposal.
+- Survey: `StructuredMesh` is uniform and states it has no refinement, and no local refinement exists anywhere. The
+  claims refinement study measures a FIXED ladder; nothing chooses resolution.
+- New `claims/adaptive_resolution.py`, `adapt_resolution(solve, policy, quantity=, units=)`:
+  - refines `baseline * ratio**k`;
+  - after each level, applies the CANONICAL `numerical_uq` estimator to the three finest levels;
+  - TARGET_MET only on a quantified half-width within the target, otherwise BUDGET_EXHAUSTED (keeps the honest
+    interval) or UNKNOWN;
+  - an unusable level ends the search;
+  - the target is a spread.
+- Not done (next slices, same exception or a new one): wiring into `uq_studies` and capability declarations; local
+  AMR (non-uniform mesh records, error indicators, solver support).
+- Tests written: `tests/claims/test_adaptive_resolution.py`. Exact first-order model: n = 4, 8, 16, 32 meets a
+  0.05 target with half-width 0.0390625 and extrapolate 1.0.
