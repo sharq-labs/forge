@@ -204,3 +204,27 @@ certification-pinned file is UNCERTIFIED until OD-3.
   mesh-weighted L2 norm; that is documented, not changed (changing it would move convergence decisions).
 - Non-finite participant outputs are refused when the `Quantity` / `FieldValue` is built, before any residual;
   that refusal is not retried by window control. Only an overflowing residual is a retryable numerical failure.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-33 | P1-BR2 conservative cell remap | New tests (hand-computed overlap oracles, refusals, diagnostics identity) | `pytest tests/test_phase1_conservative_cell_mapping.py -q` | NOT RUN |
+| DV-34 | P1-BR2 | A field-mapped coupled run through `TransferEngine` with a conservative edge (mapping provenance reaches the run record); none written | new test | NOT WRITTEN |
+| DV-35 | P1-BR2 | Cost of the polygon path (O(source x target) candidate search in Python) on a realistic interface mesh; owner-authorized measurement only | benchmark | NOT RUN |
+
+### Supported geometry (P1-BR2)
+
+- Two axis-aligned `StructuredMesh` grids of any spacing: exact separable overlaps (`kron` of 1D overlaps).
+- Any pair of planar 2D supports made of triangles, strictly convex quadrilaterals or structured rectangles:
+  Sutherland-Hodgman intersection of convex polygons in the target cell's local frame.
+- Refused: node fields, offset-scale units (degC, degF), any coverage deficit above the declared round-off
+  allowance in either direction (no extrapolation, no dropped source integral), 3D cells, non-convex or
+  degenerate cells, `ExtrapolationPolicy.NEAREST` on a conservative definition. No nearest-site fallback.
+
+### Unverified assumptions (P1-BR2)
+
+- `CONSERVATIVE_COVERAGE_ROUNDOFF = 1e-9` (relative to the cell measure) absorbs float64 intersection
+  round-off. Measured deficits are recorded in provenance; the value itself is a numerical choice, not a measurement.
+- First order only: a piecewise-constant remap is conservative, not accurate; its pointwise error is
+  unquantified and stays so in the numerical-error accounting (P1-BR3).
+- The structured path assumes `axis_coordinates()` partitions are sorted and gap-free, which the record
+  guarantees by construction.
