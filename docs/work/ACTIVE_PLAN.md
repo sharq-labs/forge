@@ -370,6 +370,22 @@ expiry, owner approval, prohibitions).
    - any change to the battery 1RC epic or its pins;
    - a second concurrent exception, which would trigger the anti-loophole owner review.
 
+**EXC-1 amendment A1 (2026-10-17): slice 2.** The owner approved it in the session ("Continue EXC-1: build
+mesh-control slice 2"). It is the same exception, not a second one.
+- **Scope added:** a new module `src/engcore/numerical/mesh_adaptation.py` and its tests.
+- **Allowed work added:**
+  - a non-uniform 1D grid record local to that module;
+  - piecewise-linear a-posteriori error indicators;
+  - Doerfler marking, bisection with gradation control, and an adaptation loop around a caller-supplied evaluator.
+  - These are pure numerics: estimates labelled as estimates, no authority.
+- **Still prohibited:**
+  - changes to any domain solver (the uniform-grid `conduction1d` is untouched);
+  - changes to Core mesh or field records (`scientific/fields`), capability declarations or the ledger;
+  - wiring adaptive resolution into `uq_studies`. That would make a finer run than the claim's reported run carry
+    its evidence, which is an owner decision.
+  - Everything else in item 8 above.
+- **Exit and expiry:** unchanged. DV-27 and the new DV-28 must run, and the scientific review must cover both slices.
+
 ## Stop conditions
 
 Stop and surface a blocker if a change would: weaken UNKNOWN or fail-closed semantics; change a frozen serialized
