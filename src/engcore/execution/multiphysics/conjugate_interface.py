@@ -9,7 +9,8 @@ conditions, and each must be carried by the coupling graph in the right form:
 
 * temperature continuity ``T_S = T_F`` on Gamma -- an INTENSIVE quantity: one
   side's interface temperature is the other side's Dirichlet datum, matched by
-  a consistent mapping, never "conserved";
+  a mapping of values (a conservative cell remap of a temperature is admitted as
+  an area-weighted cell average; it is never described as conserving anything);
 * heat-flux balance ``q_S . n_S + q_F . n_F = 0`` on Gamma -- a FLUX DENSITY
   (W/m**2): the other side's Neumann datum, transferred CONSERVATIVELY (its
   integral over Gamma is not created or lost by the mapping), with a declared
@@ -135,10 +136,12 @@ def admit_conjugate_interface(
             problems.append(f"the {label} edge {edge_id!r} is not field-valued; an interface {label} is a field on the interface")
         if dimensionality(port.unit) != dimension:
             problems.append(f"the {label} edge {edge_id!r} carries {port.unit!r}, not a {label} dimension")
+    try:
+        plan.validate_against(graph)
+    except InvalidScientificProblem as exc:
+        problems.append(f"the plan does not fit the graph: {exc}")
     if len(edges) == 2:
-        t, q = edges["temperature"], edges["heat flux"]
-        if (t.source.participant_id, t.target.participant_id) != (q.target.participant_id, q.source.participant_id):
-            problems.append("temperature and heat flux must cross the interface in opposite directions")
+        # the opposite-direction rule is checked by the InterfaceContract below (one message, not two)
         contract = InterfaceContract(interface.interface_id, (
             InterfaceExchange(interface.temperature_edge, ExchangeKind.INTENSIVE),
             InterfaceExchange(interface.heat_flux_edge, ExchangeKind.FLUX_DENSITY, interface.flux_normal),
@@ -193,13 +196,15 @@ class ProviderPairMaturity:
         stages = {PairStage(k): v for k, v in dict(self.stages).items()}
         if set(stages) != set(PairStage):
             raise InvalidScientificProblem("a provider-pair maturity record states every stage")
+        order = list(PairStage)
         for stage in EVIDENCE_STAGES:
             status = stages[stage]
             if status.reached:
                 ref = status.evidence_ref.strip().lower()
                 if len(ref) != 64 or set(ref) - set("0123456789abcdef"):
                     raise InvalidScientificProblem(f"{stage.value} needs the sha256 of the recorded run that shows it")
-                missing = [s.value for s in list(PairStage)[:4] if not stages[s].reached]
+                # review M3: EVERY earlier stage, so validation can never be claimed without execution and verification
+                missing = [s.value for s in order[:order.index(stage)] if not stages[s].reached]
                 if missing:
                     raise InvalidScientificProblem(f"{stage.value} cannot be reached before {missing}")
         object.__setattr__(self, "stages", stages)
@@ -207,7 +212,9 @@ class ProviderPairMaturity:
     def to_dict(self) -> dict[str, Any]:
         return {"kind": "provider_pair_maturity", "pair": self.pair, "policy": self.policy,
                 "stages": {s.value: {"reached": v.reached, "basis": v.basis, "evidence_ref": v.evidence_ref or None}
-                           for s, v in self.stages.items()}}
+                           for s, v in self.stages.items()},
+                # an evidence reference is a stated digest; nothing here looks it up
+                "evidence_ref_status": "asserted_not_resolved"}
 
 
 #: the repository's actual state for the preferred CHT pair (2026-10-18).  Nothing here was executed.

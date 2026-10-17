@@ -647,6 +647,8 @@ class CouplingPlan:
           ``old + (new - old)``) and needs no criterion.
         * SERIAL with CONSTANT or AITKEN relaxation: every edge.  A relaxed
           forward edge delivers a mix of two iterates, not the transfer.
+          With ``RelaxationPolicy.scope = "lagged_edges"`` (Phase 3.5) only
+          the lagged edges are relaxed, so only they are required, as under NONE.
 
         EXPLICIT plans make no convergence claim and require nothing.  The
         residual is an iterate-consistency measure: it is not the solution's

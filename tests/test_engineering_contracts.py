@@ -54,14 +54,16 @@ def _link(cls, outcome="met", kind="probe", **extra):
     return EvidenceLink.of_record(kind, {"probe": kind, "class": cls, **extra}, cls, outcome)
 
 
-def _admission(a="a" * 64, b="b" * 64, problem="c" * 64):
-    """Phase 3.5 WS1: the same-problem admission a corroboration record must carry (shape of corroborate()'s record)."""
-    from engcore.providers.problem_identity import DEFAULT_REQUIRED
-    return {"same_problem_established": True,
-            "problem_equivalence": {"kind": "problem_equivalence", "a_problem": problem, "b_problem": problem, "verdict": "same_problem",
-                                    "required": sorted(DEFAULT_REQUIRED), "differing": [], "undeclared": []},
-            "problem_bindings": [{"execution_identity": a, "problem_digest": problem, "translator": "t"},
-                                 {"execution_identity": b, "problem_digest": problem, "translator": "t"}]}
+def _admission(a="a" * 64, b="b" * 64):
+    """Phase 3.5 WS1: the same-problem admission a corroboration record must carry (shape of corroborate()'s record):
+    two real canonical problems, the equivalence they derive, and bindings to the two executions."""
+    from engcore.providers.problem_identity import CanonicalProblem, ProblemAspect, compare_problems
+    problem = CanonicalProblem("fixture", {aspect: f"fixture {aspect.value}" for aspect in ProblemAspect})
+    payload = problem.to_dict()
+    return {"same_problem_established": True, "canonical_problems": [payload, payload],
+            "problem_equivalence": compare_problems(problem, problem).to_dict(),
+            "problem_bindings": [{"execution_identity": a, "problem_digest": problem.digest, "translator": "t"},
+                                 {"execution_identity": b, "problem_digest": problem.digest, "translator": "t"}]}
 
 
 def _provider_link(cls="solver_corroboration_not_validation", within=True):

@@ -20,7 +20,9 @@ even when the manifest and every digest it states are regenerated to match (what
   comparison must be cited by the ladder;
 * every provider comparison (level 5): its two executions must be recorded by the result under two DIFFERENT provider ids, its labels must
   name those providers, its post-hoc flag must be a boolean matching its classification and, for a purely absolute tolerance, its outcome must
-  follow from its own maximum difference (a relative tolerance is judged per point and is refused);
+  follow from its own maximum difference (a relative tolerance is judged per point and is refused); and (Phase 3.5 WS1) its classification
+  must follow from its record -- corroboration only when the record carries two canonical problems whose re-derived equivalence is
+  SAME_PROBLEM with every aspect and bindings naming its two executions, a diagnostic otherwise; a pre-rule record is refused;
 * the uncertainty statement (its guards re-run; no entry may be blank, no UNKNOWN entry may say "none"; it may not be emptied while outputs are UNKNOWN), the
   status basis (a constant), the summary's field set, and the trace (re-derived from the result, for an observable that is a key output);
 * the ladder itself, rebuilt with every guard, each evidence link's digest re-derived from the kind, classification, outcome and record it carries.
@@ -29,8 +31,9 @@ What this does NOT do: levels 2-4 evidence that is not a comparison (a conservat
 diagnostic) is a JUDGMENT the flagship recorded with its record; it cannot be re-derived from the bundle, and neither can the constraint and
 conservation lines or the free-text notes.  The INPUTS of a reference comparison (the compared difference, the conditions, the tolerance, the
 identity of what was compared) are stated by the flagship: the bundle re-derives what follows from them (outcome, applicability, kind,
-classification) but not the inputs themselves. The inputs of a provider comparison (its maximum difference, its output selections, whether both executions solved the same
-declared problem) are likewise stated by the flagship.  Nor can it show that the SET of provider comparisons is complete or that one was pre-registered (a consistent rewrite
+classification) but not the inputs themselves. The inputs of a provider comparison (its maximum difference, its output selections, and the canonical problem each side
+declares) are likewise stated by the flagship: the same-problem verdict is re-derived from the declarations, but whether each declaration
+faithfully describes what its provider was asked is the adapter's claim.  Nor can it show that the SET of provider comparisons is complete or that one was pre-registered (a consistent rewrite
 that drops a failing comparison, or re-classifies a post-hoc one, verifies), that the named UNKNOWN inputs are all of them, or that the
 key-output list was not pruned.  And the manifest is unkeyed: someone who consistently rewrites summary.json, summary.txt and the manifest
 together produces a bundle that verifies.  Verification is therefore SELF-CONSISTENCY, never authenticity.  Authenticity needs the ``bundle_digest`` recorded somewhere the bundle's author cannot edit (a commit, a

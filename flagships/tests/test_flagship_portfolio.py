@@ -107,11 +107,13 @@ def test_gate_h_a_flagship_result_cannot_be_promoted_by_its_own_ladder():
     from engcore.engineering import EvidenceLink, LevelEntry, LevelStatus
     from engcore.scientific.errors import InvalidScientificProblem
     sha = hashlib.sha256(b"x").hexdigest()
-    from engcore.providers.problem_identity import DEFAULT_REQUIRED
-    admission = {"a_identity": "a" * 64, "b_identity": "b" * 64, "same_problem_established": True,   # Phase 3.5 WS1
-                 "problem_equivalence": {"a_problem": sha, "b_problem": sha, "verdict": "same_problem", "required": sorted(DEFAULT_REQUIRED),
-                                         "differing": [], "undeclared": []},
-                 "problem_bindings": [{"execution_identity": "a" * 64, "problem_digest": sha}, {"execution_identity": "b" * 64, "problem_digest": sha}]}
+    from engcore.providers.problem_identity import CanonicalProblem, ProblemAspect, compare_problems
+    problem = CanonicalProblem("fixture", {aspect: f"fixture {aspect.value}" for aspect in ProblemAspect})   # Phase 3.5 WS1
+    admission = {"a_identity": "a" * 64, "b_identity": "b" * 64, "same_problem_established": True,
+                 "canonical_problems": [problem.to_dict(), problem.to_dict()],
+                 "problem_equivalence": compare_problems(problem, problem).to_dict(),
+                 "problem_bindings": [{"execution_identity": "a" * 64, "problem_digest": problem.digest},
+                                      {"execution_identity": "b" * 64, "problem_digest": problem.digest}]}
     agreement = EvidenceLink.of_record("provider_comparison", {"classification": "solver_corroboration_not_validation", "within_tolerance": True, "probe": sha,
                                                                **admission}, "solver_corroboration_not_validation", "met")
     benchmark = EvidenceLink.of_record("reference_comparison", {"classification": "numerical_benchmark_comparison_not_validation_grant", "outcome": "met", "probe": sha},
@@ -158,7 +160,20 @@ REPORTS = {"battery_normal": "battery_cooling_lifecycle.md", "structure_flagship
            "cavity_re100": "cavity_cfd_benchmark.md", "chemistry_nominal": "chemical_thermal_system.md"}
 
 
-@pytest.mark.parametrize("bundle", sorted(REPORTS))
+#: Phase 3.5 WS1: bundles generated before same-problem admission became mandatory.  Their provider-comparison links are
+#: classified as corroboration without an admission, so verification REFUSES them (stored evidence is never promoted)
+#: until they are regenerated with the real providers (DEFERRED_VALIDATION DV-93).
+PRE_ADMISSION_BUNDLES = frozenset({"cavity_re100", "structure_flagship"})
+
+
+@pytest.mark.parametrize("bundle", sorted(PRE_ADMISSION_BUNDLES))
+def test_a_committed_bundle_with_pre_admission_corroboration_is_refused_not_promoted(bundle):
+    from engcore.engineering import BundleRefused, verify_bundle
+    with pytest.raises(BundleRefused, match="same-problem"):
+        verify_bundle(os.path.join(DOCS, "runs", bundle))
+
+
+@pytest.mark.parametrize("bundle", sorted(set(REPORTS) - PRE_ADMISSION_BUNDLES))
 def test_the_committed_run_bundles_verify_and_each_report_was_generated_from_its_own_bundle(bundle):
     """A report that does not name its bundle's request / plan / result digests is stale (review finding M4/M5): the pair is checked together."""
     from engcore.engineering import verify_bundle
@@ -187,7 +202,8 @@ BUNDLE_DIGESTS = {
 @pytest.mark.parametrize("bundle", sorted(BUNDLE_DIGESTS))
 def test_every_committed_bundle_is_the_one_its_full_digests_pin(bundle):
     from engcore.engineering import verify_bundle
-    verify_bundle(os.path.join(DOCS, "runs", bundle))
+    if bundle not in PRE_ADMISSION_BUNDLES:          # those are refused by design (see above); their bytes are still pinned
+        verify_bundle(os.path.join(DOCS, "runs", bundle))
     manifest = json.loads(open(os.path.join(DOCS, "runs", bundle, "manifest.json"), "rb").read())
     assert (manifest["bundle_digest"], manifest["summary_digest"]) == BUNDLE_DIGESTS[bundle]
 

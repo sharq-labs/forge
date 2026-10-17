@@ -895,7 +895,8 @@ def test_comparison_tolerance_is_a_spread_and_relative_tolerance_needs_a_ratio_s
     with pytest.raises(InvalidScientificProblem, match="offset scale"):
         ComparisonDeclaration("temperature", "degC", "identity", Quantity(0.5, "K"), 0.01, "demo")
     post = ComparisonDeclaration("temperature", "K", "identity", Quantity(0.5, "K"), 0.0, "region picked after looking", post_hoc=True)
-    assert compare_providers(post, a, "t", b, "t").classification == "post_hoc_solver_corroboration_not_validation"
+    # Phase 3.5 WS1: without same-problem admission a comparison is a diagnostic (post hoc here)
+    assert compare_providers(post, a, "t", b, "t").classification == "post_hoc_diagnostic_numerical_comparison_not_corroboration"
 
 
 def test_executable_changed_since_discovery_is_refused_at_launch(tmp_path):

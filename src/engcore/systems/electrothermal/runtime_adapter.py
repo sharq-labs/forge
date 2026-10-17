@@ -71,7 +71,15 @@ target, DEFERRED_VALIDATION DV-49 / DV-88..DV-90):
    states that the runtime executed the iteration;
 4. iterations, largest changes and final values are the runtime's (the largest
    change is the runtime's own residual on the torn edges; final values are
-   re-transported from the recorded results by the native rule).
+   re-transported from the recorded results by the native rule);
+5. a ``TransportRefused`` raised by the native transfer for an UNDECLARED
+   efficiency becomes a TRANSFER_REFUSED stop natively; in the runtime the
+   transfer engine refuses it with an exception, so the candidate raises;
+6. with two failed results in one sweep the candidate names the first one
+   PRODUCED, the native loop the first one TRANSPORTED;
+7. the candidate's ``CoupledRun`` is read by ``credibility.CouplingEvidence``
+   exactly like a native one; only ``software_version`` and the first
+   assumption distinguish it (no structural marker: an owner decision, OD-P35-4).
 
 Parity is a diagnostic (:class:`ParityRecord`).  It never makes either path
 correct, and nothing here claims the two agree until the deferred parity tests

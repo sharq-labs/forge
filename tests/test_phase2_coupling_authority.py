@@ -5,7 +5,7 @@
   NOT_MIGRATED with its remaining work.
 * The electrothermal composition builds as a runtime plan (``runtime_adapter``)
   whose outcome, iteration count and outputs must match the native loop
-  (parity), and a relaxed plan is refused because the two relax differently.
+  (parity); a relaxed plan is built with torn-only relaxation (Phase 3.5 WS2; it was refused before).
 * Steady participants may defer their initial outputs, only where a serial
   sweep overwrites them before they are read.
 * No relaxation now delivers the transfer exactly.

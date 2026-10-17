@@ -174,26 +174,56 @@ class ProblemEquivalence:
 DEFAULT_REQUIRED = tuple(aspect.value for aspect in ProblemAspect)
 
 
-def compare_problems(a: CanonicalProblem, b: CanonicalProblem, *,
-                     required: Iterable[Any] = DEFAULT_REQUIRED) -> ProblemEquivalence:
-    if not isinstance(a, CanonicalProblem) or not isinstance(b, CanonicalProblem):
-        raise InvalidScientificProblem("problem identity compares CanonicalProblem records only")
+def _equivalence(a_declarations: Mapping[str, Any], a_digest: str, b_declarations: Mapping[str, Any], b_digest: str,
+                 required: Iterable[Any]) -> ProblemEquivalence:
     needed = tuple(sorted({ProblemAspect(str(getattr(r, "value", r))).value for r in required}))
     if not needed:
         raise InvalidScientificProblem("problem identity requires at least one aspect")
-    aspects = sorted(set(a.declarations) | set(b.declarations) | set(needed))
+    aspects = sorted(set(a_declarations) | set(b_declarations) | set(needed))
     differing = tuple(x for x in aspects
-                      if x in a.declarations and x in b.declarations and _digest(a.declarations[x]) != _digest(b.declarations[x]))
+                      if x in a_declarations and x in b_declarations and _digest(a_declarations[x]) != _digest(b_declarations[x]))
     undeclared = tuple(x for x in aspects
-                       if (x in needed and (x not in a.declarations or x not in b.declarations))
-                       or ((x in a.declarations) != (x in b.declarations)))
+                       if (x in needed and (x not in a_declarations or x not in b_declarations))
+                       or ((x in a_declarations) != (x in b_declarations)))
     if differing:
         verdict = ProblemIdentityVerdict.DIFFERENT_PROBLEM
     elif undeclared:
         verdict = ProblemIdentityVerdict.UNDETERMINED
     else:
         verdict = ProblemIdentityVerdict.SAME_PROBLEM
-    return ProblemEquivalence(a.digest, b.digest, verdict, needed, differing, undeclared)
+    return ProblemEquivalence(a_digest, b_digest, verdict, needed, differing, undeclared)
+
+
+def compare_problems(a: CanonicalProblem, b: CanonicalProblem, *,
+                     required: Iterable[Any] = DEFAULT_REQUIRED) -> ProblemEquivalence:
+    if not isinstance(a, CanonicalProblem) or not isinstance(b, CanonicalProblem):
+        raise InvalidScientificProblem("problem identity compares CanonicalProblem records only")
+    return _equivalence(a.declarations, a.digest, b.declarations, b.digest, required)
+
+
+def equivalence_of_payloads(a: Mapping[str, Any], b: Mapping[str, Any], *,
+                            required: Iterable[Any] = DEFAULT_REQUIRED) -> ProblemEquivalence:
+    """Phase 3.5 WS1: re-derive the equivalence of two STORED canonical problems (``CanonicalProblem.to_dict()``).
+
+    Each payload's digest is recomputed from its own declarations (a payload
+    whose stated digest does not follow is refused, and so is an unknown aspect
+    or an excluded one), then compared exactly as :func:`compare_problems` does.
+    """
+    checked = []
+    for label, payload in (("a", a), ("b", b)):
+        if not isinstance(payload, Mapping) or payload.get("schema") != PROBLEM_IDENTITY_SCHEMA:
+            raise InvalidScientificProblem(f"stored canonical problem {label} is not a {PROBLEM_IDENTITY_SCHEMA} payload")
+        declarations = payload.get("declarations")
+        if not isinstance(declarations, Mapping) or not declarations:
+            raise InvalidScientificProblem(f"stored canonical problem {label} declares nothing")
+        for name in declarations:
+            if name in EXCLUDED_ASPECTS or name not in {aspect.value for aspect in ProblemAspect}:
+                raise InvalidScientificProblem(f"stored canonical problem {label} declares {name!r}, not a problem aspect")
+        digest = _digest({"schema": PROBLEM_IDENTITY_SCHEMA, "declarations": dict(declarations)})
+        if payload.get("digest") != digest:
+            raise InvalidScientificProblem(f"stored canonical problem {label}'s digest does not follow from its declarations")
+        checked.append((dict(declarations), digest))
+    return _equivalence(checked[0][0], checked[0][1], checked[1][0], checked[1][1], required)
 
 
 @dataclass(frozen=True)
@@ -224,5 +254,6 @@ class ProblemBinding:
 
 __all__ = [
     "CanonicalProblem", "DEFAULT_REQUIRED", "EXCLUDED_ASPECTS", "ProblemAspect", "ProblemBinding", "ProblemEquivalence",
+    "equivalence_of_payloads",
     "ProblemIdentityVerdict", "canonical_value", "compare_problems",
 ]

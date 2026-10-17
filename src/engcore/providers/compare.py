@@ -50,6 +50,7 @@ from .problem_identity import (
     ProblemEquivalence,
     ProblemIdentityVerdict,
     compare_problems,
+    equivalence_of_payloads,
 )
 from .records import ProviderExecutionRecord
 
@@ -230,6 +231,25 @@ class ProviderComparison:
     #: Phase 2 BR11: set only by :func:`corroborate`; absent, nothing says the records solved one problem
     problem_equivalence: ProblemEquivalence | None = None
     problem_bindings: tuple[ProblemBinding, ...] = ()
+    #: Phase 3.5 WS1 (review M1): the two canonical problems themselves (``CanonicalProblem.to_dict()``), so the
+    #: equivalence is RE-DERIVED from the record wherever it is consumed, never read from its verdict field
+    canonical_problems: tuple[Mapping[str, Any], ...] = ()
+
+    def __post_init__(self) -> None:
+        # a hand-built comparison (constructor or dataclasses.replace) cannot carry an equivalence that does not
+        # follow from the two canonical problems it carries
+        if self.problem_equivalence is None:
+            if self.canonical_problems or self.problem_bindings:
+                raise InvalidScientificProblem("canonical problems and bindings come with a derived problem equivalence")
+            return
+        if len(self.canonical_problems) != 2 or len(self.problem_bindings) != 2:
+            raise InvalidScientificProblem("a problem equivalence needs the two canonical problems and two bindings")
+        derived = equivalence_of_payloads(self.canonical_problems[0], self.canonical_problems[1], required=DEFAULT_REQUIRED)
+        if derived.to_dict() != self.problem_equivalence.to_dict():
+            raise InvalidScientificProblem("the problem equivalence does not follow from the canonical problems it names")
+        for binding, side, digest in zip(self.problem_bindings, (self.a, self.b), (derived.a_problem, derived.b_problem)):
+            if binding.execution_identity != side.execution_identity or binding.problem_digest != digest:
+                raise InvalidScientificProblem("a problem binding names another execution or another canonical problem")
 
     @property
     def same_problem_established(self) -> bool:
@@ -238,6 +258,7 @@ class ProviderComparison:
             and self.problem_equivalence.verdict is ProblemIdentityVerdict.SAME_PROBLEM
             and tuple(self.problem_equivalence.required) == tuple(sorted(DEFAULT_REQUIRED))
             and len(self.problem_bindings) == 2
+            and len(self.canonical_problems) == 2
         )
 
     @property
@@ -259,6 +280,7 @@ class ProviderComparison:
                 # absent unless corroborate() admitted the problems
                 **({"problem_equivalence": self.problem_equivalence.to_dict(),
                     "problem_bindings": [b.to_dict() for b in self.problem_bindings],
+                    "canonical_problems": [dict(p) for p in self.canonical_problems],
                     "establishes": "numerical agreement (or not) of two independent provider paths on one declared "
                                    "canonical problem, within the declared tolerance",
                     "does_not_establish": ["validation", "physical truth", "model-form adequacy",
@@ -348,6 +370,7 @@ def corroborate(declaration: ComparisonDeclaration, a: Any, a_output: str, b: An
     """
     if len(problems) != 2 or any(not isinstance(p, CanonicalProblem) for p in problems):
         raise InvalidScientificProblem("corroboration takes the two CanonicalProblem records, not a verdict")
+    payloads = (problems[0].to_dict(), problems[1].to_dict())
     problems = compare_problems(problems[0], problems[1], required=DEFAULT_REQUIRED)
     if problems.verdict is not ProblemIdentityVerdict.SAME_PROBLEM:
         raise InvalidScientificProblem(
@@ -365,7 +388,7 @@ def corroborate(declaration: ComparisonDeclaration, a: Any, a_output: str, b: An
     made = compare_providers(declaration, a, a_output, b, b_output, a_select=a_select, b_select=b_select)
     from dataclasses import replace
 
-    admitted = replace(made, problem_equivalence=problems, problem_bindings=tuple(bindings))
+    admitted = replace(made, problem_equivalence=problems, problem_bindings=tuple(bindings), canonical_problems=payloads)
     problems_found = corroboration_admission_problems(admitted.to_dict())
     if problems_found:  # pragma: no cover - corroborate builds an admitted record by construction
         raise InvalidScientificProblem(f"internal: an admitted comparison fails its own re-check: {problems_found}")
@@ -388,6 +411,24 @@ def corroboration_admission_problems(record: Mapping[str, Any]) -> list[str]:
     if not isinstance(equivalence, Mapping):
         return ["no same-problem admission is recorded (a diagnostic comparison, or a record from before mandatory "
                 "admission)"]
+    # review M1: re-derive the equivalence from the two stored canonical problems; the stored verdict is a claim
+    payloads = record.get("canonical_problems")
+    if not isinstance(payloads, (list, tuple)) or len(payloads) != 2:
+        return ["the record does not carry the two canonical problems, so its admission cannot be re-derived"]
+    try:
+        derived = equivalence_of_payloads(payloads[0], payloads[1], required=DEFAULT_REQUIRED)
+    except InvalidScientificProblem as exc:
+        return [f"the stored canonical problems do not re-derive: {exc}"]
+    if derived.verdict is not ProblemIdentityVerdict.SAME_PROBLEM:
+        problems.append(f"the stored canonical problems re-derive as {derived.verdict.value} "
+                        f"(differing {list(derived.differing)}, undeclared {list(derived.undeclared)})")
+    stated = {k: equivalence.get(k) for k in ("a_problem", "b_problem", "verdict", "required", "differing", "undeclared")}
+    if stated != {k: v for k, v in derived.to_dict().items() if k in stated}:
+        problems.append("the stated problem equivalence is not the one its canonical problems derive")
+    for side in ("a_identity", "b_identity"):
+        value = record.get(side)
+        if not isinstance(value, str) or len(value) != 64 or set(value) - _HEX:
+            problems.append(f"{side} is not a sha256 execution identity")
     if equivalence.get("verdict") != ProblemIdentityVerdict.SAME_PROBLEM.value:
         problems.append(f"the recorded problem identity is {equivalence.get('verdict')!r}, not same_problem")
     if sorted(equivalence.get("required") or ()) != sorted(DEFAULT_REQUIRED):

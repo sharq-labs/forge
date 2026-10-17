@@ -56,6 +56,22 @@ def test_f1_the_maximum_difference_must_be_canonical_finite_non_negative_text(ra
 def test_f1_a_consistently_rewritten_cavity_bundle_that_pairs_two_openfoam_meshes_as_openfoam_and_su2_is_refused(tmp_path):
     d = str(tmp_path / "cavity")
     shutil.copytree(CAVITY, d)
+    # Phase 3.5 WS1: the committed cavity bundle predates mandatory same-problem admission, so its provider links are
+    # refused as corroboration; downgraded to what they are (diagnostics), the bundle verifies again -- which is the
+    # baseline this test then attacks
+    with pytest.raises(BundleRefused, match="same-problem"):
+        verify_bundle(d)
+
+    def downgrade(w):
+        for level in w["verification"]["levels"]:
+            for k, link in enumerate(level["evidence"]):
+                if link["kind"] != "provider_comparison":
+                    continue
+                post = link["record"]["declaration"]["post_hoc"]
+                cls = ("post_hoc_" if post else "") + "diagnostic_numerical_comparison_not_corroboration"
+                record = dict(link["record"], classification=cls, same_problem_established=False)
+                level["evidence"][k] = EvidenceLink.of_record("provider_comparison", record, cls, link["outcome"], link["note"]).to_dict()
+    _rewrite_summary(d, downgrade)
     verify_bundle(d)
     result = json.loads(open(os.path.join(d, "result.json"), "rb").read())
     openfoam = sorted(p["execution_identity_digest"] for p in result["provider_records"] if p["provider_id"] == "openfoam")

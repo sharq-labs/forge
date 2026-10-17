@@ -392,16 +392,13 @@ def build_structure(case: StructCase, registry=None, *, providers: tuple[str, ..
             raise RuntimeError("the held temperature field does not match the scalars the node was handed")
         return T
 
-    def struct_outcome(call, provider: str, record, u, native, ref):
+    def struct_outcome(call, provider: str, record, u, native, ref, canonical):
         T = field_for(call)
         q = structural_qoi(mesh, mat, u, np.asarray(T.values), native)
         rec_s = element_stress_of(mesh, mat, u, np.asarray(T.values))
         ex.solutions[call.execution_identity] = {"u": np.asarray(u, dtype=float), "native": None if native is None else np.asarray(native, dtype=float), "record": record,
                                                  "temperature": np.asarray(T.values), "provider": provider}
-        from .canonical import plate_problem
-        ex.canonical[call.execution_identity] = plate_problem(
-            declared=declared, t_ref_k=T_REF, temperature_values=np.asarray(T.values),
-            material_records=(mat.youngs.digest, mat.poisson.digest, mat.expansion.digest))
+        ex.canonical[call.execution_identity] = canonical   # derived from the problem THIS provider was handed
         outputs = {n: OutputValue(q[n], UNKNOWN, f"{provider} plate displacement/stress") for n, _ in PROP_OUT}
         vtu = write_vtu(mesh, point_data={"temperature": ("K", np.asarray(T.values)), "displacement": ("m", u)},
                         cell_data={"von_mises": ("Pa", rec_s.von_mises if native is None else np.sqrt(np.maximum(
@@ -414,10 +411,12 @@ def build_structure(case: StructCase, registry=None, *, providers: tuple[str, ..
 
     def struct_fenicsx(call):
         T = field_for(call)
-        rec = fx.execute(structural_pde_problem(mesh, mat, case, T))
+        from .canonical import plate_problem_from_pde
+        pde = structural_pde_problem(mesh, mat, case, T)
+        rec = fx.execute(pde)
         if not rec.succeeded:
             return NodeOutcome.failed(rec.reason or "structural solve failed", provider_records=(fx_ref(rec),))
-        return struct_outcome(call, "fenicsx", rec, np.asarray(rec.field.values), None, fx_ref(rec))
+        return struct_outcome(call, "fenicsx", rec, np.asarray(rec.field.values), None, fx_ref(rec), plate_problem_from_pde(pde))
 
     def process_struct(provider_id):
         def run(call):
@@ -430,7 +429,9 @@ def build_structure(case: StructCase, registry=None, *, providers: tuple[str, ..
             ref = ProviderRecordRef.of_record(rec)
             if not rec.succeeded:
                 return NodeOutcome.failed(rec.reason, provider_records=(ref,))
-            return struct_outcome(call, provider_id, rec, np.asarray(rec.arrays["displacement"][1]), np.asarray(rec.arrays["stress"][1]), ref)
+            from .canonical import plate_problem_from_case
+            return struct_outcome(call, provider_id, rec, np.asarray(rec.arrays["displacement"][1]), np.asarray(rec.arrays["stress"][1]), ref,
+                                  plate_problem_from_case(prob, tuple(_roles())))
         return run
 
     cfg = {"mesh": mesh.digest, "case": case.name, "materials": [mat.youngs.digest, mat.poisson.digest, mat.expansion.digest], "t_ref": T_REF, **declared}

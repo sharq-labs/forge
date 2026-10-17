@@ -40,7 +40,7 @@ def _spec(pid, ports):
                            checkpointable=True, deterministic_restore=True)
 
 
-def _graph(*, flux_unit="W/m**2", flux_method=FieldMappingMethod.CONSERVATIVE_CELL, temp_unit="K", flux_back=False):
+def _graph(*, flux_unit="W/m**2", flux_method=FieldMappingMethod.CONSERVATIVE_CELL, temp_unit="K"):
     solid = _spec("solid", [_port("q", "output", flux_unit, "solid", "heat_flux"), _port("t", "input", temp_unit, "solid", "temperature")])
     fluid = _spec("fluid", [_port("q", "input", flux_unit, "fluid", "heat_flux"), _port("t", "output", temp_unit, "fluid", "temperature")])
     flux = CouplingEdge("e_flux", PortRef("solid", "q"), PortRef("fluid", "q"), mapping=FieldMappingDefinition("flux", flux_method),
@@ -116,5 +116,10 @@ def test_evidence_stages_need_a_recorded_run_and_every_earlier_stage():
         ProviderPairMaturity("p", {**stages, PairStage.REAL_EXECUTION_DEMONSTRATED: StageStatus(True, "said so")}, "x")
     with pytest.raises(InvalidScientificProblem, match="cannot be reached before"):
         ProviderPairMaturity("p", {**stages, PairStage.NUMERICALLY_VERIFIED: StageStatus(True, "run", "a" * 64)}, "x")
+    # validation with the first four stages reached but neither execution nor verification shown: still refused
+    four = {s: StageStatus(s in list(PairStage)[:4], "x") for s in PairStage}
+    with pytest.raises(InvalidScientificProblem, match="real_execution_demonstrated"):
+        ProviderPairMaturity("p", {**four, PairStage.SCIENTIFICALLY_VALIDATED: StageStatus(True, "said so", "a" * 64)}, "x")
+    assert CHT_FENICSX_OPENFOAM.to_dict()["evidence_ref_status"] == "asserted_not_resolved"
     with pytest.raises(InvalidScientificProblem, match="every stage"):
         ProviderPairMaturity("p", {PairStage.ADAPTER_IMPLEMENTED: StageStatus(True, "x")}, "x")

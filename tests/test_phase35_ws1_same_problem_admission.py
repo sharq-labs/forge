@@ -135,6 +135,10 @@ def test_a_diagnostic_cannot_be_relabelled_as_corroboration_nor_an_admitted_reco
     lambda r: r["problem_bindings"][0].update(execution_identity="e" * 64),
     lambda r: r["problem_bindings"][1].update(problem_digest="e" * 64),
     lambda r: r.update(same_problem_established=False),
+    # review M1: the stored canonical problems are re-derived, not trusted
+    lambda r: r["canonical_problems"][1]["declarations"].update(materials={"k": "changed"}),
+    lambda r: r["canonical_problems"][0].update(digest="d" * 64),
+    lambda r: r.pop("canonical_problems"),
 ])
 def test_a_tampered_admission_is_refused(tamper):
     a, b, pa, pb, bindings = _pair()
@@ -143,6 +147,36 @@ def test_a_tampered_admission_is_refused(tamper):
     assert corroboration_admission_problems(record)
     with pytest.raises(InvalidScientificProblem):
         LevelEntry(5, LevelStatus.REACHED, (_link(record),))
+
+
+def test_a_consistently_forged_admission_without_canonical_problems_is_refused():
+    """Review M1: four keys added consistently to a pre-rule record (equal arbitrary digests, a same_problem verdict) no longer pass."""
+    from engcore.providers.problem_identity import DEFAULT_REQUIRED
+    a, b, *_ = _pair()
+    record = compare_providers(DECLARATION, a, "t", b, "t").to_dict()
+    p = "c" * 64
+    record.update(classification="solver_corroboration_not_validation", same_problem_established=True,
+                  problem_equivalence={"a_problem": p, "b_problem": p, "verdict": "same_problem", "required": sorted(DEFAULT_REQUIRED),
+                                       "differing": [], "undeclared": []},
+                  problem_bindings=[{"execution_identity": a.identity.digest, "problem_digest": p},
+                                    {"execution_identity": b.identity.digest, "problem_digest": p}])
+    assert corroboration_admission_problems(record)
+    with pytest.raises(InvalidScientificProblem):
+        LevelEntry(5, LevelStatus.REACHED, (_link(record),))
+
+
+def test_a_hand_built_comparison_cannot_carry_an_equivalence_its_problems_do_not_derive():
+    from dataclasses import replace
+    from engcore.providers.problem_identity import compare_problems
+    a, b, pa, pb, bindings = _pair()
+    diagnostic = compare_providers(DECLARATION, a, "t", b, "t")
+    other = _problem("other", sources_and_loads={"q": Quantity(5.0, "W/m**3")})
+    forged = compare_problems(pa, pa)                       # a SAME verdict ...
+    with pytest.raises(InvalidScientificProblem, match="does not follow"):
+        replace(diagnostic, problem_equivalence=forged, problem_bindings=bindings,
+                canonical_problems=(pa.to_dict(), other.to_dict()))   # ... over two different problems
+    with pytest.raises(InvalidScientificProblem):
+        replace(diagnostic, problem_equivalence=forged)       # no canonical problems at all
 
 
 def test_an_admitted_corroboration_reaches_level_five():

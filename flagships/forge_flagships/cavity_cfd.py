@@ -255,9 +255,8 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
             ex.records[call.execution_identity] = rec
             ex.fields[call.execution_identity] = {"cells_xy": cells, "mesh": fields["velocity"].mesh, "kind": "cell", "n": n, "u_lid": u_lid,
                                                   "pressure": np.asarray(fields["pressure"].values), "record": rec}
-            from .canonical import cavity_problem
-            ex.canonical[call.execution_identity] = cavity_problem(side_m=SIDE, lid_velocity_m_s=u_lid, kinematic_viscosity_m2_s=nu,
-                                                                   density_record=rho.digest, viscosity_record=mu.digest)
+            from .canonical import cavity_problem_from_openfoam
+            ex.canonical[call.execution_identity] = cavity_problem_from_openfoam(prob)   # from the case OpenFOAM ran
             out = analyse(call, n, "openfoam", u_lid, cells, line, rec, ref_id, ())
             prof = ex.profiles[call.execution_identity]
             vtu = write_vtu(fields["velocity"].mesh, cell_data={"velocity": ("m/s", cells), "kinematic_pressure": ("m^2/s^2", np.asarray(fields["pressure"].values))},
@@ -285,11 +284,8 @@ def build_cavity(reynolds: float = REYNOLDS, levels: tuple[int, ...] = LEVELS, r
             ex.records[call.execution_identity] = rec
             ex.fields[call.execution_identity] = {"cells_xy": cells, "nodes_xy": nodes, "kind": "node", "n": n, "u_lid": u_lid, "pressure": np.asarray(rec.arrays["pressure"][1]),
                                                   "record": rec}
-            from .canonical import cavity_problem
-            ex.canonical[call.execution_identity] = cavity_problem(
-                side_m=SIDE, lid_velocity_m_s=u_lid,
-                kinematic_viscosity_m2_s=mu.value.magnitude_in("Pa*s") / rho.value.magnitude_in("kg/m^3"),
-                density_record=rho.digest, viscosity_record=mu.digest)
+            from .canonical import cavity_problem_from_su2
+            ex.canonical[call.execution_identity] = cavity_problem_from_su2(prob)        # from the case SU2 ran
             out = analyse(call, n, "su2", u_lid, cells, line, rec, ref_id, ())
             prof = ex.profiles[call.execution_identity]
             from forge_openfoam import CavityProblem, cavity_mesh  # the same declared quadrilateral mesh

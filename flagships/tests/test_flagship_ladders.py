@@ -148,13 +148,14 @@ class _FakeProviderComparison:
         self.tag = tag
 
     def to_dict(self) -> dict:
-        from engcore.providers.problem_identity import DEFAULT_REQUIRED
         record = {"classification": self.classification, "within_tolerance": self.within_tolerance, "a_selection": {"rows": [1, 2]}, "b_selection": {"rows": [3]},
                   "tag": self.tag, "a_identity": "a" * 64, "b_identity": "b" * 64, "same_problem_established": self.same_problem_established}
         if self.same_problem_established:
-            p = "c" * 64
-            record["problem_equivalence"] = {"a_problem": p, "b_problem": p, "verdict": "same_problem", "required": sorted(DEFAULT_REQUIRED),
-                                             "differing": [], "undeclared": []}
+            from engcore.providers.problem_identity import CanonicalProblem, ProblemAspect, compare_problems
+            problem = CanonicalProblem("fixture", {aspect: f"fixture {aspect.value}" for aspect in ProblemAspect})
+            p = problem.digest
+            record["canonical_problems"] = [problem.to_dict(), problem.to_dict()]
+            record["problem_equivalence"] = compare_problems(problem, problem).to_dict()
             record["problem_bindings"] = [{"execution_identity": "a" * 64, "problem_digest": p}, {"execution_identity": "b" * 64, "problem_digest": p}]
         return record
 
