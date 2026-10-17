@@ -20,6 +20,7 @@ from ...scientific.multiphysics import (
     InitialCouplingRecord,
     InitialStateReceipt,
     InitialStateValue,
+    IterationSemantics,
     MultiphysicsRunRecord,
     ParticipantStepRecord,
     PhysicsGraph,
@@ -50,6 +51,7 @@ from ...scenarios import (
     TerminationCondition,
 )
 from .convergence import ResidualCalculator
+from .concurrency import ConcurrentAdvancePolicy, advance_in_plan_order, validate_policy
 from .error import CouplingErrorBudget
 from .factory import ParticipantFactoryRegistry
 from .participant import (
@@ -112,6 +114,7 @@ class MultiphysicsRuntime:
         resolver: BulkDataResolver,
         store: BulkDataStore,
         diagnostic_balances: Iterable[str] = (),
+        concurrency: ConcurrentAdvancePolicy | None = None,
     ) -> "MultiphysicsRuntime":
         """Materialize exact graph participants and construct the runtime."""
         if not isinstance(registry, ParticipantFactoryRegistry):
@@ -130,6 +133,7 @@ class MultiphysicsRuntime:
                 resolver=resolver,
                 store=store,
                 diagnostic_balances=diagnostic_balances,
+                concurrency=concurrency,
             )
         except Exception:
             for participant_id in sorted(participants, reverse=True):
@@ -292,8 +296,16 @@ class MultiphysicsRuntime:
         resolver: BulkDataResolver,
         store: BulkDataStore,
         diagnostic_balances: Iterable[str] = (),
+        concurrency: ConcurrentAdvancePolicy | None = None,
     ) -> None:
         plan.validate_against(graph)
+        # opt-in, declared per participant; validated before anything is allocated
+        validate_policy(
+            concurrency,
+            participant_ids={p.participant_id: p for p in graph.participants},
+            jacobi=plan.iteration_semantics is IterationSemantics.JACOBI,
+        )
+        self.concurrency = concurrency
         # F5: every declared balance is REQUIRED unless the model that declared it names it DIAGNOSTIC here.
         # A name that is not a declared balance is refused: a typo must not quietly demote nothing.
         declared = {item.balance_id for item in graph.conservation}
@@ -784,21 +796,32 @@ class MultiphysicsRuntime:
             frozen_edges = dict(current_edges)
             frozen_uncertainty = dict(current_edge_uncertainty)
 
-            for participant_id in order:
-                inputs, input_uncertainty = self._inputs_for(
+            prepared = {
+                participant_id: self._inputs_for(
                     participant_id,
                     frozen_edges,
                     frozen_uncertainty,
                     external,
                     external_uncertainty,
                 )
-                result = self._advance_one(
+                for participant_id in order
+            }
+            # every Jacobi participant reads the frozen iterate: declared
+            # participants may advance concurrently; results apply in plan order
+            advanced = advance_in_plan_order(
+                order,
+                frozenset(self.concurrency.participants) if self.concurrency else frozenset(),
+                self.concurrency.max_workers if self.concurrency else 1,
+                lambda participant_id: self._advance_one(
                     participant_id,
                     start,
                     end,
-                    inputs,
-                    input_uncertainty,
-                )
+                    prepared[participant_id][0],
+                    prepared[participant_id][1],
+                ),
+            )
+            for participant_id in order:
+                result = advanced[participant_id]
                 results[participant_id] = result
                 current_outputs[participant_id] = dict(result.outputs)
                 current_output_uncertainty[participant_id] = dict(
@@ -1986,6 +2009,8 @@ class MultiphysicsRuntime:
                 conservation_history, self.diagnostic_balances
             )
         final_outputs["_coupling_error"] = error_budget.to_dict()
+        if self.concurrency is not None:
+            final_outputs["_concurrency"] = self.concurrency.to_dict()
         if self.plan.window_control is not None:
             # rejected attempts are part of the numerical record, never hidden
             final_outputs["_window_control"] = {
