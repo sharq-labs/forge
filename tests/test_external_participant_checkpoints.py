@@ -229,7 +229,7 @@ def test_issued_token_under_a_record_with_another_digest_is_refused():
     participant, session = _participant()
     issued = participant.checkpoint(Quantity(0, "s"))
     other = hashlib.sha256(b"another state").hexdigest()
-    with pytest.raises(InvalidScientificProblem, match="digest disagree"):
+    with pytest.raises(InvalidScientificProblem, match="record and provider snapshot digest disagree"):
         participant.restore(RuntimeCheckpoint(replace(issued.record, state_digest=other), issued.token))
     assert session.restored == []
 

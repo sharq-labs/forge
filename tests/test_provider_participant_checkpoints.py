@@ -117,7 +117,7 @@ def test_a_token_whose_digest_differs_from_the_record_is_refused_without_determi
     cp1 = p.checkpoint(Quantity(1, "s"))
     assert cp0.record.state_digest != cp1.record.state_digest
     forged = RuntimeCheckpoint(cp0.record, cp1.token)  # record says t=300 K, token holds t=305 K
-    with pytest.raises(InvalidScientificProblem, match="digest disagree"):
+    with pytest.raises(InvalidScientificProblem, match="record and provider snapshot digest disagree"):
         p.restore(forged)
     assert _held_t(p) == 305  # nothing was restored
 
@@ -215,8 +215,20 @@ def test_state_edited_in_place_after_issue_never_restores_even_with_a_re_digeste
     cp.token.snapshot.append(2.0)  # a mutable issued state, edited by whoever holds the token
     with pytest.raises(InvalidScientificProblem, match="changed after it was issued"):
         _admit(seal, cp)
-    with pytest.raises(InvalidScientificProblem, match="digest disagree"):
+    with pytest.raises(InvalidScientificProblem, match="record and provider snapshot digest disagree"):
         _admit(seal, RuntimeCheckpoint(replace(cp.record, state_digest=_digest([1.0, 2.0])), cp.token))
+
+
+def test_continuation_state_outside_the_recorded_identity_is_fingerprinted_at_issue():
+    # the recorded identity hashes only "y"; the integrity fingerprint also covers the clock "t"
+    seal = CheckpointSeal("p", '{"build":"b"}', integrity_of=lambda s: _digest((s["y"], s["t"])))
+    state = {"y": [1.0], "t": [0.0]}
+    cp = seal.seal(Quantity(0, "s"), state_digest=_digest(state["y"]), deterministic_restore=False, slot="s", state=state)
+    admit = lambda: seal.admit(cp, slot_of=lambda _s: "s", digest_of=lambda s: _digest(s["y"]))  # noqa: E731
+    assert admit() is state
+    state["t"][0] = 100.0  # the y-only identity cannot see this edit
+    with pytest.raises(InvalidScientificProblem, match="changed after it was issued"):
+        admit()
 
 
 def test_a_forged_none_state_never_matches_the_registry_sentinel():

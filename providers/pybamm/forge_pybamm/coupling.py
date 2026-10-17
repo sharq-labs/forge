@@ -97,7 +97,7 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
                                "capacity_fade": repr(float(capacity_fade)), "fade_mapping": FADE_MAPPING, "soc_definition": SOC_DEFINITION,
                                "model_options": dict(sorted(options.items())), "active_material_balance": [repr(b) for b in balance],
                                "solver": {"solver": "IDAKLUSolver", "rtol": "1e-6", "atol": "1e-8", "points": points}}}
-    seal = CheckpointSeal(spec.participant_id, checkpoint_scope(build))
+    seal = CheckpointSeal(spec.participant_id, checkpoint_scope(build), integrity_of=lambda sol: integrity_of(sol))
     slot = "completeness:declared_complete"
 
     def soc_of(solution) -> float:
@@ -113,6 +113,14 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
 
     def digest() -> str:
         return digest_of(held["solution"])
+
+    def integrity_of(sol) -> str:
+        # what solver.step continues from beyond y: the solution's clock (an in-place edit of it is otherwise invisible
+        # to the y-only state identity, and moves the next window); not part of the recorded state identity
+        if sol is None:
+            return "none"
+        arrays = (sol.last_state.y, sol.last_state.t, sol.t[-1:])
+        return hashlib.sha256(b"".join(np.ascontiguousarray(np.asarray(a, dtype="<f8")).tobytes() for a in arrays)).hexdigest()
 
     def initialize(_instant, _inputs, _uq):
         return InitializationResult({"heat": Quantity(0.1, "W")}, {"heat": unknown},
@@ -157,9 +165,9 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
         return seal.seal(instant, state_digest=digest(), deterministic_restore=True, slot=slot, state=held["solution"])
 
     def restore(cp):
-        # The digest is recomputed from the token's own state vector, never taken from the record alone.  The issued
-        # Solution is held as is (not copied): solver.step starts a new Solution from it and does not write its
-        # state vector, and a state vector edited in place fails this recomputation on the next restore.
+        # The digest (and the y/t integrity fingerprint) is recomputed from the token's own Solution, never taken from
+        # the record alone.  The issued Solution is held as is, not copied: solver.step starts a new Solution from it,
+        # and an issued y or t edited in place fails this recomputation on the next restore (executed tests).
         held["solution"] = seal.admit(cp, slot_of=lambda _sol: slot, digest_of=digest_of, state_type=(type(None), pybamm.Solution),
                                       label="PyBaMM")
 

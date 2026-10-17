@@ -121,9 +121,9 @@ def test_a_checkpoint_of_the_same_build_from_another_cell_object_is_refused(refe
 
 def test_a_token_whose_state_vector_disagrees_with_the_record_is_refused(reference):
     cell, cp0, cp1 = reference
-    with pytest.raises(InvalidScientificProblem, match="digest disagree"):
+    with pytest.raises(InvalidScientificProblem, match="record and provider snapshot digest disagree"):
         cell.restore(RuntimeCheckpoint(replace(cp1.record, state_digest=cp0.record.state_digest), cp1.token))
-    with pytest.raises(InvalidScientificProblem, match="digest disagree"):
+    with pytest.raises(InvalidScientificProblem, match="record and provider snapshot digest disagree"):
         cell.restore(RuntimeCheckpoint(cp1.record, cp0.token))
 
 
@@ -140,8 +140,24 @@ def test_a_solution_edited_in_place_after_issue_never_restores():
     with pytest.raises(InvalidScientificProblem, match="changed after it was issued"):
         cell.restore(cp)
     edited = hashlib.sha256(np.ascontiguousarray(np.asarray(y, dtype="<f8")).tobytes()).hexdigest()
-    with pytest.raises(InvalidScientificProblem, match="digest disagree"):
+    with pytest.raises(InvalidScientificProblem, match="record and provider snapshot digest disagree"):
         cell.restore(RuntimeCheckpoint(replace(cp.record, state_digest=edited), cp.token))
+
+
+@pytest.mark.parametrize("edit", ["all_ys", "t"])
+def test_other_continuation_state_edited_in_place_never_restores(edit):
+    # review R-2: all_ys backs the state vector; the clock (t) is outside the y-only state identity, and an
+    # admitted clock edit moved the next window's heat (probe, 2026-10-17), so it is fingerprinted at issue
+    cell = _cell()
+    _advance(cell, 0)
+    cp = cell.checkpoint(Quantity(WINDOW, "s"))
+    sol = cp.token.snapshot
+    if edit == "all_ys":
+        sol.all_ys[-1][:, -1] *= 0.5
+    else:
+        sol.t[-1] += 100.0
+    with pytest.raises(InvalidScientificProblem, match="changed after it was issued"):
+        cell.restore(cp)
 
 
 def test_a_bare_solution_is_not_a_checkpoint_token(reference):

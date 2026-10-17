@@ -141,17 +141,27 @@ class CheckpointSeal:
     * the record is the one issued with that token (instant, digest, slot and
       restore flag), so a record re-made around an issued token is refused;
     * the participant's digest of the state, recomputed now, still equals the
-      issued digest: state edited in place after issue is refused.
+      issued digest, and so does its optional ``integrity_of`` fingerprint
+      (continuation state outside the recorded identity, e.g. a solver's
+      clock): state edited in place after issue is refused.
 
     The registry is per seal (per participant object) and bounded by live
     tokens: an entry is dropped when no checkpoint holds its token any more.
     """
 
-    def __init__(self, participant_id: str, scope: str) -> None:
+    def __init__(
+        self,
+        participant_id: str,
+        scope: str,
+        *,
+        integrity_of: Callable[[Any], str] | None = None,
+    ) -> None:
         self._participant_id = participant_id
         self._scope = scope
-        # nonce -> (the very state object issued, the record issued with it)
-        self._issued: dict[str, tuple[Any, CheckpointRecord]] = {}
+        self._integrity_of = integrity_of or (lambda _state: "")
+        # nonce -> (the very state object issued, the record issued with it,
+        # the state's integrity fingerprint at issue)
+        self._issued: dict[str, tuple[Any, CheckpointRecord, str]] = {}
 
     @property
     def scope(self) -> str:
@@ -175,7 +185,7 @@ class CheckpointSeal:
             deterministic_restore=deterministic_restore,
             provider_state_id=f"{self._scope}#{slot}",
         )
-        self._issued[nonce] = (state, record)
+        self._issued[nonce] = (state, record, self._integrity_of(state))
         weakref.finalize(token, self._issued.pop, nonce, None)
         return RuntimeCheckpoint(record=record, token=token)
 
@@ -207,8 +217,8 @@ class CheckpointSeal:
                 f"{self._scope} and never restores another provider's or "
                 f"build's state"
             )
-        issued_state, issued_record = self._issued.get(
-            token.nonce, (_NOT_ISSUED, None)
+        issued_state, issued_record, fingerprint = self._issued.get(
+            token.nonce, (_NOT_ISSUED, None, "")
         )
         # identity, not equality: a payload re-wrapped under an issued digest,
         # slot and nonce is not the state that digest was recorded for
@@ -223,10 +233,13 @@ class CheckpointSeal:
                 if checkpoint.record.state_digest != issued_record.state_digest
                 else f"{label} checkpoint record was not issued with its token"
             )
-        if digest_of(token.snapshot) != issued_record.state_digest:
+        if (
+            digest_of(token.snapshot) != issued_record.state_digest
+            or self._integrity_of(token.snapshot) != fingerprint
+        ):
             raise InvalidScientificProblem(
-                f"{label} checkpoint state changed after it was issued: its "
-                f"digest and the recorded digest disagree"
+                f"{label} checkpoint state changed after it was issued: it no "
+                f"longer hashes to what was issued"
             )
         return token.snapshot
 
