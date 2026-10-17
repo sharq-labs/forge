@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from fractions import Fraction
 from typing import Any, Iterable, Mapping
 
 from ...data.resolver import BulkDataResolver
@@ -42,6 +43,7 @@ from ...scientific.multiphysics.receipts import (
 from ...scientific.results.immutable import detach
 from ...scientific.results.uncertainty import Uncertainty
 from ...scientific.units.quantity import Quantity
+from ...scenarios.timeline import SAME_INSTANT_RULE, exact_seconds
 from ...scenarios import (
     ComposedInputSchedule,
     ComposedOperatingCondition,
@@ -81,6 +83,18 @@ from .transfer import (
 
 class MultiphysicsExecutionError(ScientificCoreError):
     """A coupled execution cannot continue without inventing state or science."""
+
+
+def _float_spacing(seconds: Fraction) -> Fraction:
+    """The float64 spacing (one ulp) at ``seconds``: how far a stored instant can be from the one meant.
+
+    Phase 1 BR4.  Window boundaries are exact rationals (``SAME_INSTANT_RULE``,
+    read from the shortest decimal ``repr``, which can itself sit up to half an
+    ulp from the stored double).  Records and participants still see float64
+    seconds, so one ulp per value is the resolution a schedule can be held to.
+    It is derived from the values, never a chosen tolerance.
+    """
+    return Fraction(math.ulp(float(seconds)))
 
 
 class CouplingWindowNotConverged(MultiphysicsExecutionError):
@@ -318,6 +332,8 @@ class MultiphysicsRuntime:
         self.graph = graph
         self.plan = plan
         self._window_control_log: list[dict[str, Any]] = []
+        self._time_grid_log: list[dict[str, Any]] = []
+        self._accepted_end_exact: Fraction | None = None
         self.participants = dict(participants)
         self.resolver = resolver
         self.store = store
@@ -1371,8 +1387,8 @@ class MultiphysicsRuntime:
         return ""
 
     def _next_window_width(
-        self, window: CouplingWindowRecord, width: float, nominal: float
-    ) -> float:
+        self, window: CouplingWindowRecord, width: Fraction, nominal: Fraction, *, accepted: Fraction
+    ) -> Fraction:
         """Step-size memory: restart from the width a subdivided window was accepted at, then grow back.
 
         Only a SUBDIVISION shortens the remembered width; a window cut short by
@@ -1385,14 +1401,13 @@ class MultiphysicsRuntime:
             and event["action"] in ("accepted_after_subdivision", "exhausted")
             for event in self._window_control_log
         )
-        accepted = self._seconds(window.end) - self._seconds(window.start)
-        new = accepted if subdivided else min(nominal, width * control.growth_factor)
+        new = accepted if subdivided else min(nominal, width * Fraction(repr(control.growth_factor)))
         if new != width:
             self._window_control_log.append({
                 "window_index": window.index,
                 "action": "width_changed",
-                "from_s": width,
-                "to_s": new,
+                "from_s": float(width),
+                "to_s": float(new),
                 "reason": "accepted after subdivision" if subdivided else f"grown by {control.growth_factor:g}",
             })
         return new
@@ -1442,6 +1457,7 @@ class MultiphysicsRuntime:
         start: Quantity,
         end: Quantity,
         *state: Any,
+        exact: tuple[Fraction, Fraction] | None = None,
     ) -> tuple[Any, ...]:
         """One coupling window under the plan's optional WindowControlPolicy.
 
@@ -1453,12 +1469,16 @@ class MultiphysicsRuntime:
         Every rejected attempt is logged in ``_window_control``.
         """
         control = self.plan.window_control
+        self._accepted_end_exact = None
         if control is None:
             return self._window(index, start, end, *state)
-        start_s = self._seconds(start)
-        minimum_s = self._seconds(control.minimum_window)
+        start_x, end_x = exact if exact is not None else (exact_seconds(start), exact_seconds(end))
+        start_s = float(start_x)
+        minimum_x = exact_seconds(control.minimum_window)
+        reduction = Fraction(repr(control.reduction_factor))
         checkpoints = self._checkpoint_all(start)
         attempt_end = end
+        attempt_end_x = end_x
         subdivisions = 0
         while True:
             failure: CouplingWindowNotConverged | None = None
@@ -1468,6 +1488,7 @@ class MultiphysicsRuntime:
             except CouplingWindowNotConverged as exc:
                 failure = exc
             if result is not None and result[0].outcome is not WindowOutcome.ITERATION_LIMIT:
+                self._accepted_end_exact = attempt_end_x
                 if subdivisions:
                     self._window_control_log.append({
                         "window_index": index,
@@ -1481,17 +1502,18 @@ class MultiphysicsRuntime:
                 str(failure) if failure is not None
                 else f"iteration limit ({self.plan.max_iterations}) without convergence"
             )
-            width = self._seconds(attempt_end) - start_s
-            next_width = width * control.reduction_factor
+            next_width = (attempt_end_x - start_x) * reduction
             if (
                 subdivisions >= control.max_subdivisions
-                or next_width < minimum_s * (1.0 - 1e-12)
+                or next_width < minimum_x
+                # a retry no float64 instant can tell from the window start
+                or next_width <= _float_spacing(start_x) + _float_spacing(start_x + next_width)
             ):
                 self._window_control_log.append({
                     "window_index": index,
                     "action": "exhausted",
                     "start_s": start_s,
-                    "attempted_end_s": self._seconds(attempt_end),
+                    "attempted_end_s": float(attempt_end_x),
                     "subdivisions": subdivisions,
                     "reason": reason,
                 })
@@ -1500,6 +1522,7 @@ class MultiphysicsRuntime:
                         f"{failure} (after {subdivisions} window subdivision(s); "
                         f"minimum window {control.minimum_window})"
                     ) from failure
+                self._accepted_end_exact = attempt_end_x
                 return result  # ITERATION_LIMIT, as the plan allows without failing
             self._restore_all(checkpoints)
             subdivisions += 1
@@ -1507,11 +1530,12 @@ class MultiphysicsRuntime:
                 "window_index": index,
                 "action": "subdivided",
                 "start_s": start_s,
-                "attempted_end_s": self._seconds(attempt_end),
-                "retry_end_s": start_s + next_width,
+                "attempted_end_s": float(attempt_end_x),
+                "retry_end_s": float(start_x + next_width),
                 "reason": reason,
             })
-            attempt_end = Quantity(start_s + next_width, "second")
+            attempt_end_x = start_x + next_width
+            attempt_end = Quantity(float(attempt_end_x), "second")
 
     # =================================================================
     # SCENARIO-DRIVEN EXECUTION
@@ -1533,9 +1557,9 @@ class MultiphysicsRuntime:
         self,
         schedules: Mapping[PortRef, ComposedInputSchedule],
     ) -> dict[PortRef, ComposedInputSchedule]:
-        start_seconds = self._seconds(self.plan.time.start)
-        end_seconds = self._seconds(self.plan.time.end)
-        width_seconds = self._seconds(self.plan.time.coupling_window)
+        start_exact = exact_seconds(self.plan.time.start)
+        end_exact = exact_seconds(self.plan.time.end)
+        width_exact = exact_seconds(self.plan.time.coupling_window)
         for ref, item in schedules.items():
             if not isinstance(ref, PortRef):
                 raise InvalidScientificProblem(
@@ -1558,14 +1582,15 @@ class MultiphysicsRuntime:
                     "external input series must cover the coupling-plan horizon"
                 )
             for sample in series.samples:
-                offset = self._seconds(sample.instant) - start_seconds
-                aligned = (
-                    abs(offset / width_seconds - round(offset / width_seconds)) <= 1e-12
-                )
-                if not aligned and self._seconds(sample.instant) != end_seconds:
+                # Phase 1 BR4: exact, under the same-instant rule -- an instant
+                # declared as 0.30000000000000004 s is not the boundary 0.3 s
+                instant = exact_seconds(sample.instant)
+                aligned = (instant - start_exact) % width_exact == 0
+                if not aligned and instant != end_exact:
                     raise InvalidScientificProblem(
-                        f"STEP input {item.input_id!r} changes away from a "
-                        f"coupling-window boundary"
+                        f"STEP input {item.input_id!r} changes at {sample.instant}, away from "
+                        f"a coupling-window boundary (start + k * {self.plan.time.coupling_window}, "
+                        f"compared exactly: {SAME_INSTANT_RULE})"
                     )
         return dict(schedules)
 
@@ -1837,11 +1862,13 @@ class MultiphysicsRuntime:
             raise InvalidScientificProblem(
                 "time-varying external inputs must override declared external ports"
             )
-        start_seconds = self._seconds(self.plan.time.start)
-        end_seconds = self._seconds(self.plan.time.end)
-        width_seconds = self._seconds(self.plan.time.coupling_window)
-        event_seconds = tuple(self._seconds(item.instant) for item in events)
-        if any(item < start_seconds or item > end_seconds for item in event_seconds):
+        # Phase 1 BR4: every boundary is an exact rational (SAME_INSTANT_RULE);
+        # a nominal window is start + k * width, never a float running sum
+        start_exact = exact_seconds(self.plan.time.start)
+        end_exact = exact_seconds(self.plan.time.end)
+        width_exact = exact_seconds(self.plan.time.coupling_window)
+        event_exact = tuple(exact_seconds(item.instant) for item in events)
+        if any(item < start_exact or item > end_exact for item in event_exact):
             raise InvalidScientificProblem(
                 "scheduled event lies outside the coupling-plan horizon"
             )
@@ -1852,9 +1879,9 @@ class MultiphysicsRuntime:
         # changes is a window boundary, exactly like a scheduled event: a
         # window whose grid was shifted by an event would otherwise deliver
         # the change late, at its next boundary.
-        change_seconds = tuple(sorted(
-            {self._seconds(sample.instant) for item in schedules.values() for sample in item.series.samples}
-            | {self._seconds(contribution.start) for item in conditions for contribution, _ in item.values}
+        change_exact = tuple(sorted(
+            {exact_seconds(sample.instant) for item in schedules.values() for sample in item.series.samples}
+            | {exact_seconds(contribution.start) for item in conditions for contribution, _ in item.values}
         ))
         if parameter_bindings:
             self._bind_parameters(parameter_bindings)
@@ -1928,9 +1955,15 @@ class MultiphysicsRuntime:
         )
 
         windows: list[CouplingWindowRecord] = []
-        current_time = self._seconds(start)
-        end_time = end_seconds
-        width = width_seconds
+        current = start_exact
+        width = width_exact
+        # representation ambiguity of the nominal grid since its last forced
+        # boundary: one ulp of that boundary plus one ulp of the width per
+        # window added since (the declared width is a float64)
+        anchor_ambiguity = _float_spacing(start_exact)
+        drift = Fraction(0)
+        boundaries_exact = [start_exact]
+        self._time_grid_log: list[dict[str, Any]] = []
         index = 0
         conservation_history: list[dict[str, Any]] = []
         input_receipts: list[ScenarioInputReceipt] = []
@@ -1940,33 +1973,48 @@ class MultiphysicsRuntime:
         identities = self._state_identities(start)
 
         try:
-            while current_time < end_time - 1e-15:
+            while current < end_exact:
                 if index >= self.plan.time.max_windows:
                     raise MultiphysicsExecutionError(
                         f"run exceeded max_windows="
                         f"{self.plan.time.max_windows}"
                     )
 
-                next_events = tuple(
-                    item for item in event_seconds
-                    if item > current_time + 1e-15
+                nominal = current + width
+                drift += _float_spacing(width)
+                forced = min(
+                    end_exact,
+                    *(item for item in event_exact if item > current),
+                    *(item for item in change_exact if item > current),
                 )
-                grid_target = current_time + width
-                snap = 1e-12 * max(1.0, abs(grid_target))
-                next_changes = tuple(
-                    item for item in change_seconds
-                    if item > current_time + snap
-                )
-                if next_changes and abs(next_changes[0] - grid_target) <= snap:
-                    # the change IS on the grid; land on its exact instant
-                    # rather than leave a floating-point sliver window
-                    grid_target = next_changes[0]
-                target = min(
-                    end_time,
-                    grid_target,
-                    *(next_events[:1]),
-                    *(next_changes[:1]),
-                )
+                if forced <= nominal:
+                    target = forced
+                elif forced - nominal <= anchor_ambiguity + drift + _float_spacing(forced):
+                    # The forced boundary is within the representation
+                    # resolution of the declared grid: a window between them
+                    # would be an artefact of float64, not of the schedule.
+                    # The remainder is absorbed and recorded.
+                    target = forced
+                    self._time_grid_log.append({
+                        "window_index": index,
+                        "action": "absorbed_sub_resolution_remainder",
+                        "nominal_end": f"{nominal.numerator}/{nominal.denominator}",
+                        "end": f"{forced.numerator}/{forced.denominator}",
+                        "resolution_s": float(anchor_ambiguity + drift + _float_spacing(forced)),
+                    })
+                else:
+                    target = nominal
+                if target - current <= _float_spacing(current) + _float_spacing(target):
+                    # an event or input change this close to a boundary cannot
+                    # be told apart from it in a stored instant: refused rather
+                    # than executed as a window of a few ulps
+                    raise MultiphysicsExecutionError(
+                        f"coupling window {index} from {float(current)!r} s to {float(target)!r} s is "
+                        f"narrower than the float64 resolution of its own boundaries; the event or "
+                        f"input schedule cannot be represented consistently on this window grid "
+                        f"({SAME_INSTANT_RULE})"
+                    )
+                current_time = float(current)
                 instant = Quantity(current_time, "second")
                 window_values = values_at(instant)
                 external, external_uq = self._external_by_participant(
@@ -2028,7 +2076,7 @@ class MultiphysicsRuntime:
                 ) = self._controlled_window(
                     index,
                     Quantity(current_time, "second"),
-                    Quantity(target, "second"),
+                    Quantity(float(target), "second"),
                     edge_values,
                     edge_uq,
                     outputs,
@@ -2036,12 +2084,19 @@ class MultiphysicsRuntime:
                     external,
                     external_uq,
                     transfers,
+                    exact=(current, target),
                 )
                 conservation_history.extend(self._conservation_history(window, transfers))
                 windows.append(window)
 
-                new_time = self._seconds(window.end)
-                if new_time <= current_time:
+                ended = self._seconds(window.end)
+                if ended == float(target):
+                    new = target
+                elif self._accepted_end_exact is not None and ended == float(self._accepted_end_exact):
+                    new = self._accepted_end_exact  # a subdivided attempt, exact
+                else:
+                    new = exact_seconds(window.end)  # an instant a participant reported (event)
+                if new <= current:
                     raise MultiphysicsExecutionError(
                         "coupling window made no time progress"
                     )
@@ -2062,9 +2117,16 @@ class MultiphysicsRuntime:
                         )
                     )
                 identities = after
-                current_time = new_time
+                if new != nominal:
+                    # an event, an input change, the horizon, a subdivision or
+                    # an absorbed remainder: the grid restarts from an exact anchor
+                    anchor_ambiguity = _float_spacing(new)
+                    drift = Fraction(0)
+                previous_start = current
+                current = new
+                boundaries_exact.append(new)
                 if self.plan.window_control is not None and self.plan.window_control.growth_factor is not None:
-                    width = self._next_window_width(window, width, width_seconds)
+                    width = self._next_window_width(window, width, width_exact, accepted=new - previous_start)
                 index += 1
 
                 termination = self._evaluate_termination(
@@ -2115,6 +2177,9 @@ class MultiphysicsRuntime:
         final_outputs["_coupling_error"] = error_budget.to_dict()
         if self.concurrency is not None:
             final_outputs["_concurrency"] = self.concurrency.to_dict()
+        if self._time_grid_log:
+            # absent unless a remainder was absorbed: other runs keep their identity
+            final_outputs["_time_grid"] = {"rule": SAME_INSTANT_RULE, "events": list(self._time_grid_log)}
         if self.plan.window_control is not None:
             # rejected attempts are part of the numerical record, never hidden
             final_outputs["_window_control"] = {
@@ -2122,6 +2187,7 @@ class MultiphysicsRuntime:
                 "events": list(self._window_control_log),
             }
 
+        current_time = float(current)
         ended_at = Quantity(current_time, "second")
         qoi_records = tuple(
             QuantityOfInterestRecord(
@@ -2146,14 +2212,14 @@ class MultiphysicsRuntime:
             ScheduledEventRecord(item.event_id, item.instant) for item in events
         )
         reached_records: list[ReachedScheduledEvent] = []
-        boundaries = ((0, start),) + tuple(
-            (window.index + 1, window.end) for window in windows
-        )
         for item in scheduled_records:
+            # exact: a boundary is reached only by the instant it is
+            when = exact_seconds(item.instant)
             match = next(
                 (
-                    boundary_index for boundary_index, instant in boundaries
-                    if abs(self._seconds(instant) - self._seconds(item.instant)) <= 1e-12
+                    boundary_index
+                    for boundary_index, instant in enumerate(boundaries_exact)
+                    if instant == when
                 ),
                 None,
             )

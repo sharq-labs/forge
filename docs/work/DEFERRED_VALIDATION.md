@@ -253,3 +253,33 @@ certification-pinned file is UNCERTIFIED until OD-3.
   None. A stored non-None value is not re-interpreted anywhere; nothing in `src/` reads the field.
 - The claims condition's behaviour on a real field-mapped coupled run is unexercised (no claims capability
   produces a multiphysics run record yet); the new tests patch the assessment.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-38 | P1-BR4 exact window boundaries | New tests (exact ends, long horizon, absorbed remainder, event shift, one-ulp event pair refused, determinism) | `pytest tests/test_phase1_exact_time_windows.py -q` | NOT RUN |
+| DV-39 | P1-BR4 | Window-control, event-alignment, scenario and multiscale suites: window ends and window-control log floats can move by an ulp; STEP samples off the exact grid (e.g. built as `k * 0.1` in float) are now refused | `pytest tests/test_multiphysics_window_control.py tests/test_big9_review_runtime_fixes.py tests/test_stateful_multiphysics_runtime.py tests/test_multidomain_science_hardening.py tests/test_multiscale_runtime.py -q` | NOT RUN |
+
+### Rules after P1-BR4
+
+- Boundaries are exact `Fraction` seconds from `exact_seconds` (`SAME_INSTANT_RULE`); records and participants
+  still receive `float(boundary)`, which is correctly rounded and never accumulated.
+- A nominal window is `current + width` in exact arithmetic. Events, STEP-input and operating-condition change
+  instants and the horizon cut it exactly; after any non-nominal end the grid restarts from that exact instant
+  (the pre-existing shift semantics are kept).
+- A forced boundary beyond the nominal end by no more than the float64 resolution of the grid since its last
+  anchor (one ulp of the anchor, one ulp of the width per window, one ulp of the boundary) is absorbed into the
+  window and logged in `final_outputs["_time_grid"]` (absent otherwise, so other runs keep their identity).
+- A window no wider than one ulp of each of its boundaries is refused (`MultiphysicsExecutionError`): the schedule
+  cannot be represented consistently. A subdivision retry that narrow ends the subdivision.
+- Subdivision, minimum window and step-size memory compute in exact arithmetic (`Fraction(repr(factor))`);
+  `minimum_window` is compared exactly, without the old `1 - 1e-12` slack.
+- STEP sample alignment is exact: `(instant - start) % width == 0`.
+
+### Unverified assumptions (P1-BR4)
+
+- A participant's reported end and terminal-event instants are still compared with the pre-existing
+  `1e-12 * max(1, |t|)` tolerance (`_advance_one`, `_terminal_event`, `_checkpoint_all`). That is a participant
+  reporting contract, not the window grid; for sub-microsecond windows it is loose and is recorded as open.
+- `minimum_window` governs subdivision only. A window forced short by an event, an input change or the horizon
+  may be shorter than it; whether such a schedule should be refused under window control is an owner decision.
+- `float(Fraction)` is correctly rounded in CPython; the determinism test relies on it.
