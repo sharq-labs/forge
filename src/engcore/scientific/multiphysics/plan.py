@@ -28,6 +28,7 @@ CONVERGENCE_CRITERION_SCHEMA = schema_string("multiphysics_convergence_criterion
 RELAXATION_POLICY_SCHEMA = schema_string("multiphysics_relaxation_policy")
 COUPLING_PLAN_SCHEMA = schema_string("multiphysics_coupling_plan")
 WINDOW_CONTROL_SCHEMA = schema_string("multiphysics_window_control")
+WINDOW_ERROR_CONTROL_SCHEMA = schema_string("multiphysics_window_error_control")
 
 
 class CouplingScheme(str, Enum):
@@ -41,8 +42,16 @@ class IterationSemantics(str, Enum):
 
 
 class ResidualNorm(str, Enum):
+    #: max over stored values
     LINF = "linf"
+    #: root mean square over STORED VALUES (every site weighted equally); on a
+    #: non-uniform support this is not a measure-weighted L2 norm
     L2 = "l2"
+    #: Phase 3 BR13: measure-weighted root mean square,
+    #: sqrt(sum_i w_i d_i^2 / sum_i w_i), with w_i the cell measure (cell
+    #: fields) or the lumped P1/Q1 nodal measure (node fields) of the support.
+    #: Defined only for the supports the runtime can measure; refused elsewhere.
+    L2_MEASURE = "l2_measure"
 
 
 class RelaxationKind(str, Enum):
@@ -54,6 +63,24 @@ class RelaxationKind(str, Enum):
     #: reset every window).  Its update is not a scalar mix of two iterates, so
     #: no scalar factor is recorded and propagated uncertainty is UNKNOWN.
     IQN_ILS = "iqn_ils"
+    #: Phase 3 BR14: interface quasi-Newton with a multi-vector inverse
+    #: Jacobian (Bogaers et al. 2014; Lindner, Mehl, Uekermann 2017): the
+    #: secant pairs of the current window update the approximation carried
+    #: from the previous accepted window, J = J_prev + (W - J_prev V) V^+,
+    #: instead of starting from zero.  Jacobi only; the dense approximation is
+    #: bounded by ``imvj_max_dimension`` and carried across at most
+    #: ``imvj_reuse_windows`` windows before it restarts.  Uncertainty UNKNOWN.
+    IQN_IMVJ = "iqn_imvj"
+
+
+#: Phase 3 BR14: the relaxation kinds that update the joint interface vector
+IQN_KINDS = frozenset({RelaxationKind.IQN_ILS, RelaxationKind.IQN_IMVJ})
+
+#: Phase 3.5 WS2: which edges a scalar-mix relaxation (CONSTANT / AITKEN) mixes in a SERIAL sweep.
+#: ``every_edge`` (the default and the previous behaviour); ``lagged_edges``: only the edges whose
+#: target runs at or before their source (the torn values of a Gauss-Seidel sweep) -- a forward edge
+#: then delivers this sweep's transfer unrelaxed, so it needs no criterion, exactly as under NONE.
+RELAXATION_SCOPES = ("every_edge", "lagged_edges")
 
 
 def _time(value: Quantity, *, label: str, allow_zero: bool = False) -> Quantity:
@@ -173,9 +200,23 @@ class RelaxationPolicy:
     #: orthogonal to the newer kept columns is below this fraction of its own
     #: norm adds (almost) nothing and is dropped; recorded in the policy.
     iqn_filter: float = 1e-10
+    #: Phase 3 BR14, IQN-IMVJ only (0 otherwise): the largest joint interface
+    #: dimension n whose dense n x n inverse-Jacobian approximation may be
+    #: held; a larger interface is refused, never truncated.
+    imvj_max_dimension: int = 0
+    #: Phase 3 BR14, IQN-IMVJ only (0 otherwise): how many consecutive accepted
+    #: windows may contribute to one carried approximation before it restarts
+    #: from zero (bounded reuse of stale secant information).
+    imvj_reuse_windows: int = 0
+    #: Phase 3.5 WS2: :data:`RELAXATION_SCOPES`; ``lagged_edges`` for CONSTANT / AITKEN only
+    scope: str = "every_edge"
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "kind", RelaxationKind(self.kind))
+        if self.scope not in RELAXATION_SCOPES:
+            raise InvalidScientificProblem(f"relaxation scope must be one of {RELAXATION_SCOPES}")
+        if self.scope == "lagged_edges" and self.kind not in (RelaxationKind.CONSTANT, RelaxationKind.AITKEN):
+            raise InvalidScientificProblem("relaxation scope lagged_edges applies to CONSTANT or AITKEN relaxation only")
         factor = float(self.factor)
         minimum = float(self.minimum_factor)
         maximum = float(self.maximum_factor)
@@ -197,17 +238,28 @@ class RelaxationPolicy:
         columns = self.iqn_columns
         if isinstance(columns, bool) or not isinstance(columns, int) or columns < 0:
             raise InvalidScientificProblem("iqn_columns must be a non-negative int")
-        if self.kind is RelaxationKind.IQN_ILS:
+        if self.kind in IQN_KINDS:
             if not 1 <= columns <= 50:
-                raise InvalidScientificProblem("IQN-ILS requires iqn_columns in [1, 50]")
+                raise InvalidScientificProblem(f"{self.kind.value} requires iqn_columns in [1, 50]")
         elif columns != 0:
-            raise InvalidScientificProblem("iqn_columns applies to IQN-ILS relaxation only")
+            raise InvalidScientificProblem("iqn_columns applies to IQN-ILS relaxation only (and to IQN-IMVJ)")
         qr_filter = float(self.iqn_filter)
         if not math.isfinite(qr_filter) or not 0.0 <= qr_filter < 1.0:
             raise InvalidScientificProblem("iqn_filter must lie in [0, 1)")
-        if self.kind is not RelaxationKind.IQN_ILS and qr_filter != 1e-10:
-            raise InvalidScientificProblem("iqn_filter applies to IQN-ILS relaxation only")
+        if self.kind not in IQN_KINDS and qr_filter != 1e-10:
+            raise InvalidScientificProblem("iqn_filter applies to IQN-ILS relaxation only (and to IQN-IMVJ)")
         object.__setattr__(self, "iqn_filter", qr_filter)
+        for label, low, high in (("imvj_max_dimension", 1, 4096), ("imvj_reuse_windows", 1, 1000)):
+            value = getattr(self, label)
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise InvalidScientificProblem(f"{label} must be an int")
+            if self.kind is RelaxationKind.IQN_IMVJ:
+                if not low <= value <= high:
+                    raise InvalidScientificProblem(
+                        f"IQN-IMVJ requires {label} in [{low}, {high}]; it is never defaulted"
+                    )
+            elif value != 0:
+                raise InvalidScientificProblem(f"{label} applies to IQN-IMVJ relaxation only")
         object.__setattr__(self, "factor", factor)
         object.__setattr__(self, "minimum_factor", minimum)
         object.__setattr__(self, "maximum_factor", maximum)
@@ -222,9 +274,16 @@ class RelaxationPolicy:
             # absent for every other kind: existing policies keep their fingerprints
             **(
                 {"iqn_columns": self.iqn_columns, "iqn_filter": self.iqn_filter}
-                if self.kind is RelaxationKind.IQN_ILS
+                if self.kind in IQN_KINDS
                 else {}
             ),
+            **(
+                {"imvj_max_dimension": self.imvj_max_dimension, "imvj_reuse_windows": self.imvj_reuse_windows}
+                if self.kind is RelaxationKind.IQN_IMVJ
+                else {}
+            ),
+            # Phase 3.5 WS2: absent for the default scope, so existing policies keep their fingerprints
+            **({"scope": self.scope} if self.scope != "every_edge" else {}),
         }
 
     @classmethod
@@ -237,7 +296,92 @@ class RelaxationPolicy:
             maximum_factor=payload.get("maximum_factor", 1.0),
             iqn_columns=payload.get("iqn_columns", 0),
             iqn_filter=payload.get("iqn_filter", 1e-10),
+            imvj_max_dimension=payload.get("imvj_max_dimension", 0),
+            imvj_reuse_windows=payload.get("imvj_reuse_windows", 0),
+            scope=payload.get("scope", "every_edge"),
         )
+
+
+@dataclass(frozen=True)
+class MonitoredOutput:
+    """Phase 3 BR15: one participant output the window error indicator compares, with its tolerances."""
+
+    participant_id: str
+    port_id: str
+    absolute_tolerance: Quantity
+    relative_tolerance: float
+
+    def __post_init__(self) -> None:
+        for label in ("participant_id", "port_id"):
+            text = str(getattr(self, label)).strip()
+            if not text:
+                raise InvalidScientificProblem(f"monitored output requires {label}")
+            object.__setattr__(self, label, text)
+        if not isinstance(self.absolute_tolerance, Quantity) or not math.isfinite(self.absolute_tolerance.magnitude) \
+                or self.absolute_tolerance.magnitude < 0.0:
+            raise InvalidScientificProblem("monitored output absolute_tolerance must be a finite non-negative Quantity")
+        require_spread_unit(self.absolute_tolerance.units, context=f"monitored output {self.participant_id}.{self.port_id}")
+        relative = self.relative_tolerance
+        if isinstance(relative, bool) or not isinstance(relative, (int, float)) or not math.isfinite(relative) \
+                or relative < 0.0:
+            raise InvalidScientificProblem("monitored output relative_tolerance must be finite and non-negative")
+        object.__setattr__(self, "relative_tolerance", float(relative))
+        if self.absolute_tolerance.magnitude == 0.0 and self.relative_tolerance == 0.0:
+            raise InvalidScientificProblem(
+                "a monitored output with zero absolute and relative tolerance would reject every window that "
+                "is not reproduced bit for bit"
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"participant_id": self.participant_id, "port_id": self.port_id,
+                "absolute_tolerance": self.absolute_tolerance.to_dict(), "relative_tolerance": self.relative_tolerance}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "MonitoredOutput":
+        return cls(payload["participant_id"], payload["port_id"], Quantity.from_dict(payload["absolute_tolerance"]),
+                   payload["relative_tolerance"])
+
+
+@dataclass(frozen=True)
+class WindowErrorControl:
+    """Phase 3 BR15: a step-doubling local error INDICATOR for accepted coupling windows.
+
+    After a window ``[t, t + h]`` converges, the runtime re-executes it as two
+    windows of ``h / 2`` from the same restored start and compares the monitored
+    outputs at ``t + h``: ``eta = max_i |c_i - f_i| / (atol + rtol max(|c_i|, |f_i|))``.
+    ``eta <= 1`` accepts the COARSE window (the run is the one the plan
+    scheduled); ``eta > 1`` rejects it and retries a shorter window, recorded as
+    an error rejection -- distinct from a convergence rejection.
+
+    What it is: an indicator of the window's local time-discretization (and
+    splitting) error.  For a scheme of order ``p >= 1`` in its asymptotic range
+    the coarse window's local error is ``|c - f| 2^p / (2^p - 1)``, i.e. between
+    one and two times the recorded difference; neither the order nor the regime
+    is verified, so the difference is recorded as an indicator, never a bound.
+    It says nothing about model-form, physical or global (accumulated) error.
+    Cost: three window executions per accepted window.  Every participant must
+    be checkpointable with deterministic restore.
+    """
+
+    outputs: tuple[MonitoredOutput, ...]
+
+    def __post_init__(self) -> None:
+        items = tuple(self.outputs)
+        if not items or any(not isinstance(item, MonitoredOutput) for item in items):
+            raise InvalidScientificProblem("window error control monitors at least one MonitoredOutput")
+        keys = [(item.participant_id, item.port_id) for item in items]
+        if len(set(keys)) != len(keys):
+            raise InvalidScientificProblem("a monitored output is declared twice")
+        object.__setattr__(self, "outputs", tuple(sorted(items, key=lambda item: (item.participant_id, item.port_id))))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema": WINDOW_ERROR_CONTROL_SCHEMA, "indicator": "step_doubling_local_difference",
+                "outputs": [item.to_dict() for item in self.outputs]}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "WindowErrorControl":
+        require_schema(payload, WINDOW_ERROR_CONTROL_SCHEMA)
+        return cls(tuple(MonitoredOutput.from_dict(item) for item in payload["outputs"]))
 
 
 @dataclass(frozen=True)
@@ -271,6 +415,18 @@ class WindowControlPolicy:
     iteration) has not improved on its earlier best for this many consecutive
     iterations is rejected early as stagnating, instead of spending
     ``max_iterations``.
+
+    ``error_control`` (optional, Phase 3 BR15): a :class:`WindowErrorControl`
+    step-doubling indicator; a converged window whose indicator exceeds its
+    tolerances is rejected and subdivided like a non-converged one, and the
+    rejection is recorded as an error rejection.  Without it no time-
+    discretization error is assessed, and adapting the window says nothing
+    about time accuracy.
+
+    ``minimum_window`` governs subdivision only.  A window that an event, an
+    input change or the horizon ends earlier may be shorter; the runtime
+    records that case (``forced_below_minimum_window``) and does not refuse it
+    -- whether it should is an open owner decision.
     """
 
     minimum_window: Quantity
@@ -279,11 +435,14 @@ class WindowControlPolicy:
     divergence_factor: float | None = None
     growth_factor: float | None = None
     stagnation_iterations: int | None = None
+    error_control: WindowErrorControl | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(
             self, "minimum_window", _time(self.minimum_window, label="minimum_window")
         )
+        if self.error_control is not None and not isinstance(self.error_control, WindowErrorControl):
+            raise InvalidScientificProblem("error_control must be a WindowErrorControl")
         factor = float(self.reduction_factor)
         if not math.isfinite(factor) or not 0.0 < factor < 1.0:
             raise InvalidScientificProblem("window reduction_factor must lie in (0, 1)")
@@ -321,6 +480,7 @@ class WindowControlPolicy:
             # absent when unset: policies without step-size memory keep their identity
             **({"growth_factor": self.growth_factor} if self.growth_factor is not None else {}),
             **({"stagnation_iterations": self.stagnation_iterations} if self.stagnation_iterations is not None else {}),
+            **({"error_control": self.error_control.to_dict()} if self.error_control is not None else {}),
         }
 
     @classmethod
@@ -333,6 +493,9 @@ class WindowControlPolicy:
             divergence_factor=payload.get("divergence_factor"),
             growth_factor=payload.get("growth_factor"),
             stagnation_iterations=payload.get("stagnation_iterations"),
+            error_control=(
+                WindowErrorControl.from_dict(payload["error_control"]) if payload.get("error_control") is not None else None
+            ),
         )
 
 
@@ -382,16 +545,26 @@ class CouplingPlan:
                 raise InvalidScientificProblem("explicit coupling has no coupling-convergence criteria")
             if self.relaxation.kind is not RelaxationKind.NONE:
                 raise InvalidScientificProblem("explicit coupling does not relax an iteration")
+        elif not criteria:
+            # Phase 1 BR1: this check belongs to the scheme test.  Attached to
+            # the IQN-ILS test below (as it was), it refused every explicit plan.
+            raise InvalidScientificProblem("implicit coupling requires convergence criteria")
         if (
-            self.relaxation.kind is RelaxationKind.IQN_ILS
+            self.relaxation.kind in IQN_KINDS
             and self.iteration_semantics is not IterationSemantics.JACOBI
         ):
+            # Phase 3 BR14: the same holds for IQN-IMVJ; no Gauss-Seidel IQN variant
+            # is implemented, so none is admitted
             raise InvalidScientificProblem(
-                "IQN-ILS updates the joint interface vector after every participant has run "
+                f"{self.relaxation.kind.value} updates the joint interface vector after every participant has run "
                 "(Jacobi); serial Gauss-Seidel relaxes edges one at a time and is not supported"
             )
-        elif not criteria:
-            raise InvalidScientificProblem("implicit coupling requires convergence criteria")
+        if self.relaxation.scope == "lagged_edges" and (
+            self.scheme is not CouplingScheme.IMPLICIT or self.iteration_semantics is not IterationSemantics.SERIAL
+        ):
+            raise InvalidScientificProblem(
+                "relaxation scope lagged_edges is defined for IMPLICIT SERIAL plans (in a Jacobi sweep every edge is lagged)"
+            )
         if self.window_control is not None:
             if not isinstance(self.window_control, WindowControlPolicy):
                 raise InvalidScientificProblem("window_control must be a WindowControlPolicy")
@@ -455,6 +628,48 @@ class CouplingPlan:
             raise InvalidScientificProblem("failed to derive serial order from graph")
         return tuple(order)
 
+    def required_convergence_edges(self, graph: PhysicsGraph) -> tuple[str, ...]:
+        """The edges whose fixed-point residual an IMPLICIT plan must monitor.
+
+        An implicit window is a fixed-point iteration ``x = H(x)`` over the
+        interface vector.  The window is a solution of the coupled equations
+        only if every input a participant CONSUMED equals the transfer of the
+        output it consumed.  Which edges can violate that is a property of the
+        iteration semantics, so the policy is derived, never declared:
+
+        * JACOBI: every edge.  Each participant reads the frozen previous
+          iterate, so every edge is lagged by one iteration.
+        * SERIAL with NONE relaxation: every LAGGED edge -- its target runs at
+          or before its source in the resolved order (self-loops included), so
+          the target read the previous iterate.  A forward edge delivers this
+          iteration's transfer to a target that runs later in the same
+          iteration; it is consistent by construction (up to the rounding of
+          ``old + (new - old)``) and needs no criterion.
+        * SERIAL with CONSTANT or AITKEN relaxation: every edge.  A relaxed
+          forward edge delivers a mix of two iterates, not the transfer.
+          With ``RelaxationPolicy.scope = "lagged_edges"`` (Phase 3.5) only
+          the lagged edges are relaxed, so only they are required, as under NONE.
+
+        EXPLICIT plans make no convergence claim and require nothing.  The
+        residual is an iterate-consistency measure: it is not the solution's
+        error, and it says nothing about physical conservation.
+        """
+        if self.scheme is CouplingScheme.EXPLICIT:
+            return ()
+        if (
+            self.iteration_semantics is IterationSemantics.JACOBI
+            or (self.relaxation.kind is not RelaxationKind.NONE and self.relaxation.scope == "every_edge")
+        ):
+            return tuple(sorted(edge.edge_id for edge in graph.edges))
+        # NONE, or a relaxation restricted to the lagged edges (Phase 3.5 WS2): forward edges carry this
+        # sweep's unrelaxed transfer and are consistent by construction
+        position = {pid: index for index, pid in enumerate(self.resolved_order(graph))}
+        return tuple(sorted(
+            edge.edge_id
+            for edge in graph.edges
+            if position[edge.target.participant_id] <= position[edge.source.participant_id]
+        ))
+
     def validate_against(self, graph: PhysicsGraph) -> None:
         self.resolved_order(graph)
         for criterion in self.criteria:
@@ -466,6 +681,19 @@ class CouplingPlan:
                     f"[{criterion.absolute_tolerance.dimensionality}] but edge transports "
                     f"[{source.dimension}]"
                 )
+        missing = sorted(
+            set(self.required_convergence_edges(graph))
+            - {criterion.edge_id for criterion in self.criteria}
+        )
+        if missing:
+            # Phase 1 BR1: a window could otherwise be labelled CONVERGED while
+            # an interface the iteration updates was never measured.
+            raise InvalidScientificProblem(
+                f"implicit {self.iteration_semantics.value} coupling with "
+                f"{self.relaxation.kind.value} relaxation must monitor edges {missing}: "
+                f"they carry a lagged or relaxed iterate, and an unmonitored one can "
+                f"leave the coupled equations unsatisfied in a window reported as converged"
+            )
         if self.scheme is CouplingScheme.IMPLICIT:
             bad = [
                 participant.participant_id

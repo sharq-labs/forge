@@ -1,5 +1,90 @@
 # Active Plan
 
+Active epic: `engrt.numerical_foundations` (research program; OD-6 decided 2026-10-18; in force when branch
+`feat/od6-engineering-program-epic` merges). Earlier entries below that call `battery.thevenin_1rc` the epic, list OD-6
+as open, or list EXC-1 as an open exception are superseded by that decision on merge. The program's gates M1-E3 are
+bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
+reference application).
+
+## Integration — Codex handoff (2026-10-18)
+
+By owner confirmation in chat, branch `integration/codex-handoff-2026-10-18` merges into `main`, in order: I-8
+(`fix/engrt-v1-phase1-interop` `c68f9fc1`), Phase 1, Phase 2, Phase 3, Phase 3.5, the CDAR fixtures and OD-6, plus
+[CODEX_HANDOFF.md](CODEX_HANDOFF.md). Everything lands **IMPLEMENTED / UNVERIFIED and UNCERTIFIED**; no test ran. The
+"local commits only" lines of the overrides below describe how the work was built, not where it now is; OD-6 is in
+force from this merge.
+
+- [x] Merge in dependency order; conflicts resolved by hand (CODEX_HANDOFF.md section 1), including the I-8 vs
+      P2-BR10 checkpoint authority (I-8's seal wins; cross-object restore refused) -- owner review.
+- [ ] Owner: authorize DV-31..DV-100; OD-3 recertification of the new `main` HEAD; route the preserved, unintegrated
+      `preserve/*` and battery Pass 1 branches.
+
+## Active override — Phase 3.5: engineering foundation completion, build phase (2026-10-18)
+
+Branch `feat/phase35-engineering-foundation-completion` (worktree `D:/forge-phase35`), on Phase 3 `7389f4b4`. Local
+commits only; no test execution, push, PR, merge or certification. Deferred checks: DEFERRED_VALIDATION.md DV-87..DV-98
+(all earlier DV rows preserved). Policy drafts: [PHASE_3_5_POLICY_PROPOSALS.md](PHASE_3_5_POLICY_PROPOSALS.md). Phase 4 not started.
+
+- [x] WS1 mandatory same-problem admission for corroboration (`8a76dbe2`, review fixes `e01bc051`), tests NOT RUN; closes OD-P2-3.
+- [x] WS2 electrothermal migration candidate on the runtime, NATIVE default, parity-gated (`e740f208`) -- PARTIAL until DV-88..DV-90 pass.
+- [x] WS3 conjugate-interface admission and provider-pair maturity (`feb1f34e`) -- PARTIAL: real FE/CFD BLOCKED (P35-E2).
+- [ ] WS4 transient 1D adaptation, conservative transfer, coarsening, triangle refinement -- BLOCKED (P35-A4/A5).
+- [ ] WS5 provider-backed nonlinear PDE -- BLOCKED (P35-E1, needs OD-6).
+- [ ] WS6 ALE formulation -- BLOCKED (P35-E3, needs OD-6).
+- [x] OD-6 / OD-P35-2 decided 2026-10-18: active epic -> research program `engrt.numerical_foundations` (branch `feat/od6-engineering-program-epic` `a40ddc5d`, in force on merge); WS4-WS6 and real FE/CFD become program gates M1, M2, E1-E3.
+- [ ] Owner: review/merge the OD-6 branch; OD-P35-1, OD-P35-3..5; regenerate two flagship bundles (DV-93); authorize deferred validation; OD-3.
+
+## Active override — Phase 3: advanced numerical & multiphysics engine, build phase (2026-10-17)
+
+Branch `feat/phase3-advanced-numerical-multiphysics` (worktree `D:/forge-phase3`), stacked on Phase 2 `2661b640`.
+Local commits only: no push, PR, merge, certificate or test execution (owner direction). Rocks are P3-BR13..P3-BR17.
+Deferred checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md) DV-65..DV-86 (Phase 1 DV-31..DV-47 and Phase 2
+DV-48..DV-64 unchanged). Phase 4 not started.
+
+- [x] P3-BR13 numerical-health vocabulary, damped Newton, chain acceptance, measure-weighted residual norm (`1d80a142`), tests NOT RUN.
+- [x] P3-BR14 one IQN accelerator; bounded IQN-IMVJ with recorded history validity (`9f96c560`), tests NOT RUN.
+- [x] P3-BR15 step-doubling window error indicator, recorded clocks and forced short windows, subcycling contract (`87c271ab`), tests NOT RUN.
+- [x] P3-BR16 mesh validity checks and adaptation provenance (`f2df47d2`) -- PARTIAL: refinement extensions BLOCKED (EXC-1).
+- [x] P3-BR17 nonlinear PDE admission contract; moving-mesh kinematics and GCL (`0a97c8a7`) -- PARTIAL: nonlinear PDE execution and ALE BLOCKED.
+- [x] Read-only review: 5 MAJOR + 5 MINOR fixed (`080751eb`), 3 MINOR recorded; tests NOT RUN.
+- [ ] Owner: OD-P3-1 (EXC-1 amendment: coarsening, transient non-uniform 1D, 1D grid-to-grid conservative transfer),
+      OD-P3-2 (triangle/tetrahedron refinement, changing-mesh coupling), OD-P3-3 (a nonlinear PDE template + provider
+      Newton adapter), OD-P3-4 (an ALE formulation), OD-P3-5 (confirm the Phase 3 infrastructure is inside policy),
+      OD-P3-6 (schedule-forced windows below minimum_window), OD-P3-7 (make l2_measure / error control mandatory anywhere).
+- [ ] Owner: authorize Phase 1 + 2 + 3 deferred validation; push/PR; OD-3. Phase 2 decisions OD-P2-1..OD-P2-5 still open.
+
+## Active override — Phase 2: unified solver & multiphysics architecture, build phase (2026-10-17)
+
+Branch `feat/phase2-unified-solver-architecture` (worktree `D:/forge-phase2`), stacked on Phase 1 `6249c2d2`. Local
+commits only: no push, PR, merge, certificate or test execution (owner direction). Rocks are P2-BR8..P2-BR12. Deferred
+checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md) DV-48..DV-64 (and Phase 1 DV-31..DV-47, unchanged).
+
+- [x] P2-BR8 one declared coupling authority; steady result participants; electrothermal runtime build (`e4dec400`) -- PARTIAL: product path not migrated.
+- [x] P2-BR9 unified field-transfer engine: admission table, indexed search, tet->tet conservative remap (`54ff4321`), tests NOT RUN.
+- [x] P2-BR10 build- and problem-bound checkpoints; qualified conversion contract; provider/PyBaMM restore guards (`17dd89b6`), tests NOT RUN.
+- [x] P2-BR11 canonical problem identity, corroboration after same-problem admission, qualified selection (`77634711`), tests NOT RUN.
+- [x] P2-BR12 external-participant infrastructure (mock labels, failure classes, interface contract) (`e9d18d63`) -- PARTIAL: FE/CFD BLOCKED.
+- [ ] Owner: OD-P2-1 (FE/CFD conjugate heat transfer vs active epic), OD-P2-2 (electrothermal delegation, relaxation semantics),
+      OD-P2-3 (compare_providers refuses without same-problem admission), OD-P2-4 (preCICE role), OD-P2-5 (hex / mixed 3D remap).
+- [ ] Owner: authorize Phase 1 + Phase 2 deferred validation; push/PR; OD-3. Phase 3 not started (waits for authorization).
+
+## Active override — Phase 1: scientific & numerical correctness, build phase (2026-10-17)
+
+Branch `fix/phase1-scientific-numerical-correctness` (worktree `D:/forge-phase1`), base `origin/main` `de11dffa`.
+Local commits only: no push, PR, merge, certificate or test execution (owner direction). Rocks are P1-BR1..P1-BR7
+(not the ERT V1 BR numbers below). Deferred checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md) DV-31..DV-47.
+Every changed capability is IMPLEMENTED / UNVERIFIED; every touched pinned file is UNCERTIFIED until OD-3.
+
+- [x] P1-BR1 coupling convergence coverage; explicit plans valid again (`a1b6a87e`), tests NOT RUN.
+- [x] P1-BR2 conservative cell remap by exact intersection, 2D + structured only (`61226343`), tests NOT RUN.
+- [x] P1-BR3 mapping residuals are diagnostics, never bounds (`b7a3a032`), tests NOT RUN.
+- [x] P1-BR4 exact rational coupling-window boundaries (`b71eeb3e`), tests NOT RUN.
+- [x] P1-BR5 typed verification evidence categories (`56cd0e01`), tests NOT RUN; mutant N60d needs OD-3 (DV-41).
+- [x] P1-BR6 sparse admission, canonical digests, exact/estimated conditioning (`71085685`), tests NOT RUN.
+- [x] P1-BR7 typed coupled-run outcomes in MultiphysicsAuthority (`20aa9503`), tests NOT RUN.
+- [ ] Owner: authorize the Phase 1 deferred validation (DV-31..DV-47); push/PR; OD-3 recertification.
+- [ ] Owner decisions recorded in PROGRESS 2026-10-17 "Phase 1" (Phase 2 not started; waits for authorization).
+
 ## Active override — Engineering Runtime V1 Big Rocks, build phase (2026-10-17)
 
 Branch `feat/engrt-v1-big-rocks` (worktree `D:/forge-engrt-br`), stacked on `fix/engrt-v1-phase1-interop`. Local
@@ -22,9 +107,11 @@ ledger capability).
 - [x] BR10 composition-pack templates declare window control (carried into plans), tests NOT RUN.
 - [x] BR11 step-size memory for adaptive coupling windows, tests NOT RUN.
 - [x] BR12 defect fix: event-aligned windows keep their own failure outcome, tests NOT RUN.
-- [ ] Owner: MultiphysicsAuthority provider reporting for external participants (D5) and its rejection of explicit_completed/event_aligned windows.
+- [x] MultiphysicsAuthority rejection of explicit_completed/event_aligned windows: fixed in Phase 1 P1-BR7 (owner-directed
+      2026-10-17), tests NOT RUN. Provider reporting for external participants (D5) stays as BR14 left it.
 - [x] BR13 mapping extrapolation / unverified mappings are open coupling-error sources, tests NOT RUN.
-- [ ] Owner: the coupling error budget calls a round-trip L2 residual a relative_bound (it is not a bound on the forward transfer).
+- [x] The coupling error budget's round-trip relative_bound: fixed in Phase 1 P1-BR3 (owner-directed 2026-10-17), tests
+      NOT RUN.
 - [x] BR14 defect fix: coupled nodes may not run unreported external providers, tests NOT RUN.
 - [x] BR15 fallback solver routes start at their own refinement level (F-5), tests NOT RUN.
 - [x] BR16 QR filtering of near-dependent IQN-ILS secant pairs, tests NOT RUN.
@@ -52,8 +139,13 @@ locally as `04b12344` (owner direction). No push, PR, merge, certificate or hard
       `tree.clean` check of the uncommitted tree); real-ngspice electrothermal integration 357 passed.
 - [ ] Owner: push/PR decision; OD-3 recertification (pinned files touched); policy decisions on qualification
       gating and provider-build binding for `CallbackParticipant` adapters.
-- [ ] Next (smallest high-impact): bind provider build + token digest into `coupling/adapters.py::provider_participant`
-      and the PyBaMM coupling adapter checkpoints, with a real-provider (PyBaMM, 3.13 env) restore test.
+- [x] Bind provider build + token digest into `coupling/adapters.py::provider_participant` and the PyBaMM coupling
+      adapter checkpoints. Done twice, independently: I-8 (`fix/engrt-v1-callback-checkpoint-identity`, `1439b470`,
+      `28ff37dc`, PR #155: `CheckpointSeal`, same-object issue, record identity, recomputed digest) and Phase 2
+      P2-BR10 (`17dd89b6`: observed-build drift refusal, build tag in the record). Integrated 2026-10-18
+      (`integration/codex-handoff-2026-10-18`): I-8's seal is the restore authority; P2-BR10's drift refusal and
+      build tag are kept; a checkpoint of another participant object is refused (stricter than P2-BR10's
+      cross-object restore with a build pin). Tests NOT RUN (DV-55, I-8 gates); needs OD-3 (`external.py`).
 
 ## Active override — Open problems pass (2026-10-16)
 
@@ -242,8 +334,8 @@ Historical snapshot, 2026-10-12 (superseded above; kept for the record):
 - GitHub rulesets: the REST API returns 403 (private repository on a free plan). No merge gate is enforced remotely.
 - Open PRs: #107 self-hosted CI runner, #39 (draft) and #24 (base `claude/core-v2-hybrid-uq`): all BLOCKED in the
   2026-10-12 landing pass (OD-11, OD-21).
-- Capability ledger (computed): `thermal.nafems_t3` EVIDENCE_BACKED; `battery.thevenin_1rc` FOUNDATION and still the
-  test-pinned completion epic; nothing is PRODUCTION_READY.
+- Capability ledger (computed): `thermal.nafems_t3` EVIDENCE_BACKED; `battery.thevenin_1rc` FUNCTIONAL (no longer the
+  epic after OD-6; the research program `engrt.numerical_foundations` is); nothing is PRODUCTION_READY.
 - Negative results stand: four BIG 13 flagships `insufficient_evidence`; Kirkaldy fade NOT MET; LG M50 DFN NOT MET.
   Local-only, not on the remote: Battery Practical Pass 1 `7e923e75` (WEAKLY_IDENTIFIABLE). Trust Repair Pass 1
   `803946af` is on `main` through #123.
@@ -327,7 +419,7 @@ therapeutic work.
 | OD-3 | Recertification: which HEAD, and when (owner-run). | Certificate binds `39d43456`, not `main` `2d0fa6c3`; #126, #123, #117 and #129 all touch certified scope and landed unrecertified. |
 | OD-4 | RESOLVED 2026-10-12 (owner direction: merge the open PRs that pass every gate). PR #123 lands by a merge commit (no rebase); it closes R3-01/R3-02 only. | Its certificate binds `39d43456` (the PR tree), not the merged `main`; recertification stays OD-3. |
 | OD-5 | RESOLVED 2026-10-12 (owner direction: merge the open PRs that pass every gate). PR #126 lands as one PR; it creates no new scientific capability stage and changes no maturity. | +8,043 lines; new `engcore.authority`; real escrow is relevant to Genesis leakage controls. Not recertified (OD-3). |
-| OD-6 | Completion epic: keep `battery.thevenin_1rc` (PR #117) or re-point it; or approve one narrowly scoped A2 exception. | Pinned by the ledger, `tests/test_capability_completion.py` and the PR template (CONTRACT_PIN: a change needs its own reviewed PR). Blocks A2. No blanket Track A/B exemption exists (Completion Policy, anti-loophole rule). |
+| OD-6 | DECIDED 2026-10-18 (owner, in session): the active epic becomes the research program `engrt.numerical_foundations` ([contract](../project/ENGINEERING_FOUNDATIONS_PROGRAM.md)); in force when the branch `feat/od6-engineering-program-epic` is reviewed and merged. Gates DV0, M1, M2, E1, E2, E3; build-first. Battery stays tracked at FUNCTIONAL; Genesis A2 still needs an epic change or an exception; EXC-1 is superseded on merge. | Pinned by the ledger, `tests/test_capability_completion.py` and the PR template (CONTRACT_PIN: a change needs its own reviewed PR). Blocks A2. No blanket Track A/B exemption exists (Completion Policy, anti-loophole rule). |
 | OD-7 | Timebox windows for G0, A1, A2, B1. | None set; no dates invented here. |
 | OD-8 | External evaluator for Genesis hidden tasks: name a person or group, or fix a selection process and deadline. | Required before the A1 freeze names its held-out protocol, and before Genesis Step 6. |
 | OD-9 | RESOLVED. PR #128 supersedes PR #127 and contains Genesis plus the reviewed planning consolidation. PR #127 was closed without merge; its branch remains preserved. | PR #127 existed as the standalone Genesis document. |
@@ -344,7 +436,7 @@ therapeutic work.
 | OD-20 | Choose the escrow deployment for formal runs. | The in-process escrow leaks (attack test `test_l2_in_process…`); formal runs need the isolated escrow (isolation demo). |
 | OD-21 | `ScientificResult.is_usable`: keep "converged and no failed check" (validity excluded), or require every declared model IN_DOMAIN as #39 / #24 propose. | `docs/assurance/CORE_SEMANTIC_INVARIANTS.md` records the exclusion as deliberate and a test pins the 6×4 truth table; on `main`, OUTSIDE_VALIDATED_DOMAIN and UNKNOWN validity are `is_usable`. A scientific-design decision on frozen Core, not a merge fix. #24's UQ refusals already exist on `main` (different messages). |
 
-## Active-epic exceptions (open)
+## Active-epic exceptions (open until OD-6 merges; EXC-1 is then superseded by the program)
 
 An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
 expiry, owner approval, prohibitions).

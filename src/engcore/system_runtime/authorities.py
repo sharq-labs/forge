@@ -102,6 +102,12 @@ class MultiphysicsAuthority(_Base):
     values, scenario digest, ...).  ``state_owners`` maps a PhysicsGraph participant to the system
     state owner whose values it receives (as ``initial_state``) and reports back (its final public
     state).  ``outputs`` maps a node output name to a key of the run's ``final_outputs``.
+
+    Phase 1 BR7: a node succeeds only on a real run record of this call, of the declared graph and
+    plan, whose required conservation held and whose typed outcome
+    (:func:`~engcore.execution.multiphysics.runtime.assess_run_outcome`) is COMPLETED_EXPLICIT or
+    CONVERGED.  The outcome is reported in the diagnostics and carried into every output's UNKNOWN
+    uncertainty note; completion is never presented as convergence.
     """
 
     def __init__(self, authority_id: str, runtime: Any = None, *, run_kwargs: Callable[[NodeCall], Mapping[str, Any]], outputs: Mapping[str, str],
@@ -111,7 +117,8 @@ class MultiphysicsAuthority(_Base):
                  graph: Any = None, plan: Any = None, runtime_factory: Callable[[NodeCall], Any] | None = None,
                  state_outputs: Mapping[str, tuple[str, str]] | None = None,
                  extractors: Mapping[str, Callable[[Any, NodeCall], Quantity]] | None = None,
-                 artifacts: Callable[[Any, NodeCall], tuple[ArtifactRef, ...]] | None = None) -> None:
+                 artifacts: Callable[[Any, NodeCall], tuple[ArtifactRef, ...]] | None = None,
+                 allow_mock_participants: bool = False) -> None:
         """Either a fixed ``runtime``, or ``graph`` + ``plan`` + ``runtime_factory(call)`` for a participant that must be built from the committed
         state (for example a cell constructed with its initial state of charge).  Identity covers the graph and plan fingerprints and ``config``."""
         if (runtime is None) == (runtime_factory is None):
@@ -124,9 +131,13 @@ class MultiphysicsAuthority(_Base):
             "graph": graph.fingerprint(), "plan": plan.fingerprint(), "outputs": dict(sorted(outputs.items())),
             "state_outputs": {k: list(v) for k, v in sorted((state_outputs or {}).items())},
             "extractors": sorted(extractors or {}), "artifacts": artifacts is not None,
-            "state_owners": dict(sorted((state_owners or {}).items())), "config": dict(config or {})})
+            "state_owners": dict(sorted((state_owners or {}).items())), "config": dict(config or {}),
+            # absent unless allowed: authorities that never admit mocks keep their identity
+            **({"allow_mock_participants": True} if allow_mock_participants else {})})
+        if not isinstance(allow_mock_participants, bool):
+            raise InvalidScientificProblem("allow_mock_participants must be boolean")
+        self._allow_mock = allow_mock_participants
         self._extractors, self._artifacts = dict(extractors or {}), artifacts
-        self._declares_conservation = bool(getattr(graph, "conservation", ()))
         self._graph_fingerprint = graph.fingerprint()
         self._plan_fingerprint = plan.fingerprint()
         self.runtime, self._factory, self._kwargs, self._outputs = runtime, runtime_factory, run_kwargs, dict(outputs)
@@ -150,7 +161,8 @@ class MultiphysicsAuthority(_Base):
         return out
 
     @staticmethod
-    def _untraced_external_providers(runtime: Any, records: tuple[ProviderRecordRef, ...]) -> str:
+    def _untraced_external_providers(runtime: Any, records: tuple[ProviderRecordRef, ...], *,
+                                     skip_mocks: bool = False) -> str:
         """Why an external provider inside the coupled run is untraceable, or ''.
 
         The executor already refuses a node that names provider bindings but
@@ -165,7 +177,7 @@ class MultiphysicsAuthority(_Base):
         participants = getattr(runtime, "participants", None) or {}
         external = sorted(
             (pid, p.provider_identity) for pid, p in dict(participants).items()
-            if isinstance(p, ExternalSolverParticipant)
+            if isinstance(p, ExternalSolverParticipant) and not (skip_mocks and p.is_mock)
         )
         if not external:
             return ""
@@ -183,29 +195,54 @@ class MultiphysicsAuthority(_Base):
         if self._owners and self._factory is None and "initial_state" not in kwargs:
             kwargs["initial_state"] = self._initial_state(call)
         t0 = time.perf_counter()
-        run = runtime.run(call.run_id + "." + call.node.node_id, **kwargs)  # refusals raise: the executor records a FAILED node
+        run_id = call.run_id + "." + call.node.node_id
+        run = runtime.run(run_id, **kwargs)  # refusals raise: the executor records a FAILED node
         wall = time.perf_counter() - t0
         # F5 (fifth review): a run whose REQUIRED conservation failed in any window exposes nothing downstream.
-        from ..execution.multiphysics.runtime import MultiphysicsExecutionError, require_conservation
+        from ..execution.multiphysics.runtime import (
+            CouplingRunOutcome,
+            MultiphysicsExecutionError,
+            assess_run_outcome,
+            require_conservation,
+        )
         from ..scientific.multiphysics.report import MultiphysicsRunRecord
 
-        if isinstance(run, MultiphysicsRunRecord):
-            # Sixth review: the run must be of the graph this authority's identity names -- a factory that builds a
-            # runtime on another graph (one without the declared balances) would otherwise pass the check vacuously.
-            if run.graph_fingerprint != self._graph_fingerprint:
-                return NodeOutcome.failed("the coupled run executed a different graph than the one this authority declares")
-            # Seventh review: and the declared plan -- its convergence tolerances decide what "converged" means below.
-            if run.plan_fingerprint != self._plan_fingerprint:
-                return NodeOutcome.failed("the coupled run executed a different coupling plan than the one this authority declares")
-            try:
-                require_conservation(run)
-            except MultiphysicsExecutionError as exc:
-                return NodeOutcome.failed(f"declared conservation did not hold; nothing is exposed ({exc})")
-        elif self._declares_conservation or self._factory is not None:
-            # a built runtime must prove which graph and plan it ran; a declared balance must be checkable
-            return NodeOutcome.failed("the runtime returned no run record to check its graph, plan and conservation on")
+        if not isinstance(run, MultiphysicsRunRecord):
+            # Phase 1 BR7: what a window's outcome means is checked against the run's own plan and graph;
+            # an object that is not a run record cannot show that (and a fixed runtime is no exception)
+            return NodeOutcome.failed("the runtime returned no run record to check its graph, plan, outcome and conservation on")
+        # evidence stays bound to the call it was produced for
+        if run.run_id != run_id:
+            return NodeOutcome.failed(f"the coupled run is {run.run_id!r}, not the run {run_id!r} this call requested")
+        # Sixth review: the run must be of the graph this authority's identity names -- a factory that builds a
+        # runtime on another graph (one without the declared balances) would otherwise pass the check vacuously.
+        if run.graph_fingerprint != self._graph_fingerprint:
+            return NodeOutcome.failed("the coupled run executed a different graph than the one this authority declares")
+        # Seventh review: and the declared plan -- its convergence tolerances decide what "converged" means below.
+        if run.plan_fingerprint != self._plan_fingerprint:
+            return NodeOutcome.failed("the coupled run executed a different coupling plan than the one this authority declares")
+        try:
+            require_conservation(run)
+        except MultiphysicsExecutionError as exc:
+            return NodeOutcome.failed(f"declared conservation did not hold; nothing is exposed ({exc})")
+        # Phase 1 BR7: explicit and event-aligned windows complete a run; only an implicit run whose every window
+        # satisfied every required interface is converged; anything else exposes nothing
+        assessment = assess_run_outcome(run)
+        if not assessment.completed:
+            return NodeOutcome.failed(f"the coupled run did not complete; nothing is exposed ({'; '.join(assessment.problems)})")
+        explicit = assessment.outcome is CouplingRunOutcome.COMPLETED_EXPLICIT
+        # Phase 2 BR12: a mock external participant is never evidence that a real provider executed; it is
+        # refused unless this authority explicitly admits mocks, and then it is labelled (it has no provider
+        # record to trace, so only an admitted, labelled mock is exempt from the trace requirement below)
+        from ..execution.multiphysics.external import ExternalSolverParticipant
+
+        mocks = sorted(pid for pid, p in dict(getattr(runtime, "participants", None) or {}).items()
+                       if isinstance(p, ExternalSolverParticipant) and p.is_mock)
+        if mocks and not self._allow_mock:
+            return NodeOutcome.failed(f"the coupled run used MOCK external participants {mocks}; a mock is not a "
+                                      f"provider execution and this authority does not admit mocks")
         provider_records = () if self._providers is None else tuple(self._providers(run))
-        untraced = self._untraced_external_providers(runtime, provider_records)
+        untraced = self._untraced_external_providers(runtime, provider_records, skip_mocks=self._allow_mock)
         if untraced:
             return NodeOutcome.failed(untraced)
         outputs: dict[str, OutputValue] = {}
@@ -215,16 +252,18 @@ class MultiphysicsAuthority(_Base):
             if not match:
                 return NodeOutcome.failed(f"participant {participant!r} reported no public state {variable!r}")
             outputs[name] = OutputValue(match[0].value, match[0].uncertainty, f"multiphysics:{run.run_id}:{participant}.{variable}")
+        coupling_note = ("explicit coupling: windows completed, no convergence claim, splitting error not quantified"
+                         if explicit else "convergence is numerical, not uncertainty")
+        if mocks:
+            coupling_note += f"; produced with MOCK participants {mocks}, not by real providers"
         for name, key in self._outputs.items():
             if key not in run.final_outputs:
                 return NodeOutcome.failed(f"coupled run produced no final output {key!r}")
             outputs[name] = OutputValue(Quantity.from_dict(run.final_outputs[key]), Uncertainty.unknown(
-                "coupled-run output: participants state no uncertainty; convergence is numerical, not uncertainty"), f"multiphysics:{run.run_id}:{key}")
-        if any(w.outcome.value != "converged" for w in run.windows):
-            return NodeOutcome.failed("a coupling window did not converge; nothing is exposed")
+                f"coupled-run output: participants state no uncertainty; {coupling_note}"), f"multiphysics:{run.run_id}:{key}")
         for name, fn in self._extractors.items():   # scalars the caller derives from the run's own histories; uncertainty stays UNKNOWN
             outputs[name] = OutputValue(fn(run, call), Uncertainty.unknown(
-                "derived from the coupled run's histories: participants state no uncertainty; convergence is numerical, not uncertainty"),
+                f"derived from the coupled run's histories: participants state no uncertainty; {coupling_note}"),
                 f"multiphysics:{run.run_id}:derived:{name}")
         proposal = None
         if call.node.commits_state:
@@ -249,7 +288,9 @@ class MultiphysicsAuthority(_Base):
             provider_records=provider_records, delegated_record_digest=digest_of(run.to_dict()),
             artifacts=() if self._artifacts is None else self._artifacts(run, call),
             resource_usage=ResourceUsage(wall_seconds=wall), diagnostics={"windows": str(len(run.windows)),
-                                                                        "iterations": str(sum(len(w.iterations) for w in run.windows))})
+                                                                        "iterations": str(sum(len(w.iterations) for w in run.windows)),
+                                                                        "coupling_outcome": assessment.outcome.value,
+                                                                        **({"mock_participants": ",".join(mocks)} if mocks else {})})
 
 
 class MultiscaleAuthority(_Base):

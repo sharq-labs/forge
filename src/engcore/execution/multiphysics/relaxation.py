@@ -1,9 +1,16 @@
-"""Relaxation, Aitken and interface quasi-Newton (IQN-ILS) over scalar or field coupling values."""
+"""Relaxation, Aitken and interface quasi-Newton (IQN-ILS / IQN-IMVJ) over scalar or field coupling values.
+
+Phase 3: the joint IQN update is delegated to :mod:`.acceleration` (one
+accelerator for both IQN kinds, with recorded history-validity rules).  A
+relaxation never mixes two values on different supports: equal shapes on two
+meshes are two different fields (Phase 3 BR16).
+"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Mapping
+from fractions import Fraction
+from typing import Any, Mapping
 
 import numpy as np
 
@@ -13,12 +20,14 @@ from ...data.store import BulkDataStore
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.fields import FieldRecord, MeshSupport
 from ...scientific.multiphysics import RelaxationKind, RelaxationPolicy
+from ...scientific.multiphysics.plan import IQN_KINDS
 from ...scientific.results.uncertainty import (
     Uncertainty,
     UncertaintyKind,
     UncertaintySource,
 )
 from ...scientific.units.quantity import Quantity, base_unit, is_ratio_scale
+from .acceleration import InterfaceQuasiNewton, qr_filter
 from .participant import CouplingValue
 
 
@@ -30,21 +39,56 @@ class RelaxationController:
     meshes: Mapping[str, MeshSupport]
     _omega: dict[str, float] = field(default_factory=dict)
     _previous_residual: dict[str, np.ndarray] = field(default_factory=dict)
-    #: IQN-ILS history of the JOINT interface vector within the current window:
-    #: residuals r_i = H(x_i) - x_i and images H(x_i), the edge layout, and each
-    #: edge's scale, fixed at the first iteration its residual is non-zero.
-    _iqn_residuals: list[np.ndarray] = field(default_factory=list)
-    _iqn_images: list[np.ndarray] = field(default_factory=list)
-    _iqn_layout: tuple[tuple[str, int], ...] = ()
-    _iqn_scales: dict[str, float] = field(default_factory=dict)
+    #: Phase 3 BR14: the joint-vector accelerator (IQN kinds only); it owns the
+    #: secant history of the current window and the carried IMVJ approximation
+    accelerator: InterfaceQuasiNewton | None = None
 
-    def reset_window(self) -> None:
+    def __post_init__(self) -> None:
+        if self.policy.kind in IQN_KINDS and self.accelerator is None:
+            self.accelerator = InterfaceQuasiNewton(self.policy)
+
+    def begin_window(self, window_index: int | None = None, duration: Fraction | None = None) -> None:
+        """A new attempt over one window (Phase 3 BR14): per-window state starts empty."""
         self._omega.clear()
         self._previous_residual.clear()
-        self._iqn_residuals.clear()
-        self._iqn_images.clear()
-        self._iqn_layout = ()
-        self._iqn_scales.clear()
+        if self.accelerator is not None:
+            self.accelerator.begin_window(window_index, duration)
+
+    def end_window(self, *, accepted: bool, converged: bool, reason: str = "") -> None:
+        """Close an attempt: only an accepted, converged window may hand secant information on (IMVJ)."""
+        if self.accelerator is not None:
+            self.accelerator.end_window(accepted=accepted, converged=converged, reason=reason)
+
+    def reset_window(self) -> None:
+        """Forget every per-window history and any carried approximation (kept for existing callers)."""
+        self.begin_window(None, None)
+        if self.accelerator is not None:
+            self.accelerator.end_window(accepted=False, converged=False, reason="explicit reset")
+
+    def acceleration_record(self) -> dict[str, Any] | None:
+        """The accelerator's record for the run: always for IMVJ; for ILS only after a non-routine event."""
+        if self.accelerator is None:
+            return None
+        if self.accelerator.imvj or self.accelerator.non_routine:
+            return self.accelerator.to_dict()
+        return None
+
+    def _support(self, value: CouplingValue) -> tuple[Any, ...]:
+        if isinstance(value, Quantity):
+            return ("scalar",)
+        definition = value.definition
+        mesh = self.meshes.get(definition.mesh_id)
+        if mesh is None:
+            raise InvalidScientificProblem(f"no mesh registered for field {definition.field_id!r}")
+        return (mesh.fingerprint(), definition.location.value, int(definition.components))
+
+    def _same_support(self, edge_id: str, previous: CouplingValue, raw: CouplingValue) -> None:
+        before, after = self._support(previous), self._support(raw)
+        if before != after:
+            raise InvalidScientificProblem(
+                f"relaxation edge {edge_id!r} would mix values on two supports ({before} -> {after}); "
+                f"map them onto one support first"
+            )
 
     def propagate_uncertainty(
         self,
@@ -56,7 +100,7 @@ class RelaxationController:
         edge_id: str,
     ) -> Uncertainty:
         """Uncertainty of the relaxed iterate, by the rule of the update actually used."""
-        if self.policy.kind is RelaxationKind.IQN_ILS or factor is None:
+        if self.policy.kind in IQN_KINDS or factor is None:
             return Uncertainty.unknown(
                 f"coupling edge {edge_id} was updated by interface quasi-Newton "
                 f"(a least-squares combination of the iterate history); no "
@@ -65,54 +109,30 @@ class RelaxationController:
         return relax_uncertainty(previous, raw, factor=factor, unit=unit, edge_id=edge_id)
 
     def _qr_filter(self, scaled: np.ndarray) -> list[int]:
-        """Columns to keep, newest first: drop one whose new direction is negligible.
-
-        Modified Gram-Schmidt over the columns from newest to oldest; a column
-        is kept only when its component orthogonal to the kept ones exceeds
-        ``iqn_filter`` times its own norm.  The newest secant information wins
-        over older, near-parallel pairs.
-        """
-        basis: list[np.ndarray] = []
-        keep: list[int] = []
-        for index in range(scaled.shape[1] - 1, -1, -1):
-            column = scaled[:, index].astype(float).copy()
-            norm = float(np.linalg.norm(column))
-            if norm <= np.finfo(np.float64).tiny:
-                continue
-            for q in basis:
-                column -= float(q @ column) * q
-            remainder = float(np.linalg.norm(column))
-            if remainder > self.policy.iqn_filter * norm and remainder > 0.0:
-                basis.append(column / remainder)
-                keep.append(index)
-        return sorted(keep)
+        """Columns to keep, newest first (see :func:`.acceleration.qr_filter`)."""
+        return qr_filter(scaled, self.policy.iqn_filter)
 
     def relax_joint(
         self,
         items: Mapping[str, tuple[CouplingValue, CouplingValue, str]],
     ) -> dict[str, CouplingValue]:
-        """One IQN-ILS step over the JOINT interface vector of every edge.
+        """One IQN step (ILS or IMVJ) over the JOINT interface vector of every edge.
 
         ``items`` maps edge id -> (previous iterate x_k, raw transfer H(x_k),
-        unit).  The step is ``x_{k+1} = H(x_k) + W c`` with
-        ``c = argmin || D (V c + r_k) ||``.  ``V`` and ``W`` hold the
-        differences of the residuals and of H over the last ``iqn_columns``
-        iterations of THIS window.  ``D`` scales each edge by the RMS of its
-        first non-zero residual in the window, so the least-squares weighting
-        does not depend on the units an edge is declared in (residuals are
-        differences, so an affine unit offset cancels).  Until an edge's
-        residual is non-zero, its rows in ``V`` and ``r`` are identically zero
-        and its weight is irrelevant.  The first iteration, or a solve that is
-        not finite, falls back to constant relaxation with the declared
-        factor.
+        unit).  The vectors are assembled in sorted edge order, each edge in its
+        own unit, and handed to the accelerator (:mod:`.acceleration`), which
+        holds the secant history, the per-edge scales and -- for IMVJ -- the
+        carried inverse-Jacobian approximation.
         """
-        if self.policy.kind is not RelaxationKind.IQN_ILS:
-            raise InvalidScientificProblem("relax_joint is the IQN-ILS update only")
+        if self.policy.kind not in IQN_KINDS or self.accelerator is None:
+            raise InvalidScientificProblem("relax_joint is the IQN-ILS update only (or IQN-IMVJ)")
         order = tuple(sorted(items))
         olds: list[np.ndarray] = []
         news: list[np.ndarray] = []
+        supports: list[Any] = []
         for edge_id in order:
             previous, raw, unit = items[edge_id]
+            self._same_support(edge_id, previous, raw)
             old = self._vector(previous, unit=unit)
             new = self._vector(raw, unit=unit)
             if old.shape != new.shape:
@@ -121,45 +141,9 @@ class RelaxationController:
                 )
             olds.append(old)
             news.append(new)
+            supports.append((edge_id, *self._support(raw)))
         layout = tuple((edge_id, vector.size) for edge_id, vector in zip(order, olds))
-        if self._iqn_layout and layout != self._iqn_layout:
-            raise InvalidScientificProblem(
-                "IQN-ILS interface layout changed inside a coupling window"
-            )
-        old = np.concatenate(olds)
-        new = np.concatenate(news)
-        residual = new - old
-        self._iqn_layout = layout
-        weights = []
-        for (edge_id, size), vector_old, vector_new in zip(layout, olds, news):
-            if edge_id not in self._iqn_scales:
-                scale = float(np.linalg.norm(vector_new - vector_old)) / np.sqrt(max(1, size))
-                if scale > 0.0 and np.isfinite(scale):
-                    self._iqn_scales[edge_id] = scale
-            weights.append(np.full(size, 1.0 / self._iqn_scales.get(edge_id, 1.0)))
-        weight = np.concatenate(weights)
-        self._iqn_residuals.append(residual.copy())
-        self._iqn_images.append(new.copy())
-        keep = self.policy.iqn_columns + 1
-        del self._iqn_residuals[:-keep]
-        del self._iqn_images[:-keep]
-        step = old + self.policy.factor * residual
-        if len(self._iqn_residuals) >= 2:
-            pairs = list(zip(self._iqn_residuals, self._iqn_residuals[1:]))
-            v = np.column_stack([b - a for a, b in pairs])
-            w = np.column_stack(
-                [b - a for a, b in zip(self._iqn_images, self._iqn_images[1:])]
-            )
-            scaled = v * weight[:, None]
-            if np.all(np.isfinite(scaled)) and float(np.max(np.abs(scaled))) > np.finfo(np.float64).tiny:
-                keep = self._qr_filter(scaled)
-                if keep:
-                    coefficients, *_ = np.linalg.lstsq(
-                        scaled[:, keep], -residual * weight, rcond=None
-                    )
-                    candidate = new + w[:, keep] @ coefficients
-                    if np.all(np.isfinite(candidate)):
-                        step = candidate
+        step = self.accelerator.step(layout, tuple(supports), np.concatenate(olds), np.concatenate(news))
         out: dict[str, CouplingValue] = {}
         offset = 0
         for edge_id, size in layout:
@@ -205,17 +189,25 @@ class RelaxationController:
 
     def relax(self, edge_id: str, previous: CouplingValue, raw: CouplingValue, *, unit: str) -> tuple[CouplingValue, float]:
         """The relaxed iterate and its scalar factor (scalar-mix relaxations only)."""
+        if self.policy.kind in IQN_KINDS:
+            raise InvalidScientificProblem(
+                "IQN-ILS updates the joint interface vector (relax_joint); it has no per-edge step"
+            )
+        self._same_support(edge_id, previous, raw)
         old = self._vector(previous, unit=unit)
         new = self._vector(raw, unit=unit)
         if old.shape != new.shape:
             raise InvalidScientificProblem(
                 f"relaxation edge {edge_id!r} changed shape {old.shape}->{new.shape}"
             )
-        if self.policy.kind is RelaxationKind.IQN_ILS:
-            raise InvalidScientificProblem(
-                "IQN-ILS updates the joint interface vector (relax_joint); it has no per-edge step"
-            )
         residual = new - old
+        if self.policy.kind is RelaxationKind.NONE:
+            # Phase 2 BR8: no relaxation delivers the transferred value itself
+            # (in the target unit), not old + 1.0 * (new - old), which differs
+            # from it by rounding (the Phase 1 BR1 recorded approximation)
+            self._omega[edge_id] = 1.0
+            self._previous_residual[edge_id] = residual.copy()
+            return self._from_vector(raw, new, unit=unit), 1.0
         omega = self.factor(edge_id)
 
         if self.policy.kind is RelaxationKind.AITKEN and edge_id in self._previous_residual:
@@ -233,8 +225,6 @@ class RelaxationController:
                         self.policy.maximum_factor,
                         max(self.policy.minimum_factor, candidate),
                     )
-        elif self.policy.kind is RelaxationKind.NONE:
-            omega = 1.0
 
         relaxed = old + omega * residual
         self._omega[edge_id] = omega

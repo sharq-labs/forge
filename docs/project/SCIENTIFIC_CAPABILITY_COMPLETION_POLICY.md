@@ -42,9 +42,31 @@ To regenerate the matrix after a reviewed ledger change:
 
 ## Active epic rule
 
-The current active epic is **battery.thevenin_1rc**.
+The current active epic is **engrt.numerical_foundations** (a research program; OD-6, owner decision 2026-10-18,
+contract [ENGINEERING_FOUNDATIONS_PROGRAM.md](ENGINEERING_FOUNDATIONS_PROGRAM.md)).
 
-Until its computed stage reaches **PRODUCTION_READY**, horizontal expansion into new capability foundations is paused by policy. Work on defects, stabilization, verification infrastructure, or prerequisites of the active epic is still allowed. Starting a genuinely new capability foundation requires an explicit reviewed exception in the PR rationale.
+Until every gate of the program is decided (PASS, FAIL or BLOCKED_WITH_EVIDENCE), horizontal expansion into new
+capability foundations OUTSIDE the program's `allowed_scope` is paused by policy. Inside it, the capability work the
+program contract names is allowed without a further exception. Work on defects, stabilization, verification
+infrastructure, or prerequisites is still allowed everywhere. Starting any other genuinely new capability foundation
+requires an explicit reviewed exception in the PR rationale.
+
+(Before OD-6 the active epic was the capability `battery.thevenin_1rc`; it stays tracked at its computed stage with
+every gate and its evidence unchanged.)
+
+## Research program epics (schema /2, OD-6)
+
+The ledger's `active_epic` may name a capability (maturity stages, 19 gates) or a research program
+(`research_programs`). A research program has **gates, not maturity stages** (`PASS`, `FAIL`, `MISSING`,
+`BLOCKED_WITH_EVIDENCE`, `DEFERRED_BY_OWNER`); a gate is decided only after every gate it requires passed; PASS and
+FAIL need existing evidence; a program carries no maturity vocabulary. Gate dependencies order DECISIONS only:
+any work inside a program's scope may be built at any time, before any gate (including a validation gate) is run.
+Every decided gate cites existing evidence; BLOCKED_WITH_EVIDENCE is allowed once the gates it requires are decided.
+A program contract may carry acceptance requirements that bind every gate (for `engrt.numerical_foundations`: the
+Cross-Domain Scientific Architecture Requirements -- the shared structure stays physics-agnostic). **A research result never promotes a
+capability** (Gate H): every capability a program builds is tracked in `capabilities`, enters at FOUNDATION only when
+its four FOUNDATION gates pass, and climbs only through the maturity gates. `tools/capability_maturity.py` enforces
+this, and `tests/test_capability_completion.py` pins the epic and the negative cases.
 
 This is intentionally a repository-development policy, not scientific evidence and not a verdict rule.
 
@@ -62,7 +84,7 @@ any maturity requirement. There is **no blanket exemption** for any track.
 |---|---|---|
 | G0 Trust lane | Yes | Defects, stabilization, verification infrastructure. |
 | A1 Genesis-lite preparation | Yes, within limits | Only benchmark, governance, measurement, stabilization or evaluation infrastructure: extending the existing Blindfold harness, its baselines, scoring, preregistration, leakage controls and cost measurement. It must not add a new scientific capability (no new hypothesis generator, planner, belief state, outcome model or domain capability). A change that would is handled like A2. |
-| A2 Minimal Mind | **Not until one condition holds** | Either (1) the active epic was formally changed through the canonical mechanism above, or (2) a narrowly scoped reviewed exception that meets every requirement below exists, is owner-approved and has not expired. |
+| A2 Minimal Mind | **Not until one condition holds** | Either (1) the active epic was formally changed through the canonical mechanism above to a program whose scope includes it (OD-6 chose `engrt.numerical_foundations`, which does not), or (2) a narrowly scoped reviewed exception that meets every requirement below exists, is owner-approved and has not expired. |
 | B1 demo preparation | Yes, using already-built capabilities | Existing Trust layer, `drone_coupled`, existing providers, and data admitted through existing provenance contracts. |
 | B1 new capability foundations (a new model, provider adapter or synthesis engine for the demo) | Same rule as A2 | Active-epic change, or its own narrowly scoped reviewed exception. |
 

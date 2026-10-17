@@ -2220,7 +2220,15 @@ def run_fixed_point(
         inputs={f"{p}::{q}": v for (p, q), v in sorted(current.items())},
         assumptions=(
             "Gauss-Seidel fixed-point iteration over a torn dependency cycle",
-            "no relaxation, damping or acceleration is applied",
+            # Phase 2 BR8: this used to claim "no relaxation" even for a plan
+            # that declared relaxation_factor (ERT BR18), a false statement in
+            # the provenance of every relaxed run.  Unrelaxed runs keep the text.
+            (
+                "no relaxation, damping or acceleration is applied"
+                if plan.relaxation_factor is None
+                else f"torn values are under-relaxed with factor {plan.relaxation_factor!r} between "
+                     f"sweeps; the criterion is the unrelaxed change; no damping or acceleration otherwise"
+            ),
             "every problem's own declared conditions are identical in every "
             "iteration; the iterate is a coupling iterate and not a time level",
         )

@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 from .attempt import AttemptState, SimulationAttempt
 from .backend import BackendOutcome, SimulationBackend
-from .checkpoint import CheckpointReference, adopt_checkpoint, resume_owner, resume_point_for
+from .checkpoint import CheckpointReference, adopt_checkpoint, resume_owner, resume_point_for, resume_refusal
 from .plan import SimulationPlan
 from .policy import OrchestrationPolicy
 from .report import OrchestrationReport
@@ -19,6 +19,13 @@ def run_plan(
     checkpoint:CheckpointReference|None=None,
 )->OrchestrationReport:
     owner=resume_owner(checkpoint)
+    if checkpoint is not None:
+        # Phase 2 BR10: a caller's checkpoint resumes only the build and problem it was produced for
+        refused=resume_refusal(checkpoint,solver_build=str(getattr(backends.get(owner),"solver_build","")),
+                               problem_digest=plan.problem_digest)
+        if refused:
+            return OrchestrationReport((SimulationAttempt(f"{plan.plan_id}:0:{owner}",AttemptState.FAILED,0,
+                                                          f"resume_checkpoint_refused: {refused}"),))
     attempts=[]
     current_checkpoint=checkpoint
     for index,solver_id in enumerate(schedule_attempts(plan),start=1):
@@ -43,11 +50,13 @@ def run_plan(
             continue
         try:
             # a checkpoint is solver state: only the solver that produced it may resume from it
+            build=str(getattr(backend,"solver_build","")).strip()
             outcome=backend.run(
                 attempt_id=attempt_id,
                 refinement_level=index-1,
                 deterministic_seed=plan.deterministic_seed,
-                checkpoint=resume_point_for(current_checkpoint,solver_id),
+                checkpoint=resume_point_for(current_checkpoint,solver_id,solver_build=build,
+                                            problem_digest=plan.problem_digest),
             )
         except Exception as exc:
             attempts.append(
@@ -73,7 +82,9 @@ def run_plan(
         )
         # OrchestrationReport has no problems channel (a schema change); a refused checkpoint is simply never
         # adopted, and in run_plan each solver runs once, so it could not have been resumed by anyone
-        adopted,_problem=adopt_checkpoint(outcome.checkpoint,solver_id=solver_id,state=outcome.state)
+        adopted,_problem=adopt_checkpoint(outcome.checkpoint,solver_id=solver_id,state=outcome.state,
+                                          solver_build=str(getattr(backend,"solver_build","")).strip(),
+                                          problem_digest=plan.problem_digest)
         if adopted is not None:
             current_checkpoint=adopted
         if outcome.state is AttemptState.CONVERGED:

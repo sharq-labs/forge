@@ -4,7 +4,10 @@ from .adjudication import VerificationDecision, adjudicate
 from .comparison import RouteComparison
 from .fingerprint import verification_report_fingerprint
 from .independence import IndependenceLevel, IndependenceEvidence
-from .ladder import VerificationLevel, level_for_route
+from .ladder import (
+    CATEGORY_PROVIDERS, VerificationEvidenceCategory, VerificationLevel, category_for_level,
+    category_for_route, level_for_route,
+)
 from .orchestrator import VerificationOrchestrator
 from .report import VerificationReport
 from .route import VerificationRoute, VerificationRouteKind
@@ -12,6 +15,7 @@ from .route import VerificationRoute, VerificationRouteKind
 __all__=[
     "VerificationRouteKind","VerificationRoute","IndependenceLevel",
     "IndependenceEvidence","RouteComparison","VerificationLevel","level_for_route",
+    "VerificationEvidenceCategory","CATEGORY_PROVIDERS","category_for_level","category_for_route",
     "VerificationDecision","adjudicate","VerificationReport",
     "VerificationOrchestrator","verification_report_fingerprint",
 ]

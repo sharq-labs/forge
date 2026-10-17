@@ -5,7 +5,7 @@ from .admission import (
     MultiphysicsExecutionAdmission,
     admit_multiphysics_execution,
 )
-from .convergence import ResidualCalculator
+from .convergence import NonFiniteCouplingResidual, ResidualCalculator
 from .error import CouplingErrorBudget, CouplingErrorContribution
 from .external import (
     ExternalProviderIdentity,
@@ -49,7 +49,14 @@ from .participant import (
     validate_uncertainty,
 )
 from .relaxation import RelaxationController, relax_uncertainty
-from .runtime import CouplingWindowNotConverged, MultiphysicsExecutionError, MultiphysicsRuntime
+from .runtime import (
+    CouplingRunOutcome,
+    CouplingWindowNotConverged,
+    MultiphysicsExecutionError,
+    MultiphysicsRuntime,
+    RunOutcomeAssessment,
+    assess_run_outcome,
+)
 from .transfer import (
     FrameTransform,
     TransferEngine,
@@ -63,6 +70,7 @@ __all__ = [
     "CallbackParticipant",
     "CouplingErrorBudget",
     "CouplingErrorContribution",
+    "CouplingRunOutcome",
     "CouplingValue",
     "ExecutableParticipant",
     "ExternalProviderIdentity",
@@ -85,6 +93,7 @@ __all__ = [
     "MultiphysicsExecutionError",
     "CouplingWindowNotConverged",
     "MultiphysicsRuntime",
+    "NonFiniteCouplingResidual",
     "ParticipantEvent",
     "ParticipantFactory",
     "ParticipantFactoryCoverage",
@@ -92,6 +101,7 @@ __all__ = [
     "ParticipantFactoryRegistry",
     "RelaxationController",
     "ResidualCalculator",
+    "RunOutcomeAssessment",
     "RuntimeCheckpoint",
     "StateVariableValue",
     "StructuredFieldMapper",
@@ -100,6 +110,7 @@ __all__ = [
     "admit_multiphysics_execution",
     "apply_operating_conditions",
     "apply_parameters",
+    "assess_run_outcome",
     "combine_fan_in_uncertainty",
     "operating_condition_definitions",
     "parameter_definitions",

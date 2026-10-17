@@ -19,7 +19,7 @@ SystemRunResult (BIG 12) ──┬─> ConstraintAssessment / ConservationAssess
 | scientific status | `credibility.CredibilityVerdict` via `trust_handoff` | nothing: the summary prints the existing verdict |
 | reference kinds | `scientific.oracles.OracleKind` (analytic / benchmark / experimental) | `ReferenceRecord`: provenance, applicability envelope, `role`, comparable quantities, content identity |
 | tolerance comparison | - | `PredeclaredCriterion`, `ReferenceComparison` (DERIVED from reference + criterion + stated conditions + value), `compare_to_reference`; a comparison against a reference that does not apply is `not_applicable` (judges nothing) |
-| provider comparison | `providers.compare_providers` (`solver_corroboration_not_validation`) | `EvidenceLink.of_provider_comparison` |
+| provider comparison | `providers.corroborate` (`solver_corroboration_not_validation`, same-problem admission re-derived from the record; `compare_providers` alone is a diagnostic that never reaches level 5) | `EvidenceLink.of_provider_comparison` |
 | run identity | BIG 12 request / plan / result digests | `write_bundle` / `verify_bundle` |
 | fields | BIG 7 `SpatialMesh` / `SpatialField` | `write_vtu` (presentation artifact, not evidence) |
 

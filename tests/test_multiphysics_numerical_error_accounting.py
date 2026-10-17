@@ -168,12 +168,16 @@ def test_assessment_refuses_anything_but_a_run_record():
 # ---- BR13: mapping extrapolation and unverified mappings are open sources -----------------------
 
 
-def _mapped_run(mapping, *, budget=()):
+def _mapped_run(mapping, *, budget=(), method=None):
     """Minimal stand-in carrying exactly what _mapping_sources reads (the recorded diagnostic shape)."""
     from types import SimpleNamespace
 
+    from engcore.scientific.multiphysics import FieldMappingMethod
+
     iteration = SimpleNamespace(mapping_diagnostics=({"edge_id": "e_field", "mapping": mapping},))
+    edge = SimpleNamespace(edge_id="e_field", mapping=SimpleNamespace(method=method or FieldMappingMethod.BILINEAR))
     return SimpleNamespace(final_outputs={"_coupling_error": {"contributions": list(budget)}},
+                           graph=SimpleNamespace(edges=(edge,)),
                            windows=(SimpleNamespace(index=0, iterations=(iteration,)),
                                     SimpleNamespace(index=1, iterations=())))
 
@@ -184,13 +188,16 @@ def _diag(extrapolated=0, round_trip=1e-3, conservation=None, target=10):
             "round_trip_relative_l2": round_trip, "conservation_relative_error": conservation}
 
 
-def test_extrapolated_mapping_sites_are_an_open_source_beside_the_budget_bound():
+def test_extrapolated_mapping_sites_are_an_open_source_beside_the_round_trip_diagnostic():
     from engcore.execution.multiphysics.numerical_error import _mapping_sources
 
+    # Phase 1 BR3: a round-trip residual is a DIAGNOSTIC, never a QUANTIFIED bound; a stored
+    # pre-Phase-1 'relative_bound' key is read as the same diagnostic
     budget = ({"source": "edge:e_field:occurrence:1", "relative_bound": 1e-3, "method": "mapping_round_trip"},)
     sources = _mapping_sources(_mapped_run(_diag(extrapolated=2), budget=budget))
     by_method = {s.method: s for s in sources}
-    assert by_method["mapping_round_trip"].status is ErrorSourceStatus.QUANTIFIED
+    assert by_method["mapping_round_trip"].status is ErrorSourceStatus.DIAGNOSTIC
+    assert by_method["mapping_forward_error"].status is ErrorSourceStatus.UNQUANTIFIED
     assert by_method["mapping_extrapolation"].status is ErrorSourceStatus.UNQUANTIFIED
     assert "2/10" in by_method["mapping_extrapolation"].detail
 
@@ -199,13 +206,26 @@ def test_a_mapping_with_no_declared_verification_is_an_open_source():
     from engcore.execution.multiphysics.numerical_error import _mapping_sources
 
     sources = _mapping_sources(_mapped_run(_diag(round_trip=None, conservation=None)))
-    assert [s.method for s in sources] == ["mapping_unverified"]
-    assert sources[0].relative is None
+    assert [s.method for s in sources] == ["mapping_forward_error", "mapping_unverified"]
+    assert all(s.relative is None for s in sources)
 
 
-def test_a_fully_covered_verified_mapping_adds_only_its_budget_contribution():
+def test_a_fully_covered_verified_mapping_still_leaves_its_forward_error_open():
     from engcore.execution.multiphysics.numerical_error import _mapping_sources
 
-    budget = ({"source": "edge:e_field:occurrence:1", "relative_bound": 1e-3, "method": "mapping_round_trip"},)
+    budget = ({"source": "edge:e_field:occurrence:1", "relative_value": 1e-3, "method": "mapping_round_trip"},)
     sources = _mapping_sources(_mapped_run(_diag(), budget=budget))
-    assert [s.method for s in sources] == ["mapping_round_trip"]
+    assert [(s.method, s.status) for s in sources] == [
+        ("mapping_round_trip", ErrorSourceStatus.DIAGNOSTIC),
+        ("mapping_forward_error", ErrorSourceStatus.UNQUANTIFIED),
+    ]
+
+
+def test_an_identity_mapping_contributes_diagnostics_and_no_error_source():
+    from engcore.execution.multiphysics.numerical_error import _mapping_sources
+    from engcore.scientific.multiphysics import FieldMappingMethod
+
+    budget = ({"source": "edge:e_field:occurrence:1", "relative_value": 0.0, "method": "mapping_round_trip"},)
+    sources = _mapping_sources(_mapped_run(_diag(round_trip=0.0, conservation=0.0), budget=budget,
+                                           method=FieldMappingMethod.IDENTITY))
+    assert [(s.method, s.status) for s in sources] == [("mapping_round_trip", ErrorSourceStatus.DIAGNOSTIC)]

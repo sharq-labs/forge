@@ -191,11 +191,72 @@ class OperatorIdentity:
         return {"operator_id": self.operator_id, "version": self.version, "definition_digest": self.definition_digest, "derivation": self.derivation}
 
 
+#: Phase 1 BR6 -- the bounded dense conversions this module may make of a SPARSE
+#: operand.  A dense operand is already dense; these bound only conversions the
+#: caller did not ask for.  An exact 2-norm condition number of a sparse matrix
+#: is computed by densifying it only up to this dimension (8 MiB of float64).
+SPARSE_EXACT_CONDITION_LIMIT = 1000
+#: A sparse 1-norm condition ESTIMATE factorizes the matrix once (sparse LU);
+#: above this many stored entries it is not attempted and conditioning is
+#: reported unresolved.
+SPARSE_ESTIMATE_NNZ_LIMIT = 5_000_000
+#: A provider whose method is dense (``dense_lu``) densifies a sparse operand
+#: only up to this dimension (128 MiB of float64); above it the problem is refused.
+DENSE_CONVERSION_LIMIT = 4096
+
+
+def is_sparse(a: Any) -> bool:
+    """A SciPy sparse matrix or array (duck-typed: it converts to CSR and counts stored entries)."""
+    return hasattr(a, "tocsr") and hasattr(a, "nnz")
+
+
+def canonical_csr(a: Any, *, require_finite: bool = True) -> Any:
+    """A validated canonical CSR COPY of a sparse operand; the caller's matrix is never modified.
+
+    Validation reads the STORED entries only -- nothing is densified.  The
+    structure is checked in full (index ranges, ``indptr`` monotonicity), the
+    dtype must be real numeric, duplicates are summed and indices sorted (so
+    one operator has one identity whatever its storage order), and every
+    stored value must be finite.  Explicit zeros are kept: they are part of the
+    declared structure.
+    """
+    try:
+        csr = a.tocsr(copy=True)
+    except TypeError:
+        csr = a.tocsr().copy()
+    try:
+        csr.check_format(full_check=True)
+    except ValueError as exc:
+        raise NumericalRefusal(f"sparse operand has an invalid structure: {exc}") from exc
+    dtype = csr.data.dtype
+    if dtype == np.bool_ or not np.issubdtype(dtype, np.number) or np.issubdtype(dtype, np.complexfloating):
+        raise NumericalRefusal(f"sparse operand must be real numeric, got dtype {dtype}")
+    csr.sum_duplicates()
+    if require_finite and not np.all(np.isfinite(csr.data)):
+        bad = int(np.count_nonzero(~np.isfinite(csr.data)))
+        raise NumericalRefusal(f"sparse operand stores {bad} non-finite entr{'y' if bad == 1 else 'ies'}")
+    return csr
+
+
+def bounded_dense(a: Any, *, limit: int, purpose: str) -> np.ndarray:
+    """``a`` as a dense float array; a sparse operand is converted only up to ``limit`` x ``limit``."""
+    if not is_sparse(a):
+        return np.asarray(a, dtype=float)
+    rows, cols = a.shape
+    if max(rows, cols) > limit:
+        raise NumericalRefusal(
+            f"{purpose} would densify a {rows}x{cols} sparse operand ({8 * rows * cols / 2**20:.0f} MiB); "
+            f"the dense conversion limit is {limit}. Use a sparse method."
+        )
+    return canonical_csr(a).toarray().astype(float, copy=False)
+
+
 def array_digest(*arrays: Any) -> str:
     h = hashlib.sha256()
     for a in arrays:
-        if hasattr(a, "tocsr"):
-            a = a.tocsr()
+        if is_sparse(a):
+            # canonical: an already canonical CSR hashes exactly as before
+            a = canonical_csr(a)
             for part in (a.data, a.indices, a.indptr):
                 arr = np.ascontiguousarray(part)
                 h.update(str(arr.dtype).encode() + str(arr.shape).encode() + arr.tobytes())
@@ -256,10 +317,23 @@ class NumericalProblem:
             if a is None or b is None:
                 raise NumericalRefusal("linear problem requires 'matrix' and 'rhs'")
             n = self.unknowns.size
-            if tuple(a.shape) != (n, n) or np.asarray(b).reshape(-1).size != n:
-                raise NumericalRefusal(f"linear operand shapes {tuple(a.shape)} / {np.asarray(b).shape} do not match {n} unknowns")
-            dense = a.toarray() if hasattr(a, "toarray") else np.asarray(a, dtype=float)
-            if not np.all(np.isfinite(dense)) or not np.all(np.isfinite(np.asarray(b, dtype=float))):
+            if is_sparse(b):
+                raise NumericalRefusal("linear 'rhs' must be a dense vector, not a sparse matrix")
+            try:
+                rhs = np.asarray(b, dtype=float).reshape(-1)
+                # Phase 1 BR6: a sparse matrix is validated on its stored
+                # entries and never densified here
+                matrix = a if is_sparse(a) else np.asarray(a, dtype=float)
+            except (TypeError, ValueError) as exc:
+                raise NumericalRefusal(f"linear operands are not numeric arrays: {exc}") from exc
+            if tuple(matrix.shape) != (n, n) or rhs.size != n:
+                raise NumericalRefusal(f"linear operand shapes {tuple(matrix.shape)} / {np.asarray(b).shape} do not match {n} unknowns")
+            if is_sparse(matrix):
+                # structure and dtype refused here; finiteness of the stored entries below
+                finite_matrix = bool(np.all(np.isfinite(canonical_csr(matrix, require_finite=False).data)))
+            else:
+                finite_matrix = bool(np.all(np.isfinite(matrix)))
+            if not finite_matrix or not np.all(np.isfinite(rhs)):
                 raise NumericalRefusal("linear operands contain non-finite values")
             if self.operator.derivation == "array_bytes" and self.operator.definition_digest != array_digest(a, b):
                 raise NumericalRefusal("operator digest does not match the matrix/rhs it names")
@@ -323,9 +397,16 @@ class NumericalDiagnostics:
     health: NumericHealth | None = None
     termination_message: str = ""
     warnings: tuple[str, ...] = ()
+    #: Phase 3 BR13: why a failed execution failed (a ``numerical.health.NumericalFailureClass``
+    #: value).  ``None`` when the provider does not classify; absent from the record then, so
+    #: existing executions keep their identity.
+    failure_class: str | None = None
+    #: Phase 3 BR13: accepted step-length factors of a damped iteration, one per iteration
+    #: (1.0 = full step); absent when the method takes no damped steps.
+    step_lengths: tuple[float, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out = {
             "residual_norm": self.residual_norm, "residual_history": list(self.residual_history),
             "iterations": self.iterations, "objective_value": self.objective_value, "function_evaluations": self.function_evaluations,
             "jacobian_evaluations": self.jacobian_evaluations, "accepted_steps": self.accepted_steps,
@@ -334,6 +415,11 @@ class NumericalDiagnostics:
             "health": None if self.health is None else {"status": self.health.status.value, "nonfinite_count": self.health.nonfinite_count},
             "termination_message": self.termination_message, "warnings": list(self.warnings),
         }
+        if self.failure_class is not None:
+            out["failure_class"] = self.failure_class
+        if self.step_lengths:
+            out["step_lengths"] = list(self.step_lengths)
+        return out
 
 
 _SUCCESS = (ConvergenceState.CONVERGED, ConvergenceState.NOT_APPLICABLE)
@@ -408,6 +494,9 @@ class NumericalProvider(ABC):
     identity: SolverIdentity
     kinds: frozenset[ProblemKind]
     methods: frozenset[str]
+    #: Phase 3 BR13: method OPTIONS that change what the provider accepts as converged (not only how
+    #: it iterates); a fallback chain compares them like tolerances
+    acceptance_options: frozenset[str] = frozenset()
     #: why the backend is unavailable, as observed (an import error's type and text);
     #: carried into the refusal so a broken install is not reported as an absent one
     unavailable_reason: str = "backend is not installed"
@@ -511,12 +600,91 @@ def health_of(values: np.ndarray) -> NumericHealth:
     return assess_numeric_values(tuple(float(x) for x in np.asarray(values).reshape(-1)))
 
 
-def condition_of(matrix: Any) -> ConditionEstimate:
-    dense = matrix.toarray() if hasattr(matrix, "toarray") else np.asarray(matrix, dtype=float)
+def _exact_condition(dense: np.ndarray, threshold: float = 1e12) -> ConditionEstimate:
     try:
         c = float(np.linalg.cond(dense))
     except np.linalg.LinAlgError:
         c = math.inf
     if math.isnan(c):
         c = math.inf
-    return classify_condition_number(max(c, 1.0), method="numpy.linalg.cond (2-norm)")
+    return classify_condition_number(max(c, 1.0), method="numpy.linalg.cond (2-norm)", threshold=threshold)
+
+
+def _inverse_one_norm_lower_bound(solve: Callable[[np.ndarray], np.ndarray],
+                                  solve_transpose: Callable[[np.ndarray], np.ndarray], n: int) -> float:
+    """Hager's estimator with Higham's safeguard (LAPACK xLACON): a deterministic lower bound on ||A^-1||_1.
+
+    Deterministic by construction (no random starting vectors), so the
+    estimate is part of a reproducible execution record.
+    """
+    x = np.full(n, 1.0 / n)
+    estimate = 0.0
+    for step in range(5):
+        y = solve(x)
+        current = float(np.sum(np.abs(y)))
+        if step > 0 and current <= estimate:
+            break
+        estimate = current
+        z = solve_transpose(np.where(y >= 0.0, 1.0, -1.0))
+        j = int(np.argmax(np.abs(z)))
+        if step > 0 and abs(float(z[j])) <= float(z @ x):
+            break
+        x = np.zeros(n)
+        x[j] = 1.0
+    alternating = np.array([(-1.0) ** i * (1.0 + i / max(n - 1, 1)) for i in range(n)])
+    return max(estimate, 2.0 * float(np.sum(np.abs(solve(alternating)))) / (3.0 * n))
+
+
+def _estimated_condition(csr: Any, threshold: float) -> ConditionEstimate:
+    if csr.nnz > SPARSE_ESTIMATE_NNZ_LIMIT:
+        return classify_condition_number(None, method=(
+            f"not estimated: {csr.nnz} stored entries exceed the factorization policy "
+            f"({SPARSE_ESTIMATE_NNZ_LIMIT}); conditioning unresolved"), threshold=threshold)
+    import scipy.sparse.linalg as spla
+
+    try:
+        lu = spla.splu(csr.tocsc().astype(np.float64))
+    except RuntimeError:
+        return classify_condition_number(math.inf, method="sparse LU (SuperLU) found the matrix exactly singular",
+                                         threshold=threshold)
+    except MemoryError:
+        return classify_condition_number(None, method="not estimated: the sparse LU factorization ran out of memory",
+                                         threshold=threshold)
+    norm = float(np.max(np.asarray(abs(csr).sum(axis=0)).reshape(-1)))
+    estimate = norm * _inverse_one_norm_lower_bound(lu.solve, lambda v: lu.solve(v, trans="T"), csr.shape[0])
+    method = (f"ESTIMATED 1-norm condition lower bound {estimate:.6e} (exact ||A||_1 x Hager/Higham estimate of "
+              f"||A^-1||_1 on a SuperLU factorization)")
+    if not math.isfinite(estimate):
+        return classify_condition_number(math.inf, method=method + "; the estimate overflowed", threshold=threshold)
+    if estimate > threshold:
+        return classify_condition_number(max(estimate, 1.0), threshold=threshold, method=(
+            method + "; a lower bound above the threshold: the matrix is at least this ill-conditioned"))
+    return classify_condition_number(None, threshold=threshold, method=(
+        method + "; a lower bound below the threshold does not establish good conditioning: unresolved"))
+
+
+def condition_of(matrix: Any, *, allow_factorization: bool = True, threshold: float = 1e12) -> ConditionEstimate:
+    """The condition of a linear operator, stating whether it is exact or estimated (Phase 1 BR6).
+
+    * a dense matrix: exact 2-norm condition number (``numpy.linalg.cond``);
+    * a sparse matrix up to :data:`SPARSE_EXACT_CONDITION_LIMIT`: the same
+      exact number after a BOUNDED dense conversion;
+    * a larger sparse matrix: a deterministic 1-norm LOWER-BOUND estimate from
+      one sparse LU (when ``allow_factorization``).  A lower bound above the
+      threshold proves ill-conditioning; one below it proves nothing and is
+      reported unresolved, never well-conditioned;
+    * otherwise unresolved.  Never an uncontrolled dense conversion.
+    """
+    if not is_sparse(matrix):
+        return _exact_condition(np.asarray(matrix, dtype=float), threshold)
+    csr = canonical_csr(matrix)
+    rows, cols = csr.shape
+    if rows != cols:
+        return classify_condition_number(None, method="not square: no condition number", threshold=threshold)
+    if rows <= SPARSE_EXACT_CONDITION_LIMIT:
+        return _exact_condition(csr.toarray().astype(float, copy=False), threshold)
+    if not allow_factorization:
+        return classify_condition_number(None, threshold=threshold, method=(
+            f"not estimated: a {rows}x{cols} sparse operator under an iterative method; estimating its "
+            f"condition would need the factorization the method avoids"))
+    return _estimated_condition(csr, threshold)

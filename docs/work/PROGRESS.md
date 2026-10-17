@@ -5389,3 +5389,466 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   - `git diff --check`.
   pytest NOT RUN.
 - Tests added to `tests/domains/thermal_models/test_conduction1d_nonuniform.py`.
+
+## 2026-10-17 -- Engineering Runtime V1, Phase 1 follow-up: CallbackParticipant provider checkpoints bound to their build (fix/engrt-v1-callback-checkpoint-identity, local only)
+
+Branch `fix/engrt-v1-callback-checkpoint-identity`, Claude worktree `.claude/worktrees/recursing-lichterman-6220f6`,
+base `423fb467` (tip of `fix/engrt-v1-phase1-interop`, Phase 1 commit `04b12344`). Local commits `1439b470` and
+`28ff37dc`; not pushed, no PR, no merge, no certificate, no hardened run. Closes Phase 1 limitation I-8. Defect fix
+inside the Battery 1RC active-epic policy (no new capability foundation). Pristine comparison worktree:
+`D:/forge-cbck-base` (detached `423fb467`). Logs: `D:/cbck-logs/`.
+
+**Confirmed defects (reproduced before the fix):**
+1. `coupling/adapters.py::provider_participant` restore set the held state from `cp.token` without comparing it with
+   `cp.record.state_digest`. Only the runtime's re-checkpoint caught a mismatch, and only for deterministic_restore
+   participants. The record named no provider build, so a checkpoint of a participant declaring `thermo@1.0` restored
+   into one declaring `thermo@2.0` with the same participant id.
+2. `forge_pybamm/coupling.py::cell_participant` restore accepted any token. With REAL PyBaMM 26.8.0.0, a Solution
+   checkpointed by an SPM / fade 0.0 cell restored into a cell built with fade 0.2, or with SPMe. It also accepted a
+   twin cell's token, a bare Solution, and a record with another digest. A spec naming another solver build was not
+   refused.
+
+**Fix (reuses Phase 1's pattern, no parallel provenance):**
+- Phase 1's inline seal in `ExternalSolverParticipant` is now the reusable `CheckpointSeal` plus `checkpoint_scope`
+  in `execution/multiphysics/external.py`. `ExternalSolverParticipant` uses it with its unchanged scope.
+- The registry holds nonce -> (the issued state object, the record issued with it, an optional integrity
+  fingerprint). Its entries are dropped by `weakref.finalize` when the token dies.
+- `admit` checks, in order:
+  1. token type;
+  2. build scope and record slot;
+  3. the state is the issued object;
+  4. the record equals the issued record;
+  5. the recomputed digest equals the issued digest, and so does the fingerprint.
+- `provider_participant`: the scope is the spec-declared solver and adapter identity, labelled
+  `build_basis: participant_spec_declaration` (a declaration, not a session-verified identity). The token state is a
+  read-only `MappingProxyType` copy, and restore recomputes the digest from it.
+- PyBaMM: the scope is `build_basis: provider_discovery` plus PyBaMM id, version, digest and dependencies, the
+  adapter, the declared coupling adapter, and the configuration (model, parameter-set digest, initial SOC, fade,
+  fade mapping, SOC definition, options, balance, solver settings). Restore recomputes sha256(y). A fingerprint of
+  `last_state.y`, `last_state.t` and `t[-1]` is taken at issue; it is not part of the state identity, so no state
+  digest moved. A spec whose solver id or version differs from the discovered provider is refused.
+
+**Scientific review** (`forge-scientific-review` contract, run through the read-only reviewer agent because the
+skill was not registered in this session; static only):
+- Pass 1: CHANGES REQUIRED.
+  - I-1 MEDIUM: the seal bound the token to the participant, not to its issued record. A mutable issued state edited
+    in place, plus a re-made record, would be admitted.
+  - I-2 LOW: PyBaMM restore aliases the issued Solution.
+  - I-3 LOW: the declared build looked like a verified identity.
+  - I-4 LOW: the PyBaMM spec adapter was not recorded.
+  - I-5: test gaps.
+  - All fixed and tested.
+- Pass 2 (confirmation): PASS, with LOW notes.
+  - R-1: two refusals shared the "digest disagree" phrase. Reworded, and tests match the full phrase.
+  - R-2: unverified PyBaMM internals. An executed probe showed that in-place edits of `y` and `all_ys` were refused,
+    but an edit of `Solution.t` was ADMITTED and moved the next window's heat. Fixed with the integrity fingerprint;
+    an executed test now covers both edits.
+  - R-3: opaque `ExternalSnapshot` tokens cannot be re-digested. Documented on `ExternalSnapshot`.
+  - No third pass ran after the R-2 fingerprint, so that fix is verified by its tests only.
+
+```text
+# reproducers on the unfixed tree (423fb467)
+.venv/Scripts/python.exe -m pytest tests/test_provider_participant_checkpoints.py -q   (first version, before the
+    seal tests existed)                                         -> 7 failed, 3 passed (controls); failures DID NOT RAISE
+WSL ~/mm/root/envs/battery (Python 3.12.14, PyBaMM 26.8.0.0), cwd D:/forge-cbck-base with the final test file copied in:
+  pytest providers/pybamm/tests/test_pybamm_checkpoint_identity.py   -> 8 failed, 1 passed (own round-trip control)
+# final tree (28ff37dc)
+pytest tests/test_provider_participant_checkpoints.py tests/test_external_participant_checkpoints.py -q -> 33 passed
+pytest tests/test_provider_participant_checkpoints.py tests/test_external_participant_checkpoints.py
+  tests/test_multiscale_runtime.py -q (1439b470)                     -> 50 passed
+# EXECUTED PROVIDER, WSL battery env, -p no:cacheprovider -rfs:
+pytest providers/pybamm/tests (28ff37dc)                              -> 49 passed, 0 skipped in 183 s
+pytest flagships/tests/test_flagship_battery.py (28ff37dc)            -> 22 passed in 1446 s (gate A, rollback, gate F replay)
+# EXECUTED PROVIDER, WSL ~/mm/root/envs/fenicsx (dolfinx 0.11.0), providers/fenicsx/tests/test_coupling_fenicsx.py:
+#   fix (before review) 7 passed, 2 failed; pristine base 7 passed, 2 failed -- the same two KeyError failures
+#   (test_two_way_thermal_electrical_converges..., test_conservation_audit_passes_only_when...), pre-existing
+python tools/forge_check.py --regression --workers 4                  -> 256 passed in 13.9 s
+# FAST, Windows venv 3.14, -m "not expensive" -q -n 4 -p no:cacheprovider --basetemp=D:/fbt-cbck/<x> -rfE
+#   baseline 423fb467 : 128 failed, 10690 passed, 204 skipped, 22 errors in 374 s (150 failing ids; equals the
+#                       Phase 1 baseline set)
+#   fix 28ff37dc      : 129 failed, 10706 passed, 215 skipped, 22 errors in 546 s (151 failing ids)
+#   only in fix: tests/test_test_timing.py::test_the_plugin_records_telemetry_and_never_changes_an_outcome
+#     -> environmental: the module key is '' when the worktree (C:) and basetemp (D:) are on different drives; it
+#        passes on this tree with a C: basetemp (1 passed) and on the base worktree, which is on D:
+#   only in baseline: none
+#   +11 skips = the new PyBaMM test file, which skips on 3.14 (no PyBaMM there)
+# SCIENTIFIC tier (-m "not campaign"): NOT RUN
+```
+
+**Environment:** the 3.13 provider env `D:/forge-prov-tools/provenv` no longer exists on D:. The executed-provider
+runs used the WSL conda env `~/mm/root/envs/battery`, which has the same PyBaMM version (26.8.0.0) and Python 3.12.
+
+**Failed approaches (do not repeat):**
+- Bash heredocs with long Python patch scripts failed again (`unexpected EOF`); short ones and editor writes worked.
+- Comparing only the state-identity digest misses continuation state outside it (the PyBaMM clock). Fingerprint
+  that state at issue instead of widening the identity, which would move recorded digests.
+
+**Remaining limitations:**
+- `ExternalSolverParticipant` tokens are opaque, so their integrity rests on the session contract (documented).
+- PyBaMM state outside y and t (for example the inputs carried on the Solution) is not fingerprinted. It is fixed
+  per participant (scope) or re-supplied each window.
+- `systems/products/drone_coupled.py` checkpoints a stateless CallbackParticipant with no build (token None). It is
+  not a provider adapter and holds no state, so it was left unchanged.
+
+**RECERTIFICATION_REQUIRED (OD-3).** `src/engcore/execution/multiphysics/external.py` is pinned in
+`certification/current_core_v2.json`, and the new tests fall under the pinned `tests/**` area.
+`coupling/adapters.py` and `providers/pybamm` are not pinned. No touched file is in the frozen API snapshot.
+
+## 2026-10-17 -- Phase 1: scientific & numerical correctness (build phase; fix/phase1-scientific-numerical-correctness, local only)
+
+Worktree `D:/forge-phase1`, base `origin/main` `de11dffa` (re-verified with `git fetch`; still HEAD). Owner direction:
+build all seven rocks, write regression tests, **execute no test of any kind**, no push/PR/merge/certification, stop
+after Phase 1. Rocks are numbered P1-BR1..P1-BR7 so they are not confused with ERT V1 BR1..BR22.
+
+### Reconciliation against `main` (what already existed)
+
+| Area | Existing and correct | Confirmed defect fixed here |
+| --- | --- | --- |
+| Coupling plan | criteria/relaxation validation, window control | `35d8f557` (ERT BR2) attached the implicit "requires criteria" check to the IQN-ILS test: every EXPLICIT plan was refused, including both built-in composition packs |
+| Convergence | unrelaxed fixed-point residual, divergence/stagnation (opt-in) | no required-coverage policy: an implicit window could be CONVERGED with an iterated interface never measured |
+| Conservative mapping | cell measures, extrapolation refusal for other methods | nearest-site values rescaled to the global integral (locally wrong, ~0 division for signed fields, not offset-unit invariant) |
+| Error accounting | ESTIMATED/UNQUANTIFIED/UNBOUNDED split, run binding | round-trip + conservation residuals summed into a `relative_bound`, stored as `coupling_error_bound`, read as QUANTIFIED; the claims channel PASSED a mapped run on a 0.0 conservation residual |
+| Time windows | event/change boundaries, step-size memory | float running sum, 1e-15 / 1e-12 tolerances, sliver final windows |
+| Verification planning | dependency-derived independence, require_external | ordinal `level < minimum_level`: V6 experiment / V7 reproduction satisfied V2, V5 satisfied V4 |
+| Sparse numerics | sparse digests, SciPy sparse providers | `.toarray()` on admission and in `condition_of`; storage-order-dependent digests |
+| System runtime | graph/plan fingerprints, conservation refusal, untraced providers (ERT BR14) | only `converged` windows exposed: explicit and event-aligned runs always failed; a stub saying `converged` passed |
+
+### Commits (all local)
+
+`a1b6a87e` P1-BR1, `61226343` P1-BR2, `b7a3a032` P1-BR3, `b71eeb3e` P1-BR4, `56cd0e01` P1-BR5, `71085685` P1-BR6,
+`20aa9503` P1-BR7, then a docs commit. Details, rules and assumptions per rock: DEFERRED_VALIDATION.md "Phase 1".
+
+### What was executed
+
+- `python -m py_compile` on every changed source and test file: OK (no output).
+- `git diff --check` after every rock: clean. CR count of every changed file: 0.
+- Import check (`PYTHONPATH=D:/forge-phase1/src`, `engcore.__file__` confirmed in the worktree) of the 15 changed or
+  dependent modules, including both built-in composition packs: `imports ok`.
+- No pytest, FAST, SCIENTIFIC, regression pack, hardened assurance, mutation, benchmark or certification. **NOT RUN.**
+- A read-only static review of the full diff (subagent, no execution): 2 MAJOR, 8 MINOR; dispositions in
+  DEFERRED_VALIDATION.md "Phase 1 static review". Findings 3, 4, 5, 6 and 8 fixed in the review-fix commit
+  (py_compile, import check and `git diff --check` re-run: clean); 1 and 2 need OD-3 / test rewrites.
+
+### Failed approaches (do not repeat)
+
+- A half-ulp representability threshold for window boundaries (BR4) misses windows between ADJACENT doubles,
+  because `exact_seconds` reads the shortest decimal `repr`, which can sit up to half an ulp from the double. One
+  ulp per value is the resolution actually available.
+- `scipy.sparse.linalg.onenormest` draws random starting columns (t > 1) and random resamples; its estimate would
+  make execution records non-deterministic. The in-module xLACON (Hager/Higham, t = 1) estimator is used instead.
+- A bash heredoc for a long patch script failed with an unmatched quote (project memory already warns); patch
+  scripts were written with the Write tool.
+
+### Certification-pinned files touched (UNCERTIFIED until OD-3)
+
+All in `certification/current_core_v2.json`: `execution/multiphysics/{__init__,convergence,error,mapping,runtime}.py`,
+`numerical/{core,providers}.py`, `planning/verification.py`, `scientific/multiphysics/{mapping,plan,report}.py`,
+`scientific/verification/{__init__,ladder,plan_serialization,planning}.py`, `system_runtime/authorities.py`. Mutation
+population V4: N60d pins the removed ordinal line in `planning.py` (DV-41); N60e/N60f/N60i lines are byte-identical.
+No new certified -> uncertified import edge (new targets `scenarios/timeline.py` and `scientific/units/quantity.py`
+are pinned; `numerical_error.py` -> `runtime.py` is uncertified -> certified).
+
+### Owner decisions recorded, not taken
+
+1. P1-BR4: should a schedule-forced window shorter than `minimum_window` be refused under window control?
+2. P1-BR4: the participant reporting tolerance `1e-12 * max(1, |t|)` is loose for sub-microsecond windows.
+3. P1-BR5: admitting `external_solver` and `analytical_reference` as code verification (the only many-to-one entry).
+4. P1-BR1: a mesh-measure-weighted field residual norm (today `l2` is the RMS over stored values).
+5. P1-BR2: 3D (tet/hex) intersection, non-convex cells, and a "restricted conservative" variant for one-sided coverage.
+6. P1-BR6: the dense-conversion and factorization limits (1000, 4096, 5e6 stored entries) are memory-budget choices.
+7. P1-BR7: rewrite of the stub-run authority tests (`test_h2_*`, `test_r2_*`, big13 extractor test) on real run records (DV-46/47).
+8. Still open from ERT V1: mandatory conditioning of coupled claims; DV-24 closure; OD-3.
+
+## 2026-10-17 -- Phase 2: unified solver & multiphysics architecture (build phase; feat/phase2-unified-solver-architecture, local only)
+
+Worktree `D:/forge-phase2`, stacked on Phase 1 `6249c2d2` (re-verified: Phase 1 not pushed, not merged; `origin/main`
+still `de11dffa`). Owner direction: build BR8..BR12 (numbered P2-BR8..P2-BR12), write tests, **execute no test**, no
+push/PR/merge/certification, stop after Phase 2. Phase 1 deferred items are preserved, not resolved, except DV-34
+(now written, still not run).
+
+### Commits (all local)
+
+`e4dec400` P2-BR8, `54ff4321` P2-BR9, `17dd89b6` P2-BR10, `77634711` P2-BR11, `e9d18d63` P2-BR12, then a review-fix /
+docs commit. Per-rock scope, rules, limitations and assumptions: DEFERRED_VALIDATION.md "Phase 2".
+
+### What was executed
+
+- `python -m py_compile` on every changed source and test file: OK. `git diff --check` after every rock: clean;
+  CR count of every changed file: 0.
+- Import check (`PYTHONPATH=D:/forge-phase2/src;D:/forge-phase2/providers/pybamm`, `engcore.__file__` in the worktree)
+  of 21 changed or dependent modules: `imports ok 21`.
+- Three one-line arithmetic checks to choose test fixtures (float pairs where `old + (new - old) != new`).
+- A read-only static review of the Phase 2 diff (subagent, no execution): 4 MAJOR, ~14 MINOR. M1, M2, M4 and six
+  MINORs fixed in the review-fix commit; M3 kept deliberately as a recorded identity change. Dispositions:
+  DEFERRED_VALIDATION.md "Phase 2 static review". `py_compile`, import check and `git diff --check` re-run: clean.
+- No pytest, FAST, SCIENTIFIC, hardened assurance, mutation, benchmark, real external solver or certification:
+  **NOT RUN**.
+
+### Reconciliation (what existed, what was wrong)
+
+| Area | Existing | Found and fixed here |
+| --- | --- | --- |
+| Coupling owners | `MultiphysicsRuntime`; electrothermal Picard loop; preCICE engine; provider participants | no declaration of which owns convergence; electrothermal provenance claimed "no relaxation" for relaxed runs (false support); NONE relaxation rounded the transfer; one object under two concurrent ids not refused |
+| Field transfer | `FieldMapper` (runtime), P1 interpolation on `SpatialMesh`, structured contract checker | no admission table; O(N*M) scans; no 3D conservative remap; provenance only on conservative; arrays round-tripped through Python lists/tuples |
+| Checkpoints | solver-id binding, failed-attempt discard, cold fallback (ERT Phase 1) | no build or problem binding; `provider_participant` and PyBaMM `restore` accepted any token (no content digest, no build check) -- the open ERT item |
+| Comparison | `compare_providers` with independence and unit rules | no same-problem admission at all (provider problem digests are provider-specific) |
+| External solvers | `ExternalSolverParticipant` sealing; FEniCSx via `provider_participant` | no mock label, no failure classes, no interface conservation semantics |
+
+### Failed approaches (do not repeat)
+
+- Driving the electrothermal composition through the runtime with invented initial outputs: a steady result has no
+  value before its first solve; the runtime now accepts deferred outputs only where a serial sweep overwrites them.
+- Mapping the native relaxed loop onto runtime relaxation: the runtime relaxes every serial edge, the native loop only
+  torn values; the adapter refuses relaxed plans instead.
+- Putting the mock check after the provider-trace check in `MultiphysicsAuthority`: every mock was refused as
+  untraced, so an explicit admission could never take effect.
+- `scipy.sparse.linalg.onenormest` (Phase 1) and KD-tree tie-breaking were not trusted for determinism; the KD-tree
+  only bounds the search radius and the exhaustive arithmetic decides.
+
+### Certification-pinned files touched (UNCERTIFIED until OD-3)
+
+`current_core_v2.json`: `data/{field,mesh,resolver}.py`, `execution/multiphysics/{external,mapping,relaxation,runtime}.py`,
+`execution/orchestration/{advanced_runner,checkpoint,plan,runner}.py`, `system_runtime/authorities.py`,
+`systems/electrothermal/coupled.py`. New certified -> uncertified import edge: `execution/multiphysics/mapping.py` ->
+`execution/multiphysics/spatial_index.py` (must be pinned or declared). No mutant of the V4 population pins a changed
+line (N60d remains the Phase 1 item).
+
+### Owner decisions recorded, not taken
+
+- OD-P2-1: real FE <-> CFD conjugate heat transfer is a new capability foundation (active epic; EXC-1 open) -- BLOCKED.
+- OD-P2-2: electrothermal migration: whether the product path may delegate to the runtime after parity (DV-49), and
+  which relaxation semantics (torn-only vs every serial edge) the unified runtime should offer.
+- OD-P2-3: make `compare_providers` refuse without same-problem admission (changes flagship level-5 evidence).
+- OD-P2-4: preCICE: a participant transport under the runtime, or a declared external engine (today).
+- OD-P2-5: hexahedral and mixed 3D conservative remap (a trilinear hex is not convex); 3D node fields.
+- Still open from Phase 1: N60d / OD-3, stub-run tests, mesh-weighted residual, participant time tolerance, no
+  mathematical coupling-error bound.
+
+## 2026-10-17 -- Phase 3: advanced numerical & multiphysics engine (build phase; feat/phase3-advanced-numerical-multiphysics, local only)
+
+Worktree `D:/forge-phase3`, stacked on Phase 2 `2661b640` (re-verified 2026-10-17: Phase 2 is a descendant of Phase 1
+`6249c2d2`; neither is in `origin/main`, still `de11dffa`; no phase branch on the remote). Owner direction: build
+BR13..BR17 (numbered P3-BR13..P3-BR17), write tests, **execute no test**, no push/PR/merge/certification, stop
+after Phase 3. Phase 1/2 deferred items are preserved, not resolved.
+
+### Commits (all local)
+
+`1d80a142` P3-BR13, `9f96c560` P3-BR14, `87c271ab` P3-BR15, `f2df47d2` P3-BR16, `0a97c8a7` P3-BR17, `080751eb`
+review fixes, then this docs commit. Per-rock scope, limits and assumptions: DEFERRED_VALIDATION.md "Phase 3".
+
+### What was executed
+
+- `python -m py_compile` on every changed source and test file: OK. `git diff --check` after every rock and after the
+  fixes: clean. CR count of every changed source file: 0.
+- Import checks (`PYTHONPATH=D:/forge-phase3/src`, `engcore.__file__` in the worktree) of every changed module and of
+  `domains.electrical.heater_circuit`, `systems.electrothermal.runtime_adapter`, `domains.thermal_models.conduction1d_nonuniform`: OK.
+  Two import checks also printed trivial values (the `ResidualNorm` members; one `RelaxationPolicy` IQN-IMVJ
+  to_dict/from_dict round trip) -- a constructor smoke, not a test.
+- Static grep checks: `execution/` imports only `scientific`, `data`, `scenarios`; `plan.py` has none of the core
+  purity words.
+- A read-only scientific review of the Phase 3 diff (subagent with Read/Grep/Glob only, no execution): 0 BLOCKER,
+  5 MAJOR, 8 MINOR. All MAJORs and 5 MINORs fixed in `080751eb`; 3 MINORs recorded. Two written tests would have
+  failed (M2, M3) and were corrected. Dispositions: DEFERRED_VALIDATION.md "Phase 3 static review".
+- No pytest, FAST, SCIENTIFIC, hardened assurance, mutation, benchmark, real external solver or certification:
+  **NOT RUN**.
+
+### Reconciliation (what existed, what was added or fixed)
+
+| Area | Existing | Phase 3 |
+| --- | --- | --- |
+| Nonlinear solves | SciPy hybr/lm provider; method chain; continuation | classified failures; damped Newton with declared scale-aware acceptance; a chain can no longer loosen acceptance (tolerances or acceptance options) |
+| Coupling residuals | `linf`, `l2` = RMS over stored values | `l2_measure` (cell / lumped nodal measure); `l2` documented as unweighted |
+| Acceleration | IQN-ILS inside `RelaxationController`, history reset every window | one accelerator; IQN-IMVJ with recorded carry/discard rules; supports never mixed; fresh controller per run |
+| Window control | subdivision, divergence, stagnation, step memory | step-doubling error indicator with distinct rejection; forced short windows and clock differences recorded; subcycling contract |
+| Mesh adaptation | 1D kernel (EXC-1 A1), steady non-uniform conduction | grid digests and per-cycle provenance; round-off bisection skipped; scope refusals; mesh validity checks |
+| PDE / moving mesh | four linear templates, FEniCSx KSP | nonlinear admission contract (no template admitted); moving-mesh kinematics, mid-step inversion refusal, discrete GCL residual; no ALE |
+
+### Failed approaches (do not repeat)
+
+- Long bash heredocs for patch scripts again wrote nothing (`unexpected EOF`); write the script with the Write tool.
+- Chaining `grep -c` into `&& git commit`: `grep -c` exits 1 when the count is 0, so the commit silently did not run.
+- IQN-IMVJ with only the own-norm QR filter: near convergence a round-off secant column passes it and corrupts the
+  CARRIED approximation; IMVJ also filters relative to the largest column, and (review M5) an edge scale is not set by
+  a round-off residual.
+- Carrying an IMVJ approximation across windows of different lengths was rejected: the window map is a different
+  operator; only identical exact durations reuse it.
+
+### Certification-pinned files touched (UNCERTIFIED until OD-3)
+
+`current_core_v2.json`: `execution/multiphysics/{convergence,relaxation,runtime}.py`, `numerical/core.py`,
+`scientific/multiphysics/plan.py`. New files in certified SCOPE patterns: `execution/multiphysics/{acceleration,
+field_measures,subcycling}.py`, `numerical/{health,nonlinear,mesh_quality,moving_mesh}.py`, `pde/nonlinear.py`.
+New certified -> unpinned edges: `convergence.py -> field_measures.py`, `relaxation.py -> acceleration.py`. No V4 mutant
+targets a changed line.
+
+### Owner decisions recorded, not taken
+
+- OD-P3-1: EXC-1 amendment for coarsening, transient non-uniform 1D conduction and 1D grid-to-grid conservative state
+  transfer (BR16 BLOCKED parts).
+- OD-P3-2: triangle / tetrahedron refinement and coupled transfer between changing meshes (EXC-1 amendment, or a
+  second exception -- which triggers the anti-loophole review).
+- OD-P3-3: a nonlinear PDE template (e.g. k(T) diffusion) and a FEniCSx Newton adapter -- a new capability foundation.
+- OD-P3-4: an ALE formulation of any governing equation -- a new capability foundation.
+- OD-P3-5: confirm that the Phase 3 infrastructure (damped Newton, IMVJ, window error indicator, mesh quality,
+  moving-mesh kinematics) is inside policy as runtime/numerical infrastructure, following the ERT V1 and Phase 1/2
+  precedent. Claude judged it so; the owner has not confirmed.
+- OD-P3-6: schedule-forced windows below `minimum_window` (open since P1-BR4): still recorded, not refused.
+- OD-P3-7: whether `l2_measure` or window error control should become mandatory anywhere (identity change).
+- Still open: OD-P2-1..OD-P2-5, Phase 1 items, OD-3.
+
+## 2026-10-18 -- Phase 3.5: engineering foundation completion (build phase; feat/phase35-engineering-foundation-completion, local only)
+
+Worktree `D:/forge-phase35`, on Phase 3 `7389f4b4` (re-verified 2026-10-18: Phase 1 -> 2 -> 3 ancestry intact; none in
+`origin/main` `de11dffa`; no phase branch on the remote; all worktrees clean). Owner direction: complete the unfinished
+foundations within policy, execute no test, no push/PR/merge/certification, stop before Phase 4.
+
+### Commits (all local)
+
+`8a76dbe2` WS1, `e740f208` WS2, `feb1f34e` WS3, `e30c33c0` policy proposals, `e01bc051` review fixes, then this docs
+commit. Per-workstream status, DV rows and review dispositions: DEFERRED_VALIDATION.md "Phase 3.5".
+
+### What was executed
+
+- `python -m py_compile` on every changed source and test file; import checks (`PYTHONPATH=D:/forge-phase35/src;D:/forge-phase35/flagships`);
+  `git diff --check`: clean.
+- A read-only scientific review of the Phase 3.5 diff (subagent, Read/Grep/Glob only): 2 BLOCKER (stale test
+  expectations), 3 MAJOR, 8 MINOR; all BLOCKERs and MAJORs fixed in `e01bc051`; MINORs fixed or recorded.
+- No pytest, FAST, SCIENTIFIC, mutation, benchmark, real-provider run or certification: **NOT RUN**.
+
+### Policy boundary (what was and was not done)
+
+- Permitted and implemented: WS1 (owner-directed false-support fix, closes OD-P2-3), WS2 (runtime engineering under the
+  existing coupling authority), WS3 provider-neutral infrastructure.
+- Policy-blocked, NOT implemented: WS3 real FE/CFD adapters (OD-P2-1), WS4 transient 1D adaptation / conservative 1D
+  transfer / coarsening / triangle refinement, WS5 nonlinear PDE template, WS6 ALE formulation. Drafts:
+  `docs/work/PHASE_3_5_POLICY_PROPOSALS.md` (P35-A4, P35-A5 as EXC-1 amendments; P35-E1..E3 as new exceptions that
+  trigger the OD-6 active-epic review). None is active.
+- Technically blocked even if approved: no OpenFOAM time-window session or interface read-back; no FEniCSx boundary-trace
+  flux output; no Newton path in `forge_fenicsx`.
+
+### Failed approaches (do not repeat)
+
+- A stored same-problem admission checked only for shape could be forged consistently by adding four keys: store the
+  canonical problems and re-derive.
+- Flagship canonical problems built from the flagship's shared constants declare SAME for sides given different
+  inputs: derive each from the problem object the provider was handed.
+- Making the runtime refuse a failed SINK result by default would break native parity; making it accept one by default
+  would weaken the generic runtime: the tolerance is an explicit adapter opt-in.
+
+### Owner decisions recorded, not taken
+
+- OD-P35-1: approve, amend or reject P35-A4 / P35-A5 (EXC-1 amendments; EXC-1 expires 2026-10-31).
+- OD-P35-2: decide OD-6 (active-epic change or program review) before any of P35-E1..E3 can start.
+- OD-P35-3: regenerate the cavity and structure flagship bundles with the real providers (DV-93); until then their
+  committed level-5 statements are stale and their bundles are refused.
+- OD-P35-4: after DV-88..DV-90 pass, set `RUNTIME_PATH_PARITY_VERIFIED` and decide whether the product path delegates;
+  whether `CouplingEvidence` should carry a structural marker for candidate runs.
+- OD-P35-5: whether the Core consensus path and the verification ladder's V5 mapping must also require canonical
+  same-problem admission (Core freeze implications).
+- Still open: OD-P3-1..OD-P3-7, OD-P2-1/2/4/5, Phase 1 items, OD-3.
+
+### 2026-10-18 -- Cross-domain architectural fixtures written (CDAR, OD-6 program; tests NOT RUN)
+
+- Branch `test/cdar-architectural-fixtures` (worktree `D:/forge-cdar`, from the Phase 3.5 head `e89c5b5b`: on `main`
+  explicit plans are refused until Phase 1 lands). New file `tests/architecture/test_cross_domain_fixtures.py`, test code
+  only, participants built from `CallbackParticipant`; no `src/` change.
+- Fixtures: RC circuit (explicit serial; v_N = Vs - (Vs - v0)(1 - dt/RC)^N exactly), spring-mass (symplectic Euler;
+  Q = v^2 + w^2 x^2 - w^2 dt x v exactly conserved, |H_N - H0| bounded by (w dt/2) H0/(1 - w dt/2)), two-tank mixing
+  (implicit serial; inventory conserved, difference decays by 1/(1 + 2 Q dt/V)). Closed forms checked by a plain
+  arithmetic script outside the repository (no repository import); this is not a test run.
+- Gap pins (ordinary tests asserting today's gap, not xfail): A-11 no ODE participant; A-1 a declared N/m stiffness ->
+  surface-tension edge is accepted; A-9 FrameTransform has no translation/time fields; A-2 a species loss needs an
+  EnergyConversion.
+- New design finding (to add to `CROSS_DOMAIN_ARCHITECTURE_AUDIT.md` on the OD-6 branch): every SCALAR edge builds a
+  `QuantityDependency`, whose energy-density rule (`composition/conversion.py` ENERGY_DERIVED_DIMENSIONS) covers force
+  (J/m), pressure and surface tension; a mechanical edge must answer it with a prose `transport_declaration`. The audit
+  named that rule for field edges only.
+- Also found: the fixture's species balance (SOURCE == RECEIVED per scalar edge) holds by construction; storage terms
+  cannot be bound into a balance (CDAR-2).
+- Read-only review (subagent, nothing executed): 2 BLOCKER (undeclared force edge refused; the CDAR-1 probe was refused
+  for the energy rule and would XPASS), 1 MAJOR (live xfails are UNEXPECTED_SKIPs in hardened recertification), minor
+  wording; all fixed.
+- Verification: `py_compile` and `git diff --check` only. `pytest tests/architecture/test_cross_domain_fixtures.py`
+  NOT RUN (DV-99).
+
+### Failed approaches (do not repeat)
+
+- `xfail(strict=True)` probes for architecture gaps: pytest reports them as skips of type `pytest.xfail`, which
+  `tools/certification/skip_admission.py` refuses as UNEXPECTED_SKIP; pin the current gap with an ordinary test instead.
+- Probing a missing module by importing it: the dependency guard reads import strings; probe with `hasattr` on the
+  existing package.
+
+
+## 2026-10-18 -- OD-6 decided: the active epic becomes the engineering foundations program (branch feat/od6-engineering-program-epic, local only)
+
+Owner decision in the Claude Code session: re-point the active epic from `battery.thevenin_1rc` to the research program
+`engrt.numerical_foundations` (contract `docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md`), using the schema /2
+research-program mechanism of the OD-6 package (Option C) with this program instead of Genesis. Implemented as the
+canonical separate change on a branch from `origin/main` `de11dffa`; **in force only when reviewed and merged.**
+
+- Ledger schema /2: `research_programs` with one entry (gates DV0, M1, M2, E1, E2, E3, all MISSING; build-first: no gate
+  requires DV0, `requires` orders decisions only); `active_epic` names
+  it; every capability, battery included, byte-identical in meaning.
+- `tools/capability_maturity.py`: refuses /1 ("migrate"); validates programs (exact fields, own statuses, ordered
+  `requires`, evidence paths, no maturity vocabulary, unique ids across both arrays); a decided program cannot stay the
+  epic; renders a programs table.
+- `tests/test_capability_completion.py`: the battery pin replaced by the program pin plus a battery snapshot (stage,
+  statuses, evidence counts may only grow); negative cases for every back door. **This test edit is a recertification
+  trigger (OD-3).**
+- Policy, PR template, matrix (hand-edited to the renderer's format) and ACTIVE_PLAN's OD-6 row updated.
+
+Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN: `pytest tests/test_capability_completion.py`,
+`python -m tools.capability_maturity` (check) and `--write` (the matrix must be regenerated or confirmed).
+- Read-only merge review: 0 BLOCKER, 4 MAJOR, ~10 MINOR, fixed except one recorded limit; package:
+  `docs/work/OD6_MERGE_REVIEW.md`. Merge preview against `origin/main`: clean. Nothing executed, no PR, nothing merged.
+
+### 2026-10-18 -- Cross-Domain Scientific Architecture Requirements added to the program (owner direction)
+
+- Read-only audit of the Phase 3.5 tree (two Explore subagents, nothing executed):
+  `docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md`. The runtime core is mostly physics-agnostic (and a steady coupled
+  screening template spanning mechanical, electrical and thermal models exists); thermal hard-coding is confined to `conjugate_interface.py` (P) and
+  one message; the real gaps are undeclared semantics (port roles, field kind, non-energy losses), missing ODE / DAE /
+  chemical / mechanical participants, static frames, closed problem aspects.
+- `ENGINEERING_FOUNDATIONS_PROGRAM.md`: CDAR-1..CDAR-10, multi-domain acceptance criteria for M1-E3, three
+  architectural fixtures required before those gates are decided; one prohibition added. Policy: one sentence.
+- Test pin added (NOT RUN). Core gaps A-1, A-2, A-3, A-7, A-9 recorded for the Core compatibility review, not implemented.
+- Read-only review of the change: 0 BLOCKER, 2 MAJOR (fixture location/enforcement; M2/E2 dependence on Core review),
+  minor wording and citations; all fixed.
+
+### 2026-10-18 -- Audit gap A-13 (force edges and the energy-density rule), from the CDAR fixtures
+
+- `CROSS_DOMAIN_ARCHITECTURE_AUDIT.md`: the edge-checks row now says the energy-density rule applies to scalar edges too
+  (`graph.py:301` builds a `QuantityDependency`; `composition/dependency.py:231, 241`), and its set
+  `ENERGY_DERIVED_DIMENSIONS` holds force, pressure and surface tension. New gap A-13 (CDAR-1, CDAR-2; Core review with
+  A-1 and A-2): a mechanical edge can answer that rule only with a prose `transport_declaration`.
+- Found while writing the fixtures on `test/cdar-architectural-fixtures` (`D:/forge-cdar`, `2e8434b7`); pinned there by
+  `test_gap_a_force_edge_must_speak_in_energy_terms`. Fixture next-step bullet updated; `OD6_MERGE_REVIEW.md` gap range.
+- Docs only. Verification: `git diff --check` only; no test was run.
+
+### 2026-10-18 -- Codex handoff: preservation and integration into main (owner direction)
+
+- Inventory: 111 local branches, 77 worktrees, 2 stashes in the Windows repo; WSL clones under `~/forge-*`. Only the
+  work below existed outside GitHub; all of it is now pushed (a final `git rev-list <branch> --not --remotes=origin`
+  over every local branch returned nothing).
+- Pushed: the Phase 1 / 2 / 3 / 3.5 branches, `test/cdar-architectural-fixtures`, `feat/od6-engineering-program-epic`,
+  `feat/battery-real-data-identifiability` (`7e923e75`, fetched from the WSL clone), `fix/final-assurance-blockers`,
+  `evidence-v11`, `fix-bisect-table`, two September battery branches, `codex/multidomain-science-hardening`
+  (fast-forward), `preserve/ci-local-only-assurance-local-2026-10-06` (diverged local branch), six
+  `preserve/wip-*` snapshots of uncommitted worktree work (temporary index; worktrees untouched; UNREVIEWED, NOT RUN),
+  four `preserve/stash-*` refs, `handoff/codex-2026-10-18`. Secret scan of every pushed range (file names and
+  token/key patterns): none. Excluded: regenerated benchmark JSON in `forge-g0-main`, pytest temp directories.
+- Integration branch `integration/codex-handoff-2026-10-18` from `origin/main` `de11dffa`: merges I-8 (`b35445ad`),
+  Phase 1 (`0ae939f7`), Phase 2 (`0356dbdf`), Phase 3 (`29d37bf3`), Phase 3.5 (`2e800f6e`), CDAR (`a2a5123f`), OD-6
+  (`0ae96d3e`), handoff page (`c4f3453e`). Conflicts and their resolutions: `docs/work/CODEX_HANDOFF.md` section 1.
+  The I-8 vs P2-BR10 checkpoint-authority resolution makes cross-object restore a refusal and rewrites three Phase 2
+  tests to that rule; it is a scientific-design decision for owner review (DV-100).
+- Not integrated (preserved on GitHub): battery Practical Pass 1, the `preserve/wip-*` snapshots, stale September
+  branches, `fix/final-assurance-blockers` (superseded), open PRs #107 / #39 / #24 (OD-11).
+- The CDAR fixture docstring now cites audit gap A-13 (scalar edges, not field-only) (`ff66daef`).
+- Verification: `py_compile` of the resolved files, `git diff --check`, conflict-marker scans and merge previews only.
+  No pytest, tier, mutation, benchmark or certification ran: everything integrated is UNVERIFIED / UNCERTIFIED.
+
+### Failed approaches (do not repeat)
+
+- Fetching from a WSL *worktree* over `\\wsl.localhost`: its `.git` file names a Linux path; fetch from the clone's
+  common git dir instead (`git rev-parse --git-common-dir`).

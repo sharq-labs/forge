@@ -174,6 +174,13 @@ class LevelEntry:
                 raise InvalidScientificProblem("level 5 accepts solver corroboration evidence only")
             if link.classification.startswith("post_hoc_"):
                 raise InvalidScientificProblem("a post-hoc-selected comparison cannot reach level 5 (it may be recorded as an observation)")
+            # Phase 3.5 WS1: the class string is a claim; the record must carry a derived same-problem admission.
+            # A stored record from before mandatory admission is refused here, never promoted.
+            from ..providers.compare import corroboration_admission_problems
+
+            missing = corroboration_admission_problems(link.record)
+            if missing:
+                raise InvalidScientificProblem(f"level 5 needs admitted same-problem corroboration: {'; '.join(missing)}")
         if self.level == 6 and self.status is LevelStatus.REACHED and c != COMPARISON_CLASSIFICATIONS[OracleKind.BENCHMARK_DATASET]:
             raise InvalidScientificProblem("level 6 accepts a numerical-benchmark comparison only")
         if self.level == 7 and self.status is LevelStatus.REACHED and c != COMPARISON_CLASSIFICATIONS[OracleKind.EXPERIMENTAL_DATASET]:
@@ -284,6 +291,16 @@ def check_provider_comparison(record: Mapping[str, Any], providers: Mapping[str,
         raise InvalidScientificProblem("a provider comparison compares two executions of one recorded provider, not two providers")
     if not _names_provider(record.get("a_provider"), providers[a]) or not _names_provider(record.get("b_provider"), providers[b]):
         raise InvalidScientificProblem("a provider comparison's provider labels are not the providers the run recorded for its executions")
+    # Phase 3.5 WS1: the classification must follow from the record -- corroboration only with an admission,
+    # a diagnostic only without one (no relabelling in either direction)
+    from ..providers.compare import CORROBORATION_CLASS, DIAGNOSTIC_CLASS, corroboration_admission_problems
+
+    base = str(record.get("classification", "")).removeprefix("post_hoc_")
+    admitted = not corroboration_admission_problems(record)
+    if base == CORROBORATION_CLASS and not admitted:
+        raise InvalidScientificProblem("a provider comparison classified as corroboration carries no valid same-problem admission")
+    if base not in (CORROBORATION_CLASS, DIAGNOSTIC_CLASS) or (base == DIAGNOSTIC_CLASS and admitted):
+        raise InvalidScientificProblem(f"a provider comparison's classification {record.get('classification')!r} does not follow from its record")
     declaration = record["declaration"]
     if not isinstance(declaration["post_hoc"], bool):
         raise InvalidScientificProblem("a provider comparison's post-hoc flag must be a boolean")

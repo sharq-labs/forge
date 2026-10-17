@@ -8,6 +8,7 @@ import math
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
+from ..results.immutable import detach, freeze
 from ..serialization import require_schema, schema_string
 
 FIELD_MAPPING_SCHEMA = schema_string("multiphysics_field_mapping")
@@ -42,6 +43,16 @@ class FieldMappingDefinition:
         object.__setattr__(self, "mapping_id", mapping_id)
         object.__setattr__(self, "method", FieldMappingMethod(self.method))
         object.__setattr__(self, "extrapolation", ExtrapolationPolicy(self.extrapolation))
+        if (
+            self.method is FieldMappingMethod.CONSERVATIVE_CELL
+            and self.extrapolation is not ExtrapolationPolicy.REFUSE
+        ):
+            # A conservative transfer distributes each source cell's integral
+            # over the target cells it overlaps.  A target cell outside the
+            # source support receives a value no source integral accounts for.
+            raise InvalidScientificProblem(
+                "conservative_cell mapping cannot extrapolate; its extrapolation policy is 'refuse'"
+            )
         if not isinstance(self.verify_round_trip, bool):
             raise InvalidScientificProblem("verify_round_trip must be boolean")
         if self.relative_error_limit is not None:
@@ -77,6 +88,20 @@ class FieldMappingDefinition:
 
 @dataclass(frozen=True)
 class MappingDiagnostics:
+    """What one execution of a field mapping measured about itself.
+
+    These are DIAGNOSTICS, not error bounds.  ``round_trip_relative_l2`` is the
+    residual of mapping forward and back; it does not bound the error of the
+    forward transfer.  ``conservation_relative_error`` is the computed
+    integral imbalance of the transferred field; it says nothing about the
+    field's pointwise accuracy.  ``provenance`` names the method, the supports
+    and locations it was computed on and, for a conservative transfer, the
+    measured coverage and conservation residuals.  Phase 2 BR9: every method of
+    the runtime engine records it, so diagnostics -- and run records carrying
+    them -- written before Phase 2 differ in form from new ones; a record without
+    provenance still loads (the field is optional).
+    """
+
     mapping_id: str
     source_count: int
     target_count: int
@@ -84,8 +109,13 @@ class MappingDiagnostics:
     coverage_fraction: float
     round_trip_relative_l2: float | None = None
     conservation_relative_error: float | None = None
+    provenance: Mapping[str, Any] | None = None
 
     def __post_init__(self) -> None:
+        if self.provenance is not None:
+            if not isinstance(self.provenance, Mapping) or not self.provenance.get("method"):
+                raise InvalidScientificProblem("mapping provenance must be a mapping that names its method")
+            object.__setattr__(self, "provenance", freeze(dict(self.provenance)))
         if not str(self.mapping_id).strip():
             raise InvalidScientificProblem("mapping diagnostics require mapping_id")
         for label in ("source_count", "target_count", "extrapolated_count"):
@@ -118,6 +148,8 @@ class MappingDiagnostics:
             "coverage_fraction": self.coverage_fraction,
             "round_trip_relative_l2": self.round_trip_relative_l2,
             "conservation_relative_error": self.conservation_relative_error,
+            # absent unless recorded: earlier diagnostics keep their identity
+            **({"provenance": detach(self.provenance)} if self.provenance is not None else {}),
         }
 
     @classmethod
@@ -131,4 +163,5 @@ class MappingDiagnostics:
             coverage_fraction=payload["coverage_fraction"],
             round_trip_relative_l2=payload.get("round_trip_relative_l2"),
             conservation_relative_error=payload.get("conservation_relative_error"),
+            provenance=payload.get("provenance"),
         )

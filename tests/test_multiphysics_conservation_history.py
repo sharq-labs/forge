@@ -292,8 +292,8 @@ def test_a_system_runtime_node_exposes_nothing_when_required_conservation_failed
         outputs={"flow": "a.p"})
     call = SimpleNamespace(run_id="sys", node=SimpleNamespace(node_id="mp", commits_state=False))
     outcome = authority.execute(call)
-    # The explicit fixture never reports "converged", so the node fails either way; what matters is which check
-    # refuses first: conservation is checked before any output is read or any other gate runs.
+    # Phase 1 BR7: an explicit run that completes is exposed, so STEADY now succeeds and FAIL_THEN_PASS fails on
+    # conservation -- which is checked before any output is read or any other gate runs.
     assert ("declared conservation did not hold" in outcome.reason) is refused_for_conservation, outcome.reason
 
 def test_a_system_runtime_node_refuses_a_run_of_a_graph_it_does_not_declare() -> None:

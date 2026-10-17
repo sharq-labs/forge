@@ -233,7 +233,8 @@ class FieldValue:
         reference = store_values(
             store,
             name or f"{self.definition.field_id}:field",
-            self.values.reshape(-1).tolist(),
+            # an array, not a list: encode_float64 reads its buffer (same bytes)
+            np.ascontiguousarray(self.values, dtype=np.float64).reshape(-1),
             unit=self.unit,
         )
         record = FieldRecord(
@@ -261,8 +262,7 @@ class FieldValue:
         wrong meaning, which is the whole failure this layer exists to prevent.
         """
         record.verify_against(mesh)
-        values = resolver.resolve(record.reference)
-        array = np.asarray(values, dtype=np.float64).reshape(record.shape)
+        array = resolver.resolve_array(record.reference).reshape(record.shape)
         field = cls(definition=record.definition, mesh=mesh, values=array)
         field._require_the_summary_describes_these_values(record)
         return field
