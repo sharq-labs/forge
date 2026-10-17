@@ -15,7 +15,8 @@ coupling error source the run carries and what is known about each:
     converged plain fixed-point window, ``q / (1 - q) * r_k`` with the
     contraction ``q`` estimated from the last two residuals;
 ``UNQUANTIFIED``
-    present and not estimated (explicit splitting error; accelerated or
+    present and not estimated (explicit splitting error unless an opt-in
+    refinement estimate for THIS run is supplied; accelerated or
     single-iteration windows);
 ``UNBOUNDED``
     known not to be controlled (a window that ended at its iteration limit).
@@ -30,7 +31,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ...scientific.errors import InvalidScientificProblem
 from ...scientific.multiphysics import (
@@ -39,6 +40,9 @@ from ...scientific.multiphysics import (
     RelaxationKind,
     WindowOutcome,
 )
+
+if TYPE_CHECKING:
+    from .splitting import SplittingErrorEstimate
 
 ASSESSMENT_KIND = "coupling_numerical_error_assessment"
 
@@ -218,9 +222,32 @@ def _iteration_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]
     return sources
 
 
-def _splitting_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]:
+def _splitting_sources(
+    run: MultiphysicsRunRecord, splitting: "SplittingErrorEstimate | None"
+) -> list[NumericalErrorSource]:
     if run.plan.scheme is not CouplingScheme.EXPLICIT or not run.graph.edges:
+        if splitting is not None:
+            raise InvalidScientificProblem("a splitting estimate applies to an explicit coupled run only")
         return []
+    if splitting is not None:
+        from .splitting import SplittingErrorEstimate, run_digest
+
+        if not isinstance(splitting, SplittingErrorEstimate):
+            raise InvalidScientificProblem("splitting must be a SplittingErrorEstimate")
+        if splitting.base_run_digest != run_digest(run) or splitting.base_run_id != run.run_id:
+            # evidence stays bound to the exact run it was produced with
+            raise InvalidScientificProblem(
+                "the splitting estimate was produced with another run; it does not describe this one"
+            )
+        return [
+            NumericalErrorSource(
+                source=f"run:splitting:{item.quantity}", kind="splitting",
+                status=ErrorSourceStatus.ESTIMATED if item.estimated else ErrorSourceStatus.UNQUANTIFIED,
+                relative=item.relative, method="window_refinement_richardson",
+                detail=f"{item.detail}; order {splitting.order_basis}; windows {list(splitting.windows_s)} s",
+            )
+            for item in splitting.quantities
+        ]
     return [NumericalErrorSource(
         source="run:splitting", kind="splitting", status=ErrorSourceStatus.UNQUANTIFIED, relative=None,
         method="explicit_staggering",
@@ -230,11 +257,23 @@ def _splitting_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]
     )]
 
 
-def assess_coupling_numerical_error(run: MultiphysicsRunRecord) -> CouplingNumericalErrorAssessment:
-    """Every coupling numerical error source of ``run`` and its status (derived; the run is not changed)."""
+def assess_coupling_numerical_error(
+    run: MultiphysicsRunRecord,
+    *,
+    splitting: "SplittingErrorEstimate | None" = None,
+) -> CouplingNumericalErrorAssessment:
+    """Every coupling numerical error source of ``run`` and its status (derived; the run is not changed).
+
+    ``splitting``: an opt-in refinement estimate produced WITH this run
+    (:func:`~engcore.execution.multiphysics.splitting.estimate_splitting_error`).
+    It replaces the open splitting source by one source per estimated
+    quantity; it only ever covers the quantities it names.
+    """
     if not isinstance(run, MultiphysicsRunRecord):
         raise InvalidScientificProblem("assess_coupling_numerical_error takes a MultiphysicsRunRecord")
     if not run.graph.edges:
+        if splitting is not None:
+            raise InvalidScientificProblem("a run without coupling edges has no splitting error to estimate")
         return CouplingNumericalErrorAssessment(run.run_id, ())
-    sources = _mapping_sources(run) + _iteration_sources(run) + _splitting_sources(run)
+    sources = _mapping_sources(run) + _iteration_sources(run) + _splitting_sources(run, splitting)
     return CouplingNumericalErrorAssessment(run.run_id, tuple(sources))
