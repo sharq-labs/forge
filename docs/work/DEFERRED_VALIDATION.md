@@ -795,6 +795,7 @@ resolved by Phase 3.5 unless a row says so. Policy-blocked scope: `docs/work/PHA
 | DV-96 | WS5 provider-backed nonlinear PDE | manufactured solution, Newton failure, admission re-check through FEniCSx | — | — | — | BLOCKED (policy, P35-E1) / NOT WRITTEN |
 | DV-97 | WS6 ALE | constant-state preservation, GCL, known mesh motion, rollback | — | — | — | BLOCKED (policy, P35-E3) / NOT WRITTEN |
 | DV-98 | All | Structural guards: layering, certified-dependency closure, core purity, pin portability; FAST and SCIENTIFIC tiers on the Phase 1-3.5 tree diffed against a pristine baseline | pass or recorded failures | all | — | NOT RUN |
+| DV-99 | Engineering program CDAR fixtures (OD-6) | `pytest tests/architecture/test_cross_domain_fixtures.py -q` | 4 fixture tests pass (RC geometric decay and a refused A -> V edge, symplectic-Euler invariant and energy bound, two-tank inventory and d'=d/(1+2r)); 5 gap pins pass, each recording a gap as it stands (A-1, A-2, A-9, A-11, force-edge energy-density rule); any gap pin that fails means its gap moved and must be rewritten | none: design findings, never domain evidence; required before any of M1-E3 is decided | test file only, outside certified SCOPE; no xfail (UNEXPECTED_SKIP in hardened runs) | NOT RUN |
 
 ### WS1 status: IMPLEMENTED / UNVERIFIED (closes OD-P2-3 by owner direction)
 

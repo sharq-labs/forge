@@ -5642,3 +5642,34 @@ commit. Per-workstream status, DV rows and review dispositions: DEFERRED_VALIDAT
 - OD-P35-5: whether the Core consensus path and the verification ladder's V5 mapping must also require canonical
   same-problem admission (Core freeze implications).
 - Still open: OD-P3-1..OD-P3-7, OD-P2-1/2/4/5, Phase 1 items, OD-3.
+
+### 2026-10-18 -- Cross-domain architectural fixtures written (CDAR, OD-6 program; tests NOT RUN)
+
+- Branch `test/cdar-architectural-fixtures` (worktree `D:/forge-cdar`, from the Phase 3.5 head `e89c5b5b`: on `main`
+  explicit plans are refused until Phase 1 lands). New file `tests/architecture/test_cross_domain_fixtures.py`, test code
+  only, participants built from `CallbackParticipant`; no `src/` change.
+- Fixtures: RC circuit (explicit serial; v_N = Vs - (Vs - v0)(1 - dt/RC)^N exactly), spring-mass (symplectic Euler;
+  Q = v^2 + w^2 x^2 - w^2 dt x v exactly conserved, |H_N - H0| bounded by (w dt/2) H0/(1 - w dt/2)), two-tank mixing
+  (implicit serial; inventory conserved, difference decays by 1/(1 + 2 Q dt/V)). Closed forms checked by a plain
+  arithmetic script outside the repository (no repository import); this is not a test run.
+- Gap pins (ordinary tests asserting today's gap, not xfail): A-11 no ODE participant; A-1 a declared N/m stiffness ->
+  surface-tension edge is accepted; A-9 FrameTransform has no translation/time fields; A-2 a species loss needs an
+  EnergyConversion.
+- New design finding (to add to `CROSS_DOMAIN_ARCHITECTURE_AUDIT.md` on the OD-6 branch): every SCALAR edge builds a
+  `QuantityDependency`, whose energy-density rule (`composition/conversion.py` ENERGY_DERIVED_DIMENSIONS) covers force
+  (J/m), pressure and surface tension; a mechanical edge must answer it with a prose `transport_declaration`. The audit
+  named that rule for field edges only.
+- Also found: the fixture's species balance (SOURCE == RECEIVED per scalar edge) holds by construction; storage terms
+  cannot be bound into a balance (CDAR-2).
+- Read-only review (subagent, nothing executed): 2 BLOCKER (undeclared force edge refused; the CDAR-1 probe was refused
+  for the energy rule and would XPASS), 1 MAJOR (live xfails are UNEXPECTED_SKIPs in hardened recertification), minor
+  wording; all fixed.
+- Verification: `py_compile` and `git diff --check` only. `pytest tests/architecture/test_cross_domain_fixtures.py`
+  NOT RUN (DV-99).
+
+### Failed approaches (do not repeat)
+
+- `xfail(strict=True)` probes for architecture gaps: pytest reports them as skips of type `pytest.xfail`, which
+  `tools/certification/skip_admission.py` refuses as UNEXPECTED_SKIP; pin the current gap with an ordinary test instead.
+- Probing a missing module by importing it: the dependency guard reads import strings; probe with `hasattr` on the
+  existing package.
