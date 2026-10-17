@@ -5044,3 +5044,19 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   of runs that also staggered explicitly or stopped at an iteration limit. Nothing in `src` consumes that bound
   today.
 - Tests written: `tests/test_multiphysics_numerical_error_accounting.py`. Static checks only.
+
+### BR4 -- opt-in splitting-error estimate by coupling-window refinement (tests NOT RUN)
+- New `execution/multiphysics/splitting.py`: `estimate_splitting_error(build, coupling_window=, run_id=,
+  run_kwargs=, quantities=, levels=3 | 2 + declared order and basis)`.
+  - Re-executes the explicit problem at dt, dt/2 (and dt/4) and applies Richardson extrapolation to named scalar
+    outputs at the horizon end.
+  - Three levels observe the order; two levels need a declared order with its basis.
+  - A quantity outside the asymptotic range stays UNQUANTIFIED.
+  - Refinements may change only the coupling window (graph, plan and end time are checked).
+  - The estimate is bound to `canonical_digest(base_run.to_dict())`.
+  - Cost: 3x the base run (two levels) or 7x (three levels).
+- `numerical_error.assess_coupling_numerical_error(run, splitting=)` accepts the estimate only for that exact run.
+  It turns the open splitting source into per-quantity ESTIMATED or UNQUANTIFIED sources, never a bound.
+- Tests written: `tests/test_multiphysics_splitting_estimate.py`. The exact model problem is hand-derived: a right
+  Riemann sum with x = 0.625, 0.5625, 0.53125, observed order 1, and an estimate equal to the true error 0.125.
+- Static checks only. No certified file was touched.

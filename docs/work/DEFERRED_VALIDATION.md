@@ -15,6 +15,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-8 | BR2 joint IQN-ILS | New tests (hand-computed expectations) | `pytest tests/test_multiphysics_iqn_ils.py -q` | NOT RUN |
 | DV-9 | BR2 | Field-valued (mesh) edges under IQN-ILS: no test exists yet; write one with a registered mesh | new test | NOT WRITTEN |
 | DV-10 | BR3 error accounting | New tests (includes estimate >= true error on an exact linear contraction) | `pytest tests/test_multiphysics_numerical_error_accounting.py -q` | NOT RUN |
+| DV-11 | BR4 splitting estimate | New tests (exact first-order model problem; determinism of an identical re-run) | `pytest tests/test_multiphysics_splitting_estimate.py -q` | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -51,3 +52,14 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 - A residual-based estimate assumes the recorded residual is the unrelaxed fixed-point residual, which the runtime
   guarantees for implicit windows (`raw_out`).
 - Splitting error is reported once per explicit run, not per window or per edge.
+
+## Unverified assumptions (BR4)
+
+- The builder is trusted to rebuild the SAME participants. Only graph and plan identity are checked. Participant
+  implementation behaviour is not part of any record, so a builder that changes a participant's behaviour between
+  levels goes undetected; the test's `bias` variant does exactly that.
+- Richardson assumes the observed (or declared) order holds at the base window. A smooth problem with a shift in
+  dominant error terms between levels can pass the asymptotic-range check and still be mis-estimated.
+- Estimate-to-run binding relies on run records being byte-identical across a deterministic re-run, i.e. no hidden
+  nondeterminism in `run.to_dict()`. The test relies on this and it is unverified.
+- Only scalar outputs at the horizon end are estimated. Field outputs and time histories are not.
