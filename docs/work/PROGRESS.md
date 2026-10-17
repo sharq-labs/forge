@@ -11,6 +11,24 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
+## 2026-10-17 forge-scientific-review skill removed (owner decision)
+
+The owner asked for the skill to be removed from the repository. Deleted `.claude/skills/forge-scientific-review/` and the
+untracked `.agents/skills/forge-scientific-review/` copy; removed the "Reviewer separation" section from `CLAUDE.md` and `AGENTS.md`;
+dropped the skill path from `tests/test_agent_workflow_contract.py`. Older entries below that name the skill are history.
+Its last run (DC support-version gate, 2026-10-17) returned CHANGES REQUIRED; all four findings are now fixed:
+- I-1/I-2: `dc/problem.py::verify_problem_matches_circuit` now requires the problem's model keys to equal `models_for_circuit(circuit)`
+  (forged version, extra model and omitted model all raise `CircuitBindingError`); `NgspiceDCSolver.prepare` also checks `support_gap`.
+- I-3: native `additional_support_gap` reads `self.served_models`. I-4: `solve_circuit_with_ngspice` docstring no longer says byte-unchanged.
+- Tests: execution-path refusals for `solve_circuit`, `solve_circuit_with_ngspice` and both `prepare` methods in `test_support_version_gate.py`.
+The owner then confirmed removing the agent too: deleted `.claude/agents/forge-scientific-reviewer.md` and its path in
+`tests/test_agent_workflow_contract.py` (test renamed `test_persistent_work_memory_exists`).
+`.venv/Scripts/python.exe -m pytest tests/test_agent_workflow_contract.py -q -p no:cacheprovider` -> 2 passed.
+
+Test: `.venv/Scripts/python.exe -m pytest tests/test_agent_workflow_contract.py -q -p no:cacheprovider --basetemp D:/ftmp-skill/bt` -> 2 passed.
+After the fixes: `.venv/Scripts/python.exe -m pytest tests/domains/electrical tests/test_agent_workflow_contract.py -q -p no:cacheprovider -n 4` -> 367 passed;
+`.venv/Scripts/python.exe tools/forge_check.py --changed` -> exit 0 (40 passed). Wider tiers NOT RUN.
+
 ## 2026-09-26 BIG 13 — Flagship Engineering Demonstrations (BUILD phase; read this first)
 
 Branch `feat/big-13-flagship-demonstrations`, base `6054ac44811cec26e074ad5be275396cccfd3b13` (the BIG 12 HEAD), worktree `D:/forge-b13`. Reports: `docs/flagships/`
@@ -1433,3 +1451,263 @@ works.
 - Continue reducing the remaining flat claim modules only after PR #65 is
   verified.
 - Do not expand the frozen Scientific Core for repository-layout aesthetics.
+
+
+## Full project review — 2026-10-05
+
+Review: docs/work/PROJECT_REVIEW_2026-10-05.md. No production code changed. Initial ACTIVE_PLAN edit preserved. Python 3.14.2/Windows; not the declared CI environment. FAST and SCIENTIFIC overlapped, so these are diagnostic runs, not isolated clean-tree acceptance baselines. Generated benchmark JSONs were backed up and all 17 restored; logs were moved under .pytest-review-temp/full-project-logs-20261005/.
+
+2026-10-05 19:12 +03:00
+command: `python tools/forge_check.py --regression`
+result: BLOCKED
+summary: Windows Store alias reports Python not found; no tests executed.
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
+
+2026-10-05 19:12 +03:00
+command: `py -3.14 tools/forge_check.py --regression`
+result: FAIL
+summary: pytest temporary-root setup PermissionError [WinError 5] in test_untracked_manifest_digest_changes_with_file_content; not a product assertion failure.
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
+
+2026-10-05 19:12 +03:00
+command: `py -3.14 tools/forge_check.py --changed`
+result: PASS
+summary: 40 passed.
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
+
+2026-10-05 19:12 +03:00
+command: `py -3.14 -m pytest -m "not expensive" -q -n 4 --tb=short *> .pytest-full-project-review-fast.log`
+result: BLOCKED
+summary: xdist INTERNALERROR: PermissionError at pytest-of-dev_kaeem temporary root; retried with explicit workspace basetemp.
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
+
+2026-10-05 19:12 +03:00
+command: `py -3.14 -m pytest -q tests/scientific/replay_core/test_dirty_tree.py --tb=short`
+result: FAIL
+summary: No tests ran: requested test file does not exist; this was an incorrect diagnostic target, not a test failure.
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
+
+2026-10-05 19:12 +03:00
+command: `$env:PYTEST_ADDOPTS='--basetemp=.pytest-review-temp/regression-20261005'; py -3.14 tools/forge_check.py --regression *> .pytest-full-project-review-regression.log`
+result: PASS
+summary: 225 passed in 10.10s.
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
+
+2026-10-05 19:12 +03:00
+command: `py -3.14 -m pytest -m "not expensive" -q -n 4 --tb=short --basetemp=.pytest-review-temp/full-project-20261005 *> .pytest-full-project-review-fast.log`
+result: FAIL
+summary: 8640 passed, 33 failed, 88 skipped, 66 warnings, 20 collection errors in 315.15s; exit 1.
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
+
+2026-10-05 19:12 +03:00
+command: `py -3.14 -m pytest -m "not campaign" -q -n 4 --tb=short --basetemp=.pytest-review-temp/scientific-20261005 *> .pytest-full-project-review-scientific.log`
+result: FAIL
+summary: 9196 passed, 33 failed, 88 skipped, 66 warnings, 20 collection errors in 334.36s; exit 1.
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
+
+2026-10-05 19:12 +03:00
+command: `py -3.14 -m pytest -q tests/test_engineering_contracts.py tests/test_provider_boundary.py tests/test_big11_review_fixes.py --basetemp=.pytest-review-temp/focused-20261005 --tb=short`
+result: PASS
+summary: 52 passed, 1 skipped in 3.77s.
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
+
+2026-10-05 19:12 +03:00
+command: `py -3.14 -m pytest -q tests/claims/test_impact_replay.py --basetemp=.pytest-review-temp/replay-isolated-20261005 --tb=short`
+result: PASS
+summary: 24 passed in 3.58s after benchmark-output cleanup and isolated execution.
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
+
+Relevant failure names — FAST (full diagnostics in saved log):
+```text
+FAILED tests/domains/test_audit_domains_unscreened_claims.py::test_the_held_resistance_limitation_is_stated_where_a_caller_reads
+FAILED tests/claims/test_impact_replay.py::test_a_bundle_verifies_without_execution_and_replays_identically
+FAILED tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result
+FAILED tests/claims/test_impact_replay.py::test_a_bundle_with_external_evidence_carries_its_trust_and_replays
+FAILED tests/test_core_scientific_audit_batch56.py::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see
+FAILED tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one
+FAILED flagships/tests/test_flagship_portfolio.py::test_ghia_excerpt_is_a_numerical_benchmark_with_a_content_identity_and_matches_an_independent_transcription
+FAILED flagships/tests/test_flagship_portfolio.py::test_nist_hess_reference_is_analytic_carries_source_digests_and_its_numbers_recompute
+FAILED flagships/tests/test_flagship_portfolio.py::test_the_nasa_battery_reference_is_pinned_by_the_repository_manifest_and_has_no_copied_data
+FAILED flagships/tests/test_flagship_portfolio.py::test_the_analytic_references_of_the_structure_flagship_are_labelled_analytic_and_apply_only_inside_their_envelopes
+FAILED flagships/tests/test_flagship_portfolio.py::test_the_first_law_reference_is_analytic_and_states_it_shares_a_property_backend
+FAILED flagships/tests/test_flagship_portfolio.py::test_the_numeric_criteria_are_pinned_to_the_preregistration_file_and_recorded_failures_stay_recorded
+FAILED tests/claims/test_claims_assessment.py::test_the_mcp_tool_returns_the_same_record
+FAILED tests/test_core_api_contracts.py::test_the_frozen_digest_is_identical_in_fresh_processes
+FAILED tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract
+FAILED tests/test_core_api_snapshot.py::test_the_snapshot_is_byte_identical_across_fresh_processes
+FAILED tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds
+FAILED tests/test_core_certificate.py::test_the_certificate_describes_this_tree
+FAILED tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
+FAILED tests/test_core_freeze_v4_manifest.py::test_the_deep_surface_carries_methods_and_member_positions
+FAILED tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 - ...
+FAILED tests/test_core_freeze_manifest.py::test_the_command_line_verifier_agrees_with_the_function
+FAILED tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
+FAILED tests/test_core_freeze_policy.py::test_the_policy_names_every_non_core_package
+FAILED tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks
+FAILED tests/test_core_guards.py::test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green
+FAILED tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree
+FAILED tests/test_core_guards.py::test_the_battery_march_runs_the_solver_it_names
+FAILED tests/test_core_guards.py::test_every_marched_step_carries_its_own_cell_report
+FAILED tests/test_core_scientific_audit_batch24.py::test_r39_the_word_says_that_agreement_between_solvers_is_one_of_the_things_it_covers
+FAILED tests/test_core_guards.py::test_the_domain_names_were_derived_from_the_packages_not_listed
+FAILED tests/test_spatial_core.py::test_meshio_roundtrip_preserves_identity
+FAILED tests/test_spatial_core.py::test_duplicate_facet_and_flattening_are_refused
+ERROR flagships/tests/test_flagship_ladders.py - ImportError while importing ...
+ERROR flagships/tests/test_thermoelastic_adapters.py - ImportError while impo...
+ERROR providers/calculix/tests/test_calculix_provider.py - ImportError while ...
+ERROR providers/cantera/tests/test_cantera_provider.py - ImportError while im...
+ERROR providers/code_aster/tests/test_code_aster_provider.py - ImportError wh...
+ERROR providers/coolprop/tests/test_coolprop_provider.py - ImportError while ...
+ERROR providers/fenicsx/tests/test_coupling_fenicsx.py - ImportError while im...
+ERROR providers/fenicsx/tests/test_multiscale_fenicsx.py - ImportError while ...
+ERROR providers/fenicsx/tests/test_pde_fenicsx.py - ImportError while importi...
+ERROR providers/openfoam/tests/test_openfoam_provider.py - ImportError while ...
+ERROR providers/openmodelica/tests/test_openmodelica_provider.py - ImportErro...
+ERROR providers/precice/tests/test_precice_provider.py - ImportError while im...
+ERROR providers/pybamm/tests/test_pybamm_provider.py - ImportError while impo...
+ERROR providers/su2/tests/test_su2_provider.py - ImportError while importing ...
+ERROR providers/tespy/tests/test_tespy_provider.py - ImportError while import...
+ERROR tests/domains/battery/test_audit_domains_battery_pulse.py - ImportError...
+ERROR tests/mcp/test_answer.py - ImportError while importing test module 'C:\...
+ERROR tests/mcp/test_audit_domains_electrothermal_transient.py - ImportError ...
+ERROR tests/mcp/test_audit_domains_refused_coupling.py - ImportError while im...
+ERROR tests/mcp/test_core_scientific_audit_batch8.py - ImportError while impo...
+```
+
+Relevant failure names — SCIENTIFIC (full diagnostics in saved log):
+```text
+FAILED tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result
+FAILED tests/domains/test_audit_domains_unscreened_claims.py::test_the_held_resistance_limitation_is_stated_where_a_caller_reads
+FAILED benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+FAILED benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+FAILED tests/test_core_scientific_audit_batch24.py::test_r39_the_word_says_that_agreement_between_solvers_is_one_of_the_things_it_covers
+FAILED tests/test_core_api_contracts.py::test_the_frozen_digest_is_identical_in_fresh_processes
+FAILED tests/test_core_api_snapshot.py::test_the_snapshot_is_byte_identical_across_fresh_processes
+FAILED tests/test_core_certificate.py::test_the_certificate_describes_this_tree
+FAILED tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully
+FAILED tests/test_core_scientific_audit_batch56.py::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see
+FAILED tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 - ...
+FAILED tests/test_core_freeze_manifest.py::test_the_command_line_verifier_agrees_with_the_function
+FAILED flagships/tests/test_flagship_portfolio.py::test_ghia_excerpt_is_a_numerical_benchmark_with_a_content_identity_and_matches_an_independent_transcription
+FAILED flagships/tests/test_flagship_portfolio.py::test_nist_hess_reference_is_analytic_carries_source_digests_and_its_numbers_recompute
+FAILED flagships/tests/test_flagship_portfolio.py::test_the_nasa_battery_reference_is_pinned_by_the_repository_manifest_and_has_no_copied_data
+FAILED flagships/tests/test_flagship_portfolio.py::test_the_analytic_references_of_the_structure_flagship_are_labelled_analytic_and_apply_only_inside_their_envelopes
+FAILED flagships/tests/test_flagship_portfolio.py::test_the_first_law_reference_is_analytic_and_states_it_shares_a_property_backend
+FAILED flagships/tests/test_flagship_portfolio.py::test_the_numeric_criteria_are_pinned_to_the_preregistration_file_and_recorded_failures_stay_recorded
+FAILED tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies
+FAILED tests/test_core_freeze_policy.py::test_the_policy_names_every_non_core_package
+FAILED tests/claims/test_claims_assessment.py::test_the_mcp_tool_returns_the_same_record
+FAILED tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks
+FAILED tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree
+FAILED tests/test_core_guards.py::test_the_battery_march_runs_the_solver_it_names
+FAILED tests/test_core_guards.py::test_every_marched_step_carries_its_own_cell_report
+FAILED tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract
+FAILED tests/test_core_guards.py::test_the_domain_names_were_derived_from_the_packages_not_listed
+FAILED tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds
+FAILED tests/test_core_freeze_v4_manifest.py::test_the_deep_surface_carries_methods_and_member_positions
+FAILED tests/test_core_guards.py::test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green
+FAILED tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one
+FAILED tests/test_spatial_core.py::test_meshio_roundtrip_preserves_identity
+FAILED tests/test_spatial_core.py::test_duplicate_facet_and_flattening_are_refused
+ERROR flagships/tests/test_flagship_ladders.py - ImportError while importing ...
+ERROR flagships/tests/test_thermoelastic_adapters.py - ImportError while impo...
+ERROR providers/calculix/tests/test_calculix_provider.py - ImportError while ...
+ERROR providers/cantera/tests/test_cantera_provider.py - ImportError while im...
+ERROR providers/code_aster/tests/test_code_aster_provider.py - ImportError wh...
+ERROR providers/coolprop/tests/test_coolprop_provider.py - ImportError while ...
+ERROR providers/fenicsx/tests/test_coupling_fenicsx.py - ImportError while im...
+ERROR providers/fenicsx/tests/test_multiscale_fenicsx.py - ImportError while ...
+ERROR providers/fenicsx/tests/test_pde_fenicsx.py - ImportError while importi...
+ERROR providers/openfoam/tests/test_openfoam_provider.py - ImportError while ...
+ERROR providers/openmodelica/tests/test_openmodelica_provider.py - ImportErro...
+ERROR providers/precice/tests/test_precice_provider.py - ImportError while im...
+ERROR providers/pybamm/tests/test_pybamm_provider.py - ImportError while impo...
+ERROR providers/su2/tests/test_su2_provider.py - ImportError while importing ...
+ERROR providers/tespy/tests/test_tespy_provider.py - ImportError while import...
+ERROR tests/domains/battery/test_audit_domains_battery_pulse.py - ImportError...
+ERROR tests/mcp/test_answer.py - ImportError while importing test module 'C:\...
+ERROR tests/mcp/test_audit_domains_electrothermal_transient.py - ImportError ...
+ERROR tests/mcp/test_audit_domains_refused_coupling.py - ImportError while im...
+ERROR tests/mcp/test_core_scientific_audit_batch8.py - ImportError while impo...
+```
+
+Diagnostic counterexamples executed through PowerShell here-strings piped to `py -3.14 -`: failed version probe returned AVAILABLE and minted identity; changed synthetic installed solver bytes retained distribution_digest; infinite replay tolerance returned numerical_reproducibility=True; actual write_bundle with traversal reference ID wrote outside bundle in a disposable temporary directory. These are software counterexamples, not scientific validation. Independent scientific reviewer: CHANGES REQUIRED for supplied bundle/reference excerpts only; tests NOT RUN by reviewer.
+
+Failed approach: broad tiers overlapped while SCIENTIFIC regenerated tracked benchmark reports, causing source-identity replay interference. Do not repeat this concurrency arrangement for an acceptance baseline. Isolated claim replay pack passed; other failures remain unclassified beyond dependency/dirty-tree categories. Hardened recertification, mutation populations, external solver validation, remote CI and branch policy: NOT RUN / NOT inspected.
+
+2026-10-05 19:12 +03:00
+command: `git diff --check`
+result: PASS
+summary: exit 0; no whitespace errors
+commit: a3f757eb5fdbc804ef11e3c4088a757c31981870
+
+## Per-model audit — 2026-10-13 (in progress)
+
+User requested a full current-tree model audit. Baseline HEAD:
+`a3f757eb5fdbc804ef11e3c4088a757c31981870`, branch main, existing uncommitted
+ACTIVE_PLAN/PROGRESS and PROJECT_REVIEW_2026-10-05 preserved. Read-only
+independent reviewers cover native electrical/battery/systems,
+thermal/kinetics/lifecycle, and external provider/flagship models. Primary
+reviewer executes diagnostics and reviews shared scientific boundaries.
+Python 3.14.2 local environment differs from CI 3.11/3.12; not release acceptance.
+Snapshot: 111 non-test source files in physical-model/provider/flagship scope,
+26 literal ScientificModelDefinition/ModelRealizationDefinition calls, 3189
+benchmark JSONs backed up before any broad tier. Counts describe inventory,
+not scientific maturity or model completeness.
+
+command: `$env:PYTEST_ADDOPTS='--basetemp=.pytest-review-temp/model-audit-20261013/regression-temp'; py -3.14 tools/forge_check.py --regression *> .pytest-review-temp/model-audit-20261013/regression.log`
+result: PASS — 225 passed in 16.32s, exit 0.
+
+command: `py -3.14 .pytest-review-temp/model-audit-20261013/counterexamples.py *> .pytest-review-temp/model-audit-20261013/counterexamples.log`
+result: BLOCKED — initial diagnostic script lacked PYTHONPATH; ModuleNotFoundError: engcore; no counterexamples ran. Corrected below.
+
+command: `$env:PYTHONPATH='src'; py -3.14 .pytest-review-temp/model-audit-20261013/counterexamples.py *> .pytest-review-temp/model-audit-20261013/counterexamples.log`
+result: EXECUTED — exit 0; all five diagnostic examples ran. 2D equivalent K/mK
+inputs returned centers 300.5K/300.0005K while both verification reports passed;
+lumped returned 0K vs independent 400K and awarded analytically_verified;
+battery curve B solved under curve A problem; all four battery model bindings
+used RINT realization; dropping derating declarations reduced utilization
+1.1705009926427654 to0.8 at160C. These demonstrate software/authority defects or
+scientific-design concerns, not physical validation. Exact outputs saved in log.
+
+Failed approach: a diagnostic file launched by path does not inherit pytest's
+src path setting. Set PYTHONPATH explicitly for standalone scripts. Do not
+repeat the October5 concurrent broad-tier arrangement: tiers run sequentially,
+and benchmark content must be checked/restored against the initial snapshot.
+
+command: `py -3.14 .pytest-review-temp/model-audit-20261013/counterexamples2.py *> .pytest-review-temp/model-audit-20261013/counterexamples2.log`
+result: EXECUTED — exit0, five examples. OpenFOAM/SU2 accept Re=-100000 from
+negative lid velocity while refusing positive +100000; contradictory material
+interpolation returns known216 at450K while direct400K is UNKNOWN; identical
+CSTR rungs award numerically_converged; omitted conductor class changes
+UNKNOWN to IN_DOMAIN; NaN model-form holdout policy changes coverage0.0 from
+FAILED_HOLDOUT to VALIDATED, and standalone promotion returns MODEL_FORM
+interval299..301K with caller-supplied qualification. Production claims UQ
+runtime has an independent empty qualification-pin registry; the standalone
+counterexample does not establish a production terminal SUPPORTED verdict.
+
+command: `py -3.14 .pytest-review-temp/model-audit-20261013/counterexamples3.py *> .pytest-review-temp/model-audit-20261013/counterexamples3.log`
+result: EXECUTED after two fixture repairs — exit0. Initial thermal-case fixture
+used scalar arguments where RegionMaterial requires ResolvedProperty records;
+first repair still used Quantity instead of records. Both were caught TypeError
+fixture failures, not product counterexamples. Final fixture uses canonical
+records and all four examples complete: FTCS r=.8 yields negative midpoint-.6,
+physics IN_DOMAIN and is_usable=True despite realization OUTSIDE; negative/NaN
+fluid mole fractions accepted; Calculix parser accepts stress element99 for
+one-element mesh; thermoelastic cases with300K/600K fields share to_dict under
+same caller temperature digest. Final Calculix/CodeAster decks bind actual
+thermal bytes, so latter is a case/source-provenance flaw, not proven identical
+final provider execution identities.
+
+## 2026-10-15 - Solver support-gate review fixes
+
+- Finding: ngspice DC adapter matched realizations by model id only (served_models=()), so a problem naming electrical.dc.kcl@99.0 was accepted while the native solver refused it.
+- Finding: the native DC adapter accepted a problem naming a served model alongside an unknown one; the unknown model was silently never assessed.
+- Fix: dc_realizations.py keys realizations by (model_id, version); ngspice.py gate and binding use the version key; dc/solver.py adds additional_support_gap refusing any named model it does not serve. The core protocol.py was NOT changed (pinned by certification/current_core_v2.json, digest-protected).
+- Tests added: tests/domains/electrical/test_support_version_gate.py (6 tests; 4 fail on the committed files, confirmed by swap).
+- Command: .venv/Scripts/python.exe -m pytest tests/domains/electrical tests/test_heterogeneous_ngspice.py -q -p no:cacheprovider --basetemp=<scratch>
+  Result: 393 passed.
+- Command: .venv/Scripts/python.exe -m pytest <127 test files referencing electrical/ngspice/consensus> -m "not expensive and not campaign" -q -n 4
+  Result: 3084 passed, 3 skipped, 13 failed, 1 error. All 13 failures and the error are pre-existing harness issues: ModuleNotFoundError for bare sibling test imports (test_cross_solver_consensus, test_trusted_consensus_gate, mutation_guards) and two guard tests (test_the_bare_install_the_readme_documents_is_the_one_that_must_be_green, test_the_domain_names_were_derived_from_the_packages_not_listed) that also fail on the committed files.
+- Not run: the full FAST/SCIENTIFIC tiers and the core certificate test (protocol.py untouched).
+- Open (not fixed): DC validation _worst_against skips NaN residuals (electrical/dc/validation.py); CSTR sampled-extrema admission in cstr/solver.py bundle path; the core rule "any-overlap" in scientific/solvers/protocol.py needs a core-freeze decision.

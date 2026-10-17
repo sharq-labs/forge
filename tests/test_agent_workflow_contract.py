@@ -19,10 +19,8 @@ def test_root_claude_contract_names_the_scientific_guardrails_and_automatic_ci()
         assert required in text
 
 
-def test_scientific_reviewer_and_persistent_work_memory_exist():
+def test_persistent_work_memory_exists():
     required = (
-        ".claude/agents/forge-scientific-reviewer.md",
-        ".claude/skills/forge-scientific-review/SKILL.md",
         "docs/work/PROGRESS.md",
         "docs/work/ACTIVE_PLAN.md",
     )

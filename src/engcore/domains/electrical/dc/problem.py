@@ -255,6 +255,25 @@ def verify_problem_matches_circuit(
         subject=f"circuit {circuit.circuit_id!r}",
     )
 
+    # The result's ``models`` come from the circuit, never from the problem. A
+    # problem naming a model version, or an extra model, that the circuit does
+    # not invoke would have it silently dropped; a problem omitting one would
+    # be paired with a result reporting a model it never named. Either way the
+    # problem record would not describe the computation that ran. The metadata
+    # fingerprint survives ``dataclasses.replace``, so it cannot catch this.
+    named = {model.key for model in problem.models}
+    invoked = {
+        (model.model_id, model.version) for model in models_for_circuit(circuit)
+    }
+    if named != invoked:
+        extra = sorted(f"{m}@{v}" for m, v in named - invoked)
+        missing = sorted(f"{m}@{v}" for m, v in invoked - named)
+        raise CircuitBindingError(
+            f"problem {problem.problem_id!r} does not name the models circuit "
+            f"{circuit.circuit_id!r} invokes (named but not invoked: {extra}; "
+            f"invoked but not named: {missing})"
+        )
+
 
 def _short(fingerprint: str | None) -> str:
     """Enough of a digest to identify it in an error, without dumping a

@@ -100,14 +100,6 @@ to `docs/work/PROGRESS.md`. If execution is unavailable, write **NOT RUN**.
 A code review is not test execution. Static inspection is not a scientific
 validation result.
 
-## Reviewer separation
-
-After changing claim/evidence/UQ/assurance behavior, invoke the
-`forge-scientific-review` skill. The reviewer is read-only and should try to
-find false support, authority leaks, hidden defaults, context mismatches and
-verification/validation confusion. The builder does not silently overrule a
-review finding; either fix it or record why it is not applicable.
-
 ## Long-running sessions
 
 Treat `docs/project/FORGE_MASTER_PLAN.md` as the persistent strategic contract.
