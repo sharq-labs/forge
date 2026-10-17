@@ -80,6 +80,15 @@ class MultiphysicsExecutionError(ScientificCoreError):
     """A coupled execution cannot continue without inventing state or science."""
 
 
+class CouplingWindowNotConverged(MultiphysicsExecutionError):
+    """A window failed NUMERICALLY: iteration limit, divergence, or a participant's internal solve.
+
+    The only failure a :class:`WindowControlPolicy` may retry over a shorter
+    window.  Refusals (units, missing inputs, provenance, admission) are never
+    of this type, so they are never retried.
+    """
+
+
 @dataclass(frozen=True)
 class _IterationOutcome:
     edge_values: Mapping[str, CouplingValue]
@@ -294,6 +303,7 @@ class MultiphysicsRuntime:
         self.diagnostic_balances = diagnostic
         self.graph = graph
         self.plan = plan
+        self._window_control_log: list[dict[str, Any]] = []
         self.participants = dict(participants)
         self.resolver = resolver
         self.store = store
@@ -567,7 +577,7 @@ class MultiphysicsRuntime:
                 f"participant {participant_id!r} advanced beyond synchronization time"
             )
         if not result.internal_converged:
-            raise MultiphysicsExecutionError(
+            raise CouplingWindowNotConverged(
                 f"participant {participant_id!r} did not converge internally"
             )
         if actual < requested - tolerance:
@@ -1113,6 +1123,12 @@ class MultiphysicsRuntime:
                 checkpoints,
             )
             iterations.append(outcome.record)
+            diverging = self._diverging_edge(iterations)
+            if diverging:
+                raise CouplingWindowNotConverged(
+                    f"coupling window {index} [{start}, {end}] is diverging: "
+                    f"{diverging}"
+                )
 
             if outcome.event is not None and self.plan.time.align_events:
                 event_time = Quantity.from_dict(outcome.event["instant"])
@@ -1223,7 +1239,7 @@ class MultiphysicsRuntime:
             tuple(iterations),
         )
         if self.plan.fail_on_nonconvergence:
-            raise MultiphysicsExecutionError(
+            raise CouplingWindowNotConverged(
                 f"coupling window {index} [{start}, {end}] reached "
                 f"{self.plan.max_iterations} iterations without convergence"
             )
@@ -1235,6 +1251,112 @@ class MultiphysicsRuntime:
             current_output_uncertainty,
             current_transfers,
         )
+
+    def _diverging_edge(
+        self, iterations: list[CouplingIterationRecord]
+    ) -> str:
+        """Name an edge whose residual grew past the declared divergence factor, or ''."""
+        control = self.plan.window_control
+        if (
+            control is None
+            or control.divergence_factor is None
+            or self.plan.scheme is not CouplingScheme.IMPLICIT
+            or len(iterations) < 2
+        ):
+            return ""
+        first = {item.edge_id: item.absolute for item in iterations[0].residuals}
+        for item in iterations[-1].residuals:
+            reference = first.get(item.edge_id)
+            if reference is None:
+                continue
+            base = reference.magnitude_in(str(item.absolute.units))
+            if base <= 0.0:
+                continue
+            ratio = item.absolute.magnitude / base
+            if ratio > control.divergence_factor:
+                return (
+                    f"edge {item.edge_id!r} residual grew {ratio:.3g}x over "
+                    f"{len(iterations)} iterations (declared limit "
+                    f"{control.divergence_factor:g}x)"
+                )
+        return ""
+
+    def _controlled_window(
+        self,
+        index: int,
+        start: Quantity,
+        end: Quantity,
+        *state: Any,
+    ) -> tuple[Any, ...]:
+        """One coupling window under the plan's optional WindowControlPolicy.
+
+        Without a policy this is exactly ``_window``.  With one, a window that
+        fails numerically (:class:`CouplingWindowNotConverged`, or an
+        ITERATION_LIMIT outcome) is rolled back to ``start`` and retried over
+        a shorter window.  The shorter window is held to the same criteria; a
+        window that still fails is reported exactly as without the policy.
+        Every rejected attempt is logged in ``_window_control``.
+        """
+        control = self.plan.window_control
+        if control is None:
+            return self._window(index, start, end, *state)
+        start_s = self._seconds(start)
+        minimum_s = self._seconds(control.minimum_window)
+        checkpoints = self._checkpoint_all(start)
+        attempt_end = end
+        subdivisions = 0
+        while True:
+            failure: CouplingWindowNotConverged | None = None
+            result: tuple[Any, ...] | None = None
+            try:
+                result = self._window(index, start, attempt_end, *state)
+            except CouplingWindowNotConverged as exc:
+                failure = exc
+            if result is not None and result[0].outcome is not WindowOutcome.ITERATION_LIMIT:
+                if subdivisions:
+                    self._window_control_log.append({
+                        "window_index": index,
+                        "action": "accepted_after_subdivision",
+                        "start_s": start_s,
+                        "end_s": self._seconds(result[0].end),
+                        "subdivisions": subdivisions,
+                    })
+                return result
+            reason = (
+                str(failure) if failure is not None
+                else f"iteration limit ({self.plan.max_iterations}) without convergence"
+            )
+            width = self._seconds(attempt_end) - start_s
+            next_width = width * control.reduction_factor
+            if (
+                subdivisions >= control.max_subdivisions
+                or next_width < minimum_s * (1.0 - 1e-12)
+            ):
+                self._window_control_log.append({
+                    "window_index": index,
+                    "action": "exhausted",
+                    "start_s": start_s,
+                    "attempted_end_s": self._seconds(attempt_end),
+                    "subdivisions": subdivisions,
+                    "reason": reason,
+                })
+                if failure is not None:
+                    raise CouplingWindowNotConverged(
+                        f"{failure} (after {subdivisions} window subdivision(s); "
+                        f"minimum window {control.minimum_window})"
+                    ) from failure
+                return result  # ITERATION_LIMIT, as the plan allows without failing
+            self._restore_all(checkpoints)
+            subdivisions += 1
+            self._window_control_log.append({
+                "window_index": index,
+                "action": "subdivided",
+                "start_s": start_s,
+                "attempted_end_s": self._seconds(attempt_end),
+                "retry_end_s": start_s + next_width,
+                "reason": reason,
+            })
+            attempt_end = Quantity(start_s + next_width, "second")
 
     # =================================================================
     # SCENARIO-DRIVEN EXECUTION
@@ -1483,6 +1605,7 @@ class MultiphysicsRuntime:
         run_id = str(run_id).strip()
         if not run_id:
             raise InvalidScientificProblem("multiphysics run requires run_id")
+        self._window_control_log: list[dict[str, Any]] = []
 
         requested_state = {} if initial_state is None else dict(initial_state)
         unknown_state_owners = set(requested_state) - set(self.participants)
@@ -1747,7 +1870,7 @@ class MultiphysicsRuntime:
                     outputs,
                     output_uq,
                     transfers,
-                ) = self._window(
+                ) = self._controlled_window(
                     index,
                     Quantity(current_time, "second"),
                     Quantity(target, "second"),
@@ -1833,6 +1956,12 @@ class MultiphysicsRuntime:
                 conservation_history, self.diagnostic_balances
             )
         final_outputs["_coupling_error"] = error_budget.to_dict()
+        if self.plan.window_control is not None:
+            # rejected attempts are part of the numerical record, never hidden
+            final_outputs["_window_control"] = {
+                "policy": self.plan.window_control.to_dict(),
+                "events": list(self._window_control_log),
+            }
 
         ended_at = Quantity(current_time, "second")
         qoi_records = tuple(

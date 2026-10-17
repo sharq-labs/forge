@@ -48,6 +48,7 @@ from .plan import (
     CONVERGENCE_CRITERION_SCHEMA,
     RELAXATION_POLICY_SCHEMA,
     TIME_POLICY_SCHEMA,
+    WINDOW_CONTROL_SCHEMA,
     ConvergenceCriterion,
     CouplingPlan,
     CouplingScheme,
@@ -56,6 +57,7 @@ from .plan import (
     RelaxationPolicy,
     ResidualNorm,
     TimePolicy,
+    WindowControlPolicy,
 )
 from .ports import (
     PORT_REF_SCHEMA,
@@ -158,6 +160,7 @@ __all__ = [
     "RUN_SCHEMA_V1",
     "RUN_SCHEMA_V2",
     "TIME_POLICY_SCHEMA",
+    "WINDOW_CONTROL_SCHEMA",
     "WINDOW_SCHEMA",
     "BalanceSide",
     "CheckpointRecord",
@@ -203,6 +206,7 @@ __all__ = [
     "ResidualNorm",
     "TimePolicy",
     "TransferMeasure",
+    "WindowControlPolicy",
     "WindowOutcome",
     "analyze_composition",
     "coupling_value_from_dict",

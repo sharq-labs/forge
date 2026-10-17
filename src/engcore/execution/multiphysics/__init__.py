@@ -49,7 +49,7 @@ from .participant import (
     validate_uncertainty,
 )
 from .relaxation import RelaxationController, relax_uncertainty
-from .runtime import MultiphysicsExecutionError, MultiphysicsRuntime
+from .runtime import CouplingWindowNotConverged, MultiphysicsExecutionError, MultiphysicsRuntime
 from .transfer import (
     FrameTransform,
     TransferEngine,
@@ -83,6 +83,7 @@ __all__ = [
     "ParameterValue",
     "MultiphysicsExecutionAdmission",
     "MultiphysicsExecutionError",
+    "CouplingWindowNotConverged",
     "MultiphysicsRuntime",
     "ParticipantEvent",
     "ParticipantFactory",
