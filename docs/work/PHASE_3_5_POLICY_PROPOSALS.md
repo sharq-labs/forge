@@ -1,6 +1,10 @@
 # Phase 3.5 — proposed policy changes (NOT ACTIVE)
 
-Status: **PROPOSED, not approved, not in force.** Written 2026-10-18 by Claude for the owner. Nothing below authorizes
+Status: **PROPOSED, not approved, not in force.** **Update 2026-10-18: OD-6 decided by the owner** -- the active epic
+becomes the research program `engrt.numerical_foundations`, whose gates M1, M2, E1, E2, E3 take over the scopes of
+P35-A4, P35-A5, P35-E1, P35-E2 and P35-E3 (no separate exceptions needed). It is in force only when branch
+`feat/od6-engineering-program-epic` (`a40ddc5d`, from `origin/main`) is reviewed and merged; until then everything
+below stays blocked. Written 2026-10-18 by Claude for the owner. Nothing below authorizes
 any work. The active epic is `battery.thevenin_1rc` (`docs/project/scientific_capability_completion.json`); EXC-1
 (adaptive mesh control, amendments A1–A3) is the only open exception and expires 2026-10-31
 (`docs/work/ACTIVE_PLAN.md`). The policy is `docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md`.

@@ -12,7 +12,8 @@ commits only; no test execution, push, PR, merge or certification. Deferred chec
 - [ ] WS4 transient 1D adaptation, conservative transfer, coarsening, triangle refinement -- BLOCKED (P35-A4/A5).
 - [ ] WS5 provider-backed nonlinear PDE -- BLOCKED (P35-E1, needs OD-6).
 - [ ] WS6 ALE formulation -- BLOCKED (P35-E3, needs OD-6).
-- [ ] Owner: OD-P35-1..OD-P35-5 (PROGRESS 2026-10-18); regenerate two flagship bundles (DV-93); authorize deferred validation; OD-3.
+- [x] OD-6 / OD-P35-2 decided 2026-10-18: active epic -> research program `engrt.numerical_foundations` (branch `feat/od6-engineering-program-epic` `a40ddc5d`, in force on merge); WS4-WS6 and real FE/CFD become program gates M1, M2, E1-E3.
+- [ ] Owner: review/merge the OD-6 branch; OD-P35-1, OD-P35-3..5; regenerate two flagship bundles (DV-93); authorize deferred validation; OD-3.
 
 ## Active override — Phase 3: advanced numerical & multiphysics engine, build phase (2026-10-17)
 
