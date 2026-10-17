@@ -1,5 +1,24 @@
 # Active Plan
 
+## Active override — Phase 3: advanced numerical & multiphysics engine, build phase (2026-10-17)
+
+Branch `feat/phase3-advanced-numerical-multiphysics` (worktree `D:/forge-phase3`), stacked on Phase 2 `2661b640`.
+Local commits only: no push, PR, merge, certificate or test execution (owner direction). Rocks are P3-BR13..P3-BR17.
+Deferred checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md) DV-65..DV-86 (Phase 1 DV-31..DV-47 and Phase 2
+DV-48..DV-64 unchanged). Phase 4 not started.
+
+- [x] P3-BR13 numerical-health vocabulary, damped Newton, chain acceptance, measure-weighted residual norm (`1d80a142`), tests NOT RUN.
+- [x] P3-BR14 one IQN accelerator; bounded IQN-IMVJ with recorded history validity (`9f96c560`), tests NOT RUN.
+- [x] P3-BR15 step-doubling window error indicator, recorded clocks and forced short windows, subcycling contract (`87c271ab`), tests NOT RUN.
+- [x] P3-BR16 mesh validity checks and adaptation provenance (`f2df47d2`) -- PARTIAL: refinement extensions BLOCKED (EXC-1).
+- [x] P3-BR17 nonlinear PDE admission contract; moving-mesh kinematics and GCL (`0a97c8a7`) -- PARTIAL: nonlinear PDE execution and ALE BLOCKED.
+- [x] Read-only review: 5 MAJOR + 5 MINOR fixed (`080751eb`), 3 MINOR recorded; tests NOT RUN.
+- [ ] Owner: OD-P3-1 (EXC-1 amendment: coarsening, transient non-uniform 1D, 1D grid-to-grid conservative transfer),
+      OD-P3-2 (triangle/tetrahedron refinement, changing-mesh coupling), OD-P3-3 (a nonlinear PDE template + provider
+      Newton adapter), OD-P3-4 (an ALE formulation), OD-P3-5 (confirm the Phase 3 infrastructure is inside policy),
+      OD-P3-6 (schedule-forced windows below minimum_window), OD-P3-7 (make l2_measure / error control mandatory anywhere).
+- [ ] Owner: authorize Phase 1 + 2 + 3 deferred validation; push/PR; OD-3. Phase 2 decisions OD-P2-1..OD-P2-5 still open.
+
 ## Active override — Phase 2: unified solver & multiphysics architecture, build phase (2026-10-17)
 
 Branch `feat/phase2-unified-solver-architecture` (worktree `D:/forge-phase2`), stacked on Phase 1 `6249c2d2`. Local

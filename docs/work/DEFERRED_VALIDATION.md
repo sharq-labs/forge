@@ -583,3 +583,193 @@ BLOCKED -- real FE <-> CFD conjugate heat transfer (owner decision OD-P2-1):
 | m | MINOR | Pre-Phase-2 PyBaMM checkpoints (no build tag) are refused; provider_state_id of new checkpoints changes | Recorded (DV-55); in-process checkpoints only, none stored. |
 | m | MINOR | `sign_convention` is metadata only; INTENSIVE edges unchecked | Recorded: the contract checks mapping/unit/pairing, not the sign of transferred values. |
 | m | MINOR | Mock refusal happens after the run executes; build-drift break consumes an attempt; `converted_resume_point` does not re-check the problem (safe only because the caller checked it); legacy unbound checkpoints resume on any build; BoxIndex O(n^2) registrations for domain-sized boxes; `session.identity` read not classified | Recorded, not changed. |
+
+## Phase 3 — Advanced numerical & multiphysics engine (2026-10-17)
+
+Branch `feat/phase3-advanced-numerical-multiphysics` (worktree `D:/forge-phase3`), stacked on Phase 2 `2661b640`
+(itself on Phase 1 `6249c2d2` on `origin/main` `de11dffa`; none pushed or merged, re-verified 2026-10-17). Rocks are
+P3-BR13..P3-BR17. **No test of any kind was executed** (owner direction): only `py_compile`, import checks and
+`git diff --check`. Every changed capability is IMPLEMENTED / UNVERIFIED at most; every touched pinned file is
+UNCERTIFIED until OD-3. Phase 1 (DV-31..DV-47) and Phase 2 (DV-48..DV-64) items are NOT resolved by Phase 3 unless a
+row below says so.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-65 | P3-BR13 health, damped Newton, chain acceptance, weighted norm | New tests | `pytest tests/test_phase3_br13_numerical_stability.py -q` | NOT RUN |
+| DV-66 | P3-BR13 | Existing robust-solve and heater-chain suites: a chain with differing tolerances is now refused (every existing chain declares identical ones); `NumericalDiagnostics` serializes unchanged when the new fields are unset | `pytest tests/numerical tests/domains/electrical -q` | NOT RUN |
+| DV-67 | P3-BR13 | Weighted vs unweighted field norms on real coupled runs with non-uniform supports (does `l2_measure` change convergence decisions where `l2` misled?); existing coupling suites (unchanged: no plan declares `l2_measure`) | `pytest tests -q -k "multiphysics or coupling" -m "not expensive"` + new comparison test | NOT RUN / comparison NOT WRITTEN |
+| DV-68 | P3-BR13 | Nonlinear robustness campaign: Newton / Newton-Armijo vs MINPACK hybr / lm on a declared problem set; failure-class distribution only, no performance claim | owner-authorized benchmark | NOT WRITTEN |
+
+### P3-BR13 status: IMPLEMENTED / UNVERIFIED
+
+- `numerical/health.py`: `NumericalFailureClass` (non_finite, diverging, stagnating, step_stagnation,
+  line_search_failed, singular_jacobian, iteration_limit, tolerance_not_met, backend_failure); history detectors with
+  the coupling runtime's rules; `ResidualScaling` (declared, never inferred); `RESIDUAL_IS_NOT_AN_ERROR_BOUND`.
+- `numerical/nonlinear.py`: `DampedNewtonProvider` (`newton`, `newton_armijo`) for square NONLINEAR_ROOT problems --
+  every acceptance value explicit; declared or finite-difference Jacobian; optional `condition_limit`; a vanishing step
+  with a large residual is STEP_STAGNATION, never convergence; every failure classified; the last iterate withheld.
+- `numerical/robust.py`: a fallback chain cannot loosen acceptance (identical tolerances, or one `ChainAcceptance`
+  re-evaluated from the problem's own residual on every converged attempt); attempts carry the failure class.
+- `ResidualNorm.L2_MEASURE` (`execution/multiphysics/field_measures.py`): measure-weighted RMS; the unweighted `l2`
+  stays as it was and is documented as RMS over stored values.
+- `numerical/mesh_quality.py`: measures, orientation, inversion, degeneracy (64 eps h^d), shape quality.
+
+Unsupported regimes (refused, not approximated): non-square or least-squares "root" problems; finite-difference
+Jacobians above 4096 unknowns; `l2_measure` on scalar edges, quadrilateral node fields and hexahedra; trust-region
+globalization in the new provider (MINPACK `hybr` / `lm` remain the trust-region methods).
+
+### Unverified assumptions (P3-BR13)
+
+- The Armijo slope `-2 phi` assumes the linear solve is exact; a nearly singular Jacobian without a declared
+  `condition_limit` can make the direction poor (it is then classified by the line search or the history, not hidden).
+- The weighted RMS of a vector field gives every component of a site the site's weight (one shared frame).
+- `DampedNewtonProvider`'s step-stagnation test uses `step_rtol * (1 + ||x||_inf)` in normalized space.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-69 | P3-BR14 accelerator, IMVJ | New tests | `pytest tests/test_phase3_br14_iqn_imvj.py -q` | NOT RUN |
+| DV-70 | P3-BR14 | Existing IQN-ILS suite: the arithmetic moved to `acceleration.py` unchanged (same operations in the same order); error messages kept | `pytest tests/test_multiphysics_iqn_ils.py tests/test_multiphysics_window_control.py -q` | NOT RUN |
+| DV-71 | P3-BR14 | IMVJ vs ILS on NONLINEAR coupled maps, ill-conditioned or dependent histories, field-valued interfaces; convergence and fallback recorded, no rate claimed | new tests | NOT WRITTEN |
+| DV-72 | P3-BR14 | Accelerator history across window rejection end to end (an IMVJ run under window control with subdivisions and error rejections) | new test | NOT WRITTEN |
+
+### P3-BR14 status: IMPLEMENTED / UNVERIFIED
+
+- One accelerator (`execution/multiphysics/acceleration.py::InterfaceQuasiNewton`) for IQN-ILS and IQN-IMVJ;
+  `RelaxationController` delegates; the runtime begins each attempt with its exact duration and ends it as accepted or
+  rejected; a fresh controller per run.
+- IQN-IMVJ: `J = J_prev + (W - J_prev V)(D V)^+ D`, `x <- H(x) - J r` (`J_prev = 0` gives IQN-ILS). Carried only from an
+  accepted, CONVERGED window into one of the same exact duration, layout and supports; discarded (recorded) on
+  rejection/rollback, event re-run, iteration-limit acceptance, layout/support change, `imvj_reuse_windows` reuses, or
+  a non-finite update (which also falls back to constant relaxation for that step). Interfaces above
+  `imvj_max_dimension` are refused. IMVJ additionally drops secant columns below `iqn_filter` x the largest column.
+- Convergence coverage is unchanged: every required edge is still judged on its UNRELAXED transfer.
+- Uncertainty of an accelerated iterate: UNKNOWN. No Gauss-Seidel IQN variant is admitted.
+- Record: `final_outputs["_acceleration"]` always for IMVJ; for ILS only after a non-routine event.
+
+### Unverified assumptions (P3-BR14)
+
+- A carried approximation is assumed useful only for windows of identical exact duration; windows of other lengths
+  (subdivided retries, schedule-forced ends) restart from zero. This is conservative, not optimal.
+- `numpy.linalg.pinv` and `lstsq` agree to round-off on the filtered (full column rank) secant matrix, so IMVJ with
+  `J_prev = 0` reproduces IQN-ILS up to rounding, not bit for bit.
+- Restart-free IMVJ can accumulate stale information; `imvj_reuse_windows` bounds it, it does not prove it harmless.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-73 | P3-BR15 error-aware windows, clocks, subcycling | New tests | `pytest tests/test_phase3_br15_window_error_control.py -q` | NOT RUN |
+| DV-74 | P3-BR15 | Existing window-control, event-alignment and exact-time suites: window-controlled runs with schedule-forced short windows now record `forced_below_minimum_window`; participants reporting an end within the tolerance now produce `_time_grid` | `pytest tests/test_multiphysics_window_control.py tests/test_phase1_exact_time_windows.py tests/test_phase1_coupling_convergence_coverage.py tests/test_stateful_multiphysics_runtime.py -q` | NOT RUN |
+| DV-75 | P3-BR15 | Error control with implicit coupling, IQN-IMVJ, event-capable participants, field-valued outputs, step-size memory; exact rational boundaries of the half windows | new tests | NOT WRITTEN |
+| DV-76 | P3-BR15 | Temporal refinement study: step-doubling indicator vs observed local error on a problem with a known solution (is the indicator conservative for the actual participant schemes?) | new test / benchmark | NOT WRITTEN |
+
+### P3-BR15 status: IMPLEMENTED / UNVERIFIED
+
+- `WindowErrorControl` (plan, absent when unset): after a window converges it is re-executed as two half windows from
+  the restored start; `eta = max |c - f| / (atol + rtol max(|c|, |f|))`. `eta <= 1` keeps the COARSE window
+  (participants restored to its end, accelerator restored from a snapshot); `eta > 1` rejects it as
+  `rejected_error_indicator` (never `subdivided`) and retries a shorter window through the existing bounded
+  subdivision and step-size memory; exhaustion raises `CouplingWindowErrorNotControlled` (a retryable numerical
+  failure). Event-cut windows are `not_assessed`; failed or unrepresentable halves reject.
+- Schedule-forced windows below `minimum_window`: recorded, not refused (owner decision open, P1-BR4).
+- Participant clock differences within the reporting tolerance: recorded in `_time_grid` (plan order).
+- `subcycling.py`: the explicit in-window contract (zero-order input hold, window-end exchange, minimum substeps,
+  declared substep budget).
+
+Not an accuracy claim: the indicator is the local step-doubling difference; for an order `p >= 1` scheme in its
+asymptotic range the coarse local error is 1x to 2x it, neither order nor regime is verified, and nothing bounds the
+accumulated (global) error or model-form error. Without `error_control` window adaptation is convergence-driven only.
+
+### Unverified assumptions (P3-BR15)
+
+- Restoring every participant to the coarse end from a checkpoint taken there reproduces the coarse state exactly
+  (deterministic restore is required and digest-checked by `_restore_all`).
+- Half windows may be shorter than `minimum_window`; they are a measurement, not a schedule.
+- Clock disagreements are recorded once per (window, attempt, participant) and never from the half windows of an
+  assessment (review M4).
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-77 | P3-BR16 mesh validity, adaptation provenance | New tests | `pytest tests/test_phase3_br16_mesh_validity_and_adaptation.py -q` | NOT RUN |
+| DV-78 | P3-BR16 | Existing adaptation and non-uniform conduction suites (the adaptation record gains provenance keys; the EXC-1 exit gate DV-27..DV-30 still stands) | `pytest tests/numerical/test_mesh_adaptation.py tests/domains/thermal_models/test_conduction1d_nonuniform.py -q` | NOT RUN |
+| DV-79 | P3-BR16 | Mesh adaptation conservation and spatial/temporal refinement studies (transient non-uniform 1D, 2D/3D) | BLOCKED (policy, OD-P3-1/OD-P3-2) | NOT WRITTEN |
+
+### P3-BR16 status: PARTIAL / UNVERIFIED
+
+Implemented (inside existing authority): grid digests and per-cycle provenance (grid evaluated, cells marked,
+largest neighbour ratio, superseded grids); round-off bisections skipped; `require_supported_adaptation` refuses
+everything outside the EXC-1 A1 slice; mesh validity checks (`mesh_quality`, `assess_support`); relaxation and the
+accelerator never mix values on two supports.
+
+BLOCKED (EXC-1 enumerates its allowed work; each needs an owner-approved amendment): coarsening, transient /
+time-adaptive solves on adapted grids (no conservative state transfer between grids), triangle and tetrahedron
+refinement, coupled field transfer between changing meshes (the runtime registers supports at construction and
+refuses an unregistered one).
+
+Spatial/temporal relationship as built: spatial adaptation exists for steady 1D only; temporal adaptation is
+window-level (convergence- and, when declared, error-indicator-driven); there is no joint space-time adaptivity, and
+an adapted grid never carries a transient state.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-80 | P3-BR17 nonlinear PDE contract, moving-mesh kinematics | New tests | `pytest tests/test_phase3_br17_nonlinear_pde_and_moving_mesh.py -q` | NOT RUN |
+| DV-81 | P3-BR17 | Nonlinear PDE manufactured solutions through a real provider (e.g. FEniCSx Newton on a k(T) template) | BLOCKED (OD-P3-3) | NOT WRITTEN |
+| DV-82 | P3-BR17 | Moving-mesh geometric conservation inside a real ALE scheme; coupled ALE restart and replay | BLOCKED (OD-P3-4) | NOT WRITTEN |
+
+### P3-BR17 status: PARTIAL / UNVERIFIED (nonlinear PDE execution and ALE BLOCKED)
+
+- Inventory: four linear Forge templates (steady/transient diffusion, plane-stress and thermoelastic elasticity);
+  `forge_fenicsx` assembles them with a KSP solve; no provider implements a nonlinear PDE or any moving mesh.
+- `pde/nonlinear.py` (contract only): no template is nonlinear, so every one is refused; `NonlinearSolveSpec`,
+  `InitialGuess` and `admit_nonlinear_execution` (re-derives convergence from Newton histories; refuses false
+  convergence) are what a future provider would be held to.
+- `numerical/moving_mesh.py` (kinematics only): reference vs current configuration, displacement (m) and mesh
+  velocity (m/s) at exact times; inversion or collapse refused at any instant of a step; the discrete GCL residual of a
+  declared time rule (midpoint exact in 2D, violated on tetrahedra; two-point Gauss exact in 3D); digest-checked
+  history and rollback; fields bound to the mesh state; topology changes and opened interfaces refused.
+- `require_ale_formulation` refuses: no governing equation has an ALE form in Forge; nothing here is ALE support.
+
+### Unverified assumptions (P3-BR17)
+
+- Vertex motion is linear in time within a step; another motion law changes the measure polynomial and the GCL
+  exactness degrees.
+- `numpy.roots` finds the interior critical points of the measure polynomial to round-off; the degeneracy floor is
+  64 eps h^d.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-83 | P3 all | Real-provider compatibility: the FEniCSx coupling and PDE suites on THIS tree | WSL: `FORGE_PROVIDER_ENVS=$HOME/mm/root/envs $HOME/mm/root/envs/fenicsx/bin/python -m pytest -q providers/fenicsx/tests` | NOT RUN |
+| DV-84 | P3 all | Runtime and memory: IMVJ dense n x n approximation, step doubling (3 window executions per accepted window), per-cell mid-step inversion loop, finite-difference Jacobians | owner-authorized benchmark | NOT RUN |
+| DV-85 | P3 all | Structural guards for the new files: layering, certified-dependency closure, core purity string count, pin portability | `pytest tests/test_core_api_layering.py tests/test_certified_dependency_closure.py tests/test_heterogeneous_ngspice.py tests/test_pin_portability.py -q` | NOT RUN |
+| DV-86 | P3 all | FAST and SCIENTIFIC tiers on the Phase 1+2+3 tree, diffed against a pristine baseline | `python -m pytest -m "not expensive" -q -n 4` / `python -m pytest -m "not campaign" -q -n 4` | NOT RUN |
+
+### Certification impact (Phase 3)
+
+Pinned by `certification/current_core_v2.json` and changed (UNCERTIFIED until OD-3):
+`execution/multiphysics/{convergence,relaxation,runtime}.py`, `numerical/core.py`, `scientific/multiphysics/plan.py`.
+New files inside certified SCOPE patterns (`execution/**`, `numerical/**`, `pde/**`), not yet in the pinned list:
+`execution/multiphysics/{acceleration,field_measures,subcycling}.py`, `numerical/{health,nonlinear,mesh_quality,moving_mesh}.py`,
+`pde/nonlinear.py`; unlisted files changed: `numerical/{robust,mesh_adaptation}.py`. New certified -> unpinned import
+edges (must be pinned or declared at recertification): `convergence.py -> field_measures.py`,
+`relaxation.py -> acceleration.py`. No mutant of the V4 population targets a changed line.
+
+Serialization identity: unchanged for every existing record type when the new fields are unset (policies, diagnostics,
+strategy records, window control). Deliberate changes, recorded: IQN-ILS runs gain `_acceleration` only after a
+non-routine event; window-controlled runs gain `forced_below_minimum_window` events; runs whose participants report
+an end that differs within tolerance gain `_time_grid`; the 1D adaptation record gains provenance keys.
+
+### Phase 3 static review (read-only, nothing executed) and what it changed
+
+| # | Severity | Finding | Disposition |
+| --- | --- | --- | --- |
+| M1 | MAJOR | A chain could loosen acceptance through `residual_scales` (an option, not a tolerance) | Fixed: providers declare `acceptance_options`; the chain compares them with the tolerances or needs a `ChainAcceptance`; test added. |
+| M2 | MAJOR | `weighted_rms` divided by `components x sum(w)`, contradicting its definition (a written test would fail) | Fixed: `sqrt(sum w_i |v_i|^2 / sum w_i)`, the site-vector norm. |
+| M3 | MAJOR | The runtime's restorability check for error control was unreachable (`validate_against` refuses first); the test matched the wrong text | Fixed: dead block removed, test matches the real refusal; the monitored tolerance unit is checked at construction (MINOR 4). |
+| M4 | MAJOR | Clock records: undocumented identity change, one entry per iteration, entries from rejected attempts and half windows | Fixed: once per (window, attempt, participant) with `window_index` and `attempt`; suspended during half windows; identity change stated in code and here. |
+| M5 | MAJOR | IMVJ: a round-off first residual set a ~1e13 edge weight, amplifying round-off into the carried approximation | Fixed: an IMVJ edge scale is set only by a residual above 64 eps x the image RMS (IQN-ILS arithmetic unchanged). |
+| m | MINOR | Event-cut windows skipped error control without saying so in the entry | Fixed: `accepted: true, error_assessed: false` and the notice. No run-level count is kept. |
+| m | MINOR | An assessment that raised left the attempt open | Fixed: the attempt is closed as rejected before the error propagates. |
+| m | MINOR | The runtime notice inverted the step-doubling relation | Fixed: the coarse local error is 1x-2x the difference. |
+| m | MINOR | The PDE admission accepted a CONVERGED record listing only converged steps; it did not count line-search factors | Fixed: `expected_steps` is required and every step 0..n-1 must appear; one factor per iteration. |
+| m | MINOR | Non-integral moving-mesh connectivity was truncated silently | Fixed: refused. |
+| m | MINOR | The adaptation record serializes its provenance keys unconditionally | Kept deliberately (the record is not pinned anywhere); recorded as an identity change. |
+| m | MINOR | `condition_limit` compares a 1-norm lower bound for large sparse Jacobians with an unqualified limit | Recorded (it can only refuse; the record names the method). |
+| m | MINOR | Hard (non-numerical) errors inside a half window abort the run | Recorded (a refusal, never a pass). |
