@@ -32,6 +32,7 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
 | DV-25 | BR15 refinement per route | Orchestration tests | `pytest tests/execution/orchestration -q` | NOT RUN |
 | DV-26 | BR18 electrothermal relaxation | New tests + existing electrothermal suites (plan identity unchanged by default) | `pytest tests/test_electrothermal_fixed_point_relaxation.py tests/domains/thermal_models/test_lumped_applicability.py tests/test_electrothermal_vertical.py -q` | NOT RUN |
 | DV-27 | BR19 adaptive resolution (EXC-1 exit gate) | New tests + scientific review of the slice | `pytest tests/claims/test_adaptive_resolution.py -q` + forge-scientific-review | NOT RUN |
+| DV-28 | BR20 1D mesh adaptation (EXC-1 exit gate, with DV-27) | New tests + scientific review | `pytest tests/numerical/test_mesh_adaptation.py -q` + forge-scientific-review | NOT RUN |
 | DV-4 | all | Scientific regression pack | `python tools/forge_check.py --regression --workers 4` | NOT RUN |
 | DV-5 | all | FAST tier diffed against a pristine `origin/main` worktree (Windows has ~150 environmental failures) | `pytest -m "not expensive" -q -n 4` | NOT RUN |
 | DV-6 | all | Scientific review (`forge-scientific-review`) of each Big Rock diff | skill | NOT RUN |
@@ -146,3 +147,11 @@ Every changed certification-pinned file is **UNCERTIFIED** until recertification
   are checked; the model identity is the caller's responsibility, as in `uq_studies`.
 - Three finest levels are re-estimated after every level. Observed-order agreement across four or more levels (a
   rule of the canonical estimator) is not used, because only three levels are passed each time.
+
+## Unverified assumptions (BR20)
+
+- The indicator assumes a smooth solution. At a discontinuity or kink it is still largest there, but it is not an
+  error estimate there.
+- Boundary nodes copy their neighbour's curvature estimate, which is exact for quadratics and first-order otherwise.
+- Gradation uses repeated single bisections until no violation remains. It terminates because every bisection halves
+  a cell above `minimum_cell`, but its node cost on extreme layers is unmeasured.

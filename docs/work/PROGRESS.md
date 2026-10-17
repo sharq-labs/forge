@@ -5298,3 +5298,20 @@ not a sound method there. Joint IQN over the Jacobi interface vector replaced it
   AMR (non-uniform mesh records, error indicators, solver support).
 - Tests written: `tests/claims/test_adaptive_resolution.py`. Exact first-order model: n = 4, 8, 16, 32 meets a
   0.05 target with half-width 0.0390625 and extrapolate 1.0.
+
+### BR20 -- adaptive mesh control slice 2: 1D local refinement kernel (EXC-1 A1, tests NOT RUN)
+- EXC-1 amendment A1 (owner-approved 2026-10-17) adds `numerical/mesh_adaptation.py` to the scope. Still
+  prohibited: solver changes, Core mesh records, and wiring adaptive resolution into `uq_studies` (owner decision:
+  it would make a finer run than the claim's reported run carry its evidence).
+- Survey: `conduction1d` is uniform-grid only (single dx, `linspace`), so local AMR cannot drive it without a
+  solver change.
+- The kernel:
+  - `Grid1D`, a non-uniform grid;
+  - P1 indicators `h**2/8 * max|u''|`, exact for quadratics;
+  - deterministic Doerfler marking;
+  - bisection with a minimum cell and gradation;
+  - `adapt_grid`, which re-evaluates fresh values every cycle. Its statuses are TOLERANCE_MET_ESTIMATED,
+    BUDGET_EXHAUSTED, NODE_BUDGET and RESOLUTION_FLOOR, and the record is classified not-evidence.
+- Next slice (needs an EXC-1 amendment or a new exception): a non-uniform finite-difference conduction solver that
+  `adapt_grid` can drive, plus wiring into a capability.
+- Tests written: `tests/numerical/test_mesh_adaptation.py`.
