@@ -46,6 +46,19 @@ def test_active_epic_is_the_engineering_foundations_program_with_every_gate_open
     assert data["policy"]["horizontal_expansion_paused"] is True             # still paused OUTSIDE the program scope
 
 
+def test_g0_gates_no_other_work_and_requires_only_order_decisions() -> None:
+    """Build-first (owner, 2026-10-18): the deferred-validation gate G0 is required by no gate, so building any gate's
+    scope never waits for a test run; M2 and E3 wait only for M1's DECISION."""
+    program = _program(maturity.load_ledger())
+    requires = {g["id"]: g["requires"] for g in program["gates"]}
+    assert all("G0" not in deps for deps in requires.values())
+    assert requires == {"G0": [], "M1": [], "M2": ["M1"], "E1": [], "E2": [], "E3": ["M1"]}
+    assert all("build-first" in g["next_action"] for g in program["gates"] if g["id"] != "G0")
+    # deciding a gate before its requirement passes is refused; leaving it built-but-MISSING is not
+    data = deepcopy(maturity.load_ledger())
+    assert maturity.validate(data) == ()
+
+
 def test_battery_1rc_stays_functional_with_its_evidence() -> None:
     data = maturity.load_ledger()
     battery = next(cap for cap in data["capabilities"] if cap["id"] == "battery.thevenin_1rc")

@@ -13,6 +13,19 @@ rule, restated for this program): every scientific capability the program builds
 `capabilities` array with the 19 maturity gates, enters it at FOUNDATION only when its four FOUNDATION gates PASS with
 repository evidence, and climbs only through those gates.
 
+## Build-first: gates order DECISIONS, never work
+
+The owner's strategy is to build every foundation first and validate afterwards. The program encodes exactly that:
+
+- **Any gate's scope may be written and implemented at any time** -- before G0, before any other gate, and in any
+  order. Nothing in the ledger, the checker or this contract makes building wait for a test run.
+- **G0 gates nothing.** No gate `requires` G0; G0 is the deferred-validation gate for the work already built (ERT V1,
+  Phases 1-3.5). Running it is an owner decision, and it never blocks M1, M2, E1, E2 or E3 work.
+- A gate's `requires` constrains only when that gate may be **decided** (PASS, FAIL or BLOCKED_WITH_EVIDENCE): M2 and
+  E3 can be built now, but are decided only after M1 has PASSED.
+- A gate is decided only on **executed evidence** that exists in the repository; until then it is MISSING (built and
+  unverified work is MISSING, never PASS). Building something never changes a maturity stage (Gate H).
+
 ## Why
 
 The Engineering Runtime V1 program and Phases 1–3.5 built the runtime foundations (coupling authority, field transfer,

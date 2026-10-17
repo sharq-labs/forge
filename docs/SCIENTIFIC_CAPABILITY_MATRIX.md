@@ -21,12 +21,12 @@ Stages: FOUNDATION -> FUNCTIONAL -> EVIDENCE_BACKED -> PRODUCTION_READY.
 
 | Program | Gate | Status | Requires | Next action |
 |---|---|---|---|---|
-| engrt.numerical_foundations | G0 | MISSING | - | owner authorizes the deferred validation; run the DV tables of docs/work/DEFERRED_VALIDATION.md |
-| engrt.numerical_foundations | M1 | MISSING | - | build per the program contract (M1), then execute its tests |
-| engrt.numerical_foundations | M2 | MISSING | M1 | after M1: build per the program contract (M2) |
-| engrt.numerical_foundations | E1 | MISSING | - | build per the program contract (E1), then execute in the WSL FEniCSx env |
-| engrt.numerical_foundations | E2 | MISSING | - | build the two window sessions per the program contract (E2), then execute the coupled run |
-| engrt.numerical_foundations | E3 | MISSING | M1 | after M1: build per the program contract (E3) |
+| engrt.numerical_foundations | G0 | MISSING | - | when the owner authorizes it, run the DV tables of docs/work/DEFERRED_VALIDATION.md; building the other gates does not wait for it |
+| engrt.numerical_foundations | M1 | MISSING | - | build per the program contract (M1) now (build-first); decide the gate only on executed evidence |
+| engrt.numerical_foundations | M2 | MISSING | M1 | build per the program contract (M2) now (build-first); the gate is decided only after M1 PASS |
+| engrt.numerical_foundations | E1 | MISSING | - | build per the program contract (E1) now (build-first); decide the gate on executed WSL FEniCSx evidence |
+| engrt.numerical_foundations | E2 | MISSING | - | build the two window sessions per the program contract (E2) now (build-first); decide the gate on an executed coupled run |
+| engrt.numerical_foundations | E3 | MISSING | M1 | build per the program contract (E3) now (build-first); the gate is decided only after M1 PASS |
 
 ## Policy
 

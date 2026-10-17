@@ -947,7 +947,7 @@
           "requires": [],
           "status": "MISSING",
           "evidence": [],
-          "next_action": "owner authorizes the deferred validation; run the DV tables of docs/work/DEFERRED_VALIDATION.md"
+          "next_action": "when the owner authorizes it, run the DV tables of docs/work/DEFERRED_VALIDATION.md; building the other gates does not wait for it"
         },
         {
           "id": "M1",
@@ -955,7 +955,7 @@
           "requires": [],
           "status": "MISSING",
           "evidence": [],
-          "next_action": "build per the program contract (M1), then execute its tests"
+          "next_action": "build per the program contract (M1) now (build-first); decide the gate only on executed evidence"
         },
         {
           "id": "M2",
@@ -965,7 +965,7 @@
           ],
           "status": "MISSING",
           "evidence": [],
-          "next_action": "after M1: build per the program contract (M2)"
+          "next_action": "build per the program contract (M2) now (build-first); the gate is decided only after M1 PASS"
         },
         {
           "id": "E1",
@@ -973,7 +973,7 @@
           "requires": [],
           "status": "MISSING",
           "evidence": [],
-          "next_action": "build per the program contract (E1), then execute in the WSL FEniCSx env"
+          "next_action": "build per the program contract (E1) now (build-first); decide the gate on executed WSL FEniCSx evidence"
         },
         {
           "id": "E2",
@@ -981,7 +981,7 @@
           "requires": [],
           "status": "MISSING",
           "evidence": [],
-          "next_action": "build the two window sessions per the program contract (E2), then execute the coupled run"
+          "next_action": "build the two window sessions per the program contract (E2) now (build-first); decide the gate on an executed coupled run"
         },
         {
           "id": "E3",
@@ -991,7 +991,7 @@
           ],
           "status": "MISSING",
           "evidence": [],
-          "next_action": "after M1: build per the program contract (E3)"
+          "next_action": "build per the program contract (E3) now (build-first); the gate is decided only after M1 PASS"
         }
       ],
       "exit": "every gate is PASS, FAIL or BLOCKED_WITH_EVIDENCE; the owner then names the next epic"
