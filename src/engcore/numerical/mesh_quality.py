@@ -229,6 +229,24 @@ def require_valid_mesh(cell_type: str, coordinates: Any, cells: Any, policy: Mes
     return report
 
 
+def assess_support(mesh: Any, resolver: Any, policy: MeshQualityPolicy) -> MeshQualityReport:
+    """:func:`assess_mesh` for a stored Core ``UnstructuredMesh`` record (coordinates read through ``resolver``).
+
+    A ``StructuredMesh`` is valid by construction (positive spacing, quality 1)
+    and is reported as such without reading anything.
+    """
+    from ..data.mesh import UnstructuredMeshData
+    from ..scientific.fields import StructuredMesh, UnstructuredMesh
+
+    if isinstance(mesh, StructuredMesh):
+        return MeshQualityReport("structured_rectilinear", mesh.cell_count, policy, 1.0,
+                                 tuple((kind.value, ()) for kind in CellDefect))
+    if not isinstance(mesh, UnstructuredMesh):
+        raise MeshQualityRefusal(f"not a mesh support record: {type(mesh).__name__}")
+    data = UnstructuredMeshData.from_record(mesh, resolver)
+    return assess_mesh(mesh.cell_type.value, data.coordinates, data.connectivity, policy)
+
+
 def inverted_relative_to(reference: np.ndarray, current: np.ndarray, degenerate_floor: np.ndarray | None = None) -> np.ndarray:
     """Cells whose signed measure changed sign, or collapsed, between two configurations of one connectivity."""
     ref = np.asarray(reference, dtype=np.float64)
@@ -246,6 +264,7 @@ __all__ = [
     "MeshQualityRefusal",
     "MeshQualityReport",
     "assess_mesh",
+    "assess_support",
     "degenerate_cells",
     "inverted_relative_to",
     "require_valid_mesh",
