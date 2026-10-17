@@ -317,14 +317,16 @@ def test_a_demanded_uncertainty_channel_no_capability_quantifies_is_predicted(re
     assert "declares no input distributions" in gap.detail
 
 
-def test_an_unknown_or_unsupported_zero_discrepancy_cannot_meet_a_discrepancy_demand(registry) -> None:
+def test_an_unknown_an_unsupported_zero_or_an_unresolvable_prior_cannot_meet_a_discrepancy_demand(registry) -> None:
     demand = UncertaintyDemand(frozenset(), None, True)
     for kind in (DiscrepancyKind.UNKNOWN, DiscrepancyKind.ZERO_DECLARED):
         compiled = compile_claim(t3_claim(uncertainty=demand, discrepancy=ModelDiscrepancy(kind, rationale="stated")), registry)
         assert GapKind.DISCREPANCY_UNSUPPORTED in {g.kind for g in compiled.predicted_gaps}
+    # Review 3 A2-F10: this used to predict no gap -- a reference string was enough. T3 declares no MODEL_FORM
+    # study, so nothing in its plan can resolve the prior (tests/claims/test_constrained_prior_resolution.py).
     prior = ModelDiscrepancy(DiscrepancyKind.CONSTRAINED_PRIOR, reference="doi:10.0/prior", rationale="bounded")
     compiled = compile_claim(t3_claim(uncertainty=demand, discrepancy=prior), registry)
-    assert GapKind.DISCREPANCY_UNSUPPORTED not in {g.kind for g in compiled.predicted_gaps}
+    assert GapKind.DISCREPANCY_UNSUPPORTED in {g.kind for g in compiled.predicted_gaps}
 
 
 # ---------------------------------------------------------------------------

@@ -70,6 +70,10 @@ _MECHANISM = ("separate uid 65534 (setpriv --reuid/--regid, cleared groups, all 
 
 def isolation_support() -> tuple[bool, str]:
     """Whether this host can build the isolated deployment (root to create namespaces and switch uid, the tools)."""
+    if not sys.platform.startswith("linux"):
+        # Answered, not raised: on Windows `os.geteuid` does not exist and this used to be an AttributeError where
+        # every caller expects (False, why).
+        return False, f"the isolated deployment needs Linux namespaces and uid switching; this host is {sys.platform}"
     if os.geteuid() != 0:
         return False, "creating the namespaces and switching to the discovery uid needs root on the launcher side"
     missing = [t for t in ("unshare", "setpriv", "mount") if shutil.which(t) is None]

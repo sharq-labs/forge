@@ -112,6 +112,14 @@ def compile_natural_language(text: str, proposal: Mapping[str, Any], spans: Mapp
     discrepancy = proposal.get("discrepancy") or {}
     if isinstance(discrepancy, Mapping) and discrepancy.get("kind") == "zero_declared":
         return NaturalLanguageCompilation("refused", ("a language-model proposal may not declare model-form discrepancy zero",), ())
+    # Review 3 A2-F10: a constrained prior is a statement about model form too, and its reference is whatever the
+    # model wrote. A language model may leave discrepancy UNKNOWN; it may not bound it.
+    if isinstance(discrepancy, Mapping) and discrepancy.get("kind") not in (None, "unknown"):
+        return NaturalLanguageCompilation(
+            "refused",
+            (f"a language-model proposal may declare model-form discrepancy only as unknown, not {discrepancy.get('kind')!r}",),
+            (),
+        )
     findings: list[str] = []
     moved: list[str] = []
     missing = list(proposal.get("missing_inputs") or [])

@@ -471,15 +471,6 @@ def compare_executions(a: NumericalExecutionRecord, b: NumericalExecutionRecord,
             diffs[key + suffix] = float(np.max(np.abs(va - vb)))
             ok = ok and bool(np.allclose(va, vb, rtol=rtol, atol=atol))
     return NumericalAgreement(ok, diffs, float(rtol), float(atol))
-    for key in sorted(a.outputs):
-        xa = a.outputs[key] if isinstance(a.outputs[key], tuple) else (a.outputs[key],)
-        xb = b.outputs[key] if isinstance(b.outputs[key], tuple) else (b.outputs[key],)
-        unit = xa[0].units
-        va = np.array([q.magnitude_in(unit) for q in xa])
-        vb = np.array([q.magnitude_in(unit) for q in xb])
-        diffs[key] = float(np.max(np.abs(va - vb)))
-        ok = ok and bool(np.allclose(va, vb, rtol=rtol, atol=atol))
-    return NumericalAgreement(ok, diffs, float(rtol), float(atol))
 
 
 def to_raw_solver_output(record: NumericalExecutionRecord, unit_of: Mapping[str, str]) -> RawSolverOutput:

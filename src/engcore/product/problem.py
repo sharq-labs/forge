@@ -2208,7 +2208,10 @@ def _coupling_evidence(run: "cp.CoupledRun") -> CouplingEvidence:
     ``outcome`` is the pack's token carried verbatim, so a reader scanning the
     serialized report finds ``iteration_limit_reached`` in it. Nothing here
     interprets that token: the criterion the report derives is derived from the
-    numbers beside it, and the two are separately readable on purpose.
+    numbers beside it, and the two are separately readable on purpose. The
+    distance to the fixed point is one of those numbers (2026-10-13): the loop
+    stops on it as well as on the change, so a report that read the change
+    alone would call MET a run that stopped on its budget.
     """
     return CouplingEvidence(
         outcome=run.outcome.value,
@@ -2216,6 +2219,7 @@ def _coupling_evidence(run: "cp.CoupledRun") -> CouplingEvidence:
         iteration_limit=run.plan.max_iterations,
         largest_iterate_change=run.final_iterate_change,
         tolerance=run.plan.absolute_tolerance,
+        distance_to_fixed_point=run.final_distance_to_fixed_point,
     )
 
 

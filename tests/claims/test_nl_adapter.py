@@ -73,6 +73,19 @@ def test_a_proposal_cannot_declare_discrepancy_zero(registry) -> None:
     assert compile_natural_language(text, proposal, spans, registry).status == "refused"
 
 
+def test_a_proposal_cannot_bound_discrepancy_with_a_constrained_prior(registry) -> None:
+    # Review 3 A2-F10: the prior's reference would be whatever the model wrote.
+    made = et_claim()
+    text, spans = _text_and_spans(made)
+    proposal = made.to_dict()
+    assert proposal["discrepancy"]["kind"] == "unknown"
+    assert compile_natural_language(text, proposal, spans, registry).status != "refused"
+    proposal["discrepancy"].update(kind="constrained_prior", reference="doi:10.0/model-wrote-this")
+    result = compile_natural_language(text, proposal, spans, registry)
+    assert result.status == "refused" and result.compiled is None
+    assert "only as unknown" in result.findings[0]
+
+
 def test_the_core_imports_no_language_model() -> None:
     import ast
     import pathlib

@@ -2694,3 +2694,117 @@ Failed approaches:
 Open: the two `test_rebuilding_everything_reproduces_the_published_gates` tests write committed files in place (CI
 deselects them; locally they race with `test_offline_revalidation`); the builders need an output-directory parameter.
 SCIENTIFIC without the CI deselects is not equivalent to CI. FULL, Python 3.11/3.12, hardened recertification: NOT RUN.
+
+## 2026-10-13 -- Read-only scientific-code rating (owner question), tree origin/main c4e05ee6
+
+Worktree `D:/forge-rate-2026-10-13` (detached at `c4e05ee6`), Windows, Python 3.14.2 venv. No source change.
+
+- `python tools/forge_check.py --regression --workers 6`: PASS, 241 passed in 9.50 s.
+- `python -m pytest -m "not expensive" -q -n 8 --basetemp=D:/fbt-rate -p no:cacheprovider`: 151 failed, 9704 passed,
+  185 skipped, 21 errors in 125.03 s. The failure set is identical (0 new, 0 gone) to `D:/forge-perf-logs/fast_base.failed`.
+  By file: test_mutation_workspace 97 ("pristine seed contains links or special files"), test_formal_xdist 23,
+  foundations/test_escrow_boundary 15, foundations/test_authority_durable_campaign 10, test_local_assurance 7,
+  foundations/test_authority_integrity 5, test_mutation_startup 3, core freeze V1/V3/V4 + certificate + batch56 7,
+  foundations/test_escrow_isolation 2, flagships/tests/test_battery_blind_readiness 2 (setup ERROR), foundations/test_v2_blindfold 1.
+  Causes seen: POSIX-only `fcntl` / `os.geteuid` / `signal.pthread_sigmask`, mutation-workspace seed check, freeze/certificate
+  drift. No physics or numerics test failed.
+- Finding: `src/engcore/authority/ledger.py:277` imports `fcntl` unconditionally, so `AuthorityLedger` (and the battery
+  blind dry run that uses it) cannot run on Windows. This is production code, not a test artifact.
+- Independent MMS (scratch script, not committed): conduction2d on a 2 m x 0.5 m plate, nx != ny, harmonic Dirichlet
+  data on LEFT/BOTTOM, harmonic non-zero Neumann flux on RIGHT/TOP (doubly-Neumann corner),
+  T = T0 + A sin(a x + p) sin(b y + s). 9x6 .. 129x66: observed order L2 1.776 -> 1.975, Linf 1.646 -> 1.954,
+  corner 1.673 -> 1.952; every ValidationCheck PASS at the finest level.
+- SCIENTIFIC, FULL, hardened recertification, Python 3.11/3.12: NOT RUN.
+
+## 2026-10-13 -- Rating-review fixes (owner: "fix them"), branch `fix/scientific-rating-findings` on c4e05ee6
+
+Worktree `D:/forge-rate-2026-10-13`. Uncommitted at the time of writing. Windows, py3.14 venv, unless stated otherwise.
+
+Fixed:
+- Review 3 A2-F10 (HIGH). `model_discrepancy_check` passed a CONSTRAINED_PRIOR on any reference string, and
+  `test_claims_assessment.py` asserted that `doi:10.0/t3-prior` turned INSUFFICIENT into SUPPORTED.
+  - A prior is now INCONCLUSIVE unless `supported_by` is given. The finding code is `domain.constrained_prior_unresolved`.
+  - `claims.assessment.resolved_prior` supplies `supported_by` only from a MODEL_FORM study record. That record must
+    be promoted under a pinned qualification, and it must be identical to the evidence's MODEL_FORM channel.
+  - `ScientificClaim` makes a supported-discrepancy demand with a prior imply MODEL_FORM (review F3: otherwise naming
+    the channel firms up the answer).
+  - The compiler predicts DISCREPANCY_UNSUPPORTED unless the study is plannable.
+  - The NL adapter refuses any discrepancy kind but unknown.
+  - The PASS detail says the reference was not itself checked (review F2).
+  - Production effect: no claim can resolve a prior today, because PRODUCTION_MODEL_FORM_QUALIFICATIONS is empty.
+- NAFEMS T3 `nafems_t3_boundary_conditions_held` compared the stored boundary node with the value written into it.
+  - It now re-evaluates every Crank-Nicolson step from the stencil on the full field (review F6: every step, not
+    the last). Measured max backward error 1.9e-16.
+  - A 0.1 % wall-adjacent RHS error, on all steps or on step 3 only, makes it FAIL.
+- `run_fixed_point` (electrothermal) met its criterion on the step alone.
+  - It now also needs `_distance_to_fixed_point`, a per-endpoint signed a-posteriori estimate:
+    one-sided `|d| rho/(1-rho)`, oscillating `|d||rho|/(1+|rho|)`, infinite when `|rho| >= 1` or there is one sweep.
+  - Demonstrated: a controlled one-sided rho=0.95 map; the old loop reported CRITERION_MET 1.82e-5 K from the fixed
+    point at tolerance 1e-6.
+  - Review F1 (HIGH, introduced by the first version of this fix): `CouplingEvidence.criterion` read the change
+    alone, so a budget-exhausted run with a small last step read MET.
+    - `CouplingEvidence` now carries `distance_to_fixed_point`, schema `mcp_coupling_evidence/2`. v1 is still read
+      and judged as written.
+    - A missing distance is NOT_MET.
+    - `CoupledRun.final_distance_to_fixed_point` re-derives it from the iterations through `_transport`.
+  - Software version `coupled/0.2.0`.
+  - Unchanged:
+    - Every preregistered iteration count.
+    - U00204: 123 iterations, 355.7381904607981 K. Its iteration oscillates (PTC), so the estimate is below the step.
+- `HeaterCircuit` default `root_method` changed `hybr` -> `lm`.
+  - Measured on 800 states: hybr refused 67, lm refused 0, worst relative error 7e-16.
+  - `identity()` still omits the method only for hybr, so old records keep their meaning.
+- `FileLedgerStore.append` imported `fcntl` unconditionally. The lock is now `flock` on POSIX and an
+  `msvcrt.locking` byte past EOF on Windows.
+  - Writes are LF-only bytes.
+  - An unlock failure no longer masks the error in flight (review F7).
+  - New contention test.
+  - `keys._check_private_path` refuses rather than raising AttributeError off POSIX.
+  - `blindfold.isolation_support` answers `(False, why)` off Linux.
+- `numerical/core.py` `compare_executions`: an unreachable block after `return` was removed.
+
+Not changed, and why:
+- `ValidationCheck` issuer records are not bound to their result. This is a frozen Core shape and is now OD-15.
+- Rint `metric_dimensions`: dimensional validity is a static property; the check can still fail on a wrong unit
+  assignment; the two residual checks establish nothing. Not a defect.
+- Review F4 (model-form scope built from the observations, not the claim's context): it predates this round and is
+  OD-R7 on `fix/remediation-2026-10-12`.
+- Review F5 (end-to-end prior PASS through `verify_assessment`): blocked. The model-form read-back crashes on this
+  base (PairedObservation NameError, unbound qualification); those fixes are on `fix/remediation-2026-10-12`
+  (ce96fa06) and are not ported twice. Add the test after both land.
+- Main-branch gate enforcement: repository settings (OD-1 / OD-R2).
+
+Commands and results:
+- `python tools/forge_check.py --regression --workers 6`: 241 passed.
+- `python tools/forge_check.py --changed --base origin/main --workers 8`: 127 failed, 4832 passed, 166 skipped.
+  Every failure is in the baseline set (0 new). This run was before the review-F1..F7 fixes.
+- `python -m pytest -m "not expensive" -q -n 8 --basetemp=D:/fbt-rate4 -p no:cacheprovider` (final):
+  138 failed, 9755 passed, 185 skipped, 19 errors, 157.38 s. Against the baseline `D:/ftmp/fast_rate.failed`
+  (151 failed + 21 errors on the same c4e05ee6):
+  - Fixed (17): authority_durable_campaign 10, authority_integrity 3, escrow_isolation 2, battery_blind_readiness 2.
+  - New (2): `test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1` and
+    `test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`.
+    Both fail on `tree.clean` only (uncommitted files); every other failing check is in their SUPERSEDED_BY_V4 set.
+- `score_hard.py --split dev --workers 4`, base (src stashed) vs branch, before and after review F1: summary,
+  families and all 1400 rows identical. Exact match 1362/1400, catch 1157/1157, false accept 0/1157,
+  false reject 0/243.
+- WSL Linux, `.forge/venvs/3.12`: `pytest tests/foundations/test_ledger_file_store.py
+  tests/foundations/test_authority_integrity.py tests/foundations/test_authority_durable_campaign.py
+  tests/foundations/test_escrow_isolation.py tests/test_coupling_contraction_criterion.py
+  tests/claims/test_constrained_prior_resolution.py`: 66 passed.
+- Fail-before (source stashed, tests kept):
+  - prior: 3 of 3 failed;
+  - heater: 2 of 3 failed;
+  - ledger: 4 of 4 failed;
+  - slow one-sided loop: failed at 1.82e-5 K vs 1e-6.
+- forge-scientific-review: one round. CHANGES REQUIRED. F1, F2, F3, F6 and F7 fixed; F4 and F5 recorded above.
+
+Failed approaches:
+- A contraction estimate from the ratio of unsigned max-norm steps added 11 iterations to U00204 and moved its
+  golden value for no accuracy gain. The PTC iteration oscillates, and its error is below the step (3.9e-7 K at
+  tolerance 1e-6 against a 1e-12 reference). Replaced by the per-endpoint signed estimate.
+- Looking for a slow one-sided electrothermal case: NTC alpha -0.003 was refused at the transfer (applicability).
+  NTC alpha down to -0.0015 converged with rho < 0.2, where the old rule was already safe. The demonstration
+  therefore uses a controlled map.
+
+Still NOT RUN: SCIENTIFIC, FULL, hardened recertification (OD-3), Python 3.11/3.12 full tiers.

@@ -24,12 +24,13 @@ a NodeReceipt, ...) together with the record itself; it is not a second evidence
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
 import pathlib
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from types import MappingProxyType
@@ -274,24 +275,67 @@ class FileLedgerStore:
     def append(self, line: str, *, expected_lines: int) -> None:
         """Append under an exclusive lock, and only if the file still holds exactly the lines this writer verified:
         a second writer (another ledger object on the same file) is refused instead of forking the chain."""
-        import fcntl
         if "\n" in line:
             raise AuthorityRefused("a ledger line holds one event")
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        fd = os.open(self.path, os.O_RDWR | os.O_CREAT | os.O_APPEND, 0o600)
-        with os.fdopen(fd, "a+", encoding="utf-8") as fh:
-            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
-            try:
-                fh.seek(0)
-                present = sum(1 for ln in fh.read().splitlines() if ln.strip())
-                if present != expected_lines:
-                    raise AuthorityRefused(f"the ledger file holds {present} events, this writer verified {expected_lines}: "
-                                           "another writer appended; reopen it")
-                fh.write(line + "\n")
-                fh.flush()
-                os.fsync(fh.fileno())
-            finally:
-                fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+        # O_BINARY and newline="": the file holds the same LF-terminated bytes on every platform (Windows would
+        # otherwise write CRLF at the descriptor and again in the text layer).
+        fd = os.open(self.path, os.O_RDWR | os.O_CREAT | os.O_APPEND | getattr(os, "O_BINARY", 0), 0o600)
+        with os.fdopen(fd, "a+", encoding="utf-8", newline="") as fh, _exclusive(fh.fileno()):
+            fh.seek(0)
+            present = sum(1 for ln in fh.read().splitlines() if ln.strip())
+            if present != expected_lines:
+                raise AuthorityRefused(f"the ledger file holds {present} events, this writer verified {expected_lines}: "
+                                       "another writer appended; reopen it")
+            fh.write(line + "\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+
+
+#: Windows byte-range locks are mandatory, so locking the ledger's own bytes would also fail every concurrent
+#: reader. The lock is taken on one byte far past any real ledger's end instead (locking beyond EOF is allowed); a
+#: ledger that ever grew past it would still be locked correctly, only with readers briefly refused during an append.
+_WINDOWS_LOCK_OFFSET = 2**31 - 2
+
+
+@contextlib.contextmanager
+def _exclusive(fd: int) -> Iterator[None]:
+    """One writer at a time on this ledger file: ``flock`` on POSIX, ``msvcrt.locking`` on Windows.
+
+    Until 2026-10-13 this was ``fcntl`` alone, imported inside ``append``, so every file-backed ledger raised
+    ``ModuleNotFoundError`` on Windows the first time it wrote.
+    """
+    if os.name == "nt":
+        import msvcrt
+
+        def release() -> None:
+            os.lseek(fd, _WINDOWS_LOCK_OFFSET, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+
+        here = os.lseek(fd, 0, os.SEEK_CUR)
+        os.lseek(fd, _WINDOWS_LOCK_OFFSET, os.SEEK_SET)
+        try:
+            msvcrt.locking(fd, msvcrt.LK_LOCK, 1)  # retries for about 10 s, then raises
+        except OSError as exc:
+            raise AuthorityRefused(f"another writer holds this ledger's lock: {exc}") from exc
+        finally:
+            os.lseek(fd, here, os.SEEK_SET)
+    else:
+        import fcntl
+
+        def release() -> None:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+
+        fcntl.flock(fd, fcntl.LOCK_EX)
+    try:
+        yield
+    except BaseException:
+        # The refusal or failure that is already in flight is what the caller needs; an unlock that fails on the way
+        # out must not replace it. Closing the descriptor, which follows, releases the lock on both platforms.
+        with contextlib.suppress(OSError):
+            release()
+        raise
+    release()
 
 
 # ---------------------------------------------------------------------------- state

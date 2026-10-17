@@ -158,15 +158,22 @@ def test_a_demanded_uncertainty_channel_that_is_unknown_leaves_the_claim_undecid
     assert "assurance.unmet" in _codes(record) and "uncertainty:numerical" in record["assurance"]["unmet_obligations"]
 
 
-def test_a_demanded_discrepancy_needs_support_that_unknown_and_bare_zero_do_not_give(registry) -> None:
+def test_a_demanded_discrepancy_needs_support_that_unknown_bare_zero_and_a_bare_citation_do_not_give(registry) -> None:
     demand = UncertaintyDemand(frozenset(), None, True)
     for kind in (DiscrepancyKind.UNKNOWN, DiscrepancyKind.ZERO_DECLARED):
         record = assess_claim(t3_claim(uncertainty=demand, discrepancy=ModelDiscrepancy(kind, rationale="stated")), registry).to_dict()
         assert record["verdict"] == "insufficient_evidence", kind
         assert record["assurance"]["discrepancy_check"]["outcome"] != "pass"
+    # Review 3 A2-F10. This assertion used to read "supported": a made-up DOI was enough. A reference nothing
+    # resolved is a declaration, and the same claim without the demand is still SUPPORTED -- so the citation
+    # is the only thing the verdict could have rested on.
     prior = ModelDiscrepancy(DiscrepancyKind.CONSTRAINED_PRIOR, reference="doi:10.0/t3-prior", rationale="bounded")
     record = assess_claim(t3_claim(uncertainty=demand, discrepancy=prior), registry).to_dict()
-    assert record["verdict"] == "supported"
+    assert record["verdict"] == "insufficient_evidence"
+    check = record["assurance"]["discrepancy_check"]
+    assert check["outcome"] == "inconclusive" and "not resolved" in check["detail"]
+    no_demand = UncertaintyDemand(frozenset(), None, False)
+    assert assess_claim(t3_claim(uncertainty=no_demand, discrepancy=prior), registry).to_dict()["verdict"] == "supported"
 
 
 def test_a_claim_that_cannot_run_is_insufficient_with_its_repairs(registry) -> None:

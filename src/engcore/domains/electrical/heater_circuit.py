@@ -33,10 +33,15 @@ class HeaterCircuit:
     t0: Quantity
     alpha: Quantity
     #: BIG 6 root method.  SciPy 1.18 ``hybr`` reports "not making good
-    #: progress" for ~6% of states of this LINEAR residual after reaching it to
-    #: machine precision (and BIG 6 correctly refuses a backend non-success);
-    #: ``lm`` does not.  Default kept for BIG 9 identity.
-    root_method: str = "hybr"
+    #: progress" for 6-8% of states of this LINEAR residual after reaching it to
+    #: machine precision (67 of an 800-state V x T grid on 2026-10-13), and BIG 6
+    #: correctly refuses a backend non-success, so a coupled run died mid-window
+    #: for no physical reason; ``lm`` refused none of the 800 and matched the
+    #: closed form to 7e-16.  The default was ``hybr`` until 2026-10-13, kept
+    #: for BIG 9 identity -- which is why :meth:`identity` still omits the
+    #: method when it is ``hybr``: a record without one was, and still means, a
+    #: ``hybr`` solve, and a default-built circuit now names ``lm``.
+    root_method: str = "lm"
 
     def identity(self) -> dict:
         ident = {k: getattr(self, k).to_dict() for k in ("supply_voltage", "series_resistance", "r0", "t0", "alpha")}

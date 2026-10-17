@@ -54,6 +54,7 @@ from ..sria.assurance import (
     trusting_authority,
 )
 from ..sria.assurance.assessment import CriticVerdict
+from ..sria.uncertainty import DiscrepancyKind, UncertaintyChannel
 from ._records import assessment_record_digest, canonical_json, require_mapping, tagged_digest
 from .capabilities import CapabilityRegistry
 from .compiler import CompilationStatus, CompiledClaim, compile_claim
@@ -198,7 +199,45 @@ def assemble_evidence(
     return AssembledEvidence(evidence, None)
 
 
-def assure(plan: ExperimentPlan, claim: ScientificClaim, evidence: Any, report: CredibilityEvidenceReport) -> Assurance:
+def resolved_prior(claim: ScientificClaim, evidence: Any, studies: StudyOutcome | None) -> str:
+    """What a CONSTRAINED_PRIOR discrepancy resolves to in this assessment, or ``""``.
+
+    Review 3 A2-F10: the claim's ``reference`` is the declarer's string and was
+    never resolved, so a made-up DOI met ``require_supported_discrepancy``. The
+    one admissible thing a prior can resolve to here is the MODEL_FORM interval
+    this run's own model-form study promoted -- held-out discrepancy, promoted
+    through ``authorize_model_form`` under a producer qualification the trust
+    registry pins -- and filed as the evidence's MODEL_FORM channel. Anything
+    else, including a quantified record of any other channel, resolves nothing.
+    """
+    if claim.discrepancy.kind is not DiscrepancyKind.CONSTRAINED_PRIOR or studies is None:
+        return ""
+    promoted = studies.channel_records.get(UncertaintyChannel.MODEL_FORM)
+    filed = evidence.uncertainty.channel(UncertaintyChannel.MODEL_FORM)
+    # Compared as records, not dataclasses: a field holding NaN never equals itself under `==`.
+    if promoted is None or not promoted.is_quantified or filed.to_dict() != promoted.to_dict():
+        return ""
+    for record in studies.records:
+        if (
+            record.get("channel") == UncertaintyChannel.MODEL_FORM.value
+            and record.get("problem") is None
+            and record.get("qualification_trusted") is True
+            and record.get("qualification_digest")
+        ):
+            return (
+                f"model_form_qualification:{record['qualification_digest']} (the MODEL_FORM "
+                f"interval this run's model-form study promoted under a pinned qualification)"
+            )
+    return ""
+
+
+def assure(
+    plan: ExperimentPlan,
+    claim: ScientificClaim,
+    evidence: Any,
+    report: CredibilityEvidenceReport,
+    studies: StudyOutcome | None = None,
+) -> Assurance:
     """The SRIA decision over the evidence, under the plan's own charter."""
     obligations = obligations_from_charter(
         plan.charter,
@@ -236,7 +275,9 @@ def assure(plan: ExperimentPlan, claim: ScientificClaim, evidence: Any, report: 
     )
     discrepancy = None
     if claim.uncertainty.require_supported_discrepancy:
-        discrepancy, _findings = model_discrepancy_check(budget, mandatory=True)
+        discrepancy, _findings = model_discrepancy_check(
+            budget, supported_by=resolved_prior(claim, evidence, studies), mandatory=True
+        )
     return Assurance(decision, obligations, discrepancy)
 
 
@@ -441,7 +482,7 @@ def _build_record(
                 evidence_problem = "; ".join(context)
                 evidence = None
         if evidence is not None:
-            assurance = assure(plan, claim, evidence, report)
+            assurance = assure(plan, claim, evidence, report, studies)
             channels = dict(evidence.uncertainty.channels)
         else:
             channels = {}

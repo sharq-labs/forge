@@ -225,7 +225,7 @@ of these rows.
 | Check | Category | Decision |
 |---|---|---|
 | `nafems_t3_field_finite` | **never earnable by this check** | Confirms the reported probe value is finite. Necessary execution hygiene, not evidence that the value is scientifically correct. |
-| `nafems_t3_boundary_conditions_held` | **never earnable by this check** | Reads back the time-dependent Dirichlet boundary imposed by the same execution path. It can catch an implementation break but is not an independent solution or external reference. |
+| `nafems_t3_boundary_conditions_held` | **never earnable by this check** | Re-evaluates every Crank–Nicolson step from the stencil on the full field, with the time-dependent right Dirichlet value at both time levels, and bounds the largest backward error at 1e-12. Until 2026-10-13 it read the stored boundary node back against the value written into it and could not fail. It catches a boundary term the interior solve did not see, but it is a consistency check on the same discretisation, not an independent solution or external reference. |
 | `nafems_t3_refinement_sensitivity` | **never earnable by this check** | Requires the reported 160/640 solve to remain within 0.025 K of its 80/320 companion. This is a deliberately conservative sensitivity gate before external comparison, not a convergence-order study; it therefore establishes no `NUMERICALLY_CONVERGED` level. The external `BENCHMARK_VALIDATED` level comes only from the pinned NAFEMS oracle. |
 
 ### Thermal models — `src/engcore/domains/thermal_models/lumped.py`

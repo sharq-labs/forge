@@ -41,7 +41,7 @@ The authority rules this record enforces
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any, Mapping
 
@@ -329,7 +329,9 @@ class UncertaintyDemand:
 
     ``require_supported_discrepancy`` asks that model-form discrepancy be
     *supported* under SRIA's existing rule (``model_discrepancy_check``):
-    UNKNOWN and an unsupported ZERO_DECLARED do not satisfy it.
+    UNKNOWN and an unsupported ZERO_DECLARED do not satisfy it, and neither
+    does a CONSTRAINED_PRIOR that this run's model-form study did not resolve
+    (``assessment.resolved_prior``) -- its reference alone is a declaration.
     """
 
     required_channels: frozenset[UncertaintyChannel]
@@ -515,6 +517,24 @@ class ScientificClaim:
         ):
             if not isinstance(getattr(self, label), kind):
                 raise ClaimContractError(f"{label} must be a {kind.__name__}")
+        # Review 3 A2-F10, review F3 (2026-10-13). A demand for supported discrepancy declared as a constrained
+        # prior can be met only by the MODEL_FORM interval a model-form study quantifies (assessment.resolved_prior),
+        # so the demand implies that channel. Implied here, once, and not at each reader: otherwise the same claim
+        # naming the channel too -- strictly more demanding -- plans the study and can be SUPPORTED where this one
+        # never can, and asking for more evidence would firm up the answer.
+        if (
+            self.uncertainty.require_supported_discrepancy
+            and self.discrepancy.kind is DiscrepancyKind.CONSTRAINED_PRIOR
+            and UncertaintyChannel.MODEL_FORM not in self.uncertainty.required_channels
+        ):
+            object.__setattr__(
+                self,
+                "uncertainty",
+                replace(
+                    self.uncertainty,
+                    required_channels=self.uncertainty.required_channels | {UncertaintyChannel.MODEL_FORM},
+                ),
+            )
 
         self._check_comparison()
         self._check_inputs()

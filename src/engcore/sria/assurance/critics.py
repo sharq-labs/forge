@@ -463,10 +463,14 @@ def model_discrepancy_check(
     contradicted_by: str = "",
     mandatory: bool = False,
 ) -> tuple[CheckRecord, tuple[Finding, ...]]:
-    """Shared helper: is a ZERO_DECLARED discrepancy actually supported?
+    """Shared helper: is a declared discrepancy actually supported?
 
     ``ZERO_DECLARED`` never means "the model is known to be exact". It means
-    this campaign chose to model discrepancy as zero.
+    this campaign chose to model discrepancy as zero. ``CONSTRAINED_PRIOR``
+    never means "the reference bounds it": the reference is the declarer's,
+    and only ``supported_by`` -- what the calling runtime resolved it to --
+    supports it. Without that it is INCONCLUSIVE, exactly like an
+    unsupported zero.
 
     M3.1 separates two very different situations:
 
@@ -524,14 +528,55 @@ def model_discrepancy_check(
             ),
         )
     if discrepancy.kind is DiscrepancyKind.CONSTRAINED_PRIOR:
+        # Review 3 A2-F10. A reference is a pointer, and a pointer nobody
+        # resolved is a declaration: it used to PASS on any non-empty string,
+        # so ``reference="doi:10.0/anything"`` satisfied a decision that
+        # demanded supported discrepancy. A prior now stands exactly where an
+        # unsupported ZERO_DECLARED stands until the runtime calling this
+        # helper has resolved it to admissible model-form evidence and says
+        # which in ``supported_by``. The declaring caller's reference never
+        # resolves itself.
+        if str(supported_by).strip():
+            return (
+                CheckRecord(
+                    name="model_discrepancy_supported",
+                    outcome=CriticVerdict.PASS,
+                    mandatory=mandatory,
+                    # The support is what the runtime resolved; the citation is
+                    # recorded as declared and is not itself checked against it.
+                    detail=(
+                        f"model-form discrepancy supported by {supported_by}; the "
+                        f"declared prior reference {discrepancy.reference!r} was "
+                        f"not itself checked"
+                    ),
+                ),
+                (),
+            )
         return (
             CheckRecord(
                 name="model_discrepancy_supported",
-                outcome=CriticVerdict.PASS,
+                outcome=CriticVerdict.INCONCLUSIVE,
                 mandatory=mandatory,
-                detail=f"constrained prior: {discrepancy.reference}",
+                detail=(
+                    f"constrained prior {discrepancy.reference!r} is not resolved "
+                    f"to admissible model-form evidence"
+                ),
             ),
-            (),
+            (
+                Finding(
+                    code="domain.constrained_prior_unresolved",
+                    severity=Severity.MAJOR,
+                    impact=FindingImpact.ASSURANCE_BLOCKING,
+                    category="model_form",
+                    message=(
+                        "model-form discrepancy is declared a constrained prior "
+                        f"citing {discrepancy.reference!r}, and nothing resolved "
+                        "that reference to admissible model-form evidence; a "
+                        "citation is a declaration, not support"
+                    ),
+                    check_name="model_discrepancy_supported",
+                ),
+            ),
         )
 
     # ZERO_DECLARED

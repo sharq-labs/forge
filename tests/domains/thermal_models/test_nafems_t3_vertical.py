@@ -59,6 +59,60 @@ def test_t3_refinement_gate_is_separate_from_the_external_level() -> None:
     assert refinement.residual <= refinement.tolerance
 
 
+def _boundary_check(result):
+    return next(c for c in result.validation.checks if c.name == "nafems_t3_boundary_conditions_held")
+
+
+def test_t3_boundary_check_holds_on_the_real_solve() -> None:
+    check = _boundary_check(solve_nafems_t3(run_id="t3-boundary"))
+    assert check.outcome is ValidationOutcome.PASS and check.establishes is None
+    assert check.residual is not None and check.residual <= check.tolerance
+
+
+def test_t3_boundary_check_fails_when_the_interior_solve_did_not_see_the_boundary(monkeypatch) -> None:
+    """The check used to compare the stored boundary node with the value written into it, so no solve could fail it.
+
+    Here the interior solve is handed a right-hand side whose wall-adjacent entry is off by 0.1 %: the boundary
+    node itself is still written exactly, so the old read-back would PASS this run.
+    """
+    import engcore.domains.thermal_models.nafems_t3 as t3
+
+    real = t3.solve_banded
+
+    def boundary_blind(l_and_u, banded, rhs):
+        rhs = rhs.copy()
+        rhs[-1] *= 0.999
+        return real(l_and_u, banded, rhs)
+
+    monkeypatch.setattr(t3, "solve_banded", boundary_blind)
+    result = solve_nafems_t3(run_id="t3-boundary-blind")
+    check = _boundary_check(result)
+    assert check.outcome is ValidationOutcome.FAIL
+    assert check.residual > 1e3 * check.tolerance
+    assert result.provenance.metadata["right_boundary_final_excursion_k"] == pytest.approx(
+        t3._right_excursion(t3._magnitude("end_time", "second")), abs=0.0
+    )
+
+
+def test_t3_boundary_check_sees_a_defect_confined_to_an_early_step(monkeypatch) -> None:
+    """Review finding F6: a check on the last step alone passes a run whose boundary went wrong earlier."""
+    import engcore.domains.thermal_models.nafems_t3 as t3
+
+    real, calls = t3.solve_banded, {"n": 0}
+
+    def blind_once(l_and_u, banded, rhs):
+        calls["n"] += 1
+        if calls["n"] == 3:  # the third step of the reported solve only
+            rhs = rhs.copy()
+            rhs[-1] *= 0.999
+        return real(l_and_u, banded, rhs)
+
+    monkeypatch.setattr(t3, "solve_banded", blind_once)
+    check = _boundary_check(solve_nafems_t3(run_id="t3-boundary-blind-once"))
+    assert check.outcome is ValidationOutcome.FAIL
+    assert check.residual > 1e3 * check.tolerance
+
+
 def test_t3_numerics_keep_the_probe_on_a_grid_node() -> None:
     with pytest.raises(ValueError, match="divisible by 5"):
         NAFEMST3Numerics(n_cells=82, n_steps=320)

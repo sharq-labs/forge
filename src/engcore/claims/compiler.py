@@ -40,7 +40,7 @@ from typing import Any, Mapping
 
 from ..scientific.serialization import schema_string
 from ..scientific.units.quantity import Quantity, dimensionality
-from ..sria.uncertainty import DiscrepancyKind
+from ..sria.uncertainty import DiscrepancyKind, UncertaintyChannel
 from ._records import tagged_digest
 from .capabilities import CapabilityDeclaration, CapabilityRegistry, MismatchReason
 from .contract import ScientificClaim
@@ -409,20 +409,30 @@ def _predicted_gaps(claim: ScientificClaim, declaration: CapabilityDeclaration, 
                     detail={"basis": declaration.uncertainty.basis},
                 )
             )
-    if claim.uncertainty.require_supported_discrepancy and claim.discrepancy.kind is not DiscrepancyKind.CONSTRAINED_PRIOR:
+    # Review 3 A2-F10: a constrained prior is resolvable only by the model-form study the plan runs when the claim
+    # demands the MODEL_FORM channel; its reference alone resolves nothing (see assessment.resolved_prior).
+    resolvable_prior = (
+        claim.discrepancy.kind is DiscrepancyKind.CONSTRAINED_PRIOR
+        and UncertaintyChannel.MODEL_FORM in claim.uncertainty.required_channels
+        and study_spec(declaration, claim, UncertaintyChannel.MODEL_FORM)[0] is not None
+    )
+    if claim.uncertainty.require_supported_discrepancy and not resolvable_prior:
         gaps.append(
             PredictedGap(
                 GapKind.DISCREPANCY_UNSUPPORTED,
                 claim.discrepancy.kind.value,
-                "the decision requires model-form discrepancy to be supported; UNKNOWN is not supported "
-                "and a ZERO_DECLARED assumption is supported only by evidence, never by declaration",
+                "the decision requires model-form discrepancy to be supported; UNKNOWN is not supported, "
+                "a ZERO_DECLARED assumption is supported only by evidence, never by declaration, and a "
+                "constrained prior only by the model-form study this plan would run for the MODEL_FORM channel",
             )
         )
         repairs.append(
             RepairAction(
                 RepairKind.SUPPORT_DISCREPANCY,
                 "discrepancy",
-                "declare a constrained prior with a reference, or supply evidence that supports the zero assumption",
+                "declare a constrained prior and demand the model_form channel of a capability that can quantify it, "
+                "so a model-form study under a pinned producer qualification can resolve the prior; or supply "
+                "evidence that supports the zero assumption",
                 required_for=(f"decision:{claim.decision.decision_id}",),
                 source="sria:model_discrepancy_check",
                 detail={"declared": claim.discrepancy.to_dict()},

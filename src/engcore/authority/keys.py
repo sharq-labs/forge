@@ -209,6 +209,12 @@ def _check_private_path(path: pathlib.Path, what: str) -> None:
     st = path.lstat()
     if stat.S_ISLNK(st.st_mode):
         raise AuthorityRefused(f"{what} {path} is a symbolic link; private key material is a regular file in the key directory")
+    if not hasattr(os, "geteuid"):
+        # Windows: no POSIX owner or mode bits, so neither check below can be made. Refused, never skipped -- this
+        # used to surface as an AttributeError, and skipping it would trust key material nobody verified as private.
+        raise AuthorityRefused(f"{what} {path}: this platform has no POSIX owner and mode bits, so owner-only placement "
+                               "of private key material cannot be verified here; production keys are refused, not "
+                               "trusted unchecked")
     if st.st_uid != os.geteuid():
         raise AuthorityRefused(f"{what} {path} is not owned by this process's user")
     mode = st.st_mode

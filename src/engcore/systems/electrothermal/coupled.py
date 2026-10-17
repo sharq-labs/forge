@@ -1708,6 +1708,39 @@ class CoupledRun:
         return tuple(i.largest_iterate_change for i in self.iterations)
 
     @property
+    def final_distance_to_fixed_point(self) -> Quantity | None:
+        """The a-posteriori distance of the final iterate from the fixed point, or ``None`` if there is no estimate.
+
+        Derived from the iterations, never stored, by the rule the loop stopped
+        on (:func:`_distance_to_fixed_point`): the torn values are re-read from
+        each sweep's results through :func:`_transport`, exactly as they
+        crossed, with the plan's seeds before the first sweep. ``None`` for a
+        run a transfer refusal stopped -- its last sweep produced no iterate --
+        and wherever the estimate is infinite: one sweep, or no contraction.
+        """
+        if self.outcome is CouplingOutcome.TRANSFER_REFUSED:
+            return None
+        unit = self.plan.comparison_unit
+
+        def torn_values(iteration: CoupledIteration) -> dict[tuple[str, str], float]:
+            return {
+                e.endpoint: _transport(
+                    iteration.result_for(e.dependency.source_problem_id), e.dependency, iteration.index
+                ).magnitude_in(unit)
+                for e in self.plan.torn
+            }
+
+        tail = list(self.iterations[-3:])
+        history = [] if len(self.iterations) >= 3 else [
+            {e.endpoint: e.initial_value.magnitude_in(unit) for e in self.plan.torn}
+        ]
+        history += [torn_values(iteration) for iteration in tail]
+        steps = [{key: after[key] - before[key] for key in after} for before, after in zip(history, history[1:])]
+        final = {key: Quantity(value, unit) for key, value in history[-1].items()}
+        distance = _distance_to_fixed_point(steps[-1], steps[-2] if len(steps) > 1 else None, final, unit)
+        return None if math.isinf(distance) else Quantity(distance, unit)
+
+    @property
     def final(self) -> CoupledIteration:
         return self.iterations[-1]
 
@@ -1949,6 +1982,44 @@ def _executors(
     return table
 
 
+def _distance_to_fixed_point(
+    step: Mapping[tuple[str, str], float],
+    previous: Mapping[tuple[str, str], float] | None,
+    values: Mapping[tuple[str, str], Quantity],
+    unit: str,
+) -> float:
+    """How far the latest iterate may still be from the fixed point, estimated a posteriori.
+
+    Per torn endpoint, from its last two SIGNED steps ``d`` and ``d_prev``: the
+    local rate is ``rho = d / d_prev``, and for an iteration contracting at that
+    rate the remaining distance is ``|d| rho / (1 - rho)`` when it approaches
+    from one side (``0 < rho < 1``) and ``|d| |rho| / (1 + |rho|)`` when it
+    oscillates about the fixed point (``-1 < rho < 0``) -- never more than
+    ``|d| / 2``, so an oscillating loop stops exactly where it always did. An
+    estimate, as ``rho`` is, not a bound. Infinite when ``rho`` cannot be
+    estimated (a first sweep, or a previous step of zero) or the endpoint is
+    not contracting (``|rho| >= 1``). A step already at the round-off floor of
+    the iterates is its own distance: below it, successive steps are noise and
+    their ratio measures nothing.
+    """
+    scale = max((abs(v.magnitude_in(unit)) for v in values.values()), default=0.0)
+    floor = 64.0 * math.ulp(1.0) * scale
+    worst = 0.0
+    for key, d in step.items():
+        size = abs(d)
+        if size <= floor:
+            worst = max(worst, size)
+            continue
+        before = None if previous is None else previous.get(key)
+        if not before:
+            return math.inf
+        rho = d / before
+        if abs(rho) >= 1.0:
+            return math.inf
+        worst = max(worst, size * (rho / (1.0 - rho) if rho > 0.0 else -rho / (1.0 - rho)))
+    return worst
+
+
 def run_fixed_point(
     problems: Sequence[ScientificProblem],
     executors: Mapping[str, Callable[[Mapping[str, Quantity], str], ScientificResult]],
@@ -1981,6 +2052,18 @@ def run_fixed_point(
     ratio-scale unit fixed by the plan. It is **not** derived from any
     participant's own convergence: in the non-convergent cases every sub-solve
     reports success in every one of the fifty iterations that did not converge.
+
+    **A small step is not a small error.** An iterate that approaches its fixed
+    point from one side at rate ``rho`` can still be ``d * rho / (1 - rho)``
+    away after a step ``d`` -- 9 ``d`` at ``rho = 0.9``, unbounded as ``rho``
+    approaches 1. Until 2026-10-13 the criterion was met on the step alone. It
+    is now met when the step AND :func:`_distance_to_fixed_point`, estimated
+    per torn endpoint from its last two signed steps, are both within the
+    tolerance. An oscillating iterate (a positive temperature coefficient
+    feeding back through dissipation, as in every electrothermal design that
+    reaches this loop with ``rho`` above 1/2) is at most ``d / 2`` away, so it
+    stops where it always did; a one-sided one with ``rho`` above 1/2 iterates
+    on; a loop that does not contract is never MET however small its step.
 
     A sub-solve that refuses an inadmissible value is **not caught**. An
     execution failure and a failure to converge are different findings, and a
@@ -2040,6 +2123,7 @@ def run_fixed_point(
 
     current = dict(seeds)
     iterations: list[CoupledIteration] = []
+    previous_step: dict[tuple[str, str], float] | None = None
     outcome = CouplingOutcome.ITERATION_LIMIT_REACHED
     refusal: TransportRefused | None = None
 
@@ -2149,8 +2233,14 @@ def run_fixed_point(
                 )
             )
             break
+        step = {
+            key: value.magnitude_in(unit) - current[key].magnitude_in(unit)
+            for key, value in updated.items()
+        }
         current = updated
-        if largest <= tolerance:
+        distance = _distance_to_fixed_point(step, previous_step, current, unit)
+        previous_step = step
+        if largest <= tolerance and distance <= tolerance:
             outcome = CouplingOutcome.CRITERION_MET
             break
 
@@ -2245,7 +2335,8 @@ def run_fixed_point_coupling(
         # than a judgement about any particular check.
         stop_on_transfer_refusal=True,
         run_id=run_id,
-        software_version="engcore.systems.electrothermal.coupled/0.1.0",
+        # 0.2.0: CRITERION_MET also needs the contraction-extrapolated distance (2026-10-13).
+        software_version="engcore.systems.electrothermal.coupled/0.2.0",
         assumptions=(
             "the resistance is evaluated at the transported temperature and "
             "held constant over the integrated interval; this is an implicit "

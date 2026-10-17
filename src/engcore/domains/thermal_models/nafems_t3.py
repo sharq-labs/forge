@@ -70,6 +70,11 @@ QOI = "temperature_at_probe"
 # result is even compared with the external oracle.
 REFINEMENT_DELTA_LIMIT_K = 0.025
 
+# Largest backward error of any Crank-Nicolson step re-evaluated on the full field:
+# max|stencil residual| / max(sum of |stencil terms|). A banded LU solve leaves
+# a few 1e-16; a boundary term the interior solve did not see leaves order 0.1.
+BOUNDARY_STEP_BACKWARD_TOL = 1.0e-12
+
 _ASSUMPTIONS = (
     "one-dimensional heat conduction in a uniform bar",
     "constant isotropic conductivity, density and specific heat",
@@ -192,6 +197,37 @@ def _right_excursion(time_s: float) -> float:
     return (offset - left) + amplitude * math.sin(math.pi * time_s / scale)
 
 
+def _step_backward_error(
+    before: np.ndarray, after: np.ndarray, t0: float, t1: float, r: float
+) -> float:
+    """Backward error of one Crank-Nicolson step, re-evaluated from the stencil on the full field.
+
+    THE BOUNDARY CHECK'S EVIDENCE. The stored boundary node is g(t_end) by
+    construction, so reading it back (what this check did until 2026-10-13)
+    compared a value with itself and could not fail. What can fail is the
+    interior solve not having seen the boundary: each step is re-evaluated here
+    on the full fields, boundary nodes included, from the stencil itself rather
+    than from the banded matrix or the right-hand side the solve used. A
+    boundary term that was dropped, signed wrongly or taken at one time level
+    leaves a residual of order r g / (1 + 2r) at the node next to the wall.
+    Evaluated on every step, not only the last, so a defect confined to part
+    of the run is caught too (review finding F6). Both sides share
+    :func:`_right_excursion`: a wrong boundary LAW is the external oracle's to
+    catch, not this check's.
+    """
+    full_before = np.concatenate(([0.0], before, [_right_excursion(t0)]))
+    full_after = np.concatenate(([0.0], after, [_right_excursion(t1)]))
+    new_terms = (1.0 + r) * full_after[1:-1] - 0.5 * r * (full_after[:-2] + full_after[2:])
+    old_terms = (1.0 - r) * full_before[1:-1] + 0.5 * r * (full_before[:-2] + full_before[2:])
+    scale = (
+        (1.0 + r) * np.abs(full_after[1:-1])
+        + 0.5 * r * (np.abs(full_after[:-2]) + np.abs(full_after[2:]))
+        + abs(1.0 - r) * np.abs(full_before[1:-1])
+        + 0.5 * r * (np.abs(full_before[:-2]) + np.abs(full_before[2:]))
+    )
+    return float(np.max(np.abs(new_terms - old_terms)) / (float(np.max(scale)) or 1.0))
+
+
 def _integrate(numerics: NAFEMST3Numerics) -> tuple[float, dict[str, float]]:
     length = _magnitude("length", "meter")
     conductivity = _magnitude("conductivity", "watt/meter/kelvin")
@@ -220,6 +256,7 @@ def _integrate(numerics: NAFEMST3Numerics) -> tuple[float, dict[str, float]]:
         initial_absolute - left_absolute,
         dtype=float,
     )
+    worst_step_backward_error = 0.0
     for step in range(numerics.n_steps):
         t0 = step * dt
         t1 = (step + 1) * dt
@@ -232,7 +269,12 @@ def _integrate(numerics: NAFEMST3Numerics) -> tuple[float, dict[str, float]]:
         # Left boundary excursion is zero.  The right boundary contributes at
         # both Crank-Nicolson time levels.
         rhs[-1] += 0.5 * r * (_right_excursion(t0) + _right_excursion(t1))
+        before = excursion
         excursion = np.asarray(solve_banded((1, 1), banded, rhs), dtype=float)
+        worst_step_backward_error = max(
+            worst_step_backward_error,
+            _step_backward_error(before, excursion, t0, t1, r),
+        )
 
     full = np.concatenate(
         (
@@ -253,6 +295,7 @@ def _integrate(numerics: NAFEMST3Numerics) -> tuple[float, dict[str, float]]:
         "probe_index": float(probe_index),
         "max_excursion_k": float(np.max(full)),
         "right_boundary_final_excursion_k": float(full[-1]),
+        "boundary_step_backward_error": worst_step_backward_error,
     }
 
 
@@ -281,10 +324,7 @@ def solve_nafems_t3(
     refinement_delta = abs(fine_temperature - coarse_temperature)
 
     finite = math.isfinite(fine_temperature)
-    right_expected = _right_excursion(_magnitude("end_time", "second"))
-    right_error = abs(
-        diagnostics["right_boundary_final_excursion_k"] - right_expected
-    )
+    boundary_error = diagnostics["boundary_step_backward_error"]
 
     self_checks = (
         ValidationCheck(
@@ -296,12 +336,18 @@ def solve_nafems_t3(
             name="nafems_t3_boundary_conditions_held",
             outcome=(
                 ValidationOutcome.PASS
-                if right_error <= 1.0e-12
+                if boundary_error <= BOUNDARY_STEP_BACKWARD_TOL
                 else ValidationOutcome.FAIL
             ),
-            residual=right_error,
-            tolerance=1.0e-12,
-            detail="time-dependent right Dirichlet boundary is imposed exactly",
+            residual=boundary_error,
+            tolerance=BOUNDARY_STEP_BACKWARD_TOL,
+            detail=(
+                f"every Crank-Nicolson step, re-evaluated from the stencil on "
+                f"the full field with the time-dependent right Dirichlet value at "
+                f"both time levels, has backward error at most {boundary_error:.3e} "
+                f"against {BOUNDARY_STEP_BACKWARD_TOL:.1e}: the interior solve "
+                f"saw the boundary it reports"
+            ),
         ),
         ValidationCheck(
             name="nafems_t3_refinement_sensitivity",

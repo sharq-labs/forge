@@ -125,7 +125,7 @@ def thermal_participant(mesh, store, *, ambient_at, k_at=None, log=None, statefu
 
 def electrical_participant(circuit, store, log=None):
     s = spec("electrical", [scalar_port("temperature", "input", "temperature", "K"), scalar_port("power", "output", "electrical_power", "W")],
-             "scipy.optimize.root", "hybr")
+             "scipy.optimize.root", circuit.root_method)
 
     def solve(inputs, start, end, uq, state):
         rec, power = circuit.solve(inputs["temperature"])

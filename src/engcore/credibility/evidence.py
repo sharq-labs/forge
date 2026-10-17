@@ -172,6 +172,7 @@ from .errors import CredibilityEvidenceError
 __all__ = [
     "ASSERTED_CONTEXT_SCHEMA",
     "COUPLING_EVIDENCE_SCHEMA",
+    "COUPLING_EVIDENCE_SCHEMA_V2",
     "EVIDENCE_PACKAGE_SCHEMA",
     "MODEL_VALIDITY_SCHEMA",
     "AssertedContext",
@@ -252,6 +253,8 @@ ASSERTED_CONTEXT_SCHEMA_V1 = schema_string("mcp_asserted_context", 1)
 # not been argued for.
 EVIDENCE_PACKAGE_SCHEMA = schema_string("mcp_evidence_package")
 COUPLING_EVIDENCE_SCHEMA = schema_string("mcp_coupling_evidence")
+#: v2 (2026-10-13) adds ``distance_to_fixed_point``; v1 records are still read, and judged on the change alone.
+COUPLING_EVIDENCE_SCHEMA_V2 = schema_string("mcp_coupling_evidence", 2)
 
 #: Schemas a caller's asserted context may not embed. These are the record
 #: types a reader — human or tool — scans for when it wants evidence, so
@@ -364,6 +367,17 @@ class CouplingEvidence:
     largest_iterate_change: Quantity
     #: The criterion that change was compared against.
     tolerance: Quantity
+    #: v2 (2026-10-13). How far the producing loop estimated its final iterate
+    #: still was from the fixed point; ``None`` when it had no finite estimate
+    #: (a single sweep, a sweep refused at a transfer, or a loop that does not
+    #: contract). A small final change alone is not a small error: a one-sided
+    #: iterate contracting at rate ``rho`` is still ``change * rho / (1 - rho)``
+    #: away, and the producing loop now stops on both, so this layer must read
+    #: both or it calls MET what the loop did not.
+    distance_to_fixed_point: Quantity | None = None
+    #: False only for a record read under v1, which stated no distance and
+    #: whose criterion was the change alone. A record built now states one.
+    states_distance: bool = True
 
     def __post_init__(self) -> None:
         outcome = str(self.outcome).strip()
@@ -403,21 +417,48 @@ class CouplingEvidence:
         self.largest_iterate_change.require_compatible(
             self.tolerance, context="coupling criterion"
         )
+        if not isinstance(self.states_distance, bool):
+            raise CredibilityEvidenceError("coupling evidence states_distance must be a bool")
+        distance = self.distance_to_fixed_point
+        if distance is not None:
+            if not self.states_distance:
+                raise CredibilityEvidenceError(
+                    "a v1 coupling record states no distance to the fixed point; "
+                    "one that carries a distance is a v2 record"
+                )
+            if not isinstance(distance, Quantity):
+                raise CredibilityEvidenceError(
+                    "coupling evidence distance_to_fixed_point must be a Quantity or None"
+                )
+            distance.require_compatible(self.tolerance, context="coupling criterion")
+            if distance.magnitude < 0.0:
+                raise CredibilityEvidenceError(
+                    f"a distance to the fixed point is not negative, got {distance}"
+                )
 
     @property
     def criterion(self) -> CouplingCriterion:
-        """MET exactly when the final iterate change is within the tolerance.
+        """MET exactly when the final iterate change AND the distance to the fixed point are within the tolerance.
 
         A property and not a field, for the reason
         :attr:`CredibilityEvidenceReport.verdict` is one: derived on access
         from the numbers it sits beside, so there is no stored copy to drift
         out of step with them and no constructor parameter through which a
-        caller can assert a criterion the numbers do not support.
+        caller can assert a criterion the numbers do not support. A missing
+        distance is NOT_MET, never zero; only a record read under v1, which
+        never stated one, is judged on the change alone, as it was written.
         """
         change = self.largest_iterate_change.magnitude_in(self.tolerance.units)
+        if change > self.tolerance.magnitude:
+            return CouplingCriterion.NOT_MET
+        if not self.states_distance:
+            return CouplingCriterion.MET
+        if self.distance_to_fixed_point is None:
+            return CouplingCriterion.NOT_MET
+        distance = self.distance_to_fixed_point.magnitude_in(self.tolerance.units)
         return (
             CouplingCriterion.MET
-            if change <= self.tolerance.magnitude
+            if distance <= self.tolerance.magnitude
             else CouplingCriterion.NOT_MET
         )
 
@@ -426,20 +467,35 @@ class CouplingEvidence:
         return self.criterion is CouplingCriterion.MET
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "schema": COUPLING_EVIDENCE_SCHEMA,
+        payload: dict[str, Any] = {
+            "schema": COUPLING_EVIDENCE_SCHEMA_V2 if self.states_distance else COUPLING_EVIDENCE_SCHEMA,
             "outcome": self.outcome,
             "iterations_run": self.iterations_run,
             "iteration_limit": self.iteration_limit,
             "largest_iterate_change": self.largest_iterate_change.to_dict(),
             "tolerance": self.tolerance.to_dict(),
-            # Derived, emitted for readers, and re-derived on the way back in.
-            "criterion": self.criterion.value,
         }
+        if self.states_distance:
+            payload["distance_to_fixed_point"] = (
+                None if self.distance_to_fixed_point is None else self.distance_to_fixed_point.to_dict()
+            )
+        # Derived, emitted for readers, and re-derived on the way back in.
+        payload["criterion"] = self.criterion.value
+        return payload
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CouplingEvidence":
-        require_schema(payload, COUPLING_EVIDENCE_SCHEMA)
+        version = require_schema_any(payload, (COUPLING_EVIDENCE_SCHEMA, COUPLING_EVIDENCE_SCHEMA_V2))
+        states_distance = version == COUPLING_EVIDENCE_SCHEMA_V2
+        distance = None
+        if states_distance:
+            if "distance_to_fixed_point" not in payload:
+                raise CredibilityEvidenceError(
+                    f"a {COUPLING_EVIDENCE_SCHEMA_V2!r} record states its distance to the fixed point, "
+                    f"null when it had none; this one omits the field"
+                )
+            raw = payload["distance_to_fixed_point"]
+            distance = None if raw is None else Quantity.from_dict(raw)
         evidence = cls(
             outcome=payload["outcome"],
             iterations_run=payload["iterations_run"],
@@ -448,6 +504,8 @@ class CouplingEvidence:
                 payload["largest_iterate_change"]
             ),
             tolerance=Quantity.from_dict(payload["tolerance"]),
+            distance_to_fixed_point=distance,
+            states_distance=states_distance,
         )
         declared = payload.get("criterion")
         if declared is not None and declared != evidence.criterion.value:

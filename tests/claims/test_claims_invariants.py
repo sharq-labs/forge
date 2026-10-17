@@ -31,8 +31,10 @@ INVARIANTS: dict[str, tuple[tuple[str, str], ...]] = {
     ),
     "3. caller assertions are not evidence": (
         ("claims/test_claims_contract.py", "test_constructed_statement_prose_is_kept_for_the_record_but_not_parsed"),
-        ("claims/test_claims_assessment.py", "test_a_demanded_discrepancy_needs_support_that_unknown_and_bare_zero_do_not_give"),
-        ("claims/test_claims_compiler.py", "test_an_unknown_or_unsupported_zero_discrepancy_cannot_meet_a_discrepancy_demand"),
+        ("claims/test_claims_assessment.py", "test_a_demanded_discrepancy_needs_support_that_unknown_bare_zero_and_a_bare_citation_do_not_give"),
+        ("claims/test_claims_compiler.py", "test_an_unknown_an_unsupported_zero_or_an_unresolvable_prior_cannot_meet_a_discrepancy_demand"),
+        ("claims/test_constrained_prior_resolution.py", "test_nothing_else_resolves_a_prior"),
+        ("claims/test_nl_adapter.py", "test_a_proposal_cannot_bound_discrepancy_with_a_constrained_prior"),
     ),
     "4. planner decisions are not evidence": (
         ("claims/test_claims_planning.py", "test_unattainable_evidence_and_uncertainty_work_are_planned_as_unavailable"),

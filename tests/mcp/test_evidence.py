@@ -1646,6 +1646,7 @@ def test_the_coupling_criterion_is_derived_and_cannot_be_asserted():
         iteration_limit=50,
         largest_iterate_change=Quantity(1e-9, K),
         tolerance=Quantity(1e-6, K),
+        distance_to_fixed_point=Quantity(1e-10, K),
     )
     assert met.criterion is CouplingCriterion.MET
     assert package(coupling=met).verdict is CredibilityVerdict.SUPPORTED
@@ -1658,8 +1659,39 @@ def test_the_coupling_criterion_is_derived_and_cannot_be_asserted():
         iteration_limit=50,
         largest_iterate_change=Quantity(0.5, "millikelvin"),
         tolerance=Quantity(1e-3, K),
+        distance_to_fixed_point=Quantity(0.9, "millikelvin"),
     )
     assert in_millikelvin.criterion is CouplingCriterion.MET
+
+
+def test_a_small_final_change_is_not_met_without_a_small_distance_to_the_fixed_point():
+    """2026-10-13. The loop stops on the change AND the a-posteriori distance; this layer reads both.
+
+    Reading the change alone, a run that stopped on its budget with a small last step -- possible now that the
+    loop keeps going while the distance is too large -- read MET beside ``iteration_limit_reached``.
+    """
+    small_change = dict(
+        outcome="iteration_limit_reached", iterations_run=50, iteration_limit=50,
+        largest_iterate_change=Quantity(1e-7, K), tolerance=Quantity(1e-6, K),
+    )
+    far = CouplingEvidence(**small_change, distance_to_fixed_point=Quantity(1.9e-6, K))
+    unknown = CouplingEvidence(**small_change)  # no finite estimate: missing is NOT_MET, never zero
+    for evidence in (far, unknown):
+        assert evidence.criterion is CouplingCriterion.NOT_MET
+        assert package(coupling=evidence).verdict is not CredibilityVerdict.SUPPORTED
+        restored = CouplingEvidence.from_dict(json.loads(json.dumps(evidence.to_dict())))
+        assert restored == evidence and restored.to_dict()["schema"] == "mcp_coupling_evidence/2"
+
+    # A v1 record stated no distance and was judged on the change alone; it is still read, and read that way.
+    v1 = {**unknown.to_dict(), "schema": "mcp_coupling_evidence/1", "criterion": "met"}
+    del v1["distance_to_fixed_point"]
+    legacy = CouplingEvidence.from_dict(v1)
+    assert legacy.states_distance is False and legacy.criterion is CouplingCriterion.MET
+    assert legacy.to_dict() == v1
+    # and a v2 record may not drop the field to be read as one
+    v2_without = {k: v for k, v in unknown.to_dict().items() if k != "distance_to_fixed_point"}
+    with pytest.raises(CredibilityEvidenceError, match="omits the field"):
+        CouplingEvidence.from_dict(v2_without)
 
 
 def test_the_coupling_statement_round_trips_and_is_not_a_check():

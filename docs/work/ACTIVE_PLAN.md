@@ -117,6 +117,8 @@ therapeutic work.
 | OD-12 | Confirm the control-plane budget signal (Master Plan §5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |
 | OD-13 | Confirm the B1 demo system. | Drone recommended: the only executable product chain today. |
 | OD-14 | Branch `perf/test-suite-runtime`: land it (needs the OD-3 recertification: it touches `certified:harness`, `inference_admission`, `certification_control`), and decide whether to add V4 mutation entries for the admission-record memo (changes the certified population count of 680). | Owner-requested. FAST 992 s -> 476 s, SCIENTIFIC 1448 s -> 1024 s, same failure sets (PROGRESS 2026-10-12). Review F1–F4 fixed; the memo's three mutants are killed by `tests/inference/test_admission_record_memo.py` today, outside the certified population. |
+| OD-15 | Bind a `ValidationCheck`'s issuer record to the result it qualifies. Today a check copied from a genuine solve or consensus onto another result carries a genuine record (`_issuer_gap` / `_analytic_issuer_gap` docstrings, `scientific/results/validation.py`). The frozen check has no field for it, so closing it is a Core Freeze change (additive field or V5). | Found again in the 2026-10-13 rating review; not changed there. |
+| OD-16 | Land branch `fix/scientific-rating-findings` (2026-10-13). It touches certified files (`sria/assurance/critics.py`, `tests/mcp/test_evidence.py`), so it needs the OD-3 recertification. It also bumps `mcp_coupling_evidence` to /2 (v1 still read) and moves the electrothermal coupled software version to 0.2.0. | PROGRESS 2026-10-13 "rating-review fixes". FAST: 17 fixed, 0 new apart from `tree.clean` on the uncommitted tree; hard-benchmark dev split identical. |
 
 ## Active-epic exceptions (open)
 

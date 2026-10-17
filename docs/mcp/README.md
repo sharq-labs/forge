@@ -395,18 +395,23 @@ response:
   "schema": "mcp_electrothermal_response/1",
   "system": "electrothermal",
   "coupling": {
-    "schema": "mcp_coupling_evidence/1",
+    "schema": "mcp_coupling_evidence/2",
     "outcome": "criterion_met",
-    "iterations_run": 10,
+    "iterations_run": 4,
     "iteration_limit": 50,
     "largest_iterate_change": {
       "schema": "quantity/1",
-      "magnitude": 4.7410196657438064e-07,
+      "magnitude": 1.3759330386164947e-07,
       "units": "kelvin"
     },
     "tolerance": {
       "schema": "quantity/1",
       "magnitude": 1e-06,
+      "units": "kelvin"
+    },
+    "distance_to_fixed_point": {
+      "schema": "quantity/1",
+      "magnitude": 2.6406554649233025e-10,
       "units": "kelvin"
     },
     "criterion": "met"
