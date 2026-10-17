@@ -73,6 +73,7 @@ _GAP_KIND = {
     "discrepancy_unsupported": ExplanationKind.UNCERTAINTY_GAP,
     "applicability_pending": ExplanationKind.FINDING,
     "applicability_at_risk": ExplanationKind.MISSING_EVIDENCE,
+    "applicability_unassessable": ExplanationKind.MISSING_EVIDENCE,
 }
 
 _STATUS_KIND = {

@@ -471,7 +471,7 @@ def test_residual_the_anchor_is_the_trust_root_so_it_never_comes_from_the_call_p
     import pathlib
     mcp = pathlib.Path(__file__).resolve().parents[2] / "src" / "engcore" / "mcp"
     for f in mcp.rglob("*.py"):
-        text = f.read_text()
+        text = f.read_text(encoding="utf-8")
         for token in ("trust_anchor", "allow_test_profile", "AuthorityLedger"):
             assert token not in text, f"{f}: MCP must never carry {token}"
 
