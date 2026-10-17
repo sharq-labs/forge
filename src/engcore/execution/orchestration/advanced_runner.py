@@ -78,6 +78,12 @@ def run_adaptive_plan(
             )
             continue
 
+        # A refinement request answers ONE solver's error indicator; a fallback
+        # route starts at its own level 0 (max_refinements counts per route,
+        # the total stays bounded by max_attempts).
+        refinement = None
+        refinement_level = 0
+
         while attempt_number < plan.budget.max_attempts:
             attempt_number += 1
             attempt_id = (
