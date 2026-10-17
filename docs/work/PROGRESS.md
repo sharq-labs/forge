@@ -5777,3 +5777,50 @@ commit. Per-workstream status, DV rows and review dispositions: DEFERRED_VALIDAT
   `tools/certification/skip_admission.py` refuses as UNEXPECTED_SKIP; pin the current gap with an ordinary test instead.
 - Probing a missing module by importing it: the dependency guard reads import strings; probe with `hasattr` on the
   existing package.
+
+
+## 2026-10-18 -- OD-6 decided: the active epic becomes the engineering foundations program (branch feat/od6-engineering-program-epic, local only)
+
+Owner decision in the Claude Code session: re-point the active epic from `battery.thevenin_1rc` to the research program
+`engrt.numerical_foundations` (contract `docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md`), using the schema /2
+research-program mechanism of the OD-6 package (Option C) with this program instead of Genesis. Implemented as the
+canonical separate change on a branch from `origin/main` `de11dffa`; **in force only when reviewed and merged.**
+
+- Ledger schema /2: `research_programs` with one entry (gates DV0, M1, M2, E1, E2, E3, all MISSING; build-first: no gate
+  requires DV0, `requires` orders decisions only); `active_epic` names
+  it; every capability, battery included, byte-identical in meaning.
+- `tools/capability_maturity.py`: refuses /1 ("migrate"); validates programs (exact fields, own statuses, ordered
+  `requires`, evidence paths, no maturity vocabulary, unique ids across both arrays); a decided program cannot stay the
+  epic; renders a programs table.
+- `tests/test_capability_completion.py`: the battery pin replaced by the program pin plus a battery snapshot (stage,
+  statuses, evidence counts may only grow); negative cases for every back door. **This test edit is a recertification
+  trigger (OD-3).**
+- Policy, PR template, matrix (hand-edited to the renderer's format) and ACTIVE_PLAN's OD-6 row updated.
+
+Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN: `pytest tests/test_capability_completion.py`,
+`python -m tools.capability_maturity` (check) and `--write` (the matrix must be regenerated or confirmed).
+- Read-only merge review: 0 BLOCKER, 4 MAJOR, ~10 MINOR, fixed except one recorded limit; package:
+  `docs/work/OD6_MERGE_REVIEW.md`. Merge preview against `origin/main`: clean. Nothing executed, no PR, nothing merged.
+
+### 2026-10-18 -- Cross-Domain Scientific Architecture Requirements added to the program (owner direction)
+
+- Read-only audit of the Phase 3.5 tree (two Explore subagents, nothing executed):
+  `docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md`. The runtime core is mostly physics-agnostic (and a steady coupled
+  screening template spanning mechanical, electrical and thermal models exists); thermal hard-coding is confined to `conjugate_interface.py` (P) and
+  one message; the real gaps are undeclared semantics (port roles, field kind, non-energy losses), missing ODE / DAE /
+  chemical / mechanical participants, static frames, closed problem aspects.
+- `ENGINEERING_FOUNDATIONS_PROGRAM.md`: CDAR-1..CDAR-10, multi-domain acceptance criteria for M1-E3, three
+  architectural fixtures required before those gates are decided; one prohibition added. Policy: one sentence.
+- Test pin added (NOT RUN). Core gaps A-1, A-2, A-3, A-7, A-9 recorded for the Core compatibility review, not implemented.
+- Read-only review of the change: 0 BLOCKER, 2 MAJOR (fixture location/enforcement; M2/E2 dependence on Core review),
+  minor wording and citations; all fixed.
+
+### 2026-10-18 -- Audit gap A-13 (force edges and the energy-density rule), from the CDAR fixtures
+
+- `CROSS_DOMAIN_ARCHITECTURE_AUDIT.md`: the edge-checks row now says the energy-density rule applies to scalar edges too
+  (`graph.py:301` builds a `QuantityDependency`; `composition/dependency.py:231, 241`), and its set
+  `ENERGY_DERIVED_DIMENSIONS` holds force, pressure and surface tension. New gap A-13 (CDAR-1, CDAR-2; Core review with
+  A-1 and A-2): a mechanical edge can answer that rule only with a prose `transport_declaration`.
+- Found while writing the fixtures on `test/cdar-architectural-fixtures` (`D:/forge-cdar`, `2e8434b7`); pinned there by
+  `test_gap_a_force_edge_must_speak_in_energy_terms`. Fixture next-step bullet updated; `OD6_MERGE_REVIEW.md` gap range.
+- Docs only. Verification: `git diff --check` only; no test was run.
