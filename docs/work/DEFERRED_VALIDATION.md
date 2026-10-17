@@ -344,3 +344,30 @@ matrix is not modified). An already canonical matrix hashes exactly as before.
 - Index dtype (int32 vs int64) is still part of a sparse digest; two otherwise identical canonical matrices with
   different index dtypes hash differently. The messy-vs-canonical test assumes SciPy picks int32 for both.
 - `SuperLU` fill-in is not bounded by the nnz limit; a `MemoryError` is reported unresolved, other failures propagate.
+
+| ID | Rock | Deferred test / check | Command (when authorized) | Status |
+| --- | --- | --- | --- | --- |
+| DV-45 | P1-BR7 outcome semantics | New tests (typed assessment, forged label, authority success/refusal paths) | `pytest tests/test_phase1_system_runtime_outcomes.py -q` | NOT RUN |
+| DV-46 | P1-BR7 | Existing authority suites. Expected: explicit-run nodes that used to FAIL now SUCCEED (`test_multiphysics_conservation_history.py` STEADY case still passes by its own assertion); `tests/test_system_runtime_review_fixes.py::test_h2_*` drives the authority with a SimpleNamespace "converged" stub and is now refused ("no run record") -- it must be rewritten on a real run record, not the check weakened | `pytest tests/test_multiphysics_conservation_history.py tests/test_system_runtime_external_providers.py tests/test_system_runtime_big13_additions.py tests/test_system_runtime_review_fixes.py flagships -q` | NOT RUN |
+| DV-47 | P1-BR7 | Rewrite of the H2 state-uncertainty tests on a real stateful coupled run | new test | NOT WRITTEN |
+
+### Outcome semantics after P1-BR7
+
+| Plan | Window outcomes | Run outcome | Node |
+| --- | --- | --- | --- |
+| explicit | explicit_completed / event_aligned | COMPLETED_EXPLICIT (no convergence claim; splitting error open) | succeeds, `coupling_outcome=completed_explicit`, every output UNKNOWN with that note |
+| implicit | converged / event_aligned, final iteration satisfied and every required edge measured | CONVERGED (fixed-point residual only) | succeeds, `coupling_outcome=converged` |
+| either | any iteration_limit / participant_refused / transfer_refused | NOT_COMPLETED | fails, nothing exposed |
+| either | a label the plan cannot produce, an unmeasured required edge, a gap between windows, a plan that does not validate against the graph | NOT_COMPLETED | fails, nothing exposed |
+
+Unchanged and still enforced first: graph and plan fingerprints, required conservation, untraced external providers.
+New: a non-record return is refused even for a fixed runtime, and the record's `run_id` must be the one this call
+requested. `assess_coupling_numerical_error` turns an inconsistent, unmonitored or unconverged label into an
+UNBOUNDED source.
+
+### Unverified assumptions (P1-BR7)
+
+- Window contiguity is checked by exact float equality of consecutive boundaries; records produced by this runtime
+  (before or after P1-BR4) satisfy it by construction.
+- `assess_run_outcome` lives in the certified `runtime.py` so the certified authority gains no new import edge; the
+  lazy import from `numerical_error.py` adds an uncertified -> certified edge only.

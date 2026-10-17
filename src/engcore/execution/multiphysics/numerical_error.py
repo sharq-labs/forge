@@ -254,14 +254,27 @@ def _mapping_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]:
     return sources
 
 
-def _iteration_sources(run: MultiphysicsRunRecord) -> list[NumericalErrorSource]:
+def _iteration_sources(
+    run: MultiphysicsRunRecord, classification: dict[int, str] | None = None
+) -> list[NumericalErrorSource]:
     plan = run.plan
     sources: list[NumericalErrorSource] = []
     plain = plan.relaxation.kind is RelaxationKind.NONE
+    classification = classification or {}
     for window in run.windows:
         if not window.iterations:
             continue
         label = f"window:{window.index}"
+        verdict = classification.get(window.index)
+        if verdict in ("inconsistent", "unmonitored", "not_converged"):
+            # Phase 1 BR7: a completed-looking label the run's own plan does not support
+            sources.append(NumericalErrorSource(
+                source=f"{label}:iteration", kind="iteration", status=ErrorSourceStatus.UNBOUNDED, relative=None,
+                method=f"window_{verdict}",
+                detail=(f"window labelled {window.outcome.value} is {verdict} against its plan "
+                        f"(see assess_run_outcome); its coupled state is not controlled"),
+            ))
+            continue
         if window.outcome not in _COMPLETED_OUTCOMES:
             last = window.iterations[-1]
             worst = max((r.relative for r in last.residuals), default=None)
@@ -374,5 +387,8 @@ def assess_coupling_numerical_error(
         if splitting is not None:
             raise InvalidScientificProblem("a run without coupling edges has no splitting error to estimate")
         return CouplingNumericalErrorAssessment(run.run_id, digest, False, ())
-    sources = _mapping_sources(run) + _iteration_sources(run) + _splitting_sources(run, splitting)
+    from .runtime import assess_run_outcome
+
+    classification = {item["window_index"]: item["classification"] for item in assess_run_outcome(run).windows}
+    sources = _mapping_sources(run) + _iteration_sources(run, classification) + _splitting_sources(run, splitting)
     return CouplingNumericalErrorAssessment(run.run_id, digest, True, tuple(sources))

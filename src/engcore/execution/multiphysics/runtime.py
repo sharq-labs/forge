@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from enum import Enum
 from fractions import Fraction
 from typing import Any, Iterable, Mapping
 
@@ -2372,3 +2373,137 @@ def require_conservation(run: MultiphysicsRunRecord, *, diagnostic: Iterable[str
         raise MultiphysicsExecutionError(
             f"required conservation did not hold: failed {failed}, unread {unread}; a coupled result is not admitted"
         )
+
+
+class CouplingRunOutcome(str, Enum):
+    """What a recorded coupled run established about its coupling (Phase 1 BR7).
+
+    COMPLETED and CONVERGED are different claims.  An explicit run completes
+    every window and makes no convergence claim: its staggering (splitting)
+    error stays open in the numerical-error accounting.  Only an implicit run
+    whose every window satisfied every required interface is CONVERGED -- and
+    that is a statement about the fixed-point residual, not about the
+    solution's error or its physical truth.
+    """
+
+    #: implicit: every window ended with every required interface monitored and satisfied
+    CONVERGED = "converged"
+    #: explicit: every window completed (event-aligned windows included); no convergence claim
+    COMPLETED_EXPLICIT = "completed_explicit"
+    #: some window did not complete, or the record is inconsistent with its plan
+    NOT_COMPLETED = "not_completed"
+
+
+_REFUSED_OUTCOMES = frozenset({
+    WindowOutcome.ITERATION_LIMIT,
+    WindowOutcome.PARTICIPANT_REFUSED,
+    WindowOutcome.TRANSFER_REFUSED,
+})
+
+
+@dataclass(frozen=True)
+class RunOutcomeAssessment:
+    """Derived from a run record, never declared; ``problems`` says why a run is NOT_COMPLETED."""
+
+    run_id: str
+    scheme: str
+    outcome: CouplingRunOutcome
+    required_edges: tuple[str, ...]
+    windows: tuple[Mapping[str, Any], ...]
+    problems: tuple[str, ...]
+
+    @property
+    def completed(self) -> bool:
+        return self.outcome is not CouplingRunOutcome.NOT_COMPLETED
+
+    @property
+    def mathematically_converged(self) -> bool:
+        return self.outcome is CouplingRunOutcome.CONVERGED
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "kind": "coupling_run_outcome",
+            "run_id": self.run_id,
+            "scheme": self.scheme,
+            "outcome": self.outcome.value,
+            "completed": self.completed,
+            "mathematically_converged": self.mathematically_converged,
+            "required_edges": list(self.required_edges),
+            "windows": [dict(item) for item in self.windows],
+            "problems": list(self.problems),
+            "notice": (
+                "completion is not convergence, and convergence is a fixed-point residual statement: "
+                "not the solution's error, not conservation, not validation"
+            ),
+        }
+
+
+def assess_run_outcome(run: MultiphysicsRunRecord) -> RunOutcomeAssessment:
+    """Classify every window of a recorded run against ITS plan and graph (Phase 1 BR7).
+
+    * EXPLICIT plan: EXPLICIT_COMPLETED and EVENT_ALIGNED windows complete it;
+      a CONVERGED window is inconsistent (an explicit plan has no criteria).
+    * IMPLICIT plan: a CONVERGED or EVENT_ALIGNED window counts only if its
+      final iteration satisfied every residual and measured every edge
+      :meth:`~CouplingPlan.required_convergence_edges` names; an
+      EXPLICIT_COMPLETED window is inconsistent.
+    * Any ITERATION_LIMIT or refused window, a gap between windows, or a plan
+      that does not validate against the graph makes the run NOT_COMPLETED.
+    """
+    if not isinstance(run, MultiphysicsRunRecord):
+        raise InvalidScientificProblem("assess_run_outcome takes a MultiphysicsRunRecord")
+    plan, graph = run.plan, run.graph
+    implicit = plan.scheme is CouplingScheme.IMPLICIT
+    problems: list[str] = []
+    try:
+        plan.validate_against(graph)
+        required = frozenset(plan.required_convergence_edges(graph))
+    except InvalidScientificProblem as exc:
+        required = frozenset()
+        problems.append(f"the recorded plan does not validate against the recorded graph: {exc}")
+    if not run.windows:
+        problems.append("the run records no coupling window")
+    classified: list[dict[str, Any]] = []
+    previous_end = run.started_at.magnitude_in("second")
+    for window in run.windows:
+        label = f"window {window.index}"
+        if window.start.magnitude_in("second") != previous_end:
+            problems.append(f"{label} starts at {window.start} but the previous boundary is {previous_end!r} s")
+        previous_end = window.end.magnitude_in("second")
+        outcome = window.outcome
+        if outcome in _REFUSED_OUTCOMES:
+            classification = "not_completed"
+            problems.append(f"{label} ended {outcome.value}")
+        elif not implicit:
+            if outcome is WindowOutcome.CONVERGED:
+                classification = "inconsistent"
+                problems.append(f"{label} is labelled converged under an explicit plan, which has no criteria")
+            else:
+                classification = "completed_explicit"
+        elif outcome is WindowOutcome.EXPLICIT_COMPLETED:
+            classification = "inconsistent"
+            problems.append(f"{label} is labelled explicit_completed under an implicit plan")
+        else:
+            final = window.iterations[-1]
+            unmonitored = sorted(required - {r.edge_id for r in final.residuals})
+            if not final.converged:
+                classification = "not_converged"
+                problems.append(f"{label} ({outcome.value}) did not satisfy every recorded residual at its final iteration")
+            elif unmonitored:
+                classification = "unmonitored"
+                problems.append(f"{label} ({outcome.value}) never measured required interfaces {unmonitored}")
+            else:
+                classification = "converged"
+        classified.append({"window_index": window.index, "outcome": outcome.value, "classification": classification})
+    if problems:
+        verdict = CouplingRunOutcome.NOT_COMPLETED
+    else:
+        verdict = CouplingRunOutcome.CONVERGED if implicit else CouplingRunOutcome.COMPLETED_EXPLICIT
+    return RunOutcomeAssessment(
+        run_id=run.run_id,
+        scheme=plan.scheme.value,
+        outcome=verdict,
+        required_edges=tuple(sorted(required)),
+        windows=tuple(classified),
+        problems=tuple(problems),
+    )
