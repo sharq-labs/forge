@@ -28,6 +28,7 @@ CONVERGENCE_CRITERION_SCHEMA = schema_string("multiphysics_convergence_criterion
 RELAXATION_POLICY_SCHEMA = schema_string("multiphysics_relaxation_policy")
 COUPLING_PLAN_SCHEMA = schema_string("multiphysics_coupling_plan")
 WINDOW_CONTROL_SCHEMA = schema_string("multiphysics_window_control")
+WINDOW_ERROR_CONTROL_SCHEMA = schema_string("multiphysics_window_error_control")
 
 
 class CouplingScheme(str, Enum):
@@ -287,6 +288,88 @@ class RelaxationPolicy:
 
 
 @dataclass(frozen=True)
+class MonitoredOutput:
+    """Phase 3 BR15: one participant output the window error indicator compares, with its tolerances."""
+
+    participant_id: str
+    port_id: str
+    absolute_tolerance: Quantity
+    relative_tolerance: float
+
+    def __post_init__(self) -> None:
+        for label in ("participant_id", "port_id"):
+            text = str(getattr(self, label)).strip()
+            if not text:
+                raise InvalidScientificProblem(f"monitored output requires {label}")
+            object.__setattr__(self, label, text)
+        if not isinstance(self.absolute_tolerance, Quantity) or not math.isfinite(self.absolute_tolerance.magnitude) \
+                or self.absolute_tolerance.magnitude < 0.0:
+            raise InvalidScientificProblem("monitored output absolute_tolerance must be a finite non-negative Quantity")
+        require_spread_unit(self.absolute_tolerance.units, context=f"monitored output {self.participant_id}.{self.port_id}")
+        relative = self.relative_tolerance
+        if isinstance(relative, bool) or not isinstance(relative, (int, float)) or not math.isfinite(relative) \
+                or relative < 0.0:
+            raise InvalidScientificProblem("monitored output relative_tolerance must be finite and non-negative")
+        object.__setattr__(self, "relative_tolerance", float(relative))
+        if self.absolute_tolerance.magnitude == 0.0 and self.relative_tolerance == 0.0:
+            raise InvalidScientificProblem(
+                "a monitored output with zero absolute and relative tolerance would reject every window that "
+                "is not reproduced bit for bit"
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"participant_id": self.participant_id, "port_id": self.port_id,
+                "absolute_tolerance": self.absolute_tolerance.to_dict(), "relative_tolerance": self.relative_tolerance}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "MonitoredOutput":
+        return cls(payload["participant_id"], payload["port_id"], Quantity.from_dict(payload["absolute_tolerance"]),
+                   payload["relative_tolerance"])
+
+
+@dataclass(frozen=True)
+class WindowErrorControl:
+    """Phase 3 BR15: a step-doubling local error INDICATOR for accepted coupling windows.
+
+    After a window ``[t, t + h]`` converges, the runtime re-executes it as two
+    windows of ``h / 2`` from the same restored start and compares the monitored
+    outputs at ``t + h``: ``eta = max_i |c_i - f_i| / (atol + rtol max(|c_i|, |f_i|))``.
+    ``eta <= 1`` accepts the COARSE window (the run is the one the plan
+    scheduled); ``eta > 1`` rejects it and retries a shorter window, recorded as
+    an error rejection -- distinct from a convergence rejection.
+
+    What it is: an indicator of the window's local time-discretization (and
+    splitting) error.  For a scheme of order ``p >= 1`` in its asymptotic range
+    the coarse window's local error is ``|c - f| 2^p / (2^p - 1)``, i.e. between
+    one and two times the recorded difference; neither the order nor the regime
+    is verified, so the difference is recorded as an indicator, never a bound.
+    It says nothing about model-form, physical or global (accumulated) error.
+    Cost: three window executions per accepted window.  Every participant must
+    be checkpointable with deterministic restore.
+    """
+
+    outputs: tuple[MonitoredOutput, ...]
+
+    def __post_init__(self) -> None:
+        items = tuple(self.outputs)
+        if not items or any(not isinstance(item, MonitoredOutput) for item in items):
+            raise InvalidScientificProblem("window error control monitors at least one MonitoredOutput")
+        keys = [(item.participant_id, item.port_id) for item in items]
+        if len(set(keys)) != len(keys):
+            raise InvalidScientificProblem("a monitored output is declared twice")
+        object.__setattr__(self, "outputs", tuple(sorted(items, key=lambda item: (item.participant_id, item.port_id))))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema": WINDOW_ERROR_CONTROL_SCHEMA, "indicator": "step_doubling_local_difference",
+                "outputs": [item.to_dict() for item in self.outputs]}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "WindowErrorControl":
+        require_schema(payload, WINDOW_ERROR_CONTROL_SCHEMA)
+        return cls(tuple(MonitoredOutput.from_dict(item) for item in payload["outputs"]))
+
+
+@dataclass(frozen=True)
 class WindowControlPolicy:
     """Bounded subdivision of a coupling window that did not converge.
 
@@ -317,6 +400,18 @@ class WindowControlPolicy:
     iteration) has not improved on its earlier best for this many consecutive
     iterations is rejected early as stagnating, instead of spending
     ``max_iterations``.
+
+    ``error_control`` (optional, Phase 3 BR15): a :class:`WindowErrorControl`
+    step-doubling indicator; a converged window whose indicator exceeds its
+    tolerances is rejected and subdivided like a non-converged one, and the
+    rejection is recorded as an error rejection.  Without it no time-
+    discretization error is assessed, and adapting the window says nothing
+    about time accuracy.
+
+    ``minimum_window`` governs subdivision only.  A window that an event, an
+    input change or the horizon ends earlier may be shorter; the runtime
+    records that case (``forced_below_minimum_window``) and does not refuse it
+    -- whether it should is an open owner decision.
     """
 
     minimum_window: Quantity
@@ -325,11 +420,14 @@ class WindowControlPolicy:
     divergence_factor: float | None = None
     growth_factor: float | None = None
     stagnation_iterations: int | None = None
+    error_control: WindowErrorControl | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(
             self, "minimum_window", _time(self.minimum_window, label="minimum_window")
         )
+        if self.error_control is not None and not isinstance(self.error_control, WindowErrorControl):
+            raise InvalidScientificProblem("error_control must be a WindowErrorControl")
         factor = float(self.reduction_factor)
         if not math.isfinite(factor) or not 0.0 < factor < 1.0:
             raise InvalidScientificProblem("window reduction_factor must lie in (0, 1)")
@@ -367,6 +465,7 @@ class WindowControlPolicy:
             # absent when unset: policies without step-size memory keep their identity
             **({"growth_factor": self.growth_factor} if self.growth_factor is not None else {}),
             **({"stagnation_iterations": self.stagnation_iterations} if self.stagnation_iterations is not None else {}),
+            **({"error_control": self.error_control.to_dict()} if self.error_control is not None else {}),
         }
 
     @classmethod
@@ -379,6 +478,9 @@ class WindowControlPolicy:
             divergence_factor=payload.get("divergence_factor"),
             growth_factor=payload.get("growth_factor"),
             stagnation_iterations=payload.get("stagnation_iterations"),
+            error_control=(
+                WindowErrorControl.from_dict(payload["error_control"]) if payload.get("error_control") is not None else None
+            ),
         )
 
 
