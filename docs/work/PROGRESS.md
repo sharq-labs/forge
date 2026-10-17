@@ -5623,3 +5623,75 @@ line (N60d remains the Phase 1 item).
 - OD-P2-5: hexahedral and mixed 3D conservative remap (a trilinear hex is not convex); 3D node fields.
 - Still open from Phase 1: N60d / OD-3, stub-run tests, mesh-weighted residual, participant time tolerance, no
   mathematical coupling-error bound.
+
+## 2026-10-17 -- Phase 3: advanced numerical & multiphysics engine (build phase; feat/phase3-advanced-numerical-multiphysics, local only)
+
+Worktree `D:/forge-phase3`, stacked on Phase 2 `2661b640` (re-verified 2026-10-17: Phase 2 is a descendant of Phase 1
+`6249c2d2`; neither is in `origin/main`, still `de11dffa`; no phase branch on the remote). Owner direction: build
+BR13..BR17 (numbered P3-BR13..P3-BR17), write tests, **execute no test**, no push/PR/merge/certification, stop
+after Phase 3. Phase 1/2 deferred items are preserved, not resolved.
+
+### Commits (all local)
+
+`1d80a142` P3-BR13, `9f96c560` P3-BR14, `87c271ab` P3-BR15, `f2df47d2` P3-BR16, `0a97c8a7` P3-BR17, `080751eb`
+review fixes, then this docs commit. Per-rock scope, limits and assumptions: DEFERRED_VALIDATION.md "Phase 3".
+
+### What was executed
+
+- `python -m py_compile` on every changed source and test file: OK. `git diff --check` after every rock and after the
+  fixes: clean. CR count of every changed source file: 0.
+- Import checks (`PYTHONPATH=D:/forge-phase3/src`, `engcore.__file__` in the worktree) of every changed module and of
+  `domains.electrical.heater_circuit`, `systems.electrothermal.runtime_adapter`, `domains.thermal_models.conduction1d_nonuniform`: OK.
+  Two import checks also printed trivial values (the `ResidualNorm` members; one `RelaxationPolicy` IQN-IMVJ
+  to_dict/from_dict round trip) -- a constructor smoke, not a test.
+- Static grep checks: `execution/` imports only `scientific`, `data`, `scenarios`; `plan.py` has none of the core
+  purity words.
+- A read-only scientific review of the Phase 3 diff (subagent with Read/Grep/Glob only, no execution): 0 BLOCKER,
+  5 MAJOR, 8 MINOR. All MAJORs and 5 MINORs fixed in `080751eb`; 3 MINORs recorded. Two written tests would have
+  failed (M2, M3) and were corrected. Dispositions: DEFERRED_VALIDATION.md "Phase 3 static review".
+- No pytest, FAST, SCIENTIFIC, hardened assurance, mutation, benchmark, real external solver or certification:
+  **NOT RUN**.
+
+### Reconciliation (what existed, what was added or fixed)
+
+| Area | Existing | Phase 3 |
+| --- | --- | --- |
+| Nonlinear solves | SciPy hybr/lm provider; method chain; continuation | classified failures; damped Newton with declared scale-aware acceptance; a chain can no longer loosen acceptance (tolerances or acceptance options) |
+| Coupling residuals | `linf`, `l2` = RMS over stored values | `l2_measure` (cell / lumped nodal measure); `l2` documented as unweighted |
+| Acceleration | IQN-ILS inside `RelaxationController`, history reset every window | one accelerator; IQN-IMVJ with recorded carry/discard rules; supports never mixed; fresh controller per run |
+| Window control | subdivision, divergence, stagnation, step memory | step-doubling error indicator with distinct rejection; forced short windows and clock differences recorded; subcycling contract |
+| Mesh adaptation | 1D kernel (EXC-1 A1), steady non-uniform conduction | grid digests and per-cycle provenance; round-off bisection skipped; scope refusals; mesh validity checks |
+| PDE / moving mesh | four linear templates, FEniCSx KSP | nonlinear admission contract (no template admitted); moving-mesh kinematics, mid-step inversion refusal, discrete GCL residual; no ALE |
+
+### Failed approaches (do not repeat)
+
+- Long bash heredocs for patch scripts again wrote nothing (`unexpected EOF`); write the script with the Write tool.
+- Chaining `grep -c` into `&& git commit`: `grep -c` exits 1 when the count is 0, so the commit silently did not run.
+- IQN-IMVJ with only the own-norm QR filter: near convergence a round-off secant column passes it and corrupts the
+  CARRIED approximation; IMVJ also filters relative to the largest column, and (review M5) an edge scale is not set by
+  a round-off residual.
+- Carrying an IMVJ approximation across windows of different lengths was rejected: the window map is a different
+  operator; only identical exact durations reuse it.
+
+### Certification-pinned files touched (UNCERTIFIED until OD-3)
+
+`current_core_v2.json`: `execution/multiphysics/{convergence,relaxation,runtime}.py`, `numerical/core.py`,
+`scientific/multiphysics/plan.py`. New files in certified SCOPE patterns: `execution/multiphysics/{acceleration,
+field_measures,subcycling}.py`, `numerical/{health,nonlinear,mesh_quality,moving_mesh}.py`, `pde/nonlinear.py`.
+New certified -> unpinned edges: `convergence.py -> field_measures.py`, `relaxation.py -> acceleration.py`. No V4 mutant
+targets a changed line.
+
+### Owner decisions recorded, not taken
+
+- OD-P3-1: EXC-1 amendment for coarsening, transient non-uniform 1D conduction and 1D grid-to-grid conservative state
+  transfer (BR16 BLOCKED parts).
+- OD-P3-2: triangle / tetrahedron refinement and coupled transfer between changing meshes (EXC-1 amendment, or a
+  second exception -- which triggers the anti-loophole review).
+- OD-P3-3: a nonlinear PDE template (e.g. k(T) diffusion) and a FEniCSx Newton adapter -- a new capability foundation.
+- OD-P3-4: an ALE formulation of any governing equation -- a new capability foundation.
+- OD-P3-5: confirm that the Phase 3 infrastructure (damped Newton, IMVJ, window error indicator, mesh quality,
+  moving-mesh kinematics) is inside policy as runtime/numerical infrastructure, following the ERT V1 and Phase 1/2
+  precedent. Claude judged it so; the owner has not confirmed.
+- OD-P3-6: schedule-forced windows below `minimum_window` (open since P1-BR4): still recorded, not refused.
+- OD-P3-7: whether `l2_measure` or window error control should become mandatory anywhere (identity change).
+- Still open: OD-P2-1..OD-P2-5, Phase 1 items, OD-3.
