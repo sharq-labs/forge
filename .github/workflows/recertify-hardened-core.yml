@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   classify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       mode: ${{ steps.classify.outputs.recertification }}
       source_sha: ${{ steps.classify.outputs.source_sha }}
@@ -56,7 +56,7 @@ jobs:
   fast311:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -112,7 +112,7 @@ jobs:
   fast312:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -168,7 +168,7 @@ jobs:
   scientific312:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -230,7 +230,7 @@ jobs:
   campaign312:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -271,7 +271,7 @@ jobs:
   regression312:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -317,7 +317,7 @@ jobs:
   formal_mutations_0:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
       SHARD_INDEX: "0"
@@ -371,7 +371,7 @@ jobs:
   formal_mutations_1:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
       SHARD_INDEX: "1"
@@ -425,7 +425,7 @@ jobs:
   formal_mutations_2:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
       SHARD_INDEX: "2"
@@ -479,7 +479,7 @@ jobs:
   formal_mutations_3:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
       SHARD_INDEX: "3"
@@ -533,7 +533,7 @@ jobs:
   v4_mutations_0:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SHARD_INDEX: "0"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -602,7 +602,7 @@ jobs:
   v4_mutations_1:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SHARD_INDEX: "1"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -671,7 +671,7 @@ jobs:
   v4_mutations_2:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SHARD_INDEX: "2"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -740,7 +740,7 @@ jobs:
   v4_mutations_3:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SHARD_INDEX: "3"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -809,7 +809,7 @@ jobs:
   v4_mutations_4:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SHARD_INDEX: "4"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -878,7 +878,7 @@ jobs:
   v4_mutations_5:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SHARD_INDEX: "5"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -947,7 +947,7 @@ jobs:
   v4_mutations_6:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SHARD_INDEX: "6"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -1016,7 +1016,7 @@ jobs:
   v4_mutations_7:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SHARD_INDEX: "7"
       SOURCE_SHA: ${{ needs.classify.outputs.source_sha }}
@@ -1084,7 +1084,7 @@ jobs:
   trust_mutations:
     needs: classify
     if: needs.classify.outputs.mode == 'source'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -1155,7 +1155,7 @@ jobs:
       needs.v4_mutations_6.result == 'success' &&
       needs.v4_mutations_7.result == 'success' &&
       needs.trust_mutations.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       child_sha: ${{ steps.commit.outputs.child_sha }}
     env:
@@ -1294,7 +1294,7 @@ jobs:
       always() &&
       (needs.certify.result == 'success' ||
        needs.classify.outputs.mode == 'certificate_child')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout exact certificate child produced by this run
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -1356,7 +1356,7 @@ jobs:
       - certify
       - verify_certificate_child
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:

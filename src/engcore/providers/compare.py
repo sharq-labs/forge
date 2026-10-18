@@ -368,7 +368,13 @@ def corroborate(declaration: ComparisonDeclaration, a: Any, a_output: str, b: An
     canonical problem on its side.  The usual independence and unit rules of
     :func:`compare_providers` apply.
     """
-    if len(problems) != 2 or any(not isinstance(p, CanonicalProblem) for p in problems):
+    # The type is checked before ``len``: a caller still passing the old verdict
+    # (a ProblemEquivalence) must get this refusal, not a TypeError from len().
+    if (
+        not isinstance(problems, (tuple, list))
+        or len(problems) != 2
+        or any(not isinstance(p, CanonicalProblem) for p in problems)
+    ):
         raise InvalidScientificProblem("corroboration takes the two CanonicalProblem records, not a verdict")
     payloads = (problems[0].to_dict(), problems[1].to_dict())
     problems = compare_problems(problems[0], problems[1], required=DEFAULT_REQUIRED)
@@ -377,7 +383,11 @@ def corroborate(declaration: ComparisonDeclaration, a: Any, a_output: str, b: An
             f"the two records are not admitted as solving one problem ({problems.verdict.value}: differing "
             f"{list(problems.differing)}, undeclared {list(problems.undeclared)}); their outputs are not compared"
         )
-    if len(bindings) != 2 or any(not isinstance(item, ProblemBinding) for item in bindings):
+    if (
+        not isinstance(bindings, (tuple, list))
+        or len(bindings) != 2
+        or any(not isinstance(item, ProblemBinding) for item in bindings)
+    ):
         raise InvalidScientificProblem("corroboration needs one ProblemBinding per record")
     ra, rb = ExecutionRef.of(a), ExecutionRef.of(b)
     for ref, binding, side in ((ra, bindings[0], problems.a_problem), (rb, bindings[1], problems.b_problem)):

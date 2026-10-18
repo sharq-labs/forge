@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
   "numpy>=1.26",
-  "scipy>=1.11",
+  # 1.12 is the floor, not 1.11: numerical/providers.py calls
+  # scipy.sparse.linalg.gmres(rtol=...), and `rtol` replaced `tol` in 1.12.
+  "scipy>=1.12",
   # NOTHING IN THIS REPOSITORY IMPORTS THIS, by statement or by string.
   # Every clean install pays for an ~8 MB wheel and its joblib/threadpoolctl
   # tail to satisfy a declaration no code reads. It is left declared rather
