@@ -1,0 +1,5 @@
+analysis: D:\forge-main-337519d1\benchmarks\genesis_lite\analysis.py
+TRIGGER both out of family: off_family_flag=True raw(disc,spur)=(1.0,1.0) capped(disc,spur)=(0.0,1.0) paired_primary_difference=1.0
+CONTROL discoverable in family: off_family_flag=False raw(disc,spur)=(1.0,1.0) capped(disc,spur)=(1.0,1.0) paired_primary_difference=2.0
+VERDICT FDA-06: REPRODUCED
+CONTROL_OK: True

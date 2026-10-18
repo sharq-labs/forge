@@ -1,0 +1,9 @@
+engcore: D:\forge-main-337519d1\src\engcore\__init__.py
+TRIGGER ids a<b : T=350 status=known derivation=interpolated value=25.0 used_claims=['b-300', 'c-400'] sources=['src-A', 'src-B'] reason=''
+TRIGGER ids swap: T=350 status=known derivation=interpolated value=20.0 used_claims=['b-300', 'c-400'] sources=['src-A'] reason=''
+EXACT 300 K     : T=300 status=unknown derivation=none value=None used_claims=['a-300', 'b-300'] sources=['src-A', 'src-B'] reason='several data admit this state; sources are not arbitrated'
+COVERAGE at 350 K: status=known conflicted=False value={'schema': 'quantity/1', 'magnitude': 25.0, 'units': 'watt / kelvin / meter'}
+CONTROL a-300   : T=350 status=known derivation=interpolated value=20.0 used_claims=['a-300', 'c-400'] sources=['src-A'] reason=''
+CONTROL z-300   : T=350 status=known derivation=interpolated value=20.0 used_claims=['c-400', 'z-300'] sources=['src-A'] reason=''
+VERDICT FDA-03: REPRODUCED
+CONTROL_OK: True
