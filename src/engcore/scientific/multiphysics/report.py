@@ -14,7 +14,7 @@ from ..results.uncertainty import Uncertainty
 from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from .graph import PhysicsGraph
-from .plan import CouplingPlan
+from .plan import CouplingPlan, ResidualNorm
 from .receipts import (
     OperatingConditionReceipt,
     QuantityOfInterestRecord,
@@ -104,9 +104,13 @@ class EdgeResidual:
                 "edge residual relative value must be finite and non-negative"
             )
         norm = str(self.norm).strip()
-        if norm not in {"linf", "l2"}:
+        # Every norm a criterion can declare, not a copy of the list: the copy
+        # still read {"linf", "l2"} after Phase 3 BR13 added `l2_measure`, so a
+        # run measured under that norm could not be recorded at all.
+        allowed = sorted(item.value for item in ResidualNorm)
+        if norm not in allowed:
             raise InvalidScientificProblem(
-                f"edge residual norm must be 'linf' or 'l2', got {norm!r}"
+                f"edge residual norm must be one of {allowed}, got {norm!r}"
             )
         if not isinstance(self.satisfied, bool):
             raise InvalidScientificProblem(
