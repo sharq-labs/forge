@@ -1,3 +1,15 @@
+---
+ai_schema_version: 1
+doc_id: FORGE-BVB-RESUME-20261019
+doc_kind: AUDIT_HANDOFF
+doc_status: SNAPSHOT
+authority_scope: NONE
+source_ref: multiple
+evidence_level: REPORTED
+last_reviewed: 2026-10-19
+supersedes: none
+---
+
 # FORGE — Build vs Buy (BVB) Resumption Handoff — 2026-10-19
 
 > **Historical audit navigation; not a replacement for `ACTIVE_PLAN.md`, not an authorization to replace code or install packages.** BVB-0 findings below are reported from the owner's Claude transcript at `abed661f`. The full six BVB reports and addendum were **reported untracked in a Windows worktree**, and are **not on `main` as of this snapshot**. Do not present this summary as an independent file-by-file verification of their contents.
