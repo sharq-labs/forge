@@ -5852,3 +5852,47 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
 
 - Fetching from a WSL *worktree* over `\\wsl.localhost`: its `.git` file names a Linux path; fetch from the clone's
   common git dir instead (`git rev-parse --git-common-dir`).
+
+### 2026-10-18 -- Solver audit and quick fixes (Claude, owner direction in chat)
+
+- Audit of the solver layers on `main` `0284ae16` (Linux, CPython 3.13.16, numpy 2.5.3, scipy 1.18.1, ngspice 44 from
+  apt, `CRAFTY_NGSPICE_ARGV=ngspice`; `.` installed without extras):
+  `python -m pytest -m "not expensive" -q -n 6 -p no:cacheprovider -rfE --tb=line`
+  -> **278 failed, 11210 passed, 166 skipped, 1 error in 692.69 s**. 196 failures were raised directly at
+  `execution/multiphysics/runtime.py:2297` (`min(end_exact, *pending)` with nothing pending, from `b71eeb3e`); the error
+  was `benchmarks/scientific_truth` without `mpmath` (environment).
+- GitHub Actions has started no job since 2026-10-15 (billing; see OD-25). Nothing merged since then ran CI.
+- Fixes, each with its own tests run in this session:
+  - `cf74cf1c`: window-boundary `min()` (+ `tests/test_multiphysics_windows_without_events.py`, fails without the fix,
+    passes with it); `corroborate()` type check before `len()`; ngspice default argv by platform; `scipy>=1.12`;
+    workflows pinned to `ubuntu-24.04`.
+  - `fef66a75`: steady `CallbackParticipant.initialize` with no outputs admitted as the runtime already admits it;
+    `DampedNewtonProvider` classifies `ValueError` domain errors and `newton_armijo` backtracks from an unevaluable
+    trial point (+ `tests/numerical/test_newton_domain_errors.py`, 3 of 5 fail without the fix); `EdgeResidual`
+    accepts every `ResidualNorm` (BR13 `l2_measure`); IMVJ logs dropping a staged approximation.
+  - `f5a346ae`: preCICE path named by repository path (core layering guard); `MonitoredOutput` registered as a nested
+    record in `tests/test_core_semantic_invariants.py` (certified file, OD-3); two stale refusal regexes; OD-22..OD-25.
+- After the fixes, same environment plus `sympy`/`mpmath` left behind by a provider install:
+  `python -m pytest -m "not expensive" -q -n 6 -p no:cacheprovider -rfE --tb=line`
+  -> **22 failed, 11494 passed, 164 skipped in 741.68 s** (exit 1). The 22:
+  - certification / freeze / mutation-population drift, waiting for OD-3 (10): `test_core_certificate` x2,
+    `test_core_freeze_manifest::test_a_descendant_that_keeps_the_contract_still_verifies`,
+    `test_core_freeze_v3_manifest::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree`,
+    `test_core_freeze_v4_manifest` x3, `test_core_scientific_audit_batch55::test_r67_...`,
+    `test_core_scientific_audit_batch56::test_r69_...`, `test_mutation_population_v4::test_every_folded_mutation_...`;
+  - owner decisions (3): OD-22 window control, OD-23 `test_l3_no_relaxation...`, OD-24 self-loop edge;
+  - test follow-ups (6): `test_phase2_review_regressions::test_a_redundant_forward_tear_is_refused` (no valid plan of
+    this one-stage composition can reach the forward-tear refusal: its only other edges have other dimensions, which
+    the plan refuses first); five system-runtime tests whose `SimpleNamespace` runtime stub is refused by the Phase 1 BR7
+    run-record check (`test_system_runtime_big13_additions` x2, `test_system_runtime_review_fixes` x2,
+    `test_system_runtime_state_reads` x1) -- they need a real `MultiphysicsRunRecord`;
+  - maturity policy (1): `test_capability_completion::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]`;
+  - environment (2): `test_mutation_workspace` permission tests, run as root.
+- Provider adapters with pip-installable backends (Cantera 3.2.0, CoolProp 8.0.0, PyBaMM 26.10.1.0, TESPy 0.11.3),
+  before the fixes: `pytest providers/{cantera,coolprop,tespy,pybamm}/tests` -> 54 passed, 4 failed (all the `min()`
+  bug); with the fix applied, `providers/pybamm/tests/test_pybamm_multiphysics.py` and
+  `test_system_runtime_battery.py` -> 9 passed. Deprecations to act on: Cantera `ReactorBase.thermo` (removed after
+  3.2) and the `clone` default; PyBaMM `npts`. With PyBaMM installed, the flagship battery tests in FAST take minutes
+  each (the FAST tier exceeded 3000 s and was stopped); they skip when PyBaMM is absent.
+- `python tools/forge_check.py --changed` escalated to a serial full run after the `pyproject.toml` / workflow change and
+  was stopped after ~11 minutes; the FAST tier above was run instead.
