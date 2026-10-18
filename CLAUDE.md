@@ -134,6 +134,12 @@ Do not stop merely because one subtask or PR is complete if the active plan
 contains the next executable task and no scientific/architectural blocker
 exists.
 
+## Pause / resume checkpoint protocol
+
+When the owner says **"كمل آخر حاجة"**, **"كمل شغل FORGE"**, or **"continue FORGE"** after a pause, first read [`docs/work/PAUSE_RESUME_CHECKPOINT_2026_10_19.md`](docs/work/PAUSE_RESUME_CHECKPOINT_2026_10_19.md), the live `ACTIVE_PLAN.md` and `PROGRESS.md`, and verify the actual repository and PR state. Then **show a current status/priority table and a compact dependency roadmap before further work**, in the owner's language. Identify the last completed step, blockers and the next bounded, already-authorized task. If approval is missing, ask rather than assuming the phrase authorizes edits, execution, certification or merge.
+
+The pause checkpoint is a historical resumption aid, **not** a new execution queue or a scientific authority. `ACTIVE_PLAN.md` alone governs active tasks; never promote unverified assertions from a checkpoint. Refresh its state from live evidence on every resume.
+
 ## CI policy
 
 GitHub test and hardened-core recertification workflows are part of the
