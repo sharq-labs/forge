@@ -577,7 +577,9 @@ class MultiscaleAuthority(_Base):
         if change:
             return change
         from ..multiscale import MacroCheckpoint
-        for cp in getattr(record, "checkpoints", ()) or ():
+        if type(record.checkpoints) is not tuple:      # a stateful container could yield another item after verification
+            return "the run record's checkpoints are not a tuple; the checkpoint that would be held cannot be verified"
+        for cp in record.checkpoints:
             if (type(cp) is not MacroCheckpoint or getattr(cp, "run_id", None) != run_id or _identities_of(cp) is None
                     or dict(_identities_of(cp)) != dict(ids)):
                 return (f"the run record carries macro checkpoint {getattr(cp, 'checkpoint_id', '?')!r} that is not bound to this run "

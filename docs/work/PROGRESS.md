@@ -6012,3 +6012,8 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
 - After: `tests/test_system_runtime_multiscale_identity.py` -> **33 passed**; regression set -> **5 failed, 262 passed**
   (the same five #163 stub tests); `providers/pybamm/tests/test_system_runtime_battery.py` (PyBaMM/TESPy installed for the
   run, removed) -> **8 passed**.
+- Second re-review of `f726392d` (static): **PASS**; MEDIUM-1b closed. LOW note applied: `record.checkpoints` must be a
+  tuple (a stateful container could yield another item after verification). After it:
+  `python -m pytest -q -p no:cacheprovider -n 4 tests/test_system_runtime_multiscale_identity.py tests/test_system_runtime_review_fixes.py tests/test_system_runtime_rereview_fixes.py tests/test_multiscale_runtime.py tests/test_multiscale_review_fixes.py`
+  -> **2 failed, 121 passed** (`test_h2_...`, `test_r2_...`: #163 stub tests, failing on the base too). Open: OD-29, OD-30;
+  no test for one authority shared by two contexts (fails closed statically). UNCERTIFIED until OD-3.
