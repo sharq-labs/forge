@@ -23,12 +23,14 @@ supersedes: none
 | File | Role | Governs execution? |
 |---|---|---|
 | `CLAUDE.md` | Repository and scientific working rules; automatic resume trigger | Repository rules only |
+| [AI Context Map](../ai/CONTEXT_MAP.md) | Select the exact owning contract and relevant evidence | **NO — navigation only** |
+| [PROGRESS Index](../ai/PROGRESS_INDEX.md) | Find relevant historical sections without loading 6,600+ lines | **NO — historical locator** |
 | `docs/work/ACTIVE_PLAN.md` | Active epic, bounded tasks, prerequisites, approval status | **YES — sole executable queue** |
 | [Resume Dashboard](RESUME_DASHBOARD_2026_10_19.md) | Current-state table format, ★ priority rubric, roadmap | **NO — derived snapshot** |
 | [Decision Register](RESUME_DECISION_REGISTER_2026_10_19.md) | Unresolved owner/scientific decisions, evidence and permission gates | **NO — recommendations only** |
 | [Build vs Buy Handoff](BVB_RESUME_HANDOFF_2026_10_19.md) | All BVB phases, 97-component counts, FDA reconciliation, six report hashes, baseline policy | **NO — unapproved audit** |
 
-Also read `docs/work/PROGRESS.md` for executed history, `docs/project/FORGE_MASTER_PLAN.md` for strategy, and `docs/discovery/FORGE_GENESIS.md` for Genesis semantics. Capability maturity, frozen core, performance and assurance contracts retain their original authority. In case of conflict, obey scope ownership and record a decision requirement; do not invent precedence.
+Use [PROGRESS Index](../ai/PROGRESS_INDEX.md) to locate only relevant executed history in `docs/work/PROGRESS.md`, `docs/project/FORGE_MASTER_PLAN.md` for strategy, and `docs/discovery/FORGE_GENESIS.md` for Genesis semantics. Capability maturity, frozen core, performance and assurance contracts retain their original authority. In case of conflict, obey scope ownership and record a decision requirement; do not invent precedence.
 
 ## 2. Mission — what not to lose
 
@@ -82,7 +84,7 @@ These are **last reported names**, not a guarantee of availability, freshness or
 
 ## 6. Resume algorithm — exactly this order
 
-1. **Verify** repository, HEADs, PR states, local worktree cleanliness/concurrency, active epic and required contracts. If inaccessible, write **UNVERIFIED**; do not assume.
+1. **Select context** with [AI Context Map](../ai/CONTEXT_MAP.md) and [metadata schema](../ai/DOCUMENT_SCHEMA.md). **Verify** repository, HEADs, PR states, local worktree cleanliness/concurrency, active epic and required contracts. If inaccessible, write **UNVERIFIED**; do not assume.
 2. **Render** a status table covering Trust/PRs, FDA-05/06, O-1, B-LEAK, BVB, baseline arms, v0.3, engineering demo and numerical epic, with `evidence SHA | status | ★ priority | dependency | next action`. Use fresh data, not copied statuses.
 3. **Render** a compact updated dependency roadmap from [dashboard](RESUME_DASHBOARD_2026_10_19.md).
 4. **Distinguish** last completed action, first unfinished action in `ACTIVE_PLAN.md`, blockers, authorizations, and one proposed next bounded step.
