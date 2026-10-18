@@ -987,3 +987,30 @@ not calibration or experimental validation. Code/expectations NOT EXECUTED.
 After bounded execution, separately authorize forge_check/integration gates,
 mutation/full assurance and final-source OD-3. M1D adaptive/rollback studies are
 future tests for a future driver, not satisfied by this fixed-mesh pack.
+
+
+## M1D adaptive transient: DV-133..136 (2026-10-18)
+
+Exact base M1C73a18468/Draft#166. IMPLEMENTED / UNVERIFIED / UNCERTIFIED,
+INTEGRATION HOLD. Earlier DV-101..132 remain NOT RUN. Separate owner authorization
+required for every numerical/test recipe. No expectations/tolerances retuned after runs.
+
+| ID | Scope | Exact deferred command | Required interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-133 | New M1D adaptive, recovery and study pack | `python -m pytest tests/test_m1d_adaptive_transient.py -q` | Independent known energy budgets, constant/reference histories, issued refine/coarsen, fresh storage, rollback registry/resource/clock completeness, unsafe restoration poison, criterion/source/state refusal and manufactured studies | NOT RUN |
+| DV-134 | M1A/B/C and legacy numerical regression | `python -m pytest tests/test_m1a_mesh_lineage.py tests/test_m1b_vertex_dual_state.py tests/test_m1c_transient_fv.py tests/numerical/test_mesh_adaptation.py tests/domains/thermal_models/test_conduction1d_nonuniform.py -q` | Original sourced constructor/legacy guards and prior numerical expectations unchanged; new continuation does not fabricate source evidence | NOT RUN |
+| DV-135 | Seal/time/material/semantic/CDAR compatibility | `python -m pytest tests/test_external_participant_checkpoints.py tests/test_provider_participant_checkpoints.py tests/test_time_engine.py tests/test_materials_engine.py tests/test_declared_field_kind_mapping.py tests/architecture/test_cross_domain_fixtures.py -q` | Strict same-object scope, exact time and source/meaning boundaries; fixtures remain design probes | NOT RUN |
+| DV-136 | Census/Core/certification integration | `python -m pytest tests/test_core_guards.py tests/test_core_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py -q` | Known static model20 vs pinned19 hold; reserving16/conditions96/reserved63/solver11 expected unchanged; capture ALL import failures, no silent skip/pin regeneration | NOT RUN |
+
+Study definitions: uniform exponential transient T=300+exp(-t), source=-exp(-t),
+insulated, dt=.1/.05/.025, one explicit refinement at t=.5; compare with independent
+analytical value and a uniform run (agreement alone is not truth). Spatial study uses
+stationary manufactured T=300+cos(pi*x), q=pi²cos(pi*x), exact regional/dual averages,
+uniform starting nodes5/9/17 and one issued refinement between two .05s windows.
+Assert monotonic refinement target only; no universal remap/jump spatial order claimed.
+These are authored studies, not executed evidence. Failure stays recorded; no tuning.
+
+After targeted execution, separately authorize repository forge_check/integration,
+full FAST, performance, mutation/full assurance and exact-source OD-3. No such command
+is a permitted static gate here. M1 still needs executed complete contextual evidence,
+required CDAR fixtures and an explicit owner gate decision; implementation cannot close it.

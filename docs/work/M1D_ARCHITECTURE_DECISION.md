@@ -101,3 +101,25 @@ synthetic mathematical inputs; no invented material measurements or thresholds.
 M1 acceptance still needs owner-authorized execution of all deferred parent/M1D packs,
 spatial/temporal/adaptive studies and required CDAR probes, model-census compatibility
 approval and OD-3/integration decisions. M1D cannot close M1 from implementation alone.
+
+## Final bounded safeguards
+
+Fresh target partitioning may split identical material regions, but overlay comparison
+must preserve the exact material property/state identities, IDs, area and contact
+field. Changing physical properties is not adaptation. Re-resolve actual source bytes;
+never transplant old C. Coordinator binds the expected committed backend state/time,
+so direct out-of-band checkpoint restore cannot rewind accepted history silently.
+Restoration must reproduce the full pre-attempt identity, not merely return without error.
+
+Registered resource roots are restored on their same builtin objects; JSON-tree value
+contents are supported, not arbitrary alias identity in external references. Arbitrary
+external aliases/provider sessions are outside recovery scope. Speculative immutable
+bulk blobs may remain in the content store without live issued handles after rollback;
+this is not a store garbage-collection operation.
+
+At material jumps a source dual average may conceal within-cell variation. Conservative
+remap/reconstruction can therefore alter local temperature even for an initially
+constant temperature; UNKNOWN remap error remains. No automatic boundary overwrite:
+if reconstruction conflicts with a subsequent Dirichlet initial consistency requirement,
+the window refuses/rolls back. A broader material-weighted remap or Dirichlet adaptation
+policy needs separate domain design; no universal local accuracy claim is made here.

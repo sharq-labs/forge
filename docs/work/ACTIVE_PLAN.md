@@ -6,6 +6,31 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Active bounded slice - M1D adaptive transient runtime (2026-10-18)
+
+Branch codex/m1d-adaptive-transient from exact M1C
+73a18468d02e5817178e1bf10d53298d5cc14900. Stack main -> #159 -> #160 ->
+#161 -> #162 -> #165 -> M1C Draft#166 -> M1D local. M1C published as draft
+against M1B with INTEGRATION HOLD after exact-head/ancestry/cleanliness/nine-file
+bounded scans/whitespace checks. Nothing merged/retargeted; checkpoint#158 independent.
+Previous M1C local-only publication notes superseded.
+
+- [x] Bounded table shown before edits; architecture/compatibility decision67cd3134 before source.
+- [x] Physics-neutral explicit-criterion coordinator and issued refinement/coarsening.
+- [x] M1B energy remap, domain-owned source/material/storage re-resolution and fresh M1C continuation.
+- [x] Exact window order and complete accepted/adaptation/refusal history, UNKNOWN uncertainty.
+- [x] Same-session/same-mesh window rollback; strict seal unchanged; unsafe recovery poisons.
+- [x] Adversarial and manufactured convergence study tests written, NOT RUN.
+- [x] Independent static scientific review PASS; no numerical execution/evidence.
+- [x] Explicit discovery proposal: static20 models vs pin19, other census populations unchanged.
+- [ ] OWNER_DECISION_REQUIRED: approve intended model-census20 compatibility/pin review and OD-3 tree.
+- [ ] Owner-authorized DV-133..136 and previous DV-101..132; record every actual failure.
+- [ ] M1 acceptance: executed temporal/spatial/adaptive studies and CDAR fixtures, integration/OD-3.
+
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED, INTEGRATION HOLD. No M1 closure or mature
+capability promotion. Mesh-mutation rollback/durable or external-provider recovery
+remain unsupported; failure then poisons. M1D_MERGE_PACKAGE.md records exact scope/limits.
+
 ## Active bounded slice - M1C transient nonuniform vertex FV (2026-10-18)
 
 Branch codex/m1c-transient-fv-1d, exact M1B base

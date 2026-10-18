@@ -6281,3 +6281,90 @@ Independent reviewer final addendum reread input validators, nonfinite/tensor
 fixtures and full package: PASS, no new authority/evidence-integrity finding;
 model-census integration hold remains. No commands/tests/imports by reviewer.
 IMPLEMENTED / UNVERIFIED / UNCERTIFIED, NOT INTEGRATION-READY.
+
+
+## 2026-10-18 M1C publication and M1D adaptive transient build
+
+M1C exact73a18468d02e5817178e1bf10d53298d5cc14900 clean, stack ancestry checked,
+exact nine changed paths bounded for artifacts/credential patterns (zero matches),
+git diff --check 9b092d56 HEAD exit0. git push -u origin codex/m1c-transient-fv-1d
+succeeded; gh pr create --draft --repo sharq-labs/forge --base
+codex/m1b-vertex-dual-state --head codex/m1c-transient-fv-1d created
+https://github.com/sharq-labs/forge/pull/166. Title/body explicitly INTEGRATION HOLD,
+attached to task. Nothing merged/retargeted or certification-pinned. Checkpoint#158 independent.
+
+Bounded task table shown before edits; separate managed adaptive-transient-1d worktree
+and branch codex/m1d-adaptive-transient from exact M1C. Architecture decision67cd3134
+before implementation. Independent read-only forge-scientific-review initial architecture
+no blocker. Generic coordinator owns declared criteria/decisions and accepted-window/
+adaptation/refusal history; thermal backend owns source-qualified storage/session rebuild
+and recovery. No estimator/criterion/tolerance invented; synthetic caller schedules only
+in tests. M1A issued mesh operations, M1B dual energy transfer and A-3 reused unchanged.
+
+M1C original sourced constructor preserved while initialization factored for separately
+issued continuation. No reconstructed measurement source invented. Exact permit/source
+energy/transfer/mesh/time/material context binds new session; target material partition
+may split identical regions but physical property/state/area/contact changes refuse.
+Re-resolve source bytes and reintegrate C; never transfer coefficients. Old sessions retire.
+UNKNOWN stays UNKNOWN; remap/balance is not local accuracy or physical validation.
+
+Recovery reuses existing strict CheckpointSeal unchanged, same backend/session/build/
+support only. Saved immutable records/actual bytes and state/clock/issuance/resource
+contents restore on unchanged mesh; unsafe restoration or any failure after mesh mutation
+poisons execution. No partial mesh rollback, durable/process/provider-external recovery.
+Speculative handles removed after rollback; immutable orphan blobs may remain, not authority.
+Independent final source/test/proposal A-J PASS; final new-anchor/package addendum requested.
+No reviewer commands/imports/tests/workflows. No scientific evidence from static review.
+
+Failed approaches/corrections found statically, not observed test failures: an unbound
+backend could restore outside the driver and rewind its accepted history; now coordinator
+pins expected committed material and checks complete before-state after recovery. Snapshot
+content hashes alone could miss equal-content replacement of nested issuance objects;
+separate captured local reference anchors now reject this, without changing native seal or
+scientific digest rules. Physical material switching was explicitly refused instead of
+misrepresenting it as adaptation. An initially drafted incompatible sine/insulated spatial
+study was replaced before execution by compatible stationary cosine with analytical dual
+source averages; no scientific expectations were changed in response to passing/failing runs.
+
+21 authored tests cover independent external energy totals, constant/changing mesh,
+sibling coarsening, discontinuous material limitations, actual rebuild/cache/history
+invalidation, provider/post-publication rollback, saved-byte/anchor/copy failure, poison,
+missing target/partial coverage/lineage/criteria/source/time refusal and manufactured
+uniform/adaptive/temporal/spatial study definitions. All NOT RUN. DV-133..136 appended;
+prior DV-101..132 NOT RUN. No pytest/real numerical execution/full FAST/performance/
+mutation/full assurance/OD-3. IMPLEMENTED / UNVERIFIED / UNCERTIFIED, INTEGRATION HOLD.
+
+Model-discovery proposal: intended20 vs pin19; reserving16, conditions96, reserved63,
+ScientificSolver11 unchanged by static inspection. Mandatory import failures remain fatal;
+actual import list UNKNOWN. No pin/frozen manifest/certificate edited. Owner compatibility
+approval and separate OD-3 execution/integration decisions remain required. M1 acceptance
+still needs actual complete deferred/CDAR/convergence/conservation evidence and owner gate.
+
+Actual lightweight checks: compile(Path(name).read_bytes(), name, 'exec') on four changed
+Python files completed without importing/executing them. AST comparison confirms original
+M1C constructor signature and MODEL/REALIZATION declarations unchanged. git-show/base-byte
+comparisons confirm pinned guard, native seal, M1A/M1B and steady source unchanged. Final
+inventory/credential/whitespace checks recorded separately below.
+
+Independent M1D final addendum PASS: all final code/tests/package/deferred recipes
+reread, including nested original-reference anchors and corrupted target-source
+fixtures. No new scientific-authority/evidence-integrity finding; unsupported recovery
+and local remap-accuracy limits disclosed, census hold intact. Reviewer executed no
+commands/imports/tests/workflows. Static PASS is not executed scientific evidence.
+A reference-table refresh utility initially raised IndexError before writing the matrix;
+column parsing corrected and final exact references regenerated. No source or numerical
+execution affected by that documentation utility failure.
+
+M1D final lightweight checks: four changed Python files compile-only via
+compile(Path(name).read_bytes(), name, 'exec'), no imports/execution. Exact12-file
+inventory, bounded credential-pattern scan zero matches and no unexpected artifacts.
+Deferred DV-133..136 paths exist (static check). Every main ->semantic ->A3 ->A4 ->
+M1A ->M1B ->M1C ->M1D ancestry edge confirmed by git merge-base --is-ancestor.
+AST confirms generic runtime has no thermal import. Tests remain NOT RUN.
+
+Final publication/static record: git diff --cached --check and git diff --check
+73a18468d02e5817178e1bf10d53298d5cc14900 completed with exit 0.
+gh pr view 166 confirmed Draft=true, exact M1C head
+73a18468d02e5817178e1bf10d53298d5cc14900 and base
+codex/m1b-vertex-dual-state. M1C remains INTEGRATION HOLD; no merge or pin update.
+These checks are static/publication checks, not scientific execution evidence.

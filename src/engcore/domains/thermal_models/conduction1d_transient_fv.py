@@ -231,6 +231,23 @@ class ThermalStep(_AuditOnlyRecord):
                 "classification": "numerical_balance_not_certified_error_or_physical_validation"}
 
 
+@dataclass(frozen=True)
+class ConductionContinuation(_AuditOnlyRecord):
+    issuer: object
+    energy: VertexState1D
+    instant: TimePoint
+    configuration: str
+
+    @property
+    def record_id(self):
+        return canonical_digest(self.to_dict())
+
+    def to_dict(self):
+        return {"schema":"conduction_continuation/1","energy":self.energy.to_dict(),
+                "instant":self.instant.to_dict(),"configuration":self.configuration,
+                "classification":"derived_numerical_continuation_not_initial_measurement"}
+
+
 class TransientConduction1D:
     """One fixed issued mesh, serial BE steps. Any failed step attempt poisons continuation."""
     def __init__(self, adapter: VertexDualAdapter1D, *, regions: tuple[ThermalRegion,...],
@@ -238,6 +255,15 @@ class TransientConduction1D:
                  initial: VertexState1D, admission: ConductionAdmission, provider: NumericalProvider,
                  method: NumericalMethod, conservation_atol: Quantity, conservation_rtol: float,
                  temperature_atol: Quantity, local_power_atol: Quantity):
+        self._initialize(adapter,regions=regions,contacts=contacts,basis=basis,initial_time=initial_time,
+            initial=initial,admission=admission,provider=provider,method=method,
+            conservation_atol=conservation_atol,conservation_rtol=conservation_rtol,
+            temperature_atol=temperature_atol,local_power_atol=local_power_atol)
+
+    def _initialize(self, adapter, *, regions, contacts, basis, initial_time, initial, admission,
+                    provider, method, conservation_atol, conservation_rtol, temperature_atol,
+                    local_power_atol, continuation=None):
+        self._continuation = continuation
         if (not isinstance(adapter,VertexDualAdapter1D) or not isinstance(admission,ConductionAdmission)
                 or not isinstance(basis,TimeBasis) or not isinstance(initial_time,TimePoint)
                 or initial_time.basis_id != basis.basis_id or not isinstance(provider,SparseFVProvider)):
@@ -258,14 +284,15 @@ class TransientConduction1D:
         self.support = adapter.support
         self.context = problem_context(adapter,self.regions,self.contacts,basis,initial_time,admission)
         self._issued, self._unusable = _IssuedRecords(), False
-        if not isinstance(initial,VertexState1D) or initial.placement is not StatePlacement.VERTEX_INTENSIVE or initial.semantics != TEMPERATURE:
-            raise NumericalRefusal("exact sourced M1B vertex temperature initial state required")
-        if initial.context_digest != self.context or initial.source is None:
-            raise NumericalRefusal("initial provenance/context does not bind this material/geometry/clock problem")
-        t = np.asarray(adapter.read_state(initial),dtype=float)*Quantity(1,initial.unit).magnitude_in("K")
-        if np.any(t <= 0):
-            raise NumericalRefusal("initial absolute temperature must be positive")
-        self.initial, self.current, self._temperatures = initial, initial, t
+        if continuation is None:
+            if not isinstance(initial,VertexState1D) or initial.placement is not StatePlacement.VERTEX_INTENSIVE or initial.semantics != TEMPERATURE:
+                raise NumericalRefusal("exact sourced M1B vertex temperature initial state required")
+            if initial.context_digest != self.context or initial.source is None:
+                raise NumericalRefusal("initial provenance/context does not bind this material/geometry/clock problem")
+            t = np.asarray(adapter.read_state(initial),dtype=float)*Quantity(1,initial.unit).magnitude_in("K")
+            if np.any(t <= 0):
+                raise NumericalRefusal("initial absolute temperature must be positive")
+            self.initial, self.current, self._temperatures = initial, initial, t
         self._x = np.asarray([_q(Quantity(v,adapter.mesh.grid.unit),"m") for v in adapter.mesh.grid.nodes])
         boundaries = np.asarray([_q(Quantity(v,self.support.intervals.unit),"m") for v in self.support.intervals.nodes])
         self._bounds, self._overlap, self._areas, self._conductivity, cv, resolutions = self._geometry()
@@ -297,10 +324,69 @@ class TransientConduction1D:
         self.storage = adapter.register_storage("m1c_storage",self._capacity,intensive=TEMPERATURE,integrated=INTEGRATED_ENERGY,
             unit="J/K",uncertainty=Uncertainty.unknown(),context_digest=self.context,
             source=_normalization_source(payload,"forge:material-resolution:"+self.context),source_bytes=payload)
+        if continuation is not None:
+            permit,transferred,receipt,transition = continuation
+            values=adapter.read_state(transferred)
+            rebound=adapter._publish("m1d_rebound_"+permit.record_id,values,StatePlacement.DUAL_CELL_INTEGRATED,
+                INTEGRATED_ENERGY,transferred.unit,Uncertainty.unknown(),self.context,None,(transferred.record_id,))
+            initial=adapter.convert_storage(rebound,self.storage,name="m1d_reconstructed_"+permit.record_id)
+            t=np.asarray(adapter.read_state(initial),dtype=float)*Quantity(1,initial.unit).magnitude_in("K")
+            if np.any(t<=0):
+                raise NumericalRefusal("reconstructed absolute temperature must be positive")
+            self.initial,self.current,self._temperatures=initial,initial,t
         self.energy = adapter.convert_storage(initial,self.storage,name="m1c_energy_initial")
+        if continuation is not None:
+            expected=np.asarray(adapter.read_state(continuation[1]),dtype=float)*Quantity(1,continuation[1].unit).magnitude_in("J")
+            actual=np.asarray(adapter.read_state(self.energy),dtype=float)*Quantity(1,self.energy.unit).magnitude_in("J")
+            if np.any(np.abs(expected-actual)>self.atol+self.rtol*np.abs(expected)):
+                raise NumericalRefusal("reconstructed storage does not preserve transferred energy")
         self._config_digest = canonical_digest(self._configuration())
         self._clock = canonical_digest(self.time.to_dict())
         self._current_ids = (self.current.record_id,self.energy.record_id)
+
+    def continuation_permit(self):
+        self._guard()
+        return self._issued.issue(ConductionContinuation(self,self.energy,self.time,self._config_digest))
+
+    @classmethod
+    def from_transfer(cls, permit, transition, transferred, receipt, *, regions, contacts):
+        if not isinstance(permit,ConductionContinuation) or not isinstance(permit.issuer,cls):
+            raise NumericalRefusal("issued same-session conduction continuation required")
+        previous=permit.issuer
+        previous._issued.require(permit)
+        previous._issued.verify()
+        if (previous._unusable or permit.energy is not previous.energy or permit.instant!=previous.time
+                or permit.configuration!=previous._config_digest
+                or canonical_digest(previous._configuration())!=previous._config_digest):
+            raise NumericalRefusal("retired, stale or drifted continuation issuer")
+        adapter=previous.adapter
+        adapter._require_parents(transition)
+        adapter._issued.require(receipt)
+        if (transition.before is not previous.support or transition.after is not adapter.support
+                or receipt.transition_id!=transition.record_id or receipt.source_id!=permit.energy.record_id
+                or receipt.target_id!=transferred.record_id or transferred.support is not adapter.support
+                or transferred.placement is not StatePlacement.DUAL_CELL_INTEGRATED
+                or transferred.semantics!=INTEGRATED_ENERGY or transferred.context_digest!=previous.context):
+            raise NumericalRefusal("continuation requires exact immediate issued energy transfer")
+        adapter.read_state(transferred)
+        regions,contacts=tuple(regions),tuple(contacts)
+        if [c.to_dict() for c in contacts]!=[c.to_dict() for c in previous.contacts]:
+            raise NumericalRefusal("adaptation cannot change physical contact declarations")
+        for old in previous.regions:
+            for target in regions:
+                if min(_q(old.right,"m"),_q(target.right,"m"))>max(_q(old.left,"m"),_q(target.left,"m")):
+                    if (old.properties.digest!=target.properties.digest or old.state.digest!=target.state.digest
+                            or old.conductivity_id!=target.conductivity_id or old.storage_id!=target.storage_id
+                            or _q(old.area,"m**2")!=_q(target.area,"m**2")):
+                        raise NumericalRefusal("adaptation cannot change physical material/storage/area field")
+        result=cls.__new__(cls)
+        result._initialize(adapter,regions=regions,contacts=contacts,basis=previous.basis,
+            initial_time=previous.time,initial=None,admission=previous.admission,provider=previous.provider,
+            method=previous.method,conservation_atol=Quantity(previous.atol,"J"),conservation_rtol=previous.rtol,
+            temperature_atol=Quantity(previous.temperature_atol,"K"),local_power_atol=Quantity(previous.local_power_atol,"W"),
+            continuation=(permit,transferred,receipt,transition))
+        previous._unusable=True
+        return result
 
     def _geometry(self):
         if not self.regions or any(not isinstance(r,ThermalRegion) for r in self.regions):
@@ -323,6 +409,7 @@ class TransientConduction1D:
 
     def _configuration(self):
         return {"context":self.context,"support":self.support.record_id,"initial":self.initial.record_id,
+                "continuation":None if self._continuation is None else [r.to_dict() for r in self._continuation],
                 "regions":[r.to_dict() for r in self.regions],"contacts":[c.to_dict() for c in self.contacts],
                 "basis":self.basis.to_dict(),"initial_time":self.initial_time.to_dict(),
                 "storage_id":self.storage.record_id,"provider":self.provider.identity.to_dict(),"method":self.method.to_dict(),
@@ -337,6 +424,12 @@ class TransientConduction1D:
         if self._unusable:
             raise NumericalRefusal("transient session unusable after failed step attempt")
         self._issued.verify()
+        if self._continuation is not None:
+            permit,transferred,receipt,transition=self._continuation
+            permit.issuer._issued.require(permit)
+            self.adapter._issued.require(receipt)
+            self.adapter._require_parents(transferred)
+            self.adapter._require_parents(transition)
         if self.adapter.support is not self.support or canonical_digest(self._configuration()) != self._config_digest:
             raise NumericalRefusal("stale mesh/support or material/provider/build/configuration drift")
         if (canonical_digest(self.time.to_dict()) != self._clock
