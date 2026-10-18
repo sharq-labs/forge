@@ -560,7 +560,8 @@ class MultiscaleAuthority(_Base):
     def _record_refusal(self, record: Any, authorized: Mapping[str, str]) -> str:
         """Why a returned run record is not bound to this runtime's run and the authorized context ('' if it is)."""
         from ..multiscale.runtime import MultiTimescaleRunRecord
-        if not isinstance(record, MultiTimescaleRunRecord):
+        if type(record) is not MultiTimescaleRunRecord:
+            # exact type: a subclass can override the properties / serialization the checks below rely on
             return f"the runtime returned {type(record).__name__}, not a MultiTimescaleRunRecord; its identities cannot be verified"
         run_id = getattr(self.runtime, "run_id", None)
         if getattr(record, "run_id", None) != run_id:
@@ -575,10 +576,20 @@ class MultiscaleAuthority(_Base):
         change = self._runtime_change() or self._runtime_objects_refusal()
         if change:
             return change
+        from ..multiscale import MacroCheckpoint
         for cp in getattr(record, "checkpoints", ()) or ():
-            if getattr(cp, "run_id", None) != run_id or _identities_of(cp) is None or dict(_identities_of(cp)) != dict(ids):
+            if (type(cp) is not MacroCheckpoint or getattr(cp, "run_id", None) != run_id or _identities_of(cp) is None
+                    or dict(_identities_of(cp)) != dict(ids)):
                 return (f"the run record carries macro checkpoint {getattr(cp, 'checkpoint_id', '?')!r} that is not bound to this run "
                         "and its identities; it is neither exposed nor held")
+        if record.checkpoints:
+            # verify exactly the payload that would be held, as it will be read back on resume
+            try:
+                held = MacroCheckpoint.deserialize(record.checkpoints[-1].serialize())
+            except InvalidScientificProblem as exc:
+                return f"the run record's last macro checkpoint does not round-trip ({exc}); it is neither exposed nor held"
+            if held.run_id != run_id or dict(held.identities) != dict(ids):
+                return "the payload of the run record's last macro checkpoint is not bound to this run and its identities; it is not held"
         return ""
 
     def _stage_findings(self, node: Any) -> tuple[tuple[str, str], ...]:

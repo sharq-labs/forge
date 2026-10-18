@@ -465,14 +465,78 @@ class OverridesLastCheckpoint(Counting):
         return forged
 
 
-def test_review_m1_the_held_checkpoint_is_the_verified_list_item_never_an_overridden_property():
-    _rt, auth = kit(cls=OverridesLastCheckpoint)
+def test_review_m1_a_record_subclass_that_overrides_its_last_checkpoint_is_refused():
+    spies = Spies()
+    _rt, auth = kit(cls=OverridesLastCheckpoint, spies=spies)
     request, context = F.request(ENV, SCN, auth)
     result = SystemExecutor(context).run(request)
-    assert result.receipt("aging").status is NodeStatus.SUCCEEDED, result.receipt("aging").reason
-    held = MacroCheckpoint.deserialize(auth._last_checkpoint)
-    assert {k: held.identities[k] for k in ("scenario", "timeline", "environment")} == {
-        "scenario": SCN.digest, "timeline": ENV.timeline.digest, "environment": ENV.digest}     # its own, not ENV_SOURCE's
+    assert result.receipt("aging").status is NodeStatus.FAILED and "MultiTimescaleRunRecord" in result.receipt("aging").reason
+    assert auth._last_checkpoint is None and auth._last_binding is None
+    assert_nothing_released(result, "aging", auth, spies)
+
+
+class _Masquerade:
+    """Reports a genuine checkpoint's run id / identities but serializes another context's checkpoint."""
+
+    def __init__(self, genuine, foreign):
+        self._genuine, self._foreign = genuine, foreign
+
+    def __getattr__(self, name):
+        return getattr(self._genuine, name)
+
+    def serialize(self):
+        return self._foreign.serialize()
+
+
+class MasqueradingCheckpoint(Counting):
+    def run(self, **kw):
+        record = super().run(**kw)
+        foreign = F.runtime(ENV_SOURCE, run_id=self.run_id).run(**kw).checkpoints[-1]
+        return replace(record, checkpoints=record.checkpoints[:-1] + (_Masquerade(record.checkpoints[-1], foreign),))
+
+
+class SerializesElsewhere(Counting):
+    """A genuine MacroCheckpoint subclass whose payload is another context's."""
+
+    def run(self, **kw):
+        from dataclasses import fields
+
+        record = super().run(**kw)
+        foreign = F.runtime(ENV_SOURCE, run_id=self.run_id).run(**kw).checkpoints[-1]
+
+        class Forged(MacroCheckpoint):
+            def serialize(self):
+                return foreign.serialize()
+
+        last = record.checkpoints[-1]
+        return replace(record, checkpoints=record.checkpoints[:-1] + (Forged(**{f.name: getattr(last, f.name) for f in fields(last)}),))
+
+
+@pytest.mark.parametrize("cls", [MasqueradingCheckpoint, SerializesElsewhere], ids=["look-alike-checkpoint", "checkpoint-subclass"])
+def test_review_m1b_the_held_payload_must_be_the_checkpoint_that_was_verified(cls):
+    spies = Spies()
+    _rt, auth = kit(cls=cls, spies=spies)
+    request, context = F.request(ENV, SCN, auth)
+    result = SystemExecutor(context).run(request)
+    assert result.receipt("aging").status is NodeStatus.FAILED and "checkpoint" in result.receipt("aging").reason
+    assert auth._last_checkpoint is None and auth._last_binding is None
+    assert_nothing_released(result, "aging", auth, spies)
+
+
+def test_review_a_runtime_that_starts_lying_after_preflight_is_refused_before_it_runs():
+    spies = Spies()
+    rt, auth = kit(cls=LiesAfterPreflight, spies=spies)
+
+    def rebind(call):
+        rt.lie = True
+        rt.environment, rt.timeline = ENV_SOURCE, ENV_SOURCE.timeline
+    mut, mut_node = mutator(rebind, depends_target="aging")
+    request, context = F.request(ENV, SCN, auth, nodes=(mut_node, F.node(auth, depends_on=("mutator",))), extra_authorities=(mut,))
+    result = SystemExecutor(context).run(request)
+    receipt = result.receipt("aging")
+    assert receipt.status is NodeStatus.FAILED and "self-reported" in receipt.reason, receipt.reason
+    assert rt.runs == 0
+    assert_nothing_released(result, "aging", auth, spies)
 
 
 class LiesAboutIdentity(Counting):
@@ -489,6 +553,18 @@ def test_review_l1_a_self_reported_identity_does_not_stand_in_for_the_environmen
     assert result.status is RunStatus.REFUSED and codes(result) == ["MULTISCALE_IDENTITY_MISMATCH"]
     assert "self-reported" in result.preflight.blocking[0].message
     assert rt.runs == 0
+
+
+class LiesAfterPreflight(Counting):
+    """Honest until ``lie`` is set; then it keeps reporting ENV's identities whatever it executes on."""
+
+    lie = False
+
+    def identities(self):
+        ids = super().identities()
+        if self.lie:
+            ids.update(scenario=SCN.digest, timeline=ENV.timeline.digest, environment=ENV.digest)
+        return ids
 
 
 class RewritesPolicy(Counting):

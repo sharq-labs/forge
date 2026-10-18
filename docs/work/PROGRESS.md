@@ -6002,3 +6002,13 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
   the pre-review fix -> **3 failed, 3 passed** (MEDIUM-1 x2 and LOW-1 caught; the LOW-2 branches were already handled).
   Same regression set as above -> **5 failed, 259 passed** (the same five #163 stub tests).
   `providers/pybamm/tests/test_system_runtime_battery.py` (PyBaMM/TESPy installed for the run, then removed) -> **8 passed**.
+- Re-review of `9c5c7664` (static): **CHANGES REQUIRED** -- MEDIUM-2, LOW-1 closed, LOW-2 mostly closed; MEDIUM-1b: the
+  checkpoint items were checked by attribute only and the held payload was whatever `serialize()` returned, so a
+  look-alike or a `MacroCheckpoint` subclass could still get a foreign payload held. Acted on: exact types
+  (`type(record) is MultiTimescaleRunRecord`, `type(cp) is MacroCheckpoint`) and the payload that would be held is
+  deserialized and checked (run id, identities) before anything is exposed; tests for both adversaries, a record subclass
+  overriding `last_valid_checkpoint` (now refused), and a runtime that starts lying after preflight (caught by the objects
+  check at execute). The new m1b / record-subclass tests against `9c5c7664` -> **3 failed, 1 passed**.
+- After: `tests/test_system_runtime_multiscale_identity.py` -> **33 passed**; regression set -> **5 failed, 262 passed**
+  (the same five #163 stub tests); `providers/pybamm/tests/test_system_runtime_battery.py` (PyBaMM/TESPy installed for the
+  run, removed) -> **8 passed**.
