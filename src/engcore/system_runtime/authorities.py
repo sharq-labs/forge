@@ -446,7 +446,11 @@ class MultiscaleAuthority(_Base):
       every resumed checkpoint must carry the authorized identities and this runtime's run id before ``resume``.
 
     There is no scenario-independent multi-timescale path: a runtime (or record, or checkpoint) without these
-    identities is refused, never completed from a matching time, state, unit or model name.
+    identities is refused, never completed from a matching time, state, unit or model name. The runtime's reported
+    identities must also be those of the ``timeline`` / ``environment`` objects it executes on.
+
+    Admission is per node and per authority instance; it means "pinned to the request" only because the executor never
+    executes after a refused preflight (``SystemExecutor`` is the only caller that builds a ``NodeCall``).
     """
 
     def __init__(self, authority_id: str, runtime: Any, *, initial_slow_state: Mapping[str, Mapping[str, InitialStateValue]],
@@ -505,7 +509,24 @@ class MultiscaleAuthority(_Base):
         if change:
             return (("MULTISCALE_RUNTIME_CHANGED", change),)
         code, message = _bound_identity_refusal(_identities_of(self.runtime), authorized, "the multi-timescale runtime")
-        return ((code, message),) if code else ()
+        if code:
+            return ((code, message),)
+        lie = self._runtime_objects_refusal()
+        return (("MULTISCALE_IDENTITY_MISMATCH", lie),) if lie else ()
+
+    def _runtime_objects_refusal(self) -> str:
+        """Why the runtime's reported identities are not those of the timeline / environment its loop actually reads ('' if they are).
+
+        ``identities()`` is the runtime's own report; the genuine loop reads ``runtime.timeline`` and ``runtime.environment``."""
+        ids = _identities_of(self.runtime) or {}
+        timeline, environment = getattr(self.runtime, "timeline", None), getattr(self.runtime, "environment", None)
+        used = {"scenario": getattr(timeline, "scenario_digest", None), "timeline": getattr(timeline, "digest", None),
+                "environment": getattr(environment, "digest", None)}
+        differ = sorted(k for k in _CONTEXT_BOUND_IDENTITIES if used[k] != ids.get(k))
+        if not differ and getattr(getattr(environment, "timeline", None), "digest", None) == used["timeline"]:
+            return ""
+        return (f"the runtime reports {differ or 'its'} identities that are not those of the timeline / environment it executes on; "
+                "a self-reported identity does not stand in for the objects the run reads")
 
     def preflight_findings(self, node: Any, context: Any) -> tuple[tuple[str, str], ...]:
         self._admitted.pop(node.node_id, None)                       # a failed admission withdraws an earlier one
@@ -531,10 +552,16 @@ class MultiscaleAuthority(_Base):
         if change:
             return {}, change
         code, message = _bound_identity_refusal(_identities_of(self.runtime), admitted, "the multi-timescale runtime")
-        return ({}, message) if code else (admitted, "")
+        if code:
+            return {}, message
+        lie = self._runtime_objects_refusal()
+        return ({}, lie) if lie else (admitted, "")
 
     def _record_refusal(self, record: Any, authorized: Mapping[str, str]) -> str:
         """Why a returned run record is not bound to this runtime's run and the authorized context ('' if it is)."""
+        from ..multiscale.runtime import MultiTimescaleRunRecord
+        if not isinstance(record, MultiTimescaleRunRecord):
+            return f"the runtime returned {type(record).__name__}, not a MultiTimescaleRunRecord; its identities cannot be verified"
         run_id = getattr(self.runtime, "run_id", None)
         if getattr(record, "run_id", None) != run_id:
             return f"the run record belongs to run {getattr(record, 'run_id', None)!r}, not to this runtime's run {run_id!r}"
@@ -545,7 +572,7 @@ class MultiscaleAuthority(_Base):
         if current is None or dict(ids) != dict(current):
             differ = sorted(k for k in set(ids) | set(current or {}) if ids.get(k) != (current or {}).get(k))
             return f"the returned run record's {differ} identity is not the runtime's"
-        change = self._runtime_change()
+        change = self._runtime_change() or self._runtime_objects_refusal()
         if change:
             return change
         for cp in getattr(record, "checkpoints", ()) or ():
@@ -663,8 +690,9 @@ class MultiscaleAuthority(_Base):
                 new = tuple(InitialStateValue(v.variable_id, v.value.to(previous[v.variable_id].value.units), v.uncertainty) for v in final.values())
                 updates.append(OwnerState(owner_id, call.state.owner(owner_id).role, new))
             proposal = StateProposal(record.reached.quantity, tuple(updates))
-        if record.last_valid_checkpoint is not None:
-            self._pending_checkpoint = record.last_valid_checkpoint.serialize()
+        if record.checkpoints:
+            # exactly the checkpoint _record_refusal verified (the list item), never a property that could resolve elsewhere
+            self._pending_checkpoint = record.checkpoints[-1].serialize()
             self._pending_binding = (call.request_digest, dict(authorized))
         return NodeOutcome(
             "succeeded", outputs, applicability=() if self._applicability is None else self._applicability(record, call), state_proposal=proposal,

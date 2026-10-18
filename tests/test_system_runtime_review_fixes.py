@@ -199,6 +199,11 @@ def test_h5_a_checkpoint_from_a_refused_stage_is_never_promoted_and_a_fresh_run_
     SystemExecutor(context2).run(request2)
     assert ok._last_checkpoint is not None and ok._last_checkpoint == ok._pending_checkpoint   # a committed stage IS promoted
     assert MSF.slow_values(ok._last_checkpoint)[0] > 0.0                                      # ... and it is the run's real macro checkpoint
+    # a fresh run on the SAME authority never inherits it, even when that fresh run then fails on the committed state
+    assert ok.preflight_findings(compile_plan(request2).nodes[0], context2) == ()
+    fresh = ok.execute(MSF.direct_call(request2, context2, "aging", state=MSF.state_at(request2, moisture_content=0.05)))
+    assert fresh.status == "failed" and "not the state this multi-timescale run starts from" in fresh.reason
+    assert ok._last_checkpoint is None and ok._last_binding is None and ok._pending_checkpoint is None
 
 
 # ------------------------------------------------------------------------------------------------------------- H6 uncertainty propagation

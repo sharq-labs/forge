@@ -5984,3 +5984,21 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
 - Nested gap recorded as OD-29 (fast-system inner run records are not resolved; only self-reported echoes are checked).
 - `src/engcore/system_runtime/authorities.py` is certification-pinned: UNCERTIFIED until OD-3. Not run: FAST / SCIENTIFIC,
   mutation, full assurance, OD-3.
+- Independent read-only review (`forge-scientific-reviewer`, static): **CHANGES REQUIRED** -- MEDIUM-1 (the held
+  checkpoint was `record.last_valid_checkpoint`, a property, while the verified object was `record.checkpoints[-1]`; a
+  record look-alike or subclass could have a foreign checkpoint held and bound to the authorized request), MEDIUM-2 (h5's
+  name promises "a fresh run never inherits one" but nothing tested it; pre-existing: the stub version also used two
+  authorities), LOW-1 (identities are the runtime's self-report), LOW-2 (untested branches), LOW-3 (identity refusals are
+  FAILED, not REFUSED), NOTE-1..4. Acted on: MEDIUM-1 -- the record must be a `MultiTimescaleRunRecord` and the held
+  checkpoint is the verified list item; MEDIUM-2 -- h5 now runs a fresh (failing) stage on the same authority and asserts
+  nothing is inherited; LOW-1 -- the reported scenario / timeline / environment must be those of `runtime.timeline` /
+  `runtime.environment` (and the environment's timeline), at admission, before run and after the record; LOW-2 -- tests for
+  a record differing in a non-bound key, a record missing a bound key, a renamed runtime; NOTE-1 -- docstring. Not changed:
+  LOW-3 (kept consistent with OD-27 and the existing `MultiscaleAuthority` guards; recorded with NOTE-3 as OD-30); the
+  held-binding identity branch is defence in depth (unreachable while the runtime is fixed and the request pins the context).
+  Serialization identity checked: the authority `identity_digest` of a staged and a plain fixture authority is identical on
+  base `279a3fd7` and on the fix.
+- After the review fixes: `tests/test_system_runtime_multiscale_identity.py` -> **30 passed**; its 6 review tests against
+  the pre-review fix -> **3 failed, 3 passed** (MEDIUM-1 x2 and LOW-1 caught; the LOW-2 branches were already handled).
+  Same regression set as above -> **5 failed, 259 passed** (the same five #163 stub tests).
+  `providers/pybamm/tests/test_system_runtime_battery.py` (PyBaMM/TESPy installed for the run, then removed) -> **8 passed**.

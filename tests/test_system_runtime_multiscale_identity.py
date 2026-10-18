@@ -415,3 +415,109 @@ def test_applicability_reports_from_an_admitted_run_still_gate_the_commit():
     request, context = F.request(ENV, SCN, auth, nodes=(replace(F.node(auth), applicability_waiver="", applicability_checks=("bounds",)),))
     result = SystemExecutor(context).run(request)
     assert result.receipt("aging").status is NodeStatus.REFUSED and len(result.state_history) == 1
+
+
+# ---------------------------------------------------------------------------------------------------- review follow-ups
+class _Wrap:
+    """Forwards every attribute to a genuine record except ``last_valid_checkpoint`` (taken from another context)."""
+
+    def __init__(self, record, foreign):
+        self._record, self.last_valid_checkpoint = record, foreign
+
+    def __getattr__(self, name):
+        return getattr(self._record, name)
+
+
+class WrapsRecord(Counting):
+    def run(self, **kw):
+        record = super().run(**kw)
+        return _Wrap(record, F.runtime(ENV_SOURCE, run_id=self.run_id).run(**kw).checkpoints[-1])
+
+
+def test_review_m1_a_record_lookalike_whose_last_checkpoint_resolves_elsewhere_is_refused():
+    spies = Spies()
+    _rt, auth = kit(cls=WrapsRecord, spies=spies)
+    request, context = F.request(ENV, SCN, auth)
+    result = SystemExecutor(context).run(request)
+    assert result.receipt("aging").status is NodeStatus.FAILED and "MultiTimescaleRunRecord" in result.receipt("aging").reason
+    assert auth._last_checkpoint is None and auth._last_binding is None
+    assert_nothing_released(result, "aging", auth, spies)
+
+
+class OverridesLastCheckpoint(Counting):
+    """A genuine record subclass whose ``last_valid_checkpoint`` property points at another context's checkpoint."""
+
+    def run(self, **kw):
+        from dataclasses import fields
+
+        from engcore.multiscale.runtime import MultiTimescaleRunRecord
+
+        class ForeignLast(MultiTimescaleRunRecord):
+            foreign = None
+
+            @property
+            def last_valid_checkpoint(self):
+                return self.foreign
+
+        record = super().run(**kw)
+        forged = ForeignLast(**{f.name: getattr(record, f.name) for f in fields(record)})
+        forged.foreign = F.runtime(ENV_SOURCE, run_id=self.run_id).run(**kw).checkpoints[-1]
+        return forged
+
+
+def test_review_m1_the_held_checkpoint_is_the_verified_list_item_never_an_overridden_property():
+    _rt, auth = kit(cls=OverridesLastCheckpoint)
+    request, context = F.request(ENV, SCN, auth)
+    result = SystemExecutor(context).run(request)
+    assert result.receipt("aging").status is NodeStatus.SUCCEEDED, result.receipt("aging").reason
+    held = MacroCheckpoint.deserialize(auth._last_checkpoint)
+    assert {k: held.identities[k] for k in ("scenario", "timeline", "environment")} == {
+        "scenario": SCN.digest, "timeline": ENV.timeline.digest, "environment": ENV.digest}     # its own, not ENV_SOURCE's
+
+
+class LiesAboutIdentity(Counting):
+    """Executes on ENV_SOURCE but reports ENV's environment digest (its records and checkpoints then carry the lie too)."""
+
+    def identities(self):
+        return {**super().identities(), "environment": ENV.digest}
+
+
+def test_review_l1_a_self_reported_identity_does_not_stand_in_for_the_environment_the_run_reads():
+    rt, auth = kit(ENV_SOURCE, cls=LiesAboutIdentity)
+    request, context = F.request(ENV, SCN, auth)
+    result = SystemExecutor(context).run(request)
+    assert result.status is RunStatus.REFUSED and codes(result) == ["MULTISCALE_IDENTITY_MISMATCH"]
+    assert "self-reported" in result.preflight.blocking[0].message
+    assert rt.runs == 0
+
+
+class RewritesPolicy(Counting):
+    def run(self, **kw):
+        record = super().run(**kw)
+        return replace(record, identities={**record.identities, "policy": sha("another policy")})
+
+
+class RecordDropsEnvironment(Counting):
+    def run(self, **kw):
+        record = super().run(**kw)
+        return replace(record, identities={k: v for k, v in record.identities.items() if k != "environment"})
+
+
+@pytest.mark.parametrize("cls, expected", [(RewritesPolicy, "is not the runtime's"), (RecordDropsEnvironment, "carries no ['environment']")],
+                         ids=["record-other-non-bound-key", "record-missing-bound-key"])
+def test_review_l2_a_record_differing_from_its_runtime_in_any_identity_is_refused(cls, expected):
+    spies = Spies()
+    _rt, auth = kit(cls=cls, spies=spies)
+    request, context = F.request(ENV, SCN, auth)
+    result = SystemExecutor(context).run(request)
+    assert result.receipt("aging").status is NodeStatus.FAILED and expected in result.receipt("aging").reason, result.receipt("aging").reason
+    assert_nothing_released(result, "aging", auth, spies)
+
+
+def test_review_l2_a_runtime_renamed_after_construction_is_refused():
+    rt, auth = kit()
+    rt.run_id = "renamed-run"
+    request, context = F.request(ENV, SCN, auth)
+    result = SystemExecutor(context).run(request)
+    assert result.status is RunStatus.REFUSED and codes(result) == ["MULTISCALE_RUNTIME_CHANGED"] and "run_id" in result.preflight.blocking[0].message
+    assert rt.runs == 0
