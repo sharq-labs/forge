@@ -136,9 +136,14 @@ exists.
 
 ## Pause / resume checkpoint protocol
 
-When the owner says **"كمل آخر حاجة"**, **"كمل شغل FORGE"**, or **"continue FORGE"** after a pause, first read [`docs/work/PAUSE_RESUME_CHECKPOINT_2026_10_19.md`](docs/work/PAUSE_RESUME_CHECKPOINT_2026_10_19.md), the live `ACTIVE_PLAN.md` and `PROGRESS.md`, and verify the actual repository and PR state. Then **show a current status/priority table and a compact dependency roadmap before further work**, in the owner's language. Identify the last completed step, blockers and the next bounded, already-authorized task. If approval is missing, ask rather than assuming the phrase authorizes edits, execution, certification or merge.
+When the owner says **"كمل آخر حاجة"**, **"كمل شغل FORGE"**, or **"continue FORGE"** after a pause:
 
-The pause checkpoint is a historical resumption aid, **not** a new execution queue or a scientific authority. `ACTIVE_PLAN.md` alone governs active tasks; never promote unverified assertions from a checkpoint. Refresh its state from live evidence on every resume.
+1. Read `docs/work/PAUSE_RESUME_CHECKPOINT_2026_10_19.md`, `docs/work/RESUME_DASHBOARD_2026_10_19.md`, `docs/work/RESUME_DECISION_REGISTER_2026_10_19.md`, and `docs/work/BVB_RESUME_HANDOFF_2026_10_19.md`; also reread the **live** `ACTIVE_PLAN.md` (sole executable task queue) and `PROGRESS.md`.
+2. Verify actual GitHub main/PRs, local worktree/HEAD, active epic, test and certificate evidence, and owner approvals. The dated checkpoint is **historical**; do not treat its statuses, hashes or proposed priorities as current authority.
+3. **Before substantial work**, display a fresh Egyptian-Arabic ★ **status table** (`workstream | evidence SHA | status | blockers | owner approval | next action`) and an updated compact **dependency roadmap**, including Build vs Buy/BVB, Genesis scoring, O-1, isolation and engineering demo.
+4. Distinguish the last verified completed task from the next incomplete authorized task. Continue only the smallest **already-approved** bounded work in `ACTIVE_PLAN.md`; if an approval is missing, ask for one decision and stop. **"Continue" is not permission for code changes, expensive tests, recertification, dependency installs, PR/merge or formal measurement.**
+5. If the user asks `الجدول`, `وصلنا لفين` or `قيّم`, **report only**. Do not run tasks.
+6. Never make a new second authoritative task queue. Keep scientific semantics with their existing contract owners; verify historical evidence against the exact audited SHA; protect untracked/scratch files and their checksums.
 
 ## CI policy
 
