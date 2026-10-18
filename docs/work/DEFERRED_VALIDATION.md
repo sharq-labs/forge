@@ -962,3 +962,28 @@ forge_check/integration gates. No pytest, provider execution, full assurance,
 mutation or OD-3 in this build. M1C manufactured solutions, temporal/spatial order,
 solver-backed conservation and full adaptive-loop studies are still unwritten future
 solver tests, not satisfied by normalized-input or remap arithmetic fixtures.
+
+
+## M1C transient vertex FV: DV-129..132 (2026-10-18)
+
+Exact base M1B9b092d56/Draft#165. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+All previous DV-101..128 remain NOT RUN. These recipes execute numerical solves;
+owner authorization is required before any execution, including targeted tests.
+Do not tune expected orders/tolerances after observing a result; record failures.
+
+| ID | Scope | Exact deferred command | Required interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-129 | M1C real sparse numerical, manufactured/refinement and adversarial pack | `python -m pytest tests/test_m1c_transient_fv.py -q` | Independent specified-flux/source energy totals, both-Neumann, half duals/reactions, series/contact resistance, exact source averages, BE first order and spatial study, provider/failure/context/source/stale-state/refusal probes | NOT RUN |
+| DV-130 | Parent state and legacy steady compatibility | `python -m pytest tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py tests/domains/thermal_models/test_conduction1d_nonuniform.py tests/numerical/test_mesh_adaptation.py -q` | Existing identities/outputs/refusals retained; do not infer M1D or physical validation | NOT RUN |
+| DV-131 | Material and cross-domain semantics | `python -m pytest tests/test_materials_engine.py tests/test_declared_field_kind_mapping.py tests/test_interface_flux_execution.py tests/architecture/test_cross_domain_fixtures.py -q` | Existing resolution/meaning/field/sign boundaries remain; synthetic data stay assumptions, UNKNOWN remains UNKNOWN | NOT RUN |
+| DV-132 | Model census and Core/certification compatibility | `python -m pytest tests/test_core_guards.py tests/test_core_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py -q` | Known static integration hold: model census pin19 vs new model20; do not regenerate pins or suppress model discovery. Owner must decide compatible pin/certificate change explicitly | NOT RUN |
+
+Manufactured study definitions: uniform T=300+exp(-t), insulated, c=A=1,
+q=-exp(-t) sampled at step end isolates BE temporal order; stationary-in-time
+T=300+sin(pi*x), q=pi²sin(pi*x), exact dual-average source on nonuniform grids
+isolates spatial behavior. These are synthetic mathematical verification designs,
+not calibration or experimental validation. Code/expectations NOT EXECUTED.
+
+After bounded execution, separately authorize forge_check/integration gates,
+mutation/full assurance and final-source OD-3. M1D adaptive/rollback studies are
+future tests for a future driver, not satisfied by this fixed-mesh pack.

@@ -6212,3 +6212,72 @@ pattern scan over exact nine intended files found zero matches; artifact invento
 matched, no unexpected untracked files. Static AST counted 31 test functions;
 all NOT RUN. Deferred DV-125..128 paths checked for existence only. No numerical
 verification, physical validation, certification or M1 gate claim.
+
+
+## 2026-10-18 M1B publication and M1C bounded transient FV
+
+M1B exact9b092d563507b0de3563c4209d42d6fc0772ea0a clean, correct stack ancestry,
+exact nine-file inventory and bounded credential-pattern scan zero matches;
+git diff --check 7f8cb5da HEAD exit0. git push -u origin codex/m1b-vertex-dual-state
+completed. gh pr create --draft --repo sharq-labs/forge --base codex/m1a-mesh-lineage
+--head codex/m1b-vertex-dual-state created https://github.com/sharq-labs/forge/pull/165,
+attached to task. No earlier PR retargeted or merged. Checkpoint#158 independent.
+
+Created separate managed transient-fv-1d worktree/branch codex/m1c-transient-fv-1d
+from exact M1B. Mathematical/compatibility decision ef11c1da before source. Owner
+requested M1C only, not adaptive M1D or full M1. Added new thermal module only,
+preserving all prior production source. Distinct transient model/realization;
+explicit piecewise area/material/source, M1B dual storage, positive scalar
+phase-constant MaterialPropertySet resolution, exact source byte hashes, series
+conductivity/contact resistance. No rho/cp/area defaults or unsupported state dependence.
+Both-Neumann transient admitted through positive storage, steady refusal unchanged.
+
+Sparse tridiagonal BE through existing numerical protocol with domain-local sparse-only
+SuperLU provider. Existing SciPyLinearProvider's small-system dense conditioning path
+was rejected for this owner constraint; no existing provider changed. Conditioning
+unresolved, provider identity binds source and actual SuperLU binary plus library
+versions. Residuals never error bounds. Exact initial/current state/material/storage/
+source/clock/window/dt/build binding. Per-face opposite powers, explicit volumetric and
+boundary contributions, endpoint half-volume reservoir reactions. Failed attempts and
+partial publication poison continuation. No rollback/adaptation/history M1D guarantee.
+
+Independent forge-scientific-review skill/read-only /root/m1c_review: initial design
+no blocker, final A-J static PASS after corrections. Failed approaches found statically,
+not observed test failures: HIGH mixed Dirichlet K versus interior W rows/global norm
+could hide wrong endpoints and reactions closed tautologically; now power-scaled rows,
+explicit temperature tolerance and row-wise residual admission. HIGH live alternative
+storage2*C could change returned energy without assembly change; now exact storage ID/
+actual J/K bytes and initial clock bound. MEDIUM missing-boundary helper defaulted None
+to valid zero flux; direct malformed step fixture now covers it. All fixes reread.
+No scientific verification, validation or certification follows from review.
+
+Known integration hold M1C-C1: tests/test_core_guards.py walker163 and exact count
+pin199/assert534 expect19 models. New required model statically implies20. No execution
+or observed failure claimed; no certified pin edit or hidden/lazy model discovery.
+Owner compatibility/count-pin approval and separate certification handling required
+before integration. Other unexecuted failures remain unknown.
+
+Authored independent specified-flux/source energy balance, equilibrium/insulation,
+nonuniform half-volume/interface/contact tests, exponential transient temporal-order
+and sine/analytic-dual-source spatial refinement designs. Adversarial time/source/
+material/initial/BC/state/build/provider substitution, false residual, during-provider
+mutation and partial publication failure cases. No numerical expectation was tuned to
+observed runs. All tests NOT RUN. Compile-only source/tests checked without imports
+or execution. Final checks recorded below. DV-129..132 appended; earlier DV rows NOT RUN.
+M1C package local only, IMPLEMENTED / UNVERIFIED / UNCERTIFIED. M1D/full M1 incomplete.
+No pytest/provider solves/forge_check/full assurance/mutation/OD-3 executed.
+
+M1C final lightweight checks: bundled Python compile(Path(name).read_bytes(), name,
+'exec') completed for two new Python files without importing/executing their code.
+Static AST counted 28 authored test functions, all NOT RUN. Exact nine-file
+inventory and bounded credential-pattern scan zero matches; no unexpected artifacts.
+Deferred DV-129..132 paths checked for existence only. Direct git-show/base-byte
+comparison confirms old steady, M1B, numerical core/providers and certified model
+census guard unchanged. No numerical solve or scientific evidence produced.
+
+M1C final staged/static checks: `git diff --cached --check` and
+`git diff --check 9b092d563507b0de3563c4209d42d6fc0772ea0a` both exit0.
+Independent reviewer final addendum reread input validators, nonfinite/tensor
+fixtures and full package: PASS, no new authority/evidence-integrity finding;
+model-census integration hold remains. No commands/tests/imports by reviewer.
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED, NOT INTEGRATION-READY.

@@ -6,6 +6,29 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Active bounded slice - M1C transient nonuniform vertex FV (2026-10-18)
+
+Branch codex/m1c-transient-fv-1d, exact M1B base
+9b092d563507b0de3563c4209d42d6fc0772ea0a. Stack main -> #159 -> #160 ->
+#161 -> #162 -> M1B Draft#165 -> M1C local. M1B exact SHA/ancestry/cleanliness/
+nine-file inventory/bounded credential scan/whitespace checked; push completed,
+draft targets codex/m1a-mesh-lineage. No earlier PR retargeted or merged.
+Checkpoint#158 independent. Previous local-only M1B publication notes superseded.
+
+- [x] Mathematical and compatibility decision before source (ef11c1da).
+- [x] Fixed-mesh vertex dual FV, positive phase-constant sourced materials, BE order1 declared.
+- [x] Explicit geometry/BC/source/initial/time; both-Neumann transient allowed.
+- [x] Series material/contact resistance; opposite shared interior face contributions.
+- [x] Sparse-only provider, exact build/context/state binding, residual/conservation refusal.
+- [x] Independent static scientific architecture review PASS after corrections.
+- [x] Adversarial/manufactured/refinement tests authored, all NOT RUN; DV-129..132 deferred.
+- [ ] OWNER_DECISION_REQUIRED M1C-C1: model discovery pin19 ->20 compatibility/certification review.
+- [ ] Owner-authorized targeted execution and all earlier DV rows; no scientific gate promotion.
+- [ ] M1D adaptive window decisions/transfers/rebuild/cache-history/rollback/full history/studies.
+
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. M1C is not M1 completion or integration-ready.
+M1C_MERGE_PACKAGE.md records exact inventory, limitations and next owner decisions.
+
 ## Active bounded slice - M1B vertex-centred dual-volume state adapter (2026-10-18)
 
 Branch codex/m1b-vertex-dual-state from exact M1A

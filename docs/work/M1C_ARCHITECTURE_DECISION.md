@@ -97,3 +97,19 @@ mutation/OD-3 run; compile-only/static allowed. Independent architecture/scienti
 M1D still must supply adaptation decisions/transfers/rebuild/cache-history/rollback/full
 history and adaptive numerical studies. Owner still selects real physical sources,
 validity envelope and integration rules for wider models, and authorizes execution/gates.
+
+## Final static-review corrections and integration hold
+
+Dirichlet replacement rows retain W units using their original positive diagonal
+scale. Require explicit temperature_atol [K] and local_power_atol [W], independently
+check row-wise residuals and endpoint values after solving. Global residuals and
+reconstructed reactions cannot substitute for an endpoint constraint check.
+Bind exact original storage identity, its actual J/K coefficient bytes and initial
+TimePoint into session configuration. Provider binding hashes this module and the
+actual SuperLU binary plus NumPy/SciPy versions; source/binary must be readable.
+
+Model discovery in tests/test_core_guards.py:199,534 pins19 models. New separately
+identified transient model makes the expected population20 by static inspection.
+No guard/count/certificate edited and no observed test failure claimed. This is a
+known integration hold requiring explicit owner compatibility/count-pin review and
+separate OD-3 decisions before integration; do not hide or lazily suppress discovery.
