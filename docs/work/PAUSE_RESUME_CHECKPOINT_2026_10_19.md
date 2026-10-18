@@ -1,3 +1,15 @@
+---
+ai_schema_version: 1
+doc_id: FORGE-RESUME-CHECKPOINT-20261019
+doc_kind: SNAPSHOT
+doc_status: SNAPSHOT
+authority_scope: NONE
+source_ref: multiple
+evidence_level: MIXED
+last_reviewed: 2026-10-19
+supersedes: none
+---
+
 # FORGE — Durable Pause / Resume Checkpoint
 
 **Snapshot:** 2026-10-19 · **Status:** OWNER_PAUSED · **Purpose:** resume from repository facts, without relying on this chat or trusting a stale task list.
