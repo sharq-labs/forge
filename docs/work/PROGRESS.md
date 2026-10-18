@@ -5896,3 +5896,25 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
   each (the FAST tier exceeded 3000 s and was stopped); they skip when PyBaMM is absent.
 - `python tools/forge_check.py --changed` escalated to a serial full run after the `pyproject.toml` / workflow change and
   was stopped after ~11 minutes; the FAST tier above was run instead.
+
+### 2026-10-18 -- Batch 5: scenario identity integrity, OD-27 (branch `fix/od27-scenario-identity`)
+
+- Base `main` `4e339b5f8728088816a2584fe203b9b203a7b15e`; Linux, CPython 3.13.16, numpy 2.5.3, scipy 1.18.1, ngspice 44,
+  `CRAFTY_NGSPICE_ARGV=ngspice`. Independent of draft PR #163.
+- `MultiphysicsAuthority.execute` now admits scenario identity twice: before `runtime.run` (a `run_kwargs` digest that is not
+  the authorized `call.context.scenario.digest`, or scenario-driven arguments with no digest -> FAILED, nothing runs) and on
+  the returned record, right after the graph/plan checks and before conservation, outcome, outputs, extractors, state,
+  artifacts and provider records (a different digest, or scenario evidence without a digest -> FAILED). A record with no
+  digest and no scenario evidence stays admitted: the runtime's and `MultiphysicsRunRecord`'s own scenario_bound contract.
+- `python -m pytest -q -p no:cacheprovider tests/test_system_runtime_scenario_identity.py` -> **11 passed**; with the
+  `src` change stashed -> **8 failed, 3 passed** (the 3 are the admitted / compatibility cases).
+- `python -m pytest -q -p no:cacheprovider -n 4 tests/test_system_runtime_*.py tests/test_phase1_system_runtime_outcomes.py
+  tests/test_phase2_external_coupling.py tests/test_multiphysics_conservation_history.py tests/test_stateful_multiphysics_runtime.py`:
+  before (main) **5 failed, 214 passed**; after, excluding the new file, **5 failed, 214 passed** -- the same five
+  `SimpleNamespace`-stub tests PR #163 repairs (three now refused one step earlier, by the new pre-run check).
+- Same suites plus `tests/test_phase2_review_regressions.py`, merged locally with PR #163 (temporary branch, discarded):
+  **238 passed, 1 failed** (`test_a_redundant_forward_tear_is_refused`, OD-26).
+- `providers/pybamm/tests/test_system_runtime_battery.py` (PyBaMM 26.10.1.0 and TESPy 0.11.3 installed for this run, then
+  removed): **8 passed** -- the provider `runtime_factory` path, which passes the scenario digest, is unchanged.
+- `src/engcore/system_runtime/authorities.py` is pinned in `certification/current_core_v2.json`: UNCERTIFIED until OD-3.
+  Not run: FAST / SCIENTIFIC tiers, mutation, OD-3.

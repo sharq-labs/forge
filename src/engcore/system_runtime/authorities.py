@@ -95,6 +95,65 @@ def _values_of(owner: OwnerState) -> dict[str, InitialStateValue]:
     return {v.variable_id: v for v in owner.values}
 
 
+#: ``MultiphysicsRuntime.run`` arguments through which a scenario materially participates in a coupled run. The
+#: runtime refuses any of them without the authorized scenario digest (OD-27 mirrors that rule; it does not widen it).
+_SCENARIO_DRIVEN_RUN_ARGUMENTS = (
+    "initial_state", "external_input_schedules", "operating_conditions", "scheduled_events",
+    "termination_conditions", "quantities_of_interest",
+)
+
+
+def _authorized_scenario_digest(call: NodeCall) -> str:
+    """The scenario this system execution is authorized for: the context's scenario, which preflight pins to the
+    request by content digest (``CONTENT_DIGEST_MISMATCH``). Empty only when the context supplies no scenario."""
+    scenario = getattr(getattr(call, "context", None), "scenario", None)
+    return "" if scenario is None else str(scenario.digest).strip().lower()
+
+
+def _scenario_refusal_before_run(kwargs: Mapping[str, Any], authorized: str) -> str:
+    """Why the coupled run must not start under this call's scenario identity, or ''.
+
+    OD-27: a ``run_kwargs`` that names another scenario, or drives the run from the scenario (state, schedules,
+    conditions, events, terminations, quantities of interest) without naming the authorized one, is refused before
+    any participant executes -- a run known to be bound to the wrong scenario is never started.
+    """
+    supplied = str(kwargs.get("scenario_digest", "") or "").strip().lower()
+    if supplied:
+        if not authorized:
+            return ("the coupled run names a scenario, but this system execution supplies no authorized scenario to bind "
+                    "it to; nothing is run")
+        if supplied != authorized:
+            return (f"the coupled run would be bound to scenario {supplied[:12]}.., not the authorized scenario "
+                    f"{authorized[:12]}.. of this system execution; nothing is run")
+        return ""
+    driving = sorted(name for name in _SCENARIO_DRIVEN_RUN_ARGUMENTS if kwargs.get(name))
+    if driving:
+        return (f"the coupled run is driven by the scenario ({', '.join(driving)}) but names no scenario digest; "
+                f"scenario identity is required and is not inferred, so nothing is run")
+    return ""
+
+
+def _scenario_refusal_after_run(run: Any, authorized: str) -> str:
+    """Why a returned run record is not bound to this call's authorized scenario, or ''.
+
+    Checked on the record itself, so a runtime that ignored, replaced or replayed the scenario it was given is
+    caught whatever its arguments said. A record that carries no scenario digest is admitted only when it carries
+    no scenario evidence either (no initial state, scheduled event, scenario input, operating condition, quantity
+    of interest or termination): the runtime's and the record's own contract, under which such a run does not
+    depend on any scenario.
+    """
+    bound = str(run.scenario_digest or "").strip().lower()
+    if bound:
+        if bound != authorized:
+            return (f"the coupled run is bound to scenario {bound[:12]}.., not the authorized scenario "
+                    f"{(authorized or 'none')[:12]}.. of this system execution; nothing is exposed")
+        return ""
+    if (run.initial_state_receipts or run.scheduled_events or run.scenario_input_receipts
+            or run.operating_condition_receipts or run.quantities_of_interest or run.termination is not None):
+        return "the coupled run carries scenario evidence but no scenario identity; nothing is exposed"
+    return ""
+
+
 class MultiphysicsAuthority(_Base):
     """Delegates to a BIG 9 ``MultiphysicsRuntime``.  The coupling loop lives there and only there.
 
@@ -194,6 +253,11 @@ class MultiphysicsAuthority(_Base):
         runtime = self._factory(call) if self._factory is not None else self.runtime
         if self._owners and self._factory is None and "initial_state" not in kwargs:
             kwargs["initial_state"] = self._initial_state(call)
+        # OD-27: scenario identity is admitted before anything runs, and again on the returned record below
+        authorized_scenario = _authorized_scenario_digest(call)
+        refused = _scenario_refusal_before_run(kwargs, authorized_scenario)
+        if refused:
+            return NodeOutcome.failed(refused)
         t0 = time.perf_counter()
         run_id = call.run_id + "." + call.node.node_id
         run = runtime.run(run_id, **kwargs)  # refusals raise: the executor records a FAILED node
@@ -221,6 +285,11 @@ class MultiphysicsAuthority(_Base):
         # Seventh review: and the declared plan -- its convergence tolerances decide what "converged" means below.
         if run.plan_fingerprint != self._plan_fingerprint:
             return NodeOutcome.failed("the coupled run executed a different coupling plan than the one this authority declares")
+        # OD-27: and the scenario this system execution is authorized for -- before conservation, outcome, outputs,
+        # state, artifacts or provider records are read, so a run of another scenario exposes and commits nothing
+        refused = _scenario_refusal_after_run(run, authorized_scenario)
+        if refused:
+            return NodeOutcome.failed(refused)
         try:
             require_conservation(run)
         except MultiphysicsExecutionError as exc:
