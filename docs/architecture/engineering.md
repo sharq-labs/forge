@@ -90,3 +90,10 @@ SystemRunResult (BIG 12) ──┬─> ConstraintAssessment / ConservationAssess
 * `MultiphysicsAuthority` scenario binding (OD-27): under `SystemExecutor`, `run_kwargs` must pass `scenario_digest` equal to
   `call.context.scenario.digest`; a run naming another scenario or none, or a record any of whose scenario-bound receipts names
   another scenario, fails the node before anything is exposed or committed.
+* `MultiscaleAuthority` context binding (OD-28): the runtime's scenario / timeline / environment digests (`runtime.identities()`)
+  must equal the call context's. `preflight_findings` admits a node only then (and only if the runtime is unchanged since the
+  authority was built), `execute` rechecks admission, context and runtime before run / resume, the returned record and every
+  macro checkpoint it carries must carry exactly the runtime's identities, and a held checkpoint resumes only for the request and
+  context that produced it (an executor-restored one must still carry the authorized identities). Codes:
+  `MULTISCALE_IDENTITY_MISSING`, `MULTISCALE_IDENTITY_MISMATCH`, `MULTISCALE_RUNTIME_CHANGED`. Not covered: the fast system's
+  inner run records (OD-29).
