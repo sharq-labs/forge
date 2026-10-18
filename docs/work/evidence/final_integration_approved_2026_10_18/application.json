@@ -1,0 +1,183 @@
+{
+  "approved_utc_recorded": "2026-10-18T19:25:11.243632+00:00",
+  "authorization": "Explicit human approval D1/D2/D3 and final integration in current turn; no archive behavior approval.",
+  "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+  "inventory_preserved": [
+    {
+      "path": "docs/work/ACTIVE_PLAN.md",
+      "sha256": "91edd4697291b013480703d8619740ac08fdbf1484ab50dfabf7965cbed32fd9"
+    },
+    {
+      "path": "docs/work/FINAL_OWNER_DISPOSITIONS_2026_10_18.md",
+      "sha256": "686cdc0fa7f64ed15d436d1e9ebcb32a88e967c5bfb157cde2de14b1bbf836bd"
+    },
+    {
+      "path": "docs/work/FINAL_SCIENTIFIC_INTEGRATION_VERIFICATION.md",
+      "sha256": "22bdfc5ce2c0c7138ffc0e1227f6a45947fe5f15f64c2a190de93b16573aee5f"
+    },
+    {
+      "path": "docs/work/P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md",
+      "sha256": "a541ccbdc587578eb8b0af5e7c4f95f8b59be721a8c23ba04639456e82439524"
+    },
+    {
+      "path": "docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md",
+      "sha256": "93da37570479c1859569e7e11485f330e1e32eea2ef6eea6926e98f229ff7ab6"
+    },
+    {
+      "path": "docs/work/PROGRESS.md",
+      "sha256": "8a4e733b766bd0b29e162221e643e657dbf6a344f17a5d08bf4413ffc9967e92"
+    },
+    {
+      "path": "docs/work/REMEDIATION_2026-10-18.md",
+      "sha256": "afb59bdfe0f5a7002ea6f52988a4caa1d2d05f1defcac55c7646bbaac920a981"
+    },
+    {
+      "path": "docs/work/evidence/final_owner_disposition_analysis_2026_10_18.json",
+      "sha256": "0d0cf6d9a97ea181354f329e93f1b31f61a60d441f49a270923c8acce05687d7"
+    },
+    {
+      "path": "docs/work/evidence/final_scientific_integration_2026_10_18.json",
+      "sha256": "7f6876e5f93e4f940193d50de0e3bd72c09c9f193dd463a3850e25a285783ec0"
+    },
+    {
+      "path": "docs/work/evidence/owner_dispositions_census-first-failed.txt",
+      "sha256": "fb288f173d6ae07c9624c53a512edf4d0dbb72061f44472544911963d5a31559"
+    },
+    {
+      "path": "docs/work/evidence/owner_dispositions_census.py",
+      "sha256": "e1994ab8ab156d5248b6b78e26b2b38ec6982728f8298455d29354b2b72dde0e"
+    },
+    {
+      "path": "docs/work/evidence/owner_dispositions_census.txt",
+      "sha256": "0f97d5d3ee7cb765a4f0510fb098a78824d78c18189a1f5d62c82193d3a47628"
+    },
+    {
+      "path": "docs/work/evidence/p0_exact_kernel_analysis.py",
+      "sha256": "c84d6caa6c2929e2f074a2d720dc5c16e1613b1424c1741ee80a713ea7517fc0"
+    },
+    {
+      "path": "docs/work/evidence/p0_scientific_correctness_2026_10_18.json",
+      "sha256": "8b5fd1a83bfbb99e594c3a0970b37e909a1cff5b979f5c4a42cb69aee585fa66"
+    },
+    {
+      "path": "docs/work/evidence/post_merge_2026_10_18.json",
+      "sha256": "5625342cc06a693cfef790369cfb28a8b2cc6980d26036ac9d75cb30e7ba50e9"
+    },
+    {
+      "path": "docs/work/evidence/post_merge_2026_10_18_energy_probe.py",
+      "sha256": "df48383345208a1ed7900a02062fdc854f170a8a6d945d96b38bc0f32d4024d3"
+    },
+    {
+      "path": "docs/work/proposals/FINAL_D1_GATE_CONTRACT.patch",
+      "sha256": "cd5afe9d5d52a4d839c31b20d346fbf06ac1dac4e3c93d346ddf6fb8cb52291d"
+    },
+    {
+      "path": "docs/work/proposals/FINAL_D2_OD31_MODEL_CENSUS.patch",
+      "sha256": "59b573ed46b142b4c5856111600d8961dbbdda8ae47293b46e1fae377e347e80"
+    },
+    {
+      "path": "docs/work/proposals/FINAL_D3_M1A_LINEAGE_REFUSAL.patch",
+      "sha256": "3903f55a900dc65447a1ef058e48c387dbf9fdcd480cc049c123f1a63d726293"
+    },
+    {
+      "path": "docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md",
+      "sha256": "d8baf141263785b8927153693158ad1eb005d83573684b79d5dd4f16c267a63b"
+    },
+    {
+      "path": "docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch",
+      "sha256": "7f425f87544f67e6a1965e2ab1b8d219f4449c702a0e855b8c36ed3d7760ea8a"
+    },
+    {
+      "path": "docs/work/proposals/P0_M1C_IDENTITY_DECISION.md",
+      "sha256": "9620d1cce264c50ca1bbda978468467d913e1f15cad994f8d011a5dc5885acdf"
+    },
+    {
+      "path": "docs/work/proposals/P0_M1C_REALIZATION_0_2.patch",
+      "sha256": "25c2e66d19b755edace01abeb4991e9c55c80764e5b04d38b8fb5811a811b783"
+    },
+    {
+      "path": "src/engcore/claims/execution.py",
+      "sha256": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06"
+    },
+    {
+      "path": "src/engcore/claims/replay/bundle.py",
+      "sha256": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5"
+    },
+    {
+      "path": "src/engcore/domains/thermal_models/conduction1d_transient_fv.py",
+      "sha256": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273"
+    },
+    {
+      "path": "src/engcore/scientific/composition/conversion.py",
+      "sha256": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+    },
+    {
+      "path": "tests/claims/test_impact_replay.py",
+      "sha256": "1f97dfc3c2ba20be735b110f9a9d22dc49e12e06463ef28373b758727518b38a"
+    },
+    {
+      "path": "tests/claims/test_p0_replay_execution_authority.py",
+      "sha256": "b2dc77749d168611dab9f07dbbbfadbbfbe263e8f2f6080e3bdd1017830e3b68"
+    },
+    {
+      "path": "tests/test_m1c_transient_fv.py",
+      "sha256": "131d6d2214bc2920cd3aaced03f752efcff8372fffbc0e4f297466190d7b3310"
+    },
+    {
+      "path": "tests/test_p0_conservation_policy.py",
+      "sha256": "f1a4d3dd2c5bc6158ba5dab5965d8001143d24f33f8d22d745a8522ef8240560"
+    },
+    {
+      "path": "tests/test_post_merge_import_smoke.py",
+      "sha256": "8622684b52e0ad3725488b3c0db0822640fc23eb85c327f1478cd5b65e57e602"
+    }
+  ],
+  "fresh_census_condition_met": true,
+  "patches": [
+    {
+      "patch": "docs\\work\\proposals\\FINAL_D1_GATE_CONTRACT.patch",
+      "patch_sha256": "cd5afe9d5d52a4d839c31b20d346fbf06ac1dac4e3c93d346ddf6fb8cb52291d",
+      "preimages": {
+        "tests/test_capability_completion.py": "db7923b8babac605d55f623f0816214a71fb0572cb3ba4182912e45e88d8399b",
+        "docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md": "b7c0e23bb0d6e523a42213f371de7fb82090d65b5f314c3646b9ee6b6c484e02"
+      },
+      "check_exit_code": 0,
+      "exact_diff": "--- a/tests/test_capability_completion.py\n+++ b/tests/test_capability_completion.py\n@@ -167,11 +167,12 @@\n \n \n @pytest.mark.parametrize(\"status\", [\"PASS\", \"FAIL\", \"BLOCKED_WITH_EVIDENCE\"])\n-def test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes(status) -> None:\n+def test_a_gate_cannot_be_decided_before_its_required_gate_is_ready(status) -> None:\n     def decide_e3(d):\n         e3 = next(g for g in _program(d)[\"gates\"] if g[\"id\"] == \"E3\")\n         e3.update(status=status, evidence=[\"docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md\"])\n-    assert any(\"needs 'M1' PASS first\" in e for e in _with(decide_e3))\n+    required_state = \"decided\" if status == \"BLOCKED_WITH_EVIDENCE\" else \"PASS\"\n+    assert any(f\"needs 'M1' {required_state} first\" in e for e in _with(decide_e3))\n \n \n def test_a_deferred_gate_may_wait_on_an_open_requirement() -> None:\n@@ -185,7 +186,8 @@\n     assert any(\"the owner names the next epic\" in e for e in _with(decide_all))\n \n \n-def test_every_decided_gate_needs_evidence_and_blocked_follows_a_failed_requirement() -> None:\n+@pytest.mark.parametrize(\"downstream_status\", [\"PASS\", \"FAIL\"])\n+def test_every_decided_gate_needs_evidence_and_blocked_follows_a_failed_requirement(downstream_status) -> None:\n     blocked_without_evidence = _with(lambda d: _program(d)[\"gates\"][0].update(status=\"BLOCKED_WITH_EVIDENCE\"))\n     assert any(\"BLOCKED_WITH_EVIDENCE requires evidence\" in e for e in blocked_without_evidence)\n     evidence = [\"docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md\"]\n@@ -199,7 +201,7 @@\n     def m1_failed_m2_failed(d):\n         gates = {g[\"id\"]: g for g in _program(d)[\"gates\"]}\n         gates[\"M1\"].update(status=\"FAIL\", evidence=evidence)\n-        gates[\"M2\"].update(status=\"FAIL\", evidence=evidence)\n+        gates[\"M2\"].update(status=downstream_status, evidence=evidence)\n     assert any(\"needs 'M1' PASS first\" in e for e in _with(m1_failed_m2_failed))\n \n \n--- a/docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md\n+++ b/docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md\n@@ -58,8 +58,8 @@\n \n The ledger's `active_epic` may name a capability (maturity stages, 19 gates) or a research program\n (`research_programs`). A research program has **gates, not maturity stages** (`PASS`, `FAIL`, `MISSING`,\n-`BLOCKED_WITH_EVIDENCE`, `DEFERRED_BY_OWNER`); a gate is decided only after every gate it requires passed; PASS and\n-FAIL need existing evidence; a program carries no maturity vocabulary. Gate dependencies order DECISIONS only:\n+`BLOCKED_WITH_EVIDENCE`, `DEFERRED_BY_OWNER`); PASS and FAIL may be decided only after every required gate passed;\n+every decided gate needs existing evidence; a program carries no maturity vocabulary. Gate dependencies order DECISIONS only:\n any work inside a program's scope may be built at any time, before any gate (including a validation gate) is run.\n Every decided gate cites existing evidence; BLOCKED_WITH_EVIDENCE is allowed once the gates it requires are decided.\n A program contract may carry acceptance requirements that bind every gate (for `engrt.numerical_foundations`: the\n",
+      "apply_exit_code": 0,
+      "apply_output": "",
+      "postimages": {
+        "tests/test_capability_completion.py": "33e771423239b94595b3d6059c3336c594c878b6dde4fd59b4f19bfa4c7caadf",
+        "docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md": "46df957e9d170cba855f794d28413b7faf2a0d1ef2761f5b74e7e593f351c781"
+      }
+    },
+    {
+      "patch": "docs\\work\\proposals\\FINAL_D2_OD31_MODEL_CENSUS.patch",
+      "patch_sha256": "59b573ed46b142b4c5856111600d8961dbbdda8ae47293b46e1fae377e347e80",
+      "preimages": {
+        "tests/test_core_guards.py": "93cce1eff12affddd9a8a6fd05efd6697ce390725dfe7314acfd86b1edbe07a6"
+      },
+      "check_exit_code": 0,
+      "exact_diff": "--- a/tests/test_core_guards.py\n+++ b/tests/test_core_guards.py\n@@ -196,7 +196,7 @@\n #: directions and has to be updated deliberately, which is the moment somebody\n #: looks at the new record. `tests/test_pin_portability.py:_pinned_paths` is\n #: the pattern: derive the population, then assert its size.\n-EXPECTED_MODELS = 19  # 19: thermal.conduction1d.steady_variable_conductivity (2026-10-17)\n+EXPECTED_MODELS = 20  # 20: thermal.conduction1d.transient_piecewise_linear (M1C, 2026-10-18)\n EXPECTED_RESERVING_MODELS = 16  # 16: battery.cell.thevenin_1rc\n # 64 -> 67 and 46 -> 49 in the capability-boundary round, which added one\n # condition to each of three records: linear_resistance_ratio on the\n",
+      "apply_exit_code": 0,
+      "apply_output": "",
+      "postimages": {
+        "tests/test_core_guards.py": "67ff9b71e4d9bc99b66c4b1f3867f9d0358ec6f6c5d40d80a7a92d9f1f5215b8"
+      }
+    },
+    {
+      "patch": "docs\\work\\proposals\\FINAL_D3_M1A_LINEAGE_REFUSAL.patch",
+      "patch_sha256": "3903f55a900dc65447a1ef058e48c387dbf9fdcd480cc049c123f1a63d726293",
+      "preimages": {
+        "tests/test_m1a_mesh_lineage.py": "5e2889dd0b5618727473ad89f2f8ad7ad4778a76855f322d99ff6a42c33e3a1e"
+      },
+      "check_exit_code": 0,
+      "exact_diff": "--- a/tests/test_m1a_mesh_lineage.py\n+++ b/tests/test_m1a_mesh_lineage.py\n@@ -170,9 +170,9 @@\n     original = state(runtime)\n     split = refine(runtime)\n     object.__setattr__(split.change.bisections[0].children[0], \"parent_id\", \"forged\")\n-    with pytest.raises(NumericalRefusal, match=\"tampered|unissued\"):\n+    with pytest.raises(NumericalRefusal, match=r\"tampered|unissued|^conflicting issued mesh registry key$\"):\n         runtime.transfer_state(original, split)\n-    with pytest.raises(NumericalRefusal, match=\"tampered|unissued\"):\n+    with pytest.raises(NumericalRefusal, match=r\"tampered|unissued|^conflicting issued mesh registry key$\"):\n         runtime.coarsen(split.change.bisections, max_ratio=10)\n \n \n",
+      "apply_exit_code": 0,
+      "apply_output": "",
+      "postimages": {
+        "tests/test_m1a_mesh_lineage.py": "138ad98e4ca64e0c491067301969f53b7fa523a50e275aac2fe3e3087e8f870f"
+      }
+    }
+  ],
+  "production_source_changes_from_application": []
+}

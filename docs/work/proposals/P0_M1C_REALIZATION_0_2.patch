@@ -1,0 +1,22 @@
+--- a/src/engcore/domains/thermal_models/conduction1d_transient_fv.py
++++ b/src/engcore/domains/thermal_models/conduction1d_transient_fv.py
+@@ -42,6 +42,7 @@
+ from ...scientific.solvers.protocol import SolverIdentity, ConvergenceState
+ from ...scientific.units.quantity import Quantity, is_ratio_scale
+ from .conduction1d_nonuniform import BoundaryKind, ConductionBoundary
++from .conduction1d_schemes import CONDUCTION_1D_TRANSIENT
+ 
+ 
+ MODEL = ScientificModelDefinition(
+@@ -58,9 +59,10 @@
+     exclusions=("multiphase", "nonlinear or temperature-dependent coefficients", "anisotropy", "moving mesh"),
+     validity=ValidityDomain(description="No sourced model applicability limits declared; UNKNOWN, not unlimited."))
+ REALIZATION = ModelRealizationDefinition(
+-    realization_id=MODEL.model_id+".vertex_fv_be", version="0.1.0",
++    realization_id=MODEL.model_id+".vertex_fv_be", version="0.2.0",
+     model=ModelReference(MODEL.model_id, MODEL.version), formulation=ModelFormulation.PDE,
+     name="Nonuniform vertex FV / Backward Euler", description="Midpoint duals, series edge resistance, BE order1",
++    provided_capabilities=frozenset({CONDUCTION_1D_TRANSIENT}),
+     assumptions=("declared first-order temporal accuracy, not an executed order result",),
+     implementation=ImplementationReference(__name__, "0.2.0", "M1C sparse vertex FV; no M1D adaptation; "
+                                            "energy admission on exchanged energy (2026-10-18)"))

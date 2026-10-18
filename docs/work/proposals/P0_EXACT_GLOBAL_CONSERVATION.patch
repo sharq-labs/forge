@@ -1,0 +1,81 @@
+--- a/src/engcore/domains/thermal_models/conduction1d_transient_fv.py
++++ b/src/engcore/domains/thermal_models/conduction1d_transient_fv.py
+@@ -3,6 +3,7 @@
+ 
+ from dataclasses import dataclass
+ from enum import Enum
++from fractions import Fraction
+ import hashlib
+ import json
+ import math
+@@ -67,9 +68,9 @@
+     implementation=ImplementationReference(__name__, "0.2.0", "M1C sparse vertex FV; no M1D adaptation; "
+                                            "energy admission on exchanged energy (2026-10-18)"))
+ 
+-#: Multiple of machine epsilon times dt * sum(|A||T| + |b|) allowed for evaluating the energy balance: a tridiagonal
+-#: LU solve plus the residual and balance sums cost a few roundings per row; 64 leaves margin without approaching
+-#: any declared tolerance. A floating-point floor, not a solver or physical tolerance.
++#: Legacy machine-epsilon multiplier for the LOCAL balance diagnostic only.
++#: It is not a global conservation allowance or a bound on solver/physical error.
++#: The independent global gate evaluates its represented inputs exactly.
+ _BALANCE_ROUNDOFF_FACTOR = 64
+ 
+ ENERGY = ConservedQuantity("thermal:internal_energy_zero_reference", "J")
+@@ -481,20 +482,49 @@
+         # the temperature datum: the larger of the internal redistribution sum|C*dT| and the external energy
+         # dt*(|boundary| + |sources|). It was applied to sum|C*T|, energy from 0 K, so the admitted imbalance grew
+         # with the absolute temperature level rather than with the heat exchanged. Interior face powers are left
+-        # out: they cancel in the balance and would make the tolerance grow with the node count. Separately, and
+-        # labelled, a machine-precision floor for evaluating the balance on states of magnitude |T| (not the
+-        # solver tolerance: that would make this check implied by the row check).
++        # out: they cancel in the balance and would make the tolerance grow with the node count. The global gate
++        # below evaluates represented inputs exactly. The legacy matrix-based allowance is retained separately
++        # for the local diagnostic and cannot relax that global gate.
+         exchange=max(math.fsum(abs(float(c)*(float(b)-float(a))) for c,a,b in zip(self._capacity,old,new)),
+                      seconds*(abs(boundary[0])+abs(boundary[1])+math.fsum(abs(float(p)) for p in powers)))
+-        arithmetic=_BALANCE_ROUNDOFF_FACTOR*np.finfo(float).eps*seconds*math.fsum(map(float,abs(matrix)@np.abs(new)+np.abs(rhs)))
+-        allowance=self.atol+self.rtol*exchange+arithmetic
+-        if (not all(math.isfinite(v) for v in (delta,boundary_energy,source_energy,balance))
+-                or abs(balance)>allowance or np.max(np.abs(local))*seconds>allowance):
++        # Preserve the existing local residual diagnostic and its arithmetic allowance.
++        # It may not relax the independent global conservation admission below.
++        local_arithmetic=_BALANCE_ROUNDOFF_FACTOR*np.finfo(float).eps*seconds*math.fsum(map(float,abs(matrix)@np.abs(new)+np.abs(rhs)))
++        local_allowance=self.atol+self.rtol*exchange+local_arithmetic
++        if (not all(math.isfinite(v) for v in (delta,boundary_energy,source_energy,balance,
++                                               exchange,local_arithmetic,local_allowance))
++                or not np.all(np.isfinite(local))):
++            raise NumericalRefusal("non-finite energy conservation arithmetic; session cannot continue")
++        # Exact arithmetic on the represented inputs: this bounds neither solver
++        # error nor physical/model uncertainty. Solver drift above the declared
++        # conservation tolerance is refused, even if its row residual is small.
++        f=lambda value: Fraction.from_float(float(value))
++        changes=tuple(f(c)*(f(b)-f(a)) for c,a,b in zip(self._capacity,old,new))
++        exact_dt=f(seconds)
++        exact_boundary=exact_dt*sum(map(f,boundary),Fraction(0))
++        exact_source=exact_dt*sum(map(f,powers),Fraction(0))
++        exact_delta=sum(changes,Fraction(0))
++        exact_balance=exact_delta-exact_boundary-exact_source
++        exact_exchange=max(sum(map(abs,changes),Fraction(0)),
++            exact_dt*(sum((abs(f(b)) for b in boundary),Fraction(0))+
++                      sum((abs(f(p)) for p in powers),Fraction(0))))
++        exact_allowance=f(self.atol)+f(self.rtol)*exact_exchange
++        if (abs(exact_balance)>exact_allowance or np.max(np.abs(local))*seconds>local_allowance):
+             raise NumericalRefusal("energy conservation admission failed; session cannot continue")
++        try:
++            allowance=float(exact_allowance)
++            exchange_display=float(exact_exchange)
++        except OverflowError as exc:
++            raise NumericalRefusal("non-finite energy conservation display; session cannot continue") from exc
++        if not all(math.isfinite(v) for v in (allowance,exchange_display)):
++            raise NumericalRefusal("non-finite energy conservation display; session cannot continue")
+         # Recheck frozen inputs/live parent state after provider execution, before publishing.
+         self._guard()
+         binding.update(actual_residual=residual,row_residual_W=row_residual.tolist(),conservation_allowance_J=allowance,
+-                       conservation_exchange_scale_J=exchange,conservation_arithmetic_floor_J=arithmetic,
++                       conservation_exchange_scale_J=exchange_display,conservation_arithmetic_floor_J=0.0,
++                       conservation_admission_policy="exact_represented_inputs_global/1",
++                       conservation_exact_balance_J=str(exact_balance),conservation_exact_allowance_J=str(exact_allowance),
++                       local_conservation_allowance_J=local_allowance,local_conservation_arithmetic_floor_J=local_arithmetic,
+                        dirichlet_reaction_notice="reconstructed boundary reaction, not independent measured flux")
+         step_id=canonical_digest(binding)
+         temperature=self.adapter._publish("m1c_temperature_"+step_id,new,StatePlacement.VERTEX_INTENSIVE,TEMPERATURE,

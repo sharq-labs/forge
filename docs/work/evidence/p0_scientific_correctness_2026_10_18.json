@@ -1,0 +1,1460 @@
+{
+  "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+  "branch": "fix/post-merge-remediation-2026-10-18",
+  "worktree": "D:\\forge-main-337519d1",
+  "initial_state": {
+    "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+    "branch": "fix/post-merge-remediation-2026-10-18",
+    "initial_files": [
+      {
+        "path": "docs/work/ACTIVE_PLAN.md",
+        "sha256": "1dc6fcab13d9bb95763c0d5b3798afbc40f5cd1b05f7904ff7ee25b99e7680cb"
+      },
+      {
+        "path": "docs/work/PROGRESS.md",
+        "sha256": "756b31989319b2c32f26126a380c32f0df009593d503cbdb4ab17bbf9e1c1099"
+      },
+      {
+        "path": "docs/work/REMEDIATION_2026-10-18.md",
+        "sha256": "56579b8af1438f316fd6cf3a728c45bbf234920f693dff9a80c76345d1290a21"
+      },
+      {
+        "path": "src/engcore/scientific/composition/conversion.py",
+        "sha256": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      {
+        "path": "docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md",
+        "sha256": "93da37570479c1859569e7e11485f330e1e32eea2ef6eea6926e98f229ff7ab6"
+      },
+      {
+        "path": "docs/work/evidence/post_merge_2026_10_18.json",
+        "sha256": "5625342cc06a693cfef790369cfb28a8b2cc6980d26036ac9d75cb30e7ba50e9"
+      },
+      {
+        "path": "docs/work/evidence/post_merge_2026_10_18_energy_probe.py",
+        "sha256": "df48383345208a1ed7900a02062fdc854f170a8a6d945d96b38bc0f32d4024d3"
+      },
+      {
+        "path": "tests/test_post_merge_import_smoke.py",
+        "sha256": "8622684b52e0ad3725488b3c0db0822640fc23eb85c327f1478cd5b65e57e602"
+      }
+    ],
+    "status": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/scientific/composition/conversion.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? tests/test_post_merge_import_smoke.py\n"
+  },
+  "initial_work_preservation": [
+    {
+      "path": "docs/work/ACTIVE_PLAN.md",
+      "sha256": "1dc6fcab13d9bb95763c0d5b3798afbc40f5cd1b05f7904ff7ee25b99e7680cb",
+      "snapshot_matches_initial": true,
+      "current_sha256": "681e49fff9b87087cffc0ec715ff8dca384f215551220820427d4a3e57d7a110"
+    },
+    {
+      "path": "docs/work/PROGRESS.md",
+      "sha256": "756b31989319b2c32f26126a380c32f0df009593d503cbdb4ab17bbf9e1c1099",
+      "snapshot_matches_initial": true,
+      "current_sha256": "d4783be6757b4a13994681a3632c60868fcfa7ebefee97f623337a92b8e6a794"
+    },
+    {
+      "path": "docs/work/REMEDIATION_2026-10-18.md",
+      "sha256": "56579b8af1438f316fd6cf3a728c45bbf234920f693dff9a80c76345d1290a21",
+      "snapshot_matches_initial": true,
+      "current_sha256": "afb59bdfe0f5a7002ea6f52988a4caa1d2d05f1defcac55c7646bbaac920a981"
+    },
+    {
+      "path": "src/engcore/scientific/composition/conversion.py",
+      "sha256": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9",
+      "snapshot_matches_initial": true,
+      "current_sha256": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+    },
+    {
+      "path": "docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md",
+      "sha256": "93da37570479c1859569e7e11485f330e1e32eea2ef6eea6926e98f229ff7ab6",
+      "snapshot_matches_initial": true,
+      "current_sha256": "93da37570479c1859569e7e11485f330e1e32eea2ef6eea6926e98f229ff7ab6"
+    },
+    {
+      "path": "docs/work/evidence/post_merge_2026_10_18.json",
+      "sha256": "5625342cc06a693cfef790369cfb28a8b2cc6980d26036ac9d75cb30e7ba50e9",
+      "snapshot_matches_initial": true,
+      "current_sha256": "5625342cc06a693cfef790369cfb28a8b2cc6980d26036ac9d75cb30e7ba50e9"
+    },
+    {
+      "path": "docs/work/evidence/post_merge_2026_10_18_energy_probe.py",
+      "sha256": "df48383345208a1ed7900a02062fdc854f170a8a6d945d96b38bc0f32d4024d3",
+      "snapshot_matches_initial": true,
+      "current_sha256": "df48383345208a1ed7900a02062fdc854f170a8a6d945d96b38bc0f32d4024d3"
+    },
+    {
+      "path": "tests/test_post_merge_import_smoke.py",
+      "sha256": "8622684b52e0ad3725488b3c0db0822640fc23eb85c327f1478cd5b65e57e602",
+      "snapshot_matches_initial": true,
+      "current_sha256": "8622684b52e0ad3725488b3c0db0822640fc23eb85c327f1478cd5b65e57e602"
+    }
+  ],
+  "final_source_sha256": {
+    "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+    "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+    "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+    "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9",
+    "tests/claims/test_impact_replay.py": "1f97dfc3c2ba20be735b110f9a9d22dc49e12e06463ef28373b758727518b38a",
+    "tests/claims/test_p0_replay_execution_authority.py": "b2dc77749d168611dab9f07dbbbfadbbfbe263e8f2f6080e3bdd1017830e3b68",
+    "tests/test_m1c_transient_fv.py": "131d6d2214bc2920cd3aaced03f752efcff8372fffbc0e4f297466190d7b3310",
+    "tests/test_p0_conservation_policy.py": "f1a4d3dd2c5bc6158ba5dab5965d8001143d24f33f8d22d745a8522ef8240560"
+  },
+  "original_baseline": {
+    "name": "final-bounded-1",
+    "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression",
+    "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+    "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+    "exit_code": 1,
+    "status": "EXECUTED",
+    "seconds": 12.7950973000261,
+    "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\final-bounded-1.log",
+    "summary": [
+      "19 failed, 256 passed, 3 errors in 11.85s"
+    ],
+    "failure_names": [
+      "FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]",
+      "FAILED tests/claims/test_claims_assessment.py::test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation",
+      "FAILED tests/claims/test_claims_assessment.py::test_the_value_compared_is_the_reports_never_the_callers",
+      "FAILED tests/claims/test_claims_assessment.py::test_a_violated_comparison_without_the_required_evidence_is_not_a_contradiction",
+      "FAILED tests/claims/test_claims_assessment.py::test_verification_cannot_satisfy_a_validation_requirement",
+      "FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[tolerance_band]",
+      "FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[threshold]",
+      "FAILED tests/claims/test_quantitative_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict",
+      "FAILED tests/claims/test_quantitative_uq.py::test_numerical_uq_cannot_satisfy_model_form",
+      "FAILED tests/claims/test_quantitative_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand",
+      "FAILED tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels",
+      "FAILED tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict",
+      "FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[study]",
+      "FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[value]",
+      "FAILED tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result",
+      "FAILED tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action",
+      "FAILED tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq",
+      "FAILED tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality",
+      "FAILED tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused",
+      "ERROR tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid",
+      "ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid",
+      "ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid"
+    ],
+    "log_sha256": "5d60466d14e9a87d11ca6f09857d851074aae70fec701a1e3ef9acb2d5504ccf",
+    "timeout_seconds": 180,
+    "environment_variables": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src",
+      "PYTEST_ADDOPTS": "--basetemp=D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\final-bounded-1-temp"
+    }
+  },
+  "original_failure_disposition": [
+    {
+      "original": "FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]",
+      "classification": "Contract/compatibility defect",
+      "root_cause": "BLOCKED dependency requires decided predecessors under canonical contract; test demands PASS.",
+      "repair": "None; owner must resolve gate contract/test intent.",
+      "supporting_evidence": "bounded-regression-final",
+      "outcome": "FAIL_WITH_EVIDENCE",
+      "remaining_risk": "Owner-governed contract unresolved."
+    },
+    {
+      "original": "FAILED tests/claims/test_claims_assessment.py::test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_claims_assessment.py::test_the_value_compared_is_the_reports_never_the_callers",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_claims_assessment.py::test_a_violated_comparison_without_the_required_evidence_is_not_a_contradiction",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_claims_assessment.py::test_verification_cannot_satisfy_a_validation_requirement",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[tolerance_band]",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[threshold]",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_quantitative_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_quantitative_uq.py::test_numerical_uq_cannot_satisfy_model_form",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_quantitative_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[study]",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[value]",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it. Matching refusals also falsely satisfied replay reproducibility.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved. Bound-result replay guard and non-vacuous fixture preconditions added.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "FAILED tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "ERROR tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    },
+    {
+      "original": "ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid",
+      "classification": "Scientific authority/integrity defect (upstream invalid realization)",
+      "root_cause": "Invalid M1C realization aborts complete domain index; T3 report is absent and bridge correctly refuses it.",
+      "repair": "Owner-approved capability declaration at realization0.2.0; strict bridge preserved.",
+      "supporting_evidence": "affected-claims-final; independent p0_authority static A-J review",
+      "outcome": "PASS_WITH_EVIDENCE",
+      "remaining_risk": "Bounded software evidence; no experimental validation or certification."
+    }
+  ],
+  "executions": [
+    {
+      "id": "affected-claims-final",
+      "command": "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_claims_assessment.py tests/claims/test_quantitative_uq.py tests/claims/test_external_evidence.py tests/claims/test_sensitivity_robustness_challenge.py tests/claims/test_impact_replay.py tests/claims/test_scientific_diagnostics.py tests/claims/test_sria_context_authority.py tests/claims/test_p0_replay_execution_authority.py",
+      "args": [
+        "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/claims/test_claims_assessment.py",
+        "tests/claims/test_quantitative_uq.py",
+        "tests/claims/test_external_evidence.py",
+        "tests/claims/test_sensitivity_robustness_challenge.py",
+        "tests/claims/test_impact_replay.py",
+        "tests/claims/test_scientific_diagnostics.py",
+        "tests/claims/test_sria_context_authority.py",
+        "tests/claims/test_p0_replay_execution_authority.py"
+      ],
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 24.51187480002409,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/affected-claims-final-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\affected-claims-final.log",
+      "log_sha256": "e30232407c017225e4e17c54bafd9eb74f157915351f00e956635bc0199cab78",
+      "summary": [
+        "175 passed in 23.74s"
+      ],
+      "failure_names": [],
+      "counts": {
+        "passed": 175,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "affected-claims-suites",
+      "command": "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_claims_assessment.py tests/claims/test_quantitative_uq.py tests/claims/test_external_evidence.py tests/claims/test_sensitivity_robustness_challenge.py tests/claims/test_impact_replay.py tests/claims/test_scientific_diagnostics.py tests/claims/test_sria_context_authority.py tests/claims/test_p0_replay_execution_authority.py",
+      "args": [
+        "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/claims/test_claims_assessment.py",
+        "tests/claims/test_quantitative_uq.py",
+        "tests/claims/test_external_evidence.py",
+        "tests/claims/test_sensitivity_robustness_challenge.py",
+        "tests/claims/test_impact_replay.py",
+        "tests/claims/test_scientific_diagnostics.py",
+        "tests/claims/test_sria_context_authority.py",
+        "tests/claims/test_p0_replay_execution_authority.py"
+      ],
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 23.091068600013386,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/affected-claims-suites-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\affected-claims-suites.log",
+      "log_sha256": "d8f346a448a3e7a0b5e18ad3e34d4853bb91562c9aa59f683bf41e17e731f544",
+      "summary": [
+        "170 passed in 22.07s"
+      ],
+      "failure_names": [],
+      "counts": {
+        "passed": 170,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "authority-structural-and-insufficient-controls",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_p0_replay_execution_authority.py",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/claims/test_p0_replay_execution_authority.py"
+      ],
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 5.517293900018558,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/authority-structural-and-insufficient-controls-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\authority-structural-and-insufficient-controls.log",
+      "log_sha256": "4f333f9c4d0b157f13be2a79fd2a9cbf3107eb1dd125b049a8e4d9cf60f15950",
+      "summary": [
+        "8 passed in 4.75s"
+      ],
+      "failure_names": [],
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "baseline-regression",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "tools/forge_check.py",
+        "--regression"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 13.365323600010015,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/scientific/composition/conversion.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/baseline-regression-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\baseline-regression.log",
+      "log_sha256": "1ef04e276004bed93fd6ba1d29974812e1d7ac252b1aa8ea64cf8882c13f408f",
+      "summary": [
+        "20 failed, 255 passed, 3 errors in 12.34s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]",
+        "FAILED tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic",
+        "FAILED tests/claims/test_claims_assessment.py::test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation",
+        "FAILED tests/claims/test_claims_assessment.py::test_the_value_compared_is_the_reports_never_the_callers",
+        "FAILED tests/claims/test_claims_assessment.py::test_a_violated_comparison_without_the_required_evidence_is_not_a_contradiction",
+        "FAILED tests/claims/test_claims_assessment.py::test_verification_cannot_satisfy_a_validation_requirement",
+        "FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[tolerance_band]",
+        "FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[threshold]",
+        "FAILED tests/claims/test_quantitative_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict",
+        "FAILED tests/claims/test_quantitative_uq.py::test_numerical_uq_cannot_satisfy_model_form",
+        "FAILED tests/claims/test_quantitative_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand",
+        "FAILED tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels",
+        "FAILED tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict",
+        "FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[study]",
+        "FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[value]",
+        "FAILED tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused",
+        "ERROR tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid",
+        "ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid",
+        "ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid"
+      ],
+      "counts": {
+        "passed": 255,
+        "failed": 20,
+        "skipped": 0,
+        "errors": 3
+      }
+    },
+    {
+      "id": "bounded-regression-after-authority",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "tools/forge_check.py",
+        "--regression"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 15.237547799944878,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/bounded-regression-after-authority-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bounded-regression-after-authority.log",
+      "log_sha256": "8e5a15709183f722dad3df6f0bc35a65cd506184f4d01b5e9768416c59a0271f",
+      "summary": [
+        "1 failed, 277 passed in 14.21s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]"
+      ],
+      "counts": {
+        "passed": 277,
+        "failed": 1,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "bounded-regression-final",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "tools/forge_check.py",
+        "--regression"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 15.29525740002282,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/bounded-regression-final-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bounded-regression-final.log",
+      "log_sha256": "d6a7ef71bd66926cb18cb7aac6408cfc69d1795ea53599da7c3bfd39f0617b29",
+      "summary": [
+        "1 failed, 277 passed in 14.15s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]"
+      ],
+      "source_sha256_before": {
+        "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+        "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+        "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      "source_sha256_after": {
+        "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+        "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+        "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      "counts": {
+        "passed": 277,
+        "failed": 1,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "bounded-regression-post-numerical",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "tools/forge_check.py",
+        "--regression"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 14.942539499956183,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/p0_exact_kernel_analysis.py\n?? docs/work/evidence/p0_scientific_correctness_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/bounded-regression-post-numerical-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bounded-regression-post-numerical.log",
+      "log_sha256": "356233a7d9ef25ecb20b94fdd833586bca538eec86631f69e37bb3ccfade944b",
+      "summary": [
+        "1 failed, 277 passed in 13.86s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]"
+      ],
+      "source_sha256_before": {
+        "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+        "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+        "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      "source_sha256_after": {
+        "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+        "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+        "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      "counts": {
+        "passed": 277,
+        "failed": 1,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "compatibility-after-authority",
+      "command": "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q -rs tests/test_core_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py tests/test_post_merge_import_smoke.py",
+      "args": [
+        "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "-rs",
+        "tests/test_core_api_snapshot.py",
+        "tests/test_core_api_serialization.py",
+        "tests/test_core_api_layering.py",
+        "tests/test_core_freeze_policy.py",
+        "tests/test_certified_dependency_closure.py",
+        "tests/test_post_merge_import_smoke.py"
+      ],
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 34.10963899997296,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/compatibility-after-authority-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\compatibility-after-authority.log",
+      "log_sha256": "e59981de3dc269d67d510cfa891be849d1fcc85d76859c7dc1611779b9ad8aee",
+      "summary": [
+        "153 passed, 1 skipped in 33.56s"
+      ],
+      "failure_names": [],
+      "counts": {
+        "passed": 153,
+        "failed": 0,
+        "skipped": 1,
+        "errors": 0
+      }
+    },
+    {
+      "id": "compatibility-final",
+      "command": "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q -rs tests/test_core_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py tests/test_post_merge_import_smoke.py",
+      "args": [
+        "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "-rs",
+        "tests/test_core_api_snapshot.py",
+        "tests/test_core_api_serialization.py",
+        "tests/test_core_api_layering.py",
+        "tests/test_core_freeze_policy.py",
+        "tests/test_certified_dependency_closure.py",
+        "tests/test_post_merge_import_smoke.py"
+      ],
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 34.04185989999678,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/compatibility-final-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\compatibility-final.log",
+      "log_sha256": "fb7d79e45db3d99a91d1a5e7d30c26a555f3ed78af9e96cbe3c99c1a2cbd798c",
+      "summary": [
+        "153 passed, 1 skipped in 33.55s"
+      ],
+      "failure_names": [],
+      "source_sha256_before": {
+        "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+        "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+        "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      "source_sha256_after": {
+        "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+        "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+        "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      "counts": {
+        "passed": 153,
+        "failed": 0,
+        "skipped": 1,
+        "errors": 0
+      }
+    },
+    {
+      "id": "datum-fixture-corrected",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy"
+      ],
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 8.465567799983546,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/p0_exact_kernel_analysis.py\n?? docs/work/evidence/p0_scientific_correctness_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/datum-fixture-corrected-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\datum-fixture-corrected.log",
+      "log_sha256": "d4f92d68bcae708b5ef977010cb46dd14b9fb8d1b7d309370f196d762c7cfc5e",
+      "summary": [
+        "6 passed in 7.86s"
+      ],
+      "failure_names": [],
+      "source_sha256_before": {
+        "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+        "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+        "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      "source_sha256_after": {
+        "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+        "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+        "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "datum-fixture-diagnosis",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.01]",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.01]"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 3.5738742999965325,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/p0_exact_kernel_analysis.py\n?? docs/work/evidence/p0_scientific_correctness_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/datum-fixture-diagnosis-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\datum-fixture-diagnosis.log",
+      "log_sha256": "3855ea22dcbaf569842beab120433c96970965315bd92e502a78eee506564c71",
+      "summary": [
+        "1 failed in 2.83s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.01]"
+      ],
+      "source_sha256_before": {
+        "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+        "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+        "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      "source_sha256_after": {
+        "src/engcore/claims/execution.py": "54c493324f1f958c647b70a93795f2581a8a3fa3b058980023c9b889916f3f06",
+        "src/engcore/claims/replay/bundle.py": "c0831464c9e00c3cb6262a418623b0e046b7d38f5b9a7f4d597095aa463aced5",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "6596154d9dce909d9149e9fbae08540b00e26bef73e00fb192460a8cddb23273",
+        "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+      },
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "discovery-after-identity",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_core_guards.py -k \"discovery_found or solver_discovery\"",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/test_core_guards.py",
+        "-k",
+        "discovery_found or solver_discovery"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 6.951411999994889,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/discovery-after-identity-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\discovery-after-identity.log",
+      "log_sha256": "129de08444efde56699010a6b8f538202e71db75f0677eff1467865ed7da661c",
+      "summary": [
+        "1 failed, 2 passed, 273 deselected, 12 warnings in 5.81s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_core_guards.py::test_the_discovery_found_exactly_the_repository"
+      ],
+      "counts": {
+        "passed": 2,
+        "failed": 1,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "exact-conservation-adversarial",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -vv --durations=12 tests/test_p0_conservation_policy.py",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-vv",
+        "--durations=12",
+        "tests/test_p0_conservation_policy.py"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 826.1821548999869,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/p0_exact_kernel_analysis.py\n?? docs/work/evidence/p0_scientific_correctness_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/exact-conservation-adversarial-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\exact-conservation-adversarial.log",
+      "log_sha256": "e503b281035d79d96838fadf98d8660846ac727c52dec5a764930a9f3f160348",
+      "summary": [
+        "================== 6 failed, 42 passed in 825.51s (0:13:45) ==================="
+      ],
+      "failure_names": [
+        "FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.01] - assert 0.0375 == 0.0275 \ufffd 2.7e-09",
+        "FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.005] - assert 0.01875 == 0.01375 \ufffd 1.4e-09",
+        "FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.0025] - assert 0.009375 == 0.006875 \ufffd 6.9e-10",
+        "FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[3000-0.01] - assert 0.0375 == 0.0275 \ufffd 2.7e-09",
+        "FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[3000-0.005] - assert 0.01875 == 0.01375 \ufffd 1.4e-09",
+        "FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[3000-0.0025] - assert 0.009375 == 0.006875 \ufffd 6.9e-10"
+      ],
+      "counts": {
+        "passed": 42,
+        "failed": 6,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "exact-kernel-reference-and-cost",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\exact_kernel_analysis.py",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\exact_kernel_analysis.py"
+      ],
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 0.4628783999942243,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/exact-kernel-reference-and-cost-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\exact-kernel-reference-and-cost.log",
+      "log_sha256": "07613a2d8aae914d580082f0d72c4f6d26f07c73d02a55882878ba76b70624ae",
+      "summary": [],
+      "failure_names": [],
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "identity-correction-targeted",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_m1c_transient_fv.py tests/claims/test_claims_assessment.py",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/test_m1c_transient_fv.py",
+        "tests/claims/test_claims_assessment.py"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 116.79116250004154,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/identity-correction-targeted-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\identity-correction-targeted.log",
+      "log_sha256": "761dc7e226b3a932b207735fb5a845b86ed8771afad0bd832227d9a9ec434134",
+      "summary": [
+        "2 failed, 68 passed in 115.99s (0:01:55)"
+      ],
+      "failure_names": [
+        "FAILED tests/test_m1c_transient_fv.py::test_exact_window_dt_basis_and_clock_identity_refuse",
+        "FAILED tests/claims/test_claims_assessment.py::test_the_mcp_tool_returns_the_same_record"
+      ],
+      "counts": {
+        "passed": 68,
+        "failed": 2,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "m1c-and-parent-integration-final",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_m1c_transient_fv.py tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/test_m1c_transient_fv.py",
+        "tests/test_m1b_vertex_dual_state.py",
+        "tests/test_m1a_mesh_lineage.py"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 122.20054749998963,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/m1c-and-parent-integration-final-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\m1c-and-parent-integration-final.log",
+      "log_sha256": "afbea6daafb69998b7e6a9e6028a3e4419cac207980ad42f77ee20d00a2aa687",
+      "summary": [
+        "1 failed, 123 passed in 121.56s (0:02:01)"
+      ],
+      "failure_names": [
+        "FAILED tests/test_m1a_mesh_lineage.py::test_nested_record_tampering_poisoned_lineage_is_fail_closed"
+      ],
+      "counts": {
+        "passed": 123,
+        "failed": 1,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "production-leak-before-policy-fixture-fixed",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_p0_conservation_policy.py -k fixed_closed_system_leak",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/test_p0_conservation_policy.py",
+        "-k",
+        "fixed_closed_system_leak"
+      ],
+      "exit_code": null,
+      "status": "BLOCKED_TIMEOUT",
+      "seconds": 180.02960569999414,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/production-leak-before-policy-fixture-fixed-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\production-leak-before-policy-fixture-fixed.log",
+      "log_sha256": "0ee889eebad7ec2a4080b6f45924ec91069be149b80aa4beef6e2a9f9357b87d",
+      "summary": [],
+      "failure_names": [],
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "production-leak-before-policy",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_p0_conservation_policy.py -k fixed_closed_system_leak",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/test_p0_conservation_policy.py",
+        "-k",
+        "fixed_closed_system_leak"
+      ],
+      "exit_code": 2,
+      "status": "EXECUTED",
+      "seconds": 2.357852500048466,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/production-leak-before-policy-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\production-leak-before-policy.log",
+      "log_sha256": "96622c1f6a0fc5deccce32654b24ca966e635ad90b7c3433c926788a63e78c87",
+      "summary": [
+        "1 error in 1.64s"
+      ],
+      "failure_names": [
+        "ERROR tests/test_p0_conservation_policy.py"
+      ],
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "project-dependencies-probe",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -c \"import sys,importlib.metadata as m,engcore,scipy,numpy,pint,mcp; print(sys.executable);print(engcore.__file__);print([(x,m.version(x)) for x in (\\\"numpy\\\",\\\"scipy\\\",\\\"pint\\\",\\\"pytest\\\",\\\"mcp\\\")]);print(scipy.__file__); print(mcp.__file__)\"",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-c",
+        "import sys,importlib.metadata as m,engcore,scipy,numpy,pint,mcp; print(sys.executable);print(engcore.__file__);print([(x,m.version(x)) for x in (\"numpy\",\"scipy\",\"pint\",\"pytest\",\"mcp\")]);print(scipy.__file__); print(mcp.__file__)"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 0.965815500007011,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims;C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Lib/site-packages",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/project-dependencies-probe-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\project-dependencies-probe.log",
+      "log_sha256": "014df5f781e1fbfbba77d276760b9b65fd51ef4439e7565048e7ff581ba071da",
+      "summary": [],
+      "failure_names": [],
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "proper-project-venv-probe",
+      "command": "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -c \"import sys,importlib.metadata as m,engcore,scipy,numpy,pint,mcp; print(sys.executable);print(engcore.__file__);print([(x,m.version(x)) for x in (\\\"numpy\\\",\\\"scipy\\\",\\\"pint\\\",\\\"pytest\\\",\\\"mcp\\\")]);print(scipy.__file__); print(mcp.__file__)\"",
+      "args": [
+        "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe",
+        "-B",
+        "-c",
+        "import sys,importlib.metadata as m,engcore,scipy,numpy,pint,mcp; print(sys.executable);print(engcore.__file__);print([(x,m.version(x)) for x in (\"numpy\",\"scipy\",\"pint\",\"pytest\",\"mcp\")]);print(scipy.__file__); print(mcp.__file__)"
+      ],
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 0.966063599975314,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/proper-project-venv-probe-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\proper-project-venv-probe.log",
+      "log_sha256": "7245fa2716a005095c84149f31ec0802530fc991cd9b8b20d5746ae8e24b74a5",
+      "summary": [],
+      "failure_names": [],
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "replay-bound-negative-controls",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_p0_replay_execution_authority.py tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/claims/test_p0_replay_execution_authority.py",
+        "tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result"
+      ],
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 6.150170999986585,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/replay-bound-negative-controls-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\replay-bound-negative-controls.log",
+      "log_sha256": "b5fb7025ad789b3ebdb735e9fdbe4ad6da3f427491d178fd7f2252a21db3dc37",
+      "summary": [
+        "4 passed in 5.38s"
+      ],
+      "failure_names": [],
+      "counts": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "replay-negative-after-fixture-repair",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_p0_replay_execution_authority.py tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/claims/test_p0_replay_execution_authority.py",
+        "tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 6.109211599978153,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/replay-negative-after-fixture-repair-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\replay-negative-after-fixture-repair.log",
+      "log_sha256": "3067580e8e7b92132cabb1a93bdd10ea054991495782020f3a611fbd8aed2922",
+      "summary": [
+        "1 failed, 3 passed in 5.30s"
+      ],
+      "failure_names": [
+        "FAILED tests/claims/test_p0_replay_execution_authority.py::test_matching_nonexecutions_cannot_receive_scientific_replay_verification[missing_report]"
+      ],
+      "counts": {
+        "passed": 3,
+        "failed": 1,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "replay-negative-after",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_p0_replay_execution_authority.py tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result tests/test_m1c_transient_fv.py::test_exact_window_dt_basis_and_clock_identity_refuse",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/claims/test_p0_replay_execution_authority.py",
+        "tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result",
+        "tests/test_m1c_transient_fv.py::test_exact_window_dt_basis_and_clock_identity_refuse"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 6.2647844000021,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/replay-negative-after-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\replay-negative-after.log",
+      "log_sha256": "6598fca1823d19d578325e3c4ccad22c47ce375a5513a3157d4eeb9686469bc8",
+      "summary": [
+        "1 failed, 4 passed in 5.50s"
+      ],
+      "failure_names": [
+        "FAILED tests/claims/test_p0_replay_execution_authority.py::test_matching_nonexecutions_cannot_receive_scientific_replay_verification[missing_report]"
+      ],
+      "counts": {
+        "passed": 4,
+        "failed": 1,
+        "skipped": 0,
+        "errors": 0
+      }
+    },
+    {
+      "id": "replay-negative-before",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_p0_replay_execution_authority.py",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "-q",
+        "tests/claims/test_p0_replay_execution_authority.py"
+      ],
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 4.679304299992509,
+      "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "working_state": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/scientific/composition/conversion.py\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_post_merge_import_smoke.py\n",
+      "environment": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1\\tests\\claims",
+        "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/p0-closure/replay-negative-before-temp"
+      },
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\replay-negative-before.log",
+      "log_sha256": "93a5e454617b066e5a628b6227f574eb06433fa978d0b29fbd76afddd48cd444",
+      "summary": [
+        "3 failed in 3.83s"
+      ],
+      "failure_names": [
+        "FAILED tests/claims/test_p0_replay_execution_authority.py::test_matching_nonexecutions_cannot_receive_scientific_replay_verification[refused]",
+        "FAILED tests/claims/test_p0_replay_execution_authority.py::test_matching_nonexecutions_cannot_receive_scientific_replay_verification[missing_report]",
+        "FAILED tests/claims/test_p0_replay_execution_authority.py::test_matching_nonexecutions_cannot_receive_scientific_replay_verification[not_planned]"
+      ],
+      "counts": {
+        "passed": 0,
+        "failed": 3,
+        "skipped": 0,
+        "errors": 0
+      }
+    }
+  ],
+  "import_probes": [
+    {
+      "file": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\fallback-import-probe.json",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-c",
+        "import platform; platform._wmi=None; import scipy.sparse,pint; print(\"imports OK\",platform.uname(),flush=True)"
+      ],
+      "exit_code": 0,
+      "stdout": "imports OK uname_result(system='Windows', node='Kareem-Elsharkawy', release='11', version='10.0.26200', machine='AMD64')\n",
+      "stderr": "",
+      "seconds": 0.49832899996545166
+    },
+    {
+      "file": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\plain-import-probe.json",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-c",
+        "import faulthandler; faulthandler.dump_traceback_later(5); import scipy.sparse,pint;print(\"imports OK\",flush=True)"
+      ],
+      "status": "BLOCKED_TIMEOUT",
+      "stdout": "",
+      "stderr": "Timeout (0:00:05)!\nThread 0x00004de4 (most recent call first):\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 347 in _wmi_query\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 408 in _win32_ver\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 467 in win32_ver\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 1016 in uname\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 1127 in machine\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\numpy\\testing\\_private\\utils.py\", line 89 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\numpy\\testing\\__init__.py\", line 12 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\numpy\\__init__.py\", line 746 in __getattr__\n  File \"<frozen importlib._bootstrap>\", line 1423 in _handle_fromlist\n  File \"<frozen importlib._bootstrap>\", line 1421 in _handle_fromlist\n  File \"<string>\", line 1 in <module>\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\_external\\array_api_compat\\_internal.py\", line 64 in clone_module\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\_external\\array_api_compat\\numpy\\__init__.py\", line 9 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1426 in _handle_fromlist\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\_lib\\_array_api.py\", line 24 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\_lib\\_util.py\", line 17 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\sparse\\_compressed.py\", line 8 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\sparse\\_csr.py\", line 15 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\sparse\\__init__.py\", line 251 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"<string>\", line 1 in <module>\n",
+      "seconds": 10.02091909997398
+    }
+  ],
+  "approvals": {
+    "m1c": "Exact existing capability / realization0.2.0 proposal explicitly approved; no model/count/certificate/historical changes.",
+    "conservation": "Exact represented-input global Fraction policy explicitly approved; same rtol/atol; local-only matrix allowance; future receipt policy identity explicit."
+  },
+  "independent_review": {
+    "authority": "p0_authority: A-J static PASS; no remaining defect found; no tests executed by reviewer.",
+    "conservation": "p0_conservation: no BLOCKER/MAJOR in exact patch and final fixture/report; read original42pass6fail and corrected6pass traces; high-Fourier and overflow limits retained.",
+    "final_report": "p0_authority final static PASS: all24 execution-log hashes and8 source hashes match; all22 original cases dispositioned; no tests executed by reviewer."
+  },
+  "conservation_fixture_correction": {
+    "preserved_test_snapshot": "D:\\forge-main-337519d1\\.pytest-review-temp\\p0-closure\\conservation-test-before-gross-exchange-correction.py",
+    "snapshot_sha256": "8e1c766ca86e91c39c1b8737fe83e7cac6d3d27e5b95f72b902542068ae57df3",
+    "reason": "Net external power2.75W is not absolute exchange3.75W. Same rel1e-7; production unchanged.",
+    "single_all48_pass_run_claimed": false
+  },
+  "not_run": [
+    "OD-3",
+    "full test suite",
+    "full assurance",
+    "standalone mutation campaign",
+    "Genesis formal measurement",
+    "Linux Python3.11/3.12 recertification"
+  ],
+  "state_at_report": " M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n"
+}

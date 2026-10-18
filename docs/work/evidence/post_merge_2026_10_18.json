@@ -1,0 +1,2257 @@
+{
+  "date": "2026-10-18",
+  "branch": "fix/post-merge-remediation-2026-10-18",
+  "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+  "base": "337519d1944bd52c5711a657a926ad855ac8d868",
+  "initial_worktree_clean": true,
+  "original_inventory": [
+    "docs/work/ACTIVE_PLAN.md",
+    "docs/work/PROGRESS.md",
+    "docs/work/REMEDIATION_2026-10-18.md",
+    "docs/work/proposals/A1_core_guards_model_count.patch",
+    "docs/work/proposals/OD22_window_control_subdivisions.patch",
+    "docs/work/proposals/od22_replay.py",
+    "src/engcore/domains/thermal_models/conduction1d_transient_fv.py",
+    "src/engcore/execution/multiphysics/acceleration.py",
+    "src/engcore/execution/multiphysics/runtime.py",
+    "src/engcore/multiscale/runtime.py",
+    "src/engcore/numerical/nonlinear.py",
+    "src/engcore/numerical/providers.py",
+    "src/engcore/numerical/vertex_state.py",
+    "src/engcore/system_runtime/authorities.py",
+    "tests/numerical/test_newton_domain_errors.py",
+    "tests/numerical/test_phase1_sparse_correctness.py",
+    "tests/test_interface_flux_execution.py",
+    "tests/test_m1b_vertex_dual_state.py",
+    "tests/test_m1c_transient_fv.py",
+    "tests/test_od30_multiscale_authority_identity.py",
+    "tests/test_phase2_review_regressions.py",
+    "tests/test_phase3_br14_iqn_imvj.py",
+    "tests/test_system_runtime_scenario_identity.py"
+  ],
+  "source_digests": [
+    {
+      "path": "src/engcore/domains/thermal_models/conduction1d_transient_fv.py",
+      "base_sha256": "89df68aa5e8e2097b073cbddadd4d1f48b9004a1e7eaf5dac5c0c9b43d858e3e",
+      "remediation_commit_sha256": "ccdb257657fd2c9408590d6b8ca2f426c660ee0f7bb1a259345a6cd2088fbda3",
+      "reviewed_working_sha256": "ccdb257657fd2c9408590d6b8ca2f426c660ee0f7bb1a259345a6cd2088fbda3"
+    },
+    {
+      "path": "src/engcore/execution/multiphysics/acceleration.py",
+      "base_sha256": "103ab082f17bd099f4d06ea9cca3540e86eaff576948cc70ff633485b96711f5",
+      "remediation_commit_sha256": "29c2aa57c7713bb312c75b6be397854471d2e73e037e579a31c131cda5d6b637",
+      "reviewed_working_sha256": "29c2aa57c7713bb312c75b6be397854471d2e73e037e579a31c131cda5d6b637"
+    },
+    {
+      "path": "src/engcore/execution/multiphysics/runtime.py",
+      "base_sha256": "1b41e78f6ed8ceea235d41e1db1e2720fa766041944dc251e0b3a94f5294576b",
+      "remediation_commit_sha256": "8c57e5d5cf696eb60341ecac801462355afae57c76537ecab2cf4ae9c68374d4",
+      "reviewed_working_sha256": "8c57e5d5cf696eb60341ecac801462355afae57c76537ecab2cf4ae9c68374d4"
+    },
+    {
+      "path": "src/engcore/multiscale/runtime.py",
+      "base_sha256": "eed6345e251d5f72fd25aa278e4ec33b4e37d0c31e5150ebd1eeb986cc683f7a",
+      "remediation_commit_sha256": "d603a368c6dda5fa6c491079f425981f055ed659b25dcd2469fac04d4e62b6e2",
+      "reviewed_working_sha256": "d603a368c6dda5fa6c491079f425981f055ed659b25dcd2469fac04d4e62b6e2"
+    },
+    {
+      "path": "src/engcore/numerical/nonlinear.py",
+      "base_sha256": "ce07d66e4657c7955694db4c9bc002f27e50f4483447cb8ae328457f1807febf",
+      "remediation_commit_sha256": "d4a839a1d487c6af9e35976a525810bc8d5af31d1f688bde71660a135b26abfd",
+      "reviewed_working_sha256": "d4a839a1d487c6af9e35976a525810bc8d5af31d1f688bde71660a135b26abfd"
+    },
+    {
+      "path": "src/engcore/numerical/providers.py",
+      "base_sha256": "6fd9a73b6525892e450bb3ad882da1d2599949901636b02cd9e55729cdc087d5",
+      "remediation_commit_sha256": "12913d652b2700e51d14ed66a79831b3beaa26b2f6f25b8d98b325fa0ea249e1",
+      "reviewed_working_sha256": "12913d652b2700e51d14ed66a79831b3beaa26b2f6f25b8d98b325fa0ea249e1"
+    },
+    {
+      "path": "src/engcore/numerical/vertex_state.py",
+      "base_sha256": "a1889c937cba868fc305e18751dc916d7871f1ff2f597771635d8bc36e4d0979",
+      "remediation_commit_sha256": "49e34045b2c5b5d908f2e1ba80e24c826c2e728348dc163b75ed3dd4e5ba927d",
+      "reviewed_working_sha256": "49e34045b2c5b5d908f2e1ba80e24c826c2e728348dc163b75ed3dd4e5ba927d"
+    },
+    {
+      "path": "src/engcore/system_runtime/authorities.py",
+      "base_sha256": "5e451a374c4173f39fe1727871852049d18098d693ebe58f0ee17a3464278c0c",
+      "remediation_commit_sha256": "24e3c29082d2df613dac83f933fa57d412f8748e013d1cc1ca92b312351c7949",
+      "reviewed_working_sha256": "24e3c29082d2df613dac83f933fa57d412f8748e013d1cc1ca92b312351c7949"
+    },
+    {
+      "path": "src/engcore/scientific/composition/conversion.py",
+      "base_sha256": "6eda5ba7a01304dcd53077ac64654735dfca0fedf7d6378b8165604f630a0be8",
+      "remediation_commit_sha256": "6eda5ba7a01304dcd53077ac64654735dfca0fedf7d6378b8165604f630a0be8",
+      "reviewed_working_sha256": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9"
+    }
+  ],
+  "execution": [
+    {
+      "name": "recipe-1",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_phase2_review_regressions.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "exit_code": 2,
+      "status": "EXECUTED",
+      "seconds": 1.5968239000067115,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\recipe-1.log",
+      "summary": [
+        "1 error in 0.92s"
+      ],
+      "failure_names": [
+        "ERROR tests/test_phase2_review_regressions.py"
+      ],
+      "log_sha256": "da84ed8a82ac8ffa20cd1929c4172642c06b2d78c14fa79bccaeee7e466f6f98",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "recipe-2",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_core_guards.py -k \"discovery_found or solver_discovery\"",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "exit_code": 2,
+      "status": "EXECUTED",
+      "seconds": 1.7646051999763586,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\recipe-2.log",
+      "summary": [
+        "1 error in 1.11s"
+      ],
+      "failure_names": [
+        "ERROR tests/test_core_guards.py"
+      ],
+      "log_sha256": "e06c1ae266a383c279ee7a34a6b8f9aa38a55a1f18a1cc83e4828e50a42b6f24",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "recipe-3",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/numerical/test_newton_domain_errors.py tests/test_phase3_br13_numerical_stability.py tests/numerical/test_robust_nonlinear.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "exit_code": 2,
+      "status": "EXECUTED",
+      "seconds": 2.54835679999087,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\recipe-3.log",
+      "summary": [
+        "1 error in 1.90s"
+      ],
+      "failure_names": [
+        "ERROR tests/numerical/test_newton_domain_errors.py"
+      ],
+      "log_sha256": "448e50cb5dbb8c3d17ff0e324e0ded2695ff60b346ccb8ae02e5f6b88e6ff420",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "recipe-4",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/numerical/test_phase1_sparse_correctness.py tests/test_interface_flux_execution.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "exit_code": 2,
+      "status": "EXECUTED",
+      "seconds": 2.1282041000085883,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\recipe-4.log",
+      "summary": [
+        "1 error in 1.54s"
+      ],
+      "failure_names": [
+        "ERROR tests/numerical/test_phase1_sparse_correctness.py"
+      ],
+      "log_sha256": "ba75fdde61bc271980d5df94f880fbaaad707ae7f01f127bdf9163aeeef3576b",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "recipe-5",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_m1c_transient_fv.py tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "exit_code": 2,
+      "status": "EXECUTED",
+      "seconds": 2.504921199986711,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\recipe-5.log",
+      "summary": [
+        "1 error in 1.80s"
+      ],
+      "failure_names": [
+        "ERROR tests/test_m1c_transient_fv.py"
+      ],
+      "log_sha256": "25c159cde9bec27425872d168f6d025db5f15c23210433d226d7a551e80efb48",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "recipe-6",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_phase3_br14_iqn_imvj.py tests/test_multiphysics_window_control.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "exit_code": 2,
+      "status": "EXECUTED",
+      "seconds": 2.1056023000273854,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\recipe-6.log",
+      "summary": [
+        "1 error in 1.46s"
+      ],
+      "failure_names": [
+        "ERROR tests/test_phase3_br14_iqn_imvj.py"
+      ],
+      "log_sha256": "4b54fab04645e9176c5e635477213c9130cb84e6053002ae5232516ccc2ace53",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "recipe-7",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_od30_multiscale_authority_identity.py tests/test_system_runtime_scenario_identity.py tests/test_system_runtime_multiscale_identity.py tests/test_multiscale_review_fixes.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050",
+      "exit_code": 2,
+      "status": "EXECUTED",
+      "seconds": 3.2065626999828964,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\recipe-7.log",
+      "summary": [
+        "1 error in 2.39s"
+      ],
+      "failure_names": [
+        "ERROR tests/test_od30_multiscale_authority_identity.py"
+      ],
+      "log_sha256": "589156fe78d913eb9a75f3b1c531cf646a81c4fac8642fc60b6911a2c3272dae",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "corrected-recipe-1",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_phase2_review_regressions.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 2.5658634999999776,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\corrected-recipe-1.log",
+      "summary": [
+        "5 failed, 4 passed in 1.91s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_phase2_review_regressions.py::test_a_redundant_forward_tear_is_refused",
+        "FAILED tests/test_phase2_review_regressions.py::test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build",
+        "FAILED tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[1]",
+        "FAILED tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[2]",
+        "FAILED tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[3]"
+      ],
+      "log_sha256": "6afcc2322e27bd3dcd00e10259ceb03409a832b2b3dbed90798938d3aba7e25d",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "corrected-recipe-2",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_core_guards.py -k \"discovery_found or solver_discovery\"",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 7.544462999969255,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\corrected-recipe-2.log",
+      "summary": [
+        "2 failed, 1 passed, 271 deselected, 12 warnings in 6.39s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_core_guards.py::test_the_discovery_found_exactly_the_repository",
+        "FAILED tests/test_core_guards.py::test_the_solver_discovery_found_the_adapters"
+      ],
+      "log_sha256": "c7e87265f3b97e6c9e166da5373ecdde904f601ea8d8c9eca95fbffeb0659f6b",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "corrected-recipe-3",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/numerical/test_newton_domain_errors.py tests/test_phase3_br13_numerical_stability.py tests/numerical/test_robust_nonlinear.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 2.098443499999121,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\corrected-recipe-3.log",
+      "summary": [
+        "79 passed in 1.43s"
+      ],
+      "failure_names": [],
+      "log_sha256": "b54181adf73fbc9f93fa85535bfa64b51031ec374d5e3284451fa79fe920c663",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "corrected-recipe-4",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/numerical/test_phase1_sparse_correctness.py tests/test_interface_flux_execution.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 2.55312260001665,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\corrected-recipe-4.log",
+      "summary": [
+        "1 failed, 41 passed in 1.88s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_interface_flux_execution.py::test_unqualified_direct_mapper_escape_and_stale_support_refuse"
+      ],
+      "log_sha256": "6d3b93ffe37eb1e8819b82e5be47620bf31e1d13313188c05465168016425847",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "corrected-recipe-5",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_m1c_transient_fv.py tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 2,
+      "status": "EXECUTED",
+      "seconds": 2.6650034000049345,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\corrected-recipe-5.log",
+      "summary": [
+        "1 error in 1.88s"
+      ],
+      "failure_names": [
+        "ERROR tests/test_m1c_transient_fv.py - engcore.scientific.errors.InvalidModel..."
+      ],
+      "log_sha256": "018572351717cf1dfb3f6212832ce28f5edb7110f5ad6114a3ea37707d6512eb",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "corrected-recipe-6",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_phase3_br14_iqn_imvj.py tests/test_multiphysics_window_control.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 2.0273751000058837,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\corrected-recipe-6.log",
+      "summary": [
+        "1 failed, 67 passed, 1 warning in 1.45s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable"
+      ],
+      "log_sha256": "f0b43a3ffac44e1c1a517a57ad9165b473daf68e6a3004e8765cb9455a24112d",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "corrected-recipe-7",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_od30_multiscale_authority_identity.py tests/test_system_runtime_scenario_identity.py tests/test_system_runtime_multiscale_identity.py tests/test_multiscale_review_fixes.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 64.2765368000255,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\corrected-recipe-7.log",
+      "summary": [
+        "83 passed in 63.55s (0:01:03)"
+      ],
+      "failure_names": [],
+      "log_sha256": "f758f8f82b0582c7d3532433f1d682c185f60ba104fccf6e3b4fa1ec3ba8bf56",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "bounded-1",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --changed --dry-run",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 16.300998700025957,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bounded-1.log",
+      "summary": [],
+      "failure_names": [],
+      "log_sha256": "4d66d730760e06779d1f98add8b4cb11cdf6206d333c6afe121cfd7e74fd637e",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "bounded-2",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_post_merge_import_smoke.py tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 12.540450699976645,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bounded-2.log",
+      "summary": [
+        "1 failed, 84 passed in 11.92s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_m1a_mesh_lineage.py::test_nested_record_tampering_poisoned_lineage_is_fail_closed"
+      ],
+      "log_sha256": "b5bb3347ecc70a629124c84b314060de8012a27554d34f0dabfc632bac16e104",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "bounded-3",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 12.629455299989786,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bounded-3.log",
+      "summary": [
+        "19 failed, 251 passed, 8 errors in 11.62s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]",
+        "FAILED tests/claims/test_claims_assessment.py::test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation",
+        "FAILED tests/claims/test_claims_assessment.py::test_the_value_compared_is_the_reports_never_the_callers",
+        "FAILED tests/claims/test_claims_assessment.py::test_a_violated_comparison_without_the_required_evidence_is_not_a_contradiction",
+        "FAILED tests/claims/test_claims_assessment.py::test_verification_cannot_satisfy_a_validation_requirement",
+        "FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[tolerance_band]",
+        "FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[threshold]",
+        "FAILED tests/claims/test_quantitative_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict",
+        "FAILED tests/claims/test_quantitative_uq.py::test_numerical_uq_cannot_satisfy_model_form",
+        "FAILED tests/claims/test_quantitative_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand",
+        "FAILED tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels",
+        "FAILED tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict",
+        "FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[study]",
+        "FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[value]",
+        "FAILED tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused",
+        "ERROR tests/test_forge_check.py::test_every_kind_of_change_is_detected_and_committed_only_is_narrower",
+        "ERROR tests/test_forge_check.py::test_an_uncommitted_change_on_the_base_branch_itself_is_detected",
+        "ERROR tests/test_forge_check.py::test_an_unknown_base_fails_loudly - Permissi...",
+        "ERROR tests/test_capability_completion.py::test_a_superseded_schema_is_refused_not_read",
+        "ERROR tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid",
+        "ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid",
+        "ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid",
+        "ERROR tests/claims/test_impact_replay.py::test_untracked_manifest_digest_changes_with_file_content"
+      ],
+      "log_sha256": "712d9d2aa9517bf75aacff4609ac77d38640fdf8d2905e41774cadd29ea84a8c",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "bounded-4",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -I docs/work/proposals/od22_replay.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 0.08429590001469478,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bounded-4.log",
+      "summary": [],
+      "failure_names": [],
+      "log_sha256": "5fdad1a208616f02b720fa66ae28e48da781da7616ec0bf8db924f1d691ca48c",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "bounded-5",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_phase1_coupling_convergence_coverage.py tests/test_electrothermal_vertical.py tests/architecture/test_cross_domain_fixtures.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 3.199140399985481,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bounded-5.log",
+      "summary": [
+        "2 failed, 87 passed, 1 warning in 2.50s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_phase1_coupling_convergence_coverage.py::test_a_self_loop_is_a_lagged_edge",
+        "FAILED tests/test_electrothermal_vertical.py::test_l3_no_relaxation_appears_anywhere_in_the_module"
+      ],
+      "log_sha256": "a5bc1a430af94c821ea91f3e10f3559eaf6f0115fe6876373a7ff5a00aac8910",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src"
+      }
+    },
+    {
+      "name": "final-bounded-1",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 1,
+      "status": "EXECUTED",
+      "seconds": 12.7950973000261,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\final-bounded-1.log",
+      "summary": [
+        "19 failed, 256 passed, 3 errors in 11.85s"
+      ],
+      "failure_names": [
+        "FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]",
+        "FAILED tests/claims/test_claims_assessment.py::test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation",
+        "FAILED tests/claims/test_claims_assessment.py::test_the_value_compared_is_the_reports_never_the_callers",
+        "FAILED tests/claims/test_claims_assessment.py::test_a_violated_comparison_without_the_required_evidence_is_not_a_contradiction",
+        "FAILED tests/claims/test_claims_assessment.py::test_verification_cannot_satisfy_a_validation_requirement",
+        "FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[tolerance_band]",
+        "FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[threshold]",
+        "FAILED tests/claims/test_quantitative_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict",
+        "FAILED tests/claims/test_quantitative_uq.py::test_numerical_uq_cannot_satisfy_model_form",
+        "FAILED tests/claims/test_quantitative_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand",
+        "FAILED tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels",
+        "FAILED tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict",
+        "FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[study]",
+        "FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[value]",
+        "FAILED tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality",
+        "FAILED tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused",
+        "ERROR tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid",
+        "ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid",
+        "ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid"
+      ],
+      "log_sha256": "5d60466d14e9a87d11ca6f09857d851074aae70fec701a1e3ef9acb2d5504ccf",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src",
+        "PYTEST_ADDOPTS": "--basetemp=D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\final-bounded-1-temp"
+      }
+    },
+    {
+      "name": "final-bounded-2",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_checkpoint_integrity_hardening.py tests/test_external_participant_checkpoints.py tests/test_provider_participant_checkpoints.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 2.253953100007493,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\final-bounded-2.log",
+      "summary": [
+        "55 passed in 1.63s"
+      ],
+      "failure_names": [],
+      "log_sha256": "b714c73ff3f5e481d8486be9e4e47afb117c1209405a4f655a18c8bd37856a2a",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src",
+        "PYTEST_ADDOPTS": "--basetemp=D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\final-bounded-2-temp"
+      }
+    },
+    {
+      "name": "final-bounded-3",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/architecture/test_quantity_semantics.py tests/test_declared_field_kind_mapping.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 1.974361400003545,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\final-bounded-3.log",
+      "summary": [
+        "56 passed in 1.32s"
+      ],
+      "failure_names": [],
+      "log_sha256": "774fb46bf6146ff3b138dd2c57bb8a4c218bb05a77d574ca3a0d84c1c8bed249",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src",
+        "PYTEST_ADDOPTS": "--basetemp=D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\final-bounded-3-temp"
+      }
+    },
+    {
+      "name": "final-bounded-4",
+      "command": "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_core_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py",
+      "environment": "CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src",
+      "commit": "93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction",
+      "exit_code": 0,
+      "status": "EXECUTED",
+      "seconds": 30.6250088000088,
+      "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\final-bounded-4.log",
+      "summary": [
+        "150 passed, 1 skipped in 29.87s"
+      ],
+      "failure_names": [],
+      "log_sha256": "51ba252b2ecf890f68379b00bb4963f01565845e624ff00a344831079d063cc5",
+      "timeout_seconds": 180,
+      "environment_variables": {
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\bootstrap;D:\\forge-main-337519d1\\src",
+        "PYTEST_ADDOPTS": "--basetemp=D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\final-bounded-4-temp"
+      }
+    }
+  ],
+  "energy_diagnostic": {
+    "classification": "SCIENTIFIC_CORRECTNESS_COUNTEREXAMPLE_TO_MESH_INDEPENDENT_ADMISSION; extracted arithmetic only; production realization unavailable",
+    "source_sha256": "ccdb257657fd2c9408590d6b8ca2f426c660ee0f7bb1a259345a6cd2088fbda3",
+    "results": [
+      {
+        "cells": 4,
+        "delta_J": 1.0000002248489182e-07,
+        "exchange_J": 1.0000002248489182e-07,
+        "floor_J": 3.581135389282509e-11,
+        "allowance_J": 1.03591135391531e-09,
+        "energy_admitted": false,
+        "row_admitted": true,
+        "relative_residual": 3.333334461785853e-10,
+        "independent_equilibrium_floor_J": 3.581135388230905e-11
+      },
+      {
+        "cells": 32,
+        "delta_J": 1.0000002248489182e-07,
+        "exchange_J": 1.0000002248489182e-07,
+        "floor_J": 1.7547563408166414e-09,
+        "allowance_J": 2.7548563408391263e-09,
+        "energy_admitted": false,
+        "row_admitted": true,
+        "relative_residual": 3.3333587149778996e-10,
+        "independent_equilibrium_floor_J": 1.7547563402331434e-09
+      },
+      {
+        "cells": 128,
+        "delta_J": 1.0000002248489182e-07,
+        "exchange_J": 1.0000002248489182e-07,
+        "floor_J": 2.794820376060813e-08,
+        "allowance_J": 2.8948303760630613e-08,
+        "energy_admitted": false,
+        "row_admitted": true,
+        "relative_residual": 3.3341348171234135e-10,
+        "independent_equilibrium_floor_J": 2.7948203751293477e-08
+      },
+      {
+        "cells": 256,
+        "delta_J": 1.0000002248489182e-07,
+        "exchange_J": 1.0000002248489182e-07,
+        "floor_J": 1.1176723550394088e-07,
+        "allowance_J": 1.1276733550396337e-07,
+        "energy_admitted": true,
+        "row_admitted": true,
+        "relative_residual": 3.3279259999593094e-10,
+        "independent_equilibrium_floor_J": 1.1176723546668654e-07
+      },
+      {
+        "cells": 512,
+        "delta_J": 1.0000002248489182e-07,
+        "exchange_J": 1.0000002248489182e-07,
+        "floor_J": 4.470433624772719e-07,
+        "allowance_J": 4.480434624772944e-07,
+        "energy_admitted": true,
+        "row_admitted": true,
+        "relative_residual": 3.3775965372721357e-10,
+        "independent_equilibrium_floor_J": 4.470433623282588e-07
+      }
+    ]
+  },
+  "environment_diagnostics": {
+    "base-imports.json": {
+      "name": "base-imports",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-c",
+        "import faulthandler; faulthandler.dump_traceback_later(12); import numpy; print(\"numpy\",numpy.__version__,flush=True); import scipy.sparse; print(\"sparse OK\",flush=True); import pint; print(\"pint\",pint.__version__,flush=True)"
+      ],
+      "seconds": 20.022689000004902,
+      "status": "BLOCKED_TIMEOUT",
+      "stdout": "numpy 2.4.3\n",
+      "stderr": "Timeout (0:00:12)!\nThread 0x000108fc (most recent call first):\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 347 in _wmi_query\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 408 in _win32_ver\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 467 in win32_ver\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 1016 in uname\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 1127 in machine\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\numpy\\testing\\_private\\utils.py\", line 89 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\numpy\\testing\\__init__.py\", line 12 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\numpy\\__init__.py\", line 746 in __getattr__\n  File \"<frozen importlib._bootstrap>\", line 1423 in _handle_fromlist\n  File \"<frozen importlib._bootstrap>\", line 1421 in _handle_fromlist\n  File \"<string>\", line 1 in <module>\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\_external\\array_api_compat\\_internal.py\", line 64 in clone_module\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\_external\\array_api_compat\\numpy\\__init__.py\", line 9 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1426 in _handle_fromlist\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\_lib\\_array_api.py\", line 24 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\_lib\\_util.py\", line 17 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\sparse\\_compressed.py\", line 8 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\sparse\\_csr.py\", line 15 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\sparse\\__init__.py\", line 251 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"<string>\", line 1 in <module>\n"
+    },
+    "base-sites.json": {
+      "name": "base-sites",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-c",
+        "import sys,importlib.metadata as m; print(sys.executable); print(sys.path); print([(x,m.version(x)) for x in (\"numpy\",\"scipy\",\"pint\",\"pytest\")])"
+      ],
+      "seconds": 0.15186500002164394,
+      "exit_code": 0,
+      "stdout": "C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe\n['', 'C:\\\\Users\\\\dev_kaeem\\\\AppData\\\\Local\\\\Python\\\\pythoncore-3.14-64\\\\python314.zip', 'C:\\\\Users\\\\dev_kaeem\\\\AppData\\\\Local\\\\Python\\\\pythoncore-3.14-64\\\\DLLs', 'C:\\\\Users\\\\dev_kaeem\\\\AppData\\\\Local\\\\Python\\\\pythoncore-3.14-64\\\\Lib', 'C:\\\\Users\\\\dev_kaeem\\\\AppData\\\\Local\\\\Python\\\\pythoncore-3.14-64', 'C:\\\\Users\\\\dev_kaeem\\\\AppData\\\\Local\\\\Python\\\\pythoncore-3.14-64\\\\Lib\\\\site-packages', 'C:\\\\Users\\\\dev_kaeem\\\\Downloads\\\\promptsim-project_1\\\\promptsim-project\\\\src']\n[('numpy', '2.4.3'), ('scipy', '1.18.0'), ('pint', '0.25.3'), ('pytest', '9.0.2')]\n",
+      "stderr": ""
+    },
+    "package-integrity.json": [
+      {
+        "environment": "C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages",
+        "package": "numpy",
+        "dist_info": [
+          "C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\numpy-2.4.3.dist-info"
+        ],
+        "version": "2.4.3",
+        "sampled_files": [
+          {
+            "path": "numpy-2.4.3.dist-info/METADATA",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/_core/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/_pyinstaller/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/_pyinstaller/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/_typing/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/_utils/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/char/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/core/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/ctypeslib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/f2py/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/f2py/_backends/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/f2py/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/fft/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/fft/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/lib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/lib/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/linalg/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/linalg/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/ma/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/ma/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/matrixlib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/matrixlib/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/polynomial/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/polynomial/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/random/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/random/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/random/tests/data/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/rec/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/strings/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/testing/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/testing/_private/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/testing/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/typing/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/typing/tests/__init__.py",
+            "matches_RECORD": true
+          }
+        ]
+      },
+      {
+        "environment": "C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages",
+        "package": "scipy",
+        "dist_info": [
+          "C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy-1.18.0.dist-info"
+        ],
+        "version": "1.18.0",
+        "sampled_files": [
+          {
+            "path": "scipy-1.18.0.dist-info/METADATA",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/common/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/cupy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/dask/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/dask/array/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/numpy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/torch/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_extra/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_extra/_lib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_extra/_lib/_utils/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/cobyqa/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/cobyqa/subsolvers/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/cobyqa/utils/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/pyprima/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/pyprima/cobyla/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/pyprima/common/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_lib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_lib/_uarray/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_lib/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/cluster/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/cluster/hierarchy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/cluster/hierarchy/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/cluster/vq/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/cluster/vq/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/constants/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/constants/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/datasets/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/datasets/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/differentiate/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/differentiate/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fft/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fft/_duccfft/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fft/_duccfft/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fft/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fftpack/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fftpack/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/integrate/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/integrate/_ivp/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/integrate/_ivp/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/integrate/_rules/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/integrate/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/interpolate/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/interpolate/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/_fast_matrix_market/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/_harwell_boeing/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/_harwell_boeing/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/arff/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/arff/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/matlab/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/matlab/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/linalg/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/linalg/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/misc/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/ndimage/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/ndimage/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/odr/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/odr/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_highspy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_lsq/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_shgo_lib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_trlib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_trustregion_constr/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_trustregion_constr/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/cython_optimize/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/signal/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/signal/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/signal/windows/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/csgraph/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/csgraph/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_dsolve/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_dsolve/_superlu.cp314-win_amd64.dll.a",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_dsolve/_superlu.cp314-win_amd64.pyd",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_dsolve/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/arpack/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/arpack/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/lobpcg/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/lobpcg/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_isolve/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_isolve/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/spatial/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/spatial/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/spatial/transform/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/spatial/transform/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/special/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/special/_precompute/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/special/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/special/tests/data/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/stats/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/stats/_levy_stable/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/stats/_rcont/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/stats/_unuran/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/stats/tests/__init__.py",
+            "matches_RECORD": true
+          }
+        ]
+      },
+      {
+        "environment": "C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages",
+        "package": "pint",
+        "dist_info": [
+          "C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pint-0.25.3.dist-info"
+        ],
+        "version": "0.25.3",
+        "sampled_files": [
+          {
+            "path": "pint-0.25.3.dist-info/METADATA",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/delegates/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/delegates/formatter/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/delegates/txt_defparser/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/context/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/dask/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/group/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/measurement/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/nonmultiplicative/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/numpy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/plain/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/system/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/testsuite/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/testsuite/benchmarks/__init__.py",
+            "matches_RECORD": true
+          }
+        ]
+      },
+      {
+        "environment": "C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages",
+        "package": "pytest",
+        "dist_info": [
+          "C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pytest-9.0.2.dist-info"
+        ],
+        "version": "9.0.2",
+        "sampled_files": [
+          {
+            "path": "_pytest/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/_code/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/_io/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/_py/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/assertion/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/config/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/mark/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pytest-9.0.2.dist-info/METADATA",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pytest/__init__.py",
+            "matches_RECORD": true
+          }
+        ]
+      },
+      {
+        "environment": "C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\.venv\\Lib\\site-packages",
+        "package": "numpy",
+        "dist_info": [
+          "C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\.venv\\Lib\\site-packages\\numpy-2.5.2.dist-info"
+        ],
+        "version": "2.5.2",
+        "sampled_files": [
+          {
+            "path": "numpy-2.5.2.dist-info/METADATA",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/_core/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/_pyinstaller/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/_pyinstaller/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/_typing/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/_utils/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/char/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/core/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/ctypeslib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/f2py/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/f2py/_backends/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/f2py/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/fft/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/fft/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/lib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/lib/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/linalg/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/linalg/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/ma/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/ma/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/matrixlib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/matrixlib/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/polynomial/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/polynomial/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/random/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/random/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/random/tests/data/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/rec/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/strings/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/testing/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/testing/_private/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/testing/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/typing/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "numpy/typing/tests/__init__.py",
+            "matches_RECORD": true
+          }
+        ]
+      },
+      {
+        "environment": "C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\.venv\\Lib\\site-packages",
+        "package": "scipy",
+        "dist_info": [
+          "C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\.venv\\Lib\\site-packages\\scipy-1.18.1.dist-info"
+        ],
+        "version": "1.18.1",
+        "sampled_files": [
+          {
+            "path": "scipy-1.18.1.dist-info/METADATA",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/common/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/cupy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/dask/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/dask/array/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/numpy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_compat/torch/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_extra/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_extra/_lib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/array_api_extra/_lib/_utils/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/cobyqa/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/cobyqa/subsolvers/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/cobyqa/utils/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/pyprima/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/pyprima/cobyla/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_external/pyprima/common/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_lib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_lib/_uarray/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/_lib/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/cluster/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/cluster/hierarchy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/cluster/hierarchy/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/cluster/vq/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/cluster/vq/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/constants/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/constants/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/datasets/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/datasets/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/differentiate/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/differentiate/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fft/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fft/_duccfft/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fft/_duccfft/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fft/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fftpack/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/fftpack/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/integrate/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/integrate/_ivp/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/integrate/_ivp/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/integrate/_rules/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/integrate/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/interpolate/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/interpolate/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/_fast_matrix_market/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/_harwell_boeing/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/_harwell_boeing/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/arff/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/arff/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/matlab/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/matlab/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/io/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/linalg/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/linalg/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/misc/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/ndimage/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/ndimage/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/odr/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/odr/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_highspy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_lsq/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_shgo_lib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_trlib/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_trustregion_constr/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/_trustregion_constr/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/cython_optimize/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/optimize/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/signal/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/signal/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/signal/windows/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/csgraph/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/csgraph/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_dsolve/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_dsolve/_superlu.cp314-win_amd64.dll.a",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_dsolve/_superlu.cp314-win_amd64.pyd",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_dsolve/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/arpack/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/arpack/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/lobpcg/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/lobpcg/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_eigen/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_isolve/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/_isolve/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/linalg/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/sparse/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/spatial/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/spatial/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/spatial/transform/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/spatial/transform/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/special/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/special/_precompute/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/special/tests/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/special/tests/data/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/stats/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/stats/_levy_stable/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/stats/_rcont/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/stats/_unuran/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "scipy/stats/tests/__init__.py",
+            "matches_RECORD": true
+          }
+        ]
+      },
+      {
+        "environment": "C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\.venv\\Lib\\site-packages",
+        "package": "pint",
+        "dist_info": [
+          "C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\.venv\\Lib\\site-packages\\pint-0.25.3.dist-info"
+        ],
+        "version": "0.25.3",
+        "sampled_files": [
+          {
+            "path": "pint-0.25.3.dist-info/METADATA",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/delegates/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/delegates/formatter/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/delegates/txt_defparser/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/context/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/dask/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/group/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/measurement/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/nonmultiplicative/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/numpy/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/plain/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/facets/system/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/testsuite/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pint/testsuite/benchmarks/__init__.py",
+            "matches_RECORD": true
+          }
+        ]
+      },
+      {
+        "environment": "C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\.venv\\Lib\\site-packages",
+        "package": "pytest",
+        "dist_info": [
+          "C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\.venv\\Lib\\site-packages\\pytest-9.1.1.dist-info"
+        ],
+        "version": "9.1.1",
+        "sampled_files": [
+          {
+            "path": "_pytest/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/_code/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/_io/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/_py/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/assertion/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/config/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "_pytest/mark/__init__.py",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pytest-9.1.1.dist-info/METADATA",
+            "matches_RECORD": true
+          },
+          {
+            "path": "pytest/__init__.py",
+            "matches_RECORD": true
+          }
+        ]
+      }
+    ],
+    "venv-imports.json": {
+      "name": "venv-imports",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-S",
+        "-c",
+        "import sys; sys.path.insert(0,'C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Lib/site-packages'); import numpy; print(\"numpy\",numpy.__version__,flush=True); import scipy.sparse; print(\"sparse OK\",flush=True); import pint; print(\"pint\",pint.__version__,flush=True)"
+      ],
+      "seconds": 25.02920200000517,
+      "status": "BLOCKED_TIMEOUT",
+      "stdout": "numpy 2.5.2\n",
+      "stderr": ""
+    },
+    "venv-pint.json": {
+      "name": "venv-pint",
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-S",
+        "-c",
+        "import sys; sys.path.insert(0,\"C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Lib/site-packages\"); import faulthandler; faulthandler.dump_traceback_later(12); import pint; print(pint.__version__,flush=True)"
+      ],
+      "seconds": 20.01638929999899,
+      "status": "BLOCKED_TIMEOUT",
+      "stdout": "",
+      "stderr": "Timeout (0:00:12)!\nThread 0x0001001c (most recent call first):\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 347 in _wmi_query\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 408 in _win32_ver\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 467 in win32_ver\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 1016 in uname\n  File \"C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\platform.py\", line 1090 in system\n  File \"C:\\Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Lib/site-packages\\flexcache\\flexcache.py\", line 134 in BasicPythonHeader\n  File \"C:\\Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Lib/site-packages\\flexcache\\flexcache.py\", line 131 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Lib/site-packages\\flexcache\\__init__.py\", line 25 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Lib/site-packages\\pint\\delegates\\txt_defparser\\defparser.py\", line 6 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Lib/site-packages\\pint\\delegates\\txt_defparser\\__init__.py\", line 13 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1426 in _handle_fromlist\n  File \"C:\\Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Lib/site-packages\\pint\\delegates\\__init__.py\", line 13 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1314 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1314 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"C:\\Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Lib/site-packages\\pint\\__init__.py\", line 18 in <module>\n  File \"<frozen importlib._bootstrap>\", line 491 in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap_external>\", line 759 in exec_module\n  File \"<frozen importlib._bootstrap>\", line 938 in _load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1342 in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 1371 in _find_and_load\n  File \"<string>\", line 1 in <module>\n"
+    },
+    "working-environment.json": {
+      "args": [
+        "C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe",
+        "-B",
+        "-c",
+        "import sys,platform,importlib.metadata as m; import scipy.sparse,pint,numpy,pytest; print(sys.executable); print(platform.uname()); print([(x,m.version(x)) for x in (\"numpy\",\"scipy\",\"pint\",\"pytest\")]); print(scipy.__file__); print(pint.__file__)"
+      ],
+      "exit_code": 0,
+      "seconds": 0.706575000018347,
+      "stdout": "C:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe\nuname_result(system='Windows', node='Kareem-Elsharkawy', release='11', version='10.0.26200', machine='AMD64')\n[('numpy', '2.4.3'), ('scipy', '1.18.0'), ('pint', '0.25.3'), ('pytest', '9.0.2')]\nC:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\scipy\\__init__.py\nC:\\Users\\dev_kaeem\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pint\\__init__.py\n",
+      "stderr": ""
+    },
+    "wsl-status.json": {
+      "name": "wsl-status",
+      "args": [
+        "wsl.exe",
+        "--list",
+        "--quiet"
+      ],
+      "seconds": 25.01033300004201,
+      "status": "BLOCKED_TIMEOUT",
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "temp_archive_note": "PYTEST_ADDOPTS backslashes were consumed by pytest argument splitting; two generated task-only root directories were preserved in ignored evidence storage. Future reruns should use forward slashes.",
+  "temp_archives": {
+    "forge-main-337519d1.pytest-review-temppost-merge-verificationfinal-bounded-1-temp": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\archived-forge-main-337519d1.pytest-review-temppost-merge-verificationfinal-bounded-1-temp",
+    "forge-main-337519d1.pytest-review-temppost-merge-verificationfinal-bounded-4-temp": "D:\\forge-main-337519d1\\.pytest-review-temp\\post-merge-verification\\archived-forge-main-337519d1.pytest-review-temppost-merge-verificationfinal-bounded-4-temp"
+  },
+  "verification_session_patch_sha256": {
+    "src/engcore/scientific/composition/conversion.py": "24ee129177191a01ce5a0cf8e22e34762af3df782fc829ab2ee1f301abef15b9",
+    "tests/test_post_merge_import_smoke.py": "8622684b52e0ad3725488b3c0db0822640fc23eb85c327f1478cd5b65e57e602",
+    "docs/work/evidence/post_merge_2026_10_18_energy_probe.py": "df48383345208a1ed7900a02062fdc854f170a8a6d945d96b38bc0f32d4024d3"
+  }
+}

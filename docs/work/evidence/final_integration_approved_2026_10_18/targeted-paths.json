@@ -1,0 +1,58 @@
+{
+  "id": "targeted-paths",
+  "argv": [
+    "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe",
+    "-B",
+    "-m",
+    "pytest",
+    "-p",
+    "no:cacheprovider",
+    "-p",
+    "final_path_audit",
+    "-vv",
+    "tests/test_capability_completion.py",
+    "tests/test_m1a_mesh_lineage.py::test_nested_record_tampering_poisoned_lineage_is_fail_closed"
+  ],
+  "command": "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -p final_path_audit -vv tests/test_capability_completion.py tests/test_m1a_mesh_lineage.py::test_nested_record_tampering_poisoned_lineage_is_fail_closed",
+  "cwd": "D:\\forge-main-337519d1",
+  "started_utc": "2026-10-18T19:25:45.222554+00:00",
+  "seconds": 50.03535019996343,
+  "timeout": 180,
+  "exit_code": 0,
+  "status": "EXECUTED",
+  "head": "93ed64b0292e9fea714ac83affb64b71488ac050",
+  "working_state": " M docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md\n M docs/work/ACTIVE_PLAN.md\n M docs/work/PROGRESS.md\n M docs/work/REMEDIATION_2026-10-18.md\n M src/engcore/claims/execution.py\n M src/engcore/claims/replay/bundle.py\n M src/engcore/domains/thermal_models/conduction1d_transient_fv.py\n M src/engcore/scientific/composition/conversion.py\n M tests/claims/test_impact_replay.py\n M tests/test_capability_completion.py\n M tests/test_core_guards.py\n M tests/test_m1a_mesh_lineage.py\n M tests/test_m1c_transient_fv.py\n?? docs/work/FINAL_OWNER_DISPOSITIONS_2026_10_18.md\n?? docs/work/FINAL_SCIENTIFIC_INTEGRATION_VERIFICATION.md\n?? docs/work/P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md\n?? docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md\n?? docs/work/evidence/final_owner_disposition_analysis_2026_10_18.json\n?? docs/work/evidence/final_scientific_integration_2026_10_18.json\n?? docs/work/evidence/owner_dispositions_census-first-failed.txt\n?? docs/work/evidence/owner_dispositions_census.py\n?? docs/work/evidence/owner_dispositions_census.txt\n?? docs/work/evidence/p0_exact_kernel_analysis.py\n?? docs/work/evidence/p0_scientific_correctness_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18.json\n?? docs/work/evidence/post_merge_2026_10_18_energy_probe.py\n?? docs/work/proposals/FINAL_D1_GATE_CONTRACT.patch\n?? docs/work/proposals/FINAL_D2_OD31_MODEL_CENSUS.patch\n?? docs/work/proposals/FINAL_D3_M1A_LINEAGE_REFUSAL.patch\n?? docs/work/proposals/P0_CONSERVATION_POLICY_DECISION.md\n?? docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch\n?? docs/work/proposals/P0_M1C_IDENTITY_DECISION.md\n?? docs/work/proposals/P0_M1C_REALIZATION_0_2.patch\n?? tests/claims/test_p0_replay_execution_authority.py\n?? tests/test_p0_conservation_policy.py\n?? tests/test_post_merge_import_smoke.py\n",
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "PYTHONPATH": "D:\\forge-main-337519d1\\.pytest-review-temp\\final-integration-approved-2026-10-18\\bootstrap;D:\\forge-main-337519d1\\src;D:\\forge-main-337519d1;D:\\forge-main-337519d1\\tests\\claims",
+    "PYTEST_ADDOPTS": "--basetemp=D:/forge-main-337519d1/.pytest-review-temp/final-integration-approved-2026-10-18/targeted-paths-temp"
+  },
+  "source_before": {
+    "index": "D:\\forge-main-337519d1\\.pytest-review-temp\\final-integration-approved-2026-10-18\\targeted-paths-source-before.json",
+    "sha256": "5f7c2171abca8e915bfc5102d5eb286d06d140bdfd6c6e1f0d4e99ed9547b3df",
+    "files": 1464
+  },
+  "source_after": {
+    "index": "D:\\forge-main-337519d1\\.pytest-review-temp\\final-integration-approved-2026-10-18\\targeted-paths-source-after.json",
+    "sha256": "5f7c2171abca8e915bfc5102d5eb286d06d140bdfd6c6e1f0d4e99ed9547b3df",
+    "files": 1464
+  },
+  "source_unchanged": true,
+  "source_changes": [],
+  "log": "D:\\forge-main-337519d1\\.pytest-review-temp\\final-integration-approved-2026-10-18\\targeted-paths.log",
+  "log_sha256": "de6f86e5967dbff5e629100ca3819292082664d5ab97767b73ba71ea32c58fd8",
+  "summary": [
+    "============================= 29 passed in 49.40s ============================="
+  ],
+  "failure_names": [],
+  "resource_usage": "Wall time measured. Child CPU/RSS not measured; no attribution to Fraction or setup is inferred.",
+  "counts": {
+    "passed": 29,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0
+  }
+}

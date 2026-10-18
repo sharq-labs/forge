@@ -251,7 +251,7 @@ def test_exact_window_dt_basis_and_clock_identity_refuse():
     with pytest.raises(NumericalRefusal,match="time-window"):
         advance(session(),window=wrong)
     with pytest.raises(NumericalRefusal,match="time-window"):
-        advance(session(),dt=.1,**{"window":TimeWindow(TimePoint(BASIS.basis_id,0),TimePoint(BASIS.basis_id,Fraction(1,5)))})
+        advance(session(),dt=.1,**{"window":TimeWindow(TimePoint(BASIS.basis_id,Fraction(0)),TimePoint(BASIS.basis_id,Fraction(1,5)))})
     s=session();s.time=TimePoint(BASIS.basis_id,Fraction(1,10))
     with pytest.raises(NumericalRefusal,match="clock"):
         advance(s)

@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "D:\forge-main-337519d1\.pytest-review-temp\owner-dispositions-2026-10-18\census.py", line 47, in <module>
+    roundtrip=ModelRegistry.from_dict(serialized)
+  File "D:\forge-main-337519d1\src\engcore\scientific\models\registry.py", line 123, in from_dict
+    return cls(
+        ScientificModelDefinition.from_dict(m)
+        for m in payload.get("models", ())
+    )
+  File "D:\forge-main-337519d1\src\engcore\scientific\models\registry.py", line 26, in __init__
+    for model in models:
+                 ^^^^^^
+  File "D:\forge-main-337519d1\src\engcore\scientific\models\registry.py", line 124, in <genexpr>
+    ScientificModelDefinition.from_dict(m)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "D:\forge-main-337519d1\src\engcore\scientific\models\definition.py", line 2451, in from_dict
+    return cls(
+        model_id=payload["model_id"],
+    ...<31 lines>...
+        metadata=dict(payload.get("metadata", {})),
+    )
+  File "<string>", line 19, in __init__
+  File "D:\forge-main-337519d1\src\engcore\scientific\models\definition.py", line 2162, in __post_init__
+    raise InvalidScientificProblem(
+    ...<10 lines>...
+    )
+engcore.scientific.errors.InvalidScientificProblem: model 'thermal.conduction1d.linear_diffusion' declares no exclusions. A model is a claim about a physical system, and a claim that does not say what it leaves out -- no phase change, no ageing, no reversible heat, no saturation, whichever it omits -- is a claim a reader cannot assess. A reader of a credibility report cannot read this source. Pass exclusions=(...) with what this model does not represent, or exclusions=() with excludes_nothing_because=... if it truly represents everything in its scope

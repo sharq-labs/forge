@@ -653,6 +653,33 @@ class ReplayResult:
         return {"status": self.status.value, "differences": list(self.differences), "compared_numbers": self.compared_numbers}
 
 
+def _has_bound_replay_result(record: Mapping[str, Any]) -> bool:
+    """Matching refusals are reproducible records, never verified scientific runs.
+
+    The assessment runtime re-derives these fields; this is an additional
+    prerequisite for granting replay standing, not evidence from caller flags.
+    An executed result can still have an insufficient scientific verdict.
+    """
+    execution, result = record.get("execution"), record.get("result")
+    credibility, basis = record.get("credibility"), record.get("basis")
+    if not all(isinstance(item, Mapping) for item in (execution, result, credibility, basis)):
+        return False
+    report = credibility.get("report")
+    if not isinstance(report, Mapping):
+        return False
+    run_id = execution.get("run_id")
+    return (
+        isinstance(run_id, str) and bool(run_id.strip())
+        and execution.get("outcome") == "completed"
+        and execution.get("binding_problems") == []
+        and execution.get("report_run_id") == run_id
+        and result.get("report_run_id") == run_id
+        and report.get("run_id") == run_id
+        and basis.get("executed") is True
+        and basis.get("bound") is True
+    )
+
+
 def replay_bundle(
     bundle: Mapping[str, Any],
     registry: CapabilityRegistry,
@@ -740,6 +767,12 @@ def replay_bundle(
     derived_drift = derived_numeric_drift + derived_identity_drift
     if derived_drift and not tolerated_numeric_drift:
         differences.extend(derived_drift)
+    for label, assessed in (("stored", record), ("replayed", replayed)):
+        if not _has_bound_replay_result(assessed):
+            differences.append(
+                f"/{label}/execution: no completed, bound scientific result; "
+                "matching refusals or unexecuted assessments cannot earn VERIFIED"
+            )
     return ReplayResult(
         BundleStatus.VERIFIED if not differences else BundleStatus.NOT_REPRODUCIBLE,
         tuple(differences),

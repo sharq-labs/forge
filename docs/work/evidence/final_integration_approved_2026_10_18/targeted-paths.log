@@ -1,0 +1,38 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Scripts\python.exe
+rootdir: D:\forge-main-337519d1
+configfile: pyproject.toml
+plugins: anyio-4.15.1, xdist-3.8.0
+collecting ... collected 29 items
+
+tests/test_capability_completion.py::test_checked_in_capability_ledger_is_valid_and_matrix_is_current PASSED [  3%]
+tests/test_capability_completion.py::test_active_epic_is_the_engineering_foundations_program_with_every_gate_open PASSED [  6%]
+tests/test_capability_completion.py::test_dv0_gates_no_other_work_and_requires_only_order_decisions PASSED [ 10%]
+tests/test_capability_completion.py::test_battery_1rc_stays_functional_with_its_evidence PASSED [ 13%]
+tests/test_capability_completion.py::test_declared_stage_cannot_exceed_supported_gates PASSED [ 17%]
+tests/test_capability_completion.py::test_not_applicable_cannot_hide_missing_work_without_rationale PASSED [ 20%]
+tests/test_capability_completion.py::test_incomplete_capability_must_keep_concrete_next_actions PASSED [ 24%]
+tests/test_capability_completion.py::test_an_unknown_active_epic_is_refused PASSED [ 27%]
+tests/test_capability_completion.py::test_an_incomplete_program_contract_is_refused[contract] PASSED [ 31%]
+tests/test_capability_completion.py::test_an_incomplete_program_contract_is_refused[allowed_scope] PASSED [ 34%]
+tests/test_capability_completion.py::test_an_incomplete_program_contract_is_refused[prohibited] PASSED [ 37%]
+tests/test_capability_completion.py::test_an_incomplete_program_contract_is_refused[gates] PASSED [ 41%]
+tests/test_capability_completion.py::test_a_program_contract_path_must_exist_and_statuses_are_its_own PASSED [ 44%]
+tests/test_capability_completion.py::test_ids_are_unique_across_capabilities_and_programs PASSED [ 48%]
+tests/test_capability_completion.py::test_a_program_pass_needs_existing_evidence PASSED [ 51%]
+tests/test_capability_completion.py::test_a_program_carries_no_maturity_vocabulary_and_never_moves_a_capability PASSED [ 55%]
+tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_its_required_gate_is_ready[PASS] PASSED [ 58%]
+tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_its_required_gate_is_ready[FAIL] PASSED [ 62%]
+tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_its_required_gate_is_ready[BLOCKED_WITH_EVIDENCE] PASSED [ 65%]
+tests/test_capability_completion.py::test_a_deferred_gate_may_wait_on_an_open_requirement PASSED [ 68%]
+tests/test_capability_completion.py::test_a_decided_program_cannot_stay_the_active_epic PASSED [ 72%]
+tests/test_capability_completion.py::test_every_decided_gate_needs_evidence_and_blocked_follows_a_failed_requirement[PASS] PASSED [ 75%]
+tests/test_capability_completion.py::test_every_decided_gate_needs_evidence_and_blocked_follows_a_failed_requirement[FAIL] PASSED [ 79%]
+tests/test_capability_completion.py::test_a_deferred_gate_states_why_and_paths_stay_inside_the_repository PASSED [ 82%]
+tests/test_capability_completion.py::test_two_programs_with_one_id_and_duplicate_planned_capabilities_are_refused PASSED [ 86%]
+tests/test_capability_completion.py::test_the_program_contract_carries_the_cross_domain_architecture_requirements PASSED [ 89%]
+tests/test_capability_completion.py::test_a_superseded_schema_is_refused_not_read PASSED [ 93%]
+tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic PASSED [ 96%]
+tests/test_m1a_mesh_lineage.py::test_nested_record_tampering_poisoned_lineage_is_fail_closed PASSED [100%]
+
+============================= 29 passed in 49.40s =============================

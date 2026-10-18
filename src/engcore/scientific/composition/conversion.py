@@ -64,7 +64,6 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
-from ..models.definition import ValidityStatus
 from ..serialization import require_schema, require_schema_any, schema_string
 from ..units.quantity import Quantity, dimensionality
 from ..sequences import duplicates
@@ -224,6 +223,11 @@ class LossPath:
             fraction=float(payload["fraction"]),
             description=payload.get("description", ""),
         )
+
+
+# Publish the shared loss record before model imports traverse field semantics,
+# which reuse LossPath. Keep the same module binding and scientific contracts.
+from ..models.definition import ValidityStatus
 
 
 @dataclass(frozen=True)
