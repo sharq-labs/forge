@@ -172,3 +172,25 @@ def test_the_dense_provider_refuses_a_sparse_operand_above_its_conversion_limit(
     method = NumericalMethod("dense_lu", SolverSettings(tolerances={"residual_rtol": 1e-10}))
     with pytest.raises(NumericalRefusal, match="dense conversion limit"):
         NumPyDenseLinearProvider().execute(problem, method)
+
+
+# ---- 2026-10-18 remediation C2: a singular sparse-direct solve is named singular ---------------
+
+
+def test_an_exactly_singular_sparse_direct_solve_is_named_singular_not_a_residual_failure():
+    import warnings
+
+    from engcore.numerical.providers import SciPyLinearProvider
+    from engcore.scientific.solvers.protocol import ConvergenceState
+
+    # [[1, 1], [1, 1]] has rank 1: Gaussian elimination leaves the second pivot exactly 0
+    matrix = sp.csr_matrix(np.array([[1.0, 1.0], [1.0, 1.0]]))
+    problem = _problem(matrix, np.array([1.0, 2.0]))
+    method = NumericalMethod("sparse_direct", SolverSettings(tolerances={"residual_rtol": 1e-10}))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # SuperLU's MatrixRankWarning is not what this test asserts
+        record = SciPyLinearProvider().execute(problem, method)
+    assert record.convergence is ConvergenceState.FAILED
+    assert "singular" in record.reason
+    assert record.diagnostics.condition.status is not ConditioningStatus.WELL_CONDITIONED
+    assert not record.outputs

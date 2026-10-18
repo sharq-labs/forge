@@ -95,7 +95,53 @@ class _Evaluation(Exception):
 #: NaN for the same input. Both are the same mathematical event and are
 #: classified the same way; the exception type and text are kept in the record.
 #: A refusal (``ScientificCoreError``) is not a ``ValueError`` and still propagates.
+#:
+#: Only the ``ValueError`` that IS a domain error is classified (:func:`_is_domain_error`):
+#: ``ValueError`` is also how numpy reports a shape mismatch and the base of
+#: ``numpy.linalg.LinAlgError``, and a programming error classified NON_FINITE
+#: would be backtracked from at a trial point and could end CONVERGED.
 _EVALUATION_ERRORS = (ArithmeticError, ValueError)
+
+#: CPython's ``math`` / ``cmath`` domain-error texts: the legacy one (every
+#: version, and ``pow``/``fmod``/``remainder``/``cmath`` in 3.14) and the 3.14
+#: per-function forms, each optionally followed by ``", got <value>"``. Matched
+#: exactly; an unlisted text propagates, so a wording this list misses makes the
+#: provider stricter (the caller sees the exception), never laxer.
+#: ``"cannot convert float NaN to integer"`` is ``int``/``math.floor``/``round`` of a NaN the residual itself
+#: produced upstream (e.g. ``math.floor(np.log(x))`` at x < 0): the same domain event, one call later.
+#: ``"expected a positive input"`` is matched exactly, so a caller's own argument check that happens to use
+#: that wording would also be classified; it is CPython's text and is kept.
+_MATH_DOMAIN_MESSAGES = frozenset({"math domain error", "cannot convert float NaN to integer"})
+#: ``core.condition_of``'s default threshold; the recorded label is never judged against a looser bar
+_DEFAULT_CONDITION_THRESHOLD = 1e12
+_MATH_DOMAIN_PREFIXES = (
+    "expected a positive input",
+    "expected a nonnegative input",
+    "expected a finite input",
+    "expected a number in range from -1 up to 1",
+    "expected a number between -1 and 1",
+    "expected argument value > -1",
+    "expected argument value not less than 1",
+    "expected a noninteger or positive integer",
+)
+
+
+def _is_domain_error(exc: BaseException) -> bool:
+    """Whether an exception from a caller's callable is a mathematical domain/range event.
+
+    Every ``ArithmeticError`` (``ZeroDivisionError``, ``OverflowError``,
+    ``FloatingPointError``) is. A ``ValueError`` is only when its type is
+    exactly ``ValueError`` -- ``LinAlgError`` and every other subclass are not --
+    and its text is one of the ``math`` module's domain-error texts above.
+    """
+    if isinstance(exc, ArithmeticError):
+        return True
+    if type(exc) is not ValueError:
+        return False
+    message = str(exc)
+    return message in _MATH_DOMAIN_MESSAGES or any(
+        message == prefix or message.startswith(prefix + ", got ") for prefix in _MATH_DOMAIN_PREFIXES
+    )
 
 
 class DampedNewtonProvider(NumericalProvider):
@@ -135,6 +181,8 @@ class DampedNewtonProvider(NumericalProvider):
             with np.errstate(all="ignore"):
                 return function(x.copy())
         except _EVALUATION_ERRORS as exc:  # ZeroDivisionError, OverflowError, FloatingPointError, domain ValueError
+            if not _is_domain_error(exc):
+                raise  # a shape mismatch, a LinAlgError, a caller's own bug: not a point outside the domain
             raise _Evaluation(f"{type(exc).__name__}: {exc}") from exc
 
     def _residual(self, f: Callable, x: np.ndarray, n: int) -> np.ndarray:
@@ -218,16 +266,34 @@ class DampedNewtonProvider(NumericalProvider):
                  "jacobian: declared operand" if jac is not None else
                  f"jacobian: forward finite differences, relative step {config['fd_step']:g}"]
         last_matrix: Any = None
+        trial_failures = {"count": 0}
+        #: the admission estimate of the last Jacobian: (matrix object, threshold, estimate)
+        admitted: dict[str, Any] = {"matrix": None, "threshold": None, "estimate": None}
 
         def diagnostics(failure: NumericalFailureClass | None, message: str) -> NumericalDiagnostics:
             condition = None
             if last_matrix is not None and (is_sparse(last_matrix) or n <= SPARSE_EXACT_CONDITION_LIMIT):
-                condition = condition_of(last_matrix)
+                # classified against the STRICTER of the declared limit and the core default: a tighter
+                # declared limit is recorded as the bar the solve was held to, a looser one never upgrades
+                # the label (a caller's policy sets the bar; it does not make a Jacobian well-conditioned)
+                limit = config["condition_limit"]
+                threshold = _DEFAULT_CONDITION_THRESHOLD if limit is None else min(limit, _DEFAULT_CONDITION_THRESHOLD)
+                if admitted["matrix"] is last_matrix and admitted["threshold"] == threshold:
+                    # the same deterministic computation on the same matrix object and threshold: reused, not
+                    # repeated (F1-d; condition_of is a full SVD for a dense Jacobian). The recorded condition is
+                    # that of the Jacobian AS ADMITTED, even if a caller's buffer was mutated afterwards
+                    condition = admitted["estimate"]
+                else:
+                    condition = condition_of(last_matrix, threshold=threshold)
+            warnings = tuple(notes)
+            if trial_failures["count"]:
+                warnings += (f"line-search trial points that raised a domain or range error, backtracked: "
+                             f"{trial_failures['count']}",)
             return NumericalDiagnostics(
                 residual_norm=history[-1] if history and math.isfinite(history[-1]) else None,
                 residual_history=tuple(history), iterations=len(lengths), function_evaluations=evaluations["f"],
                 jacobian_evaluations=evaluations["j"], condition=condition, termination_message=message,
-                warnings=tuple(notes), failure_class=None if failure is None else failure.value,
+                warnings=warnings, failure_class=None if failure is None else failure.value,
                 step_lengths=tuple(lengths),
             )
 
@@ -244,6 +310,7 @@ class DampedNewtonProvider(NumericalProvider):
             try:
                 return self._residual(f, point, n)
             except _Evaluation as exc:
+                trial_failures["count"] += 1
                 note = f"a line-search trial point could not be evaluated ({exc}); it was backtracked like a non-finite residual"
                 if not any(item.startswith("a line-search trial point could not be evaluated") for item in notes):
                     notes.append(note)
@@ -269,6 +336,7 @@ class DampedNewtonProvider(NumericalProvider):
                 last_matrix = matrix
                 if config["condition_limit"] is not None:
                     estimate = condition_of(matrix, threshold=config["condition_limit"])
+                    admitted.update(matrix=matrix, threshold=config["condition_limit"], estimate=estimate)
                     if estimate.condition_number is not None and estimate.condition_number > config["condition_limit"]:
                         return fail(ConvergenceState.FAILED, NumericalFailureClass.SINGULAR_JACOBIAN,
                                     f"Jacobian condition {estimate.condition_number:.3e} exceeds the declared limit "
@@ -343,7 +411,9 @@ def acceptance_measure(problem: NumericalProblem, record: NumericalExecutionReco
     with np.errstate(all="ignore"):
         try:
             value = np.asarray(problem.operands["residual"](x.copy()), dtype=float).reshape(-1)
-        except _EVALUATION_ERRORS:
+        except _EVALUATION_ERRORS as exc:
+            if not _is_domain_error(exc):
+                raise  # a programming error is not an acceptance rejection
             return math.inf
     return scaling.measure(value)
 

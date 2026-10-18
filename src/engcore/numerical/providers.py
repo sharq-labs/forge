@@ -96,6 +96,12 @@ class SciPyLinearProvider(NumericalProvider):
             x = spla.spsolve(a.tocsc(), b)
             r = float(np.linalg.norm(a @ x - b) / max(np.linalg.norm(b), 1e-300))
             d = NumericalDiagnostics(residual_norm=r, condition=cond, termination_message="SuperLU direct solve")
+            if not np.all(np.isfinite(x)):
+                # SuperLU reports an exactly singular factor with a MatrixRankWarning and a NaN solution; named
+                # as such rather than as a failed residual check (the warning itself is not suppressed here:
+                # warnings.catch_warnings is process-global and this provider runs under concurrent Jacobi)
+                return failed(problem, self.identity, method, ConvergenceState.FAILED, d,
+                              "numerically singular matrix: SuperLU returned a non-finite solution")
             if not math.isfinite(r) or r > _tol(method, "residual_rtol"):
                 return failed(problem, self.identity, method, ConvergenceState.FAILED, d, "residual check failed")
             return _success(problem, self.identity, method, ConvergenceState.NOT_APPLICABLE, x, d)

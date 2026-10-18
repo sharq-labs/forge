@@ -6527,3 +6527,111 @@ IMPLEMENTED / UNVERIFIED / UNCERTIFIED, NOT INTEGRATION-READY.
   `python -m pytest -q -p no:cacheprovider -n 4 tests/test_system_runtime_multiscale_identity.py tests/test_system_runtime_review_fixes.py tests/test_system_runtime_rereview_fixes.py tests/test_multiscale_runtime.py tests/test_multiscale_review_fixes.py`
   -> **2 failed, 121 passed** (`test_h2_...`, `test_r2_...`: #163 stub tests, failing on the base too). Open: OD-29, OD-30;
   no test for one authority shared by two contexts (fails closed statically). UNCERTIFIED until OD-3.
+
+## 2026-10-18 -- Post-merge remediation: defect census + Batch A (worktree `D:/forge-main-337519d1`, base `337519d1`)
+
+- Census of Batches A-F (static only; four read-only review agents plus own spot checks): master table in
+  `docs/work/REMEDIATION_2026-10-18.md`. Owner decisions now open: OD-22/23/24/26/29/30 (existing) and OD-31 (new).
+- A1: static count of `ScientificModelDefinition(` in `src` is 19 at `89b9e7c3` and 20 at `337519d1`; the only addition
+  is `thermal.conduction1d.transient_piecewise_linear@0.1.0`, which has no validity conditions and no derived quantities,
+  so reserving 16 / conditions 96 / reserved 63 / solvers 11 do not move. Proposed patch
+  `docs/work/proposals/A1_core_guards_model_count.patch` (19 -> 20), **not applied**: `tests/test_core_guards.py` is
+  certification-pinned (OD-31).
+- A2 (OD-26): the original test's fixture is refused by `FixedPointCouplingPlan.__post_init__` (mixed dimensions) before
+  `runtime_equivalent` runs, so it is a test-design defect and the guard is defensive code. Added
+  `test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build` (genuine 1-stage records, frozen plan altered
+  after construction, fixture pinned). Original test kept for the owner.
+- Failed approach: an import-only discovery replica (`pkgutil.walk_packages` over `engcore`) could not run. On this host
+  `import pint` and `import scipy.sparse` never return (`import numpy` needs `OPENBLAS_NUM_THREADS=1` to return); about
+  25 idle `python.exe` processes from other sessions were present and were not touched.
+- Tests: **NOT RUN** (no pytest authorized). Only `ast.parse` of the edited test file was executed.
+
+## 2026-10-18 -- Post-merge remediation: Batch C (numerical correctness), same worktree, uncommitted
+
+- C1 (`numerical/nonlinear.py`, not pinned): Newton classifies only `ArithmeticError` and an exact-type `ValueError`
+  carrying a CPython `math`/`cmath` domain text (3.14 texts probed on this interpreter, plus NaN-to-integer); numpy
+  shape errors, `LinAlgError` and caller bugs now propagate from residual, Jacobian, Armijo trial points and
+  `acceptance_measure`. Backtracked domain failures are counted. The recorded condition is judged against
+  `min(declared limit, 1e12)`.
+- C2 (`numerical/providers.py`, certified, already drifted): a non-finite SuperLU solution is FAILED "numerically
+  singular matrix"; success path unchanged. CERTIFICATION PENDING (OD-3).
+- C3: no source change. C3-3 (sign for CONTINUOUS with opposing normals) is correct by flux-vector continuity; C3-5 is
+  unreachable (window records refuse empty iterations); C3-2 downgraded (shared declared frame). C3-1 limitation pinned
+  by a test.
+- Recorded OD-32 (C1-4 initial-point label, C2-1 residual measure label, C2-2 linear disclaimer, C3-1 relabel): each
+  changes serialization identity or a pinned outcome.
+- Rejected approaches: matching only the legacy "math domain error" text (Python 3.14 rewrote most `math` messages, so
+  `math.log(-1)` would have crashed); suppressing `MatrixRankWarning` with `warnings.catch_warnings()` (process-global,
+  unsafe under concurrent Jacobi); switching `sparse_direct` to `splu` (could change output bits of existing successful
+  records; deferred to F1-c with measurement).
+- Independent static review: PASS; M1/M2/M3/N2 applied (see `docs/work/REMEDIATION_2026-10-18.md`).
+- Tests: **NOT RUN**. Executed only `ast.parse` of every changed file, `git diff --check`, and stdlib `math` probes.
+
+## 2026-10-18 -- Post-merge remediation: Batch D (M1C/M1B verification readiness), same worktree, uncommitted
+
+- D1-3 (`conduction1d_transient_fv.py`, not pinned): the energy admission's relative tolerance now applies to the
+  step's exchanged energy `max(sum|C*dT|, dt*(|boundary|+|sources|))` instead of energy from 0 K, plus a labelled
+  64*eps machine-precision floor; `conservation_rtol` must lie in (0, 1); the binding records both terms;
+  implementation reference 0.2.0.
+- D3-2 (`numerical/vertex_state.py`, not pinned): optional declared `AmountDistribution1D` for `transfer_state`
+  (split by the integral of a storage weight); default behaviour and existing receipt identity unchanged.
+- Tests (hand-derived, independent of the implementation): heterogeneous capacity and equilibrium, exact
+  two-material steady state, datum invariance, a closed-slab leak the old scale admitted, rtol bounds, M1B
+  heterogeneous refine (length split vs weighted split), distribution refusals.
+- Rejected approaches: (1) a solver-floor equal to the admitted row allowance -- it would make the balance check
+  implied by the row check (a weakening); (2) including interior face powers in the exchange scale -- they cancel in
+  the balance and made the tolerance grow with node count (review MAJOR); (3) a unit-spelling identity test -- pint's
+  canonical ordering could not be verified without running it.
+- Recorded OD-33 (M1D must adopt the weighted transfer, or stay homogeneous-only).
+- Independent static review: CHANGES REQUIRED (1 MAJOR, 3 MINOR) -> all acted on.
+- Tests: **NOT RUN**. Executed only `ast.parse` of every changed file and `git diff --check`.
+
+## 2026-10-18 -- Post-merge remediation: Batch E (runtime failure recovery, OD-22 evidence), same worktree, uncommitted
+
+- E4-2 (`execution/multiphysics/acceleration.py`, not pinned): an event-aligned re-run's `begin_window` now logs the
+  approximation the outer attempt had staged when it drops it.
+- E4-3 (`execution/multiphysics/runtime.py`, certified): `_finalize_all` finalizes every participant even when one
+  fails; failures are noted on the propagating exception, or raised together on the success path.
+- E4-4 (`runtime.py`, certified): a refusal raised before any participant code runs no longer retires the
+  participants (`_participants_touched`); a run started from inside a running run is refused and retires the runtime.
+- OD-22: exact-rational replay (`docs/work/proposals/od22_replay.py`) gives 7 without memory, 4 with growth 2;
+  proposed test patch `docs/work/proposals/OD22_window_control_subdivisions.patch`, not applied (owner decision).
+- Known gaps left: a refusal between participant initialization and the main `try` still skips finalize
+  (pre-existing); no runtime-level IMVJ + event-alignment test.
+- Independent static review: PASS; MINOR-1 (re-entrancy) and the reason-text NOTE applied; MINOR-2/3 recorded.
+- CERTIFICATION PENDING (OD-3) for `runtime.py`.
+- Tests: **NOT RUN**. Executed only `ast.parse` of every changed file, `git diff --check`, and the pure-`fractions`
+  replay script (`python -B -I docs/work/proposals/od22_replay.py`: "no memory: 7 subdivisions", "growth 2: 4").
+
+## 2026-10-18 -- Post-merge remediation: Batch F (performance, output-identical slice), same worktree, uncommitted
+
+- No benchmark was authorized and the host cannot import scipy/pint: **no speedup is claimed**; only changes whose
+  outputs are identical (or strictly safer) were made.
+- F2-1/F2-3 (`conduction1d_transient_fv.py`): build identity computed once at import (same bytes, same digest);
+  private `_superlu` import and the build-digest file reads are guarded, so a SciPy layout change or an unreadable
+  file makes the provider unavailable instead of the model unimportable.
+- F1-d (`numerical/nonlinear.py`): the exit diagnostic reuses the admission estimate when matrix object and
+  threshold are the same.
+- F3-1 (`execution/multiphysics/runtime.py`, certified): `_next_window_width` scans back only over the current
+  window's log block (ordering invariant proven by the reviewer).
+- Not changed, recorded as proposals awaiting measurement (`docs/work/REMEDIATION_2026-10-18.md`): F1-a/b/c
+  (factorization reuse changes recorded-condition semantics or output bits), F3-2..4, and F2-4 as OD-34
+  (incremental verification would weaken tamper detection).
+- Independent static review: PASS; MINOR-1/2/3 and the NOTE applied.
+- Tests: **NOT RUN**. Executed only `ast.parse` of every changed file and `git diff --check`.
+
+## 2026-10-18 -- Post-merge remediation: Batch B (identity integrity), same worktree, uncommitted
+
+- OD-30 fast-state half (`multiscale/runtime.py` not pinned; `system_runtime/authorities.py` certified): the
+  `MultiscaleAuthority` identity now states the authority's own declared fast state
+  (`MultiTimescaleRuntime.declared_fast_state_digest`, pure, same normalization as `_state_from`) instead of the
+  runtime's value at construction; the fast state is snapshotted and every returned record must declare the stated one.
+  Payload shape unchanged (no version key); digests move only where the fast state was misstated -- including the
+  flagship `cell-cooling-aging` authority on regeneration. Committed bundles still verify (they re-derive from stored
+  files). The FAILED-vs-REFUSED half of OD-30 is not changed.
+- B3a: `MultiphysicsAuthority` snapshots the scenario at preflight per node and refuses a call whose context was
+  swapped after admission (checked before and after `run_kwargs`).
+- Rejected approach: an `identity_version: 2` key -- it would move every multiscale digest, including correct ones.
+- Independent static review: PASS; MINOR-1/2 and NOTE-2/4 applied; NOTE-1/3 recorded.
+- CERTIFICATION PENDING (OD-3) for `authorities.py`.
+- Tests: **NOT RUN**. Executed only `ast.parse` of every changed file and `git diff --check`.

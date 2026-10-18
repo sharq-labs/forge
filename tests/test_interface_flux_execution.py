@@ -109,6 +109,24 @@ def test_same_or_reversed_direction_normals_and_explicit_orientation(normal, ori
     assert values == pytest.approx(expected)
 
 
+def test_the_oriented_integral_residual_is_not_an_orientation_check():
+    """Pinned limitation (2026-10-18 remediation C3-1), not a property to rely on.
+
+    Two declarations that differ only in the target orientation execute OPPOSITE fields ((-2,-4,-6) vs (2,4,6),
+    the expectations of the parametrized test above), and both report a zero ``oriented_integral_absolute_residual``:
+    the residual re-applies the contract's own sign, so it equals the unsigned remap residual and cannot detect a
+    wrong declared normal or orientation. Only the receiver's own boundary flux could; until that exists the record
+    must keep saying it is a constructed diagnostic.
+    """
+    plus, plus_diag = execute(fixture(normal=(0, 0, -1), orientations=(1, 1), relation="continuous_oriented_flux"))
+    minus, minus_diag = execute(fixture(normal=(0, 0, -1), orientations=(1, -1), relation="continuous_oriented_flux"))
+    assert plus == pytest.approx((-2, -4, -6)) and minus == pytest.approx((2, 4, 6))
+    for diag in (plus_diag, minus_diag):
+        assert diag.provenance["oriented_integral_absolute_residual"] == pytest.approx(0, abs=1e-12)
+        assert diag.provenance["notice"].startswith("constructed transfer integral diagnostic")
+        assert diag.provenance["coupled_physical_conservation"].startswith("unknown")
+
+
 def test_same_direction_normals_cannot_claim_equal_and_opposite_outward():
     with pytest.raises(InvalidScientificProblem, match="opposing normals"):
         fixture(normal=(0,0,1))

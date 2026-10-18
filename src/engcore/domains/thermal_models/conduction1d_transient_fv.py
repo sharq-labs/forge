@@ -12,7 +12,14 @@ import numpy as np
 import scipy
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
-from scipy.sparse.linalg._dsolve import _superlu
+
+try:  # SciPy-private: a release that moves it makes the provider unavailable, never the model unimportable
+    import scipy.sparse.linalg._dsolve._superlu as _superlu
+except ImportError as _superlu_error:  # pragma: no cover - depends on the installed SciPy layout
+    _superlu = None
+    _SUPERLU_UNAVAILABLE = f"{type(_superlu_error).__name__}: {_superlu_error}"
+else:
+    _SUPERLU_UNAVAILABLE = ""
 
 from ...materials.identity import MaterialState
 from ...materials.properties import MaterialPropertySet, PropertyDerivation
@@ -55,7 +62,13 @@ REALIZATION = ModelRealizationDefinition(
     model=ModelReference(MODEL.model_id, MODEL.version), formulation=ModelFormulation.PDE,
     name="Nonuniform vertex FV / Backward Euler", description="Midpoint duals, series edge resistance, BE order1",
     assumptions=("declared first-order temporal accuracy, not an executed order result",),
-    implementation=ImplementationReference(__name__, "0.1.0", "M1C sparse vertex FV; no M1D adaptation"))
+    implementation=ImplementationReference(__name__, "0.2.0", "M1C sparse vertex FV; no M1D adaptation; "
+                                           "energy admission on exchanged energy (2026-10-18)"))
+
+#: Multiple of machine epsilon times dt * sum(|A||T| + |b|) allowed for evaluating the energy balance: a tridiagonal
+#: LU solve plus the residual and balance sums cost a few roundings per row; 64 leaves margin without approaching
+#: any declared tolerance. A floating-point floor, not a solver or physical tolerance.
+_BALANCE_ROUNDOFF_FACTOR = 64
 
 ENERGY = ConservedQuantity("thermal:internal_energy_zero_reference", "J")
 TEMPERATURE = FieldSemantics("intensive", QuantitySemantics("thermal:absolute_temperature", "K", (QuantityRole.INTENSIVE,)))
@@ -166,16 +179,42 @@ def _normalization_source(payload, locator):
         hashlib.sha256(payload).hexdigest(), "1", locator, KnowledgeSourceClass.OTHER)
 
 
+def _build_digest():
+    """The provider build identity: this module's source and the SuperLU binary, as loaded by this process.
+
+    Computed ONCE, at import (F2-1). It used to re-read and re-hash both files on every ``identity`` access --
+    about four times per step. The bytes hashed are the same, so an unchanged checkout gives the same digest as
+    before. What changes is an edit made on disk after import: the identity keeps the bytes as they were when
+    this process imported the module, instead of hashing a file the process never loaded. It is the source file
+    at import time, not the bytecode (a stale ``.pyc`` with an unchanged mtime and size is not detected, as
+    before), and the binary file as it was at import, which is what the loaded image came from even if the file
+    is replaced later. Any failure to read either file makes the provider unavailable, never the module.
+    """
+    if _superlu is None:
+        return None, _SUPERLU_UNAVAILABLE
+    try:
+        return canonical_digest({"implementation":hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "superlu_binary":hashlib.sha256(Path(_superlu.__file__).read_bytes()).hexdigest(),
+            "scipy":scipy.__version__,"numpy":np.__version__,"policy":"sparse-only/1"}), ""
+    except (OSError, AttributeError, TypeError) as exc:  # pragma: no cover - frozen/zipped installs
+        return None, f"provider build identity unavailable: {type(exc).__name__}: {exc}"
+
+
+_BUILD_DIGEST, _BUILD_UNAVAILABLE = _build_digest()
+
+
 class SparseFVProvider(NumericalProvider):
     """Existing provider protocol; strictly sparse SuperLU, no dense condition diagnostics."""
     @property
     def identity(self):
-        build = canonical_digest({"implementation":hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-            "superlu_binary":hashlib.sha256(Path(_superlu.__file__).read_bytes()).hexdigest(),
-            "scipy":scipy.__version__,"numpy":np.__version__,"policy":"sparse-only/1"})
-        return SolverIdentity("forge.thermal_sparse_fv", "0.1.0", backend="SuperLU:"+build)
+        backend = "SuperLU:"+_BUILD_DIGEST if _BUILD_DIGEST is not None else "SuperLU:unavailable"
+        return SolverIdentity("forge.thermal_sparse_fv", "0.1.0", backend=backend)
     kinds = frozenset({ProblemKind.LINEAR})
     methods = frozenset({"sparse_direct"})
+    unavailable_reason = _BUILD_UNAVAILABLE or "backend is not installed"
+
+    def available(self):
+        return _BUILD_DIGEST is not None
 
     def _execute(self, problem, method):
         tolerance = method.settings.tolerances.get("residual_rtol")
@@ -252,8 +291,11 @@ class TransientConduction1D:
         self.atol = _q(conservation_atol,"J",positive=True)
         self.temperature_atol=_q(temperature_atol,"K",positive=True)
         self.local_power_atol=_q(local_power_atol,"W",positive=True)
-        if not math.isfinite(conservation_rtol) or conservation_rtol <= 0:
-            raise NumericalRefusal("explicit finite positive conservation_rtol required")
+        if not math.isfinite(conservation_rtol) or conservation_rtol <= 0 or conservation_rtol >= 1:
+            # a fraction of the step's exchanged energy; an imbalance itself enters sum|C*dT|, so what is admitted
+            # is up to rtol/(1 - rtol) of the rest of the exchange -- unbounded at rtol >= 1, and already of the
+            # order of the whole exchange near 1. Declare rtol << 1.
+            raise NumericalRefusal("explicit finite conservation_rtol in (0, 1) required")
         self.rtol = conservation_rtol
         self.support = adapter.support
         self.context = problem_context(adapter,self.regions,self.contacts,basis,initial_time,admission)
@@ -433,14 +475,24 @@ class TransientConduction1D:
         delta=math.fsum(float(c)*(float(b)-float(a)) for c,a,b in zip(self._capacity,old,new))
         boundary_energy=seconds*math.fsum(boundary);source_energy=seconds*math.fsum(map(float,powers))
         balance=delta-boundary_energy-source_energy
-        scale=max(math.fsum(abs(float(c)*float(t)) for c,t in zip(self._capacity,old)),abs(boundary_energy)+abs(source_energy))
-        allowance=self.atol+self.rtol*scale
+        # The declared relative tolerance applies to the energy this step actually moves, which is independent of
+        # the temperature datum: the larger of the internal redistribution sum|C*dT| and the external energy
+        # dt*(|boundary| + |sources|). It was applied to sum|C*T|, energy from 0 K, so the admitted imbalance grew
+        # with the absolute temperature level rather than with the heat exchanged. Interior face powers are left
+        # out: they cancel in the balance and would make the tolerance grow with the node count. Separately, and
+        # labelled, a machine-precision floor for evaluating the balance on states of magnitude |T| (not the
+        # solver tolerance: that would make this check implied by the row check).
+        exchange=max(math.fsum(abs(float(c)*(float(b)-float(a))) for c,a,b in zip(self._capacity,old,new)),
+                     seconds*(abs(boundary[0])+abs(boundary[1])+math.fsum(abs(float(p)) for p in powers)))
+        arithmetic=_BALANCE_ROUNDOFF_FACTOR*np.finfo(float).eps*seconds*math.fsum(map(float,abs(matrix)@np.abs(new)+np.abs(rhs)))
+        allowance=self.atol+self.rtol*exchange+arithmetic
         if (not all(math.isfinite(v) for v in (delta,boundary_energy,source_energy,balance))
                 or abs(balance)>allowance or np.max(np.abs(local))*seconds>allowance):
             raise NumericalRefusal("energy conservation admission failed; session cannot continue")
         # Recheck frozen inputs/live parent state after provider execution, before publishing.
         self._guard()
         binding.update(actual_residual=residual,row_residual_W=row_residual.tolist(),conservation_allowance_J=allowance,
+                       conservation_exchange_scale_J=exchange,conservation_arithmetic_floor_J=arithmetic,
                        dirichlet_reaction_notice="reconstructed boundary reaction, not independent measured flux")
         step_id=canonical_digest(binding)
         temperature=self.adapter._publish("m1c_temperature_"+step_id,new,StatePlacement.VERTEX_INTENSIVE,TEMPERATURE,

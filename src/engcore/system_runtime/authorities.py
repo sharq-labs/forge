@@ -107,7 +107,12 @@ _SCENARIO_DRIVEN_RUN_ARGUMENTS = (
 def _authorized_scenario_digest(call: NodeCall) -> str:
     """The scenario this system execution is authorized for: the context's scenario, which preflight pins to the
     request by content digest (``CONTENT_DIGEST_MISMATCH``). Empty only when the context supplies no scenario."""
-    scenario = getattr(getattr(call, "context", None), "scenario", None)
+    return _scenario_digest_of(getattr(call, "context", None))
+
+
+def _scenario_digest_of(context: Any) -> str:
+    """The normalized digest of ``context.scenario`` ('' when the context supplies none)."""
+    scenario = getattr(context, "scenario", None)
     return "" if scenario is None else str(scenario.digest).strip().lower()
 
 
@@ -187,6 +192,12 @@ class MultiphysicsAuthority(_Base):
     must pass ``scenario_digest`` equal to ``call.context.scenario.digest``. A run naming another scenario or none is
     refused before the runtime (or its factory) is touched, and the returned record -- its own digest and every
     scenario-bound receipt in it -- must name the same scenario before anything is exposed or committed.
+
+    B3a: the scenario a node was admitted under at its latest preflight on this authority instance is kept per node;
+    ``execute`` refuses a call whose context names another one (the context is a mutable object), checked before and
+    after ``run_kwargs``. A node this instance never preflighted has no snapshot and keeps the OD-27 checks only -- the
+    executor always preflights before it builds a ``NodeCall``. The snapshot is per instance, not per request: two
+    executors interleaving on one shared instance are covered by OD-27 only (as for ``MultiscaleAuthority``).
     """
 
     def __init__(self, authority_id: str, runtime: Any = None, *, run_kwargs: Callable[[NodeCall], Mapping[str, Any]], outputs: Mapping[str, str],
@@ -224,11 +235,18 @@ class MultiphysicsAuthority(_Base):
         self._owners, self._applicability, self._providers = dict(state_owners or {}), applicability, providers
         self.deterministic = False
         self.stateless = True
+        #: node id -> the scenario digest preflight admitted it under (B3a); a failed preflight withdraws it
+        self._preflight_scenarios: dict[str, str] = {}
 
     def preflight_findings(self, node: Any, context: Any) -> tuple[tuple[str, str], ...]:
+        self._preflight_scenarios.pop(node.node_id, None)
         missing = sorted(set(self._owners.values()) - set(node.visible_owners))
-        return () if not missing else (("UNDECLARED_STATE_READ", f"the authority reads state owners {missing} that node {node.node_id!r} does not declare "
-                                                                  "in reads_owners or writes_owners"),)
+        findings = () if not missing else (("UNDECLARED_STATE_READ", f"the authority reads state owners {missing} that node {node.node_id!r} does not declare "
+                                                                      "in reads_owners or writes_owners"),)
+        if not findings:
+            # B3a: the context is a mutable object; execute compares the scenario it is called under with this snapshot
+            self._preflight_scenarios[node.node_id] = _scenario_digest_of(context)
+        return findings
 
     def _initial_state(self, call: NodeCall) -> dict[str, dict[str, InitialStateValue]]:
         out: dict[str, dict[str, InitialStateValue]] = {}
@@ -268,12 +286,26 @@ class MultiphysicsAuthority(_Base):
                     f"an unreported provider is untraceable")
         return ""
 
+    def _scenario_swap(self, call: NodeCall) -> str:
+        """B3a: why the call's scenario is not the one this node was admitted under at preflight ('' if it is)."""
+        admitted = self._preflight_scenarios.get(call.node.node_id)
+        if admitted is not None and admitted != _authorized_scenario_digest(call):
+            return ("the call's scenario is not the one this node was admitted under at preflight (the context changed after "
+                    "admission); nothing is run")
+        return ""
+
     def execute(self, call: NodeCall) -> NodeOutcome:
+        swapped = self._scenario_swap(call)       # before run_kwargs: a swap already made runs no caller callback
+        if swapped:
+            return NodeOutcome.failed(swapped)
         kwargs = dict(self._kwargs(call))
         if self._owners and self._factory is None and "initial_state" not in kwargs:
             kwargs["initial_state"] = self._initial_state(call)
         # OD-27: scenario identity is admitted before anything is built or run (a runtime factory has side effects),
         # and again on the returned record below
+        swapped = self._scenario_swap(call)       # again: run_kwargs is caller code and can swap the context itself
+        if swapped:
+            return NodeOutcome.failed(swapped)
         authorized_scenario = _authorized_scenario_digest(call)
         refused = _scenario_refusal_before_run(kwargs, authorized_scenario)
         if refused:
@@ -460,6 +492,16 @@ class MultiscaleAuthority(_Base):
                  applicability: Callable[[Any, NodeCall], tuple[ApplicabilityReport, ...]] | None = None,
                  providers: Callable[[Any], tuple[ProviderRecordRef, ...]] | None = None) -> None:
         built = dict(runtime.identities())
+        # OD-30: the declared fast state in the identity is THIS authority's -- the one every run and resume it makes
+        # declares -- not whatever the runtime last ran with. Before, two authorities differing only in
+        # initial_fast_state shared a digest, and one built on a runtime that had already run inherited that run's
+        # fast state. The payload keeps its shape: an authority declaring no fast state over a runtime that never ran
+        # keeps its digest; digests that move are exactly those that misstated the fast state.
+        derive = getattr(runtime, "declared_fast_state_digest", None)
+        if not callable(derive):
+            raise InvalidScientificProblem("the multi-timescale runtime cannot state the identity of a declared fast state; "
+                                           "an authority's identity is never taken from the runtime's last run")
+        built["declared_fast_state"] = derive(initial_fast_state)
         self._init(authority_id, "multiscale", {
             "runtime": dict(sorted(built.items())), "outputs": sorted(extractors), "until": None if until is None else str(until.seconds),
             "stages": {k: {"until": None if v.get("until") is None else str(v["until"].seconds), "resume": bool(v.get("resume")),
@@ -467,7 +509,11 @@ class MultiscaleAuthority(_Base):
                        for k, v in sorted((stages or {}).items())},
             "initial_slow": digest_of([v.to_dict() for m in initial_slow_state.values() for v in m.values()]),
             "state_owners": dict(sorted((slow_state_owners or {}).items())), "config": dict(config or {})})
-        self.runtime, self._slow, self._fast, self._extract = runtime, initial_slow_state, initial_fast_state, dict(extractors)
+        # OD-30 review: the fast state is snapshotted (a caller's later change to its mapping cannot change what runs
+        # declare under this identity) and the stated identity is enforced on every returned record (_record_refusal)
+        fast_snapshot = None if initial_fast_state is None else {p: dict(v) for p, v in initial_fast_state.items()}
+        self._stated_fast = built["declared_fast_state"]
+        self.runtime, self._slow, self._fast, self._extract = runtime, initial_slow_state, fast_snapshot, dict(extractors)
         self._until, self._owners, self._applicability, self._providers = until, dict(slow_state_owners or {}), applicability, providers
         self._stages = {k: dict(v) for k, v in (stages or {}).items()}
         self.deterministic = False
@@ -573,6 +619,10 @@ class MultiscaleAuthority(_Base):
         if current is None or dict(ids) != dict(current):
             differ = sorted(k for k in set(ids) | set(current or {}) if ids.get(k) != (current or {}).get(k))
             return f"the returned run record's {differ} identity is not the runtime's"
+        if ids.get("declared_fast_state") != self._stated_fast:
+            # OD-30: the record's run declared another fast state than the one this authority's identity states
+            return ("the returned run record declares another initial fast state than the one this authority's identity states; "
+                    "it is not the run the plan pinned")
         change = self._runtime_change() or self._runtime_objects_refusal()
         if change:
             return change

@@ -10,6 +10,7 @@ NOT RUN (Phase 2 build phase): docs/work/DEFERRED_VALIDATION.md, DV-64.
 
 from __future__ import annotations
 
+import copy
 import dataclasses
 import hashlib
 import itertools
@@ -54,6 +55,42 @@ def test_a_redundant_forward_tear_is_refused():
         plan, torn=plan.torn + (cp.TornEndpoint(dependency=extra, initial_value=_seed_for(extra)),))
     with pytest.raises(InvalidScientificProblem, match="run forward"):
         runtime_equivalent(system, redundant)
+
+
+def test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build():
+    """The forward-tear guard, reached with genuine records (OD-26).
+
+    No admissible plan of the series pack reaches the guard (pinned below), so the only way a forward tear
+    arrives is a frozen plan altered after ``__post_init__`` -- a deserialized or hand-patched record. The
+    fixture is the nominal 1-stage plan (every temperature edge torn) plus the heat edge torn as well. The
+    constructor refuses that set as mixed-dimension; ``runtime_equivalent`` trusts the frozen record, so the
+    forward-tear refusal is the line that must catch it. Problem ids sort ``electrical_dc:`` <
+    ``resistance-tcr-`` < ``thermal-lumped-``, so with only the resistance edge uncut the order is
+    (property, electrical, thermal) and the heat edge electrical -> thermal runs forward in it.
+    """
+    system = _series(1)
+    problems = cp.coupled_problems(system, {s.component_id: s.conductor.reference_resistance for s in system.stages})
+    dependencies = cp.coupled_dependencies(system, problems, temperature_metric=lump.TEMPERATURE_METRIC)
+    plan = cp.nominal_plan(system, dependencies, seed=Quantity(300.0, "kelvin"))
+    heat = next(d for d in dependencies if d.target_quantity == lump.HEAT_INPUT)
+    torn = plan.torn + (cp.TornEndpoint(dependency=heat, initial_value=_seed_for(heat)),)
+
+    # the same tear set is not constructible: only tampering produces it
+    with pytest.raises(InvalidScientificProblem, match="different dimensions"):
+        dataclasses.replace(plan, torn=torn)
+    tampered = copy.copy(plan)
+    object.__setattr__(tampered, "torn", torn)
+
+    # the fixture really is a forward tear in the order the runtime build derives, not some other refusal
+    order = cp.execution_order([p.problem_id for p in problems], tampered.uncut)
+    assert order, "the tampered plan must still leave an order, or the cycle refusal fires first"
+    position = {pid: k for k, pid in enumerate(order)}
+    assert position[heat.source_problem_id] < position[heat.target_problem_id]
+
+    with pytest.raises(InvalidScientificProblem, match="run forward"):
+        runtime_equivalent(system, tampered)
+    # the untampered plan still builds: the refusal is the forward tear, not the pack
+    runtime_equivalent(system, plan)
 
 
 def _seed_for(dependency):
