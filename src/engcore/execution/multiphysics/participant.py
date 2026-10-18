@@ -538,6 +538,15 @@ class CallbackParticipant:
             raise InvalidScientificProblem(
                 "ordinary initialization must not return an initial-state receipt"
             )
+        if not result.outputs and not result.uncertainty and not self.spec.transient:
+            # Phase 2 BR8, stated where the participant answers and not only in
+            # the runtime: a STEADY participant whose outputs are computed from
+            # its coupling inputs has nothing to report before its first solve,
+            # and reports nothing rather than an invented value. The runtime's
+            # `_initialize` admits exactly this case and `_initial_transfers`
+            # requires every edge out of it to be seeded before it is read.
+            # Validating it here first refused every such participant.
+            return result
         validate_outputs(self.spec, result.outputs, result.uncertainty)
         return result
 
