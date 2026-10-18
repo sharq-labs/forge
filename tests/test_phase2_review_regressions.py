@@ -89,22 +89,31 @@ def test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal(
     problems = cp.coupled_problems(system, {s.component_id: s.conductor.reference_resistance for s in system.stages})
     dependencies = cp.coupled_dependencies(system, problems, temperature_metric=lump.TEMPERATURE_METRIC)
     base = cp.nominal_plan(system, dependencies, seed=Quantity(300.0, "kelvin"))
-    admitted, forward = 0, []
+    admitted: list[frozenset] = []
     for size in range(1, len(dependencies) + 1):
         for subset in itertools.combinations(dependencies, size):
             torn = tuple(cp.TornEndpoint(dependency=d, initial_value=_seed_for(d)) for d in subset)
+            dimensions = {d.dimension for d in subset}
             try:
                 plan = dataclasses.replace(base, torn=torn, absolute_tolerance=Quantity(1e-9, subset[0].unit_exemplar))
-            except InvalidScientificProblem:
-                continue  # refused by the plan itself (mixed dimensions)
+            except InvalidScientificProblem as exc:
+                # the ONLY refusal the plan may make here is the mixed-dimension one; anything else is a finding
+                assert len(dimensions) > 1 and "different dimensions" in str(exc), (sorted(dimensions), str(exc))
+                continue
+            assert len(dimensions) == 1, "the plan admitted a mixed-dimension tear set"
             try:
                 runtime_equivalent(system, plan)
-                admitted += 1
+                admitted.append(frozenset(cp.edge_key(d) for d in subset))
             except InvalidScientificProblem as exc:
-                if "run forward" in str(exc):
-                    forward.append(sorted(cp.edge_key(d) for d in subset))
-    assert forward == []
-    assert admitted == 3  # one admissible tear set per dimension: every power, every temperature, every resistance edge
+                # every refusal of an admitted plan must be the cycle refusal: any other one -- the forward-tear
+                # refusal in whatever wording -- means a forward tear became reachable
+                assert "leaves a cycle after its tears" in str(exc), (sorted(cp.edge_key(d) for d in subset), str(exc))
+    by_dimension = {}
+    for dependency in dependencies:
+        by_dimension.setdefault(dependency.dimension, set()).add(cp.edge_key(dependency))
+    # exactly one admissible tear set per dimension, and it is every edge of that dimension
+    assert sorted(admitted, key=sorted) == sorted((frozenset(keys) for keys in by_dimension.values()), key=sorted)
+    assert len(by_dimension) == 3 and all(len(keys) == stages for keys in by_dimension.values())
 
 
 # ---- 2. problem identity cannot be asserted ------------------------------------------------------------------

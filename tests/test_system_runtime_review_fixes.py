@@ -90,6 +90,8 @@ def _coupled_runtime(end_uncertainty):
         return hashlib.sha256(json.dumps(value.to_dict(), sort_keys=True).encode()).hexdigest()
 
     def initialize(_instant, _inputs, _uncertainty):
+        # no owner supplied a state: every run starts from the declared 300 K, never from an earlier run's end
+        held["value"] = InitialStateValue("temperature", Quantity(300.0, "K"), UNKNOWN)
         return InitializationResult({"temperature": held["value"].value}, {"temperature": unknown_output})
 
     def initialize_state(instant, state, _inputs, _uncertainty):
@@ -149,6 +151,18 @@ def test_h2_the_committed_state_carries_the_participants_uncertainty_never_the_p
     committed = result.final_state.owner("cell").values[0]
     assert committed.value.magnitude == pytest.approx(305.0)
     assert committed.uncertainty.kind is UncertaintyKind.UNKNOWN            # the stale +-0.01 K did not survive a solve that states none
+
+
+def test_h2_a_known_end_uncertainty_over_a_known_prior_is_committed_as_the_participant_stated_it():
+    """The other direction of H2: the participant's own statement is carried through, not blanked to UNKNOWN."""
+    prior = Uncertainty(kind=UncertaintyKind.STANDARD, standard_uncertainty=Quantity(0.01, "K"), source="declared:initial", method="declared")
+    stated = Uncertainty(kind=UncertaintyKind.STANDARD, standard_uncertainty=Quantity(0.25, "K"), source="participant", method="declared")
+    request, context = _state_commit_request(stated, prior)
+    result = SystemExecutor(context).run(request)
+    assert result.status is RunStatus.SUCCEEDED, [(r.node_id, r.reason) for r in result.node_receipts]
+    committed = result.final_state.owner("cell").values[0]
+    assert committed.value.magnitude == pytest.approx(305.0)
+    assert committed.uncertainty == stated                                  # the end state's own +-0.25 K, not the prior's +-0.01 K
 
 
 # ------------------------------------------------------------------------------------------------------------- H3 content by digest
