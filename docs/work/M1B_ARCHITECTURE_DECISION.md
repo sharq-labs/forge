@@ -40,7 +40,9 @@ Direct vertex interpolation is refused: unresolved fine information is not suppl
 Reconstruction requires a new, current-target, positive finite per-dual-cell linear
 storage coefficient, with exact intensive and integrated quantity meanings. Bounded
 law A_i = C_i u_i, with C_i having amount/intensive units, is explicit and reversible
-only under its declared zero-reference linear rule. Nonlinear, offset, state-dependent
+only under its declared zero-reference linear rule. Density conversion additionally
+requires an exact optional density FieldSemantics binding in that law; matching
+amount/dimensions alone is insufficient. Nonlinear, offset, state-dependent
 laws and affine quantities refuse. Coefficients can differ at every vertex and are
 never remapped as state or inherited implicitly. Convert conserved densities to
 amounts using actual dual lengths before applying this law. Domain packs own physical
