@@ -6406,3 +6406,48 @@ IMPLEMENTED / UNVERIFIED / UNCERTIFIED, NOT INTEGRATION-READY.
   -> **269 passed, 2 failed** (`test_a_redundant_forward_tear_is_refused` OD-26; `test_l3_no_relaxation...` OD-23).
 - Not run (not authorized): full FAST / SCIENTIFIC tiers, mutation, OD-3.
 - Independent read-only review (`forge-scientific-reviewer`, static, ran nothing): **PASS**, no BLOCKER/MAJOR. Acted on: MINOR-1/2 (the enumeration now asserts every plan refusal is the mixed-dimension one, every adapter refusal is the cycle refusal, and the exact admitted sets), NOTE-1 (the no-state `initialize` starts from the declared 300 K every run), NOTE-2 (new `test_h2_a_known_end_uncertainty_over_a_known_prior_is_committed_as_the_participant_stated_it`). Recorded: MINOR-3 in OD-26, NOTE-3 as OD-27. After the fixes: `python -m pytest -q -p no:cacheprovider -n 4 tests/test_phase2_review_regressions.py tests/test_system_runtime_big13_additions.py tests/test_system_runtime_review_fixes.py tests/test_system_runtime_state_reads.py` -> **59 passed, 1 failed** (`test_a_redundant_forward_tear_is_refused`, OD-26).
+
+### 2026-10-18 -- Batch 5: scenario identity integrity, OD-27 (branch `fix/od27-scenario-identity`)
+
+- Base `main` `4e339b5f8728088816a2584fe203b9b203a7b15e`; Linux, CPython 3.13.16, numpy 2.5.3, scipy 1.18.1, ngspice 44,
+  `CRAFTY_NGSPICE_ARGV=ngspice`. Independent of draft PR #163.
+- `MultiphysicsAuthority.execute` now admits scenario identity twice: before `runtime.run` (a `run_kwargs` digest that is not
+  the authorized `call.context.scenario.digest`, or scenario-driven arguments with no digest -> FAILED, nothing runs) and on
+  the returned record, right after the graph/plan checks and before conservation, outcome, outputs, extractors, state,
+  artifacts and provider records (a different digest, or scenario evidence without a digest -> FAILED). A record with no
+  digest and no scenario evidence stays admitted: the runtime's and `MultiphysicsRunRecord`'s own scenario_bound contract.
+  **Superseded by the review fixes below (`fa71030c`): inside an authorized execution an unbound run is refused.**
+- `python -m pytest -q -p no:cacheprovider tests/test_system_runtime_scenario_identity.py` -> **11 passed**; with the
+  `src` change stashed -> **8 failed, 3 passed** (the 3 are the admitted / compatibility cases).
+- `python -m pytest -q -p no:cacheprovider -n 4 tests/test_system_runtime_*.py tests/test_phase1_system_runtime_outcomes.py
+  tests/test_phase2_external_coupling.py tests/test_multiphysics_conservation_history.py tests/test_stateful_multiphysics_runtime.py`:
+  before (main) **5 failed, 214 passed**; after, excluding the new file, **5 failed, 214 passed** -- the same five
+  `SimpleNamespace`-stub tests PR #163 repairs (three now refused one step earlier, by the new pre-run check).
+- Same suites plus `tests/test_phase2_review_regressions.py`, merged locally with PR #163 (temporary branch, discarded):
+  **238 passed, 1 failed** (`test_a_redundant_forward_tear_is_refused`, OD-26).
+- `providers/pybamm/tests/test_system_runtime_battery.py` (PyBaMM 26.10.1.0 and TESPy 0.11.3 installed for this run, then
+  removed): **8 passed** -- the provider `runtime_factory` path, which passes the scenario digest, is unchanged.
+- `src/engcore/system_runtime/authorities.py` is pinned in `certification/current_core_v2.json`: UNCERTIFIED until OD-3.
+  Not run: FAST / SCIENTIFIC tiers, mutation, OD-3.
+- Independent read-only review (`forge-scientific-reviewer`, static): **CHANGES REQUIRED** -- M1 (an unbound run, no
+  digest and no scenario evidence, was admitted and could commit state inside an execution that has an authorized
+  scenario; a runtime factory can carry scenario-derived state without leaving evidence), M2 (out of scope:
+  `MultiscaleAuthority` binds no scenario / timeline / environment to the call context), m1 (top-level digest trusted
+  alone), m2/m3 (untested branch, vacuous assertions), N1 (factory built before the check). Acted on: M1 -- with an
+  authorized scenario the run must name exactly it, before the run and on the record; m1 -- every state transition,
+  scenario input, operating condition, QoI and termination receipt must carry the authorized digest; N1 -- the check runs
+  before the runtime factory; m2/m3 -- tests for a rewritten and a cleared digest, a providers hook, no vacuous asserts.
+  Recorded for follow-up: M2 (proposed OD-28), N2 (mutable `RuntimeContext`), N3 (refusals drop provider records).
+- After the review fixes: `python -m pytest -q -p no:cacheprovider tests/test_system_runtime_scenario_identity.py` ->
+  **14 passed**; against main's `authorities.py` -> **11 failed, 3 passed** (the admitted cases).
+  Related suites (as above, new file included) -> **5 failed, 228 passed** (the five #163 stub tests, now refused by the
+  pre-run rule because their stub `run_kwargs` name no scenario; #163's fixture names it). Merged locally with #163
+  (temporary, discarded; only `docs/work/PROGRESS.md` conflicted) -> **241 passed, 1 failed** (OD-26).
+  `providers/pybamm/tests/test_system_runtime_battery.py` -> **8 passed** (PyBaMM/TESPy installed for the run, removed).
+- Compatibility: inside a `SystemExecutor` run every `MultiphysicsAuthority` must now pass
+  `scenario_digest=<authorized digest>` in `run_kwargs`. In-tree: the PyBaMM kit and the battery flagship already do;
+  #163's fixture does; calls without an execution context (unit tests passing a bare call) are unaffected.
+- Re-review of `fa71030c` (static): **PASS**; M1, m1, m2, m3, N1 closed. Follow-ups applied in the next commit: L1 (no-context
+  branch also requires empty receipt digests), L2 (stale comment / superseded PROGRESS line), L3 (contract in the
+  `MultiphysicsAuthority` docstring and `docs/architecture/engineering.md`), L4 (M2 as OD-28 in ACTIVE_PLAN). Not run by the
+  builder: `flagships/tests/test_flagship_battery.py` (needs PyBaMM; minutes per test); statically it passes the authorized digest.

@@ -87,3 +87,6 @@ SystemRunResult (BIG 12) ──┬─> ConstraintAssessment / ConservationAssess
   `InputValue.producer_identity`, so an authority can key side data (a field held in a bulk store) to exactly its own execution.
 * `MultiphysicsAuthority(extractors=, artifacts=)`: scalars derived from a coupled run's own histories (uncertainty stays UNKNOWN) and
   artifacts referenced by digest.
+* `MultiphysicsAuthority` scenario binding (OD-27): under `SystemExecutor`, `run_kwargs` must pass `scenario_digest` equal to
+  `call.context.scenario.digest`; a run naming another scenario or none, or a record any of whose scenario-bound receipts names
+  another scenario, fails the node before anything is exposed or committed.
