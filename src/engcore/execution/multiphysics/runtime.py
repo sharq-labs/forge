@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import copy
 import math
+import weakref
+from functools import wraps
 from dataclasses import dataclass
 from enum import Enum
 from fractions import Fraction
@@ -127,6 +129,28 @@ class _IterationOutcome:
     output_uncertainty: Mapping[str, Mapping[str, Uncertainty]]
     record: CouplingIterationRecord
     event: Mapping[str, Any] | None = None
+
+
+# Process-local object retirement, never scientific identity or durable issuance.
+# Weak values support unhashable participants; non-weakrefable objects are held
+# strongly so an address cannot be recycled into a false retirement match.
+_RETIRED_PARTICIPANTS: weakref.WeakValueDictionary[int, Any] = weakref.WeakValueDictionary()
+_RETIRED_STRONG: dict[int, Any] = {}
+
+
+def _fail_closed_run(method):
+    """Preserve the run signature while refusing reuse after an aborted execution."""
+    @wraps(method)
+    def guarded(self, *args, **kwargs):
+        self._require_usable()
+        try:
+            result = method(self, *args, **kwargs)
+            self._require_usable()
+            return result
+        except BaseException:
+            self._invalidate("coupled run aborted; participant state may be indeterminate")
+            raise
+    return guarded
 
 
 class MultiphysicsRuntime:
@@ -365,6 +389,7 @@ class MultiphysicsRuntime:
         self._time_grid_log: list[dict[str, Any]] = []
         self._accepted_end_exact: Fraction | None = None
         self.participants = dict(participants)
+        self._unusable_reason = ""
         self.resolver = resolver
         self.store = store
         self.meshes = {
@@ -739,7 +764,35 @@ class MultiphysicsRuntime:
                 "difference_s": float(reported - requested),
             })
 
+    def _require_usable(self) -> None:
+        if self._unusable_reason:
+            raise MultiphysicsExecutionError(f"runtime is unusable: {self._unusable_reason}")
+        for participant in self.participants.values():
+            if (_RETIRED_PARTICIPANTS.get(id(participant)) is participant
+                    or _RETIRED_STRONG.get(id(participant)) is participant):
+                raise MultiphysicsExecutionError("participant is unusable after an aborted coupled execution")
+            check = getattr(participant, "require_usable", None)
+            if callable(check):
+                check()
+
+    def _invalidate(self, reason: str) -> None:
+        self._unusable_reason = self._unusable_reason or reason
+        # Retire every participant, including those not reached by a partial restore.
+        # A provider's failing invalidation hook cannot prevent retirement of others.
+        for participant in self.participants.values():
+            try:
+                _RETIRED_PARTICIPANTS[id(participant)] = participant
+            except TypeError:
+                _RETIRED_STRONG[id(participant)] = participant
+            invalidate = getattr(participant, "invalidate", None)
+            if callable(invalidate):
+                try:
+                    invalidate(reason)
+                except BaseException:
+                    pass  # runtime remains unusable regardless of provider cleanup
+
     def _checkpoint_all(self, instant: Quantity) -> dict[str, RuntimeCheckpoint]:
+        self._require_usable()
         checkpoints: dict[str, RuntimeCheckpoint] = {}
         expected = self._seconds(instant)
         for spec in self.graph.participants:
@@ -768,6 +821,14 @@ class MultiphysicsRuntime:
     def _restore_all(
         self, checkpoints: Mapping[str, RuntimeCheckpoint]
     ) -> None:
+        self._require_usable()
+        try:
+            self._restore_all_unchecked(checkpoints)
+        except BaseException:
+            self._invalidate("restore failed; coupled participant state is indeterminate")
+            raise
+
+    def _restore_all_unchecked(self, checkpoints: Mapping[str, RuntimeCheckpoint]) -> None:
         for participant_id in sorted(checkpoints):
             participant = self.participants[participant_id]
             checkpoint = checkpoints[participant_id]
@@ -2069,6 +2130,7 @@ class MultiphysicsRuntime:
                 found[participant_id] = digest
         return found
 
+    @_fail_closed_run
     def run(
         self,
         run_id: str,

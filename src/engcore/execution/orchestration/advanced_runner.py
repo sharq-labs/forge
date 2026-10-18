@@ -145,6 +145,7 @@ def run_adaptive_plan(
                     current_checkpoint, solver_id=capability.solver_id, solver_build=build,
                     conversions=conversions,
                     accepts_converted=bool(getattr(backend, "accepts_converted_checkpoints", False)),
+                    problem_digest=plan.problem_digest,
                 )
                 note = (
                     f"{capability.solver_id}:resume_via_conversion_{conversion.conversion_id}"
@@ -186,6 +187,14 @@ def run_adaptive_plan(
                     "advanced simulation backend must return AdvancedBackendOutcome"
                 )
             total = total.plus(outcome.usage)
+            if str(getattr(backend, "solver_build", "")).strip() != build:
+                problems.append(f"{capability.solver_id}:execution_build_drift_refused")
+                attempts.append(AdvancedAttemptRecord(
+                    SimulationAttempt(attempt_id, AttemptState.FAILED, refinement_level,
+                                      "execution_build_drift_refused"),
+                    capability.solver_id, outcome.usage, refinement, None,
+                ))
+                break
             exceeded = total.exceeded(resource_budget)
             attempt = SimulationAttempt(
                 attempt_id,

@@ -6324,3 +6324,59 @@ Independent reviewer final addendum reread input validators, nonfinite/tensor
 fixtures and full package: PASS, no new authority/evidence-integrity finding;
 model-census integration hold remains. No commands/tests/imports by reviewer.
 IMPLEMENTED / UNVERIFIED / UNCERTIFIED, NOT INTEGRATION-READY.
+
+## 2026-10-18 - Checkpoint integrity R1-R5 bounded repair (Build-First)
+
+- Base `0284ae161ad957d51674ee481e47cfd43d10c5f0`, isolated branch
+  `codex/checkpoint-integrity-hardening`, worktree
+  `C:/Users/dev_kaeem/.codex/worktrees/checkpoint-integrity/phyx`. Shared stale main
+  `a3f757e` and all pre-existing edits left untouched. No main merge/push.
+- Owner decisions: preserve strict same-participant seal; durable cross-process recovery is
+  separate; fail closed on required integrity/identity; preserve evidence/certification;
+  tests are written but NOT RUN. No full assurance, mutation, expensive suite or OD-3.
+- R1: mandatory provider codec of actual immutable continuation bytes (including resolution
+  and verification of referenced content); SHA-256 computed by Forge, not accepted as a cached
+  provider assertion. No automatic bytes-handle escape. No unsafe serializer.
+- R2: run/restore failures retire the runtime; callback/external application failures retire
+  wrappers. Safe record/foreign-object admission is separated from corrupt issued payloads.
+  Process-local object retirement blocks custom participant reuse in fresh runtimes.
+- R3: PyBaMM origin zero, requested/checkpoint/restored/solver time checks, current-state
+  fingerprint against alias edits, and failed-step retirement; y digest/build scope preserved.
+- R4: readable legacy references cannot resume without explicit build/problem; adoption
+  requires known execution context; both runners refuse observable within-call build drift;
+  cross-solver conversion requires the same canonical problem. Native declaration-only
+  adapter scope remains labelled and cannot replace a required expected/observed build.
+- R5: adversarial tests written, including review-driven counterexamples. Existing routing
+  fixtures now provide explicit identities; original routing/science expectations retained.
+  A corrupted PyBaMM session's subsequent attempt now expects permanent unusability.
+- Independent reviews 1/2: CHANGES REQUIRED, read-only, no execution. Rejected approaches
+  and dispositions are in CHECKPOINT_HARDENING.md; follow-up review pending.
+- Deferred commands DV-101..DV-106 added; DV-100 then DV-99 remain first. All pytest,
+  forge_check, tiers, provider solves, assurance, mutation and OD-3: NOT RUN.
+- Environment observation: `python --version` returned exit 1 (Windows Store alias; no
+  interpreter there). Used bundled Python for editing and compile-only static inspection.
+- Static command executed (exit 0):
+  `& 'C:/Users/dev_kaeem/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe' -c "import pathlib,subprocess; names=subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()+subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines(); paths=sorted({n for n in names if n.endswith('.py')}); [compile(pathlib.Path(p).read_bytes(),p,'exec') for p in paths]; print('Static compilation only:',len(paths),'Python files; no modules imported or executed')"`
+  Result: 15 changed Python files compiled as source; no Forge/provider modules imported,
+  no tests or numerical code executed. This is syntax evidence only.
+- Static command `git diff --check` executed, exit 0, no output. Later edits require final
+  repeat of these static checks; no scientific verification or certification is claimed.
+
+### Final independent disposition and package
+
+- Independent reviewer `/root/checkpoint_review`: PASS after review-driven repairs; no
+  outstanding HIGH/MEDIUM finding. Report: CHECKPOINT_HARDENING_REVIEW.md. No tests ran.
+- Final inventory: 21 files (8 implementation, 7 test, 6 documentation). Exact paths, PR
+  title/body, compatibility/limits and merge requirements: CHECKPOINT_HARDENING_MERGE_PACKAGE.md.
+- Final static repeat: the exact compile-only command recorded above executed again,
+  exit 0, 15 changed Python files; `git diff --check`, exit 0, no output. Syntax and
+  whitespace only. pytest/forge_check/provider solves/full tiers/mutation/assurance/OD-3: NOT RUN.
+- No source evidence, frozen snapshots, certificates, workflows or scientific acceptance
+  thresholds regenerated. No capability promotion. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+- Next recommended bounded task: A-1/A-2/A-13 semantic compatibility proposal, then A-3
+  declared-field-kind overlap rules. No additional implementation authorized by this slice.
+
+- Failed documentation approach: a default-encoding whole-file read/write altered historical
+  non-ASCII text in PROGRESS. Restored the exact baseline bytes and appended only this task's
+  ASCII entries. Do not normalize historical evidence logs through locale-dependent text IO.
+  Correction changes documentation only; independently reviewed implementation is unchanged.

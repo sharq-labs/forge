@@ -30,6 +30,11 @@ UNKNOWN = Uncertainty.unknown("mock provider output uncertainty not quantified")
 
 
 class Session:
+    snapshot_integrity_codec = ("mock.inline-ascii-step-count", "1")
+
+    def snapshot_integrity_bytes(self, snapshot):
+        return snapshot.token
+
     def __init__(self, out, inp, fn, version="1.0"):
         self._identity = ExternalProviderIdentity("thermo", version, "thermo-adapter", "1")
         self.out, self.inp, self.fn, self.steps = out, inp, fn, 0
@@ -46,10 +51,10 @@ class Session:
         return AdvanceResult(request.end, {self.out: self.fn(request.inputs[self.inp])}, {self.out: UNKNOWN}, 1, True)
 
     def snapshot(self, _t):
-        return ExternalSnapshot(hashlib.sha256(str(self.steps).encode()).hexdigest(), f"s{self.steps}", self.steps)
+        return ExternalSnapshot(hashlib.sha256(str(self.steps).encode()).hexdigest(), f"s{self.steps}", str(self.steps).encode("ascii"))
 
     def restore(self, snapshot):
-        self.steps = snapshot.token
+        self.steps = int(snapshot.token)
 
     def finalize(self):
         pass
