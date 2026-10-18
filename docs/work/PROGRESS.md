@@ -5999,3 +5999,74 @@ pattern scan:0 matches; exact17 A-3 files, six intended new untracked deliverabl
 at scan time and no temporary artifacts. Semantic worktree `git status --porcelain`
 clean; `git rev-parse HEAD origin/codex/quantity-semantics` both98da0c02. These static
 checks provide no scientific verification, validation or certification.
+
+
+## 2026-10-18 A-3 publication and A-4 interface execution
+
+A-3 clean at4f239fa7fe705e3d8ae390a8e885302dcb07904e; `git status --porcelain`
+empty. `git diff --check 98da0c02 HEAD` exit0. Bounded private-key/GitHub token/AWS/sk
+and quoted credential-assignment pattern scan over17 intended source/test/doc paths:
+0 matches; no untracked/temporary artifacts. Scan is not an exhaustive security audit.
+Pushed codex/declared-field-kind-mapping and opened Draft PR#160 against
+codex/quantity-semantics, NOT main, by explicit owner authorization. Dependency:
+main0284ae1 -> semanticPR#159/98da0c02 -> A-3PR#160/4f239fa7. No merge. Prior A-3
+local-only publication statement superseded. CheckpointPR#158 remains independent.
+
+A-4 new branch codex/interface-flux-execution based exactly on A-3 head4f239fa7.
+Architecture/Core compatibility decision and48-file baseline reference matrix committed
+before source changes: dab92bf0. Typed InterfaceTransfer binds physical meaning,
+conserved measure, density/integrated representation, support fingerprints, normals,
+orientations, common-plane embedding, full coverage and qualified rectangle method.
+Execution derives and applies normal/orientation sign through FieldMapper and
+TransferEngine. Integrated values divide by source area; densities use target area.
+No dimension-only meaning, unqualified projection, partial coverage or vector shortcut.
+
+Neutral Dirichlet-Neumann admission now uses exact quantity semantics. CHT is its
+explicit thermal wrapper; old prose-only/pre-signed conventions require migration.
+Typed CHT /2 report binds generic admission to graph identity and says transfer already
+applied sign. Edge /3 carries executable interface material; /1 and scalar /2 writers
+retain their shapes. 3D normal declaration on2D parameter mesh alone grants no execution.
+No frozen API exports, scientific evidence/UQ systems or certificate pins changed.
+
+Independent read-only scientific review /root/a4_review: final static PASS, no unresolved
+HIGH/MEDIUM defect in bounded source/tests. Resolved HIGH: interface mapper ignored
+requested roundtrip verification/limits; now uses A-3 same-kind reverse norm, finite/limit
+refusal and disabled-check-with-limit refusal. Resolved MEDIUM: integrated flux was
+misclassified as density in admission; exact branch corrected. Direct/graph regressions
+written. Preliminary port-frame finding retracted after confirming scalar ports forbid
+that independent frame; no unnecessary guard added. No observed test failures: NOT RUN.
+
+Written probes: opposing/same/reversed normals/orientations, unequal areas/discretizations,
+integrated vs density, incorrect-sign outward sum, full-coverage both ways, missing normal,
+orientation, unsupported geometry/vector/projection/method, stale support, units/meaning/
+kind mismatch, schema downgrade/material identity, roundtrip limits, identity sign and
+unit scaling, thermal CHT and nonthermal charge/potential. No provider/numerical execution.
+Constructed integral transfer residual is separate from UNKNOWN independent coupled
+physical conservation. Numerical solution verification and experimental validation remain
+unestablished. Spatial error/model discrepancy uncertainty stays UNKNOWN.
+
+Actual lightweight static checks: bundled Python
+C:/Users/dev_kaeem/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe
+compiled9 changed Python files from union of `git diff --name-only 4f239fa7` and
+`git ls-files --others --exclude-standard` using exact operation
+`compile(Path(name).read_bytes(), name, 'exec')`; no Forge imports or compiled code
+executed. `git diff --check` exit0 (LF normalization notices only). No pytest, forge_check,
+heavy provider runs, mutation, full assurance or OD-3. DV-117..120 record deferred recipes;
+DV-101..116 remain NOT RUN. All new work IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+
+A4_MERGE_PACKAGE.md records exact16-file inventory, compatibility limits and precise
+nextM1 task: lineage-bound 1D transfer plus reversible recorded-bisection coarsening,
+reusing A-3 arithmetic and existing data/provenance records; then the domain-owned
+transient FV/backward-Euler conduction reference. OD-6 permits building before DV0;
+scientific verification/validation and gate decisions require executed evidence.
+Owner decisions remain consumer migrations, integration/validation authorization,
+reference initial/boundary/material sources and final certification/gate decisions.
+Unstructured/curved/vector/moving interfaces and independent coupled physical balance
+remain open. No A-4 closure or E2 maturity claim. Local A-4 package, no auto publication/merge.
+
+
+Final A-4 packaging: compile-only repeated over9 Python files; `git diff --check`
+exit0. Bounded changed-file credential-pattern scan0 matches (not exhaustive), exact16
+A-4 files and four intended untracked deliverables at scan time; no temporary artifacts.
+A-3 worktree clean; HEAD and origin/codex/declared-field-kind-mapping both4f239fa7.
+No tests or scientific assurance executed. Local package remains UNVERIFIED/UNCERTIFIED.

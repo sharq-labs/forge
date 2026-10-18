@@ -900,3 +900,23 @@ and `python tools/forge_check.py --regression`, normal integration tiers and fin
 These commands execute tests and were not run as static checks. Provider runs, mutation,
 full assurance and OD-3 remain separately authorized. A-4 is not closed by normal metadata.
 No transient adaptive solver or automatic history/lineage restoration is added.
+
+
+## A-4 interface execution: DV-117..120 (2026-10-18)
+
+Base A-3 4f239fa7; predecessor DV-101..116 remain NOT RUN. All commands below NOT RUN.
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. Local/static PASS never scientific evidence.
+
+| ID | Scope | Exact deferred recipe | Expected interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-117 | A-4 numerical/contract probes | `python -m pytest tests/test_interface_flux_execution.py -q` | Executed scalar normal signs, density vs integrated amounts, unequal surface cells, full coverage, roundtrip limits, identity/unit/schema/context refusals, thermal + nonthermal; integral residual is constructed transfer diagnostic only | NOT RUN |
+| DV-118 | Parent semantic and field-kind guarantees | `python -m pytest tests/test_declared_field_kind_mapping.py tests/architecture/test_quantity_semantics.py tests/architecture/test_cross_domain_fixtures.py -q` | Preserve A-1/A-2/A-13 and A-3; unsupported interface without explicit executable contract still refuses; interpret residual gap pins as gaps | NOT RUN |
+| DV-119 | Concrete legacy interface migration audit | `python -m pytest tests/test_phase35_ws3_conjugate_interface.py tests/test_phase2_review_regressions.py -q` | WS3 lines68-104 expect prose-only admission and old sign metadata; intentionally refused until explicit typed migration. Record failures/dispositions; do not change physics expectations or count as retained coverage | NOT RUN |
+| DV-120 | Core/trust/schema/runtime compatibility | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_v2_api_snapshot.py tests/test_core_api_serialization.py tests/test_scientific_serialization_integrity.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py tests/test_stateful_multiphysics_runtime.py tests/test_multiphysics_conservation_history.py -q` | Exact frozen/import identity, nested edge /3 refusal/readers, certified dependency and existing runtime behavior; no automatic pin regeneration | NOT RUN |
+
+After targeted migration/execution, separately authorize `python tools/forge_check.py --changed`
+and `python tools/forge_check.py --regression` and required CI/integration tiers. These
+execute tests and are not static commands. Provider runs, mutation, full assurance and
+final integrated source OD-3 remain separately authorized. No real FE/CFD interface
+execution, coupled physical verification or experimental validation follows from these
+fixtures. E2 unstructured surfaces and independent flux/source balances remain future work.

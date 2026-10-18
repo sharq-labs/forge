@@ -111,7 +111,7 @@ class FieldDefinition:
         if self.semantics is not None and self.semantics.interface is not None:
             interface = self.semantics.interface
             if (interface.support_id != mesh.mesh_id or interface.support_fingerprint != mesh.fingerprint()
-                    or len(interface.normal) != mesh.spatial_dimension):
+                    or len(interface.normal) not in (mesh.spatial_dimension, 3 if mesh.spatial_dimension == 2 else mesh.spatial_dimension)):
                 raise InvalidScientificProblem("interface convention does not match actual support identity/dimension")
 
     def expected_shape(self, mesh: MeshSupport) -> tuple[int, ...]:

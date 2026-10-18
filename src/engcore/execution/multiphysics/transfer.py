@@ -238,6 +238,7 @@ class TransferEngine:
             target_port.field,
             target_mesh,
             edge.mapping,
+            interface_transfer=edge.interface_transfer,
         )
         value = mapped.record
 

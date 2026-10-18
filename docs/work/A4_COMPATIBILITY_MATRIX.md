@@ -52,3 +52,26 @@ Exact baseline references: A-3 4f239fa7. Static index, not executed migration or
 | `tests/test_phase3_br15_window_error_control.py` | 33, 92, 190 | Admission/schema/normal execution or downstream caller; explicit migration and deferred regression |
 | `tests/test_system_runtime_external_providers.py` | 21, 69, 70 | Admission/schema/normal execution or downstream caller; explicit migration and deferred regression |
 | `tests/test_world_runtime_sprint1.py` | 62, 234 | Admission/schema/normal execution or downstream caller; explicit migration and deferred regression |
+
+## Exact A-4 implementation references
+
+| File | Current lines | Impact |
+| --- | --- | --- |
+| `src/engcore/scientific/fields/interface_transfer.py` | 18, 23, 28, 32, 41, 90, 93, 116, 124 | Typed admission/execution/schema or adversarial regression; NOT RUN |
+| `src/engcore/scientific/fields/definition.py` | 97 | Typed admission/execution/schema or adversarial regression; NOT RUN |
+| `src/engcore/scientific/fields/semantics.py` | 24 | Typed admission/execution/schema or adversarial regression; NOT RUN |
+| `src/engcore/scientific/multiphysics/graph.py` | 49, 90, 109, 263, 554, 577 | Typed admission/execution/schema or adversarial regression; NOT RUN |
+| `src/engcore/execution/multiphysics/mapping.py` | 722, 964 | Typed admission/execution/schema or adversarial regression; NOT RUN |
+| `src/engcore/execution/multiphysics/transfer.py` | 164 | Typed admission/execution/schema or adversarial regression; NOT RUN |
+| `src/engcore/execution/multiphysics/interface_exchange.py` | 49, 56, 81, 155, 195, 215 | Typed admission/execution/schema or adversarial regression; NOT RUN |
+| `src/engcore/execution/multiphysics/conjugate_interface.py` | 73, 102 | Typed admission/execution/schema or adversarial regression; NOT RUN |
+| `tests/test_interface_flux_execution.py` | 88, 107, 112, 118, 132, 137, 152, 167, 177, 189, 213, 226, 239, 248, 254, 260, 273, 280 | Typed admission/execution/schema or adversarial regression; NOT RUN |
+
+## Compatibility dispositions
+
+Core Freeze reviewed before edits in decision commit dab92bf0. No canonical frozen exports, existing Evidence/UQ vocabulary, field record/mesh schemas or certification artifacts changed. CouplingEdge optional interface field emits /3; old /1 and scalar /2 writer shapes retained. InterfaceTransfer owns /1, CHT typed admission owns /2 and embeds exact graph identity. New FieldMapper keyword-only interface_transfer does not alter old positional calls; old unqualified flux execution still refuses.
+FieldDefinition /2 remains unchanged in shape: a 3D normal may describe a 2D parameter surface, but execution requires explicit qualified common-plane transfer. Scalar port frames remain forbidden; scalar normal basis belongs to InterfaceConvention. No vector FrameTransform/projection is silently applied.
+Concrete legacy migration: tests/test_phase35_ws3_conjugate_interface.py:68-104 expects untyped/prose admission and source-normal sign+1 metadata. New typed output has the actual mapped receiver sign; no receiver double-sign. CHT now requires explicit domain-owned temperature_semantics and heat_flux_semantics and source-normal migration. Historical expectations require explicit owning-model disposition; no numerical or historical records were rewritten. FieldMapping roundtrip requirements are enforced for new interface execution.
+InterfaceExchange sign_convention remains parseable metadata; only edge_interface_transfer plus the executed graph contract admits a new flux exchange. ExchangeKind adds INTEGRATED_FLUX outside frozen canonical exports. Neutral admission has no thermal units; only the CHT instance checks thermal dimensions. Legacy untyped intensive interface declarations now refuse too.
+Run/graph replay, field/provider adapters, runtime mapping diagnostics, cached identities and certified dependency closure are transitively affected. Normal, orientation, support, plane, representation, measure and relation changes are material graph identity changes. No automatic aliases/kinds/sign migrations, pin regeneration or changed scientific thresholds.
+Integration requires explicit consumer migration, old-reader/schema/frozen/layering checks and required CI on final source, then separately authorized OD-3. The 48-file baseline index is static; external/dynamic callers are not exhaustively discovered. E2 unstructured surface adapters remain unsupported and require further geometry review, not just the existence of A-4 code.
