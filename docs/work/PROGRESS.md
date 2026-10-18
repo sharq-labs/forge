@@ -5918,3 +5918,21 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
   removed): **8 passed** -- the provider `runtime_factory` path, which passes the scenario digest, is unchanged.
 - `src/engcore/system_runtime/authorities.py` is pinned in `certification/current_core_v2.json`: UNCERTIFIED until OD-3.
   Not run: FAST / SCIENTIFIC tiers, mutation, OD-3.
+- Independent read-only review (`forge-scientific-reviewer`, static): **CHANGES REQUIRED** -- M1 (an unbound run, no
+  digest and no scenario evidence, was admitted and could commit state inside an execution that has an authorized
+  scenario; a runtime factory can carry scenario-derived state without leaving evidence), M2 (out of scope:
+  `MultiscaleAuthority` binds no scenario / timeline / environment to the call context), m1 (top-level digest trusted
+  alone), m2/m3 (untested branch, vacuous assertions), N1 (factory built before the check). Acted on: M1 -- with an
+  authorized scenario the run must name exactly it, before the run and on the record; m1 -- every state transition,
+  scenario input, operating condition, QoI and termination receipt must carry the authorized digest; N1 -- the check runs
+  before the runtime factory; m2/m3 -- tests for a rewritten and a cleared digest, a providers hook, no vacuous asserts.
+  Recorded for follow-up: M2 (proposed OD-28), N2 (mutable `RuntimeContext`), N3 (refusals drop provider records).
+- After the review fixes: `python -m pytest -q -p no:cacheprovider tests/test_system_runtime_scenario_identity.py` ->
+  **14 passed**; against main's `authorities.py` -> **11 failed, 3 passed** (the admitted cases).
+  Related suites (as above, new file included) -> **5 failed, 228 passed** (the five #163 stub tests, now refused by the
+  pre-run rule because their stub `run_kwargs` name no scenario; #163's fixture names it). Merged locally with #163
+  (temporary, discarded; only `docs/work/PROGRESS.md` conflicted) -> **241 passed, 1 failed** (OD-26).
+  `providers/pybamm/tests/test_system_runtime_battery.py` -> **8 passed** (PyBaMM/TESPy installed for the run, removed).
+- Compatibility: inside a `SystemExecutor` run every `MultiphysicsAuthority` must now pass
+  `scenario_digest=<authorized digest>` in `run_kwargs`. In-tree: the PyBaMM kit and the battery flagship already do;
+  #163's fixture does; calls without an execution context (unit tests passing a bare call) are unaffected.

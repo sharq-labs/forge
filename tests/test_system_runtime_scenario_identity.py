@@ -127,7 +127,6 @@ def _refused_and_nothing_exposed(result, reason):
     assert result.observable("t").value is None
     assert len(result.state_history) == 1  # the initial state only: nothing was committed
     assert result.final_state.owner("cell").values[0].value.magnitude == pytest.approx(300.0)
-    assert receipt.artifacts == () and receipt.provider_records == ()
 
 
 # --------------------------------------------------------------------------------------------------- admitted
@@ -142,13 +141,25 @@ def test_the_authorized_scenario_is_admitted_and_commits(spelling):
     assert body.advanced == 1
 
 
-def test_a_run_that_does_not_depend_on_any_scenario_stays_admitted():
-    """The runtime's and the record's contract: no state, inputs, events or QoI from the scenario -> no binding needed."""
+def test_a_run_that_does_not_depend_on_any_scenario_is_admitted_when_it_names_the_authorized_one():
+    """No state, inputs, events or QoI from the scenario: the run still names the scenario it executes under."""
     body = _Body()
-    request, context = _request(body.runtime(), lambda call: {"external_inputs": {}}, owners=False)
+    request, context = _request(body.runtime(), _authorized, owners=False)
     result = SystemExecutor(context).run(request)
     assert result.status is RunStatus.SUCCEEDED, [(r.node_id, r.reason) for r in result.node_receipts]
     assert result.node_outputs["coupled"]["temperature"].value.magnitude == pytest.approx(305.0)
+
+
+def test_an_unbound_run_is_refused_inside_an_authorized_execution_even_without_scenario_evidence():
+    """Review M1: absence of scenario evidence on a record is no proof of independence (a runtime factory can bake
+    scenario-derived state or inputs into participants), so inside an execution with an authorized scenario a run
+    that names none is refused -- before anything runs."""
+    body = _Body()
+    request, context = _request(body.runtime(), lambda call: {"external_inputs": {}}, owners=False)
+    result = SystemExecutor(context).run(request)
+    receipt = result.receipt("coupled")
+    assert receipt.status is NodeStatus.FAILED and "names no scenario digest" in receipt.reason
+    assert result.node_outputs.get("coupled") is None and body.advanced == 0
 
 
 # --------------------------------------------------------------------------------------------------- refused before the run
@@ -190,7 +201,7 @@ def test_correct_run_id_graph_and_plan_but_a_substituted_scenario_is_refused_and
     assert body.advanced == 1  # it did run -- under the wrong scenario -- and nothing of it was admitted
 
 
-def test_a_replayed_record_of_another_scenario_is_refused_on_the_repeated_execution():
+def test_a_repeated_execution_that_returns_a_record_of_another_scenario_is_refused():
     body = _Body()
     inner = body.runtime()
     recorded = {}
@@ -219,6 +230,7 @@ def test_the_scenario_check_runs_before_outputs_artifacts_and_extractors():
     auth = MultiphysicsAuthority("od27-hooks", runtime, run_kwargs=_authorized, outputs={}, state_owners={"body": "cell"},
                                  extractors={"peak": lambda run, call: touched.append("extractor") or Quantity(305.0, "K")},
                                  artifacts=lambda run, call: touched.append("artifacts") or (),
+                                 providers=lambda run: touched.append("providers") or (),
                                  applicability=lambda run, call: touched.append("applicability") or (
                                      ApplicabilityReport("ok", "within", sha("e")),))
     context.authorities.register(auth)
@@ -231,3 +243,36 @@ def test_the_scenario_check_runs_before_outputs_artifacts_and_extractors():
     result = SystemExecutor(context).run(request)
     assert result.receipt("coupled").status is NodeStatus.FAILED and "is bound to scenario" in result.receipt("coupled").reason
     assert touched == []
+
+
+class _Rewriting(_Substituting):
+    """Runs genuinely under another scenario, then rewrites a field of the returned record after construction."""
+
+    def __init__(self, inner, rewrite):
+        super().__init__(inner, bind=lambda _given: OTHER_SCENARIO)
+        self._rewrite = rewrite
+
+    def run(self, run_id, **kwargs):
+        record = super().run(run_id, **kwargs)
+        self._rewrite(record)
+        return record
+
+
+def test_a_record_whose_digest_was_rewritten_to_the_authorized_one_is_refused_on_its_receipts():
+    """Review m1: the top-level digest alone is not trusted; every state transition must name the authorized scenario."""
+    body = _Body()
+    holder = {}
+    runtime = _Rewriting(body.runtime(), lambda record: object.__setattr__(record, "scenario_digest", holder["authorized"]))
+    request, context = _request(runtime, _authorized)
+    holder["authorized"] = context.scenario.digest
+    result = SystemExecutor(context).run(request)
+    _refused_and_nothing_exposed(result, "receipts bound to another scenario")
+
+
+def test_a_record_whose_digest_was_cleared_is_refused():
+    """Review m2: a scenario-driven record stripped of its digest after construction is not admitted."""
+    body = _Body()
+    runtime = _Rewriting(body.runtime(), lambda record: object.__setattr__(record, "scenario_digest", ""))
+    request, context = _request(runtime, _authorized)
+    result = SystemExecutor(context).run(request)
+    _refused_and_nothing_exposed(result, "is bound to scenario none")

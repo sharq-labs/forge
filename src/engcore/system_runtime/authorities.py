@@ -113,23 +113,28 @@ def _authorized_scenario_digest(call: NodeCall) -> str:
 def _scenario_refusal_before_run(kwargs: Mapping[str, Any], authorized: str) -> str:
     """Why the coupled run must not start under this call's scenario identity, or ''.
 
-    OD-27: a ``run_kwargs`` that names another scenario, or drives the run from the scenario (state, schedules,
-    conditions, events, terminations, quantities of interest) without naming the authorized one, is refused before
-    any participant executes -- a run known to be bound to the wrong scenario is never started.
+    OD-27: inside a system execution that has an authorized scenario, the run must name exactly that scenario --
+    another one, or none, is refused before any participant executes (scenario identity is required and is not
+    inferred; a runtime factory can carry scenario-derived state or inputs without leaving scenario evidence on
+    the record, so the absence of evidence is no proof of independence). Only a call with no authorized scenario
+    (no execution context) may run unbound, and then only without scenario-driven arguments.
     """
     supplied = str(kwargs.get("scenario_digest", "") or "").strip().lower()
-    if supplied:
-        if not authorized:
-            return ("the coupled run names a scenario, but this system execution supplies no authorized scenario to bind "
-                    "it to; nothing is run")
+    if authorized:
+        if not supplied:
+            return (f"the coupled run names no scenario digest, but this system execution is authorized for scenario "
+                    f"{authorized[:12]}..; scenario identity is required and is not inferred, so nothing is run")
         if supplied != authorized:
             return (f"the coupled run would be bound to scenario {supplied[:12]}.., not the authorized scenario "
                     f"{authorized[:12]}.. of this system execution; nothing is run")
         return ""
+    if supplied:
+        return ("the coupled run names a scenario, but this execution supplies no authorized scenario to bind it to; "
+                "nothing is run")
     driving = sorted(name for name in _SCENARIO_DRIVEN_RUN_ARGUMENTS if kwargs.get(name))
     if driving:
-        return (f"the coupled run is driven by the scenario ({', '.join(driving)}) but names no scenario digest; "
-                f"scenario identity is required and is not inferred, so nothing is run")
+        return (f"the coupled run is driven by a scenario ({', '.join(driving)}) but no scenario is authorized or named; "
+                f"nothing is run")
     return ""
 
 
@@ -137,17 +142,26 @@ def _scenario_refusal_after_run(run: Any, authorized: str) -> str:
     """Why a returned run record is not bound to this call's authorized scenario, or ''.
 
     Checked on the record itself, so a runtime that ignored, replaced or replayed the scenario it was given is
-    caught whatever its arguments said. A record that carries no scenario digest is admitted only when it carries
-    no scenario evidence either (no initial state, scheduled event, scenario input, operating condition, quantity
-    of interest or termination): the runtime's and the record's own contract, under which such a run does not
-    depend on any scenario.
+    caught whatever its arguments said: the run's digest must be the authorized one, and so must the digest every
+    scenario-bound receipt in it carries (state transitions, scenario inputs, operating conditions, quantities of
+    interest, termination) -- a record whose top-level digest was rewritten after construction is not admitted on
+    that field alone. With no authorized scenario, only a record with no scenario identity and no scenario
+    evidence is admitted.
     """
     bound = str(run.scenario_digest or "").strip().lower()
-    if bound:
+    receipts = (*run.state_transitions, *run.scenario_input_receipts, *run.operating_condition_receipts,
+                *run.quantities_of_interest, *(() if run.termination is None else (run.termination,)))
+    if authorized:
         if bound != authorized:
-            return (f"the coupled run is bound to scenario {bound[:12]}.., not the authorized scenario "
-                    f"{(authorized or 'none')[:12]}.. of this system execution; nothing is exposed")
+            return (f"the coupled run is bound to scenario {(bound or 'none')[:12]}.., not the authorized scenario "
+                    f"{authorized[:12]}.. of this system execution; nothing is exposed")
+        stray = sorted({str(item.scenario_digest).strip().lower() for item in receipts} - {authorized})
+        if stray:
+            return (f"the coupled run carries receipts bound to another scenario ({', '.join(d[:12] + '..' for d in stray)}); "
+                    f"nothing is exposed")
         return ""
+    if bound:
+        return "the coupled run is bound to a scenario, but this execution authorizes none; nothing is exposed"
     if (run.initial_state_receipts or run.scheduled_events or run.scenario_input_receipts
             or run.operating_condition_receipts or run.quantities_of_interest or run.termination is not None):
         return "the coupled run carries scenario evidence but no scenario identity; nothing is exposed"
@@ -250,14 +264,15 @@ class MultiphysicsAuthority(_Base):
 
     def execute(self, call: NodeCall) -> NodeOutcome:
         kwargs = dict(self._kwargs(call))
-        runtime = self._factory(call) if self._factory is not None else self.runtime
         if self._owners and self._factory is None and "initial_state" not in kwargs:
             kwargs["initial_state"] = self._initial_state(call)
-        # OD-27: scenario identity is admitted before anything runs, and again on the returned record below
+        # OD-27: scenario identity is admitted before anything is built or run (a runtime factory has side effects),
+        # and again on the returned record below
         authorized_scenario = _authorized_scenario_digest(call)
         refused = _scenario_refusal_before_run(kwargs, authorized_scenario)
         if refused:
             return NodeOutcome.failed(refused)
+        runtime = self._factory(call) if self._factory is not None else self.runtime
         t0 = time.perf_counter()
         run_id = call.run_id + "." + call.node.node_id
         run = runtime.run(run_id, **kwargs)  # refusals raise: the executor records a FAILED node
