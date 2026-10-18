@@ -18,9 +18,9 @@ supersedes: none
 
 ## Authority and reading order
 
-1. `CLAUDE.md` (scientific and engineering rules).
+1. `CLAUDE.md` (scientific and engineering rules) + [AI Context Map](../ai/CONTEXT_MAP.md) (what to read selectively).
 2. `docs/work/ACTIVE_PLAN.md` (the **only executable queue**, including active epic and owner permissions).
-3. `docs/work/PROGRESS.md` (evidence of commands, progress and failures).
+3. [PROGRESS Index](../ai/PROGRESS_INDEX.md) → targeted `docs/work/PROGRESS.md` sections (actual evidence of commands, progress and failures).
 4. [Pause checkpoint](PAUSE_RESUME_CHECKPOINT_2026_10_19.md) (historical situation and local file inventory).
 5. [Owner-decision matrix](RESUME_DECISION_REGISTER_2026_10_19.md) and [BVB handoff](BVB_RESUME_HANDOFF_2026_10_19.md) (navigation, NOT authorizations).
 6. `docs/project/FORGE_MASTER_PLAN.md`, `docs/discovery/FORGE_GENESIS.md`, capability-completion, performance and certification contracts as applicable.
