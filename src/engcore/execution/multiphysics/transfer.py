@@ -32,6 +32,7 @@ from ...scientific.results.uncertainty import (
     UncertaintySource,
 )
 from ...scientific.units.quantity import Quantity, base_unit, is_ratio_scale
+from ...scientific.semantics import TransportKind
 from ...scientific.results.uncertainty_mapping import (
     propagate_declared_mapping_uncertainty,
 )
@@ -182,7 +183,11 @@ class TransferEngine:
                 )
             arrived = source_value
             losses: Mapping[str, Quantity] = {}
-            if edge.conversion is not None:
+            if edge.transport is not None:
+                # Recheck the executed edge's declared meaning; no energy inference.
+                edge.transport.admit(source_port.semantics, target_port.semantics)
+                arrived, losses = edge.transport.transfer(source_value)
+            elif edge.conversion is not None:
                 outcome = edge.conversion.convert(source_value)
                 if outcome.value is None:
                     raise InvalidScientificProblem(
@@ -203,6 +208,8 @@ class TransferEngine:
                 instant=instant,
                 conversion=edge.conversion,
             )
+            if edge.transport is not None and edge.transport.kind is TransportKind.CONSERVED:
+                propagated = Uncertainty.unknown("declared transport fractions have no quantified coefficient uncertainty")
             return TransferResult(
                 edge_id=edge.edge_id,
                 value=target_value,
@@ -215,6 +222,8 @@ class TransferEngine:
             raise InvalidScientificProblem(
                 f"edge {edge.edge_id!r} expected FieldRecord source value"
             )
+        if source_value.definition != source_port.field:
+            raise InvalidScientificProblem("executed field definition differs from declared source port")
         source_mesh = self.meshes.get(source_port.field.mesh_id)
         target_mesh = self.meshes.get(target_port.field.mesh_id)
         if source_mesh is None or target_mesh is None:
@@ -229,6 +238,7 @@ class TransferEngine:
             target_port.field,
             target_mesh,
             edge.mapping,
+            interface_transfer=edge.interface_transfer,
         )
         value = mapped.record
 

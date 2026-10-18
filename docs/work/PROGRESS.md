@@ -5897,6 +5897,490 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
 - `python tools/forge_check.py --changed` escalated to a serial full run after the `pyproject.toml` / workflow change and
   was stopped after ~11 minutes; the FAST tier above was run instead.
 
+## 2026-10-18 - A-1/A-2/A-13 semantic compatibility, Phase A/B
+
+- Checkpoint branch preflight: clean at `02065a6dd25d16abdcac094f7c947148b954bc0e`;
+  credential-pattern scan of both branch commits: zero matches; 21 changed paths, no
+  temporary/credential artifacts. This bounded scan is not exhaustive secret detection.
+- `git push -u origin codex/checkpoint-integrity-hardening`: exit 0. Draft PR #158
+  https://github.com/sharq-labs/forge/pull/158 opened and attached; not merged.
+  IMPLEMENTED / UNVERIFIED / UNCERTIFIED labels preserved.
+- `git fetch origin main`: exit 0; latest origin/main remains `0284ae1`. New isolated
+  branch `codex/quantity-semantics` starts there, not from checkpoint hardening.
+- Proposal written before shared code: SEMANTIC_COMPATIBILITY_PROPOSAL.md.
+  Direct static consumer inventory: 39 src/provider/flagship files, exact baseline lines
+  in SEMANTIC_IMPACT_MATRIX.md; indirect/external consumers explicitly discussed.
+- Independent Phase A/B read-only review `/root/semantic_review`: PASS before shared
+  implementation, no HIGH/MEDIUM design finding. Review is not executed verification.
+- Frozen QuantityDependency/EnergyConversion shapes and stored identities will remain;
+  typed multiphysics scalar path is the bounded migration mechanism. Legacy aliases may
+  refuse and need explicit migration; no auto-alias/physics guessing or evidence promotion.
+- pytest/forge_check/provider solves/assurance/mutation/OD-3: NOT RUN by owner Build-First
+  policy. Only lightweight static checks authorized. No semantic gap is CLOSED.
+
+
+## 2026-10-18 semantic compatibility bounded implementation
+
+Branch codex/quantity-semantics is independently based on fetched origin/main
+0284ae161ad957d51674ee481e47cfd43d10c5f0. Checkpoint hardening remains clean at
+02065a6dd25d16abdcac094f7c947148b954bc0e, matching its origin tracking ref, and
+published as Draft PR #158; no merge. No checkpoint commits were combined here.
+
+Design/compatibility proposal and independent design PASS preceded shared source
+edits (design-only commit ab688c0f). Typed scalar meaning/role, structured transport,
+exact conserved measures and realized contribution bindings are implemented. Frozen
+QuantityDependency/EnergyConversion/LossPath exports and shapes are untouched.
+Legacy aliases fail closed unless exactly matched conversion forms; typed fields
+refuse pending A-3. UNKNOWN coefficients never imply lossless delivery or quantified
+uncertainty. All work IMPLEMENTED / UNVERIFIED / UNCERTIFIED; no gaps CLOSED.
+
+New adversarial fixtures cover semantic/role/identity/dimension refusal, actual named
+loss partitions, energy/mass/charge/species/momentum-component arithmetic, explicit
+fixture F*v power, thermal legacy intent, six /2 record schema boundaries and
+quantified-input/UNKNOWN-output uncertainty. Existing stiffness gap pin was strengthened
+into intended refusal, not weakened. Remaining legacy gap pins retain gap meaning.
+
+Independent read-only review by /root/semantic_review: static design PASS, patch
+PASS and final added-test addendum PASS. Resolved MEDIUM fixture construction issues:
+duplicate BalanceTerm names prevented reaching schema assertions; use distinct names.
+STANDARD/INTERVAL fixtures lacked mandatory method; add explicitly unqualified fixture
+method. These were source-inspection findings, not observed test failures. No outstanding
+HIGH/MEDIUM finding. Full A-J record: SEMANTIC_STATIC_REVIEW.md.
+
+Lightweight checks actually executed (PowerShell pipeline into bundled Python at
+C:/Users/dev_kaeem/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe):
+- Compile-only exact operation: for each .py in union of `git diff --name-only origin/main`
+  and `git ls-files --others --exclude-standard`, `compile(Path(name).read_bytes(), name, 'exec')`.
+  Result: 9 changed Python files compiled; no compiled code executed and no Forge import.
+- Exact command `git diff --check`: exit 0, no output.
+- Changed-file UTF-8 credential-pattern scan (private-key headers, GitHub token patterns,
+  AWS access key, sk token and quoted credential assignments): 0 matches; bounded,
+  not a security certification. Untracked inventory exactly five intended deliverables,
+  no temporary files. Exact total changed-file inventory 17, in SEMANTIC_MERGE_PACKAGE.md.
+- Checkpoint exact commands `git status --porcelain` and
+  `git rev-parse HEAD origin/codex/checkpoint-integrity-hardening`: clean and matching
+  02065a6dd25d16abdcac094f7c947148b954bc0e.
+
+Tests/provider execution/import checks/forge_check/full assurance/mutation/OD-3: NOT RUN.
+DV-107..112 record exact deferred recipes, avoiding checkpoint DV-101..106. Final
+integration needs consumer alias dispositions, normal CI and separately authorized
+certification on the final source. Do not regenerate pins merely to silence failures.
+
+Impact matrix now indexes 122 src/provider/flagship/test files with exact BASELINE line
+references, not a claim of complete dynamic/external discovery or consumer migration.
+Separate A-3 proposal uses unequal-cell integrated amounts (2,6): correct target(4,4),
+total8; wrong density interpretation(4,6),total10 despite weighted-integral preservation.
+Hand reasoning only; no mapping implementation/numerical execution. Next bounded task
+is declared scalar field-kind contract and compatibility review, then unequal-cell tests
+under separate execution authorization. Owner decisions and limitations are recorded in
+SEMANTIC_MERGE_PACKAGE.md; no automatic semantic push/PR/merge performed.
+
+
+## 2026-10-18 A-3 declared field kind mapping
+
+Semantic branch codex/quantity-semantics pushed at 98da0c024bd59bd0b18844941eafad3f1d24d428
+and opened as Draft PR #159 targeting main by owner authorization. Semantic worktree
+was clean before publication; no merge. Prior local-only publication note superseded.
+PR body records fail-closed legacy aliases, per-consumer migration and historical
+identity preservation. Checkpoint Draft PR #158 remains independent and unmerged.
+
+A-3 branch codex/declared-field-kind-mapping starts exactly at semantic98da0c02;
+dependency explicitly recorded. Architecture and 62-file exact-baseline consumer
+matrix committed before source edits (2e4fe486). No checkpoint commits combined.
+
+Implemented FieldSemantics using existing QuantitySemantics/ConservedQuantity;
+cell-average density, integrated amount and intensive have distinct operators/diagnostics.
+Flux/interface support/normal/orientation are declarations only, execution refuses
+pending A-4. Existing FieldMapper and new Grid1D adapter share the arithmetic kernel.
+Integrated amounts divide by source measure before overlap; densities divide by target
+measure. No dimensional inference, global rescaling or coverage extrapolation. UNKNOWN
+uncertainty retained; no local physical validity or certified capability claim.
+
+Compatibility: FieldDefinition typed /2 extension; untyped writer /1 retained; downgrade
+and incomplete typed payload refusal. Unit conversion retains semantics. Source record
+must match declared graph port. No frozen export/schema/certification manifest changed.
+Legacy conservative_cell calls without kind now refuse: existing Phase1/Phase2 fixtures
+require explicit owning-model migration before integration, not numerical expectation edits.
+
+Independent read-only scientific reviewer /root/a3_review: final static PASS plus
+read-only final-additions PASS. Corrections: MEDIUM legacy energy/prose requirement
+still applied to typed energy fields (guard with not typed_field, regression written);
+MEDIUM nonexistent numerical.errors test import (use numerical.core); LOW expected
+measure-refusal text; LOW overclaim that supplied grid digests authenticate stale value
+origin (corrected to caller-owned array origin); minor documentation qualified affine
+refusal as conserved-field-only. Unit-conversion reconstruction initially would drop
+new semantics; preserved explicitly before final review. None are executed test failures.
+
+Tests written for hand-derived (2,6)->(4,4),total8, density contrast(4,6), unequal cells,
+refinement/coarsening, partial coverage both directions, reversed axis/normal conventions,
+units, intensive affine average, unsupported kinds, stale supplied identities, actual
+source substitution, schema refusal and graph identity. Direct 2D tests distinguish
+operators. Declared unequal-volume tetrahedral permutation test added; 3D split/merge
+remains additional coverage. All tests NOT RUN. No gap CLOSED, A-4 remains open.
+
+Lightweight static checks actually executed via bundled Python
+C:/Users/dev_kaeem/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe:
+- For the .py union from `git diff --name-only 98da0c02` and
+  `git ls-files --others --exclude-standard`, exact operation
+  `compile(Path(name).read_bytes(), name, 'exec')`: 10 changed Python files compiled;
+  no compiled code executed and no Forge imports.
+- `git diff --check`: exit0, no whitespace errors (Git LF normalization notices only).
+No pytest, forge_check, mutation, numerical/provider execution, full assurance or OD-3.
+DV-113..116 record exact deferred recipes. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+
+Local Draft PR-ready package: A3_MERGE_PACKAGE.md, exact17-file inventory, no automatic
+A-3 push/PR/merge. A3_COMPATIBILITY_MATRIX.md includes exact current implementation
+lines and baseline consumers. No automatic historical relabeling. Remaining decisions:
+consumer migrations, test/OD-3 authorization, A-4 face/sign execution, vector/frame scope,
+adaptive lineage/history and 3D split/merge evidence. Integral conservation remains a
+transfer diagnostic, never a local physical validation result.
+
+
+Final packaging checks: compile-only repeated over all10 changed Python files, no
+Forge imports/execution; `git diff --check` exit0. Bounded changed-file credential
+pattern scan:0 matches; exact17 A-3 files, six intended new untracked deliverables
+at scan time and no temporary artifacts. Semantic worktree `git status --porcelain`
+clean; `git rev-parse HEAD origin/codex/quantity-semantics` both98da0c02. These static
+checks provide no scientific verification, validation or certification.
+
+
+## 2026-10-18 A-3 publication and A-4 interface execution
+
+A-3 clean at4f239fa7fe705e3d8ae390a8e885302dcb07904e; `git status --porcelain`
+empty. `git diff --check 98da0c02 HEAD` exit0. Bounded private-key/GitHub token/AWS/sk
+and quoted credential-assignment pattern scan over17 intended source/test/doc paths:
+0 matches; no untracked/temporary artifacts. Scan is not an exhaustive security audit.
+Pushed codex/declared-field-kind-mapping and opened Draft PR#160 against
+codex/quantity-semantics, NOT main, by explicit owner authorization. Dependency:
+main0284ae1 -> semanticPR#159/98da0c02 -> A-3PR#160/4f239fa7. No merge. Prior A-3
+local-only publication statement superseded. CheckpointPR#158 remains independent.
+
+A-4 new branch codex/interface-flux-execution based exactly on A-3 head4f239fa7.
+Architecture/Core compatibility decision and48-file baseline reference matrix committed
+before source changes: dab92bf0. Typed InterfaceTransfer binds physical meaning,
+conserved measure, density/integrated representation, support fingerprints, normals,
+orientations, common-plane embedding, full coverage and qualified rectangle method.
+Execution derives and applies normal/orientation sign through FieldMapper and
+TransferEngine. Integrated values divide by source area; densities use target area.
+No dimension-only meaning, unqualified projection, partial coverage or vector shortcut.
+
+Neutral Dirichlet-Neumann admission now uses exact quantity semantics. CHT is its
+explicit thermal wrapper; old prose-only/pre-signed conventions require migration.
+Typed CHT /2 report binds generic admission to graph identity and says transfer already
+applied sign. Edge /3 carries executable interface material; /1 and scalar /2 writers
+retain their shapes. 3D normal declaration on2D parameter mesh alone grants no execution.
+No frozen API exports, scientific evidence/UQ systems or certificate pins changed.
+
+Independent read-only scientific review /root/a4_review: final static PASS, no unresolved
+HIGH/MEDIUM defect in bounded source/tests. Resolved HIGH: interface mapper ignored
+requested roundtrip verification/limits; now uses A-3 same-kind reverse norm, finite/limit
+refusal and disabled-check-with-limit refusal. Resolved MEDIUM: integrated flux was
+misclassified as density in admission; exact branch corrected. Direct/graph regressions
+written. Preliminary port-frame finding retracted after confirming scalar ports forbid
+that independent frame; no unnecessary guard added. No observed test failures: NOT RUN.
+
+Written probes: opposing/same/reversed normals/orientations, unequal areas/discretizations,
+integrated vs density, incorrect-sign outward sum, full-coverage both ways, missing normal,
+orientation, unsupported geometry/vector/projection/method, stale support, units/meaning/
+kind mismatch, schema downgrade/material identity, roundtrip limits, identity sign and
+unit scaling, thermal CHT and nonthermal charge/potential. No provider/numerical execution.
+Constructed integral transfer residual is separate from UNKNOWN independent coupled
+physical conservation. Numerical solution verification and experimental validation remain
+unestablished. Spatial error/model discrepancy uncertainty stays UNKNOWN.
+
+Actual lightweight static checks: bundled Python
+C:/Users/dev_kaeem/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe
+compiled9 changed Python files from union of `git diff --name-only 4f239fa7` and
+`git ls-files --others --exclude-standard` using exact operation
+`compile(Path(name).read_bytes(), name, 'exec')`; no Forge imports or compiled code
+executed. `git diff --check` exit0 (LF normalization notices only). No pytest, forge_check,
+heavy provider runs, mutation, full assurance or OD-3. DV-117..120 record deferred recipes;
+DV-101..116 remain NOT RUN. All new work IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+
+A4_MERGE_PACKAGE.md records exact16-file inventory, compatibility limits and precise
+nextM1 task: lineage-bound 1D transfer plus reversible recorded-bisection coarsening,
+reusing A-3 arithmetic and existing data/provenance records; then the domain-owned
+transient FV/backward-Euler conduction reference. OD-6 permits building before DV0;
+scientific verification/validation and gate decisions require executed evidence.
+Owner decisions remain consumer migrations, integration/validation authorization,
+reference initial/boundary/material sources and final certification/gate decisions.
+Unstructured/curved/vector/moving interfaces and independent coupled physical balance
+remain open. No A-4 closure or E2 maturity claim. Local A-4 package, no auto publication/merge.
+
+
+Final A-4 packaging: compile-only repeated over9 Python files; `git diff --check`
+exit0. Bounded changed-file credential-pattern scan0 matches (not exhaustive), exact16
+A-4 files and four intended untracked deliverables at scan time; no temporary artifacts.
+A-3 worktree clean; HEAD and origin/codex/declared-field-kind-mapping both4f239fa7.
+No tests or scientific assurance executed. Local package remains UNVERIFIED/UNCERTIFIED.
+
+
+## 2026-10-18 A-4 publication and M1A lineage-bound adaptation
+
+A-4 clean at1f43c59eab717aa7cbfea672b948accb37f3cc50. `git merge-base HEAD
+codex/declared-field-kind-mapping` returned4f239fa7, `git diff --check 4f239fa7 HEAD`
+exit0 and status empty. Bounded credential/artifact scan over16 intended files found
+0 credential matches/no temporary artifacts. `git push -u origin codex/interface-flux-execution`
+succeeded; Draft PR#161 targets codex/declared-field-kind-mapping, NOT main. Stack
+main -> #159 -> #160 -> #161. No merge. Prior A-4 local-only publication note superseded.
+
+M1A branch codex/m1a-mesh-lineage is based exactly on A-4 head1f43c59e. Full M1/CDAR
+contract read; preimplementation architecture/compatibility decision cbecc2df. Adds
+explicit local lineage issuer and numerical/interval_transfer managed adapter; existing
+Grid1D/refine/adapt_grid identities and legacy guards unchanged. New deterministic
+material includes context/frame, parent versions, exact intervals, bisections and policy.
+Coarsening restores only exact recorded active siblings; no inferred ancestry. Captured
+canonical snapshots and same-object issuance refuse clones/nested tampering. Exported
+/1 audit records cannot authorize import or cross-process recovery.
+
+Managed content-addressed states reuse ScientificDataReference/BulkDataResolver,
+existing FieldSemantics and Uncertainty. Actual registered built-in dict/list solver
+cache and coupling-history contents cleared on mesh changes; stale handles/fields refuse.
+Exact immediate transition authorizes invalidated-source transfer, with populated or
+consumed destination refusal. Source byte integrity rechecked. A-3 map_cells_1d reused;
+independent coverage and actual amount totals guard admission. Intensive needs an explicit
+rule and never a conservation claim; affine units refused. Transfer uncertainty UNKNOWN.
+Caller initial values/context remain declarations, not authenticated source provenance.
+
+Independent /root/m1a_review static A-J PASS and addenda PASS. Three MEDIUM corrections:
+frame missing from mesh/state material (now root/version/state bound); repeated transfer
+could overwrite newer state (consume/refuse populated target); uncertainty seconds could
+bind kg state (check all supplied uncertainty dimensions). Legacy scope wording clarified
+without relaxing old guards. Explicit root context exported to make identity preimage
+auditable. These were source findings, not observed test failures. No outstanding
+scientific-authority/evidence-integrity finding reported in reviewed bounded source/tests.
+
+Tests written: unequal cells; refine-transfer-coarsen-transfer-back; density/amount kinds;
+fine information loss; deterministic export vs cross-issuer refusal; forged/missing/
+conflicting ancestry and sibling/geometry attacks; nested tampering; unrelated/partial
+supports; stale fields/receipt replay; actual cache/history clearing; byte corruption;
+affine units; misleading conserved/intensive diagnostics; unit conversion; frame identity;
+known-to-UNKNOWN UQ and incompatible uncertainty dimensions. Nodal arrays explicitly
+refuse interval-cell binding. All NOT RUN. No pytest, provider/numerical execution,
+forge_check, full assurance, mutation or OD-3. DV-121..124 added; prior DV-101..120 NOT RUN.
+
+Lightweight checks actually executed using bundled Python at
+C:/Users/dev_kaeem/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe:
+For .py union from `git diff --name-only 1f43c59e` and `git ls-files --others --exclude-standard`,
+exact `compile(Path(name).read_bytes(), name, 'exec')`:3 Python files compiled; no Forge
+imports or compiled code execution. `git diff --check` exit0. No scientific verification,
+validation or certification follows. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+
+Remaining M1 assessed against actual source: conduction1d_nonuniform is steady
+vertex-centred FV only. M1A state is primal interval-cell, not vertex dual-volume state;
+future adapter must explicitly bind dual supports to primal versions without inventing
+bisection ancestry. Then implement transient backward Euler/order1, sourced initial/
+material/boundary states, adaptive transient loop and actual numerical studies. Do not
+invent density/heat capacity or source provenance, infer conserved energy from kelvin,
+or recover arbitrary fine information after coarsening. M1 remains incomplete/MISSING.
+
+M1A_MERGE_PACKAGE.md records exact10-file inventory, compatibility matrix and remaining
+owner decisions: concrete dual-state placement design, source data/contexts, consumer and
+stack/checkpoint integration, deferred execution and final certification/gate decision.
+OD-6 permits bounded build before DV0. No M1A automatic publication/merge or maturity change.
+
+M1A final independent-review addendum PASS: a fourth MEDIUM static finding was
+corrected. Registry key aliases could hide a missing issued bisection; verify/lookup
+now bind requested/stored keys to record identities. Dedicated wrong-key regression
+written, NOT RUN. Current parent-chain records, missing ancestry and nodal-cell refusal
+were also reviewed. Four MEDIUM findings resolved in total; no outstanding finding
+reported within bounded static review. No scientific verification or M1 completion.
+
+M1A final lightweight checks (2026-10-18): compile(Path(name).read_bytes(), name,
+'exec') on the three changed Python files completed without execution or imports.
+`git diff --check 1f43c59eab717aa7cbfea672b948accb37f3cc50` exit0. Bounded
+credential-pattern scan over exact10-file inventory found zero matches; no additional
+untracked artifacts. Explicit `git merge-base --is-ancestor` checks confirmed each
+main -> semantic -> A-3 -> A-4 -> M1A edge. Scientific tests remain NOT RUN;
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. No merge or M1A publication.
+
+
+## 2026-10-18 M1A publication and M1B vertex dual state adapter
+
+M1A exact7f8cb5dac01cd7a270ef72886b77c8cddf717d3b clean; explicit ancestry checks
+main0284ae16 ->98da0c02 ->4f239fa7 ->1f43c59e ->M1A completed exit0. Bounded
+credential pattern scan over ten intended files found zero matches; no untracked
+artifacts; git diff --check 1f43c59e HEAD exit0. git push -u origin
+codex/m1a-mesh-lineage succeeded. gh pr create --draft --repo sharq-labs/forge
+--base codex/interface-flux-execution --head codex/m1a-mesh-lineage created
+https://github.com/sharq-labs/forge/pull/162; attached to task. Nothing merged.
+
+Created isolated managed worktree vertex-dual-state/phyx, branch
+codex/m1b-vertex-dual-state from exact M1A7f8cb5da. Owner explicitly decided
+vertex primary/dual conserved placement. Preimplementation architecture and Core
+compatibility decision4fb78436 before source. Independent read-only reviewer
+found no design blocker within declared adapter authority; existing source records
+remain caller declarations, not physical applicability/evidence.
+
+Added numerical/vertex_state.py only, no existing source modified. Compose M1A
+lineage/cache management; exact issued primal versions derive midpoint/end-point
+dual supports. Explicit placement counts distinguish vertex intensive vs dual
+density/integrated content. A-3 remap applied to dual boundaries, independent
+both-coverages/actual-total tolerance admission. No direct vertex interpolation,
+coefficient remap, area/material defaults or affine quantities. Explicit positive
+per-dual integrated linear storage binds exact primary/amount/optional density
+meanings; missing/unsupported normalized source artifacts refuse. Reuse existing
+KnowledgeSource/data/UQ records; output UQ UNKNOWN. This grants no scientific
+source authenticity or new evidence/provenance authority.
+
+Failed approaches found by static review (not observed executed failures): initially
+density conversion checked only conserved quantity, allowing different density
+meanings; now law explicitly binds optional exact density semantics. Initially
+ancestry traversal checked state/law records but could miss removed old support
+or primal invalidation issuance; now recursively require supports, mesh lineage,
+dual/primal transitions. Two MEDIUM findings corrected with dedicated probes.
+Independent /root/m1b_review final A-J PASS, no outstanding finding in bounded scope.
+No scientific verification follows. Mesh-change failure after primal mutation poisons
+adapter. Registered caches/history really clear; external sessions/concurrency unsupported.
+
+Authored tests include nonuniform/half duals/counts, constant density and primary via
+explicit storage, unequal amounts, refine/coarsen roundtrip/information loss, storage
+discontinuities, unit/species/context/placement mismatch, stale handles, missing source
+or ancestry, cloned records, real corrupt/missing bytes, false residuals and unsafe
+post-change failure. All NOT RUN. Compile-only checked both new Python files; no
+Forge imports/code execution. git diff --check exit0 at that checkpoint. Final bounded
+checks recorded separately below. DV-125..128 added, predecessor DV rows NOT RUN.
+
+Legacy require_supported_adaptation and all M1A/A-3/A-4 contracts unchanged. New explicit
+OD-6 /1 admission permits state operations only; not a transient policy bypass.
+M1C transient vertex FV/backward Euler with sourced physical inputs/BCs and numerical
+studies remains next, then adaptive transient orchestration and executed M1/CDAR gate.
+No provider execution/pytest/forge_check/full assurance/mutation/OD-3 or maturity change.
+M1B remains local Draft PR-ready, IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+
+M1B final lightweight checks: bundled Python compile(Path(name).read_bytes(), name,
+'exec') completed on two new Python files, without importing/executing Forge code.
+`git diff --check 7f8cb5dac01cd7a270ef72886b77c8cddf717d3b` exit0. Bounded credential
+pattern scan over exact nine intended files found zero matches; artifact inventory
+matched, no unexpected untracked files. Static AST counted 31 test functions;
+all NOT RUN. Deferred DV-125..128 paths checked for existence only. No numerical
+verification, physical validation, certification or M1 gate claim.
+
+
+## 2026-10-18 M1B publication and M1C bounded transient FV
+
+M1B exact9b092d563507b0de3563c4209d42d6fc0772ea0a clean, correct stack ancestry,
+exact nine-file inventory and bounded credential-pattern scan zero matches;
+git diff --check 7f8cb5da HEAD exit0. git push -u origin codex/m1b-vertex-dual-state
+completed. gh pr create --draft --repo sharq-labs/forge --base codex/m1a-mesh-lineage
+--head codex/m1b-vertex-dual-state created https://github.com/sharq-labs/forge/pull/165,
+attached to task. No earlier PR retargeted or merged. Checkpoint#158 independent.
+
+Created separate managed transient-fv-1d worktree/branch codex/m1c-transient-fv-1d
+from exact M1B. Mathematical/compatibility decision ef11c1da before source. Owner
+requested M1C only, not adaptive M1D or full M1. Added new thermal module only,
+preserving all prior production source. Distinct transient model/realization;
+explicit piecewise area/material/source, M1B dual storage, positive scalar
+phase-constant MaterialPropertySet resolution, exact source byte hashes, series
+conductivity/contact resistance. No rho/cp/area defaults or unsupported state dependence.
+Both-Neumann transient admitted through positive storage, steady refusal unchanged.
+
+Sparse tridiagonal BE through existing numerical protocol with domain-local sparse-only
+SuperLU provider. Existing SciPyLinearProvider's small-system dense conditioning path
+was rejected for this owner constraint; no existing provider changed. Conditioning
+unresolved, provider identity binds source and actual SuperLU binary plus library
+versions. Residuals never error bounds. Exact initial/current state/material/storage/
+source/clock/window/dt/build binding. Per-face opposite powers, explicit volumetric and
+boundary contributions, endpoint half-volume reservoir reactions. Failed attempts and
+partial publication poison continuation. No rollback/adaptation/history M1D guarantee.
+
+Independent forge-scientific-review skill/read-only /root/m1c_review: initial design
+no blocker, final A-J static PASS after corrections. Failed approaches found statically,
+not observed test failures: HIGH mixed Dirichlet K versus interior W rows/global norm
+could hide wrong endpoints and reactions closed tautologically; now power-scaled rows,
+explicit temperature tolerance and row-wise residual admission. HIGH live alternative
+storage2*C could change returned energy without assembly change; now exact storage ID/
+actual J/K bytes and initial clock bound. MEDIUM missing-boundary helper defaulted None
+to valid zero flux; direct malformed step fixture now covers it. All fixes reread.
+No scientific verification, validation or certification follows from review.
+
+Known integration hold M1C-C1: tests/test_core_guards.py walker163 and exact count
+pin199/assert534 expect19 models. New required model statically implies20. No execution
+or observed failure claimed; no certified pin edit or hidden/lazy model discovery.
+Owner compatibility/count-pin approval and separate certification handling required
+before integration. Other unexecuted failures remain unknown.
+
+Authored independent specified-flux/source energy balance, equilibrium/insulation,
+nonuniform half-volume/interface/contact tests, exponential transient temporal-order
+and sine/analytic-dual-source spatial refinement designs. Adversarial time/source/
+material/initial/BC/state/build/provider substitution, false residual, during-provider
+mutation and partial publication failure cases. No numerical expectation was tuned to
+observed runs. All tests NOT RUN. Compile-only source/tests checked without imports
+or execution. Final checks recorded below. DV-129..132 appended; earlier DV rows NOT RUN.
+M1C package local only, IMPLEMENTED / UNVERIFIED / UNCERTIFIED. M1D/full M1 incomplete.
+No pytest/provider solves/forge_check/full assurance/mutation/OD-3 executed.
+
+M1C final lightweight checks: bundled Python compile(Path(name).read_bytes(), name,
+'exec') completed for two new Python files without importing/executing their code.
+Static AST counted 28 authored test functions, all NOT RUN. Exact nine-file
+inventory and bounded credential-pattern scan zero matches; no unexpected artifacts.
+Deferred DV-129..132 paths checked for existence only. Direct git-show/base-byte
+comparison confirms old steady, M1B, numerical core/providers and certified model
+census guard unchanged. No numerical solve or scientific evidence produced.
+
+M1C final staged/static checks: `git diff --cached --check` and
+`git diff --check 9b092d563507b0de3563c4209d42d6fc0772ea0a` both exit0.
+Independent reviewer final addendum reread input validators, nonfinite/tensor
+fixtures and full package: PASS, no new authority/evidence-integrity finding;
+model-census integration hold remains. No commands/tests/imports by reviewer.
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED, NOT INTEGRATION-READY.
+
+## 2026-10-18 - Checkpoint integrity R1-R5 bounded repair (Build-First)
+
+- Base `0284ae161ad957d51674ee481e47cfd43d10c5f0`, isolated branch
+  `codex/checkpoint-integrity-hardening`, worktree
+  `C:/Users/dev_kaeem/.codex/worktrees/checkpoint-integrity/phyx`. Shared stale main
+  `a3f757e` and all pre-existing edits left untouched. No main merge/push.
+- Owner decisions: preserve strict same-participant seal; durable cross-process recovery is
+  separate; fail closed on required integrity/identity; preserve evidence/certification;
+  tests are written but NOT RUN. No full assurance, mutation, expensive suite or OD-3.
+- R1: mandatory provider codec of actual immutable continuation bytes (including resolution
+  and verification of referenced content); SHA-256 computed by Forge, not accepted as a cached
+  provider assertion. No automatic bytes-handle escape. No unsafe serializer.
+- R2: run/restore failures retire the runtime; callback/external application failures retire
+  wrappers. Safe record/foreign-object admission is separated from corrupt issued payloads.
+  Process-local object retirement blocks custom participant reuse in fresh runtimes.
+- R3: PyBaMM origin zero, requested/checkpoint/restored/solver time checks, current-state
+  fingerprint against alias edits, and failed-step retirement; y digest/build scope preserved.
+- R4: readable legacy references cannot resume without explicit build/problem; adoption
+  requires known execution context; both runners refuse observable within-call build drift;
+  cross-solver conversion requires the same canonical problem. Native declaration-only
+  adapter scope remains labelled and cannot replace a required expected/observed build.
+- R5: adversarial tests written, including review-driven counterexamples. Existing routing
+  fixtures now provide explicit identities; original routing/science expectations retained.
+  A corrupted PyBaMM session's subsequent attempt now expects permanent unusability.
+- Independent reviews 1/2: CHANGES REQUIRED, read-only, no execution. Rejected approaches
+  and dispositions are in CHECKPOINT_HARDENING.md; follow-up review pending.
+- Deferred commands DV-101..DV-106 added; DV-100 then DV-99 remain first. All pytest,
+  forge_check, tiers, provider solves, assurance, mutation and OD-3: NOT RUN.
+- Environment observation: `python --version` returned exit 1 (Windows Store alias; no
+  interpreter there). Used bundled Python for editing and compile-only static inspection.
+- Static command executed (exit 0):
+  `& 'C:/Users/dev_kaeem/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe' -c "import pathlib,subprocess; names=subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()+subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).splitlines(); paths=sorted({n for n in names if n.endswith('.py')}); [compile(pathlib.Path(p).read_bytes(),p,'exec') for p in paths]; print('Static compilation only:',len(paths),'Python files; no modules imported or executed')"`
+  Result: 15 changed Python files compiled as source; no Forge/provider modules imported,
+  no tests or numerical code executed. This is syntax evidence only.
+- Static command `git diff --check` executed, exit 0, no output. Later edits require final
+  repeat of these static checks; no scientific verification or certification is claimed.
+
+### Final independent disposition and package
+
+- Independent reviewer `/root/checkpoint_review`: PASS after review-driven repairs; no
+  outstanding HIGH/MEDIUM finding. Report: CHECKPOINT_HARDENING_REVIEW.md. No tests ran.
+- Final inventory: 21 files (8 implementation, 7 test, 6 documentation). Exact paths, PR
+  title/body, compatibility/limits and merge requirements: CHECKPOINT_HARDENING_MERGE_PACKAGE.md.
+- Final static repeat: the exact compile-only command recorded above executed again,
+  exit 0, 15 changed Python files; `git diff --check`, exit 0, no output. Syntax and
+  whitespace only. pytest/forge_check/provider solves/full tiers/mutation/assurance/OD-3: NOT RUN.
+- No source evidence, frozen snapshots, certificates, workflows or scientific acceptance
+  thresholds regenerated. No capability promotion. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+- Next recommended bounded task: A-1/A-2/A-13 semantic compatibility proposal, then A-3
+  declared-field-kind overlap rules. No additional implementation authorized by this slice.
+
+- Failed documentation approach: a default-encoding whole-file read/write altered historical
+  non-ASCII text in PROGRESS. Restored the exact baseline bytes and appended only this task's
+  ASCII entries. Do not normalize historical evidence logs through locale-dependent text IO.
+  Correction changes documentation only; independently reviewed implementation is unchanged.
+
 ### 2026-10-18 -- Batch 4: real coupled runs for five system-runtime tests; forward-tear reachability (branch `fix/batch4-system-runtime-real-runs`)
 
 - Base `main` `4e339b5f8728088816a2584fe203b9b203a7b15e`; Linux, CPython 3.13.16, numpy 2.5.3, scipy 1.18.1,

@@ -20,7 +20,7 @@ OTHER_PROBLEM = "2" * 64
 
 
 class Backend:
-    def __init__(self, solver_id, outcomes, build="", accepts_converted=False):
+    def __init__(self, solver_id, outcomes, build="", accepts_converted=False, problem_digest=PROBLEM):
         self.solver_id = solver_id
         self.solver_build = build
         self.accepts_converted_checkpoints = accepts_converted
@@ -144,7 +144,8 @@ def test_build_drift_between_attempts_is_refused():
     a = Drifting("a", [_adv(AttemptState.CONVERGED, 1.0), _adv(AttemptState.CONVERGED, 1e-4)], build="a@1")
     b = Backend("b", [_adv(AttemptState.CONVERGED, 1e-4)], build="b@1")
     report = _adaptive(a, b)
-    assert "a:build_drift_a@1_to_a@2_refused" in report.problems
+    # R4 refuses at the end of the first call, before it could adopt a checkpoint.
+    assert "a:execution_build_drift_refused" in report.problems
     assert len(a.received) == 1
 
 
@@ -152,13 +153,13 @@ def test_a_qualified_conversion_carries_state_only_into_a_backend_that_accepts_i
     checkpoint = CheckpointReference("a:cp", "a" * 64, "a", "a@1", PROBLEM)
     conversion = CheckpointConversion("a-to-b", "a", "a@1", "b", "b@1", "same state variables, verified mapping")
     assert converted_resume_point(checkpoint, solver_id="b", solver_build="b@1", conversions=(conversion,),
-                                  accepts_converted=True) == (checkpoint, conversion)
+                                  accepts_converted=True, problem_digest=PROBLEM) == (checkpoint, conversion)
     assert converted_resume_point(checkpoint, solver_id="b", solver_build="b@1", conversions=(conversion,),
-                                  accepts_converted=False) == (None, None)
+                                  accepts_converted=False, problem_digest=PROBLEM) == (None, None)
     assert converted_resume_point(checkpoint, solver_id="b", solver_build="b@2", conversions=(conversion,),
-                                  accepts_converted=True) == (None, None)
+                                  accepts_converted=True, problem_digest=PROBLEM) == (None, None)
     assert converted_resume_point(checkpoint, solver_id="b", solver_build="b@1", conversions=(),
-                                  accepts_converted=True) == (None, None)
+                                  accepts_converted=True, problem_digest=PROBLEM) == (None, None)
 
 
 def test_a_conversion_needs_both_builds_and_a_qualification():

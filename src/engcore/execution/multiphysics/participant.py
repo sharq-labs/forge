@@ -53,6 +53,10 @@ class InitializationResult:
     initial_state_receipt: InitialStateReceipt | None = None
 
 
+class CheckpointIntegrityError(InvalidScientificProblem):
+    """Issued continuation payload changed; it may alias the live solver state."""
+
+
 @dataclass(frozen=True)
 class AdvanceRequest:
     start: Quantity
@@ -464,9 +468,11 @@ class CallbackParticipant:
         public_state: Callable[[Quantity], tuple[StateVariableValue, ...]] | None = None,
         checkpoint: Callable[[Quantity], RuntimeCheckpoint] | None = None,
         restore: Callable[[RuntimeCheckpoint], None] | None = None,
+        restore_admission: Callable[[RuntimeCheckpoint], None] | None = None,
         finalize: Callable[[], None] | None = None,
     ) -> None:
         self._spec = spec
+        self._unusable_reason = ""
         self._initialize = initialize
         conditions = tuple(operating_condition_definitions)
         if any(
@@ -507,6 +513,7 @@ class CallbackParticipant:
         self._advance = advance
         self._checkpoint = checkpoint
         self._restore = restore
+        self._restore_admission = restore_admission
         self._finalize = finalize or (lambda: None)
         if spec.checkpointable and (checkpoint is None or restore is None):
             raise InvalidScientificProblem(
@@ -521,12 +528,21 @@ class CallbackParticipant:
     def spec(self) -> ParticipantSpec:
         return self._spec
 
+    def invalidate(self, reason: str) -> None:
+        """Permanently retire state after an unsafe runtime restoration."""
+        self._unusable_reason = self._unusable_reason or str(reason) or "indeterminate state"
+
+    def require_usable(self) -> None:
+        if self._unusable_reason:
+            raise InvalidScientificProblem(f"participant {self.spec.participant_id!r} is unusable: {self._unusable_reason}")
+
     def initialize(
         self,
         instant: Quantity,
         external_inputs: Mapping[str, CouplingValue],
         external_uncertainty: Mapping[str, Uncertainty],
     ) -> InitializationResult:
+        self.require_usable()
         validate_inputs(self.spec, external_inputs, external_uncertainty)
         result = self._initialize(instant, external_inputs, external_uncertainty)
         if not isinstance(result, InitializationResult):
@@ -567,6 +583,7 @@ class CallbackParticipant:
     def apply_operating_conditions(
         self, instant: Quantity, values: Mapping[str, OperatingConditionValue]
     ) -> tuple[OperatingConditionValue, ...]:
+        self.require_usable()
         if self._apply_operating_conditions is None:
             raise InvalidScientificProblem(
                 f"participant {self.spec.participant_id!r} does not consume "
@@ -577,6 +594,7 @@ class CallbackParticipant:
     def apply_parameters(
         self, values: Mapping[str, ParameterValue]
     ) -> tuple[ParameterValue, ...]:
+        self.require_usable()
         if self._apply_parameters is None:
             raise InvalidScientificProblem(
                 f"participant {self.spec.participant_id!r} does not accept "
@@ -586,11 +604,13 @@ class CallbackParticipant:
 
     def state_identity(self, instant: Quantity) -> str | None:
         """This adapter's declared state digest, or ``None`` if it declares none."""
+        self.require_usable()
         if self._state_identity is None:
             return None
         return self._state_identity(instant)
 
     def public_state(self, instant: Quantity) -> tuple[StateVariableValue, ...]:
+        self.require_usable()
         if self._public_state is None:
             return ()
         return tuple(self._public_state(instant))
@@ -600,6 +620,7 @@ class CallbackParticipant:
         external_inputs: Mapping[str, CouplingValue],
         external_uncertainty: Mapping[str, Uncertainty],
     ) -> InitializationResult:
+        self.require_usable()
         if self._initialize_state is None:
             raise InvalidScientificProblem(f"participant {self.spec.participant_id!r} does not accept explicit initial state")
         expected = {item.variable_id: item for item in self._initial_state_definitions}
@@ -623,6 +644,7 @@ class CallbackParticipant:
         return result
 
     def advance(self, request: AdvanceRequest) -> AdvanceResult:
+        self.require_usable()
         validate_inputs(self.spec, request.inputs, request.input_uncertainty)
         result = self._advance(request)
         if not isinstance(result, AdvanceResult):
@@ -639,6 +661,7 @@ class CallbackParticipant:
         return result
 
     def checkpoint(self, instant: Quantity) -> RuntimeCheckpoint:
+        self.require_usable()
         if self._checkpoint is None:
             raise InvalidScientificProblem(
                 f"participant {self.spec.participant_id!r} is not checkpointable"
@@ -649,13 +672,25 @@ class CallbackParticipant:
         return checkpoint
 
     def restore(self, checkpoint: RuntimeCheckpoint) -> None:
+        self.require_usable()
         if self._restore is None:
             raise InvalidScientificProblem(
                 f"participant {self.spec.participant_id!r} is not checkpointable"
             )
         if checkpoint.record.participant_id != self.spec.participant_id:
             raise InvalidScientificProblem("cannot restore another participant's checkpoint")
-        self._restore(checkpoint)
+        # Admission is read-only. Failure here never applied solver state.
+        if self._restore_admission is not None:
+            try:
+                self._restore_admission(checkpoint)
+            except CheckpointIntegrityError:
+                self.invalidate("issued checkpoint payload is corrupt and may alias live state")
+                raise
+        try:
+            self._restore(checkpoint)
+        except BaseException:
+            self.invalidate("restore application failed; participant state is indeterminate")
+            raise
 
     def finalize(self) -> None:
         self._finalize()

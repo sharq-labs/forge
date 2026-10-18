@@ -26,6 +26,7 @@ import numpy as np
 from engcore.coupling import ParticipantStateContract, StateCompleteness
 from engcore.execution.multiphysics import AdvanceResult, CallbackParticipant, InitializationResult
 from engcore.execution.multiphysics.external import CheckpointSeal, checkpoint_scope
+from engcore.execution.multiphysics.participant import CheckpointIntegrityError
 from engcore.providers import ProviderExecutionIdentity, ProviderRefusal, require_library_unchanged
 from engcore.scientific.multiphysics.receipts import StateVariableValue
 from engcore.scientific.results.uncertainty import Uncertainty
@@ -83,7 +84,7 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
     sim = pybamm.Simulation(getattr(pybamm.lithium_ion, model)(options=options), parameter_values=pv,
                             solver=pybamm.IDAKLUSolver(rtol=1e-6, atol=1e-8))
     sim.build()
-    held: dict = {"solution": None}
+    held: dict = {"solution": None, "integrity": "none"}
     log = log if log is not None else []
     unknown = Uncertainty.unknown("PyBaMM output uncertainty is not quantified")
     contract = ParticipantStateContract(spec.participant_id, ("soc",), ("soc",), StateCompleteness.DECLARED_COMPLETE, COMPLETENESS_BASIS)
@@ -112,6 +113,7 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
         return hashlib.sha256(np.ascontiguousarray(np.asarray(sol.last_state.y, dtype="<f8")).tobytes()).hexdigest()
 
     def digest() -> str:
+        require_current_integrity()
         return digest_of(held["solution"])
 
     def integrity_of(sol) -> str:
@@ -122,11 +124,46 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
         arrays = (sol.last_state.y, sol.last_state.t, sol.t[-1:])
         return hashlib.sha256(b"".join(np.ascontiguousarray(np.asarray(a, dtype="<f8")).tobytes() for a in arrays)).hexdigest()
 
-    def initialize(_instant, _inputs, _uq):
+    def require_current_integrity() -> None:
+        # A checkpoint may alias the held Solution. Mutation is unsafe even if
+        # nobody attempts restore; never execute that edited live state.
+        try:
+            intact = integrity_of(held["solution"]) == held["integrity"]
+        except BaseException:
+            participant.invalidate("PyBaMM live continuation state cannot be fingerprinted")
+            raise
+        if not intact:
+            participant.invalidate("PyBaMM live continuation state changed outside execution")
+            raise CheckpointIntegrityError("PyBaMM live continuation state is corrupt")
+
+    def require_clock(actual: float, expected: float, label: str) -> None:
+        # Time is a coordinate, not a solver-error tolerance. Allow only float
+        # representation roundoff (PyBaMM may nextafter a continuation start).
+        if (not math.isfinite(actual) or not math.isfinite(expected)
+                or abs(actual - expected) > 64 * max(math.ulp(actual), math.ulp(expected))):
+            raise ProviderRefusal(f"PyBaMM {label} clock {actual} s disagrees with physical time {expected} s")
+
+    def clock_of(sol) -> float:
+        if sol is None:
+            return 0.0  # this adapter's explicit supported initial physical origin
+        end = float(sol.t[-1])
+        require_clock(float(sol.last_state.t[-1]), end, "continuation")
+        return end
+
+    def initialize(instant, _inputs, _uq):
+        require_current_integrity()
+        require_library_unchanged(status, "pybamm")
+        require_clock(float(instant.magnitude_in("s")), 0.0, "initial origin")
+        require_clock(clock_of(held["solution"]), 0.0, "initial state")
         return InitializationResult({"heat": Quantity(0.1, "W")}, {"heat": unknown},
                                     diagnostics={"classification": "declared_initial_iterate_not_a_result"})
 
     def advance(request):
+        require_current_integrity()
+        start, end = float(request.start.magnitude_in("s")), float(request.end.magnitude_in("s"))
+        if not math.isfinite(start) or not math.isfinite(end) or end <= start:
+            raise ProviderRefusal("PyBaMM requires a finite, increasing physical time interval")
+        require_clock(clock_of(held["solution"]), start, "request start")
         if "temperature" not in request.inputs:
             raise ProviderRefusal("cell needs the coupled temperature; it is never defaulted")
         T = float(request.inputs["temperature"].to("K").magnitude)
@@ -142,15 +179,21 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
                                                                       "model_options": options,
                                                                       "declared_initial_heat_iterate_W": "0.1 (seeds iteration 1 only)"},
                                                        output_request=("heat", "soc"))
-        sol = sim.solver.step(held["solution"], sim.built_model, dt, npts=points, inputs=inputs, save=False)
-        if float(sol.t[-1] - sol.t[0]) < dt - 1e-6:
-            raise ProviderRefusal(f"PyBaMM stopped early in [{request.start}, {request.end}] (event); window refused")
+        try:
+            sol = sim.solver.step(held["solution"], sim.built_model, dt, npts=points, inputs=inputs, save=False)
+            require_library_unchanged(status, "pybamm")
+            require_clock(float(sol.t[0]), start, "solver start")
+            require_clock(clock_of(sol), end, "solver end (early termination is refused)")
+        except BaseException:
+            participant.invalidate("PyBaMM step failed or returned inconsistent time")
+            raise
         heat_t = np.asarray(sol["Total heating [W]"].entries, dtype=float)
         t = np.asarray(sol.t, dtype=float)
         heat = float(np.trapezoid(heat_t, t) / (t[-1] - t[0]))
         if not np.isfinite(heat):
             raise ProviderRefusal("non-finite PyBaMM heat")
         held["solution"] = sol
+        held["integrity"] = integrity_of(sol)
         v_t = np.asarray(sol["Voltage [V]"].entries, dtype=float)
         log.append({"execution_identity": ident.digest, "window": problem["window_s"], "T_K": T, "heat_W": heat, "soc": soc_of(sol),
                     "current_A": float(current.to("A").magnitude), "voltage_V_mean": float(np.trapezoid(v_t, t) / (t[-1] - t[0])),
@@ -162,17 +205,28 @@ def cell_participant(registry, spec, *, parameter_set_name: str, model: str, ini
                              diagnostics={"execution_identity": ident.digest, "soc_end": repr(soc_of(sol))})
 
     def checkpoint(instant):
+        require_library_unchanged(status, "pybamm")
+        require_clock(clock_of(held["solution"]), float(instant.magnitude_in("s")), "checkpoint")
         return seal.seal(instant, state_digest=digest(), deterministic_restore=True, slot=slot, state=held["solution"])
 
-    def restore(cp):
+    def admit_restore(cp):
         # The digest (and the y/t integrity fingerprint) is recomputed from the token's own Solution, never taken from
         # the record alone.  The issued Solution is held as is, not copied: solver.step starts a new Solution from it,
         # and an issued y or t edited in place fails this recomputation on the next restore (executed tests).
-        held["solution"] = seal.admit(cp, slot_of=lambda _sol: slot, digest_of=digest_of, state_type=(type(None), pybamm.Solution),
-                                      label="PyBaMM")
+        require_library_unchanged(status, "pybamm")
+        restored = seal.admit(cp, slot_of=lambda _sol: slot, digest_of=digest_of, state_type=(type(None), pybamm.Solution),
+                              label="PyBaMM")
+        require_clock(clock_of(restored), float(cp.record.instant.magnitude_in("s")), "restore")
+        return restored
+
+    def restore(cp):
+        restored = admit_restore(cp)
+        held["solution"] = restored
+        held["integrity"] = integrity_of(restored)
 
     participant = CallbackParticipant(
         spec, initialize=initialize, advance=advance, checkpoint=checkpoint, restore=restore, state_identity=lambda _t: digest(),
+        restore_admission=lambda cp: admit_restore(cp),
         public_state=lambda _t: (StateVariableValue("soc", Quantity(soc_of(held["solution"]), "dimensionless"),
                                                     Uncertainty.unknown(f"SOC by the declared definition: {SOC_DEFINITION}")),))
     participant.state_contract = contract
