@@ -121,7 +121,10 @@ COUPLING_PATHS: tuple[CouplingPath, ...] = (
         "of MultiphysicsRuntime; the runtime decides convergence",
     ),
     CouplingPath(
-        "precice_scalar_two_way", "forge_precice", CouplingPathStatus.EXTERNAL_ENGINE,
+        # The repository path of the separate preCICE adapter distribution, not
+        # its import name: src/ may not name an adapter package (core layering
+        # guard), and this record only says where the external engine lives.
+        "precice_scalar_two_way", "providers/precice", CouplingPathStatus.EXTERNAL_ENGINE,
         "preCICE runs the iterations between separate participant processes from a Forge-rendered "
         "ScalarTwoWayContract; Forge accepts the record only if preCICE converged AND its own fixed-point residual "
         "check on the exchanged values passes",

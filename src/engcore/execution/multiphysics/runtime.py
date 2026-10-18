@@ -2356,10 +2356,16 @@ class MultiphysicsRuntime:
 
                 nominal = current + width
                 drift += _float_spacing(width)
+                # One iterable, never `min(end_exact, *pending)`: with nothing
+                # pending that call receives a single Fraction and tries to
+                # iterate it, which failed every run without a future event or
+                # condition change.
                 forced = min(
-                    end_exact,
-                    *(item for item in event_exact if item > current),
-                    *(item for item in change_exact if item > current),
+                    (
+                        end_exact,
+                        *(item for item in event_exact if item > current),
+                        *(item for item in change_exact if item > current),
+                    )
                 )
                 if forced <= nominal:
                     target = forced

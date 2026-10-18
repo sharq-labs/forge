@@ -65,8 +65,11 @@ def test_every_declared_coupling_path_names_a_module_that_exists():
     for path in COUPLING_PATHS:
         if path.module.startswith("engcore."):
             importlib.import_module(path.module)
-        else:  # a provider package outside src (forge_precice): it exists in the repository
-            assert any(root.glob(f"providers/*/{path.module}/__init__.py")), path.module
+        else:  # a provider distribution outside src, named by its repository path: it exists
+            assert path.module.startswith("providers/"), path.module
+            distribution = root / path.module
+            assert (distribution / "pyproject.toml").is_file(), path.module
+            assert any(distribution.glob("*/__init__.py")), path.module
 
 
 def test_the_electrothermal_loop_is_declared_not_migrated_with_its_remaining_work():

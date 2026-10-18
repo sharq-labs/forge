@@ -115,8 +115,13 @@ class InterfaceQuasiNewton:
             self.non_routine = True
         self.events.append({"window_index": self._window_index, "action": action, "reason": reason})
 
-    def _discard(self, reason: str) -> None:
-        if self._carried is not None:
+    def _discard(self, reason: str, *, staged: bool = False) -> None:
+        # Logged when an approximation is actually dropped: one carried from an
+        # earlier window, or one staged from this window's secant pairs that a
+        # rejected or non-converged attempt will never hand on. Dropping the
+        # staged one silently left no trace of why the next window started
+        # from constant relaxation.
+        if self._carried is not None or staged:
             self._log("imvj_discarded", reason)
         self._carried = None
         self._carried_key = None
@@ -144,12 +149,16 @@ class InterfaceQuasiNewton:
         if not self.imvj:
             return
         if not accepted:
+            had_staged = self._staged is not None
             self._staged = None
-            self._discard(f"attempt rejected and rolled back: {reason}" if reason else "attempt rejected and rolled back")
+            self._discard(f"attempt rejected and rolled back: {reason}" if reason else "attempt rejected and rolled back",
+                          staged=had_staged)
             return
         if not converged:
+            had_staged = self._staged is not None
             self._staged = None
-            self._discard("the accepted window did not converge; its secant information is not carried")
+            self._discard("the accepted window did not converge; its secant information is not carried",
+                          staged=had_staged)
             return
         if self._staged is None:
             return

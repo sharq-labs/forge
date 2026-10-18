@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   scope:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       mode: ${{ steps.scope.outputs.mode }}
       delegate_to_recertify: ${{ steps.scope.outputs.delegate_to_recertify }}
@@ -52,7 +52,7 @@ jobs:
 
   repo-layout:
     name: repository layout
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Enforce documentation layout
@@ -88,7 +88,7 @@ jobs:
     needs: scope
     if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
     name: fast (py ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -116,7 +116,7 @@ jobs:
   mutations:
     needs: scope
     if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -132,7 +132,7 @@ jobs:
   scientific:
     needs: scope
     if: needs.scope.outputs.mode == 'ordinary' || needs.scope.outputs.mode == 'full_suite'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -159,7 +159,7 @@ jobs:
   certificate-child:
     needs: scope
     if: needs.scope.outputs.mode == 'certificate_child'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -198,7 +198,7 @@ jobs:
       - scientific
       - certificate-child
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -218,7 +218,7 @@ jobs:
 
   reproduce:
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -233,7 +233,7 @@ jobs:
 
   benchmark:
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5

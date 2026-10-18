@@ -89,6 +89,15 @@ class _Evaluation(Exception):
     """An arithmetic failure inside a caller's residual or Jacobian (classified NON_FINITE)."""
 
 
+#: What a caller's residual or Jacobian may raise when evaluated where it is not
+#: defined. ``ValueError`` is here because the standard library reports a domain
+#: error that way -- ``math.log(-1.0)``, ``math.sqrt(-1.0)`` -- where numpy returns
+#: NaN for the same input. Both are the same mathematical event and are
+#: classified the same way; the exception type and text are kept in the record.
+#: A refusal (``ScientificCoreError``) is not a ``ValueError`` and still propagates.
+_EVALUATION_ERRORS = (ArithmeticError, ValueError)
+
+
 class DampedNewtonProvider(NumericalProvider):
     """Newton / Newton with Armijo backtracking on square NONLINEAR_ROOT problems (see the module docstring)."""
 
@@ -125,7 +134,7 @@ class DampedNewtonProvider(NumericalProvider):
         try:
             with np.errstate(all="ignore"):
                 return function(x.copy())
-        except ArithmeticError as exc:  # ZeroDivisionError, OverflowError, FloatingPointError
+        except _EVALUATION_ERRORS as exc:  # ZeroDivisionError, OverflowError, FloatingPointError, domain ValueError
             raise _Evaluation(f"{type(exc).__name__}: {exc}") from exc
 
     def _residual(self, f: Callable, x: np.ndarray, n: int) -> np.ndarray:
@@ -222,6 +231,24 @@ class DampedNewtonProvider(NumericalProvider):
                 step_lengths=tuple(lengths),
             )
 
+        def trial_residual(point: np.ndarray) -> np.ndarray | None:
+            """The residual at a line-search trial point, or None where it cannot be evaluated.
+
+            A trial point outside the residual's domain (``math.log`` of a
+            negative number, a division by zero) is the same event as a
+            non-finite residual there, and is backtracked from the same way --
+            not a reason to abandon a solve whose current iterate is fine. The
+            first such failure is noted in the record. Only ``newton_armijo``
+            backtracks; plain ``newton`` still ends DIVERGED / NON_FINITE.
+            """
+            try:
+                return self._residual(f, point, n)
+            except _Evaluation as exc:
+                note = f"a line-search trial point could not be evaluated ({exc}); it was backtracked like a non-finite residual"
+                if not any(item.startswith("a line-search trial point could not be evaluated") for item in notes):
+                    notes.append(note)
+                return None
+
         def fail(state: ConvergenceState, failure: NumericalFailureClass, reason: str) -> NumericalExecutionRecord:
             return failed(problem, self.identity, method, state, diagnostics(failure, reason), reason)
 
@@ -252,13 +279,16 @@ class DampedNewtonProvider(NumericalProvider):
                                 "the Newton system J dx = -F could not be solved (singular or non-finite step)")
                 alpha = 1.0
                 trial = x + step
-                f_trial = self._residual(f, trial, n)
+                if method.method == "newton_armijo":
+                    f_trial = trial_residual(trial)
+                else:
+                    f_trial = self._residual(f, trial, n)
                 evaluations["f"] += 1
                 if method.method == "newton_armijo":
                     phi0 = 0.5 * float(np.sum((weights * fx) ** 2))
                     accepted = False
                     for backtrack in range(config["max_backtracks"] + 1):
-                        if np.all(np.isfinite(f_trial)):
+                        if f_trial is not None and np.all(np.isfinite(f_trial)):
                             phi = 0.5 * float(np.sum((weights * f_trial) ** 2))
                             if phi <= phi0 - 2.0 * config["c1"] * alpha * phi0:
                                 accepted = True
@@ -267,7 +297,7 @@ class DampedNewtonProvider(NumericalProvider):
                             break
                         alpha *= config["backtrack"]
                         trial = x + alpha * step
-                        f_trial = self._residual(f, trial, n)
+                        f_trial = trial_residual(trial)
                         evaluations["f"] += 1
                     if not accepted:
                         return fail(ConvergenceState.NOT_CONVERGED, NumericalFailureClass.LINE_SEARCH_FAILED,
@@ -313,7 +343,7 @@ def acceptance_measure(problem: NumericalProblem, record: NumericalExecutionReco
     with np.errstate(all="ignore"):
         try:
             value = np.asarray(problem.operands["residual"](x.copy()), dtype=float).reshape(-1)
-        except ArithmeticError:
+        except _EVALUATION_ERRORS:
             return math.inf
     return scaling.measure(value)
 

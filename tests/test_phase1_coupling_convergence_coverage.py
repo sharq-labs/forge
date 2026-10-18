@@ -133,7 +133,9 @@ def test_an_implicit_plan_without_criteria_is_still_refused():
 
 
 def test_iqn_ils_with_serial_semantics_is_still_refused():
-    with pytest.raises(InvalidScientificProblem, match="IQN-ILS"):
+    # Phase 3 BR14 names the kind by its value (`iqn_ils`) in the refusal; the
+    # refusal and its reason (serial Gauss-Seidel) are what this test pins.
+    with pytest.raises(InvalidScientificProblem, match=r"(?i)iqn[-_]ils.*serial"):
         CouplingPlan("p", CouplingScheme.IMPLICIT, IterationSemantics.SERIAL, _time(), criteria=(_criterion("e"),),
                      relaxation=RelaxationPolicy(RelaxationKind.IQN_ILS, iqn_columns=3), max_iterations=5)
 

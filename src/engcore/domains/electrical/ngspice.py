@@ -175,6 +175,11 @@ class NgspiceExecutionFailure(NgspiceProviderError):
 # Invocation — configuration, never a scientific record
 # =====================================================================
 
+def _platform_default_command() -> tuple[str, ...]:
+    """``wsl.exe -e ngspice`` on Windows, ``ngspice`` on every other platform."""
+    return ("wsl.exe", "-e", "ngspice") if os.name == "nt" else ("ngspice",)
+
+
 @dataclass(frozen=True)
 class NgspiceInvocation:
     """How to reach the provider on this machine. **Runtime, not science.**
@@ -185,12 +190,19 @@ class NgspiceInvocation:
     that, and inventing one would have quietly assumed a portability this
     milestone has not earned.
 
+    The default follows the platform, and only the platform: ``wsl.exe -e
+    ngspice`` on Windows, where that is how ngspice is reached, and plain
+    ``ngspice`` everywhere else. A Windows-only launcher as the universal
+    default made every Linux and macOS run fail to launch instead of finding
+    the binary on PATH. Nothing is probed: ``CRAFTY_NGSPICE_ARGV`` still
+    overrides both, and the command never enters a scientific record.
+
     Nothing here is ever serialized into a scientific record. This object is an
     argument, in the same way a ``BulkDataStore`` holds locations while
     ``ScientificDataReference`` holds none.
     """
 
-    command: tuple[str, ...] = ("wsl.exe", "-e", "ngspice")
+    command: tuple[str, ...] = field(default_factory=lambda: _platform_default_command())
     timeout_seconds: float = 60.0
 
     def __post_init__(self) -> None:
