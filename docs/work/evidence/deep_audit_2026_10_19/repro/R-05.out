@@ -1,0 +1,12 @@
+evaluator: D:\forge-main-337519d1\benchmarks\genesis_lite\evaluator\score.py
+escrow: D:\forge-main-337519d1\src\engcore\blindfold\escrow.py
+vacuous pair admissible variables: [['x'], ['x']]
+TRIGGER truth=T_up  : kind=indistinguishable outcome=indistinguishable_hit credit=1.0 | escrow hit=True mutual_in_box=0.0009404989844989964 differ_outside=0.95 brackets=True contains=False
+TRIGGER truth=T_down: kind=indistinguishable outcome=indistinguishable_hit credit=1.0 | escrow hit=True mutual_in_box=0.0009404989844989964 differ_outside=0.95 brackets=True contains=False
+vacuous pair at x=4: A/B = 1.3292279957849183e+30
+CONTROL honest refusal  : kind=indistinguishable outcome=insufficient_evidence credit=0.5
+CONTROL informative pair: kind=indistinguishable outcome=indistinguishable_hit credit=1.0 | escrow hit=True mutual_in_box=0.009063115654524462 differ_outside=0.775 brackets=True contains=True
+CONTROL in-box disagree : kind=indistinguishable outcome=indistinguishable_miss credit=-1.0 | escrow hit=False mutual_in_box=0.10118789062499975 differ_outside=1.0 brackets=False contains=False
+CONTROL discoverable    : kind=discoverable outcome=indistinguishable_hit credit=-0.5 | escrow hit=True mutual_in_box=0.0009404989844989964 differ_outside=0.95 brackets=True contains=False
+VERDICT FDA-05: REPRODUCED
+CONTROL_OK: True
