@@ -9,13 +9,28 @@ from engcore.execution.orchestration import (
 )
 from engcore.execution.orchestration.checkpoint import adopt_checkpoint, resume_owner, resume_point_for
 
-GOOD_A = CheckpointReference("a:cp1", "a" * 64)
-DIVERGED_A = CheckpointReference("a:diverged", "d" * 64)
+PROBLEM = "1" * 64
+
+
+def _plan(*args, **kwargs):
+    return SimulationPlan(*args, problem_digest=PROBLEM, **kwargs)
+
+
+def _checkpoint(cid, digest, solver_id=""):
+    # Producer returns can be adopted from known context; named resume points
+    # explicitly carry the original build/problem, including expected records.
+    return CheckpointReference(cid, digest, solver_id, f"{solver_id}@1" if solver_id else "",
+                               PROBLEM if solver_id else "")
+
+
+GOOD_A = _checkpoint("a:cp1", "a" * 64)
+DIVERGED_A = _checkpoint("a:diverged", "d" * 64)
 
 
 class Backend:
     def __init__(self, solver_id, outcomes):
         self.solver_id = solver_id
+        self.solver_build = f"{solver_id}@1"
         self.outcomes = list(outcomes)
         self.received = []
 
@@ -36,7 +51,7 @@ def _adv(state, error=None, checkpoint=None, failure_code=""):
 def _adaptive(a_outcomes, b_outcomes, checkpoint=None):
     a, b = Backend("a", a_outcomes), Backend("b", b_outcomes)
     report = run_adaptive_plan(
-        SimulationPlan("q", ("a", "b"), ExecutionBudget(max_attempts=6, max_refinements=3)),
+        _plan("q", ("a", "b"), ExecutionBudget(max_attempts=6, max_refinements=3)),
         SimulationRequirements(ProblemKind.ODE),
         (SolverCapability("a", (ProblemKind.ODE,), preference=2), SolverCapability("b", (ProblemKind.ODE,), preference=1)),
         {"a": a, "b": b},
@@ -51,7 +66,7 @@ def test_checkpoint_of_a_failed_solver_never_reaches_the_fallback_solver():
     # failed attempt's checkpoint is observed through run_adaptive_plan below
     a = Backend("a", [BackendOutcome(AttemptState.FAILED, "diverged", GOOD_A)])
     b = Backend("b", [BackendOutcome(AttemptState.CONVERGED)])
-    report = run_plan(SimulationPlan("p", ("a", "b"), ExecutionBudget(max_attempts=2)), {"a": a, "b": b})
+    report = run_plan(_plan("p", ("a", "b"), ExecutionBudget(max_attempts=2)), {"a": a, "b": b})
     assert report.converged
     assert b.received == [None]
 
@@ -59,15 +74,15 @@ def test_checkpoint_of_a_failed_solver_never_reaches_the_fallback_solver():
 def test_checkpoint_of_a_cancelled_solver_does_not_cross_to_another_solver():
     a = Backend("a", [BackendOutcome(AttemptState.CANCELLED, "", GOOD_A)])
     b = Backend("b", [BackendOutcome(AttemptState.CONVERGED)])
-    run_plan(SimulationPlan("p", ("a", "b"), ExecutionBudget(max_attempts=2)), {"a": a, "b": b})
+    run_plan(_plan("p", ("a", "b"), ExecutionBudget(max_attempts=2)), {"a": a, "b": b})
     assert b.received == [None]
 
 
 def test_caller_checkpoint_resumes_only_the_solver_it_names_and_no_other_solver_runs_cold():
-    bound = CheckpointReference("b:cp", "b" * 64, "b")
+    bound = _checkpoint("b:cp", "b" * 64, "b")
     a = Backend("a", [BackendOutcome(AttemptState.CONVERGED)])
     b = Backend("b", [BackendOutcome(AttemptState.CONVERGED)])
-    report = run_plan(SimulationPlan("p", ("a", "b"), ExecutionBudget(max_attempts=2)), {"a": a, "b": b}, checkpoint=bound)
+    report = run_plan(_plan("p", ("a", "b"), ExecutionBudget(max_attempts=2)), {"a": a, "b": b}, checkpoint=bound)
     assert a.received == []  # a cannot continue b's state, and is not run cold in its place
     assert report.attempts[0].failure_code == "resume_checkpoint_belongs_to_b"
     assert b.received == [bound]
@@ -75,25 +90,25 @@ def test_caller_checkpoint_resumes_only_the_solver_it_names_and_no_other_solver_
 
 def test_caller_checkpoint_of_a_solver_that_does_not_run_yields_no_success():
     a = Backend("a", [BackendOutcome(AttemptState.CONVERGED)])
-    report = run_plan(SimulationPlan("p", ("a",)), {"a": a}, checkpoint=CheckpointReference("b:cp", "b" * 64, "b"))
+    report = run_plan(_plan("p", ("a",)), {"a": a}, checkpoint=_checkpoint("b:cp", "b" * 64, "b"))
     assert a.received == [] and not report.converged
 
 
 def test_unbound_caller_checkpoint_is_refused_not_turned_into_a_cold_start():
     a = Backend("a", [BackendOutcome(AttemptState.CONVERGED)])
     with pytest.raises(ValueError, match="does not name the solver"):
-        run_plan(SimulationPlan("p", ("a",)), {"a": a}, checkpoint=GOOD_A)
+        run_plan(_plan("p", ("a",)), {"a": a}, checkpoint=GOOD_A)
     with pytest.raises(ValueError, match="does not name the solver"):
         _adaptive([_adv(AttemptState.CONVERGED, 1e-4)], [], checkpoint=GOOD_A)
     assert a.received == []
 
 
 def test_adaptive_same_solver_refinement_resumes_from_its_own_checkpoint():
-    accepted = CheckpointReference("a:cp2", "c" * 64)
+    accepted = _checkpoint("a:cp2", "c" * 64)
     report, a, _ = _adaptive([_adv(AttemptState.CONVERGED, 1.0, GOOD_A), _adv(AttemptState.CONVERGED, 1e-4, accepted)], [])
     assert report.stop_reason is AdvancedStopReason.ERROR_TARGET_SATISFIED
-    assert a.received == [None, CheckpointReference("a:cp1", "a" * 64, "a")]
-    assert report.final_checkpoint == CheckpointReference("a:cp2", "c" * 64, "a")
+    assert a.received == [None, _checkpoint("a:cp1", "a" * 64, "a")]
+    assert report.final_checkpoint == _checkpoint("a:cp2", "c" * 64, "a")
 
 
 def test_adaptive_accepted_attempt_without_a_checkpoint_does_not_inherit_the_rejected_refinements():
@@ -114,7 +129,7 @@ def test_adaptive_diverged_checkpoint_neither_resumes_the_fallback_nor_becomes_t
     assert report.final_checkpoint is None
     assert "a:checkpoint_of_diverged_attempt_discarded" in report.problems
     # the diverged attempt's record does not carry its refused checkpoint as if usable
-    assert [r.checkpoint for r in report.attempts] == [CheckpointReference("a:cp1", "a" * 64, "a"), None, None]
+    assert [r.checkpoint for r in report.attempts] == [_checkpoint("a:cp1", "a" * 64, "a"), None, None]
 
 
 def test_adaptive_diverged_checkpoint_does_not_replace_the_last_good_one():
@@ -123,11 +138,11 @@ def test_adaptive_diverged_checkpoint_does_not_replace_the_last_good_one():
         [_adv(AttemptState.FAILED, None, None, "no_convergence")],
     )
     assert not report.successful
-    assert report.final_checkpoint == CheckpointReference("a:cp1", "a" * 64, "a")
+    assert report.final_checkpoint == _checkpoint("a:cp1", "a" * 64, "a")
 
 
 def test_adaptive_checkpoint_claiming_another_solver_is_refused():
-    forged = CheckpointReference("b:cp", "b" * 64, "b")
+    forged = _checkpoint("b:cp", "b" * 64, "b")
     report, a, b = _adaptive(
         [_adv(AttemptState.CONVERGED, 1.0, forged), _adv(AttemptState.FAILED, None, None, "x")],
         [_adv(AttemptState.CONVERGED, 1e-4)],
@@ -138,7 +153,7 @@ def test_adaptive_checkpoint_claiming_another_solver_is_refused():
 
 
 def test_adaptive_caller_checkpoint_skips_other_solvers_with_a_recorded_problem():
-    bound = CheckpointReference("b:cp", "b" * 64, "b")
+    bound = _checkpoint("b:cp", "b" * 64, "b")
     report, a, b = _adaptive([_adv(AttemptState.CONVERGED, 1e-4)], [_adv(AttemptState.CONVERGED, 1e-4)], checkpoint=bound)
     assert a.received == [] and b.received == [bound]
     assert "a:resume_checkpoint_belongs_to_b" in report.problems
@@ -154,7 +169,7 @@ def test_adaptive_backend_exception_records_no_checkpoint():
     a = Raises("a", [])
     b = Backend("b", [_adv(AttemptState.CONVERGED, 1e-4)])
     report = run_adaptive_plan(
-        SimulationPlan("q", ("a", "b"), ExecutionBudget(max_attempts=3)), SimulationRequirements(ProblemKind.ODE),
+        _plan("q", ("a", "b"), ExecutionBudget(max_attempts=3)), SimulationRequirements(ProblemKind.ODE),
         (SolverCapability("a", (ProblemKind.ODE,), preference=2), SolverCapability("b", (ProblemKind.ODE,), preference=1)),
         {"a": a, "b": b}, AdaptiveRefinementPolicy(target_error=1e-3, max_refinement_level=0),
     )
@@ -169,9 +184,9 @@ def test_adopt_refuses_unusable_states(state):
 
 
 def test_adopt_and_resume_helpers():
-    bound, problem = adopt_checkpoint(GOOD_A, solver_id="a", state=AttemptState.CONVERGED)
+    bound, problem = adopt_checkpoint(GOOD_A, solver_id="a", state=AttemptState.CONVERGED, solver_build="a@1", problem_digest=PROBLEM)
     assert problem == "" and bound.solver_id == "a"
-    assert resume_point_for(bound, "a") is bound
+    assert resume_point_for(bound, "a", solver_build="a@1", problem_digest=PROBLEM) is bound
     assert resume_point_for(bound, "b") is None
     assert resume_point_for(GOOD_A, "a") is None
     assert adopt_checkpoint("not-a-checkpoint", solver_id="a", state="converged") == (None, "a:checkpoint_not_a_reference")
@@ -182,14 +197,14 @@ def test_adopt_and_resume_helpers():
 
 def test_adaptive_resume_owner_that_is_not_capable_stops_as_no_capable_solver():
     report, a, b = _adaptive([_adv(AttemptState.CONVERGED, 1e-4)], [_adv(AttemptState.CONVERGED, 1e-4)],
-                             checkpoint=CheckpointReference("z:cp", "e" * 64, "z"))
+                             checkpoint=_checkpoint("z:cp", "e" * 64, "z"))
     assert report.stop_reason is AdvancedStopReason.NO_CAPABLE_SOLVER
     assert a.received == [] and b.received == [] and report.attempts == ()
     assert report.problems == ("resume_checkpoint_owner_z_not_a_capable_declared_solver",)
 
 
 def test_adaptive_resume_owner_failure_does_not_fall_back_to_a_cold_solver():
-    bound = CheckpointReference("a:cp", "a" * 64, "a")
+    bound = _checkpoint("a:cp", "a" * 64, "a")
     report, a, b = _adaptive([_adv(AttemptState.FAILED, None, None, "no_convergence")], [_adv(AttemptState.CONVERGED, 1e-4)],
                              checkpoint=bound)
     assert a.received == [bound] and b.received == []
@@ -200,25 +215,26 @@ def test_adaptive_resume_owner_failure_does_not_fall_back_to_a_cold_solver():
 def test_adaptive_refinement_budget_stop_reports_the_last_adopted_resume_point_bound_to_its_solver():
     a = Backend("a", [_adv(AttemptState.CONVERGED, 1.0, GOOD_A), _adv(AttemptState.CONVERGED, 1.0)])
     report = run_adaptive_plan(
-        SimulationPlan("q", ("a",), ExecutionBudget(max_attempts=5, max_refinements=1)), SimulationRequirements(ProblemKind.ODE),
+        _plan("q", ("a",), ExecutionBudget(max_attempts=5, max_refinements=1)), SimulationRequirements(ProblemKind.ODE),
         (SolverCapability("a", (ProblemKind.ODE,)),), {"a": a}, AdaptiveRefinementPolicy(target_error=1e-3, max_refinement_level=5))
     assert report.stop_reason is AdvancedStopReason.REFINEMENT_BUDGET and not report.successful
-    assert report.final_checkpoint == CheckpointReference("a:cp1", "a" * 64, "a")
+    assert report.final_checkpoint == _checkpoint("a:cp1", "a" * 64, "a")
 
 
 def test_run_plan_without_fallback_stops_when_the_first_solver_cannot_continue_the_resume():
     a = Backend("a", [BackendOutcome(AttemptState.CONVERGED)])
     b = Backend("b", [BackendOutcome(AttemptState.CONVERGED)])
-    report = run_plan(SimulationPlan("p", ("a", "b"), ExecutionBudget(max_attempts=2)), {"a": a, "b": b},
-                      policy=OrchestrationPolicy(allow_solver_fallback=False), checkpoint=CheckpointReference("b:cp", "b" * 64, "b"))
+    report = run_plan(_plan("p", ("a", "b"), ExecutionBudget(max_attempts=2)), {"a": a, "b": b},
+                      policy=OrchestrationPolicy(allow_solver_fallback=False), checkpoint=_checkpoint("b:cp", "b" * 64, "b"))
     assert a.received == [] and b.received == [] and not report.converged
     assert [x.failure_code for x in report.attempts] == ["resume_checkpoint_belongs_to_b"]
 
 
 def test_run_plan_refuses_a_backend_registered_under_another_solvers_name():
     impostor = Backend("t", [BackendOutcome(AttemptState.CONVERGED)])
-    bound = CheckpointReference("s:cp", "f" * 64, "s")
-    report = run_plan(SimulationPlan("p", ("s",)), {"s": impostor}, checkpoint=bound)
+    impostor.solver_build = "s@1"  # isolate solver-id mismatch from the earlier build guard
+    bound = _checkpoint("s:cp", "f" * 64, "s")
+    report = run_plan(_plan("p", ("s",)), {"s": impostor}, checkpoint=bound)
     assert impostor.received == [] and not report.converged
     assert report.attempts[0].failure_code == "backend_solver_identity_mismatch"
 
@@ -228,7 +244,7 @@ def test_non_terminal_attempt_never_supplies_a_resume_point(state):
     assert adopt_checkpoint(GOOD_A, solver_id="a", state=state)[0] is None
     a = Backend("a", [AdvancedBackendOutcome(state, ResourceUsage(), checkpoint=GOOD_A)])
     report = run_adaptive_plan(
-        SimulationPlan("q", ("a",), ExecutionBudget(max_attempts=1)), SimulationRequirements(ProblemKind.ODE),
+        _plan("q", ("a",), ExecutionBudget(max_attempts=1)), SimulationRequirements(ProblemKind.ODE),
         (SolverCapability("a", (ProblemKind.ODE,)),), {"a": a}, AdaptiveRefinementPolicy(target_error=1e-3, max_refinement_level=0))
     assert not report.successful
     assert report.final_checkpoint is None and report.attempts[0].checkpoint is None

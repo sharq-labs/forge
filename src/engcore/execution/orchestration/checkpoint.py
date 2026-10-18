@@ -101,6 +101,8 @@ def adopt_checkpoint(checkpoint:object,*,solver_id:str,state:object,solver_build
     problem=str(problem_digest).strip().lower()
     if checkpoint.problem_digest and problem and checkpoint.problem_digest!=problem:
         return None,f"{solver_id}:checkpoint_of_another_problem_refused"
+    if not build or not problem:
+        return None,f"{solver_id}:checkpoint_missing_execution_build_or_problem_refused"
     bound=CheckpointReference(checkpoint.checkpoint_id,checkpoint.state_digest,solver_id,
                               checkpoint.solver_build or build,checkpoint.problem_digest or problem)
     return (checkpoint if bound==checkpoint else bound),""
@@ -128,12 +130,17 @@ def resume_owner(checkpoint:object)->str|None:
 def resume_refusal(checkpoint:CheckpointReference,*,solver_build:str="",problem_digest:str="")->str:
     """Why ``checkpoint`` cannot be resumed by its own solver at this build for this problem ('' when it can).
 
-    Build drift and a different problem refuse.  So does ambiguity: a checkpoint
-    that records a build (or problem) resumed by a backend (or plan) that states
-    none cannot be shown compatible, and is not assumed to be.
+    Both sides must name the exact build and problem. Legacy records remain
+    readable, but missing bindings never authorize execution. Producer-backed
+    migration or an explicit cold start is required; current context cannot
+    retroactively supply the identity of an old checkpoint.
     """
     build=str(solver_build).strip()
     problem=str(problem_digest).strip().lower()
+    if not checkpoint.solver_build:
+        return f"checkpoint {checkpoint.checkpoint_id!r} states no producing build"
+    if not checkpoint.problem_digest:
+        return f"checkpoint {checkpoint.checkpoint_id!r} states no producing problem"
     if checkpoint.solver_build and not build:
         return f"checkpoint {checkpoint.checkpoint_id!r} was produced by build {checkpoint.solver_build!r}; the backend states no build"
     if checkpoint.solver_build and build!=checkpoint.solver_build:
@@ -159,7 +166,8 @@ def resume_point_for(checkpoint:CheckpointReference|None,solver_id:str,*,solver_
 
 
 def converted_resume_point(checkpoint:CheckpointReference|None,*,solver_id:str,solver_build:str,
-                           conversions:tuple[CheckpointConversion,...],accepts_converted:bool
+                           conversions:tuple[CheckpointConversion,...],accepts_converted:bool,
+                           problem_digest:str=""
                            )->tuple[CheckpointReference|None,CheckpointConversion|None]:
     """Another solver's checkpoint for ``solver_id``, through a declared qualified conversion only.
 
@@ -170,6 +178,8 @@ def converted_resume_point(checkpoint:CheckpointReference|None,*,solver_id:str,s
     if checkpoint is None or checkpoint.solver_id==solver_id or not accepts_converted:
         return None,None
     if not checkpoint.solver_build or not str(solver_build).strip():
+        return None,None
+    if not problem_digest or checkpoint.problem_digest != str(problem_digest).strip().lower():
         return None,None
     for conversion in conversions:
         if (conversion.source_solver,conversion.source_build,conversion.target_solver,conversion.target_build)==(

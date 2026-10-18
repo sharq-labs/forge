@@ -140,7 +140,8 @@ def test_a_solution_edited_in_place_after_issue_never_restores():
     with pytest.raises(InvalidScientificProblem, match="changed after it was issued"):
         cell.restore(cp)
     edited = hashlib.sha256(np.ascontiguousarray(np.asarray(y, dtype="<f8")).tobytes()).hexdigest()
-    with pytest.raises(InvalidScientificProblem, match="record and provider snapshot digest disagree"):
+    # R2/R3: detected issued-payload corruption retires the aliased live session.
+    with pytest.raises(InvalidScientificProblem, match="unusable"):
         cell.restore(RuntimeCheckpoint(replace(cp.record, state_digest=edited), cp.token))
 
 
@@ -173,3 +174,78 @@ def test_a_spec_declaring_another_solver_build_is_refused():
     with pytest.raises(ProviderRefusal, match="declares solver"):
         cell_participant(REG, _spec(solver_version="0.0.0-not-this-build"), parameter_set_name="Chen2020", model="SPM",
                          initial_soc=0.8, capacity_fade=0.0, current_at=lambda _start: Quantity(2.5, "A"))
+
+
+# R3 physical-time admission. Build-First repair: these new tests are NOT RUN.
+def test_nonzero_initialization_origin_is_explicitly_refused():
+    from engcore.providers import ProviderRefusal
+    cell = _cell()
+    with pytest.raises(ProviderRefusal, match="initial origin"):
+        cell.initialize(Quantity(100, "s"), {}, {})
+
+
+def test_initial_and_advanced_checkpoints_cannot_be_stamped_at_another_time():
+    from engcore.providers import ProviderRefusal
+    cell = _cell()
+    with pytest.raises(ProviderRefusal, match="checkpoint"):
+        cell.checkpoint(Quantity(100, "s"))
+    _advance(cell, 0)
+    with pytest.raises(ProviderRefusal, match="checkpoint"):
+        cell.checkpoint(Quantity(0, "s"))
+    cell.checkpoint(Quantity(WINDOW, "s"))
+
+
+def test_advance_after_restore_must_start_at_the_restored_physical_time():
+    from engcore.providers import ProviderRefusal
+    cell = _cell()
+    cp0 = cell.checkpoint(Quantity(0, "s"))
+    _advance(cell, 0)
+    cp1 = cell.checkpoint(Quantity(WINDOW, "s"))
+    cell.restore(cp0)
+    with pytest.raises(ProviderRefusal, match="request start"):
+        _advance(cell, 1)
+    cell.restore(cp1)
+    with pytest.raises(ProviderRefusal, match="request start"):
+        _advance(cell, 0)
+    _advance(cell, 1)  # same-object continuation at the admitted time remains supported
+
+
+def test_record_time_substitution_is_refused_before_solution_changes():
+    cell = _cell()
+    _advance(cell, 0)
+    cp = cell.checkpoint(Quantity(WINDOW, "s"))
+    before = _soc(cell)
+    with pytest.raises(InvalidScientificProblem, match="not issued with its token"):
+        cell.restore(RuntimeCheckpoint(replace(cp.record, instant=Quantity(0, "s")), cp.token))
+    assert _soc(cell) == before
+    cell.restore(cp)
+
+
+@pytest.mark.parametrize("start,end", [(1.0, WINDOW), (0.0, WINDOW - 1), (0.0, WINDOW + 1)])
+def test_wrong_solver_endpoints_refuse_and_retire_the_session(monkeypatch, start, end):
+    from types import SimpleNamespace
+    import numpy as np
+    import pybamm
+    from engcore.providers import ProviderRefusal
+    cell = _cell()
+    fake = SimpleNamespace(t=np.array([start, end]), last_state=SimpleNamespace(t=np.array([end])))
+    monkeypatch.setattr(pybamm.IDAKLUSolver, "step", lambda *args, **kwargs: fake)
+    with pytest.raises(ProviderRefusal, match="clock"):
+        _advance(cell, 0)
+    with pytest.raises(InvalidScientificProblem, match="unusable"):
+        _advance(cell, 0)
+
+
+@pytest.mark.parametrize("attempt_restore", [False, True])
+def test_mutated_checkpoint_alias_cannot_be_used_as_live_continuation(attempt_restore):
+    cell = _cell()
+    _advance(cell, 0)
+    cp = cell.checkpoint(Quantity(WINDOW, "s"))
+    cp.token.snapshot.last_state.y[0] += 1e-3
+    if attempt_restore:
+        with pytest.raises(InvalidScientificProblem, match="changed after it was issued"):
+            cell.restore(cp)
+    with pytest.raises(InvalidScientificProblem, match="unusable|live continuation state is corrupt"):
+        _advance(cell, 1)
+    with pytest.raises(InvalidScientificProblem, match="unusable"):
+        cell.checkpoint(Quantity(WINDOW, "s"))

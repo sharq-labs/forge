@@ -215,6 +215,7 @@ class FieldValue:
                 location=self.definition.location,
                 components=self.definition.components,
                 description=self.definition.description,
+                semantics=self.definition.semantics,
             ),
             mesh=self.mesh,
             values=converted,

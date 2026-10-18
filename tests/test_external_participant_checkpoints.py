@@ -33,6 +33,12 @@ UNKNOWN = Uncertainty.unknown("mock provider output uncertainty not quantified")
 class MockSession:
     """A stateful mock provider: every advance adds one to ``steps`` (state a rollback must undo)."""
 
+    snapshot_integrity_codec = ("mock.inline-ascii-step-count", "1")
+
+    def snapshot_integrity_bytes(self, snapshot):
+        # This mock restores only the complete step count encoded in token.
+        return snapshot.token
+
     def __init__(self, provider_version="1.0", adapter_version="1", *, out, inp, fn):
         self._identity = ExternalProviderIdentity("thermo", provider_version, "thermo-adapter", adapter_version)
         self.out, self.inp, self.fn = out, inp, fn
@@ -52,11 +58,11 @@ class MockSession:
 
     def snapshot(self, _instant):
         digest = hashlib.sha256(f"{self._identity.provider_version}:{self.steps}".encode()).hexdigest()
-        return ExternalSnapshot(digest, f"steps-{self.steps}", self.steps)
+        return ExternalSnapshot(digest, f"steps-{self.steps}", str(self.steps).encode("ascii"))
 
     def restore(self, snapshot):
         self.restored.append(snapshot)
-        self.steps = snapshot.token
+        self.steps = int(snapshot.token)
 
     def finalize(self):
         pass

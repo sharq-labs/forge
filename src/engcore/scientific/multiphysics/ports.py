@@ -10,7 +10,8 @@ from typing import Any, Mapping
 from ..errors import InvalidScientificProblem
 from ..fields.definition import FieldDefinition
 from ..serialization import require_schema, schema_string
-from ..units.quantity import dimensionality, normalize_unit
+from ..semantics import QuantitySemantics, extend_payload, semantic_extension
+from ..units.quantity import dimensionality, is_ratio_scale, normalize_unit
 
 PORT_SCHEMA = schema_string("multiphysics_port")
 PORT_REF_SCHEMA = schema_string("multiphysics_port_ref")
@@ -77,6 +78,7 @@ class PortDefinition:
     algebra: FieldAlgebra = FieldAlgebra.SCALAR
     coordinate_frame: str = ""
     description: str = ""
+    semantics: QuantitySemantics | None = None
 
     def __post_init__(self) -> None:
         port_id = str(self.port_id).strip()
@@ -91,6 +93,12 @@ class PortDefinition:
         object.__setattr__(self, "unit", normalize_unit(self.unit))
         object.__setattr__(self, "coordinate_frame", str(self.coordinate_frame).strip())
         object.__setattr__(self, "description", str(self.description).strip())
+        if self.semantics is not None:
+            if (not isinstance(self.semantics, QuantitySemantics)
+                    or dimensionality(self.semantics.unit) != self.dimension):
+                raise InvalidScientificProblem("port semantics must match the port's declared dimension")
+            if self.semantics.conserved_quantity is not None and not is_ratio_scale(self.unit):
+                raise InvalidScientificProblem("conserved port semantics require a ratio-scale unit")
 
         if self.kind is PortKind.SCALAR:
             if self.field is not None:
@@ -156,7 +164,7 @@ class PortDefinition:
         return dimensionality(self.unit)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        return extend_payload({
             "schema": PORT_SCHEMA,
             "port_id": self.port_id,
             "direction": self.direction.value,
@@ -167,11 +175,11 @@ class PortDefinition:
             "algebra": self.algebra.value,
             "coordinate_frame": self.coordinate_frame,
             "description": self.description,
-        }
+        }, "semantics", self.semantics)
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "PortDefinition":
-        require_schema(payload, PORT_SCHEMA)
+        raw_semantics = semantic_extension(payload, PORT_SCHEMA, "semantics")
         raw_field = payload.get("field")
         return cls(
             port_id=payload["port_id"],
@@ -183,4 +191,5 @@ class PortDefinition:
             algebra=FieldAlgebra(payload.get("algebra", "scalar")),
             coordinate_frame=payload.get("coordinate_frame", ""),
             description=payload.get("description", ""),
+            semantics=None if raw_semantics is None else QuantitySemantics.from_dict(raw_semantics),
         )

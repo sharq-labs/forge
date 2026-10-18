@@ -24,6 +24,7 @@ Phase 2 BR12:
 from __future__ import annotations
 
 import json
+import hashlib
 import secrets
 import weakref
 from dataclasses import dataclass
@@ -36,6 +37,7 @@ from ...scientific.units.quantity import Quantity
 from .participant import (
     AdvanceRequest,
     AdvanceResult,
+    CheckpointIntegrityError,
     CouplingValue,
     ExecutableParticipant,
     InitializationResult,
@@ -94,10 +96,9 @@ class ExternalProviderIdentity:
 class ExternalSnapshot:
     """A provider session's state at a checkpoint.
 
-    Forge cannot recompute ``state_digest`` from the opaque ``token``, so the
-    session must not change ``token`` after issuing it (hand out an immutable
-    token, or copy it on restore): a token edited in place would restore under
-    the digest recorded for the original.
+    The scientific state_digest is not a payload-integrity proof. All tokens
+    require the provider's versioned SnapshotIntegritySession encoding of
+    complete continuation state, including bytes that might encode references.
     """
 
     state_digest: str
@@ -254,11 +255,18 @@ class CheckpointSeal:
                 if checkpoint.record.state_digest != issued_record.state_digest
                 else f"{label} checkpoint record was not issued with its token"
             )
-        if (
-            digest_of(token.snapshot) != issued_record.state_digest
-            or self._integrity_of(token.snapshot) != fingerprint
-        ):
-            raise InvalidScientificProblem(
+        try:
+            changed = (digest_of(token.snapshot) != issued_record.state_digest
+                       or self._integrity_of(token.snapshot) != fingerprint)
+        except BaseException as exc:
+            # Identity/record admission above was safe. Failure to read an
+            # ISSUED payload is different: it may alias live solver state.
+            # Even an interrupted integrity read cannot authorize continuation.
+            raise CheckpointIntegrityError(
+                f"{label} checkpoint integrity could not be established"
+            ) from exc
+        if changed:
+            raise CheckpointIntegrityError(
                 f"{label} checkpoint state changed after it was issued: it no "
                 f"longer hashes to what was issued"
             )
@@ -313,6 +321,23 @@ class ExternalSolverSession(Protocol):
     def finalize(self) -> None: ...
 
 
+@runtime_checkable
+class SnapshotIntegritySession(Protocol):
+    """Provider-qualified encoding, not a claimed hash of opaque state.
+
+    The codec (id, version) must encode ALL state restore/continuation consumes,
+    including clocks and history. Each call reads the snapshot's actual payload;
+    content-addressed references must be resolved and content-verified. Returning
+    a cached digest does not implement this protocol. Completeness is a provider
+    obligation needing adversarial provider tests, never scientific evidence.
+    """
+
+    @property
+    def snapshot_integrity_codec(self) -> tuple[str, str]: ...
+
+    def snapshot_integrity_bytes(self, snapshot: ExternalSnapshot) -> bytes: ...
+
+
 class ExternalSolverParticipant(ExecutableParticipant):
     """Provider-neutral adapter with identity and checkpoint enforcement."""
 
@@ -351,8 +376,36 @@ class ExternalSolverParticipant(ExecutableParticipant):
         # the identity verified against the spec; a session whose identity
         # later changes is refused rather than re-read
         self._identity = identity
+        self._unusable_reason = ""
+        self._integrity_codec = getattr(session, "snapshot_integrity_codec", None)
         # issues and admits this participant's checkpoints for the admitted build
-        self._seal = CheckpointSeal(spec.participant_id, identity.state_scope)
+        self._seal = CheckpointSeal(spec.participant_id, identity.state_scope,
+                                    integrity_of=self._snapshot_fingerprint)
+
+    def invalidate(self, reason: str) -> None:
+        """A failed provider restore cannot be reset into a usable session."""
+        self._unusable_reason = self._unusable_reason or str(reason) or "indeterminate state"
+
+    def require_usable(self) -> None:
+        if self._unusable_reason:
+            raise InvalidScientificProblem(f"participant {self.spec.participant_id!r} is unusable: {self._unusable_reason}")
+
+    def _snapshot_fingerprint(self, snapshot: ExternalSnapshot) -> str:
+        self._require_same_build()
+        codec = getattr(self._session, "snapshot_integrity_codec", None)
+        if codec != self._integrity_codec:
+            raise InvalidScientificProblem("snapshot integrity codec changed after admission")
+        encode = getattr(self._session, "snapshot_integrity_bytes", None)
+        if (not isinstance(codec, tuple) or len(codec) != 2
+                or any(not isinstance(x, str) or not x.strip() for x in codec)
+                or not callable(encode)):
+            raise InvalidScientificProblem("snapshot requires a versioned provider integrity codec")
+        payload = _classified(self, "snapshot_integrity", encode, snapshot)
+        if type(payload) is not bytes:
+            raise InvalidScientificProblem("snapshot integrity codec must return immutable payload bytes")
+        prefix = checkpoint_scope({"codec": list(codec)}).encode("utf-8") + b"\0"
+        self._require_same_build()
+        return hashlib.sha256(prefix + payload).hexdigest()
 
     @property
     def spec(self) -> ParticipantSpec:
@@ -363,6 +416,7 @@ class ExternalSolverParticipant(ExecutableParticipant):
         return self._identity
 
     def _require_same_build(self) -> str:
+        self.require_usable()
         if self._session.identity != self._identity:
             raise InvalidScientificProblem(
                 f"external session of participant {self.spec.participant_id!r} "
@@ -451,16 +505,28 @@ class ExternalSolverParticipant(ExecutableParticipant):
                 "external participant cannot restore another participant checkpoint"
             )
         self._require_same_build()
-        snapshot = self._seal.admit(
-            checkpoint,
-            slot_of=lambda state: state.provider_state_id,
-            # the provider's own digest: its state is opaque to Forge
-            digest_of=lambda state: state.state_digest,
-            state_type=ExternalSnapshot,
-            label="external",
-        )
-        _classified(self, "restore", self._session.restore, snapshot)
-        self._require_same_build()
+        try:
+            snapshot = self._seal.admit(
+                checkpoint,
+                slot_of=lambda state: state.provider_state_id,
+                # Separate payload integrity is recomputed by the provider codec.
+                digest_of=lambda state: state.state_digest,
+                state_type=ExternalSnapshot,
+                label="external",
+            )
+        except (CheckpointIntegrityError, ExternalProviderFailure):
+            self.invalidate("checkpoint payload integrity failed; live state may be aliased")
+            raise
+        try:
+            _classified(self, "restore", self._session.restore, snapshot)
+            self._require_same_build()
+            # A restore implementation must not consume/mutate the issued payload.
+            self._seal.admit(checkpoint, slot_of=lambda state: state.provider_state_id,
+                             digest_of=lambda state: state.state_digest, state_type=ExternalSnapshot,
+                             label="external")
+        except BaseException:
+            self.invalidate("provider restore failed or changed checkpoint state")
+            raise
 
     @property
     def is_mock(self) -> bool:

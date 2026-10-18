@@ -1,37 +1,20 @@
-"""Conjugate heat transfer at a solid/fluid interface: admission of the interface conditions (Phase 3.5 WS3).
+"""Thermal instance of physics-neutral typed Dirichlet-Neumann admission.
 
-STATUS: provider-neutral coupling infrastructure.  It implements no solver and
-no provider adapter; a real FE <-> CFD conjugate heat-transfer coupling stays
-BLOCKED by policy (OD-P2-1, see :data:`CHT_FENICSX_OPENFOAM`).
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. OD-6 permits E2 build work; this module
+implements no FE/CFD solver or provider adapter and grants no provider-pair stage.
 
-A conjugate interface Gamma between a solid S and a fluid F carries two
-conditions, and each must be carried by the coupling graph in the right form:
+The caller declares exact domain-owned temperature and heat-flux meanings. Shared
+admission and execution live in interface_exchange and InterfaceTransfer. CHT adds
+its thermal dimensions and an equal-and-opposite outward normal relation. Execution
+applies the derived sign, so receivers consume the mapped record without another
+sign multiplication. Legacy prose-only or pre-signed target conventions require
+explicit migration and cannot authorize execution.
 
-* temperature continuity ``T_S = T_F`` on Gamma -- an INTENSIVE quantity: one
-  side's interface temperature is the other side's Dirichlet datum, matched by
-  a mapping of values (a conservative cell remap of a temperature is admitted as
-  an area-weighted cell average; it is never described as conserving anything);
-* heat-flux balance ``q_S . n_S + q_F . n_F = 0`` on Gamma -- a FLUX DENSITY
-  (W/m**2): the other side's Neumann datum, transferred CONSERVATIVELY (its
-  integral over Gamma is not created or lost by the mapping), with a declared
-  normal: ``outward_normal_of:<participant>``.  Heat leaving the source along
-  its outward normal enters the receiver, so a receiver reads
-  ``q_in = +value`` under the source's normal and ``q_in = -value`` under its
-  own; the admission records which.
-
-:func:`admit_conjugate_interface` refuses a graph or plan that does not express
-both (two field edges between the same two participants in opposite
-directions, temperature and power-per-area dimensions, a conservative flux
-mapping, a ratio-scale flux unit, an explicit normal; an implicit plan measures
-both edges).  It reuses :class:`.interface_exchange.InterfaceContract` for the
-flux/intensive semantics.
-
-What an admitted interface does NOT establish: that either solver is correct,
-that the Dirichlet-Neumann partition is stable (that depends on the solid and
-fluid heat-transfer properties, not on the graph), that a converged coupling is
-accurate, or validation.  An EXPLICIT plan satisfies the two conditions only up
-to its splitting error, which nothing measures unless window error control is
-declared.
+Temperature continuity and heat-flux balance are domain conditions to be solved,
+not established by admission, a mapping residual or an iterative tolerance. The
+constructed transferred integral is not an independent target-solver flux. Solver
+verification, experimental validation, interface-law applicability and provider
+maturity require separately admitted evidence.
 """
 
 from __future__ import annotations
@@ -41,9 +24,11 @@ from enum import Enum
 from typing import Any, Mapping
 
 from ...scientific.errors import InvalidScientificProblem
-from ...scientific.multiphysics import CouplingPlan, CouplingScheme, PhysicsGraph, PortKind
+from ...scientific.multiphysics import CouplingPlan, PhysicsGraph
 from ...scientific.units.quantity import dimensionality
-from .interface_exchange import ExchangeKind, InterfaceContract, InterfaceExchange
+from .interface_exchange import DirichletNeumannAdmission, admit_dirichlet_neumann_interface
+from ...scientific.semantics import QuantitySemantics
+from ...scientific.fields.interface_transfer import InterfaceRelation, InterfaceRepresentation
 
 _TEMPERATURE = dimensionality("kelvin")
 _HEAT_FLUX = dimensionality("watt/meter**2")
@@ -91,9 +76,10 @@ class ConjugateInterfaceAdmission:
     neumann_receiver: str
     receiver_flux_sign: int
     implicit: bool
+    execution: DirichletNeumannAdmission | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "classification": "interface_condition_admission_not_validation",
             "interface": self.interface.to_dict(),
             "conditions": {
@@ -101,63 +87,47 @@ class ConjugateInterfaceAdmission:
                                            f"(Dirichlet datum of {self.dirichlet_receiver!r}), consistent mapping"),
                 "heat_flux_balance": (f"q_solid.n_solid + q_fluid.n_fluid = 0: carried by {self.interface.heat_flux_edge!r} "
                                       f"(Neumann datum of {self.neumann_receiver!r}), conservative mapping, "
-                                      f"receiver applies q_in = {'+' if self.receiver_flux_sign > 0 else '-'}value"),
+                                      f"transfer already applies sign {self.receiver_flux_sign}; receiver consumes transferred value"),
             },
-            "satisfied_to": ("the coupling tolerance of both edges (implicit plan)" if self.implicit else
-                             "the splitting error of a staggered scheme (explicit plan); not measured unless window error "
-                             "control is declared"),
+            "satisfied_to": "not established by admission; iterative or splitting diagnostics are not physical interface verification",
             "does_not_establish": ["either solver's correctness", "stability of the Dirichlet-Neumann partition",
                                    "accuracy of the coupled solution", "validation"],
         }
+        if self.execution is not None:
+            payload["schema"] = "conjugate_interface_admission/2"
+            payload["execution"] = self.execution.to_dict()
+        return payload
 
 
 def admit_conjugate_interface(
     interface: ConjugateHeatTransferInterface, graph: PhysicsGraph, plan: CouplingPlan,
+    *, temperature_semantics: QuantitySemantics | None = None,
+    heat_flux_semantics: QuantitySemantics | None = None,
 ) -> ConjugateInterfaceAdmission:
-    """Admit the interface, or refuse naming every condition the graph or plan does not express."""
-    problems: list[str] = []
-    ids = {p.participant_id for p in graph.participants}
-    for name in (interface.solid, interface.fluid):
-        if name not in ids:
-            problems.append(f"participant {name!r} is not in the graph")
-    edges = {}
-    for label, edge_id, dimension in (("temperature", interface.temperature_edge, _TEMPERATURE),
-                                      ("heat flux", interface.heat_flux_edge, _HEAT_FLUX)):
-        try:
-            edge = graph.edge(edge_id)
-        except InvalidScientificProblem as exc:
-            problems.append(str(exc))
-            continue
-        edges[label] = edge
-        port = graph.participant(edge.source.participant_id).port(edge.source.port_id)
+    """Thermal instance of neutral admission, requiring explicit domain meanings.
+
+    Legacy prose normals alone refuse. The transfer applies the sign; receivers
+    consume the transferred value without applying that sign a second time.
+    """
+    if not isinstance(temperature_semantics, QuantitySemantics) or not isinstance(heat_flux_semantics, QuantitySemantics):
+        raise InvalidScientificProblem("CHT requires explicit thermal quantity semantics; legacy migration required")
+    if dimensionality(temperature_semantics.unit) != _TEMPERATURE or dimensionality(heat_flux_semantics.unit) != _HEAT_FLUX:
+        raise InvalidScientificProblem("CHT declared meanings require temperature and heat-flux dimensions")
+    flux = graph.edge(interface.heat_flux_edge)
+    intensive = graph.edge(interface.temperature_edge)
+    for edge in (flux, intensive):
         if {edge.source.participant_id, edge.target.participant_id} != {interface.solid, interface.fluid}:
-            problems.append(f"the {label} edge {edge_id!r} does not join {interface.solid!r} and {interface.fluid!r}")
-        if port.kind is not PortKind.FIELD:
-            problems.append(f"the {label} edge {edge_id!r} is not field-valued; an interface {label} is a field on the interface")
-        if dimensionality(port.unit) != dimension:
-            problems.append(f"the {label} edge {edge_id!r} carries {port.unit!r}, not a {label} dimension")
-    try:
-        plan.validate_against(graph)
-    except InvalidScientificProblem as exc:
-        problems.append(f"the plan does not fit the graph: {exc}")
-    if len(edges) == 2:
-        # the opposite-direction rule is checked by the InterfaceContract below (one message, not two)
-        contract = InterfaceContract(interface.interface_id, (
-            InterfaceExchange(interface.temperature_edge, ExchangeKind.INTENSIVE),
-            InterfaceExchange(interface.heat_flux_edge, ExchangeKind.FLUX_DENSITY, interface.flux_normal),
-        ))
-        problems += contract.problems(graph)
-    implicit = plan.scheme is CouplingScheme.IMPLICIT
-    if implicit:
-        measured = {c.edge_id for c in plan.criteria}
-        for edge_id in (interface.temperature_edge, interface.heat_flux_edge):
-            if edge_id not in measured:
-                problems.append(f"an implicit plan must measure the interface edge {edge_id!r}; it has no criterion")
-    if problems:
-        raise InvalidScientificProblem(f"conjugate interface {interface.interface_id!r} is not admitted: " + "; ".join(problems))
-    q = edges["heat flux"]
-    sign = +1 if interface.flux_normal == _NORMAL + q.source.participant_id else -1
-    return ConjugateInterfaceAdmission(interface, edges["temperature"].target.participant_id, q.target.participant_id, sign, implicit)
+            raise InvalidScientificProblem("CHT edges must join declared solid and fluid participants")
+    transfer = flux.interface_transfer
+    if (transfer is None or transfer.relation is not InterfaceRelation.EQUAL_AND_OPPOSITE_OUTWARD
+            or transfer.representation is not InterfaceRepresentation.NORMAL_DENSITY):
+        raise InvalidScientificProblem("CHT requires executed equal-and-opposite outward flux-density transfer")
+    if interface.flux_normal != _NORMAL + flux.source.participant_id:
+        raise InvalidScientificProblem("legacy presigned CHT flux requires explicit source-normal migration")
+    admission = admit_dirichlet_neumann_interface(interface.interface_id, interface.temperature_edge,
+        interface.heat_flux_edge, temperature_semantics, heat_flux_semantics, graph, plan)
+    return ConjugateInterfaceAdmission(interface, admission.intensive_receiver, admission.flux_receiver,
+                                      admission.receiver_flux_sign, admission.implicit, admission)
 
 
 # --------------------------------------------------------------------------------------------------------------------
