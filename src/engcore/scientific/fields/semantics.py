@@ -24,7 +24,8 @@ class FieldKind(str, Enum):
 class InterfaceConvention:
     """Positive normal component means orientation * dot(vector, normal).
 
-    This support-bound convention is declarative; A-4 execution is unsupported.
+    This support-bound convention alone is declarative; execution additionally
+    requires an admitted InterfaceTransfer and its qualified geometry.
     It does not declare a face discretization or qualify a physical interface.
     """
     support_id: str

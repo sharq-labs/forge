@@ -726,7 +726,15 @@ class FieldMapper:
         target_definition: FieldDefinition,
         target_mesh: MeshSupport,
         definition: FieldMappingDefinition,
+        *,
+        interface_transfer=None,
     ) -> FieldMappingResult:
+        if interface_transfer is not None:
+            from ...scientific.fields.interface_transfer import InterfaceTransfer
+            if not isinstance(interface_transfer, InterfaceTransfer):
+                raise InvalidScientificProblem("interface mapping requires typed executable contract")
+            interface_transfer.admit(record.definition, source_mesh, target_definition, target_mesh, definition)
+            return self._interface(record, source_mesh, target_definition, target_mesh, definition, interface_transfer)
         source_semantics, target_semantics = record.definition.semantics, target_definition.semantics
         typed = source_semantics is not None or target_semantics is not None
         if typed:
@@ -952,6 +960,58 @@ class FieldMapper:
                 },
             ),
         )
+
+    def _interface(self, record, source_mesh, target_definition, target_mesh, definition, contract):
+        from ...scientific.fields.interface_transfer import InterfaceRepresentation
+        source = FieldValue.from_record(record, source_mesh, self.resolver).to_unit(target_definition.unit)
+        overlap, va, vb, geometry = _overlap_geometry(source_mesh, target_mesh, self.resolver)
+        if (np.any(np.abs(np.asarray(overlap.sum(axis=1)).reshape(-1)/va-1) > CONSERVATIVE_COVERAGE_ROUNDOFF)
+                or np.any(np.abs(np.asarray(overlap.sum(axis=0)).reshape(-1)/vb-1) > CONSERVATIVE_COVERAGE_ROUNDOFF)):
+            raise InvalidScientificProblem("partial interface coverage is unsupported; no extrapolation or dropped source")
+        kind = FieldKind.CELL_AVERAGE_DENSITY if contract.representation is InterfaceRepresentation.NORMAL_DENSITY else FieldKind.CELL_INTEGRATED
+        values = source.values.reshape(-1, 1)
+        mapped, reverse = remap_cells(values, overlap, va, vb, kind)
+        round_trip = None
+        if definition.verify_round_trip:
+            weights = (1.0/va[:, None] if kind is FieldKind.CELL_INTEGRATED else va[:, None])
+            numerator = math.sqrt(float(np.sum(weights * (values-reverse)**2)))
+            denominator = max(math.sqrt(float(np.sum(weights * values**2))), np.finfo(float).tiny)
+            round_trip = numerator/denominator
+            if not math.isfinite(round_trip) or (definition.relative_error_limit is not None and round_trip > definition.relative_error_limit):
+                raise InvalidScientificProblem("interface round-trip error exceeds declared limit or is non-finite")
+        local = conservation_totals(values, mapped, va, vb, kind)
+        executed = mapped * contract.sign
+        actual = conservation_totals(values, executed, va, vb, kind)
+        before, after, _, l1, _ = actual
+        raw_unit = f"({target_definition.unit}) * m**2" if kind is FieldKind.CELL_AVERAGE_DENSITY else target_definition.unit
+        factor = Quantity(1, raw_unit).magnitude_in(contract.conserved_quantity.unit)
+        source_total, target_total = float(before[0]*factor), float(after[0]*factor)
+        source_outward, target_outward = source_total/contract.source.orientation, target_total/contract.target.orientation
+        normal_sign = contract.sign * contract.source.orientation * contract.target.orientation
+        residual = abs(target_outward - normal_sign*source_outward)
+        scale = float(l1[0]*factor)
+        relative = 0.0 if scale == 0 and residual == 0 else residual/scale
+        if not all(math.isfinite(x) for x in (source_total, target_total, residual, scale, relative)):
+            raise InvalidScientificProblem("non-finite executed interface integral diagnostics")
+        result = FieldValue(target_definition, target_mesh, executed.reshape(target_definition.expected_shape(target_mesh)))
+        out, _ = result.store(self.store)
+        return FieldMappingResult(out, MappingDiagnostics(
+            mapping_id=definition.mapping_id, source_count=source.count, target_count=result.count,
+            extrapolated_count=0, coverage_fraction=1.0, round_trip_relative_l2=round_trip,
+            conservation_relative_error=local[-1], provenance={
+                "method": "executed_common_plane_interface_overlap", "geometry": geometry,
+                "interface_transfer": contract.to_dict(), "applied_sign": contract.sign,
+                "source_support": source_mesh.fingerprint(), "target_support": target_mesh.fingerprint(),
+                "coverage_roundoff_allowance": CONSERVATIVE_COVERAGE_ROUNDOFF,
+                "round_trip_norm": ("density_l2" if kind is FieldKind.CELL_INTEGRATED else "measure_weighted_l2") if round_trip is not None else None,
+                "local_mapping_relative_residual": local[-1],
+                "source_total_stored_convention": source_total, "target_total_stored_convention": target_total,
+                "source_total_normal_component": source_outward, "target_total_normal_component": target_outward,
+                "oriented_integral_absolute_residual": residual, "oriented_integral_scale_l1": scale,
+                "oriented_integral_relative_residual": relative, "conservation_unit": contract.conserved_quantity.unit,
+                "coupled_physical_conservation": "unknown: independent participant fluxes and sources not evaluated",
+                "numerical_solution_verification": "not established", "experimental_validation": "not established",
+                "notice": "constructed transfer integral diagnostic, not independent physical conservation or a local error bound"}))
 
     def _conservative(
         self,

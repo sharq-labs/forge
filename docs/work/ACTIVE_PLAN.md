@@ -6,6 +6,26 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Active repair - A-4 physics-neutral interface flux execution (2026-10-18)
+
+Branch codex/interface-flux-execution, base A-3 4f239fa7fe705e3d8ae390a8e885302dcb07904e.
+Stack: main -> semantic Draft PR #159 -> A-3 Draft PR #160 -> A-4 local branch.
+A-3 was clean/scanned, pushed and opened against codex/quantity-semantics by owner
+instruction. Prior local-only A-3 publication note superseded; no merge.
+
+- [x] Preimplementation Core compatibility/architecture decision (dab92bf0).
+- [x] Typed scalar planar interface transfer and executed sign/normal convention.
+- [x] Neutral Dirichlet-Neumann admission; explicit thermal wrapper; tests written.
+- [x] Independent scientific static review PASS, defects corrected, no execution.
+- [x] Local Draft PR-ready package and DV-117..120, NOT RUN.
+- [ ] Owner-authorized execution and explicit legacy WS3/interface migration.
+- [ ] Independent coupled physical balance, numerical verification, validation and OD-3.
+
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. No A-4/gate closure from code or static PASS.
+Unstructured/curved/vector/moving/partial interfaces remain unsupported. Proposed next
+bounded M1 work is lineage-bound 1D transfer and reversible bisection coarsening;
+see A4_MERGE_PACKAGE.md for prerequisites. DV0 does not block Build-First implementation.
+
 ## Active repair - A-3 declared field kind mapping (2026-10-18)
 
 Branch `codex/declared-field-kind-mapping` is stacked on semantic PR #159,
