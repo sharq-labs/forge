@@ -72,6 +72,11 @@ def run_plan(
             continue
         if not isinstance(outcome,BackendOutcome):
             raise TypeError("simulation backend must return BackendOutcome")
+        if str(getattr(backend,"solver_build","")).strip()!=build:
+            attempts.append(SimulationAttempt(attempt_id,AttemptState.FAILED,index-1,"execution_build_drift_refused"))
+            if not policy.allow_solver_fallback:
+                break
+            continue
         attempts.append(
             SimulationAttempt(
                 attempt_id,
@@ -83,7 +88,7 @@ def run_plan(
         # OrchestrationReport has no problems channel (a schema change); a refused checkpoint is simply never
         # adopted, and in run_plan each solver runs once, so it could not have been resumed by anyone
         adopted,_problem=adopt_checkpoint(outcome.checkpoint,solver_id=solver_id,state=outcome.state,
-                                          solver_build=str(getattr(backend,"solver_build","")).strip(),
+                                          solver_build=build,
                                           problem_digest=plan.problem_digest)
         if adopted is not None:
             current_checkpoint=adopted

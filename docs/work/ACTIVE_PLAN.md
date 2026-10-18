@@ -6,6 +6,26 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Active repair — checkpoint integrity R1–R5 (2026-10-18)
+
+Owner-authorized bounded Build-First repair from main `0284ae161ad957d51674ee481e47cfd43d10c5f0`.
+Branch `codex/checkpoint-integrity-hardening`; isolated worktree
+`C:/Users/dev_kaeem/.codex/worktrees/checkpoint-integrity/phyx`.
+The shared stale main checkout and its existing edits are preserved.
+
+- [x] R1 provider-qualified snapshot payload encoding; strict same-object seal retained.
+- [x] R2 failed restoration retirement across runtimes, callback/external application guards.
+- [x] R3 PyBaMM physical-time and live-state-integrity admission.
+- [x] R4 strict legacy orchestration build/problem admission; compatibility review note written.
+- [x] R5 adversarial tests written. IMPLEMENTED / UNVERIFIED; tests NOT RUN.
+- [x] Independent scientific/compatibility review: PASS (static review only); PR-ready
+      package in CHECKPOINT_HARDENING_MERGE_PACKAGE.md. No push/PR/merge performed.
+- [ ] Separately authorize DV-100, DV-99, then DV-101..DV-106. Full tiers, mutation,
+      full assurance and OD-3 remain separately authorized operations; no automatic merge.
+
+Contract/compatibility/limitations: [CHECKPOINT_HARDENING.md](CHECKPOINT_HARDENING.md).
+This slice does not authorize implementation of A-1/A-2/A-13 or A-3 semantics.
+
 ## Integration — Codex handoff (2026-10-18)
 
 By owner confirmation in chat, branch `integration/codex-handoff-2026-10-18` merges into `main`, in order: I-8

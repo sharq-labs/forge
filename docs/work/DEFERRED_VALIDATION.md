@@ -854,3 +854,25 @@ Certification-pinned (`certification/current_core_v2.json`) files changed in Pha
 patterns: `providers/{compare,problem_identity,__init__}.py`, `execution/multiphysics/{steady,authority,conjugate_interface}.py`.
 No new import from a pinned-list file into an unpinned module. No V4 mutant targets a changed line (the G20a anchor in
 `systems/electrothermal/coupled.py` is untouched). OD-3 recertification required.
+
+
+## Checkpoint integrity repair R1-R5 (2026-10-18)
+
+Base `0284ae161ad957d51674ee481e47cfd43d10c5f0`; branch `codex/checkpoint-integrity-hardening`.
+Owner authorized implementation and static checks only. All execution below is NOT RUN.
+Run DV-100 and DV-99 first, then these bounded checks after separate execution authorization.
+No test result is inferred from compilation or independent review.
+
+| ID | Scope | Deferred command / required evidence | Status |
+| --- | --- | --- | --- |
+| DV-101 | R1/R2/R5 integrity, substitution, same-object rollback, unsupported cross-object restore, direct and partial restore failures, weak/nonweak custom retirement, qualified inline/content-addressed codecs | `python -m pytest tests/test_checkpoint_integrity_hardening.py tests/test_external_participant_checkpoints.py tests/test_provider_participant_checkpoints.py tests/test_system_runtime_external_providers.py -q` | NOT RUN |
+| DV-102 | R4 legacy required bindings, build/problem mismatch, within-call build drift, qualified conversion and original routing expectations | `python -m pytest tests/execution/orchestration -q` | NOT RUN |
+| DV-103 | R3 real PyBaMM same-object replay, current-solution alias corruption, wrong checkpoint/request/solver times, build/configuration identity; controlled wrong-endpoint fixtures remain mocks | supported WSL battery Python: `python -m pytest providers/pybamm/tests/test_pybamm_checkpoint_identity.py -q` | NOT RUN; provider required, no skip counts as execution evidence |
+| DV-104 | Frozen API, serialization, stable exception roots, dependency layering/closure and pin portability | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_api_contracts.py tests/test_core_api_serialization.py tests/test_core_freeze_policy.py tests/test_core_api_layering.py tests/test_certified_dependency_closure.py tests/test_pin_portability.py -q` | NOT RUN; do not regenerate pins to silence failures |
+| DV-105 | Runtime consumers and native declaration-only compatibility | `python -m pytest tests/test_multiphysics_window_control.py tests/test_stateful_multiphysics_runtime.py tests/test_multiscale_runtime.py tests/test_phase2_external_coupling.py tests/test_phase35_ws2_electrothermal_migration.py -q`; in supported provider env also `python -m pytest providers/pybamm/tests/test_pybamm_multiphysics.py providers/pybamm/tests/test_system_runtime_battery.py -q` | NOT RUN |
+| DV-106 | Repository changed/regression gates; later final-source normal integration and OD-3 certification | first `python tools/forge_check.py --changed`, then `python tools/forge_check.py --regression`; full FAST/SCIENTIFIC tiers, mutation, full assurance and OD-3 require separate authorization | NOT RUN; touched certified/SCOPE files remain UNCERTIFIED |
+
+Compatibility: see CHECKPOINT_HARDENING.md. Records keep their schemas; legacy readability is not resume authority.
+Every later result must record exact source SHA, interpreter, provider versions, command, exit status, failures/skips
+and relevant names in PROGRESS. Re-run independent review if behavior changes. Provider codec completeness needs
+provider-specific qualification; these mocks are not evidence for real external solvers or physical validation.
