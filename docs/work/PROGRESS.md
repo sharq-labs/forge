@@ -6380,3 +6380,29 @@ IMPLEMENTED / UNVERIFIED / UNCERTIFIED, NOT INTEGRATION-READY.
   non-ASCII text in PROGRESS. Restored the exact baseline bytes and appended only this task's
   ASCII entries. Do not normalize historical evidence logs through locale-dependent text IO.
   Correction changes documentation only; independently reviewed implementation is unchanged.
+
+### 2026-10-18 -- Batch 4: real coupled runs for five system-runtime tests; forward-tear reachability (branch `fix/batch4-system-runtime-real-runs`)
+
+- Base `main` `4e339b5f8728088816a2584fe203b9b203a7b15e`; Linux, CPython 3.13.16, numpy 2.5.3, scipy 1.18.1,
+  ngspice 44 (apt), `CRAFTY_NGSPICE_ARGV=ngspice`. Tests only; no `src/` file changed.
+- 4A: `_coupled_stub()` (a `SimpleNamespace` "run") replaced by `_coupled_runtime(end_uncertainty)`, a genuine
+  `MultiphysicsRuntime`: one transient `body` participant on a real graph, an explicit plan with one 1800 s window, an
+  initial-state receipt that acknowledges the supplied state exactly, a real state identity and a public end state
+  (305 K with the caller's uncertainty). `coupled_run_kwargs(call)` passes `external_inputs={}` and the run's authorized
+  scenario (`call.context.scenario.digest`), as the PyBaMM and flagship authorities do. Assertions unchanged.
+- 4B: `test_a_redundant_forward_tear_is_refused` has no valid fixture in the series pack. New
+  `test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[1-3]` tries all 7 / 63 / 511 tear sets
+  (tolerance in the torn dimension): 3 admitted per N, all backward; none reaches the forward-tear refusal. The
+  original test is left failing and recorded as OD-26; nothing was fabricated.
+- Before, the six tests:
+  `python -m pytest -q -p no:cacheprovider <6 node ids>` -> **6 failed**.
+- After:
+  `python -m pytest -q -p no:cacheprovider tests/test_system_runtime_big13_additions.py tests/test_system_runtime_review_fixes.py tests/test_system_runtime_state_reads.py`
+  -> **51 passed**;
+  `python -m pytest -q -p no:cacheprovider tests/test_phase2_review_regressions.py` -> **7 passed, 1 failed**
+  (`test_a_redundant_forward_tear_is_refused`, OD-26).
+- Related regressions:
+  `python -m pytest -q -p no:cacheprovider -n 4 tests/test_system_runtime_*.py tests/test_phase2_review_regressions.py tests/test_phase35_ws2_electrothermal_migration.py tests/test_electrothermal_vertical.py tests/test_phase2_coupling_authority.py tests/test_stateful_multiphysics_runtime.py`
+  -> **269 passed, 2 failed** (`test_a_redundant_forward_tear_is_refused` OD-26; `test_l3_no_relaxation...` OD-23).
+- Not run (not authorized): full FAST / SCIENTIFIC tiers, mutation, OD-3.
+- Independent read-only review (`forge-scientific-reviewer`, static, ran nothing): **PASS**, no BLOCKER/MAJOR. Acted on: MINOR-1/2 (the enumeration now asserts every plan refusal is the mixed-dimension one, every adapter refusal is the cycle refusal, and the exact admitted sets), NOTE-1 (the no-state `initialize` starts from the declared 300 K every run), NOTE-2 (new `test_h2_a_known_end_uncertainty_over_a_known_prior_is_committed_as_the_participant_stated_it`). Recorded: MINOR-3 in OD-26, NOTE-3 as OD-27. After the fixes: `python -m pytest -q -p no:cacheprovider -n 4 tests/test_phase2_review_regressions.py tests/test_system_runtime_big13_additions.py tests/test_system_runtime_review_fixes.py tests/test_system_runtime_state_reads.py` -> **59 passed, 1 failed** (`test_a_redundant_forward_tear_is_refused`, OD-26).

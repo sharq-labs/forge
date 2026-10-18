@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import replace
 from types import SimpleNamespace
@@ -9,6 +10,14 @@ from types import SimpleNamespace
 import pytest
 
 from engcore.credibility.evidence import CredibilityVerdict
+from engcore.data import BulkDataResolver, InMemoryBulkStore
+from engcore.execution.multiphysics import (
+    AdvanceResult, CallbackParticipant, InitializationResult, InitialStateDefinition, InitialStateReceipt, MultiphysicsRuntime,
+)
+from engcore.scientific.multiphysics import (
+    CouplingPlan, CouplingScheme, IterationSemantics, ParticipantSpec, PhysicsGraph, PortDefinition, PortDirection, PortKind, TimePolicy,
+)
+from engcore.scientific.multiphysics.receipts import StateVariableValue
 from engcore.scientific.errors import InvalidScientificProblem
 from engcore.scientific.multiphysics.state import InitialStateValue
 from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
@@ -59,24 +68,69 @@ def test_h1_the_trust_handoff_refuses_a_request_that_is_not_the_one_the_result_c
 
 
 # ------------------------------------------------------------------------------------------------------------- H2 state uncertainty
-class _Stub:
-    def fingerprint(self):
-        return sha("stub")
+def _coupled_runtime(end_uncertainty):
+    """A genuine, minimal BIG 9 coupled runtime whose participant reports its own end-state uncertainty.
+
+    Phase 1 BR7 refuses anything that is not a ``MultiphysicsRunRecord`` (the window outcomes, conservation and
+    state transitions are checked against the run's own graph and plan), so this executes a real run: one
+    transient participant ``body`` on a real graph and an explicit plan with one 1800 s window. It accepts an
+    initial state when its owner supplies one (acknowledging it exactly), advances its temperature to 305 K,
+    publishes that end state with ``end_uncertainty`` -- the participant's own statement, which is what these
+    tests are about -- and exposes a real state identity, so the run carries a genuine state-transition receipt.
+    """
+    unknown_output = Uncertainty.unknown("coupled-run output: the participant states no uncertainty")
+    spec = ParticipantSpec(
+        "body", "lumped-body", "1", "closed-form", "1", "test-solver", "1", "test-adapter", "1",
+        (PortDefinition("temperature", PortDirection.OUTPUT, PortKind.SCALAR, "temperature", "K"),),
+        transient=True,
+    )
+    held = {"value": InitialStateValue("temperature", Quantity(300.0, "K"), UNKNOWN)}
+
+    def digest(value: InitialStateValue) -> str:
+        return hashlib.sha256(json.dumps(value.to_dict(), sort_keys=True).encode()).hexdigest()
+
+    def initialize(_instant, _inputs, _uncertainty):
+        # no owner supplied a state: every run starts from the declared 300 K, never from an earlier run's end
+        held["value"] = InitialStateValue("temperature", Quantity(300.0, "K"), UNKNOWN)
+        return InitializationResult({"temperature": held["value"].value}, {"temperature": unknown_output})
+
+    def initialize_state(instant, state, _inputs, _uncertainty):
+        held["value"] = state["temperature"]
+        return InitializationResult(
+            {"temperature": held["value"].value}, {"temperature": unknown_output},
+            initial_state_receipt=InitialStateReceipt("body", instant, (state["temperature"],), digest(state["temperature"])),
+        )
+
+    def advance(request):
+        held["value"] = InitialStateValue("temperature", Quantity(305.0, "K"), end_uncertainty)
+        return AdvanceResult(request.end, {"temperature": held["value"].value}, {"temperature": unknown_output}, 1, True)
+
+    participant = CallbackParticipant(
+        spec, initialize=initialize, advance=advance,
+        initial_state_definitions=(InitialStateDefinition("temperature", "K"),),
+        initialize_state=initialize_state,
+        state_identity=lambda _instant: digest(held["value"]),
+        public_state=lambda _instant: (StateVariableValue("temperature", held["value"].value, held["value"].uncertainty),),
+    )
+    graph = PhysicsGraph("stub-coupled", (spec,), ())
+    plan = CouplingPlan("stub-coupled-plan", CouplingScheme.EXPLICIT, IterationSemantics.SERIAL,
+                        TimePolicy(Quantity(0.0, "s"), Quantity(1800.0, "s"), Quantity(1800.0, "s")))
+    store = InMemoryBulkStore()
+    return MultiphysicsRuntime(graph, plan, {"body": participant}, resolver=BulkDataResolver(store), store=store)
 
 
-def _coupled_stub(end_uncertainty):
-    """A stand-in BIG 9 runtime that returns a converged run whose participant reports its own end-state uncertainty."""
-    value = SimpleNamespace(variable_id="temperature", value=Quantity(305.0, "K"), uncertainty=end_uncertainty)
-    run = SimpleNamespace(
-        run_id="stub", final_outputs={"body.temperature": Quantity(305.0, "K").to_dict()}, windows=[SimpleNamespace(outcome=SimpleNamespace(value="converged"), iterations=[1])],
-        state_transitions=[SimpleNamespace(participant_id="body", end_values=(value,))], ended_at=Quantity(1800, "s"), to_dict=lambda: {"stub": True})
-    runtime = SimpleNamespace(graph=_Stub(), plan=_Stub(), run=lambda run_id, **kw: run)
-    return runtime
+def coupled_run_kwargs(call):
+    """What the real ``MultiphysicsRuntime.run`` needs from the call, as the provider-backed authorities pass it.
+
+    External inputs are explicit (this graph has none), and an initial state that participates in the run is
+    bound to the scenario the system run authorized -- the scenario the executor's context holds by digest.
+    """
+    return {"external_inputs": {}, "scenario_digest": call.context.scenario.digest}
 
 
 def _state_commit_request(end_uncertainty, prior_uncertainty, accounts=False):
     request, context, knobs = build()
-    auth = MultiphysicsAuthority("stub-coupled", _coupled_stub(end_uncertainty), run_kwargs=lambda c: {}, outputs={"temperature": "body.temperature"},
+    auth = MultiphysicsAuthority("stub-coupled", _coupled_runtime(end_uncertainty), run_kwargs=coupled_run_kwargs, outputs={"temperature": "body.temperature"},
                                  state_owners={"body": "cell"},
                                  applicability=lambda run, call: (ApplicabilityReport("ok", "within", sha("e")),))
     auth.accounts_for_input_uncertainty = accounts
@@ -97,6 +151,18 @@ def test_h2_the_committed_state_carries_the_participants_uncertainty_never_the_p
     committed = result.final_state.owner("cell").values[0]
     assert committed.value.magnitude == pytest.approx(305.0)
     assert committed.uncertainty.kind is UncertaintyKind.UNKNOWN            # the stale +-0.01 K did not survive a solve that states none
+
+
+def test_h2_a_known_end_uncertainty_over_a_known_prior_is_committed_as_the_participant_stated_it():
+    """The other direction of H2: the participant's own statement is carried through, not blanked to UNKNOWN."""
+    prior = Uncertainty(kind=UncertaintyKind.STANDARD, standard_uncertainty=Quantity(0.01, "K"), source="declared:initial", method="declared")
+    stated = Uncertainty(kind=UncertaintyKind.STANDARD, standard_uncertainty=Quantity(0.25, "K"), source="participant", method="declared")
+    request, context = _state_commit_request(stated, prior)
+    result = SystemExecutor(context).run(request)
+    assert result.status is RunStatus.SUCCEEDED, [(r.node_id, r.reason) for r in result.node_receipts]
+    committed = result.final_state.owner("cell").values[0]
+    assert committed.value.magnitude == pytest.approx(305.0)
+    assert committed.uncertainty == stated                                  # the end state's own +-0.25 K, not the prior's +-0.01 K
 
 
 # ------------------------------------------------------------------------------------------------------------- H3 content by digest
