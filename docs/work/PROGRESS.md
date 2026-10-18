@@ -6451,3 +6451,79 @@ IMPLEMENTED / UNVERIFIED / UNCERTIFIED, NOT INTEGRATION-READY.
   branch also requires empty receipt digests), L2 (stale comment / superseded PROGRESS line), L3 (contract in the
   `MultiphysicsAuthority` docstring and `docs/architecture/engineering.md`), L4 (M2 as OD-28 in ACTIVE_PLAN). Not run by the
   builder: `flagships/tests/test_flagship_battery.py` (needs PyBaMM; minutes per test); statically it passes the authorized digest.
+
+### 2026-10-18 -- Batch 6A (OD-28): MultiscaleAuthority bound to the authorized scenario / timeline / environment (branch `fix/od28-multiscale-identity`)
+
+- Base `fix/od27-scenario-identity` `279a3fd749ded312bda53afb02dfd2a64e4fa568` (stacked on draft PR #164; `main`
+  `4e339b5f` untouched). Linux, CPython 3.13.16.
+- Decision: a `MultiTimescaleRuntime` is always scenario-bound (its constructor requires a scenario-bound timeline), so
+  there is no scenario-independent multi-timescale path and no compatibility exception. `MultiscaleAuthority`:
+  `preflight_findings` admits a node only when `runtime.identities()` scenario / timeline / environment equal
+  `context.scenario/timeline/environment` digests (internally consistent) and the runtime is unchanged since construction
+  (`declared_fast_state` excluded: the runtime re-derives it from the authority's declared fast state each run; record and
+  checkpoints are compared on it exactly); `execute` refuses a node not admitted, a context that is no longer the admitted
+  one, or a changed runtime, before run / resume; the returned record must belong to the runtime's run and carry exactly the
+  runtime's identities (bound to the authorized ones), as must every macro checkpoint in it, before extractors /
+  applicability / providers / state proposal / pending checkpoint; a held checkpoint carries `(request digest, identities)`
+  and resumes only for them; a restored payload (binding None; the executor's `SystemCheckpoint` verification binds the
+  request) and every resumed checkpoint must carry the authorized identities and the runtime's run id before
+  `runtime.resume`. Codes `MULTISCALE_IDENTITY_MISSING` / `_MISMATCH` / `MULTISCALE_RUNTIME_CHANGED`. Authority identity
+  payload unchanged (serialization identity preserved).
+- New `tests/test_system_runtime_multiscale_identity.py` (24 tests, genuine `MultiTimescaleRuntime` over the heater/board
+  reference, two-day program; adversaries are runtime subclasses) and shared `tests/system_runtime_multiscale_fixtures.py`.
+  Before (base `authorities.py`): `python -m pytest -q -p no:cacheprovider -n 4 tests/test_system_runtime_multiscale_identity.py`
+  -> **19 failed, 5 passed** (the 5 valid-path controls). After -> **24 passed**.
+- Migrated (stub runtime `identities={"id": "stub"}` is now refused): `test_h5_...`, `test_m5_...`
+  (`test_system_runtime_review_fixes.py`), `test_n2_...` x3, `test_c_...` x2 (`test_system_runtime_rereview_fixes.py`) to
+  genuine runtimes on the request's own context; assertions kept (h5's literal stub payload became "the promoted
+  checkpoint is the run's real macro checkpoint"; m5 uses a genuine runtime that stops at day 1; the two-domain test
+  perturbs the second compared domain, `board_slow`). The migrated tests pass on the base `authorities.py` too (faithful).
+- Regressions: `python -m pytest -q -p no:cacheprovider -n 4 tests/test_system_runtime_*.py tests/test_phase1_system_runtime_outcomes.py tests/test_multiscale_fast_nonconvergence.py tests/test_multiscale_review_fixes.py tests/test_multiscale_runtime.py tests/test_big11_review_fixes.py`
+  -> after **5 failed, 253 passed**; base tracked tree with the new untracked tests -> **24 failed, 234 passed** (19 new
+  OD-28 tests + the same 5). The 5 are the coupled-stub tests PR #163 repairs (`test_multiphysics_extractors_...`,
+  `test_an_extractor_that_raises_...`, `test_a_committing_node_cannot_requantify_...`, `test_h2_...`, `test_r2_...`),
+  failing identically on the base.
+- Merged locally with #163 (temporary branch, discarded; only docs conflicted), same suites plus
+  `tests/test_phase2_review_regressions.py` -> **1 failed, 266 passed** (`test_a_redundant_forward_tear_is_refused`, OD-26).
+- `providers/pybamm/tests/test_system_runtime_battery.py` (PyBaMM 26.10.1.0, TESPy 0.11.3 installed for the run, then
+  removed; `PYTHONPATH=providers/pybamm:providers/tespy`) -> **8 passed** (incl. Gate C, Gate E fresh-runtime resume,
+  changed-context resume refusal: the production `MultiscaleAuthority` path).
+- Compatibility: a `MultiscaleAuthority` now needs a runtime bound to the request's scenario / timeline / environment and
+  a preflight admission before `execute` (direct `execute` calls must call `preflight_findings` first with the context);
+  a request without an environment cannot run a multiscale node. In-tree production users (PyBaMM kit) already comply.
+- Nested gap recorded as OD-29 (fast-system inner run records are not resolved; only self-reported echoes are checked).
+- `src/engcore/system_runtime/authorities.py` is certification-pinned: UNCERTIFIED until OD-3. Not run: FAST / SCIENTIFIC,
+  mutation, full assurance, OD-3.
+- Independent read-only review (`forge-scientific-reviewer`, static): **CHANGES REQUIRED** -- MEDIUM-1 (the held
+  checkpoint was `record.last_valid_checkpoint`, a property, while the verified object was `record.checkpoints[-1]`; a
+  record look-alike or subclass could have a foreign checkpoint held and bound to the authorized request), MEDIUM-2 (h5's
+  name promises "a fresh run never inherits one" but nothing tested it; pre-existing: the stub version also used two
+  authorities), LOW-1 (identities are the runtime's self-report), LOW-2 (untested branches), LOW-3 (identity refusals are
+  FAILED, not REFUSED), NOTE-1..4. Acted on: MEDIUM-1 -- the record must be a `MultiTimescaleRunRecord` and the held
+  checkpoint is the verified list item; MEDIUM-2 -- h5 now runs a fresh (failing) stage on the same authority and asserts
+  nothing is inherited; LOW-1 -- the reported scenario / timeline / environment must be those of `runtime.timeline` /
+  `runtime.environment` (and the environment's timeline), at admission, before run and after the record; LOW-2 -- tests for
+  a record differing in a non-bound key, a record missing a bound key, a renamed runtime; NOTE-1 -- docstring. Not changed:
+  LOW-3 (kept consistent with OD-27 and the existing `MultiscaleAuthority` guards; recorded with NOTE-3 as OD-30); the
+  held-binding identity branch is defence in depth (unreachable while the runtime is fixed and the request pins the context).
+  Serialization identity checked: the authority `identity_digest` of a staged and a plain fixture authority is identical on
+  base `279a3fd7` and on the fix.
+- After the review fixes: `tests/test_system_runtime_multiscale_identity.py` -> **30 passed**; its 6 review tests against
+  the pre-review fix -> **3 failed, 3 passed** (MEDIUM-1 x2 and LOW-1 caught; the LOW-2 branches were already handled).
+  Same regression set as above -> **5 failed, 259 passed** (the same five #163 stub tests).
+  `providers/pybamm/tests/test_system_runtime_battery.py` (PyBaMM/TESPy installed for the run, then removed) -> **8 passed**.
+- Re-review of `9c5c7664` (static): **CHANGES REQUIRED** -- MEDIUM-2, LOW-1 closed, LOW-2 mostly closed; MEDIUM-1b: the
+  checkpoint items were checked by attribute only and the held payload was whatever `serialize()` returned, so a
+  look-alike or a `MacroCheckpoint` subclass could still get a foreign payload held. Acted on: exact types
+  (`type(record) is MultiTimescaleRunRecord`, `type(cp) is MacroCheckpoint`) and the payload that would be held is
+  deserialized and checked (run id, identities) before anything is exposed; tests for both adversaries, a record subclass
+  overriding `last_valid_checkpoint` (now refused), and a runtime that starts lying after preflight (caught by the objects
+  check at execute). The new m1b / record-subclass tests against `9c5c7664` -> **3 failed, 1 passed**.
+- After: `tests/test_system_runtime_multiscale_identity.py` -> **33 passed**; regression set -> **5 failed, 262 passed**
+  (the same five #163 stub tests); `providers/pybamm/tests/test_system_runtime_battery.py` (PyBaMM/TESPy installed for the
+  run, removed) -> **8 passed**.
+- Second re-review of `f726392d` (static): **PASS**; MEDIUM-1b closed. LOW note applied: `record.checkpoints` must be a
+  tuple (a stateful container could yield another item after verification). After it:
+  `python -m pytest -q -p no:cacheprovider -n 4 tests/test_system_runtime_multiscale_identity.py tests/test_system_runtime_review_fixes.py tests/test_system_runtime_rereview_fixes.py tests/test_multiscale_runtime.py tests/test_multiscale_review_fixes.py`
+  -> **2 failed, 121 passed** (`test_h2_...`, `test_r2_...`: #163 stub tests, failing on the base too). Open: OD-29, OD-30;
+  no test for one authority shared by two contexts (fails closed statically). UNCERTIFIED until OD-3.

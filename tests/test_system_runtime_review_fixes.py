@@ -24,11 +24,12 @@ from engcore.scientific.results.uncertainty import Uncertainty, UncertaintyKind
 from engcore.scientific.units.quantity import Quantity
 from engcore.system_runtime import (
     ApplicabilityReport, AuthorityRef, Availability, CallbackAuthority, ExecutionCache, ExecutionProfile, ModelSelection, MultiphysicsAuthority,
-    MultiscaleAuthority, NodeInput, NodeKind, NodeOutcome, NodeOutputSpec, NodeSpec, NodeStatus, OutputValue, OwnerState, PreflightStatus,
+    NodeInput, NodeKind, NodeOutcome, NodeOutputSpec, NodeSpec, NodeStatus, OutputValue, OwnerState, PreflightStatus,
     ProviderRecordRef, RequestedObservable, ResumeRefused, RunStatus, SystemCheckpoint, SystemExecutor, SystemRunResult, SystemState, TermSource,
     compare_runs, compile_plan, preflight, trace_result, trust_handoff, verify_checkpoint,
 )
 from engcore.system_runtime._common import digest_of
+from tests import system_runtime_multiscale_fixtures as MSF
 from tests.system_runtime_fixtures import UNKNOWN, Knobs, build, material_property, sha
 from tests.test_system_runtime_checkpoint import Counting, Incomplete, _with_authority
 from tests.test_system_runtime_executor import FakeProviders, _prov
@@ -246,43 +247,29 @@ def test_h4_the_state_of_a_checkpoint_must_be_the_state_after_its_last_committed
 
 
 # ------------------------------------------------------------------------------------------------------------- H5 pending authority state
-class _MacroCheckpoint:
-    def serialize(self):
-        return {"checkpoint": {"stub": True}, "digest": sha("stub-checkpoint")}
-
-
-def _stub_multiscale(status="completed", reached=1800, resume_ok=True):
-    calls = {"run": 0, "resume": 0}
-    record = lambda: SimpleNamespace(  # noqa: E731
-        run_id="ms", status=status, reason="stub", reached=SimpleNamespace(seconds=reached, quantity=Quantity(reached, "s")),
-        final_slow_state={}, steps=(), last_valid_checkpoint=_MacroCheckpoint(), accounting={"represented_seconds": "0/1"}, digest=sha("ms-record"))
-    def run(**kw):
-        calls["run"] += 1
-        return record()
-    runtime = SimpleNamespace(identities=lambda: {"id": "stub"}, run=run, resume=lambda cp, until=None: record(), set_declared_fast_state=lambda s: None)
-    return runtime, calls
+# Genuine BIG 10 runtimes (OD-28): the authority refuses a runtime that is not bound to the call's scenario / timeline /
+# environment, so these regressions run a real MultiTimescaleRuntime on the request's own context instead of a stub.
+MS_ENV, MS_SCN = MSF.environment()
 
 
 def test_h5_a_checkpoint_from_a_refused_stage_is_never_promoted_and_a_fresh_run_never_inherits_one():
-    runtime, calls = _stub_multiscale()
     outside = lambda record, call: (ApplicabilityReport("bounds", "outside", sha("e"), "left"),)   # noqa: E731
-    auth = MultiscaleAuthority("stub-ms", runtime, initial_slow_state={}, extractors={"power": lambda r: Quantity(1.0, "W")}, applicability=outside)
-    request, context, knobs = build()
-    context.authorities.register(auth)
-    heat = replace(next(n for n in request.nodes if n.node_id == "heat"), authority=auth.ref, applicability_checks=("bounds",), literals=())
-    request = replace(request, nodes=tuple(heat if n.node_id == "heat" else n for n in request.nodes), profile=ExecutionProfile(("multiscale",)))
-    request = replace(request, nodes=tuple(replace(n, authority=n.authority) for n in request.nodes))
-    result = SystemExecutor(context).run(replace(request, profile=ExecutionProfile(("multiscale",))))
-    assert result.receipt("heat").status is NodeStatus.REFUSED                         # applicability refused AFTER the authority executed
+    auth = MSF.authority(MSF.runtime(MS_ENV), authority_id="ms-h5", applicability=outside)
+    request, context = MSF.request(MS_ENV, MS_SCN, auth, nodes=(replace(MSF.node(auth, commits_state=False), applicability_checks=("bounds",)),))
+    result = SystemExecutor(context).run(request)
+    assert result.receipt("aging").status is NodeStatus.REFUSED                        # applicability refused AFTER the authority executed
     assert auth._last_checkpoint is None and auth._pending_checkpoint is not None      # pending, not promoted
     within = lambda record, call: (ApplicabilityReport("bounds", "within", sha("e")),)  # noqa: E731
-    ok = MultiscaleAuthority("stub-ms2", runtime, initial_slow_state={}, extractors={"power": lambda r: Quantity(1.0, "W")}, applicability=within)
-    request2, context2, _ = build()
-    context2.authorities.register(ok)
-    heat2 = replace(next(n for n in request2.nodes if n.node_id == "heat"), authority=ok.ref, applicability_checks=("bounds",), literals=())
-    request2 = replace(request2, nodes=tuple(heat2 if n.node_id == "heat" else n for n in request2.nodes), profile=ExecutionProfile(("multiscale",)))
+    ok = MSF.authority(MSF.runtime(MS_ENV), authority_id="ms-h5-ok", applicability=within)
+    request2, context2 = MSF.request(MS_ENV, MS_SCN, ok, nodes=(replace(MSF.node(ok, commits_state=False), applicability_checks=("bounds",)),))
     SystemExecutor(context2).run(request2)
-    assert ok._last_checkpoint == {"checkpoint": {"stub": True}, "digest": sha("stub-checkpoint")}     # a committed stage IS promoted
+    assert ok._last_checkpoint is not None and ok._last_checkpoint == ok._pending_checkpoint   # a committed stage IS promoted
+    assert MSF.slow_values(ok._last_checkpoint)[0] > 0.0                                      # ... and it is the run's real macro checkpoint
+    # a fresh run on the SAME authority never inherits it, even when that fresh run then fails on the committed state
+    assert ok.preflight_findings(compile_plan(request2).nodes[0], context2) == ()
+    fresh = ok.execute(MSF.direct_call(request2, context2, "aging", state=MSF.state_at(request2, moisture_content=0.05)))
+    assert fresh.status == "failed" and "not the state this multi-timescale run starts from" in fresh.reason
+    assert ok._last_checkpoint is None and ok._last_binding is None and ok._pending_checkpoint is None
 
 
 # ------------------------------------------------------------------------------------------------------------- H6 uncertainty propagation
@@ -395,17 +382,18 @@ def test_m5_a_state_time_beyond_the_scenario_or_not_finite_is_a_failed_node_not_
     assert nan.receipt("thermal").status is NodeStatus.FAILED and len(nan.state_history) == 1
 
 
+class _StopsEarly(MSF.MultiTimescaleRuntime):
+    """A genuine runtime that stops at the first day whatever instant it is asked to reach (its record is genuine and paused)."""
+
+    def run(self, **kw):
+        return super().run(**{**kw, "until": MSF.until_day(MS_ENV, 1)})
+
+
 def test_m5_a_multi_timescale_run_that_paused_short_of_the_requested_instant_is_not_exposed_as_complete():
-    from engcore.scenarios import TimePoint
-    runtime, calls = _stub_multiscale(status="paused", reached=100)
-    until = TimePoint("sys", Quantity(1800, "s"))
-    auth = MultiscaleAuthority("stub-ms3", runtime, initial_slow_state={}, extractors={"power": lambda r: Quantity(1.0, "W")}, until=until)
-    request, context, _ = build()
-    context.authorities.register(auth)
-    heat = replace(next(n for n in request.nodes if n.node_id == "heat"), authority=auth.ref, literals=())
-    request = replace(request, nodes=tuple(heat if n.node_id == "heat" else n for n in request.nodes), profile=ExecutionProfile(("multiscale",)))
+    auth = MSF.authority(MSF.runtime(MS_ENV, cls=_StopsEarly), authority_id="ms-m5", until=MSF.until_day(MS_ENV, 2))
+    request, context = MSF.request(MS_ENV, MS_SCN, auth, nodes=(MSF.node(auth, commits_state=False),))
     result = SystemExecutor(context).run(request)
-    assert result.receipt("heat").status is NodeStatus.FAILED and "paused before the instant" in result.receipt("heat").reason
+    assert result.receipt("aging").status is NodeStatus.FAILED and "paused before the instant" in result.receipt("aging").reason
 
 
 # ------------------------------------------------------------------------------------------------------------- M6 commit taint
