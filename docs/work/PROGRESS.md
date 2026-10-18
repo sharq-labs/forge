@@ -6193,3 +6193,65 @@ credential-pattern scan over exact10-file inventory found zero matches; no addit
 untracked artifacts. Explicit `git merge-base --is-ancestor` checks confirmed each
 main -> semantic -> A-3 -> A-4 -> M1A edge. Scientific tests remain NOT RUN;
 IMPLEMENTED / UNVERIFIED / UNCERTIFIED. No merge or M1A publication.
+
+
+## 2026-10-18 M1A publication and M1B vertex dual state adapter
+
+M1A exact7f8cb5dac01cd7a270ef72886b77c8cddf717d3b clean; explicit ancestry checks
+main0284ae16 ->98da0c02 ->4f239fa7 ->1f43c59e ->M1A completed exit0. Bounded
+credential pattern scan over ten intended files found zero matches; no untracked
+artifacts; git diff --check 1f43c59e HEAD exit0. git push -u origin
+codex/m1a-mesh-lineage succeeded. gh pr create --draft --repo sharq-labs/forge
+--base codex/interface-flux-execution --head codex/m1a-mesh-lineage created
+https://github.com/sharq-labs/forge/pull/162; attached to task. Nothing merged.
+
+Created isolated managed worktree vertex-dual-state/phyx, branch
+codex/m1b-vertex-dual-state from exact M1A7f8cb5da. Owner explicitly decided
+vertex primary/dual conserved placement. Preimplementation architecture and Core
+compatibility decision4fb78436 before source. Independent read-only reviewer
+found no design blocker within declared adapter authority; existing source records
+remain caller declarations, not physical applicability/evidence.
+
+Added numerical/vertex_state.py only, no existing source modified. Compose M1A
+lineage/cache management; exact issued primal versions derive midpoint/end-point
+dual supports. Explicit placement counts distinguish vertex intensive vs dual
+density/integrated content. A-3 remap applied to dual boundaries, independent
+both-coverages/actual-total tolerance admission. No direct vertex interpolation,
+coefficient remap, area/material defaults or affine quantities. Explicit positive
+per-dual integrated linear storage binds exact primary/amount/optional density
+meanings; missing/unsupported normalized source artifacts refuse. Reuse existing
+KnowledgeSource/data/UQ records; output UQ UNKNOWN. This grants no scientific
+source authenticity or new evidence/provenance authority.
+
+Failed approaches found by static review (not observed executed failures): initially
+density conversion checked only conserved quantity, allowing different density
+meanings; now law explicitly binds optional exact density semantics. Initially
+ancestry traversal checked state/law records but could miss removed old support
+or primal invalidation issuance; now recursively require supports, mesh lineage,
+dual/primal transitions. Two MEDIUM findings corrected with dedicated probes.
+Independent /root/m1b_review final A-J PASS, no outstanding finding in bounded scope.
+No scientific verification follows. Mesh-change failure after primal mutation poisons
+adapter. Registered caches/history really clear; external sessions/concurrency unsupported.
+
+Authored tests include nonuniform/half duals/counts, constant density and primary via
+explicit storage, unequal amounts, refine/coarsen roundtrip/information loss, storage
+discontinuities, unit/species/context/placement mismatch, stale handles, missing source
+or ancestry, cloned records, real corrupt/missing bytes, false residuals and unsafe
+post-change failure. All NOT RUN. Compile-only checked both new Python files; no
+Forge imports/code execution. git diff --check exit0 at that checkpoint. Final bounded
+checks recorded separately below. DV-125..128 added, predecessor DV rows NOT RUN.
+
+Legacy require_supported_adaptation and all M1A/A-3/A-4 contracts unchanged. New explicit
+OD-6 /1 admission permits state operations only; not a transient policy bypass.
+M1C transient vertex FV/backward Euler with sourced physical inputs/BCs and numerical
+studies remains next, then adaptive transient orchestration and executed M1/CDAR gate.
+No provider execution/pytest/forge_check/full assurance/mutation/OD-3 or maturity change.
+M1B remains local Draft PR-ready, IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+
+M1B final lightweight checks: bundled Python compile(Path(name).read_bytes(), name,
+'exec') completed on two new Python files, without importing/executing Forge code.
+`git diff --check 7f8cb5dac01cd7a270ef72886b77c8cddf717d3b` exit0. Bounded credential
+pattern scan over exact nine intended files found zero matches; artifact inventory
+matched, no unexpected untracked files. Static AST counted 31 test functions;
+all NOT RUN. Deferred DV-125..128 paths checked for existence only. No numerical
+verification, physical validation, certification or M1 gate claim.

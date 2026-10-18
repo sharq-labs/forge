@@ -941,3 +941,24 @@ These commands execute tests, not permitted static gates in this session. Provid
 runs, mutation, full assurance and final-source OD-3 remain separately authorized.
 M1 transient temporal/spatial refinement and physical energy/source balances are
 future tests for the future domain solver, not satisfied by this arithmetic pack.
+
+
+## M1B vertex dual state adapter: DV-125..128 (2026-10-18)
+
+Exact base M1A7f8cb5da/Draft#162. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+All predecessor DV-101..124 remain NOT RUN; no imported earlier evidence.
+Run only after separate owner execution authorization. Do not adjust expectations
+or tolerances to obtain agreement. Static PASS establishes no numerical evidence.
+
+| ID | Scope | Exact deferred recipe | Required interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-125 | M1B dual placement/storage/adversarial pack | `python -m pytest tests/test_m1b_vertex_dual_state.py -q` | Nonuniform duals/half cells, exact placement/meaning, conservation/refine-coarsen roundtrip, explicit discontinuous storage, provenance, unit conversions, stale/cache/history/ancestry/byte attacks, false residual and unsafe transition poisoning | NOT RUN |
+| DV-126 | Parent lineage/kinds/interface regressions | `python -m pytest tests/test_m1a_mesh_lineage.py tests/test_declared_field_kind_mapping.py tests/test_interface_flux_execution.py -q` | Parent issuance, primal/dual separation, A-3 kind guarantees and A-4 execution unchanged; no physical conservation or transient evidence | NOT RUN |
+| DV-127 | Legacy mesh policy, steady FV and CDAR | `python -m pytest tests/numerical/test_mesh_adaptation.py tests/test_phase3_br16_mesh_validity_and_adaptation.py tests/domains/thermal_models/test_conduction1d_nonuniform.py tests/architecture/test_cross_domain_fixtures.py -q` | Legacy transient refusal remains; steady solver not relabelled transient; fixtures are architecture probes, not domain validation | NOT RUN |
+| DV-128 | Core compatibility and certification boundaries | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_v2_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py -q` | No frozen/API/import/schema drift; no certificate or expected-digest regeneration to silence failures | NOT RUN |
+
+After bounded recipes and failure recording, separately authorize repository
+forge_check/integration gates. No pytest, provider execution, full assurance,
+mutation or OD-3 in this build. M1C manufactured solutions, temporal/spatial order,
+solver-backed conservation and full adaptive-loop studies are still unwritten future
+solver tests, not satisfied by normalized-input or remap arithmetic fixtures.

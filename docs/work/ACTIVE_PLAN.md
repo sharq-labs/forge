@@ -6,6 +6,29 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Active bounded slice - M1B vertex-centred dual-volume state adapter (2026-10-18)
+
+Branch codex/m1b-vertex-dual-state from exact M1A
+7f8cb5dac01cd7a270ef72886b77c8cddf717d3b. Stack main -> #159 -> #160 ->
+#161 -> M1A Draft PR#162 -> M1B local. M1A clean/exact SHA/ancestry/bounded
+credential and artifact scan/whitespace checked, pushed, draft targets A-4.
+Prior local-only M1A note below is superseded; nothing merged. Checkpoint#158 independent.
+
+- [x] Owner direction: explicit vertex intensive state, derived midpoint dual supports.
+- [x] Preimplementation architecture/compatibility decision (4fb78436).
+- [x] Typed dual density/integrated placement, qualified exact-meaning linear storage.
+- [x] A-3 remap on dual supports, independent both-coverages/actual-total admission.
+- [x] Source bytes bound through existing KnowledgeSource; no physical evidence authority.
+- [x] Lineage-bound invalidation; managed cache/history clearing; unsafe transition poison.
+- [x] Adversarial/regression tests written; independent static review, NOT execution.
+- [ ] Owner-authorized DV-125..128 and predecessor DV-101..124.
+- [ ] M1C vertex-centred transient FV/backward Euler, explicit sourced inputs/BCs.
+- [ ] Adaptive transient driver, numerical refinement/conservation studies, M1 gate.
+
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. No transient solver, pointwise accuracy,
+physical validation, certification or maturity promotion. M1B_MERGE_PACKAGE.md
+records exact inventory, compatibility, remaining limits and owner decisions.
+
 ## Active bounded slice - M1A lineage-bound adaptive mesh 1D (2026-10-18)
 
 Branch codex/m1a-mesh-lineage, exact base1f43c59eab717aa7cbfea672b948accb37f3cc50.
