@@ -5852,3 +5852,25 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
 
 - Fetching from a WSL *worktree* over `\\wsl.localhost`: its `.git` file names a Linux path; fetch from the clone's
   common git dir instead (`git rev-parse --git-common-dir`).
+
+
+## 2026-10-18 - A-1/A-2/A-13 semantic compatibility, Phase A/B
+
+- Checkpoint branch preflight: clean at `02065a6dd25d16abdcac094f7c947148b954bc0e`;
+  credential-pattern scan of both branch commits: zero matches; 21 changed paths, no
+  temporary/credential artifacts. This bounded scan is not exhaustive secret detection.
+- `git push -u origin codex/checkpoint-integrity-hardening`: exit 0. Draft PR #158
+  https://github.com/sharq-labs/forge/pull/158 opened and attached; not merged.
+  IMPLEMENTED / UNVERIFIED / UNCERTIFIED labels preserved.
+- `git fetch origin main`: exit 0; latest origin/main remains `0284ae1`. New isolated
+  branch `codex/quantity-semantics` starts there, not from checkpoint hardening.
+- Proposal written before shared code: SEMANTIC_COMPATIBILITY_PROPOSAL.md.
+  Direct static consumer inventory: 39 src/provider/flagship files, exact baseline lines
+  in SEMANTIC_IMPACT_MATRIX.md; indirect/external consumers explicitly discussed.
+- Independent Phase A/B read-only review `/root/semantic_review`: PASS before shared
+  implementation, no HIGH/MEDIUM design finding. Review is not executed verification.
+- Frozen QuantityDependency/EnergyConversion shapes and stored identities will remain;
+  typed multiphysics scalar path is the bounded migration mechanism. Legacy aliases may
+  refuse and need explicit migration; no auto-alias/physics guessing or evidence promotion.
+- pytest/forge_check/provider solves/assurance/mutation/OD-3: NOT RUN by owner Build-First
+  policy. Only lightweight static checks authorized. No semantic gap is CLOSED.
