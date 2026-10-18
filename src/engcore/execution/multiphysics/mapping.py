@@ -19,8 +19,11 @@ supports must cover each other; hexahedra, mixed 2D/3D, non-convex cells,
 node fields, offset-scale units and any extrapolation are refused.  It never
 falls back to the nearest-site path.  Candidates come from an exact bucket
 index (:mod:`.spatial_index`); acceptance is always the exact geometric test.
-Vector fields are remapped component by component, which is the conservative
-remap of each Cartesian component in the one frame both fields share.
+A-3 requires explicit scalar CELL field kinds. Integrated amounts use source
+measure division; densities use target measure division. Intensive overlap
+averaging has no conservation claim. Legacy undeclared conservative calls,
+typed vectors/tensors, normal flux and interface execution refuse. Geometric
+support alone does not qualify a field's physical meaning or a local error bound.
 """
 
 from __future__ import annotations
@@ -53,6 +56,9 @@ from ...scientific.multiphysics import (
     MappingDiagnostics,
 )
 from ...scientific.units.quantity import is_ratio_scale
+from ...scientific.units.quantity import Quantity
+from ...scientific.fields.semantics import FieldKind
+from .cell_mapping import remap_cells, conservation_totals
 from .spatial_index import BoxIndex, nearest_sites
 
 
@@ -651,6 +657,8 @@ SUPPORTED_TRANSFERS: tuple[dict[str, str], ...] = (
 FIELD_TRANSFER_PATHS: tuple[dict[str, str], ...] = (
     {"path": "engcore.execution.multiphysics.mapping.FieldMapper", "status": "authoritative",
      "scope": "FieldRecord values between declared supports inside coupled runs"},
+    {"path": "engcore.numerical.field_mapping.map_cells_1d", "status": "declared 1D adapter",
+     "scope": "Grid1D scalar cells; same declared-kind kernel; no transient solver or normal execution"},
     {"path": "engcore.spatial.fields.interpolate_p1_to_mesh / node_to_cell_average", "status": "separate data model",
      "scope": "P1 node fields on SpatialMesh (used by engcore.coupling.adapters); not routed through FieldMapper"},
     {"path": "engcore.scientific.fields.transfer.check_field_transfer", "status": "contract check only",
@@ -719,6 +727,20 @@ class FieldMapper:
         target_mesh: MeshSupport,
         definition: FieldMappingDefinition,
     ) -> FieldMappingResult:
+        source_semantics, target_semantics = record.definition.semantics, target_definition.semantics
+        typed = source_semantics is not None or target_semantics is not None
+        if typed:
+            if source_semantics is None or target_semantics is None:
+                raise InvalidScientificProblem("mixed typed/untyped field mapping is refused")
+            source_semantics.require_cell_mapping(target_semantics, source_mesh.spatial_dimension)
+            if (record.definition.components != 1 or target_definition.components != 1
+                    or record.definition.location is not FieldLocation.CELL
+                    or target_definition.location is not FieldLocation.CELL):
+                raise InvalidScientificProblem("typed mapping currently supports scalar CELL fields only")
+            if definition.method not in (FieldMappingMethod.IDENTITY, FieldMappingMethod.CONSERVATIVE_CELL):
+                raise InvalidScientificProblem("typed mapping requires identity or declared cell overlap")
+        elif definition.method is FieldMappingMethod.CONSERVATIVE_CELL:
+            raise InvalidScientificProblem("conservative_cell requires explicit field kind; legacy migration required")
         source = FieldValue.from_record(
             record, source_mesh, self.resolver
         ).to_unit(target_definition.unit)
@@ -772,7 +794,7 @@ class FieldMapper:
                     round_trip_relative_l2=(
                         0.0 if definition.verify_round_trip else None
                     ),
-                    conservation_relative_error=0.0,
+                    conservation_relative_error=(None if typed and source_semantics.kind is FieldKind.INTENSIVE else 0.0),
                     provenance={**provenance, "exact": "values copied on one support"},
                 ),
             )
@@ -940,16 +962,19 @@ class FieldMapper:
         target_mesh: MeshSupport,
         definition: FieldMappingDefinition,
     ) -> FieldMappingResult:
-        """First-order conservative remap by exact cell intersection (Phase 1 BR2).
+        """First-order declared-kind remap by qualified cell intersection.
 
-        ``T_j = sum_i S_i |A_i n B_j| / |B_j|``: every source cell's integral
+        Density: ``T_j = sum_i S_i |A_i n B_j| / |B_j|``. Integrated amount:
+        ``T_j = sum_i (S_i / |A_i|) |A_i n B_j|``. Every source cell's amount
         ``S_i |A_i|`` is distributed over the target cells it overlaps, in
         proportion to the overlap measure.  When the two supports cover each
         other exactly, every source integral is accounted for locally and the
-        total is conserved without any rescaling; a constant field maps to the
-        same constant.  Anything the method cannot do honestly is refused:
-        node fields, offset-scale units, partial coverage in either direction,
-        3D cells and non-convex cells.
+        total is conserved without global rescaling. A constant density maps to
+        constant density; integrated amounts scale with cell measures. Intensive
+        overlap averaging uses the density operator but claims no conserved total.
+        Anything the method cannot do honestly is refused:
+        node fields, offset-scale conserved fields, partial coverage in either direction,
+        unsupported 3D cells (tetrahedra remain supported) and non-convex cells.
         """
         if (
             source.definition.location is not FieldLocation.CELL
@@ -960,7 +985,7 @@ class FieldMapper:
                 "source and target fields"
             )
         for unit in (record.definition.unit, target_definition.unit):
-            if not is_ratio_scale(unit):
+            if source.definition.semantics.kind is not FieldKind.INTENSIVE and not is_ratio_scale(unit):
                 # the integral of an offset-scale value depends on where its
                 # zero was put: no conservation statement survives that
                 raise InvalidScientificProblem(
@@ -1002,27 +1027,29 @@ class FieldMapper:
                 f"so part of their integral would be dropped"
             )
 
-        mapped = np.asarray(overlap.T @ values) / target_measures[:, np.newaxis]
-        source_integral = (values * source_measures[:, np.newaxis]).sum(axis=0)
-        target_integral = (mapped * target_measures[:, np.newaxis]).sum(axis=0)
-        # signed fields: the scale is the L1 mass, so a field that integrates
-        # to zero is judged against its own magnitude, never divided by ~0
-        scale = (np.abs(values) * source_measures[:, np.newaxis]).sum(axis=0)
-        residual = np.abs(target_integral - source_integral)
-        relative = [
-            0.0 if s == 0.0 and r == 0.0 else (float(r / s) if s > 0.0 else math.inf)
-            for r, s in zip(residual, scale)
-        ]
-        if not all(math.isfinite(x) for x in relative) or not np.all(np.isfinite(mapped)):
-            raise InvalidScientificProblem(
-                f"mapping {definition.mapping_id!r} produced a non-finite transfer or conservation residual"
-            )
-        conservation_error = max(relative)
+        kind = source.definition.semantics.kind
+        mapped, reverse = remap_cells(values, overlap, source_measures, target_measures, kind)
+        totals = conservation_totals(values, mapped, source_measures, target_measures, kind)
+        conservation_error = None if totals is None else totals[-1]
+        conservation = {}
+        if totals is not None:
+            before, after, residual, scale, _ = totals
+            raw_unit = (target_definition.unit if kind is FieldKind.CELL_INTEGRATED else
+                        f"({target_definition.unit}) * meter ** {source_mesh.spatial_dimension}")
+            unit = source.definition.semantics.conserved_quantity.unit
+            factor = Quantity(1, raw_unit).magnitude_in(unit)
+            conservation = {
+                "source_total": [float(x*factor) for x in before],
+                "target_total": [float(x*factor) for x in after],
+                "conservation_absolute_residual": [float(x*factor) for x in residual],
+                "conservation_scale_l1": [float(x*factor) for x in scale],
+                "conservation_unit": unit,
+            }
 
         round_trip = None
         if definition.verify_round_trip:
-            reverse = np.asarray(overlap @ mapped) / source_measures[:, np.newaxis]
-            weights = source_measures[:, np.newaxis]
+            weights = (1.0/source_measures[:, np.newaxis] if kind is FieldKind.CELL_INTEGRATED
+                       else source_measures[:, np.newaxis])
             numerator = math.sqrt(float(np.sum(weights * (values - reverse) ** 2)))
             denominator = max(
                 math.sqrt(float(np.sum(weights * values ** 2))),
@@ -1054,21 +1081,19 @@ class FieldMapper:
             "method": CONSERVATIVE_METHOD,
             "geometry": geometry,
             "order": "first (piecewise-constant per cell)",
-            "local_conservation": (
-                "each source cell's integral is distributed over the target cells it "
-                "overlaps by exact intersection measure; no global rescaling"
-            ),
+            "operator": ("A_target = overlap.T @ (A_source / source_measure)" if kind is FieldKind.CELL_INTEGRATED
+                         else "q_target = (overlap.T @ q_source) / target_measure"),
             "overlap_pairs": int(overlap.nnz),
             "coverage_roundoff_allowance": CONSERVATIVE_COVERAGE_ROUNDOFF,
             "max_source_coverage_deficit": float(source_deficit.max()) if source_deficit.size else 0.0,
             "max_target_coverage_deficit": float(target_deficit.max()) if target_deficit.size else 0.0,
-            "conservation_absolute_residual": [float(x) for x in residual],
-            "conservation_scale_l1": [float(x) for x in scale],
-            "conservation_unit": f"{target_definition.unit} * meter ** {source_mesh.spatial_dimension}",
+            "field_semantics": source.definition.semantics.to_dict(),
+            "conservative": kind is not FieldKind.INTENSIVE,
+            **conservation,
             "source_support": source_mesh.fingerprint(),
             "target_support": target_mesh.fingerprint(),
             "search": "bucket_index",
-            "round_trip_norm": "measure_weighted_l2" if round_trip is not None else None,
+            "round_trip_norm": ("density_l2" if kind is FieldKind.CELL_INTEGRATED else "measure_weighted_l2") if round_trip is not None else None,
             "notice": (
                 "conservation and round-trip residuals are diagnostics of this transfer; "
                 "neither bounds the pointwise error of the transferred field"

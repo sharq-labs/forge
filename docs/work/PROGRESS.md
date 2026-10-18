@@ -5931,3 +5931,71 @@ Hand reasoning only; no mapping implementation/numerical execution. Next bounded
 is declared scalar field-kind contract and compatibility review, then unequal-cell tests
 under separate execution authorization. Owner decisions and limitations are recorded in
 SEMANTIC_MERGE_PACKAGE.md; no automatic semantic push/PR/merge performed.
+
+
+## 2026-10-18 A-3 declared field kind mapping
+
+Semantic branch codex/quantity-semantics pushed at 98da0c024bd59bd0b18844941eafad3f1d24d428
+and opened as Draft PR #159 targeting main by owner authorization. Semantic worktree
+was clean before publication; no merge. Prior local-only publication note superseded.
+PR body records fail-closed legacy aliases, per-consumer migration and historical
+identity preservation. Checkpoint Draft PR #158 remains independent and unmerged.
+
+A-3 branch codex/declared-field-kind-mapping starts exactly at semantic98da0c02;
+dependency explicitly recorded. Architecture and 62-file exact-baseline consumer
+matrix committed before source edits (2e4fe486). No checkpoint commits combined.
+
+Implemented FieldSemantics using existing QuantitySemantics/ConservedQuantity;
+cell-average density, integrated amount and intensive have distinct operators/diagnostics.
+Flux/interface support/normal/orientation are declarations only, execution refuses
+pending A-4. Existing FieldMapper and new Grid1D adapter share the arithmetic kernel.
+Integrated amounts divide by source measure before overlap; densities divide by target
+measure. No dimensional inference, global rescaling or coverage extrapolation. UNKNOWN
+uncertainty retained; no local physical validity or certified capability claim.
+
+Compatibility: FieldDefinition typed /2 extension; untyped writer /1 retained; downgrade
+and incomplete typed payload refusal. Unit conversion retains semantics. Source record
+must match declared graph port. No frozen export/schema/certification manifest changed.
+Legacy conservative_cell calls without kind now refuse: existing Phase1/Phase2 fixtures
+require explicit owning-model migration before integration, not numerical expectation edits.
+
+Independent read-only scientific reviewer /root/a3_review: final static PASS plus
+read-only final-additions PASS. Corrections: MEDIUM legacy energy/prose requirement
+still applied to typed energy fields (guard with not typed_field, regression written);
+MEDIUM nonexistent numerical.errors test import (use numerical.core); LOW expected
+measure-refusal text; LOW overclaim that supplied grid digests authenticate stale value
+origin (corrected to caller-owned array origin); minor documentation qualified affine
+refusal as conserved-field-only. Unit-conversion reconstruction initially would drop
+new semantics; preserved explicitly before final review. None are executed test failures.
+
+Tests written for hand-derived (2,6)->(4,4),total8, density contrast(4,6), unequal cells,
+refinement/coarsening, partial coverage both directions, reversed axis/normal conventions,
+units, intensive affine average, unsupported kinds, stale supplied identities, actual
+source substitution, schema refusal and graph identity. Direct 2D tests distinguish
+operators. Declared unequal-volume tetrahedral permutation test added; 3D split/merge
+remains additional coverage. All tests NOT RUN. No gap CLOSED, A-4 remains open.
+
+Lightweight static checks actually executed via bundled Python
+C:/Users/dev_kaeem/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe:
+- For the .py union from `git diff --name-only 98da0c02` and
+  `git ls-files --others --exclude-standard`, exact operation
+  `compile(Path(name).read_bytes(), name, 'exec')`: 10 changed Python files compiled;
+  no compiled code executed and no Forge imports.
+- `git diff --check`: exit0, no whitespace errors (Git LF normalization notices only).
+No pytest, forge_check, mutation, numerical/provider execution, full assurance or OD-3.
+DV-113..116 record exact deferred recipes. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+
+Local Draft PR-ready package: A3_MERGE_PACKAGE.md, exact17-file inventory, no automatic
+A-3 push/PR/merge. A3_COMPATIBILITY_MATRIX.md includes exact current implementation
+lines and baseline consumers. No automatic historical relabeling. Remaining decisions:
+consumer migrations, test/OD-3 authorization, A-4 face/sign execution, vector/frame scope,
+adaptive lineage/history and 3D split/merge evidence. Integral conservation remains a
+transfer diagnostic, never a local physical validation result.
+
+
+Final packaging checks: compile-only repeated over all10 changed Python files, no
+Forge imports/execution; `git diff --check` exit0. Bounded changed-file credential
+pattern scan:0 matches; exact17 A-3 files, six intended new untracked deliverables
+at scan time and no temporary artifacts. Semantic worktree `git status --porcelain`
+clean; `git rev-parse HEAD origin/codex/quantity-semantics` both98da0c02. These static
+checks provide no scientific verification, validation or certification.

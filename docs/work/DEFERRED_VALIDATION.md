@@ -880,3 +880,23 @@ CI control plane and separately authorized OD-3 on final integrated source. Full
 assurance, mutation, normal broad integration tiers and hardened recertification
 remain separately gated; none was run here. Do not regenerate pins to silence refusal.
 A-3 proposal examples were checked by hand only, not numerical execution.
+
+
+## A-3 declared field kind mapping: DV-113..116 (2026-10-18)
+
+Stacked branch base semantic98da0c02 / Draft PR #159. All commands NOT RUN.
+Predecessor checkpoint DV-101..106 and semantic DV-107..112 remain NOT RUN.
+No verification/validation/certification follows from declarations or static PASS.
+
+| ID | Scope | Exact deferred recipe | Required interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-113 | A-3 numerical/adversarial probes | `python -m pytest tests/test_declared_field_kind_mapping.py -q` | Preregistered integrated(4,4),total8; density contrast; 1D/refinement/coarsening/coverage/unit/orientation; 2D and declared unequal-volume tetrahedra; no local physical-validity claim | NOT RUN |
+| DV-114 | Legacy conservative consumer migration audit | `python -m pytest tests/test_phase1_conservative_cell_mapping.py tests/test_phase2_field_transfer.py -q` | Unmigrated declarations intentionally refuse. Record failures and disposition each owning-model kind; these historical fixtures cannot prove new typed behavior or count as retained coverage. Do not alter numerical expectations to pass | NOT RUN |
+| DV-115 | Core/serialization/trust compatibility | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_v2_api_snapshot.py tests/test_core_api_serialization.py tests/test_scientific_serialization_integrity.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py -q` | Frozen shape/import identity preserved; /2 refuses in old readers; investigate dependency/pin failures, no automatic manifests | NOT RUN |
+| DV-116 | Semantic and runtime integration | `python -m pytest tests/architecture/test_quantity_semantics.py tests/architecture/test_cross_domain_fixtures.py tests/test_multiphysics_fan_in_units.py tests/test_stateful_multiphysics_runtime.py tests/test_multiphysics_conservation_history.py -q` | Recheck parent scalar invariants, actual source record binding and known gap meanings; classify consumer migration failures explicitly | NOT RUN |
+
+After targeted execution/migration, owner must authorize `python tools/forge_check.py --changed`
+and `python tools/forge_check.py --regression`, normal integration tiers and final-source CI.
+These commands execute tests and were not run as static checks. Provider runs, mutation,
+full assurance and OD-3 remain separately authorized. A-4 is not closed by normal metadata.
+No transient adaptive solver or automatic history/lineage restoration is added.

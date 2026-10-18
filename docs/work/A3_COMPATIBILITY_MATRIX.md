@@ -66,3 +66,25 @@ Baseline: semantic dependency `98da0c02`; exact baseline references. Static symb
 | `tests/test_spatial_core.py` | 24, 70, 155, 165, 169, 171, 176, 302 | Deferred regression; retain numerical expectations; legacy conservative fixtures need explicit justified migration |
 | `tests/test_structured_validity.py` | 10, 12, 47, 49, 61 | Deferred regression; retain numerical expectations; legacy conservative fixtures need explicit justified migration |
 | `tests/test_unknown_diagnostics_v2.py` | 9, 11, 42, 44, 55, 111, 131 | Deferred regression; retain numerical expectations; legacy conservative fixtures need explicit justified migration |
+
+## Exact implementation references (A-3 working tree)
+
+| File | Lines | Change |
+| --- | --- | --- |
+| `src/engcore/scientific/fields/semantics.py` | 15, 24, 63 | A-3 declaration, admission, operator or regression; tests NOT RUN |
+| `src/engcore/scientific/fields/definition.py` | 64, 97, 132, 144 | A-3 declaration, admission, operator or regression; tests NOT RUN |
+| `src/engcore/scientific/fields/transfer.py` | 37, 122, 365 | A-3 declaration, admission, operator or regression; tests NOT RUN |
+| `src/engcore/data/field.py` | 201 | A-3 declaration, admission, operator or regression; tests NOT RUN |
+| `src/engcore/scientific/multiphysics/graph.py` | 242 | A-3 declaration, admission, operator or regression; tests NOT RUN |
+| `src/engcore/execution/multiphysics/cell_mapping.py` | 14, 33 | A-3 declaration, admission, operator or regression; tests NOT RUN |
+| `src/engcore/execution/multiphysics/mapping.py` | 657, 722, 956 | A-3 declaration, admission, operator or regression; tests NOT RUN |
+| `src/engcore/execution/multiphysics/transfer.py` | 164 | A-3 declaration, admission, operator or regression; tests NOT RUN |
+| `src/engcore/numerical/field_mapping.py` | 18, 24 | A-3 declaration, admission, operator or regression; tests NOT RUN |
+| `tests/test_declared_field_kind_mapping.py` | 48, 58, 65, 76, 86, 95, 100, 105, 117, 124, 137, 149, 165, 181, 196, 207, 224, 237, 251, 269, 280, 293, 309, 319, 325 | A-3 declaration, admission, operator or regression; tests NOT RUN |
+
+## Compatibility dispositions
+
+Frozen canonical API snapshots/import exports, FieldRecord/MappingDiagnostics shapes and existing mesh schemas are untouched. FieldDefinition is internal (absent from frozen manifests); optional semantics emits /2, old readers refuse typed nested definitions. Untyped definition writers retain /1. Material semantics enter existing graph/record identity. No historical record/bundle/pin regeneration.
+Legacy conservative_cell without kind is now an explicit refusal. Both tests/test_phase1_conservative_cell_mapping.py and tests/test_phase2_field_transfer.py must be migrated under owning-model decisions before being treated as integration coverage; no numerical expectations were rewritten in this slice. Identity/site interpolation legacy paths retain their existing contract, not a new conservation guarantee.
+New direct sources are the two field semantics/definition surfaces, mapper/kernel and numerical adapter; transitive downstreams include FieldRecord/FieldValue, serialization/replay, participant ports, provider adapters, FieldTransferContract/FieldDependency, field producers, spatial bridges, cached graph identities, and certification closure. Static baseline index cannot discover all external/dynamic factories. Separate spatial P1 transfer remains a separate data model; it is not certified as typed conservative by this patch.
+No automatic field-kind inference, vector/tensor semantic promotion, normal sign execution, adaptive cache/history restoration or consumer migration. Trust-sensitive/runtime sources and new dependencies require normal CI classification, layering/frozen serialization checks and separately authorized final-source OD-3. No tests, assurance or certification executed.

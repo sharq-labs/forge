@@ -6,6 +6,25 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Active repair - A-3 declared field kind mapping (2026-10-18)
+
+Branch `codex/declared-field-kind-mapping` is stacked on semantic PR #159,
+base `98da0c024bd59bd0b18844941eafad3f1d24d428`. It does not contain checkpoint
+PR #158. Semantic branch was pushed cleanly and opened as Draft PR #159 by owner
+authorization; legacy alias migration obligations and historical identities retained.
+
+- [x] Architecture/compatibility decision committed before source implementation.
+- [x] Typed cell density/integrated/intensive and declarative interface/normal contracts.
+- [x] Shared declared-kind operator and Grid1D adapter; adversarial tests written.
+- [x] Independent static review PASS; corrections recorded; tests NOT RUN.
+- [x] A-3 local Draft PR-ready package; no automatic merge.
+- [ ] Owner-authorized validation DV-113..116 and explicit consumer kind migrations.
+- [ ] A-4 normal/sign execution, adaptive lineage/history, vector/tensor scope remain open.
+
+Status IMPLEMENTED / UNVERIFIED / UNCERTIFIED; A-3 remains open pending execution
+and compatibility/migration disposition. See A3_ARCHITECTURE_DECISION.md,
+A3_COMPATIBILITY_MATRIX.md and A3_MERGE_PACKAGE.md. No assurance or OD-3 executed.
+
 ## Active repair - semantic compatibility A-1/A-2/A-13 (2026-10-18)
 
 Branch `codex/quantity-semantics`, base latest fetched origin/main
