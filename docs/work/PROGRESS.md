@@ -12,7 +12,7 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
 - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
 - Current execution authority: `docs/work/ACTIVE_PLAN.md`
 
-## 2026-09-27 BIG 14 â€” 14.0 branch and baseline (read this first)
+## 2026-09-27 BIG 14 — 14.0 branch and baseline (read this first)
 
 BIG 14 = Scientific Closure & Recertification (plan: `docs/work/ACTIVE_PLAN.md`). Plan committed `a2d33619`; `.gitignore` for the local Codex files
 (`AGENTS.md`, `.agents/`, `.codex/`, owner decision) `f508387b`; the shared repository's `info/exclude` carries the same three lines until this merges.
@@ -81,7 +81,7 @@ BIG 14 = Scientific Closure & Recertification (plan: `docs/work/ACTIVE_PLAN.md`)
 Classes 1, 2 and 6 can alter evidence admission / replay identity / assurance, and the ruleset blocker means a red gate cannot stop a merge. 14.2/14.3 flagship
 evidence work stays blocked until 1, 2, 3, 4, 5 are repaired on this branch and 6 has a recertification run; the ruleset needs the owner.
 
-## 2026-09-28 BIG 14 â€” flagship A: first comparison against measured LG M50 cells (branch `feat/big-14-flagship-a`)
+## 2026-09-28 BIG 14 — flagship A: first comparison against measured LG M50 cells (branch `feat/big-14-flagship-a`)
 
 The user chose flagship A for deep closure work. The work so far is below. Every study was pre-registered in a pushed commit before its first run.
 
@@ -274,7 +274,7 @@ The user chose flagship A for deep closure work. The work so far is below. Every
   every recorded value (three quantities, dense heat maximum, window count, verdict) is bit-identical to the committed record. Only `wall_s` and
   `result_digest` differ; the system result digest hashes `resource_usage.wall_seconds` (`system_runtime/result.py`), so it is not a replay identity.
 
-## 2026-09-28 BIG 14 â€” owner decisions carried out: state reads, applicability disclosure, main ruleset, Pint (branch `feat/big-14-reviews`)
+## 2026-09-28 BIG 14 — owner decisions carried out: state reads, applicability disclosure, main ruleset, Pint (branch `feat/big-14-reviews`)
 
 The owner said "do the three". The three were: `reads_owners`; undeclared applicability; the gates on `main`, the PR and the Pint decisions.
 
@@ -333,7 +333,7 @@ The owner said "do the three". The three were: `reads_owners`; undeclared applic
   - The other 8 are baseline classes: 2 stale-certificate failures (class 6, need recertification) and 6 Python-3.14-only failures (class 7).
   - The a3f757eb baseline had 38 failures and errors.
 
-## 2026-09-28 BIG 14 â€” 14.1 review debt: BIG 12 re-review, BIG 13 round 5, BIG 11 second re-review (branch `feat/big-14-reviews`)
+## 2026-09-28 BIG 14 — 14.1 review debt: BIG 12 re-review, BIG 13 round 5, BIG 11 second re-review (branch `feat/big-14-reviews`)
 
 Branch `feat/big-14-reviews` in worktree `D:/forge-b14-review`, cut from `origin/feat/big-14-flagship-a` @ `814e1492`. Ownership: this line = 14.1 review debt;
 the flagship A science line is the other session's, on `feat/big-14-flagship-a` in `D:/forge-b14`, which merges this branch.
@@ -434,7 +434,7 @@ BIG 11, second re-review:
     `providers/pybamm/tests/test_pybamm_provider.py` added: **28 passed**, exit 0.
 - NOT RUN: full FAST, full SCIENTIFIC, mutation populations, hardened recertification, and the other provider suites (OpenFOAM, SU2, CalculiX, Code_Aster, Cantera, FEniCSx).
 
-## 2026-09-27 BIG 14 â€” 14.1 continued: PR #110 merged red, probe semantics, Units U-01..U-03, env re-check (PR #111)
+## 2026-09-27 BIG 14 — 14.1 continued: PR #110 merged red, probe semantics, Units U-01..U-03, env re-check (PR #111)
 
 - PR #110 (commits up to `86fa1896`) was MERGED at 17:26 UTC by the sharq-labs account while `recertification-gate` was red. Cause of the red:
   every formal mutation shard reported `CONTROL RED -- ROUND VOID` because `tests/mutation_guards.py` copies only `_COPIED` (no `flagships/`,
@@ -564,7 +564,7 @@ BIG 11, second re-review:
 - `ids=repr` on parametrized `memoryview` / `object()` values puts a memory address in the test id; xdist workers then collect different tests.
 - An open PR in this repository can be merged within the hour while red; push a coherent state before opening one.
 
-## 2026-09-27 BIG 14 â€” 14.1 baseline repairs (classes 1-5) and three review rounds
+## 2026-09-27 BIG 14 — 14.1 baseline repairs (classes 1-5) and three review rounds
 
 Commits on `feat/big-14-scientific-closure` (none pushed): `cd8e71f7` class 1, `d2de31d1` classes 3-5, `7c9e7f7a` class 2, `1ae83bd2` `tools/wsl_env.sh`,
 `a7f5723d` review round 1 fixes, `29900d60` review round 2 fixes, then the round-3 L1 fix and this entry.
@@ -632,7 +632,7 @@ Commits on `feat/big-14-scientific-closure` (none pushed): `cd8e71f7` class 1, `
 - The pyproject `pythonpath` change and the edits to `tests/test_core_guards.py` / `tests/test_core_semantic_invariants.py` move certified areas
   (runtime_dependencies, harness): class 6 recertification must run after these commits, on 3.12 in CI, never regenerated locally.
 
-## BUILD-phase entries (BIG 2 to BIG 13) â€” archived
+## BUILD-phase entries (BIG 2 to BIG 13) — archived
 
 The 1163 lines of per-milestone entries from the 2026-09-25 P0.1 triage through BIG 13 (2026-09-26) were
 moved verbatim to `docs/work/archive/PROGRESS_BUILD_PHASE_BIG2_TO_BIG13.md` on 2026-10-09. Their failed
@@ -719,7 +719,7 @@ summary: Tests: 54 failed in FAST 3.12 / FAST 3.11 / SCIENTIFIC, mutations CONTR
 commit: deabe5cb / 5026b40b
 
 2026-09-23 19:05 +03:00
-command: GitHub Actions PR #102 â€” Tests run 323 / Recertify Hardened Core run 205
+command: GitHub Actions PR #102 — Tests run 323 / Recertify Hardened Core run 205
 result: FAIL
 summary: normal Tests workflow passed; hardened recertification reached the heavy gates, but campaign312 and regression312 failed during pytest collection because duplicate test basenames were imported with legacy import semantics. Updated the recertification workflow so campaign uses --import-mode=importlib and regression sets PYTEST_ADDOPTS=--import-mode=importlib. New head: ddd358c72f9cd5d95cd41835de54dbc03ee17db9.
 commit: ddd358c72f9cd5d95cd41835de54dbc03ee17db9
@@ -899,7 +899,7 @@ works.
 - Do not expand the frozen Scientific Core for repository-layout aesthetics.
 
 
-## 2026-09-28 strategic decision â€” motion systems and electromechanical product behaviour
+## 2026-09-28 strategic decision — motion systems and electromechanical product behaviour
 
 The post-hardening design roadmap now treats machine motion as first-class
 engineering behaviour, not as an incidental property of CAD assemblies.
@@ -927,10 +927,10 @@ Strategic additions:
 - the strategic Master Plan is extended through P36, while BIG 14/15 remain the
   active hardening/UQ work and are not displaced.
 
-Tests: **NOT RUN** â€” documentation/strategic architecture changes only.
+Tests: **NOT RUN** — documentation/strategic architecture changes only.
 
 
-## 2026-09-28 strategic decision â€” global 3D engineering viewer
+## 2026-09-28 strategic decision — global 3D engineering viewer
 
 The post-hardening product/design roadmap now includes a dedicated global 3D
 engineering visualization runtime immediately after parametric CAD/topology.
@@ -955,7 +955,7 @@ Recorded direction:
 - visualization remains downstream of authoritative product/CAD/simulation
   records and cannot become a second source of scientific truth.
 
-Tests: **NOT RUN** â€” documentation/strategic architecture changes only.
+Tests: **NOT RUN** — documentation/strategic architecture changes only.
 
 
 ## 2026-10-07 Local Assurance control-plane optimization
@@ -1055,7 +1055,7 @@ Independent reviewer inspected both deltas and retained source-only verdict
 with no remaining actionable findings. Their new test specifications: NOT RUN.
 
 
-## 2026-10-07 â€” Local Assurance optimization pass 3, source only
+## 2026-10-07 — Local Assurance optimization pass 3, source only
 
 Built one immutable pristine index with cached restoration bytes per shard;
 removed repeated seed SHA computations while retaining full seed byte checks.
@@ -1099,7 +1099,7 @@ FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN. No certificate/commit/push/PR/merge.
 CONTROL_PLANE_READY_FOR_NEXT_OPTIMIZATION_PASS.
 
 
-## 2026-10-07 â€” Local Assurance optimization pass 4, implementation only
+## 2026-10-07 — Local Assurance optimization pass 4, implementation only
 
 Removed all retained pristine content bytes. Index retains metadata/digests;
 complete seed SHA scans run before attempts and before any repair. Restoration
@@ -1136,7 +1136,7 @@ ConfigParser is explicitly treated as a limited supported parser; unfamiliar
 forms refuse. Future real descendant specification now launches a dedicated
 interpreter instead of borrowing the pytest process ownership context. NOT RUN.
 
-Final accumulated Pass 2â€“4 independent reviewer: PASS, static review only.
+Final accumulated Pass 2–4 independent reviewer: PASS, static review only.
 Prior Git grammar finding explicitly resolved; no remaining actionable finding
 within the dedicated Linux process/controlled-toolchain assumptions. Review
 recorded in LOCAL_ASSURANCE_WORKSPACE_STATIC_REVIEW.md. Execution remains
@@ -1147,7 +1147,7 @@ No certificate, commit, push, PR or merge. HEAD remains
 CONTROL_PLANE_READY_FOR_NEXT_OPTIMIZATION_PASS.
 
 
-## 2026-10-07 â€” Local Assurance optimization pass 5, source-only audit
+## 2026-10-07 — Local Assurance optimization pass 5, source-only audit
 
 Fresh independent reviewer found concrete P1 paths: Formal population deleted
 arbitrary preexisting destination; pytest artifacts lived in caller scratch;
@@ -1220,7 +1220,7 @@ Tests, mutation, subprocess/Git/import probes, profiling and certification: NOT 
 No scientific/domain change; no certificate, commit, push, PR or merge.
 Independent final static review remains pending; detailed audit in Pass 6 document.
 
-Final independent complete Pass 2â€“6 hostile static review: PASS; all reported
+Final independent complete Pass 2–6 hostile static review: PASS; all reported
 static findings repaired and reinspected. Second pre-final source-only
 `git diff --check`: exit 0. No runtime operation followed the final review.
 READY_TO_FREEZE_WORKSPACE_ARCHITECTURE under the accepted controlled-target/toolchain
@@ -1254,7 +1254,7 @@ FULL_LOCAL_ASSURANCE: NOT_RUN_BY_DESIGN.
 ## Pass 8 bounded runtime validation (2026-10-07)
 
 Takeover recovered the work in the WSL clone `/home/dev_kaeem/forge-local-assurance-72bf7c4c`
-(not a phyx worktree), HEAD 8d5eed3f, Passes 2â€“7 uncommitted; diff and untracked files were
+(not a phyx worktree), HEAD 8d5eed3f, Passes 2–7 uncommitted; diff and untracked files were
 backed up before execution. All probes ran in WSL with `.forge/venvs/3.12`, outputs outside
 the repository (`$HOME/forge-pass8`; WSL `/tmp` does not survive between `wsl` invocations).
 
@@ -1321,11 +1321,11 @@ Final targeted set: 444 passed, 2 failed (baseline certificate drift) in 29.97 s
 
 ## Pass 10 freeze and bounded concurrency measurement (2026-10-07)
 
-Pre-freeze audit of the Passes 2â€“9 diff: only tools/certification, mutation/assurance tests
+Pre-freeze audit of the Passes 2–9 diff: only tools/certification, mutation/assurance tests
 and docs touched; MUTATIONS/EVIDENCE/TARGETS/_COPIED AST-identical to 8d5eed3f; V4
 population and selection modules untouched; no debug code; telemetry archived outside
 evidence/. Stale "never executed"/"future execution" wording corrected. `git diff --check`: exit 0.
-Pre-commit: blocker tests 2 passed; Passes 2â€“9 specs 184 passed on 3.11 and 3.12; targeted
+Pre-commit: blocker tests 2 passed; Passes 2–9 specs 184 passed on 3.11 and 3.12; targeted
 12-module set 444 passed, 2 failed (baseline certificate drift) in 30.51 s.
 Source commit: 4f2cdf4b5c38b17bc3188967d15503d51b907bed
 "certification: optimize local mutation assurance" (local only; no certificate, push or PR).
@@ -1431,7 +1431,7 @@ Commands (WSL clone, TMPDIR=~/forge-pass13/tmp, -p no:cacheprovider):
   on tree.clean only (uncommitted changes); audit 141 accepted / 0 unexpected, inventory 14370d2c...
   identical on 3.11 and 3.12 (3 conditional, 5 extra, 133 provider).
 
-## Full project review â€” 2026-10-05
+## Full project review — 2026-10-05
 
 Review: docs/work/PROJECT_REVIEW_2026-10-05.md. No production code changed. Initial ACTIVE_PLAN edit preserved. Python 3.14.2/Windows; not the declared CI environment. FAST and SCIENTIFIC overlapped, so these are diagnostic runs, not isolated clean-tree acceptance baselines. Generated benchmark JSONs were backed up and all 17 restored; logs were moved under .pytest-review-temp/full-project-logs-20261005/.
 
@@ -1495,7 +1495,7 @@ result: PASS
 summary: 24 passed in 3.58s after benchmark-output cleanup and isolated execution.
 commit: a3f757eb5fdbc804ef11e3c4088a757c31981870 (existing plan edit)
 
-Relevant failure names â€” FAST (full diagnostics in saved log):
+Relevant failure names — FAST (full diagnostics in saved log):
 ```text
 FAILED tests/domains/test_audit_domains_unscreened_claims.py::test_the_held_resistance_limitation_is_stated_where_a_caller_reads
 FAILED tests/claims/test_impact_replay.py::test_a_bundle_verifies_without_execution_and_replays_identically
@@ -1552,7 +1552,7 @@ ERROR tests/mcp/test_audit_domains_refused_coupling.py - ImportError while im...
 ERROR tests/mcp/test_core_scientific_audit_batch8.py - ImportError while impo...
 ```
 
-Relevant failure names â€” SCIENTIFIC (full diagnostics in saved log):
+Relevant failure names — SCIENTIFIC (full diagnostics in saved log):
 ```text
 FAILED tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result
 FAILED tests/domains/test_audit_domains_unscreened_claims.py::test_the_held_resistance_limitation_is_stated_where_a_caller_reads
@@ -1620,7 +1620,7 @@ summary: exit 0; no whitespace errors
 commit: a3f757eb5fdbc804ef11e3c4088a757c31981870
 
 
-## 2026-10-09 BIG 14 â€” review 2026-10-05 R1/R4 fixes (branch `fix/big-14-review-r1-r4`, worktree `D:/forge-r1r4`)
+## 2026-10-09 BIG 14 — review 2026-10-05 R1/R4 fixes (branch `fix/big-14-review-r1-r4`, worktree `D:/forge-r1r4`)
 
 Base `origin/main` @ `16c87f40`. Commits `926836a4` (R1 + R4, review doc carried in, BUILD-phase PROGRESS archived) and
 `26d04c14` (scientific review round 1 fixes).
@@ -1634,7 +1634,7 @@ Base `origin/main` @ `16c87f40`. Commits `926836a4` (R1 + R4, review doc carried
 - R4 (MEDIUM): `compare_runs` tolerances must be finite, non-negative real numbers (not bool), and `rel_tol < 1`.
 - R2/R3 were already covered on `origin/main` (version-probe `returncode` refusal; `catalog._footprint`). R5 is carried by the
   Pass 13 skip admission.
-- forge-scientific-review, one round: CHANGES REQUIRED â€” HIGH-1 manifest.json written uncontained; MEDIUM-1 hard link / sibling
+- forge-scientific-review, one round: CHANGES REQUIRED — HIGH-1 manifest.json written uncontained; MEDIUM-1 hard link / sibling
   link / check-then-open race; MEDIUM-2 `rel_tol >= 1` still accepts any same-signed drift; LOW-1 Unicode/8.3/device names; LOW-2
   manifest read and nested names in verify; LOW-3 overflow and missing acceptance tests. All fixed in `26d04c14`; no finding was
   dispositioned as not applicable. `abs_tol` being read in run `a`'s unit is pre-existing and out of scope (recorded, not changed).
@@ -1657,7 +1657,7 @@ Failed approach: a long bash heredoc patch script failed with "unexpected EOF" (
 tool. Editing the worktree while FAST ran would have contaminated it; round-2 fixes were made in a second detached worktree and
 fast-forwarded.
 
-## 2026-10-09 BIG 14 â€” flagship A 14.3: timebox, Kirkaldy 2024 pre-registration, B/C/D deferred (branch `feat/big-14-a-kirkaldy-fade`)
+## 2026-10-09 BIG 14 — flagship A 14.3: timebox, Kirkaldy 2024 pre-registration, B/C/D deferred (branch `feat/big-14-a-kirkaldy-fade`)
 
 - Owner decisions 2026-10-09: download the Kirkaldy 2024 LG M50T subset; 14.3 timebox two weeks (2026-10-09 to 2026-10-23).
 - Pre-registration commit `dd53eec7` (pushed to `origin/feat/big-14-a-kirkaldy-fade` before any capacity value was read and while
@@ -1720,7 +1720,7 @@ fast-forwarded.
   charge per cycle), recorded as a deviation; L4 measurement UNKNOWN stays a stated assertion.
 - `pytest flagships/tests/test_kirkaldy_fade.py` (Windows 3.14): 9 passed.
 
-## 2026-10-09 BIG 14 â€” Kirkaldy fade study closed NOT MET; branch synced with main after PR #120
+## 2026-10-09 BIG 14 — Kirkaldy fade study closed NOT MET; branch synced with main after PR #120
 
 - PR #120 (R1/R4, certified source `3e396bc4`, certificate child `d383eed0`) merged into main as `2c0e024b` (merge commit,
   parents `16c87f40` + `d383eed0`). `main` was merged INTO `feat/big-14-a-kirkaldy-fade` as `343b8937` (no rebase, so the
@@ -1751,7 +1751,7 @@ fast-forwarded.
   `D:/forge-data/kirkaldy2024/study/kirkaldy_fade_study.json`; the study was not re-run and nothing was re-downloaded.
   Local Assurance / recertification: NOT RUN (no protected path changed).
 
-## 2026-10-09 Big Rocks expansion program â€” platform foundations (branch `claude/adoring-cray-jj367z`)
+## 2026-10-09 Big Rocks expansion program — platform foundations (branch `claude/adoring-cray-jj367z`)
 
 - Owner-directed breadth program alongside BIG 14 (BIG 14 tasks unchanged). Base `origin/main` @
   `446370651bc1630daf55b9dc0e7db9189946f0fa`; final source SHA `d8b99d45` (this PROGRESS entry is a docs-only commit after it).
@@ -1785,10 +1785,10 @@ fast-forwarded.
     tests on the pristine base. SCIENTIFIC tier (`-m "not campaign"`): NOT RUN.
 - Failed approaches / dead ends: `pip download pychrono` fetched an unrelated PyPI timing library of the same name (the Chrono
   probe now refuses it by API identity); openvsp.org is blocked by the egress policy; the OpenRadioss release API returned 403.
-  A `ruff --fix` over `src/engcore/design` edited three pre-existing modules; they were restored byte-for-byte (0a0cb89f) â€”
+  A `ruff --fix` over `src/engcore/design` edited three pre-existing modules; they were restored byte-for-byte (0a0cb89f) —
   autofix is run only on files this program owns.
 
-## 2026-10-09 Big Rocks â€” next three rocks (branch `claude/adoring-cray-jj367z`, grows PR #124)
+## 2026-10-09 Big Rocks — next three rocks (branch `claude/adoring-cray-jj367z`, grows PR #124)
 
 - Owner-directed: (1) provider reality + qualification path, (2) executable drone product coupling, (3) TwinRevision
   evidence and DesignHistory in SRIA. Final source SHA `e572ea61` (this entry is a docs-only commit after it). Same cloud
@@ -1797,10 +1797,10 @@ fast-forwarded.
   the `FORGE_PROVIDER_ENVS` layout): `chrono` (python 3.12, pychrono 10.0.0 + chrono 10.0.0), `fenicsx` (fenics-dolfinx 0.11.0,
   petsc4py, mpich, gmsh 4.15.2, meshio, scipy), `calculix` (calculix 2.23). Repo installed into the first two with
   `pip install --no-deps -e .` plus pint/pytest. OpenVSP and OpenRadioss: not on conda-forge, PyPI 404, openvsp.org blocked,
-  GitHub releases 403 â€” NOT_INSTALLED, fail-closed.
+  GitHub releases 403 — NOT_INSTALLED, fail-closed.
 - Real-run findings (Chrono 10.0.0): `ChMatrix33d.SetItem` does not exist (orientation now a plan quaternion); the NSC
   default solver PSOR did NOT hold the pendulum's bilateral revolute joint (4 mm length drift, no zero crossing in 2 s), while
-  SPARSE_QR / SPARSE_LU / MINRES reproduced the period â€” the solver is now a required declaration (direct solvers only);
+  SPARSE_QR / SPARSE_LU / MINRES reproduced the period — the solver is now a required declaration (direct solvers only);
   conda-forge pychrono installs no dist-info and Chrono 10 has no `GetChronoVersion` (identity now bound to the conda
   records, the bytes of pychrono's .py/.so and chrono's shared libraries, and the env digest).
 - Commands and results:
@@ -1808,16 +1808,16 @@ fast-forwarded.
     (rootdir/config = repo): 17 passed (both pendulum reference routes executed against Chrono 10.0.0).
   - `$HOME/mm/root/envs/chrono/bin/python tools/provider_routes.py chrono --out <ledger.json>`: rc 0;
     `chrono.pendulum_period.euler_implicit_linearized+sparse_qr` PASSED, relative error 1.3846e-07 (tolerance 1e-5);
-    `â€¦+sparse_lu` PASSED, 1.3846e-07; provider 10.0.0 digest `201e5097â€¦`. Re-run after the Codex fixes changed the adapter
-    source: adapter `0.3.0+src.209ff35ec371409e`, runs `621ee840â€¦` / `22044e33â€¦`, ledger head `daa2e259â€¦` (the earlier
-    adapter `â€¦7883f603â€¦` runs `75ab3a90â€¦` / `8c49eb09â€¦` do not transfer to it, by design). A route run is a check of one translation, not a qualification;
+    `…+sparse_lu` PASSED, 1.3846e-07; provider 10.0.0 digest `201e5097…`. Re-run after the Codex fixes changed the adapter
+    source: adapter `0.3.0+src.209ff35ec371409e`, runs `621ee840…` / `22044e33…`, ledger head `daa2e259…` (the earlier
+    adapter `…7883f603…` runs `75ab3a90…` / `8c49eb09…` do not transfer to it, by design). A route run is a check of one translation, not a qualification;
     no qualification was issued.
   - `FORGE_PROVIDER_ENVS=$HOME/mm/root/envs $HOME/mm/root/envs/fenicsx/bin/python -m pytest -q providers/fenicsx/tests
     providers/calculix/tests flagships/tests/test_geometry_slice.py tests/foundations`: 133 passed (FEniCSx suite, CalculiX
     suite incl. the FEniCSx-vs-CalculiX comparison, the slice's FEniCSx rung, foundations). Without the separate `calculix`
     env (ccx on the fenicsx env's PATH) the comparison is refused "independence UNKNOWN: calculix declares no dependency set"
-    â€” correct fail-closed behaviour, recorded as a failed approach.
-  - `python -m pytest -m "not expensive" -q -n 4 -rfE -p no:cacheprovider --junitxml=â€¦` on `e572ea61`: 14 failed, 9577 passed,
+    — correct fail-closed behaviour, recorded as a failed approach.
+  - `python -m pytest -m "not expensive" -q -n 4 -rfE -p no:cacheprovider --junitxml=…` on `e572ea61`: 14 failed, 9577 passed,
     135 skipped. The 14 are exactly the base-drift set recorded in the previous entry (13 freeze-manifest / core-freeze v3-v4 /
     batch56 / mutation-workspace tests that also fail on the pristine base in this container) plus
     `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` (recertification required).
@@ -1833,7 +1833,7 @@ fast-forwarded.
 - forge-scientific-review, three rounds, all CHANGES REQUIRED, all HIGH/MEDIUM fixed (commit messages list each):
   Rock 1 (0535be53: unbacked qualifications, forged/hidden route runs, in-memory build pinning, PSOR/HHT defaults, tolerance
   basis, file-byte identity, adapter source digest); Rock 2 (5c03b65c: infeasible duty reported as computed, unbounded winding
-  temperature, a balance that could not fail, Kv unit 2Ï€ ambiguity, runaway reason); Rock 3 (be21e65a: look-alike belief,
+  temperature, a balance that could not fail, Kv unit 2π ambiguity, runaway reason); Rock 3 (be21e65a: look-alike belief,
   unassessed verification, model binding / omitted contradictions, anchors appended around the runner).
 - Failed approaches / dead ends: the SRIA bridges were first written under `engcore.sria` and broke GUARD 18 (SRIA may import
   only `scientific`); they now live in `engcore.claims`, and SRIA gained only a generic `RECORD_CHAIN_ANCHORED` primitive.
@@ -1846,10 +1846,10 @@ fast-forwarded.
   `pytest tests/foundations providers/chrono/tests tests/mcp/test_foundations_tools.py flagships/tests/test_geometry_slice.py`:
   119 passed, 2 skipped (provider-gated); chrono env `providers/chrono/tests`: 12 passed.
 - Re-gate on `e5e3a81c` (after the Codex fixes): `python -m pytest -m "not expensive" -q -n 4 -rfE -p no:cacheprovider
-  --junitxml=â€¦`: 14 failed, 9577 passed, 135 skipped â€” the same 14 node ids as above; skip admission audit: skipped 135,
+  --junitxml=…`: 14 failed, 9577 passed, 135 skipped — the same 14 node ids as above; skip admission audit: skipped 135,
   accepted 135, unexpected 0. Hardened-core recertification and the SCIENTIFIC tier: still NOT RUN.
 
-## 2026-10-09 Roadmap V2 â€” checkpoint 1: discovery authority + FidelityGraph (branch `feat/roadmap-v2-discovery`)
+## 2026-10-09 Roadmap V2 — checkpoint 1: discovery authority + FidelityGraph (branch `feat/roadmap-v2-discovery`)
 
 - Stacked on PR #124 head `6656042099796921572d7ef81600750b4ba576fe`; PR #124 frozen except critical fixes. Owner decision:
   no provider breadth, no product depth; build discovery + falsification authority (Roadmap V2 R1-R8).
@@ -1862,7 +1862,7 @@ fast-forwarded.
   on the existing ladder/multifidelity (measured links, policy-bound admission, elimination only through an admitted
   in-domain quantified link, recorded stratified audit, suspension, resurrection). MIGRATION: additive only; no
   CORE_CERTIFIED file modified.
-- HOSTILE_REVIEW_RESULTS: forge-scientific-reviewer on 17526a32 â€” CHANGES REQUIRED: 6 HIGH (admission settable/carried
+- HOSTILE_REVIEW_RESULTS: forge-scientific-reviewer on 17526a32 — CHANGES REQUIRED: 6 HIGH (admission settable/carried
   over; declared domain; fabricated eliminations; gameable audit; audited false elimination stays eliminated; assertable
   hypothesis status), 6 MEDIUM, 7 LOW. All HIGH and MEDIUM fixed in 0cf5aac3 with a regression test each; L1-L7 fixed.
 - TARGETED_TESTS (this container, `.venv`, CPython 3.12.13):
@@ -1878,24 +1878,24 @@ fast-forwarded.
 - Failed approaches: none at this checkpoint (a first FidelityGraph draft trusted any 'admitted' audit event and a
   caller-chosen audit seed; replaced, see review above).
 
-## 2026-10-09 Roadmap V2 â€” checkpoints 2 and 3: Blindfold + escrow + isolation; falsifiers + multiplicity + novelty
+## 2026-10-09 Roadmap V2 — checkpoints 2 and 3: Blindfold + escrow + isolation; falsifiers + multiplicity + novelty
 
 - R3/R4 (FORGE Blindfold, new non-Core package `engcore.blindfold`; dbb65ecc): L5 synthetic universes (invented dimensions,
   dimensionless groups, non-textbook exponents, per-instance constants, power/exp/two-term/regime forms), controls
   NO_SOLUTION / INSUFFICIENT_EVIDENCE / INDISTINGUISHABLE / SPURIOUS_CORRELATE / CONFOUNDED, an escrow with one bytes
   entry point (in-process + subprocess transports, both labelled SECURITY_BOUNDARY_NOT_PROVEN), hash-chained HMAC-keyed
   query log, budgets, one sealed submission per universe, roles proposer -> admission -> evaluator -> adjudicator -> reporter.
-- Checkpoint-2 hostile review (forge-scientific-reviewer) â€” CHANGES REQUIRED, 7 HIGH / 8 MEDIUM / 6 LOW; fixed in 2bd429c2
+- Checkpoint-2 hostile review (forge-scientific-reviewer) — CHANGES REQUIRED, 7 HIGH / 8 MEDIUM / 6 LOW; fixed in 2bd429c2
   (operator credential; inadmissible = -1; INDISTINGUISHABLE redesigned and verified dimensionally homogeneous with in/out
   margins; CONFOUNDED made real confounding scored on the interventional expectation; strict replay; credit over the best
-  constant answer; canonical monomial structure digest; careful baseline pairing). Re-review â€” CHANGES REQUIRED, 1 HIGH
+  constant answer; canonical monomial structure digest; careful baseline pairing). Re-review — CHANGES REQUIRED, 1 HIGH
   (overflow killed the escrow) / 5 MEDIUM; fixed in b1e4714d (catch-all + guarded logging; pair hit needs mutual in-box
   agreement within 1 sigma, outside divergence, truth contained or bracketed; proposer crashes scored inadmissible; NO_SOLUTION
   noise like INSUFFICIENT; discovery vs control credit; allow-listed boundary labels; config digest declared at create).
-- R5 (10ab0a8e): `claims.falsification`, `claims.multiplicity`, `claims.novelty`. Checkpoint-3 review â€” BLOCKER (caller-
+- R5 (10ab0a8e): `claims.falsification`, `claims.multiplicity`, `claims.novelty`. Checkpoint-3 review — BLOCKER (caller-
   supplied prediction; forgeable/selective verdict store; self-reported exposure clock; unbounded k; NaN -> NOT_REFUTED; ...);
   fixed in 601ae459 (ExposureAuthority owns the clock; prediction/k/resolution sealed; verdicts in the registry chain).
-  Re-review â€” BLOCKER (unjudged refuting releases; conditions unchecked) + 8 HIGH; fixed in dd289ed5 (judge-all on
+  Re-review — BLOCKER (unjudged refuting releases; conditions unchecked) + 8 HIGH; fixed in dd289ed5 (judge-all on
   apply; conditions required; refutation follows the hypothesis id; RegistryAnchor; seal-time vacuity guards; novelty ledger
   on the authority clock with first-proposal ordering, canonicalizer self-test, declared equivalence, verify_novelty;
   multiplicity close()/verify_promoted, campaign ids never reused).
@@ -1905,7 +1905,7 @@ fast-forwarded.
   hypothesis id; a narrower or different claim is a new hypothesis (`derive_hypothesis`). (3) Identical values from two
   acquisitions are two measurements; an acquisition re-released keeps its first exposure.
 - Baseline scan (20 master seeds, MIX 8/3/3/3/3/3, DEFAULT_CREDIT): mean total / over-best-constant / discovery / control
-  credit â€” always_law -14.1 / -18.6 / 0.3 / -14.4; always_refuse 3.0 / -1.5 / 0 / 3.0; always_insufficient 4.5 / 0.0 / 0 /
+  credit — always_law -14.1 / -18.6 / 0.3 / -14.4; always_refuse 3.0 / -1.5 / 0 / 3.0; always_insufficient 4.5 / 0.0 / 0 /
   4.5; single_setting (non-discoverer) 7.25 / 2.75 / 0 / 7.25; careful 10.1 / 5.6 / 1.15 / 8.95 (discovery success 0.16).
   Finding: careful is mostly a control classifier; in 6/20 seeds its discovery credit is not above the non-discoverer's,
   so the test asserts only the properties that held on 20/20 seeds and uses a fixed seed.
@@ -1913,7 +1913,7 @@ fast-forwarded.
   - `pytest -q -n 4 tests/foundations/test_v2_falsifiers_multiplicity_novelty.py tests/foundations/test_v2_discovery_authority.py
     tests/foundations/test_v2_blindfold.py tests/foundations/test_v2_fidelity_graph.py tests/test_core_api_layering.py
     tests/test_core_semantic_invariants.py`: 162 passed, 1 failed (`test_credit_is_reported_over_the_best_constant_answer`,
-    random master seed â€” fixed by seeding; re-run `pytest -n 4 tests/foundations/test_v2_blindfold.py`: 14 passed);
+    random master seed — fixed by seeding; re-run `pytest -n 4 tests/foundations/test_v2_blindfold.py`: 14 passed);
     `pytest tests/foundations/test_v2_falsifiers_multiplicity_novelty.py`: 8 passed.
 - DEFERRED_HARDENING (LOW / design, recorded): Blindfold M7 SPURIOUS driver settable (weak control); L1 refusals free and
   unbounded in the log; L5 replay identity is the store writer's record, master seed held by the operator; L6 no exogenous
@@ -1927,15 +1927,15 @@ fast-forwarded.
   refutation). (4) An unnormalised exp(-b g) form underflowed outside the box; replaced by a saturating form. (5) The rival
   law added as law + k law g^m exceeded the 96-node limit; written as law (1 + k g^m).
 
-## 2026-10-10 Roadmap V2 â€” checkpoints 4 and 5, R8, battery readiness, final gate (branch `feat/roadmap-v2-discovery`)
+## 2026-10-10 Roadmap V2 — checkpoints 4 and 5, R8, battery readiness, final gate (branch `feat/roadmap-v2-discovery`)
 
 - R6 Scientific Red Team (`claims.redteam`, `claims.redteam_suite`; cd2a16b7): declared attack space (every range has a
   source and a unit), seeded deterministic plan (digest binds space, budget, seed, edge-interior points, replay tolerance),
   replay of every candidate, cross-FAMILY confirmation (neither the candidate's nor the claim's route votes; skipped or
   unconverged voters -> UNCONFIRMED), artifact dismissal only by an ATTACKED refined route of the same family, TrustEnvelope
   `engcore.claims.trust_envelope/2` with outcomes FALSIFIED / SURVIVED / UNKNOWN (no SAFE). Seeded flaw suite: 7 flaws +
-  an interior-only violation + 1 declared blind spot + 5 controls. Checkpoint-4 review â€” CHANGES REQUIRED (6 HIGH, 6
-  MEDIUM); fixed in 4c67ad4a. Confirmation review â€” 3 MEDIUM + LOWs, fixed in a8ab8d22; second confirmation: no HIGH or
+  an interior-only violation + 1 declared blind spot + 5 controls. Checkpoint-4 review — CHANGES REQUIRED (6 HIGH, 6
+  MEDIUM); fixed in 4c67ad4a. Confirmation review — 3 MEDIUM + LOWs, fixed in a8ab8d22; second confirmation: no HIGH or
   BLOCKER on the Red Team side.
 - SEEDED_FLAW_RESULTS (`run_suite()`, deterministic): detection_rate 1.0, false_alarm_rate 0.0, controls_as_expected 1.0,
   cross_family_confirmation_rate 1.0, evaluations to a confirmed counterexample min 13 / max 70 / mean ~26.1;
@@ -1965,13 +1965,13 @@ fast-forwarded.
   'within' whose evidence digest is the subject's content digest; UQ by a re-read `sria.assurance.uncertainty_budget.ChannelEntry`
   of that channel (quantified = KNOWN/BOUNDED with the channel's own UncertaintySource; UNKNOWN backs nothing;
   NOT_APPLICABLE backs only 'declared', with pinned provenance, from an authority that could have quantified the channel, and
-  NEVER for model form â€” declaring model-form discrepancy impossible would turn missing discrepancy into zero); support
+  NEVER for model form — declaring model-form discrepancy impossible would turn missing discrepancy into zero); support
   disqualification follows the canonical any-SUPERSEDES rule, a supersession of what the subject rests on is a 'superseded'
   defeater; "rests on" = twins + ancestors (not through SUPERSEDES) + calibration inputs; an outside-domain finding is
   judged like a defeater; OR chooses a branch by the requirement first (requirement_met is monotone; per-factor levels
   are those of the chosen branch); a CONTRADICTS edge is a conflict whichever side wrote it; a model-form statement at any
   level needs an outside authority with pinned provenance; a validator sharing any record with the data that calibrated the
-  subject is refused (hold-out siblings of one raw dataset too â€” over-conservative by choice); the report binds
+  subject is refused (hold-out siblings of one raw dataset too — over-conservative by choice); the report binds
   `inputs_digest` (schema `engcore.claims.credibility_vector/3`); the attacked statement is declared on the claim leaf and
   bound into the structure digest.
 - R8 (c8853038, c3bb5f91): `claims.discovery_providers` + `providers/discovery/*` runners in separate envs; PROVIDER_STATUS
@@ -1979,10 +1979,10 @@ fast-forwarded.
   hypotheses / ExternalSuggestion / untrusted raw output, never a verdict. Live runs moved to `tools/discovery_provider_smoke.py`
   (opt-in) after the skip-admission audit flagged env-gated skips; smoke run: PySINDy recovered du/dt = -0.50015 u, BoTorch
   suggestion inside bounds, Dakota moments present. Performance: `tools/discovery_performance.py`, documented in
-  `docs/performance/core-performance.md` Â§9 (20k candidates, seed 7: tier 0 ~33k/s; tier 1 screen+record ~3.4k/s, trust
+  `docs/performance/core-performance.md` §9 (20k candidates, seed 7: tier 0 ~33k/s; tier 1 screen+record ~3.4k/s, trust
   overhead ~292 us/candidate; tier 2 ~640 verdicts/s, seal O(releases); tier 3 ~33 universes/s; 50.7 useful promotions per
   compute-hour under a DECLARED 60 s high-fidelity cost; false-elimination rate 0.0 recorded audit and ground truth).
-- Battery: `docs/architecture/battery_discovery_readiness.md` â€” NOT READY for a confirmatory experiment, READY to draft
+- Battery: `docs/architecture/battery_discovery_readiness.md` — NOT READY for a confirmatory experiment, READY to draft
   the pre-registration; Kirkaldy 2024 stays NOT MET; nothing was run, re-fitted or pre-registered.
 - TARGETED_TESTS (this container, `.venv`, this session):
   - `pytest -m "not expensive" -q -n 4 -rfE -p no:cacheprovider` (before a8ab8d22): 14 failed, 9638 passed, 137 skipped
@@ -2031,14 +2031,14 @@ fast-forwarded.
   OR branch forces AND; citing a closer protects it) -- they are claim changes bound by `claim_structure_digest`; closer
   qualification is not a lineage fixpoint and `superseders` matches the exact record, not its twins.
 - Failed approaches: (0) disqualifying superseded support by any admissible superseder AND routing the outside-domain
-  claim through the same `usable()` gate â€” an unpinned superseder then lifted a defeater; defeater claims now bypass it.
-  (1) lineage that skipped the subject via view state (`view.subject`) â€” fixed independence but hid
+  claim through the same `usable()` gate — an unpinned superseder then lifted a defeater; defeater claims now bypass it.
+  (1) lineage that skipped the subject via view state (`view.subject`) — fixed independence but hid
   contradictions of the subject and made results child-order dependent; replaced by a `stop` parameter. (2) Reusing the strict
-  "closing" superseder bar to disqualify superseded support â€” removing a pin revived stale records. (3) A flaky-trap control
-  with a small, stateful spike â€” not detected reliably; replaced by a call-parity spike. (4) Env-gated live provider tests in
-  the certified harness â€” flagged by the skip-admission audit; moved to an opt-in smoke tool.
+  "closing" superseder bar to disqualify superseded support — removing a pin revived stale records. (3) A flaky-trap control
+  with a small, stateful spike — not detected reliably; replaced by a call-parity spike. (4) Env-gated live provider tests in
+  the certified harness — flagged by the skip-admission audit; moved to an opt-in smoke tool.
 
-## 2026-10-10 Big Rocks â€” Authority Integrity â†’ Real Escrow â†’ Battery Blind Readiness (branch `feat/big-rocks-authority-escrow-battery`)
+## 2026-10-10 Big Rocks — Authority Integrity → Real Escrow → Battery Blind Readiness (branch `feat/big-rocks-authority-escrow-battery`)
 
 Base `origin/main` `4634eba2` (Big Rocks PR #124 and Roadmap V2 PR #125 merged). PR #123 (trust repair) was not used,
 cherry-picked, rebased or depended on. TRUST_REPAIR_DEPENDENCY_CANDIDATEs (both certified lane) are in
@@ -2106,11 +2106,11 @@ Every finding below was fixed, with a test, unless it is listed under deferred h
 
 | review | commit reviewed | result | fixed in |
 |---|---|---|---|
-| checkpoint A | f71f66d6 | CHANGES REQUIRED: B1, H1â€“H3, M1â€“M5 | 4a7c392e |
-| checkpoint A re-review | 4a7c392e | CHANGES REQUIRED: H-1, H-2, M-1â€“M-5 | 708a3036 |
-| checkpoint B | 4a7c392e | CHANGES REQUIRED: H1, H2, M1â€“M7 | b195e093 |
-| checkpoint C | 7772e070 | CHANGES REQUIRED: H1â€“H4, M1â€“M9 | 47ac6a74 |
-| combined final review | b195e093 | CHANGES REQUIRED: H-1â€“H-3, M-1â€“M-6 | 09781568 |
+| checkpoint A | f71f66d6 | CHANGES REQUIRED: B1, H1–H3, M1–M5 | 4a7c392e |
+| checkpoint A re-review | 4a7c392e | CHANGES REQUIRED: H-1, H-2, M-1–M-5 | 708a3036 |
+| checkpoint B | 4a7c392e | CHANGES REQUIRED: H1, H2, M1–M7 | b195e093 |
+| checkpoint C | 7772e070 | CHANGES REQUIRED: H1–H4, M1–M9 | 47ac6a74 |
+| combined final review | b195e093 | CHANGES REQUIRED: H-1–H-3, M-1–M-6 | 09781568 |
 | verification 1 | 09781568 | CHANGES REQUIRED | 642e324c |
 | verification 2 | bb4ff5c4 | CHANGES REQUIRED | 71e02d8e |
 | verification 3 | 71e02d8e | CHANGES REQUIRED | 4532ea58 |
@@ -2144,12 +2144,12 @@ Every finding below was fixed, with a test, unless it is listed under deferred h
     - `test_core_scientific_audit_batch56::test_r65...`;
     - 2 in `test_mutation_workspace.py`.
 - Isolation demo (root, unshare/setpriv available):
-  - normal run: `run_isolation_demo` â†’ OS_ISOLATION_BOUNDARY_VERIFIED, every check true (launcher-verified ids,
+  - normal run: `run_isolation_demo` → OS_ISOLATION_BOUNDARY_VERIFIED, every check true (launcher-verified ids,
     capabilities, namespaces and tmpfs on both runs), 0 attacks succeeded, 175 980 files stat'd, 2.6 s;
   - positive control (`leak_control=True`): SECURITY_BOUNDARY_NOT_PROVEN, canary found in the planted partial copy;
   - `tools/blindfold_isolation_demo.py`: exit 0.
 - Performance: `python tools/authority_escrow_performance.py --n 200`, recorded in `docs/performance/core-performance.md`
-  Â§10. Ledger open ~0.42 ms/event; issuer-bound credibility 4.35 ms median; stored escrow observe 0.69 ms median.
+  §10. Ledger open ~0.42 ms/event; issuer-bound credibility 4.35 ms median; stored escrow observe 0.69 ms median.
 - NOT RUN: `pytest -m "not campaign"`, Local Assurance, hardened recertification, and any certificate rewrite (forbidden
   during the build campaign).
 
@@ -2192,14 +2192,14 @@ Recertification is owner-run and NOT RUN.
 
 ## 2026-10-11 Planning consolidation (docs only; uncommitted working tree on `main` @ `4634eba`)
 
-- Problem: conflicting execution authority â€” Master Plan Â§8.1 "Big Rocks First" + P0â€“P40, the Completion Policy's
+- Problem: conflicting execution authority — Master Plan §8.1 "Big Rocks First" + P0–P40, the Completion Policy's
   paused-expansion epic, PERFORMANCE.md's three-rocks-then-pivot policy, an 800-line ACTIVE_PLAN mixing history with
   tasks, and the Genesis contract present only in PR #127.
 - Done: Master Plan rewritten as Part I strategy (authority map, Now/Next/Later/Superseded, timebox framework, Trust-lane
   circuit breaker, control-plane budget, evidence-maturity progress metric) + Part II architecture reference;
-  ACTIVE_PLAN reduced to the live queue (G0 â†’ A1 â†’ A2 â†’ B1) with OWNER_DECISION_REQUIRED OD-1..OD-13; Genesis (from
-  PR #127 head `4872b10`) gained substrate inventory Â§4.1, baseline families Â§10.5, compute estimate Â§10.6, timebox
-  policy Â§18.0, Step-0 circuit breaker, Step 2B demo, evaluator-ownership rule; PERFORMANCE.md lost execution authority
+  ACTIVE_PLAN reduced to the live queue (G0 → A1 → A2 → B1) with OWNER_DECISION_REQUIRED OD-1..OD-13; Genesis (from
+  PR #127 head `4872b10`) gained substrate inventory §4.1, baseline families §10.5, compute estimate §10.6, timebox
+  policy §18.0, Step-0 circuit breaker, Step 2B demo, evaluator-ownership rule; PERFORMANCE.md lost execution authority
   and gained measurement labels and compute staging; Completion Policy gained the planning relationship; CLAUDE.md
   gained a planning-authority section. Old texts archived verbatim: `docs/archive/FORGE_MASTER_PLAN_2026-10-10.md`
   (+ PERFORMANCE appendix), `docs/work/archive/ACTIVE_PLAN_HISTORY_TO_2026-10-10.md`.
@@ -2214,7 +2214,7 @@ Recertification is owner-run and NOT RUN.
 - No code, test, threshold, result, maturity state or certificate changed. Not committed or pushed.
 - Correction pass (same day, docs only): (1) authority is by scope, not a global precedence chain ("execution authority
   does not imply semantic authority outside the document's scope"); (2) Completion Policy: no blanket Track A/B
-  exemption â€” A1 limited to benchmark/measurement infrastructure, A2 and new B1 foundations need the active epic changed
+  exemption — A1 limited to benchmark/measurement infrastructure, A2 and new B1 foundations need the active epic changed
   or one fully specified owner-approved exception, anti-loophole rule added; (3) circuit breaker has three states,
   `UNCLASSIFIED` is the blocking default and `GOVERNANCE_ONLY` needs a six-question evidence record; (4) the PERFORMANCE
   appendix in the Master Plan archive was rebuilt byte-exact inside `~~~~` fences (the first version had demoted
@@ -2230,12 +2230,12 @@ Recertification is owner-run and NOT RUN.
 - `py -3 -m pytest -q -p no:cacheprovider tests/test_agent_workflow_contract.py tests/test_capability_completion.py` -> 7 passed.
 - `py -3 -m tools.capability_maturity` -> "Capability completion ledger is coherent."
 - `git diff --check` against the full planning diff reports exactly two archive-only trailing-whitespace findings inherited byte-exact from the historical Master Plan; no live-document whitespace findings. The incremental cleanup diff was clean where applicable. Those historical whitespace lines were not removed or normalized; archive byte integrity is intentional.
-- ARCHIVE_VERIFY: PASS (Master Plan body, ACTIVE_PLAN body, PERFORMANCE.md lines 26â€“53 and 126â€“189, SHA-256 byte match).
+- ARCHIVE_VERIFY: PASS (Master Plan body, ACTIVE_PLAN body, PERFORMANCE.md lines 26–53 and 126–189, SHA-256 byte match).
 - FAST / Full Local Assurance: NOT RUN.
 
 ## 2026-10-12 Test-suite runtime (owner-requested; branch `perf/test-suite-runtime`, base `main` @ `8b028dc`)
 
-- Problem: FAST (`-m "not expensive"`) had grown to ~13â€“17 min on a 2-core host. Measured cause: (1) the tier tables
+- Problem: FAST (`-m "not expensive"`) had grown to ~13–17 min on a 2-core host. Measured cause: (1) the tier tables
   were last extended at ~3k tests; at 10.4k, FAST carried ~680 s of solver runs, result reproductions and studies;
   (2) source-scanning guards recomputed identical sweeps (guard_reach tokenized `src/` 4x per `verify()` and ~25
   `verify()` calls per session; the nested `from_dict` scan parsed ~750 files once per exempted name; the dependency
@@ -2336,7 +2336,7 @@ New `claims/revalidation.py`:
 
 Review history:
 1. forge-scientific-review returned BLOCKER (F1): offline VERIFIED re-earned the level but not the
-   verdict. A runtime adversary independently forged "T > 309.795 K" at 309.7999 K â†’ VERIFIED supported.
+   verdict. A runtime adversary independently forged "T > 309.795 K" at 309.7999 K → VERIFIED supported.
    Fixed with band invariance.
    Also fixed: F2 (binding and authority lines), F4 (unroutable oracle refuted), F3 (diagnose carries
    the standing), F5/F6 (MCP uncertainty demand, routing guard), and the AttributeError crash.
@@ -2440,7 +2440,7 @@ Commands (this session, Linux container, 4 cores, CPython 3.12.13 `.venv`, shall
 
 
 
-## NASA battery ingestion hostile review â€” 2026-10-06
+## NASA battery ingestion hostile review — 2026-10-06
 
 Requested branch was absent from shared checkout (on main with pre-existing
 work-document edits). Fetched origin/scientific/battery-1rc-production-closure
@@ -2718,7 +2718,7 @@ Fixed (tests fail on base unless stated):
   file capture; code_aster workspace created inside its `try`.
 - `execution/sweep.py`: non-exported `run_sweep_within_budget` / `BudgetedSweep` over `ResourceBudget`
   (RECERTIFICATION_REQUIRED: certified `execution_trust`).
-- `systems/products/drone_coupled.py`: docstring / note only â€” the winding residual is zero by construction (0.0 K on
+- `systems/products/drone_coupled.py`: docstring / note only — the winding residual is zero by construction (0.0 K on
   a real run), the bus residual is the last bus-voltage update times the current (-5.8e-11 W).
 
 Commands (Windows 11, CPython 3.14.2 `.venv`, `TMPDIR`/`--basetemp` on D:, `PYTHONPATH='D:\forge-remed\src;D:\forge-remed'`):
@@ -2743,7 +2743,7 @@ Commands (Windows 11, CPython 3.14.2 `.venv`, `TMPDIR`/`--basetemp` on D:, `PYTH
   tests/test_core_runtime_api_surface.py tests/test_core_api_layering.py` -> 72 passed.
 - Fail-before on `D:/forge-remed-base` (test files copied in temporarily, removed after): 15/20 ported, 20/23 new fail;
   escaped-descendant test 60.1 s for a 2 s timeout.
-- Provider benchmark (WSL, provider tests under a metrics plugin, base vs branch): see the report Â§D.
+- Provider benchmark (WSL, provider tests under a metrics plugin, base vs branch): see the report §D.
 - after commit `ce96fa06` (clean tree): `python -m pytest -q -n 0 tests/test_core_freeze_manifest.py
   tests/test_core_freeze_v3_manifest.py tests/test_core_freeze_v4_manifest.py` -> 5 failed, 41 passed, 1 skipped;
   pristine `c4e05ee6` -> the same 5 failed, 41 passed, 1 skipped. `test_the_tree_is_core_freeze_v1` and
@@ -2887,7 +2887,7 @@ NOT RUN.
 Trap: a real-tree soundness test that called `impact_of` per dependency took 137 s; computing `importers` once per
 dependency (what `impact_of` uses for import reach) takes 2.8 s.
 
-## Hostile remediation round 1 â€” 2026-10-13, BLOCKED_WITH_EVIDENCE
+## Hostile remediation round 1 — 2026-10-13, BLOCKED_WITH_EVIDENCE
 
 Verified origin/main after fetch: 5d73e8f5118aa845f1957decc5aae986e72476a9.
 Created clean D:/forge-hostile-remediation, branch fix/hostile-review-p0-p1.
@@ -2928,7 +2928,7 @@ whitespace only; raw originals retained outside the worktree. No evidence values
 failure IDs or source bytes changed. Rerun required below before final checkpoint.
 `git diff --cached --check`: PASS after transcript whitespace normalization, exit 0.
 
-## Hostile remediation round 1 â€” implementation, 2026-10-13/14 (Linux/WSL Ubuntu 24.04)
+## Hostile remediation round 1 — implementation, 2026-10-13/14 (Linux/WSL Ubuntu 24.04)
 
 Branch `fix/hostile-review-p0-p1`, base `5d73e8f5`. Work clone `~/forge-hostile-dev`; integration
 clone `~/forge-hostile-remediation` fast-forwarded from it; Python `.forge/venvs/3.11` and `3.12`
@@ -3019,7 +3019,7 @@ Failed approaches: a closed-world reader that counted every input statement as r
 `missing_inputs` path hide a retraction (fixed c2d592a4, d150f975); a duplicated-test-name probe and a
 malformed H10 mutant (syntax error) were corrected; a commit helper that took an absolute message path
 committed with a stale message once (amended before anything else built on it).
-## Hostile remediation round 1 â€” final matrix and hardened recertification, 2026-10-14
+## Hostile remediation round 1 — final matrix and hardened recertification, 2026-10-14
 
 Late fixes after the first entry: 313bbf1e (harness: a FAILED line is attributed to its own nodeid --
 the 3.12 "xdist flake" since Phase 0 was a real parsing bug in tests/mutation_guards.py and the xdist
@@ -3053,7 +3053,7 @@ sharq-labs/forge --python311 .forge/venvs/3.11/bin/python --python312 .forge/ven
   production-registry pin (456 evidence-code files). Old target 39d43456 superseded.
 
 Not pushed, not merged (user instruction). Host branch protection not re-verified.
-## 2026-10-14 â€” User-requested gaps catalogue (docs only)
+## 2026-10-14 — User-requested gaps catalogue (docs only)
 
 Created seven Arabic Markdown files under gaps/, preserving all five research
 tables (57 entries, with intentional overlap), star ratings, implementation slices,
@@ -3080,7 +3080,7 @@ apply_patch instead; no partial append or repository mutation from the failed co
 
 Command: git diff --cached --check. Initial result: seven trailing blank-line warnings in new Markdown files; trimmed EOF whitespace. Repeated result: PASS, exit 0.
 
-## 2026-10-14 â€” Additional gaps catalogue review (docs only)
+## 2026-10-14 — Additional gaps catalogue review (docs only)
 
 User requested additional cross-cutting gaps and publication on PR #136. Read the
 PR state: already merged as 375ab559677768dec5ab2c7267f20d127f51b197.
@@ -3123,7 +3123,7 @@ PowerShell rg with a literal *.py path failed; use a directory plus -g '*.py'.
 No code or state changed by either failed read.
 Command: git diff --cached --check. Result: PASS, exit 0. Documentation link/count check repeated after the sources update: PASS, exit 0.
 
-## 2026-10-14 â€” More design and coupling improvement proposals (docs only)
+## 2026-10-14 — More design and coupling improvement proposals (docs only)
 
 User requested more improvement proposals. PR #137 was read as open and unmerged;
 continued on codex/gaps-additional-review at 415f9993056bce2a0bcd8a62d21c5184eef6f4ab.
@@ -3163,7 +3163,7 @@ explicit anchors resolve. External URLs not checked. Scientific tests, regressio
 FAST, SCIENTIFIC and certification: **NOT RUN**, documentation-only.
 Command: git diff --cached --check. Result: PASS, exit 0 for the design/coupling proposal update.
 
-## 2026-10-15 â€” Quick wins: G0 CI record on `main` and catalogue item X08 (user-requested)
+## 2026-10-15 — Quick wins: G0 CI record on `main` and catalogue item X08 (user-requested)
 
 User request: read the plan and the Markdown files, then implement the easiest and quickest items.
 Branch `fix/ci-reproduce-and-g0-record`, worktree `D:/forge-quickwins`, base `origin/main` `e193e573`.
@@ -3181,7 +3181,7 @@ Read-only `gh run list` / `gh run view --log` for `sharq-labs/forge`. On push of
 | Branch Policy | exit 1 | `gh api .../rules/branches/main` HTTP 403 (needs Pro or a public repo) | OD-1 |
 | reproduce (Docker) | 161 failed, 10164 passed, 178 skipped | 150 need git history (`.dockerignore` drops `.git`; checkout is depth 1): no repository root, `git rev-parse` 128, freeze manifests, replay `NOT_REPRODUCIBLE` for a missing commit identity; 11 `test_oracle_ngspice_dc` because the image's ngspice-39 exits 1 after a correct `.control`/`op` run (ngspice-42 on the hosted runner exits 0) | CI environment, not a product regression; the fix needs `fetch-depth: 0` plus a `.git` mount in certified `tests.yml` (`certified:certification_control`), so it waits for OD-3 |
 | mutations | cancelled at 6 h 0 m | GitHub job time limit | infrastructure |
-| tests-gate | failure | aggregates the above | â€” |
+| tests-gate | failure | aggregates the above | — |
 
 No `SCIENTIFIC_CORRECTNESS` failure was found in these runs. This is a classification from the logs,
 not a rerun.
@@ -3206,7 +3206,7 @@ Independent `forge-scientific-review` (read-only): no BLOCKER; CHANGES REQUIRED 
 - M3: the first draft re-exported the module from `src/engcore/materials/__init__.py`, an evidence-code file
   pinned by the certificate. Fixed: the re-export was reverted; `__init__.py` is byte-identical to base and
   the module is reachable by path only.
-- Minor m1â€“m5 and m7 also fixed (uncertainty `source_kind`, structured `conflicted`, value and rule in the
+- Minor m1–m5 and m7 also fixed (uncertainty `source_kind`, structured `conflicted`, value and rule in the
   entry, stronger serialization assertions, a whitespace-duplicate case). m6 (an ASSUMED input to a
   FITTED/DERIVED datum resolves as SOURCED) is inherited from `properties.py` and is not changed here.
 
@@ -3233,7 +3233,7 @@ system-runtime report yet; SCIENTIFIC tier, regression pack and Linux runs **NOT
 
 Rerun after commit `aa160b6d` (clean tree): `python -m pytest tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1 tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks tests/test_materials_engine.py -q` -> 25 passed. The branch's FAST failure set therefore equals the pristine base's (153 failed, 22 errors on Windows); no failure is attributable to this change.
 
-## 2026-10-15 â€” Red `reproduce` job: full read-only history, non-root user, trixie ngspice (branch `fix/ci-reproduce-docker-history`, worktree `D:/forge-reproduce`, local only)
+## 2026-10-15 — Red `reproduce` job: full read-only history, non-root user, trixie ngspice (branch `fix/ci-reproduce-docker-history`, worktree `D:/forge-reproduce`, local only)
 
 Base `origin/main` @ `e193e573`. Tests run `38544091505`, job `reproduce` (115786199600):
 161 FAST failures (10164 passed, 178 skipped). On the same commit, hosted `fast (py 3.12)` failed only
@@ -3272,10 +3272,10 @@ Executed (WSL Ubuntu 24.04, CPython 3.12.3, ngspice-42; no Docker anywhere local
 - Emulation v1 (in-place ro bind mount, safe.directory via `GIT_CONFIG_SYSTEM`, run as root):
   `python -m pytest -m "not expensive" -q -n 4 --dist loadfile`.
   Result: FAIL, 7 failed / 4 errors, 10365 passed, 155 skipped.
-  - 6 `OwnershipError` dubious ownership: `test_change_impact` Ã—4 errors + f7,
+  - 6 `OwnershipError` dubious ownership: `test_change_impact` ×4 errors + f7,
     `test_repository_ownership::test_the_real_checkout_graph_never_contains_an_environment`.
   - Root: `test_mutation_workspace::test_mid_walk...`.
-  - Emulation artifacts: `test_local_telemetry...` (env override) and `test_escrow_isolation` Ã—2
+  - Emulation artifacts: `test_local_telemetry...` (env override) and `test_escrow_isolation` ×2
     (WSL root can `unshare`).
   - OD-3: the certificate test.
 - Emulation v2, the shipped design: tree owned by uid 1000, history a root-owned copy unwritable by
@@ -3318,10 +3318,10 @@ Owner: the workflow edit needs OD-3 recertification. Nothing is pushed or merged
   5 errors, 992 s. Tree clean afterwards.
 - Re-run of those 12 node ids with `mcp>=2.1 anyio>=4.0` added: 2 failed, 41 passed. **So on a supported Python with
   the extras CI installs, FAST on `main` has exactly two failures:**
-  - `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` â€” GOVERNANCE_ONLY candidate (evidence
+  - `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` — GOVERNANCE_ONLY candidate (evidence
     record not yet complete): areas `certification_control` (`skip_admission.py`, `test_skip_admission.py`), `harness`
     (`test_core_guards.py`) and `runtime_dependencies` (`pyproject.toml`) changed after recertification `d383eed0`.
-  - `tests/test_mutation_workspace.py::test_mid_walk_failure_still_reports_entries_already_scanned` â€” ENVIRONMENT:
+  - `tests/test_mutation_workspace.py::test_mid_walk_failure_still_reports_entries_already_scanned` — ENVIRONMENT:
     `chmod(0)` does not deny root; the container runs as uid 0.
 - Attribution of the earlier 3.13 drift set (same tests, same tree):
   - six freeze-v4 / batch56 failures are **Python-version artefacts**: `tools/certification/api_surface_v4.py` records
@@ -3344,7 +3344,7 @@ Owner: the workflow edit needs OD-3 recertification. Nothing is pushed or merged
   (26 calls, ~612k file lookups each run) and `test_core_api_contracts._guard_module()` re-executes
   `test_core_guards.py` per call; caching both took the four dependency-hygiene tests from 75 s to 30 s (same result).
 
-## 2026-10-12 PR landing pass â€” outcome (owner direction: resolve conflicts, merge what passes every gate)
+## 2026-10-12 PR landing pass — outcome (owner direction: resolve conflicts, merge what passes every gate)
 
 - Merged, one at a time, each by a merge commit after merging `main` into the PR branch (no rebase, no force push, no
   force merge; each landing gate is recorded in the PR's own entry above):
@@ -3373,7 +3373,7 @@ Owner: the workflow edit needs OD-3 recertification. Nothing is pushed or merged
   unrelated histories. Use the GitHub compare API, or deepen the clone, before calling histories unrelated.
 
 
-## 2026-10-13 Final test infrastructure assurance closeout â€” BLOCKED
+## 2026-10-13 Final test infrastructure assurance closeout — BLOCKED
 
 Source origin/main 5d73e8f5118aa845f1957decc5aae986e72476a9, tree ed305a44e69429fe06bb1e92954237aadd005080. Dedicated Windows and Linux worktrees; original dirty checkout preserved. Full commands, exact failures, outcomes and limits: `docs/work/FINAL_TEST_INFRASTRUCTURE_ASSURANCE_2026-10-13.md`. Raw argv/results/JUnit: `D:/forge-final-assurance-evidence/executed-commands-and-results.json`.
 
@@ -3758,37 +3758,37 @@ retry under the persistent Ubuntu user home succeeded (Python 3.12.3). Initial
 forge_check launch did not execute tests because the /tmp interpreter was missing.
 Tests: NOT RUN at the environment-preparation checkpoint; results appended below.
 
-2026-10-13 â€” initial adversarial tests (Ubuntu Python 3.12.3; mounted Windows source)
+2026-10-13 — initial adversarial tests (Ubuntu Python 3.12.3; mounted Windows source)
 command: `/home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q tests/uq/budget tests/claims/test_challenge_summary.py tests/claims/test_unassessable_compilation.py tests/foundations/test_discovery_deadline.py --tb=short`
-result: FAIL â€” 30 passed, 1 failed in 13.21 s.
+result: FAIL — 30 passed, 1 failed in 13.21 s.
 failure: `test_timeout_covers_handshake_output_and_inherited_pipes` (leader exits, descendant pipes).
 Cause: test expected a killed orphan's process group to disappear immediately; a zombie may persist until init reaps it. Corrected the assertion to reject any live member; no deadline or production behavior relaxed.
 
 command: `/home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --changed --workers 4` (mounted Windows worktree)
-result: BLOCKED â€” no tests executed; Linux git cannot resolve the Windows .git worktree path.
+result: BLOCKED — no tests executed; Linux git cannot resolve the Windows .git worktree path.
 Correction: created a task-owned native Linux Git clone at `/home/dev_kaeem/forge-repair-src`, pinned at c4e05ee6, and copied only the repair changes with Git-normalized LF bytes. Python environment installed against that clone. Native checkout has its own Git identities and Linux-supported execution.
 
 command: `/home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --changed --workers 4` (native Linux clone)
-result: FAIL â€” 3889 passed, 59 skipped, 2 failed in 73.37 s.
+result: FAIL — 3889 passed, 59 skipped, 2 failed in 73.37 s.
 failures: `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`; `tests/claims/test_sensitivity_robustness_challenge.py::test_a_claim_that_holds_across_its_declared_range_survives`.
 Certificate failure names the pre-existing certified-area drift plus changed UQ/harness bytes and the uncommitted tree; no certificate regenerated. Challenge failure was an obsolete expected summary: real surviving range probes coexist with another INCONCLUSIVE challenge. Updated the test to assert both surviving routes and an honest overall inconclusive status; this is the requested behavior correction.
 
 Independent read-only forge-scientific-review: PASS. Initial request for task-write/final-wait stall tests addressed; reviewer inspected them. No tests executed by reviewer, no scientific validation claimed. Pre-existing direct UncertaintyBudgetReport dataclass construction can carry arbitrary fields; no authority consumer found by reviewer, recorded as scope limitation. Aggregation/build/loading paths are hardened.
 
 command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q tests/uq/budget tests/claims/test_challenge_summary.py tests/claims/test_unassessable_compilation.py tests/claims/test_sensitivity_robustness_challenge.py tests/foundations/test_discovery_deadline.py tests/test_benchmark_output_isolation.py --tb=short` (native Linux clone)
-result: PASS â€” 60 passed in 40.20 s.
+result: PASS — 60 passed in 40.20 s.
 Published benchmark JSON/Markdown bytes were compared before and after both builds by the isolation tests. Mutating/deleting the private generated result was detected instead of reading a published fallback. These are software tests, not physical validation.
 
 command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --regression --workers 4` (native Linux clone)
-result: PASS â€” 241 passed in 6.07 s.
+result: PASS — 241 passed in 6.07 s.
 
 command: `python3 .pytest-review-temp/compare_api.py` (WSL Ubuntu; script invokes `/home/dev_kaeem/forge-repair-venv/bin/python -X utf8 -m engcore.api_snapshot --frozen` with each checkout's own src on PYTHONPATH)
-result: PASS â€” base c4e05ee6 and repair frozen API output bytes identical; SHA256 `0cfcaca6290cfe910e13d851986b62bbe55ae732a2e7a9f43174c5a319916072`.
+result: PASS — base c4e05ee6 and repair frozen API output bytes identical; SHA256 `0cfcaca6290cfe910e13d851986b62bbe55ae732a2e7a9f43174c5a319916072`.
 This comparison establishes unchanged frozen API shape, not certificate validity.
 
 
 Latest-main steering checkpoint: user requested a fresh check. Fetched `origin/main`
-`5d73e8f5` (PRs #133â€“#135). Updated repair branch by fast-forward; upstream
+`5d73e8f5` (PRs #133–#135). Updated repair branch by fast-forward; upstream
 benchmark isolation and additive challenge outcome_summary supersede the overlapping
 local changes, which remain recoverable in the repair stash. Kept only empty-budget,
 NOT_ASSESSABLE compiler and Discovery read-deadline repairs plus their tests.
@@ -3797,25 +3797,25 @@ base, not this new base. Prior FAST run was interrupted before a result/XML was
 available (lost exec session, partial log at 97%); result BLOCKED, never PASS.
 New-baseline gates and scientific review follow below.
 
-2026-10-13 â€” updated-main gate (`5d73e8f5` base)
+2026-10-13 — updated-main gate (`5d73e8f5` base)
 command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --changed --workers 4`
-result: FAIL â€” 3940 passed, 61 skipped, 1 failed in 44.50 s.
+result: FAIL — 3940 passed, 61 skipped, 1 failed in 44.50 s.
 failure: `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`.
 The remaining defect tests pass; certificate verification still reports certified-area byte drift, including the explicit UQ repair and earlier main changes. Not recertified, not accepted as a clean integration gate.
 Independent read-only review of the updated-base, narrowed diff: PASS. No outstanding finding; review did not execute tests or establish physical validation.
 
 command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --regression --workers 4` (updated base 5d73e8f5)
-result: PASS â€” 256 passed in 5.22 s.
+result: PASS — 256 passed in 5.22 s.
 
 command: `wsl -d Ubuntu -- python3 /mnt/c/Users/dev_kaeem/.codex/worktrees/repair-scientific-boundaries/phyx/.pytest-review-temp/compare_latest_api.py`
-result: PASS â€” latest base 5d73e8f5 and repair frozen API output bytes identical; SHA256 `0cfcaca6290cfe910e13d851986b62bbe55ae732a2e7a9f43174c5a319916072`.
+result: PASS — latest base 5d73e8f5 and repair frozen API output bytes identical; SHA256 `0cfcaca6290cfe910e13d851986b62bbe55ae732a2e7a9f43174c5a319916072`.
 
 command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -m "not expensive" -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-latest-fast.xml`
-result: FAIL â€” 10041 passed, 157 skipped, 7 failed in 117.32 s.
+result: FAIL — 10041 passed, 157 skipped, 7 failed in 117.32 s.
 Raw log and XML are in the task-owned Ubuntu user home. Failure names and base attribution appended after SCIENTIFIC completes; no result waived or certificate rewritten.
 
 command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -m "not campaign" -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-latest-scientific.xml`
-result: FAIL â€” 10617 passed, 157 skipped, 9 failed in 209.85 s.
+result: FAIL — 10617 passed, 157 skipped, 9 failed in 209.85 s.
 Failure names (FAST plus SCIENTIFIC union):
 - benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
 - benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates
@@ -3829,7 +3829,7 @@ Failure names (FAST plus SCIENTIFIC union):
 Attribution run on pristine base 5d73e8f5 is underway. Dirty-tree failures are not called scientific regressions without this comparison; source/evidence replay remains bound to its actual checkout.
 
 command: `CRAFTY_NGSPICE_ARGV=ngspice PYTHONPATH=/home/dev_kaeem/forge-repair-latest-base/src:/home/dev_kaeem/forge-repair-latest-base /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-base-attribution.xml <the nine failure node IDs listed above>`
-result: FAIL â€” 3 failed, 6 passed in 26.35 s on pristine 5d73e8f5.
+result: FAIL — 3 failed, 6 passed in 26.35 s on pristine 5d73e8f5.
 Base failures: certificate_describes_this_tree and both historical benchmark rebuild tests. The six freeze tests pass on the clean base and reject the uncommitted repair tree specifically at tree.clean; a committed repair rerun will determine their status. No scientific regression was inferred from those dirty-tree failures; no gate was waived.
 
 Exact base-attribution subprocess command (cwd `/home/dev_kaeem/forge-repair-latest-base`; PYTHONPATH set to that checkout src/root; CRAFTY_NGSPICE_ARGV=ngspice):
@@ -3851,14 +3851,14 @@ results were not used. Fetching the branch through the primary repository's .git
 worked. The final runner asserts the exact HEAD and a clean tree before any test.
 
 command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python tools/forge_check.py --regression --workers 4`
-result: PASS â€” 256 passed in 5.19 s.
+result: PASS — 256 passed in 5.19 s.
 
 command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -m "not expensive" -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-latest-fast.xml`
-result: FAIL â€” 10047 passed, 157 skipped, 1 failed in 119.30 s.
+result: FAIL — 10047 passed, 157 skipped, 1 failed in 119.30 s.
 failure: `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`.
 
 command: `CRAFTY_NGSPICE_ARGV=ngspice /home/dev_kaeem/forge-repair-venv/bin/python -m pytest -m "not campaign" -q -n 4 --tb=short --junitxml=/home/dev_kaeem/forge-repair-latest-scientific.xml`
-result: FAIL â€” 10623 passed, 157 skipped, 3 failed in 204.95 s.
+result: FAIL — 10623 passed, 157 skipped, 3 failed in 204.95 s.
 failures: certificate_describes_this_tree and both historical benchmark rebuild
 nodes listed above. All three also fail on pristine 5d73e8f5; XML failure-ID union
 comparison matched exactly. The six freeze checks that rejected the dirty tree
@@ -3866,11 +3866,11 @@ pass on the committed repair. No certificate, threshold, skip rule, reference
 artifact or published negative result was rewritten to clear a gate.
 
 command: `wsl -d Ubuntu -- python3 /mnt/c/Users/dev_kaeem/.codex/worktrees/repair-scientific-boundaries/phyx/.pytest-review-temp/compare_final_failures.py`
-result: PASS â€” final FAST/SCIENTIFIC failure union equals the three failures from
+result: PASS — final FAST/SCIENTIFIC failure union equals the three failures from
 the pristine-main attribution run. This is failure attribution, not a passing tier.
 
 command: `/home/dev_kaeem/forge-repair-venv/bin/python -m tools.certification.assert_clean_tree`
-result: PASS â€” `/home/dev_kaeem/forge-repair-src` byte-identical to HEAD after all tiers.
+result: PASS — `/home/dev_kaeem/forge-repair-src` byte-identical to HEAD after all tiers.
 
 Outcome: the remaining three requested code repairs are implemented and reviewed;
 latest-main benchmark and additive challenge-summary repairs are preserved.
@@ -3898,7 +3898,7 @@ G0 PASS, certification, qualification or physical validation is claimed.
 - Scientific review of the Mind: CHANGES REQUIRED, then PASS after the five corrections. A PASS is a review result only. Recertification: NOT RUN.
 
 
-## 2026-10-14 â€” BR-15 authority boundary & certification closure
+## 2026-10-14 — BR-15 authority boundary & certification closure
 
 Branch `fix/br15-authority-closure` (worktree `D:/forge-br15`; WSL clone `~/forge-br15`), base `origin/main`
 `e193e573`. Commits: `dc26175d` (red reproducer), `6d62e5cf` (closure fix), `a49e8d12` (harness fix), `01073787`
@@ -3949,12 +3949,12 @@ Failed approaches, so they are not repeated:
 - Package-wide exclusions were replaced by importer edges.
 - The Windows `-n 4` runs of the certificate fixtures fail on `git add -A` (exit 128) on the base as well. It is an
   environment problem; run those serially on Windows.
-## 2026-10-14 â€” BR-16 Genesis-lite v0: preregistered benchmark layer and Tier-1 pilot
+## 2026-10-14 — BR-16 Genesis-lite v0: preregistered benchmark layer and Tier-1 pilot
 
 Branch `feat/br16-genesis-lite-benchmark` (worktree `D:/forge-br16`, WSL clone `~/forge-br16`), base `origin/main`
 `e193e573`. Code commit `e493ff3f`. Not pushed. Report: [GENESIS_LITE_V0.md](../discovery/GENESIS_LITE_V0.md).
-Outcome: **PILOT_COMPLETE Â· BLOCKED_OWNER_APPROVAL**, not GENESIS_A1_PASS. G0 has not exited, the preregistration is
-frozen for the pilot only, the formal â‰¥20-seed runs have not started, and the budget and evaluator owner decisions are
+Outcome: **PILOT_COMPLETE · BLOCKED_OWNER_APPROVAL**, not GENESIS_A1_PASS. G0 has not exited, the preregistration is
+frozen for the pilot only, the formal ≥20-seed runs have not started, and the budget and evaluator owner decisions are
 open.
 
 Scope:
@@ -3973,12 +3973,12 @@ Gates:
 
 Hardened recertification: **NOT RUN** (and not required by any certified-file change).
 
-Pilot (WSL 3.12.3, 20 CPUs, preregistration `f99fcfbdâ€¦`, root commitment `07381465â€¦`, now revealed):
+Pilot (WSL 3.12.3, 20 CPUs, preregistration `f99fcfbd…`, root commitment `07381465…`, now revealed):
 - Command: `python -m benchmarks.genesis_lite.pilot --root-file <root> --out ~/br16-evidence/pilot`.
 - Result: 960 runs, 0 invalid, 0 inadmissible, 85.07 s.
 - The separate evaluator agreed with the escrow on all 5,760 universes.
-- Run log sha256 `0c279655â€¦`.
-- Formal baseline tier: 15,120 runs â‰ˆ 1,185 s (ESTIMATED).
+- Run log sha256 `0c279655…`.
+- Formal baseline tier: 15,120 runs ≈ 1,185 s (ESTIMATED).
 
 Pilot findings (indicative; 10 worlds per cell):
 - P-1: the floor arm `always_law` dominates the discoverable cell (0.70 vs 0.27 for the best competence arm). The
@@ -4252,7 +4252,7 @@ union resolution touched only docs/work/ACTIVE_PLAN.md and PROGRESS.md.
 ## 2026-10-15 -- Battery 1RC cross-cell evaluation on Kirkaldy 2024 (feat/battery-1rc-crosscell, local only)
 
 **Data.**
-- Owner-approved partial download ("Partial: 25Â°C BoL tests"): the 36 RPT0 CSVs of the 12 LG M50T cells at 25 Â°C, about
+- Owner-approved partial download ("Partial: 25°C BoL tests"): the 36 RPT0 CSVs of the 12 LG M50T cells at 25 °C, about
   250 MB, read from the five Zenodo 10637534 archives by HTTP range. Each file was CRC32-checked.
 - Location: D:/forge-data/kirkaldy2024/bol25 (receipts in bol25.sha256).
 
@@ -4269,11 +4269,11 @@ union resolution touched only docs/work/ACTIVE_PLAN.md and PROGRESS.md.
     fit had no free choice left.
   - Deviation 1 (exclude any window holding a temperature dropout) removed no window on these files.
 - 3c865540: calibration on the 7 calibration cells, committed before the held-out evaluation ran.
-  - IDENTIFIABLE: R0 33.1 mÎ©, R1 20.2 mÎ©, C1 5307 F, Ï„ 107 s. Cell-block bootstrap CV â‰¤ 6.1 %.
+  - IDENTIFIABLE: R0 33.1 mΩ, R1 20.2 mΩ, C1 5307 F, τ 107 s. Cell-block bootstrap CV ≤ 6.1 %.
 - Held-out (5 cells, strict transfer through the engcore route):
   - Primary: 32/99 windows outside the unwidened calibration domain.
   - Secondary: 8/17 windows outside.
-  - Causes: temperature down to 17.61 Â°C against a 23.19 Â°C minimum, and current up to 0.52 mA above the calibration
+  - Causes: temperature down to 17.61 °C against a 23.19 °C minimum, and current up to 0.52 mA above the calibration
     maximum.
   - Both sets are NOT_ASSESSABLE, so the outcome is **IDENTIFIABILITY_SUPPORTED**. The ledger's independent_validation
     stays MISSING; the computed stage stays FUNCTIONAL.
@@ -4676,13 +4676,13 @@ Environment: Linux container, 2 CPUs, CPython 3.12.13 (uv venv) with full histor
 | `python tools/certification/core_certificate.py --verify` | FAILED: certified `39d43456`, HEAD `5d73e8f5`; 15 files in 5 areas (certification_control, execution_trust, harness, inference_admission, runtime_dependencies) |
 
 FAST failures, classified:
-- `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` â€” certificate drift (OD-3); the only
+- `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` — certificate drift (OD-3); the only
   failure that reflects the tree.
 - `tests/test_mutation_workspace.py::{test_local_telemetry_is_outside_manifest_and_cannot_verify_as_receipt,
-  test_mid_walk_failure_still_reports_entries_already_scanned}` â€” environment: run as root, so the read-only
+  test_mid_walk_failure_still_reports_entries_already_scanned}` — environment: run as root, so the read-only
   directory these tests build does not raise `PermissionError`.
 - `tests/foundations/test_escrow_isolation.py::{test_the_isolated_deployment_reports_exactly_what_it_established,
-  test_the_leak_detector_catches_a_planted_partial_copy}` â€” environment: inside the namespace only the interpreter
+  test_the_leak_detector_catches_a_planted_partial_copy}` — environment: inside the namespace only the interpreter
   prefix is mounted, and a uv venv keeps `cryptography` outside it. Both pass with the system interpreter
   (CPython 3.13.16): `python -m pytest tests/foundations/test_escrow_isolation.py` 2 passed.
 
@@ -4691,7 +4691,7 @@ the shallow history and 6 from the V4 deep API surface gaining `format`/`format_
 `add_note`/`with_traceback` (exceptions) under 3.13; the same tests pass on 3.12. The V4 surface is therefore
 interpreter-dependent. The owner's local interpreter is 3.14 (REMEDIATION_2026-10-13); 3.14: NOT RUN here (OD-2).
 
-## 2026-10-16 â€” Local Assurance performance investigation (read-only; documentation only)
+## 2026-10-16 — Local Assurance performance investigation (read-only; documentation only)
 
 Record: `docs/work/LOCAL_ASSURANCE_PERFORMANCE_INVESTIGATION_2026-10-16.md` (Arabic, with an English summary).
 Base: `main` at `e193e573`.
@@ -4704,7 +4704,7 @@ Findings (details and sources are in the record):
 - **Late refusals.** Four full local runs between 2026-10-07 and 2026-10-15 were refused only after every
   execution gate had passed. Three were refused by skip admission, one by the runner interpreter at
   `certificate_generation`. Each was detectable with existing tools within 16 s to 20 min of the start.
-- **Worker flags.** `run --workers 4 --mutation-workers 4 --formal-pytest-workers 2` ran in 2h42mâ€“2h47m on the
+- **Worker flags.** `run --workers 4 --mutation-workers 4 --formal-pytest-workers 2` ran in 2h42m–2h47m on the
   WSL host (Pass 13; PR #119). Three later runs used the default flags (`--mutation-workers 2
   --formal-pytest-workers 1`; their recorded commands carry no worker flags): 05522b59 took 3h27m, 5847345e
   3h33m and 0bc8b1cb 3h33m. The documented `run` command carries no worker flags.
@@ -4736,8 +4736,8 @@ certification evidence.
 Failed approach: a bytecode cache.
 
 - A checked-hash pyc cache in an external `PYTHONPYCACHEPREFIX` does not speed up mutation children. Importing
-  718 `engcore` modules took 4.89â€“4.93 s with it, against 4.05â€“4.26 s with no pyc. Timestamp pycs took
-  2.72â€“2.75 s but are unsafe.
+  718 `engcore` modules took 4.89–4.93 s with it, against 4.05–4.26 s with no pyc. Timestamp pycs took
+  2.72–2.75 s but are unsafe.
 - `compileall -j 0` with `-X pycache_prefix` wrote 720 pyc files into the copied tree, because its forkserver
   workers do not inherit the prefix.
 - Do not pursue it.
@@ -4746,7 +4746,7 @@ Failed approach: a bytecode cache.
 - After merging `main` at `91b44e22`: `python tools/forge_check.py --changed --base origin/main`: both files
   classified `doc_only`; 158 passed in 11.87 s; exit 0.
 
-## 2026-10-16 â€” Recent-branch documentation reconciliation
+## 2026-10-16 — Recent-branch documentation reconciliation
 
 Copied the previously unmerged historical check record from `docs/main-check-2026-10-13` and the performance-investigation record from PR #147 into a documentation-only integration branch based on `36306da51`. These remain historical execution records. Scientific models, certificate identities, workflows and acceptance thresholds are unchanged by this reconciliation. TESTS: NOT RUN in this integration session. HARDENED RECERTIFICATION: NOT RUN. No claim of certified or passing CI is made.
 
@@ -5904,3 +5904,8 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
   thresholds regenerated. No capability promotion. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
 - Next recommended bounded task: A-1/A-2/A-13 semantic compatibility proposal, then A-3
   declared-field-kind overlap rules. No additional implementation authorized by this slice.
+
+- Failed documentation approach: a default-encoding whole-file read/write altered historical
+  non-ASCII text in PROGRESS. Restored the exact baseline bytes and appended only this task's
+  ASCII entries. Do not normalize historical evidence logs through locale-dependent text IO.
+  Correction changes documentation only; independently reviewed implementation is unchanged.
