@@ -1,3 +1,15 @@
+---
+ai_schema_version: 1
+doc_id: FORGE-RESUME-DASHBOARD-20261019
+doc_kind: CONTEXT_INDEX
+doc_status: SNAPSHOT
+authority_scope: NONE
+source_ref: multiple
+evidence_level: DERIVED
+last_reviewed: 2026-10-19
+supersedes: none
+---
+
 # FORGE — Resume Dashboard (snapshot 2026-10-19)
 
 > **READ ME FIRST after a pause.** This is a navigation and prioritization **snapshot**, not a new task queue, certification, authorization, or replacement for `docs/work/ACTIVE_PLAN.md`. Rebuild all statuses from live repository evidence each time. The original source for the audit was **`abed661f`**, not necessarily `main`.
