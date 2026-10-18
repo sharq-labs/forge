@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import replace
-from types import SimpleNamespace
 
 import pytest
 
@@ -21,7 +20,7 @@ from engcore.system_runtime import (
 )
 from engcore.scientific.results.uncertainty import UncertaintyKind
 from tests.system_runtime_fixtures import UNKNOWN, build, sha
-from tests.test_system_runtime_review_fixes import _coupled_stub
+from tests.test_system_runtime_review_fixes import _coupled_runtime, coupled_run_kwargs
 
 
 def test_a_node_sees_its_own_execution_identity_and_the_consumer_sees_the_same_value_as_the_producer_identity():
@@ -61,7 +60,7 @@ def test_multiphysics_extractors_are_node_outputs_with_unknown_uncertainty_and_a
         run_holder["seen"] = run.run_id
         return (ArtifactRef("history.csv", "timeseries_csv", hashlib.sha256(payload).hexdigest(), "presentation, not evidence"),)
 
-    auth = MultiphysicsAuthority("stub-coupled-extract", _coupled_stub(UNKNOWN), run_kwargs=lambda c: {}, outputs={}, state_owners={},
+    auth = MultiphysicsAuthority("stub-coupled-extract", _coupled_runtime(UNKNOWN), run_kwargs=coupled_run_kwargs, outputs={}, state_owners={},
                                  extractors={"peak_temperature": lambda run, call: Quantity(305.0, "K"), "mean_of_two": lambda run, call: Quantity(302.5, "K")},
                                  artifacts=artifacts, applicability=lambda run, call: (ApplicabilityReport("ok", "within", sha("e")),))
     context.authorities.register(auth)
@@ -82,7 +81,7 @@ def test_an_extractor_that_raises_fails_the_node_and_exposes_nothing():
     def boom(run, call):
         raise ValueError("the history has no discharge window")
 
-    auth = MultiphysicsAuthority("stub-coupled-boom", _coupled_stub(UNKNOWN), run_kwargs=lambda c: {}, outputs={}, state_owners={}, extractors={"peak": boom},
+    auth = MultiphysicsAuthority("stub-coupled-boom", _coupled_runtime(UNKNOWN), run_kwargs=coupled_run_kwargs, outputs={}, state_owners={}, extractors={"peak": boom},
                                  applicability=lambda run, call: (ApplicabilityReport("ok", "within", sha("e")),))
     context.authorities.register(auth)
     node = NodeSpec("stub", NodeKind.MULTIPHYSICS_EXECUTION, auth.ref, (NodeOutputSpec("peak", "K"),), applicability_checks=("ok",))
@@ -94,7 +93,7 @@ def test_an_extractor_that_raises_fails_the_node_and_exposes_nothing():
 
 def test_the_authority_identity_covers_the_extractor_names_and_the_artifact_hook():
     _, context, _ = build()
-    a = MultiphysicsAuthority("stub-a", _coupled_stub(UNKNOWN), run_kwargs=lambda c: {}, outputs={}, extractors={"x": lambda r, c: Quantity(1.0, "K")})
-    b = MultiphysicsAuthority("stub-a", _coupled_stub(UNKNOWN), run_kwargs=lambda c: {}, outputs={}, extractors={"y": lambda r, c: Quantity(1.0, "K")})
-    c = MultiphysicsAuthority("stub-a", _coupled_stub(UNKNOWN), run_kwargs=lambda c: {}, outputs={}, extractors={"x": lambda r, c: Quantity(1.0, "K")}, artifacts=lambda r, c: ())
+    a = MultiphysicsAuthority("stub-a", _coupled_runtime(UNKNOWN), run_kwargs=coupled_run_kwargs, outputs={}, extractors={"x": lambda r, c: Quantity(1.0, "K")})
+    b = MultiphysicsAuthority("stub-a", _coupled_runtime(UNKNOWN), run_kwargs=coupled_run_kwargs, outputs={}, extractors={"y": lambda r, c: Quantity(1.0, "K")})
+    c = MultiphysicsAuthority("stub-a", _coupled_runtime(UNKNOWN), run_kwargs=coupled_run_kwargs, outputs={}, extractors={"x": lambda r, c: Quantity(1.0, "K")}, artifacts=lambda r, c: ())
     assert len({a.identity_digest, b.identity_digest, c.identity_digest}) == 3
