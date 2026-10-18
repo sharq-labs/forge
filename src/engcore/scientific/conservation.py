@@ -3,7 +3,8 @@
 A conservation check asks whether two explicitly declared sides of a balance
 close within a dimensional tolerance. The core does not know whether the
 quantity is mass, energy, charge, momentum, species amount or something a
-future domain introduces; units decide whether the terms are commensurate.
+future domain introduces. Units establish commensurability; typed balances also
+require the same explicitly declared conserved meaning on every term.
 
 The framework deliberately does **not** award a validation level by itself.
 Conservation is a powerful necessary check, but satisfying a balance does not
@@ -21,7 +22,8 @@ from typing import Any, Mapping, Sequence
 from .errors import ScientificValidationError
 from .results.validation import ValidationCheck, ValidationOutcome
 from .serialization import require_schema, schema_string
-from .units.quantity import Quantity
+from .semantics import ConservedQuantity, QuantitySemantics, extend_payload, semantic_extension
+from .units.quantity import Quantity, is_ratio_scale
 from .units.validation import require_same_dimension
 
 BALANCE_TERM_SCHEMA = schema_string("balance_term")
@@ -35,6 +37,7 @@ class BalanceTerm:
     name: str
     value: Quantity
     evidence: str = ""
+    semantics: QuantitySemantics | None = None
 
     def __post_init__(self) -> None:
         name = str(self.name).strip()
@@ -46,22 +49,29 @@ class BalanceTerm:
             )
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "evidence", str(self.evidence).strip())
+        if self.semantics is not None:
+            if (not isinstance(self.semantics, QuantitySemantics)
+                    or self.value.dimensionality != Quantity(1, self.semantics.unit).dimensionality):
+                raise ScientificValidationError("balance term semantics and value dimension disagree")
+            if self.semantics.conserved_quantity is not None and not is_ratio_scale(self.value.units):
+                raise ScientificValidationError("conserved balance terms require ratio-scale units")
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        return extend_payload({
             "schema": BALANCE_TERM_SCHEMA,
             "name": self.name,
             "value": self.value.to_dict(),
             "evidence": self.evidence,
-        }
+        }, "semantics", self.semantics)
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "BalanceTerm":
-        require_schema(payload, BALANCE_TERM_SCHEMA)
+        raw_semantics = semantic_extension(payload, BALANCE_TERM_SCHEMA, "semantics")
         return cls(
             name=payload["name"],
             value=Quantity.from_dict(payload["value"]),
             evidence=payload.get("evidence", ""),
+            semantics=None if raw_semantics is None else QuantitySemantics.from_dict(raw_semantics),
         )
 
 
@@ -82,6 +92,7 @@ class ConservationBalance:
     tolerance: Quantity
     description: str = ""
     reference: str = ""
+    conserved_quantity: ConservedQuantity | None = None
 
     def __post_init__(self) -> None:
         balance_id = str(self.balance_id).strip()
@@ -95,6 +106,13 @@ class ConservationBalance:
         terms = left + right
         if any(not isinstance(term, BalanceTerm) for term in terms):
             raise ScientificValidationError("conservation terms must be BalanceTerm records")
+        if self.conserved_quantity is not None:
+            if not isinstance(self.conserved_quantity, ConservedQuantity):
+                raise ScientificValidationError("balance conserved quantity must be typed")
+            if any(term.semantics is None or term.semantics.conserved_quantity != self.conserved_quantity for term in terms):
+                raise ScientificValidationError("balance terms do not share the precise conserved meaning")
+        elif any(term.semantics is not None for term in terms):
+            raise ScientificValidationError("typed balance terms require a conserved quantity declaration")
         names = [term.name for term in terms]
         if len(set(names)) != len(names):
             raise ScientificValidationError(
@@ -203,7 +221,7 @@ class ConservationBalance:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        return extend_payload({
             "schema": CONSERVATION_BALANCE_SCHEMA,
             "balance_id": self.balance_id,
             "left": [term.to_dict() for term in self.left],
@@ -211,11 +229,11 @@ class ConservationBalance:
             "tolerance": self.tolerance.to_dict(),
             "description": self.description,
             "reference": self.reference,
-        }
+        }, "conserved_quantity", self.conserved_quantity)
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ConservationBalance":
-        require_schema(payload, CONSERVATION_BALANCE_SCHEMA)
+        raw_quantity = semantic_extension(payload, CONSERVATION_BALANCE_SCHEMA, "conserved_quantity")
         return cls(
             balance_id=payload["balance_id"],
             left=tuple(BalanceTerm.from_dict(v) for v in payload.get("left", ())),
@@ -223,6 +241,7 @@ class ConservationBalance:
             tolerance=Quantity.from_dict(payload["tolerance"]),
             description=payload.get("description", ""),
             reference=payload.get("reference", ""),
+            conserved_quantity=None if raw_quantity is None else ConservedQuantity.from_dict(raw_quantity),
         )
 
 

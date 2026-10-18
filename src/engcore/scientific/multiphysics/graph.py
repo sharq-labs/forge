@@ -24,6 +24,7 @@ from ..fields import (
     read_mesh_support,
 )
 from ..serialization import require_schema, schema_string
+from ..semantics import QuantityTransport, extend_payload, semantic_extension
 from ..units.quantity import is_ratio_scale
 from .conservation import CoupledConservation, TransferMeasure
 from .frames import FrameTransform
@@ -54,6 +55,7 @@ class CouplingEdge:
     transport_declaration: str = ""
     coordinate_transform_id: str = ""
     description: str = ""
+    transport: QuantityTransport | None = None
 
     def __post_init__(self) -> None:
         edge_id = str(self.edge_id).strip()
@@ -72,9 +74,14 @@ class CouplingEdge:
         object.__setattr__(self, "transport_declaration", str(self.transport_declaration).strip())
         object.__setattr__(self, "coordinate_transform_id", str(self.coordinate_transform_id).strip())
         object.__setattr__(self, "description", str(self.description).strip())
+        if self.transport is not None:
+            if not isinstance(self.transport, QuantityTransport):
+                raise InvalidScientificProblem("edge transport must be QuantityTransport")
+            if self.conversion is not None or self.transport_declaration:
+                raise InvalidScientificProblem("structured transport cannot be combined with legacy conversion/prose")
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        return extend_payload({
             "schema": COUPLING_EDGE_SCHEMA,
             "edge_id": self.edge_id,
             "source": self.source.to_dict(),
@@ -85,11 +92,11 @@ class CouplingEdge:
             "transport_declaration": self.transport_declaration,
             "coordinate_transform_id": self.coordinate_transform_id,
             "description": self.description,
-        }
+        }, "transport", self.transport)
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "CouplingEdge":
-        require_schema(payload, COUPLING_EDGE_SCHEMA)
+        raw_transport = semantic_extension(payload, COUPLING_EDGE_SCHEMA, "transport")
         raw_mapping = payload.get("mapping")
         raw_conversion = payload.get("conversion")
         return cls(
@@ -102,6 +109,7 @@ class CouplingEdge:
             transport_declaration=payload.get("transport_declaration", ""),
             coordinate_transform_id=payload.get("coordinate_transform_id", ""),
             description=payload.get("description", ""),
+            transport=None if raw_transport is None else QuantityTransport.from_dict(raw_transport),
         )
 
 
@@ -253,6 +261,18 @@ class PhysicsGraph:
                 raise InvalidScientificProblem(
                     f"edge {edge.edge_id!r} connects [{source.dimension}] to [{target.dimension}]"
                 )
+            typed = source.semantics is not None or target.semantics is not None or edge.transport is not None
+            if typed:
+                if source.semantics is None or target.semantics is None or edge.transport is None:
+                    raise InvalidScientificProblem("typed connections require both port semantics and structured transport")
+                edge.transport.admit(source.semantics, target.semantics)
+                if source.kind is PortKind.FIELD:
+                    raise InvalidScientificProblem("typed field transport requires the separate A-3 declared-kind review")
+            elif source.quantity != target.quantity:
+                if (edge.conversion is None
+                        or source.quantity != edge.conversion.input_form
+                        or target.quantity != edge.conversion.output_form):
+                    raise InvalidScientificProblem("legacy quantity meanings differ; explicit semantic migration is required")
             if edge.source.participant_id == edge.target.participant_id:
                 raise InvalidScientificProblem(
                     f"edge {edge.edge_id!r} connects two ports of participant "
@@ -298,17 +318,8 @@ class PhysicsGraph:
                     raise InvalidScientificProblem(
                         f"scalar edge {edge.edge_id!r} cannot declare a field mapping"
                     )
-                QuantityDependency(
-                    source_problem_id=edge.source.participant_id,
-                    source_quantity=source.quantity,
-                    target_problem_id=edge.target.participant_id,
-                    target_quantity=target.quantity,
-                    unit_exemplar=source.unit,
-                    name=edge.edge_id,
-                    description=edge.description,
-                    conversion=edge.conversion,
-                    transport_declaration=edge.transport_declaration,
-                )
+                if not typed:
+                    self._validate_legacy_scalar(edge, source, target)
             frames_differ = (
                 source.coordinate_frame != target.coordinate_frame
             )
@@ -370,6 +381,15 @@ class PhysicsGraph:
                         f"requires {expected_dimension}D"
                     )
 
+    @staticmethod
+    def _validate_legacy_scalar(edge, source, target) -> None:
+        QuantityDependency(
+            source_problem_id=edge.source.participant_id, source_quantity=source.quantity,
+            target_problem_id=edge.target.participant_id, target_quantity=target.quantity,
+            unit_exemplar=source.unit, name=edge.edge_id, description=edge.description,
+            conversion=edge.conversion, transport_declaration=edge.transport_declaration,
+        )
+
     def _validate_fan_in(self) -> None:
         groups: dict[PortRef, list[CouplingEdge]] = {}
         for edge in self.edges:
@@ -409,13 +429,24 @@ class PhysicsGraph:
                         f"[{balance.tolerance.dimensionality}] differs from edge "
                         f"{edge.edge_id!r} [{source.dimension}]"
                     )
+                if balance.conserved_quantity is not None:
+                    if (edge.transport is None or source.semantics is None
+                            or source.semantics.conserved_quantity != balance.conserved_quantity
+                            or edge.transport.conserved_quantity != balance.conserved_quantity):
+                        raise InvalidScientificProblem("balance and realized edge conserved meanings disagree")
+                elif edge.transport is not None:
+                    raise InvalidScientificProblem("typed conserved transport requires a typed balance declaration")
                 if binding.measure is TransferMeasure.LOSS:
-                    if edge.conversion is None:
+                    if edge.transport is not None:
+                        paths = edge.transport.losses
+                    elif edge.conversion is not None:
+                        paths = edge.conversion.losses
+                    else:
                         raise InvalidScientificProblem(
                             f"conservation term {binding.name!r} asks for a loss on "
                             f"edge {edge.edge_id!r} with no conversion"
                         )
-                    forms = {loss.form for loss in edge.conversion.losses}
+                    forms = {loss.form for loss in paths}
                     if binding.loss_form not in forms:
                         raise InvalidScientificProblem(
                             f"conservation term {binding.name!r} asks for loss form "

@@ -6,6 +6,22 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Active repair - semantic compatibility A-1/A-2/A-13 (2026-10-18)
+
+Branch `codex/quantity-semantics`, base latest fetched origin/main
+`0284ae161ad957d51674ee481e47cfd43d10c5f0`, isolated semantic-contracts worktree.
+Checkpoint hardening is independently published in Draft PR #158 at `02065a6d`;
+its changes are not included here. Build-First: no tests/provider execution/assurance.
+
+- [x] Phase A/B proposal and initial 39-file inventory; expanded static index covers 122 files.
+- [x] Independent static design compatibility review: PASS, no HIGH/MEDIUM finding.
+- [x] Bounded typed scalar implementation, adversarial tests, compatibility records (UNVERIFIED).
+- [x] Independent static patch review and local PR-ready package; no tests run.
+- [x] Separate A-3 declared-field-kind proposal; no mapping implementation in this slice.
+- [ ] Separately authorize deferred tests; do not mark A-1/A-2/A-13 CLOSED on code alone.
+
+See SEMANTIC_COMPATIBILITY_PROPOSAL.md and SEMANTIC_IMPACT_MATRIX.md.
+
 ## Integration — Codex handoff (2026-10-18)
 
 By owner confirmation in chat, branch `integration/codex-handoff-2026-10-18` merges into `main`, in order: I-8
