@@ -1,0 +1,16 @@
+diff --git a/tests/test_multiphysics_window_control.py b/tests/test_multiphysics_window_control.py
+index 34190f4..c45f7d2 100644
+--- a/tests/test_multiphysics_window_control.py
++++ b/tests/test_multiphysics_window_control.py
+@@ -294,8 +294,9 @@ def test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_
+     without, _, _ = _explicit_runtime(_policy(minimum=0.1), end=2.0)
+     remembered_runtime, src, sink = _explicit_runtime(WindowControlPolicy(_q(0.1), 0.5, 4, None, 2.0), end=2.0)
+     plain, remembered = _run(without), _run(remembered_runtime)
+-    # nominal 0.5 s always fails (> 0.25 s): 8 subdivisions without memory; with growth 2, every other window
+-    assert _subdivisions(plain) == 8 and _subdivisions(remembered) == 4
++    # nominal 0.5 s always fails (> 0.25 s): 7 subdivisions without memory (the last window [7/4, 2] is cut to
++    # 0.25 s by the horizon and never fails); with growth 2, every other window: 4
++    assert _subdivisions(plain) == 7 and _subdivisions(remembered) == 4
+     widths = [w.end.magnitude_in("s") - w.start.magnitude_in("s") for w in remembered.windows]
+     assert all(width <= 0.25 + 1e-12 for width in widths)
+     assert remembered.ended_at.magnitude_in("s") == pytest.approx(2.0)

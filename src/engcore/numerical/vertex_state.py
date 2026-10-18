@@ -146,6 +146,9 @@ class DualTransferReceipt(_AuditOnlyRecord):
     source_unit: str
     target_unit: str
     uncertainty: Uncertainty
+    #: the declared :class:`AmountDistribution1D` (its ``to_dict``), or None for the uniform-per-length default;
+    #: carried whole so an auditor holding the receipt can see the split that was assumed
+    distribution: dict | None = None
 
     @property
     def record_id(self):
@@ -160,7 +163,71 @@ class DualTransferReceipt(_AuditOnlyRecord):
                 "conserved_unit": self.conserved_unit, "source_unit": self.source_unit,
                 "target_unit": self.target_unit, "roundoff_allowance": CONSERVATIVE_COVERAGE_ROUNDOFF,
                 "uncertainty": self.uncertainty.to_dict(),
+                # absent when undeclared: existing receipts keep their identity
+                **({"distribution": self.distribution} if self.distribution is not None else {}),
                 "classification": "constructed_dual_transfer_not_pointwise_accuracy_or_physical_validation"}
+
+
+@dataclass(frozen=True)
+class AmountDistribution1D:
+    """A declared positive weight ``w(x)``, constant on each ``[breakpoints[k], breakpoints[k+1]]``.
+
+    Within every source dual the conserved amount is split over the target duals it overlaps in proportion to
+    ``integral of w`` over each overlap, instead of in proportion to overlap length. For a storage law
+    ``A_i = C_i * u_i`` with one intensive value per dual, ``w = capacity per length`` (e.g. ``c * area``) is the
+    split the discrete state itself implies: a uniform ``u`` is transferred to a uniform ``u`` across a jump in
+    ``w``, where the length split moves amount between materials. The weight is a declared assumption, carried
+    whole on the receipt; it is not evidence, is not checked against any registered storage, and quantifies no
+    transfer error. Only ratios of ``w`` are used, so ``unit`` is normalized and recorded, never converted.
+    """
+
+    breakpoints: tuple[float, ...]
+    breakpoint_unit: str
+    weights: tuple[float, ...]
+    unit: str
+
+    def __post_init__(self):
+        points = tuple(float(x) for x in self.breakpoints)
+        weights = tuple(self.weights)
+        if (len(points) < 2 or not all(math.isfinite(x) for x in points)
+                or any(b <= a for a, b in zip(points, points[1:]))):
+            raise NumericalRefusal("amount distribution breakpoints must be finite and strictly increasing")
+        if (len(weights) != len(points) - 1 or any(isinstance(w, bool) or not isinstance(w, (int, float)) for w in weights)
+                or not all(math.isfinite(float(w)) and float(w) > 0 for w in weights)):
+            raise NumericalRefusal("amount distribution needs one finite positive weight per breakpoint interval")
+        if not isinstance(self.unit, str) or not self.unit.strip():
+            raise NumericalRefusal("amount distribution weight unit must be declared")
+        try:
+            object.__setattr__(self, "unit", normalize_unit(self.unit))
+        except Exception as exc:  # UnitCompatibilityError: an unparsable unit is not a declaration
+            raise NumericalRefusal(f"amount distribution weight unit is not a unit: {self.unit!r}") from exc
+        if (not isinstance(self.breakpoint_unit, str) or not is_ratio_scale(self.breakpoint_unit)
+                or dimensionality(self.breakpoint_unit) != dimensionality("m")):
+            raise NumericalRefusal("amount distribution breakpoints require an explicit ratio-scale length unit")
+        object.__setattr__(self, "breakpoints", points)
+        object.__setattr__(self, "breakpoint_unit", normalize_unit(self.breakpoint_unit))
+        object.__setattr__(self, "weights", tuple(float(w) for w in weights))
+
+    def to_dict(self):
+        return {"schema": "dual_amount_distribution/1", "breakpoints": [x.hex() for x in self.breakpoints],
+                "breakpoint_unit": self.breakpoint_unit, "weights": [w.hex() for w in self.weights], "unit": self.unit,
+                "rule": "piecewise_constant_weight_overlap_split/1"}
+
+    @property
+    def digest(self):
+        return canonical_digest(self.to_dict())
+
+    def integrate(self, left, right):
+        """``integral of w`` over ``[left, right]`` (metres, broadcast arrays); zero where ``right <= left``."""
+        factor = Quantity(1, self.breakpoint_unit).magnitude_in("m")
+        b = np.asarray(self.breakpoints, dtype=float)*factor
+        lo, hi = np.asarray(left, dtype=float)[..., None], np.asarray(right, dtype=float)[..., None]
+        segments = np.maximum(0.0, np.minimum(hi, b[1:]) - np.maximum(lo, b[:-1]))
+        return segments @ np.asarray(self.weights, dtype=float)
+
+    def span_m(self):
+        factor = Quantity(1, self.breakpoint_unit).magnitude_in("m")
+        return self.breakpoints[0]*factor, self.breakpoints[-1]*factor
 
 
 def normalized_input_bytes(*, support: DualSupport1D, role: str, name: str, values,
@@ -404,10 +471,20 @@ class VertexDualAdapter1D:
     def coarsen(self, bisections, *, max_ratio: float):
         return self._change(self._runtime.coarsen, bisections, max_ratio=max_ratio)
 
-    def transfer_state(self, source: VertexState1D, transition: DualInvalidation1D, *, target_unit=None):
+    def transfer_state(self, source: VertexState1D, transition: DualInvalidation1D, *, target_unit=None,
+                       distribution: AmountDistribution1D | None = None):
+        """Move one conserved dual state across an issued transition.
+
+        Default: each source dual's amount is split over overlapping target duals by overlap LENGTH (uniform per
+        length inside a dual). With a declared ``distribution`` (integrated placement only) it is split by the
+        integral of the declared weight instead -- see :class:`AmountDistribution1D`. Either way the totals are
+        conserved and checked; neither is a pointwise accuracy statement.
+        """
         self._guard()
         if not isinstance(source, VertexState1D) or not isinstance(transition, DualInvalidation1D):
             raise NumericalRefusal("explicit issued vertex/dual source and transition required")
+        if distribution is not None and not isinstance(distribution, AmountDistribution1D):
+            raise NumericalRefusal("a declared amount distribution must be an AmountDistribution1D")
         self._issued.require(source)
         self._issued.require(transition)
         self._issued.require(source.support)
@@ -424,6 +501,8 @@ class VertexDualAdapter1D:
             raise NumericalRefusal("transition consumed or destination populated")
         if source.placement is StatePlacement.VERTEX_INTENSIVE:
             raise NumericalRefusal("vertex interpolation/reconstruction unsupported; transfer conserved content then declare target storage")
+        if distribution is not None and source.placement is not StatePlacement.DUAL_CELL_INTEGRATED:
+            raise NumericalRefusal("a declared amount distribution applies to dual-integrated amounts only")
         unit = normalize_unit(source.unit if target_unit is None else target_unit)
         self._state_contract(source.placement, source.semantics, unit, source.uncertainty, source.context_digest)
         values = np.asarray(self._runtime._resolver.resolve(source.data), dtype=float)
@@ -439,6 +518,19 @@ class VertexDualAdapter1D:
         ca, cb = overlap.sum(axis=1)/va, overlap.sum(axis=0)/vb
         if any(not np.all(np.isfinite(c)) or np.max(np.abs(c-1)) > CONSERVATIVE_COVERAGE_ROUNDOFF for c in (ca, cb)):
             raise NumericalRefusal("partial source or destination dual coverage")
+        if distribution is not None:
+            # the length split above validated meaning, unit and frame; the amounts are re-split by the weight
+            lo, hi = distribution.span_m()
+            span = x[-1] - x[0]
+            if abs(lo - x[0]) > CONSERVATIVE_COVERAGE_ROUNDOFF*span or abs(hi - x[-1]) > CONSERVATIVE_COVERAGE_ROUNDOFF*span:
+                raise NumericalRefusal("amount distribution does not cover exactly the dual support")
+            shares = distribution.integrate(np.maximum(x[:-1, None], y[None, :-1]), np.minimum(x[1:, None], y[None, 1:]))
+            own = distribution.integrate(x[:-1], x[1:])
+            if (not np.all(np.isfinite(shares)) or not np.all(own > 0)
+                    or np.max(np.abs(shares.sum(axis=1)/own - 1)) > CONSERVATIVE_COVERAGE_ROUNDOFF):
+                raise NumericalRefusal("amount distribution weight does not partition every source dual")
+            factor = Quantity(1, source.unit).magnitude_in(unit)
+            mapped = self._values(((values/own) @ shares)*factor)
         integrated = source.placement is StatePlacement.DUAL_CELL_INTEGRATED
         av, bv = (values, mapped) if integrated else (values*va, mapped*vb)
         cq = source.semantics.conserved_quantity
@@ -453,6 +545,7 @@ class VertexDualAdapter1D:
         target = self._publish(source.name, mapped, source.placement, source.semantics, unit, self._unknown(),
                                source.context_digest, None, (source.record_id, transition.record_id))
         receipt = self._issued.issue(DualTransferReceipt(transition.record_id, source.record_id, target.record_id,
-            tuple(map(float, ca)), tuple(map(float, cb)), ta, tb, absolute, relative, cq.unit, source.unit, unit, self._unknown()))
+            tuple(map(float, ca)), tuple(map(float, cb)), ta, tb, absolute, relative, cq.unit, source.unit, unit, self._unknown(),
+            None if distribution is None else distribution.to_dict()))
         self._consumed.add(key)
         return target, receipt

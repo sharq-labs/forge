@@ -70,6 +70,15 @@ REFINING_EVENT_KINDS = frozenset({
 State = Mapping[str, Mapping[str, StateVariableValue]]
 
 
+def _normalized_state(values: Mapping[str, Mapping[str, Any]]) -> dict[str, dict[str, StateVariableValue]]:
+    """``{participant: {variable: StateVariableValue}}`` in the caller's order; no key is checked or defaulted."""
+    out: dict[str, dict[str, StateVariableValue]] = {}
+    for pid, vars_ in dict(values).items():
+        for k, v in dict(vars_).items():
+            out.setdefault(pid, {})[k] = StateVariableValue(k, v.value, v.uncertainty)
+    return out
+
+
 def freeze(state: Mapping[str, Mapping[str, StateVariableValue]]) -> State:
     """An immutable snapshot (StateVariableValue is itself frozen)."""
     return MappingProxyType({p: MappingProxyType(dict(v)) for p, v in state.items()})
@@ -503,6 +512,16 @@ class MultiTimescaleRuntime:
         """Supply the declared initial fast state before :meth:`resume` (it is part of run identity)."""
         self._declared_fast = freeze(self._state_from(state, self._fast_keys, "fast"))
 
+    @staticmethod
+    def declared_fast_state_digest(state: Mapping[str, Mapping[str, InitialStateValue]] | None) -> str:
+        """The ``declared_fast_state`` identity a run or resume declaring ``state`` records (OD-30).
+
+        Pure: it changes no runtime state and validates nothing -- a run still refuses a fast state that misses or
+        adds a declared FAST variable, exactly where it did. ``None`` is the empty declaration, which is also what a
+        runtime that has never run reports. Same normalization as :meth:`_state_from`, so the two cannot drift.
+        """
+        return canonical_digest(state_to_list(freeze(_normalized_state(state or {}))))
+
     def resume(self, checkpoint: MacroCheckpoint, *, until: TimePoint | None = None) -> MultiTimescaleRunRecord:
         """Continue from a verified checkpoint.
 
@@ -535,10 +554,7 @@ class MultiTimescaleRuntime:
 
     @staticmethod
     def _state_from(values, keys, label) -> dict[str, dict[str, StateVariableValue]]:
-        out: dict[str, dict[str, StateVariableValue]] = {}
-        for pid, vars_ in dict(values).items():
-            for k, v in dict(vars_).items():
-                out.setdefault(pid, {})[k] = StateVariableValue(k, v.value, v.uncertainty)
+        out = _normalized_state(values)
         got = {(p, k) for p in out for k in out[p]}
         if got != keys:
             raise InvalidScientificProblem(f"{label} state must supply exactly {sorted(keys)}; missing {sorted(keys - got)}, "

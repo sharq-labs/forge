@@ -435,3 +435,80 @@ def test_nested_support_tamper_refuses_and_source_object_is_not_authority():
     object.__setattr__(s.support.intervals, "nodes", (0,.5,2.5,4.1))
     with pytest.raises(NumericalRefusal, match="tampered|conflicting"):
         m.read_state(s)
+
+
+# ---- 2026-10-18 remediation D3-2: transfer across a jump in storage per length --------------------------------------
+#
+# Independent hand derivation. Primal nodes (0, 1, 2) m; storage per length w = 1 kg/K/m on [0, 1] and 3 on [1, 2].
+# Duals [0,.5], [.5,1.5], [1.5,2] hold C = (.5, .5*1 + .5*3, 1.5) = (.5, 2, 1.5) kg/K; uniform u = 300 K gives
+# amounts (150, 600, 450) kg. Refining primal cell [0, 1] gives nodes (0, .5, 1, 2), duals [0,.25], [.25,.75],
+# [.75,1.5], [1.5,2] with C = (.25, .5, .25 + 1.5, 1.5) = (.25, .5, 1.75, 1.5) kg/K.
+#   length split:  (75, 75 + 600*.25/1, 600*.75/1, 450) = (75, 225, 450, 450)  -> u = (300, 450, 257.142857..., 300)
+#   weight split:  (75, 75 + 600*.25/2, 600*1.75/2, 450) = (75, 150, 525, 450) -> u = (300, 300, 300, 300)
+
+COARSE_C, FINE_C = (.5, 2, 1.5), (.25, .5, 1.75, 1.5)
+
+
+def _heterogeneous_uniform_amount():
+    m = manager(Grid1D((0, 1, 2), "m"))
+    u = register(m, (300, 300, 300), name="u", placement=P.VERTEX_INTENSIVE, semantics=PRIMARY)
+    amount = m.convert_storage(u, storage(m, COARSE_C), name="amount")
+    assert m.read_state(amount) == pytest.approx((150, 600, 450), abs=1e-12)
+    transition = m.refine([m.mesh.cells[0].record_id], minimum_cell=Quantity(.01, "m"), max_ratio=10)
+    assert m.support.intervals.nodes == pytest.approx((0, .25, .75, 1.5, 2), abs=1e-15)
+    return m, amount, transition
+
+
+def _weight():
+    return implementation.AmountDistribution1D((0, 1, 2), "m", (1, 3), "kg/K/m")
+
+
+def test_the_default_length_split_moves_amount_across_a_storage_jump():
+    """The default is the declared uniform-per-length rule; its consequence here is derived above, not physics."""
+    m, amount, transition = _heterogeneous_uniform_amount()
+    fine, receipt = m.transfer_state(amount, transition)
+    assert m.read_state(fine) == pytest.approx((75, 225, 450, 450), abs=1e-12)
+    assert "distribution" not in receipt.to_dict()  # existing receipts keep their identity
+    u = m.convert_storage(fine, storage(m, FINE_C), name="u")
+    assert m.read_state(u) == pytest.approx((300, 450, 450 / 1.75, 300), abs=1e-9)
+
+
+def test_a_declared_storage_weight_keeps_a_uniform_intensive_state_uniform():
+    m, amount, transition = _heterogeneous_uniform_amount()
+    fine, receipt = m.transfer_state(amount, transition, distribution=_weight())
+    assert m.read_state(fine) == pytest.approx((75, 150, 525, 450), abs=1e-12)
+    assert receipt.source_total == pytest.approx(1200, abs=1e-9) and receipt.target_total == pytest.approx(1200, abs=1e-9)
+    assert receipt.to_dict()["distribution"] == _weight().to_dict()  # the assumed split, whole, not only a digest
+    u = m.convert_storage(fine, storage(m, FINE_C), name="u")
+    assert m.read_state(u) == pytest.approx((300, 300, 300, 300), abs=1e-9)
+    assert u.uncertainty.kind is UncertaintyKind.UNKNOWN
+
+
+@pytest.mark.parametrize(("breakpoints", "weights", "match"), [
+    ((0, 1, 2.5), (1, 3), "cover"),
+    ((0, 1), (1,), "cover"),
+])
+def test_a_distribution_that_does_not_cover_the_support_is_refused(breakpoints, weights, match):
+    m, amount, transition = _heterogeneous_uniform_amount()
+    with pytest.raises(NumericalRefusal, match=match):
+        m.transfer_state(amount, transition,
+                         distribution=implementation.AmountDistribution1D(breakpoints, "m", weights, "kg/K/m"))
+
+
+@pytest.mark.parametrize(("breakpoints", "unit", "weights", "weight_unit"), [
+    ((0, 1, 2), "m", (1, 0), "kg/K/m"), ((0, 1, 2), "m", (1, -3), "kg/K/m"),
+    ((0, 1, 2), "m", (1, float("nan")), "kg/K/m"), ((0, 2, 1), "m", (1, 3), "kg/K/m"),
+    ((0, 1, 2), "m", (1,), "kg/K/m"), ((0, 1, 2), "K", (1, 3), "kg/K/m"), ((0, 1, 2), "m", (True, 3), "kg/K/m"),
+    ((0, 1, 2), "m", (1, 3), "banana"), ((0, 1, 2), "m", (1, 3), ""),
+])
+def test_an_invalid_distribution_is_refused_at_construction(breakpoints, unit, weights, weight_unit):
+    with pytest.raises(NumericalRefusal):
+        implementation.AmountDistribution1D(breakpoints, unit, weights, weight_unit)
+
+
+def test_a_distribution_is_refused_for_a_density_state():
+    m = manager(Grid1D((0, 1, 2), "m"))
+    s = register(m, (2, 2, 2), placement=P.DUAL_CELL_DENSITY, semantics=DENSITY)
+    transition = m.refine([m.mesh.cells[0].record_id], minimum_cell=Quantity(.01, "m"), max_ratio=10)
+    with pytest.raises(NumericalRefusal, match="dual-integrated amounts only"):
+        m.transfer_state(s, transition, distribution=_weight())

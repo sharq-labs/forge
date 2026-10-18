@@ -276,3 +276,40 @@ def test_a_record_whose_digest_was_cleared_is_refused():
     request, context = _request(runtime, _authorized)
     result = SystemExecutor(context).run(request)
     _refused_and_nothing_exposed(result, "is bound to scenario none")
+
+
+# --------------------------------------------------------------------------------------------------- B3a context swap
+def test_a_context_whose_scenario_is_swapped_after_preflight_is_refused_and_runs_nothing():
+    """2026-10-18 remediation B3a. The context is a mutable object read at execute time: swapping its scenario after
+    preflight -- here from inside run_kwargs, which also names the new scenario so the OD-27 comparison of the two
+    agrees -- used to run and commit under a scenario preflight never checked against the request."""
+    from tests.system_runtime_fixtures import scenario as scenario_of
+
+    body = _Body()
+
+    def swapping(call):
+        call.context.scenario = scenario_of("2")
+        return {"external_inputs": {}, "scenario_digest": call.context.scenario.digest}
+
+    request, context = _request(body.runtime(), swapping)
+    admitted = context.scenario.digest
+    result = SystemExecutor(context).run(request)
+    _refused_and_nothing_exposed(result, "admitted under at preflight")
+    assert body.advanced == 0
+    assert context.scenario.digest == OTHER_SCENARIO != admitted  # the swap really happened
+
+
+def test_a_call_that_was_never_preflighted_keeps_the_od27_checks_only():
+    """A direct execute (no SystemExecutor, no preflight) has no snapshot: the B3a rule cannot apply, OD-27 still does."""
+    from types import SimpleNamespace
+
+    from engcore.system_runtime.authorities import MultiphysicsAuthority as Authority
+
+    body = _Body()
+    auth = Authority("od27-direct", body.runtime(), run_kwargs=lambda call: {"external_inputs": {}, "scenario_digest": OTHER_SCENARIO},
+                     outputs={"temperature": "body.temperature"})
+    request, context, _ = build()
+    call = SimpleNamespace(context=context, node=SimpleNamespace(node_id="coupled"), run_id="direct")
+    outcome = auth.execute(call)
+    assert outcome.status == "failed" and "not the authorized scenario" in outcome.reason
+    assert "admitted under at preflight" not in outcome.reason and body.advanced == 0

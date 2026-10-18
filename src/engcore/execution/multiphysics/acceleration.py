@@ -131,6 +131,9 @@ class InterfaceQuasiNewton:
 
     def begin_window(self, window_index: int | None, duration: Fraction | None) -> None:
         """A new attempt over one window: the secant history starts empty."""
+        # An event-aligned re-run begins a nested attempt without closing the outer one, so an approximation the
+        # outer attempt staged is dropped here; it must be logged like the one end_window drops (2026-10-18, E4-2)
+        had_staged = self._staged is not None
         self._window_index = window_index
         self._duration = duration
         self._residuals.clear()
@@ -142,7 +145,8 @@ class InterfaceQuasiNewton:
         self._checked_carry = False
         self._used_carry = False
         if self.imvj and duration is None:
-            self._discard("an attempt of unknown exact duration (event-aligned re-run) cannot reuse a carried approximation")
+            self._discard("an attempt of unknown exact duration (event-aligned re-run) cannot reuse a carried or "
+                          "staged approximation", staged=had_staged)
 
     def end_window(self, *, accepted: bool, converged: bool, reason: str = "") -> None:
         """Close the current attempt: commit the IMVJ approximation only for an accepted, converged window."""

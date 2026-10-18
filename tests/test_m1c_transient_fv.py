@@ -54,7 +54,8 @@ def region(left=0,right=1,*,area=1,k=1,c=1,missing=False):
                          MaterialState(material,phase="fixture_linear_solid"),"k","c",(raw,))
 
 
-def session(nodes=(0,.2,.7,1),*,regions=None,temperatures=None,contacts=(),provider=None,admission=ADMISSION):
+def session(nodes=(0,.2,.7,1),*,regions=None,temperatures=None,contacts=(),provider=None,admission=ADMISSION,
+            residual_rtol=1e-12,conservation_rtol=1e-12):
     a=VertexDualAdapter1D(Grid1D(tuple(nodes),"m"),admission=StateAdapterAdmission.OD6_VERTEX_DUAL_STATE_V1,
         root_context="fixture:transient",coordinate_frame="fixture:axis",store=InMemoryBulkStore())
     regions=tuple(regions or (region(),))
@@ -67,8 +68,8 @@ def session(nodes=(0,.2,.7,1),*,regions=None,temperatures=None,contacts=(),provi
         uncertainty=U,context_digest=context,source=origin(raw),source_bytes=raw)
     return TransientConduction1D(a,regions=regions,contacts=tuple(contacts),basis=BASIS,initial_time=initial_time,
         initial=initial,admission=admission,provider=provider or SparseFVProvider(),
-        method=NumericalMethod("sparse_direct",SolverSettings(tolerances={"residual_rtol":1e-12})),
-        conservation_atol=Quantity(1e-9,"J"),conservation_rtol=1e-12,
+        method=NumericalMethod("sparse_direct",SolverSettings(tolerances={"residual_rtol":residual_rtol})),
+        conservation_atol=Quantity(1e-9,"J"),conservation_rtol=conservation_rtol,
         temperature_atol=Quantity(1e-9,"K"),local_power_atol=Quantity(1e-8,"W"))
 
 
@@ -409,3 +410,122 @@ def test_initial_context_and_contact_origin_and_affine_boundary_refuse():
     with pytest.raises(NumericalRefusal,match="provenance"):session(contacts=(contact,))
     with pytest.raises(NumericalRefusal,match="affine"):
         advance(session(),left=ConductionBoundary(BoundaryKind.TEMPERATURE,Quantity(26.85,"degC")))
+
+
+# ---- 2026-10-18 remediation D1: independent references and a datum-free conservation tolerance ----------------------
+
+HETEROGENEOUS=lambda:(region(0,.4,k=1,c=2,area=2),region(.4,1,k=10,c=3,area=1))  # noqa: E731
+
+
+def test_heterogeneous_capacity_with_an_area_jump_matches_hand_integration_and_stays_in_equilibrium():
+    # Duals of nodes (0,.4,1): [0,.2], [.2,.7], [.7,1].  C = sum over regions of overlap * c * A:
+    # (.2*2*2, .2*2*2 + .3*3*1, .3*3*1) = (.8, 1.7, .9) J/K.  Uniform 300 K, insulated: nothing may move.
+    s=session(nodes=(0,.4,1),regions=HETEROGENEOUS())
+    assert s._capacity==pytest.approx((.8,1.7,.9),abs=1e-12)
+    r=advance(s,.5)
+    assert s.adapter.read_state(r.temperature)==pytest.approx((300,300,300),abs=1e-9)
+    assert s.adapter.read_state(r.energy)==pytest.approx((240,510,270),abs=1e-9)
+    assert r.interior_powers==pytest.approx((0,0),abs=1e-9)
+
+
+def test_two_material_steady_state_is_the_exact_series_resistance_solution():
+    # Steady 1D conduction, no source: the heat rate is uniform and T is piecewise linear, so a vertex scheme with a
+    # node at the interface and series edge resistance is EXACT.  R1 = .4/(1*2) = .2 K/W, R2 = .6/(10*1) = .06 K/W.
+    # Right end: inward flux 5 W/m^2 on A = 1 m^2 -> 5 W in; left end held at 300 K takes it out.
+    # T = (300, 301, 301.3) K.  Backward Euler with dt = 1e6 s damps the slowest mode (lambda = 50/27 1/s) by
+    # 1/(1 + dt*lambda) ~ 5.4e-7 per step, so four steps reach the steady state to roundoff.
+    s=session(nodes=(0,.4,1),regions=HETEROGENEOUS())
+    for _ in range(4):
+        r=advance(s,1e6,left=fixed(300),right=flux(5))
+    assert s.adapter.read_state(r.temperature)==pytest.approx((300,301,301.3),abs=1e-9)
+    assert r.interior_powers==pytest.approx((-5,-5),abs=1e-9)  # face power is T_left - T_right times g
+    assert r.inward_boundary_powers==pytest.approx((-5,5),abs=1e-6)
+
+
+def test_the_conservation_scale_does_not_depend_on_the_temperature_datum():
+    # The heat equation is invariant under T -> T + const (with the boundary values shifted alike), so the energy a
+    # step exchanges -- and the tolerance the declared rtol buys on it -- must be identical at 300 K and 3000 K.
+    # Only the labelled machine-precision floor may grow with |T|.
+    results=[]
+    for datum in (0,2700):
+        s=session(temperatures=tuple(t+datum for t in (300,340,310,290)))
+        results.append(advance(s,.2).binding)
+    low,high=results
+    assert high["conservation_exchange_scale_J"]==pytest.approx(low["conservation_exchange_scale_J"],rel=1e-9)
+    policy=[b["conservation_allowance_J"]-b["conservation_arithmetic_floor_J"] for b in results]
+    assert policy[1]==pytest.approx(policy[0],rel=1e-9)
+    assert high["conservation_arithmetic_floor_J"]<1e-9  # a roundoff floor, far below any declared tolerance here
+
+
+def test_a_uniform_energy_leak_the_absolute_energy_scale_would_admit_is_refused():
+    """Insulated equilibrium at 300 K; a provider adds 1e-7 K to every node (1e-7 J into a closed slab, sum C = 1).
+
+    With residual_rtol 1e-8 the leak passes the solver checks (global ~3.3e-10; rows 1e-7..4e-7 W, smallest row
+    allowance ~2.9e-5 W). The old allowance 1e-9 + 1e-6 * sum|C*T| = 3e-4 J admitted it; on the exchanged energy
+    (~1e-7 J) the allowance is ~1e-9 J.
+    """
+    class Leaking(SparseFVProvider):
+        def _execute(self,problem,method):
+            record=super()._execute(problem,method)
+            shifted=tuple(Quantity(q.magnitude+1e-7,"K") for q in record.outputs["temperature"])
+            return replace(record,outputs={"temperature":shifted})
+    s=session(provider=Leaking(),residual_rtol=1e-8,conservation_rtol=1e-6)
+    with pytest.raises(NumericalRefusal,match="energy conservation"):
+        advance(s)
+    with pytest.raises(NumericalRefusal,match="unusable"):
+        advance(s)
+
+
+@pytest.mark.parametrize("rtol",[1.0,2.0,math.inf,0.0])
+def test_a_conservation_rtol_outside_zero_one_is_refused(rtol):
+    # at rtol >= 1 an imbalance can be admitted however large (it enters the exchanged energy it is judged against)
+    with pytest.raises(NumericalRefusal,match="conservation_rtol"):
+        session(conservation_rtol=rtol)
+
+
+# ---- 2026-10-18 remediation F2: provider build identity, computed once; private SciPy import guarded --------------
+
+
+def test_provider_identity_is_the_digest_of_the_loaded_bytes_and_reads_no_file_per_access(monkeypatch):
+    from pathlib import Path
+    import scipy
+    import scipy.sparse.linalg._dsolve._superlu as superlu
+    from engcore.domains.thermal_models import conduction1d_transient_fv as module
+    from engcore.scenarios.timeline import canonical_digest
+
+    # independently recomputed from the same two files: the value the per-access implementation produced
+    expected = canonical_digest({"implementation": hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest(),
+        "superlu_binary": hashlib.sha256(Path(superlu.__file__).read_bytes()).hexdigest(),
+        "scipy": scipy.__version__, "numpy": np.__version__, "policy": "sparse-only/1"})
+    def no_reads(*_args, **_kwargs):
+        raise AssertionError("the provider identity re-read a file")
+    monkeypatch.setattr(Path, "read_bytes", no_reads)
+    identity = SparseFVProvider().identity
+    assert identity.backend == "SuperLU:" + expected
+    assert SparseFVProvider().identity == identity
+    assert SparseFVProvider().available()
+
+
+def test_a_missing_private_superlu_makes_the_provider_unavailable_not_the_model_unimportable():
+    import os
+    from pathlib import Path
+    import subprocess
+    import sys
+    import engcore
+
+    script = (
+        "import sys, json\n"
+        "import scipy.sparse.linalg\n"  # the public API still works; only the private module is gone
+        "sys.modules['scipy.sparse.linalg._dsolve._superlu'] = None\n"
+        "from engcore.domains.thermal_models import conduction1d_transient_fv as m\n"
+        "p = m.SparseFVProvider()\n"
+        "print(json.dumps([m.MODEL.model_id, p.available(), p.identity.backend, p.unavailable_reason]))\n"
+    )
+    source_root = str(Path(engcore.__file__).resolve().parents[1])
+    env = dict(os.environ, PYTHONPATH=os.pathsep.join(p for p in (source_root, os.environ.get("PYTHONPATH", "")) if p))
+    out = subprocess.run([sys.executable, "-B", "-c", script], capture_output=True, text=True, env=env, check=True,
+                         timeout=300)  # a wedged scientific import must fail this test, not hang the run
+    model_id, available, backend, reason = json.loads(out.stdout.strip().splitlines()[-1])
+    assert model_id == MODEL.model_id
+    assert available is False and backend == "SuperLU:unavailable"
+    assert "superlu" in reason.lower()

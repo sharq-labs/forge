@@ -258,3 +258,153 @@ def test_a_second_run_of_one_runtime_starts_without_acceleration_history():
     first, second = _run(runtime), _run(runtime)
     assert [len(w.iterations) for w in first.windows] == [len(w.iterations) for w in second.windows]
     assert first.final_outputs == second.final_outputs
+
+
+# ---- 2026-10-18 remediation E4-2: an event re-run drops the outer attempt's staged approximation, on the record ----
+
+
+def test_an_event_aligned_re_run_logs_the_staged_approximation_it_drops():
+    # window 0, no carried approximation: two Jacobi steps give two residuals, so IMVJ stages a J (white box);
+    # the runtime then restores and re-runs the window to an event (begin_window(index, None)) WITHOUT closing
+    # the outer attempt -- that staged J is dropped and must be recorded like end_window's drops are
+    acc = InterfaceQuasiNewton(_imvj())
+    acc.begin_window(0, ONE)
+    _iterate(acc, np.array([290.0, 290.0]), 2)
+    assert acc._staged is not None and acc._carried is None
+    acc.begin_window(0, None)
+    discarded = [e for e in acc.events if e["action"] == "imvj_discarded"]
+    assert len(discarded) == 1 and "unknown exact duration" in discarded[0]["reason"]
+    assert acc._staged is None and acc._carried is None
+
+
+def test_a_nested_begin_with_nothing_staged_or_carried_logs_nothing():
+    acc = InterfaceQuasiNewton(_imvj())
+    acc.begin_window(0, ONE)
+    acc.begin_window(0, None)
+    assert not [e for e in acc.events if e["action"] == "imvj_discarded"]
+
+
+# ---- 2026-10-18 remediation E4-3 / E4-4: runtime failure recovery -----------------------------------------------
+
+
+def _recording(log, participant_id, *, fail=False):
+    def finalize():
+        log.append(participant_id)
+        if fail:
+            raise RuntimeError(f"{participant_id} finalize failed")
+    return finalize
+
+
+def test_one_failing_finalize_does_not_skip_the_others_and_is_reported():
+    from engcore.execution.multiphysics.runtime import MultiphysicsExecutionError
+
+    runtime, log = _runtime(_ils()), []
+    runtime.participants["a"].finalize = _recording(log, "a", fail=True)  # sorted first: it used to stop the loop
+    runtime.participants["b"].finalize = _recording(log, "b")
+    with pytest.raises(MultiphysicsExecutionError, match="participant finalize failed: a: RuntimeError"):
+        _run(runtime)
+    assert log == ["a", "b"]
+
+
+def test_a_failing_finalize_never_replaces_the_window_s_own_exception():
+    class Boom(Exception):
+        pass
+
+    def exploding(inputs, t):
+        raise Boom("participant b failed to advance")
+
+    a = _spec("a", [_port("y", "input"), _port("x", "output")])
+    b = _spec("b", [_port("x", "input"), _port("y", "output")])
+    pa = _participant(a, lambda i, t: Quantity(2.0 * i["y"].magnitude_in("K") - 300.0, "K"), Quantity(290.0, "K"))
+    pb = _participant(b, exploding, Quantity(290.0, "K"))
+    graph = PhysicsGraph("boom", (a, b), (CouplingEdge("e_x", PortRef("a", "x"), PortRef("b", "x")),
+                                          CouplingEdge("e_y", PortRef("b", "y"), PortRef("a", "y"))))
+    plan = CouplingPlan("boom", CouplingScheme.IMPLICIT, IterationSemantics.JACOBI,
+                        TimePolicy(Quantity(0, "s"), Quantity(1, "s"), Quantity(1, "s")), (),
+                        (ConvergenceCriterion("e_x", 0.0, Quantity(1e-8, "K")),
+                         ConvergenceCriterion("e_y", 0.0, Quantity(1e-8, "K"))), _ils(), 50, True)
+    store = InMemoryBulkStore()
+    runtime = MultiphysicsRuntime(graph, plan, {"a": pa, "b": pb}, resolver=BulkDataResolver(store), store=store)
+    log = []
+    runtime.participants["a"].finalize = _recording(log, "a", fail=True)
+    runtime.participants["b"].finalize = _recording(log, "b")
+    with pytest.raises(Exception) as caught:
+        _run(runtime)
+    chain, item = [], caught.value
+    while item is not None:
+        chain.append(item)
+        item = item.__cause__ or item.__context__
+    assert any(isinstance(item, Boom) for item in chain)  # the advance failure is what propagates
+    assert "a finalize failed" not in str(caught.value)
+    assert any("participant finalize also failed: a: RuntimeError" in note
+               for note in getattr(caught.value, "__notes__", ()))
+    assert log == ["a", "b"]
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"run_id": "   "},
+    {"initial_state": {"nobody": {}}},
+    {"scenario_digest": "not-a-digest"},
+], ids=["blank_run_id", "unknown_state_owner", "malformed_scenario_digest"])
+def test_a_refusal_before_any_participant_call_leaves_the_runtime_usable(kwargs):
+    runtime = _runtime(_ils())
+    unknown = Uncertainty.unknown("test initial coupling value")
+    arguments = dict(run_id="imvj", external_inputs={},
+                     initial_coupling_values={"e_x": Quantity(290.0, "K"), "e_y": Quantity(290.0, "K")},
+                     initial_coupling_uncertainty={"e_x": unknown, "e_y": unknown})
+    arguments.update(kwargs)
+    run_id = arguments.pop("run_id")
+    with pytest.raises(InvalidScientificProblem):
+        runtime.run(run_id, **arguments)
+    record = _run(runtime)  # the participants were never called, so nothing was retired
+    assert all(w.outcome is WindowOutcome.CONVERGED for w in record.windows)
+
+
+def test_a_refusal_after_participant_code_ran_still_retires_the_runtime():
+    from engcore.execution.multiphysics.runtime import MultiphysicsExecutionError
+
+    runtime = _runtime(_ils())
+    unknown = Uncertainty.unknown("test initial coupling value")
+    with pytest.raises(InvalidScientificProblem, match="unknown edges"):
+        runtime.run("imvj", external_inputs={},
+                    initial_coupling_values={"e_x": Quantity(290.0, "K"), "e_y": Quantity(290.0, "K"),
+                                             "e_nowhere": Quantity(1.0, "K")},
+                    initial_coupling_uncertainty={"e_x": unknown, "e_y": unknown})
+    with pytest.raises(MultiphysicsExecutionError, match="unusable"):
+        _run(runtime)
+
+
+def test_a_run_started_from_inside_a_running_run_is_refused_and_retires_the_runtime():
+    # review MINOR-1: a nested run refused in the exempt prefix used to reset the outer run's fail-closed flag
+    from engcore.execution.multiphysics.runtime import MultiphysicsExecutionError
+
+    holder, nested = {}, []
+
+    def reentrant(inputs, t):
+        try:
+            holder["runtime"].run("   ", external_inputs={})
+        except Exception as exc:  # a participant that swallows the nested failure
+            nested.append(exc)
+        return Quantity(inputs["x"].magnitude_in("K"), "K")
+
+    a = _spec("a", [_port("y", "input"), _port("x", "output")])
+    b = _spec("b", [_port("x", "input"), _port("y", "output")])
+    pa = _participant(a, lambda i, t: Quantity(2.0 * i["y"].magnitude_in("K") - 300.0, "K"), Quantity(290.0, "K"))
+    pb = _participant(b, reentrant, Quantity(290.0, "K"))
+    graph = PhysicsGraph("nested", (a, b), (CouplingEdge("e_x", PortRef("a", "x"), PortRef("b", "x")),
+                                            CouplingEdge("e_y", PortRef("b", "y"), PortRef("a", "y"))))
+    plan = CouplingPlan("nested", CouplingScheme.IMPLICIT, IterationSemantics.JACOBI,
+                        TimePolicy(Quantity(0, "s"), Quantity(1, "s"), Quantity(1, "s")), (),
+                        (ConvergenceCriterion("e_x", 0.0, Quantity(1e-8, "K")),
+                         ConvergenceCriterion("e_y", 0.0, Quantity(1e-8, "K"))), _ils(), 50, True)
+    store = InMemoryBulkStore()
+    holder["runtime"] = runtime = MultiphysicsRuntime(graph, plan, {"a": pa, "b": pb},
+                                                      resolver=BulkDataResolver(store), store=store)
+    # the swallowed nested call still retired the runtime, so the outer run cannot complete; which check stops it
+    # (the runtime's own, or a retired participant's) is not what this asserts
+    with pytest.raises((MultiphysicsExecutionError, InvalidScientificProblem)):
+        _run(runtime)
+    assert nested and isinstance(nested[0], MultiphysicsExecutionError)
+    assert "inside a running one" in str(nested[0])
+    with pytest.raises(MultiphysicsExecutionError, match="unusable"):
+        _run(runtime)

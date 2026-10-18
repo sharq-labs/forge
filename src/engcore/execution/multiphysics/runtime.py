@@ -139,17 +139,36 @@ _RETIRED_STRONG: dict[int, Any] = {}
 
 
 def _fail_closed_run(method):
-    """Preserve the run signature while refusing reuse after an aborted execution."""
+    """Preserve the run signature while refusing reuse after an aborted execution.
+
+    A refusal (``InvalidScientificProblem``) raised while ``_participants_touched`` is False -- argument checks
+    that run before any participant code is called -- leaves every participant exactly as it was, so it does not
+    retire them (2026-10-18, E4-4: a typo'd run id used to retire a whole provider session). Anything else, and
+    any refusal after the first participant call, still invalidates. The flag defaults to touched.
+
+    A run started from inside a running one (participant code calling ``run`` on its own runtime) is refused and
+    retires the runtime: the nested call would otherwise reset the outer run's flag and per-run state.
+    """
     @wraps(method)
     def guarded(self, *args, **kwargs):
+        if getattr(self, "_in_run", False):
+            self._invalidate("a coupled run was started from inside a running coupled run")
+            raise MultiphysicsExecutionError("a coupled run cannot be started from inside a running one")
         self._require_usable()
+        self._in_run = True
         try:
             result = method(self, *args, **kwargs)
             self._require_usable()
             return result
+        except InvalidScientificProblem:
+            if getattr(self, "_participants_touched", True):
+                self._invalidate("coupled run aborted; participant state may be indeterminate")
+            raise
         except BaseException:
             self._invalidate("coupled run aborted; participant state may be indeterminate")
             raise
+        finally:
+            self._in_run = False
     return guarded
 
 
@@ -774,6 +793,28 @@ class MultiphysicsRuntime:
             check = getattr(participant, "require_usable", None)
             if callable(check):
                 check()
+
+    def _finalize_all(self, primary: BaseException | None = None) -> None:
+        """Finalize EVERY participant, even when one of them fails (2026-10-18, E4-3).
+
+        A participant whose ``finalize`` raises no longer stops the others from being finalized. With an
+        exception already propagating (``primary``) the finalize failures are attached to it as a note and
+        the original exception stays the one raised; with none, they are raised together once every
+        participant has been tried. Only ``Exception`` is collected: an interrupt propagates at once.
+        """
+        failures: list[tuple[str, Exception]] = []
+        for participant_id in sorted(self.participants):
+            try:
+                self.participants[participant_id].finalize()
+            except Exception as exc:
+                failures.append((participant_id, exc))
+        if not failures:
+            return
+        message = "; ".join(f"{pid}: {type(exc).__name__}: {exc}" for pid, exc in failures)
+        if primary is not None:
+            primary.add_note(f"participant finalize also failed: {message}")
+            return
+        raise MultiphysicsExecutionError(f"participant finalize failed: {message}") from failures[0][1]
 
     def _invalidate(self, reason: str) -> None:
         self._unusable_reason = self._unusable_reason or reason
@@ -1585,11 +1626,16 @@ class MultiphysicsRuntime:
         """
         control = self.plan.window_control
         assert control is not None and control.growth_factor is not None
-        subdivided = any(
-            event["window_index"] == window.index
-            and event["action"] in ("accepted_after_subdivision", "exhausted")
-            for event in self._window_control_log
-        )
+        # Every entry carries the window index current when it was appended, and the index never decreases, so this
+        # window's entries are a contiguous block at the tail: scanning back to the first earlier index gives the
+        # same answer as scanning the whole run's log, without the per-window cost growing with the run (F3-1)
+        subdivided = False
+        for event in reversed(self._window_control_log):
+            if event["window_index"] != window.index:
+                break
+            if event["action"] in ("accepted_after_subdivision", "exhausted"):
+                subdivided = True
+                break
         new = accepted if subdivided else min(nominal, width * Fraction(repr(control.growth_factor)))
         if new != width:
             self._window_control_log.append({
@@ -2149,6 +2195,8 @@ class MultiphysicsRuntime:
         quantities_of_interest: tuple[QuantityOfInterest, ...] = (),
         scenario_digest: str = "",
     ) -> MultiphysicsRunRecord:
+        # Until the first participant call below, a refusal leaves every participant untouched (_fail_closed_run)
+        self._participants_touched = False
         run_id = str(run_id).strip()
         if not run_id:
             raise InvalidScientificProblem("multiphysics run requires run_id")
@@ -2251,6 +2299,9 @@ class MultiphysicsRuntime:
                 "scheduled event lies outside the coupling-plan horizon"
             )
 
+        # From here participant code runs (declaration reads, parameter binding, initialization): any failure,
+        # refusal included, retires the participants
+        self._participants_touched = True
         condition_consumers = self._operating_condition_plan(conditions)
         composed_conditions = {item.condition_id: item for item in conditions}
         # Every instant at which a declared STEP input or operating condition
@@ -2304,13 +2355,13 @@ class MultiphysicsRuntime:
             scenario_digest=scenario_digest,
         )
         if opening is not None:
-            for participant_id in sorted(self.participants):
-                self.participants[participant_id].finalize()
-            raise InvalidScientificProblem(
+            refusal = InvalidScientificProblem(
                 f"termination condition {opening.condition_id!r} is already "
                 f"satisfied at the scenario start ({opening.reason}); executing "
                 f"would record a trajectory the scenario forbids"
             )
+            self._finalize_all(refusal)  # a failing finalize must not replace the refusal
+            raise refusal
 
         external_records = tuple(
             ExternalInputRecord(
@@ -2350,6 +2401,7 @@ class MultiphysicsRuntime:
         termination: TerminationReceipt | None = None
         identities = self._state_identities(start)
 
+        failure: BaseException | None = None
         try:
             while current < end_exact:
                 if index >= self.plan.time.max_windows:
@@ -2524,9 +2576,12 @@ class MultiphysicsRuntime:
                 if termination is not None:
                     # A mandatory stop is mandatory: nothing continues past it.
                     break
+        except BaseException as exc:
+            failure = exc
+            raise
         finally:
-            for participant_id in sorted(self.participants):
-                self.participants[participant_id].finalize()
+            # every participant is finalized; a failing finalize never replaces the window's own exception
+            self._finalize_all(failure)
 
         mapping_diagnostics = [
             item
