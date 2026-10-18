@@ -253,15 +253,15 @@ def test_gap_a_force_edge_must_speak_in_energy_terms():
         ))
 
 
-def test_gap_a_same_dimension_different_meaning_edge_is_accepted():
-    """CDAR-1 / audit A-1: edges compare dimensions, not meaning.  Once the energy-density rule is answered, a spring
-    STIFFNESS (N/m) feeds a SURFACE-TENSION input (N/m, also J/m^2) unrefused; ``quantity`` is never compared."""
+def test_a_same_dimension_different_meaning_edge_is_refused():
+    """A-1 migrated from a gap pin to the requirement's regression: prose and
+    equal dimensions cannot relabel stiffness as surface tension. NOT RUN."""
     stiffness = _spec("spring", [_port("k", "output", "spring_stiffness", "N/m")])
     film = _spec("film", [_port("gamma", "input", "surface_tension", "N/m")])
-    graph = PhysicsGraph("meaning", (stiffness, film), (
-        CouplingEdge("e", PortRef("spring", "k"), PortRef("film", "gamma"), transport_declaration="delivered whole"),
-    ))
-    assert graph.edge("e").edge_id == "e"
+    with pytest.raises(InvalidScientificProblem, match="legacy quantity meanings differ"):
+        PhysicsGraph("meaning", (stiffness, film), (
+            CouplingEdge("e", PortRef("spring", "k"), PortRef("film", "gamma"), transport_declaration="delivered whole"),
+        ))
 
 
 def test_gap_a_frame_transform_is_a_static_rotation_only():

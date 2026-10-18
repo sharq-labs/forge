@@ -6,6 +6,128 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Active bounded slice - M1C transient nonuniform vertex FV (2026-10-18)
+
+Branch codex/m1c-transient-fv-1d, exact M1B base
+9b092d563507b0de3563c4209d42d6fc0772ea0a. Stack main -> #159 -> #160 ->
+#161 -> #162 -> M1B Draft#165 -> M1C local. M1B exact SHA/ancestry/cleanliness/
+nine-file inventory/bounded credential scan/whitespace checked; push completed,
+draft targets codex/m1a-mesh-lineage. No earlier PR retargeted or merged.
+Checkpoint#158 independent. Previous local-only M1B publication notes superseded.
+
+- [x] Mathematical and compatibility decision before source (ef11c1da).
+- [x] Fixed-mesh vertex dual FV, positive phase-constant sourced materials, BE order1 declared.
+- [x] Explicit geometry/BC/source/initial/time; both-Neumann transient allowed.
+- [x] Series material/contact resistance; opposite shared interior face contributions.
+- [x] Sparse-only provider, exact build/context/state binding, residual/conservation refusal.
+- [x] Independent static scientific architecture review PASS after corrections.
+- [x] Adversarial/manufactured/refinement tests authored, all NOT RUN; DV-129..132 deferred.
+- [ ] OWNER_DECISION_REQUIRED M1C-C1: model discovery pin19 ->20 compatibility/certification review.
+- [ ] Owner-authorized targeted execution and all earlier DV rows; no scientific gate promotion.
+- [ ] M1D adaptive window decisions/transfers/rebuild/cache-history/rollback/full history/studies.
+
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. M1C is not M1 completion or integration-ready.
+M1C_MERGE_PACKAGE.md records exact inventory, limitations and next owner decisions.
+
+## Active bounded slice - M1B vertex-centred dual-volume state adapter (2026-10-18)
+
+Branch codex/m1b-vertex-dual-state from exact M1A
+7f8cb5dac01cd7a270ef72886b77c8cddf717d3b. Stack main -> #159 -> #160 ->
+#161 -> M1A Draft PR#162 -> M1B local. M1A clean/exact SHA/ancestry/bounded
+credential and artifact scan/whitespace checked, pushed, draft targets A-4.
+Prior local-only M1A note below is superseded; nothing merged. Checkpoint#158 independent.
+
+- [x] Owner direction: explicit vertex intensive state, derived midpoint dual supports.
+- [x] Preimplementation architecture/compatibility decision (4fb78436).
+- [x] Typed dual density/integrated placement, qualified exact-meaning linear storage.
+- [x] A-3 remap on dual supports, independent both-coverages/actual-total admission.
+- [x] Source bytes bound through existing KnowledgeSource; no physical evidence authority.
+- [x] Lineage-bound invalidation; managed cache/history clearing; unsafe transition poison.
+- [x] Adversarial/regression tests written; independent static review, NOT execution.
+- [ ] Owner-authorized DV-125..128 and predecessor DV-101..124.
+- [ ] M1C vertex-centred transient FV/backward Euler, explicit sourced inputs/BCs.
+- [ ] Adaptive transient driver, numerical refinement/conservation studies, M1 gate.
+
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. No transient solver, pointwise accuracy,
+physical validation, certification or maturity promotion. M1B_MERGE_PACKAGE.md
+records exact inventory, compatibility, remaining limits and owner decisions.
+
+## Active bounded slice - M1A lineage-bound adaptive mesh 1D (2026-10-18)
+
+Branch codex/m1a-mesh-lineage, exact base1f43c59eab717aa7cbfea672b948accb37f3cc50.
+Stack main -> #159 -> #160 -> A-4 Draft PR#161 -> M1A local branch.
+A-4 was clean/ancestry-checked/scanned and published targeting A-3 by owner instruction;
+prior local-only publication note superseded. Checkpoint#158 remains independent.
+
+- [x] Full M1/CDAR read; architecture/compatibility decision before source (cbecc2df).
+- [x] Explicit issued lineage, reversible recorded bisection coarsening.
+- [x] Content-addressed state transfer reusing A-3 semantics and mapper.
+- [x] Actual managed cache/history clearing; stale field/receipt/source refusal.
+- [x] Adversarial tests written; independent static review PASS, all tests NOT RUN.
+- [x] Local Draft PR-ready package and deferred recipes DV-121..124.
+- [ ] Transient nonuniform vertex-centred FV/backward-Euler conduction and sourced inputs.
+- [ ] Explicit primal-interval vs vertex dual-control-volume state-placement adapter.
+- [ ] Adaptive transient loop, provider/cache adapters, refinement/conservation studies.
+- [ ] Owner-authorized validation, integration/certification and M1 gate decision.
+
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. This is M1A only; M1 is not complete.
+No capability promotion or arbitrary/durable lineage import. See M1A_MERGE_PACKAGE.md.
+
+## Active repair - A-4 physics-neutral interface flux execution (2026-10-18)
+
+Branch codex/interface-flux-execution, base A-3 4f239fa7fe705e3d8ae390a8e885302dcb07904e.
+Stack: main -> semantic Draft PR #159 -> A-3 Draft PR #160 -> A-4 local branch.
+A-3 was clean/scanned, pushed and opened against codex/quantity-semantics by owner
+instruction. Prior local-only A-3 publication note superseded; no merge.
+
+- [x] Preimplementation Core compatibility/architecture decision (dab92bf0).
+- [x] Typed scalar planar interface transfer and executed sign/normal convention.
+- [x] Neutral Dirichlet-Neumann admission; explicit thermal wrapper; tests written.
+- [x] Independent scientific static review PASS, defects corrected, no execution.
+- [x] Local Draft PR-ready package and DV-117..120, NOT RUN.
+- [ ] Owner-authorized execution and explicit legacy WS3/interface migration.
+- [ ] Independent coupled physical balance, numerical verification, validation and OD-3.
+
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. No A-4/gate closure from code or static PASS.
+Unstructured/curved/vector/moving/partial interfaces remain unsupported. Proposed next
+bounded M1 work is lineage-bound 1D transfer and reversible bisection coarsening;
+see A4_MERGE_PACKAGE.md for prerequisites. DV0 does not block Build-First implementation.
+
+## Active repair - A-3 declared field kind mapping (2026-10-18)
+
+Branch `codex/declared-field-kind-mapping` is stacked on semantic PR #159,
+base `98da0c024bd59bd0b18844941eafad3f1d24d428`. It does not contain checkpoint
+PR #158. Semantic branch was pushed cleanly and opened as Draft PR #159 by owner
+authorization; legacy alias migration obligations and historical identities retained.
+
+- [x] Architecture/compatibility decision committed before source implementation.
+- [x] Typed cell density/integrated/intensive and declarative interface/normal contracts.
+- [x] Shared declared-kind operator and Grid1D adapter; adversarial tests written.
+- [x] Independent static review PASS; corrections recorded; tests NOT RUN.
+- [x] A-3 local Draft PR-ready package; no automatic merge.
+- [ ] Owner-authorized validation DV-113..116 and explicit consumer kind migrations.
+- [ ] A-4 normal/sign execution, adaptive lineage/history, vector/tensor scope remain open.
+
+Status IMPLEMENTED / UNVERIFIED / UNCERTIFIED; A-3 remains open pending execution
+and compatibility/migration disposition. See A3_ARCHITECTURE_DECISION.md,
+A3_COMPATIBILITY_MATRIX.md and A3_MERGE_PACKAGE.md. No assurance or OD-3 executed.
+
+## Active repair - semantic compatibility A-1/A-2/A-13 (2026-10-18)
+
+Branch `codex/quantity-semantics`, base latest fetched origin/main
+`0284ae161ad957d51674ee481e47cfd43d10c5f0`, isolated semantic-contracts worktree.
+Checkpoint hardening is independently published in Draft PR #158 at `02065a6d`;
+its changes are not included here. Build-First: no tests/provider execution/assurance.
+
+- [x] Phase A/B proposal and initial 39-file inventory; expanded static index covers 122 files.
+- [x] Independent static design compatibility review: PASS, no HIGH/MEDIUM finding.
+- [x] Bounded typed scalar implementation, adversarial tests, compatibility records (UNVERIFIED).
+- [x] Independent static patch review and local PR-ready package; no tests run.
+- [x] Separate A-3 declared-field-kind proposal; no mapping implementation in this slice.
+- [ ] Separately authorize deferred tests; do not mark A-1/A-2/A-13 CLOSED on code alone.
+
+See SEMANTIC_COMPATIBILITY_PROPOSAL.md and SEMANTIC_IMPACT_MATRIX.md.
+
 ## Active repair — checkpoint integrity R1–R5 (2026-10-18)
 
 Owner-authorized bounded Build-First repair from main `0284ae161ad957d51674ee481e47cfd43d10c5f0`.
