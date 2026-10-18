@@ -18,7 +18,7 @@ Matching declarations establish wiring consistency, not the physical truth of a 
    the precise measure being balanced (an amount OR an explicitly named rate); Core
    never infers an amount/rate relationship, species, reaction, charge number or frame.
 2. `QuantitySemantics`: namespaced meaning id, dimensional unit exemplar, ordered set
-   of physical roles (potential, flow, intensive, extensive, density, integrated, other),
+   of physical roles (potential, effort, flow, intensive, extensive, density, integrated, other),
    optional namespaced custom role, and optional `ConservedQuantity`. Orthogonal roles
    can coexist (flow+density, potential+intensive). Unit exemplars are canonicalized;
    their dimensions bind the declaration to a port. Names are never parsed as laws.

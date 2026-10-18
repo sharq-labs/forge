@@ -854,3 +854,29 @@ Certification-pinned (`certification/current_core_v2.json`) files changed in Pha
 patterns: `providers/{compare,problem_identity,__init__}.py`, `execution/multiphysics/{steady,authority,conjugate_interface}.py`.
 No new import from a pinned-list file into an unpinned module. No V4 mutant targets a changed line (the G20a anchor in
 `systems/electrothermal/coupled.py` is untouched). OD-3 recertification required.
+
+
+## Semantic compatibility A-1/A-2/A-13 (2026-10-18)
+
+Status: IMPLEMENTED / UNVERIFIED / UNCERTIFIED. All commands below NOT RUN.
+DV-101..DV-106 are reserved by separate checkpoint Draft PR #158; these rows
+start at DV-107 to avoid collision. DV-100 and checkpoint DV-101..106 run first
+when separately authorized on the appropriate checkpoint tree; do not claim that
+this independent semantic branch contains those repairs. DV-99 is repeated with
+the strengthened stiffness refusal regression; its other gap pins are not support.
+
+| ID | Scope | Exact deferred recipe | Admission / expected result | Status |
+| --- | --- | --- | --- | --- |
+| DV-107 | Typed scalar semantics and revised DV-99 | `python -m pytest tests/architecture/test_quantity_semantics.py tests/architecture/test_cross_domain_fixtures.py -q` | Correct refusal/roundtrip/identity/partition assertions; interpret remaining gap pins as known gaps; no domain validation | NOT RUN |
+| DV-108 | Conservation, transfer and runtime | `python -m pytest tests/test_conservation.py tests/test_multiphysics_conservation_history.py tests/test_multiphysics_fan_in_units.py tests/test_stateful_multiphysics_runtime.py tests/test_phase2_external_coupling.py -q` | Preserve arithmetic and units; classify legacy alias refusals explicitly, never edit physical expectations merely to pass | NOT RUN |
+| DV-109 | Frozen API, serialization, layering, certified closure | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_v2_api_snapshot.py tests/test_core_api_serialization.py tests/test_scientific_serialization_integrity.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_core_freeze_v4_manifest.py tests/test_certified_dependency_closure.py -q` | No frozen surface drift; investigate certified dependency/pin failures; no automatic manifest update | NOT RUN |
+| DV-110 | Thermal downstream and parity boundaries | `python -m pytest tests/test_electrothermal_vertical.py tests/test_electrothermal_fixed_point_relaxation.py tests/test_min_foundation_electrothermal.py tests/test_phase35_ws2_electrothermal_migration.py -q` | Existing exact-name paths retain expectations; owner-approved alias migrations required for newly refused paths; no parity promotion from declarations | NOT RUN |
+| DV-111 | Provider consumers | In the existing WSL battery environment: `python -m pytest providers/pybamm/tests/test_pybamm_multiphysics.py providers/pybamm/tests/test_pybamm_coupling_options.py -q`; separately in FEniCSx environment: `python -m pytest providers/fenicsx/tests/test_coupling_fenicsx.py -q` | Re-establish provider identity, wiring and existing thermal intent; environment failures recorded; no substitute callback evidence | NOT RUN |
+| DV-112 | Normal local integration gate | `python tools/forge_check.py --changed`, then `python tools/forge_check.py --regression` only after targeted checks and authorization | Gate may execute tests; NOT a permitted static-only command in this session; no assurance/certification claim | NOT RUN |
+
+Before integration, classify the final diff under Core Freeze/certification policy.
+Shared trust/admission, runtime and certified dependency changes require the normal
+CI control plane and separately authorized OD-3 on final integrated source. Full
+assurance, mutation, normal broad integration tiers and hardened recertification
+remain separately gated; none was run here. Do not regenerate pins to silence refusal.
+A-3 proposal examples were checked by hand only, not numerical execution.

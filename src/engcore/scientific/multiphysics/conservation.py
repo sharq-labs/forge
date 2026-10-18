@@ -8,6 +8,7 @@ from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
 from ..serialization import require_schema, schema_string
+from ..semantics import ConservedQuantity, extend_payload, semantic_extension
 from ..units.quantity import Quantity, require_spread_unit
 
 CONSERVATION_TERM_BINDING_SCHEMA = schema_string(
@@ -29,6 +30,14 @@ class TransferMeasure(str, Enum):
     LOSS = "loss"
 
 
+class ContributionKind(str, Enum):
+    INFLOW = "inflow"
+    OUTFLOW = "outflow"
+    SOURCE = "source"
+    LOSS = "loss"
+    ACCUMULATION = "accumulation"
+
+
 @dataclass(frozen=True)
 class ConservationTermBinding:
     """One term in a balance, read from a concrete coupling transfer."""
@@ -38,6 +47,7 @@ class ConservationTermBinding:
     side: BalanceSide
     measure: TransferMeasure
     loss_form: str = ""
+    contribution: ContributionKind | None = None
 
     def __post_init__(self) -> None:
         for label in ("name", "edge_id"):
@@ -61,30 +71,37 @@ class ConservationTermBinding:
             raise InvalidScientificProblem(
                 "loss_form is valid only for LOSS terms"
             )
+        if self.contribution is not None:
+            kind = ContributionKind(self.contribution)
+            object.__setattr__(self, "contribution", kind)
+            expected = BalanceSide.LEFT if kind in (ContributionKind.INFLOW, ContributionKind.SOURCE) else BalanceSide.RIGHT
+            if self.side is not expected:
+                raise InvalidScientificProblem("conservation contribution is on the wrong equation side")
+            if (kind is ContributionKind.LOSS) != (self.measure is TransferMeasure.LOSS):
+                raise InvalidScientificProblem("a declared loss contribution requires the realized LOSS measure")
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        return extend_payload({
             "schema": CONSERVATION_TERM_BINDING_SCHEMA,
             "name": self.name,
             "edge_id": self.edge_id,
             "side": self.side.value,
             "measure": self.measure.value,
             "loss_form": self.loss_form,
-        }
+        }, "contribution", self.contribution)
 
     @classmethod
     def from_dict(
         cls, payload: Mapping[str, Any]
     ) -> "ConservationTermBinding":
-        require_schema(
-            payload, CONSERVATION_TERM_BINDING_SCHEMA
-        )
+        raw_contribution = semantic_extension(payload, CONSERVATION_TERM_BINDING_SCHEMA, "contribution")
         return cls(
             name=payload["name"],
             edge_id=payload["edge_id"],
             side=BalanceSide(payload["side"]),
             measure=TransferMeasure(payload["measure"]),
             loss_form=payload.get("loss_form", ""),
+            contribution=raw_contribution,
         )
 
 
@@ -96,6 +113,7 @@ class CoupledConservation:
     terms: tuple[ConservationTermBinding, ...]
     tolerance: Quantity
     description: str = ""
+    conserved_quantity: ConservedQuantity | None = None
 
     def __post_init__(self) -> None:
         balance_id = str(self.balance_id).strip()
@@ -144,21 +162,30 @@ class CoupledConservation:
         object.__setattr__(
             self, "description", str(self.description).strip()
         )
+        if self.conserved_quantity is not None:
+            if not isinstance(self.conserved_quantity, ConservedQuantity):
+                raise InvalidScientificProblem("coupled balance requires a typed conserved quantity")
+            if self.tolerance.dimensionality != Quantity(1, self.conserved_quantity.unit).dimensionality:
+                raise InvalidScientificProblem("balance tolerance and conserved measure dimensions differ")
+            if any(term.contribution is None for term in terms):
+                raise InvalidScientificProblem("typed balances require explicit contribution kinds")
+        elif any(term.contribution is not None for term in terms):
+            raise InvalidScientificProblem("typed contributions require a typed conserved balance")
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        return extend_payload({
             "schema": COUPLED_CONSERVATION_SCHEMA,
             "balance_id": self.balance_id,
             "terms": [term.to_dict() for term in self.terms],
             "tolerance": self.tolerance.to_dict(),
             "description": self.description,
-        }
+        }, "conserved_quantity", self.conserved_quantity)
 
     @classmethod
     def from_dict(
         cls, payload: Mapping[str, Any]
     ) -> "CoupledConservation":
-        require_schema(payload, COUPLED_CONSERVATION_SCHEMA)
+        raw_quantity = semantic_extension(payload, COUPLED_CONSERVATION_SCHEMA, "conserved_quantity")
         return cls(
             balance_id=payload["balance_id"],
             terms=tuple(
@@ -167,4 +194,5 @@ class CoupledConservation:
             ),
             tolerance=Quantity.from_dict(payload["tolerance"]),
             description=payload.get("description", ""),
+            conserved_quantity=None if raw_quantity is None else ConservedQuantity.from_dict(raw_quantity),
         )

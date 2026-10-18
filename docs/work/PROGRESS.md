@@ -5874,3 +5874,60 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
   refuse and need explicit migration; no auto-alias/physics guessing or evidence promotion.
 - pytest/forge_check/provider solves/assurance/mutation/OD-3: NOT RUN by owner Build-First
   policy. Only lightweight static checks authorized. No semantic gap is CLOSED.
+
+
+## 2026-10-18 semantic compatibility bounded implementation
+
+Branch codex/quantity-semantics is independently based on fetched origin/main
+0284ae161ad957d51674ee481e47cfd43d10c5f0. Checkpoint hardening remains clean at
+02065a6dd25d16abdcac094f7c947148b954bc0e, matching its origin tracking ref, and
+published as Draft PR #158; no merge. No checkpoint commits were combined here.
+
+Design/compatibility proposal and independent design PASS preceded shared source
+edits (design-only commit ab688c0f). Typed scalar meaning/role, structured transport,
+exact conserved measures and realized contribution bindings are implemented. Frozen
+QuantityDependency/EnergyConversion/LossPath exports and shapes are untouched.
+Legacy aliases fail closed unless exactly matched conversion forms; typed fields
+refuse pending A-3. UNKNOWN coefficients never imply lossless delivery or quantified
+uncertainty. All work IMPLEMENTED / UNVERIFIED / UNCERTIFIED; no gaps CLOSED.
+
+New adversarial fixtures cover semantic/role/identity/dimension refusal, actual named
+loss partitions, energy/mass/charge/species/momentum-component arithmetic, explicit
+fixture F*v power, thermal legacy intent, six /2 record schema boundaries and
+quantified-input/UNKNOWN-output uncertainty. Existing stiffness gap pin was strengthened
+into intended refusal, not weakened. Remaining legacy gap pins retain gap meaning.
+
+Independent read-only review by /root/semantic_review: static design PASS, patch
+PASS and final added-test addendum PASS. Resolved MEDIUM fixture construction issues:
+duplicate BalanceTerm names prevented reaching schema assertions; use distinct names.
+STANDARD/INTERVAL fixtures lacked mandatory method; add explicitly unqualified fixture
+method. These were source-inspection findings, not observed test failures. No outstanding
+HIGH/MEDIUM finding. Full A-J record: SEMANTIC_STATIC_REVIEW.md.
+
+Lightweight checks actually executed (PowerShell pipeline into bundled Python at
+C:/Users/dev_kaeem/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe):
+- Compile-only exact operation: for each .py in union of `git diff --name-only origin/main`
+  and `git ls-files --others --exclude-standard`, `compile(Path(name).read_bytes(), name, 'exec')`.
+  Result: 9 changed Python files compiled; no compiled code executed and no Forge import.
+- Exact command `git diff --check`: exit 0, no output.
+- Changed-file UTF-8 credential-pattern scan (private-key headers, GitHub token patterns,
+  AWS access key, sk token and quoted credential assignments): 0 matches; bounded,
+  not a security certification. Untracked inventory exactly five intended deliverables,
+  no temporary files. Exact total changed-file inventory 17, in SEMANTIC_MERGE_PACKAGE.md.
+- Checkpoint exact commands `git status --porcelain` and
+  `git rev-parse HEAD origin/codex/checkpoint-integrity-hardening`: clean and matching
+  02065a6dd25d16abdcac094f7c947148b954bc0e.
+
+Tests/provider execution/import checks/forge_check/full assurance/mutation/OD-3: NOT RUN.
+DV-107..112 record exact deferred recipes, avoiding checkpoint DV-101..106. Final
+integration needs consumer alias dispositions, normal CI and separately authorized
+certification on the final source. Do not regenerate pins merely to silence failures.
+
+Impact matrix now indexes 122 src/provider/flagship/test files with exact BASELINE line
+references, not a claim of complete dynamic/external discovery or consumer migration.
+Separate A-3 proposal uses unequal-cell integrated amounts (2,6): correct target(4,4),
+total8; wrong density interpretation(4,6),total10 despite weighted-integral preservation.
+Hand reasoning only; no mapping implementation/numerical execution. Next bounded task
+is declared scalar field-kind contract and compatibility review, then unequal-cell tests
+under separate execution authorization. Owner decisions and limitations are recorded in
+SEMANTIC_MERGE_PACKAGE.md; no automatic semantic push/PR/merge performed.

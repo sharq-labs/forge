@@ -1243,6 +1243,9 @@ class MultiphysicsRuntime:
                 evidence=(
                     f"edge:{binding.edge_id}:{binding.measure.value}"
                 ),
+                semantics=(self.graph.participant(self.graph.edge(binding.edge_id).source.participant_id)
+                           .port(self.graph.edge(binding.edge_id).source.port_id).semantics
+                           if definition.conserved_quantity is not None else None),
             )
             if binding.side is BalanceSide.LEFT:
                 left.append(term)
@@ -1256,6 +1259,7 @@ class MultiphysicsRuntime:
             definition.tolerance,
             definition.description,
             reference=f"physics_graph:{self.graph.graph_id}",
+            conserved_quantity=definition.conserved_quantity,
         )
 
     def _window(

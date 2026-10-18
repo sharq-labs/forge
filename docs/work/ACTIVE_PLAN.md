@@ -13,11 +13,11 @@ Branch `codex/quantity-semantics`, base latest fetched origin/main
 Checkpoint hardening is independently published in Draft PR #158 at `02065a6d`;
 its changes are not included here. Build-First: no tests/provider execution/assurance.
 
-- [x] Phase A/B proposal and 39-file direct-consumer impact inventory.
+- [x] Phase A/B proposal and initial 39-file inventory; expanded static index covers 122 files.
 - [x] Independent static design compatibility review: PASS, no HIGH/MEDIUM finding.
-- [ ] Bounded typed scalar implementation, adversarial tests, compatibility records.
-- [ ] Independent patch review and PR-ready package.
-- [ ] Separate A-3 declared-field-kind proposal; no mapping implementation in this slice.
+- [x] Bounded typed scalar implementation, adversarial tests, compatibility records (UNVERIFIED).
+- [x] Independent static patch review and local PR-ready package; no tests run.
+- [x] Separate A-3 declared-field-kind proposal; no mapping implementation in this slice.
 - [ ] Separately authorize deferred tests; do not mark A-1/A-2/A-13 CLOSED on code alone.
 
 See SEMANTIC_COMPATIBILITY_PROPOSAL.md and SEMANTIC_IMPACT_MATRIX.md.
