@@ -1,3 +1,15 @@
+---
+ai_schema_version: 1
+doc_id: FORGE-RESUME-DECISIONS-20261019
+doc_kind: DECISION_INDEX
+doc_status: SNAPSHOT
+authority_scope: NONE
+source_ref: multiple
+evidence_level: DERIVED
+last_reviewed: 2026-10-19
+supersedes: none
+---
+
 # FORGE — Resumption Decision Register (snapshot 2026-10-19)
 
 > **Advisory register, not approval, not a duplicate executable queue.** Check each decision against its owning contract, the **live** `docs/work/ACTIVE_PLAN.md`, and fresh PR/evidence state. This list distinguishes *scientific design approval* from *permission to edit, execute, certify, push or merge*. All recommendation statuses are **PROPOSED** unless the active plan/owner's explicit current instruction proves otherwise.
