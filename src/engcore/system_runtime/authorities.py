@@ -96,7 +96,8 @@ def _values_of(owner: OwnerState) -> dict[str, InitialStateValue]:
 
 
 #: ``MultiphysicsRuntime.run`` arguments through which a scenario materially participates in a coupled run. The
-#: runtime refuses any of them without the authorized scenario digest (OD-27 mirrors that rule; it does not widen it).
+#: runtime refuses any of them without a scenario digest. OD-27 is stricter inside a system execution: there every run
+#: must name the authorized scenario, whether or not it uses any of these.
 _SCENARIO_DRIVEN_RUN_ARGUMENTS = (
     "initial_state", "external_input_schedules", "operating_conditions", "scheduled_events",
     "termination_conditions", "quantities_of_interest",
@@ -160,7 +161,7 @@ def _scenario_refusal_after_run(run: Any, authorized: str) -> str:
             return (f"the coupled run carries receipts bound to another scenario ({', '.join(d[:12] + '..' for d in stray)}); "
                     f"nothing is exposed")
         return ""
-    if bound:
+    if bound or any(str(item.scenario_digest).strip() for item in receipts):
         return "the coupled run is bound to a scenario, but this execution authorizes none; nothing is exposed"
     if (run.initial_state_receipts or run.scheduled_events or run.scenario_input_receipts
             or run.operating_condition_receipts or run.quantities_of_interest or run.termination is not None):
@@ -181,6 +182,11 @@ class MultiphysicsAuthority(_Base):
     (:func:`~engcore.execution.multiphysics.runtime.assess_run_outcome`) is COMPLETED_EXPLICIT or
     CONVERGED.  The outcome is reported in the diagnostics and carried into every output's UNKNOWN
     uncertainty note; completion is never presented as convergence.
+
+    OD-27: under a ``SystemExecutor`` (which always has an authorized scenario, pinned by preflight) ``run_kwargs``
+    must pass ``scenario_digest`` equal to ``call.context.scenario.digest``. A run naming another scenario or none is
+    refused before the runtime (or its factory) is touched, and the returned record -- its own digest and every
+    scenario-bound receipt in it -- must name the same scenario before anything is exposed or committed.
     """
 
     def __init__(self, authority_id: str, runtime: Any = None, *, run_kwargs: Callable[[NodeCall], Mapping[str, Any]], outputs: Mapping[str, str],

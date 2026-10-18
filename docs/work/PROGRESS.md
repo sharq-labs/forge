@@ -5906,6 +5906,7 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
   the returned record, right after the graph/plan checks and before conservation, outcome, outputs, extractors, state,
   artifacts and provider records (a different digest, or scenario evidence without a digest -> FAILED). A record with no
   digest and no scenario evidence stays admitted: the runtime's and `MultiphysicsRunRecord`'s own scenario_bound contract.
+  **Superseded by the review fixes below (`fa71030c`): inside an authorized execution an unbound run is refused.**
 - `python -m pytest -q -p no:cacheprovider tests/test_system_runtime_scenario_identity.py` -> **11 passed**; with the
   `src` change stashed -> **8 failed, 3 passed** (the 3 are the admitted / compatibility cases).
 - `python -m pytest -q -p no:cacheprovider -n 4 tests/test_system_runtime_*.py tests/test_phase1_system_runtime_outcomes.py
@@ -5936,3 +5937,7 @@ Executed: `py_compile` of the checker and the test, `git diff --check`. NOT RUN:
 - Compatibility: inside a `SystemExecutor` run every `MultiphysicsAuthority` must now pass
   `scenario_digest=<authorized digest>` in `run_kwargs`. In-tree: the PyBaMM kit and the battery flagship already do;
   #163's fixture does; calls without an execution context (unit tests passing a bare call) are unaffected.
+- Re-review of `fa71030c` (static): **PASS**; M1, m1, m2, m3, N1 closed. Follow-ups applied in the next commit: L1 (no-context
+  branch also requires empty receipt digests), L2 (stale comment / superseded PROGRESS line), L3 (contract in the
+  `MultiphysicsAuthority` docstring and `docs/architecture/engineering.md`), L4 (M2 as OD-28 in ACTIVE_PLAN). Not run by the
+  builder: `flagships/tests/test_flagship_battery.py` (needs PyBaMM; minutes per test); statically it passes the authorized digest.
