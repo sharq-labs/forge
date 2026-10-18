@@ -357,6 +357,9 @@ _NESTED_WITHOUT_SCHEMA_AT = frozenset({
     ("MindHypothesis", "src/engcore/mind/transition.py"),
     ("Dependency", "src/engcore/mind/transition.py"),
     ("CandidateAction", "src/engcore/mind/transition.py"),
+    # Phase 3 BR15: read only through WindowErrorControl.from_dict, which
+    # checks WINDOW_ERROR_CONTROL_SCHEMA before it reads its `outputs`
+    ("MonitoredOutput", "src/engcore/scientific/multiphysics/plan.py"),
 })
 _SCHEMA_CHECKERS = frozenset({"require_schema", "require_schema_any"})
 
@@ -473,6 +476,7 @@ _NESTED_READ_ONLY_BY = {
     "MindHypothesis": {("src/engcore/mind/transition.py", "MindState.from_dict")},
     "Dependency": {("src/engcore/mind/transition.py", "MindState.from_dict")},
     "CandidateAction": {("src/engcore/mind/transition.py", "MindState.from_dict")},
+    "MonitoredOutput": {("src/engcore/scientific/multiphysics/plan.py", "WindowErrorControl.from_dict")},
 }
 
 

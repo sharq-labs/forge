@@ -87,7 +87,10 @@ def test_a_flux_without_an_explicit_participant_normal_is_refused(normal):
 @pytest.mark.parametrize("graph,match", [
     (lambda: _graph(flux_method=FieldMappingMethod.NEAREST), "conservatively"),
     (lambda: _graph(flux_unit="W"), "heat flux dimension"),
-    (lambda: _graph(temp_unit="W/m**2", flux_unit="W/m**2"), "temperature dimension"),
+    # a power-like "temperature" field is refused while the graph is built (it must be
+    # transported whole), before the interface admission can name the missing temperature
+    # dimension; either refusal keeps the wrong semantics out
+    (lambda: _graph(temp_unit="W/m**2", flux_unit="W/m**2"), "temperature dimension|transported whole"),
 ])
 def test_wrong_interface_semantics_are_refused(graph, match):
     with pytest.raises(InvalidScientificProblem, match=match):
