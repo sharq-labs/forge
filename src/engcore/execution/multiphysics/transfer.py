@@ -222,6 +222,8 @@ class TransferEngine:
             raise InvalidScientificProblem(
                 f"edge {edge.edge_id!r} expected FieldRecord source value"
             )
+        if source_value.definition != source_port.field:
+            raise InvalidScientificProblem("executed field definition differs from declared source port")
         source_mesh = self.meshes.get(source_port.field.mesh_id)
         target_mesh = self.meshes.get(target_port.field.mesh_id)
         if source_mesh is None or target_mesh is None:

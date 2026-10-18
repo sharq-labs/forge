@@ -18,8 +18,11 @@ from enum import Enum
 from typing import Any, Mapping
 
 from ..errors import InvalidScientificProblem
-from ..serialization import require_schema, schema_string
+from ..serialization import schema_string
 from ..units.quantity import normalize_unit
+from ..units.quantity import dimensionality, is_ratio_scale
+from ..semantics import extend_payload, semantic_extension
+from .semantics import FieldKind, FieldSemantics
 from .support import MeshSupport
 from .mesh import StructuredMesh
 from .unstructured import UnstructuredMesh
@@ -58,6 +61,7 @@ class FieldDefinition:
     location: FieldLocation = FieldLocation.NODE
     components: int = 1
     description: str = ""
+    semantics: FieldSemantics | None = None
 
     def __post_init__(self) -> None:
         for label in ("field_id", "mesh_id"):
@@ -81,6 +85,13 @@ class FieldDefinition:
             raise InvalidScientificProblem(
                 f"field {self.field_id!r}: components must be >= 1, got {components}"
             )
+        if self.semantics is not None:
+            if (not isinstance(self.semantics, FieldSemantics)
+                    or dimensionality(self.unit) != dimensionality(self.semantics.quantity.unit)):
+                raise InvalidScientificProblem("field semantics and value unit dimension disagree")
+            if self.semantics.kind in (FieldKind.CELL_AVERAGE_DENSITY, FieldKind.CELL_INTEGRATED):
+                if self.location is not FieldLocation.CELL or not is_ratio_scale(self.unit):
+                    raise InvalidScientificProblem("conserved fields require CELL location and ratio-scale units")
 
     # ---- what it demands of a support --------------------------------------
     def require_support(self, mesh: MeshSupport) -> None:
@@ -95,6 +106,13 @@ class FieldDefinition:
                 f"and was given {mesh.mesh_id!r}; a field of one support is "
                 f"not a field of another"
             )
+        if self.semantics is not None and self.semantics.interface is None:
+            self.semantics.require_cell_mapping(self.semantics, mesh.spatial_dimension)
+        if self.semantics is not None and self.semantics.interface is not None:
+            interface = self.semantics.interface
+            if (interface.support_id != mesh.mesh_id or interface.support_fingerprint != mesh.fingerprint()
+                    or len(interface.normal) != mesh.spatial_dimension):
+                raise InvalidScientificProblem("interface convention does not match actual support identity/dimension")
 
     def expected_shape(self, mesh: MeshSupport) -> tuple[int, ...]:
         """The shape an array of this field on ``mesh`` must have."""
@@ -112,7 +130,7 @@ class FieldDefinition:
 
     # ---- serialization ------------------------------------------------------
     def to_dict(self) -> dict[str, Any]:
-        return {
+        return extend_payload({
             "schema": FIELD_DEFINITION_SCHEMA,
             "field_id": self.field_id,
             "unit": self.unit,
@@ -120,11 +138,11 @@ class FieldDefinition:
             "location": self.location.value,
             "components": self.components,
             "description": self.description,
-        }
+        }, "semantics", self.semantics)
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "FieldDefinition":
-        require_schema(payload, FIELD_DEFINITION_SCHEMA)
+        raw = semantic_extension(payload, FIELD_DEFINITION_SCHEMA, "semantics")
         return cls(
             field_id=payload["field_id"],
             unit=payload["unit"],
@@ -132,4 +150,5 @@ class FieldDefinition:
             location=FieldLocation(payload.get("location", FieldLocation.NODE)),
             components=payload.get("components", 1),
             description=payload.get("description", ""),
+            semantics=None if raw is None else FieldSemantics.from_dict(raw),
         )

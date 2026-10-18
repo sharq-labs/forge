@@ -262,12 +262,26 @@ class PhysicsGraph:
                     f"edge {edge.edge_id!r} connects [{source.dimension}] to [{target.dimension}]"
                 )
             typed = source.semantics is not None or target.semantics is not None or edge.transport is not None
-            if typed:
+            typed_field = source.kind is PortKind.FIELD and (typed or source.field.semantics is not None or target.field.semantics is not None)
+            if typed_field:
+                if (source.field.semantics is None or target.field.semantics is None
+                        or source.semantics is None or target.semantics is None):
+                    raise InvalidScientificProblem("A-3 typed fields require both field-kind and port quantity semantics")
+                if (source.field.semantics.quantity != source.semantics
+                        or target.field.semantics.quantity != target.semantics):
+                    raise InvalidScientificProblem("port and field quantity meanings disagree")
+                dimension = self.support(source.field.mesh_id).spatial_dimension
+                source.field.semantics.require_cell_mapping(target.field.semantics, dimension)
+                if (edge.transport is not None or source.coordinate_frame != target.coordinate_frame
+                        or edge.coordinate_transform_id or source.algebra is not FieldAlgebra.SCALAR
+                        or source.field.components != 1 or target.field.components != 1):
+                    raise InvalidScientificProblem("typed fields require scalar common-frame mapping; scalar partitions and frame transforms unsupported")
+                if edge.reduction is not ReductionOperator.NONE:
+                    raise InvalidScientificProblem("typed field reduction requires separate measure-aware admission")
+            elif typed:
                 if source.semantics is None or target.semantics is None or edge.transport is None:
                     raise InvalidScientificProblem("typed connections require both port semantics and structured transport")
                 edge.transport.admit(source.semantics, target.semantics)
-                if source.kind is PortKind.FIELD:
-                    raise InvalidScientificProblem("typed field transport requires the separate A-3 declared-kind review")
             elif source.quantity != target.quantity:
                 if (edge.conversion is None
                         or source.quantity != edge.conversion.input_form
@@ -303,7 +317,7 @@ class PhysicsGraph:
                         f"{source.field.components}->{target.field.components}"
                     )
                 if (
-                    source.dimension
+                    not typed_field and source.dimension
                     in ENERGY_DIMENSIONS + ENERGY_DERIVED_DIMENSIONS
                     and not edge.transport_declaration
                 ):
