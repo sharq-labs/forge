@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import dataclasses
 import hashlib
+import itertools
 from types import SimpleNamespace
 
 import pytest
@@ -57,6 +58,62 @@ def test_a_redundant_forward_tear_is_refused():
 
 def _seed_for(dependency):
     return Quantity(1.0, dependency.unit_exemplar)
+
+
+def _series(n):
+    stages = []
+    for k in range(1, n + 1):
+        conductor = mat.TemperatureDependentConductor(
+            component_id=f"R{k}", reference_resistance=Quantity(10.0, "ohm"),
+            temperature_coefficient=Quantity(0.00393, "1/kelvin"), reference_temperature=Quantity(293.15, "kelvin"))
+        body = lump.ThermalBody(body_id=f"R{k}", heat_capacity=Quantity(2.5, "joule/kelvin"),
+                                ambient_conductance=Quantity(0.05, "watt/kelvin"), ambient_temperature=Quantity(300.0, "kelvin"),
+                                initial_temperature=Quantity(300.0, "kelvin"), duration=Quantity(120.0, "second"))
+        stages.append(cp.CoupledStage(conductor, body))
+    return cp.CoupledElectroThermalSystem(stages=tuple(stages), source_voltage=Quantity(5.0, "volt"))
+
+
+@pytest.mark.parametrize("stages", [1, 2, 3])
+def test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal(stages):
+    """Why ``test_a_redundant_forward_tear_is_refused`` cannot be built in this pack -- pinned, not assumed.
+
+    Every one of the ``2**(3N) - 1`` tear sets is tried, with the tolerance in the torn dimension. A plan admits
+    only single-dimension tears (mixed dimensions are refused: one scalar tolerance cannot serve them). Each of
+    the three dimensions has exactly one edge per stage cycle, so a single-dimension set that breaks every cycle
+    is all edges of that dimension, and each such edge runs backward in the resulting order. The forward-tear
+    refusal in ``runtime_equivalent`` is therefore a defensive guard no admissible plan of this pack reaches.
+    If a future pack (or a normalization rule for mixed-dimension tears) makes one reachable, this fails and
+    the forward-tear test can be given a genuine fixture.
+    """
+    system = _series(stages)
+    problems = cp.coupled_problems(system, {s.component_id: s.conductor.reference_resistance for s in system.stages})
+    dependencies = cp.coupled_dependencies(system, problems, temperature_metric=lump.TEMPERATURE_METRIC)
+    base = cp.nominal_plan(system, dependencies, seed=Quantity(300.0, "kelvin"))
+    admitted: list[frozenset] = []
+    for size in range(1, len(dependencies) + 1):
+        for subset in itertools.combinations(dependencies, size):
+            torn = tuple(cp.TornEndpoint(dependency=d, initial_value=_seed_for(d)) for d in subset)
+            dimensions = {d.dimension for d in subset}
+            try:
+                plan = dataclasses.replace(base, torn=torn, absolute_tolerance=Quantity(1e-9, subset[0].unit_exemplar))
+            except InvalidScientificProblem as exc:
+                # the ONLY refusal the plan may make here is the mixed-dimension one; anything else is a finding
+                assert len(dimensions) > 1 and "different dimensions" in str(exc), (sorted(dimensions), str(exc))
+                continue
+            assert len(dimensions) == 1, "the plan admitted a mixed-dimension tear set"
+            try:
+                runtime_equivalent(system, plan)
+                admitted.append(frozenset(cp.edge_key(d) for d in subset))
+            except InvalidScientificProblem as exc:
+                # every refusal of an admitted plan must be the cycle refusal: any other one -- the forward-tear
+                # refusal in whatever wording -- means a forward tear became reachable
+                assert "leaves a cycle after its tears" in str(exc), (sorted(cp.edge_key(d) for d in subset), str(exc))
+    by_dimension = {}
+    for dependency in dependencies:
+        by_dimension.setdefault(dependency.dimension, set()).add(cp.edge_key(dependency))
+    # exactly one admissible tear set per dimension, and it is every edge of that dimension
+    assert sorted(admitted, key=sorted) == sorted((frozenset(keys) for keys in by_dimension.values()), key=sorted)
+    assert len(by_dimension) == 3 and all(len(keys) == stages for keys in by_dimension.values())
 
 
 # ---- 2. problem identity cannot be asserted ------------------------------------------------------------------

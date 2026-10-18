@@ -31,6 +31,21 @@ from ..units.quantity import Quantity, canonical_magnitude, dimensionality
 from .definition import FieldDefinition
 from .mesh import CANONICAL_LENGTH, StructuredMesh
 from .result import FieldRecord
+from .semantics import FieldKind
+
+
+def _semantic_refusal(producer: FieldDefinition, consumer: FieldDefinition) -> str:
+    a, b = producer.semantics, consumer.semantics
+    if a is None and b is None:
+        return ""
+    if a is None or b is None or a != b:
+        return "declared field meanings/kinds differ or mixed typed/untyped connection"
+    if a.kind in (FieldKind.NORMAL_FLUX, FieldKind.INTERFACE):
+        return "flux/interface crossing requires separate A-4 admission"
+    if (producer.components != 1 or consumer.components != 1
+            or producer.location.value != "cell" or consumer.location.value != "cell"):
+        return "typed crossing supports scalar cell fields only"
+    return ""
 
 FIELD_TRANSFER_SCHEMA = schema_string("field_transfer_contract")
 FIELD_DEPENDENCY_SCHEMA = schema_string("field_dependency")
@@ -119,7 +134,9 @@ class FieldTransferContract:
         """
         ceiling = FieldTransferVerdict.COMPATIBLE
         because = ""
-        if self.producer.components != self.consumer.components:
+        if _semantic_refusal(self.producer, self.consumer):
+            ceiling, because = FieldTransferVerdict.REFUSED, _semantic_refusal(self.producer, self.consumer)
+        elif self.producer.components != self.consumer.components:
             ceiling, because = (
                 FieldTransferVerdict.REFUSED,
                 f"the producer has {self.producer.components} component(s) and the consumer expects "
@@ -379,6 +396,8 @@ def check_field_transfer(
             f"consumer expects {consumer.components}; these are different kinds "
             f"of field, not two resolutions of one",
         )
+    if _semantic_refusal(producer, consumer):
+        return contract(FieldTransferVerdict.REFUSED, _semantic_refusal(producer, consumer))
     if dimensionality(producer.unit) != dimensionality(consumer.unit):
         return contract(
             FieldTransferVerdict.REFUSED,

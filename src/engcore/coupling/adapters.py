@@ -256,6 +256,8 @@ def provider_participant(
                 raise CouplingRefusal(
                     f"participant {spec.participant_id!r}: the execution record states no complete provider build; "
                     f"it cannot be shown to be the admitted one")
+            # Native callbacks may have only the spec declaration, explicitly
+            # labelled in the seal's scope. This is not observed build evidence.
             return
         if observed["build"] is None:
             if observed["pinned_tag"] is not None and build_tag(build) != observed["pinned_tag"]:
@@ -360,7 +362,7 @@ def provider_participant(
         return seal.seal(instant, state_digest=state_digest(), deterministic_restore=spec.deterministic_restore,
                          slot=slot_now, state=MappingProxyType(dict(held["state"])))
 
-    def restore(cp):
+    def admit_restore(cp):
         if cp.record.participant_id != spec.participant_id:
             raise CouplingRefusal("checkpoint belongs to another participant")
         # I-8 first: only a checkpoint this participant object issued, with the record it was issued with, whose
@@ -374,6 +376,10 @@ def provider_participant(
         tags = [part.split(":", 1)[1] for part in recorded_slot.split(";") if part.startswith("build:")]
         if tags and observed["build"] is not None and tags[0] != build_tag(observed["build"]):
             raise CouplingRefusal(f"checkpoint of {spec.participant_id!r} was produced by another provider build")
+        return state, tags
+
+    def restore(cp):
+        state, tags = admit_restore(cp)
         if tags and observed["build"] is None:
             # nothing has executed here yet: the next execution must be the build this state came from
             observed["pinned_tag"] = tags[0]
@@ -381,7 +387,7 @@ def provider_participant(
 
     if not state_definitions:
         participant = CallbackParticipant(spec, initialize=initialize, advance=advance, checkpoint=checkpoint, restore=restore,
-                                          state_identity=lambda _t: state_digest())
+                                          restore_admission=lambda cp: admit_restore(cp), state_identity=lambda _t: state_digest())
         participant.state_contract = contract
         return participant
 
@@ -395,6 +401,7 @@ def provider_participant(
         spec, initialize=lambda *a: (_ for _ in ()).throw(CouplingRefusal(f"{spec.participant_id} requires an explicit initial state")),
         advance=advance, initial_state_definitions=tuple(state_definitions), initialize_state=initialize_state,
         checkpoint=checkpoint, restore=restore,
+        restore_admission=lambda cp: admit_restore(cp),
         state_identity=lambda _t: state_digest(),
         public_state=lambda _t: tuple(StateVariableValue(k, v.value, v.uncertainty) for k, v in sorted(held["state"].items())),
     )

@@ -854,3 +854,157 @@ Certification-pinned (`certification/current_core_v2.json`) files changed in Pha
 patterns: `providers/{compare,problem_identity,__init__}.py`, `execution/multiphysics/{steady,authority,conjugate_interface}.py`.
 No new import from a pinned-list file into an unpinned module. No V4 mutant targets a changed line (the G20a anchor in
 `systems/electrothermal/coupled.py` is untouched). OD-3 recertification required.
+
+
+## Semantic compatibility A-1/A-2/A-13 (2026-10-18)
+
+Status: IMPLEMENTED / UNVERIFIED / UNCERTIFIED. All commands below NOT RUN.
+DV-101..DV-106 are reserved by separate checkpoint Draft PR #158; these rows
+start at DV-107 to avoid collision. DV-100 and checkpoint DV-101..106 run first
+when separately authorized on the appropriate checkpoint tree; do not claim that
+this independent semantic branch contains those repairs. DV-99 is repeated with
+the strengthened stiffness refusal regression; its other gap pins are not support.
+
+| ID | Scope | Exact deferred recipe | Admission / expected result | Status |
+| --- | --- | --- | --- | --- |
+| DV-107 | Typed scalar semantics and revised DV-99 | `python -m pytest tests/architecture/test_quantity_semantics.py tests/architecture/test_cross_domain_fixtures.py -q` | Correct refusal/roundtrip/identity/partition assertions; interpret remaining gap pins as known gaps; no domain validation | NOT RUN |
+| DV-108 | Conservation, transfer and runtime | `python -m pytest tests/test_conservation.py tests/test_multiphysics_conservation_history.py tests/test_multiphysics_fan_in_units.py tests/test_stateful_multiphysics_runtime.py tests/test_phase2_external_coupling.py -q` | Preserve arithmetic and units; classify legacy alias refusals explicitly, never edit physical expectations merely to pass | NOT RUN |
+| DV-109 | Frozen API, serialization, layering, certified closure | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_v2_api_snapshot.py tests/test_core_api_serialization.py tests/test_scientific_serialization_integrity.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_core_freeze_v4_manifest.py tests/test_certified_dependency_closure.py -q` | No frozen surface drift; investigate certified dependency/pin failures; no automatic manifest update | NOT RUN |
+| DV-110 | Thermal downstream and parity boundaries | `python -m pytest tests/test_electrothermal_vertical.py tests/test_electrothermal_fixed_point_relaxation.py tests/test_min_foundation_electrothermal.py tests/test_phase35_ws2_electrothermal_migration.py -q` | Existing exact-name paths retain expectations; owner-approved alias migrations required for newly refused paths; no parity promotion from declarations | NOT RUN |
+| DV-111 | Provider consumers | In the existing WSL battery environment: `python -m pytest providers/pybamm/tests/test_pybamm_multiphysics.py providers/pybamm/tests/test_pybamm_coupling_options.py -q`; separately in FEniCSx environment: `python -m pytest providers/fenicsx/tests/test_coupling_fenicsx.py -q` | Re-establish provider identity, wiring and existing thermal intent; environment failures recorded; no substitute callback evidence | NOT RUN |
+| DV-112 | Normal local integration gate | `python tools/forge_check.py --changed`, then `python tools/forge_check.py --regression` only after targeted checks and authorization | Gate may execute tests; NOT a permitted static-only command in this session; no assurance/certification claim | NOT RUN |
+
+Before integration, classify the final diff under Core Freeze/certification policy.
+Shared trust/admission, runtime and certified dependency changes require the normal
+CI control plane and separately authorized OD-3 on final integrated source. Full
+assurance, mutation, normal broad integration tiers and hardened recertification
+remain separately gated; none was run here. Do not regenerate pins to silence refusal.
+A-3 proposal examples were checked by hand only, not numerical execution.
+
+
+## A-3 declared field kind mapping: DV-113..116 (2026-10-18)
+
+Stacked branch base semantic98da0c02 / Draft PR #159. All commands NOT RUN.
+Predecessor checkpoint DV-101..106 and semantic DV-107..112 remain NOT RUN.
+No verification/validation/certification follows from declarations or static PASS.
+
+| ID | Scope | Exact deferred recipe | Required interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-113 | A-3 numerical/adversarial probes | `python -m pytest tests/test_declared_field_kind_mapping.py -q` | Preregistered integrated(4,4),total8; density contrast; 1D/refinement/coarsening/coverage/unit/orientation; 2D and declared unequal-volume tetrahedra; no local physical-validity claim | NOT RUN |
+| DV-114 | Legacy conservative consumer migration audit | `python -m pytest tests/test_phase1_conservative_cell_mapping.py tests/test_phase2_field_transfer.py -q` | Unmigrated declarations intentionally refuse. Record failures and disposition each owning-model kind; these historical fixtures cannot prove new typed behavior or count as retained coverage. Do not alter numerical expectations to pass | NOT RUN |
+| DV-115 | Core/serialization/trust compatibility | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_v2_api_snapshot.py tests/test_core_api_serialization.py tests/test_scientific_serialization_integrity.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py -q` | Frozen shape/import identity preserved; /2 refuses in old readers; investigate dependency/pin failures, no automatic manifests | NOT RUN |
+| DV-116 | Semantic and runtime integration | `python -m pytest tests/architecture/test_quantity_semantics.py tests/architecture/test_cross_domain_fixtures.py tests/test_multiphysics_fan_in_units.py tests/test_stateful_multiphysics_runtime.py tests/test_multiphysics_conservation_history.py -q` | Recheck parent scalar invariants, actual source record binding and known gap meanings; classify consumer migration failures explicitly | NOT RUN |
+
+After targeted execution/migration, owner must authorize `python tools/forge_check.py --changed`
+and `python tools/forge_check.py --regression`, normal integration tiers and final-source CI.
+These commands execute tests and were not run as static checks. Provider runs, mutation,
+full assurance and OD-3 remain separately authorized. A-4 is not closed by normal metadata.
+No transient adaptive solver or automatic history/lineage restoration is added.
+
+
+## A-4 interface execution: DV-117..120 (2026-10-18)
+
+Base A-3 4f239fa7; predecessor DV-101..116 remain NOT RUN. All commands below NOT RUN.
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. Local/static PASS never scientific evidence.
+
+| ID | Scope | Exact deferred recipe | Expected interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-117 | A-4 numerical/contract probes | `python -m pytest tests/test_interface_flux_execution.py -q` | Executed scalar normal signs, density vs integrated amounts, unequal surface cells, full coverage, roundtrip limits, identity/unit/schema/context refusals, thermal + nonthermal; integral residual is constructed transfer diagnostic only | NOT RUN |
+| DV-118 | Parent semantic and field-kind guarantees | `python -m pytest tests/test_declared_field_kind_mapping.py tests/architecture/test_quantity_semantics.py tests/architecture/test_cross_domain_fixtures.py -q` | Preserve A-1/A-2/A-13 and A-3; unsupported interface without explicit executable contract still refuses; interpret residual gap pins as gaps | NOT RUN |
+| DV-119 | Concrete legacy interface migration audit | `python -m pytest tests/test_phase35_ws3_conjugate_interface.py tests/test_phase2_review_regressions.py -q` | WS3 lines68-104 expect prose-only admission and old sign metadata; intentionally refused until explicit typed migration. Record failures/dispositions; do not change physics expectations or count as retained coverage | NOT RUN |
+| DV-120 | Core/trust/schema/runtime compatibility | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_v2_api_snapshot.py tests/test_core_api_serialization.py tests/test_scientific_serialization_integrity.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py tests/test_stateful_multiphysics_runtime.py tests/test_multiphysics_conservation_history.py -q` | Exact frozen/import identity, nested edge /3 refusal/readers, certified dependency and existing runtime behavior; no automatic pin regeneration | NOT RUN |
+
+After targeted migration/execution, separately authorize `python tools/forge_check.py --changed`
+and `python tools/forge_check.py --regression` and required CI/integration tiers. These
+execute tests and are not static commands. Provider runs, mutation, full assurance and
+final integrated source OD-3 remain separately authorized. No real FE/CFD interface
+execution, coupled physical verification or experimental validation follows from these
+fixtures. E2 unstructured surfaces and independent flux/source balances remain future work.
+
+
+## M1A lineage-bound adaptation: DV-121..124 (2026-10-18)
+
+Stacked on A-4#161/1f43c59e; predecessor DV-101..120 remain NOT RUN.
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. No gate closure, verification or validation
+from code, deterministic identity, a conservation diagnostic or static PASS.
+
+| ID | Scope | Exact deferred recipe | Required interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-121 | New M1A lineage/state/adversarial pack | `python -m pytest tests/test_m1a_mesh_lineage.py -q` | Issuance/geometry/siblings, refine-transfer-coarsen-transfer-back, nonrecoverable fine variation, units/coverage, stale/tampered records/bytes/cache/history, frame and replay refusal, false conservation and uncertainty dimensions | NOT RUN |
+| DV-122 | Legacy mesh and steady-reference compatibility | `python -m pytest tests/numerical/test_mesh_adaptation.py tests/test_phase3_br16_mesh_validity_and_adaptation.py tests/claims/test_adaptive_resolution.py tests/domains/thermal_models/test_conduction1d_nonuniform.py -q` | Grid1D identity, legacy APIs/refusals, steady FV remain unchanged; these tests do not verify a transient M1 solver | NOT RUN |
+| DV-123 | Parent semantic/transfer guarantees | `python -m pytest tests/test_declared_field_kind_mapping.py tests/test_interface_flux_execution.py tests/architecture/test_quantity_semantics.py tests/architecture/test_cross_domain_fixtures.py -q` | Recheck A-3 kind/operator and A-4 sign guarantees with shared dependencies; retain gap pins as gaps | NOT RUN |
+| DV-124 | Core/trust/import compatibility | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_v2_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py -q` | No frozen export/digest/serialization/import drift; no pin regeneration to silence failures | NOT RUN |
+
+After targeted execution, separately authorize `python tools/forge_check.py --changed`
+and `python tools/forge_check.py --regression` and required integration/CI tiers.
+These commands execute tests, not permitted static gates in this session. Provider
+runs, mutation, full assurance and final-source OD-3 remain separately authorized.
+M1 transient temporal/spatial refinement and physical energy/source balances are
+future tests for the future domain solver, not satisfied by this arithmetic pack.
+
+
+## M1B vertex dual state adapter: DV-125..128 (2026-10-18)
+
+Exact base M1A7f8cb5da/Draft#162. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+All predecessor DV-101..124 remain NOT RUN; no imported earlier evidence.
+Run only after separate owner execution authorization. Do not adjust expectations
+or tolerances to obtain agreement. Static PASS establishes no numerical evidence.
+
+| ID | Scope | Exact deferred recipe | Required interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-125 | M1B dual placement/storage/adversarial pack | `python -m pytest tests/test_m1b_vertex_dual_state.py -q` | Nonuniform duals/half cells, exact placement/meaning, conservation/refine-coarsen roundtrip, explicit discontinuous storage, provenance, unit conversions, stale/cache/history/ancestry/byte attacks, false residual and unsafe transition poisoning | NOT RUN |
+| DV-126 | Parent lineage/kinds/interface regressions | `python -m pytest tests/test_m1a_mesh_lineage.py tests/test_declared_field_kind_mapping.py tests/test_interface_flux_execution.py -q` | Parent issuance, primal/dual separation, A-3 kind guarantees and A-4 execution unchanged; no physical conservation or transient evidence | NOT RUN |
+| DV-127 | Legacy mesh policy, steady FV and CDAR | `python -m pytest tests/numerical/test_mesh_adaptation.py tests/test_phase3_br16_mesh_validity_and_adaptation.py tests/domains/thermal_models/test_conduction1d_nonuniform.py tests/architecture/test_cross_domain_fixtures.py -q` | Legacy transient refusal remains; steady solver not relabelled transient; fixtures are architecture probes, not domain validation | NOT RUN |
+| DV-128 | Core compatibility and certification boundaries | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_v2_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py -q` | No frozen/API/import/schema drift; no certificate or expected-digest regeneration to silence failures | NOT RUN |
+
+After bounded recipes and failure recording, separately authorize repository
+forge_check/integration gates. No pytest, provider execution, full assurance,
+mutation or OD-3 in this build. M1C manufactured solutions, temporal/spatial order,
+solver-backed conservation and full adaptive-loop studies are still unwritten future
+solver tests, not satisfied by normalized-input or remap arithmetic fixtures.
+
+
+## M1C transient vertex FV: DV-129..132 (2026-10-18)
+
+Exact base M1B9b092d56/Draft#165. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+All previous DV-101..128 remain NOT RUN. These recipes execute numerical solves;
+owner authorization is required before any execution, including targeted tests.
+Do not tune expected orders/tolerances after observing a result; record failures.
+
+| ID | Scope | Exact deferred command | Required interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-129 | M1C real sparse numerical, manufactured/refinement and adversarial pack | `python -m pytest tests/test_m1c_transient_fv.py -q` | Independent specified-flux/source energy totals, both-Neumann, half duals/reactions, series/contact resistance, exact source averages, BE first order and spatial study, provider/failure/context/source/stale-state/refusal probes | NOT RUN |
+| DV-130 | Parent state and legacy steady compatibility | `python -m pytest tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py tests/domains/thermal_models/test_conduction1d_nonuniform.py tests/numerical/test_mesh_adaptation.py -q` | Existing identities/outputs/refusals retained; do not infer M1D or physical validation | NOT RUN |
+| DV-131 | Material and cross-domain semantics | `python -m pytest tests/test_materials_engine.py tests/test_declared_field_kind_mapping.py tests/test_interface_flux_execution.py tests/architecture/test_cross_domain_fixtures.py -q` | Existing resolution/meaning/field/sign boundaries remain; synthetic data stay assumptions, UNKNOWN remains UNKNOWN | NOT RUN |
+| DV-132 | Model census and Core/certification compatibility | `python -m pytest tests/test_core_guards.py tests/test_core_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py -q` | Known static integration hold: model census pin19 vs new model20; do not regenerate pins or suppress model discovery. Owner must decide compatible pin/certificate change explicitly | NOT RUN |
+
+Manufactured study definitions: uniform T=300+exp(-t), insulated, c=A=1,
+q=-exp(-t) sampled at step end isolates BE temporal order; stationary-in-time
+T=300+sin(pi*x), q=pi²sin(pi*x), exact dual-average source on nonuniform grids
+isolates spatial behavior. These are synthetic mathematical verification designs,
+not calibration or experimental validation. Code/expectations NOT EXECUTED.
+
+After bounded execution, separately authorize forge_check/integration gates,
+mutation/full assurance and final-source OD-3. M1D adaptive/rollback studies are
+future tests for a future driver, not satisfied by this fixed-mesh pack.
+
+## Checkpoint integrity repair R1-R5 (2026-10-18)
+
+Base `0284ae161ad957d51674ee481e47cfd43d10c5f0`; branch `codex/checkpoint-integrity-hardening`.
+Owner authorized implementation and static checks only. All execution below is NOT RUN.
+Run DV-100 and DV-99 first, then these bounded checks after separate execution authorization.
+No test result is inferred from compilation or independent review.
+
+| ID | Scope | Deferred command / required evidence | Status |
+| --- | --- | --- | --- |
+| DV-101 | R1/R2/R5 integrity, substitution, same-object rollback, unsupported cross-object restore, direct and partial restore failures, weak/nonweak custom retirement, qualified inline/content-addressed codecs | `python -m pytest tests/test_checkpoint_integrity_hardening.py tests/test_external_participant_checkpoints.py tests/test_provider_participant_checkpoints.py tests/test_system_runtime_external_providers.py -q` | NOT RUN |
+| DV-102 | R4 legacy required bindings, build/problem mismatch, within-call build drift, qualified conversion and original routing expectations | `python -m pytest tests/execution/orchestration -q` | NOT RUN |
+| DV-103 | R3 real PyBaMM same-object replay, current-solution alias corruption, wrong checkpoint/request/solver times, build/configuration identity; controlled wrong-endpoint fixtures remain mocks | supported WSL battery Python: `python -m pytest providers/pybamm/tests/test_pybamm_checkpoint_identity.py -q` | NOT RUN; provider required, no skip counts as execution evidence |
+| DV-104 | Frozen API, serialization, stable exception roots, dependency layering/closure and pin portability | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_api_contracts.py tests/test_core_api_serialization.py tests/test_core_freeze_policy.py tests/test_core_api_layering.py tests/test_certified_dependency_closure.py tests/test_pin_portability.py -q` | NOT RUN; do not regenerate pins to silence failures |
+| DV-105 | Runtime consumers and native declaration-only compatibility | `python -m pytest tests/test_multiphysics_window_control.py tests/test_stateful_multiphysics_runtime.py tests/test_multiscale_runtime.py tests/test_phase2_external_coupling.py tests/test_phase35_ws2_electrothermal_migration.py -q`; in supported provider env also `python -m pytest providers/pybamm/tests/test_pybamm_multiphysics.py providers/pybamm/tests/test_system_runtime_battery.py -q` | NOT RUN |
+| DV-106 | Repository changed/regression gates; later final-source normal integration and OD-3 certification | first `python tools/forge_check.py --changed`, then `python tools/forge_check.py --regression`; full FAST/SCIENTIFIC tiers, mutation, full assurance and OD-3 require separate authorization | NOT RUN; touched certified/SCOPE files remain UNCERTIFIED |
+
+Compatibility: see CHECKPOINT_HARDENING.md. Records keep their schemas; legacy readability is not resume authority.
+Every later result must record exact source SHA, interpreter, provider versions, command, exit status, failures/skips
+and relevant names in PROGRESS. Re-run independent review if behavior changes. Provider codec completeness needs
+provider-specific qualification; these mocks are not evidence for real external solvers or physical validation.
