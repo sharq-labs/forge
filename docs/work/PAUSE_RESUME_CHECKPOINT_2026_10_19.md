@@ -1,136 +1,92 @@
-# FORGE — Pause / Resume Checkpoint (2026-10-19)
+# FORGE — Durable Pause / Resume Checkpoint
 
-> **Purpose:** durable handoff for a deliberate work pause. The owner can later say **"كمل آخر حاجة"**, **"كمل شغل FORGE"**, or **"continue FORGE"** and the agent must reconstruct state, draw the status/roadmap table, and continue only with work that is already authorized.
->
-> **STATUS AT AUTHORING:** OWNER_PAUSED. This document records a snapshot; it is **not** scientific evidence, certification, approval to merge, or a new execution queue.
->
-> **Authority:** `CLAUDE.md` and `docs/work/ACTIVE_PLAN.md` remain binding. The latter is the **sole executable work queue**. `docs/project/FORGE_MASTER_PLAN.md` controls strategy; `docs/discovery/FORGE_GENESIS.md` controls Genesis science; mature/certification rules retain their original owners. This checkpoint cannot override any of them.
+**Snapshot:** 2026-10-19 · **Status:** OWNER_PAUSED · **Purpose:** resume from repository facts, without relying on this chat or trusting a stale task list.
 
-## 1. What FORGE is for
+**One-line trigger:** `كمل آخر حاجة في FORGE`. A future agent must read the checkpoint and show a fresh status table plus dependency roadmap, then continue only with an **already-authorized** bounded item in `ACTIVE_PLAN.md`. If it needs approval, ask once and stop.
 
-FORGE is a **solver-neutral scientific reasoning and trust layer**, NOT a universal physics solver. External providers compute; FORGE owns applicability, uncertainty, evidence admission, provenance, replay, scientific refusals and verdicts. Optional LLM agents propose, never issue scientific authority.
+> This checkpoint is a historical handoff, **not** the executable queue, scientific authority, certification, permission to merge, or claim of readiness. Do not perform background work while paused.
 
-**North star:** (1) independent, leakage-resistant **Blindfold Graduation** against equal-budget strong baselines, plus (2) an **independently reviewed real engineering demo** demonstrating a grounded result or correct scientific refusal. Never claim either achieved without executed evidence.
+## 1. Start here: five-file navigation
 
-Commercialization and business valuation are a separate track; do not substitute hypothetical valuation for measured technical maturity or sales.
-
-## 2. Snapshot identity and provenance
-
-This table describes information observed **on 2026-10-19**. Re-query GitHub and the local worktree before trusting it.
-
-| Item | Checkpoint observation | Verification required on resume |
+| File | Role | Governs execution? |
 |---|---|---|
-| Repository | `sharq-labs/forge` (private) | Confirm current GitHub repo and permissions |
-| Default branch | `main` @ `a051af162647b20ab81bfbb99d0af0b533b32d11` | Fetch fresh HEAD; SHA here will become stale |
-| PR #169 | `fix/p0-scientific-correctness-2026-10-18` @ `abed661f`; OPEN, **not merged**; review/OD-3 unresolved | Fetch live PR and checks; never assume merged or certified |
-| PR #170 | `docs/deep-audit-evidence-2026-10-19` @ `2acf9da1`; **MERGED** | Verify on main and any follow-up correction |
-| Scientific audited tree | `abed661f` (not necessarily current main) | Keep evidence scoped to the audited commit |
-| Owner's previously used Windows worktree | `D:/forge-main-337519d1` | Verify path/branch/HEAD/status before touching; multiple agents may be active |
-| Main evidence pointer | `docs/work/DEEP_SCIENTIFIC_DEFECT_AUDIT_2026_10_19.md` | Read on current main |
-| Historical FDA evidence | `docs/work/evidence/deep_audit_2026_10_19/` | Never edit pinned historical bytes; manifest governs their identity |
-| Pause/resume plan | This file + root `CLAUDE.md` pointer | Do not assume this draft PR was merged |
+| `CLAUDE.md` | Repository and scientific working rules; automatic resume trigger | Repository rules only |
+| `docs/work/ACTIVE_PLAN.md` | Active epic, bounded tasks, prerequisites, approval status | **YES — sole executable queue** |
+| [Resume Dashboard](RESUME_DASHBOARD_2026_10_19.md) | Current-state table format, ★ priority rubric, roadmap | **NO — derived snapshot** |
+| [Decision Register](RESUME_DECISION_REGISTER_2026_10_19.md) | Unresolved owner/scientific decisions, evidence and permission gates | **NO — recommendations only** |
+| [Build vs Buy Handoff](BVB_RESUME_HANDOFF_2026_10_19.md) | All BVB phases, 97-component counts, FDA reconciliation, six report hashes, baseline policy | **NO — unapproved audit** |
 
-**Execution reminder:** FDA reproduction evidence was from Windows CPython 3.14.2, **not** the Linux 3.11/3.12 certification platform. Static source review is not executed validation. Do not re-run historical reproduction scripts automatically.
+Also read `docs/work/PROGRESS.md` for executed history, `docs/project/FORGE_MASTER_PLAN.md` for strategy, and `docs/discovery/FORGE_GENESIS.md` for Genesis semantics. Capability maturity, frozen core, performance and assurance contracts retain their original authority. In case of conflict, obey scope ownership and record a decision requirement; do not invent precedence.
 
-## 3. Verified or reported scientific state, NOT a maturity promotion
+## 2. Mission — what not to lose
 
-The following are **audit claims bound to `abed661f`**, not independently certified conclusions:
+**FORGE** is a **solver-neutral scientific reasoning and trust layer**, not a universal solver. External numerical providers compute. FORGE independently owns evidence admission, physical applicability, provenance, uncertainty, scientific refusal and verdicts, replay, falsification and sealed evaluation. LLM agents propose structured inputs but cannot decide scientific truth.
 
-- **Deep FDA audit:** 26 defects: 6 MAJOR + 20 MINOR, plus 8 observations. Five findings were reproduced in **four** approved bounded runs (R-03..R-06); everything else has its stated, generally static evidence class. The audit classified zero new BLOCKER labels, which does **not** waive any scientific gate.
-- **FDA-05 / Genesis scoring:** an `INDISTINGUISHABLE` pair can receive full credit for vacuous, widely diverging brackets. Reproduced at the pair-scoring level; a false *end-to-end lift PASS* has **not** been demonstrated.
-- **FDA-06 / Genesis cap scope:** the candidate cap applies to `discoverable`, not all other law-credit kinds; the capping-function defect was reproduced; full lift flip is not established.
-- **O-1 statistics:** a fraction of ordinary bootstrap resample means is used as a Holm p-value; validity/FWER in this setting is **UNVERIFIED**. Do not freeze, claim lift, or run formal Blindfold using an unqualified decision rule.
-- **B-LEAK:** the previously observed same-account hidden-answer leakage is an existing **formal measurement blocker**; independent security isolation and evaluator separation remain necessary.
-- **FDA-01 / replay:** certain uncertainty/validation outputs are not bound or compared by assembly replay; source-proven/static, not reproduced at runtime.
-- **FDA-02 / state clock:** authority may commit a state disconnected from run start time; source-proven/static, not reproduced at runtime.
-- **FDA-03 / materials:** contradictory source values can be silently selected and covered as known; reproduced.
-- **FDA-04 and FDA-14 / MCP UQ:** degenerate sampling and incorrect claimed empirical interval coverage; reproduced.
-- **D4 archive readback:** frozen current-format model cannot round-trip; scientific reach/contract disposition still requires owner decision. An export-only contract downgrade is not the same as repairing readback.
-- **OD-29 internal FastSystem execution provenance**, cross-domain uncertainty BO4/BO9, various OD-22..34 scientific semantics and G0 dependency/global-scope question remain open unless later evidence closes them.
-- **BVB-0:** 97 present components surveyed. Original classifications: KEEP 69, REPLACE 3, DEFER 4, AUDIT 21; proposed **not approved** FDA reconciliation moves A16/A21 from KEEP to AUDIT => KEEP 67, AUDIT 23. BVB is review, not installed/implemented modernization. PySR / BoTorch / grammar-search suggested only as independently qualified baseline arms, not Trust authority.
-- **Commercial valuation discussion:** rough, *non-transactional* illustrative IP-sale range **USD 100k–500k**, central thought experiment **USD 250k**, conditional on ownership, technical due diligence and a buyer. **Not** an appraisal, offer, verified transaction price, ARR, or investor valuation. No verified paid revenue or customer contracts were presented here.
+**Two long-term proof goals:** independently defensible **Blindfold Graduation** under honest strong equal-budget baselines; and an **independently reviewed narrow real engineering refusal/correction demonstration**. Neither is completed or certified by merely recording this snapshot.
 
-Never say that FDA bugs are fixed, O-1 validated, B-LEAK closed, formal Blindfold passed, certification current or the real engineering demo independently validated unless new executed evidence supports it.
+## 3. Last observed Git/source state
 
-## 4. Local-only work: safeguard before resumption
+Recorded via GitHub on 2026-10-19; **recheck before working**.
 
-Previous agents reported uncommitted/untracked local `docs/work/` documents on the Windows worktree, including:
+| Item | Historical fact / claim | What to recheck |
+|---|---|---|
+| Repo | `sharq-labs/forge` (private) | Correct linked repo and permission |
+| Main | `a051af162647b20ab81bfbb99d0af0b533b32d11` at checkpoint creation | Fetch latest `main`; SHA here is intentionally historical |
+| PR #169 | OPEN / not merged, P0+D1–D3 @ `abed661f`; no final OD-3 | Review, required checks and actual status |
+| PR #170 | MERGED evidence-only, `2acf9da1` historical PR tip | See whether errata and review comments were closed |
+| PR #171 | Draft documentation-resume PR created from `a051af1`; contains this snapshot | On return, check whether PR #171 landed or is still draft |
+| Audited source | `abed661f`; **different from main's history** | All FDA paths and finding claims belong to exact audited tree |
+| Windows worktree | `D:/forge-main-337519d1` previously shared by multiple agents | Verify real path, HEAD, branch, tracked/untracked/ignored files and active processes |
 
-- `BVB_40_ALGORITHM_INVENTORY.md`, `BVB_SCIENTIFIC_COMPARISON_MATRIX.md`, `BVB_LICENSE_AND_DEPENDENCY_AUDIT.md`, `BVB_NUMERICAL_EQUIVALENCE_PLAN.md`, `BVB_PRE_BLINDFOLD_ROADMAP.md`, `BVB_OWNER_DECISIONS.md`.
-- `BVB_FDA_RECONCILIATION_ADDENDUM.md`.
-- `D4_ARCHIVE_COMPATIBILITY_DESIGN_REVIEW.md`, `GENESIS_STEP0_A1_READINESS_REVIEW.md`.
-- `FDA_05_SCORING_CLOSURE_DESIGN.md`, `FDA_06_CAP_SCOPE_CLOSURE_DESIGN.md`, `GENESIS_SCORING_STATISTICAL_DEPENDENCIES.md`, `OWNER_DECISION_PACKAGE.md`, `GENESIS_SCORING_DESIGN_CHALLENGE.md`.
-- Another agent reported a local `docs/work/evidence/fda_audit_2026_10_19/` copied preservation bundle; check for duplicated material against merged PR #170 before any commit.
-- Historical evidence may also exist only in ignored scratch/test folders; do not clean or overwrite.
+The FDA evidence is versioned in `docs/work/evidence/deep_audit_2026_10_19/` (merged PR #170). The registered audit describes **26 defects (6 MAJOR, 20 MINOR) and 8 observations**; four authorized runs R-03..R-06 reproduce **five findings**, on Windows Python 3.14.2, not the supported certification matrix. None of those facts alone proves current code repaired or certified.
 
-**These are last-reported filenames, not assertions they still exist or have been pushed.** On resume, compare to the live repo and locate them safely; preserve hashes and author ownership. Do not reset/stash/clean a shared worktree.
+## 4. The actual pause point
 
-## 5. Immediate decision context when pausing
+**Last clearly completed activities:** FDA evidence preservation via PR #170, BVB-0 inventory/reporting (97 components, **not implementation**), and Claude's read-only FDA-05/06 scientific scoring closure design + adversarial self-challenge as reported by the owner. Some full design files were still uncommitted locally, so their presence must be confirmed before any future work. PR #169 remains an independent integration obligation.
 
-1. **Scientific scoring design unresolved.** An adversarial self-challenge found F5-A (hidden-rival-relative informativeness) vulnerable to sign-crossing, generator-shape copying, absent rival kinds and possible gaming of the width parameter. Proposed F5-IS interval scoring requires carefully defined probabilistic semantics; F5-D conservative fallback gives no excessive reward but may be uninformative. **No FDA-05 scoring algorithm has owner-approved final semantics.**
-2. **FDA-06 design partly accepted as a direction, not approved implementation.** Cap law-credit kinds appropriately; distinguish expressibility from equal-budget attainability and avoid pilot-selection bias. BoTorch experiment selection should not automatically widen a law-search family.
-3. **O-1** must be designed for the **eventual frozen scoring pipeline** with valid primary-null inference, strongest-baseline selection, non-inferiority, multiplicity and repeated-submission handling. No simulation approval as of this checkpoint.
-4. **Independent design review was proposed** to Codex, but whether it actually ran is **unknown**. The Claude challenge was explicitly *not author-independent*. Do not silently treat it as independent external assurance.
-5. **PR #169** remains open and needs independent review, required gates and owner-approved integration. **PR #170** preserved evidence but its reviewer P2 findings about register method metadata, fail-closed verifier and the 20-field claim, and its CI scope/classify failures, must be reconciled by checking newer commits/status (do not infer billing without evidence).
-6. **Licensing:** Gmsh GPL/in-process integration and transitive PETSc/DOLFINx/Dakota licensing require technical and legal distribution review; no automatic compliance claim.
-7. **No owner decision to merge, recertify, install new libraries, run new reproductions, conduct formal campaigns or alter preregistered scoring** is supplied by this checkpoint.
+**Scientific issues that remain open at this snapshot:**
+- FDA-05 vacuous-bracket scoring is reproduced on a pair, not a proven false end-to-end lift PASS. The later proposed F5-A has important flaws; the scientifically valid choice between F5-IS, revised F5-A and conservative F5-D is **UNRESOLVED**.
+- FDA-06 cap is too narrow in a reproduced capping-function case; final family/applicability must distinguish expressive capability and observed equal-budget search competence. No full lift impact has been executed.
+- O-1 Holm inputs are bootstrap fractions of resampled means, **not yet qualified p-values**. Final null/test must account for candidate cap, strongest-baseline selection, multiplicity and repeated submissions.
+- B-LEAK is a previous formal benchmark **blocker** until independently isolated.
+- FDA-01 replay/UQ authority (source-only), FDA-02 state clock (source-only), FDA-03 materials conflict (executed), FDA-04/14 MCP UQ (executed), BO4/BO9, D4 archive readback, OD-22..34/OD-29/OD-B1, required Linux OD-3 and various integration/prereg gates remain pending.
+- PR #170 may need a **separate erratum** for inaccurate register `method` metadata, an integrity verifier that does not fail closed, and incomplete 20-field JSON claim. The historical SHA-pinned original must not be silently rewritten.
+- Gmsh and transitive numerical provider licences need specific commercial distribution review.
+- Numerical/engineering epic has numerous parallel Codex M1/semantic/checkpoint branches documented in `ACTIVE_PLAN.md`. Do not force these into the Genesis queue, claim their tests ran, or change their owners.
 
-## 6. What to do when the owner says "كمل آخر حاجة"
+**BVB is included deliberately:** original KEEP 69 / AUDIT 21 / REPLACE 3 / DEFER 4; proposed FDA correction KEEP 67 / AUDIT 23 (unapproved). New optional baselines PySR, full-grammar and BoTorch require independent qualification and preregistration. Provider replacement is not an excuse to move Trust authority outside FORGE.
 
-**Mandatory interactive recovery protocol (READ/REPORT FIRST):**
+## 5. Uncommitted / local-only preservation risk
 
-1. Read `CLAUDE.md`, `docs/work/ACTIVE_PLAN.md`, `docs/work/PROGRESS.md`, `docs/project/FORGE_MASTER_PLAN.md`, this checkpoint, and Genesis contracts if involved.
-2. Check actual current GitHub `main`, open PRs (especially #169), recent merges and CI, and the intended local worktree's `git status`; check for other running agents. If access is unavailable, mark **UNVERIFIED** and do not invent status.
-3. Decide which tracked slice in `ACTIVE_PLAN.md` is active. This checkpoint is a **history/resume aid only**. If current authoritative docs or the owner have superseded it, use them and name the discrepancy.
-4. **Always show the owner a newly generated Markdown STATUS TABLE before doing substantial work:**
+At pause, sessions reported the following `docs/work/` files in the Windows worktree **without GitHub visibility**:
 
-   | # | Workstream / task | Last evidence & exact commit | State (DONE / OPEN / BLOCKED / UNVERIFIED) | Dependency / owner decision | Next bounded action | Priority ★ |
-   |---|---|---|---|---|---|---|
+- **BVB (six):** `BVB_40_ALGORITHM_INVENTORY.md`, `BVB_SCIENTIFIC_COMPARISON_MATRIX.md`, `BVB_LICENSE_AND_DEPENDENCY_AUDIT.md`, `BVB_NUMERICAL_EQUIVALENCE_PLAN.md`, `BVB_PRE_BLINDFOLD_ROADMAP.md`, `BVB_OWNER_DECISIONS.md`. The exact reported SHA-256 values are recorded in [BVB handoff](BVB_RESUME_HANDOFF_2026_10_19.md).
+- **BVB addendum:** `BVB_FDA_RECONCILIATION_ADDENDUM.md`.
+- **Genesis / scoring:** `FDA_05_SCORING_CLOSURE_DESIGN.md`, `FDA_06_CAP_SCOPE_CLOSURE_DESIGN.md`, `GENESIS_SCORING_STATISTICAL_DEPENDENCIES.md`, `OWNER_DECISION_PACKAGE.md`, `GENESIS_SCORING_DESIGN_CHALLENGE.md`, and `GENESIS_STEP0_A1_READINESS_REVIEW.md`.
+- **D4:** `D4_ARCHIVE_COMPATIBILITY_DESIGN_REVIEW.md`.
+- A copied FDA preservation package was also reported at `docs/work/evidence/fda_audit_2026_10_19/`; this may duplicate merged #170 and **must not be recommitted blindly**.
 
-   Include rows for current integration/assurance, FDA scientific defects, FDA-05/06 scoring, O-1 statistics, B-LEAK isolation, BVB, Genesis v0.3 and the real engineering demo, unless superseded. Do not assign **DONE** to design documents alone when execution is required.
-5. **Draw a compact dependency roadmap** below the table (Mermaid or simple arrows), such as:
+These are **last reported names**, not a guarantee of availability, freshness or independent truth. Read-only inventory, hash verification and concurrency review first. Do not reset, stash, clean, rewrite, copy unchecked or delete untracked/ignored material. A future durable-preservation PR needs separate owner instruction and secret/benchmark-answer review.
 
-   `Scientific repairs + safe integration + certification` and `FDA-05/FDA-06 scoring + O-1 valid statistics + equal-budget baselines + B-LEAK isolation` → `Genesis v0.3 preregistration freeze` → `Independent Blindfold measurement` → `Real engineering demo and commercial validation`.
+## 6. Resume algorithm — exactly this order
 
-   This is a **conceptual map**, not a command to start all tracks or a replacement for the active-plan queue.
-6. State: **last completed action**, **first genuinely unfinished action**, **known blockers**, **what can safely be done now**, **what requires explicit owner permission**, and **precise scope of the next small task**.
-7. Then **continue only the smallest currently authorized work** from `ACTIVE_PLAN.md`. If the next action requires owner approval, ask for that single decision and stop there. No full assurance, expensive run, code edit, installer, benchmark, commit/push/PR/merge or certification is implicitly authorized by "continue".
-8. After any owner-approved completed work, update the appropriate plan/progress records according to the existing governance; leave a fresh dated checkpoint with exact branch, SHA, evidence and next action **only if modification is authorized**.
-9. When the owner instead asks only "الجدول" or "وصلنا لفين", output the status table and dependency roadmap **without executing anything**.
-10. Write the user-facing table and explanation in **Egyptian Arabic**, retaining technical identifiers in English; use ★ rating for relative priority, not unmeasured scientific maturity or speedups.
+1. **Verify** repository, HEADs, PR states, local worktree cleanliness/concurrency, active epic and required contracts. If inaccessible, write **UNVERIFIED**; do not assume.
+2. **Render** a status table covering Trust/PRs, FDA-05/06, O-1, B-LEAK, BVB, baseline arms, v0.3, engineering demo and numerical epic, with `evidence SHA | status | ★ priority | dependency | next action`. Use fresh data, not copied statuses.
+3. **Render** a compact updated dependency roadmap from [dashboard](RESUME_DASHBOARD_2026_10_19.md).
+4. **Distinguish** last completed action, first unfinished action in `ACTIVE_PLAN.md`, blockers, authorizations, and one proposed next bounded step.
+5. **Continue** that step only when already authorized. If it requires scientific design approval, tests, installs, code change, push/merge, OD-3 or formal measurement, ask for **one** explicit decision and stop.
+6. **Preserve** historical SHA-pinned evidence. Record actual executed command/results in `PROGRESS.md` when applicable; update live plan/checkpoint only under suitable owner authority.
 
-### Starter diagram to refresh, never blindly reuse
+For **"الجدول"**, **"وصلنا لفين"**, **"قيّم"**: report table + roadmap only. For **"كمل آخر حاجة"**: report first, then bounded authorized work. Reply in Egyptian Arabic with exact English technical names and ★ relative *attention*, never invented pass/speedup/maturity.
 
-```mermaid
-flowchart TD
-    A[Verify live repo and active-plan scope] --> B[Review approved scientific fixes and PR gates]
-    A --> C[Independent FDA-05/06 scoring design decision]
-    C --> D[Freeze scoring and choose valid O-1 inference]
-    D --> E[Calibrate on non-formal qualification data]
-    B --> F[Trust-lane closure and certification]
-    E --> G[Genesis v0.3 prereg + baselines]
-    F --> G
-    A --> H[Close B-LEAK with independent isolation tests]
-    H --> G
-    G --> I[Formal Independent Blindfold]
-    I --> J[Independently checked real engineering demo]
+## 7. Business context (not a scientific gate)
+
+An earlier conversational **hypothetical** IP-asset-sale range was **USD 100k–500k**, with illustrative midpoint USD 250k. This is **not** a certified valuation, buyer bid, enterprise valuation, sale price, or evidence of revenue; don't multiply it into scientific readiness. Any actual pricing requires IP/licensing due diligence, demonstrated customer value, commercial references and transaction comparisons.
+
+## 8. Owner's short command
+
+```text
+كمل آخر حاجة في FORGE. راجع CLAUDE.md وACTIVE_PLAN.md وملف الاستئناف والـDashboard وBVB Handoff، اتحقق من حالة GitHub والـworktree، اعرض جدول الحالة بالأولويات والاعتماديات وارسم الخريطة، وبعدين كمل أول خطوة عندها تصريح بالفعل. ما تعملش Merge أو اختبار ثقيل من غير موافقتي.
 ```
 
-## 7. Safety / truthfulness on resume
-
-- No passive background work during owner pause, no implicit permission to run tests or agents.
-- Source commits, timestamps, pass counts and owner decisions must be verified anew.
-- NEVER modify original SHA-pinned historical evidence or silently re-score frozen pilots.
-- Keep CERTIFIED / FUNCTIONAL / UNVERIFIED / FOUNDATION labels tied to explicit existing policy and evidence.
-- Refusal and UNKNOWN are legitimate scientific outcomes, not failures to be hidden.
-- Prioritize actual false-support/authority risks over feature count or hypothetical monetary value.
-- If a new chat has no repository connector, ask to open this checkpoint or supply it; do not claim knowledge of current local files.
-
-## 8. Short owner resume message
-
-**Arabic:** `كمل آخر حاجة في FORGE. اقرأ CLAUDE.md و docs/work/PAUSE_RESUME_CHECKPOINT_2026_10_19.md و ACTIVE_PLAN.md، تحقق من GitHub والـworktree، اعرض جدول الحالة والأولويات وخريطة الاعتماديات، وبعدها نفّذ فقط أول خطوة مصرح بها.`
-
-**English:** `Resume FORGE from the persistent checkpoint, verify current repository state, draw the status/priority/dependency table, and continue the next already-authorized bounded task only.`
-
----
-Checkpoint authored 2026-10-19. Historical snapshot; subject to live verification.
+**Stop point:** OWNER_PAUSED. No automatic execution while waiting.
