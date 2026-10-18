@@ -920,3 +920,24 @@ execute tests and are not static commands. Provider runs, mutation, full assuran
 final integrated source OD-3 remain separately authorized. No real FE/CFD interface
 execution, coupled physical verification or experimental validation follows from these
 fixtures. E2 unstructured surfaces and independent flux/source balances remain future work.
+
+
+## M1A lineage-bound adaptation: DV-121..124 (2026-10-18)
+
+Stacked on A-4#161/1f43c59e; predecessor DV-101..120 remain NOT RUN.
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. No gate closure, verification or validation
+from code, deterministic identity, a conservation diagnostic or static PASS.
+
+| ID | Scope | Exact deferred recipe | Required interpretation | Status |
+| --- | --- | --- | --- | --- |
+| DV-121 | New M1A lineage/state/adversarial pack | `python -m pytest tests/test_m1a_mesh_lineage.py -q` | Issuance/geometry/siblings, refine-transfer-coarsen-transfer-back, nonrecoverable fine variation, units/coverage, stale/tampered records/bytes/cache/history, frame and replay refusal, false conservation and uncertainty dimensions | NOT RUN |
+| DV-122 | Legacy mesh and steady-reference compatibility | `python -m pytest tests/numerical/test_mesh_adaptation.py tests/test_phase3_br16_mesh_validity_and_adaptation.py tests/claims/test_adaptive_resolution.py tests/domains/thermal_models/test_conduction1d_nonuniform.py -q` | Grid1D identity, legacy APIs/refusals, steady FV remain unchanged; these tests do not verify a transient M1 solver | NOT RUN |
+| DV-123 | Parent semantic/transfer guarantees | `python -m pytest tests/test_declared_field_kind_mapping.py tests/test_interface_flux_execution.py tests/architecture/test_quantity_semantics.py tests/architecture/test_cross_domain_fixtures.py -q` | Recheck A-3 kind/operator and A-4 sign guarantees with shared dependencies; retain gap pins as gaps | NOT RUN |
+| DV-124 | Core/trust/import compatibility | `python -m pytest tests/test_core_api_snapshot.py tests/test_core_v2_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py -q` | No frozen export/digest/serialization/import drift; no pin regeneration to silence failures | NOT RUN |
+
+After targeted execution, separately authorize `python tools/forge_check.py --changed`
+and `python tools/forge_check.py --regression` and required integration/CI tiers.
+These commands execute tests, not permitted static gates in this session. Provider
+runs, mutation, full assurance and final-source OD-3 remain separately authorized.
+M1 transient temporal/spatial refinement and physical energy/source balances are
+future tests for the future domain solver, not satisfied by this arithmetic pack.

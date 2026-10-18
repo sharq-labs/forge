@@ -6113,3 +6113,83 @@ exit0. Bounded changed-file credential-pattern scan0 matches (not exhaustive), e
 A-4 files and four intended untracked deliverables at scan time; no temporary artifacts.
 A-3 worktree clean; HEAD and origin/codex/declared-field-kind-mapping both4f239fa7.
 No tests or scientific assurance executed. Local package remains UNVERIFIED/UNCERTIFIED.
+
+
+## 2026-10-18 A-4 publication and M1A lineage-bound adaptation
+
+A-4 clean at1f43c59eab717aa7cbfea672b948accb37f3cc50. `git merge-base HEAD
+codex/declared-field-kind-mapping` returned4f239fa7, `git diff --check 4f239fa7 HEAD`
+exit0 and status empty. Bounded credential/artifact scan over16 intended files found
+0 credential matches/no temporary artifacts. `git push -u origin codex/interface-flux-execution`
+succeeded; Draft PR#161 targets codex/declared-field-kind-mapping, NOT main. Stack
+main -> #159 -> #160 -> #161. No merge. Prior A-4 local-only publication note superseded.
+
+M1A branch codex/m1a-mesh-lineage is based exactly on A-4 head1f43c59e. Full M1/CDAR
+contract read; preimplementation architecture/compatibility decision cbecc2df. Adds
+explicit local lineage issuer and numerical/interval_transfer managed adapter; existing
+Grid1D/refine/adapt_grid identities and legacy guards unchanged. New deterministic
+material includes context/frame, parent versions, exact intervals, bisections and policy.
+Coarsening restores only exact recorded active siblings; no inferred ancestry. Captured
+canonical snapshots and same-object issuance refuse clones/nested tampering. Exported
+/1 audit records cannot authorize import or cross-process recovery.
+
+Managed content-addressed states reuse ScientificDataReference/BulkDataResolver,
+existing FieldSemantics and Uncertainty. Actual registered built-in dict/list solver
+cache and coupling-history contents cleared on mesh changes; stale handles/fields refuse.
+Exact immediate transition authorizes invalidated-source transfer, with populated or
+consumed destination refusal. Source byte integrity rechecked. A-3 map_cells_1d reused;
+independent coverage and actual amount totals guard admission. Intensive needs an explicit
+rule and never a conservation claim; affine units refused. Transfer uncertainty UNKNOWN.
+Caller initial values/context remain declarations, not authenticated source provenance.
+
+Independent /root/m1a_review static A-J PASS and addenda PASS. Three MEDIUM corrections:
+frame missing from mesh/state material (now root/version/state bound); repeated transfer
+could overwrite newer state (consume/refuse populated target); uncertainty seconds could
+bind kg state (check all supplied uncertainty dimensions). Legacy scope wording clarified
+without relaxing old guards. Explicit root context exported to make identity preimage
+auditable. These were source findings, not observed test failures. No outstanding
+scientific-authority/evidence-integrity finding reported in reviewed bounded source/tests.
+
+Tests written: unequal cells; refine-transfer-coarsen-transfer-back; density/amount kinds;
+fine information loss; deterministic export vs cross-issuer refusal; forged/missing/
+conflicting ancestry and sibling/geometry attacks; nested tampering; unrelated/partial
+supports; stale fields/receipt replay; actual cache/history clearing; byte corruption;
+affine units; misleading conserved/intensive diagnostics; unit conversion; frame identity;
+known-to-UNKNOWN UQ and incompatible uncertainty dimensions. Nodal arrays explicitly
+refuse interval-cell binding. All NOT RUN. No pytest, provider/numerical execution,
+forge_check, full assurance, mutation or OD-3. DV-121..124 added; prior DV-101..120 NOT RUN.
+
+Lightweight checks actually executed using bundled Python at
+C:/Users/dev_kaeem/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe:
+For .py union from `git diff --name-only 1f43c59e` and `git ls-files --others --exclude-standard`,
+exact `compile(Path(name).read_bytes(), name, 'exec')`:3 Python files compiled; no Forge
+imports or compiled code execution. `git diff --check` exit0. No scientific verification,
+validation or certification follows. IMPLEMENTED / UNVERIFIED / UNCERTIFIED.
+
+Remaining M1 assessed against actual source: conduction1d_nonuniform is steady
+vertex-centred FV only. M1A state is primal interval-cell, not vertex dual-volume state;
+future adapter must explicitly bind dual supports to primal versions without inventing
+bisection ancestry. Then implement transient backward Euler/order1, sourced initial/
+material/boundary states, adaptive transient loop and actual numerical studies. Do not
+invent density/heat capacity or source provenance, infer conserved energy from kelvin,
+or recover arbitrary fine information after coarsening. M1 remains incomplete/MISSING.
+
+M1A_MERGE_PACKAGE.md records exact10-file inventory, compatibility matrix and remaining
+owner decisions: concrete dual-state placement design, source data/contexts, consumer and
+stack/checkpoint integration, deferred execution and final certification/gate decision.
+OD-6 permits bounded build before DV0. No M1A automatic publication/merge or maturity change.
+
+M1A final independent-review addendum PASS: a fourth MEDIUM static finding was
+corrected. Registry key aliases could hide a missing issued bisection; verify/lookup
+now bind requested/stored keys to record identities. Dedicated wrong-key regression
+written, NOT RUN. Current parent-chain records, missing ancestry and nodal-cell refusal
+were also reviewed. Four MEDIUM findings resolved in total; no outstanding finding
+reported within bounded static review. No scientific verification or M1 completion.
+
+M1A final lightweight checks (2026-10-18): compile(Path(name).read_bytes(), name,
+'exec') on the three changed Python files completed without execution or imports.
+`git diff --check 1f43c59eab717aa7cbfea672b948accb37f3cc50` exit0. Bounded
+credential-pattern scan over exact10-file inventory found zero matches; no additional
+untracked artifacts. Explicit `git merge-base --is-ancestor` checks confirmed each
+main -> semantic -> A-3 -> A-4 -> M1A edge. Scientific tests remain NOT RUN;
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. No merge or M1A publication.
