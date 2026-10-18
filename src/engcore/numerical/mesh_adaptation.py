@@ -35,12 +35,12 @@ Provenance and validity (Phase 3 BR16, defect and stabilization fixes)
     strictly inside its cell in float64 is not performed (resolution floor),
     rather than producing a non-increasing grid.
 
-Scope (what is NOT supported, by policy: active-epic exception EXC-1 covers
-this slice only; :func:`require_supported_adaptation` refuses the rest)
-    coarsening; transient or time-adaptive problems on an adapted grid (no
-    conservative state transfer between grids is defined here); any 2D or 3D
-    mesh (triangle / tetrahedron refinement); coupled field transfer between
-    changing meshes.  Each needs an owner-approved EXC-1 amendment.
+Legacy adapt_grid scope
+    require_supported_adaptation retains its original refusal of transient and
+    multidimensional execution. Geometry-only refine/adapt_grid creates no trusted
+    ancestry. The opt-in M1A MeshLineage1D and interval_transfer.AdaptiveMesh1D add
+    recorded reversible bisections and managed state transfer under OD-6, not a
+    transient solver or multidimensional/coupled adaptation capability.
 """
 
 from __future__ import annotations
@@ -54,9 +54,10 @@ import numpy as np
 
 from ..scenarios.timeline import canonical_digest
 from ..scientific.units.quantity import Quantity, normalize_unit, require_spread_unit
+from ..scientific.units.quantity import dimensionality, is_ratio_scale
 from .core import NumericalRefusal
 
-#: Phase 3 BR16: the adaptation combinations this module admits, and why the others are refused
+#: Legacy adapt_grid combinations; M1A requires the separate explicit lineage manager.
 SUPPORTED_ADAPTATION = (
     {"dimension": 1, "transient": False, "operation": "bisection refinement with gradation",
      "status": "supported (EXC-1 A1)"},
@@ -178,6 +179,279 @@ def refine(grid: Grid1D, marked: Sequence[int], *, minimum_cell: float, max_rati
                 changed = True
                 break
     return Grid1D(tuple(nodes), grid.unit)
+
+
+class _AuditOnlyRecord:
+    @classmethod
+    def from_dict(cls, payload):
+        raise NumericalRefusal("serialized mesh audit data cannot establish issuance; trusted durable import is unsupported")
+
+
+class _IssuedRecords:
+    """Local issuance plus canonical snapshot, not scientific evidence or durable authority."""
+    def __init__(self):
+        self._records = {}
+
+    @staticmethod
+    def snapshot(record):
+        try:
+            return canonical_digest(record.to_dict())
+        except Exception as exc:
+            raise NumericalRefusal("invalid or tampered issued mesh record") from exc
+
+    def issue(self, record):
+        key, snapshot = record.record_id, self.snapshot(record)
+        if key in self._records:
+            previous, expected = self._records[key]
+            self.require(previous)
+            if snapshot != expected:
+                raise NumericalRefusal("conflicting mesh record identity")
+            return previous
+        self._records[key] = (record, snapshot)
+        return record
+
+    def require(self, record):
+        try:
+            entry = self._records.get(record.record_id)
+            if entry is None or entry[0] is not record or self.snapshot(record) != entry[1]:
+                raise NumericalRefusal("unissued, substituted or tampered mesh record")
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise NumericalRefusal("missing or malformed mesh issuance") from exc
+
+    def verify(self):
+        for key, (record, _) in tuple(self._records.items()):
+            if record.record_id != key:
+                raise NumericalRefusal("conflicting issued mesh registry key")
+            self.require(record)
+
+    def lookup(self, key, record_type):
+        entry = self._records.get(key)
+        if entry is None or not isinstance(entry[0], record_type) or entry[0].record_id != key:
+            raise NumericalRefusal("missing authoritative mesh ancestry record")
+        self.require(entry[0])
+        return entry[0]
+
+
+@dataclass(frozen=True)
+class LineageCell1D(_AuditOnlyRecord):
+    root_id: str
+    parent_id: str | None
+    left: float
+    right: float
+
+    def __post_init__(self):
+        if not all(math.isfinite(x) for x in (self.left, self.right)) or not self.left < self.right:
+            raise NumericalRefusal("lineage cell requires a positive finite interval")
+
+    @property
+    def cell_id(self):
+        return canonical_digest({"schema": "lineage_cell_1d/1", "root": self.root_id, "parent": self.parent_id,
+                                 "left": float(self.left).hex(), "right": float(self.right).hex()})
+
+    @property
+    def record_id(self):
+        return self.cell_id
+
+    def to_dict(self):
+        return {"schema": "lineage_cell_1d/1", "cell_id": self.cell_id, "root_id": self.root_id,
+                "parent_id": self.parent_id, "left": float(self.left).hex(), "right": float(self.right).hex()}
+
+
+@dataclass(frozen=True)
+class Bisection1D(_AuditOnlyRecord):
+    parent: LineageCell1D
+    children: tuple[LineageCell1D, LineageCell1D]
+
+    def __post_init__(self):
+        middle = .5*self.parent.left + .5*self.parent.right
+        if (len(self.children) != 2 or not self.parent.left < middle < self.parent.right
+                or any(c.parent_id != self.parent.cell_id or c.root_id != self.parent.root_id for c in self.children)
+                or (self.children[0].left, self.children[0].right, self.children[1].left, self.children[1].right)
+                   != (self.parent.left, middle, middle, self.parent.right)):
+            raise NumericalRefusal("invalid exact parent/child bisection geometry or ancestry")
+
+    @property
+    def record_id(self):
+        return canonical_digest({"schema": "bisection_1d/1", "parent": self.parent.to_dict(),
+                                 "children": [c.to_dict() for c in self.children]})
+
+    def to_dict(self):
+        return {"schema": "bisection_1d/1", "bisection_id": self.record_id, "parent": self.parent.to_dict(),
+                "children": [c.to_dict() for c in self.children]}
+
+
+@dataclass(frozen=True)
+class MeshVersion1D(_AuditOnlyRecord):
+    root_id: str
+    parent_version_id: str | None
+    grid: Grid1D
+    cells: tuple[LineageCell1D, ...]
+    operation: str
+    coordinate_frame: str
+    root_context: str
+    bisection_ids: tuple[str, ...] = ()
+    policy: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self):
+        if (len(self.cells) != len(self.grid.nodes)-1 or len({c.cell_id for c in self.cells}) != len(self.cells)
+                or any(c.root_id != self.root_id or (c.left, c.right) != pair
+                       for c, pair in zip(self.cells, zip(self.grid.nodes[:-1], self.grid.nodes[1:])))):
+            raise NumericalRefusal("mesh version cells do not partition its exact grid")
+
+    def _material(self):
+        return {"schema": "mesh_version_1d/1", "root_id": self.root_id, "parent_version_id": self.parent_version_id,
+                "grid": self.grid.to_dict(), "grid_digest": self.grid.digest, "cells": [c.to_dict() for c in self.cells],
+                "operation": self.operation, "coordinate_frame": self.coordinate_frame,
+                "root_context": self.root_context,
+                "bisection_ids": list(self.bisection_ids), "policy": dict(self.policy)}
+
+    @property
+    def version_id(self):
+        return canonical_digest(self._material())
+
+    @property
+    def record_id(self):
+        return self.version_id
+
+    def to_dict(self):
+        return {**self._material(), "version_id": self.version_id}
+
+
+@dataclass(frozen=True)
+class MeshChange1D(_AuditOnlyRecord):
+    before: MeshVersion1D
+    after: MeshVersion1D
+    operation: str
+    bisections: tuple[Bisection1D, ...]
+
+    @property
+    def record_id(self):
+        return canonical_digest({"schema": "mesh_change_1d/1", "before": self.before.version_id,
+                                 "after": self.after.version_id, "operation": self.operation,
+                                 "bisections": [b.record_id for b in self.bisections]})
+
+    def to_dict(self):
+        return {"schema": "mesh_change_1d/1", "change_id": self.record_id,
+                "before": self.before.to_dict(), "after": self.after.to_dict(), "operation": self.operation,
+                "bisections": [b.to_dict() for b in self.bisections]}
+
+
+class MeshLineage1D:
+    """Explicit local issuer; existing geometry-only refinement grants no ancestry."""
+    def __init__(self, grid: Grid1D, *, root_context: str, coordinate_frame: str):
+        if not isinstance(root_context, str) or not root_context.strip():
+            raise NumericalRefusal("root registration requires explicit context; it is not source evidence")
+        if not isinstance(coordinate_frame, str) or not coordinate_frame.strip():
+            raise NumericalRefusal("lineage requires explicit coordinate frame")
+        if (not isinstance(grid, Grid1D) or not is_ratio_scale(grid.unit)
+                or dimensionality(grid.unit) != dimensionality("m")
+                or not np.all(np.isfinite(grid.cell_widths))):
+            raise NumericalRefusal("lineage requires finite ratio-scale length geometry")
+        self._issued = _IssuedRecords()
+        self._changes_for_versions = {}
+        root = canonical_digest({"schema": "mesh_root_1d/1", "grid": grid.digest, "context": root_context,
+                                 "coordinate_frame": coordinate_frame})
+        cells = tuple(LineageCell1D(root, None, a, b) for a, b in zip(grid.nodes[:-1], grid.nodes[1:]))
+        self._current = self._issued.issue(MeshVersion1D(root, None, grid, cells, "root", coordinate_frame, root_context))
+
+    @property
+    def current(self):
+        return self._current
+
+    def verify(self):
+        self._issued.verify()
+        version, seen = self.current, set()
+        while True:
+            self._issued.require(version)
+            if version.version_id in seen:
+                raise NumericalRefusal("cyclic mesh version ancestry")
+            seen.add(version.version_id)
+            for key in version.bisection_ids:
+                self._issued.lookup(key, Bisection1D)
+            if version.parent_version_id is None:
+                if version.operation != "root":
+                    raise NumericalRefusal("missing declared root ancestry")
+                break
+            parent = self._issued.lookup(version.parent_version_id, MeshVersion1D)
+            change = self._changes_for_versions.get(version.version_id)
+            self._issued.require(change)
+            if (change.before is not parent or change.after is not version
+                    or (parent.root_id, parent.root_context, parent.coordinate_frame)
+                       != (version.root_id, version.root_context, version.coordinate_frame)):
+                raise NumericalRefusal("inconsistent mesh parent/change/root identity")
+            version = parent
+
+    def require(self, record):
+        self.verify()
+        self._issued.require(record)
+
+    @staticmethod
+    def _ratio(cells, max_ratio):
+        if isinstance(max_ratio, bool) or not math.isfinite(max_ratio) or max_ratio < 1:
+            raise NumericalRefusal("max_ratio must be explicit finite and >= 1")
+        widths = [c.right-c.left for c in cells]
+        if any(not math.isfinite(x) or x <= 0 for x in widths) or any(max(a/b, b/a) > max_ratio for a,b in zip(widths[:-1], widths[1:])):
+            raise NumericalRefusal("mesh change violates finite widths or declared neighbour ratio")
+
+    def _commit(self, cells, records, operation, max_ratio, minimum=None):
+        self._ratio(cells, max_ratio)
+        before = self.current
+        grid = Grid1D((cells[0].left, *(c.right for c in cells)), before.grid.unit)
+        records = tuple(self._issued.issue(r) for r in records)
+        policy = (("max_ratio", float(max_ratio).hex()),) + (() if minimum is None else (("minimum_cell_in_grid_unit", float(minimum).hex()),))
+        after = self._issued.issue(MeshVersion1D(before.root_id, before.version_id, grid, tuple(cells), operation, before.coordinate_frame, before.root_context,
+                                                tuple(r.record_id for r in records), policy))
+        change = self._issued.issue(MeshChange1D(before, after, operation, records))
+        self._changes_for_versions[after.version_id] = change
+        self._current = after
+        return change
+
+    def refine(self, cell_ids, *, minimum_cell: Quantity, max_ratio: float):
+        self.verify()
+        selected = tuple(cell_ids)
+        active = {c.cell_id for c in self.current.cells}
+        if not selected or len(set(selected)) != len(selected) or not set(selected).issubset(active):
+            raise NumericalRefusal("refinement requires distinct active cell identities")
+        if (not isinstance(minimum_cell, Quantity) or not is_ratio_scale(minimum_cell.units)
+                or minimum_cell.dimensionality != dimensionality("m")):
+            raise NumericalRefusal("minimum cell requires explicit ratio-scale length")
+        minimum = minimum_cell.magnitude_in(self.current.grid.unit)
+        if not math.isfinite(minimum) or minimum <= 0:
+            raise NumericalRefusal("minimum cell must be positive finite")
+        cells, records = [], []
+        for cell in self.current.cells:
+            if cell.cell_id not in selected:
+                cells.append(cell)
+                continue
+            middle = .5*cell.left + .5*cell.right
+            if not cell.left < middle < cell.right or min(middle-cell.left, cell.right-middle) < minimum:
+                raise NumericalRefusal("bisection violates representability or declared minimum cell")
+            children = (LineageCell1D(cell.root_id, cell.cell_id, cell.left, middle),
+                        LineageCell1D(cell.root_id, cell.cell_id, middle, cell.right))
+            records.append(Bisection1D(cell, children))
+            cells.extend(children)
+        return self._commit(cells, records, "refine", max_ratio, minimum)
+
+    def coarsen(self, bisections, *, max_ratio: float):
+        self.verify()
+        records = tuple(bisections)
+        if not records or any(not isinstance(r, Bisection1D) for r in records):
+            raise NumericalRefusal("coarsening requires issued bisection records, never inferred neighbours")
+        for record in records:
+            self._issued.require(record)
+        if len({r.record_id for r in records}) != len(records):
+            raise NumericalRefusal("conflicting duplicate coarsening records")
+        active = [c.cell_id for c in self.current.cells]
+        replacements, removed = {}, set()
+        for record in records:
+            left, right = (c.cell_id for c in record.children)
+            if left not in active or right not in active or active.index(right) != active.index(left)+1 or {left,right} & removed:
+                raise NumericalRefusal("coarsening requires exact active adjacent siblings of the recorded parent")
+            replacements[left] = record.parent
+            removed.update((left,right))
+        cells = [replacements[c.cell_id] if c.cell_id in replacements else c for c in self.current.cells
+                 if c.cell_id not in removed or c.cell_id in replacements]
+        return self._commit(cells, sorted(records, key=lambda r: r.parent.left), "coarsen", max_ratio)
 
 
 class AdaptationStatus(str, Enum):

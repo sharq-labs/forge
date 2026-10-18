@@ -6,6 +6,27 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Active bounded slice - M1A lineage-bound adaptive mesh 1D (2026-10-18)
+
+Branch codex/m1a-mesh-lineage, exact base1f43c59eab717aa7cbfea672b948accb37f3cc50.
+Stack main -> #159 -> #160 -> A-4 Draft PR#161 -> M1A local branch.
+A-4 was clean/ancestry-checked/scanned and published targeting A-3 by owner instruction;
+prior local-only publication note superseded. Checkpoint#158 remains independent.
+
+- [x] Full M1/CDAR read; architecture/compatibility decision before source (cbecc2df).
+- [x] Explicit issued lineage, reversible recorded bisection coarsening.
+- [x] Content-addressed state transfer reusing A-3 semantics and mapper.
+- [x] Actual managed cache/history clearing; stale field/receipt/source refusal.
+- [x] Adversarial tests written; independent static review PASS, all tests NOT RUN.
+- [x] Local Draft PR-ready package and deferred recipes DV-121..124.
+- [ ] Transient nonuniform vertex-centred FV/backward-Euler conduction and sourced inputs.
+- [ ] Explicit primal-interval vs vertex dual-control-volume state-placement adapter.
+- [ ] Adaptive transient loop, provider/cache adapters, refinement/conservation studies.
+- [ ] Owner-authorized validation, integration/certification and M1 gate decision.
+
+IMPLEMENTED / UNVERIFIED / UNCERTIFIED. This is M1A only; M1 is not complete.
+No capability promotion or arbitrary/durable lineage import. See M1A_MERGE_PACKAGE.md.
+
 ## Active repair - A-4 physics-neutral interface flux execution (2026-10-18)
 
 Branch codex/interface-flux-execution, base A-3 4f239fa7fe705e3d8ae390a8e885302dcb07904e.
