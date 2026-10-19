@@ -503,7 +503,11 @@ def test_probabilistic_tool_propagates_declared_distribution_only():
     }).structured_content
 
     assert response["status"] == "completed"
+    assert response["schema"] == "engineering_uncertainty_answer/2"
+    assert response["uncertainty"]["schema"] == "engineering_probabilistic_uq/2"
     assert response["dependence"] == "independent"
+    assert response["sample_design"]["sampler"]["algorithm"] == (
+        "scipy.stats.qmc.LatinHypercube")
     assert len(response["samples"]) == 8
     interval = next(
         item for item in response["uncertainty"]["intervals"]

@@ -70,7 +70,12 @@ from .planning import plan_engineering_intent
 from .answer import summarize_engineering_run
 from .scenario_uq import scenario_envelope
 from .context import evaluate_context
-from .probabilistic_uq import build_deterministic_samples, predictive_intervals
+from .probabilistic_uq import (
+    PROBABILISTIC_UQ_SCHEMA,
+    build_deterministic_samples,
+    predictive_intervals,
+    sample_design,
+)
 from .problem import (
     CaseDescription,
     build_electrothermal_system,
@@ -908,7 +913,7 @@ def answer_engineering_uncertainty(
     ]
     uq = (
         {
-            "schema": "engineering_probabilistic_uq/1",
+            "schema": PROBABILISTIC_UQ_SCHEMA,
             "status": "incomplete",
             "sample_count": len(samples),
             "incomplete_sample_indices": incomplete,
@@ -917,9 +922,11 @@ def answer_engineering_uncertainty(
         if incomplete else predictive_intervals(answers, credible_mass=credible_mass)
     )
     return {
-        "schema": "engineering_uncertainty_answer/1",
+        # /2 with engineering_probabilistic_uq/2 (BUY-01, FDA-04, FDA-14).
+        "schema": "engineering_uncertainty_answer/2",
         "status": uq["status"],
         "dependence": dependence,
+        "sample_design": sample_design(len(samples), len(uncertain_inputs)),
         "declared_inputs": uncertain_inputs,
         "uncertainty": uq,
         "samples": [
@@ -1484,15 +1491,25 @@ insufficient. Scenario bounds that straddle a threshold produce
 
 _PROBABILISTIC_UQ_DESCRIPTION = """\
 Propagate caller-declared uniform or normal input distributions through an
-engineering system using deterministic stratified Latin-hypercube samples.
+engineering system using a fixed-seed SciPy Latin hypercube on stratum
+midpoints, its columns re-paired (Iman-Conover) to reduce spurious correlation.
+A design is refused when sample_count does not exceed the number of uncertain
+inputs, or when its rank-correlation lambda_min is below 0.64 (some linear
+combination of inputs would keep under 0.8 of its declared spread). The sampler
+identity, the realised dependence and the linear-output sd band are returned as
+`sample_design`; the band does not bound nonlinear outputs.
 
 The caller must explicitly declare `dependence="independent"`; this version
-refuses correlated inputs rather than silently ignoring correlation. Every
-equal-mass sample passes through normal validity, validation and evidence. If
-any sample is not SUPPORTED, the tool returns
+refuses correlated inputs rather than silently ignoring correlation. A standard
+deviation must use a spread unit ("2 delta_degC" or "2 kelvin", never
+"2 degC"). Every equal-mass sample passes through normal validity, validation
+and evidence. If any sample is not SUPPORTED, the tool returns
 `predictive_support_not_admitted` with no intervals, refusing silent
-conditioning. Successful output includes empirical central intervals, mean and
-standard uncertainty, and explicitly excludes model-form uncertainty."""
+conditioning. If a tail of the requested credible_mass lies beyond the
+outermost stratum midpoint (0.5/sample_count), it returns
+`sample_resolution_insufficient`. Successful output includes empirical central
+intervals (Hazen quantiles; the mass is nominal, not calibrated coverage), mean
+and standard uncertainty, and explicitly excludes model-form uncertainty."""
 
 
 def build_server() -> MCPServer:
