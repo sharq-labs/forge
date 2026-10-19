@@ -150,3 +150,64 @@ def test_environment_manifest_of_this_tree_names_numpy_and_imports_every_probe_m
     manifest = environment.build_manifest()
     assert "numpy" in manifest["distributions"] and manifest["absent_probe_modules"] == []
     assert json.loads(v03p.PREREG_PATH.read_bytes())["escrow_half"]["sha256"] != "NOT_IN_TREE"
+
+
+# ---- the evaluator's post-reveal verification on real v0.3 records (review rounds 3-4) --------------------------------
+def _v03_attempt(tmp_path, tag, presentation="paraphrased"):
+    from benchmarks.genesis_lite.v0_3 import formal
+    from benchmarks.genesis_lite.v0_3.registry import AttemptRegistry, EvaluatorInbox
+
+    root, prereg = hashlib.sha256(b"e2e root " + tag.encode()).digest(), hashlib.sha256(b"e2e prereg").hexdigest()
+    reg, inbox = AttemptRegistry(tmp_path / tag / "reg"), EvaluatorInbox(tmp_path / tag / "inbox.jsonl")
+    admission = reg.admit(root_commitment_sha256=hashlib.sha256(root).hexdigest(), prereg_sha256=prereg,
+                          campaign_set_sha256=prereg, tier="formal")
+    inbox.receive(admission)
+    binding = _binding()
+
+    def runner(arm, *, master_seed, campaign_id, presentation, seed):
+        return harness.run_one(arm, binding=binding, master_seed=master_seed, campaign_id=campaign_id,
+                               presentation=presentation, seed=seed, isolation="in_process").to_dict()
+
+    master = formal.master_for(root, prereg, admission["nonce"], presentation, "gl-formal-5", 2)
+    records = [{**runner(arm, master_seed=master, campaign_id="gl-formal-5", presentation=presentation, seed=2),
+                "attempt_sha256": admission["attempt_sha256"]} for arm in ("careful", "always_refuse")]
+
+    def verify(recs):
+        log = formal.SealedLog(tmp_path / tag / "runs.jsonl")
+        for rec in recs:
+            log(rec)
+        log.close()
+        inbox.receive_heads(admission["attempt_sha256"], run_log=log.head, registry=reg.head())
+        return formal.verify_attempt(
+            tmp_path / tag / "runs.jsonl", root, admission, inbox=inbox, prereg_sha256=prereg,
+            pair_bound=TEST_BOUND.to_dict(), replay_runner=runner,
+            runs={(arm, (presentation, "gl-formal-5", 2)) for arm in ("careful", "always_refuse")})
+
+    return records, verify
+
+
+@pytest.mark.parametrize("presentation", ["paraphrased", "trap"])
+def test_harness_records_of_an_honest_attempt_verify_end_to_end(tmp_path, presentation):
+    records, verify = _v03_attempt(tmp_path, f"honest-{presentation}", presentation)
+    assert all(r["status"] == "VALID" for r in records)
+    assert all(isinstance(u["proposal"], dict) for r in records for u in r["universes"])
+    assert verify(records) == []
+
+
+def test_harness_a_forged_credit_or_flag_does_not_verify(tmp_path):
+    records, verify = _v03_attempt(tmp_path, "forged")
+    forged = json.loads(json.dumps(records))
+    u = forged[1]["universes"][0]
+    u["credit"] = 1.0 if u["credit"] != 1.0 else -1.0
+    assert any("re-scores to" in p or "replay does not reproduce" in p for p in verify(forged))
+
+
+def test_harness_a_whole_record_swap_between_arms_does_not_verify(tmp_path):
+    records, verify = _v03_attempt(tmp_path, "swap")
+    careful, refuse = records
+    swapped = [{**careful, "arm": "always_refuse", "presented_card_digests": refuse["presented_card_digests"],
+                "universes": careful["universes"]},
+               {**refuse, "arm": "careful", "presented_card_digests": careful["presented_card_digests"],
+                "universes": refuse["universes"]}]
+    problems = verify(swapped)
+    assert any("replay does not reproduce" in p for p in problems)
