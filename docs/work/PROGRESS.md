@@ -1,5 +1,25 @@
 # Forge Work Progress
 
+## Approved D1/D2/D3 application and integration in progress — 2026-10-18
+
+Owner explicitly approved the exact three corrections and resumption of bounded final integration. Proposal hashes and preimages verified against owner-analysis manifest; all three `git apply --check <exact proposal>` commands exited0, then `git apply <exact proposal>` exited0 for each. No broader source change; application and32-file preservation snapshot recorded in `.pytest-review-temp/final-integration-approved-2026-10-18/application.json`. Fresh census-before diagnostic confirmed same20 identities, sole M1C physical model0.1.0 addition, no import loss/collisions. Owner disposition status updated from actual approval/application, not inferred from file existence.
+
+Shorter final suites executed: targeted29; discovery3; claims175; M1A/B/C124; fixed regression279; compatibility153/1 explicit Windows symlink skip. Exact commands/env/counts/wall times/failures/source indexes appended in job entries below. Task-local path observer confirms formerly unreached M1A coarsen and transfer each reach the exact issuance-key guard (line224 twice), and D1 all missing-M1/failed-M1 branches. The unified48 pack is running once with1200s timeout; result is not yet claimed. All completed jobs' before/after source hashes agree.
+
+Separate archive diagnostic reproduced direct+registry refusal for frozen thermal.conduction1d.linear_diffusion@0.1.0 current/2 with null exclusions; direct+registry positive M1C control succeeds. Diagnostic exit0 is not compatibility PASS. Scientific impact remains UNCLASSIFIED and blocking dependent archive/readback claims; no archive behavior changed. Independent read-only reviews agree; no authority to repair reader or regenerate history inferred. No commit/push/merge/PR/OD-3/full assurance/full suite/standalone mutation campaign.
+
+## P0 closure disposition — 2026-10-18
+
+Final read-only checks: `git diff --check` executed, exit0 (only CRLF normalization warnings); no whitespace defects. Independent final report review:24 execution-log hashes and8 current source hashes match; all22 original failure/error cases covered exactly once. Final numerical reviewer found no remaining BLOCKER/MAJOR after reading both failure and corrected-pass traces. Review is static, not additional execution.
+
+Owner-approved exact patches applied after independent read-only review. Final report: `docs/work/P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md`; machine command/environment/hash evidence: `docs/work/evidence/p0_scientific_correctness_2026_10_18.json`.
+
+Conservation suite:42 passed/6 failed in825.51s (826.182s wall). All failures were a new fixture confusing signed net2.75W with absolute exchange3.75W. Actual reported values0.0375/0.01875/0.009375J match approved absolute-exchange semantics. Independent reviewer confirmed; same rel1e-7 retained, production unchanged, six cases rerun6 passed in7.86s (8.466s wall). Original test snapshot and failure logs preserved. No single all48-pass rerun claimed. No normal solver case refused unexpectedly; extreme high-Fourier tests may refuse and do not establish global-gate reachability or general roundoff acceptance. Larger-mesh setup remains costly; kernel8192-entry median0.05164s is not end-to-end performance qualification.
+
+Post-numerical bounded regression command/result and exact failing gate name are recorded in the execution entry below:277 passed/1 failed. Claims175 passed; compatibility153 passed/1 symlink skip; M1C/parent123 passed/1 M1A conservative refusal-text mismatch; discovery2 passed/1 count20-versus19 failure. Both reviewers found no remaining source BLOCKER/MAJOR; their static review is not test execution. Two report wording findings about source binding and pending numerical coverage were corrected before finalization.
+
+All22 original failed/error cases individually dispositioned;21 claims cases now pass, gate case remains red. Final production digests captured before/after bounded/compatibility/post-numerical jobs, unchanged. Original eight-file snapshots checked against initial hashes; historical report/JSON/probe/import-smoke/conversion remain byte-identical. ACTIVE_PLAN/PROGRESS and remediation addendum preserve prior content. No count pin, certificate, historical bundle, epic/ledger, unrelated checkout or process modified; no commit, push, PR, merge, OD-3/full assurance/full suite/standalone mutation campaign. Branch proceeds to owner review only; broader readiness and owner decisions remain explicit in report.
+
 This file is persistent engineering memory for long-running AI-assisted work.
 Keep it concise and factual. Do not use it as a release note or marketing log.
 
@@ -6635,6 +6655,840 @@ IMPLEMENTED / UNVERIFIED / UNCERTIFIED, NOT INTEGRATION-READY.
 - Independent static review: PASS; MINOR-1/2 and NOTE-2/4 applied; NOTE-1/3 recorded.
 - CERTIFICATION PENDING (OD-3) for `authorities.py`.
 - Tests: **NOT RUN**. Executed only `ast.parse` of every changed file and `git diff --check`.
+
+
+### Post-merge verification 2026-10-18 / recipe-1
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_phase2_review_regressions.py`
+- Result: EXECUTED, exit 2, 1.597s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\recipe-1.log`.
+```text
+    from ..fields.definition import FieldLocation
+src\engcore\scientific\fields\__init__.py:30: in <module>
+    from .conditions import (
+src\engcore\scientific\fields\conditions.py:25: in <module>
+    from .definition import FieldDefinition
+src\engcore\scientific\fields\definition.py:24: in <module>
+    from ..semantics import extend_payload, semantic_extension
+src\engcore\scientific\semantics.py:13: in <module>
+    from .composition.conversion import CONSERVATION_TOLERANCE, LossPath
+E   ImportError: cannot import name 'CONSERVATION_TOLERANCE' from partially initialized module 'engcore.scientific.composition.conversion' (most likely due to a circular import) (D:\forge-main-337519d1\src\engcore\scientific\composition\conversion.py)
+=========================== short test summary info ===========================
+ERROR tests/test_phase2_review_regressions.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.92s
+```
+
+
+### Post-merge verification 2026-10-18 / recipe-2
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_core_guards.py -k "discovery_found or solver_discovery"`
+- Result: EXECUTED, exit 2, 1.765s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\recipe-2.log`.
+```text
+    from ..fields.definition import FieldLocation
+src\engcore\scientific\fields\__init__.py:30: in <module>
+    from .conditions import (
+src\engcore\scientific\fields\conditions.py:25: in <module>
+    from .definition import FieldDefinition
+src\engcore\scientific\fields\definition.py:24: in <module>
+    from ..semantics import extend_payload, semantic_extension
+src\engcore\scientific\semantics.py:13: in <module>
+    from .composition.conversion import CONSERVATION_TOLERANCE, LossPath
+E   ImportError: cannot import name 'CONSERVATION_TOLERANCE' from partially initialized module 'engcore.scientific.composition.conversion' (most likely due to a circular import) (D:\forge-main-337519d1\src\engcore\scientific\composition\conversion.py)
+=========================== short test summary info ===========================
+ERROR tests/test_core_guards.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 1.11s
+```
+
+
+### Post-merge verification 2026-10-18 / recipe-3
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/numerical/test_newton_domain_errors.py tests/test_phase3_br13_numerical_stability.py tests/numerical/test_robust_nonlinear.py`
+- Result: EXECUTED, exit 2, 2.548s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\recipe-3.log`.
+```text
+    from ..fields.definition import FieldLocation
+src\engcore\scientific\fields\__init__.py:30: in <module>
+    from .conditions import (
+src\engcore\scientific\fields\conditions.py:25: in <module>
+    from .definition import FieldDefinition
+src\engcore\scientific\fields\definition.py:24: in <module>
+    from ..semantics import extend_payload, semantic_extension
+src\engcore\scientific\semantics.py:13: in <module>
+    from .composition.conversion import CONSERVATION_TOLERANCE, LossPath
+E   ImportError: cannot import name 'CONSERVATION_TOLERANCE' from partially initialized module 'engcore.scientific.composition.conversion' (most likely due to a circular import) (D:\forge-main-337519d1\src\engcore\scientific\composition\conversion.py)
+=========================== short test summary info ===========================
+ERROR tests/numerical/test_newton_domain_errors.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 1.90s
+```
+
+
+### Post-merge verification 2026-10-18 / recipe-4
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/numerical/test_phase1_sparse_correctness.py tests/test_interface_flux_execution.py`
+- Result: EXECUTED, exit 2, 2.128s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\recipe-4.log`.
+```text
+    from ..fields.definition import FieldLocation
+src\engcore\scientific\fields\__init__.py:30: in <module>
+    from .conditions import (
+src\engcore\scientific\fields\conditions.py:25: in <module>
+    from .definition import FieldDefinition
+src\engcore\scientific\fields\definition.py:24: in <module>
+    from ..semantics import extend_payload, semantic_extension
+src\engcore\scientific\semantics.py:13: in <module>
+    from .composition.conversion import CONSERVATION_TOLERANCE, LossPath
+E   ImportError: cannot import name 'CONSERVATION_TOLERANCE' from partially initialized module 'engcore.scientific.composition.conversion' (most likely due to a circular import) (D:\forge-main-337519d1\src\engcore\scientific\composition\conversion.py)
+=========================== short test summary info ===========================
+ERROR tests/numerical/test_phase1_sparse_correctness.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 1.54s
+```
+
+
+### Post-merge verification 2026-10-18 / recipe-5
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_m1c_transient_fv.py tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py`
+- Result: EXECUTED, exit 2, 2.505s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\recipe-5.log`.
+```text
+    from ..fields.definition import FieldLocation
+src\engcore\scientific\fields\__init__.py:30: in <module>
+    from .conditions import (
+src\engcore\scientific\fields\conditions.py:25: in <module>
+    from .definition import FieldDefinition
+src\engcore\scientific\fields\definition.py:24: in <module>
+    from ..semantics import extend_payload, semantic_extension
+src\engcore\scientific\semantics.py:13: in <module>
+    from .composition.conversion import CONSERVATION_TOLERANCE, LossPath
+E   ImportError: cannot import name 'CONSERVATION_TOLERANCE' from partially initialized module 'engcore.scientific.composition.conversion' (most likely due to a circular import) (D:\forge-main-337519d1\src\engcore\scientific\composition\conversion.py)
+=========================== short test summary info ===========================
+ERROR tests/test_m1c_transient_fv.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 1.80s
+```
+
+
+### Post-merge verification 2026-10-18 / recipe-6
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_phase3_br14_iqn_imvj.py tests/test_multiphysics_window_control.py`
+- Result: EXECUTED, exit 2, 2.106s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\recipe-6.log`.
+```text
+    from ..fields.definition import FieldLocation
+src\engcore\scientific\fields\__init__.py:30: in <module>
+    from .conditions import (
+src\engcore\scientific\fields\conditions.py:25: in <module>
+    from .definition import FieldDefinition
+src\engcore\scientific\fields\definition.py:24: in <module>
+    from ..semantics import extend_payload, semantic_extension
+src\engcore\scientific\semantics.py:13: in <module>
+    from .composition.conversion import CONSERVATION_TOLERANCE, LossPath
+E   ImportError: cannot import name 'CONSERVATION_TOLERANCE' from partially initialized module 'engcore.scientific.composition.conversion' (most likely due to a circular import) (D:\forge-main-337519d1\src\engcore\scientific\composition\conversion.py)
+=========================== short test summary info ===========================
+ERROR tests/test_phase3_br14_iqn_imvj.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 1.46s
+```
+
+
+### Post-merge verification 2026-10-18 / recipe-7
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_od30_multiscale_authority_identity.py tests/test_system_runtime_scenario_identity.py tests/test_system_runtime_multiscale_identity.py tests/test_multiscale_review_fixes.py`
+- Result: EXECUTED, exit 2, 3.207s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\recipe-7.log`.
+```text
+    from ..fields.definition import FieldLocation
+src\engcore\scientific\fields\__init__.py:30: in <module>
+    from .conditions import (
+src\engcore\scientific\fields\conditions.py:25: in <module>
+    from .definition import FieldDefinition
+src\engcore\scientific\fields\definition.py:24: in <module>
+    from ..semantics import extend_payload, semantic_extension
+src\engcore\scientific\semantics.py:13: in <module>
+    from .composition.conversion import CONSERVATION_TOLERANCE, LossPath
+E   ImportError: cannot import name 'CONSERVATION_TOLERANCE' from partially initialized module 'engcore.scientific.composition.conversion' (most likely due to a circular import) (D:\forge-main-337519d1\src\engcore\scientific\composition\conversion.py)
+=========================== short test summary info ===========================
+ERROR tests/test_od30_multiscale_authority_identity.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 2.39s
+```
+
+
+### Post-merge verification 2026-10-18 / corrected-recipe-1
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_phase2_review_regressions.py`
+- Result: EXECUTED, exit 1, 2.566s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\corrected-recipe-1.log`.
+```text
+                    # refusal in whatever wording -- means a forward tear became reachable
+>                   assert "leaves a cycle after its tears" in str(exc), (sorted(cp.edge_key(d) for d in subset), str(exc))
+E                   AssertionError: ([('electrical_dc:electrothermal-series-R1-R2-R3', 'resistor_power:R1', 'thermal-lumped-R1', 'heat_input'), ('electric...r:R3', 'thermal-lumped-R3', 'heat_input')], 'legacy quantity meanings differ; explicit semantic migration is required')
+E                   assert 'leaves a cycle after its tears' in 'legacy quantity meanings differ; explicit semantic migration is required'
+E                    +  where 'legacy quantity meanings differ; explicit semantic migration is required' = str(InvalidScientificProblem('legacy quantity meanings differ; explicit semantic migration is required'))
+
+tests\test_phase2_review_regressions.py:147: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_phase2_review_regressions.py::test_a_redundant_forward_tear_is_refused
+FAILED tests/test_phase2_review_regressions.py::test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build
+FAILED tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[1]
+FAILED tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[2]
+FAILED tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[3]
+5 failed, 4 passed in 1.91s
+```
+
+
+### Post-merge verification 2026-10-18 / corrected-recipe-2
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_core_guards.py -k "discovery_found or solver_discovery"`
+- Result: EXECUTED, exit 1, 7.544s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\corrected-recipe-2.log`.
+```text
+E       AssertionError: {'engcore.domains.thermal_models.conduction1d_transient_fv': "InvalidModelRealization: realization 'thermal.conduction...t declare at least one provided scientific capability; a realization that provides nothing can never satisfy anything"}
+E       assert not {'engcore.domains.thermal_models.conduction1d_transient_fv': "InvalidModelRealization: realization 'thermal.conduction...t declare at least one provided scientific capability; a realization that provides nothing can never satisfy anything"}
+
+tests\test_core_guards.py:1322: AssertionError
+============================== warnings summary ===============================
+tests\test_core_guards.py:102: 12 warnings
+  D:\forge-main-337519d1\tests\test_core_guards.py:102: DeprecationWarning: 'maxsplit' is passed as positional argument
+    distribution = re.split(r"[\s<>=!~\[;]", requirement.strip(), 1)[0]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_core_guards.py::test_the_discovery_found_exactly_the_repository
+FAILED tests/test_core_guards.py::test_the_solver_discovery_found_the_adapters
+2 failed, 1 passed, 271 deselected, 12 warnings in 6.39s
+```
+
+
+### Post-merge verification 2026-10-18 / corrected-recipe-3
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/numerical/test_newton_domain_errors.py tests/test_phase3_br13_numerical_stability.py tests/numerical/test_robust_nonlinear.py`
+- Result: EXECUTED, exit 0, 2.098s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\corrected-recipe-3.log`.
+```text
+........................................................................ [ 91%]
+.......                                                                  [100%]
+79 passed in 1.43s
+```
+
+
+### Post-merge verification 2026-10-18 / corrected-recipe-4
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/numerical/test_phase1_sparse_correctness.py tests/test_interface_flux_execution.py`
+- Result: EXECUTED, exit 1, 2.553s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\corrected-recipe-4.log`.
+```text
+    def test_unqualified_direct_mapper_escape_and_stale_support_refuse():
+        a, b, fa, fb, transfer = fixture()
+        store = InMemoryBulkStore()
+        record, _ = FieldValue(fa, a, np.array([[2.,6.]])).store(store)
+>       with pytest.raises(InvalidScientificProblem, match="A-4"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'A-4'
+E         Actual message: 'field meanings, kinds or measures differ; explicit transformation required'
+
+tests\test_interface_flux_execution.py:189: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_interface_flux_execution.py::test_unqualified_direct_mapper_escape_and_stale_support_refuse
+1 failed, 41 passed in 1.88s
+```
+
+
+### Post-merge verification 2026-10-18 / corrected-recipe-5
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_m1c_transient_fv.py tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py`
+- Result: EXECUTED, exit 2, 2.665s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\corrected-recipe-5.log`.
+```text
+_______________ ERROR collecting tests/test_m1c_transient_fv.py _______________
+tests\test_m1c_transient_fv.py:26: in <module>
+    from engcore.domains.thermal_models.conduction1d_transient_fv import (
+src\engcore\domains\thermal_models\conduction1d_transient_fv.py:60: in <module>
+    REALIZATION = ModelRealizationDefinition(
+<string>:14: in __init__
+    ???
+src\engcore\scientific\realizations\definition.py:297: in __post_init__
+    raise InvalidModelRealization(
+E   engcore.scientific.errors.InvalidModelRealization: realization 'thermal.conduction1d.transient_piecewise_linear.vertex_fv_be' must declare at least one provided scientific capability; a realization that provides nothing can never satisfy anything
+=========================== short test summary info ===========================
+ERROR tests/test_m1c_transient_fv.py - engcore.scientific.errors.InvalidModel...
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 1.88s
+```
+
+
+### Post-merge verification 2026-10-18 / corrected-recipe-6
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_phase3_br14_iqn_imvj.py tests/test_multiphysics_window_control.py`
+- Result: EXECUTED, exit 1, 2.027s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\corrected-recipe-6.log`.
+```text
+>       assert _subdivisions(plain) == 8 and _subdivisions(remembered) == 4
+E       AssertionError: assert (7 == 8)
+E        +  where 7 = _subdivisions(MultiphysicsRunRecord(run_id='wc', graph=PhysicsGraph(graph_id='wc-explicit', participants=(ParticipantSpec(participan...b0b488bfe16e27c9cb1fe030f456af6dc01', end_values=(), scenario_digest='')), termination=None, quantities_of_interest=()))
+
+tests\test_multiphysics_window_control.py:298: AssertionError
+============================== warnings summary ===============================
+tests/test_phase3_br14_iqn_imvj.py::test_a_non_finite_carried_step_falls_back_and_discards_the_approximation
+  D:\forge-main-337519d1\src\engcore\execution\multiphysics\acceleration.py:245: RuntimeWarning: invalid value encountered in matmul
+    step = new - carried @ residual
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable
+1 failed, 67 passed, 1 warning in 1.45s
+```
+
+
+### Post-merge verification 2026-10-18 / corrected-recipe-7
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_od30_multiscale_authority_identity.py tests/test_system_runtime_scenario_identity.py tests/test_system_runtime_multiscale_identity.py tests/test_multiscale_review_fixes.py`
+- Result: EXECUTED, exit 0, 64.277s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\corrected-recipe-7.log`.
+```text
+........................................................................ [ 86%]
+...........                                                              [100%]
+83 passed in 63.55s (0:01:03)
+```
+
+
+### Post-merge verification 2026-10-18 / bounded-1
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --changed --dry-run`
+- Result: EXECUTED, exit 0, 16.301s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\bounded-1.log`.
+```text
+  src/engcore/systems/multibody.py
+  src/engcore/systems/products/__init__.py
+  src/engcore/systems/products/drone.py
+  src/engcore/systems/products/drone_coupled.py
+  src/engcore/systems/products/drone_ratings.py
+  src/engcore/systems/products/hvac.py
+  src/engcore/systems/products/motor.py
+  src/engcore/systems/products/template.py
+  src/engcore/systems/products/vehicle.py
+  src/engcore/systems/twin_revision.py
+  tests/conftest.py
+  tools/forge_check.py
+  tools/test_impact.py
+$ 'C:\Users\dev_kaeem\AppData\Local\Python\pythoncore-3.14-64\python.exe' -m pytest -q -m 'not expensive'
+```
+
+
+### Post-merge verification 2026-10-18 / bounded-2
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_post_merge_import_smoke.py tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py`
+- Result: EXECUTED, exit 1, 12.540s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\bounded-2.log`.
+```text
+        runtime, _ = session()
+        original = state(runtime)
+        split = refine(runtime)
+        object.__setattr__(split.change.bisections[0].children[0], "parent_id", "forged")
+>       with pytest.raises(NumericalRefusal, match="tampered|unissued"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'tampered|unissued'
+E         Actual message: 'conflicting issued mesh registry key'
+
+tests\test_m1a_mesh_lineage.py:173: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_m1a_mesh_lineage.py::test_nested_record_tampering_poisoned_lineage_is_fail_closed
+1 failed, 84 passed in 11.92s
+```
+
+
+### Post-merge verification 2026-10-18 / bounded-3
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression`
+- Result: EXECUTED, exit 1, 12.629s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\bounded-3.log`.
+```text
+FAILED tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action
+FAILED tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq
+FAILED tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality
+FAILED tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused
+ERROR tests/test_forge_check.py::test_every_kind_of_change_is_detected_and_committed_only_is_narrower
+ERROR tests/test_forge_check.py::test_an_uncommitted_change_on_the_base_branch_itself_is_detected
+ERROR tests/test_forge_check.py::test_an_unknown_base_fails_loudly - Permissi...
+ERROR tests/test_capability_completion.py::test_a_superseded_schema_is_refused_not_read
+ERROR tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid
+ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid
+ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid
+ERROR tests/claims/test_impact_replay.py::test_untracked_manifest_digest_changes_with_file_content
+19 failed, 251 passed, 8 errors in 11.62s
+$ 'C:\Users\dev_kaeem\AppData\Local\Python\pythoncore-3.14-64\python.exe' -m pytest -q tests/test_repository_architecture.py tests/test_core_api_layering.py tests/test_scientific_regression_manifest.py tests/test_forge_check.py tests/test_agent_workflow_contract.py tests/test_capability_completion.py tests/claims/test_claims_assessment.py::test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation tests/claims/test_claims_assessment.py::test_the_value_compared_is_the_reports_never_the_callers tests/claims/test_claims_assessment.py::test_a_violated_comparison_without_the_required_evidence_is_not_a_contradiction tests/claims/test_claims_assessment.py::test_verification_cannot_satisfy_a_validation_requirement tests/claims/test_claims_assessment.py::test_a_model_outside_its_domain_never_contradicts_the_claim tests/claims/test_claims_assessment.py::test_asking_for_more_evidence_never_firms_up_the_answer tests/claims/test_claims_compiler.py::test_a_complete_t3_claim_is_ready_on_the_benchmark_capability tests/claims/test_claims_compiler.py::test_compilation_never_executes tests/claims/test_claims_compiler.py::test_a_candidate_outside_its_validated_domain_is_unsupported_not_contradicted tests/claims/test_claims_selection.py::test_unknown_applicability_never_beats_a_known_in_domain_candidate tests/claims/test_claims_selection.py::test_two_applicable_candidates_are_ambiguous_not_ranked tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid tests/claims/test_quantitative_uq.py::test_a_second_order_sequence_is_quantified_and_brackets_the_exact_value tests/claims/test_quantitative_uq.py::test_every_rule_failure_is_unknown_never_zero tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient tests/claims/test_quantitative_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict tests/claims/test_quantitative_uq.py::test_numerical_uq_cannot_satisfy_model_form tests/claims/test_quantitative_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand tests/claims/test_evidence_policy.py::test_more_risk_never_requires_less_evidence_within_a_profile tests/claims/test_evidence_policy.py::test_consequence_is_stated_never_inferred tests/claims/test_evidence_policy.py::test_a_policy_cannot_grant_what_the_run_lacks tests/claims/test_external_evidence.py::test_an_unpinned_measurement_is_weak_however_good_it_looks tests/claims/test_external_evidence.py::test_a_pinned_applicable_quantified_measurement_is_admissible_and_still_not_validation tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels tests/claims/test_evidence_gaps_next_experiment.py::test_every_verdict_is_fully_explained_by_its_blocking_gaps tests/claims/test_evidence_gaps_next_experiment.py::test_recommendations_address_real_gaps_and_promise_nothing tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused tests/claims/test_impact_replay.py::test_current_oracle_digest_drift_is_detected tests/claims/test_impact_replay.py::test_a_removed_policy_profile_is_detected tests/claims/test_impact_replay.py::test_untracked_manifest_digest_changes_with_file_content tests/claims/test_measurement_dataset.py::test_raw_nasa_row_cannot_masquerade_as_complete_battery_evidence tests/claims/test_model_form_discrepancy.py::test_calibration_envelope_must_survive_independent_holdout tests/claims/test_model_form_discrepancy.py::test_same_independence_group_cannot_leak_across_the_split tests/claims/test_model_form_discrepancy.py::test_residuals_below_known_uncertainty_do_not_establish_zero_model_form tests/domains/test_battery_thevenin.py::test_rest_interval_relaxes_polarization_without_changing_soc tests/claims/test_nasa_battery_aging_adapter.py::test_direct_voltage_observation_remains_nonadmissible_without_calibration_uq tests/claims/test_nasa_battery_aging_adapter.py::test_soc_trace_is_explicitly_derived_not_measurement_evidence tests/domainpacks/test_domain_pack_v1.py::test_registering_a_pack_does_not_enable_it tests/domainpacks/test_domain_pack_v1.py::test_manifest_runtime_drift_is_refused_before_registration tests/scientific/equations/test_dimensions.py::test_addition_rejects_incompatible_dimensions tests/scientific/equations/test_dimensions.py::test_dimensionless_functions_reject_dimensional_arguments tests/scientific/equations/test_law.py::test_law_rejects_undeclared_symbol tests/scientific/equations/test_law.py::test_law_rejects_wrong_binding_dimension tests/scientific/equations/test_adversarial.py::test_expression_payload_is_data_not_python_code tests/scientific/equations/test_reference.py::test_law_reference_rejects_changed_contract_under_same_id tests/scientific/validation_core/test_report.py::test_accepted_report_cannot_hide_failed_stage tests/scientific/replay_core/test_verify.py::test_environment_drift_refuses_replay_verification tests/credibility/evidence_graph/test_conflict.py::test_support_and_contradict_same_edge_is_conflict tests/uq/budget/test_correlation.py::test_unknown_correlation_component_is_refused tests/scientific/verification/test_adjudication.py::test_agreement_without_independence_is_not_verified tests/execution/orchestration/test_retry.py::test_failed_attempt_retries_only_inside_budget tests/scientific/certification_core/test_verify.py::test_missing_required_gate_refuses_certification tests/scientific/assurance_flow/test_decision.py::test_trust_requires_all_three_layers_green tests/core_extensions/test_new_core_mutations.py::test_new_core_guard_mutations_are_killed tests/core_extensions/test_new_core_adversarial.py::test_validated_model_form_cannot_have_zero_half_width tests/uq/model_form/test_study.py::test_compatible_units_are_normalized_before_residual_comparison tests/uq/model_form/test_authority.py::test_authority_requires_independent_review_identity tests/claims/test_model_form_uncertainty.py::test_unvalidated_model_form_cannot_cross_authority_boundary tests/scientific/verification/test_serialization.py::test_verification_round_trip_rederives_decision tests/scientific/certification_core/test_serialization.py::test_certification_round_trip_rederives_verification tests/uq/budget/test_serialization.py::test_budget_round_trip_recomputes_aggregate tests/credibility/test_replay_binding.py::test_assurance_bundle_becomes_content_addressed_replay_artifact tests/scientific/verification/test_route_bound_independence.py::test_every_agreeing_route_requires_its_own_independence_evidence tests/uq/budget/test_psd.py::test_non_psd_correlation_matrix_is_refused_even_when_each_pair_is_in_range tests/credibility/evidence_graph/test_lineage.py::test_derived_from_cycle_is_refused tests/execution/orchestration/test_runner.py::test_runner_falls_back_deterministically_until_converged tests/scientific/equations/test_derivatives_v2.py::test_derivative_binding_with_wrong_dimension_is_refused tests/scientific/equations/test_constraints_v2.py::test_constraint_wire_verdict_is_rederived tests/scientific/equations/test_assumptions_v2.py::test_checkable_assumption_can_be_satisfied_violated_or_unknown tests/scientific/equations/test_conditions_v2.py::test_condition_refuses_a_conflicting_location_binding tests/scientific/equations/test_transformations_v2.py::test_safe_symbol_isolation_records_nonzero_side_condition tests/scientific/equations/test_nondimensional_v2.py::test_ohm_law_nondimensionalization_produces_dimensionless_residual_equation tests/scientific/equations/test_differential_ode_v2.py::test_ode_contract_classifies_order_conditions_and_round_trips tests/scientific/equations/test_differential_pde_v2.py::test_two_space_dimensional_heat_equation_is_dimensionally_complete tests/scientific/equations/test_law_system_v2.py::test_law_system_binds_assumptions_conditions_and_differential_evidence tests/scientific/equations/test_differential_ode_v2.py::test_differential_problem_rejects_derivative_on_undeclared_independent_variable tests/uq/model_form/test_authority.py::test_authority_requires_exact_target_scope tests/uq/model_form/test_authority.py::test_authority_requires_estimator_qualification tests/uq/model_form/test_serialization.py::test_v1_payload_is_read_as_unscoped_and_cannot_gain_scope tests/uq/combined/test_lineage.py::test_shared_primitive_lineage_is_refused_before_combination tests/uq/combined/test_standard_rss.py::test_rss_requires_explicit_pair_correlation_by_default tests/uq/combined/test_psd.py::test_combined_standard_uq_refuses_non_psd_declared_correlation_matrix tests/uq/combined/test_intervals.py::test_conservative_interval_adds_asymmetric_widths_without_independence_claim tests/uq/combined/test_intervals.py::test_hybrid_interval_requires_explicit_k_and_records_it tests/uq/combined/test_serialization.py::test_combination_wire_output_is_recomputed_from_inputs tests/uq/combined/test_model_form_integration.py::test_authorized_model_form_interval_combines_with_numerical_without_losing_source_identity tests/scientific/verification/test_dependency_independence_v2.py::test_dependency_manifests_derive_none_partial_strong_and_external tests/scientific/verification/test_planning_v2.py::test_plan_rejects_low_verification_level_and_partial_independence tests/scientific/verification/test_external_requirement_v2.py::test_require_external_policy_is_incomplete_when_only_internal_strong_route_exists tests/scientific/verification/test_quantity_comparison_v2.py::test_dimensionally_foreign_verification_value_is_refused tests/execution/test_verification_runner_identity_v2.py::test_backend_identity_must_match_planned_route_before_execution tests/scientific/verification/test_replay_v2.py::test_verification_plan_refuses_forged_selected_route tests/scientific/verification/test_replay_v2.py::test_verification_run_refuses_forged_verdict tests/scientific/verification/test_orchestration_v2.py::test_plan_observations_produce_verified_report_only_when_all_required_routes_arrive_and_agree tests/scientific/knowledge/test_source_trust.py::test_same_source_id_with_changed_document_digest_is_not_trusted tests/scientific/knowledge/test_freshness.py::test_unconfigured_source_class_is_unknown_not_not_applicable tests/scientific/knowledge/test_claim_snapshot.py::test_numeric_claim_interval_must_contain_claimed_value tests/scientific/knowledge/test_admission.py::test_changed_context_is_refused_even_for_pinned_current_source tests/scientific/knowledge/test_ingestion.py::test_ingestion_receipt_refuses_missing_or_extra_claim_digest tests/scientific/knowledge/test_conflicts.py::test_nonoverlapping_explicit_intervals_are_recorded_as_disagreement tests/credibility/evidence_graph/test_knowledge_bridge.py::test_tampered_pin_identity_rederives_untrusted_and_strict_policy_refuses tests/credibility/evidence_graph/test_knowledge_bridge.py::test_evidence_wire_trust_status_is_rederived_not_trusted tests/credibility/evidence_graph/test_knowledge_bridge.py::test_provenance_freshness_status_is_rederived_not_trusted tests/credibility/evidence_graph/test_knowledge_bridge.py::test_unadmitted_context_never_crosses_knowledge_to_evidence_bridge tests/credibility/test_knowledge_replay_binding.py::test_knowledge_snapshot_and_evidence_graph_are_content_addressed_replay_artifacts tests/scientific/replay_core/test_environment_v2.py::test_runtime_dependency_digest_requires_actual_sha256_not_only_length tests/scientific/replay_core/test_environment_v2.py::test_replay_tolerance_refuses_nan_and_infinity tests/scientific/replay_core/test_manifest_v2.py::test_missing_required_artifact_kind_is_refused tests/scientific/replay_core/test_manifest_v2.py::test_replay_exact_kinds_must_be_required_by_profile tests/scientific/replay_core/test_manifest_v2.py::test_manifest_wire_digest_is_rederived tests/scientific/replay_core/test_run_replay_v2.py::test_replay_requires_binding_to_exact_expected_manifest_and_matching_contract tests/scientific/replay_core/test_run_replay_v2.py::test_missing_or_out_of_tolerance_output_refuses_replay tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_wire_verification_is_rederived tests/scientific/replay_core/test_lineage_v2.py::test_manifest_lineage_refuses_missing_or_wrong_parent_identity tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_rederives_validation_instead_of_trusting_accepted_flag tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_requires_complete_independent_verification tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_certification_profile_with_no_required_gate tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_binds_provenance_commit_to_certification_commit tests/credibility/test_assurance_manifest_v2.py::test_full_production_manifest_can_be_replayed_with_new_run_provenance_and_typed_output_tolerance tests/credibility/test_assurance_replay_bundle_v2.py::test_production_assurance_bundle_round_trips_all_payloads_and_manifest tests/credibility/test_assurance_replay_bundle_v2.py::test_payload_change_with_old_manifest_is_refused_by_content_addressing tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_forged_validation_is_still_refused_by_semantic_revalidation tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_provenance_with_wrong_certified_commit_is_still_refused tests/scientific/replay_core/test_manifest_v2.py::test_whitespace_parent_run_id_is_refused_even_with_a_digest tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_boundary_requires_typed_manifests_expectations_and_observations
+```
+
+
+### Post-merge verification 2026-10-18 / bounded-4
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -I docs/work/proposals/od22_replay.py`
+- Result: EXECUTED, exit 0, 0.084s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\bounded-4.log`.
+```text
+  [3/4, 1]  subdivisions=1
+  [1, 5/4]  subdivisions=1
+  [5/4, 3/2]  subdivisions=1
+  [3/2, 7/4]  subdivisions=1
+  [7/4, 2]  subdivisions=0
+growth 2: 4 subdivisions over 8 accepted windows
+  [0, 1/4]  subdivisions=1
+  [1/4, 1/2]  subdivisions=0
+  [1/2, 3/4]  subdivisions=1
+  [3/4, 1]  subdivisions=0
+  [1, 5/4]  subdivisions=1
+  [5/4, 3/2]  subdivisions=0
+  [3/2, 7/4]  subdivisions=1
+  [7/4, 2]  subdivisions=0
+```
+
+
+### Post-merge verification 2026-10-18 / bounded-5
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_phase1_coupling_convergence_coverage.py tests/test_electrothermal_vertical.py tests/architecture/test_cross_domain_fixtures.py`
+- Result: EXECUTED, exit 1, 3.199s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\bounded-5.log`.
+```text
+E           assert not True
+E            +  where True = any(<generator object test_l3_no_relaxation_appears_anywhere_in_the_module.<locals>.<genexpr> at 0x000002386616FCA0>)
+
+tests\test_electrothermal_vertical.py:1598: AssertionError
+============================== warnings summary ===============================
+tests/test_phase1_coupling_convergence_coverage.py::test_an_overflowing_iterate_fails_the_window_even_when_nonconvergence_is_allowed
+  D:\forge-main-337519d1\src\engcore\execution\multiphysics\relaxation.py:203: RuntimeWarning: overflow encountered in subtract
+    residual = new - old
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_phase1_coupling_convergence_coverage.py::test_a_self_loop_is_a_lagged_edge
+FAILED tests/test_electrothermal_vertical.py::test_l3_no_relaxation_appears_anywhere_in_the_module
+2 failed, 87 passed, 1 warning in 2.50s
+```
+
+
+### Post-merge verification 2026-10-18 / final-bounded-1
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression`
+- Result: EXECUTED, exit 1, 12.795s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\final-bounded-1.log`.
+```text
+FAILED tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels
+FAILED tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict
+FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[study]
+FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[value]
+FAILED tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result
+FAILED tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action
+FAILED tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq
+FAILED tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality
+FAILED tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused
+ERROR tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid
+ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid
+ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid
+19 failed, 256 passed, 3 errors in 11.85s
+$ 'C:\Users\dev_kaeem\AppData\Local\Python\pythoncore-3.14-64\python.exe' -m pytest -q tests/test_repository_architecture.py tests/test_core_api_layering.py tests/test_scientific_regression_manifest.py tests/test_forge_check.py tests/test_agent_workflow_contract.py tests/test_capability_completion.py tests/claims/test_claims_assessment.py::test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation tests/claims/test_claims_assessment.py::test_the_value_compared_is_the_reports_never_the_callers tests/claims/test_claims_assessment.py::test_a_violated_comparison_without_the_required_evidence_is_not_a_contradiction tests/claims/test_claims_assessment.py::test_verification_cannot_satisfy_a_validation_requirement tests/claims/test_claims_assessment.py::test_a_model_outside_its_domain_never_contradicts_the_claim tests/claims/test_claims_assessment.py::test_asking_for_more_evidence_never_firms_up_the_answer tests/claims/test_claims_compiler.py::test_a_complete_t3_claim_is_ready_on_the_benchmark_capability tests/claims/test_claims_compiler.py::test_compilation_never_executes tests/claims/test_claims_compiler.py::test_a_candidate_outside_its_validated_domain_is_unsupported_not_contradicted tests/claims/test_claims_selection.py::test_unknown_applicability_never_beats_a_known_in_domain_candidate tests/claims/test_claims_selection.py::test_two_applicable_candidates_are_ambiguous_not_ranked tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid tests/claims/test_quantitative_uq.py::test_a_second_order_sequence_is_quantified_and_brackets_the_exact_value tests/claims/test_quantitative_uq.py::test_every_rule_failure_is_unknown_never_zero tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient tests/claims/test_quantitative_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict tests/claims/test_quantitative_uq.py::test_numerical_uq_cannot_satisfy_model_form tests/claims/test_quantitative_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand tests/claims/test_evidence_policy.py::test_more_risk_never_requires_less_evidence_within_a_profile tests/claims/test_evidence_policy.py::test_consequence_is_stated_never_inferred tests/claims/test_evidence_policy.py::test_a_policy_cannot_grant_what_the_run_lacks tests/claims/test_external_evidence.py::test_an_unpinned_measurement_is_weak_however_good_it_looks tests/claims/test_external_evidence.py::test_a_pinned_applicable_quantified_measurement_is_admissible_and_still_not_validation tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels tests/claims/test_evidence_gaps_next_experiment.py::test_every_verdict_is_fully_explained_by_its_blocking_gaps tests/claims/test_evidence_gaps_next_experiment.py::test_recommendations_address_real_gaps_and_promise_nothing tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused tests/claims/test_impact_replay.py::test_current_oracle_digest_drift_is_detected tests/claims/test_impact_replay.py::test_a_removed_policy_profile_is_detected tests/claims/test_impact_replay.py::test_untracked_manifest_digest_changes_with_file_content tests/claims/test_measurement_dataset.py::test_raw_nasa_row_cannot_masquerade_as_complete_battery_evidence tests/claims/test_model_form_discrepancy.py::test_calibration_envelope_must_survive_independent_holdout tests/claims/test_model_form_discrepancy.py::test_same_independence_group_cannot_leak_across_the_split tests/claims/test_model_form_discrepancy.py::test_residuals_below_known_uncertainty_do_not_establish_zero_model_form tests/domains/test_battery_thevenin.py::test_rest_interval_relaxes_polarization_without_changing_soc tests/claims/test_nasa_battery_aging_adapter.py::test_direct_voltage_observation_remains_nonadmissible_without_calibration_uq tests/claims/test_nasa_battery_aging_adapter.py::test_soc_trace_is_explicitly_derived_not_measurement_evidence tests/domainpacks/test_domain_pack_v1.py::test_registering_a_pack_does_not_enable_it tests/domainpacks/test_domain_pack_v1.py::test_manifest_runtime_drift_is_refused_before_registration tests/scientific/equations/test_dimensions.py::test_addition_rejects_incompatible_dimensions tests/scientific/equations/test_dimensions.py::test_dimensionless_functions_reject_dimensional_arguments tests/scientific/equations/test_law.py::test_law_rejects_undeclared_symbol tests/scientific/equations/test_law.py::test_law_rejects_wrong_binding_dimension tests/scientific/equations/test_adversarial.py::test_expression_payload_is_data_not_python_code tests/scientific/equations/test_reference.py::test_law_reference_rejects_changed_contract_under_same_id tests/scientific/validation_core/test_report.py::test_accepted_report_cannot_hide_failed_stage tests/scientific/replay_core/test_verify.py::test_environment_drift_refuses_replay_verification tests/credibility/evidence_graph/test_conflict.py::test_support_and_contradict_same_edge_is_conflict tests/uq/budget/test_correlation.py::test_unknown_correlation_component_is_refused tests/scientific/verification/test_adjudication.py::test_agreement_without_independence_is_not_verified tests/execution/orchestration/test_retry.py::test_failed_attempt_retries_only_inside_budget tests/scientific/certification_core/test_verify.py::test_missing_required_gate_refuses_certification tests/scientific/assurance_flow/test_decision.py::test_trust_requires_all_three_layers_green tests/core_extensions/test_new_core_mutations.py::test_new_core_guard_mutations_are_killed tests/core_extensions/test_new_core_adversarial.py::test_validated_model_form_cannot_have_zero_half_width tests/uq/model_form/test_study.py::test_compatible_units_are_normalized_before_residual_comparison tests/uq/model_form/test_authority.py::test_authority_requires_independent_review_identity tests/claims/test_model_form_uncertainty.py::test_unvalidated_model_form_cannot_cross_authority_boundary tests/scientific/verification/test_serialization.py::test_verification_round_trip_rederives_decision tests/scientific/certification_core/test_serialization.py::test_certification_round_trip_rederives_verification tests/uq/budget/test_serialization.py::test_budget_round_trip_recomputes_aggregate tests/credibility/test_replay_binding.py::test_assurance_bundle_becomes_content_addressed_replay_artifact tests/scientific/verification/test_route_bound_independence.py::test_every_agreeing_route_requires_its_own_independence_evidence tests/uq/budget/test_psd.py::test_non_psd_correlation_matrix_is_refused_even_when_each_pair_is_in_range tests/credibility/evidence_graph/test_lineage.py::test_derived_from_cycle_is_refused tests/execution/orchestration/test_runner.py::test_runner_falls_back_deterministically_until_converged tests/scientific/equations/test_derivatives_v2.py::test_derivative_binding_with_wrong_dimension_is_refused tests/scientific/equations/test_constraints_v2.py::test_constraint_wire_verdict_is_rederived tests/scientific/equations/test_assumptions_v2.py::test_checkable_assumption_can_be_satisfied_violated_or_unknown tests/scientific/equations/test_conditions_v2.py::test_condition_refuses_a_conflicting_location_binding tests/scientific/equations/test_transformations_v2.py::test_safe_symbol_isolation_records_nonzero_side_condition tests/scientific/equations/test_nondimensional_v2.py::test_ohm_law_nondimensionalization_produces_dimensionless_residual_equation tests/scientific/equations/test_differential_ode_v2.py::test_ode_contract_classifies_order_conditions_and_round_trips tests/scientific/equations/test_differential_pde_v2.py::test_two_space_dimensional_heat_equation_is_dimensionally_complete tests/scientific/equations/test_law_system_v2.py::test_law_system_binds_assumptions_conditions_and_differential_evidence tests/scientific/equations/test_differential_ode_v2.py::test_differential_problem_rejects_derivative_on_undeclared_independent_variable tests/uq/model_form/test_authority.py::test_authority_requires_exact_target_scope tests/uq/model_form/test_authority.py::test_authority_requires_estimator_qualification tests/uq/model_form/test_serialization.py::test_v1_payload_is_read_as_unscoped_and_cannot_gain_scope tests/uq/combined/test_lineage.py::test_shared_primitive_lineage_is_refused_before_combination tests/uq/combined/test_standard_rss.py::test_rss_requires_explicit_pair_correlation_by_default tests/uq/combined/test_psd.py::test_combined_standard_uq_refuses_non_psd_declared_correlation_matrix tests/uq/combined/test_intervals.py::test_conservative_interval_adds_asymmetric_widths_without_independence_claim tests/uq/combined/test_intervals.py::test_hybrid_interval_requires_explicit_k_and_records_it tests/uq/combined/test_serialization.py::test_combination_wire_output_is_recomputed_from_inputs tests/uq/combined/test_model_form_integration.py::test_authorized_model_form_interval_combines_with_numerical_without_losing_source_identity tests/scientific/verification/test_dependency_independence_v2.py::test_dependency_manifests_derive_none_partial_strong_and_external tests/scientific/verification/test_planning_v2.py::test_plan_rejects_low_verification_level_and_partial_independence tests/scientific/verification/test_external_requirement_v2.py::test_require_external_policy_is_incomplete_when_only_internal_strong_route_exists tests/scientific/verification/test_quantity_comparison_v2.py::test_dimensionally_foreign_verification_value_is_refused tests/execution/test_verification_runner_identity_v2.py::test_backend_identity_must_match_planned_route_before_execution tests/scientific/verification/test_replay_v2.py::test_verification_plan_refuses_forged_selected_route tests/scientific/verification/test_replay_v2.py::test_verification_run_refuses_forged_verdict tests/scientific/verification/test_orchestration_v2.py::test_plan_observations_produce_verified_report_only_when_all_required_routes_arrive_and_agree tests/scientific/knowledge/test_source_trust.py::test_same_source_id_with_changed_document_digest_is_not_trusted tests/scientific/knowledge/test_freshness.py::test_unconfigured_source_class_is_unknown_not_not_applicable tests/scientific/knowledge/test_claim_snapshot.py::test_numeric_claim_interval_must_contain_claimed_value tests/scientific/knowledge/test_admission.py::test_changed_context_is_refused_even_for_pinned_current_source tests/scientific/knowledge/test_ingestion.py::test_ingestion_receipt_refuses_missing_or_extra_claim_digest tests/scientific/knowledge/test_conflicts.py::test_nonoverlapping_explicit_intervals_are_recorded_as_disagreement tests/credibility/evidence_graph/test_knowledge_bridge.py::test_tampered_pin_identity_rederives_untrusted_and_strict_policy_refuses tests/credibility/evidence_graph/test_knowledge_bridge.py::test_evidence_wire_trust_status_is_rederived_not_trusted tests/credibility/evidence_graph/test_knowledge_bridge.py::test_provenance_freshness_status_is_rederived_not_trusted tests/credibility/evidence_graph/test_knowledge_bridge.py::test_unadmitted_context_never_crosses_knowledge_to_evidence_bridge tests/credibility/test_knowledge_replay_binding.py::test_knowledge_snapshot_and_evidence_graph_are_content_addressed_replay_artifacts tests/scientific/replay_core/test_environment_v2.py::test_runtime_dependency_digest_requires_actual_sha256_not_only_length tests/scientific/replay_core/test_environment_v2.py::test_replay_tolerance_refuses_nan_and_infinity tests/scientific/replay_core/test_manifest_v2.py::test_missing_required_artifact_kind_is_refused tests/scientific/replay_core/test_manifest_v2.py::test_replay_exact_kinds_must_be_required_by_profile tests/scientific/replay_core/test_manifest_v2.py::test_manifest_wire_digest_is_rederived tests/scientific/replay_core/test_run_replay_v2.py::test_replay_requires_binding_to_exact_expected_manifest_and_matching_contract tests/scientific/replay_core/test_run_replay_v2.py::test_missing_or_out_of_tolerance_output_refuses_replay tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_wire_verification_is_rederived tests/scientific/replay_core/test_lineage_v2.py::test_manifest_lineage_refuses_missing_or_wrong_parent_identity tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_rederives_validation_instead_of_trusting_accepted_flag tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_requires_complete_independent_verification tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_refuses_certification_profile_with_no_required_gate tests/credibility/test_assurance_manifest_v2.py::test_production_manifest_binds_provenance_commit_to_certification_commit tests/credibility/test_assurance_manifest_v2.py::test_full_production_manifest_can_be_replayed_with_new_run_provenance_and_typed_output_tolerance tests/credibility/test_assurance_replay_bundle_v2.py::test_production_assurance_bundle_round_trips_all_payloads_and_manifest tests/credibility/test_assurance_replay_bundle_v2.py::test_payload_change_with_old_manifest_is_refused_by_content_addressing tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_forged_validation_is_still_refused_by_semantic_revalidation tests/credibility/test_assurance_replay_bundle_v2.py::test_rehashed_provenance_with_wrong_certified_commit_is_still_refused tests/scientific/replay_core/test_manifest_v2.py::test_whitespace_parent_run_id_is_refused_even_with_a_digest tests/scientific/replay_core/test_run_replay_v2.py::test_run_replay_boundary_requires_typed_manifests_expectations_and_observations
+```
+
+
+### Post-merge verification 2026-10-18 / final-bounded-2
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_checkpoint_integrity_hardening.py tests/test_external_participant_checkpoints.py tests/test_provider_participant_checkpoints.py`
+- Result: EXECUTED, exit 0, 2.254s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\final-bounded-2.log`.
+```text
+.......................................................                  [100%]
+55 passed in 1.63s
+```
+
+
+### Post-merge verification 2026-10-18 / final-bounded-3
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/architecture/test_quantity_semantics.py tests/test_declared_field_kind_mapping.py`
+- Result: EXECUTED, exit 0, 1.974s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\final-bounded-3.log`.
+```text
+........................................................                 [100%]
+56 passed in 1.32s
+```
+
+
+### Post-merge verification 2026-10-18 / final-bounded-4
+- Commit: `93ed64b0292e9fea714ac83affb64b71488ac050 + uncommitted import-order correction`; environment: CPython3.14.2 Windows base; process-local platform._wmi=None fallback; BLAS threads=1; PYTHONPATH bootstrap+target/src.
+- Exact command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_core_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py`
+- Result: EXECUTED, exit 0, 30.625s. Log: `D:\forge-main-337519d1\.pytest-review-temp\post-merge-verification\final-bounded-4.log`.
+```text
+........................................................................ [ 47%]
+........................................................................ [ 95%]
+.....s.                                                                  [100%]
+150 passed, 1 skipped in 29.87s
+```
+
+
+## Post-merge remediation verification closeout — 2026-10-18
+
+Target clean initially at 93ed64b0292e9fea714ac83affb64b71488ac050 (parent 337519d1944bd52c5711a657a926ad855ac8d868), branch fix/post-merge-remediation-2026-10-18. Original inventory 23 files = 8 source + 9 tests + 6 docs/proposals (handoff claimed 10 tests + 5 docs). No existing changes overwritten; all edits uncommitted.
+
+Environment diagnostic commands: bounded subprocess probes stored as exact argv in docs/work/evidence/post_merge_2026_10_18.json. Base import probe and venv Pint probe timed out 20s; venv SciPy probe and wsl.exe --list --quiet timed out 25s. Faulthandler at 12s located platform._wmi_query/_wmi.exec_query. Initial Get-CimInstance process query stalled and its own command was interrupted; no unrelated process touched. Get-Process observed 14 python processes including 6 shared-venv paths; exact session ownership unavailable. No installs/upgrades. Sampled RECORD hashes matched both dependency trees (partial integrity only).
+
+Task-local bootstrap uses platform._wmi=None to activate real Windows fallback. Working imports completed 0.707s. Tests use base CPython3.14.2/NumPy2.4.3/SciPy1.18.0/Pint0.25.3/pytest9.0.2, BLAS thread limits1, PYTHONPATH bootstrap+target/src. This is not supported 3.11/3.12 certification evidence. For final-bounded-1..4 exact PYTEST_ADDOPTS values are preserved in evidence JSON (Windows backslashes; archive caveat below); this removed 5 environmental fixture errors, not 19 failures / 3 bridge type errors.
+
+Bounded correction: scientific/composition/conversion.py publishes unchanged LossPath before importing unchanged ValidityStatus, breaking the import cycle. Independent compatibility reviewer found same symbols/signatures/schema/tolerance/serialization;150 compatibility tests passed, 1 skipped (skip identity not emitted). New 3 fresh-process import tests passed within bounded-2. All original 7 collection-failure logs retained. No scientific identity or count pin changed.
+
+Exact numerical diagnostic command executed (with documented bootstrap/thread environment):
+`C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B .pytest-review-temp/post-merge-verification/energy_probe.py`
+Result: exit0; diagnostic-specific timing not isolated. Saved log energy-probe.log; reproducible script copied to docs/work/evidence/post_merge_2026_10_18_energy_probe.py. Source-extracted unchanged admission block (not production M1C execution): same 1e-7 J uniform leak rejected at 4/32/128 cells, admitted at 256/512 cells. Independent formula 64*eps*(600+120*N²) agrees. This contradicts mesh-independent admission; no numerical tolerance/floor changed. M1C realization refuses empty provided_capabilities; requires scientific identity/compatibility decision. Batch D end-to-end unavailable.
+
+Positive subset results and every red command above are exact executed evidence only. Independent reviewers' static conclusions are not validation. Remaining cleanup gap before main runtime try/finally, unresolved OD-29 inner provenance, initial-slow identity and FAILED-vs-REFUSED are open. All named owner decisions remain open. Final fixed regression: 19 failed, 256 passed, 3 errors; complete names in evidence JSON and report. Do not infer baseline equivalence or environment-only causes without a control.
+
+Review report: docs/work/POST_MERGE_REMEDIATION_VERIFICATION.md. Outcome: BLOCKED_BY_SCIENTIFIC_CORRECTNESS; merge/Phase3.5/recertification readiness not achieved. Genesis-lite preparation allowed; G0 and dependent scientific claims remain blocked. No active-epic/ledger change, commit/push/PR/merge, package mutation, bundle regeneration, full tier/full mutation campaign/full assurance/OD-3, reboot or unrelated-process termination.
+
+Failed approaches to preserve: direct scientific imports remain host-WMI-blocked absent task-local fallback; original exact recipes all hit a repository cycle; the new tampered forward fixture never reaches the guard; whole M1C pack cannot collect due invalid realization; default pytest temp has WinError5; rerun with isolated temp still red. Do not repeat these without addressing causes. forge_check --changed dry-run selected full FAST; actual full FAST NOT RUN under user restriction.
+
+
+Final documentation/evidence audit: use UTF-8 explicitly when reading the report; an initial closeout edit using Python's cp1252 default failed with UnicodeDecodeError before any write and was corrected. PYTEST_ADDOPTS Windows backslashes were consumed by pytest splitting, creating two task-specific temp directories at the target root. Exact original env values remain in evidence JSON. Those two generated directories were verified to resolve inside D:/forge-main-337519d1 and preserved by native PowerShell Move-Item into ignored .pytest-review-temp/post-merge-verification/archived-<original-name>. No unrelated paths were moved or deleted. Use forward slashes for future PYTEST_ADDOPTS. No scientific evidence was regenerated.
+
+Independent final report reviewer requested correcting an overstrict certification prerequisite: Genesis governance permits isolating a proven GOVERNANCE_ONLY certificate blocker with all six circuit-breaker answers, preserving red and labelling outputs uncertified. Report corrected; current scientific/unclassified blockers do not qualify.
+
+
+Final check executed: `git diff --check` -> exit 0 (only CRLF normalization notices). Evidence audit executed with stdlib Python: all 23 recorded command-log SHA-256 values and the three session source/test/probe digests match preserved files. This is file-integrity inspection, not scientific validation. HEAD and branch unchanged; eight task files remain uncommitted.
+
+
+### P0 closure / baseline-regression / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\baseline-regression.json.
+- Result: EXECUTED, exit 1, 13.365s; 20 failed, 255 passed, 3 errors in 12.34s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\baseline-regression.log`.
+```text
+FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]
+FAILED tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic
+FAILED tests/claims/test_claims_assessment.py::test_a_t3_claim_at_the_benchmark_point_is_supported_with_benchmark_validation
+FAILED tests/claims/test_claims_assessment.py::test_the_value_compared_is_the_reports_never_the_callers
+FAILED tests/claims/test_claims_assessment.py::test_a_violated_comparison_without_the_required_evidence_is_not_a_contradiction
+FAILED tests/claims/test_claims_assessment.py::test_verification_cannot_satisfy_a_validation_requirement
+FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[tolerance_band]
+FAILED tests/claims/test_quantitative_uq.py::test_an_interval_that_crosses_the_boundary_is_insufficient[threshold]
+FAILED tests/claims/test_quantitative_uq.py::test_removing_uq_evidence_cannot_improve_the_verdict
+FAILED tests/claims/test_quantitative_uq.py::test_numerical_uq_cannot_satisfy_model_form
+FAILED tests/claims/test_quantitative_uq.py::test_parameter_uq_cannot_satisfy_a_numerical_demand
+FAILED tests/claims/test_external_evidence.py::test_offered_external_evidence_never_changes_the_verdict_or_the_levels
+FAILED tests/claims/test_sensitivity_robustness_challenge.py::test_a_challenge_never_changes_the_verdict
+FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[study]
+FAILED tests/claims/test_impact_replay.py::test_any_edit_to_a_bundle_is_detected[value]
+FAILED tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result
+FAILED tests/claims/test_scientific_diagnostics.py::test_model_form_gap_becomes_a_root_cause_and_a_non_guaranteed_corrective_action
+FAILED tests/claims/test_scientific_diagnostics.py::test_admissible_model_data_mismatch_is_diagnosed_without_becoming_model_form_uq
+FAILED tests/claims/test_scientific_diagnostics.py::test_sensitivity_can_rank_repair_hypotheses_but_never_establish_causality
+FAILED tests/claims/test_scientific_diagnostics.py::test_sealed_sensitivity_from_another_assessment_is_refused
+ERROR tests/claims/test_sria_context_authority.py::test_same_qoi_same_value_wrong_charter_cannot_become_valid
+ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_wrong_decision_id_cannot_become_valid
+ERROR tests/claims/test_sria_context_authority.py::test_same_evidence_changed_context_cannot_become_valid
+```
+
+
+### P0 closure / replay-negative-before / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_p0_replay_execution_authority.py`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\replay-negative-before.json.
+- Result: EXECUTED, exit 1, 4.679s; 3 failed in 3.83s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\replay-negative-before.log`.
+```text
+FAILED tests/claims/test_p0_replay_execution_authority.py::test_matching_nonexecutions_cannot_receive_scientific_replay_verification[refused]
+FAILED tests/claims/test_p0_replay_execution_authority.py::test_matching_nonexecutions_cannot_receive_scientific_replay_verification[missing_report]
+FAILED tests/claims/test_p0_replay_execution_authority.py::test_matching_nonexecutions_cannot_receive_scientific_replay_verification[not_planned]
+```
+
+
+### P0 closure / identity-correction-targeted / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_m1c_transient_fv.py tests/claims/test_claims_assessment.py`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\identity-correction-targeted.json.
+- Result: EXECUTED, exit 1, 116.791s; 2 failed, 68 passed in 115.99s (0:01:55). Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\identity-correction-targeted.log`.
+```text
+FAILED tests/test_m1c_transient_fv.py::test_exact_window_dt_basis_and_clock_identity_refuse
+FAILED tests/claims/test_claims_assessment.py::test_the_mcp_tool_returns_the_same_record
+```
+
+
+### P0 closure / replay-negative-after / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_p0_replay_execution_authority.py tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result tests/test_m1c_transient_fv.py::test_exact_window_dt_basis_and_clock_identity_refuse`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\replay-negative-after.json.
+- Result: EXECUTED, exit 1, 6.265s; 1 failed, 4 passed in 5.50s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\replay-negative-after.log`.
+```text
+FAILED tests/claims/test_p0_replay_execution_authority.py::test_matching_nonexecutions_cannot_receive_scientific_replay_verification[missing_report]
+```
+
+
+### P0 closure / replay-negative-after-fixture-repair / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_p0_replay_execution_authority.py tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\replay-negative-after-fixture-repair.json.
+- Result: EXECUTED, exit 1, 6.109s; 1 failed, 3 passed in 5.30s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\replay-negative-after-fixture-repair.log`.
+```text
+FAILED tests/claims/test_p0_replay_execution_authority.py::test_matching_nonexecutions_cannot_receive_scientific_replay_verification[missing_report]
+```
+
+
+### P0 closure / replay-bound-negative-controls / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_p0_replay_execution_authority.py tests/claims/test_impact_replay.py::test_replay_detects_a_changed_solver_result`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\replay-bound-negative-controls.json.
+- Result: EXECUTED, exit 0, 6.15s; 4 passed in 5.38s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\replay-bound-negative-controls.log`.
+```text
+
+```
+
+
+### P0 closure / project-dependencies-probe / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -c "import sys,importlib.metadata as m,engcore,scipy,numpy,pint,mcp; print(sys.executable);print(engcore.__file__);print([(x,m.version(x)) for x in (\"numpy\",\"scipy\",\"pint\",\"pytest\",\"mcp\")]);print(scipy.__file__); print(mcp.__file__)"`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\project-dependencies-probe.json.
+- Result: EXECUTED, exit 1, 0.966s; . Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\project-dependencies-probe.log`.
+```text
+
+```
+
+
+### P0 closure / proper-project-venv-probe / 2026-10-18
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -c "import sys,importlib.metadata as m,engcore,scipy,numpy,pint,mcp; print(sys.executable);print(engcore.__file__);print([(x,m.version(x)) for x in (\"numpy\",\"scipy\",\"pint\",\"pytest\",\"mcp\")]);print(scipy.__file__); print(mcp.__file__)"`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\proper-project-venv-probe.json.
+- Result: EXECUTED, exit 0, 0.966s; . Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\proper-project-venv-probe.log`.
+```text
+
+```
+
+
+P0 investigation milestone: baseline reproduced original19 failures/3 errors plus one new documentation-layout failure (20 failed,255 passed,3 errors). Prior verification inserted a section before the line3 active-epic pin. Moved the unchanged epic paragraph back to line3, preserving all prior section content and the same epic; no ledger or test assertion changed. Original baseline log preserved.
+
+Owner explicitly approved existing transient capability + M1C realization0.2.0 correction, with unchanged physical model/equations/tolerances/pins/history. Independent exact-patch read-only review found precisely those3 source edits and accurate scientific meaning. Initial git apply--check/apply on CRLF proposal failed before writing; applied the exact three edits using patch tool. Snapshot .pytest-review-temp/p0-closure/m1c-identity-authorized-source.py preserves the identity-only source. Model report construction resumed. New TimePoint fixture error: integer0 rejected before intended dt mismatch; repaired to existing exact Fraction(0), no assertion changed. MCP optional environment failure in base3.14 is distinct; existing proper project venv imports all required packages without installation or environment edits. A failed mixed PYTHONPATH package-root probe lacked pywintypes because .pth initialization was absent; do not repeat that approach. Proper venv startup handles its native dependency paths, with task-local WMI workaround.
+
+Independent replay review classified matching-refusal VERIFIED as an existing-contract bug; fixed via executed/bound/result/run-identity prerequisite without changing schemas, enums, trust bar or numeric comparison. Initial new missing-report test fixture was invalid at CapabilityRun construction; the second valid wrong-instance fixture was already rejected offline as TAMPERED. Replaced the new fixture with a genuine report under a different run id to reach the intended unbound replay boundary. These test-authoring failures are preserved in logs; no production guard was bypassed. Refusal/unplanned controls demonstrated false VERIFIED before fix; final refusal/wrong-run/unplanned plus numeric-drift controls4 passed.
+
+Conservation exact rational global policy and separately retained local criterion have independent numerical review and an exact patch/decision document. Policy replacement remains pending explicit owner approval; M1C identity approval does not authorize it. No rtol/atol, count pin, certificate or historical bundle changed.
+
+
+### P0 closure / affected-claims-suites / 2026-10-18
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_claims_assessment.py tests/claims/test_quantitative_uq.py tests/claims/test_external_evidence.py tests/claims/test_sensitivity_robustness_challenge.py tests/claims/test_impact_replay.py tests/claims/test_scientific_diagnostics.py tests/claims/test_sria_context_authority.py tests/claims/test_p0_replay_execution_authority.py`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\affected-claims-suites.json.
+- Result: EXECUTED, exit 0, 23.091s; 170 passed in 22.07s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\affected-claims-suites.log`.
+```text
+
+```
+
+
+### P0 closure / production-leak-before-policy / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_p0_conservation_policy.py -k fixed_closed_system_leak`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\production-leak-before-policy.json.
+- Result: EXECUTED, exit 2, 2.358s; 1 error in 1.64s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\production-leak-before-policy.log`.
+```text
+ERROR tests/test_p0_conservation_policy.py
+```
+
+
+### P0 closure / authority-structural-and-insufficient-controls / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_p0_replay_execution_authority.py`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\authority-structural-and-insufficient-controls.json.
+- Result: EXECUTED, exit 0, 5.517s; 8 passed in 4.75s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\authority-structural-and-insufficient-controls.log`.
+```text
+
+```
+
+
+### P0 closure / production-leak-before-policy-fixture-fixed / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_p0_conservation_policy.py -k fixed_closed_system_leak`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\production-leak-before-policy-fixture-fixed.json.
+- Result: BLOCKED_TIMEOUT, exit None, 180.03s; . Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\production-leak-before-policy-fixture-fixed.log`.
+```text
+
+```
+
+
+### P0 closure / discovery-after-identity / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_core_guards.py -k "discovery_found or solver_discovery"`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\discovery-after-identity.json.
+- Result: EXECUTED, exit 1, 6.951s; 1 failed, 2 passed, 273 deselected, 12 warnings in 5.81s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\discovery-after-identity.log`.
+```text
+FAILED tests/test_core_guards.py::test_the_discovery_found_exactly_the_repository
+```
+
+
+### P0 closure / bounded-regression-after-authority / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\bounded-regression-after-authority.json.
+- Result: EXECUTED, exit 1, 15.238s; 1 failed, 277 passed in 14.21s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\bounded-regression-after-authority.log`.
+```text
+FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]
+```
+
+
+### P0 closure / compatibility-after-authority / 2026-10-18
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q -rs tests/test_core_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py tests/test_post_merge_import_smoke.py`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\compatibility-after-authority.json.
+- Result: EXECUTED, exit 0, 34.11s; 153 passed, 1 skipped in 33.56s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\compatibility-after-authority.log`.
+```text
+
+```
+
+
+### P0 closure / exact-kernel-reference-and-cost / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B D:\forge-main-337519d1\.pytest-review-temp\p0-closure\exact_kernel_analysis.py`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\exact-kernel-reference-and-cost.json.
+- Result: EXECUTED, exit 0, 0.463s; . Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\exact-kernel-reference-and-cost.log`.
+```text
+
+```
+
+
+### P0 closure / m1c-and-parent-integration-final / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_m1c_transient_fv.py tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\m1c-and-parent-integration-final.json.
+- Result: EXECUTED, exit 1, 122.201s; 1 failed, 123 passed in 121.56s (0:02:01). Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\m1c-and-parent-integration-final.log`.
+```text
+FAILED tests/test_m1a_mesh_lineage.py::test_nested_record_tampering_poisoned_lineage_is_fail_closed
+```
+
+
+### P0 closure / affected-claims-final / 2026-10-18
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_claims_assessment.py tests/claims/test_quantitative_uq.py tests/claims/test_external_evidence.py tests/claims/test_sensitivity_robustness_challenge.py tests/claims/test_impact_replay.py tests/claims/test_scientific_diagnostics.py tests/claims/test_sria_context_authority.py tests/claims/test_p0_replay_execution_authority.py`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\affected-claims-final.json.
+- Result: EXECUTED, exit 0, 24.512s; 175 passed in 23.74s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\affected-claims-final.log`.
+```text
+
+```
+
+
+## P0 exact-global policy milestone — 2026-10-18
+
+Owner explicitly approved the reviewed exact-global Fraction proposal with unchanged model/rtol/atol, separately retained local allowance, explicit new policy/future receipt identity and preserved historical artifacts. Independent exact-patch reviewer found no BLOCKER/MAJOR; MINOR source-comment and display-overflow issues were fixed in proposal BEFORE approval/application. `git apply --check docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch` -> exit0; `git apply docs/work/proposals/P0_EXACT_GLOBAL_CONSERVATION.patch` -> exit0. Only the approved domain-file policy patch was applied. No pin or certificate changed.
+
+Actual-solver pre-policy28-case Cartesian leak pack exceeded180s (BLOCKED_TIMEOUT; no final counts). It emitted a failed leak rejection before timeout. Preserve log; never count the partial run PASS. Required finalized adversarial plan keeps ALL7 requested mesh sizes plus the shifted/dt counterexample, orthogonal normal-state/material/source/dt coverage and stress controls (48 cases). It removes redundant expensive Cartesian setup, not mesh sizes or scientific assertions. Existing N512 session/issuance work is slow before the policy; no performance refactor attempted.
+
+After policy application, actual fixed-leak cases at4/16/32/64/128/256/512cells all rejected leakage; final whole-pack outcome is still pending. Exact-kernel diagnostic uses source-extracted actual rational block and independent4000-digit Decimal arithmetic for normal/subnormal/huge-finite values: all agree, exit0. Median5 samples:4entries0.0000417s;512entries0.0030858s;8192entries0.0516442s. This is arithmetic-kernel cost/agreement, NOT end-to-end solver accuracy or physical validation. Full script/log exact command recorded by run harness.
+
+Post-authority fixed regression:277 passed,1 original contract failure; compatibility153 passed,1 explicit Windows symlink skip. Discovery20vs19 is now confirmed by import execution (not merely static count); original count pin remains unchanged. Final claims suite with structural and insufficient controls175 passed, no skips. M1C+M1B+M1A integration123 passed,1 M1A error-message mismatch (guard refuses conflicting issued mesh registry key; old regex expects tampered|unissued). No assertion/tolerance adjusted to clear it.
+
+Positive replay compatibility control confirms completed/bound execution with UNKNOWN demanded MODEL_FORM stays insufficient even though identical replay is VERIFIED. That status verifies reproducibility of a real result, not support/validation. Narrow structural-error propagation underwent independent review and direct tests; no other ScientificCoreError classification changed.
+
+
+### P0 closure / bounded-regression-final / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\bounded-regression-final.json.
+- Result: EXECUTED, exit 1, 15.295s; 1 failed, 277 passed in 14.15s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\bounded-regression-final.log`.
+```text
+FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]
+```
+
+
+### P0 closure / compatibility-final / 2026-10-18
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q -rs tests/test_core_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py tests/test_post_merge_import_smoke.py`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\compatibility-final.json.
+- Result: EXECUTED, exit 0, 34.042s; 153 passed, 1 skipped in 33.55s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\compatibility-final.log`.
+```text
+
+```
+
+
+### P0 closure / exact-conservation-adversarial / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -vv --durations=12 tests/test_p0_conservation_policy.py`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\exact-conservation-adversarial.json.
+- Result: EXECUTED, exit 1, 826.182s; ================== 6 failed, 42 passed in 825.51s (0:13:45) ===================. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\exact-conservation-adversarial.log`.
+```text
+FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.01] - assert 0.0375 == 0.0275 � 2.7e-09
+FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.005] - assert 0.01875 == 0.01375 � 1.4e-09
+FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.0025] - assert 0.009375 == 0.006875 � 6.9e-10
+FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[3000-0.01] - assert 0.0375 == 0.0275 � 2.7e-09
+FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[3000-0.005] - assert 0.01875 == 0.01375 � 1.4e-09
+FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[3000-0.0025] - assert 0.009375 == 0.006875 � 6.9e-10
+```
+
+
+### P0 closure / datum-fixture-diagnosis / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.01]`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\datum-fixture-diagnosis.json.
+- Result: EXECUTED, exit 1, 3.574s; 1 failed in 2.83s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\datum-fixture-diagnosis.log`.
+```text
+FAILED tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy[300-0.01]
+```
+
+
+### P0 closure / datum-fixture-corrected / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B -m pytest -p no:cacheprovider -q tests/test_p0_conservation_policy.py::test_timestep_and_datum_changes_preserve_global_policy`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\datum-fixture-corrected.json.
+- Result: EXECUTED, exit 0, 8.466s; 6 passed in 7.86s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\datum-fixture-corrected.log`.
+```text
+
+```
+
+
+### P0 closure / bounded-regression-post-numerical / 2026-10-18
+- Command: `C:/Users/dev_kaeem/AppData/Local/Python/pythoncore-3.14-64/python.exe -B tools/forge_check.py --regression`
+- Source: `93ed64b0292e9fea714ac83affb64b71488ac050` plus recorded working patch. Environment: CPython3.14.2, task-local WMI fallback and BLAS threads1; exact variables/source state in D:\forge-main-337519d1\.pytest-review-temp\p0-closure\bounded-regression-post-numerical.json.
+- Result: EXECUTED, exit 1, 14.943s; 1 failed, 277 passed in 13.86s. Log: `D:\forge-main-337519d1\.pytest-review-temp\p0-closure\bounded-regression-post-numerical.log`.
+```text
+FAILED tests/test_capability_completion.py::test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes[BLOCKED_WITH_EVIDENCE]
+```
+
+
+## Final scientific integration preflight — 2026-10-18
+
+BLOCKED_BY_OWNER at Phase0. Required FINAL_OWNER_DISPOSITIONS_2026_10_18.md absent; gate/census/M1A decisions remain explicitly open and prerequisite tests unchanged from HEAD. Existing approvals cover only M1C/conservation. Per new user restriction, all final integration tests including unified48: **NOT RUN**. Independent read-only p0_authority review confirmed prerequisite blocker; static review is not execution. Exact read-only commands/exit codes/durations/log hashes, environment metadata and source/working-file hashes: docs/work/evidence/final_scientific_integration_2026_10_18.json. Report: docs/work/FINAL_SCIENTIFIC_INTEGRATION_VERIFICATION.md. No source/tests/contracts/pins/certificates/historical logs changed, no commit/push/merge/OD-3. Earlier source hashes all match; this does not promote historical results into fresh PASS.
+
+
+## Final owner-decision analysis — 2026-10-18
+
+Created FINAL_OWNER_DISPOSITIONS_2026_10_18.md and three exact proposed patches (D1 gate diagnostic/policy alignment + explicit failed-prerequisite downstream PASS/FAIL controls; D2 census19->20 only; D3 both M1A integrity-message assertions). **PENDING OWNER APPROVAL; NOT APPLIED.** File creation does not satisfy final integration Phase0. Separate authorization also required before resuming integration.
+
+Narrow read-only command (no pytest test functions called): `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B D:/forge-main-337519d1/.pytest-review-temp/owner-dispositions-2026-10-18/census.py`. Existing process-local platform._wmi=None fallback; BLAS threads1, PYTHONDONTWRITEBYTECODE1; target/src+root PYTHONPATH. CPython3.14.2, NumPy2.5.2, SciPy1.18.1, Pint0.25.3, pytest9.1.1, MCP2.1.1. Initial diagnostic exited1 in4.107s on full ModelRegistry roundtrip refusal for frozen linear_diffusion missing exclusions; first failure log preserved. Diagnostic revised to report each readback outcome without aborting inventory, exit0 in5.858s. This is diagnostic completion, NOT a registry-roundtrip PASS.20unique models; no import failures/optional absences; one object/serialized digest per key; historical89b9e7c3 AST19, sole added M1C physicalmodel0.1.0, none removed;16/96/63 unchanged;17realizations with nonempty capabilities and resolving model refs. ModelRegistry construction/identity lookup succeeds. Individual model readers19 succeed; frozen diffusion readback refuses, consistent with reader admission but conflicting with class/guard archive-readability documentation. Pre-existing limitation retained for separate owner review; no source/frozen-data repair.
+
+Exact evidence, log hashes, full inventory/history, preimage hashes and independent reviewer findings: docs/work/evidence/final_owner_disposition_analysis_2026_10_18.json. Complete probe logs/script copied into evidence as new artifacts; original negative evidence untouched. All three `git apply --check <proposal>` commands executed exit0; applicability only, no patch applied. Read-only reviewers: p0_authority final D1 static PASS for proposal; closure_review D2 no blocking discrepancy with readback limitation; p0_conservation D3 no BLOCKER/MAJOR. Static review is not execution.
+
+All proposal preimages and prior P0 source/test digests remain unchanged. Integration suites, unified48, full assurance, certification/OD-3 and mutation campaign: **NOT RUN**. No production/test/policy/pin/ledger/certificate change, commit, push, merge, PR or bundle regeneration. Stop awaiting explicit D1/D2/D3 approval and authorization before final integration resumes.
+
+
+### Approved final integration / env-plain / 2026-10-18
+- Exact command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -c "import faulthandler; faulthandler.dump_traceback_later(5); import scipy.sparse,pint; print('scientific imports available')"`
+- Result: BLOCKED_TIMEOUT, exitNone, 12.004s wall; ; source unchanged=True. Source HEAD 93ed64b0292e9fea714ac83affb64b71488ac050 plus working patch; before/after source indexes, environment, counts, state, log SHA256: D:\forge-main-337519d1\.pytest-review-temp\final-integration-approved-2026-10-18\env-plain.json.
+- Failures/errors: none reported; non-pytest diagnostics require log interpretation.
+
+
+### Approved final integration / census-before / 2026-10-18
+- Exact command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B D:/forge-main-337519d1/.pytest-review-temp/owner-dispositions-2026-10-18/census.py`
+- Result: EXECUTED, exit0, 5.048s wall; ; source unchanged=True. Source HEAD 93ed64b0292e9fea714ac83affb64b71488ac050 plus working patch; before/after source indexes, environment, counts, state, log SHA256: D:\forge-main-337519d1\.pytest-review-temp\final-integration-approved-2026-10-18\census-before.json.
+- Failures/errors: none reported; non-pytest diagnostics require log interpretation.
+
+
+### Approved final integration / targeted-paths / 2026-10-18
+- Exact command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -p final_path_audit -vv tests/test_capability_completion.py tests/test_m1a_mesh_lineage.py::test_nested_record_tampering_poisoned_lineage_is_fail_closed`
+- Result: EXECUTED, exit0, 50.035s wall; ============================= 29 passed in 49.40s =============================; source unchanged=True. Source HEAD 93ed64b0292e9fea714ac83affb64b71488ac050 plus working patch; before/after source indexes, environment, counts, state, log SHA256: D:\forge-main-337519d1\.pytest-review-temp\final-integration-approved-2026-10-18\targeted-paths.json.
+- Failures/errors: none reported; non-pytest diagnostics require log interpretation.
+
+
+### Approved final integration / discovery-gates / 2026-10-18
+- Exact command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q tests/test_core_guards.py -k "discovery_found or solver_discovery"`
+- Result: EXECUTED, exit0, 7.47s wall; 3 passed, 273 deselected, 12 warnings in 6.39s; source unchanged=True. Source HEAD 93ed64b0292e9fea714ac83affb64b71488ac050 plus working patch; before/after source indexes, environment, counts, state, log SHA256: D:\forge-main-337519d1\.pytest-review-temp\final-integration-approved-2026-10-18\discovery-gates.json.
+- Failures/errors: none reported; non-pytest diagnostics require log interpretation.
+
+
+### Approved final integration / claims-replay-final / 2026-10-18
+- Exact command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q tests/claims/test_claims_assessment.py tests/claims/test_quantitative_uq.py tests/claims/test_external_evidence.py tests/claims/test_sensitivity_robustness_challenge.py tests/claims/test_impact_replay.py tests/claims/test_scientific_diagnostics.py tests/claims/test_sria_context_authority.py tests/claims/test_p0_replay_execution_authority.py`
+- Result: EXECUTED, exit0, 24.012s wall; 175 passed in 23.03s; source unchanged=True. Source HEAD 93ed64b0292e9fea714ac83affb64b71488ac050 plus working patch; before/after source indexes, environment, counts, state, log SHA256: D:\forge-main-337519d1\.pytest-review-temp\final-integration-approved-2026-10-18\claims-replay-final.json.
+- Failures/errors: none reported; non-pytest diagnostics require log interpretation.
+
+
+### Approved final integration / m1abc-final / 2026-10-18
+- Exact command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q tests/test_m1c_transient_fv.py tests/test_m1b_vertex_dual_state.py tests/test_m1a_mesh_lineage.py`
+- Result: EXECUTED, exit0, 123.817s wall; 124 passed in 123.16s (0:02:03); source unchanged=True. Source HEAD 93ed64b0292e9fea714ac83affb64b71488ac050 plus working patch; before/after source indexes, environment, counts, state, log SHA256: D:\forge-main-337519d1\.pytest-review-temp\final-integration-approved-2026-10-18\m1abc-final.json.
+- Failures/errors: none reported; non-pytest diagnostics require log interpretation.
+
+
+### Approved final integration / fixed-regression-final / 2026-10-18
+- Exact command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B tools/forge_check.py --regression`
+- Result: EXECUTED, exit0, 14.31s wall; 279 passed in 13.48s; source unchanged=True. Source HEAD 93ed64b0292e9fea714ac83affb64b71488ac050 plus working patch; before/after source indexes, environment, counts, state, log SHA256: D:\forge-main-337519d1\.pytest-review-temp\final-integration-approved-2026-10-18\fixed-regression-final.json.
+- Failures/errors: none reported; non-pytest diagnostics require log interpretation.
+
+
+### Approved final integration / compatibility-final / 2026-10-18
+- Exact command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -q -rs tests/test_core_api_snapshot.py tests/test_core_api_serialization.py tests/test_core_api_layering.py tests/test_core_freeze_policy.py tests/test_certified_dependency_closure.py tests/test_post_merge_import_smoke.py`
+- Result: EXECUTED, exit0, 35.436s wall; 153 passed, 1 skipped in 34.92s; source unchanged=True. Source HEAD 93ed64b0292e9fea714ac83affb64b71488ac050 plus working patch; before/after source indexes, environment, counts, state, log SHA256: D:\forge-main-337519d1\.pytest-review-temp\final-integration-approved-2026-10-18\compatibility-final.json.
+- Failures/errors: none reported; non-pytest diagnostics require log interpretation.
+
+
+### Approved final integration / archive-readback-investigation / 2026-10-18
+- Exact command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B D:/forge-main-337519d1/.pytest-review-temp/final-integration-approved-2026-10-18/archive_readback_probe.py`
+- Result: EXECUTED, exit0, 1.346s wall; ; source unchanged=True. Source HEAD 93ed64b0292e9fea714ac83affb64b71488ac050 plus working patch; before/after source indexes, environment, counts, state, log SHA256: D:\forge-main-337519d1\.pytest-review-temp\final-integration-approved-2026-10-18\archive-readback-investigation.json.
+- Failures/errors: none reported; non-pytest diagnostics require log interpretation.
+
+
+### Approved final integration / unified-conservation-48 / 2026-10-18
+- Exact command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B -m pytest -p no:cacheprovider -vv --durations=12 tests/test_p0_conservation_policy.py`
+- Result: EXECUTED, exit0, 811.703s wall; ======================= 48 passed in 811.21s (0:13:31) ========================; source unchanged=True. Source HEAD 93ed64b0292e9fea714ac83affb64b71488ac050 plus working patch; before/after source indexes, environment, counts, state, log SHA256: D:\forge-main-337519d1\.pytest-review-temp\final-integration-approved-2026-10-18\unified-conservation-48.json.
+- Failures/errors: none reported; non-pytest diagnostics require log interpretation.
+
+
+## Final approved bounded integration closure — 2026-10-18
+
+Owner-authorized D1/D2/D3 exact patches applied after final diff/preimage checks and fresh census. Unified48 pack **48 passed in one execution**,811.21s pytest/811.703s wall, exit0<1200s; no parameter/tolerance reduction or duplicate run. Other final outcomes:29targeted,3discovery,175claims/replay,124M1A/B/C,279fixed regression,153compatibility+1 explicit Windows symlink skip. Counts overlap and are not summed. Exact commands/env/failure/skip/source/log metadata are recorded per job and in docs/work/evidence/final_scientific_integration_approved_2026_10_18.json. All1464 indexed source/contract/certification files share canonical identity5f7c2171abca8e915bfc5102d5eb286d06d140bdfd6c6e1f0d4e99ed9547b3df across8postapply test/diagnostic jobs; before/after/current bytes match. No production source edits in this turn.
+
+Intended paths observed: D1missingM1status3branches and failedM1→PASS/FAIL negative cases; D3transfer+coarsen both reached exact issuance-key refusal (line224 twice), restoring formerly unexecuted downstream evidence. Independent static final reviewers found no new correction/report integrity BLOCKER/MAJOR;10durable logs, sourceindexes and report hash checked. Reviewers executed no tests.
+
+Separate FROZEN_MODEL_ARCHIVE_READBACK_INVESTIGATION_2026_10_18.md preserves current/2 DIFFUSION_MODEL readback/registry refusal and positive M1C control. Deliberate legacy/1 refusal does not satisfy current-format roundtrip contract. Compatibility FAIL_WITH_EVIDENCE; scientific impact remains UNCLASSIFIED/blocking for dependent archive/reconstruction claims. Static exact baseline/cert path tracing finds no failing decoder in inspected synthetic Genesis path, but grants no formal Step0/isolation/certification readiness. No archive behavior changed; separate owner decision required before repair.
+
+Report: docs/work/FINAL_SCIENTIFIC_INTEGRATION_VERIFICATION.md. Prior Phase0blocked report copied unchanged into evidence/final_integration_phase0_blocked_2026_10_18.md; earlier32modified/untracked files snapshotted, prior negative reports/logs preserved. D1/D2/D3 and prior P0 source remain uncommitted/UNCERTIFIED. No certificate/ledger/activeepic/physicalmodel/threshold/historicalbundle change, commit/push/PR/merge/rebase/OD-3/full assurance/fullsuite/standalone mutation campaign. Bounded owner-review readiness PASS_WITH_EVIDENCE; OD-3/merge BLOCKED_BY_OWNER; formal GenesisStep0/Phase3.5 UNVERIFIED. Supported Linux3.11/3.12 and separately authorized final-source certification remain necessary.
 
 ## 2026-10-19 -- Deep scientific defect audit (read-only) and owner-authorized reproductions R-03..R-06
 

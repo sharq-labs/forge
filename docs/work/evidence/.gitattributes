@@ -1,0 +1,5 @@
+# Hash-recorded evidence. Every file here is bound by SHA-256 in a manifest
+# (docs/work/evidence/*.json). The repository-wide "* text=auto eol=lf" would
+# rewrite their CRLF line endings on `git add` and break those digests.
+# Same rule as benchmarks/battery_flagship_b3/evidence/raw/.gitattributes.
+* -text

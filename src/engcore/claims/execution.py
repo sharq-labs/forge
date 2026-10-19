@@ -29,7 +29,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from ..scientific.errors import ScientificCoreError
+from ..scientific.errors import InvalidModelRealization, ScientificCoreError
+from ..credibility.evidence import CredibilityEvidenceError
 from ..scientific.units.quantity import Quantity, dimensionality
 from .capabilities import CapabilityRegistry, InstanceReport
 from .errors import CapabilityExecutionRefused, CapabilityInputError
@@ -139,6 +140,10 @@ def execute_plan(plan: ExperimentPlan, registry: CapabilityRegistry, stated: dic
         run = declaration.executor(dict(plan.case), run_id=plan.run_id)
     except (CapabilityExecutionRefused, CapabilityInputError) as exc:
         return PlanExecution(outcome=ExecutionOutcome.REFUSED_BY_SYSTEM, failure=f"{type(exc).__name__}: {exc}", **base)
+    except (CredibilityEvidenceError, InvalidModelRealization):
+        # Malformed reports and realization declarations are implementation
+        # defects, not scientific evidence that the requested case was refused.
+        raise
     except ScientificCoreError as exc:
         return PlanExecution(outcome=ExecutionOutcome.REFUSED_BY_SYSTEM, failure=f"{type(exc).__name__}: {exc}", **base)
 

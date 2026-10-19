@@ -1,0 +1,8 @@
+...                                                                      [100%]
+============================== warnings summary ===============================
+tests\test_core_guards.py:102: 12 warnings
+  D:\forge-main-337519d1\tests\test_core_guards.py:102: DeprecationWarning: 'maxsplit' is passed as positional argument
+    distribution = re.split(r"[\s<>=!~\[;]", requirement.strip(), 1)[0]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+3 passed, 273 deselected, 12 warnings in 6.39s

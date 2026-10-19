@@ -352,6 +352,11 @@ def test_a_changed_registry_is_reported_not_mistaken_for_tampering(bundled, regi
 def test_replay_detects_a_changed_solver_result(bundled, registry) -> None:
     from engcore.claims import CapabilityRun, InstanceReport
 
+    # This control must reach a real numeric result, not replay two matching
+    # upstream refusals before the mutation can run.
+    assert bundled["record"]["execution"]["outcome"] == "completed"
+    assert bundled["record"]["basis"]["bound"] is True
+    assert bundled["record"]["result"] is not None
     genuine = registry.get(NAFEMS_T3_CAPABILITY_ID).executor
 
     def drifted(case, *, run_id):

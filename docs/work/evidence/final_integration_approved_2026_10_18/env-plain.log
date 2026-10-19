@@ -1,0 +1,71 @@
+Timeout (0:00:05)!
+Thread 0x0000a784 (most recent call first):
+  File "C:\Users\dev_kaeem\AppData\Local\Python\pythoncore-3.14-64\Lib\platform.py", line 347 in _wmi_query
+  File "C:\Users\dev_kaeem\AppData\Local\Python\pythoncore-3.14-64\Lib\platform.py", line 408 in _win32_ver
+  File "C:\Users\dev_kaeem\AppData\Local\Python\pythoncore-3.14-64\Lib\platform.py", line 467 in win32_ver
+  File "C:\Users\dev_kaeem\AppData\Local\Python\pythoncore-3.14-64\Lib\platform.py", line 1016 in uname
+  File "C:\Users\dev_kaeem\AppData\Local\Python\pythoncore-3.14-64\Lib\platform.py", line 1127 in machine
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\numpy\testing\_private\utils.py", line 90 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\numpy\testing\_private\extbuild.py", line 13 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1426 in _handle_fromlist
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\numpy\testing\__init__.py", line 11 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\numpy\__init__.py", line 742 in __getattr__
+  File "<frozen importlib._bootstrap>", line 1423 in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 1421 in _handle_fromlist
+  File "<string>", line 1 in <module>
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\scipy\_external\array_api_compat\_internal.py", line 64 in clone_module
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\scipy\_external\array_api_compat\numpy\__init__.py", line 9 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1426 in _handle_fromlist
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\scipy\_lib\_array_api.py", line 24 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\scipy\_lib\_util.py", line 16 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\scipy\sparse\_compressed.py", line 8 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\scipy\sparse\_csr.py", line 15 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "C:\Users\dev_kaeem\Downloads\Compressed\phyx\.venv\Lib\site-packages\scipy\sparse\__init__.py", line 251 in <module>
+  File "<frozen importlib._bootstrap>", line 491 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 759 in exec_module
+  File "<frozen importlib._bootstrap>", line 938 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1342 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1371 in _find_and_load
+  File "<string>", line 1 in <module>

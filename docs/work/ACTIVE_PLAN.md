@@ -6,6 +6,71 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task — final owner-decision preflight (2026-10-18)
+
+- [x] Analyze D1 gate dependency, D2 OD-31 census and D3 M1A issuance-refusal mismatch; preserve existing evidence and source.
+- [x] Create FINAL_OWNER_DISPOSITIONS_2026_10_18.md with exact unapplied proposals, independent read-only reviews, impacts and explicit approval questions.
+- [x] Owner explicitly approved D1/D2/D3 and final integration. Reviewed exact patch/preimage hashes; fresh census confirmed20same unique identities/sole M1C addition; applied only the approved patches. Application record: `.pytest-review-temp/final-integration-approved-2026-10-18/application.json`.
+- [x] Final targeted29 passed with intended negative paths traced; discovery3 passed; claims175 passed; M1A/B/C124 passed; fixed bounded regression279 passed; compatibility153 passed/1 Windows symlink skip. Source indexes unchanged per executed job.
+- [x] Single unchanged unified48 conservation execution:48 passed in811.21s (811.703s wall), exit0 within1200s; full source indexes unchanged.
+- [x] Separate archive readback investigation reproduced frozen current-/2 refusal, positive M1C control succeeds; dependent scientific impact UNCLASSIFIED/blocking. No archive behavior change approved/applied.
+- [x] Final source/report/log review complete; bounded integration PASS_WITH_EVIDENCE. Owner review may proceed. Archive-dependent claims remain blocked with UNCLASSIFIED scientific impact; OD-3/merge BLOCKED_BY_OWNER; Genesis Step0 and Phase3.5 UNVERIFIED. No commit/push/merge/certification/OD-3. Report: FINAL_SCIENTIFIC_INTEGRATION_VERIFICATION.md.
+
+Read-only census confirms20 versus historical19, sole added M1C physical model0.1.0; realization0.2.0 is not another model. Registry full-readback refusal for frozen diffusion is preserved as a separate pre-existing compatibility/contract limitation, not repaired by the count proposal. No epic/maturity/ledger change.
+
+## Current bounded task — P0 scientific correctness closure (2026-10-18)
+
+Existing branch/HEAD unchanged: `fix/post-merge-remediation-2026-10-18` / `93ed64b0`.
+The preceding verification's eight uncommitted files were inventoried, hashed and copied to ignored task evidence before edits.
+
+- [x] Reproduce authority failures; independently confirm Windows WMI workaround; isolate pytest temporary paths with forward slashes.
+- [x] Trace reports=None to invalid M1C realization blocking the complete domain index; identify separate replay-of-refusal VERIFIED defect.
+- [x] Owner approved exact existing-capability / realization0.2.0 correction; independently reviewed and applied, no count pin or historical artifact changed.
+- [x] Require stored/fresh completed bound results before replay VERIFIED; preserve schema, enums, numeric comparison, unknown uncertainty and insufficient verdicts.
+- [x] Structural malformed-report/realization errors propagate as defects; expected case/input refusals remain insufficient. Direct controls8 passed.
+- [x] Full affected seven claims suites plus controls:175 passed, no skips, in existing project venv; no package changes.
+- [x] Owner separately approved exact global conservation policy; independent exact-patch review and git apply check completed; applied without changing rtol/atol or physical model.
+- [x] Exact production kernel agrees with independent Decimal reference (normal/subnormal/huge finite); Fraction cost measured at4/512/8192 entries.
+- [x] Execute48 actual-solver adversarial cases:42 passed; six net-versus-gross exchange fixture assertions failed, were independently diagnosed and corrected with the same tolerance, then6 passed. Production unchanged; all7 required mesh sizes, independent material/source energy accounting and explicit nonfinite refusal covered. No single48-pass rerun claimed.
+- [x] Fixed-mesh M1C + parent pack:123 passed,1 pre-existing M1A refusal-text mismatch; all M1C tests executed. Full claims final175 passed.
+- [x] Discovery imports complete and finds20; pinned19 test stays red pending OD-31. No automatic pin change.
+- [x] Bounded scientific regression after authority repair:277 passed,1 original BLOCKED_WITH_EVIDENCE dependency-contract failure.
+- [x] Final policy compatibility153 passed/1 Windows symlink skip; post-numerical fixed regression277 passed/1 original gate-contract failure. Independent static authority/numerical review found no remaining BLOCKER/MAJOR; final report and machine evidence recorded.
+
+P0 bounded repairs: PASS_WITH_EVIDENCE within the final report's numerical/software limits. Branch may proceed to owner review; merge remains blocked by red gate/census/parent dispositions and unexecuted integration/recertification. Phase3.5 and formal Genesis measurement remain UNVERIFIED; existing preparation scope is unchanged. All work remains uncommitted.
+
+No current epic/ledger stage, scientific threshold, historical bundle, certificate, commit, push, PR or OD-3 operation is authorized by this task.
+Owner-approved identity/policy decisions are documented in `docs/work/proposals/P0_M1C_IDENTITY_DECISION.md` and `P0_CONSERVATION_POLICY_DECISION.md`.
+Report target: `docs/work/P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md`.
+Earlier verification findings below are historical baseline; superseded scientific outcomes are recorded without deleting negative evidence.
+
+## Current bounded verification — post-merge remediation (2026-10-18)
+
+User-authorized verification of `fix/post-merge-remediation-2026-10-18`,
+HEAD `93ed64b0292e9fea714ac83affb64b71488ac050`, base `337519d1`.
+This task does not expand the active epic or scientific roadmap.
+
+- [x] Confirm exact clean starting state and original 23-file inventory (8 source / 9 tests / 6 docs-proposals).
+- [x] Diagnose SciPy/Pint import wedge: CPython Windows WMI; task-local fallback, no package changes.
+- [x] Execute all seven exact remediation recipes and preserve original collection failures.
+- [x] Apply independently reviewed import-order correction; add fresh-process regressions.
+- [x] Execute corrected recipes and bounded scientific/checkpoint/semantic/compatibility checks; record failures.
+- [x] Independently derive and execute source-extracted energy admission diagnostic: 1e-7 J leak rejected at4 cells, admitted at256/512 due to N² arithmetic floor.
+- [x] Record owner decisions, source digests, OD-3 procedure, Phase3.5 and Genesis assessment.
+- [ ] SCIENTIFIC_DESIGN_REQUIRED: conservation floor must not become permissive under refinement; no tolerance adjustment approved.
+- [ ] OWNER_DECISION_REQUIRED (OD-31): invalid M1C realization lacks provided capability; resolve scientific declaration/identity before model census pin change.
+- [ ] Diagnose red forward-tear fixtures and claim/report bridge + replay authority failures; do not infer governance-only.
+- [ ] Owner dispositions OD-22/23/24/26/29/30/31/32/33/34 remain open as detailed in the review.
+- [ ] Separately authorized final-source supported3.11/3.12 integration/OD-3 after scientific defects and red tests close.
+
+Outcome: **BLOCKED_BY_SCIENTIFIC_CORRECTNESS**, not merge-ready, not Phase3.5 closure.
+Canonical program ledger gates remain MISSING; no owner deferral, maturity promotion,
+active-epic change, bundle regeneration, commit, push or PR performed.
+Report: [POST_MERGE_REMEDIATION_VERIFICATION.md](POST_MERGE_REMEDIATION_VERIFICATION.md).
+Durable execution metadata: [evidence/post_merge_2026_10_18.json](evidence/post_merge_2026_10_18.json).
+Existing slices below retain their historical source/authorization limits; this entry records the new bounded execution.
+
+
 ## Active bounded slice - M1C transient nonuniform vertex FV (2026-10-18)
 
 Branch codex/m1c-transient-fv-1d, exact M1B base

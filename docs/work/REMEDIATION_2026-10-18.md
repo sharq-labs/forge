@@ -177,3 +177,23 @@ python -B -m pytest -p no:cacheprovider -q tests/test_m1c_transient_fv.py tests/
 python -B -m pytest -p no:cacheprovider -q tests/test_phase3_br14_iqn_imvj.py tests/test_multiphysics_window_control.py
 python -B -m pytest -p no:cacheprovider -q tests/test_od30_multiscale_authority_identity.py tests/test_system_runtime_scenario_identity.py tests/test_system_runtime_multiscale_identity.py tests/test_multiscale_review_fixes.py
 ```
+
+
+## Verification addendum — 2026-10-18 (93ed64b0 plus uncommitted import-order correction)
+
+The original static census and NOT RUN entries above are preserved as history.
+Current executed status is in [POST_MERGE_REMEDIATION_VERIFICATION.md](POST_MERGE_REMEDIATION_VERIFICATION.md),
+with exact commands/counts/failures/source digests in [evidence/post_merge_2026_10_18.json](evidence/post_merge_2026_10_18.json).
+
+- All seven exact recipes initially failed collection due to a scientific import cycle. A bounded, independently reviewed conversion.py import-order correction restores imports without changing scientific contracts; remains UNCERTIFIED.
+- Newton79 passed; identity/scenario/multiscale83 passed; checkpoint55 passed; semantic/field-kind56 passed; compatibility150 passed/1 skipped.
+- Batch D solver verification remains blocked: M1C realization construction refuses empty provided_capabilities. Do not bypass the declaration guard or change the census pin silently.
+- D1-3 is NOT scientifically closed: source-extracted admission arithmetic accepts the same1e-7 J leak after refinement from4 to256/512 cells because the arithmetic floor growsN². The exchange max is correct; its separate floor needs a scientific-design decision. No tolerance changed.
+- A2's new tampered-record test also fails before reaching the guard (quantity-meaning admission). Earlier static guard-protection claim is superseded by this execution.
+- OD22 actual runtime and exact Fraction replay agree7/4; proposed8->7 patch remains unapplied. OD23/24 red contracts and other owner decisions remain open.
+- Fixed regression rerun with task-local temp:19 failed,256 passed,3 errors. Claim/report bridge and replay failures remain scientific/unclassified blockers.
+- OD3/full tiers/mutation campaign/full assurance/provider validation/battery bundle replay: NOT RUN. Final recommendation: BLOCKED_BY_SCIENTIFIC_CORRECTNESS.
+
+### Subsequent P0 bounded remediation (2026-10-18)
+
+The historical results above are preserved. Owner-approved M1C realization0.2.0 and exact represented-input global conservation policy are applied; strict report admission remains and replay now requires completed bound results. Full affected claims175 passed. Numerical pack42 passed/6 new fixture arithmetic failures; independently corrected gross-exchange expectation with unchanged tolerance, then6 passed. All M1C cases passed in the parent pack123 passed/1 conservative M1A refusal-message mismatch. Discovery20 versus pinned19 remains red. Final fixed regression277 passed/1 original gate dependency-contract failure; compatibility153 passed/1 Windows symlink skip. No certificate/count pin/historical evidence regenerated, no commit/push/merge/OD-3. Final bounded claims and limitations: [P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md](P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md).

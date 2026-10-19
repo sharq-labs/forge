@@ -58,8 +58,8 @@ every gate and its evidence unchanged.)
 
 The ledger's `active_epic` may name a capability (maturity stages, 19 gates) or a research program
 (`research_programs`). A research program has **gates, not maturity stages** (`PASS`, `FAIL`, `MISSING`,
-`BLOCKED_WITH_EVIDENCE`, `DEFERRED_BY_OWNER`); a gate is decided only after every gate it requires passed; PASS and
-FAIL need existing evidence; a program carries no maturity vocabulary. Gate dependencies order DECISIONS only:
+`BLOCKED_WITH_EVIDENCE`, `DEFERRED_BY_OWNER`); PASS and FAIL may be decided only after every required gate passed;
+every decided gate needs existing evidence; a program carries no maturity vocabulary. Gate dependencies order DECISIONS only:
 any work inside a program's scope may be built at any time, before any gate (including a validation gate) is run.
 Every decided gate cites existing evidence; BLOCKED_WITH_EVIDENCE is allowed once the gates it requires are decided.
 A program contract may carry acceptance requirements that bind every gate (for `engrt.numerical_foundations`: the

@@ -1,0 +1,239 @@
+{
+  "status": "DIAGNOSTIC_COMPLETED_NOT_A_COMPATIBILITY_PASS",
+  "records": [
+    {
+      "model_key": [
+        "thermal.conduction1d.linear_diffusion",
+        "0.1.0"
+      ],
+      "schema": "scientific_model_definition/2",
+      "exclusions": null,
+      "payload_sha256": "696ba673080dac80cb08305725208fdd5946c4fe3acb513212e0f3723f9e01d0",
+      "payload": {
+        "schema": "scientific_model_definition/2",
+        "model_id": "thermal.conduction1d.linear_diffusion",
+        "version": "0.1.0",
+        "name": "1D linear transient diffusion",
+        "domain": "thermal",
+        "model_type": "fundamental_relation",
+        "description": "The 1D diffusion equation du/dt = alpha d2u/dx2 on a finite slab with homogeneous Dirichlet boundaries, for a normalized dimensionless field.",
+        "inputs": [
+          {
+            "schema": "model_input_spec/1",
+            "name": "alpha",
+            "source_kind": "parameter",
+            "unit_exemplar": "meter ** 2 / second",
+            "value_kind": "quantity",
+            "role": null,
+            "required": true,
+            "description": "Thermal diffusivity; strictly positive.",
+            "varies_with": null
+          },
+          {
+            "schema": "model_input_spec/1",
+            "name": "length",
+            "source_kind": "parameter",
+            "unit_exemplar": "meter",
+            "value_kind": "quantity",
+            "role": null,
+            "required": true,
+            "description": "Slab length.",
+            "varies_with": null
+          },
+          {
+            "schema": "model_input_spec/1",
+            "name": "end_time",
+            "source_kind": "parameter",
+            "unit_exemplar": "second",
+            "value_kind": "quantity",
+            "role": null,
+            "required": true,
+            "description": "Final time of the transient.",
+            "varies_with": null
+          }
+        ],
+        "outputs": [
+          {
+            "schema": "model_output_spec/1",
+            "metric": "u",
+            "unit_exemplar": "dimensionless",
+            "description": "Normalized dimensionless field over the slab. Not a temperature: no absolute scale or reference state is implied."
+          }
+        ],
+        "assumptions": [
+          "one spatial dimension; no lateral or multidimensional transport",
+          "linear diffusion with a constant, field-independent diffusivity",
+          "no source or sink term",
+          "homogeneous Dirichlet boundaries held exactly at zero for all time",
+          "single-mode sinusoidal initial condition",
+          "normalized dimensionless field; no absolute temperature scale, no material properties and no thermodynamic state are claimed",
+          "no convection, no radiation, no phase change"
+        ],
+        "exclusions": null,
+        "excludes_nothing_because": "",
+        "validity": {
+          "schema": "validity_domain/1",
+          "conditions": [
+            {
+              "schema": "validity_range_condition/1",
+              "name": "alpha",
+              "minimum": {
+                "schema": "quantity/1",
+                "magnitude": 0.0,
+                "units": "meter ** 2 / second"
+              },
+              "maximum": null,
+              "minimum_inclusive": false,
+              "maximum_inclusive": true,
+              "conservative_screen": false,
+              "requires": [],
+              "description": "Strictly positive diffusivity; zero is no transport and negative is anti-diffusion, which is ill-posed."
+            }
+          ],
+          "description": "Linear diffusion with constant coefficients on a bounded slab."
+        },
+        "references": [],
+        "required_capabilities": [
+          "thermal:conduction_1d_transient"
+        ],
+        "validation_status": "self_consistent",
+        "metadata": {}
+      },
+      "model_read": {
+        "outcome": "REFUSED",
+        "error_type": "InvalidScientificProblem",
+        "error": "model 'thermal.conduction1d.linear_diffusion' declares no exclusions. A model is a claim about a physical system, and a claim that does not say what it leaves out -- no phase change, no ageing, no reversible heat, no saturation, whichever it omits -- is a claim a reader cannot assess. A reader of a credibility report cannot read this source. Pass exclusions=(...) with what this model does not represent, or exclusions=() with excludes_nothing_because=... if it truly represents everything in its scope"
+      },
+      "registry_read": {
+        "outcome": "REFUSED",
+        "error_type": "InvalidScientificProblem",
+        "error": "model 'thermal.conduction1d.linear_diffusion' declares no exclusions. A model is a claim about a physical system, and a claim that does not say what it leaves out -- no phase change, no ageing, no reversible heat, no saturation, whichever it omits -- is a claim a reader cannot assess. A reader of a credibility report cannot read this source. Pass exclusions=(...) with what this model does not represent, or exclusions=() with excludes_nothing_because=... if it truly represents everything in its scope"
+      }
+    },
+    {
+      "model_key": [
+        "thermal.conduction1d.transient_piecewise_linear",
+        "0.1.0"
+      ],
+      "schema": "scientific_model_definition/2",
+      "exclusions": [
+        "multiphase",
+        "nonlinear or temperature-dependent coefficients",
+        "anisotropy",
+        "moving mesh"
+      ],
+      "payload_sha256": "a8c1f372545da8a2cf8eb85e81e234b1319c1f96a5507b31718f9da3d840e4fa",
+      "payload": {
+        "schema": "scientific_model_definition/2",
+        "model_id": "thermal.conduction1d.transient_piecewise_linear",
+        "version": "0.1.0",
+        "name": "Piecewise phase-constant quasi-1D transient Fourier conduction",
+        "domain": "thermal",
+        "model_type": "fundamental_relation",
+        "description": "c*A*dT/dt = d/dx(k*A*dT/dx) + q*A; explicit initial and end conditions",
+        "inputs": [
+          {
+            "schema": "model_input_spec/1",
+            "name": "conductivity",
+            "source_kind": "parameter",
+            "unit_exemplar": "watt / kelvin / meter",
+            "value_kind": "quantity",
+            "role": null,
+            "required": true,
+            "description": "",
+            "varies_with": null
+          },
+          {
+            "schema": "model_input_spec/1",
+            "name": "volumetric_storage",
+            "source_kind": "parameter",
+            "unit_exemplar": "joule / kelvin / meter ** 3",
+            "value_kind": "quantity",
+            "role": null,
+            "required": true,
+            "description": "",
+            "varies_with": null
+          },
+          {
+            "schema": "model_input_spec/1",
+            "name": "cross_section",
+            "source_kind": "parameter",
+            "unit_exemplar": "meter ** 2",
+            "value_kind": "quantity",
+            "role": null,
+            "required": true,
+            "description": "",
+            "varies_with": null
+          },
+          {
+            "schema": "model_input_spec/1",
+            "name": "initial_temperature",
+            "source_kind": "parameter",
+            "unit_exemplar": "kelvin",
+            "value_kind": "quantity",
+            "role": null,
+            "required": true,
+            "description": "",
+            "varies_with": null
+          },
+          {
+            "schema": "model_input_spec/1",
+            "name": "volumetric_source",
+            "source_kind": "parameter",
+            "unit_exemplar": "watt / meter ** 3",
+            "value_kind": "quantity",
+            "role": null,
+            "required": true,
+            "description": "",
+            "varies_with": null
+          }
+        ],
+        "outputs": [
+          {
+            "schema": "model_output_spec/1",
+            "metric": "temperature",
+            "unit_exemplar": "kelvin",
+            "description": ""
+          },
+          {
+            "schema": "model_output_spec/1",
+            "metric": "integrated_energy",
+            "unit_exemplar": "joule",
+            "description": ""
+          }
+        ],
+        "assumptions": [
+          "scalar linear phase-constant coefficients",
+          "explicit piecewise-constant cross-section",
+          "quasi-1D series transport without lateral/spreading loss",
+          "zero-reference energy C*T"
+        ],
+        "exclusions": [
+          "multiphase",
+          "nonlinear or temperature-dependent coefficients",
+          "anisotropy",
+          "moving mesh"
+        ],
+        "excludes_nothing_because": "",
+        "validity": {
+          "schema": "validity_domain/1",
+          "conditions": [],
+          "description": "No sourced model applicability limits declared; UNKNOWN, not unlimited."
+        },
+        "references": [],
+        "required_capabilities": [],
+        "validation_status": "unvalidated",
+        "metadata": {}
+      },
+      "model_read": {
+        "outcome": "READ_SUCCEEDED",
+        "type": "ScientificModelDefinition"
+      },
+      "registry_read": {
+        "outcome": "READ_SUCCEEDED",
+        "type": "ModelRegistry"
+      }
+    }
+  ],
+  "classification": "UNCLASSIFIED scientific impact; dependent archive/registry readback claims blocked. No behavior repaired."
+}

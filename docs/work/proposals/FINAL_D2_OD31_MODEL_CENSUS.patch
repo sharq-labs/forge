@@ -1,0 +1,11 @@
+--- a/tests/test_core_guards.py
++++ b/tests/test_core_guards.py
+@@ -196,7 +196,7 @@
+ #: directions and has to be updated deliberately, which is the moment somebody
+ #: looks at the new record. `tests/test_pin_portability.py:_pinned_paths` is
+ #: the pattern: derive the population, then assert its size.
+-EXPECTED_MODELS = 19  # 19: thermal.conduction1d.steady_variable_conductivity (2026-10-17)
++EXPECTED_MODELS = 20  # 20: thermal.conduction1d.transient_piecewise_linear (M1C, 2026-10-18)
+ EXPECTED_RESERVING_MODELS = 16  # 16: battery.cell.thevenin_1rc
+ # 64 -> 67 and 46 -> 49 in the capability-boundary round, which added one
+ # condition to each of three records: linear_resistance_ratio on the

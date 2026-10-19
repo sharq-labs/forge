@@ -1,0 +1,12 @@
+# Dated 2026-10-18 reports and decision records whose SHA-256 is recorded in
+# docs/work/evidence/*.json. Keep their CRLF bytes exact; the living documents
+# in this directory (ACTIVE_PLAN.md, PROGRESS.md, ...) stay under the
+# repository-wide LF rule. See docs/work/evidence/.gitattributes.
+FINAL_OWNER_DISPOSITIONS_2026_10_18.md -text
+FINAL_SCIENTIFIC_INTEGRATION_VERIFICATION.md -text
+FROZEN_MODEL_ARCHIVE_READBACK_INVESTIGATION_2026_10_18.md -text
+P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md -text
+POST_MERGE_REMEDIATION_VERIFICATION.md -text
+proposals/P0_CONSERVATION_POLICY_DECISION.md -text
+proposals/P0_M1C_IDENTITY_DECISION.md -text
+proposals/P0_M1C_REALIZATION_0_2.patch -text

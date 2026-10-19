@@ -167,11 +167,12 @@ def test_a_program_carries_no_maturity_vocabulary_and_never_moves_a_capability()
 
 
 @pytest.mark.parametrize("status", ["PASS", "FAIL", "BLOCKED_WITH_EVIDENCE"])
-def test_a_gate_cannot_be_decided_before_the_gate_it_requires_passes(status) -> None:
+def test_a_gate_cannot_be_decided_before_its_required_gate_is_ready(status) -> None:
     def decide_e3(d):
         e3 = next(g for g in _program(d)["gates"] if g["id"] == "E3")
         e3.update(status=status, evidence=["docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md"])
-    assert any("needs 'M1' PASS first" in e for e in _with(decide_e3))
+    required_state = "decided" if status == "BLOCKED_WITH_EVIDENCE" else "PASS"
+    assert any(f"needs 'M1' {required_state} first" in e for e in _with(decide_e3))
 
 
 def test_a_deferred_gate_may_wait_on_an_open_requirement() -> None:
@@ -185,7 +186,8 @@ def test_a_decided_program_cannot_stay_the_active_epic() -> None:
     assert any("the owner names the next epic" in e for e in _with(decide_all))
 
 
-def test_every_decided_gate_needs_evidence_and_blocked_follows_a_failed_requirement() -> None:
+@pytest.mark.parametrize("downstream_status", ["PASS", "FAIL"])
+def test_every_decided_gate_needs_evidence_and_blocked_follows_a_failed_requirement(downstream_status) -> None:
     blocked_without_evidence = _with(lambda d: _program(d)["gates"][0].update(status="BLOCKED_WITH_EVIDENCE"))
     assert any("BLOCKED_WITH_EVIDENCE requires evidence" in e for e in blocked_without_evidence)
     evidence = ["docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md"]
@@ -199,7 +201,7 @@ def test_every_decided_gate_needs_evidence_and_blocked_follows_a_failed_requirem
     def m1_failed_m2_failed(d):
         gates = {g["id"]: g for g in _program(d)["gates"]}
         gates["M1"].update(status="FAIL", evidence=evidence)
-        gates["M2"].update(status="FAIL", evidence=evidence)
+        gates["M2"].update(status=downstream_status, evidence=evidence)
     assert any("needs 'M1' PASS first" in e for e in _with(m1_failed_m2_failed))
 
 

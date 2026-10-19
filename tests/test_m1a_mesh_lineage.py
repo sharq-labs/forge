@@ -170,9 +170,9 @@ def test_nested_record_tampering_poisoned_lineage_is_fail_closed():
     original = state(runtime)
     split = refine(runtime)
     object.__setattr__(split.change.bisections[0].children[0], "parent_id", "forged")
-    with pytest.raises(NumericalRefusal, match="tampered|unissued"):
+    with pytest.raises(NumericalRefusal, match=r"tampered|unissued|^conflicting issued mesh registry key$"):
         runtime.transfer_state(original, split)
-    with pytest.raises(NumericalRefusal, match="tampered|unissued"):
+    with pytest.raises(NumericalRefusal, match=r"tampered|unissued|^conflicting issued mesh registry key$"):
         runtime.coarsen(split.change.bisections, max_ratio=10)
 
 
