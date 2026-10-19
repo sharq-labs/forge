@@ -56,8 +56,8 @@ from engcore.blindfold.roles import DEFAULT_CREDIT
 from ..analysis import (  # noqa: F401 - re-exported: v0.3 changes nothing else
     ALPHA, CONTROL_KINDS, FORMAL_GRID, KINDS, NON_ADVERSARIAL_ROLES, NONINFERIORITY_MARGIN, PRESENTATION_MARGIN,
     PRIMARY_FAMILY, REPRESENTATION_ARM, SCREEN_CAP, AnalysisRefused, WorldSet, _record, _ws, best_per_kind,
-    bootstrap_mean_ci, coverage_problems, registered_roles, representation_limited, screened_world_sets,
-    strongest_baseline, world_credits,
+    bootstrap_mean_ci, coverage_problems, representation_limited, screened_world_sets, strongest_baseline,
+    world_credits,
 )
 
 #: outcomes through which a proposed law or law pair earns credit
@@ -192,14 +192,37 @@ def _code_problems() -> tuple[list[str], str]:
     return identity_problems()
 
 
-def formal_binding_problems(rows: Sequence[Mapping[str, Any]]) -> list[str]:
-    """D-09: every record must come from the formal driver under the preregistered root commitment (a pilot root is
-    revealed with its results, so worlds derived from it are public)."""
-    from .preregistration import FORMAL_ROOT_COMMITMENT  # noqa: PLC0415
+def registered_roles() -> dict[str, str]:
+    """The v0.3 arm registry (every v0.2 arm plus the FDA-21 variants), never caller input."""
+    from .arms import ARMS  # noqa: PLC0415
 
-    unbound = [r for r in rows if r.get("tier") != "formal" or r.get("root_commitment_sha256") != FORMAL_ROOT_COMMITMENT
-               or len(str(FORMAL_ROOT_COMMITMENT)) != 64]
-    return [f"{len(unbound)} record(s) are not bound to the preregistered formal root commitment"] if unbound else []
+    return {name: entry[3] for name, entry in ARMS.items()}
+
+
+def formal_binding_problems(rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    """D-09 and review 2026-10-20 finding 2. Every record must come from ONE admitted formal attempt of the v0.3
+    harness under the preregistered root, w and environment. These are labels the operator's driver writes; their
+    authority comes from the external evaluator, who receives the registry and run-log heads out of band, then after
+    the reveal recomputes every master and key digest (:func:`.formal.verify_attempt`). A label alone is not evidence."""
+    from .harness import HARNESS_ID  # noqa: PLC0415
+    from .preregistration import PREREG_PATH  # noqa: PLC0415
+
+    doc = __import__("json").loads(PREREG_PATH.read_bytes())
+    root = doc["formal"]["root_commitment_sha256"]
+    want = {"tier": "formal", "tier_bound": "formal", "harness": HARNESS_ID, "root_commitment_sha256": root,
+            "pair_bound": doc["evaluator"]["pair_bound"],
+            "environment_manifest_sha256": doc["formal"]["environment_manifest_sha256"]}
+    problems = []
+    if len(str(root)) != 64:
+        problems.append("no formal root commitment is preregistered")
+    for key, value in sorted(want.items(), key=lambda kv: kv[0]):
+        bad = sum(r.get(key) != value for r in rows)
+        if bad:
+            problems.append(f"{bad} record(s) do not carry {key} = the preregistered/formal value")
+    attempts = {r.get("attempt_sha256") for r in rows}
+    if len(attempts) != 1 or None in attempts:
+        problems.append(f"records come from {len(attempts)} attempt(s); a lift decision reads exactly one admitted attempt")
+    return problems
 
 
 def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[WorldSet] | None = None) -> dict[str, Any]:

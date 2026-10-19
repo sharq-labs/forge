@@ -9,11 +9,13 @@ model, replicate log-differences have mean zero, so the unbiased estimate is ``s
 v0.2's ``arms.py`` is pinned by the v0.2 preregistration and is not edited. This module rebinds every v0.2 arm
 function to a COPY of the v0.2 module namespace in which exactly two names are replaced: ``_fit`` and
 ``_replicate_noise``. Every other line of arm logic (designs, splits, gates, thresholds) is the v0.2 code, unchanged
-and digest-pinned through v0.2. ``ARMS`` keeps the v0.2 names, families and roles, so the comparison set is the same
-registry.
+and digest-pinned through v0.2.
 
-The change makes the gates stricter, so the arms refuse more often. Whether the corrected arms are the v0.3 baselines
-is part of OD-19 (BVB-1). The gate constants themselves (3.5, PRECISION, 0.5) are not re-tuned here.
+Arms may be ADDED by a new identity, never removed or weakened (preregistered rule). The corrected gates are stricter,
+so they refuse more often and could weaken a baseline. v0.3 therefore KEEPS every v0.2 arm unchanged and ADDS one
+corrected variant, ``<name>_dof``, for each gated competence arm; the strongest baseline is the maximum over both. The
+gate constants (3.5, PRECISION, 0.5) are not re-tuned. ``careful`` comes from certified ``engcore.blindfold.baselines``
+and keeps its ddof = 0 estimate (documented exception; changing it is a certified change).
 """
 
 from __future__ import annotations
@@ -72,9 +74,12 @@ def _resolve(fn: Callable[..., Any]) -> Callable[..., Any]:
     return _NAMESPACE.get(fn.__name__, fn) if fn.__module__ == _v02.__name__ and fn.__name__ in _NAMESPACE else fn
 
 
-ARMS: dict[str, tuple[Callable[..., dict[str, Any]], str, bool, str]] = {
-    name: (_resolve(fn), family, stochastic, role) for name, (fn, family, stochastic, role) in _v02.ARMS.items()
-}
+#: the gated competence arms that call ``_fit`` / ``_replicate_noise`` and get a corrected variant
+CORRECTED = ("extrapolating_fit", "extrapolation_pair", "fit_all_gated", "greedy_forward", "monomial_enumeration",
+             "random_structures", "space_filling")
+ARMS: dict[str, tuple[Callable[..., dict[str, Any]], str, bool, str]] = dict(_v02.ARMS)
+ARMS.update({f"{name}_dof": (_resolve(_v02.ARMS[name][0]), _v02.ARMS[name][1] + " (FDA-21: n - p - 1 residual dof)",
+                             _v02.ARMS[name][2], _v02.ARMS[name][3]) for name in CORRECTED})
 UNAVAILABLE_ARMS = _v02.UNAVAILABLE_ARMS
 PRECISION, LACK_OF_FIT_RATIO, OCCAM_SLACK = _v02.PRECISION, _v02.LACK_OF_FIT_RATIO, _v02.OCCAM_SLACK
 

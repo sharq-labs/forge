@@ -29,13 +29,19 @@ MANIFEST_SCHEMA = "forge.genesis_lite.environment_manifest/1"
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 #: what a formal run imports: the harness (escrow, presentation, evaluator), the arm registry, the v0.3 analysis
 PROBE_MODULES = ("benchmarks.genesis_lite.harness", "benchmarks.genesis_lite.arms", "benchmarks.genesis_lite.proposer_host",
-                 "benchmarks.genesis_lite.v0_3.analysis", "benchmarks.genesis_lite.v0_3.evaluator")
+                 "benchmarks.genesis_lite.v0_3.analysis", "benchmarks.genesis_lite.v0_3.arms",
+                 "benchmarks.genesis_lite.v0_3.evaluator", "benchmarks.genesis_lite.v0_3.harness",
+                 "engcore.blindfold.pair_bound")
 
 _PROBE = r"""
 import importlib, importlib.metadata as md, json, platform, sys
 sys.path[:0] = [sys.argv[1] + "/src", sys.argv[1]]
+absent = []
 for name in json.loads(sys.argv[2]):
-    importlib.import_module(name)
+    try:
+        importlib.import_module(name)
+    except ImportError:
+        absent.append(name)
 first_party = {"benchmarks", "engcore", "crafty", "tests", "__main__"}
 tops = sorted({m.split(".")[0] for m in list(sys.modules)} - set(sys.stdlib_module_names) - first_party)
 owners = md.packages_distributions()
@@ -49,15 +55,18 @@ for top in tops:
         dists[dist] = md.version(dist)
 print(json.dumps({"python": {"implementation": sys.implementation.name, "version": platform.python_version(),
                              "system": platform.system(), "machine": platform.machine()},
-                  "distributions": dict(sorted(dists.items())), "unmapped_modules": unmapped}))
+                  "distributions": dict(sorted(dists.items())), "unmapped_modules": unmapped,
+                  "absent_probe_modules": absent}))
 """
 
 
-def build_manifest(python: str | None = None) -> dict[str, Any]:
-    """Measure the manifest of ``python`` (default: this interpreter) for this tree."""
-    out = subprocess.run([python or sys.executable, "-I", "-c", _PROBE, str(ROOT), json.dumps(PROBE_MODULES)],
+def build_manifest(python: str | None = None, extra_modules: tuple[str, ...] = ()) -> dict[str, Any]:
+    """Measure the manifest of ``python`` (default: this interpreter) for this tree. ``extra_modules``: the candidate's
+    modules, which the frozen identity names. Probe modules that do not import are listed, never dropped."""
+    modules = tuple(PROBE_MODULES) + tuple(extra_modules)
+    out = subprocess.run([python or sys.executable, "-I", "-c", _PROBE, str(ROOT), json.dumps(modules)],
                          capture_output=True, text=True, check=True).stdout
-    return {"schema": MANIFEST_SCHEMA, "probe_modules": list(PROBE_MODULES), **json.loads(out)}
+    return {"schema": MANIFEST_SCHEMA, "probe_modules": list(modules), **json.loads(out)}
 
 
 def manifest_digest(manifest: Mapping[str, Any]) -> str:

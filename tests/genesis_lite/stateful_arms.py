@@ -16,3 +16,15 @@ def remembers(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[st
     _SEEN["cards"] += 1
     answer = "no_law" if _SEEN["cards"] == 1 else "insufficient_evidence"
     return {"universe_id": card["universe_id"], "answer": answer, "rationale": f"card {_SEEN['cards']} in this process"}
+
+
+def temp_carry(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    """Leaves a marker in the process's temporary directory and reports whether an earlier card left one there."""
+    import tempfile  # noqa: PLC0415
+    import pathlib  # noqa: PLC0415
+
+    marker = pathlib.Path(tempfile.gettempdir()) / "gl-temp-carry-marker"
+    found = marker.exists()
+    marker.write_bytes(b"")
+    return {"universe_id": card["universe_id"], "answer": "no_law",
+            "rationale": f"temp_carry:{'REACHED' if found else 'REFUSED'}:{tempfile.gettempdir()}"}

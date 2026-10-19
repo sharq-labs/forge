@@ -418,8 +418,9 @@ MANIFEST = {"schema": environment.MANIFEST_SCHEMA, "python": {"implementation": 
 
 def frozen_doc(root=FRESH_ROOT, manifest=MANIFEST):
     """A stand-in for a FROZEN v0.3 preregistration (tests only; the committed one is DRAFT)."""
-    return {"status": "FROZEN", "benchmark_id": "genesis_lite.blindfold_l5.v0_3", "arms": {n: {} for n in arms.ARMS},
-            "formal": {"root_commitment_sha256": hashlib.sha256(root).hexdigest(),
+    return {"status": "FROZEN", "benchmark_id": "genesis_lite.blindfold_l5.v0_3",
+            "arms": {n: {} for n in formal.registered_arms()},
+            "formal": {"root_commitment_sha256": hashlib.sha256(root).hexdigest(), "candidate": formal.NO_CANDIDATE,
                        "environment_manifest_sha256": environment.manifest_digest(manifest)}}
 
 
@@ -443,6 +444,7 @@ def test_p4_a_document_that_merely_says_frozen_is_refused():
         "the preregistration given is not the committed genesis_lite_v0_3.json"]
     with pytest.raises(formal.FormalRefused, match="not the committed"):
         formal.run_formal(FRESH_ROOT, frozen_doc(), manifest=MANIFEST, runner=lambda *a, **k: {}, sink=lambda r: None,
+                          publish=lambda e: None,
                           registry=None)
     committed = json.loads(v03p.PREREG_PATH.read_bytes())
     assert formal.committed_identity_problems(committed) == []      # the draft IS the committed document (then refused
@@ -455,6 +457,7 @@ def test_p4_the_driver_refuses_the_committed_draft():
     assert any("DRAFT" in p for p in problems) and any("OWNER_DECISION_REQUIRED" in p for p in problems)
     with pytest.raises(formal.FormalRefused):
         formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=lambda *a, **k: {}, sink=lambda r: None,
+                          publish=lambda e: None,
                           registry=None)
 
 
@@ -482,13 +485,17 @@ def test_p4_the_driver_runs_every_arm_once_on_every_formal_world_set_and_release
         events.append(("sink", rec["arm"], (rec["presentation"], rec["campaign_id"], rec["seed"])))
         sunk.append(rec)
 
-    summary = formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=runner, sink=sink, registry=registry)
+    published = []
+    summary = formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=runner, sink=sink, registry=registry,
+                                publish=lambda e: (published.append(e), events.append(("publish", None, None))))
+    assert events[0][0] == "publish" and published[0]["attempt_sha256"] == summary["attempt_sha256"]
+    events.pop(0)
     assert summary["registry_head"] == registry.head() and len(registry.entries()) == 1
-    n_arms = len(arms.ARMS)
+    n_arms = len(formal.registered_arms())
     assert summary["world_sets"] == len(v02_analysis.FORMAL_GRID) == 2400
     assert len(sunk) == 2400 * n_arms
     assert {(r["arm"], (r["presentation"], r["campaign_id"], r["seed"])) for r in sunk} == {
-        (a, ws) for a in arms.ARMS for ws in v02_analysis.FORMAL_GRID}
+        (a, ws) for a in formal.registered_arms() for ws in v02_analysis.FORMAL_GRID}
     first_sink, last_run = {}, {}
     for i, (what, _arm, ws) in enumerate(events):
         if what == "run":
@@ -509,13 +516,17 @@ def test_p4_a_record_under_another_identity_is_invalid_not_relabelled(stand_in_a
         return {"arm": arm, "status": "VALID", "presentation": presentation, "campaign_id": campaign_id, "seed": seed,
                 "prereg_sha256": V0_2_SHA256, "universes": [], "reasons": []}
 
-    formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=runner, sink=sunk.append, registry=registry)
+    formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=runner, sink=sunk.append, registry=registry,
+                      publish=lambda e: None)
     assert all(r["status"] == "INVALID_BENCHMARK" and r["prereg_sha256"] == V0_2_SHA256 for r in sunk)
 
 
 def test_p4_formal_masters_never_coincide_with_pilot_masters():
     for i, p, s in ((0, "anonymous", 0), (3, "trap", 7)):
-        assert formal.master_for(FRESH_ROOT, p, f"gl-formal-{i}", s) != pilot.master_for(FRESH_ROOT, i, p, s)
+        formal_master = formal.master_for(FRESH_ROOT, "a" * 64, "0" * 32, p, f"gl-formal-{i}", s)
+        assert formal_master != pilot.master_for(FRESH_ROOT, i, p, s)
+        assert formal_master != formal.master_for(FRESH_ROOT, "a" * 64, "1" * 32, p, f"gl-formal-{i}", s)  # nonce
+        assert formal_master != formal.master_for(FRESH_ROOT, "b" * 64, "0" * 32, p, f"gl-formal-{i}", s)  # identity
 
 
 def test_p4_the_root_never_travels_on_the_command_line():
@@ -525,7 +536,7 @@ def test_p4_the_root_never_travels_on_the_command_line():
 
 def test_p4_the_production_runner_is_the_v0_3_harness_and_refuses_a_draft_identity():
     with pytest.raises(formal.FormalRefused, match="FROZEN"):
-        formal.harness_runner(json.loads(v03p.PREREG_PATH.read_bytes()), MANIFEST)
+        formal.harness_runner(json.loads(v03p.PREREG_PATH.read_bytes()))
     assert not hasattr(formal, "unbound_runner")
 
 

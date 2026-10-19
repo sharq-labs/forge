@@ -12,9 +12,13 @@ these names differ:
 
 Differences from v0.2 beyond that:
 
-* **FDA-18**: one FRESH proposer process per CARD, not per campaign. A stateful proposer can no longer carry what it
-  saw on one card to the next one, so it cannot use the campaign's one-of-each composition. Persistent storage under
-  the same OS account is still possible; closing that needs the OD-20 deployment.
+* **FDA-18**: one FRESH proposer process per CARD, not per campaign, each with its own empty working and temporary
+  directory. A proposer can no longer carry process memory or temp files from one card to the next. Files written
+  elsewhere, or a detached helper process, under the same OS account remain possible (measured by the
+  ``cross_card_state`` and ``persistence`` attacks); closing those needs the OD-20 deployment.
+* **Formal lockdown** (review 2026-10-20 finding 2): a formal run accepts no card hook, no extra import path and no
+  caller-chosen arm spec. It runs a registered v0.3 arm or the candidate the identity names, and records each arm's
+  code digest.
 * **FDA-22**: every universe records ``law_form`` (power / exp / two_term / regime) from the revealed key, so the
   kind-conditional form prior can be measured per world (declared as a structural tell in the v0.3 preregistration).
 * Every record carries the harness, the bound and the environment-manifest digest it was produced under.
@@ -28,6 +32,13 @@ from __future__ import annotations
 
 import functools
 import json
+import os
+import pathlib
+import queue
+import subprocess
+import sys
+import tempfile
+import threading
 import types
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
@@ -46,6 +57,8 @@ except ImportError:                        # pragma: no cover - exercised on a t
     escrow_bound = None
 
 HARNESS_ID = "forge.genesis_lite.harness.v0_3"
+#: the code a registered v0.3 arm runs (v0.2 arms.py, re-bound by v0.3 arms.py)
+ARM_CODE = ("benchmarks/genesis_lite/arms.py", "benchmarks/genesis_lite/v0_3/arms.py")
 CONFIG_ID, CONFIG_VERSION = "forge.genesis_lite.v0_3", "1"
 TIERS = ("formal", "development")
 ODR = v03p.ODR
@@ -64,6 +77,8 @@ class Binding:
     config: Any
     credit_digest: str
     environment_manifest_sha256: str
+    preregistered_pair_bound: Mapping[str, Any] | None = None     # None only in development while w is still open
+    candidate: Mapping[str, Any] | None = None
 
 
 def bind(doc_bytes: bytes, *, tier: str, manifest: Mapping[str, Any] | None = None,
@@ -74,6 +89,8 @@ def bind(doc_bytes: bytes, *, tier: str, manifest: Mapping[str, Any] | None = No
     'formal')."""
     if tier not in TIERS:
         raise HarnessRefused(f"unknown tier {tier!r}")
+    if tier == "formal" and manifest is not None:
+        raise HarnessRefused("a formal binding measures its environment itself; a caller's manifest is not evidence")
     problems = v03p.committed_doc_problems(doc_bytes)
     if problems:
         raise HarnessRefused("; ".join(problems))
@@ -102,12 +119,24 @@ def bind(doc_bytes: bytes, *, tier: str, manifest: Mapping[str, Any] | None = No
             raise HarnessRefused("the environment manifest is not preregistered")
     elif frozen_env != measured:
         raise HarnessRefused("the environment manifest differs from the preregistered one")
+    candidate = None
+    if tier == "formal":
+        from . import formal  # noqa: PLC0415 - formal imports this module lazily
+
+        try:
+            candidate = formal.candidate_of(doc)
+        except formal.FormalRefused as exc:
+            raise HarnessRefused(str(exc)) from exc
+        problems = formal.candidate_code_problems(candidate)
+        if problems:
+            raise HarnessRefused("; ".join(problems))
     if escrow_bound is None:
         raise HarnessRefused("the escrow half of FDA-05 (engcore.blindfold.pair_bound) is not in this tree: the escrow "
                              "would score pairs with the unbounded v0.2 rule (BLOCKED_BY_OD3); no fallback")
     config = escrow_bound.BoundedEvaluatorConfig(CONFIG_ID, CONFIG_VERSION,
                                                  pair_bound=escrow_bound.PairBound(bound.form, float(bound.value)))
-    return Binding(v03p.sha256(doc_bytes), str(doc.get("status")), tier, bound, config, credit, measured)
+    return Binding(v03p.sha256(doc_bytes), str(doc.get("status")), tier, bound, config, credit, measured,
+                   None if recorded == ODR else dict(recorded), candidate)
 
 
 class _Evaluator:
@@ -125,8 +154,10 @@ class _Evaluator:
     def evaluate_campaign(self, proposals, key, escrow, *, expected_credit_digest):  # noqa: ANN001
         self.key = key
         bound = self._binding.pair_bound
+        # the expectation comes from the preregistration; only a development run with an open w checks against itself
+        expected = self._binding.preregistered_pair_bound or bound.to_dict()
         return v03e.evaluate_campaign(proposals, key, escrow, expected_credit_digest=expected_credit_digest, bound=bound,
-                                      expected_pair_bound=bound.to_dict())
+                                      expected_pair_bound=expected)
 
 
 def _bound_run(binding: Binding, evaluator: _Evaluator) -> Callable[..., None]:
@@ -137,6 +168,27 @@ def _bound_run(binding: Binding, evaluator: _Evaluator) -> Callable[..., None]:
     return types.FunctionType(src.__code__, namespace, src.__name__, src.__defaults__, src.__closure__)
 
 
+class CardProposerHost(_v02h.ProposerHost):
+    """v0.2's isolated proposer process, started for ONE card, with its own empty working AND temporary directory
+    (TEMP, TMP and TMPDIR point into it), so temp files do not survive into the next card's process."""
+
+    def __init__(self, extra_paths: tuple[str, ...] = (), timeout: float = 600.0) -> None:  # noqa: D107
+        self._dir = tempfile.TemporaryDirectory(prefix="gl-card-")
+        env = {k: os.environ[k] for k in ("PATH", "SYSTEMROOT", "WINDIR") if k in os.environ}
+        env.update(TEMP=self._dir.name, TMP=self._dir.name, TMPDIR=self._dir.name)
+        paths = [str(_v02h._ROOT), str(_v02h._ROOT / "src"), *extra_paths]
+        self._proc = subprocess.Popen([sys.executable, "-I", str(_v02h._HOST), *paths], cwd=self._dir.name, env=env,
+                                      stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0)
+        self._lines: queue.Queue = queue.Queue()
+        threading.Thread(target=self._pump, daemon=True).start()
+        self._timeout = timeout
+        hello = self._recv()
+        expected = str((_v02h._ROOT / "src" / "engcore" / "__init__.py").resolve())
+        if hello.get("op") != "hello" or str(pathlib.Path(hello.get("engcore", "")).resolve()) != expected:
+            self.close()
+            raise RuntimeError(f"the proposer process did not import this tree's engcore: {hello}")
+
+
 def fresh_process_per_card(spec: str, extra_paths: tuple[str, ...] = ()) -> Callable[..., dict[str, Any]]:
     """FDA-18: an arm callable that starts a new isolated proposer process for every card and ends it after the card."""
     starts: list[float] = []
@@ -145,7 +197,7 @@ def fresh_process_per_card(spec: str, extra_paths: tuple[str, ...] = ()) -> Call
         import time  # noqa: PLC0415
 
         t0 = time.perf_counter()
-        host = _v02h.ProposerHost(extra_paths)
+        host = CardProposerHost(extra_paths)
         starts.append(time.perf_counter() - t0)
         try:
             return host.propose(spec, card, seed, client)
@@ -180,12 +232,23 @@ def run_one(arm_name: str, *, binding: Binding, master_seed: bytes, campaign_id:
         raise HarnessRefused("a v0.3 run needs a Binding from harness.bind()")
     if isolation not in _v02h.ISOLATIONS:
         raise HarnessRefused(f"unknown isolation {isolation!r}")
-    if isolation != "proposer_process" and binding.tier == "formal":
-        raise HarnessRefused("a formal run isolates the proposer in its own process")
+    candidate = binding.candidate
+    if binding.tier == "formal":
+        if isolation != "proposer_process":
+            raise HarnessRefused("a formal run isolates the proposer in its own process")
+        if card_hook is not None or extra_paths or arm_spec is not None:
+            raise HarnessRefused("a formal run takes no card hook, extra path or caller-chosen arm spec")
+        if arm_name not in v03_arms.ARMS and not (candidate and arm_name == candidate["name"]):
+            raise HarnessRefused(f"{arm_name!r} is neither a registered v0.3 arm nor the identity's candidate")
+    if candidate and arm_name == candidate["name"]:
+        spec, code = candidate["spec"], dict(candidate["code_sha256"])
+    else:
+        spec = arm_spec or f"benchmarks.genesis_lite.v0_3.arms:{arm_name}"
+        code = {rel: v03p._sha(v03p.v02.ROOT / rel) for rel in ARM_CODE}
     rec = _v02h.RunRecord(arm_name, seed, campaign_id, presentation, isolation=isolation)
     rec.prereg_sha256 = binding.prereg_sha256
     if isolation == "proposer_process":
-        arm = fresh_process_per_card(arm_spec or f"benchmarks.genesis_lite.v0_3.arms:{arm_name}", extra_paths)
+        arm = fresh_process_per_card(spec, extra_paths)
     else:
         arm = v03_arms.ARMS[arm_name][0]
     evaluator = _Evaluator(binding)
@@ -201,5 +264,5 @@ def run_one(arm_name: str, *, binding: Binding, master_seed: bytes, campaign_id:
     rec.host_start_seconds = float(sum(starts))
     rec.__dict__.update(harness=HARNESS_ID, tier_bound=binding.tier, pair_bound=binding.pair_bound.to_dict(),
                         environment_manifest_sha256=binding.environment_manifest_sha256,
-                        proposer_processes=len(starts))
+                        proposer_processes=len(starts), arm_spec=spec, arm_code_sha256=code)
     return rec

@@ -27,7 +27,8 @@ HERE = pathlib.Path(__file__).resolve().parent
 PREREG_PATH = v02.HERE / "preregistration" / "genesis_lite_v0_3.json"
 V0_2_PREREG_SHA256 = "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64"
 V0_3_FILES = ("__init__.py", "analysis.py", "arms.py", "deployment_attacks.py", "environment.py", "evaluator.py",
-              "formal.py", "harness.py", "preregistration.py", "readiness.py", "registry.py", "selfcheck.py")
+              "formal.py", "harness.py", "preregistration.py", "readiness.py", "registry.py", "secret_scan.py",
+              "selfcheck.py")
 #: the certified escrow half of FDA-05 (Batch A, OD-3); pinned by digest when it is in the tree
 ESCROW_HALF = "pair_bound.py"
 ODR = "OWNER_DECISION_REQUIRED"
@@ -36,6 +37,7 @@ ODR = "OWNER_DECISION_REQUIRED"
 STATUS = "DRAFT"
 FORMAL_ROOT_COMMITMENT = ODR                 # a FRESH root, generated and committed by the operator at freeze
 ENVIRONMENT_MANIFEST_SHA256 = ODR            # measured on the owner-approved formal machine (environment.py)
+CANDIDATE = ODR                              # {name, spec, code_sha256} named in the freeze, or "NONE" (baselines only)
 DECISION_RECORD = "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md"
 
 
@@ -130,8 +132,11 @@ def build() -> dict[str, Any]:
                        "FROZEN), a code tree that does not rebuild it, a credit table, w or environment manifest other "
                        "than the preregistered one, a formal binding of a non-FROZEN identity, a tree without the escrow "
                        "half",
-            "proposer": "one fresh isolated proposer process PER CARD (FDA-18); same-account persistent storage remains "
-                        "an OD-20 item",
+            "proposer": "one fresh isolated proposer process PER CARD with its own working and temporary directory "
+                        "(FDA-18); same-account files elsewhere and helper processes remain OD-20 items "
+                        "(cross_card_state and persistence attacks)",
+            "formal_lockdown": "a formal run takes no card hook, extra path or caller arm spec; it runs a registered "
+                               "v0.3 arm or the candidate this identity names and records each arm's code digest",
             "law_form": "each universe records the generator form of its hidden law (FDA-22)",
             "arms": "benchmarks.genesis_lite.v0_3.arms (FDA-21), by registry name",
         },
@@ -185,8 +190,9 @@ def build() -> dict[str, Any]:
                                    "non-adversarial arm earns full credit with an exact binary-bootstrap lower bound >= "
                                    + str(analysis.CONTROL_SOLVED_LIMIT) + " is capped at the comparator (pilot P-2)",
             "claim_scope": analysis.CLAIM_SCOPE,
-            "record_binding": "every analysed record carries tier 'formal' and the preregistered formal root commitment "
-                              "(D-09), in addition to the v0.2 identity binding",
+            "record_binding": "every analysed record carries tier and tier_bound 'formal', the v0.3 harness id, the "
+                              "preregistered root commitment, w and environment digest, and ONE attempt digest (D-09); "
+                              "these labels gain authority only through the evaluator's post-reveal verify_attempt",
             "bootstrap": f"lower bound only; {v02_analysis.BOOTSTRAP} resamples, Random(0), floor order statistic (unchanged)",
             "unchanged": "unit of analysis, grid, comparison set, strongest baseline, representation-limited rule, "
                          "non-inferiority margins, screening and its cap, identity binding: as in v0.2",
@@ -197,8 +203,14 @@ def build() -> dict[str, Any]:
                      "presentations": list(v02_analysis.PRIMARY_FAMILY[1:])},
             "world_sets": len(v02_analysis.FORMAL_GRID),
             "order": "world-set-major: every arm runs a world set before any of its records leaves the driver",
-            "master_label": formal.LABEL + "/{presentation}/{seed}/{campaign_id}",
+            "master_label": formal.LABEL + "/{prereg_sha256}/{attempt_nonce}/{presentation}/{seed}/{campaign_id}",
             "root_commitment_sha256": FORMAL_ROOT_COMMITMENT,
+            "candidate": CANDIDATE,
+            "candidate_rule": "the candidate runs INSIDE the admitted attempt, world-set-major, beside every registered "
+                              "arm; its code is pinned by sha256; it may not take a registered arm's name",
+            "admission": "admitted to the attempt registry and PUBLISHED to the external evaluator before the first "
+                         "world; after the reveal the evaluator recomputes every master and answer-key digest "
+                         "(formal.verify_attempt)",
             "retired_root_commitments": sorted(formal.retired_root_commitments()),
             "root_channel": "stdin only, never the command line",
             "environment_manifest_schema": environment.MANIFEST_SCHEMA,
@@ -211,9 +223,16 @@ def build() -> dict[str, Any]:
                                "covers the Genesis-lite secret inventory (FDA-19 / ODC-BL1), OD-18 budget, OD-8 "
                                "evaluator, this identity frozen and approved (OD-19)",
         },
-        "arms": {name: {**old["arms"][name], "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
-                        "residual_dof": v03_arms.RESIDUAL_DOF, "replicate_noise": v03_arms.REPLICATE_NOISE}
+        "arms": {name: ({**old["arms"][name], "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)"}
+                        if name in old["arms"] else
+                        {"family": v03_arms.ARMS[name][1], "stochastic": v03_arms.ARMS[name][2],
+                         "role": v03_arms.ARMS[name][3], "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm "
+                         "re-bound: " + v03_arms.RESIDUAL_DOF + "; " + v03_arms.REPLICATE_NOISE + ")",
+                         "observations": old["arms"]["careful"]["observations"],
+                         "budget": old["arms"]["careful"]["budget"]})
                  for name in sorted(v03_arms.ARMS)},
+        "arms_rule": "v0.3 keeps every v0.2 arm and ADDS the FDA-21 variants (<name>_dof); the strongest baseline is "
+                     "the maximum over all of them; careful (certified engcore baseline) keeps ddof = 0",
         "known_structural_tells": old["known_structural_tells"] + [
             "FDA-22: INDISTINGUISHABLE worlds draw only the power or exp form; every other law-bearing kind draws two-term "
             "or regime forms 40% of the time (universe.py), so an in-box two-term or regime signature rules out "
@@ -225,8 +244,8 @@ def build() -> dict[str, Any]:
         "arms_not_run": old["arms_not_run"],
         "statistics_unchanged_from_v0_2": {k: old["statistics"][k] for k in ("unit_of_analysis",)},
         "open_items": {
-            "FDA-19 / ODC-BL1": "isolation-probe scope over the Genesis-lite secret inventory (certified isolation_probe.py); "
-                                "specified, BLOCKED_BY_OD3",
+            "FDA-19 / ODC-BL1": "closed on the benchmark side by v0_3/secret_scan.py (proposer-side scan of the root, "
+                                "masters, run log and registry); extending the certified isolation_probe stays optional",
             "readiness P-1 / P-2": "the isolation deployment and an out-of-process escrow (OD-20); the deployment attack "
                                    "suite must report every channel REFUSED there",
         },
@@ -238,8 +257,8 @@ def build() -> dict[str, Any]:
             "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2: section 10.5 governs the cap; "
                                       "capped kinds; corrected-dof arms as the v0.3 baselines; the form tell declared "
                                       "(not equalised); one proposer process per card; the CONTROL_SOLVED cap",
-            "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; the operator generates a fresh formal root "
-                                  "and commits it",
+            "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a "
+                                  "baseline-only attempt); the operator generates a fresh formal root and commits it",
             "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse "
                              "every channel",
             "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",

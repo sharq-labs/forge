@@ -41,7 +41,7 @@
    "procedure": "unchanged"
   },
   "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference); capping errs conservative; a composite null 'mean <= 0' with an asymmetric difference distribution is not covered (ODC-O1a)",
-  "record_binding": "every analysed record carries tier 'formal' and the preregistered formal root commitment (D-09), in addition to the v0.2 identity binding",
+  "record_binding": "every analysed record carries tier and tier_bound 'formal', the v0.3 harness id, the preregistered root commitment, w and environment digest, and ONE attempt digest (D-09); these labels gain authority only through the evaluator's post-reveal verify_attempt",
   "sign_flip": {
    "exact_work_limit": 1000000,
    "lattice": 2,
@@ -56,7 +56,7 @@
  "arms": {
   "always_insufficient": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -64,14 +64,12 @@
    },
    "family": "floor: blanket refusal (existing)",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
    "role": "floor",
    "stochastic": false
   },
   "always_law": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -79,14 +77,12 @@
    },
    "family": "floor: always proposes (existing)",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
    "role": "floor",
    "stochastic": false
   },
   "always_refuse": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -94,14 +90,12 @@
    },
    "family": "floor: never proposes (existing)",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
    "role": "floor",
    "stochastic": false
   },
   "careful": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -109,14 +103,12 @@
    },
    "family": "experiment selection: random design + replicate/holdout (existing)",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
    "role": "competence",
    "stochastic": false
   },
   "extrapolating_fit": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -124,14 +116,20 @@
    },
    "family": "law recovery that extrapolates outside the query box",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
+   "role": "competence",
+   "stochastic": true
+  },
+  "extrapolating_fit_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "law recovery that extrapolates outside the query box (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
    "role": "competence",
    "stochastic": true
   },
   "extrapolation_pair": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -139,14 +137,20 @@
    },
    "family": "indistinguishable answer: fixed rival-pair heuristic",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
+   "role": "competence",
+   "stochastic": true
+  },
+  "extrapolation_pair_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "indistinguishable answer: fixed rival-pair heuristic (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
    "role": "competence",
    "stochastic": true
   },
   "fit_all_gated": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -154,14 +158,20 @@
    },
    "family": "law recovery: all-variable fit behind the control checks (v0.1)",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
+   "role": "competence",
+   "stochastic": true
+  },
+  "fit_all_gated_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "law recovery: all-variable fit behind the control checks (v0.1) (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
    "role": "competence",
    "stochastic": true
   },
   "greedy_forward": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -169,14 +179,20 @@
    },
    "family": "variable-primitive selection: greedy forward",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
+   "role": "competence",
+   "stochastic": true
+  },
+  "greedy_forward_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "variable-primitive selection: greedy forward (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
    "role": "competence",
    "stochastic": true
   },
   "historical_answer": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -184,14 +200,12 @@
    },
    "family": "adversarial: textbook answer for familiar vocabulary",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
    "role": "adversarial",
    "stochastic": false
   },
   "monomial_enumeration": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -199,14 +213,20 @@
    },
    "family": "law recovery: enumeration of the frozen v0 monomial family",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
+   "role": "competence",
+   "stochastic": true
+  },
+  "monomial_enumeration_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "law recovery: enumeration of the frozen v0 monomial family (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
    "role": "competence",
    "stochastic": true
   },
   "random_structures": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -214,14 +234,20 @@
    },
    "family": "law recovery: constrained random structures (v0 family)",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
+   "role": "competence",
+   "stochastic": true
+  },
+  "random_structures_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "law recovery: constrained random structures (v0 family) (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
    "role": "competence",
    "stochastic": true
   },
   "single_setting": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -229,14 +255,12 @@
    },
    "family": "non-discoverer control (existing)",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
    "role": "sanity",
    "stochastic": false
   },
   "space_filling": {
    "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
-   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
    "config": {
     "lack_of_fit_ratio": 3.5,
     "occam_slack": 0.05,
@@ -244,8 +268,14 @@
    },
    "family": "experiment selection: space-filling design",
    "observations": "presented card + observe client only",
-   "replicate_noise": "sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences",
-   "residual_dof": "n - p - 1",
+   "role": "competence",
+   "stochastic": true
+  },
+  "space_filling_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "experiment selection: space-filling design (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
    "role": "competence",
    "stochastic": true
   }
@@ -280,6 +310,7 @@
    "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
   }
  },
+ "arms_rule": "v0.3 keeps every v0.2 arm and ADDS the FDA-21 variants (<name>_dof); the strongest baseline is the maximum over all of them; careful (certified engcore baseline) keeps ddof = 0",
  "benchmark_id": "genesis_lite.blindfold_l5.v0_3",
  "decision_record": "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md",
  "escrow_half": {
@@ -306,7 +337,10 @@
   "schema": "forge.genesis_lite.independent_evaluator/3"
  },
  "formal": {
+  "admission": "admitted to the attempt registry and PUBLISHED to the external evaluator before the first world; after the reveal the evaluator recomputes every master and answer-key digest (formal.verify_attempt)",
   "attempt_registry": "required; admission before the first world (one_attempt_per_root above)",
+  "candidate": "OWNER_DECISION_REQUIRED",
+  "candidate_rule": "the candidate runs INSIDE the admitted attempt, world-set-major, beside every registered arm; its code is pinned by sha256; it may not take a registered arm's name",
   "driver": "benchmarks/genesis_lite/v0_3/formal.py",
   "environment_manifest_schema": "forge.genesis_lite.environment_manifest/1",
   "environment_manifest_sha256": "OWNER_DECISION_REQUIRED",
@@ -315,7 +349,10 @@
    "benchmarks.genesis_lite.arms",
    "benchmarks.genesis_lite.proposer_host",
    "benchmarks.genesis_lite.v0_3.analysis",
-   "benchmarks.genesis_lite.v0_3.evaluator"
+   "benchmarks.genesis_lite.v0_3.arms",
+   "benchmarks.genesis_lite.v0_3.evaluator",
+   "benchmarks.genesis_lite.v0_3.harness",
+   "engcore.blindfold.pair_bound"
   ],
   "grid": {
    "campaign_ids": [
@@ -380,7 +417,7 @@
    ]
   },
   "harness_binding": "formal.harness_runner: the v0.3 harness bound to this identity in the formal tier; refuses without the escrow half (OD-3)",
-  "master_label": "forge.genesis_lite.v0_3/formal/{presentation}/{seed}/{campaign_id}",
+  "master_label": "forge.genesis_lite.v0_3/formal/{prereg_sha256}/{attempt_nonce}/{presentation}/{seed}/{campaign_id}",
   "order": "world-set-major: every arm runs a world set before any of its records leaves the driver",
   "retired_root_commitments": [
    "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",
@@ -395,11 +432,12 @@
  "harness": {
   "arms": "benchmarks.genesis_lite.v0_3.arms (FDA-21), by registry name",
   "binding": "harness.bind refuses: a document other than the committed v0.3 bytes (v0.2 or any dict that says FROZEN), a code tree that does not rebuild it, a credit table, w or environment manifest other than the preregistered one, a formal binding of a non-FROZEN identity, a tree without the escrow half",
+  "formal_lockdown": "a formal run takes no card hook, extra path or caller arm spec; it runs a registered v0.3 arm or the candidate this identity names and records each arm's code digest",
   "id": "forge.genesis_lite.harness.v0_3",
   "law_form": "each universe records the generator form of its hidden law (FDA-22)",
   "module": "benchmarks/genesis_lite/v0_3/harness.py",
   "procedure": "v0.2 harness._run re-bound to the v0.3 evaluator, the v0.3 config and the bounded escrow; no fallback to v0.2",
-  "proposer": "one fresh isolated proposer process PER CARD (FDA-18); same-account persistent storage remains an OD-20 item"
+  "proposer": "one fresh isolated proposer process PER CARD with its own working and temporary directory (FDA-18); same-account files elsewhere and helper processes remain OD-20 items (cross_card_state and persistence attacks)"
  },
  "known_structural_tells": [
   "a box-shaped assessment region rules out INDISTINGUISHABLE (Blindfold universe.py docstring)",
@@ -415,14 +453,14 @@
   "schema": "forge.genesis_lite.attempt_registry/1"
  },
  "open_items": {
-  "FDA-19 / ODC-BL1": "isolation-probe scope over the Genesis-lite secret inventory (certified isolation_probe.py); specified, BLOCKED_BY_OD3",
+  "FDA-19 / ODC-BL1": "closed on the benchmark side by v0_3/secret_scan.py (proposer-side scan of the root, masters, run log and registry); extending the certified isolation_probe stays optional",
   "readiness P-1 / P-2": "the isolation deployment and an out-of-process escrow (OD-20); the deployment attack suite must report every channel REFUSED there"
  },
  "owner_decisions_open": {
   "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d: the bound form (i) on the bracket route only; the value and form of w; v0.3 only; the pass route with an arbitrary partner (keep, constrain, or score at law_pass)",
   "D2-significance": "covers ODC-O1a and ODC-O1b: sign-flip route B with its null scope and fixed Monte-Carlo stream, or route A, or defer; whether to run a bounded null-calibration study",
   "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2: section 10.5 governs the cap; capped kinds; corrected-dof arms as the v0.3 baselines; the form tell declared (not equalised); one proposer process per card; the CONTROL_SOLVED cap",
-  "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; the operator generates a fresh formal root and commits it",
+  "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a baseline-only attempt); the operator generates a fresh formal root and commits it",
   "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse every channel",
   "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
   "D7-budget-and-machine": "OD-18: formal compute (one proposer process per card adds per-card start cost) and the formal machine, which fixes the environment manifest",
@@ -460,16 +498,17 @@
  "status_note": "DRAFT (not FREEZE_READY): no pilot, formal run or measurement may be produced under this document; v0.2 remains the active identity until the owner approves v0.3 (OD-19). Every value marked OWNER_DECISION_REQUIRED blocks the freeze.",
  "v0_3_files": {
   "__init__.py": "f8af0c58db79ad76a213ad6fb8c771a55114b34503f7452eb3fab3116d1e4905",
-  "analysis.py": "243f4b53733e89c1c8b7f5ff1fcb9a30a890b53f603c83f4e93d3ca6d90bcf9f",
-  "arms.py": "01363a5b616e1de91b9fdfa654170946a4d080c08d2cde1efa72fd4362c0401f",
-  "deployment_attacks.py": "489273ad3e4e87e701b5a94266045ebab4b4676ec632b390876cb5c980e20b82",
-  "environment.py": "bc68eeb887dc5c4b7baddcf6abe54a0e37c676e53562dbabbd01ee194809530d",
+  "analysis.py": "06581188a5101dd7e0aea407aab2092e5def02982865c72dd0909f23a27002e1",
+  "arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
+  "deployment_attacks.py": "da999a6216794eabc622081ce531deb229cb69a48dc42854a92a24bccb5d25a8",
+  "environment.py": "a1ece02913d4616bd7007872c3a913d21453afe30713050167a1059af78e989b",
   "evaluator.py": "773cf1d6b9ad6beb5466702ed1301b6d34b15f112c23545be1898f438171dda3",
-  "formal.py": "1be2dfacf898f70b25a0121c837505c5ad687637b776e4fff83694dae0edc63d",
-  "harness.py": "f36032f6b0391bd3c3213a430606a4362ec07dfeb1b0f2e321c3995c8b3a46c9",
-  "preregistration.py": "19cfb2f0a3ca41f775b9de9d91f216df82ccb2692838ff72201d17fbb0cfa5b8",
-  "readiness.py": "49dd7f62c6b4d23c27696942bc503ae6aab23b6892fe46fc938195adecf13863",
-  "registry.py": "61ecb9d5356140b565235cf013fe300ad9255e25144c9c6eb456eb428d36d35d",
+  "formal.py": "08cdfa18f1835d9114cfa4aad928527160c8186ee1f867fdbffd6dc223e86696",
+  "harness.py": "b32dc927a099b7411dca3331e79cbc67b20b1d93fc46eb774584b29b1f94dc73",
+  "preregistration.py": "cdae9b6187f42f134d06b3e6a7af8dc80d1c7583e1090afafb1f360e4209b34e",
+  "readiness.py": "35e5e81cdd12136d753479b76d3fd1a00041ca19d4a6e5fe9ba8c7b0896bb8cf",
+  "registry.py": "aae6f98e545d25d4a5a66d73f36110cd5a41285690ae36e0590ace4dba55bade",
+  "secret_scan.py": "ebae65f56df6f0bd93bee89fc052223934369bd0b025198a319a701f16dda89f",
   "selfcheck.py": "09efb6aab132e2ee6a12a5e5dd484ebf0a069f8f34c5386fae7ed685fb323bea"
  }
 }

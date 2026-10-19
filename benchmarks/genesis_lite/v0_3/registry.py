@@ -14,20 +14,25 @@ refusal), so:
   ever seen in development can never be admitted formally, and a formal root can never be used for development.
 
 The registry is one append-only JSON-lines file in an operator-only directory OUTSIDE every run directory. Each line
-carries the sha256 of the previous line; :func:`AttemptRegistry.head` is the value to publish outside the operator's
-control (OD-8: the external evaluator receives it). Admission takes an exclusive lock file created with O_EXCL. A lock
-left by a crash is never broken automatically: the registry refuses until the operator removes it after inspection,
-which fails closed.
+carries the sha256 of the previous line and its own digest. Every entry carries a random NONCE and the admission time,
+so two admissions are never identical, and the formal masters mix in the nonce (``formal.master_for``): a second
+attempt, even through a fresh registry, can neither reproduce the first attempt's identity nor replay its worlds.
+Admission takes an exclusive lock file created with O_EXCL. A lock left by a crash is never broken automatically: the
+registry refuses until the operator removes it after inspection, which fails closed.
 
-This module cannot stop an operator from deleting the registry. The published head is what makes a rewrite visible.
+This module cannot stop an operator from deleting the registry or starting a fresh one. What makes that visible is
+outside the operator's control: the formal driver PUBLISHES each admission to the external evaluator (OD-8) before the
+first world is derived, and the evaluator refuses a second admission of one root commitment.
 """
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 import json
 import os
 import pathlib
+import secrets
 from typing import Any, Mapping
 
 REGISTRY_SCHEMA = "forge.genesis_lite.attempt_registry/1"
@@ -92,7 +97,9 @@ class AttemptRegistry:
                 raise AttemptRefused("this root is a formal root; it is never used for development")
             entry = {"schema": REGISTRY_SCHEMA, "prev_sha256": self.head(), "tier": tier,
                      "root_commitment_sha256": root_commitment_sha256, "prereg_sha256": prereg_sha256,
-                     "campaign_set_sha256": campaign_set_sha256, "attempt_label": str(attempt_label)}
+                     "campaign_set_sha256": campaign_set_sha256, "attempt_label": str(attempt_label),
+                     "nonce": secrets.token_hex(16),
+                     "admitted_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")}
             entry["attempt_sha256"] = hashlib.sha256(json.dumps(entry, sort_keys=True).encode()).hexdigest()
             line = json.dumps(entry, sort_keys=True, separators=(",", ":")).encode() + b"\n"
             with open(self.path, "ab") as fh:
