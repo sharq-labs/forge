@@ -6,6 +6,39 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task — BR-MIND-01 Minimal Mind pilot under EXC-MIND-1 (2026-10-19)
+
+Branch `feat/br-mind-01-minimal-mind` (worktree `D:/forge-mind`), base `origin/main` `8ec97064`. Report:
+[BR_MIND_01_MINIMAL_MIND.md](../discovery/BR_MIND_01_MINIMAL_MIND.md). Genesis A1 is NOT passed; this is a measured
+pilot under an owner exception, not A2.
+
+**Active-epic exception EXC-MIND-1 (open).** The only open exception (EXC-1 is superseded by OD-6), so the
+anti-loophole rule is not triggered.
+
+1. Exact scope: Genesis Step-2 Minimal Mind preparation only. Code areas: `src/engcore/mind/minimal/**` (new, not
+   certificate-scoped), `benchmarks/genesis_lite_mind/**` (new, outside the v0.2 preregistered package),
+   `tests/mind/test_minimal_mind.py`, `tests/genesis_lite_mind/**`, and these docs. No certified file and no
+   v0.2-pinned file is touched (checked by `harness.code_identity()` and a test).
+2. Allowed capability work: hypothesis competition over structural rivals, a hypothesis-conditioned outcome model,
+   expected-discrimination experiment selection, a falsifier role over `claims.falsification`, stopping, content-addressed
+   step records with replay, a Blindfold Mind arm with ablations, and one non-formal matched pilot.
+3. Reason: the owner directed BR-MIND-01 to measure whether a minimal closed loop has value before further A1/A2
+   investment; A1's formal tier is blocked by owner decisions with no date (OD-3, OD-8, OD-18, OD-19, OD-20, ODC-05,
+   ODC-06, ODC-O1).
+4. Start condition: owner approval in session, 2026-10-19.
+5. Exit condition: the BR-MIND-01 report records MINIMAL_MIND_MEASURED (pilot) or BLOCKED_WITH_PRECISE_EVIDENCE; or
+   Genesis A1 is decided.
+6. Expiry: 2026-11-02, or the A1 decision, whichever comes first.
+7. Owner approval: the repository owner, in the Claude Code session of 2026-10-19 ("Approve EXC-MIND-1").
+8. Still prohibited: merge without the owner (and OD-3 for anything certificate-scoped); any A1 PASS, A2 PASS, lift,
+   maturity, validation or certification claim; a formal-tier run; editing a certified or v0.2-pinned file; any LLM
+   authority over status, evidence, uncertainty, thresholds or outcomes; changing the active epic.
+
+- [x] Census of origin/main; A1 gate state recorded (owner-blocked). EXC-MIND-1 approved.
+- [x] Minimal Mind (`engcore.mind.minimal`) on canonical owners; Stage-1 functional and adversarial tests.
+- [ ] Freeze the Mind's identity and a fresh pilot root; Stage-2 matched pilot; ablations; prediction scoring; replay.
+- [ ] Owner: review; decide whether the Stage-3 formal tier is warranted (it still needs A1 first).
+
 ## Current bounded task — BUY-01 MCP UQ repair, FDA-04 / FDA-14 (2026-10-19)
 
 Branch `fix/buy01-fda04-fda14-qmc` (local `17e2edd5`, `428993b1`; base `origin/main` `d3c9cd45`). This is a trust-lane

@@ -1,0 +1,93 @@
+{
+ "analysis": {
+  "ablation_rule": "a capability whose ablation is not worse than FULL (bootstrap interval of FULL - ablation includes or lies below 0) is reported UNJUSTIFIED_ON_THIS_PILOT",
+  "ablations": "paired by world set: FULL minus each ablation; mean, cluster-bootstrap 95% interval (2000, seed 0) and an exact-in-distribution paired sign-flip randomization p (20000 flips, seed 0), per kind and pooled; no multiplicity correction is claimed (exploratory)",
+  "fda05_exposure": "count of Mind 'indistinguishable' answers (the vacuous-pair defect FDA-05 is unrepaired)",
+  "lift": "analysis.lift_decision(records, candidate, grid=pilot grid) per Mind variant -- exploratory by construction (not the formal grid); reported as indicative, never as a claim",
+  "no_strong_baseline": "discoverable credit split by truth_in_searched_family; out-of-family worlds are NO_STRONG_BASELINE (capped in lift_decision)",
+  "predictions": "every executed query with a sealed mixture prediction: mean log predictive density of ln y, PIT-based 90% central-interval coverage; reported per variant and kind, apart from credit",
+  "primary": "mean campaign credit over world sets (v0.2 PRIMARY endpoint), per arm",
+  "replay": "every FULL trace replayed from its recorded observations; status VERIFIED required"
+ },
+ "arms": {
+  "mind": [
+   "mind_full",
+   "mind_no_adaptive_selection",
+   "mind_no_belief_update",
+   "mind_no_falsifier"
+  ],
+  "registered_v0_2": [
+   "always_insufficient",
+   "always_law",
+   "always_refuse",
+   "careful",
+   "extrapolating_fit",
+   "extrapolation_pair",
+   "fit_all_gated",
+   "greedy_forward",
+   "historical_answer",
+   "monomial_enumeration",
+   "random_structures",
+   "single_setting",
+   "space_filling"
+  ]
+ },
+ "benchmark": {
+  "identity": "genesis_lite.blindfold_l5.v0_2",
+  "preregistration_sha256": "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64"
+ },
+ "grid": {
+  "campaigns": [
+   "gl-mind-pilot-0",
+   "gl-mind-pilot-1",
+   "gl-mind-pilot-2",
+   "gl-mind-pilot-3",
+   "gl-mind-pilot-4",
+   "gl-mind-pilot-5",
+   "gl-mind-pilot-6",
+   "gl-mind-pilot-7",
+   "gl-mind-pilot-8",
+   "gl-mind-pilot-9"
+  ],
+  "master": "benchmarks.genesis_lite.pilot.master_for(root, i, presentation, seed) -- one master per world set, shared by every arm",
+  "presentations": [
+   "anonymous",
+   "renamed",
+   "paraphrased",
+   "trap"
+  ],
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "world_sets": 120
+ },
+ "identity": "br_mind_01.minimal_mind_pilot.v1",
+ "isolation": "proposer_process (every arm)",
+ "limits": [
+  "not the preregistered formal grid; no formal or maturity claim",
+  "escrow SECURITY_BOUNDARY_NOT_PROVEN (B-LEAK open, OD-20)",
+  "FDA-05 / FDA-06 / O-1 unrepaired (scoring cannot be frozen)",
+  "Genesis A1 not passed; this pilot runs under owner exception EXC-MIND-1",
+  "the Mind was developed on development worlds from the same generator (other seeds)"
+ ],
+ "mind_sources": {
+  "benchmarks/genesis_lite_mind/__init__.py": "b0c2b529bd038c1bed916af8b43348053d6fddbf52ece6c2f8d8b0f5bebb86fc",
+  "benchmarks/genesis_lite_mind/arm.py": "abf5cd88a562da3b8a32bac6227877fbda5056bc2950a11525bb813081d9879e",
+  "benchmarks/genesis_lite_mind/pilot.py": "d49a6f0f2a6fae2c087f36bd9c866e167fb9c32ec4991d178969d5252a50dc33",
+  "src/engcore/mind/minimal/__init__.py": "c42b41b8a7fc8718f1a089f0406c09b99e89a76d0f68e9e87356faeb712c7e94",
+  "src/engcore/mind/minimal/competition.py": "d92d6104b8cdfe6075a742c36e0181c7f227a78e834fe6df2e90521f24e08ee7",
+  "src/engcore/mind/minimal/experiments.py": "f06886b6c25c221d1df90e62364b54e7faacc789db1ffe3573ba7b8a56f931a1",
+  "src/engcore/mind/minimal/falsifier.py": "cde282cfb68ef49d51812e9befb26c9affaf04deb206bd0e27d5da3b9f8d1332",
+  "src/engcore/mind/minimal/outcome_model.py": "282a421d4574cc7caff6a053375f1f9700c2b219ae7408ae9399371407ab146e",
+  "src/engcore/mind/minimal/problem.py": "5d2856fc00facaa2e21c024e40390d5f3a377b536b5b1de08f0117eec8b6f3cd",
+  "src/engcore/mind/minimal/runner.py": "4b2350234f7b2276c3d162ac5249a745cc14e20c995715d5e7f309fcc588b8b8",
+  "src/engcore/mind/minimal/stopping.py": "0363a830449c1eedcff88462fcedba0ec61efc4579104d481149c3b5e8630fed",
+  "src/engcore/mind/minimal/structures.py": "cb0b83274832160da978257a67198d7ee2f2f9a9bd74c6f6d8c6ed4d0011deff",
+  "src/engcore/mind/minimal/trace.py": "1260f09d007e39399d3f23767a77cdf9ac56016f0392125998e1a7e920b77c01"
+ },
+ "root_commitment_sha256": "b9224dee8c43edcb46f7127064612413a6c4fcca146831ca17b84fc39c1d3c82",
+ "schema": "forge.genesis_lite.mind_pilot_plan/1",
+ "status": "FROZEN_BEFORE_ROOT"
+}
