@@ -137,8 +137,9 @@ def test_harness_the_vacuous_attack_never_earns_a_bracket_hit_and_both_sides_agr
 def test_readiness_with_the_escrow_half_has_no_technical_row_left():
     rows = readiness.blockers()
     assert rows["FDA-05 escrow half"][0] == rows["v0.3 harness end to end"][0] == readiness.FIXED
-    prefixes = {p for _s, ps, _n in rows.values() for p in ps}
-    evidence = {"head": readiness._head(), "clean": True, "tests": {p + "x": "passed" for p in prefixes}}
+    required = {name for _s, names, _n in rows.values() for name in names}
+    assert set(readiness.ESCROW_TESTS["FDA-05 escrow half"]) <= required
+    evidence = {"head": readiness._head(), "clean": True, "tests": {name: "passed" for name in required}}
     out = readiness.check(evidence=evidence)
     assert out["agreement_cases"] == 40 and out["technical_blockers"] == []
     assert out["status"] == readiness.PENDING_OWNER
