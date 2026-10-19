@@ -250,7 +250,8 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
     on_grid = {a: {w: k for w, k in sets.items() if w in grid} for a, sets in credits.items()}
     baseline, _scores = strongest_baseline({a: on_grid[a] for a in required if on_grid.get(a)}, roles)
     per_kind = best_per_kind({a: on_grid[a] for a in required if on_grid.get(a)}, roles)
-    representation = representation_limited(on_grid.get(REPRESENTATION_ARM, {}))
+    representation = set().union(*(representation_limited(on_grid.get(arm, {}))
+                                   for arm in (REPRESENTATION_ARM, REPRESENTATION_ARM + "_dof")))
     solved = control_solved(on_grid, required)
     limited = representation | solved
     problems += coverage_problems(rows, candidate, grid, identity=identity)

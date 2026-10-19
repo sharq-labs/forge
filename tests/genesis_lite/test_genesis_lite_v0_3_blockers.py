@@ -28,7 +28,7 @@ from benchmarks.genesis_lite.v0_3 import environment
 from benchmarks.genesis_lite.v0_3 import evaluator as v03e
 from benchmarks.genesis_lite.v0_3 import formal, harness, readiness, secret_scan
 from benchmarks.genesis_lite.v0_3 import preregistration as v03p
-from benchmarks.genesis_lite.v0_3.registry import AttemptRefused, AttemptRegistry
+from benchmarks.genesis_lite.v0_3.registry import AttemptRefused, AttemptRegistry, EvaluatorInbox
 from tests.genesis_lite import lift_records as lr
 
 MASTER = bytes(range(32))
@@ -193,9 +193,9 @@ def _verdict(proposal):
     return channel, verdict
 
 
-def test_readiness_p3_network_attack_reaches_a_listener_and_reports_refused_without_a_target(monkeypatch):
+def test_readiness_p3_network_attack_reaches_a_listener_and_is_untestable_without_a_target(monkeypatch):
     monkeypatch.delenv("FORGE_ATTACK_NETWORK_TARGET", raising=False)
-    assert _verdict(attacks.network(CARD, None)) == ("network", attacks.REFUSED)
+    assert _verdict(attacks.network(CARD, None)) == ("network", attacks.UNTESTABLE)       # never a vacuous REFUSED
     with socket.socket() as srv:
         srv.bind(("127.0.0.1", 0))
         srv.listen(1)
@@ -206,6 +206,12 @@ def test_readiness_p3_network_attack_reaches_a_listener_and_reports_refused_with
 def test_readiness_p3_root_file_and_run_log_attacks_read_what_the_command_line_names(monkeypatch, tmp_path):
     secret = tmp_path / "root.hex"
     secret.write_bytes(b"00" * 32)
+    monkeypatch.setattr(attacks, "_proc_available", lambda: False)
+    assert _verdict(attacks.cmdline(CARD, None)) == ("cmdline", attacks.UNTESTABLE)
+    assert _verdict(attacks.root_file(CARD, None)) == ("root_file", attacks.UNTESTABLE)
+    monkeypatch.setattr(attacks, "_proc_available", lambda: True)
+    monkeypatch.delenv("FORGE_ATTACK_RUN_LOGS", raising=False)
+    assert _verdict(attacks.run_log(CARD, None)) == ("run_log", attacks.UNTESTABLE)
     monkeypatch.setattr(attacks, "_parent_cmdline", lambda: f"python -m driver --root-file {secret}")
     assert _verdict(attacks.root_file(CARD, None)) == ("root_file", attacks.REACHED)
     assert _verdict(attacks.cmdline(CARD, None)) == ("cmdline", attacks.REACHED)
@@ -233,6 +239,27 @@ def test_readiness_p3_the_deployment_is_verified_only_if_every_channel_is_refuse
     out = attacks.verify_deployment(leaky, scan_findings=[])
     assert out["verified"] is False and out["verdicts"]["network"] == attacks.REACHED
     assert attacks.verify_deployment(lambda spec: [], scan_findings=[])["missing"] == sorted(attacks.CHANNELS)
+    untestable = lambda spec: [f"{spec.rsplit(':', 1)[1]}:{attacks.UNTESTABLE if 'cmdline' in spec else attacks.REFUSED}:x"]  # noqa: E731
+    assert attacks.verify_deployment(untestable, scan_findings=[])["verified"] is False
+
+
+def test_readiness_p3_the_suite_through_per_card_processes_is_not_verified_on_a_same_account_host():
+    """Review 2026-10-20 (round 2) defect A: run through the harness's own per-card processes, with the operator's
+    targets passed as FORGE_ATTACK_* variables, the suite reports what it reaches; on this host it is not verified."""
+    shared = __import__("pathlib").Path(__import__("tempfile").gettempdir()).resolve() / "gl-cross-card-state"
+    with socket.socket() as srv:
+        srv.bind(("127.0.0.1", 0))
+        srv.listen(8)
+        env = {"FORGE_ATTACK_NETWORK_TARGET": f"127.0.0.1:{srv.getsockname()[1]}"}
+        try:
+            out = attacks.verify_deployment(attacks.deployment_runner(env), scan_findings=[])
+        finally:
+            shutil.rmtree(shared, ignore_errors=True)
+    assert out["verified"] is False and out["missing"] == []
+    assert out["verdicts"]["network"] == attacks.REACHED
+    assert out["verdicts"]["cmdline"] in (attacks.REACHED, attacks.UNTESTABLE)
+    with pytest.raises(ValueError):
+        harness.CardProposerHost(attack_env={"PATH": "x"})
 
 
 def test_readiness_p3_per_card_temp_dirs_hold_nothing_but_same_account_files_elsewhere_do():
@@ -272,6 +299,18 @@ def test_fda19_the_secret_scan_finds_every_inventory_item_and_nothing_in_clean_f
     assert {("root.hex", "hex secret"), ("root.bin", "raw secret"), ("note.txt", "hex secret"),
             ("attempts.jsonl", "attempt registry"), ("runs.jsonl", "run log")} <= found
     assert not any(name == "clean.txt" for name, _ in found)
+
+
+def test_fda19_the_scan_finds_wrapped_utf16_and_streamed_secrets(tmp_path, monkeypatch):
+    secret = H(b"wrapped").digest()
+    digests = secret_scan.digests_for([secret])
+    text = secret.hex()
+    (tmp_path / "wrapped.txt").write_bytes((text[:30] + "\n  " + text[30:]).encode())
+    (tmp_path / "utf16.txt").write_bytes(text.encode("utf-16-le"))
+    monkeypatch.setattr(secret_scan, "CHUNK", 1024)
+    (tmp_path / "big.log").write_bytes(b"x" * 5000 + text.encode() + b"y" * 5000)
+    found = {pathlib_name(f["path"]) for f in secret_scan.scan([tmp_path], digests)}
+    assert found == {"wrapped.txt", "utf16.txt", "big.log"}
 
 
 def test_fda19_the_scan_does_not_flag_the_benchmark_sources():
@@ -538,24 +577,71 @@ def test_p4_candidate_code_and_name_are_pinned():
     assert any("candidate" in p for p in formal.preflight(_stand_in(root, "OWNER_DECISION_REQUIRED"), root, MANIFEST))
 
 
-def test_attempt_the_evaluator_recomputes_every_answer_key_after_the_reveal():
-    root, prereg, nonce = H(b"verify root").digest(), H(b"prereg").hexdigest(), "ab" * 16
-    admission = {"root_commitment_sha256": H(root).hexdigest(), "prereg_sha256": prereg, "nonce": nonce,
-                 "attempt_sha256": "c" * 64}
-    master = formal.master_for(root, prereg, nonce, "anonymous", "gl-formal-3", 1)
+def test_attempt_the_evaluator_recomputes_keys_and_shown_cards_after_the_reveal(tmp_path):
+    """Review rounds 1-2: the evaluator accepts only the FIRST admission of a root, re-derives every answer key, and
+    re-derives the cards each arm was shown, so a record carrying another arm's label does not verify."""
+    root, prereg = H(b"verify root").digest(), H(b"prereg").hexdigest()
+    reg, inbox = AttemptRegistry(tmp_path / "reg"), EvaluatorInbox(tmp_path / "inbox.jsonl")
+    admission = reg.admit(root_commitment_sha256=H(root).hexdigest(), prereg_sha256=prereg, campaign_set_sha256=PLAN,
+                          tier="formal")
+    inbox.receive(admission)
+    master = formal.master_for(root, prereg, admission["nonce"], "renamed", "gl-formal-3", 1)
     rec = v02_harness.run_one("always_refuse", v02_arms.ARMS["always_refuse"][0], master_seed=master,
-                              campaign_id="gl-formal-3", presentation="anonymous", seed=1).to_dict()
+                              campaign_id="gl-formal-3", presentation="renamed", seed=1).to_dict()
     rec["attempt_sha256"] = admission["attempt_sha256"]
-    assert formal.verify_attempt([rec], root, admission) == []
-    assert formal.verify_attempt([rec], root, dict(admission, nonce="cd" * 16))      # other worlds: refused
-    assert formal.verify_attempt([dict(rec, attempt_sha256="d" * 64)], root, admission)
-    assert formal.verify_attempt([rec], H(b"another root").digest(), admission)
+    verify = lambda recs, **kw: formal.verify_attempt(recs, kw.get("root", root), kw.get("adm", admission),  # noqa: E731
+                                                      inbox=inbox, prereg_sha256=kw.get("prereg", prereg))
+    assert verify([rec]) == []
+    assert any("cards this arm was shown" in p for p in verify([dict(rec, arm="careful")]))        # swapped label
+    assert any("not from the published attempt" in p for p in verify([dict(rec, attempt_sha256="d" * 64)]))
+    assert verify([rec], root=H(b"another root").digest())
+    assert verify([rec], prereg=H(b"other identity").hexdigest())
+    assert any("malformed" in p for p in verify([{"attempt_sha256": admission["attempt_sha256"], "status": "VALID"}]))
+    assert any("invalid run" in p for p in verify([dict(rec, status="INVALID_BENCHMARK")]))
+    second = AttemptRegistry(tmp_path / "fresh-registry").admit(
+        root_commitment_sha256=H(root).hexdigest(), prereg_sha256=prereg, campaign_set_sha256=PLAN, tier="formal")
+    with pytest.raises(AttemptRefused, match="already received"):
+        inbox.receive(second)                                       # a fresh operator registry does not help
+    assert any("not the first" in p for p in verify([rec], adm=second))
+    with pytest.raises(AttemptRefused, match="well-formed"):
+        inbox.receive(dict(admission, tier="development"))
+
+
+def test_p4_candidate_spec_module_and_its_imports_must_be_pinned():
+    """Review round 2 defect B: the spec's own module and every first-party file it imports are pinned."""
+    stateful = "tests/genesis_lite/stateful_arms.py"
+    ok = {"name": "mind", "spec": "tests.genesis_lite.stateful_arms:remembers",
+          "code_sha256": {stateful: H((v03p.v02.ROOT / stateful).read_bytes()).hexdigest()}}
+    assert formal.candidate_code_problems(ok) == []
+    readme = {"name": "mind", "spec": "tests.genesis_lite.stateful_arms:remembers",
+              "code_sha256": {"README.md": H((v03p.v02.ROOT / "README.md").read_bytes()).hexdigest()}}
+    assert any("is not one of its pinned files" in p for p in formal.candidate_code_problems(readme))
+    analysis_tests = "tests/genesis_lite/test_genesis_lite_analysis.py"
+    transitive = {"name": "mind", "spec": "tests.genesis_lite.test_genesis_lite_analysis:test_x",
+                  "code_sha256": {analysis_tests: H((v03p.v02.ROOT / analysis_tests).read_bytes()).hexdigest()}}
+    assert any("lift_records.py, which is not pinned" in p for p in formal.candidate_code_problems(transitive))
+
+
+def test_p4_representation_cap_covers_both_enumeration_arms():
+    """Review round 2 defect F."""
+    rows = _field() + lr.records("monomial_enumeration_dof", dict(lr.WEAK, no_solution=1.0))
+    rows += lr.records("mind", lr.BETTER)
+    out = v03a.lift_decision(rows, "mind", grid=lr.GRID)
+    assert {("no_solution", p) for p in lr.PRESENTATIONS} <= set(out["representation_limited_cells"])
+
+
+def test_p4_the_identity_lists_a_fixed_retired_set():
+    """Review round 2 defect G: committing a later preregistration must not change what v0.3 rebuilds to."""
+    listed = json.loads(v03p.PREREG_PATH.read_bytes())["formal"]["retired_root_commitments"]
+    pilots = {json.loads(path.read_bytes())["pilot_root_commitment_sha256"]
+              for path in (v02_prereg.V0_PREREG_PATH, v02_prereg.V0_1_PREREG_PATH, v02_prereg.PREREG_PATH)}
+    assert set(listed) == pilots and "glob" not in (v03p.HERE / "preregistration.py").read_text(encoding="utf-8")
 
 
 # ---- the freeze-readiness gate ---------------------------------------------------------------------------------------
 def _all_pass_evidence():
-    prefixes = {p for _s, ps, _n in readiness.blockers().values() for p in ps}
-    return {"head": readiness._head(), "clean": True, "tests": {p + "x": "passed" for p in prefixes}}
+    required = {name for _s, names, _n in readiness.blockers().values() for name in names}
+    return {"head": readiness._head(), "clean": True, "tests": {name: "passed" for name in required}}
 
 
 def test_readiness_a_claimed_row_without_passing_tests_is_technical():
@@ -564,8 +650,13 @@ def test_readiness_a_claimed_row_without_passing_tests_is_technical():
     out = readiness.check(evidence=evidence)
     assert any(r.startswith("FDA-21: claimed") for r in out["technical_blockers"])
     failing = _all_pass_evidence()
-    failing["tests"]["test_fda06_broken"] = "failed"
+    failing["tests"][readiness.REQUIRED_TESTS["FDA-06"][0] + "[case1]"] = "failed"          # one parametrization
     assert any(r.startswith("FDA-06: claimed") for r in readiness.check(evidence=failing)["technical_blockers"])
+    prefix_only = _all_pass_evidence()
+    prefix_only["tests"] = {k: v for k, v in prefix_only["tests"].items() if k not in readiness.REQUIRED_TESTS["FDA-19"
+                            " (Genesis-lite secret inventory)"]}
+    prefix_only["tests"]["test_fda19_trivially_true"] = "passed"                              # a prefix proves nothing
+    assert any(r.startswith("FDA-19") for r in readiness.check(evidence=prefix_only)["technical_blockers"])
     assert any("no test evidence" in r for r in readiness.check()["technical_blockers"])
     stale = dict(_all_pass_evidence(), head="0" * 40)
     assert any("not from a clean tree" in r for r in readiness.check(evidence=stale)["technical_blockers"])
@@ -601,7 +692,7 @@ def test_readiness_pass_needs_everything(monkeypatch, tmp_path):
     path.write_bytes(frozen)
     monkeypatch.setattr(v03p, "PREREG_PATH", path)
     monkeypatch.setattr(v03p, "committed_doc_problems", lambda doc_bytes: [])
-    monkeypatch.setattr(readiness, "blockers", lambda: {"x": (readiness.FIXED, ("test_x",), "stub")})
+    monkeypatch.setattr(readiness, "blockers", lambda: {"x": (readiness.FIXED, ("test_x_1",), "stub")})
     monkeypatch.setattr(readiness, "agreement_cases", lambda: [{"agree": True}])
     monkeypatch.setattr(readiness, "_escrow_half", lambda: None)
     evidence = {"head": readiness._head(), "clean": True, "tests": {"test_x_1": "passed"}}

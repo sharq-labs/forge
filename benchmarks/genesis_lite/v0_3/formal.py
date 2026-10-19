@@ -26,9 +26,11 @@ This driver:
   driver adds ``tier``, ``root_commitment_sha256``, ``world_set_index`` and ``attempt_sha256``;
 * writes an append-only, hash-chained run log that refuses to open an existing file. Its head goes to the evaluator.
 
-After the reveal, :func:`verify_attempt` is the evaluator's check. It recomputes every master from the revealed root and
-the published admission, re-derives every answer key, and compares its digest with each record's; a record that came
-from any other world does not survive.
+After the reveal, :func:`verify_attempt` is the evaluator's check. It checks that the admission is the FIRST one the
+evaluator received for that root (:class:`.registry.EvaluatorInbox`), recomputes every master from the revealed root and
+that admission, re-derives every answer key, and re-derives every card the arm was shown (the pseudonyms depend on the
+arm's name). A record from another world, another attempt, or with another arm's label does not survive. Credits are
+re-derived by the evaluator from the sealed proposals and the key (OD-8), not by this check.
 
 NOT done here: the OD-20 deployment itself. The driver cannot verify that the operator, escrow and secrets run under
 another OS account or container. That is a preregistered start condition, checked by the deployment attack suite
@@ -138,16 +140,73 @@ def candidate_of(doc: Mapping[str, Any]) -> Mapping[str, Any] | None:
     return cand
 
 
+_ROOT = pathlib.Path(__file__).resolve().parents[3]
+#: first-party code a candidate may import without listing it: pinned elsewhere (this identity, v0.2, or the core
+#: certificate for src/engcore)
+_PINNED_ELSEWHERE = ("benchmarks/genesis_lite/", "src/engcore/")
+
+_IMPORT_PROBE = r"""
+import importlib, json, pathlib, sys
+root = pathlib.Path(sys.argv[1]).resolve()
+sys.path[:0] = [str(root / "src"), str(root)]
+importlib.import_module(sys.argv[2])
+files = set()
+for m in list(sys.modules.values()):
+    f = getattr(m, "__file__", None)
+    if f:
+        p = pathlib.Path(f).resolve()
+        if p.is_relative_to(root):
+            files.add(p.relative_to(root).as_posix())
+print(json.dumps(sorted(files)))
+"""
+
+
+def _module_file(module: str) -> str | None:
+    base = _ROOT.joinpath(*module.split("."))
+    for path in (base.with_suffix(".py"), base / "__init__.py"):
+        if path.is_file():
+            return path.relative_to(_ROOT).as_posix()
+    return None
+
+
 def candidate_code_problems(cand: Mapping[str, Any] | None) -> list[str]:
-    root = pathlib.Path(__file__).resolve().parents[3]
+    """The candidate's code must be pinned: the file of its spec module and every first-party file it imports (other
+    than code pinned elsewhere) are in ``code_sha256`` with matching digests."""
+    if cand is None:
+        return []
     problems = []
-    for rel, sha in sorted((cand or {}).get("code_sha256", {}).items()):
-        path = (root / rel).resolve()
-        if not path.is_relative_to(root) or not path.is_file():
+    pinned = dict(cand.get("code_sha256", {}))
+    for rel, sha in sorted(pinned.items()):
+        path = (_ROOT / rel).resolve()
+        if not path.is_relative_to(_ROOT) or not path.is_file():
             problems.append(f"the candidate's file {rel} is not in this tree")
         elif hashlib.sha256(path.read_bytes()).hexdigest() != sha:
             problems.append(f"the candidate's file {rel} is not the preregistered code")
+    module = str(cand["spec"]).split(":", 1)[0]
+    own = _module_file(module)
+    if own is None or own not in pinned:
+        problems.append(f"the candidate's module {module} is not one of its pinned files")
+        return problems
+    import subprocess  # noqa: PLC0415
+
+    run = subprocess.run([sys.executable, "-I", "-c", _IMPORT_PROBE, str(_ROOT), module], capture_output=True, text=True,
+                         check=False)
+    if run.returncode != 0:
+        return problems + [f"the candidate's module {module} does not import"]
+    for rel in json.loads(run.stdout):
+        if rel not in pinned and not rel.startswith(_PINNED_ELSEWHERE):
+            problems.append(f"the candidate imports {rel}, which is not pinned")
     return problems
+
+
+def candidate_modules(doc: Mapping[str, Any]) -> tuple[str, ...]:
+    """The candidate's module, measured into the environment manifest with the benchmark's (the frozen manifest is
+    measured the same way, on the approved machine)."""
+    try:
+        cand = candidate_of(doc)
+    except FormalRefused:
+        return ()
+    return (str(cand["spec"]).split(":", 1)[0],) if cand else ()
 
 
 def preflight(doc: Mapping[str, Any], root: bytes, manifest: Mapping[str, Any]) -> list[str]:
@@ -234,26 +293,67 @@ def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, An
             "attempt_sha256": attempt["attempt_sha256"], "registry_head": registry.head()}
 
 
-def verify_attempt(records: Sequence[Mapping[str, Any]], root: bytes, admission: Mapping[str, Any]) -> list[str]:
-    """The external evaluator's post-reveal check of one attempt: every record names the published admission, and its
-    answer-key digest is the one re-derived from the revealed root, the identity and the admission's nonce."""
+def _shown_card_digests(master: bytes, arm: str, campaign_id: str, presentation: str, seed: int) -> dict[str, str]:
+    """Every card the arm was shown in this world set, re-derived from the master (escrow cards, then the presentation
+    under the arm's run-private pseudonym key and the world set's shared stimulus key)."""
+    from engcore.blindfold.escrow import EscrowService  # noqa: PLC0415
+    from engcore.blindfold.universe import UniverseKind  # noqa: PLC0415
+
+    from .. import harness as v02h  # noqa: PLC0415
+    from ..presentation import present  # noqa: PLC0415
+
+    camp = EscrowService(master_seed=master)._new_campaign(campaign_id, {UniverseKind(k): n for k, n in v02h.MIX.items()})
+    pkey = v02h.presentation_key(master, arm, seed, presentation)
+    skey = v02h.stimulus_key(master, seed, presentation)
+    out = {}
+    for uid in camp.order:
+        card = json.loads(json.dumps(camp.worlds[uid].public_card()))
+        out[uid] = v02h._digest(present(card, presentation, pkey, skey).card)
+    return out
+
+
+def verify_attempt(records: Sequence[Mapping[str, Any]], root: bytes, admission: Mapping[str, Any], *,
+                   inbox: Any, prereg_sha256: str) -> list[str]:
+    """The external evaluator's post-reveal check of one attempt (module docstring). Never raises on a bad record."""
     from ..answer_key import export_answer_key, key_digest  # noqa: PLC0415
     from ..harness import MIX  # noqa: PLC0415
+    from .registry import REGISTRY_SCHEMA, entry_digest  # noqa: PLC0415
 
     problems = []
+    if admission.get("schema") != REGISTRY_SCHEMA or entry_digest(admission) != admission.get("attempt_sha256"):
+        problems.append("the admission is not a well-formed registry entry")
+    if admission.get("tier") != TIER or admission.get("prereg_sha256") != prereg_sha256:
+        problems.append("the admission is not a formal admission of this identity")
     if hashlib.sha256(root).hexdigest() != admission.get("root_commitment_sha256"):
         problems.append("the revealed root is not the admitted one")
+    first = inbox.first_admission(str(admission.get("root_commitment_sha256")))
+    if first is None or first.get("attempt_sha256") != admission.get("attempt_sha256"):
+        problems.append("the admission is not the first one the evaluator received for this root")
+    if problems:
+        return problems
     for rec in records:
         where = f"{rec.get('arm')}/{rec.get('presentation')}/{rec.get('campaign_id')}/{rec.get('seed')}"
-        if rec.get("attempt_sha256") != admission.get("attempt_sha256"):
-            problems.append(f"{where}: not from the published attempt")
-            continue
-        master = master_for(root, str(admission["prereg_sha256"]), str(admission["nonce"]), str(rec["presentation"]),
-                            str(rec["campaign_id"]), int(rec["seed"]))
-        ids = [u.get("universe_id") for u in rec.get("universes", [])]
-        key = export_answer_key(master, str(rec["campaign_id"]), MIX, ids)
-        if key.get("status") != "DERIVED" or key_digest(key) != rec.get("key_digest"):
-            problems.append(f"{where}: the answer key does not re-derive from the revealed root and admission")
+        try:
+            if rec.get("attempt_sha256") != admission["attempt_sha256"]:
+                problems.append(f"{where}: not from the published attempt")
+                continue
+            if rec.get("status") != "VALID":
+                problems.append(f"{where}: an invalid run (not verifiable, never analysed)")
+                continue
+            master = master_for(root, prereg_sha256, str(admission["nonce"]), str(rec["presentation"]),
+                                str(rec["campaign_id"]), int(rec["seed"]))
+            ids = [u.get("universe_id") for u in rec.get("universes", [])]
+            key = export_answer_key(master, str(rec["campaign_id"]), MIX, ids)
+            if key.get("status") != "DERIVED" or key_digest(key) != rec.get("key_digest"):
+                problems.append(f"{where}: the answer key does not re-derive from the revealed root and admission")
+                continue
+            shown = _shown_card_digests(master, str(rec["arm"]), str(rec["campaign_id"]), str(rec["presentation"]),
+                                        int(rec["seed"]))
+            if shown != dict(rec.get("presented_card_digests", {})):
+                problems.append(f"{where}: the cards this arm was shown do not re-derive (arm, world or presentation "
+                                f"differs)")
+        except (KeyError, TypeError, ValueError) as exc:
+            problems.append(f"{where}: malformed record ({type(exc).__name__})")
     return problems
 
 
@@ -304,7 +404,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     root = bytes.fromhex(sys.stdin.readline().strip())
     doc = json.loads(args.preregistration.read_bytes())
-    manifest = environment.build_manifest()
+    manifest = environment.build_manifest(extra_modules=candidate_modules(doc))
     problems = preflight(doc, root, manifest) + committed_identity_problems(doc)
     for name, path in (("attempt registry", args.registry), ("evaluator inbox", args.publish_to)):
         if path.resolve().is_relative_to(args.out.resolve()):
@@ -313,9 +413,9 @@ def main(argv: list[str] | None = None) -> int:
         print("REFUSED: " + "; ".join(problems), file=sys.stderr)
         return 2
 
-    def publish(entry: Mapping[str, Any]) -> None:
-        with open(args.publish_to, "ab") as fh:
-            fh.write(json.dumps({"admission": dict(entry)}, sort_keys=True).encode() + b"\n")
+    from .registry import EvaluatorInbox  # noqa: PLC0415
+
+    publish = EvaluatorInbox(args.publish_to).receive          # refuses a second admission of the same root
 
     args.out.mkdir(parents=True, exist_ok=False)
     log = SealedLog(args.out / "runs.jsonl")

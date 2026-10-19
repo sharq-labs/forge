@@ -39,6 +39,12 @@ FORMAL_ROOT_COMMITMENT = ODR                 # a FRESH root, generated and commi
 ENVIRONMENT_MANIFEST_SHA256 = ODR            # measured on the owner-approved formal machine (environment.py)
 CANDIDATE = ODR                              # {name, spec, code_sha256} named in the freeze, or "NONE" (baselines only)
 DECISION_RECORD = "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md"
+#: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
+RETIRED_PILOT_ROOT_COMMITMENTS = (
+    "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",   # v0
+    "2ebf31ab09d6a5f12a51156585ab46923b6b62d2c46740967d316ea904666b9d",   # v0.2
+    "b80ae0be4142b504dfe2c3dee90008e32c32fd721fdd130e7787a25a95c94d0a",   # v0.1
+)
 
 
 def _sha(path: pathlib.Path) -> str:
@@ -211,7 +217,9 @@ def build() -> dict[str, Any]:
             "admission": "admitted to the attempt registry and PUBLISHED to the external evaluator before the first "
                          "world; after the reveal the evaluator recomputes every master and answer-key digest "
                          "(formal.verify_attempt)",
-            "retired_root_commitments": sorted(formal.retired_root_commitments()),
+            "retired_root_commitments": list(RETIRED_PILOT_ROOT_COMMITMENTS),
+            "retired_rule": "these pilot roots (v0, v0.1, v0.2; each revealed with its pilot) are listed here; at run "
+                            "time the driver also refuses any root another committed preregistration names",
             "root_channel": "stdin only, never the command line",
             "environment_manifest_schema": environment.MANIFEST_SCHEMA,
             "environment_probe_modules": list(environment.PROBE_MODULES),

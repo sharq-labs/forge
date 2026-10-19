@@ -57,8 +57,10 @@ except ImportError:                        # pragma: no cover - exercised on a t
     escrow_bound = None
 
 HARNESS_ID = "forge.genesis_lite.harness.v0_3"
-#: the code a registered v0.3 arm runs (v0.2 arms.py, re-bound by v0.3 arms.py)
+#: the code a registered v0.3 arm runs (v0.2 arms.py, re-bound by v0.3 arms.py), pinned at import: both files are
+#: also pinned by the identity, so bind() has already refused a tree in which they differ from the preregistration
 ARM_CODE = ("benchmarks/genesis_lite/arms.py", "benchmarks/genesis_lite/v0_3/arms.py")
+ARM_CODE_PINS = {rel: v03p._sha(v03p.v02.ROOT / rel) for rel in ARM_CODE}
 CONFIG_ID, CONFIG_VERSION = "forge.genesis_lite.v0_3", "1"
 TIERS = ("formal", "development")
 ODR = v03p.ODR
@@ -112,13 +114,6 @@ def bind(doc_bytes: bytes, *, tier: str, manifest: Mapping[str, Any] | None = No
             raise HarnessRefused("a development bound may not differ from the preregistered w")
     if pair_bound is not None and v03e._checked(pair_bound).to_dict() != bound.to_dict():
         raise HarnessRefused(f"w {pair_bound.to_dict()} is not the bound one {bound.to_dict()}")
-    measured = environment.manifest_digest(manifest if manifest is not None else environment.build_manifest())
-    frozen_env = doc["formal"]["environment_manifest_sha256"]
-    if frozen_env == ODR:
-        if tier == "formal":
-            raise HarnessRefused("the environment manifest is not preregistered")
-    elif frozen_env != measured:
-        raise HarnessRefused("the environment manifest differs from the preregistered one")
     candidate = None
     if tier == "formal":
         from . import formal  # noqa: PLC0415 - formal imports this module lazily
@@ -130,6 +125,15 @@ def bind(doc_bytes: bytes, *, tier: str, manifest: Mapping[str, Any] | None = No
         problems = formal.candidate_code_problems(candidate)
         if problems:
             raise HarnessRefused("; ".join(problems))
+    extra = formal.candidate_modules(doc) if candidate else ()                  # the candidate's imports too
+    measured = environment.manifest_digest(manifest if manifest is not None
+                                           else environment.build_manifest(extra_modules=extra))
+    frozen_env = doc["formal"]["environment_manifest_sha256"]
+    if frozen_env == ODR:
+        if tier == "formal":
+            raise HarnessRefused("the environment manifest is not preregistered")
+    elif frozen_env != measured:
+        raise HarnessRefused("the environment manifest differs from the preregistered one")
     if escrow_bound is None:
         raise HarnessRefused("the escrow half of FDA-05 (engcore.blindfold.pair_bound) is not in this tree: the escrow "
                              "would score pairs with the unbounded v0.2 rule (BLOCKED_BY_OD3); no fallback")
@@ -172,10 +176,15 @@ class CardProposerHost(_v02h.ProposerHost):
     """v0.2's isolated proposer process, started for ONE card, with its own empty working AND temporary directory
     (TEMP, TMP and TMPDIR point into it), so temp files do not survive into the next card's process."""
 
-    def __init__(self, extra_paths: tuple[str, ...] = (), timeout: float = 600.0) -> None:  # noqa: D107
-        self._dir = tempfile.TemporaryDirectory(prefix="gl-card-")
+    def __init__(self, extra_paths: tuple[str, ...] = (), timeout: float = 600.0,  # noqa: D107
+                 attack_env: Mapping[str, str] | None = None) -> None:
+        self._dir = tempfile.TemporaryDirectory(prefix="gl-card-", ignore_cleanup_errors=True)  # a lingering helper
         env = {k: os.environ[k] for k in ("PATH", "SYSTEMROOT", "WINDIR") if k in os.environ}
-        env.update(TEMP=self._dir.name, TMP=self._dir.name, TMPDIR=self._dir.name)
+        env.update(TEMP=self._dir.name, TMP=self._dir.name, TMPDIR=self._dir.name, PYTHONDONTWRITEBYTECODE="1")
+        for k, v in (attack_env or {}).items():                # deployment verification only (never the harness path)
+            if not k.startswith("FORGE_ATTACK_"):
+                raise ValueError(f"only FORGE_ATTACK_* variables reach an attack proposer, not {k}")
+            env[k] = str(v)
         paths = [str(_v02h._ROOT), str(_v02h._ROOT / "src"), *extra_paths]
         self._proc = subprocess.Popen([sys.executable, "-I", str(_v02h._HOST), *paths], cwd=self._dir.name, env=env,
                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0)
@@ -189,13 +198,26 @@ class CardProposerHost(_v02h.ProposerHost):
             raise RuntimeError(f"the proposer process did not import this tree's engcore: {hello}")
 
 
-def fresh_process_per_card(spec: str, extra_paths: tuple[str, ...] = ()) -> Callable[..., dict[str, Any]]:
-    """FDA-18: an arm callable that starts a new isolated proposer process for every card and ends it after the card."""
+def measured_code(code: Mapping[str, str]) -> dict[str, str]:
+    """The current sha256 of each pinned file (missing files read as 'MISSING')."""
+    out = {}
+    for rel in sorted(code):
+        path = v03p.v02.ROOT / rel
+        out[rel] = v03p._sha(path) if path.is_file() else "MISSING"
+    return out
+
+
+def fresh_process_per_card(spec: str, extra_paths: tuple[str, ...] = (),
+                           pinned: Mapping[str, str] | None = None) -> Callable[..., dict[str, Any]]:
+    """FDA-18: an arm callable that starts a new isolated proposer process for every card and ends it after the card.
+    With ``pinned`` (path -> sha256), the code is re-measured before EVERY card; a change aborts the run."""
     starts: list[float] = []
 
     def arm(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
         import time  # noqa: PLC0415
 
+        if pinned is not None and measured_code(pinned) != dict(pinned):
+            raise HarnessRefused("the arm's pinned code changed during the run")
         t0 = time.perf_counter()
         host = CardProposerHost(extra_paths)
         starts.append(time.perf_counter() - t0)
@@ -241,14 +263,17 @@ def run_one(arm_name: str, *, binding: Binding, master_seed: bytes, campaign_id:
         if arm_name not in v03_arms.ARMS and not (candidate and arm_name == candidate["name"]):
             raise HarnessRefused(f"{arm_name!r} is neither a registered v0.3 arm nor the identity's candidate")
     if candidate and arm_name == candidate["name"]:
-        spec, code = candidate["spec"], dict(candidate["code_sha256"])
+        spec, pinned = candidate["spec"], dict(candidate["code_sha256"])
     else:
         spec = arm_spec or f"benchmarks.genesis_lite.v0_3.arms:{arm_name}"
-        code = {rel: v03p._sha(v03p.v02.ROOT / rel) for rel in ARM_CODE}
+        pinned = {rel: binding_code for rel, binding_code in ARM_CODE_PINS.items()}
+    code = measured_code(pinned)                              # measured, never copied from the declaration
+    if code != pinned:
+        raise HarnessRefused(f"{arm_name}: the arm's code is not the pinned code")
     rec = _v02h.RunRecord(arm_name, seed, campaign_id, presentation, isolation=isolation)
     rec.prereg_sha256 = binding.prereg_sha256
     if isolation == "proposer_process":
-        arm = fresh_process_per_card(spec, extra_paths)
+        arm = fresh_process_per_card(spec, extra_paths, pinned)
     else:
         arm = v03_arms.ARMS[arm_name][0]
     evaluator = _Evaluator(binding)

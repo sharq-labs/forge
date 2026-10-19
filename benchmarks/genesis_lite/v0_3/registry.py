@@ -58,9 +58,8 @@ class AttemptRegistry:
         prev, out = _GENESIS, []
         for n, line in enumerate(self.path.read_bytes().splitlines(), start=1):
             row = json.loads(line)
-            body = {k: v for k, v in row.items() if k != "attempt_sha256"}
-            own = hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()
-            if row.get("prev_sha256") != prev or row.get("schema") != REGISTRY_SCHEMA or row.get("attempt_sha256") != own:
+            if row.get("prev_sha256") != prev or row.get("schema") != REGISTRY_SCHEMA \
+                    or row.get("attempt_sha256") != entry_digest(row):
                 raise AttemptRefused(f"the attempt registry is broken at line {n}: refusing every admission")
             prev = hashlib.sha256(line).hexdigest()
             out.append(row)
@@ -100,7 +99,7 @@ class AttemptRegistry:
                      "campaign_set_sha256": campaign_set_sha256, "attempt_label": str(attempt_label),
                      "nonce": secrets.token_hex(16),
                      "admitted_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")}
-            entry["attempt_sha256"] = hashlib.sha256(json.dumps(entry, sort_keys=True).encode()).hexdigest()
+            entry["attempt_sha256"] = entry_digest(entry)
             line = json.dumps(entry, sort_keys=True, separators=(",", ":")).encode() + b"\n"
             with open(self.path, "ab") as fh:
                 fh.write(line)
@@ -109,6 +108,43 @@ class AttemptRegistry:
             return entry
         finally:
             self._lock.unlink(missing_ok=True)
+
+
+def entry_digest(entry: Mapping[str, Any]) -> str:
+    """An entry's own digest: sha256 of every field except ``attempt_sha256``."""
+    body = {k: v for k, v in entry.items() if k != "attempt_sha256"}
+    return hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()
+
+
+class EvaluatorInbox:
+    """The EXTERNAL evaluator's append-only record of the admissions it received (OD-8). It accepts a formal admission
+    only if no admission of the same root commitment arrived before; ``first_admission`` is what
+    ``formal.verify_attempt`` accepts. It runs on the evaluator's side; the operator cannot rewrite it."""
+
+    def __init__(self, path: pathlib.Path) -> None:
+        self.path = pathlib.Path(path)
+
+    def _rows(self) -> list[dict[str, Any]]:
+        if not self.path.exists():
+            return []
+        return [json.loads(line) for line in self.path.read_bytes().splitlines() if line.strip()]
+
+    def receive(self, entry: Mapping[str, Any]) -> None:
+        if entry.get("schema") != REGISTRY_SCHEMA or entry_digest(entry) != entry.get("attempt_sha256"):
+            raise AttemptRefused("not a well-formed admission")
+        if entry.get("tier") == "formal" and self.first_admission(str(entry["root_commitment_sha256"])) is not None:
+            with open(self.path, "ab") as fh:          # kept as evidence of the attempt, never accepted
+                fh.write(json.dumps({"refused_second_admission": dict(entry)}, sort_keys=True).encode() + b"\n")
+            raise AttemptRefused("the evaluator already received an admission of this root: one formal attempt per root")
+        with open(self.path, "ab") as fh:
+            fh.write(json.dumps({"admission": dict(entry)}, sort_keys=True).encode() + b"\n")
+
+    def first_admission(self, root_commitment_sha256: str) -> dict[str, Any] | None:
+        for row in self._rows():
+            entry = row.get("admission")
+            if isinstance(entry, Mapping) and entry.get("root_commitment_sha256") == root_commitment_sha256:
+                return dict(entry)
+        return None
 
 
 def campaign_set_sha256(world_sets: Any) -> str:

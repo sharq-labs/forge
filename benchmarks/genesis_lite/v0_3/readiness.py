@@ -3,8 +3,10 @@
     python -m benchmarks.genesis_lite.v0_3.readiness [--approvals PATH]
 
 It runs the v0.3 test files itself (:func:`collect_evidence`) and binds the result to the committed HEAD. A ledger row
-counts as FIXED only when every test prefix it names matched at least one PASSING test, and none FAILED, in that run,
-on a clean tree at that HEAD. A row's label alone is never evidence.
+counts as FIXED only when EVERY test it names (:data:`REQUIRED_TESTS`, exact function names, every parametrization)
+was collected and PASSED in that run, on a clean tree at that HEAD. A row's label alone is never evidence, and a new
+test with a matching prefix proves nothing. Evidence passed to :func:`check` by a caller is the caller's claim; only the
+CLI collects it.
 
 Statuses, in order of precedence:
 
@@ -73,6 +75,141 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
 }
 
 
+#: ledger row -> the exact tests that prove it (generated from the test files; a renamed test fails the row)
+REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
+    'FDA-05 evaluator half': (
+        'test_fda05_v0_2_credits_one_vacuous_pair_for_two_mutually_exclusive_truths',
+        'test_fda05_v0_3_scores_the_vacuous_pair_a_miss_for_both_truths',
+        'test_fda05_v0_3_keeps_the_informative_pair_whatever_w_is',
+        'test_fda05_v0_3_keeps_the_audit_controls',
+        'test_fda05_bracket_credit_survives_inside_the_bound_and_only_there',
+        'test_fda05_w_is_an_owner_decision_never_a_default',
+        'test_fda05_v0_3_fails_closed_against_an_escrow_that_still_credits_the_vacuous_pair',
+        'test_fda05_a_caller_chosen_w_is_refused_unless_it_is_the_preregistered_one',
+        'test_fda05_v0_3_changes_the_rule_not_the_credit_table',
+        'test_fda05_v0_3_evaluator_imports_nothing_but_the_standard_library',
+    ),
+    'FDA-06': (
+        'test_fda06_v0_2_leaves_an_out_of_family_spurious_world_uncapped',
+        'test_fda06_v0_3_caps_every_law_credit_kind_out_of_family',
+        'test_fda06_v0_3_does_not_cap_law_credit_in_family',
+        'test_fda06_v0_3_refuses_a_law_credit_kind_without_its_family_flag',
+        'test_fda06_the_capped_kinds_are_derived_from_the_frozen_credit_table',
+    ),
+    'O-1': (
+        'test_o1_v0_2_bootstrap_fraction_is_not_a_valid_p_value',
+        'test_o1_v0_3_p_is_super_uniform_under_the_sign_symmetric_null',
+        'test_o1_v0_3_exact_p_equals_brute_force_enumeration',
+        'test_o1_v0_3_monte_carlo_path_is_valid_deterministic_and_agrees_with_exact',
+        'test_o1_v0_3_refuses_differences_outside_the_credit_lattice',
+        'test_o1_holm_is_unchanged',
+        'test_o1_v0_3_lift_decision_uses_sign_flip_p_and_claims_nothing_while_draft',
+    ),
+    'FDA-18 (process memory and temp files)': (
+        'test_fda18_v0_2_one_process_carries_state_across_the_cards_of_a_campaign',
+        'test_fda18_v0_3_a_fresh_proposer_process_per_card_keeps_nothing_between_cards',
+        'test_readiness_p3_per_card_temp_dirs_hold_nothing_but_same_account_files_elsewhere_do',
+    ),
+    'FDA-19 (Genesis-lite secret inventory)': (
+        'test_fda19_the_secret_scan_finds_every_inventory_item_and_nothing_in_clean_files',
+        'test_fda19_the_scan_finds_wrapped_utf16_and_streamed_secrets',
+        'test_fda19_the_scan_does_not_flag_the_benchmark_sources',
+    ),
+    'FDA-21': (
+        'test_fda21_v0_2_residual_variance_is_biased_by_the_fitted_parameters',
+        'test_fda21_v0_3_residual_variance_is_unbiased',
+        'test_fda21_v0_3_replicate_noise_uses_mean_zero_pairs',
+        'test_fda21_v0_3_keeps_every_v0_2_arm_and_adds_corrected_variants',
+    ),
+    'FDA-22': (
+        'test_fda22_the_generator_tell_exists_and_v0_3_declares_it',
+        'test_fda22_law_form_classifies_every_generator_form',
+    ),
+    'pilot P-1 (always_law)': (
+        'test_pilot_p1_a_floor_arm_that_always_proposes_gains_nothing_under_the_joint_endpoint',
+    ),
+    'pilot P-2 (control cells)': (
+        'test_pilot_p2_v0_2_credits_a_control_cell_that_a_non_discoverer_already_solves',
+        'test_pilot_p2_v0_3_caps_control_cells_that_a_registered_arm_solves',
+        'test_pilot_p2_the_binary_lower_bound_is_the_exact_bootstrap_quantile',
+    ),
+    'pilot P-3 (out-of-family share)': (
+        'test_pilot_p3_a_gain_only_in_out_of_family_worlds_is_capped',
+    ),
+    'readiness P-3 (attack arms)': (
+        'test_readiness_p3_network_attack_reaches_a_listener_and_is_untestable_without_a_target',
+        'test_readiness_p3_root_file_and_run_log_attacks_read_what_the_command_line_names',
+        'test_readiness_p3_package_write_probe_writes_nothing',
+        'test_readiness_p3_the_deployment_is_verified_only_if_every_channel_is_refused_and_the_scan_is_clean',
+        'test_readiness_p3_the_suite_through_per_card_processes_is_not_verified_on_a_same_account_host',
+        'test_readiness_p3_per_card_temp_dirs_hold_nothing_but_same_account_files_elsewhere_do',
+    ),
+    'P-4 formal driver, candidate in the attempt': (
+        'test_p4_a_document_that_merely_says_frozen_is_refused',
+        'test_p4_the_driver_refuses_the_committed_draft',
+        'test_p4_the_driver_refuses_a_retired_or_uncommitted_root_and_a_changed_environment',
+        'test_p4_the_driver_runs_every_arm_once_on_every_formal_world_set_and_releases_world_sets_whole',
+        'test_p4_a_record_under_another_identity_is_invalid_not_relabelled',
+        'test_p4_formal_masters_never_coincide_with_pilot_masters',
+        'test_p4_the_root_never_travels_on_the_command_line',
+        'test_p4_the_production_runner_is_the_v0_3_harness_and_refuses_a_draft_identity',
+        'test_p4_the_sealed_log_is_append_only_and_hash_chained',
+        'test_p4_candidate_runs_inside_the_attempt_world_set_major',
+        'test_p4_candidate_code_and_name_are_pinned',
+        'test_p4_candidate_spec_module_and_its_imports_must_be_pinned',
+        'test_p4_representation_cap_covers_both_enumeration_arms',
+        'test_p4_the_identity_lists_a_fixed_retired_set',
+    ),
+    'P-5 environment manifest': (
+        'test_p5_the_manifest_names_the_interpreter_and_every_imported_distribution',
+    ),
+    'one attempt per root': (
+        'test_attempt_first_formal_attempt_is_admitted_and_a_second_is_refused',
+        'test_attempt_a_restart_still_refuses',
+        'test_attempt_a_copied_output_directory_or_new_label_or_identity_cannot_bypass',
+        'test_attempt_development_roots_stay_apart_from_formal_roots',
+        'test_attempt_a_crash_lock_and_a_tampered_registry_fail_closed',
+        'test_attempt_the_driver_consumes_the_root_before_any_world',
+        'test_attempt_a_revealed_pilot_root_is_refused_before_admission',
+        'test_attempt_a_fresh_registry_cannot_reproduce_an_attempt_or_its_worlds',
+        'test_attempt_the_evaluator_recomputes_keys_and_shown_cards_after_the_reveal',
+    ),
+    'v0.3 harness binding': (
+        'test_harness_refuses_the_v0_2_preregistration',
+        'test_harness_refuses_an_arbitrary_frozen_dict',
+        'test_harness_a_formal_binding_never_takes_a_callers_manifest',
+        'test_harness_refuses_a_changed_w',
+        'test_harness_refuses_a_changed_w_against_a_frozen_bound',
+        'test_harness_refuses_a_changed_credit_table',
+        'test_harness_refuses_a_changed_environment_manifest',
+        'test_harness_refuses_a_modified_evaluator',
+        'test_harness_refuses_a_formal_run_of_a_draft_and_an_open_w_outside_development',
+        'test_harness_never_falls_back_without_the_escrow_half',
+        'test_harness_a_formal_run_takes_no_hook_path_spec_or_in_process_arm',
+        'test_harness_a_formal_run_refuses_an_arm_that_is_neither_registered_nor_the_candidate',
+        'test_harness_uses_only_v0_3_scoring',
+    ),
+}
+#: rows proven by tests/genesis_lite/test_genesis_lite_v0_3_escrow_fda05.py, which exists only with the escrow half
+ESCROW_TESTS: dict[str, tuple[str, ...]] = {
+    'FDA-05 escrow half': (
+        'test_escrow_fda05_v0_2_escrow_credits_the_vacuous_pair_for_both_truths',
+        'test_escrow_fda05_the_bounded_escrow_misses_the_vacuous_pair_for_both_truths',
+        'test_escrow_fda05_controls_honest_hits_inbox_disagreement_misses_narrow_bracket_follows_w',
+        'test_escrow_fda05_evaluator_and_escrow_agree_on_every_selfcheck_case',
+        'test_escrow_fda05_the_config_digest_seals_w_and_v0_2_is_unchanged',
+        'test_escrow_fda05_v0_2_identity_is_untouched_by_the_escrow_half',
+        'test_escrow_fda05_the_bounded_escrow_refuses_a_campaign_sealed_under_another_config',
+        'test_escrow_fda05_the_bounded_escrow_runs_the_v0_2_score_procedure_unchanged',
+    ),
+    'v0.3 harness end to end': (
+        'test_harness_binds_with_the_escrow_half_and_seals_w_in_the_config',
+        'test_harness_an_honest_arm_runs_valid_with_agreement_and_records_its_binding',
+        'test_harness_the_vacuous_attack_never_earns_a_bracket_hit_and_both_sides_agree',
+    ),
+}
+
+
 def _escrow_half() -> Any:
     try:
         from engcore.blindfold import pair_bound  # noqa: PLC0415
@@ -94,12 +231,14 @@ def agreement_cases() -> list[dict[str, Any]]:
 def blockers() -> dict[str, tuple[str, tuple[str, ...], str]]:
     rows = dict(LEDGER)
     present = _escrow_half() is not None
-    rows["FDA-05 escrow half"] = ((FIXED, ("test_escrow_fda05_",), "engcore.blindfold.pair_bound; UNCERTIFIED (OD-3)")
+    rows["v0.3 harness binding"] = (FIXED, (), "refusals: identity, credit, w, environment, formal lockdown")
+    rows["FDA-05 escrow half"] = ((FIXED, (), "engcore.blindfold.pair_bound; UNCERTIFIED (OD-3)")
                                   if present else (BLOCKED_OD3, (), "engcore.blindfold.pair_bound is not in this tree "
                                                    "(branch feat/genesis-lite-v03-escrow-fda05)"))
-    rows["v0.3 harness end to end"] = ((FIXED, ("test_harness_",), "binds only with the escrow half") if present
+    rows["v0.3 harness end to end"] = ((FIXED, (), "binds only with the escrow half") if present
                                        else (BLOCKED_OD3, (), "binds only with the escrow half (no fallback)"))
-    return rows
+    required = {**REQUIRED_TESTS, **ESCROW_TESTS}
+    return {name: (status, required.get(name, ()), note) for name, (status, _prefixes, note) in rows.items()}
 
 
 def _git(*args: str) -> str:
@@ -117,6 +256,8 @@ def collect_evidence(python: str | None = None) -> dict[str, Any]:
     """Run the v0.3 test files that exist in this tree; return {head, clean, tests: {name: outcome}}."""
     root = v02p.ROOT
     files = [f for f in TEST_FILES if (root / f).is_file()]
+    if not files:
+        return {"head": _head(), "clean": False, "tests": {}, "missing_files": list(TEST_FILES)}
     with tempfile.TemporaryDirectory(prefix="gl-readiness-") as d:
         junit = pathlib.Path(d) / "junit.xml"
         subprocess.run([python or sys.executable, "-m", "pytest", *files, "-q", "-p", "no:cacheprovider",
@@ -131,28 +272,34 @@ def collect_evidence(python: str | None = None) -> dict[str, Any]:
     return {"head": _head(), "clean": _git("status", "--porcelain") == "", "tests": tests}
 
 
-def _row_verified(prefixes: tuple[str, ...], tests: Mapping[str, str]) -> bool:
-    for prefix in prefixes:
-        hits = [outcome for name, outcome in tests.items() if name.startswith(prefix)]
+def _row_verified(required: tuple[str, ...], tests: Mapping[str, str]) -> bool:
+    for name in required:
+        hits = [outcome for test, outcome in tests.items() if test == name or test.startswith(name + "[")]
         if not hits or any(o != "passed" for o in hits):
             return False
-    return bool(prefixes)
+    return bool(required)
 
 
 def _one_attempt_selftest() -> bool:
-    from .registry import AttemptRefused, AttemptRegistry  # noqa: PLC0415
+    from .registry import AttemptRefused, AttemptRegistry, EvaluatorInbox  # noqa: PLC0415
 
     with tempfile.TemporaryDirectory(prefix="gl-registry-selftest-") as d:
         digest = hashlib.sha256(b"selftest").hexdigest()
         kwargs = {"root_commitment_sha256": digest, "prereg_sha256": digest, "campaign_set_sha256": digest}
-        AttemptRegistry(pathlib.Path(d)).admit(tier="formal", **kwargs)
+        first = AttemptRegistry(pathlib.Path(d) / "a").admit(tier="formal", **kwargs)
         for tier in ("formal", "development"):
             try:
-                AttemptRegistry(pathlib.Path(d)).admit(tier=tier, **kwargs)
+                AttemptRegistry(pathlib.Path(d) / "a").admit(tier=tier, **kwargs)
             except AttemptRefused:
                 continue
             return False
-        return True
+        inbox = EvaluatorInbox(pathlib.Path(d) / "inbox.jsonl")       # a fresh operator registry, same evaluator
+        inbox.receive(first)
+        try:
+            inbox.receive(AttemptRegistry(pathlib.Path(d) / "b").admit(tier="formal", **kwargs))
+        except AttemptRefused:
+            return True
+        return False
 
 
 def check(approvals_path: pathlib.Path | None = None, evidence: Mapping[str, Any] | None = None) -> dict[str, Any]:
@@ -178,7 +325,8 @@ def check(approvals_path: pathlib.Path | None = None, evidence: Mapping[str, Any
     for name, (status, prefixes, note) in sorted(rows.items()):
         if status in (FIXED, NOT_A_BLOCKER):
             if not _row_verified(prefixes, tests):
-                technical.append(f"{name}: claimed {status}, but its tests {list(prefixes)} did not all pass here")
+                technical.append(f"{name}: claimed {status}, but its {len(prefixes)} named test(s) did not all pass "
+                                 f"here")
         elif status == BLOCKED_OD3:
             technical.append(f"{name}: {status} ({note})")
         else:

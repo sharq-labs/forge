@@ -7,10 +7,15 @@ certified change. It runs as the PROPOSER's account inside the OD-20 deployment 
 holds a secret. The deployment counts as verified only when it reports nothing.
 
 The scanner never receives a secret. It receives sha256 DIGESTS of the hex secrets (the root and every master). It
-hashes each 64-hex-character token in every readable file and compares the digests; raw 32-byte secrets are checked the
-same way over every 32-byte window of files up to :data:`RAW_WINDOW_LIMIT` bytes. It also flags the run log and the
-attempt registry by their schema markers, which appear in no other file. Unreadable files and directories are skipped:
-being refused is the desired result.
+reads every readable file in chunks (no size limit), hashes each 64-hex-character token and compares the digests, in
+the bytes as stored, with whitespace removed (hex wrapped across lines) and with NUL bytes removed (UTF-16 text). Raw
+32-byte secrets are checked over every 32-byte window of files up to :data:`RAW_WINDOW_LIMIT` bytes (roots are stored as
+small files). It also flags the run log and the attempt registry by their compact-JSON markers, which appear in no
+source file. Symbolic links are followed once. Unreadable files and directories are skipped: being refused is the
+desired result.
+
+Not detected, stated as limits: a secret that is encoded (base64, compressed, encrypted) or a raw secret inside a large
+binary file. The scan is a CHECK of the deployment; the control is that the proposer cannot read operator files at all.
 
     python -m benchmarks.genesis_lite.v0_3.secret_scan --digests digests.json ROOT_DIR [ROOT_DIR ...]
 """
@@ -30,7 +35,8 @@ from typing import Iterable
 #: this one included, holds them literally)
 MARKERS = {b'"schema":"' + b'forge.genesis_lite.attempt_registry/1"': "attempt registry",
            b'{"prev_sha256' + b'":"': "run log"}
-MAX_FILE_BYTES = 64 * 1024 * 1024
+CHUNK = 8 * 1024 * 1024
+_OVERLAP = 256
 RAW_WINDOW_LIMIT = 4096                                   # raw roots live in tiny files; larger files are hex-scanned
 _HEX64 = re.compile(rb"(?<![0-9a-fA-F])[0-9a-fA-F]{64}(?![0-9a-fA-F])")
 
@@ -59,22 +65,51 @@ def _scan_bytes(data: bytes, digests: frozenset[str]) -> list[str]:
     return found
 
 
+def _scan_file(path: pathlib.Path, wanted: frozenset[str]) -> set[str]:
+    found: set[str] = set()
+    with open(path, "rb") as fh:
+        tail = b""
+        first = True
+        while True:
+            chunk = fh.read(CHUNK)
+            if not chunk:
+                break
+            data = tail + chunk
+            for view in (data, re.sub(rb"\s+", b"", data), data.replace(b"\x00", b"")):
+                found.update(_scan_bytes(view, wanted) if first and len(chunk) < CHUNK else _scan_text(view, wanted))
+            tail, first = data[-_OVERLAP:], False
+    return found
+
+
+def _scan_text(data: bytes, digests: frozenset[str]) -> list[str]:
+    found = []
+    for m in _HEX64.finditer(data):
+        if hashlib.sha256(m.group(0).lower()).hexdigest() in digests:
+            found.append("hex secret")
+            break
+    return found + [what for marker, what in MARKERS.items() if marker in data]
+
+
 def scan(roots: Iterable[pathlib.Path], digests: Iterable[str]) -> list[dict[str, str]]:
     """Every readable file under ``roots`` that holds a secret or an inventory marker."""
     wanted = frozenset(digests)
-    findings = []
+    findings, seen_dirs = [], set()
     for root in roots:
-        for dirpath, _dirs, files in os.walk(root, onerror=lambda _exc: None):
+        for dirpath, dirs, files in os.walk(root, onerror=lambda _exc: None, followlinks=True):
+            real = os.path.realpath(dirpath)
+            if real in seen_dirs:                                # a link loop: each directory once
+                dirs[:] = []
+                continue
+            seen_dirs.add(real)
             for name in files:
                 path = pathlib.Path(dirpath) / name
                 try:
-                    if not path.is_file() or path.stat().st_size > MAX_FILE_BYTES:
+                    if not path.is_file():
                         continue
-                    data = path.read_bytes()
+                    hits = _scan_file(path, wanted)
                 except OSError:
                     continue
-                for what in _scan_bytes(data, wanted):
-                    findings.append({"path": str(path), "found": what})
+                findings += [{"path": str(path), "found": what} for what in sorted(hits)]
     return findings
 
 

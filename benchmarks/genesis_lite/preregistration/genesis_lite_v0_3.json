@@ -424,6 +424,7 @@
    "2ebf31ab09d6a5f12a51156585ab46923b6b62d2c46740967d316ea904666b9d",
    "b80ae0be4142b504dfe2c3dee90008e32c32fd721fdd130e7787a25a95c94d0a"
   ],
+  "retired_rule": "these pilot roots (v0, v0.1, v0.2; each revealed with its pilot) are listed here; at run time the driver also refuses any root another committed preregistration names",
   "root_channel": "stdin only, never the command line",
   "root_commitment_sha256": "OWNER_DECISION_REQUIRED",
   "start_condition": "G0 exit (OD-3), OD-20 deployment verified by an independent isolation-probe rerun that covers the Genesis-lite secret inventory (FDA-19 / ODC-BL1), OD-18 budget, OD-8 evaluator, this identity frozen and approved (OD-19)",
@@ -498,17 +499,17 @@
  "status_note": "DRAFT (not FREEZE_READY): no pilot, formal run or measurement may be produced under this document; v0.2 remains the active identity until the owner approves v0.3 (OD-19). Every value marked OWNER_DECISION_REQUIRED blocks the freeze.",
  "v0_3_files": {
   "__init__.py": "f8af0c58db79ad76a213ad6fb8c771a55114b34503f7452eb3fab3116d1e4905",
-  "analysis.py": "06581188a5101dd7e0aea407aab2092e5def02982865c72dd0909f23a27002e1",
+  "analysis.py": "aaec51c9af46cc67b1cecc2add544b80cbcb89592cb492a6bebc6356f63d6d2a",
   "arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
-  "deployment_attacks.py": "da999a6216794eabc622081ce531deb229cb69a48dc42854a92a24bccb5d25a8",
+  "deployment_attacks.py": "bc3c49f0f875ab405dae068264c23c3bad754dab01c134ac8a782f4aaf6f50be",
   "environment.py": "a1ece02913d4616bd7007872c3a913d21453afe30713050167a1059af78e989b",
   "evaluator.py": "773cf1d6b9ad6beb5466702ed1301b6d34b15f112c23545be1898f438171dda3",
-  "formal.py": "08cdfa18f1835d9114cfa4aad928527160c8186ee1f867fdbffd6dc223e86696",
-  "harness.py": "b32dc927a099b7411dca3331e79cbc67b20b1d93fc46eb774584b29b1f94dc73",
-  "preregistration.py": "cdae9b6187f42f134d06b3e6a7af8dc80d1c7583e1090afafb1f360e4209b34e",
-  "readiness.py": "35e5e81cdd12136d753479b76d3fd1a00041ca19d4a6e5fe9ba8c7b0896bb8cf",
-  "registry.py": "aae6f98e545d25d4a5a66d73f36110cd5a41285690ae36e0590ace4dba55bade",
-  "secret_scan.py": "ebae65f56df6f0bd93bee89fc052223934369bd0b025198a319a701f16dda89f",
+  "formal.py": "1f820b8eccd98f9d7683d9ca55fb7c7a05f1430a7bfeb49673cac74f75701f58",
+  "harness.py": "9225ce6465f0bdd7c1e40a0374b70ef7d8782945e9832108aad2218c9b32dbd2",
+  "preregistration.py": "ce7921a87a521e99eacbe4ac1f0e99f1976b3ab0336ab41806545cab1cd3daf9",
+  "readiness.py": "c4999e15c3f724ba1ecf5c8062ca6d4da447ec22d8d82025740762c3f95a8641",
+  "registry.py": "b7ba0725fc1b7bab834e3fc579cdc9e4f083f529528abee5d10368930b0d73e3",
+  "secret_scan.py": "37f7afd08c89581d56ddb37afc9c9eb591fc490c2f07f43fe6fa4882a4b26959",
   "selfcheck.py": "09efb6aab132e2ee6a12a5e5dd484ebf0a069f8f34c5386fae7ed685fb323bea"
  }
 }

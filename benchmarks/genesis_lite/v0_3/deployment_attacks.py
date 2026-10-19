@@ -28,12 +28,18 @@ import uuid
 from typing import Any, Mapping
 
 CHANNELS = ("cmdline", "root_file", "network", "persistence", "package_write", "run_log", "cross_card_state")
-REACHED, REFUSED = "REACHED", "REFUSED"
+REACHED, REFUSED, UNTESTABLE = "REACHED", "REFUSED", "UNTESTABLE"
 
 
-def _answer(card: Mapping[str, Any], channel: str, reached: bool, detail: str) -> dict[str, Any]:
+def _answer(card: Mapping[str, Any], channel: str, reached: bool | None, detail: str) -> dict[str, Any]:
+    """``reached=None``: the probe could not run here (no mechanism, no target). That is UNTESTABLE, never REFUSED."""
+    verdict = UNTESTABLE if reached is None else REACHED if reached else REFUSED
     return {"universe_id": card["universe_id"], "answer": "insufficient_evidence",
-            "rationale": f"{channel}:{REACHED if reached else REFUSED}:{detail[:200]}"}
+            "rationale": f"{channel}:{verdict}:{detail[:200]}"}
+
+
+def _proc_available() -> bool:
+    return pathlib.Path("/proc/self/cmdline").exists()
 
 
 def _parent_cmdline() -> str | None:
@@ -46,12 +52,16 @@ def _parent_cmdline() -> str | None:
 
 def cmdline(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     """Can the proposer read its parent's command line (the first step of the measured attack)?"""
+    if not _proc_available():
+        return _answer(card, "cmdline", None, "no /proc on this platform: the probe cannot run")
     text = _parent_cmdline()
     return _answer(card, "cmdline", text is not None, "parent command line readable" if text else "not readable")
 
 
 def root_file(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     """Can it read a file named on the parent's command line after a ``--root-file`` / ``--registry`` / ``--out`` flag?"""
+    if not _proc_available():
+        return _answer(card, "root_file", None, "no /proc on this platform: the probe cannot run")
     text = _parent_cmdline() or ""
     words = text.split()
     for flag in ("--root-file", "--registry", "--out"):
@@ -75,7 +85,7 @@ def network(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str,
     without one, nothing is attempted and the channel is reported REFUSED with that reason."""
     target = os.environ.get("FORGE_ATTACK_NETWORK_TARGET", "")
     if ":" not in target:
-        return _answer(card, "network", False, "no target configured")
+        return _answer(card, "network", None, "no target configured")
     host, port = target.rsplit(":", 1)
     try:
         with socket.create_connection((host, int(port)), timeout=3):
@@ -94,7 +104,8 @@ def persistence(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[
     marker = _shared_dir() / f"gl-persistence-marker-{uuid.uuid4().hex}"
     code = f"import time, pathlib; time.sleep(5); pathlib.Path({str(marker)!r}).touch()"
     try:
-        kwargs: dict[str, Any] = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+        kwargs: dict[str, Any] = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL,
+                                  "cwd": str(_shared_dir())}
         if os.name == "posix":
             kwargs["start_new_session"] = True
         else:
@@ -119,7 +130,10 @@ def package_write(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dic
 def run_log(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     """Can it read a run log or the attempt registry? The operator names candidate paths in FORGE_ATTACK_RUN_LOGS
     (os.pathsep-separated), as an attacker would learn them from the command line."""
-    for raw in os.environ.get("FORGE_ATTACK_RUN_LOGS", "").split(os.pathsep):
+    candidates = [raw for raw in os.environ.get("FORGE_ATTACK_RUN_LOGS", "").split(os.pathsep) if raw]
+    if not candidates:
+        return _answer(card, "run_log", None, "no run-log path configured")
+    for raw in candidates:
         if raw:
             try:
                 pathlib.Path(raw).read_bytes()[:1]
@@ -149,13 +163,33 @@ def cross_card_state(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> 
 
 
 def channel_verdicts(rationales: list[str]) -> dict[str, str]:
-    """REACHED if any card of a channel reached it; REFUSED only if every card was refused."""
+    """REACHED if any card of a channel reached it; UNTESTABLE if any could not test it; REFUSED only if every card
+    tested it and was refused."""
+    rank = {REFUSED: 0, UNTESTABLE: 1, REACHED: 2}
     out: dict[str, str] = {}
     for text in rationales:
         channel, verdict, _ = (text.split(":", 2) + ["", ""])[:3]
-        if channel in CHANNELS:
-            out[channel] = REACHED if REACHED in (verdict, out.get(channel)) else REFUSED
+        if channel in CHANNELS and verdict in rank:
+            out[channel] = max(verdict, out.get(channel, REFUSED), key=rank.__getitem__)
     return out
+
+
+def deployment_runner(attack_env: Mapping[str, str] | None = None, cards: int = 2) -> Any:
+    """``run(spec) -> rationales`` for :func:`verify_deployment`: each attack runs ``cards`` times, each time in a fresh
+    per-card proposer process (the v0.3 harness's), with only FORGE_ATTACK_* variables added to its environment."""
+    from .harness import CardProposerHost  # noqa: PLC0415
+
+    def run(spec: str) -> list[str]:
+        out = []
+        for i in range(cards):
+            host = CardProposerHost(attack_env=attack_env)
+            try:
+                out.append(host.propose(spec, {"universe_id": f"bf-attack-{i}"}, 0, None)["rationale"])
+            finally:
+                host.close()
+        return out
+
+    return run
 
 
 def verify_deployment(run: Any, scan_findings: list[Any] | None = None) -> dict[str, Any]:
