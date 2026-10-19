@@ -7742,3 +7742,7 @@ failure/error sets differ by exactly two branch-only tests, `test_core_freeze_ma
 and `test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`. Both
 report `tree.clean -- uncommitted: [the report, ACTIVE_PLAN, PROGRESS, pilot_results]`: the result documents were not
 yet committed during the run. Their re-run on the committed tree is recorded below.
+Re-run on the committed tree `48d48f01`: `pytest tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1
+tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`:
+2 passed (32.7 s). The branch's FAST failure set therefore equals pristine origin/main's on this machine. Not run:
+FAST/SCIENTIFIC on Linux 3.11/3.12, hardened recertification (OD-3), push, PR, merge.

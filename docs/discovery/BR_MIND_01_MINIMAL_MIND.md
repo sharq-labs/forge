@@ -91,7 +91,7 @@ been fitting to the generator.
 | `pytest tests/genesis_lite_mind -q` | 8 passed (v0.2 identity untouched; isolated proposer VALID; renamed/paraphrased/trap identical answers; strict client; no hidden-answer path; trace pairing + replay) |
 | `pytest tests/mind tests/genesis_lite_mind tests/genesis_lite tests/test_core_api_layering.py tests/test_core_semantic_invariants.py -n 4` | 273 passed, 1 failed: `test_every_reader_that_writes_a_schema_also_checks_one` — **pre-existing**: same test fails on pristine `8ec97064` with an identical 43-class set, none from this branch |
 | `pytest` on the six `forge_check` architecture guards `-n 4` | 94 passed |
-| `tools/forge_check.py --changed --base origin/main --workers 4` | see PROGRESS (run after the pilot) |
+| `tools/forge_check.py --changed --base origin/main --workers 4` (refused to narrow: whole FAST tier) | 186 failed / 11,736 passed / 22 errors vs 184 / 11,703 / 22 with the identical command on pristine `8ec97064`; the two extra are Core-freeze `tree.clean` checks tripped by uncommitted result docs, and both pass on the committed tree. Failure set = pristine main's. Classes: new tests `certification_pinned` (merge needs OD-3) |
 
 Acceptance tests 1–12 of the brief map to: rivals survive / no deletion (1, 3); discrimination over a replicate and a
 replicate is never a falsifier test (2); registry refutation of a strong hypothesis, refutation in the loop, forged or
