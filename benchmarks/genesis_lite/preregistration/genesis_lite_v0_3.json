@@ -1,0 +1,421 @@
+{
+ "amends": {
+  "changes": [
+   "pair rule (d'): the bracket route additionally requires max(|A|,|B|)/min(|A|,|B|) <= 1 + w at every outside-box evaluation point; the 'one law passes' route is unchanged (evaluator.py)",
+   "the no-strong-baseline cap covers every kind with a positive law_pass or indistinguishable_hit (discoverable, spurious_correlate, confounded, indistinguishable), per universe (analysis.capped / analysis.out_of_family)",
+   "significance: paired sign-flip randomisation p (exact or Monte-Carlo (b+1)/(M+1)); bootstrap for the lower bound only; Holm, alpha and the family unchanged (analysis.sign_flip_p)",
+   "formal driver: world-set-major order, tier-tagged masters, retired-root refusal, root from stdin, identity never relabelled, hash-chained append-only log (formal.py)",
+   "environment manifest measured in a fresh interpreter and committed by digest (environment.py)"
+  ],
+  "identity": "genesis_lite.blindfold_l5.v0_2",
+  "kept": "v0, v0.1 and v0.2 preregistrations and pilot results byte for byte; v0.2 records are never re-scored under v0.3 (ODC-05c)",
+  "preregistration_sha256": "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64",
+  "reasons": [
+   "FDA-05 (deep audit 2026-10-19, R-05 EXECUTED_REPRODUCED; re-reproduced failing-first by tests/genesis_lite/test_genesis_lite_v0_3_amendment.py): a vacuous INDISTINGUISHABLE pair (A/B = 1.3e30 at the region edge) earned +1.0 for two mutually exclusive truths, above the honest refusal (+0.5)",
+   "FDA-06 (R-06 EXECUTED_REPRODUCED): out-of-family spurious_correlate (and, statically, confounded) worlds were not capped at the comparator, against Genesis section 10.5 rule 4",
+   "O-1: the fraction of bootstrap means <= 0 fed Holm as a p-value; under a sign-symmetric null with six world sets it rejects at alpha/5 = 0.01 in 1/32 of the sign patterns and at 0.05 in 5/64 (executed: the sign patterns enumerated exactly, the p-function v0.2's bootstrap with 2000 resamples)",
+   "P-4: no formal-tier driver or fresh-root rule existed; P-5: no environment manifest bound a run"
+  ]
+ },
+ "analysis": {
+  "base": "the v0.2 lift rule (benchmarks/genesis_lite/analysis.py, pinned above) with two changes",
+  "bootstrap": "lower bound only; 2000 resamples, Random(0), floor order statistic (unchanged)",
+  "cap_rule": "per universe: a capped kind whose truth is outside the searched family (or whose flag is unknown) is capped at the comparator; a VALID record without the flag for one of them is refused",
+  "capped_kinds": [
+   "confounded",
+   "discoverable",
+   "indistinguishable",
+   "spurious_correlate"
+  ],
+  "holm": {
+   "alpha": 0.05,
+   "family": [
+    "pooled",
+    "anonymous",
+    "renamed",
+    "paraphrased",
+    "trap"
+   ],
+   "procedure": "unchanged"
+  },
+  "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference); capping errs conservative; a composite null 'mean <= 0' with an asymmetric difference distribution is not covered (ODC-O1a)",
+  "record_binding": "every analysed record carries tier 'formal' and the preregistered formal root commitment (D-09), in addition to the v0.2 identity binding",
+  "sign_flip": {
+   "exact_work_limit": 1000000,
+   "lattice": 2,
+   "monte_carlo_p": "(b + 1) / (M + 1); size approximately alpha for the one fixed public stream (guaranteed only over random streams); the exact path is exact",
+   "monte_carlo_resamples": 19999,
+   "statistic": "sum of the paired world-set differences (one-sided, H1 candidate better)",
+   "stream": "SHAKE-256(forge.genesis_lite.v0_3/sign_flip/1 || resample index, 8 bytes big-endian), bits in numpy.unpackbits order"
+  },
+  "significance": "paired sign-flip randomisation (one-sided); bootstrap for the lower bound only",
+  "unchanged": "unit of analysis, grid, comparison set, strongest baseline, representation-limited rule, non-inferiority margins, screening and its cap, identity binding: as in v0.2"
+ },
+ "arms": {
+  "always_insufficient": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "floor: blanket refusal (existing)",
+   "observations": "presented card + observe client only",
+   "role": "floor",
+   "stochastic": false
+  },
+  "always_law": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "floor: always proposes (existing)",
+   "observations": "presented card + observe client only",
+   "role": "floor",
+   "stochastic": false
+  },
+  "always_refuse": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "floor: never proposes (existing)",
+   "observations": "presented card + observe client only",
+   "role": "floor",
+   "stochastic": false
+  },
+  "careful": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "experiment selection: random design + replicate/holdout (existing)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": false
+  },
+  "extrapolating_fit": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery that extrapolates outside the query box",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "extrapolation_pair": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "indistinguishable answer: fixed rival-pair heuristic",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "fit_all_gated": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery: all-variable fit behind the control checks (v0.1)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "greedy_forward": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "variable-primitive selection: greedy forward",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "historical_answer": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "adversarial: textbook answer for familiar vocabulary",
+   "observations": "presented card + observe client only",
+   "role": "adversarial",
+   "stochastic": false
+  },
+  "monomial_enumeration": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery: enumeration of the frozen v0 monomial family",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "random_structures": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery: constrained random structures (v0 family)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "single_setting": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "non-discoverer control (existing)",
+   "observations": "presented card + observe client only",
+   "role": "sanity",
+   "stochastic": false
+  },
+  "space_filling": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "harness.arms.py + substrate.baselines.py",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "experiment selection: space-filling design",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  }
+ },
+ "arms_not_run": {
+  "bo_botorch": {
+   "family": "experiment selection: BO/BoTorch-only on the same observable",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "discriminating_design": {
+   "family": "competing-mechanism falsification: fixed discriminating-design heuristic",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "full_grammar_enumeration": {
+   "family": "law recovery: enumeration of the full law grammar (exp / two-term / regime forms)",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "llm_ablation": {
+   "family": "AI-proposer contribution: Mind with LLM workers replaced (\u00a78.5)",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "mechanism_enumeration": {
+   "family": "coupled mechanism recovery (G1/G2): structure enumeration in a port grammar",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "pysindy": {
+   "family": "dynamics / inverse identification: PySINDy",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "pysr": {
+   "family": "law recovery: PySR symbolic regression",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  }
+ },
+ "benchmark_id": "genesis_lite.blindfold_l5.v0_3",
+ "decision_record": "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md",
+ "evaluator": {
+  "credit_digest": "cfb8d68c3a62b1714e567fc39fcc751a28fcf8f2d3c259982a45a786aff6e12e",
+  "credit_table": "unchanged (the v0.2 table, same digest)",
+  "escrow_half": "REQUIRED before any v0.3 run: engcore.blindfold.escrow._assess_pair must apply the same bound (certified; Batch A; OD-3). Until then the independent evaluator disagrees on such a pair and the run is EVALUATOR_DISAGREEMENT (tested)",
+  "imports": "standard library and the v0.2 evaluator package only; never engcore (tested)",
+  "pair_bound": "OWNER_DECISION_REQUIRED",
+  "pair_bound_binding": "evaluate_campaign refuses any bound other than this recorded value",
+  "pair_bound_forms": [
+   "absolute",
+   "tol_multiple"
+  ],
+  "pair_bound_rule": "w is justified from the rule's purpose, never tuned on pilot or formal worlds (ODC-05b); w <= tol is option (iii), no bracket credit at all",
+  "pair_bound_scope": "bracket route only (proposed); covering every hit would refuse the generator's honest pair, whose ratio grows without limit outside the box (ODC-05a)",
+  "pair_rule": "v0.2 conditions (a)-(c) unchanged; (d') one law passes, OR the truth is bracketed at PASS_FRACTION of the evaluation points AND at every outside-box evaluation point both laws are finite, non-zero, of one sign and within a factor 1 + w of each other",
+  "pass_route_note": "a passing law paired with any in-box-agreeing, outside-diverging partner earns +1.0 where the law alone earns 0.0 (a v0.2 property kept unchanged; ODC-05d)",
+  "schema": "forge.genesis_lite.independent_evaluator/3"
+ },
+ "formal": {
+  "driver": "benchmarks/genesis_lite/v0_3/formal.py",
+  "environment_manifest_schema": "forge.genesis_lite.environment_manifest/1",
+  "environment_manifest_sha256": "OWNER_DECISION_REQUIRED",
+  "environment_probe_modules": [
+   "benchmarks.genesis_lite.harness",
+   "benchmarks.genesis_lite.arms",
+   "benchmarks.genesis_lite.proposer_host",
+   "benchmarks.genesis_lite.v0_3.analysis",
+   "benchmarks.genesis_lite.v0_3.evaluator"
+  ],
+  "grid": {
+   "campaign_ids": [
+    "gl-formal-0",
+    "gl-formal-1",
+    "gl-formal-2",
+    "gl-formal-3",
+    "gl-formal-4",
+    "gl-formal-5",
+    "gl-formal-6",
+    "gl-formal-7",
+    "gl-formal-8",
+    "gl-formal-9",
+    "gl-formal-10",
+    "gl-formal-11",
+    "gl-formal-12",
+    "gl-formal-13",
+    "gl-formal-14",
+    "gl-formal-15",
+    "gl-formal-16",
+    "gl-formal-17",
+    "gl-formal-18",
+    "gl-formal-19",
+    "gl-formal-20",
+    "gl-formal-21",
+    "gl-formal-22",
+    "gl-formal-23",
+    "gl-formal-24",
+    "gl-formal-25",
+    "gl-formal-26",
+    "gl-formal-27",
+    "gl-formal-28",
+    "gl-formal-29"
+   ],
+   "presentations": [
+    "anonymous",
+    "renamed",
+    "paraphrased",
+    "trap"
+   ],
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+   ]
+  },
+  "harness_binding": "NOT BOUND in this draft: harness.run_one is v0.2-pinned (v0.2 evaluator and identity); a v0.3 harness must bind the post-Batch-A escrow (OD-3) and the P-1 isolation deployment (OD-20)",
+  "master_label": "forge.genesis_lite.v0_3/formal/{presentation}/{seed}/{campaign_id}",
+  "order": "world-set-major: every arm runs a world set before any of its records leaves the driver",
+  "retired_root_commitments": [
+   "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",
+   "2ebf31ab09d6a5f12a51156585ab46923b6b62d2c46740967d316ea904666b9d",
+   "b80ae0be4142b504dfe2c3dee90008e32c32fd721fdd130e7787a25a95c94d0a"
+  ],
+  "root_channel": "stdin only, never the command line",
+  "root_commitment_sha256": "OWNER_DECISION_REQUIRED",
+  "start_condition": "G0 exit (OD-3), OD-20 deployment verified by an independent isolation-probe rerun that covers the Genesis-lite secret inventory (FDA-19 / ODC-BL1), OD-18 budget, OD-8 evaluator, this identity frozen and approved (OD-19)",
+  "world_sets": 2400
+ },
+ "not_in_this_draft": {
+  "FDA-18": "campaign answer exclusivity (randomise the mix or declare it); must be decided before freeze",
+  "FDA-19 / ODC-BL1": "isolation-probe scope over the Genesis-lite secret inventory; certified, OD-3; specified only",
+  "FDA-21": "baseline sigma ignores fitted degrees of freedom; v0.3 design item",
+  "FDA-22": "per-kind form-prior tell; v0.3 design item",
+  "P-1 / P-2 / P-3": "isolation deployment wiring, its harness, and in-repository attack arms per measured attack",
+  "escrow half of FDA-05": "certified engcore.blindfold.escrow; Batch A; OD-3"
+ },
+ "owner_decisions_open": {
+  "OD-18": "the formal compute budget and the formal machine (fixes the environment manifest)",
+  "OD-19": "approve and freeze this v0.3 identity",
+  "OD-20": "the escrow deployment (separate OS account / container) and its independent verification",
+  "OD-3": "recertification after Batch A (escrow half of FDA-05, FDA-19 probe scope)",
+  "OD-8": "the external evaluator or its selection process",
+  "ODC-05a": "form and scope of the informativeness bound: (i) ratio cap (drafted, bracket route only), (ii) graded credit, (iii) no bracket credit",
+  "ODC-05b": "the value of w and its form (absolute or a multiple of tol), justified from the rule's purpose",
+  "ODC-05c": "v0.3 only, never retroactive to v0.2 records (drafted that way)",
+  "ODC-05d": "the pass route: keep v0.2's +1.0 for a passing law with an arbitrary partner, constrain the partner, or score a pass-route pair at the law_pass credit",
+  "ODC-06a": "Genesis section 10.5 rule 4 governs over the v0.2 'discoverable only' wording",
+  "ODC-06b": "the capped kinds: discoverable + spurious_correlate (+ confounded and indistinguishable, drafted)",
+  "ODC-O1a": "significance route B (drafted) including its null scope; or route A",
+  "ODC-O1b": "whether to authorise a bounded, non-formal null-calibration study"
+ },
+ "reused_unchanged_from_v0_2": {
+  "evaluator": {
+   "evaluator/__init__.py": "63362ec3e96626617404fb36b228b6bf3cffaccbdb066051323c8f3bfa785844",
+   "evaluator/expr.py": "78be1ff1df5b33beaa832bd9eef289871004be43bcbec148607a308c79636aa1",
+   "evaluator/score.py": "36cdeddc3e760f85308794bc4c2f3b228a8f72f3918de1a69da86cba1540d1f1"
+  },
+  "harness": {
+   "analysis.py": "76eea7c01fa971e2ce0a8f462ff79e7ab3eb1611ba6af8878994c84d8e01a0a9",
+   "answer_key.py": "46977bcb959ac737cdadb6bb7472f89ad434d4c4c513c2240bb58a77644e5db6",
+   "arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "harness.py": "fce0dc4289d615f62ee21f6d3210c8a0835c6969f3975f32ca1e75081469bce1",
+   "pilot.py": "f081e4c1cea462cd02625b4b2c9843f4ca1621f0a3b42b9d6a7b4bb707d92f64",
+   "presentation.py": "bc83318e792ddc705976d34378512bae2f34b72af020e5c8e08beb357197a137",
+   "primitives.py": "caaea4fc83c9a4ec0c89e104b401194ab3d48e2f5f0b55d8d328f954cae96f78",
+   "proposer_host.py": "a4b9331780351232d3007596e6c9949eb9e6bdabcb88f7057c6c4e33b25c31a4"
+  },
+  "substrate": {
+   "baselines.py": "35a4a964c236e0c4b7bee91abbd160a5659f32998d850a2b3af9411fa55daf42",
+   "escrow.py": "4d0ea70d40a9aafdb28ae19a233207bdad3068a2c7e75ba1003237e557047be3",
+   "expression.py": "dd8b77dd75d21b23a0e17dc227714e118dc5c42aadffa541ab9f14463b02c04c",
+   "roles.py": "b6ea638cdf2a062295c78c657bfaa366d7788c7e0306c97f88621198e823a2b4",
+   "universe.py": "360e0166b42c69fe2888be3a7544e6d0e94ef31b111e6582b5cb52022165b66d"
+  }
+ },
+ "schema": "forge.genesis_lite.preregistration/1",
+ "statistics_unchanged_from_v0_2": {
+  "unit_of_analysis": "the WORLD SET: one campaign (one hidden world of every kind) under one (presentation, seed) master root. Every arm runs every world set once. Intervals: percentile bootstrap over world sets (2000 resamples, Random(0)). Per-cell rates are descriptive only."
+ },
+ "status": "DRAFT",
+ "status_note": "DRAFT (not FREEZE_READY): no pilot, formal run or measurement may be produced under this document; v0.2 remains the active identity until the owner approves v0.3 (OD-19). Every value marked OWNER_DECISION_REQUIRED blocks the freeze.",
+ "v0_3_files": {
+  "__init__.py": "f8af0c58db79ad76a213ad6fb8c771a55114b34503f7452eb3fab3116d1e4905",
+  "analysis.py": "42ed76234153fbc1e08a27788fc323ecd76d0786045eca1538b0486bf2f14666",
+  "environment.py": "bc68eeb887dc5c4b7baddcf6abe54a0e37c676e53562dbabbd01ee194809530d",
+  "evaluator.py": "773cf1d6b9ad6beb5466702ed1301b6d34b15f112c23545be1898f438171dda3",
+  "formal.py": "48e21eb5a023d072ca2fbb5f0643709f77c8b2f12f074de6998b035a97927661",
+  "preregistration.py": "7f2ebca1a1e7ad02d19fda4e08d3a6f880622a4a44cc25af7febfc6144f6051b"
+ }
+}

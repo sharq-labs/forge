@@ -7690,3 +7690,79 @@ passed, 84 skipped and 2 errors.
 
 **Not done:** OD-3 hardened recertification, the full FAST/SCIENTIFIC tiers on Linux, a push, a PR and a merge.
 Coverage calibration and scientific validation were not run; the guard and intervals are not claimed to give either.
+
+## 2026-10-19 — Genesis-lite v0.3 amendment package (DRAFT; local branch, not pushed)
+
+Branch `feat/genesis-lite-v03-amendment-draft` from `origin/main` `8ec97064`, in worktree
+`.claude/worktrees/wonderful-gould-1c576f`. Decision record:
+`docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md`.
+
+**Scope.**
+- New package `benchmarks/genesis_lite/v0_3/` (evaluator, analysis, formal, environment, preregistration).
+- DRAFT `benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.json` and its `.sha256`, rebuilt from code.
+- `tests/genesis_lite/test_genesis_lite_v0_3_amendment.py`.
+- Docs.
+- No v0/v0.1/v0.2-pinned file and no certified file was edited; v0.2 stays the active identity.
+
+**Environment.** Windows `.venv` CPython 3.14.2, numpy 2.5.2, `PYTHONPATH=<worktree>/src;<worktree>`,
+`TMPDIR/TMP/TEMP=D:/gl03tmp`.
+
+**Failing-first (stage 1).**
+- Setup: the v0.3 modules were stubs that exposed the v0.3 API with the unrepaired v0.2 behaviour.
+- Command: `python -m pytest tests/genesis_lite/test_genesis_lite_v0_3_amendment.py -k "fda05 or fda06 or o1" -q -p no:cacheprovider --basetemp=D:/gl03tmp/bt1 -rfE`
+- Result: **35 failed, 12 passed, 13 deselected**.
+- FDA-05: the vacuous R-05 pair was `('indistinguishable_hit', 1.0)` for both exclusive truths. The bound was never refused. An unrepaired escrow adjudication gave `VALID`, not `EVALUATOR_DISAGREEMENT`.
+- FDA-06: `KeyError` / "did not raise" for spurious_correlate and confounded.
+- O-1: v0.2 bootstrap "p" rejection rates above alpha under the sign-symmetric null, by exact enumeration of sign
+  patterns (p-function: v0.2 bootstrap, 2000 resamples):
+
+  | Magnitudes | α = 0.01 | α = 0.05 |
+  |---|---|---|
+  | Six differences | 1/32 | 5/64 |
+  | Eight, skewed | 1/32 | 7/64 |
+
+  v0.3 sign-flip on the same vectors: 0 and 1/32; 0 and 1/64. These were recomputed directly after a mix-up in an
+  earlier draft of the record.
+
+**After the repair.**
+- `python -m pytest tests/genesis_lite/test_genesis_lite_v0_3_amendment.py -q`: 60 passed.
+- `python -m pytest tests/genesis_lite -q -n 4`: 154 passed.
+- `python docs/ai/check_docs.py`: AI_DOCS PASS (8 documents, the decision record added to `DOCSET.txt`).
+
+**Changed-file gate.**
+- `python tools/forge_check.py --changed --base origin/main --workers 4 --dry-run`: NARROWING REFUSED. The new
+  `benchmarks/` files are unclassified (whole regression pack, then FAST), and the new test file is
+  `certification_pinned` (`assurance_suites`: `tests/**`).
+- So the full FAST tier was run with the gate's argument list on the pre-review code:
+  `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rf`.
+
+| Tree | Failed | Passed | Skipped | Errors | Time |
+|---|---|---|---|---|---|
+| Branch (`--basetemp=D:/gl03tmp/fast`) | 187 | 11,760 | 224 | 22 | 762 s |
+| Pristine `origin/main` (worktree `D:/gl03-pristine`, `--basetemp=D:/gl03tmp/fastp`) | 184 | 11,703 | 224 | 22 | 764 s |
+
+- No failure is in `tests/genesis_lite`.
+- `comm` of the FAILED node sets: nothing only on pristine. Three only on the branch:
+  - `tests/test_test_timing.py::test_the_plugin_records_telemetry_and_never_changes_an_outcome`: a C: worktree with a D:
+    basetemp (known environmental trap; the pristine tree is on D:).
+  - `tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1` and
+    `tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`:
+    the extra failing check is `tree.clean` (uncommitted files during the run). Their other FAIL lines also fail on
+    pristine main.
+  - Rerun on the committed tree: see below.
+
+**Independent review.** A read-only reviewer agent did a static review; no code was executed. No BLOCKER; six MAJOR
+findings. Dispositions are in the decision record §4.
+- Fixed: the cap now also covers `indistinguishable`; `w` is bound to the preregistered value; the driver requires the
+  committed, code-rebuilt preregistration; retired roots are widened; the freeze-path serialisation is fixed.
+- Recorded as owner decisions or gaps: ODC-05d (pass route with an arbitrary partner); one-attempt enforcement; the
+  fixed-stream Monte-Carlo size; lazily imported modules in the manifest.
+- After the fixes: v0.3 test file 66 passed; `tests/genesis_lite` 160 passed (`-n 4`). FAST was not rerun after the
+  fixes, which touch only `v0_3/**` and its test file.
+
+**Not done / NOT RUN.**
+- The escrow half of FDA-05 and the FDA-19 probe scope (certified; OD-3).
+- Any generator, pilot or formal world under v0.3.
+- A null-calibration study; Linux / 3.11 / 3.12; the SCIENTIFIC tier.
+- Push, PR or merge.
+- No v0.3 freeze. Every OWNER_DECISION_REQUIRED stays open.
