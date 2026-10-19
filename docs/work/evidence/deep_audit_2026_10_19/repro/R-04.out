@@ -1,0 +1,8 @@
+engcore: D:\forge-main-337519d1\src\engcore\__init__.py
+TRIGGER-A: n=4 k=3 Y=x1+x2 distinct_Y=1 status=completed lower=1.0 upper=1.0 width=0.0 sd=0.0
+TRIGGER-B: n=32 k=17 Y=x15+x16 distinct_Y=1 status=completed lower=1.0 upper=1.0 width=0.0 sd=0.0
+CONTROL: n=32 k=2 Y=x0+x1 distinct_Y=16 status=completed lower=0.1593750000000001 upper=1.8406249999999997 width=1.6812499999999997 sd=0.47092907485988494
+MASS: n=4 stated=0.95 realised=0.7124999999999999 expected_formula=0.7124999999999999
+MASS: n=32 stated=0.95 realised=0.9203124999999999 expected_formula=0.9203125
+VERDICT FDA-04: REPRODUCED
+CONTROL_OK: True

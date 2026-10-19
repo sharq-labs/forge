@@ -7489,3 +7489,22 @@ Intended paths observed: D1missingM1status3branches and failedM1→PASS/FAIL neg
 Separate FROZEN_MODEL_ARCHIVE_READBACK_INVESTIGATION_2026_10_18.md preserves current/2 DIFFUSION_MODEL readback/registry refusal and positive M1C control. Deliberate legacy/1 refusal does not satisfy current-format roundtrip contract. Compatibility FAIL_WITH_EVIDENCE; scientific impact remains UNCLASSIFIED/blocking for dependent archive/reconstruction claims. Static exact baseline/cert path tracing finds no failing decoder in inspected synthetic Genesis path, but grants no formal Step0/isolation/certification readiness. No archive behavior changed; separate owner decision required before repair.
 
 Report: docs/work/FINAL_SCIENTIFIC_INTEGRATION_VERIFICATION.md. Prior Phase0blocked report copied unchanged into evidence/final_integration_phase0_blocked_2026_10_18.md; earlier32modified/untracked files snapshotted, prior negative reports/logs preserved. D1/D2/D3 and prior P0 source remain uncommitted/UNCERTIFIED. No certificate/ledger/activeepic/physicalmodel/threshold/historicalbundle change, commit/push/PR/merge/rebase/OD-3/full assurance/fullsuite/standalone mutation campaign. Bounded owner-review readiness PASS_WITH_EVIDENCE; OD-3/merge BLOCKED_BY_OWNER; formal GenesisStep0/Phase3.5 UNVERIFIED. Supported Linux3.11/3.12 and separately authorized final-source certification remain necessary.
+
+## 2026-10-19 -- Deep scientific defect audit (read-only) and owner-authorized reproductions R-03..R-06
+
+- Audited source: `D:/forge-main-337519d1`, branch `fix/p0-scientific-correctness-2026-10-18`, `abed661f` (PR #169), tree
+  `7f965f0d`, tracked-file hash index `bf233a73` (5,289 files). Evidence and reports:
+  `docs/work/evidence/deep_audit_2026_10_19/` (manifest `94d75936`); summary `docs/work/DEEP_SCIENTIFIC_DEFECT_AUDIT_2026_10_19.md`.
+- Method: five independent read-only reviewers plus three adversarial cross-reviewers. No pytest, benchmark, mutation,
+  assurance or Genesis run. Stdlib-only derivation scripts ran under `python -I -S`; these are derivations, not test evidence.
+- Register: 26 findings (6 MAJOR FDA-01..06, 20 MINOR) and 8 observations; none labelled BLOCKER.
+- Executed (owner-authorized, once each, sequentially; real FORGE functions at `abed661f`):
+  - Command: `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="<scratch>/repro/bootstrap;D:/forge-main-337519d1/src;D:/forge-main-337519d1" OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 OMP_NUM_THREADS=1 timeout 600 C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -B <script>`, cwd = scratch. Interpreter: CPython 3.14.2, NumPy 2.5.2, SciPy 1.18.1, Pint 0.25.3. Bootstrap `sitecustomize.py`: `platform._wmi = None` only.
+  - R-04 `r04_mcp_uq.py`: exit 0, 2.118 s. FDA-04 REPRODUCED (n=4/k=3 and n=32/k=17 gave a zero-width `completed` interval); FDA-14 REPRODUCED (realised mass 0.7125 / 0.9203 against a stated 0.95). Control OK.
+  - R-05 `r05_vacuous_pair.py`: exit 0, 0.187 s. FDA-05 REPRODUCED: one vacuous pair scored `indistinguishable_hit` +1.0 in both the evaluator and the escrow, for two mutually exclusive truths. Four controls OK.
+  - R-06 `r06_spurious_cap.py`: exit 0, 0.165 s. FDA-06 REPRODUCED for the capping function (spurious credit 1.0 uncapped; discoverable capped). The full `lift_decision` was not run. Control OK.
+  - R-03 `r03_material_arbitration.py`: exit 0, 0.796 s. FDA-03 REPRODUCED (conflicting 300 K sources gave interpolated 25.0 or 20.0 by claim-id order; coverage `conflicted=False`). Control OK.
+  - Failures: none. The source hash index was identical before and after every run, and no `.pyc` was written in the repository.
+- NOT RUN: R-01 (FDA-01 replay UQ), R-02 (FDA-02 state clock) and R-07..R-26, by owner stop. FDA-01 and FDA-02 remain SOURCE_PROVEN only.
+- Windows 3.14 is not the certification platform; nothing here is certified. No source, test, contract, certificate or benchmark identity changed.
+- Owner decisions open: ODC-* in `evidence/deep_audit_2026_10_19/closure/SCIENTIFIC_FINDINGS_OWNER_DECISIONS.md`. FDA-05 and FDA-06 must be closed before any Genesis-lite scoring freeze; B-LEAK remains a formal-measurement blocker.

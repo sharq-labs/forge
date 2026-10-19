@@ -1,0 +1,7 @@
+{"id": "R-04", "argv": ["C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe", "-B", "r04_mcp_uq.py"], "cwd": "/c/Users/DEV_KA~1/AppData/Local/Temp/claude/C--Users-dev-kaeem-Downloads-Compressed-phyx/930d769c-c13d-4ea2-92ed-e1fbd607fb46/scratchpad/audit/repro",
+ "env": {"PYTHONDONTWRITEBYTECODE": "1", "PYTHONPATH": "bootstrap;D:/forge-main-337519d1/src;D:/forge-main-337519d1", "BLAS_threads": "1"},
+ "exit_code": 0, "wall_seconds": 2.11776,
+ "stdout_sha256": "184a33f4765b97ce19cd8dfece901c6dcf906b760e21ac973a6551bccadd3bd5", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "script_sha256": "6097afe9d77f123234201584d0041e7dc0794dc89784e1bff807bc97444c255c",
+ "source": {"head_before": "abed661f0d551f352e7a2c451d0df7fcc22bde5c", "head_after": "abed661f0d551f352e7a2c451d0df7fcc22bde5c", "status_before": "?? docs/work/D4_ARCHIVE_COMPATIBILITY_DESIGN_REVIEW.md|?? docs/work/GENESIS_STEP0_A1_READINESS_REVIEW.md|", "status_after": "?? docs/work/D4_ARCHIVE_COMPATIBILITY_DESIGN_REVIEW.md|?? docs/work/GENESIS_STEP0_A1_READINESS_REVIEW.md|",
+            "tracked_hash_before": "bf233a73a046225a225aea4f9101e64f0402d37509a095a6b5e22714c8dad08f", "tracked_hash_after": "bf233a73a046225a225aea4f9101e64f0402d37509a095a6b5e22714c8dad08f", "new_pyc_in_repo": 0}}
