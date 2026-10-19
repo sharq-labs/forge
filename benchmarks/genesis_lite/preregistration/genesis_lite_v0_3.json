@@ -325,7 +325,7 @@
   "certification": "new file in certified scope: UNCERTIFIED until OD-3",
   "module": "src/engcore/blindfold/pair_bound.py",
   "rule": "the escrow applies (d') itself: PairBoundedEscrowService runs the v0.2 escrow _score with _assess_pair replaced by the bounded assessment; BoundedEvaluatorConfig seals w in the config digest declared at campaign creation; escrow.py and roles.py are unchanged",
-  "sha256": "NOT_IN_TREE"
+  "sha256": "3477b1f5c1ef4709b8c4fc026be84cddf95d19315f590f2e2865f11f838a7b12"
  },
  "evaluator": {
   "credit_digest": "cfb8d68c3a62b1714e567fc39fcc751a28fcf8f2d3c259982a45a786aff6e12e",
