@@ -7766,3 +7766,11 @@ findings. Dispositions are in the decision record §4.
 - A null-calibration study; Linux / 3.11 / 3.12; the SCIENTIFIC tier.
 - Push, PR or merge.
 - No v0.3 freeze. Every OWNER_DECISION_REQUIRED stays open.
+
+**Rerun on the committed tree (`94955f88`).** The three branch-only FAST failures, run individually:
+- `tests/test_test_timing.py::test_the_plugin_records_telemetry_and_never_changes_an_outcome` with a basetemp on the
+  worktree's own drive (C:): 1 passed.
+- `tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1` and
+  `tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`
+  (`--basetemp=D:/gl03tmp/bt10`): 2 passed. On pristine `origin/main`, the first: 1 passed.
+- So the branch adds no FAST failure beyond the pristine set once committed (the FAST tier itself was not rerun).
