@@ -514,6 +514,9 @@ def test_probabilistic_tool_propagates_declared_distribution_only():
         if item["quantity"] == "final_temperature"
     )
     assert interval["credible_mass"] == 0.8
+    assert interval["requested_central_mass"] == 0.8
+    assert interval["interpretation"]["coverage_guaranteed"] is False
+    assert response["sample_design"]["role"] == "sampling_design_dependence_diagnostic"
     assert interval["sample_count"] == 8
 
 

@@ -186,7 +186,8 @@ def test_the_dependence_band_is_reported_and_matches_the_samples():
     assert record["sampler"]["pairing"] == "iman_conover_identity_vdw/1"
     assert record["minimum_lambda"] == 0.64
     assert record["admitted"] is True
-    assert record["bound_scope"] == "design_dependence_bound_linear_outputs_only"
+    assert record["role"] == "sampling_design_dependence_diagnostic"
+    assert record["bound_scope"] == "linear_outputs_only"
     low, high = record["linear_output_sd_ratio_band"]
     assert low == pytest.approx(np.sqrt(record["lambda_min"]))
     assert high == pytest.approx(np.sqrt(record["lambda_max"]))
@@ -245,7 +246,8 @@ def test_fda14_monotone_output_realises_the_stated_mass_end_to_end():
         (interval,) = result["intervals"]
         width = interval["upper"]["magnitude"] - interval["lower"]["magnitude"]
         assert width == pytest.approx(mass, abs=1e-12), count
-        assert interval["mass_semantics"] == "nominal_empirical_quantile_mass_not_coverage"
+        assert interval["requested_central_mass"] == mass
+        assert interval["interpretation"]["coverage_guaranteed"] is False
 
 
 def test_fda14_a_tail_beyond_the_outermost_midpoint_is_refused_not_clipped():
@@ -266,7 +268,7 @@ def test_schema_and_method_label_moved_with_the_semantics():
         [_answer(v) for v in range(300, 340)], credible_mass=0.9)
     (interval,) = result["intervals"]
     assert interval["method"] == "midpoint_latin_hypercube_hazen_empirical_central_interval"
-    assert "calibrated predictive coverage" in result["does_not_include"]
+    assert "calibrated coverage of any interval" in result["does_not_include"]
     assert "sampling error of the quantile estimate" in result["does_not_include"]
 
 
@@ -304,3 +306,118 @@ def test_a_standard_uncertainty_of_an_offset_scale_output_is_stated_as_a_spread(
     assert is_ratio_scale(spread.units)
     assert spread.magnitude_as_spread_in("delta_degF") == pytest.approx(
         float(np.std(values, ddof=1)))
+
+
+# ---------------------------------------------------------------------------
+# ODC-14b / ODC-04a: what the records say an interval and the design guard are.
+# ---------------------------------------------------------------------------
+
+import re
+
+from engcore.mcp.server import _PROBABILISTIC_UQ_DESCRIPTION
+
+# Negations the public text is allowed to make. Everything else is scanned.
+_ALLOWED_NEGATIONS = (
+    "it is not a credible, confidence or prediction interval",
+    "the requested mass is not a guaranteed or calibrated coverage",
+    "not a bayesian credible probability",
+    "is not evidence of output accuracy, calibrated uncertainty or model validity",
+)
+_OVERSTATEMENTS = (
+    r"\b(credible|confidence|prediction|predictive|tolerance) interval",
+    r"\bguarantee[sd]? (the )?coverage",
+    r"\b(calibrated|guaranteed|nominal) coverage",
+    r"\bcoverage (of|is|=) ?\d",
+    r"\bcredible probability",
+    r"\baccura(te|cy)\b",
+    r"\b(proves?|ensures?|certif(y|ies|ied))\b",
+)
+
+
+def _public_text(payload, skip=("does_not_include", "does_not_establish")):
+    """Every key and string value, except lists that are negations by construction.
+    Fields are kept apart by ' | ' so no phrase is read across two of them."""
+    if isinstance(payload, dict):
+        return " | ".join(f"{key} | {_public_text(value)}" for key, value in payload.items()
+                          if key not in skip)
+    if isinstance(payload, (list, tuple)):
+        return " | ".join(_public_text(item) for item in payload)
+    return payload if isinstance(payload, str) else ""
+
+
+def _overstatements(text):
+    text = re.sub(r"\s+", " ", text.replace("_", " ").replace("`", "").lower())
+    for allowed in _ALLOWED_NEGATIONS:
+        text = text.replace(allowed, " ")
+    return [hit for pattern in _OVERSTATEMENTS for hit in re.findall(pattern, text)]
+
+
+def test_odc14b_an_interval_states_a_requested_mass_never_a_coverage():
+    result = predictive_intervals(
+        [_answer(v) for v in range(300, 340)], credible_mass=0.9)
+    (interval,) = result["intervals"]
+    assert interval["requested_central_mass"] == 0.9
+    assert interval["credible_mass"] == interval["requested_central_mass"]
+    interpretation = interval["interpretation"]
+    assert interpretation == dict(puq.INTERVAL_INTERPRETATION)
+    assert interpretation["kind"] == "empirical_central_quantile_interval"
+    assert interpretation["coverage_guaranteed"] is False
+    assert interpretation["coverage_calibrated"] is False
+    assert interpretation["quantile_rule"] == "hazen"
+    # no field anywhere in the record carries a number as a coverage
+    def coverage_numbers(node):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if "coverage" in key and isinstance(value, (int, float)) and not isinstance(value, bool):
+                    yield key
+                yield from coverage_numbers(value)
+        elif isinstance(node, list):
+            for item in node:
+                yield from coverage_numbers(item)
+    assert list(coverage_numbers(result)) == []
+    refused = predictive_intervals(
+        [_answer(v) for v in (300, 302, 304, 306)], credible_mass=0.95)
+    assert refused["requested_central_mass"] == refused["credible_mass"] == 0.95
+
+
+def test_odc14b_odc04a_no_public_wording_overstates_the_interval_or_the_guard():
+    """The tool description and every record it can return may describe an
+    empirical central quantile interval and a design diagnostic, and may deny
+    being more; they may never claim coverage, credibility or accuracy."""
+    completed = predictive_intervals(
+        [_answer(v) for v in range(300, 340)], credible_mass=0.9)
+    refusals = [
+        predictive_intervals([_answer(v) for v in (300, 302, 304, 306)], credible_mass=0.95),
+        predictive_intervals([_answer(300), _answer(301, "not_supported")], credible_mass=0.5),
+    ]
+    texts = {
+        "description": _PROBABILISTIC_UQ_DESCRIPTION,
+        "completed": _public_text(completed),
+        "refusals": _public_text(refusals),
+        "design": _public_text([puq.sample_design(32, 10), puq.sample_design(32, 17)]),
+    }
+    for exc_args in ((_uniform(17), 32), (_uniform(5), 5)):
+        with pytest.raises(ValueError) as caught:
+            build_deterministic_samples(exc_args[0], sample_count=exc_args[1],
+                                        dependence="independent")
+        texts[f"refusal n={exc_args[1]}"] = str(caught.value)
+    found = {name: _overstatements(text) for name, text in texts.items()}
+    assert all(not hits for hits in found.values()), found
+    # and the scanner itself still sees an overstatement when one is written
+    assert _overstatements("a 95 % confidence interval with calibrated coverage")
+
+
+def test_odc04a_the_design_record_is_a_diagnostic_and_says_what_it_does_not_establish():
+    record = puq.sample_design(64, 10)
+    assert record["role"] == "sampling_design_dependence_diagnostic"
+    assert record["bound_scope"] == "linear_outputs_only"
+    assert set(record["does_not_establish"]) >= {
+        "accuracy of any output",
+        "accuracy of nonlinear outputs",
+        "calibrated coverage of any interval",
+        "model validity",
+    }
+    digest = record["design_sha256"]
+    assert re.fullmatch(r"[0-9a-f]{64}", digest)
+    assert digest == puq.sample_design(64, 10)["design_sha256"]
+    assert digest != puq.sample_design(32, 10)["design_sha256"]

@@ -1496,8 +1496,10 @@ midpoints, its columns re-paired (Iman-Conover) to reduce spurious correlation.
 A design is refused when sample_count does not exceed the number of uncertain
 inputs, or when its rank-correlation lambda_min is below 0.64 (some linear
 combination of inputs would keep under 0.8 of its declared spread). The sampler
-identity, the realised dependence and the linear-output sd band are returned as
-`sample_design`; the band does not bound nonlinear outputs.
+identity, design digest, realised dependence and linear-output sd band are
+returned as `sample_design`. That is a sampling-design diagnostic only: it does
+not bound nonlinear outputs and is not evidence of output accuracy, calibrated
+uncertainty or model validity.
 
 The caller must explicitly declare `dependence="independent"`; this version
 refuses correlated inputs rather than silently ignoring correlation. A standard
@@ -1505,11 +1507,15 @@ deviation must use a spread unit ("2 delta_degC" or "2 kelvin", never
 "2 degC"). Every equal-mass sample passes through normal validity, validation
 and evidence. If any sample is not SUPPORTED, the tool returns
 `predictive_support_not_admitted` with no intervals, refusing silent
-conditioning. If a tail of the requested credible_mass lies beyond the
-outermost stratum midpoint (0.5/sample_count), it returns
-`sample_resolution_insufficient`. Successful output includes empirical central
-intervals (Hazen quantiles; the mass is nominal, not calibrated coverage), mean
-and standard uncertainty, and explicitly excludes model-form uncertainty."""
+conditioning. `credible_mass` keeps its name but means the requested
+empirical central mass. If a tail of it lies beyond the outermost stratum
+midpoint (0.5/sample_count), the tool returns `sample_resolution_insufficient`.
+Successful output gives, per output quantity, the empirical central quantile
+interval of the sampled outputs (Hazen quantiles) at that requested mass, with
+mean and standard uncertainty. It is not a credible, confidence or prediction
+interval: the requested mass is not a guaranteed or calibrated coverage. Each
+interval states this in `interpretation`, and the output excludes model-form
+uncertainty."""
 
 
 def build_server() -> MCPServer:

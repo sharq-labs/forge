@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any, Mapping, Sequence
 
 import numpy as np
@@ -17,6 +18,7 @@ from ..scientific.units.quantity import (
 )
 
 __all__ = [
+    "INTERVAL_INTERPRETATION",
     "PROBABILISTIC_UQ_SCHEMA",
     "SAMPLER_SEED",
     "build_deterministic_samples",
@@ -121,6 +123,11 @@ def _assessed_design(count: int, columns: int) -> tuple[np.ndarray, dict[str, An
             "scipy_version": scipy.__version__,
             "numpy_version": np.__version__,
         },
+        # The unit design's exact bytes. The seeded stream and SciPy's sampler
+        # may differ between versions; the digest says whether two runs used
+        # the same design, so a replay cannot silently use another one.
+        "design_sha256": hashlib.sha256(
+            np.ascontiguousarray(design, dtype="<f8").tobytes()).hexdigest(),
         "stratum_width": 1.0 / count,
         "max_abs_pairwise_rank_correlation": None,
         "max_correlation_pair": None,
@@ -128,7 +135,16 @@ def _assessed_design(count: int, columns: int) -> tuple[np.ndarray, dict[str, An
         "lambda_max": None,
         "linear_output_sd_ratio_band": None,
         "minimum_lambda": MINIMUM_DESIGN_LAMBDA,
-        "bound_scope": "design_dependence_bound_linear_outputs_only",
+        # ODC-04a: a guard against a pathological sample design, nothing more.
+        "role": "sampling_design_dependence_diagnostic",
+        "bound_scope": "linear_outputs_only",
+        "does_not_establish": [
+            "accuracy of any output",
+            "accuracy of nonlinear outputs",
+            "calibrated coverage of any interval",
+            "model validity",
+            "uncertainty beyond the declared input distributions",
+        ],
         "admitted": True,
     }
     if columns < 2:
@@ -155,10 +171,14 @@ def _assessed_design(count: int, columns: int) -> tuple[np.ndarray, dict[str, An
 def sample_design(sample_count: int, input_count: int) -> dict[str, Any]:
     """The sampler's identity and the realised dependence of its design.
 
-    The realised Spearman matrix R is the dependence the propagation actually
-    used between the inputs. For an output linear in standardised inputs the
-    design's sd lies within ``linear_output_sd_ratio_band`` = [sqrt(lambda_min),
-    sqrt(lambda_max)] times the true sd. Nothing here bounds a nonlinear output.
+    A sampling-design diagnostic. The realised Spearman matrix R is the
+    dependence the propagation actually used between the inputs. Only for an
+    output linear in standardised inputs does the design's sd lie within
+    ``linear_output_sd_ratio_band`` = [sqrt(lambda_min), sqrt(lambda_max)] times
+    the sd the declared distributions imply. It is not a statement about any
+    output's accuracy, bounds no nonlinear output (the ODC-04a Ishigami check
+    showed decorrelation leaves that error unchanged), and is neither UQ
+    calibration nor model validation.
     """
     return _assessed_design(int(sample_count), int(input_count))[1]
 
@@ -194,7 +214,8 @@ def build_deterministic_samples(
         raise ValueError(
             f"the sample design for {columns} inputs at sample_count={count} "
             f"has rank-correlation lambda_min={record['lambda_min']:.3f}, below "
-            f"{MINIMUM_DESIGN_LAMBDA}: some linear combination of the inputs "
+            f"the ODC-04a design-dependence guard {MINIMUM_DESIGN_LAMBDA}: some "
+            f"linear combination of the inputs "
             f"would carry less than {MINIMUM_DESIGN_LAMBDA ** 0.5:.1f} of its "
             f"declared spread, so it cannot represent independence; increase "
             f"sample_count"
@@ -250,15 +271,40 @@ def _spread(magnitude: float, unit: str) -> dict[str, Any]:
     ).to_dict()
 
 
+# ODC-14b: what an interval of this tool is, stated once and attached to each.
+# `credible_mass` keeps its /1 name in the call and in each record, but in /2
+# it means only the REQUESTED empirical central mass. The tool has no posterior
+# (so no credible interval), makes no repeated-sampling statement (no
+# confidence interval) and adds no observation noise (no prediction interval).
+INTERVAL_INTERPRETATION: Mapping[str, Any] = {
+    "kind": "empirical_central_quantile_interval",
+    "of": "model outputs over the sample design drawn from the declared inputs",
+    "requested_central_mass_field": "requested_central_mass",
+    "credible_mass_field": (
+        "/1 name kept for compatibility; in /2 an alias of requested_central_mass, "
+        "not a Bayesian credible probability"
+    ),
+    "quantile_rule": "hazen",
+    "coverage_guaranteed": False,
+    "coverage_calibrated": False,
+}
+
+
 def predictive_intervals(
     answers: Sequence[Mapping[str, Any]], *, credible_mass: float,
 ) -> dict[str, Any]:
-    """Empirical central intervals, fail-closed on unsupported sampled mass."""
+    """Empirical central quantile intervals of sampled outputs, fail-closed.
+
+    The name is kept from /1. The interval is the Hazen central quantile range
+    of the sampled outputs at the requested mass; it is not a credible,
+    confidence or prediction interval, and the requested mass is not a
+    guaranteed or calibrated coverage (``INTERVAL_INTERPRETATION``).
+    """
     mass = float(credible_mass)
     if not 0.0 < mass < 1.0:
         raise ValueError("credible_mass must lie strictly between zero and one")
     if not answers:
-        raise ValueError("predictive intervals require sampled answers")
+        raise ValueError("empirical central intervals require sampled answers")
 
     verdicts = [answer.get("verdict") for answer in answers]
     rejected = [index for index, verdict in enumerate(verdicts) if verdict != "supported"]
@@ -272,7 +318,7 @@ def predictive_intervals(
             "intervals": [],
             "reason": (
                 "At least one equal-mass sample was not SUPPORTED. Refusing "
-                "silent conditioning or a predictive interval over partial support."
+                "silent conditioning or an interval over partial support."
             ),
         }
 
@@ -288,11 +334,12 @@ def predictive_intervals(
             "sample_count": len(answers),
             "rejected_sample_indices": [],
             "sample_verdicts": verdicts,
+            "requested_central_mass": mass,
             "credible_mass": mass,
             "minimum_tail_mass": minimum_tail,
             "intervals": [],
             "reason": (
-                f"A central mass of {mass} needs tails of {tail}; with "
+                f"A requested empirical central mass of {mass} needs tails of {tail}; with "
                 f"{len(answers)} samples the outermost stratum midpoint is at "
                 f"{minimum_tail}. Increase sample_count or lower credible_mass."
             ),
@@ -325,8 +372,9 @@ def predictive_intervals(
             "upper": Quantity(
                 float(np.quantile(magnitudes, 1.0 - tail, method="hazen")), unit
             ).to_dict(),
+            "requested_central_mass": mass,
             "credible_mass": mass,
-            "mass_semantics": "nominal_empirical_quantile_mass_not_coverage",
+            "interpretation": dict(INTERVAL_INTERPRETATION),
             "method": "midpoint_latin_hypercube_hazen_empirical_central_interval",
             "sample_count": len(values),
         })
@@ -337,13 +385,16 @@ def predictive_intervals(
         "rejected_sample_indices": [],
         "sample_verdicts": verdicts,
         "intervals": intervals,
-        "conditional_on": "declared independent input distributions",
+        "conditional_on": (
+            "the declared independent input distributions as realised by the "
+            "reported finite sample design, through the model as run"
+        ),
         "does_not_include": [
             "input correlation",
             "model-form uncertainty",
             "observation or measurement noise unless represented as an input",
             "probability outside the declared distribution families",
-            "calibrated predictive coverage",
+            "calibrated coverage of any interval",
             "sampling error of the quantile estimate",
         ],
     }
