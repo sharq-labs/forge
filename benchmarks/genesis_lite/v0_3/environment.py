@@ -53,17 +53,24 @@ for top in tops:
         continue
     for dist in names:
         dists[dist] = md.version(dist)
-print(json.dumps({"python": {"implementation": sys.implementation.name, "version": platform.python_version(),
+installed = {}
+for d in md.distributions():
+    name = d.metadata["Name"]
+    if name:
+        installed[name] = d.version
+print(json.dumps({"installed": dict(sorted(installed.items())),
+                  "python": {"implementation": sys.implementation.name, "version": platform.python_version(),
                              "system": platform.system(), "machine": platform.machine()},
                   "distributions": dict(sorted(dists.items())), "unmapped_modules": unmapped,
                   "absent_probe_modules": absent}))
 """
 
 
-def build_manifest(python: str | None = None, extra_modules: tuple[str, ...] = ()) -> dict[str, Any]:
-    """Measure the manifest of ``python`` (default: this interpreter) for this tree. ``extra_modules``: the candidate's
-    modules, which the frozen identity names. Probe modules that do not import are listed, never dropped."""
-    modules = tuple(PROBE_MODULES) + tuple(extra_modules)
+def build_manifest(python: str | None = None) -> dict[str, Any]:
+    """Measure the manifest of ``python`` (default: this interpreter) for this tree: the distributions behind the
+    benchmark's own imports, and EVERY installed distribution (so a candidate's third-party dependencies are pinned
+    without importing the candidate on the operator's side). Probe modules that do not import are listed."""
+    modules = tuple(PROBE_MODULES)
     out = subprocess.run([python or sys.executable, "-I", "-c", _PROBE, str(ROOT), json.dumps(modules)],
                          capture_output=True, text=True, check=True).stdout
     return {"schema": MANIFEST_SCHEMA, "probe_modules": list(modules), **json.loads(out)}

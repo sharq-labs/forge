@@ -127,17 +127,49 @@ class EvaluatorInbox:
     def _rows(self) -> list[dict[str, Any]]:
         if not self.path.exists():
             return []
-        return [json.loads(line) for line in self.path.read_bytes().splitlines() if line.strip()]
+        try:
+            return [json.loads(line) for line in self.path.read_bytes().splitlines() if line.strip()]
+        except ValueError as exc:
+            raise AttemptRefused("the evaluator inbox is corrupt: refusing every admission") from exc
+
+    def _append(self, row: Mapping[str, Any]) -> None:
+        lock = self.path.with_suffix(".lock")
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            raise AttemptRefused(f"the evaluator inbox is locked ({lock})") from None
+        try:
+            os.close(fd)
+            with open(self.path, "ab") as fh:
+                fh.write(json.dumps(row, sort_keys=True, separators=(",", ":")).encode() + b"\n")
+                fh.flush()
+                os.fsync(fh.fileno())
+        finally:
+            lock.unlink(missing_ok=True)
 
     def receive(self, entry: Mapping[str, Any]) -> None:
         if entry.get("schema") != REGISTRY_SCHEMA or entry_digest(entry) != entry.get("attempt_sha256"):
             raise AttemptRefused("not a well-formed admission")
         if entry.get("tier") == "formal" and self.first_admission(str(entry["root_commitment_sha256"])) is not None:
-            with open(self.path, "ab") as fh:          # kept as evidence of the attempt, never accepted
-                fh.write(json.dumps({"refused_second_admission": dict(entry)}, sort_keys=True).encode() + b"\n")
+            self._append({"refused_second_admission": dict(entry)})   # kept as evidence, never accepted
             raise AttemptRefused("the evaluator already received an admission of this root: one formal attempt per root")
-        with open(self.path, "ab") as fh:
-            fh.write(json.dumps({"admission": dict(entry)}, sort_keys=True).encode() + b"\n")
+        self._append({"admission": dict(entry)})
+
+    def receive_heads(self, attempt_sha256: str, *, run_log: str, registry: str) -> None:
+        """The final run-log and registry heads of an admitted attempt, once."""
+        if not any(isinstance(r.get("admission"), Mapping) and r["admission"].get("attempt_sha256") == attempt_sha256
+                   for r in self._rows()):
+            raise AttemptRefused("heads for an attempt the evaluator never admitted")
+        if self.published_heads(attempt_sha256) is not None:
+            raise AttemptRefused("this attempt's heads were already published")
+        self._append({"heads": {"attempt_sha256": attempt_sha256, "run_log": run_log, "registry": registry}})
+
+    def published_heads(self, attempt_sha256: str) -> dict[str, Any] | None:
+        for row in self._rows():
+            heads = row.get("heads")
+            if isinstance(heads, Mapping) and heads.get("attempt_sha256") == attempt_sha256:
+                return dict(heads)
+        return None
 
     def first_admission(self, root_commitment_sha256: str) -> dict[str, Any] | None:
         for row in self._rows():

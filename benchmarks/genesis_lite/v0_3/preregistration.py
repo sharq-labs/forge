@@ -277,6 +277,8 @@ def build() -> dict[str, Any]:
     }
     if doc["status"] == "FROZEN" and formal._mentions_owner_decision(doc):
         raise ValueError("a FROZEN v0.3 cannot contain OWNER_DECISION_REQUIRED")
+    if FORMAL_ROOT_COMMITMENT in RETIRED_PILOT_ROOT_COMMITMENTS:
+        raise ValueError("the formal root commitment is a retired pilot root")
     return doc
 
 

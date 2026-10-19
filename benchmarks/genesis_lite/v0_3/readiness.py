@@ -172,7 +172,8 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_attempt_the_driver_consumes_the_root_before_any_world',
         'test_attempt_a_revealed_pilot_root_is_refused_before_admission',
         'test_attempt_a_fresh_registry_cannot_reproduce_an_attempt_or_its_worlds',
-        'test_attempt_the_evaluator_recomputes_keys_and_shown_cards_after_the_reveal',
+        'test_attempt_the_evaluator_verifies_the_whole_published_log_after_the_reveal',
+        'test_attempt_a_whole_record_swap_between_arms_does_not_replay',
     ),
     'v0.3 harness binding': (
         'test_harness_refuses_the_v0_2_preregistration',
@@ -241,15 +242,15 @@ def blockers() -> dict[str, tuple[str, tuple[str, ...], str]]:
     return {name: (status, required.get(name, ()), note) for name, (status, _prefixes, note) in rows.items()}
 
 
-def _git(*args: str) -> str:
+def _git(*args: str) -> str | None:
     try:
         return subprocess.run(["git", *args], cwd=v03p.HERE, capture_output=True, text=True, check=True).stdout
     except (OSError, subprocess.CalledProcessError):
-        return ""
+        return None
 
 
 def _head() -> str:
-    return _git("rev-parse", "HEAD").strip()
+    return (_git("rev-parse", "HEAD") or "").strip()
 
 
 def collect_evidence(python: str | None = None) -> dict[str, Any]:
@@ -267,14 +268,16 @@ def collect_evidence(python: str | None = None) -> dict[str, Any]:
         if junit.is_file():
             for case in ET.parse(junit).getroot().iter("testcase"):
                 tags = {child.tag for child in case}
-                tests[case.get("name", "")] = ("failed" if tags & {"failure", "error"} else "skipped" if "skipped" in tags
-                                               else "passed")
-    return {"head": _head(), "clean": _git("status", "--porcelain") == "", "tests": tests}
+                tests[f"{case.get('classname', '')}::{case.get('name', '')}"] = (
+                    "failed" if tags & {"failure", "error"} else "skipped" if "skipped" in tags else "passed")
+    status = _git("status", "--porcelain", "--untracked-files=all")
+    return {"head": _head(), "clean": status == "", "tests": tests}
 
 
 def _row_verified(required: tuple[str, ...], tests: Mapping[str, str]) -> bool:
     for name in required:
-        hits = [outcome for test, outcome in tests.items() if test == name or test.startswith(name + "[")]
+        short = {test: test.rsplit("::", 1)[-1] for test in tests}
+        hits = [outcome for test, outcome in tests.items() if short[test] == name or short[test].startswith(name + "[")]
         if not hits or any(o != "passed" for o in hits):
             return False
     return bool(required)

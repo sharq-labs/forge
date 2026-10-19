@@ -125,9 +125,8 @@ def bind(doc_bytes: bytes, *, tier: str, manifest: Mapping[str, Any] | None = No
         problems = formal.candidate_code_problems(candidate)
         if problems:
             raise HarnessRefused("; ".join(problems))
-    extra = formal.candidate_modules(doc) if candidate else ()                  # the candidate's imports too
-    measured = environment.manifest_digest(manifest if manifest is not None
-                                           else environment.build_manifest(extra_modules=extra))
+    # every installed distribution is in the manifest; the candidate is never imported on the operator's side
+    measured = environment.manifest_digest(manifest if manifest is not None else environment.build_manifest())
     frozen_env = doc["formal"]["environment_manifest_sha256"]
     if frozen_env == ODR:
         if tier == "formal":

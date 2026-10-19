@@ -141,37 +141,74 @@ def candidate_of(doc: Mapping[str, Any]) -> Mapping[str, Any] | None:
 
 
 _ROOT = pathlib.Path(__file__).resolve().parents[3]
-#: first-party code a candidate may import without listing it: pinned elsewhere (this identity, v0.2, or the core
-#: certificate for src/engcore)
-_PINNED_ELSEWHERE = ("benchmarks/genesis_lite/", "src/engcore/")
+#: names whose use in a pinned candidate file would load or run code the static pin cannot see
+_DYNAMIC = frozenset({"importlib", "__import__", "exec", "eval", "compile", "runpy", "imp"})
 
-_IMPORT_PROBE = r"""
-import importlib, json, pathlib, sys
-root = pathlib.Path(sys.argv[1]).resolve()
-sys.path[:0] = [str(root / "src"), str(root)]
-importlib.import_module(sys.argv[2])
-files = set()
-for m in list(sys.modules.values()):
-    f = getattr(m, "__file__", None)
-    if f:
-        p = pathlib.Path(f).resolve()
-        if p.is_relative_to(root):
-            files.add(p.relative_to(root).as_posix())
-print(json.dumps(sorted(files)))
-"""
+
+def _identity_pinned_files() -> frozenset[str]:
+    """Files the committed v0.3 identity pins by digest (its own files and the v0.2 files it reuses)."""
+    from .preregistration import PREREG_PATH  # noqa: PLC0415
+
+    doc = json.loads(PREREG_PATH.read_bytes())
+    out = {f"benchmarks/genesis_lite/v0_3/{n}" for n in doc.get("v0_3_files", {})}
+    reused = doc.get("reused_unchanged_from_v0_2", {})
+    out |= {f"benchmarks/genesis_lite/{n}" for n in reused.get("harness", {})}
+    out |= {f"benchmarks/genesis_lite/{n}" for n in reused.get("evaluator", {})}
+    out |= {f"src/engcore/blindfold/{n}" for n in reused.get("substrate", {})}
+    return frozenset(out)
+
+
+def _tracked_engcore() -> frozenset[str]:
+    """src/engcore files tracked at HEAD: covered by the core certificate (OD-3), never an untracked addition."""
+    import subprocess  # noqa: PLC0415
+
+    run = subprocess.run(["git", "ls-files", "src/engcore"], cwd=_ROOT, capture_output=True, text=True, check=False)
+    return frozenset(run.stdout.split()) if run.returncode == 0 else frozenset()
 
 
 def _module_file(module: str) -> str | None:
-    base = _ROOT.joinpath(*module.split("."))
-    for path in (base.with_suffix(".py"), base / "__init__.py"):
-        if path.is_file():
-            return path.relative_to(_ROOT).as_posix()
+    for base in (_ROOT, _ROOT / "src"):
+        stem = base.joinpath(*module.split("."))
+        for path in (stem.with_suffix(".py"), stem / "__init__.py"):
+            if path.is_file():
+                return path.relative_to(_ROOT).as_posix()
     return None
 
 
+def _static_imports(rel: str) -> tuple[set[str], set[str]]:
+    """(first-party files a candidate file imports, dynamic-code names it uses), by reading its source only."""
+    import ast  # noqa: PLC0415
+
+    tree = ast.parse((_ROOT / rel).read_bytes())
+    package = rel.rsplit("/", 1)[0].replace("/", ".")
+    files, dynamic = set(), set()
+    for node in ast.walk(tree):
+        modules = []
+        if isinstance(node, ast.Import):
+            modules = [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            base = node.module or ""
+            if node.level:
+                parts = package.split(".")[: len(package.split(".")) - node.level + 1]
+                base = ".".join(parts + ([base] if base else []))
+            modules = [base] + [f"{base}.{a.name}" for a in node.names]
+        elif isinstance(node, ast.Name) and node.id in _DYNAMIC:
+            dynamic.add(node.id)
+        for module in modules:
+            if module.split(".")[0] in _DYNAMIC:
+                dynamic.add(module.split(".")[0])
+            found = _module_file(module)
+            if found is not None:
+                files.add(found)
+    return files, dynamic
+
+
 def candidate_code_problems(cand: Mapping[str, Any] | None) -> list[str]:
-    """The candidate's code must be pinned: the file of its spec module and every first-party file it imports (other
-    than code pinned elsewhere) are in ``code_sha256`` with matching digests."""
+    """The candidate's code is pinned WITHOUT running it on the operator's side (review round 3, N1): its spec module
+    and every first-party file it imports, read statically, must be pinned by digest in ``code_sha256``, by this
+    identity, or (for src/engcore) be tracked at HEAD under the core certificate. Dynamic imports or code execution in
+    a pinned file are refused: the static pin could not see what they load. Data files the candidate reads are listed in
+    ``code_sha256`` by the candidate's author; the harness re-measures every listed file before every card."""
     if cand is None:
         return []
     problems = []
@@ -186,27 +223,17 @@ def candidate_code_problems(cand: Mapping[str, Any] | None) -> list[str]:
     own = _module_file(module)
     if own is None or own not in pinned:
         problems.append(f"the candidate's module {module} is not one of its pinned files")
+    if problems:
         return problems
-    import subprocess  # noqa: PLC0415
-
-    run = subprocess.run([sys.executable, "-I", "-c", _IMPORT_PROBE, str(_ROOT), module], capture_output=True, text=True,
-                         check=False)
-    if run.returncode != 0:
-        return problems + [f"the candidate's module {module} does not import"]
-    for rel in json.loads(run.stdout):
-        if rel not in pinned and not rel.startswith(_PINNED_ELSEWHERE):
-            problems.append(f"the candidate imports {rel}, which is not pinned")
+    packages = {"benchmarks/__init__.py", "benchmarks/genesis_lite/__init__.py"}      # package markers, tracked
+    allowed = set(pinned) | _identity_pinned_files() | _tracked_engcore() | {p for p in packages if (_ROOT / p).is_file()}
+    for rel in sorted(r for r in pinned if r.endswith(".py")):
+        files, dynamic = _static_imports(rel)
+        if dynamic:
+            problems.append(f"{rel} uses {sorted(dynamic)}: dynamic loading is not admissible in a pinned candidate")
+        for dep in sorted(files - allowed):
+            problems.append(f"the candidate imports {dep}, which is not pinned")
     return problems
-
-
-def candidate_modules(doc: Mapping[str, Any]) -> tuple[str, ...]:
-    """The candidate's module, measured into the environment manifest with the benchmark's (the frozen manifest is
-    measured the same way, on the approved machine)."""
-    try:
-        cand = candidate_of(doc)
-    except FormalRefused:
-        return ()
-    return (str(cand["spec"]).split(":", 1)[0],) if cand else ()
 
 
 def preflight(doc: Mapping[str, Any], root: bytes, manifest: Mapping[str, Any]) -> list[str]:
@@ -228,7 +255,8 @@ def preflight(doc: Mapping[str, Any], root: bytes, manifest: Mapping[str, Any]) 
         problems.append("the root is shorter than 32 bytes")
     if formal.get("root_commitment_sha256") != commitment:
         problems.append("the root does not match the preregistered root commitment")
-    if commitment in retired_root_commitments(exclude_identity=identity(doc)):
+    listed = set(formal.get("retired_root_commitments", ()) or ())
+    if commitment in listed | retired_root_commitments(exclude_identity=identity(doc)):
         problems.append("the root is retired: an earlier preregistration committed it (and its pilot revealed it)")
     if formal.get("environment_manifest_sha256") != environment.manifest_digest(manifest):
         problems.append("the environment manifest differs from the preregistered one")
@@ -274,7 +302,10 @@ def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, An
                                  campaign_set_sha256=campaign_set_sha256(plan()), tier=TIER)
     except AttemptRefused as exc:
         raise FormalRefused(str(exc)) from exc
-    publish(dict(attempt))
+    try:
+        publish(dict(attempt))
+    except AttemptRefused as exc:                             # the evaluator refused: the attempt is consumed, not run
+        raise FormalRefused(f"the evaluator refused the admission: {exc}") from exc
     invalid = 0
     for index, (presentation, campaign_id, seed) in enumerate(plan()):
         master = master_for(root, expected, attempt["nonce"], presentation, campaign_id, seed)
@@ -312,25 +343,47 @@ def _shown_card_digests(master: bytes, arm: str, campaign_id: str, presentation:
     return out
 
 
-def verify_attempt(records: Sequence[Mapping[str, Any]], root: bytes, admission: Mapping[str, Any], *,
-                   inbox: Any, prereg_sha256: str) -> list[str]:
-    """The external evaluator's post-reveal check of one attempt (module docstring). Never raises on a bad record."""
+def expected_runs(arms: Sequence[str]) -> set[tuple[str, v02_analysis.WorldSet]]:
+    return {(arm, ws) for arm in arms for ws in v02_analysis.FORMAL_GRID}
+
+
+def verify_attempt(log_path: pathlib.Path, root: bytes, admission: Mapping[str, Any], *, inbox: Any,
+                   prereg_sha256: str, runs: set[tuple[str, v02_analysis.WorldSet]] | None = None) -> list[str]:
+    """The external evaluator's post-reveal check of one attempt (module docstring). It reads the WHOLE sealed run log,
+    whose head must be the one published to the evaluator for this attempt, and every expected (arm, world set) must
+    appear exactly once (``runs``; default: every registered arm on the formal grid). Never raises."""
     from ..answer_key import export_answer_key, key_digest  # noqa: PLC0415
     from ..harness import MIX  # noqa: PLC0415
     from .registry import REGISTRY_SCHEMA, entry_digest  # noqa: PLC0415
 
     problems = []
-    if admission.get("schema") != REGISTRY_SCHEMA or entry_digest(admission) != admission.get("attempt_sha256"):
-        problems.append("the admission is not a well-formed registry entry")
-    if admission.get("tier") != TIER or admission.get("prereg_sha256") != prereg_sha256:
-        problems.append("the admission is not a formal admission of this identity")
-    if hashlib.sha256(root).hexdigest() != admission.get("root_commitment_sha256"):
-        problems.append("the revealed root is not the admitted one")
-    first = inbox.first_admission(str(admission.get("root_commitment_sha256")))
-    if first is None or first.get("attempt_sha256") != admission.get("attempt_sha256"):
-        problems.append("the admission is not the first one the evaluator received for this root")
+    try:
+        if admission.get("schema") != REGISTRY_SCHEMA or entry_digest(admission) != admission.get("attempt_sha256"):
+            problems.append("the admission is not a well-formed registry entry")
+        if admission.get("tier") != TIER or admission.get("prereg_sha256") != prereg_sha256:
+            problems.append("the admission is not a formal admission of this identity")
+        if hashlib.sha256(root).hexdigest() != admission.get("root_commitment_sha256"):
+            problems.append("the revealed root is not the admitted one")
+        first = inbox.first_admission(str(admission.get("root_commitment_sha256")))
+        if first is None or first.get("attempt_sha256") != admission.get("attempt_sha256"):
+            problems.append("the admission is not the first one the evaluator received for this root")
+        published = inbox.published_heads(str(admission.get("attempt_sha256")))
+        verify_log(log_path)
+        lines = log_path.read_bytes().splitlines()
+        head = hashlib.sha256(lines[-1]).hexdigest() if lines else "0" * 64
+        if published is None or published.get("run_log") != head:
+            problems.append("the run log's head is not the one published to the evaluator")
+        records = [json.loads(line)["record"] for line in lines]
+    except Exception as exc:  # noqa: BLE001 - the evaluator's check reports, it never crashes
+        return problems + [f"the attempt cannot be read ({type(exc).__name__}: {str(exc)[:120]})"]
     if problems:
         return problems
+    seen = [(str(r.get("arm")), (str(r.get("presentation")), str(r.get("campaign_id")), r.get("seed"))) for r in records]
+    if len(seen) != len(set(seen)):
+        problems.append("some (arm, world set) appears more than once")
+    want = expected_runs(registered_arms()) if runs is None else runs
+    if set(seen) != want:
+        problems.append(f"the log does not hold exactly the expected runs ({len(set(seen) ^ want)} differ)")
     for rec in records:
         where = f"{rec.get('arm')}/{rec.get('presentation')}/{rec.get('campaign_id')}/{rec.get('seed')}"
         try:
@@ -352,9 +405,32 @@ def verify_attempt(records: Sequence[Mapping[str, Any]], root: bytes, admission:
             if shown != dict(rec.get("presented_card_digests", {})):
                 problems.append(f"{where}: the cards this arm was shown do not re-derive (arm, world or presentation "
                                 f"differs)")
-        except (KeyError, TypeError, ValueError) as exc:
+        except Exception as exc:  # noqa: BLE001 - one bad record is a finding, never a crash
             problems.append(f"{where}: malformed record ({type(exc).__name__})")
     return problems
+
+
+def replay_record(record: Mapping[str, Any], root: bytes, admission: Mapping[str, Any], *, prereg_sha256: str,
+                  runner: Runner) -> list[str]:
+    """Re-run one record of a REGISTERED (deterministic) arm on its re-derived master with ``runner`` (the evaluator's
+    own v0.3 harness) and compare every universe's answer, outcome and credit. A record whose universes came from
+    another arm (a whole-record swap, review round 3, N3) does not replay. Never raises."""
+    where = f"{record.get('arm')}/{record.get('presentation')}/{record.get('campaign_id')}/{record.get('seed')}"
+    try:
+        if record.get("arm") not in registered_arms():
+            return [f"{where}: only registered (deterministic) arms are replayed"]
+        master = master_for(root, prereg_sha256, str(admission["nonce"]), str(record["presentation"]),
+                            str(record["campaign_id"]), int(record["seed"]))
+        again = runner(str(record["arm"]), master_seed=master, campaign_id=str(record["campaign_id"]),
+                       presentation=str(record["presentation"]), seed=int(record["seed"]))
+
+        def view(rec: Mapping[str, Any]) -> list[tuple[Any, ...]]:
+            return [(u.get("universe_id"), u.get("answer"), u.get("outcome"), u.get("credit"))
+                    for u in rec.get("universes", [])]
+
+        return [] if view(again) == view(record) else [f"{where}: the replay does not reproduce the recorded outcomes"]
+    except Exception as exc:  # noqa: BLE001
+        return [f"{where}: replay failed ({type(exc).__name__})"]
 
 
 class SealedLog:
@@ -404,7 +480,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     root = bytes.fromhex(sys.stdin.readline().strip())
     doc = json.loads(args.preregistration.read_bytes())
-    manifest = environment.build_manifest(extra_modules=candidate_modules(doc))
+    manifest = environment.build_manifest()
     problems = preflight(doc, root, manifest) + committed_identity_problems(doc)
     for name, path in (("attempt registry", args.registry), ("evaluator inbox", args.publish_to)):
         if path.resolve().is_relative_to(args.out.resolve()):
@@ -428,8 +504,7 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         log.close()
     summary["run_log_head"] = log.head
-    with open(args.publish_to, "ab") as fh:
-        fh.write(json.dumps({"heads": {"run_log": log.head, "registry": registry.head()}}, sort_keys=True).encode() + b"\n")
+    EvaluatorInbox(args.publish_to).receive_heads(summary["attempt_sha256"], run_log=log.head, registry=registry.head())
     (args.out / "summary.json").write_bytes(json.dumps(summary, sort_keys=True, indent=1).encode() + b"\n")
     return 0
 

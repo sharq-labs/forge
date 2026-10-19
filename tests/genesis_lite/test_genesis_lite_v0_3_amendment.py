@@ -559,7 +559,8 @@ def test_p5_the_manifest_names_the_interpreter_and_every_imported_distribution()
     m = environment.build_manifest()
     assert m["schema"] == environment.MANIFEST_SCHEMA
     assert m["python"]["version"] == ".".join(map(str, sys.version_info[:3]))
-    assert "numpy" in m["distributions"]
+    assert "numpy" in m["distributions"] and m["installed"]["numpy"] == m["distributions"]["numpy"]
+    assert "pytest" in m["installed"]                 # every installed distribution, not only the benchmark's imports
     assert all(name.split(".")[0] not in sys.stdlib_module_names for name in m["unmapped_modules"])
     assert environment.manifest_digest(m) == environment.manifest_digest(json.loads(json.dumps(m)))
     changed = json.loads(json.dumps(m))

@@ -216,6 +216,8 @@ def test_readiness_p3_root_file_and_run_log_attacks_read_what_the_command_line_n
     assert _verdict(attacks.root_file(CARD, None)) == ("root_file", attacks.REACHED)
     assert _verdict(attacks.cmdline(CARD, None)) == ("cmdline", attacks.REACHED)
     monkeypatch.setattr(attacks, "_parent_cmdline", lambda: None)
+    assert _verdict(attacks.root_file(CARD, None)) == ("root_file", attacks.UNTESTABLE)  # no operator file named
+    monkeypatch.setattr(attacks, "_parent_cmdline", lambda: f"python -m driver --root-file {tmp_path / 'gone.hex'}")
     assert _verdict(attacks.root_file(CARD, None)) == ("root_file", attacks.REFUSED)
     monkeypatch.setenv("FORGE_ATTACK_RUN_LOGS", str(secret))
     assert _verdict(attacks.run_log(CARD, None)) == ("run_log", attacks.REACHED)
@@ -577,34 +579,91 @@ def test_p4_candidate_code_and_name_are_pinned():
     assert any("candidate" in p for p in formal.preflight(_stand_in(root, "OWNER_DECISION_REQUIRED"), root, MANIFEST))
 
 
-def test_attempt_the_evaluator_recomputes_keys_and_shown_cards_after_the_reveal(tmp_path):
-    """Review rounds 1-2: the evaluator accepts only the FIRST admission of a root, re-derives every answer key, and
-    re-derives the cards each arm was shown, so a record carrying another arm's label does not verify."""
-    root, prereg = H(b"verify root").digest(), H(b"prereg").hexdigest()
-    reg, inbox = AttemptRegistry(tmp_path / "reg"), EvaluatorInbox(tmp_path / "inbox.jsonl")
+def _attempt(tmp_path, tag, arms=("always_refuse",)):
+    """One admitted, published attempt with real v0.2-harness records on one world set (synthetic root)."""
+    root, prereg = H(b"verify root " + tag.encode()).digest(), H(b"prereg").hexdigest()
+    reg, inbox = AttemptRegistry(tmp_path / tag / "reg"), EvaluatorInbox(tmp_path / tag / "inbox.jsonl")
     admission = reg.admit(root_commitment_sha256=H(root).hexdigest(), prereg_sha256=prereg, campaign_set_sha256=PLAN,
                           tier="formal")
     inbox.receive(admission)
     master = formal.master_for(root, prereg, admission["nonce"], "renamed", "gl-formal-3", 1)
-    rec = v02_harness.run_one("always_refuse", v02_arms.ARMS["always_refuse"][0], master_seed=master,
-                              campaign_id="gl-formal-3", presentation="renamed", seed=1).to_dict()
-    rec["attempt_sha256"] = admission["attempt_sha256"]
-    verify = lambda recs, **kw: formal.verify_attempt(recs, kw.get("root", root), kw.get("adm", admission),  # noqa: E731
-                                                      inbox=inbox, prereg_sha256=kw.get("prereg", prereg))
-    assert verify([rec]) == []
-    assert any("cards this arm was shown" in p for p in verify([dict(rec, arm="careful")]))        # swapped label
-    assert any("not from the published attempt" in p for p in verify([dict(rec, attempt_sha256="d" * 64)]))
-    assert verify([rec], root=H(b"another root").digest())
-    assert verify([rec], prereg=H(b"other identity").hexdigest())
-    assert any("malformed" in p for p in verify([{"attempt_sha256": admission["attempt_sha256"], "status": "VALID"}]))
-    assert any("invalid run" in p for p in verify([dict(rec, status="INVALID_BENCHMARK")]))
+    records = []
+    for arm in arms:
+        rec = v02_harness.run_one(arm, v02_arms.ARMS[arm][0], master_seed=master, campaign_id="gl-formal-3",
+                                  presentation="renamed", seed=1).to_dict()
+        records.append({**rec, "attempt_sha256": admission["attempt_sha256"]})
+    return {"root": root, "prereg": prereg, "reg": reg, "inbox": inbox, "admission": admission, "records": records,
+            "runs": {(arm, ("renamed", "gl-formal-3", 1)) for arm in arms}, "dir": tmp_path / tag}
+
+
+def _publish_and_verify(ctx, records, *, extra_line=False, **kw):
+    log = formal.SealedLog(ctx["dir"] / "runs.jsonl")
+    for rec in records:
+        log(rec)
+    log.close()
+    ctx["inbox"].receive_heads(ctx["admission"]["attempt_sha256"], run_log=log.head, registry=ctx["reg"].head())
+    if extra_line:                                                   # appended after the head was published
+        with open(ctx["dir"] / "runs.jsonl", "ab") as fh:
+            fh.write(json.dumps({"prev_sha256": log.head, "record": records[0]}, sort_keys=True,
+                                separators=(",", ":")).encode() + b"\n")
+    return formal.verify_attempt(ctx["dir"] / "runs.jsonl", kw.get("root", ctx["root"]), kw.get("adm", ctx["admission"]),
+                                 inbox=ctx["inbox"], prereg_sha256=kw.get("prereg", ctx["prereg"]),
+                                 runs=kw.get("runs", ctx["runs"]))
+
+
+def test_attempt_the_evaluator_verifies_the_whole_published_log_after_the_reveal(tmp_path):
+    """Review rounds 1-3: only the FIRST admission of a root counts; the whole sealed log must be the published one and
+    hold exactly the expected runs; every key and every card the arm was shown re-derive from the revealed root."""
+    honest = _attempt(tmp_path, "honest")
+    assert _publish_and_verify(honest, honest["records"]) == []
+    swapped = _attempt(tmp_path, "label")
+    assert any("cards this arm was shown" in p for p in
+               _publish_and_verify(swapped, [dict(swapped["records"][0], arm="careful")],
+                                   runs={("careful", ("renamed", "gl-formal-3", 1))}))
+    late = _attempt(tmp_path, "late")
+    assert any("head is not the one published" in p for p in _publish_and_verify(late, late["records"], extra_line=True))
+    partial = _attempt(tmp_path, "partial")
+    assert any("expected runs" in p for p in _publish_and_verify(
+        partial, partial["records"], runs=partial["runs"] | {("careful", ("renamed", "gl-formal-3", 1))}))
+    other = _attempt(tmp_path, "other")
+    assert _publish_and_verify(other, other["records"], prereg=H(b"other identity").hexdigest())
+    bad = _attempt(tmp_path, "bad")
+    assert any("malformed" in p for p in _publish_and_verify(
+        bad, [{"attempt_sha256": bad["admission"]["attempt_sha256"], "status": "VALID", "arm": "always_refuse",
+               "presentation": "renamed", "campaign_id": "gl-formal-3", "seed": 1, "universes": [1]}]))
+    invalid = _attempt(tmp_path, "invalid")
+    assert any("invalid run" in p for p in _publish_and_verify(invalid, [dict(invalid["records"][0],
+                                                                                 status="INVALID_BENCHMARK")]))
     second = AttemptRegistry(tmp_path / "fresh-registry").admit(
-        root_commitment_sha256=H(root).hexdigest(), prereg_sha256=prereg, campaign_set_sha256=PLAN, tier="formal")
+        root_commitment_sha256=H(honest["root"]).hexdigest(), prereg_sha256=honest["prereg"], campaign_set_sha256=PLAN,
+        tier="formal")
     with pytest.raises(AttemptRefused, match="already received"):
-        inbox.receive(second)                                       # a fresh operator registry does not help
-    assert any("not the first" in p for p in verify([rec], adm=second))
+        honest["inbox"].receive(second)                              # a fresh operator registry does not help
+    assert any("not the first" in p for p in formal.verify_attempt(
+        honest["dir"] / "runs.jsonl", honest["root"], second, inbox=honest["inbox"], prereg_sha256=honest["prereg"],
+        runs=honest["runs"]))
     with pytest.raises(AttemptRefused, match="well-formed"):
-        inbox.receive(dict(admission, tier="development"))
+        honest["inbox"].receive(dict(honest["admission"], tier="development"))
+    with pytest.raises(AttemptRefused, match="already published"):
+        honest["inbox"].receive_heads(honest["admission"]["attempt_sha256"], run_log="0" * 64, registry="0" * 64)
+
+
+def _v02_runner(arm, *, master_seed, campaign_id, presentation, seed):
+    return v02_harness.run_one(arm, v02_arms.ARMS[arm][0], master_seed=master_seed, campaign_id=campaign_id,
+                               presentation=presentation, seed=seed).to_dict()
+
+
+def test_attempt_a_whole_record_swap_between_arms_does_not_replay(tmp_path):
+    """Review round 3 N3: swapping arm AND shown cards between two records of one world set keeps the key and card
+    checks happy; re-running the registered arm on its re-derived master exposes it."""
+    ctx = _attempt(tmp_path, "swap", arms=("careful", "always_refuse"))
+    careful, refuse = ctx["records"]
+    kw = {"prereg_sha256": ctx["prereg"], "runner": _v02_runner}
+    assert formal.replay_record(careful, ctx["root"], ctx["admission"], **kw) == []
+    assert formal.replay_record(refuse, ctx["root"], ctx["admission"], **kw) == []
+    forged = {**careful, "universes": refuse["universes"]}           # careful's label and cards, refuse's results
+    assert any("does not reproduce" in p for p in formal.replay_record(forged, ctx["root"], ctx["admission"], **kw))
+    assert formal.replay_record(dict(careful, arm="mind"), ctx["root"], ctx["admission"], **kw)
 
 
 def test_p4_candidate_spec_module_and_its_imports_must_be_pinned():
@@ -616,6 +675,10 @@ def test_p4_candidate_spec_module_and_its_imports_must_be_pinned():
     readme = {"name": "mind", "spec": "tests.genesis_lite.stateful_arms:remembers",
               "code_sha256": {"README.md": H((v03p.v02.ROOT / "README.md").read_bytes()).hexdigest()}}
     assert any("is not one of its pinned files" in p for p in formal.candidate_code_problems(readme))
+    host = "benchmarks/genesis_lite/proposer_host.py"
+    dynamic = {"name": "mind", "spec": "benchmarks.genesis_lite.proposer_host:main",
+               "code_sha256": {host: H((v03p.v02.ROOT / host).read_bytes()).hexdigest()}}
+    assert any("dynamic loading" in p for p in formal.candidate_code_problems(dynamic))   # importlib: refused
     analysis_tests = "tests/genesis_lite/test_genesis_lite_analysis.py"
     transitive = {"name": "mind", "spec": "tests.genesis_lite.test_genesis_lite_analysis:test_x",
                   "code_sha256": {analysis_tests: H((v03p.v02.ROOT / analysis_tests).read_bytes()).hexdigest()}}
@@ -712,3 +775,19 @@ def test_readiness_pass_needs_everything(monkeypatch, tmp_path):
     assert approve(OD_3={"certified_head": "0" * 40}) == readiness.PENDING_OWNER          # another HEAD
     assert approve(D2_significance={"prereg_sha256": "0" * 64}) == readiness.PENDING_OWNER  # another identity
     assert approve(D1_scoring={"pair_bound": {"form": "absolute", "value": 9.0}}) == readiness.PENDING_OWNER
+
+
+def test_readiness_required_tests_match_the_test_files():
+    """The gate's exact-name lists cannot drift from the files: every ledger-prefixed test in the draft's test files
+    is required by some row, and every required name exists (the escrow file's names live on the escrow branch)."""
+    import ast  # noqa: PLC0415
+
+    names = set()
+    for rel in readiness.TEST_FILES[:2]:
+        tree = ast.parse((v03p.v02.ROOT / rel).read_text(encoding="utf-8"))
+        names |= {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name.startswith("test_")}
+    required = {n for v in readiness.REQUIRED_TESTS.values() for n in v}
+    prefixes = ("test_fda", "test_o1_", "test_pilot_", "test_readiness_p3_", "test_p4_", "test_p5_", "test_attempt_",
+                "test_harness_")
+    assert required <= names
+    assert {n for n in names if n.startswith(prefixes)} == required

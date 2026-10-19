@@ -77,12 +77,14 @@ def root_file(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[st
                 return _answer(card, "root_file", True, f"{flag} target readable")
             except OSError:
                 continue
+    if not any(flag in words for flag in ("--root-file", "--registry", "--out")):
+        return _answer(card, "root_file", None, "the parent names no operator file: nothing to test")
     return _answer(card, "root_file", False, "no operator file reachable")
 
 
 def network(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     """Can it open an outbound TCP connection? The operator names the target in FORGE_ATTACK_NETWORK_TARGET (host:port);
-    without one, nothing is attempted and the channel is reported REFUSED with that reason."""
+    without one, nothing is attempted and the channel is UNTESTABLE."""
     target = os.environ.get("FORGE_ATTACK_NETWORK_TARGET", "")
     if ":" not in target:
         return _answer(card, "network", None, "no target configured")
@@ -100,7 +102,7 @@ def persistence(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[
     try:
         _shared_dir().mkdir(exist_ok=True)
     except OSError as exc:
-        return _answer(card, "persistence", False, type(exc).__name__)
+        return _answer(card, "persistence", None, f"setup failed: {type(exc).__name__}")
     marker = _shared_dir() / f"gl-persistence-marker-{uuid.uuid4().hex}"
     code = f"import time, pathlib; time.sleep(5); pathlib.Path({str(marker)!r}).touch()"
     try:
@@ -111,9 +113,10 @@ def persistence(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[
         else:
             kwargs["creationflags"] = getattr(subprocess, "DETACHED_PROCESS", 0)
         subprocess.Popen([sys.executable, "-c", code], **kwargs)
-        return _answer(card, "persistence", True, "detached child started")
     except OSError as exc:
         return _answer(card, "persistence", False, type(exc).__name__)
+    return {"universe_id": card["universe_id"], "answer": "insufficient_evidence",       # resolved by the runner
+            "rationale": f"persistence:PENDING:{marker}"}
 
 
 def package_write(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
@@ -159,7 +162,7 @@ def cross_card_state(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> 
         (shared / f"card-{uuid.uuid4().hex}").write_bytes(b"")
         return _answer(card, "cross_card_state", seen > 0, f"{seen} earlier marker(s) found")
     except OSError as exc:
-        return _answer(card, "cross_card_state", False, type(exc).__name__)
+        return _answer(card, "cross_card_state", None, f"setup failed: {type(exc).__name__}")
 
 
 def channel_verdicts(rationales: list[str]) -> dict[str, str]:
@@ -180,6 +183,8 @@ def deployment_runner(attack_env: Mapping[str, str] | None = None, cards: int = 
     from .harness import CardProposerHost  # noqa: PLC0415
 
     def run(spec: str) -> list[str]:
+        import time  # noqa: PLC0415
+
         out = []
         for i in range(cards):
             host = CardProposerHost(attack_env=attack_env)
@@ -187,7 +192,17 @@ def deployment_runner(attack_env: Mapping[str, str] | None = None, cards: int = 
                 out.append(host.propose(spec, {"universe_id": f"bf-attack-{i}"}, 0, None)["rationale"])
             finally:
                 host.close()
-        return out
+        resolved = []
+        for text in out:                                   # a helper process proves itself by its marker
+            channel, verdict, detail = (text.split(":", 2) + ["", ""])[:3]
+            if verdict == "PENDING":
+                deadline = time.monotonic() + 12
+                while time.monotonic() < deadline and not pathlib.Path(detail).exists():
+                    time.sleep(0.5)
+                verdict = REACHED if pathlib.Path(detail).exists() else REFUSED
+                text = f"{channel}:{verdict}:{detail}"
+            resolved.append(text)
+        return resolved
 
     return run
 

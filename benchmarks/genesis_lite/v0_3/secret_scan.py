@@ -36,7 +36,7 @@ from typing import Iterable
 MARKERS = {b'"schema":"' + b'forge.genesis_lite.attempt_registry/1"': "attempt registry",
            b'{"prev_sha256' + b'":"': "run log"}
 CHUNK = 8 * 1024 * 1024
-_OVERLAP = 256
+_OVERLAP = 4096
 RAW_WINDOW_LIMIT = 4096                                   # raw roots live in tiny files; larger files are hex-scanned
 _HEX64 = re.compile(rb"(?<![0-9a-fA-F])[0-9a-fA-F]{64}(?![0-9a-fA-F])")
 
@@ -75,7 +75,8 @@ def _scan_file(path: pathlib.Path, wanted: frozenset[str]) -> set[str]:
             if not chunk:
                 break
             data = tail + chunk
-            for view in (data, re.sub(rb"\s+", b"", data), data.replace(b"\x00", b"")):
+            stripped = re.sub(rb"\s+", b"", data)
+            for view in (data, stripped, data.replace(b"\x00", b""), stripped.replace(b"\x00", b"")):
                 found.update(_scan_bytes(view, wanted) if first and len(chunk) < CHUNK else _scan_text(view, wanted))
             tail, first = data[-_OVERLAP:], False
     return found
