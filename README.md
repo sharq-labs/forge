@@ -176,15 +176,22 @@ a threshold can be numerically satisfied while the decision remains
 certification.
 
 `answer_engineering_uncertainty` propagates caller-declared uniform or normal
-input distributions with deterministic stratified Latin-hypercube samples.
-The caller must explicitly declare `dependence="independent"`; correlated
-inputs are refused until a correlation model is implemented. Every equal-mass
-sample crosses the ordinary validity and evidence boundary. If any sample is
-not `SUPPORTED`, no predictive interval is emitted: the tool reports
-`predictive_support_not_admitted` rather than silently conditioning on the
-survivors. Successful results carry empirical central intervals, mean,
-standard uncertainty, sample count and stated exclusions including model-form
-uncertainty.
+input distributions with a fixed-seed, midpoint Latin-hypercube design whose
+columns are re-paired to reduce spurious correlation. A design with
+`sample_count` not above the number of inputs, or with realised rank-correlation
+lambda_min below 0.64, is refused; this is a sampling-design guard, not
+evidence of output accuracy. The caller must explicitly declare
+`dependence="independent"`; correlated inputs are refused until a correlation
+model is implemented. Every equal-mass sample crosses the ordinary validity and
+evidence boundary. If any sample is not `SUPPORTED`, no interval is emitted:
+the tool reports `predictive_support_not_admitted` rather than silently
+conditioning on the survivors. A tail of the requested mass beyond the design's
+resolution is refused as `sample_resolution_insufficient`. Successful results
+carry, per output, the empirical central quantile interval of the sampled
+outputs at the requested mass (`credible_mass` keeps its name but is not a
+Bayesian credible probability, and the requested mass is not a guaranteed or
+calibrated coverage), plus mean, standard uncertainty, sample count and stated
+exclusions including model-form uncertainty.
 
 ## Development discipline
 

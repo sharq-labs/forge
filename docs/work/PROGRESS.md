@@ -7508,3 +7508,185 @@ Report: docs/work/FINAL_SCIENTIFIC_INTEGRATION_VERIFICATION.md. Prior Phase0bloc
 - NOT RUN: R-01 (FDA-01 replay UQ), R-02 (FDA-02 state clock) and R-07..R-26, by owner stop. FDA-01 and FDA-02 remain SOURCE_PROVEN only.
 - Windows 3.14 is not the certification platform; nothing here is certified. No source, test, contract, certificate or benchmark identity changed.
 - Owner decisions open: ODC-* in `evidence/deep_audit_2026_10_19/closure/SCIENTIFIC_FINDINGS_OWNER_DECISIONS.md`. FDA-05 and FDA-06 must be closed before any Genesis-lite scoring freeze; B-LEAK remains a formal-measurement blocker.
+
+
+## 2026-10-19 — BUY-01: FDA-04 / FDA-14 / B26 repair of the MCP probabilistic UQ tool (local, uncommitted)
+
+Worktree `D:/forge-buy01`, branch `fix/buy01-fda04-fda14-qmc` from `origin/main` `d3c9cd45`. No commit, push, PR,
+merge, dependency install, recertification or epic change. The candidate patch in the 2026-10-19 handoff was read
+as reference and NOT applied: it used scrambled LHS (points no longer on midpoints, so its FDA-14 test fed midpoints
+by hand instead of the sampler), kept the absolute sigma conversion, and wrote no spread unit for offset-scale outputs.
+
+Change (`src/engcore/mcp/probabilistic_uq.py`, `src/engcore/mcp/server.py`):
+- Design: `scipy.stats.qmc.LatinHypercube(scramble=False)` from `np.random.default_rng(20261019)`; each column an
+  independent seeded permutation of stratum midpoints. A design with a rank-identical or rank-reversed column pair is
+  refused (`cannot represent independence`). `sample_design()` records sampler identity (algorithm, seed, SciPy and
+  NumPy versions) and the realised max |pairwise rank correlation|; the server returns it as `sample_design`.
+- Quantiles: `np.quantile(..., method="hazen")`; a tail below 0.5/n returns `sample_resolution_insufficient`.
+  Intervals carry `mass_semantics: nominal_empirical_quantile_mass_not_coverage`; `does_not_include` adds calibrated
+  coverage and the quantile estimate's sampling error.
+- Units: a normal sigma must be a spread unit (`require_spread_unit`) and is converted with
+  `magnitude_as_spread_in`; the output standard uncertainty on an offset scale is written in the base unit.
+- Schemas: `engineering_probabilistic_uq/2`, `engineering_uncertainty_answer/2`; the server's incomplete branch no
+  longer hard-codes `/1`. Nothing in the tree reads `/1` back.
+
+Failing-first: 11 new tests in `tests/mcp/test_probabilistic_uq.py` failed on unmodified source for the intended
+reasons (R-04 zero width; constant pair sums at n=4 for k=3/5/17; no sampler record; 0.920 mass; n=4 not refused;
+schema /1; `2 degC` sigma accepted; `2 delta_degC` sigma refused by the old absolute conversion; spread written as
+degF). One existing assertion moved from type-7 (301.5/304.5) to Hazen (301/305). `tests/mcp/test_server.py`
+gained schema and sampler assertions.
+
+Executed (Windows, `phyx/.venv` Python 3.14.2, SciPy 1.18.1, NumPy 2.5.2, pint 0.25.3 -- NOT the supported 3.11/3.12):
+- R-04 original script on unmodified worktree: REPRODUCED (identical to the audit's R-04.out).
+- `python -m pytest tests/mcp/test_probabilistic_uq.py -q` before repair: 11 failed, 6 passed; after: 17 passed.
+- `python -m pytest tests/mcp/test_server.py tests/mcp/test_probabilistic_uq.py tests/mcp/test_scenario_uq.py -q -n 4`: 60 passed.
+- R-04 cases after repair (`r04_after.py`, scratch): n=32 k=17 x15+x16 completed, sd 0.414; n=4 0.95 refused for
+  resolution; n=20/32/40 realise 0.95 exactly for Y=X0.
+- Census (fixed seed, n=4..256): design refusals only at k=5 n=4; k=10 n=4,6; k=17 n=4,5,6. Realised max |rho| for
+  admitted designs with n>=32 reaches 0.45 (k=2) and 0.53 (k=17). A fixed seed is not independence; the bound is ODC-04a.
+- `python tools/forge_check.py --changed --base origin/main --workers 4` (195 affected modules; expensive tests
+  listed, not run): 50 failed, 4536 passed, 84 skipped, 2 errors, exit 1. The identical pytest argument list on a
+  pristine `origin/main` worktree (`D:/forge-buy01-base`): 50 failed, 4523 passed, 84 skipped, 2 errors. Failure and
+  error node sets are identical (`comm` empty both ways); the +13 passes are the new tests. The shared failures
+  (durable campaign, phase2 coupling, phase3.5 WS2 migration, core certificate/guards, mutation startup, symlink,
+  offline revalidation, battery blind-readiness errors) are pre-existing on this Windows/3.14 host, not caused here.
+
+Not done / owner decisions: ODC-04a refusal bound on realised |rho| (currently only |rho|=1 refused); ODC-04b
+relocation of the computation from `engcore.mcp` to `engcore.uq` (O-4); ODC-14a minimum-n rule (implemented 0.5/n,
+the clip boundary; the audit's example 1/n would refuse the default 32 x 0.95 call); ODC-14b label wording; schema
+bump approval; OD-3 hardened recertification (forge_check classifies server.py and both test files
+certification_pinned). Supported-Python run NOT RUN. Scientific coverage calibration NOT RUN.
+
+Owner decision 2026-10-19: **ODC-14a approved as implemented** — refuse a central mass whose tail lies below 0.5/n
+(`sample_resolution_insufficient`). No code change was needed. ODC-04a, ODC-04b, ODC-14b and OD-3 remain open.
+
+ODC-04a evidence and proposal (no code change): `docs/work/proposals/ODC_04A_DESIGN_CORRELATION_BOUND.md`.
+Executed scratch scripts `odc04a_census.py`, `odc04a_checks.py` and `odc04a_nonlinear.py` against the worktree
+design generator (Python 3.14.2, SciPy 1.18.1, NumPy 2.5.2; exit 0 each). Findings:
+- The shipped design's realised rank correlation behaves like random permutations. At k=17, n=32: max |rho| 0.47,
+  lambda_min 0.15, worst linear-output sd ratio 0.39.
+- Under any fixed bound, admission is non-monotone in n.
+- One Iman–Conover pass (identity target) keeps the midpoint LHS marginals and costs ~1 ms at n=256. With
+  lambda_min >= 0.64 it admits every n >= 7/10/24/45/52 for k = 2/5/10/17/25.
+- SciPy random-cd achieves the same at 0.2–1.4 s per design, and needs n >= 49/104 for k = 17/25.
+- Decorrelation cuts the worst additive-output sd error from 0.24 to 0.05 (IC) or 0.02 (CD). It does not reduce the
+  Ishigami (nonlinear) error, which stays at ~0.17–0.18. The bound therefore guards linear outputs only.
+- Recommended: Option D (IC re-pairing + refuse n <= k or lambda_min < 0.64, and report the lambda band). This is a
+  risk-policy choice for the owner and is not implemented.
+
+Owner decision 2026-10-19: **ODC-04a approved, Option D**. Iman–Conover re-pairing; refuse n <= k or
+lambda_min < 0.64; report the lambda band. Implemented failing-first in `D:/forge-buy01`, uncommitted.
+
+- `probabilistic_uq.py`:
+  - `_pair_for_independence`: one Iman–Conover pass to the identity target. It keeps every column's values; a design
+    whose score correlation is not positive definite is returned unchanged, so the bound still refuses it.
+  - `_rank_eigenvalues` and `_assessed_design` feed both `sample_design` and `build_deterministic_samples`.
+  - `MINIMUM_DESIGN_LAMBDA = 0.64` and `PAIRING = "iman_conover_identity_vdw/1"`, recorded in the sampler identity.
+  - `sample_design` now carries `lambda_min`, `lambda_max`, `linear_output_sd_ratio_band`, `minimum_lambda`,
+    `bound_scope: design_dependence_bound_linear_outputs_only` and `admitted`.
+  - The exact |rho| = 1 pair check is removed; the bound subsumes it.
+  - Schema stays `/2`, which is unreleased. The `server.py` tool description is updated.
+- Tests (`tests/mcp/test_probabilistic_uq.py`):
+  - The R-04 trigger (n=32, k=17) is now refused; the same pair completes at n=64 with sd > 0.1.
+  - Property test over n in 4..256 for k in {2, 3, 5, 10, 17}: every admitted design has lambda_min >= 0.64,
+    computed from the sample values independently of the module, and has no cancelling pair.
+  - Added: n <= k refused; midpoint strata kept at (32, 5), (64, 10) and (128, 17); band reported and matching the
+    samples; a reversed pair fails closed.
+- Failing-first: `python -m pytest tests/mcp/test_probabilistic_uq.py -q` on the pre-Option-D code gave 9 failed, 14
+  passed, each for the intended reason. After the change: 23 passed.
+- `python -m pytest tests/mcp/test_server.py tests/mcp/test_probabilistic_uq.py tests/mcp/test_scenario_uq.py -q -n 4`:
+  66 passed.
+- Production admission (`sample_design`, n in 4..256), each k given as admitted/total, then the smallest N with every
+  n >= N admitted, then whether n=32 is admitted:
+  - k=2: 252/253, 7, yes
+  - k=3: 250/253, 7, yes
+  - k=5: 247/253, 10, yes
+  - k=10: 235/253, 24, yes
+  - k=17: 225/253, 45, no
+  - k=25: 209/253, 52, no
+
+  These are identical to the proposal's IC census.
+- `python tools/forge_check.py --changed --base origin/main --workers 4`: 52 failed, 4665 passed, 84 skipped,
+  2 errors, exit 1. The selection grew because the new docs pulled in more modules: `test_v2_blindfold.py`,
+  `test_multiphysics_window_control.py` and the battery_1rc benchmark tests.
+  - 50 failures and 2 errors are identical to the earlier pristine-`origin/main` (`d3c9cd45`) baseline.
+  - The other 2 (`test_v2_blindfold.py::test_the_subprocess_escrow_keeps_its_secrets_in_the_child`,
+    `test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable`)
+    fail identically on a fresh pristine `origin/main` worktree, run serially: 2 failed, 50 passed in both trees.
+  - Neither file references `engcore.mcp`. No failure is attributable to this change.
+- Still open: ODC-04b (move the computation to `engcore.uq`), ODC-14b (label wording), OD-3 recertification
+  (certification-pinned files), a supported-Python 3.11/3.12 run, and owner approval to commit.
+
+### 2026-10-19 — BUY-01 pre-PR scientific closure (local, not pushed)
+
+Branch `fix/buy01-fda04-fda14-qmc`: `17e2edd5` (BUY-01 + ODC-04a/14a), then `428993b1` (ODC-14b + ODC-04a wording),
+on base `origin/main` `d3c9cd45`.
+
+**ODC-14b (interval semantics), decided and implemented.** What the code computes, per output quantity: the Hazen
+central quantile range of n equal-weight model outputs over the sample design drawn from the declared inputs, at
+the requested mass. It is not a Bayesian credible interval (there is no posterior), not a confidence interval (no
+repeated-sampling statement) and not a prediction interval (no observation noise).
+
+Each interval record now carries:
+- `requested_central_mass`;
+- `credible_mass`, kept as the /1 field and input-parameter name, an alias in /2;
+- `interpretation`: kind `empirical_central_quantile_interval`, quantile rule `hazen`,
+  `coverage_guaranteed: false` and `coverage_calibrated: false`.
+
+`conditional_on` names the realised finite design, and `does_not_include` says "calibrated coverage of any interval".
+Refusal reasons, the tool description, README.md and docs/mcp/README.md no longer say "predictive interval" or
+"nominal coverage". The public names `credible_mass`, `predictive_intervals` and `predictive_support_not_admitted`
+are kept for compatibility, and their meaning is stated in `interpretation`.
+
+**ODC-04a semantics.** `sample_design` is labelled `role: sampling_design_dependence_diagnostic`,
+`bound_scope: linear_outputs_only`. Its `does_not_establish` lists output accuracy (including for nonlinear outputs),
+calibrated coverage, model validity, and uncertainty beyond the declared inputs. The tool description says the
+diagnostic is not evidence of accuracy, calibrated uncertainty or model validity. The threshold (0.64) and the
+refusal behaviour are unchanged; nothing was retuned. Added `design_sha256` (the exact unit-design bytes) for replay
+identity.
+
+**ODC-04b (move the computation to a UQ-owned module), DEFERRED to its own bounded PR.** Measured:
+`tools.test_impact.classify` gives any new file under `src/engcore/uq/` the class CERTIFICATION_PINNED
+(`certified:predictive_representation`), while `src/engcore/mcp/probabilistic_uq.py` has no recertification reason.
+Moving the code would bring uncertified code into certified scope and add certified-import edges. That is an
+architecture and certification change, separable from the FDA-04/14 numerical claim, and it does not change the
+semantics. Not part of BUY-01.
+
+**Tests.**
+- Failing-first: with the new test file in a temporary worktree at `17e2edd5`, 6 failed and 20 passed. The wording
+  scanner caught "not calibrated coverage" in the old description and "predictive interval" in the old refusal reason.
+- At `428993b1`, `tests/mcp/test_probabilistic_uq.py`: 26 passed.
+- Windows `.venv` Python 3.14.2 (NumPy 2.5.2, SciPy 1.18.1, pint 0.25.3):
+  `python -m pytest tests/mcp/test_server.py tests/mcp/test_probabilistic_uq.py tests/mcp/test_scenario_uq.py -q -n 4`
+  gave 69 passed.
+
+**Supported Python at `428993b1`**, from WSL clean tree `/mnt/d/forge-buy01` (engcore imported from
+`/mnt/d/forge-buy01/src`), using the read-only venvs of `~/forge-hostile-remediation/.forge/venvs`:
+`PYTHONPATH=$WT/src:$WT python -m pytest tests/mcp/test_probabilistic_uq.py tests/mcp/test_server.py tests/mcp/test_scenario_uq.py -q -rfEs -p no:cacheprovider`
+(script `D:/ftmp-buy01/wsl_supported.sh`, logs `D:/ftmp-buy01/supported/`).
+
+| Python | NumPy | SciPy | Pint | pytest | Result |
+|---|---|---|---|---|---|
+| 3.11.17 | 2.4.6 | 1.17.1 | 0.25.3 | 9.1.1 | 69 passed, 0 failed, 0 skipped, exit 0 |
+| 3.12.3 | 2.5.4 | 1.18.1 | 0.26.1 | 9.1.1 | 69 passed, 0 failed, 0 skipped, exit 0 |
+
+The design digests for (n, k) = (32, 10), (32, 17), (64, 17) and (256, 25) are identical on 3.11, 3.12 and Windows
+3.14 (`8c086da7…`, `2155c284…`, `eae91243…`, `9375f59e…`). `lambda_min` differs only in the last place (eigensolver
+rounding), and no admission changed.
+
+R-04 cases (`r04_after.py`) on 3.11 and 3.12:
+- n=4 k=3 and n=32 k=17 are refused by the design guard; the zero-width completed interval no longer occurs.
+- The n=32 k=2 control completes with sd 0.401.
+- Y=X0 realises 0.95 at n=20, 32 and 40, and n=4 at 0.95 is refused for resolution.
+
+**Changed-file gate at `428993b1`** (Windows 3.14.2):
+`python tools/forge_check.py --changed --base origin/main --workers 4` gave 52 failed, 4705 passed, 84 skipped and
+2 errors (exit 1). The identical pytest argument list on a pristine `origin/main` worktree gave 52 failed, 4683
+passed, 84 skipped and 2 errors.
+- The failure and error node sets are identical (54 = 54; `comm` empty in both directions).
+- The +22 passes are the added items: the two changed test files collect 66 items here and 44 on main.
+- The gate's classes: README files doc_only, `probabilistic_uq.py` scientific_shared, `server.py` and both test files
+  certification_pinned. Merge therefore requires OD-3.
+
+**Not done:** OD-3 hardened recertification, the full FAST/SCIENTIFIC tiers on Linux, a push, a PR and a merge.
+Coverage calibration and scientific validation were not run; the guard and intervals are not claimed to give either.
