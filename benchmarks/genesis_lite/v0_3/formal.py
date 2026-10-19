@@ -158,21 +158,56 @@ def _identity_pinned_files() -> frozenset[str]:
     return frozenset(out)
 
 
-def _tracked_engcore() -> frozenset[str]:
-    """src/engcore files tracked at HEAD: covered by the core certificate (OD-3), never an untracked addition."""
+def _git_lines(*args: str) -> list[str] | None:
     import subprocess  # noqa: PLC0415
 
-    run = subprocess.run(["git", "ls-files", "src/engcore"], cwd=_ROOT, capture_output=True, text=True, check=False)
-    return frozenset(run.stdout.split()) if run.returncode == 0 else frozenset()
+    run = subprocess.run(["git", *args], cwd=_ROOT, capture_output=True, text=True, check=False)
+    return run.stdout.splitlines() if run.returncode == 0 else None
+
+
+def _tracked_engcore() -> frozenset[str]:
+    """src/engcore files in the HEAD commit (covered by the core certificate, OD-3), and only while src/engcore has no
+    staged, modified or untracked change: a file that differs from HEAD is never admitted on the strength of HEAD."""
+    dirty = _git_lines("status", "--porcelain", "--untracked-files=all", "--", "src/engcore")
+    tracked = _git_lines("ls-tree", "-r", "--name-only", "HEAD", "--", "src/engcore")
+    if dirty is None or tracked is None or dirty:
+        return frozenset()
+    return frozenset(tracked)
+
+
+class _Ambiguous(Exception):
+    pass
 
 
 def _module_file(module: str) -> str | None:
+    """The file CPython would load for a first-party module: a package's __init__.py before a module's .py. Refuses
+    (``_Ambiguous``) when an extension module, a sourceless .pyc or a .pyw shares the stem, because then the scanned
+    source may not be what runs."""
     for base in (_ROOT, _ROOT / "src"):
         stem = base.joinpath(*module.split("."))
-        for path in (stem.with_suffix(".py"), stem / "__init__.py"):
-            if path.is_file():
-                return path.relative_to(_ROOT).as_posix()
+        shadows = [p for p in stem.parent.glob(stem.name + ".*") if p.suffix in (".pyd", ".so", ".pyc", ".pyw")] \
+            if stem.parent.is_dir() else []
+        package, source = stem / "__init__.py", stem.with_suffix(".py")
+        if shadows and (package.is_file() or source.is_file() or stem.is_dir()):
+            raise _Ambiguous(f"{module}: {sorted(p.name for p in shadows)} share its name")
+        if shadows:
+            raise _Ambiguous(f"{module}: only a compiled form exists ({sorted(p.name for p in shadows)})")
+        if package.is_file():
+            return package.relative_to(_ROOT).as_posix()
+        if source.is_file():
+            return source.relative_to(_ROOT).as_posix()
     return None
+
+
+def _with_parents(module: str) -> list[str]:
+    """The files of a module AND of every parent package (all of them run on import)."""
+    parts = module.split(".")
+    out = []
+    for i in range(1, len(parts) + 1):
+        found = _module_file(".".join(parts[:i]))
+        if found is not None:
+            out.append(found)
+    return out
 
 
 def _static_imports(rel: str) -> tuple[set[str], set[str]]:
@@ -197,9 +232,7 @@ def _static_imports(rel: str) -> tuple[set[str], set[str]]:
         for module in modules:
             if module.split(".")[0] in _DYNAMIC:
                 dynamic.add(module.split(".")[0])
-            found = _module_file(module)
-            if found is not None:
-                files.add(found)
+            files.update(_with_parents(module))
     return files, dynamic
 
 
@@ -220,19 +253,28 @@ def candidate_code_problems(cand: Mapping[str, Any] | None) -> list[str]:
         elif hashlib.sha256(path.read_bytes()).hexdigest() != sha:
             problems.append(f"the candidate's file {rel} is not the preregistered code")
     module = str(cand["spec"]).split(":", 1)[0]
-    own = _module_file(module)
-    if own is None or own not in pinned:
-        problems.append(f"the candidate's module {module} is not one of its pinned files")
-    if problems:
-        return problems
-    packages = {"benchmarks/__init__.py", "benchmarks/genesis_lite/__init__.py"}      # package markers, tracked
-    allowed = set(pinned) | _identity_pinned_files() | _tracked_engcore() | {p for p in packages if (_ROOT / p).is_file()}
-    for rel in sorted(r for r in pinned if r.endswith(".py")):
-        files, dynamic = _static_imports(rel)
-        if dynamic:
-            problems.append(f"{rel} uses {sorted(dynamic)}: dynamic loading is not admissible in a pinned candidate")
-        for dep in sorted(files - allowed):
-            problems.append(f"the candidate imports {dep}, which is not pinned")
+    try:
+        own_chain = _with_parents(module)
+        own = _module_file(module)
+        if own is None or own not in pinned:
+            problems.append(f"the candidate's module {module} is not one of its pinned files")
+        if problems:
+            return problems
+        packages = {"benchmarks/__init__.py", "benchmarks/genesis_lite/__init__.py"}      # package markers, tracked
+        allowed = set(pinned) | _identity_pinned_files() | _tracked_engcore() | {
+            p for p in packages if (_ROOT / p).is_file()}
+        for dep in sorted(set(own_chain) - allowed):
+            problems.append(f"the candidate's package file {dep} runs on import and is not pinned")
+        for rel in sorted(r for r in pinned if r.endswith(".py")):
+            files, dynamic = _static_imports(rel)
+            if dynamic:
+                problems.append(f"{rel} uses {sorted(dynamic)}: dynamic loading is not admissible in a pinned candidate")
+            for dep in sorted(files - allowed):
+                problems.append(f"the candidate imports {dep}, which is not pinned")
+    except _Ambiguous as exc:
+        problems.append(f"ambiguous module file: {exc}")
+    except SyntaxError as exc:
+        problems.append(f"a pinned candidate file does not parse: {exc.filename}")
     return problems
 
 
@@ -348,12 +390,21 @@ def expected_runs(arms: Sequence[str]) -> set[tuple[str, v02_analysis.WorldSet]]
 
 
 def verify_attempt(log_path: pathlib.Path, root: bytes, admission: Mapping[str, Any], *, inbox: Any,
-                   prereg_sha256: str, runs: set[tuple[str, v02_analysis.WorldSet]] | None = None) -> list[str]:
+                   prereg_sha256: str, pair_bound: Mapping[str, Any], replay_runner: Runner | None,
+                   candidate: str | None = None,
+                   runs: set[tuple[str, v02_analysis.WorldSet]] | None = None) -> list[str]:
     """The external evaluator's post-reveal check of one attempt (module docstring). It reads the WHOLE sealed run log,
-    whose head must be the one published to the evaluator for this attempt, and every expected (arm, world set) must
-    appear exactly once (``runs``; default: every registered arm on the formal grid). Never raises."""
+    whose head must be the one published to the evaluator for this attempt; every expected (arm, world set) must appear
+    exactly once (``runs``; default: every registered arm, plus ``candidate``, on the formal grid). For every universe it
+    re-derives the kind, the searched-family flag and the law form from the revealed key and RE-SCORES the sealed
+    proposal with the v0.3 evaluator under ``pair_bound``; every registered arm's record is REPLAYED with
+    ``replay_runner`` (the evaluator's own v0.3 harness). Without a runner, the registered records stay unverified and
+    that is reported. Never raises."""
     from ..answer_key import export_answer_key, key_digest  # noqa: PLC0415
+    from ..evaluator.score import in_monomial_family  # noqa: PLC0415
     from ..harness import MIX  # noqa: PLC0415
+    from . import evaluator as v03e  # noqa: PLC0415
+    from .harness import law_form  # noqa: PLC0415
     from .registry import REGISTRY_SCHEMA, entry_digest  # noqa: PLC0415
 
     problems = []
@@ -381,7 +432,13 @@ def verify_attempt(log_path: pathlib.Path, root: bytes, admission: Mapping[str, 
     seen = [(str(r.get("arm")), (str(r.get("presentation")), str(r.get("campaign_id")), r.get("seed"))) for r in records]
     if len(seen) != len(set(seen)):
         problems.append("some (arm, world set) appears more than once")
-    want = expected_runs(registered_arms()) if runs is None else runs
+    want = expected_runs(registered_arms() + ([candidate] if candidate else [])) if runs is None else runs
+    try:
+        bound = v03e.PairBound(**dict(pair_bound))
+    except TypeError:
+        return problems + ["the preregistered pair bound is not well formed"]
+    if replay_runner is None:
+        problems.append("the registered arms' records were not replayed: they remain unverified")
     if set(seen) != want:
         problems.append(f"the log does not hold exactly the expected runs ({len(set(seen) ^ want)} differ)")
     for rec in records:
@@ -405,6 +462,25 @@ def verify_attempt(log_path: pathlib.Path, root: bytes, admission: Mapping[str, 
             if shown != dict(rec.get("presented_card_digests", {})):
                 problems.append(f"{where}: the cards this arm was shown do not re-derive (arm, world or presentation "
                                 f"differs)")
+                continue
+            entries = {e["universe_id"]: e for e in key["universes"]}
+            for u in rec["universes"]:
+                e = entries[u["universe_id"]]
+                if u.get("kind") != e["kind"] or u.get("law_form") != law_form(e) \
+                        or u.get("truth_in_searched_family") is not in_monomial_family(e["law"]):
+                    problems.append(f"{where}/{u['universe_id']}: kind, law form or searched-family flag does not "
+                                    f"re-derive from the key")
+                    continue
+                proposal = u.get("proposal")
+                if not isinstance(proposal, Mapping):
+                    problems.append(f"{where}/{u['universe_id']}: no sealed proposal to re-score")
+                    continue
+                got = v03e.score_universe(proposal, e, bound=bound)
+                if got["outcome"] != u.get("outcome") or got["credit"] != float(u.get("credit")):
+                    problems.append(f"{where}/{u['universe_id']}: the sealed proposal re-scores to "
+                                    f"{got['outcome']} / {got['credit']}, not the recorded result")
+            if replay_runner is not None and rec.get("arm") in registered_arms():
+                problems += replay_record(rec, root, admission, prereg_sha256=prereg_sha256, runner=replay_runner)
         except Exception as exc:  # noqa: BLE001 - one bad record is a finding, never a crash
             problems.append(f"{where}: malformed record ({type(exc).__name__})")
     return problems
@@ -425,9 +501,11 @@ def replay_record(record: Mapping[str, Any], root: bytes, admission: Mapping[str
                        presentation=str(record["presentation"]), seed=int(record["seed"]))
 
         def view(rec: Mapping[str, Any]) -> list[tuple[Any, ...]]:
-            return [(u.get("universe_id"), u.get("answer"), u.get("outcome"), u.get("credit"))
-                    for u in rec.get("universes", [])]
+            return [(u.get("universe_id"), u.get("answer"), u.get("outcome"), u.get("credit"),
+                     u.get("truth_in_searched_family"), u.get("kind")) for u in rec.get("universes", [])]
 
+        if again.get("status") != record.get("status"):
+            return [f"{where}: the replay's status differs ({again.get('status')})"]
         return [] if view(again) == view(record) else [f"{where}: the replay does not reproduce the recorded outcomes"]
     except Exception as exc:  # noqa: BLE001
         return [f"{where}: replay failed ({type(exc).__name__})"]
@@ -482,6 +560,9 @@ def main(argv: list[str] | None = None) -> int:
     doc = json.loads(args.preregistration.read_bytes())
     manifest = environment.build_manifest()
     problems = preflight(doc, root, manifest) + committed_identity_problems(doc)
+    if _git_lines("status", "--porcelain", "--untracked-files=all") != []:
+        problems.append("the tree is not a clean checkout: an untracked or modified file could run in the operator's "
+                        "or a proposer's process")
     for name, path in (("attempt registry", args.registry), ("evaluator inbox", args.publish_to)):
         if path.resolve().is_relative_to(args.out.resolve()):
             problems.append(f"the {name} lies inside the run directory")

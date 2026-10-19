@@ -587,10 +587,16 @@ def _attempt(tmp_path, tag, arms=("always_refuse",)):
                           tier="formal")
     inbox.receive(admission)
     master = formal.master_for(root, prereg, admission["nonce"], "renamed", "gl-formal-3", 1)
+    from benchmarks.genesis_lite.answer_key import export_answer_key
+
     records = []
     for arm in arms:
         rec = v02_harness.run_one(arm, v02_arms.ARMS[arm][0], master_seed=master, campaign_id="gl-formal-3",
                                   presentation="renamed", seed=1).to_dict()
+        key = export_answer_key(master, "gl-formal-3", v02_harness.MIX, [u["universe_id"] for u in rec["universes"]])
+        entries = {e["universe_id"]: e for e in key["universes"]}
+        for u in rec["universes"]:                       # what the v0.3 harness adds; v0.2 records have no proposals
+            u["law_form"], u["proposal"] = harness.law_form(entries[u["universe_id"]]), None
         records.append({**rec, "attempt_sha256": admission["attempt_sha256"]})
     return {"root": root, "prereg": prereg, "reg": reg, "inbox": inbox, "admission": admission, "records": records,
             "runs": {(arm, ("renamed", "gl-formal-3", 1)) for arm in arms}, "dir": tmp_path / tag}
@@ -608,14 +614,16 @@ def _publish_and_verify(ctx, records, *, extra_line=False, **kw):
                                 separators=(",", ":")).encode() + b"\n")
     return formal.verify_attempt(ctx["dir"] / "runs.jsonl", kw.get("root", ctx["root"]), kw.get("adm", ctx["admission"]),
                                  inbox=ctx["inbox"], prereg_sha256=kw.get("prereg", ctx["prereg"]),
-                                 runs=kw.get("runs", ctx["runs"]))
+                                 runs=kw.get("runs", ctx["runs"]), pair_bound=TEST_BOUND.to_dict(),
+                                 replay_runner=kw.get("replay", _v02_runner))
 
 
 def test_attempt_the_evaluator_verifies_the_whole_published_log_after_the_reveal(tmp_path):
     """Review rounds 1-3: only the FIRST admission of a root counts; the whole sealed log must be the published one and
     hold exactly the expected runs; every key and every card the arm was shown re-derive from the revealed root."""
     honest = _attempt(tmp_path, "honest")
-    assert _publish_and_verify(honest, honest["records"]) == []
+    problems = _publish_and_verify(honest, honest["records"])
+    assert problems and all("no sealed proposal" in p for p in problems)    # v0.2 records: only the proposals lack
     swapped = _attempt(tmp_path, "label")
     assert any("cards this arm was shown" in p for p in
                _publish_and_verify(swapped, [dict(swapped["records"][0], arm="careful")],
@@ -641,11 +649,42 @@ def test_attempt_the_evaluator_verifies_the_whole_published_log_after_the_reveal
         honest["inbox"].receive(second)                              # a fresh operator registry does not help
     assert any("not the first" in p for p in formal.verify_attempt(
         honest["dir"] / "runs.jsonl", honest["root"], second, inbox=honest["inbox"], prereg_sha256=honest["prereg"],
-        runs=honest["runs"]))
+        runs=honest["runs"], pair_bound=TEST_BOUND.to_dict(), replay_runner=_v02_runner))
+    flagged = _attempt(tmp_path, "flag")
+    forged = json.loads(json.dumps(flagged["records"][0]))
+    forged["universes"][0]["truth_in_searched_family"] = not forged["universes"][0]["truth_in_searched_family"]
+    assert any("searched-family flag does not re-derive" in p for p in _publish_and_verify(flagged, [forged]))
+    unreplayed = _attempt(tmp_path, "unreplayed")
+    assert any("not replayed" in p for p in _publish_and_verify(unreplayed, unreplayed["records"], replay=None))
     with pytest.raises(AttemptRefused, match="well-formed"):
         honest["inbox"].receive(dict(honest["admission"], tier="development"))
     with pytest.raises(AttemptRefused, match="already published"):
         honest["inbox"].receive_heads(honest["admission"]["attempt_sha256"], run_log="0" * 64, registry="0" * 64)
+
+
+def test_p4_candidate_parent_packages_and_ambiguous_files_are_refused(tmp_path, monkeypatch):
+    """Review round 4 N2 (a, b): the files of every parent package run on import; a compiled twin may run instead of
+    the scanned source."""
+    pkg = tmp_path / "candpkg"
+    (pkg / "inner").mkdir(parents=True)
+    (pkg / "__init__.py").write_bytes(b"x = 1\n")
+    (pkg / "inner" / "__init__.py").write_bytes(b"")
+    (pkg / "inner" / "agent.py").write_bytes(b"def run(card, client, *, seed=0):\n    return {}\n")
+    monkeypatch.setattr(formal, "_ROOT", tmp_path)
+    monkeypatch.setattr(formal, "_identity_pinned_files", lambda: frozenset())
+    monkeypatch.setattr(formal, "_tracked_engcore", lambda: frozenset())
+
+    def cand(*files):
+        return {"name": "mind", "spec": "candpkg.inner.agent:run",
+                "code_sha256": {f: H((tmp_path / f).read_bytes()).hexdigest() for f in files}}
+
+    assert any("candpkg/__init__.py runs on import" in p for p in formal.candidate_code_problems(
+        cand("candpkg/inner/agent.py")))
+    assert formal.candidate_code_problems(cand("candpkg/__init__.py", "candpkg/inner/__init__.py",
+                                               "candpkg/inner/agent.py")) == []
+    (pkg / "inner" / "agent.pyd").write_bytes(b"MZ")
+    assert any("ambiguous module file" in p for p in formal.candidate_code_problems(
+        cand("candpkg/__init__.py", "candpkg/inner/__init__.py", "candpkg/inner/agent.py")))
 
 
 def _v02_runner(arm, *, master_seed, campaign_id, presentation, seed):

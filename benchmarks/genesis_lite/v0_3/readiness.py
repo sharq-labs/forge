@@ -156,6 +156,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_p4_the_sealed_log_is_append_only_and_hash_chained',
         'test_p4_candidate_runs_inside_the_attempt_world_set_major',
         'test_p4_candidate_code_and_name_are_pinned',
+        'test_p4_candidate_parent_packages_and_ambiguous_files_are_refused',
         'test_p4_candidate_spec_module_and_its_imports_must_be_pinned',
         'test_p4_representation_cap_covers_both_enumeration_arms',
         'test_p4_the_identity_lists_a_fixed_retired_set',
@@ -207,6 +208,9 @@ ESCROW_TESTS: dict[str, tuple[str, ...]] = {
         'test_harness_binds_with_the_escrow_half_and_seals_w_in_the_config',
         'test_harness_an_honest_arm_runs_valid_with_agreement_and_records_its_binding',
         'test_harness_the_vacuous_attack_never_earns_a_bracket_hit_and_both_sides_agree',
+        'test_harness_records_of_an_honest_attempt_verify_end_to_end',
+        'test_harness_a_forged_credit_or_flag_does_not_verify',
+        'test_harness_a_whole_record_swap_between_arms_does_not_verify',
     ),
 }
 
@@ -324,6 +328,9 @@ def check(approvals_path: pathlib.Path | None = None, evidence: Mapping[str, Any
         tests = evidence.get("tests", {})
         if evidence.get("head") != head or not head or evidence.get("clean") is not True:
             technical.append("the test evidence is not from a clean tree at this HEAD")
+        bad = sorted(name for name, outcome in tests.items() if outcome != "passed")
+        if bad:                                                  # any v0.3 test, required by a row or not
+            technical.append(f"{len(bad)} v0.3 test(s) did not pass: {bad[:3]}")
     rows = blockers()
     for name, (status, prefixes, note) in sorted(rows.items()):
         if status in (FIXED, NOT_A_BLOCKER):

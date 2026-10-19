@@ -148,6 +148,7 @@ class _Evaluator:
     def __init__(self, binding: Binding) -> None:
         self._binding = binding
         self.key: Mapping[str, Any] | None = None
+        self.proposals: Mapping[str, Any] = {}
         self.CREDIT, self.CREDIT_DIGEST, self.credit_digest = v03e.CREDIT, v03e.CREDIT_DIGEST, v03e.credit_digest
         from ..evaluator import score as v02_score  # noqa: PLC0415 - the unchanged audit helpers
 
@@ -155,7 +156,7 @@ class _Evaluator:
         self.audit_presented_cards, self.in_monomial_family = v02_score.audit_presented_cards, v02_score.in_monomial_family
 
     def evaluate_campaign(self, proposals, key, escrow, *, expected_credit_digest):  # noqa: ANN001
-        self.key = key
+        self.key, self.proposals = key, dict(proposals)
         bound = self._binding.pair_bound
         # the expectation comes from the preregistration; only a development run with an open w checks against itself
         expected = self._binding.preregistered_pair_bound or bound.to_dict()
@@ -284,6 +285,8 @@ def run_one(arm_name: str, *, binding: Binding, master_seed: bytes, campaign_id:
     entries = {e["universe_id"]: e for e in (evaluator.key or {}).get("universes", [])}
     for u in rec.universes:
         u["law_form"] = law_form(entries[u["universe_id"]]) if u.get("universe_id") in entries else None
+        # the sealed proposal the escrow scored: the evaluator re-scores it from the revealed key (verify_attempt)
+        u["proposal"] = evaluator.proposals.get(u.get("universe_id"))
     starts = getattr(arm, "host_starts", [])
     rec.host_start_seconds = float(sum(starts))
     rec.__dict__.update(harness=HARNESS_ID, tier_bound=binding.tier, pair_bound=binding.pair_bound.to_dict(),

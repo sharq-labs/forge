@@ -213,7 +213,10 @@ def build() -> dict[str, Any]:
             "root_commitment_sha256": FORMAL_ROOT_COMMITMENT,
             "candidate": CANDIDATE,
             "candidate_rule": "the candidate runs INSIDE the admitted attempt, world-set-major, beside every registered "
-                              "arm; its code is pinned by sha256; it may not take a registered arm's name",
+                              "arm; its code is pinned by sha256 (its module, its parent packages and every first-party "
+                              "import, read statically; dynamic loading refused); it may not take a registered arm's "
+                              "name. Static pinning proves WHICH bytes run, not what they do: the external evaluator "
+                              "reviews the pinned source before the attempt (D6)",
             "admission": "admitted to the attempt registry and PUBLISHED to the external evaluator before the first "
                          "world; after the reveal the evaluator recomputes every master and answer-key digest "
                          "(formal.verify_attempt)",
