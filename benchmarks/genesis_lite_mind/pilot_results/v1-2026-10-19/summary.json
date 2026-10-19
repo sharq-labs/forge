@@ -1,0 +1,1695 @@
+{
+ "ablations_full_minus_variant": {
+  "mind_no_adaptive_selection": {
+   "per_kind": {
+    "confounded": {
+     "ci95": [
+      -0.1,
+      -0.0083
+     ],
+     "mean_difference": -0.05,
+     "sign_flip_p": 0.06939653017349133,
+     "world_sets": 120
+    },
+    "discoverable": {
+     "ci95": [
+      -0.125,
+      -0.0167
+     ],
+     "mean_difference": -0.0667,
+     "sign_flip_p": 0.022648867556622168,
+     "world_sets": 120
+    },
+    "indistinguishable": {
+     "ci95": [
+      0.0,
+      0.0667
+     ],
+     "mean_difference": 0.0292,
+     "sign_flip_p": 0.1471926403679816,
+     "world_sets": 120
+    },
+    "insufficient_evidence": {
+     "ci95": [
+      0.0,
+      0.025
+     ],
+     "mean_difference": 0.0083,
+     "sign_flip_p": 1.0,
+     "world_sets": 120
+    },
+    "no_solution": {
+     "ci95": [
+      0.0833,
+      0.2667
+     ],
+     "mean_difference": 0.175,
+     "sign_flip_p": 0.0005499725013749313,
+     "world_sets": 120
+    },
+    "spurious_correlate": {
+     "ci95": [
+      -0.0917,
+      0.0
+     ],
+     "mean_difference": -0.0417,
+     "sign_flip_p": 0.1272936353182341,
+     "world_sets": 120
+    }
+   },
+   "pooled": {
+    "ci95": [
+     -0.0875,
+     0.1833
+    ],
+    "mean_difference": 0.0542,
+    "sign_flip_p": 0.4612769361531923,
+    "world_sets": 120
+   },
+   "verdict": "UNJUSTIFIED_ON_THIS_PILOT"
+  },
+  "mind_no_belief_update": {
+   "per_kind": {
+    "confounded": {
+     "ci95": [
+      -0.0333,
+      0.05
+     ],
+     "mean_difference": 0.0083,
+     "sign_flip_p": 1.0,
+     "world_sets": 120
+    },
+    "discoverable": {
+     "ci95": [
+      -0.025,
+      0.025
+     ],
+     "mean_difference": 0.0,
+     "sign_flip_p": 1.0,
+     "world_sets": 120
+    },
+    "indistinguishable": {
+     "ci95": [
+      -0.0417,
+      -0.0042
+     ],
+     "mean_difference": -0.0208,
+     "sign_flip_p": 0.06109694515274236,
+     "world_sets": 120
+    },
+    "insufficient_evidence": {
+     "ci95": [
+      0.0,
+      0.025
+     ],
+     "mean_difference": 0.0083,
+     "sign_flip_p": 1.0,
+     "world_sets": 120
+    },
+    "no_solution": {
+     "ci95": [
+      -0.0417,
+      0.1417
+     ],
+     "mean_difference": 0.05,
+     "sign_flip_p": 0.3401329933503325,
+     "world_sets": 120
+    },
+    "spurious_correlate": {
+     "ci95": [
+      0.0083,
+      0.0833
+     ],
+     "mean_difference": 0.0417,
+     "sign_flip_p": 0.06094695265236738,
+     "world_sets": 120
+    }
+   },
+   "pooled": {
+    "ci95": [
+     -0.0083,
+     0.1875
+    ],
+    "mean_difference": 0.0875,
+    "sign_flip_p": 0.10134493275336233,
+    "world_sets": 120
+   },
+   "verdict": "UNJUSTIFIED_ON_THIS_PILOT"
+  },
+  "mind_no_falsifier": {
+   "per_kind": {
+    "confounded": {
+     "ci95": [
+      -0.0583,
+      0.0
+     ],
+     "mean_difference": -0.025,
+     "sign_flip_p": 0.25628718564071795,
+     "world_sets": 120
+    },
+    "discoverable": {
+     "ci95": [
+      0.0,
+      0.025
+     ],
+     "mean_difference": 0.0083,
+     "sign_flip_p": 1.0,
+     "world_sets": 120
+    },
+    "indistinguishable": {
+     "ci95": [
+      -0.0333,
+      0.025
+     ],
+     "mean_difference": -0.0083,
+     "sign_flip_p": 0.8447577621118944,
+     "world_sets": 120
+    },
+    "insufficient_evidence": {
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "mean_difference": 0.0,
+     "sign_flip_p": 1.0,
+     "world_sets": 120
+    },
+    "no_solution": {
+     "ci95": [
+      0.0,
+      0.0
+     ],
+     "mean_difference": 0.0,
+     "sign_flip_p": 1.0,
+     "world_sets": 120
+    },
+    "spurious_correlate": {
+     "ci95": [
+      -0.025,
+      0.025
+     ],
+     "mean_difference": 0.0,
+     "sign_flip_p": 1.0,
+     "world_sets": 120
+    }
+   },
+   "pooled": {
+    "ci95": [
+     -0.0792,
+     0.025
+    ],
+    "mean_difference": -0.025,
+    "sign_flip_p": 0.44992750362481876,
+    "world_sets": 120
+   },
+   "verdict": "UNJUSTIFIED_ON_THIS_PILOT"
+  }
+ },
+ "cost": {
+  "always_insufficient": {
+   "observe_calls_per_campaign": 0.0,
+   "wall_seconds_per_campaign_mean": 0.181
+  },
+  "always_law": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 0.296
+  },
+  "always_refuse": {
+   "observe_calls_per_campaign": 0.0,
+   "wall_seconds_per_campaign_mean": 0.168
+  },
+  "careful": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 0.271
+  },
+  "extrapolating_fit": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 0.292
+  },
+  "extrapolation_pair": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 0.267
+  },
+  "fit_all_gated": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 0.261
+  },
+  "greedy_forward": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 0.271
+  },
+  "historical_answer": {
+   "observe_calls_per_campaign": 53.2,
+   "wall_seconds_per_campaign_mean": 0.184
+  },
+  "mind_full": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 3.586
+  },
+  "mind_no_adaptive_selection": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 3.252
+  },
+  "mind_no_belief_update": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 3.462
+  },
+  "mind_no_falsifier": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 3.119
+  },
+  "monomial_enumeration": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 0.293
+  },
+  "random_structures": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 0.288
+  },
+  "single_setting": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 0.252
+  },
+  "space_filling": {
+   "observe_calls_per_campaign": 199.8,
+   "wall_seconds_per_campaign_mean": 0.259
+  }
+ },
+ "discoverable_family_split": {
+  "always_insufficient": {
+   "in_family_mean": 0.0,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.0,
+   "out_of_family_n": 77
+  },
+  "always_law": {
+   "in_family_mean": 1.0,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": -0.5325,
+   "out_of_family_n": 77
+  },
+  "always_refuse": {
+   "in_family_mean": 0.0,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.0,
+   "out_of_family_n": 77
+  },
+  "careful": {
+   "in_family_mean": 0.2093,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.0649,
+   "out_of_family_n": 77
+  },
+  "extrapolating_fit": {
+   "in_family_mean": 0.5349,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.1169,
+   "out_of_family_n": 77
+  },
+  "extrapolation_pair": {
+   "in_family_mean": 0.0233,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.0584,
+   "out_of_family_n": 77
+  },
+  "fit_all_gated": {
+   "in_family_mean": 0.4651,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.0519,
+   "out_of_family_n": 77
+  },
+  "greedy_forward": {
+   "in_family_mean": 0.2093,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.1039,
+   "out_of_family_n": 77
+  },
+  "historical_answer": {
+   "in_family_mean": -0.1628,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": -0.2987,
+   "out_of_family_n": 77
+  },
+  "mind_full": {
+   "in_family_mean": 0.5116,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.039,
+   "out_of_family_n": 77
+  },
+  "mind_no_adaptive_selection": {
+   "in_family_mean": 0.5116,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.1429,
+   "out_of_family_n": 77
+  },
+  "mind_no_belief_update": {
+   "in_family_mean": 0.5116,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.039,
+   "out_of_family_n": 77
+  },
+  "mind_no_falsifier": {
+   "in_family_mean": 0.5116,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.026,
+   "out_of_family_n": 77
+  },
+  "monomial_enumeration": {
+   "in_family_mean": 0.2326,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.1169,
+   "out_of_family_n": 77
+  },
+  "random_structures": {
+   "in_family_mean": 0.2093,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.0649,
+   "out_of_family_n": 77
+  },
+  "single_setting": {
+   "in_family_mean": 0.0,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.0,
+   "out_of_family_n": 77
+  },
+  "space_filling": {
+   "in_family_mean": 0.2558,
+   "in_family_n": 43,
+   "out_of_family_mean_NO_STRONG_BASELINE": 0.0649,
+   "out_of_family_n": 77
+  }
+ },
+ "environment": {
+  "cpu_count": 24,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]"
+ },
+ "falsification": {
+  "mind_full": {
+   "mean_refuted_rivals": 6.29,
+   "mean_sealed_falsifiers": 19.119,
+   "worlds": 720,
+   "worlds_with_a_refutation": 192
+  },
+  "mind_no_adaptive_selection": {
+   "mean_refuted_rivals": 4.164,
+   "mean_sealed_falsifiers": 21.664,
+   "worlds": 720,
+   "worlds_with_a_refutation": 136
+  },
+  "mind_no_belief_update": {
+   "mean_refuted_rivals": 6.104,
+   "mean_sealed_falsifiers": 17.119,
+   "worlds": 720,
+   "worlds_with_a_refutation": 194
+  },
+  "mind_no_falsifier": {
+   "mean_refuted_rivals": 0.0,
+   "mean_sealed_falsifiers": 0.0,
+   "worlds": 720,
+   "worlds_with_a_refutation": 0
+  }
+ },
+ "fda05_exposure_indistinguishable_answers": {
+  "mind_full": 0,
+  "mind_no_adaptive_selection": 2,
+  "mind_no_belief_update": 0,
+  "mind_no_falsifier": 1
+ },
+ "invalid_reasons": [],
+ "label": "MEASURED (Stage 2 pilot; indicative only; no formal, maturity or lift claim)",
+ "lift_decision_exploratory": {
+  "mind_full": {
+   "coverage_problems": [
+    "the grid is not the preregistered formal grid: exploratory, no claim"
+   ],
+   "holm_significant": {
+    "anonymous": false,
+    "paraphrased": false,
+    "pooled": false,
+    "renamed": false,
+    "trap": false
+   },
+   "kind_noninferiority": {
+    "confounded": {
+     "lower95": -0.25833333333333336,
+     "mean_difference": -0.18333333333333332,
+     "ok": false,
+     "reference_arm": "single_setting"
+    },
+    "discoverable": {
+     "lower95": -0.175,
+     "mean_difference": -0.075,
+     "ok": false,
+     "reference_arm": "extrapolating_fit"
+    },
+    "indistinguishable": {
+     "lower95": -0.041666666666666664,
+     "mean_difference": -0.020833333333333332,
+     "ok": true,
+     "reference_arm": "always_insufficient"
+    },
+    "insufficient_evidence": {
+     "lower95": 0.0,
+     "mean_difference": 0.0,
+     "ok": true,
+     "reference_arm": "always_insufficient"
+    },
+    "no_solution": {
+     "lower95": -0.3,
+     "mean_difference": -0.225,
+     "ok": false,
+     "reference_arm": "always_refuse"
+    },
+    "spurious_correlate": {
+     "lower95": -0.016666666666666666,
+     "mean_difference": 0.03333333333333333,
+     "ok": true,
+     "reference_arm": "space_filling"
+    }
+   },
+   "lift_claimed": false,
+   "out_of_family_world_sets": 77,
+   "presentation_noninferiority": {
+    "anonymous": true,
+    "paraphrased": true,
+    "renamed": true,
+    "trap": true
+   },
+   "primary": {
+    "anonymous": {
+     "lower95": 0.0,
+     "mean_difference": 0.21666666666666667,
+     "world_sets": 30
+    },
+    "paraphrased": {
+     "lower95": -0.13333333333333333,
+     "mean_difference": 0.13333333333333333,
+     "world_sets": 30
+    },
+    "pooled": {
+     "lower95": 0.0,
+     "mean_difference": 0.125,
+     "world_sets": 120
+    },
+    "renamed": {
+     "lower95": -0.1,
+     "mean_difference": 0.11666666666666667,
+     "world_sets": 30
+    },
+    "trap": {
+     "lower95": -0.23333333333333334,
+     "mean_difference": 0.03333333333333333,
+     "world_sets": 30
+    }
+   },
+   "representation_limited_cells": [
+    [
+     "insufficient_evidence",
+     "anonymous"
+    ],
+    [
+     "insufficient_evidence",
+     "paraphrased"
+    ],
+    [
+     "insufficient_evidence",
+     "renamed"
+    ],
+    [
+     "insufficient_evidence",
+     "trap"
+    ],
+    [
+     "no_solution",
+     "anonymous"
+    ],
+    [
+     "no_solution",
+     "paraphrased"
+    ],
+    [
+     "no_solution",
+     "renamed"
+    ],
+    [
+     "no_solution",
+     "trap"
+    ]
+   ],
+   "shared_world_sets": 120,
+   "strongest_baseline": "careful"
+  },
+  "mind_no_adaptive_selection": {
+   "coverage_problems": [
+    "the grid is not the preregistered formal grid: exploratory, no claim"
+   ],
+   "holm_significant": {
+    "anonymous": false,
+    "paraphrased": false,
+    "pooled": false,
+    "renamed": false,
+    "trap": false
+   },
+   "kind_noninferiority": {
+    "confounded": {
+     "lower95": -0.2,
+     "mean_difference": -0.13333333333333333,
+     "ok": false,
+     "reference_arm": "single_setting"
+    },
+    "discoverable": {
+     "lower95": -0.13333333333333333,
+     "mean_difference": -0.041666666666666664,
+     "ok": false,
+     "reference_arm": "extrapolating_fit"
+    },
+    "indistinguishable": {
+     "lower95": -0.09583333333333334,
+     "mean_difference": -0.05,
+     "ok": true,
+     "reference_arm": "always_insufficient"
+    },
+    "insufficient_evidence": {
+     "lower95": -0.025,
+     "mean_difference": -0.008333333333333333,
+     "ok": true,
+     "reference_arm": "always_insufficient"
+    },
+    "no_solution": {
+     "lower95": -0.49166666666666664,
+     "mean_difference": -0.4,
+     "ok": false,
+     "reference_arm": "always_refuse"
+    },
+    "spurious_correlate": {
+     "lower95": 0.016666666666666666,
+     "mean_difference": 0.075,
+     "ok": true,
+     "reference_arm": "space_filling"
+    }
+   },
+   "lift_claimed": false,
+   "out_of_family_world_sets": 77,
+   "presentation_noninferiority": {
+    "anonymous": true,
+    "paraphrased": true,
+    "renamed": true,
+    "trap": true
+   },
+   "primary": {
+    "anonymous": {
+     "lower95": -0.15,
+     "mean_difference": 0.1,
+     "world_sets": 30
+    },
+    "paraphrased": {
+     "lower95": -0.15,
+     "mean_difference": 0.13333333333333333,
+     "world_sets": 30
+    },
+    "pooled": {
+     "lower95": -0.016666666666666666,
+     "mean_difference": 0.12083333333333333,
+     "world_sets": 120
+    },
+    "renamed": {
+     "lower95": -0.2833333333333333,
+     "mean_difference": 0.05,
+     "world_sets": 30
+    },
+    "trap": {
+     "lower95": -0.1,
+     "mean_difference": 0.2,
+     "world_sets": 30
+    }
+   },
+   "representation_limited_cells": [
+    [
+     "insufficient_evidence",
+     "anonymous"
+    ],
+    [
+     "insufficient_evidence",
+     "paraphrased"
+    ],
+    [
+     "insufficient_evidence",
+     "renamed"
+    ],
+    [
+     "insufficient_evidence",
+     "trap"
+    ],
+    [
+     "no_solution",
+     "anonymous"
+    ],
+    [
+     "no_solution",
+     "paraphrased"
+    ],
+    [
+     "no_solution",
+     "renamed"
+    ],
+    [
+     "no_solution",
+     "trap"
+    ]
+   ],
+   "shared_world_sets": 120,
+   "strongest_baseline": "careful"
+  },
+  "mind_no_belief_update": {
+   "coverage_problems": [
+    "the grid is not the preregistered formal grid: exploratory, no claim"
+   ],
+   "holm_significant": {
+    "anonymous": false,
+    "paraphrased": false,
+    "pooled": false,
+    "renamed": false,
+    "trap": false
+   },
+   "kind_noninferiority": {
+    "confounded": {
+     "lower95": -0.26666666666666666,
+     "mean_difference": -0.19166666666666668,
+     "ok": false,
+     "reference_arm": "single_setting"
+    },
+    "discoverable": {
+     "lower95": -0.18333333333333332,
+     "mean_difference": -0.08333333333333333,
+     "ok": false,
+     "reference_arm": "extrapolating_fit"
+    },
+    "indistinguishable": {
+     "lower95": 0.0,
+     "mean_difference": 0.0,
+     "ok": true,
+     "reference_arm": "always_insufficient"
+    },
+    "insufficient_evidence": {
+     "lower95": -0.025,
+     "mean_difference": -0.008333333333333333,
+     "ok": true,
+     "reference_arm": "always_insufficient"
+    },
+    "no_solution": {
+     "lower95": -0.35833333333333334,
+     "mean_difference": -0.275,
+     "ok": false,
+     "reference_arm": "always_refuse"
+    },
+    "spurious_correlate": {
+     "lower95": -0.058333333333333334,
+     "mean_difference": -0.008333333333333333,
+     "ok": true,
+     "reference_arm": "space_filling"
+    }
+   },
+   "lift_claimed": false,
+   "out_of_family_world_sets": 77,
+   "presentation_noninferiority": {
+    "anonymous": true,
+    "paraphrased": true,
+    "renamed": true,
+    "trap": true
+   },
+   "primary": {
+    "anonymous": {
+     "lower95": -0.1,
+     "mean_difference": 0.11666666666666667,
+     "world_sets": 30
+    },
+    "paraphrased": {
+     "lower95": -0.16666666666666666,
+     "mean_difference": 0.13333333333333333,
+     "world_sets": 30
+    },
+    "pooled": {
+     "lower95": -0.07083333333333333,
+     "mean_difference": 0.0625,
+     "world_sets": 120
+    },
+    "renamed": {
+     "lower95": -0.1,
+     "mean_difference": 0.1,
+     "world_sets": 30
+    },
+    "trap": {
+     "lower95": -0.4,
+     "mean_difference": -0.1,
+     "world_sets": 30
+    }
+   },
+   "representation_limited_cells": [
+    [
+     "insufficient_evidence",
+     "anonymous"
+    ],
+    [
+     "insufficient_evidence",
+     "paraphrased"
+    ],
+    [
+     "insufficient_evidence",
+     "renamed"
+    ],
+    [
+     "insufficient_evidence",
+     "trap"
+    ],
+    [
+     "no_solution",
+     "anonymous"
+    ],
+    [
+     "no_solution",
+     "paraphrased"
+    ],
+    [
+     "no_solution",
+     "renamed"
+    ],
+    [
+     "no_solution",
+     "trap"
+    ]
+   ],
+   "shared_world_sets": 120,
+   "strongest_baseline": "careful"
+  },
+  "mind_no_falsifier": {
+   "coverage_problems": [
+    "the grid is not the preregistered formal grid: exploratory, no claim"
+   ],
+   "holm_significant": {
+    "anonymous": false,
+    "paraphrased": false,
+    "pooled": false,
+    "renamed": false,
+    "trap": false
+   },
+   "kind_noninferiority": {
+    "confounded": {
+     "lower95": -0.225,
+     "mean_difference": -0.15833333333333333,
+     "ok": false,
+     "reference_arm": "single_setting"
+    },
+    "discoverable": {
+     "lower95": -0.18333333333333332,
+     "mean_difference": -0.08333333333333333,
+     "ok": false,
+     "reference_arm": "extrapolating_fit"
+    },
+    "indistinguishable": {
+     "lower95": -0.0375,
+     "mean_difference": -0.0125,
+     "ok": true,
+     "reference_arm": "always_insufficient"
+    },
+    "insufficient_evidence": {
+     "lower95": 0.0,
+     "mean_difference": 0.0,
+     "ok": true,
+     "reference_arm": "always_insufficient"
+    },
+    "no_solution": {
+     "lower95": -0.3,
+     "mean_difference": -0.225,
+     "ok": false,
+     "reference_arm": "always_refuse"
+    },
+    "spurious_correlate": {
+     "lower95": -0.025,
+     "mean_difference": 0.03333333333333333,
+     "ok": true,
+     "reference_arm": "space_filling"
+    }
+   },
+   "lift_claimed": false,
+   "out_of_family_world_sets": 77,
+   "presentation_noninferiority": {
+    "anonymous": true,
+    "paraphrased": true,
+    "renamed": true,
+    "trap": true
+   },
+   "primary": {
+    "anonymous": {
+     "lower95": -0.016666666666666666,
+     "mean_difference": 0.21666666666666667,
+     "world_sets": 30
+    },
+    "paraphrased": {
+     "lower95": -0.1,
+     "mean_difference": 0.16666666666666666,
+     "world_sets": 30
+    },
+    "pooled": {
+     "lower95": 0.020833333333333332,
+     "mean_difference": 0.15,
+     "world_sets": 120
+    },
+    "renamed": {
+     "lower95": -0.08333333333333333,
+     "mean_difference": 0.15,
+     "world_sets": 30
+    },
+    "trap": {
+     "lower95": -0.23333333333333334,
+     "mean_difference": 0.06666666666666667,
+     "world_sets": 30
+    }
+   },
+   "representation_limited_cells": [
+    [
+     "insufficient_evidence",
+     "anonymous"
+    ],
+    [
+     "insufficient_evidence",
+     "paraphrased"
+    ],
+    [
+     "insufficient_evidence",
+     "renamed"
+    ],
+    [
+     "insufficient_evidence",
+     "trap"
+    ],
+    [
+     "no_solution",
+     "anonymous"
+    ],
+    [
+     "no_solution",
+     "paraphrased"
+    ],
+    [
+     "no_solution",
+     "renamed"
+    ],
+    [
+     "no_solution",
+     "trap"
+    ]
+   ],
+   "shared_world_sets": 120,
+   "strongest_baseline": "careful"
+  }
+ },
+ "mind_vs_best_arm_per_kind": {
+  "mind_full": {
+   "confounded": {
+    "ci95": [
+     -0.2583,
+     -0.1167
+    ],
+    "mean_difference": -0.1833,
+    "reference": "single_setting",
+    "sign_flip_p": 4.999750012499375e-05,
+    "world_sets": 120
+   },
+   "discoverable": {
+    "ci95": [
+     -0.1583,
+     0.0417
+    ],
+    "mean_difference": -0.0583,
+    "reference": "extrapolating_fit",
+    "sign_flip_p": 0.33648317584120796,
+    "world_sets": 120
+   },
+   "indistinguishable": {
+    "ci95": [
+     -0.0417,
+     -0.0042
+    ],
+    "mean_difference": -0.0208,
+    "reference": "always_insufficient",
+    "sign_flip_p": 0.06109694515274236,
+    "world_sets": 120
+   },
+   "insufficient_evidence": {
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "mean_difference": 0.0,
+    "reference": "always_insufficient",
+    "sign_flip_p": 1.0,
+    "world_sets": 120
+   },
+   "no_solution": {
+    "ci95": [
+     -0.3,
+     -0.15
+    ],
+    "mean_difference": -0.225,
+    "reference": "always_refuse",
+    "sign_flip_p": 4.999750012499375e-05,
+    "world_sets": 120
+   },
+   "spurious_correlate": {
+    "ci95": [
+     -0.0167,
+     0.0833
+    ],
+    "mean_difference": 0.0333,
+    "reference": "space_filling",
+    "sign_flip_p": 0.3471826408679566,
+    "world_sets": 120
+   }
+  },
+  "mind_no_adaptive_selection": {
+   "confounded": {
+    "ci95": [
+     -0.2,
+     -0.075
+    ],
+    "mean_difference": -0.1333,
+    "reference": "single_setting",
+    "sign_flip_p": 4.999750012499375e-05,
+    "world_sets": 120
+   },
+   "discoverable": {
+    "ci95": [
+     -0.0917,
+     0.1167
+    ],
+    "mean_difference": 0.0083,
+    "reference": "extrapolating_fit",
+    "sign_flip_p": 1.0,
+    "world_sets": 120
+   },
+   "indistinguishable": {
+    "ci95": [
+     -0.0958,
+     -0.0167
+    ],
+    "mean_difference": -0.05,
+    "reference": "always_insufficient",
+    "sign_flip_p": 0.00839958002099895,
+    "world_sets": 120
+   },
+   "insufficient_evidence": {
+    "ci95": [
+     -0.025,
+     0.0
+    ],
+    "mean_difference": -0.0083,
+    "reference": "always_insufficient",
+    "sign_flip_p": 1.0,
+    "world_sets": 120
+   },
+   "no_solution": {
+    "ci95": [
+     -0.4917,
+     -0.3167
+    ],
+    "mean_difference": -0.4,
+    "reference": "always_refuse",
+    "sign_flip_p": 4.999750012499375e-05,
+    "world_sets": 120
+   },
+   "spurious_correlate": {
+    "ci95": [
+     0.0167,
+     0.1333
+    ],
+    "mean_difference": 0.075,
+    "reference": "space_filling",
+    "sign_flip_p": 0.022598870056497175,
+    "world_sets": 120
+   }
+  },
+  "mind_no_belief_update": {
+   "confounded": {
+    "ci95": [
+     -0.2667,
+     -0.125
+    ],
+    "mean_difference": -0.1917,
+    "reference": "single_setting",
+    "sign_flip_p": 4.999750012499375e-05,
+    "world_sets": 120
+   },
+   "discoverable": {
+    "ci95": [
+     -0.1667,
+     0.05
+    ],
+    "mean_difference": -0.0583,
+    "reference": "extrapolating_fit",
+    "sign_flip_p": 0.3614819259037048,
+    "world_sets": 120
+   },
+   "indistinguishable": {
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "mean_difference": 0.0,
+    "reference": "always_insufficient",
+    "sign_flip_p": 1.0,
+    "world_sets": 120
+   },
+   "insufficient_evidence": {
+    "ci95": [
+     -0.025,
+     0.0
+    ],
+    "mean_difference": -0.0083,
+    "reference": "always_insufficient",
+    "sign_flip_p": 1.0,
+    "world_sets": 120
+   },
+   "no_solution": {
+    "ci95": [
+     -0.3583,
+     -0.1917
+    ],
+    "mean_difference": -0.275,
+    "reference": "always_refuse",
+    "sign_flip_p": 4.999750012499375e-05,
+    "world_sets": 120
+   },
+   "spurious_correlate": {
+    "ci95": [
+     -0.0583,
+     0.0417
+    ],
+    "mean_difference": -0.0083,
+    "reference": "space_filling",
+    "sign_flip_p": 1.0,
+    "world_sets": 120
+   }
+  },
+  "mind_no_falsifier": {
+   "confounded": {
+    "ci95": [
+     -0.225,
+     -0.1
+    ],
+    "mean_difference": -0.1583,
+    "reference": "single_setting",
+    "sign_flip_p": 9.99950002499875e-05,
+    "world_sets": 120
+   },
+   "discoverable": {
+    "ci95": [
+     -0.1667,
+     0.0333
+    ],
+    "mean_difference": -0.0667,
+    "reference": "extrapolating_fit",
+    "sign_flip_p": 0.27798610069496527,
+    "world_sets": 120
+   },
+   "indistinguishable": {
+    "ci95": [
+     -0.0375,
+     0.0
+    ],
+    "mean_difference": -0.0125,
+    "reference": "always_insufficient",
+    "sign_flip_p": 1.0,
+    "world_sets": 120
+   },
+   "insufficient_evidence": {
+    "ci95": [
+     0.0,
+     0.0
+    ],
+    "mean_difference": 0.0,
+    "reference": "always_insufficient",
+    "sign_flip_p": 1.0,
+    "world_sets": 120
+   },
+   "no_solution": {
+    "ci95": [
+     -0.3,
+     -0.15
+    ],
+    "mean_difference": -0.225,
+    "reference": "always_refuse",
+    "sign_flip_p": 4.999750012499375e-05,
+    "world_sets": 120
+   },
+   "spurious_correlate": {
+    "ci95": [
+     -0.025,
+     0.0917
+    ],
+    "mean_difference": 0.0333,
+    "reference": "space_filling",
+    "sign_flip_p": 0.39108044597770114,
+    "world_sets": 120
+   }
+  }
+ },
+ "mind_vs_strongest_baseline": {
+  "mind_full": {
+   "ci95": [
+    0.25,
+    0.5292
+   ],
+   "mean_difference": 0.3917,
+   "sign_flip_p": 4.999750012499375e-05,
+   "world_sets": 120
+  },
+  "mind_no_adaptive_selection": {
+   "ci95": [
+    0.175,
+    0.5083
+   ],
+   "mean_difference": 0.3375,
+   "sign_flip_p": 0.00024998750062496874,
+   "world_sets": 120
+  },
+  "mind_no_belief_update": {
+   "ci95": [
+    0.15,
+    0.4542
+   ],
+   "mean_difference": 0.3042,
+   "sign_flip_p": 0.00024998750062496874,
+   "world_sets": 120
+  },
+  "mind_no_falsifier": {
+   "ci95": [
+    0.275,
+    0.5583
+   ],
+   "mean_difference": 0.4167,
+   "sign_flip_p": 4.999750012499375e-05,
+   "world_sets": 120
+  }
+ },
+ "per_kind_mean_credit": {
+  "always_insufficient": {
+   "confounded": 0.0,
+   "discoverable": 0.0,
+   "indistinguishable": 0.5,
+   "insufficient_evidence": 1.0,
+   "no_solution": 0.0,
+   "spurious_correlate": 0.0
+  },
+  "always_law": {
+   "confounded": -1.0,
+   "discoverable": 0.0167,
+   "indistinguishable": -0.825,
+   "insufficient_evidence": -1.0,
+   "no_solution": -1.0,
+   "spurious_correlate": -0.9667
+  },
+  "always_refuse": {
+   "confounded": 0.0,
+   "discoverable": 0.0,
+   "indistinguishable": 0.0,
+   "insufficient_evidence": 0.0,
+   "no_solution": 1.0,
+   "spurious_correlate": 0.0
+  },
+  "careful": {
+   "confounded": 0.6667,
+   "discoverable": 0.1167,
+   "indistinguishable": 0.4958,
+   "insufficient_evidence": 0.925,
+   "no_solution": 0.725,
+   "spurious_correlate": 0.1833
+  },
+  "extrapolating_fit": {
+   "confounded": -0.275,
+   "discoverable": 0.2667,
+   "indistinguishable": 0.0167,
+   "insufficient_evidence": 0.7917,
+   "no_solution": 0.95,
+   "spurious_correlate": 0.1667
+  },
+  "extrapolation_pair": {
+   "confounded": 0.6333,
+   "discoverable": 0.0458,
+   "indistinguishable": 0.3083,
+   "insufficient_evidence": 0.8667,
+   "no_solution": 0.7167,
+   "spurious_correlate": 0.0875
+  },
+  "fit_all_gated": {
+   "confounded": -0.625,
+   "discoverable": 0.2,
+   "indistinguishable": 0.1958,
+   "insufficient_evidence": -0.225,
+   "no_solution": 0.5667,
+   "spurious_correlate": -0.1833
+  },
+  "greedy_forward": {
+   "confounded": -0.0917,
+   "discoverable": 0.1417,
+   "indistinguishable": 0.3958,
+   "insufficient_evidence": 0.7417,
+   "no_solution": 0.925,
+   "spurious_correlate": 0.0333
+  },
+  "historical_answer": {
+   "confounded": -0.25,
+   "discoverable": -0.25,
+   "indistinguishable": 0.125,
+   "insufficient_evidence": 0.5,
+   "no_solution": -0.25,
+   "spurious_correlate": -0.25
+  },
+  "mind_full": {
+   "confounded": 0.8167,
+   "discoverable": 0.2083,
+   "indistinguishable": 0.4792,
+   "insufficient_evidence": 1.0,
+   "no_solution": 0.775,
+   "spurious_correlate": 0.225
+  },
+  "mind_no_adaptive_selection": {
+   "confounded": 0.8667,
+   "discoverable": 0.275,
+   "indistinguishable": 0.45,
+   "insufficient_evidence": 0.9917,
+   "no_solution": 0.6,
+   "spurious_correlate": 0.2667
+  },
+  "mind_no_belief_update": {
+   "confounded": 0.8083,
+   "discoverable": 0.2083,
+   "indistinguishable": 0.5,
+   "insufficient_evidence": 0.9917,
+   "no_solution": 0.725,
+   "spurious_correlate": 0.1833
+  },
+  "mind_no_falsifier": {
+   "confounded": 0.8417,
+   "discoverable": 0.2,
+   "indistinguishable": 0.4875,
+   "insufficient_evidence": 1.0,
+   "no_solution": 0.775,
+   "spurious_correlate": 0.225
+  },
+  "monomial_enumeration": {
+   "confounded": -0.0417,
+   "discoverable": 0.1583,
+   "indistinguishable": 0.4375,
+   "insufficient_evidence": 0.775,
+   "no_solution": 0.9083,
+   "spurious_correlate": 0.1667
+  },
+  "random_structures": {
+   "confounded": -0.075,
+   "discoverable": 0.1167,
+   "indistinguishable": 0.4125,
+   "insufficient_evidence": 0.7167,
+   "no_solution": 0.9583,
+   "spurious_correlate": 0.0
+  },
+  "single_setting": {
+   "confounded": 1.0,
+   "discoverable": 0.0,
+   "indistinguishable": 0.4875,
+   "insufficient_evidence": 1.0,
+   "no_solution": 0.0,
+   "spurious_correlate": 0.0
+  },
+  "space_filling": {
+   "confounded": 0.6167,
+   "discoverable": 0.1333,
+   "indistinguishable": 0.4917,
+   "insufficient_evidence": 0.8917,
+   "no_solution": 0.7083,
+   "spurious_correlate": 0.1917
+  }
+ },
+ "pilot_root_revealed_hex": "67c09db0cb1ff2d3f665936a9a8abaa8f48b16fb7cadd41eec05e5e33351a8ee",
+ "plan_sha256": "b5b775bdbdde44b0e3af985f41cafb444c4da152bfc4af04b55e3bdd859e9c85",
+ "prediction_score_by_final_credit": {
+  "mind_full": {
+   "full_credit": {
+    "mean_of_world_mean_log_score": -1.2126,
+    "worlds": 363
+   },
+   "not_full_credit": {
+    "mean_of_world_mean_log_score": -0.6692,
+    "worlds": 357
+   }
+  },
+  "mind_no_adaptive_selection": {
+   "full_credit": {
+    "mean_of_world_mean_log_score": -0.9902,
+    "worlds": 361
+   },
+   "not_full_credit": {
+    "mean_of_world_mean_log_score": 0.0325,
+    "worlds": 359
+   }
+  },
+  "mind_no_belief_update": {
+   "full_credit": {
+    "mean_of_world_mean_log_score": -1.2132,
+    "worlds": 350
+   },
+   "not_full_credit": {
+    "mean_of_world_mean_log_score": -0.6732,
+    "worlds": 370
+   }
+  },
+  "mind_no_falsifier": {
+   "full_credit": {
+    "mean_of_world_mean_log_score": -1.2258,
+    "worlds": 366
+   },
+   "not_full_credit": {
+    "mean_of_world_mean_log_score": -0.3664,
+    "worlds": 354
+   }
+  }
+ },
+ "prediction_scores": {
+  "mind_full": {
+   "confounded": {
+    "coverage90": 0.8302,
+    "mean_log_score_ln_y": -1.7349,
+    "queries": 3774
+   },
+   "discoverable": {
+    "coverage90": 0.8916,
+    "mean_log_score_ln_y": 0.0758,
+    "queries": 3247
+   },
+   "indistinguishable": {
+    "coverage90": 0.8695,
+    "mean_log_score_ln_y": 0.3698,
+    "queries": 3103
+   },
+   "insufficient_evidence": {
+    "coverage90": 0.8977,
+    "mean_log_score_ln_y": -1.6352,
+    "queries": 3576
+   },
+   "no_solution": {
+    "coverage90": 0.8964,
+    "mean_log_score_ln_y": -1.237,
+    "queries": 3648
+   },
+   "spurious_correlate": {
+    "coverage90": 0.8806,
+    "mean_log_score_ln_y": 0.1342,
+    "queries": 3033
+   }
+  },
+  "mind_no_adaptive_selection": {
+   "confounded": {
+    "coverage90": 0.8415,
+    "mean_log_score_ln_y": -1.5937,
+    "queries": 3774
+   },
+   "discoverable": {
+    "coverage90": 0.9066,
+    "mean_log_score_ln_y": 0.6526,
+    "queries": 3221
+   },
+   "indistinguishable": {
+    "coverage90": 0.9012,
+    "mean_log_score_ln_y": 1.6194,
+    "queries": 3249
+   },
+   "insufficient_evidence": {
+    "coverage90": 0.9002,
+    "mean_log_score_ln_y": -1.5452,
+    "queries": 3576
+   },
+   "no_solution": {
+    "coverage90": 0.8988,
+    "mean_log_score_ln_y": -1.2287,
+    "queries": 3648
+   },
+   "spurious_correlate": {
+    "coverage90": 0.8999,
+    "mean_log_score_ln_y": 0.8707,
+    "queries": 3067
+   }
+  },
+  "mind_no_belief_update": {
+   "confounded": {
+    "coverage90": 0.8355,
+    "mean_log_score_ln_y": -1.7085,
+    "queries": 3774
+   },
+   "discoverable": {
+    "coverage90": 0.8827,
+    "mean_log_score_ln_y": -0.0539,
+    "queries": 3351
+   },
+   "indistinguishable": {
+    "coverage90": 0.8825,
+    "mean_log_score_ln_y": 0.4211,
+    "queries": 3184
+   },
+   "insufficient_evidence": {
+    "coverage90": 0.896,
+    "mean_log_score_ln_y": -1.6078,
+    "queries": 3576
+   },
+   "no_solution": {
+    "coverage90": 0.8969,
+    "mean_log_score_ln_y": -1.231,
+    "queries": 3648
+   },
+   "spurious_correlate": {
+    "coverage90": 0.8798,
+    "mean_log_score_ln_y": 0.0019,
+    "queries": 3079
+   }
+  },
+  "mind_no_falsifier": {
+   "confounded": {
+    "coverage90": 0.8302,
+    "mean_log_score_ln_y": -1.7349,
+    "queries": 3774
+   },
+   "discoverable": {
+    "coverage90": 0.8876,
+    "mean_log_score_ln_y": 0.237,
+    "queries": 3522
+   },
+   "indistinguishable": {
+    "coverage90": 0.8858,
+    "mean_log_score_ln_y": 1.0137,
+    "queries": 3276
+   },
+   "insufficient_evidence": {
+    "coverage90": 0.8977,
+    "mean_log_score_ln_y": -1.6352,
+    "queries": 3576
+   },
+   "no_solution": {
+    "coverage90": 0.8964,
+    "mean_log_score_ln_y": -1.237,
+    "queries": 3648
+   },
+   "spurious_correlate": {
+    "coverage90": 0.8809,
+    "mean_log_score_ln_y": 0.3829,
+    "queries": 3300
+   }
+  }
+ },
+ "primary_mean_campaign_credit": {
+  "always_insufficient": 1.5,
+  "always_law": -4.775,
+  "always_refuse": 1.0,
+  "careful": 3.1125,
+  "extrapolating_fit": 1.9167,
+  "extrapolation_pair": 2.6583,
+  "fit_all_gated": -0.0708,
+  "greedy_forward": 2.1458,
+  "historical_answer": -0.375,
+  "mind_full": 3.5042,
+  "mind_no_adaptive_selection": 3.45,
+  "mind_no_belief_update": 3.4167,
+  "mind_no_falsifier": 3.5292,
+  "monomial_enumeration": 2.4042,
+  "random_structures": 2.1292,
+  "single_setting": 2.4875,
+  "space_filling": 3.0333
+ },
+ "replay_full_traces": {
+  "not_verified": [],
+  "not_verified_count": 0,
+  "verified": 720
+ },
+ "stage3_formal_cost_ESTIMATE": {
+  "formal_world_sets": 2400,
+  "label": "ESTIMATE from pilot wall times (single machine, sequential equivalent); not measured",
+  "seconds_by_arm": {
+   "always_insufficient": 434.4,
+   "always_law": 710.4,
+   "always_refuse": 403.2,
+   "careful": 650.4,
+   "extrapolating_fit": 700.8,
+   "extrapolation_pair": 640.8,
+   "fit_all_gated": 626.4,
+   "greedy_forward": 650.4,
+   "historical_answer": 441.6,
+   "mind_full": 8606.4,
+   "mind_no_adaptive_selection": 7804.8,
+   "mind_no_belief_update": 8308.8,
+   "mind_no_falsifier": 7485.6,
+   "monomial_enumeration": 703.2,
+   "random_structures": 691.2,
+   "single_setting": 604.8,
+   "space_filling": 621.6
+  },
+  "total_seconds_all_arms": 40084.8
+ },
+ "strongest_registered_baseline": "careful",
+ "traces_missing": 0,
+ "validity": {
+  "always_insufficient": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "always_law": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "always_refuse": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "careful": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "extrapolating_fit": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "extrapolation_pair": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "fit_all_gated": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "greedy_forward": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "historical_answer": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "mind_full": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "mind_no_adaptive_selection": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "mind_no_belief_update": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "mind_no_falsifier": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "monomial_enumeration": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "random_structures": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "single_setting": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  },
+  "space_filling": {
+   "evaluator_agrees": 120,
+   "inadmissible": 0,
+   "isolated": 120,
+   "leakage_audit_clean": 120,
+   "runs": 120,
+   "valid": 120
+  }
+ }
+}

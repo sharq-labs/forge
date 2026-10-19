@@ -36,8 +36,11 @@ anti-loophole rule is not triggered.
 
 - [x] Census of origin/main; A1 gate state recorded (owner-blocked). EXC-MIND-1 approved.
 - [x] Minimal Mind (`engcore.mind.minimal`) on canonical owners; Stage-1 functional and adversarial tests.
-- [ ] Freeze the Mind's identity and a fresh pilot root; Stage-2 matched pilot; ablations; prediction scoring; replay.
-- [ ] Owner: review; decide whether the Stage-3 formal tier is warranted (it still needs A1 first).
+- [x] Mind identity and a fresh pilot root frozen (`e2b8037c`, plan `b5b775bd…`); Stage-2 pilot 2,040 runs, 0 invalid.
+      MINIMAL_MIND_MEASURED (pilot). BASELINE_LIFT not established; all three ablations UNJUSTIFIED_ON_THIS_PILOT;
+      replay 720/720 VERIFIED; 0 false laws in 720 worlds.
+- [ ] Owner: review the branch; Stage 3 is not warranted before A1. Next Big Rock: close A1 via v0.3 (ODC-05/06/O1,
+      P-4, P-5, OD-20 + B-LEAK lift, OD-3), then the formal baseline tier.
 
 ## Current bounded task — BUY-01 MCP UQ repair, FDA-04 / FDA-14 (2026-10-19)
 

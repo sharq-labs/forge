@@ -7690,3 +7690,55 @@ passed, 84 skipped and 2 errors.
 
 **Not done:** OD-3 hardened recertification, the full FAST/SCIENTIFIC tiers on Linux, a push, a PR and a merge.
 Coverage calibration and scientific validation were not run; the guard and intervals are not claimed to give either.
+
+## 2026-10-19 — BR-MIND-01 Minimal Mind pilot (EXC-MIND-1)
+
+Branch `feat/br-mind-01-minimal-mind`, worktree `D:/forge-mind`, base `origin/main` `8ec97064`; Mind + frozen plan
+commit `e2b8037c`. Report: `docs/discovery/BR_MIND_01_MINIMAL_MIND.md`. Owner approved exception EXC-MIND-1 in session
+(A1 not passed; recorded in ACTIVE_PLAN with all eight fields). Nothing pushed, no PR, no merge, no certification.
+
+Census: A1 BLOCKED_WITH_PRECISE_EVIDENCE (certificate binds `05522b59`; v0.2 `878e6812` pinned and unchanged; no
+formal baseline tier; OD-3/8/18/19/20 and ODC-05/06/O1 open; B-LEAK open). `BR17_MINIMAL_MIND_READINESS.md` is stale
+as to HEAD but its blocking conclusion holds.
+
+Executed (Windows CPython 3.14.2, shared `.venv`, worktree on `PYTHONPATH`, `--basetemp` on D:):
+- `pytest tests/mind -q`: 46 passed.
+- `pytest tests/genesis_lite_mind -q`: 8 passed.
+- `pytest tests/mind tests/genesis_lite_mind tests/genesis_lite tests/test_core_api_layering.py tests/test_core_semantic_invariants.py -n 4`:
+  273 passed, 1 failed (`test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one`).
+  The same test fails on a pristine `8ec97064` worktree (`D:/forge-mind-base`) with an identical 43-class list: pre-existing.
+- The six `forge_check` architecture guards, `-n 4`: 94 passed.
+- A first `tools/forge_check.py --changed` (no `--base`, serial) was STOPPED by me after ~10 min to keep the pilot's
+  timings clean: NOT RUN to completion, no result.
+- Development sweeps (dev seeds only, `D:/mind-dev/sweep.py`): last one 2,400 Mind runs, 0 crashes.
+
+Stage 2 pilot (`python -m benchmarks.genesis_lite_mind.pilot run --workers 4`, plan sha256 `b5b775bd…` frozen
+before the root was drawn; root in `D:/forge-mind-operator/`): 2,040 runs (13 registered arms + 4 Mind variants ×
+120 world sets, all `proposer_process`), 0 invalid, 536.6 s. `runs.jsonl` `f108005e…`, `summary.json` `eb4acda6…`
+(copied to `benchmarks/genesis_lite_mind/pilot_results/v1-2026-10-19/`; traces, 973 MB, stay in the operator dir).
+- Primary: FULL 3.504 vs strongest registered baseline `careful` 3.113. Raw paired +0.392 [0.250, 0.529]; under the
+  v0.2 lift rule (capped cells) +0.125, lower bound 0.000, Holm not significant; per-kind non-inferiority fails
+  (confounded vs `single_setting`, no_solution vs `always_refuse`, discoverable vs `extrapolating_fit`).
+  `lift_claimed` False (exploratory grid anyway). BASELINE_LIFT NOT ESTABLISHED.
+- Ablations (FULL − variant): adaptive selection +0.054 [−0.088, 0.183]; sequential belief update +0.088
+  [−0.008, 0.188]; falsifier −0.025 [−0.079, 0.025]. All UNJUSTIFIED_ON_THIS_PILOT.
+- 0 false laws and 0 negative-credit outcomes in 720 FULL worlds; trap worlds: 0 textbook answers.
+- Predictions: 90% coverage 0.83–0.90 by kind (0.83 under confounding). Replay 720/720 VERIFIED.
+
+Failed approaches (do not repeat; details in the report §D): fixed-g Zellner prior (information paradox); plain
+hyper-g (no Occam penalty at n ≤ 60); beta-binomial prior over inputs AND covariates (manufactures covariate
+inclusion); g-prior posterior means as estimates (shrink exponents ~8%); misfit-inflated falsifier uncertainty (never
+refutable); corner-hammering optimal design; letting untested rivals inherit standing after refutations; reading
+association before checking fit; unguarded `exp()` of a sealed prediction.
+
+Gate classes reported by `forge_check --dry-run`: the two new test files are `certification_pinned`, the Mind modules
+`scientific_shared`; a merge therefore needs OD-3.
+
+Changed-file gate (after the pilot, Windows 3.14.2): `tools/forge_check.py --changed --base origin/main --workers 4`
+refused to narrow (new unclassified `src/engcore/mind/minimal/*`) and ran the whole FAST tier,
+`pytest -q -n 4 --dist loadfile -m "not expensive"`: 186 failed, 11736 passed, 224 skipped, 22 errors (958.6 s). The
+identical command on a pristine `8ec97064` worktree: 184 failed, 11703 passed, 224 skipped, 22 errors (941.7 s). The
+failure/error sets differ by exactly two branch-only tests, `test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1`
+and `test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`. Both
+report `tree.clean -- uncommitted: [the report, ACTIVE_PLAN, PROGRESS, pilot_results]`: the result documents were not
+yet committed during the run. Their re-run on the committed tree is recorded below.
