@@ -7774,3 +7774,92 @@ findings. Dispositions are in the decision record §4.
   `tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`
   (`--basetemp=D:/gl03tmp/bt10`): 2 passed. On pristine `origin/main`, the first: 1 passed.
 - So the branch adds no FAST failure beyond the pristine set once committed (the FAST tier itself was not rerun).
+
+## 2026-10-20 — BR-MIND-02B: Genesis-lite v0.3 freeze-blocker closure (DRAFT; local branches, not pushed)
+
+**Branches.** Both are local only.
+- `feat/genesis-lite-v03-amendment-draft` (base `origin/main` `8ec97064`): uncertified code, tests, docs.
+- `feat/genesis-lite-v03-escrow-fda05`, stacked on it: adds the NEW certified-scope file
+  `src/engcore/blindfold/pair_bound.py` plus its tests.
+- `escrow.py`, `roles.py` and `blindfold/__init__.py` are unchanged.
+- Decision record: `docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md`.
+
+**Environment.** Windows `.venv` CPython 3.14.2, numpy 2.5.2, `PYTHONPATH=<worktree>/src;<worktree>`,
+`TMPDIR/TMP/TEMP=D:/gl03tmp`.
+
+**Blocker mapping** (original findings): FDA-18 = D-03, FDA-21 = E-07, FDA-22 = D-07 (from
+`FORGE_NEW_FINDINGS_REGISTER.json` and reviewers D/E). "P-1/P-2/P-3" names both the pilot findings
+(`GENESIS_LITE_V0.md` §7) and the readiness isolation items (closure plan, X3). Both lists are dispositioned in the
+decision record §1.
+
+**Failing-first (executed).** The v0.2 defects are pinned as ordinary tests that assert the defect:
+- FDA-18: one process sees all six cards.
+- FDA-21: residual variance 2/6 σ² at 6 rows / 4 parameters (3,000 draws).
+- pilot P-2: v0.2 shows a gain from a solved control cell.
+
+FDA-05 escrow half: against a stub with the unbounded rule,
+`pytest tests/genesis_lite/test_genesis_lite_v0_3_escrow_fda05.py` gave **10 failed, 6 passed**, including an
+end-to-end `EVALUATOR_DISAGREEMENT` on the vacuous attack (campaign gl-v03-vac-1) and 12 disagreeing self-check cases.
+
+**Hostile reviews.** Five static read-only rounds; findings and dispositions are in the decision record §2.
+
+| Round | Found | Notes |
+|---|---|---|
+| 1 | 0 BLOCKER, 6 MAJOR | |
+| 2 | 1 BLOCKER, 7 MAJOR | |
+| 3 | 1 BLOCKER, 2 MAJOR | the BLOCKER was introduced by a fix: the operator imported candidate code |
+| 4 | 0 BLOCKER, 2 MAJOR | |
+| 5 | 0 BLOCKER, 1 MAJOR | screened world sets unverifiable |
+
+Every BLOCKER and MAJOR is fixed or routed to an owner decision. Recorded failed approaches:
+- Importing candidate code to pin its imports runs it as the operator: never do that.
+- Prefix-matched test evidence can be gamed: the gate names exact tests.
+- A label-only arm binding fails to a whole-record swap; it needs re-derived cards plus replay.
+
+**Targeted tests (executed).**
+- `python -m pytest tests/genesis_lite -q -p no:cacheprovider -n 4`, draft branch, after the round-6 fixes:
+  **223 passed**.
+- Escrow branch at `23998857` (before round 6): **240 passed**. The final escrow-branch run is recorded below.
+
+**Readiness gate (executed).** `python -m benchmarks.genesis_lite.v0_3.readiness` on clean escrow-branch tips. Each
+run collected its own evidence and returned **READY_TO_FREEZE_PENDING_OWNER**, with 0 technical blockers and 40/40
+evaluator/escrow agreement:
+
+| Tip | Named tests run |
+|---|---|
+| `8d52fe67` | 134 |
+| `3c974480` | 139 |
+| `8c08ec38` | 141 |
+| `23998857` | 146 |
+
+On the draft branch, without the escrow half, the gate is BLOCKED_TECHNICAL by design: the escrow half is
+SPECIFIED_BLOCKED_BY_OD3 there.
+
+**Changed-file gate.**
+- `python tools/forge_check.py --changed --base origin/main --workers 4 --dry-run` refused to narrow (unclassified
+  `benchmarks/` files; `pair_bound.py` is `certified:verdict_authority`; `tests/**` is `assurance_suites`). So the full
+  FAST tier was run with the gate's own command:
+  `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rf`.
+- It was compared against pristine `origin/main` `8ec97064` (worktree `D:/gl03-pristine`, run on 2026-10-19:
+  184 failed, 11,703 passed, 224 skipped, 22 errors).
+
+| Escrow tip | Failed | Passed | Skipped | Errors | FAILED nodes only on the branch | only on pristine |
+|---|---|---|---|---|---|---|
+| `c2049074` (pre-review) | 185 | 11,822 | 224 | 22 | `tests/test_test_timing.py::test_the_plugin_records_telemetry_and_never_changes_an_outcome` | none |
+| `8d52fe67` | 185 | 11,836 | 224 | 22 | same | none |
+| `3c974480` | 185 | 11,841 | 224 | 22 | same | none |
+| `8c08ec38` | 185 | 11,843 | 224 | 22 | same | none |
+| `23998857` | 185 | 11,848 | 224 | 22 | same | none |
+
+The one branch-only failure is environmental: a C: worktree with a D: basetemp. With a same-drive basetemp it
+**passed** (executed 2026-10-19).
+
+**Regression pack.** `python tools/forge_check.py --regression --workers 4`: `8d52fe67` exit 0; `23998857`
+**279 passed**, exit 0.
+
+**Not done / NOT RUN.**
+- OD-3 recertification; Linux 3.11/3.12; the SCIENTIFIC tier.
+- Any generator, pilot or formal world beyond the synthetic test worlds.
+- A power or null-calibration study.
+- The OD-20 deployment and its attack-suite verdicts.
+- Push, PR, merge or freeze.

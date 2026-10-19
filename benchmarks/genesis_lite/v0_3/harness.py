@@ -186,7 +186,9 @@ class CardProposerHost(_v02h.ProposerHost):
                 raise ValueError(f"only FORGE_ATTACK_* variables reach an attack proposer, not {k}")
             env[k] = str(v)
         paths = [str(_v02h._ROOT), str(_v02h._ROOT / "src"), *extra_paths]
-        self._proc = subprocess.Popen([sys.executable, "-I", str(_v02h._HOST), *paths], cwd=self._dir.name, env=env,
+        # -X pycache_prefix: bytecode is read and written only inside this card's directory, never a planted .pyc
+        self._proc = subprocess.Popen([sys.executable, "-I", "-X", f"pycache_prefix={self._dir.name}", str(_v02h._HOST),
+                                       *paths], cwd=self._dir.name, env=env,
                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0)
         self._lines: queue.Queue = queue.Queue()
         threading.Thread(target=self._pump, daemon=True).start()

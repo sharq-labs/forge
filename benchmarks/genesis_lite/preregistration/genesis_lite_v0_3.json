@@ -340,7 +340,7 @@
   "admission": "admitted to the attempt registry and PUBLISHED to the external evaluator before the first world; after the reveal the evaluator recomputes every master and answer-key digest (formal.verify_attempt)",
   "attempt_registry": "required; admission before the first world (one_attempt_per_root above)",
   "candidate": "OWNER_DECISION_REQUIRED",
-  "candidate_rule": "the candidate runs INSIDE the admitted attempt, world-set-major, beside every registered arm; its code is pinned by sha256 (its module, its parent packages and every first-party import, read statically; dynamic loading refused); it may not take a registered arm's name. Static pinning proves WHICH bytes run, not what they do: the external evaluator reviews the pinned source before the attempt (D6)",
+  "candidate_rule": "the candidate runs INSIDE the admitted attempt, world-set-major, beside every registered arm; its code is pinned by sha256 (its module, its parent packages and every first-party import, read statically; calls and imports of known dynamic-loading names are refused as a static screen); it may not take a registered arm's name. Static pinning proves WHICH bytes run, not what they do: the external evaluator reviews the pinned source before the attempt (D6)",
   "driver": "benchmarks/genesis_lite/v0_3/formal.py",
   "environment_manifest_schema": "forge.genesis_lite.environment_manifest/1",
   "environment_manifest_sha256": "OWNER_DECISION_REQUIRED",
@@ -467,6 +467,10 @@
   "D7-budget-and-machine": "OD-18: formal compute (one proposer process per card adds per-card start cost) and the formal machine, which fixes the environment manifest",
   "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)"
  },
+ "package_markers": {
+  "benchmarks/__init__.py": "06dd19293c8381eafa491dfd1be8ca413dcb3ea20a1c490cf24b810e6720c7df",
+  "benchmarks/genesis_lite/__init__.py": "cb78a50f694c4a71dbf14625a9f84574dfc7e71c4b19337f0fa1664f25c02abc"
+ },
  "reused_unchanged_from_v0_2": {
   "evaluator": {
    "evaluator/__init__.py": "63362ec3e96626617404fb36b228b6bf3cffaccbdb066051323c8f3bfa785844",
@@ -499,15 +503,15 @@
  "status_note": "DRAFT (not FREEZE_READY): no pilot, formal run or measurement may be produced under this document; v0.2 remains the active identity until the owner approves v0.3 (OD-19). Every value marked OWNER_DECISION_REQUIRED blocks the freeze.",
  "v0_3_files": {
   "__init__.py": "f8af0c58db79ad76a213ad6fb8c771a55114b34503f7452eb3fab3116d1e4905",
-  "analysis.py": "aaec51c9af46cc67b1cecc2add544b80cbcb89592cb492a6bebc6356f63d6d2a",
+  "analysis.py": "c00dc0091e977bfa120cb3cd36285149b724f304cd4724ff0392023a658a4743",
   "arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
   "deployment_attacks.py": "47c5c6406c918948436107bc5bf2306bd4a0486ecf8487ae39f6e825422510f4",
   "environment.py": "d9ab7044c74cb941e9d4c0b8973284ab73a26f5ff702fdf9b61b2b37b760a06f",
   "evaluator.py": "773cf1d6b9ad6beb5466702ed1301b6d34b15f112c23545be1898f438171dda3",
-  "formal.py": "6264ef0d7dc6154614dff81f0c658d3c31e4509d65d6c09a078ed0b693ed8bf9",
-  "harness.py": "ad39a93dbe1d7d404a280754aee970f7aa339e5fa93e885c12f12a4221a44e0c",
-  "preregistration.py": "58644c4376b1c7f4def8943d6a16ca24ce5c189d50a195ee25af86cd4e3ad18d",
-  "readiness.py": "214f83515eca7e69e13b2a61c1142f6dcad3c94c73b360634e464eb68b9c6c9c",
+  "formal.py": "26f050731e85ec16adb1d844e4017ba97f09d7c9f2086bb479fc5970c20f724c",
+  "harness.py": "ce603d0175dd3c1248ae32ed9e9286284723112c6687def143f56fc79176f15d",
+  "preregistration.py": "48c53e991618a01b141938d5529f404a14d36a09ef9b8324817698bd8d98f1b4",
+  "readiness.py": "be2ce0dbb7af523563644b9fc807fac200c8d1f957e8163751ee74c4fc955f56",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "4763de7c3878c8b82f9209285d0d9cc2c720ab3b22708141f260ce0f0bb001d9",
   "selfcheck.py": "09efb6aab132e2ee6a12a5e5dd484ebf0a069f8f34c5386fae7ed685fb323bea"

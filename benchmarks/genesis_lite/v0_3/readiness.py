@@ -156,6 +156,8 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_p4_the_sealed_log_is_append_only_and_hash_chained',
         'test_p4_candidate_runs_inside_the_attempt_world_set_major',
         'test_p4_candidate_code_and_name_are_pinned',
+        'test_p4_lift_decision_requires_a_clean_post_reveal_verification',
+        'test_p4_candidate_dynamic_calls_twins_and_markers',
         'test_p4_candidate_parent_packages_and_ambiguous_files_are_refused',
         'test_p4_candidate_spec_module_and_its_imports_must_be_pinned',
         'test_p4_representation_cap_covers_both_enumeration_arms',
@@ -174,6 +176,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_attempt_a_revealed_pilot_root_is_refused_before_admission',
         'test_attempt_a_fresh_registry_cannot_reproduce_an_attempt_or_its_worlds',
         'test_attempt_the_evaluator_verifies_the_whole_published_log_after_the_reveal',
+        'test_attempt_a_screened_world_set_verifies_only_if_its_screen_rederives',
         'test_attempt_a_whole_record_swap_between_arms_does_not_replay',
     ),
     'v0.3 harness binding': (

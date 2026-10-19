@@ -225,8 +225,10 @@ def formal_binding_problems(rows: Sequence[Mapping[str, Any]]) -> list[str]:
     return problems
 
 
-def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[WorldSet] | None = None) -> dict[str, Any]:
-    """The v0.2 lift rule with the FDA-06 cap and the O-1 significance. Claims nothing unless every condition holds."""
+def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[WorldSet] | None = None,
+                  verification: Sequence[str] | None = None) -> dict[str, Any]:
+    """The v0.2 lift rule with the FDA-06 cap and the O-1 significance. Claims nothing unless every condition holds,
+    including a clean post-reveal verification of the attempt (``formal.verify_attempt`` returned no problem)."""
     rows = [_record(r) for r in records]
     grid = FORMAL_GRID if grid is None else frozenset(grid)
     roles = registered_roles()
@@ -239,6 +241,10 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
     problems = [] if grid == FORMAL_GRID else ["the grid is not the preregistered formal grid: exploratory, no claim"]
     code_problems, identity = _code_problems()
     problems += code_problems + formal_binding_problems(rows)
+    if verification is None:
+        problems.append("the attempt was not verified after the reveal (formal.verify_attempt)")
+    elif verification:
+        problems.append(f"the attempt's post-reveal verification found {len(verification)} problem(s)")
     screened = screened_world_sets(rows, [*required, candidate]) & grid
     if len(screened) > SCREEN_CAP * len(grid):
         problems.append(f"{len(screened)} of {len(grid)} world sets were screened (cap {SCREEN_CAP:.0%}): a benchmark "

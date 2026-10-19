@@ -579,27 +579,27 @@ def test_p4_candidate_code_and_name_are_pinned():
     assert any("candidate" in p for p in formal.preflight(_stand_in(root, "OWNER_DECISION_REQUIRED"), root, MANIFEST))
 
 
-def _attempt(tmp_path, tag, arms=("always_refuse",)):
+def _attempt(tmp_path, tag, arms=("always_refuse",), presentation="renamed"):
     """One admitted, published attempt with real v0.2-harness records on one world set (synthetic root)."""
     root, prereg = H(b"verify root " + tag.encode()).digest(), H(b"prereg").hexdigest()
     reg, inbox = AttemptRegistry(tmp_path / tag / "reg"), EvaluatorInbox(tmp_path / tag / "inbox.jsonl")
     admission = reg.admit(root_commitment_sha256=H(root).hexdigest(), prereg_sha256=prereg, campaign_set_sha256=PLAN,
                           tier="formal")
     inbox.receive(admission)
-    master = formal.master_for(root, prereg, admission["nonce"], "renamed", "gl-formal-3", 1)
+    master = formal.master_for(root, prereg, admission["nonce"], presentation, "gl-formal-3", 1)
     from benchmarks.genesis_lite.answer_key import export_answer_key
 
     records = []
     for arm in arms:
         rec = v02_harness.run_one(arm, v02_arms.ARMS[arm][0], master_seed=master, campaign_id="gl-formal-3",
-                                  presentation="renamed", seed=1).to_dict()
+                                  presentation=presentation, seed=1).to_dict()
         key = export_answer_key(master, "gl-formal-3", v02_harness.MIX, [u["universe_id"] for u in rec["universes"]])
         entries = {e["universe_id"]: e for e in key["universes"]}
         for u in rec["universes"]:                       # what the v0.3 harness adds; v0.2 records have no proposals
             u["law_form"], u["proposal"] = harness.law_form(entries[u["universe_id"]]), None
         records.append({**rec, "attempt_sha256": admission["attempt_sha256"]})
     return {"root": root, "prereg": prereg, "reg": reg, "inbox": inbox, "admission": admission, "records": records,
-            "runs": {(arm, ("renamed", "gl-formal-3", 1)) for arm in arms}, "dir": tmp_path / tag}
+            "runs": {(arm, (presentation, "gl-formal-3", 1)) for arm in arms}, "dir": tmp_path / tag}
 
 
 def _publish_and_verify(ctx, records, *, extra_line=False, **kw):
@@ -660,6 +660,53 @@ def test_attempt_the_evaluator_verifies_the_whole_published_log_after_the_reveal
         honest["inbox"].receive(dict(honest["admission"], tier="development"))
     with pytest.raises(AttemptRefused, match="already published"):
         honest["inbox"].receive_heads(honest["admission"]["attempt_sha256"], run_log="0" * 64, registry="0" * 64)
+
+
+def test_attempt_a_screened_world_set_verifies_only_if_its_screen_rederives(tmp_path, monkeypatch):
+    """Review round 5 (MAJOR): a preregistered screen (here a trap whose textbook law would pass) makes a world set
+    INVALID for every arm; the evaluator re-derives the screen instead of rejecting or trusting the record."""
+    monkeypatch.setattr(v02_harness, "_textbook_could_pass", lambda textbook, entry: True)
+    screened = _attempt(tmp_path, "screened", presentation="trap")
+    rec = screened["records"][0]
+    assert rec["status"] == "INVALID_BENCHMARK" and all(r.startswith("trap ") for r in rec["reasons"])
+    assert _publish_and_verify(screened, screened["records"]) == []
+    monkeypatch.setattr(v02_harness, "_textbook_could_pass", lambda textbook, entry: False)
+    claimed = _attempt(tmp_path, "claimed", presentation="renamed")
+    fake = dict(claimed["records"][0], status="INVALID_BENCHMARK", reasons=["trap bf-x (discoverable): claimed"])
+    assert any("does not re-derive" in p for p in _publish_and_verify(claimed, [fake]))
+    other = _attempt(tmp_path, "other-reason")
+    odd = dict(other["records"][0], status="INVALID_BENCHMARK", reasons=["run aborted: boom"])
+    assert any("no preregistered screen explains" in p for p in _publish_and_verify(other, [odd]))
+
+
+def test_p4_lift_decision_requires_a_clean_post_reveal_verification():
+    rows = _field() + lr.records("mind", lr.BETTER)
+    assert any("not verified after the reveal" in p for p in v03a.lift_decision(rows, "mind", grid=lr.GRID)["coverage_problems"])
+    found = v03a.lift_decision(rows, "mind", grid=lr.GRID, verification=["x"])["coverage_problems"]
+    assert any("found 1 problem" in p for p in found)
+
+
+def test_p4_candidate_dynamic_calls_twins_and_markers(tmp_path, monkeypatch):
+    """Review round 5 MINORs: dynamic code through attribute calls, __init__ compiled twins, pinned package markers."""
+    pkg = tmp_path / "dyn"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_bytes(b"")
+    (pkg / "a.py").write_bytes(b"import builtins\n\ndef run(card, client, *, seed=0):\n    builtins.exec('1')\n")
+    (pkg / "b.py").write_bytes(b"from os import *\n\ndef run(card, client, *, seed=0):\n    return {}\n")
+    monkeypatch.setattr(formal, "_ROOT", tmp_path)
+    monkeypatch.setattr(formal, "_identity_pinned_files", lambda: frozenset())
+    monkeypatch.setattr(formal, "_tracked_engcore", lambda: frozenset())
+
+    def cand(module, *files):
+        return {"name": "mind", "spec": f"{module}:run",
+                "code_sha256": {f: H((tmp_path / f).read_bytes()).hexdigest() for f in files}}
+
+    assert any("dynamic loading" in p for p in formal.candidate_code_problems(cand("dyn.a", "dyn/__init__.py", "dyn/a.py")))
+    assert formal.candidate_code_problems(cand("dyn.b", "dyn/__init__.py", "dyn/b.py")) == []      # '*' is not a file
+    (pkg / "__init__.pyc").write_bytes(b"\x00")
+    assert any("ambiguous" in p for p in formal.candidate_code_problems(cand("dyn.b", "dyn/__init__.py", "dyn/b.py")))
+    markers = json.loads(v03p.PREREG_PATH.read_bytes())["package_markers"]
+    assert set(markers) == {"benchmarks/__init__.py", "benchmarks/genesis_lite/__init__.py"}
 
 
 def test_p4_candidate_parent_packages_and_ambiguous_files_are_refused(tmp_path, monkeypatch):

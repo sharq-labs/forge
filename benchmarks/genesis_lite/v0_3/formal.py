@@ -141,8 +141,9 @@ def candidate_of(doc: Mapping[str, Any]) -> Mapping[str, Any] | None:
 
 
 _ROOT = pathlib.Path(__file__).resolve().parents[3]
-#: names whose use in a pinned candidate file would load or run code the static pin cannot see
-_DYNAMIC = frozenset({"importlib", "__import__", "exec", "eval", "compile", "runpy", "imp"})
+#: modules and calls that would load or run code the static pin cannot see (a static screen, not a proof: behaviour is
+#: the external evaluator's source review, D6)
+_DYNAMIC = frozenset({"importlib", "__import__", "exec", "eval", "compile", "runpy", "imp", "import_module"})
 
 
 def _identity_pinned_files() -> frozenset[str]:
@@ -155,6 +156,7 @@ def _identity_pinned_files() -> frozenset[str]:
     out |= {f"benchmarks/genesis_lite/{n}" for n in reused.get("harness", {})}
     out |= {f"benchmarks/genesis_lite/{n}" for n in reused.get("evaluator", {})}
     out |= {f"src/engcore/blindfold/{n}" for n in reused.get("substrate", {})}
+    out |= set(doc.get("package_markers", {}))
     return frozenset(out)
 
 
@@ -188,6 +190,8 @@ def _module_file(module: str) -> str | None:
         shadows = [p for p in stem.parent.glob(stem.name + ".*") if p.suffix in (".pyd", ".so", ".pyc", ".pyw")] \
             if stem.parent.is_dir() else []
         package, source = stem / "__init__.py", stem.with_suffix(".py")
+        if stem.is_dir():                                    # __init__.<tag>.pyd / __init__.pyc load before __init__.py
+            shadows += [p for p in stem.glob("__init__.*") if p.suffix in (".pyd", ".so", ".pyc", ".pyw")]
         if shadows and (package.is_file() or source.is_file() or stem.is_dir()):
             raise _Ambiguous(f"{module}: {sorted(p.name for p in shadows)} share its name")
         if shadows:
@@ -227,9 +231,14 @@ def _static_imports(rel: str) -> tuple[set[str], set[str]]:
                 parts = package.split(".")[: len(package.split(".")) - node.level + 1]
                 base = ".".join(parts + ([base] if base else []))
             modules = [base] + [f"{base}.{a.name}" for a in node.names]
-        elif isinstance(node, ast.Name) and node.id in _DYNAMIC:
-            dynamic.add(node.id)
+        elif isinstance(node, ast.Call):
+            func = node.func
+            name = func.id if isinstance(func, ast.Name) else func.attr if isinstance(func, ast.Attribute) else None
+            if name in _DYNAMIC:
+                dynamic.add(name)
         for module in modules:
+            if module.endswith(".*"):
+                continue
             if module.split(".")[0] in _DYNAMIC:
                 dynamic.add(module.split(".")[0])
             files.update(_with_parents(module))
@@ -237,11 +246,13 @@ def _static_imports(rel: str) -> tuple[set[str], set[str]]:
 
 
 def candidate_code_problems(cand: Mapping[str, Any] | None) -> list[str]:
-    """The candidate's code is pinned WITHOUT running it on the operator's side (review round 3, N1): its spec module
-    and every first-party file it imports, read statically, must be pinned by digest in ``code_sha256``, by this
-    identity, or (for src/engcore) be tracked at HEAD under the core certificate. Dynamic imports or code execution in
-    a pinned file are refused: the static pin could not see what they load. Data files the candidate reads are listed in
-    ``code_sha256`` by the candidate's author; the harness re-measures every listed file before every card."""
+    """The candidate's code is pinned WITHOUT running it on the operator's side (review round 3, N1): its spec module,
+    its parent packages and every first-party file it imports, read statically, must be pinned by digest in
+    ``code_sha256``, by this identity, or (for src/engcore) be in HEAD with src/engcore clean. Calls and imports of known
+    dynamic-loading names are refused as a static SCREEN; this proves which bytes run, not what they do (code reached
+    through attribute tricks or through pinned helpers is the external evaluator's source review, D6). Data files the
+    candidate reads are listed in ``code_sha256`` by its author; the harness re-measures every listed file before every
+    card."""
     if cand is None:
         return []
     problems = []
@@ -260,9 +271,7 @@ def candidate_code_problems(cand: Mapping[str, Any] | None) -> list[str]:
             problems.append(f"the candidate's module {module} is not one of its pinned files")
         if problems:
             return problems
-        packages = {"benchmarks/__init__.py", "benchmarks/genesis_lite/__init__.py"}      # package markers, tracked
-        allowed = set(pinned) | _identity_pinned_files() | _tracked_engcore() | {
-            p for p in packages if (_ROOT / p).is_file()}
+        allowed = set(pinned) | _identity_pinned_files() | _tracked_engcore()
         for dep in sorted(set(own_chain) - allowed):
             problems.append(f"the candidate's package file {dep} runs on import and is not pinned")
         for rel in sorted(r for r in pinned if r.endswith(".py")):
@@ -366,6 +375,40 @@ def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, An
             "attempt_sha256": attempt["attempt_sha256"], "registry_head": registry.head()}
 
 
+SCREEN_PREFIXES = v02_analysis.SCREEN_PREFIXES
+
+
+def screen_rederives(master: bytes, arm: str, campaign_id: str, presentation: str, seed: int) -> bool:
+    """Whether an arm-independent screen of the harness (the literal leakage audit of the presented cards, or a trap
+    world whose best-constant textbook law would pass) re-derives for this world set from its master."""
+    from engcore.blindfold.escrow import EscrowService  # noqa: PLC0415
+    from engcore.blindfold.expression import c, mul, pw, v  # noqa: PLC0415
+    from engcore.blindfold.universe import UniverseKind  # noqa: PLC0415
+
+    from .. import harness as v02h  # noqa: PLC0415
+    from ..answer_key import export_answer_key  # noqa: PLC0415
+    from ..evaluator.score import audit_presented_cards  # noqa: PLC0415
+    from ..presentation import present  # noqa: PLC0415
+
+    camp = EscrowService(master_seed=master)._new_campaign(campaign_id, {UniverseKind(k): n for k, n in v02h.MIX.items()})
+    pkey = v02h.presentation_key(master, arm, seed, presentation)
+    skey = v02h.stimulus_key(master, seed, presentation)
+    shown = {uid: present(json.loads(json.dumps(camp.worlds[uid].public_card())), presentation, pkey, skey)
+             for uid in camp.order}
+    key = export_answer_key(master, campaign_id, v02h.MIX, list(camp.order))
+    audit = audit_presented_cards([{**p.card, "universe_id": uid} for uid, p in shown.items()], key)
+    if audit["status"] != "NO_LITERAL_LEAK_FOUND":
+        return True
+    entries = {e["universe_id"]: e for e in key["universes"]}
+    for uid, p in shown.items():
+        entry = entries[uid]
+        if p.historical is not None and entry["kind"] in v02h.LAW_CREDIT_KINDS and entry["law"] is not None:
+            hist_name, exponent = p.historical
+            if v02h._textbook_could_pass(mul(c(1.0), pw(v(p.to_original[hist_name]), exponent)), entry):
+                return True
+    return False
+
+
 def _shown_card_digests(master: bytes, arm: str, campaign_id: str, presentation: str, seed: int) -> dict[str, str]:
     """Every card the arm was shown in this world set, re-derived from the master (escrow cards, then the presentation
     under the arm's run-private pseudonym key and the world set's shared stimulus key)."""
@@ -434,8 +477,8 @@ def verify_attempt(log_path: pathlib.Path, root: bytes, admission: Mapping[str, 
         problems.append("some (arm, world set) appears more than once")
     want = expected_runs(registered_arms() + ([candidate] if candidate else [])) if runs is None else runs
     try:
-        bound = v03e.PairBound(**dict(pair_bound))
-    except TypeError:
+        bound = v03e._checked(v03e.PairBound(**dict(pair_bound)))
+    except (TypeError, v03e.EvaluatorRefused):
         return problems + ["the preregistered pair bound is not well formed"]
     if replay_runner is None:
         problems.append("the registered arms' records were not replayed: they remain unverified")
@@ -447,11 +490,17 @@ def verify_attempt(log_path: pathlib.Path, root: bytes, admission: Mapping[str, 
             if rec.get("attempt_sha256") != admission["attempt_sha256"]:
                 problems.append(f"{where}: not from the published attempt")
                 continue
-            if rec.get("status") != "VALID":
-                problems.append(f"{where}: an invalid run (not verifiable, never analysed)")
-                continue
             master = master_for(root, prereg_sha256, str(admission["nonce"]), str(rec["presentation"]),
                                 str(rec["campaign_id"]), int(rec["seed"]))
+            if rec.get("status") != "VALID":
+                reasons = list(rec.get("reasons") or ())
+                if not (reasons and all(str(r).startswith(SCREEN_PREFIXES) for r in reasons)):
+                    problems.append(f"{where}: an invalid run that no preregistered screen explains")
+                elif not screen_rederives(master, str(rec["arm"]), str(rec["campaign_id"]), str(rec["presentation"]),
+                                          int(rec["seed"])):
+                    problems.append(f"{where}: the record claims a screen (leakage audit / trap) that does not "
+                                    f"re-derive from the revealed root")
+                continue
             ids = [u.get("universe_id") for u in rec.get("universes", [])]
             key = export_answer_key(master, str(rec["campaign_id"]), MIX, ids)
             if key.get("status") != "DERIVED" or key_digest(key) != rec.get("key_digest"):

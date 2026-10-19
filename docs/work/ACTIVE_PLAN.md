@@ -6,25 +6,25 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
-## Current bounded task — Genesis-lite v0.3 amendment package, DRAFT (2026-10-19)
+## Current bounded task — Genesis-lite v0.3 freeze readiness, BR-MIND-02B (2026-10-20)
 
-Branch `feat/genesis-lite-v03-amendment-draft` (base `origin/main` `8ec97064`), local only. Scope: `benchmarks/genesis_lite/v0_3/**`,
-a DRAFT `preregistration/genesis_lite_v0_3.json`, one test file, and docs. No v0/v0.1/v0.2-pinned file and no certified file
-was edited. Decision record: [GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md](../discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md).
-Evidence: PROGRESS 2026-10-19.
+Branches `feat/genesis-lite-v03-amendment-draft` (uncertified: `benchmarks/genesis_lite/v0_3/**`, tests, docs) and
+`feat/genesis-lite-v03-escrow-fda05` (stacked; adds the NEW certified-scope file `src/engcore/blindfold/pair_bound.py`),
+both from `origin/main` `8ec97064`, local only. Decision record:
+[GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md](../discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md).
+Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
 
-- [x] Failing-first reproductions of FDA-05, FDA-06 and O-1 against stubs that kept the v0.2 behaviour; v0.2 defects pinned as
-      ordinary tests (v0.2 is frozen and never repaired in place).
-- [x] Draft code: FDA-05 evaluator half (ODC-05a (i), bracket route only, `w` = OWNER_DECISION_REQUIRED), FDA-06 cap on every
-      law-credit kind incl. indistinguishable, O-1 route B (sign-flip p; bootstrap for the bound only; Holm unchanged), P-4 formal driver, P-5
-      environment manifest, D-09 record binding.
-- [ ] Owner: ODC-05a (form and scope), ODC-05b (`w`), ODC-05c, ODC-05d (pass route), ODC-06a/b, ODC-O1a/b, OD-19 (v0.3), OD-20, OD-8, OD-18, OD-3.
+- [x] FDA-05 (evaluator + escrow half), FDA-06, O-1, FDA-18, FDA-19 (benchmark side), FDA-21, FDA-22, pilot P-1/P-2/P-3,
+      readiness P-3, the v0.3 harness, one attempt per root, post-reveal verification: fixed with named tests.
+- [x] Freeze-readiness gate (`python -m benchmarks.genesis_lite.v0_3.readiness`): READY_TO_FREEZE_PENDING_OWNER on the
+      escrow-branch tip; five hostile review rounds dispositioned.
+- [ ] Owner: D1-scoring (w, pass route), D2-significance, D3-baselines-and-tells, D4-identity-freeze (OD-19, candidate,
+      fresh root), D5-deployment (OD-20), D6-evaluator (OD-8), D7-budget-and-machine (OD-18): the approval record
+      `benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.owner_approvals.json` (owner's file).
 - [ ] OWNER_DECISION_REQUIRED (live-document tension): ODC-O1a recommends sign-flip route B; `BVB_RESUME_HANDOFF_2026_10_19.md`
-      §3 row 2 says "not automatic sign-flip" and defers O-1 until the scoring is frozen. The draft implements B for review
-      only.
-- [ ] Before any freeze: escrow half of FDA-05 and FDA-19 probe scope (certified, Batch A, OD-3), FDA-18/21/22, P-1..P-3, the
-      v0.3 harness binding, one-attempt enforcement (used-root registry, published log head, post-reveal recomputation).
-- [ ] Owner: push / PR (not authorized). `tests/**` is an `assurance_suites` recertification trigger, so landing needs OD-3.
+      §3 row 2 defers O-1 until the scoring is frozen. Folded into D2.
+- [ ] OD-3: recertify a HEAD containing `pair_bound.py` and the new tests (`tests/**` is an `assurance_suites` trigger).
+- [ ] Owner: push / PR (not authorized). No freeze, formal baseline or Mind tier is authorized.
 
 ## Current bounded task — BUY-01 MCP UQ repair, FDA-04 / FDA-14 (2026-10-19)
 

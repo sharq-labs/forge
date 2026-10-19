@@ -4,273 +4,131 @@ doc_id: FORGE-GENESIS-LITE-V0-3-AMENDMENT-DECISIONS
 doc_kind: SCIENTIFIC_DESIGN
 doc_status: PROPOSED
 authority_scope: NONE
-source_ref: 8ec97064c35144405e3eba53a4282e90f8593b1c
+source_ref: multiple
 evidence_level: EXECUTED_BOUNDED
-last_reviewed: 2026-10-19
+last_reviewed: 2026-10-20
 supersedes: none
 ---
 
-# Genesis-lite v0.3 amendment: what the owner must decide
+# Genesis-lite v0.3: freeze readiness and the owner's decisions
 
-> **Nothing here is approved.** This record lists the decisions that would let Genesis A1 (Genesis-lite Step-1)
-> close through a v0.3 identity. It covers the Genesis-lite half of the deep-audit 2026-10-19 closures.
+> **Nothing here is approved, frozen or certified.** v0.3 is a DRAFT identity on two local branches, and v0.2 stays
+> the active identity. On the escrow-branch tip, the freeze-readiness gate reports **READY_TO_FREEZE_PENDING_OWNER**:
+> no technical blocker it can see remains, only the owner's decisions and OD-3. That verdict means every named test
+> passed on a clean HEAD. It does not mean no defect is left (§2 lists the residual limits).
 >
-> The code is a DRAFT: not frozen, not FREEZE_READY, not the active identity, and not pushed. v0.2 stays the active
-> identity.
->
-> An approval of one item below implies no other. An approval to freeze is not an approval to run a pilot, a formal
-> tier, a recertification or a merge; each needs its own approval.
+> An approval of one decision implies no other. Freezing is not approval to run anything: formal baselines, a Mind
+> tier, recertification, push and merge each need their own approval.
 
-Base: `origin/main` `8ec97064` (PR #172 merged). Branch `feat/genesis-lite-v03-amendment-draft`, local only.
+## 0. Where the work is (source refs)
 
-Blocker sources:
-- [blocker matrix](../work/evidence/deep_audit_2026_10_19/closure/GENESIS_BLINDFOLD_BLOCKER_MATRIX.md)
-- [owner decisions](../work/evidence/deep_audit_2026_10_19/closure/SCIENTIFIC_FINDINGS_OWNER_DECISIONS.md)
-- [closure plan](../work/evidence/deep_audit_2026_10_19/closure/SCIENTIFIC_FINDINGS_CLOSURE_PLAN.md), §3.1, §3.2 and §3.8
-
-Commands and results: `docs/work/PROGRESS.md`, entry "2026-10-19 — Genesis-lite v0.3 amendment package (DRAFT)".
-
-## 1. Status, one axis at a time
-
-| Item | Implementation | Execution | Scientific validation | Certification | Owner |
-|---|---|---|---|---|---|
-| FDA-05 evaluator half (`v0_3/evaluator.py`) | IMPLEMENTED (draft) | targeted tests PASS | NOT_VALIDATED | prereg-pinned only | PENDING (ODC-05a/b/c/d) |
-| FDA-05 escrow half (`engcore.blindfold.escrow._assess_pair`) | NOT_STARTED; specified in §5 | NOT_RUN | NOT_VALIDATED | certified → OD-3 | PENDING (ODC-SQ1, OD-3) |
-| FDA-06 cap (`v0_3/analysis.py`) | IMPLEMENTED (draft); extended to `indistinguishable` after review | targeted tests PASS | NOT_VALIDATED | not certified | PENDING (ODC-06a/b) |
-| O-1 route B (`v0_3/analysis.py`) | IMPLEMENTED (draft) | targeted tests PASS | NOT_VALIDATED; no calibration study run | not certified | PENDING (ODC-O1a/b) |
-| P-4 formal driver (`v0_3/formal.py`) | PARTIAL: orchestration, root rules, ordering, committed-identity check and log; harness binding and one-attempt registry NOT_STARTED | targeted tests PASS with a stub runner; never ran a world | n/a | not certified | PENDING (OD-19, OD-20) |
-| P-5 environment manifest (`v0_3/environment.py`) | IMPLEMENTED; import-time modules only | built on this Windows 3.14.2 machine only | n/a | not certified | PENDING (OD-18) |
-| FDA-19 probe scope | NOT_STARTED; specified in §5 | NOT_RUN | — | certified → OD-3 | PENDING (ODC-BL1) |
-| `preregistration/genesis_lite_v0_3.json` | DRAFT, rebuilt from code (digest in its `.sha256`) | rebuild test PASS | — | — | PENDING (OD-19) |
-
-What did not change:
-- v0 (`f99fcfbd…`), v0.1 (`94efff08…`) and v0.2 (`878e6812…`) and their pilot results are byte for byte unchanged. A test checks this.
-- `pilot.prereg_matches_code()` still returns v0.2.
-- No v0.2-pinned file and no certified file was edited.
-
-The new test file falls under the `assurance_suites` recertification trigger (`tests/**`), as every test change
-does.
-
-## 2. The package
-
-| File | What it proposes |
-|---|---|
-| `benchmarks/genesis_lite/v0_3/evaluator.py` | **Pair rule (d').** The BRACKET route also requires `max(\|A\|,\|B\|)/min(\|A\|,\|B\|) <= 1 + w` at every outside-box evaluation point. A non-finite value, a zero or a sign change fails closed. The pass route is unchanged. **`w` has no default:** `PAIR_BOUND = "OWNER_DECISION_REQUIRED"`, scoring refuses without an explicit `PairBound`, and `evaluate_campaign` refuses any bound other than the preregistered one. Standard library only. The credit table is unchanged; the schema moves to `/3`. |
-| `benchmarks/genesis_lite/v0_3/analysis.py` | **FDA-06.** The cap covers every kind whose positive credit can come from a law or a law pair: discoverable, spurious_correlate, confounded and indistinguishable. It applies per universe, and a VALID record missing the flag is refused. **O-1.** A one-sided paired sign-flip p: exact integer enumeration when cheap, else Monte-Carlo `(b+1)/(M+1)` with M = 19,999 from a fixed SHAKE-256 stream. The bootstrap gives the lower bound only; Holm is unchanged. **D-09.** Records must carry `tier = formal` and the preregistered root commitment. While v0.3 is a DRAFT, `lift_decision` claims nothing. |
-| `benchmarks/genesis_lite/v0_3/formal.py` | **P-4.** The driver accepts only the committed v0.3 bytes that the code rebuilds. It refuses: a non-FROZEN document; any `OWNER_DECISION_REQUIRED`; a root that does not match the commitment; a retired root (every pilot or formal commitment of another committed preregistration, including the v0.2 pilot root, which its summary revealed); a changed environment. It runs world-set-major (OBS-04) with tier-tagged masters, and reads the root from stdin, never argv. A record from another identity is marked INVALID, never relabelled. The log is hash-chained and refuses an existing file. |
-| `benchmarks/genesis_lite/v0_3/environment.py` | **P-5.** Run in a fresh `-I` interpreter, it records the interpreter and every third-party distribution behind the modules a formal run imports. Unclaimed modules are listed, never dropped. It provides a digest and a difference report. |
-| `benchmarks/genesis_lite/v0_3/preregistration.py`, `preregistration/genesis_lite_v0_3.json` | The DRAFT identity, built from code. It amends v0.2 by digest and pins the reused v0.2 files (the build refuses if one changed). It lists every open decision. |
-| `tests/genesis_lite/test_genesis_lite_v0_3_amendment.py` | 66 tests. Each defect is pinned twice: on frozen v0.2, where the defect stays, and on v0.3, where it must be gone. |
-
-## 3. Evidence (executed in this session, Windows `.venv` CPython 3.14.2, numpy 2.5.2)
-
-### Failing-first
-
-The stage-1 stubs exposed the v0.3 API but kept the unrepaired v0.2 behaviour. On the FDA-05/06/O-1 subset of the
-first test version: **35 failed, 12 passed.** The failures were the defects themselves:
-
-- **FDA-05:** the vacuous pair scored `('indistinguishable_hit', 1.0)` for both mutually exclusive truths. An escrow
-  that still credits it produced `VALID`, not `EVALUATOR_DISAGREEMENT`.
-- **FDA-06:** `KeyError` and "did not raise" on spurious_correlate and confounded. No per-kind flag was read.
-- **O-1:** under the sign-symmetric null, the v0.2 bootstrap fraction (2,000 resamples, `Random(0)`) rejects more often than alpha.
-
-The O-1 rates come from enumerating every sign pattern of a fixed magnitude vector (the p-function is v0.2's bootstrap):
-
-| Magnitudes | v0.2, α = 0.01 | v0.2, α = 0.05 | v0.3, α = 0.01 | v0.3, α = 0.05 |
-|---|---|---|---|---|
-| Six differences | 1/32 | 5/64 | 0 | 1/32 |
-| Eight, skewed, with zeros | 1/32 | 7/64 | 0 | 1/64 |
-
-This shows the fraction is not a p-value at small n. It says nothing about the formal sizes (600 / 2,400 world sets),
-where the audit expects approximate calibration (UNVERIFIED).
-
-### After the repair and the review fixes
-
-- 66/66 v0.3 tests pass.
-- `tests/genesis_lite`: 160 passed.
-- Sign-flip timing: 0.04 s for 600 world-set differences, 0.11 s for 2,400 (Monte-Carlo path).
-- FAST tier: see PROGRESS. The comparison was made against pristine `origin/main` on the pre-review code; the review
-  fixes touch only `v0_3/**` and its test file.
-
-### Not executed
-
-- any generator, pilot or formal-grid world, or any real arm under v0.3;
-- the escrow half and the isolation probe;
-- a null-calibration study;
-- Linux, 3.11 or 3.12;
-- the SCIENTIFIC tier.
-
-## 4. Independent review (2026-10-19, static, read-only reviewer agent; no code executed)
-
-The reviewer found no BLOCKER. It confirmed three things:
-- the pair-rule equivalence;
-- the sign-flip DP and the Monte-Carlo bit handling;
-- the cap mechanics.
-
-Dispositions of its findings:
-
-| # | Finding | Disposition |
+| Branch | Contains | Certified files |
 |---|---|---|
-| 1 MAJOR | The FDA-06 cap missed `indistinguishable`. FDA-05 removes a monomial baseline's bracket route on rival truths (outside the family), while a richer grammar keeps the pass route. | **Fixed.** Capped kinds are now derived from a positive `law_pass` **or** `indistinguishable_hit`. Tests added. |
-| 2 MAJOR | The pass route credits a passing law with an arbitrary in-box-agreeing partner: +1.0, where the law alone earns 0.0. | **Not changed. It is a scientific design question: new ODC-05d.** It is a v0.2 property, and the draft neither adds nor removes it. |
-| 3 MAJOR | `w` was taken from the caller. With `w = 1e31` the vacuous pair is credited again. | **Fixed.** `evaluate_campaign` requires `expected_pair_bound` from the preregistration and refuses anything else. Tested. |
-| 4 MAJOR | The driver accepted any dict labelled FROZEN. | **Fixed.** `committed_identity_problems` requires the committed bytes, a matching digest file and a code rebuild. Tested. |
-| 5 MAJOR | D-09 binding and "one attempt" were label checks: a second `--out` with the same root was possible, and the log chain had no external anchor. | **Partly addressed.** The overstatement is corrected in code docs and here. A used-root registry, a published head hash and a post-reveal master/key recomputation are **not drafted**; they are a freeze prerequisite (§6). |
-| 6 MAJOR | PROGRESS had no entry for the cited evidence. | **Fixed.** PROGRESS entry written with commands and results. |
-| 7 MINOR | O-1 figures were inconsistent between the record and the tests. | **Fixed.** Recomputed exactly (§3). An earlier draft of this record had swapped 5/64 and 7/64. |
-| 8 MINOR | The retired-root list was narrow. | **Widened** to every pilot or formal commitment of another committed preregistration. A root revealed anywhere else remains the operator's responsibility (fresh root at freeze). |
-| 9 MINOR | "Honest pair untouched (tested)" overstated the test. | **Reworded.** It is an argument from the rule plus a synthetic honest pair; it was not tested on `universe._rival` worlds. |
-| 10 NOTE | Monte-Carlo validity with one fixed public stream | **Stated.** The guarantee holds over random streams; for the fixed stream the size is approximately α. The exact path is exact. |
-| 11 NOTE | The freeze path failed on a status note containing the ODR literal, and on serialising a `PairBound`. | **Fixed.** Both are handled. |
-| 12 NOTE | The manifest records import-time modules only, and the driver trusts a caller-passed manifest. | **Recorded.** `main` measures the manifest itself. Lazily imported modules are a known gap (§6). |
+| `feat/genesis-lite-v03-amendment-draft` | the v0.3 package (`benchmarks/genesis_lite/v0_3/`), tests, the DRAFT preregistration, docs | none touched |
+| `feat/genesis-lite-v03-escrow-fda05`, stacked on the draft | adds `src/engcore/blindfold/pair_bound.py`, its tests and the regenerated preregistration | one NEW file (`certified:verdict_authority`); `escrow.py`, `roles.py` and `__init__.py` are byte-identical to `origin/main` |
 
-## 5. Decisions the owner must take
+- Base: `origin/main` `8ec97064`. Nothing is pushed.
+- The exact tips and every command are in `docs/work/PROGRESS.md`, entry "2026-10-20 — BR-MIND-02B".
+- The gate: `python -m benchmarks.genesis_lite.v0_3.readiness`. It runs the v0.3 test files itself, binds the result
+  to the clean HEAD, and exits 0 only on PASS.
 
-Each row states what the draft assumes. *Recommended* repeats the audit's recommendation; it is not an approval.
+Because the escrow half is a NEW module, v0.2's pinned substrate does not move. v0.2 still rebuilds and still runs as
+its own identity; a test checks this.
 
-### ODC-05a — form and scope of the informativeness bound
+## 1. Blocker closure
 
-- **Question.** Which form: (i) a ratio cap; (ii) graded credit by log-width; (iii) no bracket credit. **And which
-  scope:** the bracket route only, or every hit.
-- **Drafted as.** (i), bracket route only.
-- **Notes.** Scope is a new sub-question.
-  - The generator's honest rival is `law·(1 + 0.5σ (g/g_max)^m)`, with m in [3, 4.5]. The region is pushed until 90 %
-    of points differ by more than 3·tol. Its ratio is therefore unbounded by design, so a cap on every hit would score
-    correct (law, rival) pairs as misses.
-  - Sign changes and zeros fail closed.
+"P-1/P-2/P-3" names two different lists in this repository: the pilot findings (`docs/discovery/GENESIS_LITE_V0.md`
+§7) and the readiness-review isolation items (quoted in the closure plan and in X3). Both lists are covered below.
 
-### ODC-05b — the value and form of `w`
+| Blocker | Original finding | Status | Evidence (exact tests named in `readiness.REQUIRED_TESTS`) |
+|---|---|---|---|
+| FDA-05 evaluator half | R-05 | FIXED_AND_TESTED | The bracket route is bounded by w; w is bound to the preregistration |
+| FDA-05 escrow half | R-05 | FIXED_AND_TESTED; **UNCERTIFIED (OD-3)** | `pair_bound.py` runs `EscrowService._score`'s own code with only `_assess_pair` bounded; the config digest seals w. Failing-first on an unbounded stub: 10/16 failed, including an end-to-end `EVALUATOR_DISAGREEMENT`. The evaluator and the escrow agree on 40/40 synthetic cases |
+| FDA-06 | R-06 | FIXED_AND_TESTED | Caps discoverable, spurious, confounded and indistinguishable |
+| O-1 | static | FIXED_AND_TESTED | Sign-flip p; the bootstrap is used only for the bound |
+| **FDA-18** | D-03 | FIXED_AND_TESTED (process memory, temp files, bytecode cache) + OWNER (residual) | One process, temp directory and pycache per card. v0.2 carries state across cards (pinned). The residual is measured: same-account files beside the temp directory → D5 |
+| **FDA-21** | E-07 | FIXED_AND_TESTED | `<name>_dof` arms are added beside the unchanged v0.2 arms. Residual variance: v0.2 2/6 σ², v0.3 1.0 σ². `careful` (certified) keeps ddof = 0, a documented exception |
+| **FDA-22** | D-07 | FIXED_AND_TESTED (declare and measure) | The tell is reproduced and declared, and `law_form` is recorded and re-derived. Equalising the priors is a D3 option (certified `universe.py`) |
+| FDA-19 | D-05 | FIXED_AND_TESTED (benchmark side) | `secret_scan.py` (streamed; wrapped and UTF-16 hex). It does not detect encoded copies or raw secrets inside large binary files (stated limits) |
+| **pilot P-1** (always_law) | §7 | NOT_A_REAL_BLOCKER | Solved by the v0.1 joint endpoint; proven on v0.3 |
+| **pilot P-2** (control cells) | §7 | FIXED_AND_TESTED | CONTROL_SOLVED cap: a control cell that a registered arm already solves cannot carry a gain. The lift is labelled JOINT_BENCHMARK_LIFT, never a discovery lift |
+| **pilot P-3** (out-of-family share) | §7 | FIXED_AND_TESTED | FDA-06 cap |
+| **readiness P-1/P-2** (isolation deployment, out-of-process escrow) | readiness §2 | OWNER_DECISION_REQUIRED (D5 / OD-20) | Needs a chosen deployment. The certified `escrow_server.py` exists; wiring it follows the D5 choice |
+| **readiness P-3** (attack arms) | §2 | FIXED_AND_TESTED | Seven channels, run through the harness's per-card processes. A channel that cannot be tested reports UNTESTABLE, never a vacuous REFUSED. On this same-account host the suite is NOT verified |
+| **v0.3 harness** | — | FIXED_AND_TESTED | `bind()` refuses: the v0.2 prereg, a dict that only says FROZEN, a changed w, a changed credit table, a changed environment, a modified evaluator, a formal binding of a DRAFT, a missing escrow half. Formal lockdown: no hooks, extra paths or caller arm specs. Records carry their sealed proposals |
+| **escrow FDA-05 agreement** | — | FIXED_AND_TESTED | The escrow and the evaluator apply the same bracket identity and w, bound the same hits, give the same credit and refuse the same inputs. Any disagreement makes the run INVALID |
+| **one attempt per root** | review | FIXED_AND_TESTED | The registry (nonce, time, chained, self-digest) admits the attempt before the first world. The admission is published to the evaluator's `EvaluatorInbox`, which refuses a second admission. Masters mix in the nonce |
+| post-reveal verification | review | FIXED_AND_TESTED | `verify_attempt` reads the whole published log and requires exactly the expected runs. It re-derives keys, shown cards, kind, law form and the searched-family flag, re-scores every sealed proposal, replays every registered arm, and re-derives screens. `lift_decision` requires a clean verification |
+| P-4 driver / P-5 manifest | readiness | FIXED_AND_TESTED | The candidate runs inside the attempt. Its code is pinned statically: the module, parent packages, first-party imports and dynamic-loading calls; candidate code never runs on the operator's side. The manifest records every installed distribution. The driver refuses a dirty checkout |
 
-- **Question.** The value of `w`, and whether it is absolute or a multiple of `tol`.
-- **Drafted as.** No value: `OWNER_DECISION_REQUIRED`. Once decided, the value is bound into the evaluator (and, per
-  §6, into the escrow config).
-- **Notes.**
-  - `w ≤ tol` is option (iii).
-  - **Threshold gaming.** An uninformed pair with spread just under 1 + w hits whenever the in-box fit extrapolates
-    to within about w of the truth. Measuring that rate on generator, pilot or formal worlds would be tuning, which is
-    forbidden. A synthetic study needs its own approval.
+## 2. Hostile reviews (five static rounds, read-only reviewer agents; none executed code)
 
-### ODC-05c — retroactivity
+| Round | BLOCKER | MAJOR | Disposition |
+|---|---|---|---|
+| 1 (first draft) | 0 | 6 | 4 fixed; the pass route → D1; the evidence record written |
+| 2 | 1 (the candidate could not run inside the attempt) | 7 | all fixed or routed (§1) |
+| 3 | 1 (a fix imported candidate code as the operator) | 2 | fixed (static pinning; whole-log verification and replay) |
+| 4 | 0 | 2 | fixed (sealed proposals re-scored, key fields re-derived, replay wired; CPython resolution) |
+| 5 | 0 | 1 (screened world sets unverifiable) | fixed: the screen is re-derived. MINORs fixed: package markers pinned, per-card pycache, call-site dynamic screen, `import *`, bound validation, verification required by `lift_decision` |
 
-- **Question.** Apply the rule to v0.3 only, never retroactively?
-- **Drafted as.** v0.3 only.
-- **Notes.** The v0.2 tests still pin the v0.2 behaviour.
+**Residual limits, routed to governance rather than code:**
 
-### ODC-05d (new) — the pass route
+- **Operator honesty.** The operator holds the root, the escrow and the inbox file. It could fabricate a candidate's
+  proposals together with a consistent log before publishing. Only the OD-20 separation and an external evaluator
+  that receives the admission before the first world (D5, D6) close this.
+- **Behaviour versus bytes.** Static pinning proves which bytes run, not what they do. Code reached through attribute
+  tricks or through pinned helpers is covered by the evaluator's review of the candidate's source (D6).
+- **Untested defects.** The gate is only as strong as its named tests. A defect no test exercises can pass it, which
+  is why every BLOCKER and MAJOR above has a named test.
+- **Replay environment.** Replay assumes the evaluator's machine matches the formal environment (D7).
 
-- **Question.** Keep v0.2's +1.0 for a passing law with an arbitrary partner? Or constrain the partner (for example
-  require it to pass on the in-box data within σ and be admissible by the same family)? Or score a pass-route pair at
-  the `law_pass` credit?
-- **Drafted as.** Kept, as in v0.2.
-- **Notes.** Review finding 2. In an INDISTINGUISHABLE world, (L, J) with any diverging J weakly dominates L alone.
-  This is exploitable with the kind tell (FDA-22, `region_tell`), and interacts with FDA-18.
+## 3. The owner's decisions (the smallest coherent set)
 
-### ODC-06a — which contract governs the cap
+Earlier IDs fold into these:
 
-- **Question.** Genesis §10.5 rule 4, or the v0.2 "discoverable only" wording?
-- **Drafted as.** §10.5 (*recommended*).
+| Decision | Absorbs |
+|---|---|
+| D1 | ODC-05a/b/c/d |
+| D2 | ODC-O1a/b |
+| D3 | ODC-06a/b, FDA-21, FDA-22, FDA-18, pilot P-2 |
+| D4 | OD-19 |
+| D5 | OD-20 |
+| D6 | OD-8 |
+| D7 | OD-18 |
 
-### ODC-06b — which kinds are capped
+As far as the live documents show, none of them was decided elsewhere. No threshold below is chosen on the owner's
+behalf.
 
-- **Question.** Which kinds the cap covers.
-- **Drafted as.** discoverable + spurious_correlate + confounded (*recommended*), **plus indistinguishable** (review
-  finding 1), all derived from the frozen table.
-- **Notes.** The cap uses the arms' actual searched family (`in_monomial_family`), not library reach (BVB handoff §4).
+| ID | Exact choice | Option A | Option B | Recommended | Scientific consequence |
+|---|---|---|---|---|---|
+| **D1-scoring** | The bracket bound, w, and the pass route | (i) ratio cap on the bracket route only. The owner sets w a priori (absolute, or a multiple of tol). v0.3 only. Pass route kept. | (iii) no bracket credit (w at most tol); pass-route pairs scored at the kind's `law_pass` value | A on the form (the audit's recommendation). **No recommendation on w**: it is the owner's. The pass route needs a deliberate choice. | A credits an honest spread up to w, and a pair just under w can be gamed. B is strictest: INDISTINGUISHABLE then rewards only "contains the truth" or refusal. |
+| **D2-significance** | The O-1 route | Sign-flip p, as drafted. Null = exchangeability within a world set. Caps err conservative. With the fixed public stream the size is about alpha. | Defer O-1 until the scoring is frozen (BVB handoff §3). Run a bounded null-calibration and power study first. | A, plus a bounded power study on synthetic records before the formal tier (separate approval) | No power analysis is preregistered, and the caps may leave little claimable region. |
+| **D3-baselines-and-tells** | Comparison set and tells | As drafted: §10.5 governs the cap; four capped kinds; `_dof` arms added; FDA-22 declared and measured; one process per card; CONTROL_SOLVED | As A, plus equalising the generator's form priors and correcting `careful`'s ddof (both certified, OD-3) | A | A measures the tell; B removes it at the cost of certified changes. |
+| **D4-identity-freeze** | OD-19 | Freeze once D1–D3, D5 and D7 are settled. Name the candidate, or NONE for baselines only. The operator generates a fresh root and commits its sha256. | Keep the draft | A, after D5 is verified | Freezing fixes every bound value; a later change is a v0.4. |
+| **D5-deployment** | OD-20 | A container or separate OS account with no operator processes or files, no network, no persistence and a read-only package. Verified by `verify_deployment(deployment_runner(...), scan_findings=secret_scan.scan(...))`: every channel REFUSED, none UNTESTABLE, the scan clean. | A separate host | A, or B where a container cannot hide `/proc` | Until D5 is verified, same-account runs are never formal evidence. |
+| **D6-evaluator** | OD-8 | A named external evaluator. It receives each admission (inbox) before the first world and the heads at the end; it reviews the candidate's pinned source; after the reveal it runs `verify_attempt` and `lift_decision(verification=...)`. | A selection process with a deadline | A | Without it, one-attempt enforcement and record integrity rest on the operator. |
+| **D7-budget-and-machine** | OD-18 | Approve the formal compute and the formal machine (Linux 3.11/3.12, OD-2). The manifest is measured there. | Postpone | A | Per-card processes add a start cost per card (UNMEASURED at formal scale). `_dof` adds 7 arms. Evaluator replay roughly doubles the baseline cost. |
+| **OD-3** | Recertification | Recertify a HEAD with `pair_bound.py` and the new tests (and Batch A per ODC-SQ1) | Hold | A | Until then the escrow half and every v0.3 run are UNCERTIFIED. |
 
-### ODC-O1a — significance procedure
+The approval record is the owner's file,
+`benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.owner_approvals.json`. Each decision needs:
+- `status: APPROVED`;
+- the `choice`;
+- `prereg_sha256` (the preregistration it approves).
 
-- **Question.** Which significance procedure.
-- **Drafted as.** Route B (*recommended*): an exact or Monte-Carlo sign-flip p, the bootstrap for the bound only,
-  Holm unchanged.
-- **Notes.** **Live-document tension, OWNER_DECISION_REQUIRED.**
-  - `BVB_RESUME_HANDOFF_2026_10_19.md` §3 row 2 says "not automatic sign-flip". §4 lists what O-1 depends on: the final
-    scoring, the strongest baseline, multiplicity, a proper null, non-inferiority and repeated submissions.
-  - **Null scope.** The test is valid for exchangeability within a world set; capping makes it conservative. It does
-    not cover a composite null "mean ≤ 0" with an asymmetric difference distribution.
-  - The Monte-Carlo path's size is approximately α for the one fixed stream.
-  - Repeated submissions are **not** limited by anything drafted here (review finding 5).
-  - Choices: B as drafted, B with changes, A, or defer O-1 until the scoring is frozen.
+D1 also names `pair_bound`, and OD-3 names `certified_head`. The gate never writes this file.
 
-### ODC-O1b — null-calibration study
+## 4. The owner's next action
 
-- **Question.** Authorise a bounded, non-formal null-calibration study?
-- **Drafted as.** Not run.
-- **Notes.** Relevant to the composite-null concern, the fixed stream, or route A.
+1. Write the approval record for D1–D7. Option A in each row is the drafted state.
+2. Set `PAIR_BOUND`, `CANDIDATE`, `FORMAL_ROOT_COMMITMENT` (a fresh root) and `ENVIRONMENT_MANIFEST_SHA256` (measured
+   on the D7 machine), and set `STATUS = "FROZEN"`. Regenerate, commit, and rerun the gate.
+3. Run OD-3 on that HEAD.
 
-### OD-19 (v0.3) — approve and freeze
+The gate then reports PASS or names exactly what is still missing.
 
-- **Question.** Approve and freeze the v0.3 identity.
-- **Drafted as.** DRAFT.
-- **Notes.**
-  - Freezing needs every row here decided, the decisions written into `PAIR_BOUND`, `FORMAL_ROOT_COMMITMENT`,
-    `ENVIRONMENT_MANIFEST_SHA256` and `STATUS`, a regenerated digest, and §6 done.
-  - `build()` refuses FROZEN while any `OWNER_DECISION_REQUIRED` remains.
+## 5. Not done, not authorised
 
-### OD-20 — escrow deployment
-
-- **Question.** Choose the escrow deployment, with an independent rerun of the isolation probe.
-- **Drafted as.** Not in scope.
-- **Notes.** The driver cannot verify the deployment. With FDA-19, the probe must cover the Genesis-lite root file,
-  derived masters, run logs and answer keys.
-
-### OD-8 — external evaluator
-
-- **Question.** Name the external evaluator, or a selection process and deadline.
-- **Drafted as.** Open.
-- **Notes.** Needed before Graduation, and before the A1 freeze names its held-out protocol.
-
-### OD-18 — compute budget and formal machine
-
-- **Question.** The formal compute budget, **and the formal machine and interpreter**.
-- **Drafted as.** Open.
-- **Notes.** The chosen machine fixes the manifest digest. Mind, LLM and harness overheads are UNMEASURED.
-
-### OD-3 — recertification after Batch A
-
-- **Question.** Recertify after Batch A: the escrow half of FDA-05 and the FDA-19 probe scope (with FDA-01/02/03 per
-  ODC-SQ1).
-- **Drafted as.** Open.
-- **Notes.**
-  - Until the escrow half lands, a v0.3 run on a gamed pair is `EVALUATOR_DISAGREEMENT` (tested), and no v0.3 harness
-    can be bound.
-  - Landing this package also triggers recertification through `assurance_suites`.
-
-## 6. Specified only, or still to design before a freeze
-
-**Escrow half of FDA-05** (certified, OD-3). In `escrow._assess_pair`:
-- apply exactly (d') with the same `PairBound`;
-- bind `w` into the escrow's `EvaluatorConfig` digest;
-- bump the assessment version.
-
-Tests:
-- the R-05 pair is an escrow miss for both truths;
-- the informative pair still hits;
-- the in-box-disagreeing pair still misses;
-- the agreement test covers the bounded bracket route;
-- a "vacuous pair" attack arm is refused.
-
-**FDA-19 / ODC-BL1** (certified, OD-3). `isolation_probe.scan_for_leaks` matches by content the root hex, every derived
-master, `runs.jsonl` and the answer-key digests, with one planted-artefact test per item.
-
-**One-attempt enforcement** (review finding 5). Needs:
-- an operator-side used-root registry, written before the first world set;
-- a head hash of the run log, published outside the operator's control;
-- a post-reveal recomputation of every master and key digest by the evaluator.
-
-**Also open:**
-- FDA-18 (campaign answer exclusivity);
-- FDA-21 (baseline σ ignores fitted degrees of freedom);
-- FDA-22 (per-kind form-prior tell);
-- P-1 to P-3 (isolation wiring, its harness, attack arms per measured attack);
-- the v0.3 harness binding (`formal.unbound_runner` refuses, citing OD-3);
-- lazily imported modules in the manifest.
-
-## 7. What this package does not do or authorise
-
-- No push, PR or merge.
-- No change to v0/v0.1/v0.2, the certified files, the active epic, certification manifests or historical bundles.
+- No freeze, push, PR, merge, recertification, formal baseline, Mind tier or formal measurement.
+- No change to v0/v0.1/v0.2 or to any existing certified file.
 - No re-scoring of v0.2 records.
-- No pilot or formal run.
-- No root generated or retired.
-- No benchmark freeze.
-- No claim that a Mind lift exists or does not exist.
