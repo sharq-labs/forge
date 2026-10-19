@@ -134,13 +134,18 @@ def test_harness_the_vacuous_attack_never_earns_a_bracket_hit_and_both_sides_agr
             pytest.fail(f"a vacuous pair was credited in {u['kind']}")
 
 
-def test_readiness_with_the_escrow_half_is_pending_owner_only():
-    out = readiness.check()
-    assert out["technical_blockers"] == [] and out["agreement_cases"] > 0
+def test_readiness_with_the_escrow_half_has_no_technical_row_left():
+    rows = readiness.blockers()
+    assert rows["FDA-05 escrow half"][0] == rows["v0.3 harness end to end"][0] == readiness.FIXED
+    prefixes = {p for _s, ps, _n in rows.values() for p in ps}
+    evidence = {"head": readiness._head(), "clean": True, "tests": {p + "x": "passed" for p in prefixes}}
+    out = readiness.check(evidence=evidence)
+    assert out["agreement_cases"] == 40 and out["technical_blockers"] == []
     assert out["status"] == readiness.PENDING_OWNER
-    assert any("OD-3" in r for r in out["owner_and_certification"])
+    assert any("pair_bound.py is certified scope" in r for r in out["owner_and_certification"])
 
 
-def test_environment_manifest_of_this_tree_names_numpy():
-    assert "numpy" in environment.build_manifest()["distributions"]
+def test_environment_manifest_of_this_tree_names_numpy_and_imports_every_probe_module():
+    manifest = environment.build_manifest()
+    assert "numpy" in manifest["distributions"] and manifest["absent_probe_modules"] == []
     assert json.loads(v03p.PREREG_PATH.read_bytes())["escrow_half"]["sha256"] != "NOT_IN_TREE"
