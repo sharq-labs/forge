@@ -7616,3 +7616,77 @@ lambda_min < 0.64; report the lambda band. Implemented failing-first in `D:/forg
   - Neither file references `engcore.mcp`. No failure is attributable to this change.
 - Still open: ODC-04b (move the computation to `engcore.uq`), ODC-14b (label wording), OD-3 recertification
   (certification-pinned files), a supported-Python 3.11/3.12 run, and owner approval to commit.
+
+### 2026-10-19 — BUY-01 pre-PR scientific closure (local, not pushed)
+
+Branch `fix/buy01-fda04-fda14-qmc`: `17e2edd5` (BUY-01 + ODC-04a/14a), then `428993b1` (ODC-14b + ODC-04a wording),
+on base `origin/main` `d3c9cd45`.
+
+**ODC-14b (interval semantics), decided and implemented.** What the code computes, per output quantity: the Hazen
+central quantile range of n equal-weight model outputs over the sample design drawn from the declared inputs, at
+the requested mass. It is not a Bayesian credible interval (there is no posterior), not a confidence interval (no
+repeated-sampling statement) and not a prediction interval (no observation noise).
+
+Each interval record now carries:
+- `requested_central_mass`;
+- `credible_mass`, kept as the /1 field and input-parameter name, an alias in /2;
+- `interpretation`: kind `empirical_central_quantile_interval`, quantile rule `hazen`,
+  `coverage_guaranteed: false` and `coverage_calibrated: false`.
+
+`conditional_on` names the realised finite design, and `does_not_include` says "calibrated coverage of any interval".
+Refusal reasons, the tool description, README.md and docs/mcp/README.md no longer say "predictive interval" or
+"nominal coverage". The public names `credible_mass`, `predictive_intervals` and `predictive_support_not_admitted`
+are kept for compatibility, and their meaning is stated in `interpretation`.
+
+**ODC-04a semantics.** `sample_design` is labelled `role: sampling_design_dependence_diagnostic`,
+`bound_scope: linear_outputs_only`. Its `does_not_establish` lists output accuracy (including for nonlinear outputs),
+calibrated coverage, model validity, and uncertainty beyond the declared inputs. The tool description says the
+diagnostic is not evidence of accuracy, calibrated uncertainty or model validity. The threshold (0.64) and the
+refusal behaviour are unchanged; nothing was retuned. Added `design_sha256` (the exact unit-design bytes) for replay
+identity.
+
+**ODC-04b (move the computation to a UQ-owned module), DEFERRED to its own bounded PR.** Measured:
+`tools.test_impact.classify` gives any new file under `src/engcore/uq/` the class CERTIFICATION_PINNED
+(`certified:predictive_representation`), while `src/engcore/mcp/probabilistic_uq.py` has no recertification reason.
+Moving the code would bring uncertified code into certified scope and add certified-import edges. That is an
+architecture and certification change, separable from the FDA-04/14 numerical claim, and it does not change the
+semantics. Not part of BUY-01.
+
+**Tests.**
+- Failing-first: with the new test file in a temporary worktree at `17e2edd5`, 6 failed and 20 passed. The wording
+  scanner caught "not calibrated coverage" in the old description and "predictive interval" in the old refusal reason.
+- At `428993b1`, `tests/mcp/test_probabilistic_uq.py`: 26 passed.
+- Windows `.venv` Python 3.14.2 (NumPy 2.5.2, SciPy 1.18.1, pint 0.25.3):
+  `python -m pytest tests/mcp/test_server.py tests/mcp/test_probabilistic_uq.py tests/mcp/test_scenario_uq.py -q -n 4`
+  gave 69 passed.
+
+**Supported Python at `428993b1`**, from WSL clean tree `/mnt/d/forge-buy01` (engcore imported from
+`/mnt/d/forge-buy01/src`), using the read-only venvs of `~/forge-hostile-remediation/.forge/venvs`:
+`PYTHONPATH=$WT/src:$WT python -m pytest tests/mcp/test_probabilistic_uq.py tests/mcp/test_server.py tests/mcp/test_scenario_uq.py -q -rfEs -p no:cacheprovider`
+(script `D:/ftmp-buy01/wsl_supported.sh`, logs `D:/ftmp-buy01/supported/`).
+
+| Python | NumPy | SciPy | Pint | pytest | Result |
+|---|---|---|---|---|---|
+| 3.11.17 | 2.4.6 | 1.17.1 | 0.25.3 | 9.1.1 | 69 passed, 0 failed, 0 skipped, exit 0 |
+| 3.12.3 | 2.5.4 | 1.18.1 | 0.26.1 | 9.1.1 | 69 passed, 0 failed, 0 skipped, exit 0 |
+
+The design digests for (n, k) = (32, 10), (32, 17), (64, 17) and (256, 25) are identical on 3.11, 3.12 and Windows
+3.14 (`8c086da7…`, `2155c284…`, `eae91243…`, `9375f59e…`). `lambda_min` differs only in the last place (eigensolver
+rounding), and no admission changed.
+
+R-04 cases (`r04_after.py`) on 3.11 and 3.12:
+- n=4 k=3 and n=32 k=17 are refused by the design guard; the zero-width completed interval no longer occurs.
+- The n=32 k=2 control completes with sd 0.401.
+- Y=X0 realises 0.95 at n=20, 32 and 40, and n=4 at 0.95 is refused for resolution.
+
+**Changed-file gate at `428993b1`** (Windows 3.14.2):
+`python tools/forge_check.py --changed --base origin/main --workers 4` gave 52 failed, 4705 passed, 84 skipped and
+2 errors (exit 1). The identical pytest argument list on a pristine `origin/main` worktree gave 52 failed, 4683
+passed, 84 skipped and 2 errors.
+- The failure and error node sets are identical (54 = 54; `comm` empty in both directions).
+- The +22 passes are the added items: the two changed test files collect 66 items here and 44 on main.
+- The gate's classes: README files doc_only, `probabilistic_uq.py` scientific_shared, `server.py` and both test files
+  certification_pinned. Merge therefore requires OD-3.
+
+**Not done:** OD-3 hardened recertification, the full FAST/SCIENTIFIC tiers on Linux, a push, a PR and a merge.
+Coverage calibration and scientific validation were not run; the guard and intervals are not claimed to give either.

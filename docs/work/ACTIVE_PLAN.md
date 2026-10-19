@@ -6,6 +6,24 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task — BUY-01 MCP UQ repair, FDA-04 / FDA-14 (2026-10-19)
+
+Branch `fix/buy01-fda04-fda14-qmc` (local `17e2edd5`, `428993b1`; base `origin/main` `d3c9cd45`). This is a trust-lane
+repair of the uncertified MCP tool, and it does not expand the active epic. Evidence: PROGRESS 2026-10-19.
+
+- [x] Reproduce FDA-04 and FDA-14 (R-04) on `d3c9cd45`; write failing-first tests; repair the sampler, the quantile
+      rule and the sigma spread units; bump the schemas to /2.
+- [x] Owner: ODC-14a approved (refuse a tail below 0.5/n). ODC-04a approved, Option D (Iman–Conover re-pairing; refuse
+      n <= k or lambda_min < 0.64).
+- [x] ODC-14b: the interval is stated as an empirical central quantile interval at the requested mass, with no
+      guaranteed or calibrated coverage; wording-guard tests added. The ODC-04a guard is labelled a design diagnostic.
+- [x] Targeted tests on Python 3.11.17 and 3.12.3: 69/69 each. The changed-file gate's failure set equals pristine
+      `origin/main`.
+- [ ] Owner: approve push and a Draft PR (not yet authorized).
+- [ ] Owner: OD-3 hardened recertification. `server.py` and both test files are certification_pinned.
+- [ ] ODC-04b, deferred to its own bounded PR: move the computation into a UQ-owned module. Any new
+      `src/engcore/uq/*` file is certification_pinned (`certified:predictive_representation`).
+
 ## Current bounded task — final owner-decision preflight (2026-10-18)
 
 - [x] Analyze D1 gate dependency, D2 OD-31 census and D3 M1A issuance-refusal mismatch; preserve existing evidence and source.
