@@ -13,6 +13,18 @@ rule, restated for this program): every scientific capability the program builds
 `capabilities` array with the 19 maturity gates, enters it at FOUNDATION only when its four FOUNDATION gates PASS with
 repository evidence, and climbs only through those gates.
 
+**Decision OD-CAP-0 (owner, Claude Code session, 2026-10-19: scope accepted as drafted; in force only once this
+change merges):** the program gains three gates, DA-1 (derivative authority), RE-1 (reliability engineering) and IP-1 (generic
+inverse problems), and the scope `src/engcore/quantitative/**` plus four narrowly named touch points. The three
+capabilities were outside `allowed_scope`. Three serial exceptions would trip the Completion Policy's anti-loophole
+rule, and placing the code under `src/engcore/numerical/**` to fit the old scope would be the loophole itself, so the
+program scope is amended instead. The build-first rule, Gate H and the CDAR rule bind the new gates exactly as they bind
+M1-E3. Design: [SCIENTIFIC_CAPABILITY_FREEZE_2026_10_19.md](../work/SCIENTIFIC_CAPABILITY_FREEZE_2026_10_19.md)
+(PROPOSED, static review of `8ec97064`). Owner decisions the gates still need: OD-CAP-1 (layer slot 8 for
+`quantitative` now, one certification ScopeArea at FUNCTIONAL), OD-REL-1 (a rating violation as a failure event),
+OD-REL-2 (OpenTURNS licence and installation), OD-REL-3 (preregistered demonstration inputs), OD-INV-1 (hoist of the
+held-out scorer into `adequacy`). Each is decided before the wave that needs it, and none blocks building.
+
 ## Build-first: gates order DECISIONS, never work
 
 The owner's strategy is to build every foundation first and validate afterwards. The program encodes exactly that:
@@ -50,10 +62,13 @@ itself is re-pointed.
 | E1 | (Precondition, not a ledger `requires`: Phase 3 `pde/nonlinear.py` has landed on `main`.) One nonlinear Forge template: steady `-div(k(u) grad u) = f`, `k(u) = k0 (1 + beta (u - u0))`, 2D affine triangles, P1/P2; admissibility `k(u) > 0` over the admitted range; a FEniCSx Newton path (exact UFL Jacobian) returning per-step Newton histories for `pde.nonlinear.admit_nonlinear_execution`; a manufactured-solution test | `src/engcore/pde/**`, `providers/fenicsx/**` |
 | E2 | Conjugate heat transfer for one pair and one geometry (a planar wall between a solid slab and a laminar channel): a FEniCSx transient-diffusion window session with boundary-trace flux output; an OpenFOAM energy-equation window session (restart per window, interface boundary update, read-back, time-directory snapshot/restore); interface supports as 2D `UnstructuredMesh` surfaces; one declared CHT model with sourced applicability conditions; an end-to-end run | `src/engcore/execution/multiphysics/**`, `src/engcore/coupling/**`, `providers/fenicsx/**`, `providers/openfoam/**` |
 | E3 | (Precondition, not a ledger `requires`: Phase 3 `numerical/moving_mesh.py` has landed on `main`.) 1D transient diffusion on a moving domain `[0, L(t)]` in ALE form with a declared linear mesh-motion law, material velocity 0, vertex-centred FV on `numerical.moving_mesh`, a GCL-consistent time rule, linear solves through `SciPyLinearProvider`; tests for constant-state preservation, GCL, a known moving-boundary solution and rollback | `src/engcore/numerical/**`, one new module under `src/engcore/domains/thermal_models/` named in the E3 PR |
+| DA-1 | A canonical derivative record (of / with respect to / point / units / method / numerical error, schema `quantitative.derivative/1`); a converged finite-difference source over the frozen `hybrid_uq` `central_difference` (read-only); symbolic (SymPy) and closed-form sources; declare-before-compare cross-method verification between different method families; admission of provider-computed derivatives (plus one trailing `derivative_outputs` field on `ProviderCapability`); total derivatives by the chain rule over `SystemExecutionPlan` and by the implicit-function form over `PhysicsGraph` cycles (a missing partial refuses, an IQN approximation is never admitted); a bridge into the frozen supplied-`LocalSensitivity` boundary | `src/engcore/quantitative/{refs,standing}.py`, `src/engcore/quantitative/derivatives/**`, `src/engcore/providers/catalog.py` (one trailing field) |
+| RE-1 | `LimitState` over `ConstraintDefinition` with a cited limit source; `ProbabilisticInputModel` (NORMAL, LOGNORMAL, UNIFORM, TRUNCATED_NORMAL; dependence INDEPENDENT_DECLARED with a basis or GAUSSIAN_COPULA, UNKNOWN refused); per-sample SAFE / FAILED / NOT_ASSESSABLE classification (OD-REL-1); a digest-bound study declaration; crude Monte Carlo with Clopper-Pearson; an OpenTURNS FORM / SORM / importance / subset provider (OD-REL-2) with design-point re-verification and a FORM-versus-Monte-Carlo challenge; calibrated-posterior inputs; one electrothermal demonstration (PWR220T-20 hot-spot limit, inputs preregistered, OD-REL-3) | `src/engcore/quantitative/inputs.py`, `src/engcore/quantitative/reliability/**`, `src/engcore/domains/electrical/reliability_binding.py` |
+| IP-1 | `InverseProblem` composing `CalibrationSpec` / `calibrate` without editing them; typed finite-dimensional targets (PARAMETER, MATERIAL_PROPERTY, INITIAL_STATE, BOUNDARY_VALUE, SOURCE_TERM; FIELD refused); `ObservationBinding` with a unit check before any evaluation; `InverseSolution` keeping optimizer convergence, identifiability, solution uncertainty, held-out adequacy and model discrepancy separate; sealed held-out scoring (scorer hoisted into `adequacy`, OD-INV-1); profile-likelihood and pre-data identifiability; a method boundary | `src/engcore/quantitative/inverse/**`, `src/engcore/adequacy/held_out.py`, `src/engcore/studies/calibration_study.py` (re-exports only) |
 
 Planned capabilities (enter `capabilities` only at FOUNDATION): `numerics.adaptive_mesh_1d_transient`,
 `numerics.triangle_refinement`, `pde.nonlinear_diffusion_fenicsx`, `coupling.cht_fenicsx_openfoam`,
-`thermal.ale_moving_domain_1d`.
+`thermal.ale_moving_domain_1d`, and under OD-CAP-0 `quantitative.derivative_authority`, `quantitative.reliability`, `quantitative.inverse_problems`.
 
 ## Cross-Domain Scientific Architecture Requirements
 
@@ -95,6 +110,9 @@ The evidence is the read-only audit [CROSS_DOMAIN_ARCHITECTURE_AUDIT.md](../work
 | E1 | The nonlinear PDE contract stays generic (`pde/nonlinear.py` already names no physics); `k(u)` diffusion is one template and FEniCSx one provider; nothing in the contract or the provider path assumes a temperature unknown (CDAR-1, CDAR-4). |
 | E2 | The interface admission is a GENERIC Dirichlet-Neumann (intensive / flux-density) admission parameterized by the two dimensions and the sign convention, which the transfer applies; conjugate heat transfer is its instance (CDAR-3). Generalizing `conjugate_interface.py` (Phase 3.5) changes admission semantics in `engcore.execution` and so goes through the A-4 Core review: E2 may be BUILT before it, but is DECIDED only after it. That file's docstring still says real FE / CFD is "BLOCKED by policy (OD-P2-1)"; OD-6 supersedes that on merge. |
 | E3 | Mesh motion stays separate from the physics (`numerical/moving_mesh.py` already is); the ALE transport form is generic in the transported conserved quantity; diffusion is the instance (CDAR-2, CDAR-9). |
+| DA-1 | The derivative record and its assembly name no physics. Units come from `Quantity` division (an affine result unit is refused, an affine variable uses its delta unit). The closed-form thermal partials are a test fixture, not part of the contract (CDAR-1, CDAR-7). |
+| RE-1 | The limit state, input model and sample classifier are generic. A domain supplies only which of its validity conditions are ratings (OD-REL-1), and the demonstration binding lives in `domains/` (CDAR-8, CDAR-10). |
+| IP-1 | Targets are typed by role (initial state, boundary value, source term), never by a physical quantity's name. The thermal reference and the TCR study are instances (CDAR-1, CDAR-7). |
 | DV0 | Unchanged: it never blocks building (build-first) and stays a condition for scientific maturity under the policy. |
 
 ### Architectural fixtures (design probes, not domain support)
@@ -127,6 +145,9 @@ gate.
   change made without its compatibility review;
 - a certified-area change without recertification (OD-3);
 - LLM authority over models, thresholds, evidence or verdicts.
+- FORGE-built adjoint or tangent integrators, FORM/SORM optimizers, MCMC samplers or nonlinear optimizers (DA-1, RE-1 and IP-1 wrap mature providers);
+- a derivative agreement, failure probability or inverse solution treated as a claim, evidence, validation or verdict; field-valued inverse targets;
+- a new provider dependency (OpenTURNS) without its licence and installation owner decision (OD-REL-2).
 
 ## Relationship to the rest of the ledger
 
@@ -136,6 +157,7 @@ gate.
 - EXC-1 (adaptive mesh control) is superseded by this program on merge: its slices 1–4 (including
   `claims/adaptive_resolution.py`, now in `allowed_scope`) and its exit gate (DV-27..DV-30) become part of DV0 and M1.
 - Genesis (`genesis.scientific_reasoning`) is not active; A2 still needs an epic change or an exception.
+- DA-1, RE-1 and IP-1 (OD-CAP-0) add no capability to the ledger. Each of `quantitative.derivative_authority`, `quantitative.reliability` and `quantitative.inverse_problems` enters `capabilities` only when its four FOUNDATION gates pass.
 - Horizontal expansion OUTSIDE `allowed_scope` stays paused.
 
 ## Exit

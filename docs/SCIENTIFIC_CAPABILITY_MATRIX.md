@@ -27,6 +27,9 @@ Stages: FOUNDATION -> FUNCTIONAL -> EVIDENCE_BACKED -> PRODUCTION_READY.
 | engrt.numerical_foundations | E1 | MISSING | - | build per the program contract (E1) now (build-first); decide the gate on executed WSL FEniCSx evidence |
 | engrt.numerical_foundations | E2 | MISSING | - | build the two window sessions per the program contract (E2) now (build-first); decide the gate on an executed coupled run |
 | engrt.numerical_foundations | E3 | MISSING | M1 | build per the program contract (E3) now (build-first); the gate is decided only after M1 PASS |
+| engrt.numerical_foundations | DA-1 | MISSING | - | build per the program contract (DA-1) now (build-first; first package FE-1); decide the gate only on executed evidence for A-D1..A-D11 |
+| engrt.numerical_foundations | RE-1 | MISSING | DA-1 | build per the program contract (RE-1) now (build-first); the engine needs OD-REL-2 and the demonstration OD-REL-3; the gate is decided only after DA-1 PASS, on executed evidence for A-R1..A-R12 |
+| engrt.numerical_foundations | IP-1 | MISSING | DA-1 | build per the program contract (IP-1) now (build-first); the held-out hoist needs OD-INV-1 and OD-3; the gate is decided only after DA-1 PASS, on executed evidence for A-I1..A-I12 |
 
 ## Policy
 

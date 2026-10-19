@@ -40,7 +40,7 @@ def test_active_epic_is_the_engineering_foundations_program_with_every_gate_open
     assert data["active_epic"] == "engrt.numerical_foundations"
     program = _program(data)
     assert program["kind"] == "research_program"
-    assert [g["id"] for g in program["gates"]] == ["DV0", "M1", "M2", "E1", "E2", "E3"]
+    assert [g["id"] for g in program["gates"]] == ["DV0", "M1", "M2", "E1", "E2", "E3", "DA-1", "RE-1", "IP-1"]
     assert all(g["status"] == "MISSING" for g in program["gates"])          # nothing is claimed by the migration
     assert {g["id"]: g["requires"] for g in program["gates"]}["E3"] == ["M1"]
     assert data["policy"]["horizontal_expansion_paused"] is True             # still paused OUTSIDE the program scope
@@ -52,7 +52,8 @@ def test_dv0_gates_no_other_work_and_requires_only_order_decisions() -> None:
     program = _program(maturity.load_ledger())
     requires = {g["id"]: g["requires"] for g in program["gates"]}
     assert all("DV0" not in deps for deps in requires.values())
-    assert requires == {"DV0": [], "M1": [], "M2": ["M1"], "E1": [], "E2": [], "E3": ["M1"]}
+    assert requires == {"DV0": [], "M1": [], "M2": ["M1"], "E1": [], "E2": [], "E3": ["M1"],
+                        "DA-1": [], "RE-1": ["DA-1"], "IP-1": ["DA-1"]}
     assert all("build-first" in g["next_action"] for g in program["gates"] if g["id"] != "DV0")
     # M1 still MISSING (built or not): deciding M2 is refused, leaving M2 MISSING is allowed
     def decide_m2(d):
@@ -230,11 +231,36 @@ def test_the_program_contract_carries_the_cross_domain_architecture_requirements
     for number in range(1, 11):
         assert f"| CDAR-{number} |" in contract, number
     section = contract.split("### Multi-domain acceptance criteria per gate", 1)[1].split("###", 1)[0]
-    for gate in ("M1", "M2", "E1", "E2", "E3"):
+    for gate in ("M1", "M2", "E1", "E2", "E3", "DA-1", "RE-1", "IP-1"):
         assert f"| {gate} |" in section, gate
     assert "### Architectural fixtures" in contract
     assert "tests/architecture/test_cross_domain_fixtures.py" in contract      # a named, test-only location
     assert (maturity.ROOT / "docs/work/CROSS_DOMAIN_ARCHITECTURE_AUDIT.md").exists()
+
+
+def test_the_quantitative_gates_extend_the_program_without_a_capability_or_an_exception() -> None:
+    """OD-CAP-0 (owner, 2026-10-19): derivative authority, reliability and inverse problems enter the program as
+    gates DA-1, RE-1 and IP-1 with the scope src/engcore/quantitative/**, rather than as three exceptions (which the
+    anti-loophole rule forbids) or as code placed under numerical/** to fit the old scope. Nothing is decided and no
+    capability enters the ledger."""
+    data = maturity.load_ledger()
+    program = _program(data)
+    assert any(entry.startswith("src/engcore/quantitative/** ") for entry in program["allowed_scope"])
+    planned = ("quantitative.derivative_authority", "quantitative.reliability", "quantitative.inverse_problems")
+    assert set(planned) <= set(program["planned_capabilities"])
+    assert not {c["id"] for c in data["capabilities"]} & set(planned)       # FOUNDATION gates first (Gate H)
+    gates = {g["id"]: g for g in program["gates"]}
+    for gid in ("DA-1", "RE-1", "IP-1"):
+        assert gates[gid]["status"] == "MISSING" and gates[gid]["evidence"] == [], gid
+        assert "build-first" in gates[gid]["next_action"], gid
+    contract = (maturity.ROOT / "docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md").read_bytes().decode()
+    assert "**Decision OD-CAP-0 (owner" in contract
+    for gid in ("DA-1", "RE-1", "IP-1"):
+        assert f"| {gid} |" in contract.split("## Scope (`allowed_scope` in the ledger)", 1)[1].split("##", 1)[0], gid
+    # requires orders decisions only: deciding RE-1 before DA-1 PASS is refused, building it is not
+    assert any("needs 'DA-1' PASS first" in e for e in _with(
+        lambda d: next(g for g in _program(d)["gates"] if g["id"] == "RE-1").update(
+            status="PASS", evidence=["docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md"])))
 
 
 def test_a_superseded_schema_is_refused_not_read(tmp_path) -> None:

@@ -6,6 +6,25 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task — OD-CAP-0 quantitative scope amendment (2026-10-19)
+
+Branch `governance/od-cap-0-quantitative-scope` (worktree `D:/forge-odcap0`, base `origin/main` `8ec97064`), committed
+locally, not pushed. The reviewed ledger change that the capability freeze
+(`docs/work/SCIENTIFIC_CAPABILITY_FREEZE_2026_10_19.md`, PROPOSED) names as its blocker. It does not change the active
+epic, decide any gate or add any capability.
+
+- [x] Draft: ledger `engrt.numerical_foundations` gains gates DA-1, RE-1 (requires DA-1), IP-1 (requires DA-1), all
+      MISSING; `allowed_scope` gains `src/engcore/quantitative/**` and four narrowly named touch points; three planned
+      capabilities; three prohibitions. Program contract, test pins and the generated matrix follow.
+- [x] Checker and pin tests run (see PROGRESS 2026-10-19, OD-CAP-0 draft).
+- [x] Owner decision OD-CAP-0 (2026-10-19): scope accepted as drafted, including the four touch points. It is in
+      force only once this change merges.
+- [x] Owner: local commit approved.
+- [ ] Owner: push and a Draft PR (not authorized).
+- [ ] Owner: OD-3. The pin edits in `tests/test_capability_completion.py` hit the `assurance_suites` trigger
+      (`tests/**`, certified:harness), which `tools/forge_check.py --changed` reports as RECERTIFICATION_REQUIRED.
+- [ ] Open, decided before the wave that needs each: OD-CAP-1, OD-REL-1, OD-REL-2, OD-REL-3, OD-INV-1.
+
 ## Current bounded task — BUY-01 MCP UQ repair, FDA-04 / FDA-14 (2026-10-19)
 
 Branch `fix/buy01-fda04-fda14-qmc` (local `17e2edd5`, `428993b1`; base `origin/main` `d3c9cd45`). This is a trust-lane

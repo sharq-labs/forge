@@ -911,7 +911,7 @@
     {
       "id": "engrt.numerical_foundations",
       "kind": "research_program",
-      "title": "Engineering foundations: nonlinear PDE, conjugate heat transfer, ALE and adaptive mesh control",
+      "title": "Engineering foundations: nonlinear PDE, conjugate heat transfer, ALE, adaptive mesh control, and derivative, reliability and inverse-problem authority",
       "contract": "docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md",
       "owner": "docs/project",
       "allowed_scope": [
@@ -924,7 +924,11 @@
         "src/engcore/domains/thermal_models/<one new ALE module, named in the E3 PR>",
         "providers/fenicsx/**",
         "providers/openfoam/**",
-        "tests for the above, including tests/architecture/** (cross-domain architectural fixtures; test code only)"
+        "src/engcore/quantitative/** (OD-CAP-0: DA-1 derivative authority, RE-1 reliability, IP-1 inverse problems; it must not import claims, sria, mcp, domains, product or systems)",
+        "src/engcore/providers/catalog.py (DA-1 only: one trailing derivative_outputs field, serialized only when non-empty)",
+        "src/engcore/adequacy/held_out.py and src/engcore/studies/calibration_study.py (IP-1 only: hoist of the held-out scorer with identity-preserving re-exports; OD-INV-1)",
+        "src/engcore/domains/electrical/reliability_binding.py (RE-1 only: the demonstration binding; no new physics, not reachable from claims, SRIA or MCP)",
+        "tests for the above, including tests/architecture/** (cross-domain architectural fixtures; test code only) and the quantitative layer slot in tests/test_core_api_layering.py"
       ],
       "prohibited": [
         "any capability maturity change from a program gate result (Gate H)",
@@ -933,14 +937,20 @@
         "tetrahedral or hexahedral refinement; multi-dimensional or fluid ALE; turbulence models; further nonlinear templates or provider pairs",
         "a shared mechanism that hard-codes one physics's dimensions, units or names (CDAR rule); a Core semantic change without its compatibility review",
         "certified-area change without recertification",
-        "LLM authority over models, thresholds, evidence or verdicts"
+        "LLM authority over models, thresholds, evidence or verdicts",
+        "FORGE-built adjoint or tangent integrators, FORM/SORM optimizers, MCMC samplers or nonlinear optimizers (DA-1, RE-1 and IP-1 wrap mature providers)",
+        "a derivative agreement, failure probability or inverse solution treated as a claim, evidence, validation or verdict; field-valued inverse targets",
+        "a new provider dependency (OpenTURNS) without its licence and installation owner decision (OD-REL-2)"
       ],
       "planned_capabilities": [
         "numerics.adaptive_mesh_1d_transient",
         "numerics.triangle_refinement",
         "pde.nonlinear_diffusion_fenicsx",
         "coupling.cht_fenicsx_openfoam",
-        "thermal.ale_moving_domain_1d"
+        "thermal.ale_moving_domain_1d",
+        "quantitative.derivative_authority",
+        "quantitative.reliability",
+        "quantitative.inverse_problems"
       ],
       "gates": [
         {
@@ -994,6 +1004,34 @@
           "status": "MISSING",
           "evidence": [],
           "next_action": "build per the program contract (E3) now (build-first); the gate is decided only after M1 PASS"
+        },
+        {
+          "id": "DA-1",
+          "title": "Derivative authority: canonical derivative record, converged-FD and analytic sources, cross-method verification, provider derivative admission, total derivatives over SystemExecutionPlan and PhysicsGraph",
+          "requires": [],
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "build per the program contract (DA-1) now (build-first; first package FE-1); decide the gate only on executed evidence for A-D1..A-D11"
+        },
+        {
+          "id": "RE-1",
+          "title": "Reliability: declared limit state, probabilistic input model with declared dependence, per-sample applicability classification, Monte Carlo with Clopper-Pearson, an OpenTURNS FORM/SORM provider under an independent challenge, one electrothermal demonstration",
+          "requires": [
+            "DA-1"
+          ],
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "build per the program contract (RE-1) now (build-first); the engine needs OD-REL-2 and the demonstration OD-REL-3; the gate is decided only after DA-1 PASS, on executed evidence for A-R1..A-R12"
+        },
+        {
+          "id": "IP-1",
+          "title": "Generic inverse problems over the frozen calibration core: typed finite-dimensional targets, observation binding, a five-axis solution, sealed held-out scoring, profile and pre-data identifiability",
+          "requires": [
+            "DA-1"
+          ],
+          "status": "MISSING",
+          "evidence": [],
+          "next_action": "build per the program contract (IP-1) now (build-first); the held-out hoist needs OD-INV-1 and OD-3; the gate is decided only after DA-1 PASS, on executed evidence for A-I1..A-I12"
         }
       ],
       "exit": "every gate is PASS, FAIL or BLOCKED_WITH_EVIDENCE; the owner then names the next epic"
