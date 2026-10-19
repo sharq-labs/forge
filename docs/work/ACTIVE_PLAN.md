@@ -1,5 +1,28 @@
 # Active Plan
 
+## Current bounded task — FAST runtime profiling (2026-10-20)
+
+Owner authorized trying FAST acceleration in this chat. Base: remote main
+`8ec97064c35144405e3eba53a4282e90f8593b1c`; branch `codex/fast-runtime-profile`.
+This is developer-performance work, not scientific measurement or recertification.
+
+- [x] Measure unchanged FAST on supported Python 3.12 in an isolated Linux checkout.
+- [x] Identify dominant costs and try a bounded optimization without removing tests,
+      weakening assertions, changing scientific semantics or modifying frozen artifacts.
+- [x] Compare exact test outcomes and timings; retain only supported improvements.
+- [x] Record commands, failures, environment and limitations in PROGRESS.
+
+Bounded task complete: FAST n=4 measured 794.91s -> 295.49s (one sequential
+before/after pair). All 12,113 original cases retain their outcomes; one added
+regression passes. The same 64 failures and 176 skips remain. Scientific static
+review PASS; 91 targeted tests passed. No integration-readiness claim: SCIENTIFIC,
+FULL, mutation populations and hardened recertification remain NOT RUN.
+
+Owner authorized publishing this bounded change to its branch on 2026-10-20,
+before inspecting further quick performance opportunities. No merge, dependency
+install or hardened recertification is part of this task. Existing scientific
+work and capability maturity remain unchanged.
+
 Active epic: `engrt.numerical_foundations` (research program; OD-6 decided 2026-10-18; in force when branch
 `feat/od6-engineering-program-epic` merges). Earlier entries below that call `battery.thevenin_1rc` the epic, list OD-6
 as open, or list EXC-1 as an open exception are superseded by that decision on merge. The program's gates M1-E3 are
