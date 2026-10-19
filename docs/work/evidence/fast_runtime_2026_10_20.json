@@ -1,0 +1,46 @@
+{
+  "classification": "developer performance telemetry; not certification or physical validation",
+  "baseline_commit": "8ec97064c35144405e3eba53a4282e90f8593b1c",
+  "candidate_measurement_clone_commit": "cc5b7c6ebccdc255f1e17d5f9a3ef14f2f0e3671",
+  "python": "3.12.3",
+  "machine": {
+    "logical_cpus": 20,
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39"
+  },
+  "workers": 4,
+  "baseline_wall_seconds": 794.495,
+  "candidate_wall_seconds": 295.006,
+  "wall_reduction_percent": 62.86874052070812,
+  "speedup": 2.6931486139264966,
+  "baseline_startup_seconds": 18.045,
+  "candidate_startup_seconds": 6.925,
+  "baseline_outcomes": {
+    "failed": 64,
+    "passed": 11873,
+    "skipped": 176
+  },
+  "candidate_outcomes": {
+    "failed": 64,
+    "passed": 11874,
+    "skipped": 176
+  },
+  "common_cases": 12113,
+  "changed_common_outcomes": [],
+  "removed_cases": [],
+  "added_cases": [
+    {
+      "test": [
+        "tests.test_m1c_transient_fv",
+        "test_coordinate_conversion_does_not_revalidate_the_whole_mesh_per_vertex"
+      ],
+      "outcomes": [
+        "passed"
+      ]
+    }
+  ],
+  "source_sha256": {
+    "src/engcore/domains/thermal_models/conduction1d_transient_fv.py": "c4507524acc9fc57635959bfb9a4c3bb202dcd1f0b2309af73764bb0517c3225",
+    "tests/test_m1c_transient_fv.py": "003a10b99537e556d7b6115380a941096a1cb5ca34e87a67eb703103adb5aef3"
+  },
+  "limitation": "One sequential before/after pair; initial startup colder (18.045s vs6.925s); no universal speed guarantee; original64 failures persist; no full assurance or recertification."
+}

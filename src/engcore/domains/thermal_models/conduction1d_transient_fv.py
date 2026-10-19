@@ -311,7 +311,11 @@ class TransientConduction1D:
         if np.any(t <= 0):
             raise NumericalRefusal("initial absolute temperature must be positive")
         self.initial, self.current, self._temperatures = initial, initial, t
-        self._x = np.asarray([_q(Quantity(v,adapter.mesh.grid.unit),"m") for v in adapter.mesh.grid.nodes])
+        # The checked accessor validates the complete mesh lineage. Read it once
+        # for this coordinate conversion, rather than once per vertex. Later
+        # operations still run their existing live state and lineage guards.
+        grid = adapter.mesh.grid
+        self._x = np.asarray([_q(Quantity(v,grid.unit),"m") for v in grid.nodes])
         boundaries = np.asarray([_q(Quantity(v,self.support.intervals.unit),"m") for v in self.support.intervals.nodes])
         self._bounds, self._overlap, self._areas, self._conductivity, cv, resolutions = self._geometry()
         dual_overlap = np.maximum(0,np.minimum(boundaries[1:,None],self._bounds[None,1:])-np.maximum(boundaries[:-1,None],self._bounds[None,:-1]))

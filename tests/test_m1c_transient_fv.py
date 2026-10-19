@@ -77,6 +77,26 @@ def flux(v):return ConductionBoundary(BoundaryKind.INWARD_HEAT_FLUX,Quantity(v,"
 def fixed(v):return ConductionBoundary(BoundaryKind.TEMPERATURE,Quantity(v,"K"))
 
 
+def test_coordinate_conversion_does_not_revalidate_the_whole_mesh_per_vertex(monkeypatch):
+    """Mesh authority checks must not turn coordinate conversion into quadratic work."""
+    original = VertexDualAdapter1D.mesh.fget
+    reads = []
+
+    def checked_mesh(adapter):
+        reads.append(None)
+        return original(adapter)
+
+    monkeypatch.setattr(VertexDualAdapter1D, "mesh", property(checked_mesh))
+    counts = []
+    for cells in (4, 16):
+        reads.clear()
+        run = session(nodes=tuple(np.linspace(0, 1, cells + 1)))
+        assert tuple(run._x) == tuple(np.linspace(0, 1, cells + 1))
+        counts.append(len(reads))
+    assert counts[0] > 0  # still use the checked public mesh boundary
+    assert counts[1] <= counts[0] + 1, counts
+
+
 def advance(s,dt=.1,*,left=None,right=None,q=None,**overrides):
     window=TimeWindow(s.time,TimePoint(s.basis.basis_id,s.time.seconds+Fraction(str(dt))))
     left=left if left is not None else flux(0)
