@@ -7812,3 +7812,25 @@ summary is now tracked so the measurement survives loss of scratch directories.
 Full logs remain at the recorded external evidence paths. Publication does not
 assert merge readiness, successful FAST, certification or scientific validation.
 The 64 baseline failures and remaining integration gates are unchanged.
+
+### Publication confirmed; next quick opportunities inspected
+
+- `git push --set-upstream origin codex/fast-runtime-profile`: SUCCESS; remote
+  `refs/heads/codex/fast-runtime-profile` independently read back with
+  `git ls-remote` at `57651035372acb39d4b95d1135b563cca9a24350`.
+  No PR or merge. Measured source/test bytes are unchanged.
+- Read-only follow-up inspection (NOT IMPLEMENTED / NOT BENCHMARKED):
+  1. MeshVersion1D.to_dict constructs _material and then version_id constructs
+     it again. Candidate: eliminate duplicate serialization within ONE operation,
+     preserving schema, exact canonical bytes, subclass behavior and live tamper
+     detection; do not add a persistent trusted-record cache.
+  2. Current FAST still spends about103s in each of test_m1c_transient_fv and
+     test_core_freeze_v4_manifest. A single manufactured refinement test consumes
+     about70s. Preserve its steps, meshes and assertions; investigate repeated
+     lineage/snapshot work rather than weakening the test or the certificate.
+  3. Existing bounded developer worker selection (6/8) is a configuration trial,
+     not a new implementation. Historical scaling evidence exists, but current
+     n=4 -> n=8 performance and complete outcome equivalence remain NOT RUN.
+- No additional performance claim follows from this static inspection. The only
+  new measured improvement remains the previous n=4 before/after result.
+  No additional tests run for this documentation-only publication record.
