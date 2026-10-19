@@ -20,18 +20,16 @@ This driver:
   driver adds only ``tier``, ``root_commitment_sha256`` and ``world_set_index`` (D-09: the analysis can then require
   the formal commitment);
 * accepts only the COMMITTED v0.3 preregistration bytes that the code rebuilds, never a dict that merely says FROZEN;
-* writes an append-only, hash-chained run log that refuses to open an existing file. That is NOT one-attempt
-  enforcement: a second run into another directory with the same root is possible, and a fully rewritten log still
-  verifies. One attempt needs an operator-side used-root registry, a published head hash and a post-reveal
-  recomputation of masters and key digests (not drafted; independent review 2026-10-19, finding 5).
+* ADMITS the attempt to the operator's attempt registry (:mod:`.registry`) BEFORE the first world is derived: one
+  formal attempt per root, whatever the output directory, run label or preregistration identity, restart-safe;
+* runs every arm through the v0.3 harness only (:func:`.harness.bind` + :func:`.harness.run_one`), never v0.2's;
+* writes an append-only, hash-chained run log that refuses to open an existing file. Its head, with the registry
+  head, is what the external evaluator receives (OD-8); a post-reveal recomputation of masters and key digests is the
+  evaluator's job.
 
-NOT done here, and stated in the decision record:
-
-* The harness binding (:func:`unbound_runner`). ``harness.run_one`` is pinned by v0.2: it scores with the v0.2
-  evaluator and checks the v0.2 identity. A v0.3 harness has to bind the post-Batch-A escrow (the escrow half of FDA-05
-  and the FDA-19 probe scope; certified, OD-3) and the P-1 isolation deployment (OD-20).
-* The OD-20 deployment itself. The driver cannot verify that the operator, escrow and secrets run under another OS
-  account or container. That is a preregistered start condition, checked by the independent isolation probe rerun.
+NOT done here: the OD-20 deployment itself. The driver cannot verify that the operator, escrow and secrets run under
+another OS account or container. That is a preregistered start condition, checked by the deployment attack suite
+(:mod:`.deployment_attacks`) and the independent isolation-probe rerun.
 """
 
 from __future__ import annotations
@@ -47,6 +45,7 @@ from typing import Any, Callable, Mapping, Sequence
 from .. import analysis as v02_analysis
 from .. import arms as arm_module
 from . import environment
+from .registry import AttemptRegistry, campaign_set_sha256
 
 TIER = "formal"
 LABEL = "forge.genesis_lite.v0_3/formal"
@@ -85,18 +84,9 @@ def retired_root_commitments(exclude_identity: str | None = None) -> frozenset[s
 def committed_identity_problems(doc: Mapping[str, Any]) -> list[str]:
     """The document must BE the committed v0.3 preregistration (bytes, digest file) and the code must rebuild it: a
     dict that merely says FROZEN is not a frozen identity."""
-    from .preregistration import PREREG_PATH, build, canonical  # noqa: PLC0415 - preregistration imports this module
+    from .preregistration import canonical, committed_doc_problems  # noqa: PLC0415 - it imports this module
 
-    committed = PREREG_PATH.read_bytes()
-    digest = hashlib.sha256(committed).hexdigest()
-    if identity(doc) != digest:
-        return ["the preregistration given is not the committed genesis_lite_v0_3.json"]
-    problems = []
-    if PREREG_PATH.with_suffix(".sha256").read_bytes().strip().decode() != digest:
-        problems.append("the committed v0.3 digest file does not match the committed preregistration")
-    if canonical(build()) != committed:
-        problems.append("the code does not rebuild the committed v0.3 preregistration")
-    return problems
+    return committed_doc_problems(canonical(dict(doc)))
 
 
 def master_for(root: bytes, presentation: str, campaign_id: str, seed: int) -> bytes:
@@ -140,21 +130,46 @@ def preflight(doc: Mapping[str, Any], root: bytes, manifest: Mapping[str, Any]) 
     return problems
 
 
-def unbound_runner(arm: str, *, master_seed: bytes, campaign_id: str, presentation: str, seed: int) -> Mapping[str, Any]:
-    raise FormalRefused("no v0.3 harness is bound: it needs the post-Batch-A escrow (FDA-05 escrow half, FDA-19 probe "
-                        "scope; certified, OD-3) and the P-1 isolation deployment (OD-20)")
+def harness_runner(doc: Mapping[str, Any], manifest: Mapping[str, Any]) -> Runner:
+    """The only production runner: the v0.3 harness bound to the committed identity in the formal tier."""
+    from . import harness  # noqa: PLC0415 - harness imports preregistration, which imports this module
+    from .preregistration import canonical  # noqa: PLC0415
+
+    try:
+        binding = harness.bind(canonical(dict(doc)), tier=TIER, manifest=manifest)
+    except harness.HarnessRefused as exc:
+        raise FormalRefused(f"the v0.3 harness refuses to bind: {exc}") from exc
+
+    def runner(arm: str, *, master_seed: bytes, campaign_id: str, presentation: str, seed: int) -> Mapping[str, Any]:
+        return harness.run_one(arm, binding=binding, master_seed=master_seed, campaign_id=campaign_id,
+                               presentation=presentation, seed=seed).to_dict()
+
+    return runner
 
 
-def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, Any], runner: Runner = unbound_runner,
-               sink: Callable[[dict[str, Any]], None], arms: Sequence[str] | None = None) -> dict[str, Any]:
-    """Run every registered arm once on every world set of FORMAL_GRID, world set by world set."""
+def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, Any], registry: AttemptRegistry,
+               sink: Callable[[dict[str, Any]], None], runner: Runner | None = None,
+               arms: Sequence[str] | None = None) -> dict[str, Any]:
+    """Run every registered arm once on every world set of FORMAL_GRID, world set by world set. ``runner`` exists for
+    orchestration tests only; production uses :func:`harness_runner`."""
     problems = preflight(doc, root, manifest) + committed_identity_problems(doc)
     if problems:
         raise FormalRefused("; ".join(problems))
+    if not isinstance(registry, AttemptRegistry):
+        raise FormalRefused("a formal attempt is admitted to the operator's attempt registry first")
     names = sorted(arm_module.ARMS) if arms is None else list(arms)
     if sorted(names) != sorted(arm_module.ARMS):
         raise FormalRefused("the formal tier runs every registered arm; a subset is not a formal run")
+    if runner is None:
+        runner = harness_runner(doc, manifest)
     expected, commitment = identity(doc), hashlib.sha256(root).hexdigest()
+    from .registry import AttemptRefused  # noqa: PLC0415
+
+    try:                                                     # consumed here, before the first world is derived
+        attempt = registry.admit(root_commitment_sha256=commitment, prereg_sha256=expected,
+                                 campaign_set_sha256=campaign_set_sha256(plan()), tier=TIER)
+    except AttemptRefused as exc:
+        raise FormalRefused(str(exc)) from exc
     invalid = 0
     for index, (presentation, campaign_id, seed) in enumerate(plan()):
         master = master_for(root, presentation, campaign_id, seed)
@@ -166,9 +181,11 @@ def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, An
                 rec["reasons"] = [*rec.get("reasons", []), f"produced under {str(rec.get('prereg_sha256'))[:12]}..., "
                                                            f"not this identity {expected[:12]}..."]
             invalid += rec.get("status") != "VALID"
-            sink({**rec, "tier": TIER, "root_commitment_sha256": commitment, "world_set_index": index})
+            sink({**rec, "tier": TIER, "root_commitment_sha256": commitment, "world_set_index": index,
+                  "attempt_sha256": attempt["attempt_sha256"]})
     return {"world_sets": len(v02_analysis.FORMAL_GRID), "arms": len(names), "invalid_runs": invalid,
-            "prereg_sha256": expected, "root_commitment_sha256": commitment}
+            "prereg_sha256": expected, "root_commitment_sha256": commitment,
+            "attempt_sha256": attempt["attempt_sha256"], "registry_head": registry.head()}
 
 
 class SealedLog:
@@ -202,6 +219,8 @@ def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Genesis-lite v0.3 formal tier (reads the root, hex, from stdin)")
     p.add_argument("--preregistration", required=True, type=pathlib.Path, help="the FROZEN v0.3 preregistration")
     p.add_argument("--out", required=True, type=pathlib.Path, help="operator-only directory; must not exist")
+    p.add_argument("--registry", required=True, type=pathlib.Path,
+                   help="operator-only attempt-registry directory, outside every run directory")
     return p
 
 
@@ -211,13 +230,15 @@ def main(argv: list[str] | None = None) -> int:
     doc = json.loads(args.preregistration.read_bytes())
     manifest = environment.build_manifest()
     problems = preflight(doc, root, manifest) + committed_identity_problems(doc)
+    if args.registry.resolve().is_relative_to(args.out.resolve()):
+        problems.append("the attempt registry lies inside the run directory")
     if problems:                                             # refused before anything is created
         print("REFUSED: " + "; ".join(problems), file=sys.stderr)
         return 2
     args.out.mkdir(parents=True, exist_ok=False)
     log = SealedLog(args.out / "runs.jsonl")
     try:
-        summary = run_formal(root, doc, manifest=manifest, sink=log)
+        summary = run_formal(root, doc, manifest=manifest, registry=AttemptRegistry(args.registry), sink=log)
     except FormalRefused as exc:
         print(f"REFUSED: {exc}", file=sys.stderr)
         return 2

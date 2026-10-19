@@ -28,6 +28,16 @@ claim harder, never easier.
   the candidate's difference stochastically smaller, so it errs conservative. The test does NOT cover a composite null
   "mean difference <= 0" with an asymmetric difference distribution. Accepting that scope is part of ODC-O1a.
 
+* Pilot P-2 (``docs/discovery/GENESIS_LITE_V0.md``): control cells are solved by arms that discover nothing
+  (``single_setting`` earned 1.00 on confounded). v0.2 capped only cells where ``monomial_enumeration`` reaches full
+  credit (REPRESENTATION_LIMITED). v0.3 also caps every CONTROL cell (a non-discoverable kind, per presentation) in which
+  ANY registered non-adversarial arm reaches full credit with a lower bound >= 0.5 (CONTROL_SOLVED). Such a cell
+  measures classification that a baseline already performs, so a candidate can lose there but never gain. The lower
+  bound is the exact 2.5 % quantile of the binary bootstrap distribution (Binomial(n, p_hat) / n), which is
+  deterministic and needs no resampling.
+* The lift is a JOINT BENCHMARK lift (``claim_scope``), never a discovery-only lift. A discovery-only claim would need
+  its own preregistered endpoint.
+
 The v0.3 identity is DRAFT, so :func:`lift_decision` reports a coverage problem and claims nothing until the owner
 freezes it (OD-19 for v0.3).
 """
@@ -62,6 +72,8 @@ SIGN_FLIP_STREAM = b"forge.genesis_lite.v0_3/sign_flip/1"
 EXACT_WORK_LIMIT = 1_000_000
 _CHUNK = 2048
 SIGNIFICANCE = "paired sign-flip randomisation (one-sided); bootstrap for the lower bound only"
+CLAIM_SCOPE = "JOINT_BENCHMARK_LIFT (all six kinds; never a discovery-only lift)"
+CONTROL_SOLVED_LIMIT = 0.5
 
 if not all(float(x * LATTICE).is_integer() for table in DEFAULT_CREDIT.values() for x in table.values()):
     raise RuntimeError("a DEFAULT_CREDIT value is off the 1/2 lattice: the sign-flip test cannot be exact")
@@ -134,6 +146,36 @@ def sign_flip_p(diffs: Sequence[float], *, exact_work_limit: int = EXACT_WORK_LI
     return {"p": (b + 1) / (resamples + 1), "method": "monte_carlo", "resamples": resamples, "nonzero": len(a)}
 
 
+def binary_lower_bound(hits: Sequence[float]) -> float:
+    """The exact 2.5 % quantile of the bootstrap distribution of a binary mean: the smallest k / n with
+    P(Binomial(n, p_hat) <= k) >= 0.025."""
+    n = len(hits)
+    if n == 0:
+        return float("nan")
+    s = int(round(sum(hits)))
+    total, acc = n ** n, 0                     # P(X = k) = C(n, k) s^k (n - s)^(n - k) / n^n, in exact integers
+    for k in range(n + 1):
+        acc += math.comb(n, k) * s ** k * (n - s) ** (n - k)
+        if 40 * acc >= total:
+            return k / n
+    return 1.0
+
+
+def control_solved(on_grid: Mapping[str, Mapping[WorldSet, Mapping[str, float]]],
+                   arms: Iterable[str]) -> set[tuple[str, str]]:
+    """(control kind, presentation) cells in which some registered non-adversarial arm earns full credit with an exact
+    binary-bootstrap lower bound >= CONTROL_SOLVED_LIMIT (pilot P-2)."""
+    cells = set()
+    for arm in arms:
+        sets = on_grid.get(arm, {})
+        for kind in CONTROL_KINDS:
+            for presentation in PRIMARY_FAMILY[1:]:
+                hits = [1.0 if k[kind] >= 1.0 else 0.0 for w, k in sets.items() if w[0] == presentation]
+                if hits and binary_lower_bound(hits) >= CONTROL_SOLVED_LIMIT:
+                    cells.add((kind, presentation))
+    return cells
+
+
 def holm(raw_p: Mapping[str, float], alpha: float = ALPHA) -> dict[str, bool]:
     """Holm step-down over the given family (the v0.2 procedure, unchanged)."""
     order = sorted(raw_p, key=lambda k: raw_p[k])
@@ -185,7 +227,9 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
     on_grid = {a: {w: k for w, k in sets.items() if w in grid} for a, sets in credits.items()}
     baseline, _scores = strongest_baseline({a: on_grid[a] for a in required if on_grid.get(a)}, roles)
     per_kind = best_per_kind({a: on_grid[a] for a in required if on_grid.get(a)}, roles)
-    limited = representation_limited(on_grid.get(REPRESENTATION_ARM, {}))
+    representation = representation_limited(on_grid.get(REPRESENTATION_ARM, {}))
+    solved = control_solved(on_grid, required)
+    limited = representation | solved
     problems += coverage_problems(rows, candidate, grid, identity=identity)
     for arm in required:
         problems += coverage_problems(rows, arm, grid, comparator=candidate, identity=identity)
@@ -215,7 +259,8 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
              and all(presentations_ok.values()) and all(v["ok"] for v in noninf.values()))
     return {"candidate": candidate, "strongest_baseline": baseline, "shared_world_sets": len(shared),
             "screened_world_sets": len(screened), "coverage_problems": problems,
-            "representation_limited_cells": sorted(limited),
+            "representation_limited_cells": sorted(representation), "control_solved_cells": sorted(solved),
+            "claim_scope": CLAIM_SCOPE,
             "out_of_family_universes": {k: sum(off_family.get((w, k), False) for w in shared) for k in CAPPED_KINDS},
             "primary": tests, "significance": SIGNIFICANCE, "holm_significant": holm_ok,
             "presentation_noninferiority": presentations_ok, "kind_noninferiority": noninf,

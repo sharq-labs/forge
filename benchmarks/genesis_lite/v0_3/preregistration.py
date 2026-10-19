@@ -18,14 +18,18 @@ from typing import Any
 
 from .. import analysis as v02_analysis
 from .. import preregistration as v02
-from . import analysis, environment, evaluator, formal
+from . import analysis, environment, evaluator, formal, registry
+from . import arms as v03_arms
 
 PREREG_SCHEMA = "forge.genesis_lite.preregistration/1"
 BENCHMARK_ID = "genesis_lite.blindfold_l5.v0_3"
 HERE = pathlib.Path(__file__).resolve().parent
 PREREG_PATH = v02.HERE / "preregistration" / "genesis_lite_v0_3.json"
 V0_2_PREREG_SHA256 = "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64"
-V0_3_FILES = ("__init__.py", "analysis.py", "environment.py", "evaluator.py", "formal.py", "preregistration.py")
+V0_3_FILES = ("__init__.py", "analysis.py", "arms.py", "deployment_attacks.py", "environment.py", "evaluator.py",
+              "formal.py", "harness.py", "preregistration.py", "readiness.py", "registry.py", "selfcheck.py")
+#: the certified escrow half of FDA-05 (Batch A, OD-3); pinned by digest when it is in the tree
+ESCROW_HALF = "pair_bound.py"
 ODR = "OWNER_DECISION_REQUIRED"
 
 #: owner-decided values; each stays ODR until the owner decides it (see the decision record)
@@ -37,6 +41,23 @@ DECISION_RECORD = "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md
 
 def _sha(path: pathlib.Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def committed_doc_problems(doc_bytes: bytes) -> list[str]:
+    """Why ``doc_bytes`` is not the committed v0.3 preregistration that this code rebuilds ([] when it is)."""
+    committed = PREREG_PATH.read_bytes()
+    if doc_bytes != committed:
+        return ["the preregistration given is not the committed genesis_lite_v0_3.json"]
+    problems = []
+    if PREREG_PATH.with_suffix(".sha256").read_bytes().strip().decode() != sha256(committed):
+        problems.append("the committed v0.3 digest file does not match the committed preregistration")
+    if canonical(build()) != committed:
+        problems.append("the code does not rebuild the committed v0.3 preregistration")
+    return problems
 
 
 def _v0_2() -> dict[str, Any]:
@@ -93,6 +114,34 @@ def build() -> dict[str, Any]:
         },
         "reused_unchanged_from_v0_2": reused,
         "v0_3_files": {n: _sha(HERE / n) for n in V0_3_FILES},
+        "escrow_half": {"module": "src/engcore/blindfold/" + ESCROW_HALF,
+                        "sha256": (_sha(v02.ROOT / "src" / "engcore" / "blindfold" / ESCROW_HALF)
+                                   if (v02.ROOT / "src" / "engcore" / "blindfold" / ESCROW_HALF).is_file()
+                                   else "NOT_IN_TREE"),
+                        "certification": "new file in certified scope: UNCERTIFIED until OD-3",
+                        "rule": "the escrow applies (d') itself: PairBoundedEscrowService runs the v0.2 escrow _score "
+                                "with _assess_pair replaced by the bounded assessment; BoundedEvaluatorConfig seals w in "
+                                "the config digest declared at campaign creation; escrow.py and roles.py are unchanged"},
+        "harness": {
+            "module": "benchmarks/genesis_lite/v0_3/harness.py", "id": "forge.genesis_lite.harness.v0_3",
+            "procedure": "v0.2 harness._run re-bound to the v0.3 evaluator, the v0.3 config and the bounded escrow; no "
+                         "fallback to v0.2",
+            "binding": "harness.bind refuses: a document other than the committed v0.3 bytes (v0.2 or any dict that says "
+                       "FROZEN), a code tree that does not rebuild it, a credit table, w or environment manifest other "
+                       "than the preregistered one, a formal binding of a non-FROZEN identity, a tree without the escrow "
+                       "half",
+            "proposer": "one fresh isolated proposer process PER CARD (FDA-18); same-account persistent storage remains "
+                        "an OD-20 item",
+            "law_form": "each universe records the generator form of its hidden law (FDA-22)",
+            "arms": "benchmarks.genesis_lite.v0_3.arms (FDA-21), by registry name",
+        },
+        "one_attempt_per_root": {
+            "module": "benchmarks/genesis_lite/v0_3/registry.py", "schema": registry.REGISTRY_SCHEMA,
+            "rule": "a root commitment is admitted to the operator-side registry before the first world is derived; a "
+                    "formal root is consumed by its first admission under any identity; development roots are recorded "
+                    "apart and can never become formal; the registry lives outside every run directory and its head is "
+                    "published to the external evaluator",
+        },
         "evaluator": {
             "schema": evaluator.EVALUATOR_SCHEMA, "credit_digest": evaluator.CREDIT_DIGEST,
             "credit_table": "unchanged (the v0.2 table, same digest)",
@@ -132,6 +181,10 @@ def build() -> dict[str, Any]:
                           "conservative; a composite null 'mean <= 0' with an asymmetric difference distribution is not "
                           "covered (ODC-O1a)",
             "holm": {"alpha": v02_analysis.ALPHA, "family": list(v02_analysis.PRIMARY_FAMILY), "procedure": "unchanged"},
+            "control_solved_rule": "a control cell (non-discoverable kind, per presentation) where any registered "
+                                   "non-adversarial arm earns full credit with an exact binary-bootstrap lower bound >= "
+                                   + str(analysis.CONTROL_SOLVED_LIMIT) + " is capped at the comparator (pilot P-2)",
+            "claim_scope": analysis.CLAIM_SCOPE,
             "record_binding": "every analysed record carries tier 'formal' and the preregistered formal root commitment "
                               "(D-09), in addition to the v0.2 identity binding",
             "bootstrap": f"lower bound only; {v02_analysis.BOOTSTRAP} resamples, Random(0), floor order statistic (unchanged)",
@@ -151,42 +204,48 @@ def build() -> dict[str, Any]:
             "environment_manifest_schema": environment.MANIFEST_SCHEMA,
             "environment_probe_modules": list(environment.PROBE_MODULES),
             "environment_manifest_sha256": ENVIRONMENT_MANIFEST_SHA256,
-            "harness_binding": "NOT BOUND in this draft: harness.run_one is v0.2-pinned (v0.2 evaluator and identity); a "
-                               "v0.3 harness must bind the post-Batch-A escrow (OD-3) and the P-1 isolation deployment "
-                               "(OD-20)",
+            "harness_binding": "formal.harness_runner: the v0.3 harness bound to this identity in the formal tier; "
+                               "refuses without the escrow half (OD-3)",
+            "attempt_registry": "required; admission before the first world (one_attempt_per_root above)",
             "start_condition": "G0 exit (OD-3), OD-20 deployment verified by an independent isolation-probe rerun that "
                                "covers the Genesis-lite secret inventory (FDA-19 / ODC-BL1), OD-18 budget, OD-8 "
                                "evaluator, this identity frozen and approved (OD-19)",
         },
-        "arms": old["arms"],
+        "arms": {name: {**old["arms"][name], "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arms.py re-bound)",
+                        "residual_dof": v03_arms.RESIDUAL_DOF, "replicate_noise": v03_arms.REPLICATE_NOISE}
+                 for name in sorted(v03_arms.ARMS)},
+        "known_structural_tells": old["known_structural_tells"] + [
+            "FDA-22: INDISTINGUISHABLE worlds draw only the power or exp form; every other law-bearing kind draws two-term "
+            "or regime forms 40% of the time (universe.py), so an in-box two-term or regime signature rules out "
+            "INDISTINGUISHABLE; measured per universe as law_form; equalising the priors needs a certified generator "
+            "change (owner option)",
+            "FDA-18: each campaign holds exactly one world of every kind (public mix); with one fresh proposer process per "
+            "card a proposer keeps nothing between cards except what the OD-20 deployment fails to block",
+        ],
         "arms_not_run": old["arms_not_run"],
         "statistics_unchanged_from_v0_2": {k: old["statistics"][k] for k in ("unit_of_analysis",)},
-        "not_in_this_draft": {
-            "FDA-18": "campaign answer exclusivity (randomise the mix or declare it); must be decided before freeze",
-            "FDA-19 / ODC-BL1": "isolation-probe scope over the Genesis-lite secret inventory; certified, OD-3; specified "
-                                "only",
-            "FDA-21": "baseline sigma ignores fitted degrees of freedom; v0.3 design item",
-            "FDA-22": "per-kind form-prior tell; v0.3 design item",
-            "P-1 / P-2 / P-3": "isolation deployment wiring, its harness, and in-repository attack arms per measured attack",
-            "escrow half of FDA-05": "certified engcore.blindfold.escrow; Batch A; OD-3",
+        "open_items": {
+            "FDA-19 / ODC-BL1": "isolation-probe scope over the Genesis-lite secret inventory (certified isolation_probe.py); "
+                                "specified, BLOCKED_BY_OD3",
+            "readiness P-1 / P-2": "the isolation deployment and an out-of-process escrow (OD-20); the deployment attack "
+                                   "suite must report every channel REFUSED there",
         },
         "owner_decisions_open": {
-            "ODC-05a": "form and scope of the informativeness bound: (i) ratio cap (drafted, bracket route only), (ii) "
-                       "graded credit, (iii) no bracket credit",
-            "ODC-05b": "the value of w and its form (absolute or a multiple of tol), justified from the rule's purpose",
-            "ODC-05c": "v0.3 only, never retroactive to v0.2 records (drafted that way)",
-            "ODC-06a": "Genesis section 10.5 rule 4 governs over the v0.2 'discoverable only' wording",
-            "ODC-06b": "the capped kinds: discoverable + spurious_correlate (+ confounded and indistinguishable, "
-                       "drafted)",
-            "ODC-05d": "the pass route: keep v0.2's +1.0 for a passing law with an arbitrary partner, constrain the "
-                       "partner, or score a pass-route pair at the law_pass credit",
-            "ODC-O1a": "significance route B (drafted) including its null scope; or route A",
-            "ODC-O1b": "whether to authorise a bounded, non-formal null-calibration study",
-            "OD-19": "approve and freeze this v0.3 identity",
-            "OD-20": "the escrow deployment (separate OS account / container) and its independent verification",
-            "OD-8": "the external evaluator or its selection process",
-            "OD-18": "the formal compute budget and the formal machine (fixes the environment manifest)",
-            "OD-3": "recertification after Batch A (escrow half of FDA-05, FDA-19 probe scope)",
+            "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d: the bound form (i) on the bracket route only; the value and form of w; "
+                          "v0.3 only; the pass route with an arbitrary partner (keep, constrain, or score at law_pass)",
+            "D2-significance": "covers ODC-O1a and ODC-O1b: sign-flip route B with its null scope and fixed Monte-Carlo stream, or "
+                               "route A, or defer; whether to run a bounded null-calibration study",
+            "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2: section 10.5 governs the cap; "
+                                      "capped kinds; corrected-dof arms as the v0.3 baselines; the form tell declared "
+                                      "(not equalised); one proposer process per card; the CONTROL_SOLVED cap",
+            "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; the operator generates a fresh formal root "
+                                  "and commits it",
+            "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse "
+                             "every channel",
+            "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
+            "D7-budget-and-machine": "OD-18: formal compute (one proposer process per card adds per-card start cost) and "
+                                     "the formal machine, which fixes the environment manifest",
+            "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)",
         },
     }
     if doc["status"] == "FROZEN" and formal._mentions_owner_decision(doc):

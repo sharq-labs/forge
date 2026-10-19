@@ -396,8 +396,13 @@ def test_v0_3_draft_is_exactly_what_the_code_rebuilds():
 
 def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
-    assert set(doc["owner_decisions_open"]) >= {"ODC-05a", "ODC-05b", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "OD-19", "OD-20",
-                                                 "OD-8", "OD-18", "OD-3"}
+    assert set(doc["owner_decisions_open"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells",
+                                                 "D4-identity-freeze", "D5-deployment", "D6-evaluator",
+                                                 "D7-budget-and-machine", "OD-3"}
+    covered = " ".join(doc["owner_decisions_open"].values())
+    for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",
+                  "OD-20", "OD-8", "OD-18"):
+        assert older in covered, older                                     # every scattered question folds into one
     assert doc["evaluator"]["pair_bound"] == "OWNER_DECISION_REQUIRED"
     assert doc["formal"]["root_commitment_sha256"] == "OWNER_DECISION_REQUIRED"
     assert doc["formal"]["environment_manifest_sha256"] == "OWNER_DECISION_REQUIRED"
@@ -424,13 +429,21 @@ def stand_in_accepted(monkeypatch):
     monkeypatch.setattr(formal, "committed_identity_problems", lambda doc: [])
 
 
+@pytest.fixture
+def registry(tmp_path):
+    from benchmarks.genesis_lite.v0_3.registry import AttemptRegistry
+
+    return AttemptRegistry(tmp_path / "attempt-registry")
+
+
 def test_p4_a_document_that_merely_says_frozen_is_refused():
     """Review finding 4: the driver accepts only the committed v0.3 bytes that the code rebuilds."""
     assert formal.preflight(frozen_doc(), FRESH_ROOT, MANIFEST) == []
     assert formal.committed_identity_problems(frozen_doc()) == [
         "the preregistration given is not the committed genesis_lite_v0_3.json"]
     with pytest.raises(formal.FormalRefused, match="not the committed"):
-        formal.run_formal(FRESH_ROOT, frozen_doc(), manifest=MANIFEST, runner=lambda *a, **k: {}, sink=lambda r: None)
+        formal.run_formal(FRESH_ROOT, frozen_doc(), manifest=MANIFEST, runner=lambda *a, **k: {}, sink=lambda r: None,
+                          registry=None)
     committed = json.loads(v03p.PREREG_PATH.read_bytes())
     assert formal.committed_identity_problems(committed) == []      # the draft IS the committed document (then refused
     assert formal.preflight(committed, FRESH_ROOT, MANIFEST)         # as DRAFT by preflight)
@@ -441,7 +454,8 @@ def test_p4_the_driver_refuses_the_committed_draft():
     problems = formal.preflight(doc, FRESH_ROOT, MANIFEST)
     assert any("DRAFT" in p for p in problems) and any("OWNER_DECISION_REQUIRED" in p for p in problems)
     with pytest.raises(formal.FormalRefused):
-        formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=lambda *a, **k: {}, sink=lambda r: None)
+        formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=lambda *a, **k: {}, sink=lambda r: None,
+                          registry=None)
 
 
 def test_p4_the_driver_refuses_a_retired_or_uncommitted_root_and_a_changed_environment():
@@ -453,7 +467,8 @@ def test_p4_the_driver_refuses_a_retired_or_uncommitted_root_and_a_changed_envir
     assert formal.preflight(frozen_doc(), FRESH_ROOT, MANIFEST) == []
 
 
-def test_p4_the_driver_runs_every_arm_once_on_every_formal_world_set_and_releases_world_sets_whole(stand_in_accepted):
+def test_p4_the_driver_runs_every_arm_once_on_every_formal_world_set_and_releases_world_sets_whole(stand_in_accepted,
+                                                                                                    registry):
     doc = frozen_doc()
     identity = formal.identity(doc)
     events, sunk = [], []
@@ -467,7 +482,8 @@ def test_p4_the_driver_runs_every_arm_once_on_every_formal_world_set_and_release
         events.append(("sink", rec["arm"], (rec["presentation"], rec["campaign_id"], rec["seed"])))
         sunk.append(rec)
 
-    summary = formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=runner, sink=sink)
+    summary = formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=runner, sink=sink, registry=registry)
+    assert summary["registry_head"] == registry.head() and len(registry.entries()) == 1
     n_arms = len(arms.ARMS)
     assert summary["world_sets"] == len(v02_analysis.FORMAL_GRID) == 2400
     assert len(sunk) == 2400 * n_arms
@@ -485,7 +501,7 @@ def test_p4_the_driver_runs_every_arm_once_on_every_formal_world_set_and_release
     assert len({r["master"] for r in sunk}) == 2400
 
 
-def test_p4_a_record_under_another_identity_is_invalid_not_relabelled(stand_in_accepted):
+def test_p4_a_record_under_another_identity_is_invalid_not_relabelled(stand_in_accepted, registry):
     doc = frozen_doc()
     sunk = []
 
@@ -493,7 +509,7 @@ def test_p4_a_record_under_another_identity_is_invalid_not_relabelled(stand_in_a
         return {"arm": arm, "status": "VALID", "presentation": presentation, "campaign_id": campaign_id, "seed": seed,
                 "prereg_sha256": V0_2_SHA256, "universes": [], "reasons": []}
 
-    formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=runner, sink=sunk.append)
+    formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=runner, sink=sunk.append, registry=registry)
     assert all(r["status"] == "INVALID_BENCHMARK" and r["prereg_sha256"] == V0_2_SHA256 for r in sunk)
 
 
@@ -507,10 +523,10 @@ def test_p4_the_root_never_travels_on_the_command_line():
     assert not any("root" in o for o in options)
 
 
-def test_p4_the_default_runner_is_not_bound_until_the_escrow_half_lands():
-    with pytest.raises(formal.FormalRefused, match="OD-3"):
-        formal.unbound_runner("careful", master_seed=FRESH_ROOT, campaign_id="gl-formal-0", presentation="anonymous",
-                              seed=0)
+def test_p4_the_production_runner_is_the_v0_3_harness_and_refuses_a_draft_identity():
+    with pytest.raises(formal.FormalRefused, match="FROZEN"):
+        formal.harness_runner(json.loads(v03p.PREREG_PATH.read_bytes()), MANIFEST)
+    assert not hasattr(formal, "unbound_runner")
 
 
 def test_p4_the_sealed_log_is_append_only_and_hash_chained(tmp_path):
