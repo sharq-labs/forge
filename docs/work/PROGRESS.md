@@ -7690,3 +7690,125 @@ passed, 84 skipped and 2 errors.
 
 **Not done:** OD-3 hardened recertification, the full FAST/SCIENTIFIC tiers on Linux, a push, a PR and a merge.
 Coverage calibration and scientific validation were not run; the guard and intervals are not claimed to give either.
+
+## 2026-10-20 — FAST runtime profiling (owner-authorized, in progress)
+
+Base: remote main `8ec97064c35144405e3eba53a4282e90f8593b1c` (checked with
+`git ls-remote origin refs/heads/main`). Managed branch `codex/fast-runtime-profile`.
+Measurements use an independent, self-contained Linux clone at
+`/home/dev_kaeem/forge-fast-runtime-20261020`, initialized from an existing local
+clone plus a local Git bundle; no remote writes or dependency installs.
+Interpreter: `/home/dev_kaeem/forge-hostile-remediation/.forge/venvs/3.12/bin/python`
+(Python 3.12.3, pytest 9.1.1, NumPy 2.5.4, SciPy 1.18.1). Common environment:
+`PYTHONPATH=/home/dev_kaeem/forge-fast-runtime-20261020/src:/home/dev_kaeem/forge-fast-runtime-20261020`,
+`OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1`; bytecode caching enabled.
+Evidence prefix E = `/home/dev_kaeem/forge-fast-runtime-evidence-20261020`.
+These are developer performance diagnostics, not certification or physical validation.
+
+- Command: `python tools/forge_check.py --changed --base HEAD --workers 4`
+  Result: PASS, 94 passed in 3.03s; exit 0. Log: E/initial-changed.log.
+- Command: `python -m pytest -m 'not expensive' -q -n 4 --dist loadfile -p no:cacheprovider -p tools.test_timing --timing-report=E/baseline-n4.json --junitxml=E/baseline-n4.xml --basetemp=E/tmp-baseline-n4 --durations=25`
+  Result: FAIL, 64 failed, 11873 passed, 176 skipped, 2 warnings in 794.91s;
+  exit 1. Checkout stayed clean. The complete failure names are in E/baseline-n4.log
+  and XML. Relevant existing failures include test_core_certificate::test_the_certificate_describes_this_tree,
+  test_phase2_field_transfer, test_phase2_external_coupling, test_phase2_review_regressions,
+  test_phase35_ws2_electrothermal_migration, test_phase35_ws3_conjugate_interface,
+  test_mutation_population_v4::test_every_folded_mutation_still_matches_the_source_it_names
+  and core-freeze v3/v4 tests. No acceptance or new-regression conclusion yet.
+- Measured bottleneck: tests/test_p0_conservation_policy.py consumed 746.875s
+  of test-phase time, dominated by 512-cell cases (85.7–95.1s each).
+- Command: `python -m cProfile -o E/conservation128.prof -m pytest 'tests/test_p0_conservation_policy.py::test_independent_energy_accounting_on_each_mesh[equilibrium-128]' -q -p no:cacheprovider --basetemp=E/tmp-profile128`
+  Result: PASS, 1 passed in 13.47s; exit 0. Profiling adds overhead, so this
+  duration is not compared directly with unprofiled timings. Profile: 136 mesh
+  accessor calls, 7611 version_id calls, 1155584 LineageCell1D.to_dict calls;
+  the sparse provider _execute took about 0.004s cumulative.
+- Added bounded-access regression before implementation change.
+  Command: `python -m pytest tests/test_m1c_transient_fv.py::test_coordinate_conversion_does_not_revalidate_the_whole_mesh_per_vertex -q -p no:cacheprovider --basetemp=E/tmp-failing-first`
+  Result: EXPECTED FAIL, 1 failed in 1.36s, exit 1. Checked mesh accesses grew
+  from 10 (4 cells) to 22 (16 cells). This is a performance regression proof,
+  not a scientific correctness failure.
+- Candidate: obtain the checked adapter.mesh.grid once during coordinate
+  conversion, outside the per-node comprehension. No persistent cache, tolerance,
+  numerical method, mesh size, test tier or assertion removed. Later live guards
+  remain intact. Provider backend implementation digest changes with source bytes
+  by existing design; serialization schemas are unchanged.
+
+Setup failure: a PowerShell here-string piped directly into bash preserved CR in
+one scratch directory name. Renamed that exact task directory, then stripped CR
+at the shell input boundary for subsequent scripts. No scientific run used the
+misnamed directory. A first ACTIVE_PLAN patch failed exact-context matching and
+wrote nothing; retried using the header-only context.
+
+### Candidate verification milestone
+
+- Command: `python tools/forge_check.py --changed --base HEAD --workers 4`
+  Result: FAIL, 11 failed, 2345 passed, 2 skipped in 136.46s; exit 1.
+  The exact 11 FAILED node IDs are a subset of the unchanged FAST baseline's
+  64 failures (set subtraction empty), saved in E/changed-failure-comparison.json.
+  Relevant names: test_core_semantic_invariants::test_every_reader_that_writes_a_schema_also_checks_one;
+  test_electrothermal_vertical::test_l3_no_relaxation_appears_anywhere_in_the_module;
+  test_core_guards::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against;
+  six tests in test_phase2_coupling_authority; and both certificate tests
+  test_the_certificate_describes_this_tree / test_the_certificate_records_the_v1_relationship_truthfully.
+  No new FAILED node ID in this affected selection. Full log: E/changed-after.log.
+- Command: `python -m pytest tests/test_m1c_transient_fv.py tests/test_p0_conservation_policy.py -q -n 4 --dist loadfile -p no:cacheprovider --basetemp=E/tmp-targeted-after --durations=10`
+  Result: PASS, 91 passed in 106.97s, exit 0. Includes the new bounded-access
+  regression, all unchanged 48 global conservation cases and existing stale-state,
+  provider mutation, residual and manufactured-solution checks. No tests removed
+  or moved between tiers. Representative 512-cell energy checks now take about
+  9.9–10.5s (baseline full-run examples 86–95s); these isolated test durations are
+  diagnostic, not a substitute for the full before/after wall-time comparison.
+- Independent read-only scientific review using `.claude/skills/forge-scientific-review/SKILL.md`:
+  PASS (static review only; reviewer ran no tests). No authority weakening found:
+  access stays through the checked public boundary, the local reference is used
+  only during serial conversion, and later storage/lineage/configuration checks
+  remain live. No uncertainty or scientific validation promotion.
+- For a clean-tree full comparison, the TWO candidate code/test files were
+  committed only inside the disposable Linux measurement clone. The managed
+  review worktree remains uncommitted. No remote publication. Exact scratch SHA
+  is in E/candidate-commit.txt; original baseline SHA remains 8ec97064.
+- Full candidate FAST, same n=4 and flags as baseline: IN PROGRESS at this entry.
+  SCIENTIFIC, FULL, mutations and hardened recertification: NOT RUN. The new test
+  is certification_pinned (assurance_suites); integration still needs the normal
+  gates and owner-run recertification. No certificate or frozen artifact changed.
+
+### Completed FAST before/after comparison
+
+- Candidate measurement-clone commit: `cc5b7c6ebccdc255f1e17d5f9a3ef14f2f0e3671`.
+  Managed branch remains `codex/fast-runtime-profile`, uncommitted and unpublished.
+- Command: `python -m pytest -m 'not expensive' -q -n 4 --dist loadfile -p no:cacheprovider -p tools.test_timing --timing-report=E/after-n4.json --junitxml=E/after-n4.xml --basetemp=E/tmp-after-n4 --durations=25`
+  Result: FAIL, 64 failed, 11874 passed, 176 skipped, 2 warnings in 295.49s;
+  exit 1. Candidate measurement checkout stayed clean. Relevant failures are
+  EXACTLY the baseline 64, including the previously named certificate, phase2,
+  phase3.5 and core-freeze failures; no failure repaired or hidden by this task.
+- Automated JUnit multiset comparison: all 12,113 original test cases retain
+  exactly their outcomes, zero removed cases, zero changed common outcomes.
+  Sole addition: test_coordinate_conversion_does_not_revalidate_the_whole_mesh_per_vertex,
+  PASSED. Detailed comparison and file SHA-256 values: E/result.json.
+- Existing timing plugin wall: 794.495s -> 295.006s, a 62.87% reduction / 2.69x
+  speedup in this measured pair, both n=4, loadfile, BLAS threads1. The conservation
+  module's summed phases: 746.875s -> 108.176s. Sparse solve and all original
+  assertions, meshes, tolerances, unknown uncertainty and scientific policies unchanged.
+- Limitation: one sequential before/after pair, not a universal performance guarantee.
+  Initial startup was colder (18.045s vs6.925s), accounting for about11s of the
+  roughly499s wall reduction; most savings are in eliminated per-vertex whole-mesh
+  verification. No n=8 trial was needed after the measured source bottleneck was found.
+- Evidence mirrored to `D:/forge-fast-runtime-evidence-20261020/`: baseline-n4 and
+  after-n4 logs/JSON/JUnit, failing-first, profile, changed gate, targeted log,
+  changed-failure-comparison.json, comparison.txt and result.json. Summarizer is
+  outside the repository. These artifacts are performance diagnostics only.
+- `git diff --check`: PASS (exit0; only CRLF-normalization warning for appended
+  PROGRESS text). SCIENTIFIC / FULL / mutation populations / recertification: NOT RUN.
+  This task is complete as a bounded performance improvement, NOT merge-ready
+  assurance. No frozen artifact, certificate, capability maturity or CI policy edited.
+
+### Branch publication authorized (2026-10-20)
+
+Owner explicitly requested publishing the measured FAST improvement to a branch
+before inspecting further performance opportunities. No additional test run is
+needed for publication: source/test bytes still match the executed candidate
+SHA-256 values in `docs/work/evidence/fast_runtime_2026_10_20.json`. That compact
+summary is now tracked so the measurement survives loss of scratch directories.
+Full logs remain at the recorded external evidence paths. Publication does not
+assert merge readiness, successful FAST, certification or scientific validation.
+The 64 baseline failures and remaining integration gates are unchanged.
