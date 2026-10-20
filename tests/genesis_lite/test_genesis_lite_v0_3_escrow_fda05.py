@@ -134,15 +134,18 @@ def test_harness_the_vacuous_attack_never_earns_a_bracket_hit_and_both_sides_agr
             pytest.fail(f"a vacuous pair was credited in {u['kind']}")
 
 
-def test_readiness_with_the_escrow_half_has_no_technical_row_left():
+def test_readiness_with_the_escrow_half_leaves_only_the_authorised_power_study():
+    """With the escrow half every technical row is closed except the owner-authorised power and null-calibration
+    study (D2, 2026-10-20), which is owed work and keeps the gate technical until it has run."""
     rows = readiness.blockers()
     assert rows["FDA-05 escrow half"][0] == rows["v0.3 harness end to end"][0] == readiness.FIXED
     required = {name for _s, names, _n in rows.values() for name in names}
     assert set(readiness.ESCROW_TESTS["FDA-05 escrow half"]) <= required
     evidence = {"head": readiness._head(), "clean": True, "tests": {name: "passed" for name in required}}
     out = readiness.check(evidence=evidence)
-    assert out["agreement_cases"] == 2 * len(selfcheck.PAIRS) * len(selfcheck.BOUNDS) and out["technical_blockers"] == []
-    assert out["status"] == readiness.PENDING_OWNER
+    assert out["agreement_cases"] == 2 * len(selfcheck.PAIRS) * len(selfcheck.BOUNDS) and len(out["technical_blockers"]) == 1
+    assert out["technical_blockers"][0].startswith("power and null-calibration study (ODC-O1b): " + readiness.PENDING)
+    assert out["status"] == readiness.BLOCKED
     assert any("pair_bound.py is certified scope" in r for r in out["owner_and_certification"])
 
 
