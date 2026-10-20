@@ -8219,3 +8219,6 @@ The first pilot attempt on the draft branch was refused by `bind` (the escrow ha
 `formal.preflight` refuses a FROZEN doc without a positive total_hours. `formal.run_formal` checks the elapsed time before each world set and stops past the cap as BUDGET_EXCEEDED. Test: `test_d7_the_driver_stops_and_invalidates_an_attempt_over_budget`. The test stand-in docs carry a budget.
 
 `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 247 passed.
+
+**Owner decision D6 (2026-10-20, in session).** The evaluator is chosen by a selection process with a deadline of 2026-11-17. The criteria and duties are recorded in the preregistration's `formal.evaluator`. The evaluator's name stays OWNER_DECISION_REQUIRED, so the freeze is refused until someone is named; the readiness ledger row 'external evaluator named (D6)' is OWNER.
+Placement fix found by the D6 test: the D5 deployment, D7 timing pilot, D7 budget and D6 evaluator entries had been written into the preregistration's `analysis` section. They are moved to `formal`, where `formal.budget_hours` reads the budget. The committed DRAFT now gives budget_hours None (the total is due at D4). `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 247 passed.

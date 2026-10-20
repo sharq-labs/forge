@@ -82,6 +82,7 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
                                                    "0.0540 at alpha 0.05, Holm FWER 0.0400"),
     "root grinding before the commitment (review I-1)": (DECIDED, (), "D2b, 2026-10-20: the admission nonce is bound "
                                                                      "into the key"),
+    "external evaluator named (D6)": (OWNER, (), "selection process decided 2026-10-20; the name is due by 2026-11-17"),
     "D2b nonce-bound stream": (FIXED, ("test_d2b_",), "a root ground before the commitment cannot fix the claim's "
                                                       "stream; missing, tampered or foreign admissions are refused"),
     "cap form (ODC-O1b study finding)": (DECIDED, (), "D3b-1, 2026-10-20: cell-level cap"),

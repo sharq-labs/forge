@@ -41,11 +41,17 @@ CANDIDATE = ODR                              # {name, spec, code_sha256} named i
 #: D7 (owner, 2026-10-20): the formal wall-clock cap. Baselines: 72 h (about 1.25 x the ESTIMATED 58 h of the timing
 #: pilot). The candidate's cost is measured by a one-campaign timing at D4 and added before the freeze.
 BASELINE_BUDGET_HOURS = 72.0
+#: D6 (owner, 2026-10-20): the external evaluator is chosen by a selection process; named by the deadline or D6 reopens
+EVALUATOR = ODR
+EVALUATOR_DEADLINE = "2026-11-17"
 CANDIDATE_BUDGET_HOURS = ODR
 TOTAL_BUDGET_HOURS = ODR
 DECISION_RECORD = "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md"
 #: owner decisions taken so far (each also needs its entry in the owner's approval record at freeze)
 OWNER_DECISIONS_TAKEN = {
+    "D6-evaluator": "OD-8; decided by the owner in session on 2026-10-20: a selection process with a deadline of "
+                    "2026-11-17. Criteria: independent of the operator: no access to the operator's machine, the root, the run log or the registry before the reveal; holds the EvaluatorInbox on their own machine; can run formal.verify_attempt and analysis.lift_decision; agrees to publish the verdict whatever it is. The evaluator's name stays OWNER_DECISION_REQUIRED until "
+                    "selected, so the freeze (D4) is refused until then; if nobody is named by the deadline, D6 reopens",
     "D7-budget-and-machine": "OD-18; decided by the owner in session on 2026-10-20: the formal machine is this WSL Ubuntu "
                              "(Linux 6.6 WSL2, Python 3.12 forge venv), where D5 was verified and the environment "
                              "manifest is measured at freeze. A timing pilot measured first (MEASURED 43.5 s per world set "
@@ -278,16 +284,6 @@ def build() -> dict[str, Any]:
                           "only by the percentile-bootstrap lower bound, whose level is approximate. (I-5) the bootstrap "
                           "uses numpy's Generator.multinomial; the numpy version is bound by the formal environment "
                           "manifest (D7)",
-            "budget": {"baseline_hours": BASELINE_BUDGET_HOURS, "candidate_hours": CANDIDATE_BUDGET_HOURS,
-                       "total_hours": TOTAL_BUDGET_HOURS,
-                       "rule": "formal.run_formal checks the elapsed time before each world set and stops past "
-                               "total_hours: BUDGET_EXCEEDED, INVALID, never partially claimed (Genesis section 10.6)"},
-            "timing_pilot": {"evidence": TIMING_PILOT_EVIDENCE, "evidence_sha256": TIMING_PILOT_EVIDENCE_SHA256,
-                             "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are "
-                                       "ESTIMATED from it and exclude the candidate's own cost (D4)"},
-            "deployment": {"decided": "D5 option A1 (owner, 2026-10-20)", "kind": "rootless_namespaces",
-                           "evidence": DEPLOYMENT_EVIDENCE, "evidence_sha256": DEPLOYMENT_EVIDENCE_SHA256,
-                           "rule": "every formal card through isolation.formal_launcher(); refused where unavailable"},
             "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and "
                            "null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result "
                            "is evidence for the owner, never a formal measurement. RAN 2026-10-20: " + POWER_STUDY_EVIDENCE
@@ -311,6 +307,19 @@ def build() -> dict[str, Any]:
         },
         "formal": {
             "driver": "benchmarks/genesis_lite/v0_3/formal.py",
+            "evaluator": {"name": EVALUATOR, "selection_deadline": EVALUATOR_DEADLINE,
+                          "criteria": "independent of the operator: no access to the operator's machine, the root, the run log or the registry before the reveal; holds the EvaluatorInbox on their own machine; can run formal.verify_attempt and analysis.lift_decision; agrees to publish the verdict whatever it is",
+                          "duties": "receives every admission before the first world and the run-log and registry heads at the end; reviews the candidate's pinned source; after the reveal runs verify_attempt and lift_decision(verification=...)"},
+            "budget": {"baseline_hours": BASELINE_BUDGET_HOURS, "candidate_hours": CANDIDATE_BUDGET_HOURS,
+                       "total_hours": TOTAL_BUDGET_HOURS,
+                       "rule": "formal.run_formal checks the elapsed time before each world set and stops past "
+                               "total_hours: BUDGET_EXCEEDED, INVALID, never partially claimed (Genesis section 10.6)"},
+            "timing_pilot": {"evidence": TIMING_PILOT_EVIDENCE, "evidence_sha256": TIMING_PILOT_EVIDENCE_SHA256,
+                             "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are "
+                                       "ESTIMATED from it and exclude the candidate's own cost (D4)"},
+            "deployment": {"decided": "D5 option A1 (owner, 2026-10-20)", "kind": "rootless_namespaces",
+                           "evidence": DEPLOYMENT_EVIDENCE, "evidence_sha256": DEPLOYMENT_EVIDENCE_SHA256,
+                           "rule": "every formal card through isolation.formal_launcher(); refused where unavailable"},
             "grid": {"campaign_ids": list(v02_analysis.FORMAL_CAMPAIGNS), "seeds": list(v02_analysis.FORMAL_SEEDS),
                      "presentations": list(v02_analysis.PRIMARY_FAMILY[1:])},
             "world_sets": len(v02_analysis.FORMAL_GRID),
@@ -371,7 +380,6 @@ def build() -> dict[str, Any]:
         "owner_decisions_open": {
             "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a "
                                   "baseline-only attempt); the operator generates a fresh formal root and commits it",
-            "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
             "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)",
         },
     }
