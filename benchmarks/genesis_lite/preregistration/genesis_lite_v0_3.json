@@ -1,0 +1,562 @@
+{
+ "amends": {
+  "changes": [
+   "pair rule (d'): the bracket route additionally requires max(|A|,|B|)/min(|A|,|B|) <= 1 + w at every outside-box evaluation point; the 'one law passes' route is unchanged (evaluator.py)",
+   "the no-strong-baseline cap covers every kind with a positive law_pass or indistinguishable_hit (discoverable, spurious_correlate, confounded, indistinguishable); which universes are capped is decided per universe (analysis.is_capped / analysis.out_of_family)",
+   "D3b-1 (owner, 2026-10-20): capped universes count per (kind, presentation) cell as min(0, the cell's net difference) in the effect size and the per-kind non-inferiority; the significance test uses the uncapped differences only (P2) (analysis.capped_parts / capped_bootstrap_ci)",
+   "D3b-2 (owner, 2026-10-20): per-kind non-inferiority margin 0.15, every kind required (analysis.KIND_NONINFERIORITY_MARGIN)",
+   "significance: paired sign-flip randomisation p (exact or Monte-Carlo (b+1)/(M+1)); bootstrap for the lower bound only; Holm, alpha and the family unchanged (analysis.sign_flip_p)",
+   "formal driver: world-set-major order, tier-tagged masters, retired-root refusal, root from stdin, identity never relabelled, hash-chained append-only log (formal.py)",
+   "environment manifest measured in a fresh interpreter and committed by digest (environment.py)"
+  ],
+  "identity": "genesis_lite.blindfold_l5.v0_2",
+  "kept": "v0, v0.1 and v0.2 preregistrations and pilot results byte for byte; v0.2 records are never re-scored under v0.3 (ODC-05c)",
+  "preregistration_sha256": "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64",
+  "reasons": [
+   "FDA-05 (deep audit 2026-10-19, R-05 EXECUTED_REPRODUCED; re-reproduced failing-first by tests/genesis_lite/test_genesis_lite_v0_3_amendment.py): a vacuous INDISTINGUISHABLE pair (A/B = 1.3e30 at the region edge) earned +1.0 for two mutually exclusive truths, above the honest refusal (+0.5)",
+   "FDA-06 (R-06 EXECUTED_REPRODUCED): out-of-family spurious_correlate (and, statically, confounded) worlds were not capped at the comparator, against Genesis section 10.5 rule 4",
+   "O-1: the fraction of bootstrap means <= 0 fed Holm as a p-value; under a sign-symmetric null with six world sets it rejects at alpha/5 = 0.01 in 1/32 of the sign patterns and at 0.05 in 5/64 (executed: the sign patterns enumerated exactly, the p-function v0.2's bootstrap with 2000 resamples)",
+   "P-4: no formal-tier driver or fresh-root rule existed; P-5: no environment manifest bound a run"
+  ]
+ },
+ "analysis": {
+  "base": "the v0.2 lift rule (benchmarks/genesis_lite/analysis.py, pinned above) with the changes below",
+  "bootstrap": "lower bound only; 2000 resamples of world sets as multinomial counts from numpy default_rng(0), the capped statistic recomputed per resample, floor order statistic (D3b-1)",
+  "cap_rule": "which universes are capped: a capped kind whose truth is outside the searched family (or whose flag is unknown), and every REPRESENTATION_LIMITED / CONTROL_SOLVED cell; a VALID record without the flag for one of them is refused. How they count (D3b-1): cell-level (D3b-1): a capped (kind, presentation) cell contributes min(0, its summed paired difference) to the effect size and the per-kind non-inferiority, recomputed inside every bootstrap resample; the significance test uses the uncapped differences only (P2)",
+  "capped_kinds": [
+   "confounded",
+   "discoverable",
+   "indistinguishable",
+   "spurious_correlate"
+  ],
+  "claim_scope": "JOINT_BENCHMARK_LIFT (all six kinds; never a discovery-only lift)",
+  "control_solved_rule": "a control cell (non-discoverable kind, per presentation) where any registered non-adversarial arm earns full credit with an exact binary-bootstrap lower bound >= 0.5 is capped (pilot P-2); capped cells count as in cap_rule (D3b-1)",
+  "holm": {
+   "alpha": 0.05,
+   "family": [
+    "pooled",
+    "anonymous",
+    "renamed",
+    "paraphrased",
+    "trap"
+   ],
+   "procedure": "unchanged"
+  },
+  "kind_noninferiority": {
+   "margin": 0.15,
+   "required": "every kind (D3b-2)",
+   "statistic": "the capped statistic of that kind alone, per world set"
+  },
+  "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference), tested on the UNCAPPED differences (D3b-1, P2); a composite null 'mean <= 0' with an asymmetric difference distribution is not covered. Accepted by the owner and stated as the claim's scope (D2, 2026-10-20). Disclosed by the final scientific review (2026-10-20): (I-1) which cells are capped depends partly on registered arms' outcomes, the comparator's included, so the size is conditional on that partition and can exceed nominal slightly; the candidate cannot steer it; an owner option not taken is to derive the cap set from arms other than the comparator or from separate seeds. (I-6) a candidate that gains uncapped but loses in capped cells is stopped only by the percentile-bootstrap lower bound, whose level is approximate. (I-5) the bootstrap uses numpy's Generator.multinomial; the numpy version is bound by the formal environment manifest (D7)",
+  "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result is evidence for the owner, never a formal measurement. RAN 2026-10-20: docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json sha256 9ad27938a5a553ba1f7ee671270c80c607476f2783ef9f80cb7f4ec6cc571939",
+  "record_binding": "every analysed record carries tier and tier_bound 'formal', the v0.3 harness id, the preregistered root commitment, w and environment digest, and ONE attempt digest (D-09); these labels gain authority only through the evaluator's post-reveal verify_attempt",
+  "sign_flip": {
+   "exact_work_limit": 1000000,
+   "lattice": 2,
+   "monte_carlo_p": "(b + 1) / (M + 1); the exact path is exact",
+   "monte_carlo_resamples": 19999,
+   "statistic": "sum over world sets of the paired difference over UNCAPPED kinds only (one-sided, H1 candidate better); capped cells never enter the significance test (D3b-1, P2). They enter the effect size: sum of the uncapped differences + sum over capped (kind, presentation) cells of min(0, the cell's summed difference), per world set",
+   "stream": "SHAKE-256(K || resample index, 8 bytes big-endian), bits in numpy.unpackbits order, K = HMAC-SHA256(revealed formal root, 'forge.genesis_lite.v0_3/sign_flip_stream/' + the preregistration digest + '/' + the admission nonce + '/' + the admission digest) (D2 + D2b): secret from the proposer until the reveal, and not computable at commitment time because the admission is created afterwards, so pre-commit root grinding cannot fix the stream; lift_decision refuses a root whose sha256 is not the commitment and an admission that is tampered, of another root, preregistration or tier, or not the attempt every record carries. Residual (disclosed): whoever runs the registry could generate unpublished admissions and keep one; the evaluator's inbox binds the first published admission, and the worlds mix in the same nonce"
+  },
+  "significance": "paired sign-flip randomisation (one-sided); bootstrap for the lower bound only",
+  "unchanged": "unit of analysis, grid, comparison set, strongest baseline, representation-limited rule, presentation non-inferiority margin, screening and its cap, identity binding: as in v0.2"
+ },
+ "arms": {
+  "always_insufficient": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "floor: blanket refusal (existing)",
+   "observations": "presented card + observe client only",
+   "role": "floor",
+   "stochastic": false
+  },
+  "always_law": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "floor: always proposes (existing)",
+   "observations": "presented card + observe client only",
+   "role": "floor",
+   "stochastic": false
+  },
+  "always_refuse": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "floor: never proposes (existing)",
+   "observations": "presented card + observe client only",
+   "role": "floor",
+   "stochastic": false
+  },
+  "careful": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "experiment selection: random design + replicate/holdout (existing)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": false
+  },
+  "extrapolating_fit": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery that extrapolates outside the query box",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "extrapolating_fit_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "law recovery that extrapolates outside the query box (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "extrapolation_pair": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "indistinguishable answer: fixed rival-pair heuristic",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "extrapolation_pair_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "indistinguishable answer: fixed rival-pair heuristic (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "fit_all_gated": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery: all-variable fit behind the control checks (v0.1)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "fit_all_gated_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "law recovery: all-variable fit behind the control checks (v0.1) (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "greedy_forward": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "variable-primitive selection: greedy forward",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "greedy_forward_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "variable-primitive selection: greedy forward (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "historical_answer": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "adversarial: textbook answer for familiar vocabulary",
+   "observations": "presented card + observe client only",
+   "role": "adversarial",
+   "stochastic": false
+  },
+  "monomial_enumeration": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery: enumeration of the frozen v0 monomial family",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "monomial_enumeration_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "law recovery: enumeration of the frozen v0 monomial family (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "random_structures": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "law recovery: constrained random structures (v0 family)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "random_structures_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "law recovery: constrained random structures (v0 family) (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "single_setting": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "non-discoverer control (existing)",
+   "observations": "presented card + observe client only",
+   "role": "sanity",
+   "stochastic": false
+  },
+  "space_filling": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/arms.py (v0.2, unchanged)",
+   "config": {
+    "lack_of_fit_ratio": 3.5,
+    "occam_slack": 0.05,
+    "precision": 0.02
+   },
+   "family": "experiment selection: space-filling design",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  },
+  "space_filling_dof": {
+   "budget": "the universe's query_budget, enforced by the escrow; one sealed submission",
+   "code": "benchmarks/genesis_lite/v0_3/arms.py (v0.2 arm re-bound: n - p - 1; sqrt(sum(d^2) / (2 m)) over mean-zero replicate log-differences)",
+   "family": "experiment selection: space-filling design (FDA-21: n - p - 1 residual dof)",
+   "observations": "presented card + observe client only",
+   "role": "competence",
+   "stochastic": true
+  }
+ },
+ "arms_not_run": {
+  "bo_botorch": {
+   "family": "experiment selection: BO/BoTorch-only on the same observable",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "discriminating_design": {
+   "family": "competing-mechanism falsification: fixed discriminating-design heuristic",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "full_grammar_enumeration": {
+   "family": "law recovery: enumeration of the full law grammar (exp / two-term / regime forms)",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "llm_ablation": {
+   "family": "AI-proposer contribution: Mind with LLM workers replaced (\u00a78.5)",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "mechanism_enumeration": {
+   "family": "coupled mechanism recovery (G1/G2): structure enumeration in a port grammar",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "pysindy": {
+   "family": "dynamics / inverse identification: PySINDy",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  },
+  "pysr": {
+   "family": "law recovery: PySR symbolic regression",
+   "rule": "status is measured per environment (NOT_AVAILABLE / NOT_INTEGRATED / NOT_APPLICABLE_IN_V0); never substituted; a class without a strong arm supports no lift claim"
+  }
+ },
+ "arms_rule": "v0.3 keeps every v0.2 arm and ADDS the FDA-21 variants (<name>_dof); the strongest baseline is the maximum over all of them; careful (certified engcore baseline) keeps ddof = 0",
+ "benchmark_id": "genesis_lite.blindfold_l5.v0_3",
+ "decision_record": "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md",
+ "escrow_half": {
+  "certification": "new file in certified scope: UNCERTIFIED until OD-3",
+  "module": "src/engcore/blindfold/pair_bound.py",
+  "rule": "the escrow applies (d') itself: PairBoundedEscrowService runs the v0.2 escrow _score with _assess_pair replaced by the bounded assessment; BoundedEvaluatorConfig seals w in the config digest declared at campaign creation; escrow.py and roles.py are unchanged",
+  "sha256": "3477b1f5c1ef4709b8c4fc026be84cddf95d19315f590f2e2865f11f838a7b12"
+ },
+ "evaluator": {
+  "credit_digest": "cfb8d68c3a62b1714e567fc39fcc751a28fcf8f2d3c259982a45a786aff6e12e",
+  "credit_table": "unchanged (the v0.2 table, same digest)",
+  "escrow_half": "REQUIRED before any v0.3 run: engcore.blindfold.escrow._assess_pair must apply the same bound (certified; Batch A; OD-3). Until then the independent evaluator disagrees on such a pair and the run is EVALUATOR_DISAGREEMENT (tested)",
+  "imports": "standard library and the v0.2 evaluator package only; never engcore (tested)",
+  "pair_bound": {
+   "form": "tol_multiple",
+   "value": 3.0
+  },
+  "pair_bound_binding": "evaluate_campaign refuses any bound other than this recorded value",
+  "pair_bound_forms": [
+   "absolute",
+   "tol_multiple"
+  ],
+  "pair_bound_rule": "w is justified from the rule's purpose, never tuned on pilot or formal worlds (ODC-05b); w <= tol is option (iii), no bracket credit at all",
+  "pair_bound_scope": "bracket route only (owner decision ODC-05a); covering every hit would refuse the generator's honest pair, whose ratio grows without limit outside the box",
+  "pair_rule": "v0.2 conditions (a)-(c) unchanged; (d') one law passes, OR the truth is bracketed at PASS_FRACTION of the evaluation points AND at every outside-box evaluation point both laws are finite, non-zero, of one sign and within a factor 1 + w of each other",
+  "pass_route_note": "a passing law paired with any in-box-agreeing, outside-diverging partner earns +1.0 where the law alone earns 0.0 (a v0.2 property kept unchanged by owner decision ODC-05d)",
+  "schema": "forge.genesis_lite.independent_evaluator/3"
+ },
+ "formal": {
+  "admission": "admitted to the attempt registry and PUBLISHED to the external evaluator before the first world; after the reveal the evaluator recomputes every master and answer-key digest (formal.verify_attempt)",
+  "attempt_registry": "required; admission before the first world (one_attempt_per_root above)",
+  "budget": {
+   "baseline_hours": 72.0,
+   "candidate_hours": "OWNER_DECISION_REQUIRED",
+   "rule": "formal.run_formal checks the elapsed time before each world set and stops past total_hours: BUDGET_EXCEEDED, INVALID, never partially claimed (Genesis section 10.6)",
+   "scope": "the cap times the operator's run only (about half of the ESTIMATED 58 h, which counts the evaluator's replay as a second run); the evaluator's replay is budgeted separately; overshoot is bounded by the world set in progress (every arm's cards x the per-card timeout)",
+   "total_hours": "OWNER_DECISION_REQUIRED"
+  },
+  "candidate": "OWNER_DECISION_REQUIRED",
+  "candidate_rule": "the candidate runs INSIDE the admitted attempt, world-set-major, beside every registered arm; its code is pinned by sha256 (its module, its parent packages and every first-party import, read statically; calls and imports of known dynamic-loading names are refused as a static screen); it may not take a registered arm's name. Static pinning proves WHICH bytes run, not what they do: the external evaluator reviews the pinned source before the attempt (D6)",
+  "deployment": {
+   "decided": "D5 option A1 (owner, 2026-10-20)",
+   "evidence": "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json",
+   "evidence_sha256": "519f3669b48b5bd08f79af172af51e590ce7e1432141e96bfc7446edd8c2f0c7",
+   "kind": "rootless_namespaces",
+   "rule": "every formal card through isolation.formal_launcher(); refused where unavailable"
+  },
+  "driver": "benchmarks/genesis_lite/v0_3/formal.py",
+  "environment_manifest_schema": "forge.genesis_lite.environment_manifest/1",
+  "environment_manifest_sha256": "OWNER_DECISION_REQUIRED",
+  "environment_probe_modules": [
+   "benchmarks.genesis_lite.harness",
+   "benchmarks.genesis_lite.arms",
+   "benchmarks.genesis_lite.proposer_host",
+   "benchmarks.genesis_lite.v0_3.analysis",
+   "benchmarks.genesis_lite.v0_3.arms",
+   "benchmarks.genesis_lite.v0_3.evaluator",
+   "benchmarks.genesis_lite.v0_3.harness",
+   "engcore.blindfold.pair_bound"
+  ],
+  "evaluator": {
+   "criteria": "independent of the operator: no access to the operator's machine, the root, the run log or the registry before the reveal; holds the EvaluatorInbox on their own machine; can run formal.verify_attempt and analysis.lift_decision; agrees to publish the verdict whatever it is",
+   "duties": "receives every admission before the first world and the run-log and registry heads at the end; reviews the candidate's pinned source; after the reveal runs verify_attempt and lift_decision(verification=...)",
+   "name": "OWNER_DECISION_REQUIRED",
+   "selection_deadline": "2026-11-17"
+  },
+  "grid": {
+   "campaign_ids": [
+    "gl-formal-0",
+    "gl-formal-1",
+    "gl-formal-2",
+    "gl-formal-3",
+    "gl-formal-4",
+    "gl-formal-5",
+    "gl-formal-6",
+    "gl-formal-7",
+    "gl-formal-8",
+    "gl-formal-9",
+    "gl-formal-10",
+    "gl-formal-11",
+    "gl-formal-12",
+    "gl-formal-13",
+    "gl-formal-14",
+    "gl-formal-15",
+    "gl-formal-16",
+    "gl-formal-17",
+    "gl-formal-18",
+    "gl-formal-19",
+    "gl-formal-20",
+    "gl-formal-21",
+    "gl-formal-22",
+    "gl-formal-23",
+    "gl-formal-24",
+    "gl-formal-25",
+    "gl-formal-26",
+    "gl-formal-27",
+    "gl-formal-28",
+    "gl-formal-29"
+   ],
+   "presentations": [
+    "anonymous",
+    "renamed",
+    "paraphrased",
+    "trap"
+   ],
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+   ]
+  },
+  "harness_binding": "formal.harness_runner: the v0.3 harness bound to this identity in the formal tier; refuses without the escrow half (OD-3)",
+  "master_label": "forge.genesis_lite.v0_3/formal/{prereg_sha256}/{attempt_nonce}/{presentation}/{seed}/{campaign_id}",
+  "order": "world-set-major: every arm runs a world set before any of its records leaves the driver",
+  "retired_root_commitments": [
+   "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",
+   "2ebf31ab09d6a5f12a51156585ab46923b6b62d2c46740967d316ea904666b9d",
+   "b80ae0be4142b504dfe2c3dee90008e32c32fd721fdd130e7787a25a95c94d0a"
+  ],
+  "retired_rule": "these pilot roots (v0, v0.1, v0.2; each revealed with its pilot) are listed here; at run time the driver also refuses any root another committed preregistration names",
+  "root_channel": "stdin only, never the command line",
+  "root_commitment_sha256": "OWNER_DECISION_REQUIRED",
+  "start_condition": "G0 exit (OD-3), OD-20 deployment verified by an independent isolation-probe rerun that covers the Genesis-lite secret inventory (FDA-19 / ODC-BL1), OD-18 budget, OD-8 evaluator, this identity frozen and approved (OD-19)",
+  "timing_pilot": {
+   "evidence": "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json",
+   "evidence_sha256": "3759ff334f690f4d3601b588a4bfb6c9dd71f186975a45d024a8714cb85beb4f",
+   "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are ESTIMATED from it and exclude the candidate's own cost (D4)"
+  },
+  "world_sets": 2400
+ },
+ "harness": {
+  "arms": "benchmarks.genesis_lite.v0_3.arms (FDA-21), by registry name",
+  "binding": "harness.bind refuses: a document other than the committed v0.3 bytes (v0.2 or any dict that says FROZEN), a code tree that does not rebuild it, a credit table, w or environment manifest other than the preregistered one, a formal binding of a non-FROZEN identity, a tree without the escrow half",
+  "formal_lockdown": "a formal run takes no card hook, extra path or caller arm spec; it runs a registered v0.3 arm or the candidate this identity names and records each arm's code digest",
+  "id": "forge.genesis_lite.harness.v0_3",
+  "law_form": "each universe records the generator form of its hidden law (FDA-22)",
+  "module": "benchmarks/genesis_lite/v0_3/harness.py",
+  "procedure": "v0.2 harness._run re-bound to the v0.3 evaluator, the v0.3 config and the bounded escrow; no fallback to v0.2",
+  "proposer": "one fresh isolated proposer process PER CARD with its own working and temporary directory (FDA-18); same-account files elsewhere and helper processes remain OD-20 items (cross_card_state and persistence attacks)"
+ },
+ "known_structural_tells": [
+  "a box-shaped assessment region rules out INDISTINGUISHABLE (Blindfold universe.py docstring)",
+  "an extended region pushed beyond near 0.5 / far 1.3 box spans can only be INDISTINGUISHABLE (_rival pushes the region out by 1.4x); measured per world as region_tell",
+  "the region's extension follows the first dimensionless group, hinting which inputs carry structure",
+  "public ranges identify a world across runs that share a master seed: the formal tier never reuses one",
+  "FDA-22: INDISTINGUISHABLE worlds draw only the power or exp form; every other law-bearing kind draws two-term or regime forms 40% of the time (universe.py), so an in-box two-term or regime signature rules out INDISTINGUISHABLE; measured per universe as law_form; equalising the priors needs a certified generator change (owner option)",
+  "FDA-18: each campaign holds exactly one world of every kind (public mix); with one fresh proposer process per card a proposer keeps nothing between cards except what the OD-20 deployment fails to block"
+ ],
+ "one_attempt_per_root": {
+  "module": "benchmarks/genesis_lite/v0_3/registry.py",
+  "registry_schema": "forge.genesis_lite.attempt_registry/1",
+  "rule": "a root commitment is admitted to the operator-side registry before the first world is derived; a formal root is consumed by its first admission under any identity; development roots are recorded apart and can never become formal; the registry lives outside every run directory and its head is published to the external evaluator"
+ },
+ "open_items": {
+  "FDA-19 / ODC-BL1": "closed on the benchmark side by v0_3/secret_scan.py (proposer-side scan of the root, masters, run log and registry); the certified isolation_probe rerun that covers this inventory is a start condition (OD-3), not optional",
+  "readiness P-1 / P-2": "the isolation deployment is D5 (A1). The escrow stays in the operator process: the operator_process channel shows no card reaches another process. NOT_PROVEN until the per-card writable-mount check (N-1) passes"
+ },
+ "owner_decisions_open": {
+  "D4-identity-freeze": "OD-19; candidate DEFERRED by the owner (2026-10-20) until the evaluator is named; freeze sequence (owner, 2026-10-20): (1) the evaluator is named (D6, by 2026-11-17); (2) the candidate is chosen AFTER that (deferred by the owner), its code brought into this tree and pinned by sha256 (or NONE), and a one-campaign candidate timing completes the D7 budget total; (3) OD-3 recertifies that final pre-freeze HEAD; (4) the operator generates a fresh formal root and commits its sha256; (5) the environment manifest is measured on the D7 machine; (6) the owner's approvals record binds every decision to the final preregistration digest; only then is the status set to FROZEN. Nothing is frozen or pushed before (6)",
+  "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope); scheduled by the owner (2026-10-20) on the FINAL pre-freeze HEAD, after the D4 candidate is pinned and timed; the owner's manual operation"
+ },
+ "owner_decisions_taken": {
+  "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d; decided by the owner in session on 2026-10-20: ODC-05a form (i), a ratio cap max/min <= 1 + w outside the box, on the BRACKET route only; ODC-05b w = 3 x tol (tol_multiple 3.0), anchored a priori on the generator's declared separation scale (OUTSIDE_TOLERANCES = 3 in universe.py), never tuned on pilot or formal worlds; ODC-05c v0.3 only, never retroactive to v0.2 records; ODC-05d the pass route keeps +1.0 as in v0.2",
+  "D2-significance": "covers ODC-O1a and ODC-O1b; decided by the owner in session on 2026-10-20: ODC-O1a route B, the one-sided paired sign-flip p with the Monte-Carlo stream derived from the revealed formal root (HMAC, own label; Holm, alpha and the family unchanged; bootstrap for the lower bound only); the exchangeability null scope is accepted and stated; ODC-O1b a bounded, non-formal power and null-calibration study on synthetic records is authorised, to run after D3",
+  "D2b-root-grinding": "decided by the owner in session on 2026-10-20: bind the admission nonce into the key derivation so pre-commit root grinding is refused. K = HMAC-SHA256(revealed root, label / preregistration digest / admission nonce / admission digest); the admission is created by the one-attempt registry after the commitment, so no stream is computable at commitment time; lift_decision uses the keyed stream only with a self-consistent formal admission of this root and this preregistration that every record carries (test_d2b_*). admission must also be the evaluator inbox's first admission of the root. Residual, disclosed: an operator who runs complete attempts privately (off the registry) and publishes only the admission of the best one is NOT stopped by the key; the evaluator receiving each admission before the first world (D6) narrows this, but an inbox cannot order publication against execution. That is the operator-honesty residual of the decision record",
+  "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, spurious_correlate, confounded, indistinguishable); FDA-21 careful keeps ddof = 0 (certified, a documented exception) and the corrected <name>_dof arms join the strongest-baseline maximum; FDA-22 the form tell is declared and law_form measured, the generator's priors are NOT equalised (no certified change); FDA-18 one proposer process per card; pilot P-2 CONTROL_SOLVED with the exact binary-bootstrap lower bound >= 0.5",
+  "D3b-1-cap-form": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, a cell-level cap. A capped (kind, presentation) cell contributes min(0, its summed paired difference): no gain, a net loss counts, in the effect size (recomputed per bootstrap resample) and the per-kind non-inferiority. Implementation P2 (owner, same session): the sign-flip p uses the uncapped differences only, because the min inside every sign vector let capped wins raise significance (p = 0.002 at a mean difference of 0, adversarial test). v0.3 only",
+  "D3b-2-kind-noninferiority": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, the per-kind non-inferiority margin is 0.15 (v0.2: 0.10) and every kind is still required; the presentation margin is unchanged. v0.3 only. RECONFIRMED by the owner on 2026-10-20 at 0.15, with the corrected interpretation: a NON-INFERIORITY GUARDRAIL, not an equivalence claim and not a statement of acceptable degradation. The margin bounds the 95 % lower bound of the per-kind mean credit difference; read as a success rate it allows about 7.5 points for success -> failure (+1 -> -1), 15 points for success -> refusal (1 -> 0) and 30 points for indistinguishable_hit -> insufficient_evidence (1 -> 0.5)",
+  "D5-deployment": "OD-20; decided by the owner in session on 2026-10-20: option A1, rootless Linux namespaces. Every formal proposer card runs under unshare in fresh user, PID, mount, network, IPC and UTS namespaces, with operator state masked by private tmpfs mounts and only the benchmark tree and the Python environment re-bound read-only (isolation.py); a formal card cannot start without it, and proposers run without capabilities (setpriv). Verification evidence is pinned by sha256: twelve attack channels REFUSED in the deployment, each REACHED by the same probe in a control configuration. The isolation boundary stays NOT_PROVEN until every writable location is shown private to its card (fifth scientific review, N-1). Residual, disclosed: same Linux account outside the namespaces; readable tree and environment; WSL shares the host's utility VM; the certified escrow stays in the operator process (the operator_process channel shows a proposer cannot reach it); the certified isolation-probe rerun belongs to OD-3",
+  "D6-evaluator": "OD-8; decided by the owner in session on 2026-10-20: a selection process with a deadline of 2026-11-17. Criteria: independent of the operator: no access to the operator's machine, the root, the run log or the registry before the reveal; holds the EvaluatorInbox on their own machine; can run formal.verify_attempt and analysis.lift_decision; agrees to publish the verdict whatever it is. The evaluator's name stays OWNER_DECISION_REQUIRED until selected, so the freeze (D4) is refused until then; if nobody is named by the deadline, D6 reopens",
+  "D7-budget-and-machine": "OD-18; decided by the owner in session on 2026-10-20: the formal machine is the owner's WSL machine, since 2026-10-20 a fresh Ubuntu-24.04 distro hardened by the owner (interop and automount disabled), where D5 is verified and the environment manifest is measured at freeze. The budget was decided on the first timing pilot (MEASURED 43.5 s per world set for the 20 baselines; ESTIMATED 58 h formal with replay; the current pinned pilot is in formal.timing_pilot); budget approved: 72 h for the baselines plus the candidate's cost measured by a one-campaign timing at D4; an overrun stops the attempt as BUDGET_EXCEEDED, INVALID, never partially claimed"
+ },
+ "package_markers": {
+  "benchmarks/__init__.py": "06dd19293c8381eafa491dfd1be8ca413dcb3ea20a1c490cf24b810e6720c7df",
+  "benchmarks/genesis_lite/__init__.py": "cb78a50f694c4a71dbf14625a9f84574dfc7e71c4b19337f0fa1664f25c02abc"
+ },
+ "reused_unchanged_from_v0_2": {
+  "evaluator": {
+   "evaluator/__init__.py": "63362ec3e96626617404fb36b228b6bf3cffaccbdb066051323c8f3bfa785844",
+   "evaluator/expr.py": "78be1ff1df5b33beaa832bd9eef289871004be43bcbec148607a308c79636aa1",
+   "evaluator/score.py": "36cdeddc3e760f85308794bc4c2f3b228a8f72f3918de1a69da86cba1540d1f1"
+  },
+  "harness": {
+   "analysis.py": "76eea7c01fa971e2ce0a8f462ff79e7ab3eb1611ba6af8878994c84d8e01a0a9",
+   "answer_key.py": "46977bcb959ac737cdadb6bb7472f89ad434d4c4c513c2240bb58a77644e5db6",
+   "arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "harness.py": "fce0dc4289d615f62ee21f6d3210c8a0835c6969f3975f32ca1e75081469bce1",
+   "pilot.py": "f081e4c1cea462cd02625b4b2c9843f4ca1621f0a3b42b9d6a7b4bb707d92f64",
+   "presentation.py": "bc83318e792ddc705976d34378512bae2f34b72af020e5c8e08beb357197a137",
+   "primitives.py": "caaea4fc83c9a4ec0c89e104b401194ab3d48e2f5f0b55d8d328f954cae96f78",
+   "proposer_host.py": "a4b9331780351232d3007596e6c9949eb9e6bdabcb88f7057c6c4e33b25c31a4"
+  },
+  "substrate": {
+   "baselines.py": "35a4a964c236e0c4b7bee91abbd160a5659f32998d850a2b3af9411fa55daf42",
+   "escrow.py": "4d0ea70d40a9aafdb28ae19a233207bdad3068a2c7e75ba1003237e557047be3",
+   "expression.py": "dd8b77dd75d21b23a0e17dc227714e118dc5c42aadffa541ab9f14463b02c04c",
+   "roles.py": "b6ea638cdf2a062295c78c657bfaa366d7788c7e0306c97f88621198e823a2b4",
+   "universe.py": "360e0166b42c69fe2888be3a7544e6d0e94ef31b111e6582b5cb52022165b66d"
+  }
+ },
+ "schema": "forge.genesis_lite.preregistration/1",
+ "statistics_unchanged_from_v0_2": {
+  "unit_of_analysis": "the WORLD SET: one campaign (one hidden world of every kind) under one (presentation, seed) master root. Every arm runs every world set once. Intervals: percentile bootstrap over world sets (2000 resamples, Random(0)). Per-cell rates are descriptive only."
+ },
+ "status": "DRAFT",
+ "status_note": "DRAFT (not FREEZE_READY): no pilot, formal run or measurement may be produced under this document; v0.2 remains the active identity until the owner approves v0.3 (OD-19). Every value marked OWNER_DECISION_REQUIRED blocks the freeze.",
+ "v0_3_files": {
+  "__init__.py": "f8af0c58db79ad76a213ad6fb8c771a55114b34503f7452eb3fab3116d1e4905",
+  "analysis.py": "f04a7ca3f538153d94ba4716f5189a391701fdc014bfa89bb8dd4b251c7e6718",
+  "arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
+  "deployment_attacks.py": "6961025b26a958b6b11e5cfdf76cbabb05cef95e192542e3c9575eef000788cc",
+  "environment.py": "d9ab7044c74cb941e9d4c0b8973284ab73a26f5ff702fdf9b61b2b37b760a06f",
+  "evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
+  "formal.py": "aa30cc7d58d0e459d16472666bef58afdfd6e271e9d0c6bf2f86f41b054ba6dd",
+  "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
+  "isolation.py": "d7f96b37608d799fe9d7729ba6fb8fbea2384f475bec5905590df587a1967164",
+  "preregistration.py": "6c2b33d160600a5c9bb44369c3e7f663964fa03234ac0baeb1ac8472aba15f2e",
+  "readiness.py": "b6e231f747bb13a67cc3d0627154476157062d2eb818f485f3b67d6ee7b96d33",
+  "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
+  "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",
+  "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8",
+  "timing_pilot.py": "97ca7aa9ecb3e652ef02e2096ea2cf8e24eb3ee8ba2b8fa52c9aa63827c1a225"
+ }
+}
