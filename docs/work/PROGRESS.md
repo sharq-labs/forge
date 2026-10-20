@@ -8251,3 +8251,10 @@ Fixes:
 - The residual and stale-row wording is fixed.
 
 With this commit, three evidence-binding tests fail BY DESIGN (D5, study, pilot measured the old code): 246 passed, 3 failed. Re-runs follow from this clean commit.
+
+**Re-runs after the fourth review (2026-10-20).**
+- Study at clean 20f3d379: exit 0, 2,810 s, every replicate inbox-bound. Exchangeable null 0.0545 at alpha 0.05, Holm family-wise rate 0.039; equal-skill false claims 3/300 (unsolved) and 0/300 (solved). Result sha256 9ad27938a5a553ba1f7ee671270c80c607476f2783ef9f80cb7f4ec6cc571939, pinned.
+- D5 at 20f3d379: exit 1, NOT verified. Two findings:
+  - remount_rw had no power: it probed benchmarks/, which is not a mount point. It now targets the repo root through util-linux mount.
+  - secret_inventory was REACHED: the committed preregistration recorded the registry schema under the key "schema", which is the registry-line marker in compact JSON. The key is renamed registry_schema, and test_fda19_no_tracked_file_holds_an_inventory_marker scans every tracked file.
+- Suite: 248 passed, 2 failed BY DESIGN (the D5 and D7 evidence bindings, pending re-runs).

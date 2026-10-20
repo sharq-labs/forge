@@ -18,17 +18,17 @@ record and no formal root.
 
 | | |
 |---|---|
-| HEAD | `d0e679e8dbae5435361e2f6098bada5bb55609c2` |
+| HEAD | `20f3d37920075d89b77747368d8f8d8f8f72e984` |
 | Tree | clean (`tree_clean: true`) |
-| Code sha256: `power_study.py` | `a38568d897beb3bb1b380bab453ce2d5d2d10c40c1d975eef38e2ef2a7445c1b` |
-| Code sha256: `analysis.py` | `03936fd18a1d951296c74b7a2de8aa01e55a47f73840ff43750f50496fd16bab` |
+| Code sha256: `power_study.py` | `1cc07e52f2742c72cf39c1d87d57aa9cb04ee448ddbe61bc7491582e99652bf1` |
+| Code sha256: `analysis.py` | `f04a7ca3f538153d94ba4716f5189a391701fdc014bfa89bb8dd4b251c7e6718` |
 | Code sha256: v0.2 `analysis.py` | `76eea7c01fa971e2ce0a8f462ff79e7ab3eb1611ba6af8878994c84d8e01a0a9` |
 | Python | 3.14.2 |
 | numpy | 2.5.2 |
 | Platform | Windows-11-10.0.26200-SP0 |
-| Draft preregistration at run time | `c3c1108f79b7d26ce607f9d79d1bf34a47926790f62d594996b928b9af81477e` (before this evidence digest was pinned into it) |
-| Wall time | 2627.3 s |
-| `result.json` sha256 | `a26705f74e566bc016f2035df84bc4b9808e9f3ddc1ed6091985d7e58f1f5b68` |
+| Draft preregistration at run time | `e329f659d502732c74c9b4018ac542dc4d0e66fc2eb9bcb9aaa9ea74a968e410` (before this evidence digest was pinned into it) |
+| Wall time | 2810.0 s |
+| `result.json` sha256 | `9ad27938a5a553ba1f7ee671270c80c607476f2783ef9f80cb7f4ec6cc571939` |
 
 The `result.json` digest is pinned in `preregistration.POWER_STUDY_EVIDENCE_SHA256`. Two tests check it:
 - `test_o1_power_study_evidence_is_pinned_and_says_what_the_ledger_quotes`
@@ -42,8 +42,9 @@ Command:
 **Superseded runs, all measuring the pre-D3b rule (per-world-set min cap, 0.10 margins):**
 - the first run at HEAD `27a5d6db`, from an uncommitted file;
 - the post-review run at HEAD `70195498`, result sha256 `282b4213…8b36` (commit `2dbbd462`).
-- the D3b run at HEAD `f76c1ca9`, result sha256 `a732df70…36fa` (the decided D3b rule before D2b; this run repeats it
-  with the admission-keyed stream).
+- the D3b run at HEAD `f76c1ca9`, result sha256 `a732df70…36fa` (the decided D3b rule before D2b).
+- the D2b run at HEAD `d0e679e8`, result sha256 `a26705f7…5b68` (an admission accepted on self-consistency; the fourth
+  scientific review, I-2, bound it to the evaluator inbox's first admission, and this run repeats it on that rule).
 
 Their findings are what D3b-1 and D3b-2 decided on:
 - With the per-world-set min, solved controls, independent outcomes and doubled discoverable success, claims were 0/100
@@ -61,9 +62,9 @@ Brackets are exact 95 % Clopper-Pearson intervals.
 
 | null | n | alpha 0.01 | alpha 0.05 | alpha 0.10 | Holm family-wise rate |
 |---|---|---|---|---|---|
-| exchangeable (in scope), 2000 reps | pooled | 0.0095 | 0.0540 [0.045, 0.065] | 0.1025 | 0.0400 [0.032, 0.050] |
-| exchangeable, 2000 reps | one presentation | 0.0095 | 0.0480 | 0.0940 | |
-| skewed mean-zero (outside the scope), 1000 reps | pooled | 0.0110 | 0.0640 [0.050, 0.081] | 0.1170 | 0.0360 |
+| exchangeable (in scope), 2000 reps | pooled | 0.0090 | 0.0545 [0.045, 0.065] | 0.1030 | 0.0390 [0.031, 0.048] |
+| exchangeable, 2000 reps | one presentation | 0.0085 | 0.0480 | 0.0940 | |
+| skewed mean-zero (outside the scope), 1000 reps | pooled | 0.0120 | 0.0650 [0.051, 0.082] | 0.1160 | 0.0360 |
 
 **Reading.**
 - The in-scope rates are consistent with nominal, resolved to about ±0.01. This is an implementation check of a guarantee that
@@ -84,8 +85,8 @@ Each cell shows the claim rate with the mean pooled difference in parentheses.
 | solved (0.8 → CONTROL_SOLVED) | 0.1 | 0.35 (+0.106) | 0.91 (+0.132) | 1.00 (+0.173) | 1.00 (+0.201) |
 | solved (0.8 → CONTROL_SOLVED) | 0.2 | 1.00 (+0.303) | 1.00 (+0.335) | 1.00 (+0.370) | 1.00 (+0.399) |
 | unsolved (0.4) | 0.0 | 0.01 (-0.002) | 0.01 (-0.008) | 0.01 (+0.002) | 0.00 (+0.000) |
-| unsolved (0.4) | 0.05 | 0.19 (+0.097) | 0.38 (+0.102) | 0.99 (+0.096) | 1.00 (+0.101) |
-| unsolved (0.4) | 0.1 | 0.70 (+0.195) | 0.94 (+0.203) | 1.00 (+0.197) | 1.00 (+0.200) |
+| unsolved (0.4) | 0.05 | 0.19 (+0.097) | 0.39 (+0.102) | 0.99 (+0.096) | 1.00 (+0.101) |
+| unsolved (0.4) | 0.1 | 0.67 (+0.195) | 0.96 (+0.203) | 1.00 (+0.197) | 1.00 (+0.200) |
 | unsolved (0.4) | 0.2 | 1.00 (+0.391) | 1.00 (+0.399) | 1.00 (+0.400) | 1.00 (+0.398) |
 
 Two further cells:

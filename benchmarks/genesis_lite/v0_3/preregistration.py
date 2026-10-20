@@ -99,7 +99,7 @@ OWNER_DECISIONS_TAKEN = {
 }
 #: the ODC-O1b study (non-formal, synthetic); its findings are open as D3b
 POWER_STUDY_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json"
-POWER_STUDY_EVIDENCE_SHA256 = "a26705f74e566bc016f2035df84bc4b9808e9f3ddc1ed6091985d7e58f1f5b68"
+POWER_STUDY_EVIDENCE_SHA256 = "9ad27938a5a553ba1f7ee671270c80c607476f2783ef9f80cb7f4ec6cc571939"
 #: D5 (owner, 2026-10-20, option A1): the deployment verification, run on WSL Ubuntu from a clean clone
 DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json"
 DEPLOYMENT_EVIDENCE_SHA256 = "782a1b914a748a12e59a465d8c6429851df67cba7fb53b142c78246add0259fa"
@@ -221,7 +221,7 @@ def build() -> dict[str, Any]:
             "arms": "benchmarks.genesis_lite.v0_3.arms (FDA-21), by registry name",
         },
         "one_attempt_per_root": {
-            "module": "benchmarks/genesis_lite/v0_3/registry.py", "schema": registry.REGISTRY_SCHEMA,
+            "module": "benchmarks/genesis_lite/v0_3/registry.py", "registry_schema": registry.REGISTRY_SCHEMA,
             "rule": "a root commitment is admitted to the operator-side registry before the first world is derived; a "
                     "formal root is consumed by its first admission under any identity; development roots are recorded "
                     "apart and can never become formal; the registry lives outside every run directory and its head is "

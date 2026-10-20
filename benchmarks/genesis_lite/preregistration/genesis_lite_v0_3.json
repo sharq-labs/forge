@@ -48,7 +48,7 @@
    "statistic": "the capped statistic of that kind alone, per world set"
   },
   "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference), tested on the UNCAPPED differences (D3b-1, P2); a composite null 'mean <= 0' with an asymmetric difference distribution is not covered. Accepted by the owner and stated as the claim's scope (D2, 2026-10-20). Disclosed by the final scientific review (2026-10-20): (I-1) which cells are capped depends partly on registered arms' outcomes, the comparator's included, so the size is conditional on that partition and can exceed nominal slightly; the candidate cannot steer it; an owner option not taken is to derive the cap set from arms other than the comparator or from separate seeds. (I-6) a candidate that gains uncapped but loses in capped cells is stopped only by the percentile-bootstrap lower bound, whose level is approximate. (I-5) the bootstrap uses numpy's Generator.multinomial; the numpy version is bound by the formal environment manifest (D7)",
-  "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result is evidence for the owner, never a formal measurement. RAN 2026-10-20: docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json sha256 a26705f74e566bc016f2035df84bc4b9808e9f3ddc1ed6091985d7e58f1f5b68",
+  "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result is evidence for the owner, never a formal measurement. RAN 2026-10-20: docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json sha256 9ad27938a5a553ba1f7ee671270c80c607476f2783ef9f80cb7f4ec6cc571939",
   "record_binding": "every analysed record carries tier and tier_bound 'formal', the v0.3 harness id, the preregistered root commitment, w and environment digest, and ONE attempt digest (D-09); these labels gain authority only through the evaluator's post-reveal verify_attempt",
   "sign_flip": {
    "exact_work_limit": 1000000,
@@ -486,8 +486,8 @@
  ],
  "one_attempt_per_root": {
   "module": "benchmarks/genesis_lite/v0_3/registry.py",
-  "rule": "a root commitment is admitted to the operator-side registry before the first world is derived; a formal root is consumed by its first admission under any identity; development roots are recorded apart and can never become formal; the registry lives outside every run directory and its head is published to the external evaluator",
-  "schema": "forge.genesis_lite.attempt_registry/1"
+  "registry_schema": "forge.genesis_lite.attempt_registry/1",
+  "rule": "a root commitment is admitted to the operator-side registry before the first world is derived; a formal root is consumed by its first admission under any identity; development roots are recorded apart and can never become formal; the registry lives outside every run directory and its head is published to the external evaluator"
  },
  "open_items": {
   "FDA-19 / ODC-BL1": "closed on the benchmark side by v0_3/secret_scan.py (proposer-side scan of the root, masters, run log and registry); extending the certified isolation_probe stays optional",
@@ -544,16 +544,16 @@
  "status_note": "DRAFT (not FREEZE_READY): no pilot, formal run or measurement may be produced under this document; v0.2 remains the active identity until the owner approves v0.3 (OD-19). Every value marked OWNER_DECISION_REQUIRED blocks the freeze.",
  "v0_3_files": {
   "__init__.py": "f8af0c58db79ad76a213ad6fb8c771a55114b34503f7452eb3fab3116d1e4905",
-  "analysis.py": "4b923a1770dd4eb701149e44e4b10c153d82449aaad20103eae821a4e07e1a06",
+  "analysis.py": "f04a7ca3f538153d94ba4716f5189a391701fdc014bfa89bb8dd4b251c7e6718",
   "arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
-  "deployment_attacks.py": "d45b68938fc76f18370de8f1ea86f7bc52d23fcfa05da5e1a1cbc711cff73a92",
+  "deployment_attacks.py": "6961025b26a958b6b11e5cfdf76cbabb05cef95e192542e3c9575eef000788cc",
   "environment.py": "d9ab7044c74cb941e9d4c0b8973284ab73a26f5ff702fdf9b61b2b37b760a06f",
   "evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
   "formal.py": "9ddaf964215805601d90736544b7517f139dc21ee17346c23d1e52844b84576a",
   "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
   "isolation.py": "d7f96b37608d799fe9d7729ba6fb8fbea2384f475bec5905590df587a1967164",
-  "preregistration.py": "5fb2e5cf15ade85031b85c0f6a9a6d1d7d6a90a8366ad7a4adfe02a42f52509d",
-  "readiness.py": "903a99706c2a279b64fa563466dc4641283f233d8de3d13832cb4ecae1d23c09",
+  "preregistration.py": "b3736eba7046614fe8abea4ac608c9232b85da51c95f7e620ebf0215f54f9c40",
+  "readiness.py": "c3ba3eb5ea30dbb72c1b7a2b6de3dd9643266bd862e1557808c8e87e62dc2ec0",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8",

@@ -81,7 +81,7 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "pass route with an arbitrary partner (ODC-05d)": (DECIDED, (), "D1, 2026-10-20: kept at +1.0 as in v0.2"),
     "power and null-calibration study (ODC-O1b)": (FIXED, ("test_o1_power_study_",), "ran 2026-10-20 on synthetic "
                                                    "records (docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20, sha256 pinned in the preregistration); exchangeable null "
-                                                   "0.0540 at alpha 0.05, Holm FWER 0.0400"),
+                                                   "0.0545 at alpha 0.05, Holm FWER 0.0390"),
     "root grinding before the commitment (review I-1)": (DECIDED, (), "D2b, 2026-10-20: the admission nonce is bound "
                                                                      "into the key"),
     "external evaluator named (D6)": (OWNER, (), "selection process decided 2026-10-20; the name is due by 2026-11-17"),
@@ -143,6 +143,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_fda19_the_secret_scan_finds_every_inventory_item_and_nothing_in_clean_files',
         'test_fda19_the_scan_finds_wrapped_utf16_and_streamed_secrets',
         'test_fda19_the_scan_does_not_flag_its_own_compiled_bytecode',
+        'test_fda19_no_tracked_file_holds_an_inventory_marker',
         'test_fda19_the_scan_does_not_flag_the_benchmark_sources',
     ),
     'FDA-21': (

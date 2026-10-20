@@ -291,7 +291,13 @@ def remount_rw(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[s
     libc = _libc() if os.name == "posix" else None
     if libc is None:
         return _answer(card, "remount_rw", None, "no libc on this platform: the probe cannot run")
-    target = str(pathlib.Path(__file__).resolve().parents[2])
+    target = str(pathlib.Path(__file__).resolve().parents[3])      # the kept tree's mount point (the repository root)
+    try:                                                     # util-linux keeps the mount's locked flags on a remount
+        done = subprocess.run(["mount", "-o", "remount,bind,rw", target], capture_output=True, timeout=20)
+        if done.returncode == 0:
+            return _answer(card, "remount_rw", True, "remounted the kept tree read-write")
+    except (OSError, subprocess.SubprocessError):
+        pass
     if libc.mount(None, target.encode(), None, 32 | 4096, None) == 0:     # MS_REMOUNT | MS_BIND, no MS_RDONLY
         return _answer(card, "remount_rw", True, "remounted the kept tree read-write")
     if _nested(f"mount -o remount,bind,rw {target} 2>/dev/null && echo ESCAPED"):

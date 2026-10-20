@@ -330,6 +330,26 @@ def test_fda19_the_scan_does_not_flag_its_own_compiled_bytecode(tmp_path):
     assert secret_scan.scan([tmp_path], secret_scan.digests_for([b"\x01" * 32])) == []
 
 
+def test_fda19_no_tracked_file_holds_an_inventory_marker():
+    """D5 re-run (2026-10-20): the proposer-side scan of everything a card can see REACHED the committed preregistration,
+    which recorded the registry schema under a key named 'schema' (the registry-line marker, in compact JSON). Every
+    tracked text file of the kept tree is scanned here, so nothing public can pass for a run log or a registry."""
+    import pathlib
+    import subprocess
+
+    from benchmarks.genesis_lite.v0_3 import secret_scan
+
+    repo = pathlib.Path(secret_scan.__file__).resolve().parents[3]
+    tracked = subprocess.run(["git", "ls-files", "-z"], cwd=repo, capture_output=True, check=True).stdout.split(b"\0")
+    wanted = frozenset(secret_scan.digests_for([b"\x02" * 32]))
+    hits = []
+    for rel in tracked:
+        path = repo / rel.decode()
+        if rel and path.is_file() and path.stat().st_size < 50_000_000:
+            hits += [(rel.decode(), what) for what in secret_scan._scan_file(path, wanted)]
+    assert hits == []
+
+
 def test_fda19_the_scan_does_not_flag_the_benchmark_sources():
     assert secret_scan.scan([v03p.HERE, v03p.HERE.parent / "evaluator"], secret_scan.digests_for([MASTER])) == []
 
