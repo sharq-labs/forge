@@ -315,6 +315,21 @@ def test_fda19_the_scan_finds_wrapped_utf16_and_streamed_secrets(tmp_path, monke
     assert found == {"wrapped.txt", "utf16.txt", "big.log"}
 
 
+def test_fda19_the_scan_does_not_flag_its_own_compiled_bytecode(tmp_path):
+    """D5 verification (2026-10-20): inside the namespaces the proposer-side scan REACHED a 'secret' that was the
+    scanner's own .pyc in the card's bytecode cache: CPython folds b'a' + b'b' into one constant, so the assembled
+    markers appeared whole. Bytecode of every v0.3 module (in the per-card cache a proposer writes) holds no marker."""
+    import pathlib
+    import py_compile
+
+    from benchmarks.genesis_lite.v0_3 import secret_scan
+
+    here = pathlib.Path(secret_scan.__file__).resolve().parent
+    for source in sorted(here.glob("*.py")):
+        py_compile.compile(str(source), cfile=str(tmp_path / (source.stem + ".pyc")), doraise=True)
+    assert secret_scan.scan([tmp_path], secret_scan.digests_for([b"\x01" * 32])) == []
+
+
 def test_fda19_the_scan_does_not_flag_the_benchmark_sources():
     assert secret_scan.scan([v03p.HERE, v03p.HERE.parent / "evaluator"], secret_scan.digests_for([MASTER])) == []
 

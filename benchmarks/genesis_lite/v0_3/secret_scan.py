@@ -31,10 +31,11 @@ import re
 import sys
 from typing import Iterable
 
-#: compact-JSON forms that only a real registry line or run-log line contains (assembled here, so that no source file,
-#: this one included, holds them literally)
-MARKERS = {b'"schema":"' + b'forge.genesis_lite.attempt_registry/1"': "attempt registry",
-           b'{"prev_sha256' + b'":"': "run log"}
+#: compact-JSON forms that only a real registry line or run-log line contains. Assembled at RUN time by a call, so that
+#: neither a source file (this one included) nor its compiled bytecode holds them: CPython folds b'a' + b'b' into one
+#: constant, and the scanner then flagged its own .pyc in a proposer's bytecode cache (D5 verification, 2026-10-20)
+MARKERS = {b"".join((b'"schema":"', b'forge.genesis_lite.attempt_registry/1"')): "attempt registry",
+           b"".join((b'{"prev_sha256', b'":"')): "run log"}
 CHUNK = 8 * 1024 * 1024
 _OVERLAP = 4096
 RAW_WINDOW_LIMIT = 4096                                   # raw roots live in tiny files; larger files are hex-scanned

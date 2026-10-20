@@ -136,6 +136,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
     'FDA-19 (Genesis-lite secret inventory)': (
         'test_fda19_the_secret_scan_finds_every_inventory_item_and_nothing_in_clean_files',
         'test_fda19_the_scan_finds_wrapped_utf16_and_streamed_secrets',
+        'test_fda19_the_scan_does_not_flag_its_own_compiled_bytecode',
         'test_fda19_the_scan_does_not_flag_the_benchmark_sources',
     ),
     'FDA-21': (
