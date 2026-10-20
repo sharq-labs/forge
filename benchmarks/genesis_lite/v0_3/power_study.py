@@ -124,6 +124,7 @@ def run_cell(cell: dict[str, Any], reps: int, seed: int, fast: bool = True) -> d
     rng = np.random.default_rng(seed)
     tally: dict[str, int] = {}
     pooled_mean, problems = [], set()
+    kind_stats: dict[str, dict[str, list[float]]] = {k: {"mean": [], "margin": [], "fail": []} for k in v03a.KINDS}
     for _ in range(reps):
         rows = scenario_records(cell, rng)
         root = rng.bytes(32)
@@ -133,10 +134,44 @@ def run_cell(cell: dict[str, Any], reps: int, seed: int, fast: bool = True) -> d
             tally[name] = tally.get(name, 0) + int(ok)
         pooled_mean.append(out["primary"]["pooled"]["mean_difference"])
         problems.update(p.split(":")[0][:90] for p in out["coverage_problems"])
+        for k, v in out["kind_noninferiority"].items():
+            kind_stats[k]["mean"].append(v["mean_difference"])
+            kind_stats[k]["margin"].append(v["mean_difference"] - v["lower95"])
+            kind_stats[k]["fail"].append(0.0 if v["ok"] else 1.0)
     claims = tally["claim"]
     return {"cell": cell, "reps": reps, "seed": seed, "claim_rate": claims / reps,
             "claim_rate_95ci": clopper_pearson(claims, reps), "condition_pass_rates": {k: v / reps for k, v in tally.items()},
-            "mean_pooled_difference": float(np.mean(pooled_mean)), "coverage_problems_seen": sorted(problems)}
+            "mean_pooled_difference": float(np.mean(pooled_mean)), "coverage_problems_seen": sorted(problems),
+            "kind_noninferiority_stats": {k: {"sd_mean_difference": float(np.std(s["mean"])),
+                                              "mean_of_mean_minus_lower95": float(np.mean(s["margin"])),
+                                              "fail_rate": float(np.mean(s["fail"]))} for k, s in kind_stats.items()}}
+
+
+def bootstrap_crosscheck(cell: dict[str, Any], reps: int, seed: int) -> dict[str, Any]:
+    """The SAME records and root scored twice, with the vectorised and with v0.2's original bootstrap: every lower
+    bound (pooled, presentations, kinds) and the claim are compared replicate by replicate."""
+    rng = np.random.default_rng(seed)
+    worst, claims_agree, flips, rows_out = 0.0, 0, 0, []
+    for _ in range(reps):
+        rows = scenario_records(cell, rng)
+        root = rng.bytes(32)
+        outs = []
+        for fast in (True, False):
+            with _study_scoring(root, fast):
+                outs.append(v03a.lift_decision(rows, CANDIDATE, revealed_root=root, verification=[]))
+        bounds = [{**{f"primary/{p}": o["primary"][p]["lower95"] for p in o["primary"]},
+                   **{f"kind/{k}": v["lower95"] for k, v in o["kind_noninferiority"].items()}} for o in outs]
+        gap = max(abs(bounds[0][k] - bounds[1][k]) for k in bounds[0])
+        worst = max(worst, gap)
+        same = statistical_claim(outs[0]) == statistical_claim(outs[1])
+        claims_agree += same
+        flips += any((bounds[0][k] > (0 if k.startswith("primary/pooled") else -0.1)) !=
+                     (bounds[1][k] > (0 if k.startswith("primary/pooled") else -0.1)) for k in bounds[0]
+                     if k.startswith(("primary/pooled", "kind/")))
+        rows_out.append({"max_abs_lower95_gap": gap, "claims_agree": same})
+    return {"cell": cell, "reps": reps, "seed": seed, "max_abs_lower95_gap": worst,
+            "claim_agreement": f"{claims_agree}/{reps}", "replicates_with_a_threshold_flip": flips,
+            "replicates": rows_out}
 
 
 def clopper_pearson(k: int, n: int, level: float = 0.95) -> list[float]:
@@ -203,6 +238,32 @@ def _cell_job(args: tuple) -> dict[str, Any]:
     return run_cell(*args)
 
 
+def _cross_job(args: tuple) -> dict[str, Any]:
+    return bootstrap_crosscheck(*args)
+
+
+def provenance() -> dict[str, Any]:
+    """HEAD, tree cleanliness, code digests and the environment of this run."""
+    import platform  # noqa: PLC0415
+    import subprocess  # noqa: PLC0415
+    import sys  # noqa: PLC0415
+
+    here = pathlib.Path(__file__).resolve().parent
+
+    def git(*args: str) -> str:
+        try:
+            return subprocess.run(["git", *args], cwd=here, capture_output=True, text=True, check=True).stdout.strip()
+        except (OSError, subprocess.CalledProcessError):
+            return "UNKNOWN"
+
+    code = {name: hashlib.sha256((here / name).read_bytes()).hexdigest()
+            for name in ("power_study.py", "analysis.py", "preregistration.py")}
+    code["../analysis.py"] = hashlib.sha256((here.parent / "analysis.py").read_bytes()).hexdigest()
+    return {"head": git("rev-parse", "HEAD"), "tree_clean": git("status", "--porcelain") == "",
+            "code_sha256": code, "python": sys.version.split()[0], "numpy": np.__version__,
+            "platform": platform.platform()}
+
+
 def _null_job(args: tuple) -> dict[str, Any]:
     return null_calibration(*args)
 
@@ -212,22 +273,25 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=pathlib.Path, required=True)
     parser.add_argument("--reps", type=int, default=100)
     parser.add_argument("--null-reps", type=int, default=2000)
-    parser.add_argument("--crosscheck-reps", type=int, default=3)
+    parser.add_argument("--crosscheck-reps", type=int, default=20)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--seed", type=int, default=20261020)
     args = parser.parse_args(argv)
     started = time.time()
+    source = provenance()
     grid = cells()
     with concurrent.futures.ProcessPoolExecutor(args.workers) as pool:
         nulls = list(pool.map(_null_job, [(args.null_reps, args.seed + 1, True), (args.null_reps // 2, args.seed + 2, False)]))
         power = list(pool.map(_cell_job, [(c, args.reps, args.seed + 100 + i) for i, c in enumerate(grid)]))
-        picks = [c for c in grid if c["name"] in ("controls_solved/delta=0.2/rho=1.0", "controls_unsolved/delta=0.1/rho=0.5")]
-        cross = list(pool.map(_cell_job, [(c, args.crosscheck_reps, args.seed + 900 + i, fast)
-                                          for i, c in enumerate(picks) for fast in (True, False)]))
+        picks = [c for c in grid if c["name"] in ("controls_solved/delta=0.1/rho=0.9", "controls_unsolved/delta=0.05/rho=0.5")]
+        cross = list(pool.map(_cross_job, [(c, args.crosscheck_reps, args.seed + 900 + i) for i, c in enumerate(picks)]))
     doc = {"schema": STUDY_SCHEMA, "status": "NON_FORMAL_SYNTHETIC_STUDY", "prereg_sha256": _prereg_sha(),
+           "provenance": source,
+           "credit_model": "per-universe credits +1 / -1 only (the maximum-variance case); DEFAULT_CREDIT also has 0, "
+                           "+0.5 and -0.5 outcomes, so the power figures and the cap penalty hold for this model only",
            "authorisation": "owner D2 (ODC-O1b), 2026-10-20; runs after D3 (decided 2026-10-20)",
            "args": {k: str(v) for k, v in vars(args).items()}, "null_calibration": nulls, "power": power,
-           "bootstrap_crosscheck": [{"fast": r_fast, "original": r_slow} for r_fast, r_slow in zip(cross[::2], cross[1::2])],
+           "bootstrap_crosscheck": cross,
            "wall_seconds": round(time.time() - started, 1)}
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_bytes((json.dumps(doc, indent=1, sort_keys=True) + "\n").encode())

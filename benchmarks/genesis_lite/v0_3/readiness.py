@@ -113,6 +113,8 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_o1_the_claims_monte_carlo_stream_comes_from_the_committed_root',
         'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',
         'test_o1_power_study_scores_with_the_real_rule_and_restores_it',
+        'test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p',
+        'test_o1_a_revealed_root_that_is_not_bytes_is_refused',
         'test_o1_holm_is_unchanged',
         'test_o1_v0_3_lift_decision_uses_sign_flip_p_and_claims_nothing_while_draft',
     ),

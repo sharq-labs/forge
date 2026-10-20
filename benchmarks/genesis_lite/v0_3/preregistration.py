@@ -208,9 +208,12 @@ def build() -> dict[str, Any]:
                           "monte_carlo_p": "(b + 1) / (M + 1); the exact path is exact",
                           "stream": "SHAKE-256(K || resample index, 8 bytes big-endian), bits in numpy.unpackbits "
                                     "order, K = HMAC-SHA256(revealed formal root, '" + analysis.SIGN_FLIP_KEY_LABEL
-                                    + "/' + the preregistration digest) (D2): secret until the reveal, so the Monte-Carlo "
-                                    "guarantee holds over the root's randomness, and fixed by the commitment, so streams "
-                                    "cannot be shopped; lift_decision refuses a root whose sha256 is not the commitment"},
+                                    + "/' + the preregistration digest) (D2): secret from the proposer until the reveal, and fixed "
+                                    "once the root is committed, so no stream can be chosen after the commitment; "
+                                    "lift_decision refuses a root whose sha256 is not the commitment. NOT prevented: "
+                                    "whoever generates the root can try many roots BEFORE committing and keep one whose "
+                                    "stream is favourable (scientific review 2026-10-20, I-1); the mitigation is an open "
+                                    "owner decision (D2b)"},
             "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference); capping errs "
                           "conservative; a composite null 'mean <= 0' with an asymmetric difference distribution is not "
                           "covered. Accepted by the owner and stated as the claim's scope (D2, 2026-10-20)",

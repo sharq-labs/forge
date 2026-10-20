@@ -394,6 +394,43 @@ def test_o1_power_study_scores_with_the_real_rule_and_restores_it():
     assert (v03a._formal_root_commitment, v03a.bootstrap_mean_ci, v02_analysis.bootstrap_mean_ci) == saved
 
 
+def test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p(monkeypatch):
+    """Review I-6: the committed root's stream must reach sign_flip_p. With the Monte-Carlo path forced, every p in the
+    family is computed on HMAC(root, identity); two roots give two pooled p values, and no root gives the public one."""
+    from tests.genesis_lite import lift_records as lr
+
+    original, seen = v03a.sign_flip_p, []
+
+    def forced(diffs, **kw):
+        seen.append(kw.get("stream", v03a.SIGN_FLIP_STREAM))
+        return original(diffs, exact_work_limit=0, **{k: v for k, v in kw.items() if k != "exact_work_limit"})
+
+    monkeypatch.setattr(v03a, "sign_flip_p", forced)
+    mixed = dict(lr.CAREFUL, discoverable=0.4, no_solution=0.7)      # signed differences: p is mid-range, not 1/(M+1)
+    rows = lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", mixed)
+    identity = v03p.identity_problems()[1]
+    ps = {}
+    for tag in (b"root one", b"root two"):
+        root = hashlib.sha256(tag).digest()
+        monkeypatch.setattr(v03a, "_formal_root_commitment", lambda r=root: hashlib.sha256(r).hexdigest())
+        seen.clear()
+        out = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root)
+        assert out["primary"]["pooled"]["p_method"] == "monte_carlo"
+        assert seen and set(seen) == {v03a.sign_flip_stream(root, identity)}
+        ps[tag] = out["primary"]["pooled"]["p"]
+    seen.clear()
+    public = v03a.lift_decision(rows, "mind", grid=lr.GRID)["primary"]["pooled"]["p"]
+    assert set(seen) == {v03a.SIGN_FLIP_STREAM} and len({*ps.values(), public}) == 3
+
+
+def test_o1_a_revealed_root_that_is_not_bytes_is_refused():
+    from tests.genesis_lite import lift_records as lr
+
+    rows = lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", lr.BETTER)
+    with pytest.raises(v03a.AnalysisRefused, match="must be bytes"):
+        v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root="00" * 32)
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,

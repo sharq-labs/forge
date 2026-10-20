@@ -49,7 +49,7 @@
    "monte_carlo_p": "(b + 1) / (M + 1); the exact path is exact",
    "monte_carlo_resamples": 19999,
    "statistic": "sum of the paired world-set differences (one-sided, H1 candidate better)",
-   "stream": "SHAKE-256(K || resample index, 8 bytes big-endian), bits in numpy.unpackbits order, K = HMAC-SHA256(revealed formal root, 'forge.genesis_lite.v0_3/sign_flip_stream/' + the preregistration digest) (D2): secret until the reveal, so the Monte-Carlo guarantee holds over the root's randomness, and fixed by the commitment, so streams cannot be shopped; lift_decision refuses a root whose sha256 is not the commitment"
+   "stream": "SHAKE-256(K || resample index, 8 bytes big-endian), bits in numpy.unpackbits order, K = HMAC-SHA256(revealed formal root, 'forge.genesis_lite.v0_3/sign_flip_stream/' + the preregistration digest) (D2): secret from the proposer until the reveal, and fixed once the root is committed, so no stream can be chosen after the commitment; lift_decision refuses a root whose sha256 is not the commitment. NOT prevented: whoever generates the root can try many roots BEFORE committing and keep one whose stream is favourable (scientific review 2026-10-20, I-1); the mitigation is an open owner decision (D2b)"
   },
   "significance": "paired sign-flip randomisation (one-sided); bootstrap for the lower bound only",
   "unchanged": "unit of analysis, grid, comparison set, strongest baseline, representation-limited rule, non-inferiority margins, screening and its cap, identity binding: as in v0.2"
@@ -510,15 +510,15 @@
  "status_note": "DRAFT (not FREEZE_READY): no pilot, formal run or measurement may be produced under this document; v0.2 remains the active identity until the owner approves v0.3 (OD-19). Every value marked OWNER_DECISION_REQUIRED blocks the freeze.",
  "v0_3_files": {
   "__init__.py": "f8af0c58db79ad76a213ad6fb8c771a55114b34503f7452eb3fab3116d1e4905",
-  "analysis.py": "fd52abecd4d90b35ae3a48ba2146c37ec7920b6846e795f346fef235b6e06a88",
+  "analysis.py": "f896bea914000c15f201c36e243aa2b480d6612e3f7660bcb7c97b36189e5242",
   "arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
   "deployment_attacks.py": "47c5c6406c918948436107bc5bf2306bd4a0486ecf8487ae39f6e825422510f4",
   "environment.py": "d9ab7044c74cb941e9d4c0b8973284ab73a26f5ff702fdf9b61b2b37b760a06f",
   "evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
   "formal.py": "dfbf372c084bfe9107425bcb098e58ff0d6aff199bc8680000863c6c510363d8",
   "harness.py": "ce603d0175dd3c1248ae32ed9e9286284723112c6687def143f56fc79176f15d",
-  "preregistration.py": "90a145a2d8e107d32526adc9a87265c572edc6813957730fa41cb6d43644a7f0",
-  "readiness.py": "19ecba94b28b71d9e6c22b1651d569375685c46014fd7eabb043a522a44b305b",
+  "preregistration.py": "2e5d48267b58c2737c9035e27b3cfee25ce8e2a2276556eb36bac9c3675f0287",
+  "readiness.py": "dbd7499d3ccb3a2ffc98557820f8e19e1a3db786d86eb9d124f57eab1a23187f",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "4763de7c3878c8b82f9209285d0d9cc2c720ab3b22708141f260ce0f0bb001d9",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8"

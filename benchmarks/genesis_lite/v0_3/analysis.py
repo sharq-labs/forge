@@ -261,6 +261,8 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
     code_problems, identity = _code_problems()
     problems += code_problems + formal_binding_problems(rows)
     stream = SIGN_FLIP_STREAM
+    if revealed_root is not None and not isinstance(revealed_root, bytes):
+        raise AnalysisRefused(f"the revealed formal root must be bytes, got {type(revealed_root).__name__}")
     if revealed_root is None or hashlib.sha256(revealed_root).hexdigest() != _formal_root_commitment():
         problems.append("the revealed formal root is missing or is not the preregistered commitment: the sign-flip "
                         "stream is not the claim's (D2), p values are descriptive only")
