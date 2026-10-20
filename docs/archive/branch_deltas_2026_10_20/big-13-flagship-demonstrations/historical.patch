@@ -1,0 +1,1068 @@
+diff --git a/docs/architecture/README.md b/docs/architecture/README.md
+index 026ed18968a7f2f4fd74998d99b15163ff549ed5..2725cda661f08cd4084a5723185d861adecc1d9e 100644
+--- a/docs/architecture/README.md
++++ b/docs/architecture/README.md
+@@ -53,6 +53,14 @@ The load-bearing rule is architectural: **MCP is transport, not scientific autho
+   ladder (a report vocabulary, not an authority), run bundles and VTU export over a BIG 12 result; it executes and solves nothing. See
+   [engineering.md](engineering.md). The four flagship systems are driven from `flagships/` (a separate distribution, not part of `engcore`);
+   their reports are in `docs/flagships/`.
++- **Future strategic layer — mechanism-aware discovery:** not implemented yet. The architecture direction is to represent provider-neutral
++  dependencies, mechanisms, state transitions, interventions, competing hypotheses and mechanistic explanations without promoting model
++  dependency/sensitivity into causal proof. It must reuse existing state, lifecycle, evidence, UQ, provenance and trust authorities rather
++  than create parallel vocabularies. See [mechanistic_discovery.md](mechanistic_discovery.md).
++- **Future strategic layer — design-synthesis / assembly layer:** not implemented yet. It turns requirements and design spaces into parametric
++  geometry, buildable assembly graphs, standard-component selections, joints/interfaces/fits, manufacturing/serviceability constraints and
++  high-throughput candidate campaigns. It is explicitly separate from mesh semantics and from mechanism authority. See
++  [design_synthesis.md](design_synthesis.md).
+ 
+ ## Claims organization
+ 
+diff --git a/docs/architecture/design_synthesis.md b/docs/architecture/design_synthesis.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..75e44091e8141b11463eecca584f6710f3a83f58
+--- /dev/null
++++ b/docs/architecture/design_synthesis.md
+@@ -0,0 +1,322 @@
++# Engineering Design Synthesis and Assembly Architecture
++
++> **Status:** strategic architecture direction; NOT IMPLEMENTED.
++>
++> **Purpose:** define how Forge evolves from analysis of an existing engineered
++> system into generation of buildable candidate products and assemblies, while
++> continuing to use mature open-source computational providers rather than
++> recreating CAD kernels, solvers, component databases or optimization engines.
++>
++> **Current execution boundary:** this document does not start BIG 14 or add
++> production contracts. BIG 14/15 remain review, hardening, full verification,
++> mutation and recertification work.
++
++## 1. Goal
++
++Forge must eventually support this bounded engineering loop:
++
++```text
++engineering intent / requirements
++        ↓
++formal objectives + constraints + operating envelope
++        ↓
++system architecture / product template
++        ↓
++design space + topology choices
++        ↓
++parametric geometry / CAD
++        ↓
++assembly synthesis
++        ↓
++standard-component selection + custom-part generation
++        ↓
++joints / interfaces / fits / routing / serviceability
++        ↓
++physics model graph + solver plan
++        ↓
++multi-fidelity design campaign
++        ↓
++reliability / lifecycle / manufacturing / cost
++        ↓
++candidate engineering designs
++        ↓
++experiment / validation
++```
++
++A design is not considered buildable merely because a mesh solves or a geometric
++solid can be rendered.
++
++## 2. CapabilityPack vs SystemPack
++
++Forge should keep reusable engineering science separate from products.
++
++A **CapabilityPack** owns reusable physics/engineering capability such as
++thermal, CFD, structural, electromagnetics, electrical, battery, combustion,
++multibody dynamics, controls, vehicle dynamics, flight dynamics or lifecycle.
++
++A **SystemPack** / **ProductTemplate** composes those capabilities into an
++engineered product such as an electric motor, robot arm, HVAC unit, drone,
++vehicle, pump or aircraft subsystem.
++
++Product-specific names must not leak into frozen Scientific Core.
++
++## 3. Parametric geometry is not mesh
++
++Forge's existing field/mesh semantics are necessary for analysis but are not a
++substitute for product geometry.
++
++The design-synthesis layer must represent:
++
++- parametric dimensions;
++- topological alternatives;
++- regions, interfaces and mating surfaces;
++- reference frames and datum features;
++- materials and manufacturing process constraints;
++- geometry identity/version;
++- CAD-provider provenance;
++- conversion to analysis meshes without losing the design identity.
++
++Prefer mature open-source CAD/geometry providers where appropriate. Forge should
++own the contracts, not a new CAD kernel.
++
++## 4. Assembly is first-class
++
++A product is an assembly graph, not a bag of isolated solids.
++
++Forge must be able to represent components, interfaces and assembly relations,
++including at least:
++
++- bolts, screws, nuts and washers;
++- pins and retaining features;
++- shafts, keys and splines;
++- bearings and bushings;
++- gears, belts, chains and couplings;
++- springs and dampers;
++- seals and gaskets;
++- linear guides;
++- welds, bonded joints, snap-fits and press-fits;
++- motors, gearboxes, actuators, sensors and encoders;
++- electrical connectors;
++- cable, hose and pipe routing;
++- lubrication requirements;
++- mechanical stops and safety clearances.
++
++The assembly graph must carry exact component/interface identities and be
++replayable as part of the candidate design identity.
++
++## 5. Standard components vs custom parts
++
++Forge must not generate a custom part when a suitable catalog/standard component
++is the more appropriate engineering choice.
++
++A standard-component record should be able to carry:
++
++- manufacturer / standard / part number identity where applicable;
++- geometry and interface dimensions;
++- material;
++- ratings and admissible operating envelope;
++- radial/axial/torque/speed/temperature limits as applicable;
++- tolerance / fit requirements;
++- mass;
++- cost or cost status;
++- availability/source status;
++- source/provenance;
++- uncertainty where known;
++- lifecycle/reliability model or an explicit UNKNOWN.
++
++Candidate selection must never silently invent a rating, tolerance, availability,
++cost or lifetime.
++
++Custom parts may be synthesized when needed, but their manufacturability,
++tolerances and interfaces must be explicit.
++
++## 6. Joint and interface engineering
++
++Assembly synthesis must model engineering meaning, not only CAD contact.
++
++Examples include:
++
++- fastener preload, clamp load, slip and fatigue;
++- threaded engagement and locking method;
++- bearing radial/axial load, speed, lubrication and life;
++- shaft torsion/bending and critical sections;
++- key/spline torque transfer;
++- gear ratio, backlash, tooth/contact load and efficiency;
++- press-fit/interference and clearance fits;
++- weld load path and fatigue where modeled;
++- bonded-joint area/environment/applicability;
++- alignment and allowable misalignment;
++- connector mating and retention;
++- cable/hose bend radius and routing constraints.
++
++When the required scientific model is unavailable, the interface remains
++unsupported/UNKNOWN rather than being reduced to a geometric coincidence.
++
++## 7. Assembly feasibility
++
++Before expensive solver execution, Forge should reject candidates that are
++mechanically or operationally impossible using cheap deterministic checks where
++possible:
++
++- interference/collision;
++- missing mating interface;
++- inaccessible fastener/tool path;
++- impossible assembly order;
++- insufficient clearance;
++- impossible bearing/shaft/fit combination;
++- routing violation;
++- impossible maintenance/removal path;
++- unsupported component rating;
++- violated manufacturing tolerance/process rule.
++
++These checks are engineering filters, not physical validation.
++
++## 8. Manufacturability and serviceability
++
++A candidate design should eventually carry:
++
++- manufacturing process assumptions;
++- minimum feature sizes;
++- tooling/access constraints;
++- standard stock/material choices;
++- geometric and dimensional tolerances;
++- fits;
++- assembly sequence;
++- inspection features;
++- maintainability/serviceability;
++- replaceable wear components;
++- disassembly constraints;
++- manufacturing variation distributions when sourced/admitted.
++
++Manufacturing feasibility and low cost do not constitute scientific evidence for
++performance.
++
++## 9. High-throughput design campaigns
++
++Assembly constraints participate in the same multi-fidelity campaign as physics.
++
++Example:
++
++```text
++1000 generated candidates
++        ↓
++assembly / geometry / catalog feasibility filters
++        ↓
++cheap physics models
++        ↓
++medium-fidelity analysis
++        ↓
++high-fidelity coupled analysis
++        ↓
++independent checks
++        ↓
++prototype / experiment
++```
++
++A candidate rejected by an assembly or catalog constraint should not consume an
++expensive CFD/FEM/EM solve.
++
++The campaign must preserve the reason for rejection and must not hide negative
++results.
++
++## 10. Example — human-like robotic arm
++
++A robotic-arm request should not stop at links and joint coordinates.
++
++A serious candidate may require:
++
++```text
++shoulder
++├── actuator / motor
++├── gearbox
++├── shaft
++├── bearing pair
++├── housing
++├── fasteners
++├── encoder
++├── cable passage
++└── mechanical stops
++
++elbow
++├── actuator / transmission
++├── shaft or pin
++├── bearings / bushings
++├── housing
++├── fasteners
++└── routing
++
++wrist
++├── compact actuators
++├── gears / belts / couplings
++├── bearings
++├── sensors
++├── wiring
++└── service clearances
++```
++
++The system-level result must connect assembly decisions to mass, inertia, stiffness,
++backlash, thermal load, power, control performance, fatigue, serviceability and
++lifecycle where those models exist.
++
++## 11. Provider policy
++
++Forge should prefer mature open-source providers for CAD, optimization, dynamics,
++component calculations and numerical solving when scientifically and operationally
++appropriate.
++
++Before implementing a new computational engine, record:
++
++1. whether a mature open-source project already solves it;
++2. the project's scientific/engineering maturity;
++3. automation/API suitability;
++4. license/deployment implications;
++5. supported capability and applicability envelope;
++6. validation/reference routes;
++7. whether Forge needs an adapter, a generic contract, or genuinely new computation.
++
++Forge's differentiator is orchestration, scientific identity, applicability,
++mechanism reasoning, design synthesis, evidence and discovery—not rewriting mature
++engineering software.
++
++## 12. Scientific and engineering guards
++
++1. A standard component is not acceptable merely because its geometry fits.
++2. Missing rating/tolerance/life/cost/availability stays UNKNOWN.
++3. A CAD-valid assembly is not a mechanically valid assembly.
++4. A mechanically feasible assembly is not experimentally validated.
++5. Optimization score is not evidence.
++6. Low-fidelity acceptance cannot silently replace high-fidelity evidence.
++7. A catalog component's source/version/identity must be bound to the candidate.
++8. Post-hoc changes to constraints or component choices must remain visible.
++9. Failed and rejected candidate designs remain part of discovery memory.
++10. Product-specific assembly rules stay outside frozen Scientific Core.
++
++## 13. Definition of success
++
++Forge has a usable design-synthesis/assembly layer when a candidate product can be
++traced from:
++
++```text
++requirements
++ -> system architecture
++ -> design variables
++ -> geometry/topology
++ -> component identities
++ -> joints/interfaces/fits
++ -> assembly sequence
++ -> manufacturing assumptions
++ -> model graph
++ -> provider executions
++ -> UQ / lifecycle / reliability
++ -> evidence
++```
++
++and when the system can distinguish:
++
++- buildable candidate;
++- analysis-only geometry;
++- unsupported assembly interface;
++- catalog component with insufficient evidence;
++- manufacturable but scientifically unvalidated candidate;
++- simulated improvement only;
++- experimentally validated improvement.
+diff --git a/docs/architecture/mechanistic_discovery.md b/docs/architecture/mechanistic_discovery.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7de47ef72952a3374097b84eb0f13791b0de37f1
+--- /dev/null
++++ b/docs/architecture/mechanistic_discovery.md
+@@ -0,0 +1,387 @@
++# Mechanistic Discovery Architecture
++
++> **Status:** strategic architecture direction; NOT IMPLEMENTED.
++>
++> **Purpose:** define how Forge should evolve from a simulation/assurance runtime into a
++> mechanism-aware scientific discovery system without weakening its existing scientific
++> authority rules.
++>
++> **Current execution boundary:** this document does not start BIG 14 or add production
++> contracts. BIG 14/15 remain review, hardening, validation and recertification work.
++
++## 1. Core idea
++
++Forge must not stop at:
++
++```text
++input -> solver -> output
++```
++
++For discovery, the target is:
++
++```text
++cause candidate
++    -> declared mechanism
++    -> state transition
++    -> observable consequence
++    -> downstream system consequence
++    -> evidence / applicability / uncertainty
++```
++
++The solver is a computation provider for a model of a mechanism. It is not the
++mechanism itself and it is never scientific authority by virtue of returning a number.
++
++A mechanism-aware result should be able to answer, within the limits of the model and
++available evidence:
++
++- what changed;
++- which declared mechanism(s) carried the change;
++- which state variables changed;
++- which equations/models/providers produced the result;
++- what assumptions and applicability bounds were active;
++- what uncertainty and model discrepancy are known or UNKNOWN;
++- what competing explanations remain;
++- which variables are controllable interventions;
++- which next simulation or experiment could discriminate between hypotheses.
++
++## 2. Scientific authority boundary
++
++Forge must keep three concepts separate:
++
++| Concept | Meaning | What it does NOT prove |
++|---|---|---|
++| **Dependency** | B numerically or logically depends on A in a declared model/run | that A causes B in the real system |
++| **Mechanism** | a declared physical/chemical/engineering model explains how A can affect B under stated conditions | that the mechanism is the unique or true real-world cause |
++| **Causal claim** | a claim that changing A would change B in the target system/population/context | it is not granted by a dependency edge, solver run, sensitivity result, correlation or LLM assertion |
++
++Rules:
++
++1. A mechanism explanation is always model-conditioned and applicability-conditioned.
++2. Sensitivity is not causality.
++3. A simulated intervention is not an experimental intervention.
++4. Solver agreement is not causal proof.
++5. A residual unexplained by known models is **unexplained**, not evidence that a new
++   mechanism exists.
++6. Competing mechanisms may remain simultaneously admissible.
++7. LLM/planner output may propose hypotheses or structured candidate mechanisms but may
++   not grant applicability, causal truth, validation, quantified uncertainty or evidence.
++8. UNKNOWN must remain UNKNOWN throughout mechanistic reasoning.
++
++## 3. Proposed generic vocabulary
++
++Names are provisional; the concepts are the requirement.
++
++### 3.1 MechanismDefinition
++
++A reusable scientific definition of a mechanism:
++
++- identity and version;
++- typed inputs and outputs;
++- state variables read and written;
++- governing law/model family;
++- parameters and units;
++- conservation relations;
++- assumptions;
++- applicability envelope;
++- expected failure/invalid regimes;
++- uncertainty and model discrepancy status;
++- source/evidence references;
++- admissible provider/model realizations.
++
++### 3.2 MechanismInstance
++
++Binds a `MechanismDefinition` to a concrete run context:
++
++- component/system;
++- geometry/region;
++- materials;
++- environment;
++- time window;
++- lifecycle state;
++- model realization;
++- provider execution;
++- input/output identities.
++
++### 3.3 DependencyEdge
++
++Records that one quantity/state/model consumes another. It carries no causal authority.
++
++### 3.4 StateTransition
++
++Reuses existing Forge state/timeline/lifecycle authority. A mechanism may explain or
++predict a transition, but must not create a parallel state authority.
++
++### 3.5 Intervention
++
++A typed proposed change to one or more controllable variables:
++
++- geometry;
++- material;
++- operating condition;
++- controller command;
++- environment scenario;
++- model parameter where scientifically admissible.
++
++Each intervention must distinguish:
++
++- physically controllable variable;
++- merely uncertain parameter;
++- calibration parameter;
++- fixed context;
++- hypothetical/simulated-only intervention.
++
++### 3.6 MechanisticExplanation
++
++A derived, non-authoritative explanation graph for a specific result:
++
++```text
++observed/result quantity
++  <- state transition
++  <- mechanism instance
++  <- declared inputs
++  <- upstream mechanisms / state / environment / material
++```
++
++It must carry the exact run/model/evidence identities from which it was derived.
++
++## 4. Cross-domain requirement
++
++The mechanism vocabulary must work across every current and future domain.
++
++| Domain | Example mechanism chain |
++|---|---|
++| Battery | reaction/transport -> overpotential -> voltage/heat -> temperature -> degradation |
++| Thermal | heat generation -> conduction/convection/radiation -> temperature field -> property change |
++| Structural | load/thermal strain -> stress/strain -> deformation -> damage/failure mechanism |
++| CFD | pressure/viscous forces -> momentum transport -> flow field -> separation/vortices/losses |
++| Chemistry | composition + kinetics + transport -> reaction progress -> species + heat release |
++| Thermal-fluid | pressure/enthalpy/mass flow -> component exchange -> heat/work transfer |
++| Electrical | voltage/current -> dissipation/field response -> power/losses -> thermal coupling |
++| Materials | composition + state + history -> constitutive properties -> domain response |
++| Environment | exposure history -> degradation driver -> material/state transition |
++| Corrosion | environment + material -> corrosion process -> thickness/property loss |
++| Moisture | humidity/exposure -> transport/uptake -> material-state change |
++| Lifecycle | accumulated stress/exposure -> damage/degradation -> future physics |
++| Electric motor (future) | current -> electromagnetic field -> force/torque -> losses -> heat -> material/state feedback |
++| Drone/aircraft (future) | propulsion -> forces/moments -> dynamics -> energy demand -> thermal/structural/lifecycle feedback |
++
++## 5. Discovery capabilities that build on the mechanism layer
++
++| Priority | Capability | Purpose | Scientific guard |
++|---|---|---|---|
++| P0 | **Mechanism Graph** | represent mechanism-conditioned cause/effect pathways across domains | graph edges are not causal proof |
++| P0 | **Intervention Engine** | represent what can actually be changed in a design/system | simulated intervention remains simulation |
++| P0 | **Counterfactual Runs** | compare same system under one controlled declared change | counterfactual result is model-conditioned |
++| P0 | **Root-Cause Reasoning** | trace failures/results backward through admissible mechanisms | returns candidate explanations, not automatic causal verdict |
++| P0 | **Scientific Knowledge Graph** | connect mechanisms, laws, materials, systems and evidence | every scientific edge requires provenance/classification |
++| P0 | **Equation/Law Graph** | make laws explicit objects with assumptions and applicability | equations do not gain validity outside their envelope |
++| P0 | **Conservation Graph** | connect mass/energy/charge/momentum balances across mechanisms | missing terms stay UNKNOWN, never zero |
++| P0/P1 | **Model Discrepancy Representation** | separate model inadequacy from input uncertainty | absence is NOT QUANTIFIED, not zero |
++| P1 | **Uncertainty Propagation** | propagate admitted input/model uncertainty through graph | UNKNOWN inputs cannot become quantified by assumption |
++| P1 | **Sensitivity Analysis** | identify influential parameters and mechanisms | sensitivity is not causality |
++| P1 | **Identifiability Analysis** | determine whether observations can identify parameters/mechanisms | non-identifiable parameters must remain unresolved |
++| P1 | **Inverse Problems** | infer candidate parameters/states from observations | posterior/inferred value is not direct measurement |
++| P1 | **Calibration** | fit models to calibration data with provenance | calibration and validation data remain separated |
++| P1 | **Experimental Evidence Registry** | bind datasets, instruments, conditions and uncertainty to validation | experimental label requires actual experimental provenance |
++| P1 | **Automated Experiment Design** | choose experiments that discriminate hypotheses or reduce uncertainty | information value does not equal proof |
++| P1 | **Active Learning** | choose the next simulation/experiment by expected information gain | acquisition score is a policy, not evidence |
++| P1 | **Hypothesis Engine** | generate explicit, falsifiable hypotheses | hypotheses are not evidence |
++| P1 | **Hypothesis Falsification** | design checks intended to reject hypotheses | failed falsification is not automatic confirmation |
++| P1 | **Competing Mechanisms** | keep multiple explanations alive until evidence distinguishes them | no forced single explanation |
++| P1 | **Evidence Updating** | update support when new admissible evidence arrives | evidence removal cannot increase assurance |
++| P1 | **Negative Results as First-Class Evidence** | preserve failures, disagreements and null results | negative execution result still needs evidence classification |
++| P1 | **Scientific Search Space** | define controllable variables, bounds and forbidden regions | search space cannot silently widen after results |
++| P1 | **Constraint Explanation** | explain which mechanism path contributed to a violated constraint | explanation remains model-conditioned |
++| P1 | **Trade-off Graph** | expose performance/mass/temperature/cost/lifetime trade-offs | no hidden scalarization/ranking |
++| P1 | **Dimensional Analysis** | use dimensions/Buckingham-Pi to constrain models/search | dimensionally valid does not mean physically valid |
++| P1 | **Regime Detection** | identify laminar/turbulent, transport/kinetic-limited, etc. | detection requires declared criteria and applicability |
++| P1/P2 | **Lifecycle Mechanism Graph** | connect exposure -> damage -> property change -> later physics | degradation model validity remains explicit |
++| P1/P2 | **Multi-Fidelity Modeling** | analytic/reduced/FEM/CFD/experimental fidelity ladder | lower fidelity cannot silently stand in for higher fidelity |
++| P2 | **Surrogate Models with Trust Envelopes** | accelerate repeated solves within learned applicability bounds | out-of-distribution use is refused/UNKNOWN |
++| P2 | **Differentiable Simulation** | expose gradients where scientifically meaningful | gradient is local model information, not causality |
++| P2 | **MDO** | multidisciplinary design optimization over coupled systems | optimum is conditional on objectives/constraints/models |
++| P2 | **Robust Design** | optimize under admitted uncertainty/distributional variation | UNKNOWN uncertainty must not be replaced by guessed distributions |
++| P2 | **Manufacturing Tolerance Engine** | propagate manufacturing variation into system behavior | tolerances need sourced/declared distributions |
++| P2 | **Failure Mechanism Graph** | connect fatigue/corrosion/thermal/electrical failure pathways | failure mechanism claim needs applicability/evidence |
++| P2 | **Novelty / Residual Detection** | detect observations not explained by admitted models | residual means unexplained, not novel mechanism proven |
++| P2/P3 | **Unknown-Mechanism Discovery** | cluster unexplained residuals and propose testable missing-mechanism hypotheses | proposals remain hypotheses until discriminating evidence |
++| P2 | **Scaling-Law Discovery** | infer candidate dimensionless/scaling relations | fitted laws require holdout/validation and regime bounds |
++| P2 | **Automatic Model Selection** | select among models using applicability/evidence, not LLM preference | selection policy cannot create evidence |
++| P2 | **Model Ensemble Reasoning** | preserve model disagreement instead of hiding it | ensemble consensus is not truth |
++| P2 | **Discovery Memory** | retain failed hypotheses, negative results and tested interventions | memory records provenance; repetition avoidance is policy |
++
++## 6. Mechanism-aware discovery loop
++
++Target future loop:
++
++```text
++Observation / engineering objective
++          ↓
++Known mechanisms + current state
++          ↓
++Uncertainty / contradiction / unexplained residual
++          ↓
++Competing falsifiable hypotheses
++          ↓
++Candidate interventions
++          ↓
++Simulation / multi-fidelity analysis
++          ↓
++Discriminating experiment if required
++          ↓
++Admissible evidence
++          ↓
++Hypotheses rejected / retained / unresolved
++          ↓
++Knowledge and mechanism records updated
++          ↓
++New design or next experiment
++          ↓
++Repeat
++```
++
++Forge must be able to stop at any point with:
++
++```text
++UNEXPLAINED / INSUFFICIENT EVIDENCE / UNKNOWN
++```
++
++rather than inventing a mechanism.
++
++## 7. Example: mechanism-aware motor discovery
++
++A future electric-motor domain should not be a black box mapping voltage/current to
++torque. A minimally useful mechanistic representation would include:
++
++```text
++electrical input
++  -> winding current
++  -> electromagnetic field
++  -> air-gap force
++  -> torque
++  -> rotor/shaft dynamics
++
++current
++  -> copper loss
++  -> heat
++  -> winding temperature
++  -> resistance change
++  -> current/torque feedback
++
++magnetic state + speed
++  -> iron/eddy losses
++  -> heat
++
++temperature + stress + time
++  -> insulation / magnet / bearing degradation
++  -> future performance
++```
++
++The same design principle applies to batteries, reactors, HVAC, vehicles, drones,
++aircraft and every other domain.
++
++## 8. Architecture constraints
++
++The mechanism/discovery layer must:
++
++1. reuse existing Forge timeline, state, lifecycle, provenance, evidence, UQ,
++   applicability, result and trust authorities;
++2. not create a second ScientificResult, Evidence, Validation or Uncertainty vocabulary;
++3. keep domain-specific mechanisms outside frozen Scientific Core unless a generic
++   contract is proven necessary;
++4. bind every explanation to exact request/model/provider/state/evidence identities;
++5. serialize/replay deterministically where the underlying run is replayable;
++6. preserve failed and contradictory mechanisms/evidence;
++7. keep discovery search policy separate from scientific evidence;
++8. make post-hoc hypotheses/criteria visibly post-hoc;
++9. refuse unsupported extrapolation;
++10. keep mechanism definitions provider-neutral where possible.
++
++## 8.1 Interaction with design synthesis and assembly
++
++Mechanistic discovery does not replace engineering design synthesis.
++
++A future candidate product may be created by the design/assembly layer and then
++explained/evaluated by the mechanism layer. Assembly choices such as a bearing,
++fastener, fit, gear ratio, cooling passage or connector may participate in mechanism
++paths only when the relevant model/applicability is declared.
++
++The design-synthesis/assembly architecture is defined separately in
++`docs/architecture/design_synthesis.md`.
++
++## 9. Proposed implementation order
++
++This is a future mechanism/discovery workstream after the current BIG 14/15 review and hardening campaign. It composes with the separate design-synthesis/assembly roadmap rather than replacing it.
++
++### Discovery Foundation A — Mechanism semantics
++
++- inventory existing domain laws/state transitions before creating contracts;
++- define dependency vs mechanism vs causal-claim semantics;
++- prototype `MechanismDefinition`, `MechanismInstance`, `DependencyEdge` and
++  `MechanisticExplanation`;
++- prove them on existing battery, thermo-mechanical, CFD and chemistry flagships;
++- no discovery search yet.
++
++### Discovery Foundation B — Interventions and counterfactuals
++
++- typed controllable/fixed/uncertain variables;
++- counterfactual run identity;
++- one-change and multi-change intervention records;
++- root-cause candidate tracing;
++- negative controls.
++
++### Discovery Foundation C — UQ, sensitivity and identifiability
++
++- quantified uncertainty only from admitted distributions/measurements/models;
++- model discrepancy representation;
++- global/local sensitivity;
++- identifiability;
++- inverse/calibration workflows with calibration/validation split.
++
++### Discovery Foundation D — Hypotheses and experiments
++
++- explicit hypothesis records;
++- competing mechanisms;
++- falsification criteria;
++- experiment-design objectives;
++- active-learning policy;
++- experimental evidence registry.
++
++### Discovery Foundation E — Design discovery
++
++- multi-fidelity execution;
++- trustworthy surrogates;
++- robust/MDO search;
++- scaling-law candidates;
++- residual/novelty detection;
++- discovery memory.
++
++## 10. Definition of success
++
++Forge becomes mechanism-aware only when a result can be traced as:
++
++```text
++result
++ -> state transition(s)
++ -> mechanism instance(s)
++ -> model/law
++ -> assumptions/applicability
++ -> material/environment/time context
++ -> provider execution(s)
++ -> uncertainty/model discrepancy
++ -> evidence
++```
++
++and the system can distinguish all of these outcomes:
++
++- mechanism supported for this bounded context;
++- mechanism computationally exercised but not validated;
++- competing mechanisms unresolved;
++- intervention improved the simulated objective only;
++- result sensitive to a parameter but causality not established;
++- observation unexplained by admitted mechanisms;
++- evidence insufficient;
++- applicability UNKNOWN;
++- uncertainty UNKNOWN.
++
++That distinction is a prerequisite for scientific discovery, not a presentation feature.
+diff --git a/docs/project/FORGE_MASTER_PLAN.md b/docs/project/FORGE_MASTER_PLAN.md
+index 9fd84c67518dfe4da92426cf0f8a79625600400d..d70bdcb0dc2439bc430b0838ba88ebad8edb06c1 100644
+--- a/docs/project/FORGE_MASTER_PLAN.md
++++ b/docs/project/FORGE_MASTER_PLAN.md
+@@ -59,13 +59,17 @@ The long-term differentiator is the combination of:
+ 5. environment and exposure;
+ 6. degradation and lifecycle state;
+ 7. solver/data neutrality;
+-8. scientific trust, evidence, uncertainty and refusal.
++8. scientific trust, evidence, uncertainty and refusal;
++9. mechanism-aware reasoning: explicit laws/mechanisms, state transitions, interventions, competing explanations and discovery without confusing model dependency with causal proof;
++10. engineering design synthesis: requirements, parametric geometry, assembly, standard-component selection, joints/interfaces, manufacturability and high-throughput design discovery.
+ 
+ ## 3. Explicit non-goals
+ 
+ Forge must **not** become an inferior rewrite of mature tools.
+ 
+-Do not build a new CFD, FEM, CAS, battery electrochemistry, chemical kinetics, mesh generator or HPC linear-solver stack merely because Forge needs those capabilities.
++Do not build a new CFD, FEM, CAS, battery electrochemistry, chemical kinetics, mesh generator, CAD kernel, multibody engine, optimizer or HPC linear-solver stack merely because Forge needs those capabilities.
++
++Do not recreate mature standard-component catalogs or engineering standards by hand when a reliable open-source or standards-backed source can be integrated with explicit provenance.
+ 
+ Prefer adapters/providers around mature open-source projects where scientifically appropriate.
+ 
+@@ -261,6 +265,100 @@ In particular:
+ - removing evidence cannot increase assurance;
+ - unsupported claims must remain REVIEW/REFUSED rather than being forced through.
+ 
++## 4.10 Mechanistic discovery and scientific reasoning
++
++Forge's long-term discovery direction is **mechanism-aware**, not black-box search.
++
++A scientifically useful domain must eventually expose more than `input -> solver -> output`.
++Where the domain knowledge supports it, Forge should be able to trace:
++
++```text
++declared cause candidate
++        ↓
++mechanism / governing law
++        ↓
++state transition
++        ↓
++observable
++        ↓
++downstream system consequence
++        ↓
++evidence + applicability + uncertainty
++```
++
++This is a cross-domain requirement. It applies to existing battery, thermal,
++structural, CFD, chemistry, materials, environment and lifecycle capabilities,
++and to future motor, vehicle, drone, aircraft, HVAC, reactor and energy domains.
++
++Three concepts must remain distinct:
++
++- **dependency** — a model/run consumes another quantity or state;
++- **mechanism** — a declared physical/chemical/engineering model explains how an
++  influence is represented under stated assumptions and applicability;
++- **causal claim** — a stronger claim about what would happen under intervention
++  in the target system/context.
++
++A dependency edge, sensitivity result, solver agreement, correlation, planner
++proposal or LLM explanation must never be promoted into a causal claim.
++
++Strategic discovery capabilities built on this layer include:
++
++- mechanism and equation/law graphs;
++- typed interventions and counterfactual runs;
++- mechanism-conditioned root-cause analysis;
++- competing hypotheses and falsification;
++- model discrepancy and quantified uncertainty;
++- sensitivity and identifiability;
++- inverse problems and calibration with calibration/validation separation;
++- experimental evidence registry;
++- experiment design and active learning;
++- negative-result memory;
++- multi-fidelity models and trust-bounded surrogates;
++- robust multidisciplinary design optimization;
++- residual/novelty detection that records **unexplained** behavior without
++  inventing a new mechanism.
++
++The detailed architecture, authority boundaries and proposed implementation order
++are in `docs/architecture/mechanistic_discovery.md`.
++
++## 4.11 Engineering design synthesis and assembly
++
++Forge's long-term target is not only to analyze an existing system. It must be
++able to turn engineering requirements into **buildable candidate designs**.
++
++Target flow:
++
++```text
++requirements
++  -> system architecture
++  -> design space / topology
++  -> parametric geometry / CAD
++  -> assembly synthesis
++  -> standard-component selection + custom parts
++  -> joints / interfaces / fits / routing
++  -> solver planning
++  -> multi-fidelity design campaign
++  -> reliability / lifecycle / manufacturing / cost
++  -> candidate design
++  -> experiment / evidence update
++```
++
++A mesh is not a product design, and a collection of solids is not an assembly.
++
++Assembly engineering is first-class. Forge must eventually reason about fasteners,
++nuts, washers, pins, shafts, bearings, bushings, keys/splines, gears, belts,
++chains, couplings, springs, seals, welds, bonded joints, press-fits, connectors,
++cables/hoses/pipes, lubrication, mechanical stops, tolerances, assembly sequence,
++tool access and serviceability.
++
++Prefer standard/catalog components when suitable; generate custom parts only where
++the design requires them. Missing ratings, tolerances, lifecycle, availability or
++cost remain UNKNOWN rather than being invented.
++
++The detailed architecture is in
++`docs/architecture/design_synthesis.md`.
++
++
+ ## 5. Multi-timescale execution
+ 
+ Forge must eventually coordinate phenomena whose natural time scales differ by many orders of magnitude.
+@@ -287,22 +385,33 @@ A new domain must enter through generic extension contracts.
+ 
+ **Failure condition:** adding a new domain requires sprinkling domain-specific names or branches throughout Scientific Core.
+ 
+-Preferred shape:
++Preferred reusable scientific shape:
+ 
+ ```text
+-DomainPack
+-├── Models
++CapabilityPack / DomainPack
++├── Models / Governing Laws
++├── Mechanisms
+ ├── Realizations
+ ├── Solver Providers
+ ├── State Schema
+ ├── Ports
+ ├── Coupling Semantics
+-├── Applicability
++├── Applicability / Regimes
+ ├── Conservation
++├── Uncertainty / Model Discrepancy
++├── Design Variables / Constraints
++├── Geometry Requirements
+ ├── Validation Routes
+ └── Result Adapters
+ ```
+ 
++Products such as a motor, robotic arm, HVAC unit, drone, vehicle or aircraft should
++normally be composed as a `SystemPack` / `ProductTemplate` from reusable capabilities
++rather than becoming new Scientific Core branches.
++
++A SystemPack may additionally bind parametric geometry, assembly topology, standard
++components, interfaces, manufacturing assumptions and product-level requirements.
++
+ The strongest extensibility test is an external package that can be installed and enabled without modifying Forge Core.
+ 
+ ## 7. Provider-integration definition of done
+@@ -364,6 +473,21 @@ the active slice requires them.
+ | **P16** | Flagship systems | HVAC, battery pack, drone and vehicle subsystem demonstrate the architecture |
+ | **P17** | HPC/scale | distributed/remote execution with documented scale and replay |
+ | **P18** | Commercial data/funding expansion | paid data/providers only where technically justified |
++| **P19** | Architecture boundary cleanup | Core, CapabilityPack/DomainPack, Provider and SystemPack/ProductTemplate responsibilities are explicit and product-specific logic does not leak into frozen Core |
++| **P20** | OSS provider capability matrix | every integrated provider has capability/applicability/maturity coverage; provider availability is not confused with full solver capability |
++| **P21** | Mechanism semantics | provider-neutral dependency/mechanism/state-transition/explanation contracts proven on existing flagships without granting causal authority |
++| **P22** | UQ + model discrepancy + sensitivity | quantified uncertainty only from admitted information; model discrepancy, sensitivity and identifiability compose across systems |
++| **P23** | Engineering requirements + design space | objectives, constraints, operating envelope, controllable variables, topology choices and forbidden regions are explicit and identity-bound |
++| **P24** | Parametric geometry / CAD / topology | candidate geometry/topology is reproducible, provider-neutral at the contract boundary and can feed analysis meshes without losing design identity |
++| **P25** | Assembly + standard-component synthesis | buildable assembly graph; standard/catalog component selection; custom parts only where needed; exact component/source identities |
++| **P26** | Joints / interfaces / fits / routing | fasteners, bearings, shafts, gears, couplings, fits, tolerances, connectors, routing, assembly access and serviceability are represented and checked |
++| **P27** | Capability-based solver planning | model realization, fidelity, primary provider and independent verification route are selected from declared capability/applicability rather than solver name or LLM preference |
++| **P28** | Intervention + counterfactual runtime | typed controllable variables and replayable interventions/counterfactuals with model-conditioned conclusions |
++| **P29** | High-throughput multi-fidelity design discovery | large candidate campaigns use cheap filters, parallel execution, fidelity escalation, caching/early stopping, trust-bounded surrogates and Pareto/MDO search |
++| **P30** | Reliability + lifecycle + manufacturability + cost | candidate designs include degradation, fatigue/wear where supported, manufacturing variation/tolerances, process constraints, serviceability and cost status |
++| **P31** | Hypotheses + experimental learning | competing falsifiable hypotheses, experiment design, active learning and experimental evidence registry |
++| **P32** | Closed-loop experimental validation | calibration and holdout validation remain separate; physical measurements update evidence/model discrepancy without turning calibration into validation |
++| **P33** | Validated design discovery | requirements -> design -> assembly -> multi-physics analysis -> uncertainty/reliability -> experiment, with improvement claims limited to admitted evidence |
+ 
+ Do not skip prerequisite phases merely to increase the number of domains.
+ 
+@@ -495,5 +619,8 @@ Before adding a large feature, ask:
+ 8. Can it replay?
+ 9. Does it preserve fail-closed behavior?
+ 10. Does it make the flagship systems more complete?
++11. If the feature explains *why*, is it recording a dependency, a mechanism or an actual causal claim?
++12. What intervention or falsification could distinguish the proposed mechanism from competing explanations?
++13. If the observed behavior is not explained, can the system preserve it as UNEXPLAINED rather than inventing a mechanism?
+ 
+ If those questions cannot be answered, the feature is not ready for Core.
+diff --git a/docs/work/ACTIVE_PLAN.md b/docs/work/ACTIVE_PLAN.md
+index 72f66856bf6b2db8e01bc847b1003a4986e910f9..7cbf33594cf40ab38e3d28bd12f8b94fcd924755 100644
+--- a/docs/work/ACTIVE_PLAN.md
++++ b/docs/work/ACTIVE_PLAN.md
+@@ -318,6 +318,62 @@ map and license matrix `docs/architecture/providers.md`; boundary proofs `tests/
+ - [ ] BIG 14 — NOT STARTED (per instruction). Gaps handed forward are listed at the end of the BIG 13 entry in PROGRESS (no quantified uncertainty, no experimental comparison,
+       A cell-side conservation check, B/C/D unexplained residuals, unkeyed bundle manifest, optional flagship E).
+ 
++## Accepted post-hardening strategic direction — Engineering design synthesis and assembly
++
++This is **not an active BIG 14 task** and must not displace BIG 14/15 review,
++test-audit, validation, mutation and recertification work.
++
++After the hardening campaign, Forge's design-discovery direction must include an
++explicit product-realization layer between design variables and expensive solver
++execution:
++
++- Engineering Requirements IR and identity-bound design spaces;
++- parametric geometry/CAD/topology;
++- **assembly synthesis as a first-class capability**;
++- standard/catalog-component selection with provenance;
++- custom-part generation only when required;
++- fasteners, nuts/washers, pins, shafts, bearings/bushings, keys/splines,
++  gears, belts/chains, couplings, springs, seals, welds, bonded joints and press-fits;
++- electrical/mechanical connectors, cable/hose/pipe routing and mechanical stops;
++- tolerances, fits, tool access, assembly sequence and serviceability;
++- manufacturability and component-rating checks before expensive solver runs;
++- capability-based solver planning;
++- high-throughput multi-fidelity design campaigns.
++
++A geometry that solves is not automatically a buildable product, and a catalog
++component is not admissible merely because it fits geometrically. Missing ratings,
++tolerances, lifecycle, availability or cost remain UNKNOWN.
++
++Architecture: `docs/architecture/design_synthesis.md`.
++Strategic roadmap: `docs/project/FORGE_MASTER_PLAN.md` P23-P33.
++
++## Accepted post-hardening strategic direction — Mechanism-aware discovery
++
++This is **not an active BIG 14 task** and must not displace BIG 14/15 review,
++test-audit, validation, mutation and recertification work.
++
++After the current hardening campaign, Forge should evolve from
++`input -> solver -> output` toward a mechanism-aware discovery architecture that
++can represent:
++
++- dependency vs mechanism vs causal-claim semantics;
++- explicit mechanism/law -> state-transition -> observable paths;
++- typed interventions and counterfactual runs;
++- mechanism-conditioned root-cause candidates;
++- competing falsifiable hypotheses;
++- model discrepancy, UQ, sensitivity and identifiability;
++- experimental evidence, experiment design and active learning;
++- negative results and unexplained residuals as first-class records;
++- multi-fidelity and robust/MDO design discovery.
++
++The layer must reuse existing state, timeline, lifecycle, provenance, evidence,
++applicability, uncertainty, result and trust authorities. It must never convert
++sensitivity, solver agreement, a dependency edge, optimization score or LLM
++proposal into causal/scientific evidence.
++
++Architecture: `docs/architecture/mechanistic_discovery.md`.
++Strategic roadmap: `docs/project/FORGE_MASTER_PLAN.md` P21-P33.
++
+ ## Persistent project direction
+ 
+ The long-term roadmap, non-goals, provider strategy, data policy, flagship
+diff --git a/docs/work/PROGRESS.md b/docs/work/PROGRESS.md
+index 2634f1ad51b95203d42a5e333318e10f38acae3e..365e4192379bce33111bc40aa7b546dfb0880c9e 100644
+--- a/docs/work/PROGRESS.md
++++ b/docs/work/PROGRESS.md
+@@ -11,6 +11,28 @@ Keep it concise and factual. Do not use it as a release note or marketing log.
+ - Strategic contract: `docs/project/FORGE_MASTER_PLAN.md`
+ - Current execution authority: `docs/work/ACTIVE_PLAN.md`
+ 
++## 2026-09-26 Strategic decision — mechanism-aware discovery
++
++Recorded a post-hardening strategic direction for Forge: future discovery work
++must represent **dependency -> mechanism -> state transition -> observable**
++explicitly, while keeping dependency, mechanism and causal claims scientifically
++separate. The goal is for Forge to explain model-conditioned *how/why*, support
++typed interventions/counterfactuals, competing hypotheses, UQ/sensitivity/
++identifiability, experiment design and multi-fidelity design discovery without
++turning solver output, sensitivity, optimization, correlation or LLM proposals
++into evidence.
++
++- Added `docs/architecture/mechanistic_discovery.md` with the authority boundary,
++  cross-domain mechanism model, discovery-capability table and proposed staged
++  implementation.
++- Updated `docs/project/FORGE_MASTER_PLAN.md` with the strategic rule and future
++  P19-P23 phases.
++- Updated `docs/architecture/README.md` and `docs/work/ACTIVE_PLAN.md` to link
++  the direction and explicitly keep it **after** BIG 14/15.
++- No production code changed. Tests: **NOT RUN** (documentation-only change).
++- BIG 14 remains the next active engineering phase; this strategic addition does
++  not authorize skipping review/hardening.
++
+ ## 2026-09-26 BIG 13 — Flagship Engineering Demonstrations (BUILD phase; read this first)
+ 
+ Branch `feat/big-13-flagship-demonstrations`, base `6054ac44811cec26e074ad5be275396cccfd3b13` (the BIG 12 HEAD), worktree `D:/forge-b13`. Reports: `docs/flagships/`
+@@ -1433,3 +1455,33 @@ works.
+ - Continue reducing the remaining flat claim modules only after PR #65 is
+   verified.
+ - Do not expand the frozen Scientific Core for repository-layout aesthetics.
++
++## 2026-09-27 strategic decision — assembly and buildable design synthesis
++
++Accepted a new first-class strategic requirement for the post-hardening roadmap:
++Forge must not stop at geometry/physics optimization. A candidate product must be
++able to carry an explicit assembly graph and, where applicable, standard/catalog
++component selections, joints/interfaces/fits, tolerances, routing, assembly access,
++serviceability and manufacturability constraints.
++
++Strategic consequences:
++
++- added `docs/architecture/design_synthesis.md`;
++- updated the Master Plan so design synthesis includes requirements, design space,
++  parametric CAD/topology, assembly/component synthesis, joints/interfaces,
++  capability-based solver planning, high-throughput multi-fidelity campaigns,
++  reliability/manufacturability and closed-loop validation;
++- distinguished reusable CapabilityPack/DomainPack science from SystemPack /
++  ProductTemplate composition;
++- standard components such as fasteners, bearings, shafts, gears, couplings,
++  seals, connectors and actuators should normally be selected from provenance-bound
++  catalogs/standards rather than re-created from scratch;
++- a CAD-valid/mesh-valid candidate is not automatically buildable, mechanically
++  valid or experimentally validated;
++- missing component ratings, tolerances, availability, cost or lifetime remain UNKNOWN;
++- the mechanism/discovery architecture now explicitly composes with, rather than
++  replaces, the design-synthesis/assembly layer;
++- BIG 14/15 remain the next execution work. No production contracts or code were
++  added by this decision.
++
++Tests: **NOT RUN** — documentation/strategic architecture change only.
