@@ -862,52 +862,60 @@ def test_d5_writable_host_device_nodes_stay_blocking():
 
 
 def test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only():
-    """Review MAJOR-1: a read-only view of the host is still a channel (``/`` or a socket directory). Every
-    host-backed read-only mount must be a declared bind of a kept tree, Podman's userdata or a /proc mask."""
+    """Review MAJOR-1 (two passes): a read-only view of the host is still a channel. Every read-only row is admitted
+    by target and filesystem, never by the operator's backing label. Binds are tied to their kept tree by device and
+    root, and userdata to THIS container."""
     import copy
 
     from benchmarks.genesis_lite.v0_3 import container_evidence
 
     fx = _contract_fixture()
 
-    def add(report, row_update, volume=None, backing="host"):
+    def add(row_update, volume=None, backing="host", base=2):
+        report, expected = fx.baseline()
         for card in report["cards"]:
-            row = dict(copy.deepcopy(card["mounts"][2]), id=str(int(card["mounts"][-1]["id"]) + 1), **row_update)
+            update = row_update(card) if callable(row_update) else row_update
+            row = dict(copy.deepcopy(card["mounts"][base]), id=str(int(card["mounts"][-1]["id"]) + 1), **update)
             card["mounts"].append(row)
             fx.synchronize(card)
             card["runtime_mounts"][-1]["backing"] = backing
             if volume:
                 image = card["argv"].index("localhost/forge-card@" + fx.IMAGE)
                 card["argv"][image:image] = ["--volume", volume]
-        return report
-
-    def verdict(report, expected):
         return container_evidence.validate_container_evidence(report, expected=expected)
 
-    report, expected = fx.baseline()
-    out = verdict(add(report, {"root": "/", "target": "/host"}, "/:/host:ro"), expected)
-    assert out["status"] == "BLOCKED" and "UNDECLARED_HOST_MOUNT" in out["reasons"]       # / bound read-only
-    report, expected = fx.baseline()
-    out = verdict(add(report, {"root": "/run/user/1000/podman", "target": "/s"}), expected)
-    assert "UNDECLARED_HOST_MOUNT" in out["reasons"]                                     # not even declared
-    report, expected = fx.baseline()
-    out = verdict(add(report, {"root": "/podman", "target": "/s"}, "/run/user/1000/podman:/s:ro"), expected)
-    assert "UNDECLARED_HOST_MOUNT" in out["reasons"]                                     # a socket directory
-    report, expected = fx.baseline()
-    userdata = {"root": "/containers/overlay-containers/x/userdata/hosts", "target": "/etc/hosts", "fstype": "tmpfs",
-                "source": "tmpfs"}
-    assert verdict(add(report, userdata), expected)["status"] == "PASS"                  # Podman's own file
-    report, expected = fx.baseline()
+    blocked = "UNDECLARED_HOST_MOUNT"
+    assert blocked in add({"root": "/", "target": "/host"}, "/:/host:ro")["reasons"]              # / bound read-only
+    assert blocked in add({"root": "/run/user/1000/podman", "target": "/s"})["reasons"]           # undeclared
+    assert blocked in add({"root": "/podman", "target": "/s"}, "/run/user/1000/podman:/s:ro")["reasons"]
+    tmpfs_root = {"root": "/", "target": "/x", "fstype": "tmpfs", "source": "tmpfs"}            # a whole host tmpfs
+    assert blocked in add(tmpfs_root, backing="container")["reasons"]                             # labelled container
+    assert blocked in add({"root": "/", "target": "/hostproc", "fstype": "proc", "source": "proc"},
+                          backing="kernel")["reasons"]                                            # the host's procfs
+    assert blocked in add({"root": "/", "target": "/proc/x", "fstype": "tmpfs", "source": "tmpfs"},
+                          backing="container")["reasons"]                                         # not a Podman mask
+    assert blocked in add({"root": "/repository/a", "target": "/a"}, "/repo/../etc:/a:ro")["reasons"]   # '..'
+    assert blocked in add({"root": "/repository/sub", "target": "/a", "device": "9:9"}, "/repo/sub:/a:ro")["reasons"]
+    assert blocked in add({"root": "/elsewhere", "target": "/a"}, "/repo/sub:/a:ro")["reasons"]   # wrong root
+    assert add({"root": "/repository/sub", "target": "/a"}, "/repo/sub:/a:ro")["status"] == "PASS"   # a true alias
+    mine = lambda card: {"root": f"/containers/overlay-containers/{card['id']}/userdata/hosts",  # noqa: E731
+                         "target": "/etc/hosts", "fstype": "tmpfs", "source": "tmpfs"}
+    assert add(mine)["status"] == "PASS"                                                          # Podman's own file
+    other = {"root": "/containers/overlay-containers/" + "f" * 64 + "/userdata/hosts", "target": "/etc/hosts",
+             "fstype": "tmpfs", "source": "tmpfs"}
+    assert blocked in add(other)["reasons"]                                                       # another container's
     mask = {"root": "/null", "target": "/proc/kcore", "fstype": "devtmpfs", "source": "none"}
-    assert verdict(add(report, mask), expected)["status"] == "PASS"                      # a read-only /proc mask
-    report, expected = fx.baseline()
-    wrong_mask = {"root": "/null", "target": "/etc/shadow", "fstype": "devtmpfs", "source": "none"}
-    assert "UNDECLARED_HOST_MOUNT" in verdict(add(report, wrong_mask), expected)["reasons"]
+    assert add(mask)["status"] == "PASS"                                                          # a Podman mask
+    assert blocked in add({"root": "/null", "target": "/etc/shadow", "fstype": "devtmpfs", "source": "none"})[
+        "reasons"]
+    sub = {"root": "/sys", "target": "/proc/sys", "fstype": "proc", "source": "proc"}
+    assert add(sub, backing="kernel")["status"] == "PASS"                                         # read-only /proc/sys
     report, expected = fx.baseline()
     expected["source_sha"] = "UNKNOWN"
     for card in report["cards"]:
         card["provenance"]["source_sha"] = "UNKNOWN"
-    assert "PROVENANCE_MISMATCH" in verdict(report, expected)["reasons"]                 # UNKNOWN never matches
+    assert "PROVENANCE_MISMATCH" in container_evidence.validate_container_evidence(report, expected=expected)[
+        "reasons"]                                                                                # UNKNOWN never matches
 
 
 def test_d5_a_cross_card_probe_that_could_not_run_stays_untestable_even_with_passing_containers():
@@ -915,14 +923,20 @@ def test_d5_a_cross_card_probe_that_could_not_run_stays_untestable_even_with_pas
 
     ok = {"status": "PASS", "reasons": []}
 
-    def run(spec):
-        channel = spec.rsplit(":", 1)[1]
-        if channel == "cross_card_state":
-            return ["cross_card_state:UNTESTABLE:setup failed: PermissionError"]
-        return [f"{channel}:{attacks.REFUSED}:x"]
+    def runner(cross):
+        def run(spec):
+            channel = spec.rsplit(":", 1)[1]
+            return [cross] if channel == "cross_card_state" else [f"{channel}:{attacks.REFUSED}:x"]
+        return run
 
-    out = attacks.verify_deployment(run, scan_findings=[], container_validation=ok)
-    assert out["verdicts"]["cross_card_state"] == attacks.UNTESTABLE and out["verified"] is False
+    for cross in ("cross_card_state:UNTESTABLE:setup failed: PermissionError",
+                  "cross_card_state:UNTESTABLE:some other outcome",
+                  "cross_card_state:REFUSED:a probe that refuses by itself"):
+        out = attacks.verify_deployment(runner(cross), scan_findings=[], container_validation=ok)
+        assert out["verdicts"]["cross_card_state"] == attacks.UNTESTABLE and out["verified"] is False, cross
+    exact = f"cross_card_state:UNTESTABLE:{attacks.CROSS_CARD_NO_MARKER}"
+    assert attacks.cross_card_state.__doc__ and attacks.verify_deployment(
+        runner(exact), scan_findings=[], container_validation=ok)["verdicts"]["cross_card_state"] == attacks.REFUSED
 
 
 def test_d5_a_production_run_never_takes_a_callers_deployment_check(stand_in_accepted, registry):

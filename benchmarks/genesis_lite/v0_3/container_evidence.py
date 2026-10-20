@@ -9,10 +9,12 @@ verified for N-1 only when per-card evidence shows, for three fresh cards A, B a
   Python environment are read-only binds; no writable mount is shared, host-backed, Windows-backed, stacked under
   another mount or undeclared. A writable device or pseudo-file mount is blocking (owner, 2026-10-21: no device-node
   exemption);
-* every READ-ONLY host-backed mount is one of: a declared ``--volume`` bind whose source is the source tree, the
-  Python environment or a path inside them; Podman's own userdata files (:data:`USERDATA_TARGETS`); or Podman's
-  read-only ``/dev/null`` masks over ``/proc`` and ``/sys`` pseudo-files. Any other host path visible to a card, even
-  read-only (``/``, a socket directory, a default volume), is blocking;
+* every READ-ONLY mount, whatever the operator's backing label, is on an allowlist (:func:`_read_only_admitted`):
+  the image root; the read-only ``/dev``; the card's own ``/proc``, ``/sys`` and cgroup filesystems with Podman's
+  masks over them; a declared ``--volume`` bind whose source is the source tree, the Python environment or a path
+  inside them, on the same device and below the same root as that tree's own mount; and Podman's userdata files of
+  THIS container. Any other path visible to a card, even read-only (``/``, a socket directory, the host's procfs, a
+  default volume from the operator's configuration), is blocking;
 * card A wrote a fresh token into each private mount (O_EXCL, fsync, readback, mount-attributed by the open file
   descriptor) and fresh cards B and C, at the identical path, found it ABSENT;
 * a deliberately shared volume IS seen across two containers (the probe has power), and a host listener the cards
@@ -30,6 +32,7 @@ nothing about the twelve attack channels (:mod:`.deployment_attacks`); a deploym
 
 from __future__ import annotations
 
+import posixpath
 import re
 from typing import Any, Mapping
 
@@ -61,6 +64,12 @@ DEVICE_FSTYPES = ("devtmpfs", "devpts", "mqueue")
 CGROUP_FSTYPES = ("cgroup", "cgroup2")
 #: Podman's own per-container files, bound read-only from the container's userdata directory
 USERDATA_TARGETS = ("/etc/hosts", "/etc/hostname", "/etc/resolv.conf", "/run/.containerenv")
+#: Podman's default masked paths (a read-only /dev/null bind over a file, an empty read-only tmpfs over a directory)
+MASKED_PATHS = ("/proc/acpi", "/proc/kcore", "/proc/keys", "/proc/latency_stats", "/proc/sched_debug", "/proc/scsi",
+                "/proc/timer_list", "/proc/timer_stats", "/proc/interrupts", "/sys/dev/block",
+                "/sys/devices/virtual/powercap", "/sys/firmware", "/sys/fs/selinux")
+#: Podman's default read-only re-binds of the card's own procfs
+READ_ONLY_PROC_PATHS = ("/proc/asound", "/proc/bus", "/proc/fs", "/proc/irq", "/proc/sys", "/proc/sysrq-trigger")
 HEX40 = re.compile(r"[0-9a-f]{40}")
 HEX64 = re.compile(r"[0-9a-f]{64}")
 
@@ -123,8 +132,10 @@ class _Findings:
         self.details.add(f"{reason}: {detail}")
 
 
-def _argv(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings, phase: str) -> set[str] | None:
-    """Check the launch command; return the container-side targets of its read-only binds (None if unparseable)."""
+def _argv(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings,
+          phase: str) -> dict[str, str] | None:
+    """Check the launch command; return its read-only binds as {container target: host source} (None if
+    unparseable)."""
     argv = card["argv"]
     if not isinstance(argv, list) or len(argv) < 3 or not all(isinstance(a, str) for a in argv):
         found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: argv is not a list of strings")
@@ -174,16 +185,18 @@ def _argv(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings
                               (expected["venv_host"], expected["venv_path"], "venv")):
         if f"{host}:{path}:ro" not in volumes:
             found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: the {label} is not bound read-only")
-    bound: set[str] = set()
+    bound: dict[str, str] = {}
     kept = [str(expected["source_host"]), str(expected["venv_host"])]
     for v in volumes:
         parts = v.split(":")
         if len(parts) != 3 or parts[2] != "ro":
             found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: volume {v!r} is not a read-only host:target bind")
             continue
-        if not _within(parts[0], kept):
-            found.add("UNDECLARED_HOST_MOUNT", f"{phase}: volume source {parts[0]!r} is outside the kept trees")
-        bound.add(parts[1])
+        if posixpath.normpath(parts[0]) != parts[0] or not _within(parts[0], kept):
+            found.add("UNDECLARED_HOST_MOUNT", f"{phase}: volume source {parts[0]!r} is not a normalised path "
+                                               "inside the kept trees")
+            continue
+        bound[parts[1]] = parts[0]
     for n in ("--name", "--label"):
         if sum(1 for k, _v in valued if k == n) > 1:
             found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: {n} given more than once")
@@ -209,18 +222,45 @@ def _argv(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings
     return bound
 
 
-def _host_read_only_admitted(row: Mapping[str, Any], bound: set[str]) -> bool:
-    """A read-only host-backed row a card may see: a declared bind, Podman userdata, or a /proc or /sys mask."""
-    if row["target"] in bound:
-        return True
-    if row["target"] in USERDATA_TARGETS and row["fstype"] == "tmpfs" and "/userdata/" in row["root"]:
-        return True
-    return (row["fstype"] == "devtmpfs" and row["root"] == "/null"
-            and row["target"].startswith(("/proc/", "/sys/")))
+def _read_only_admitted(row: Mapping[str, Any], by_target: Mapping[str, list[dict[str, Any]]],
+                        bound: Mapping[str, str], expected: Mapping[str, Any], card_id: Any) -> bool:
+    """Whether a card may see this read-only row. The allowlist is by target and filesystem, never by the operator's
+    backing label (a bind of a whole host tmpfs or procfs looks like a fresh one)."""
+    target, fstype, root = row["target"], row["fstype"], row["root"]
+    if target == "/":
+        return fstype == "overlay"
+    if target == "/dev":
+        return fstype == "tmpfs" and root == "/"
+    if target in ("/proc", "/sys"):
+        return fstype == ("proc" if target == "/proc" else "sysfs") and root == "/"
+    if target == "/sys/fs/cgroup":
+        return fstype in CGROUP_FSTYPES                       # root: relative to the reader's cgroup namespace
+    if target in MASKED_PATHS:                                # Podman's masks: /dev/null over a file, empty tmpfs
+        return (fstype == "devtmpfs" and root == "/null") or (fstype == "tmpfs" and root == "/")
+    if target in READ_ONLY_PROC_PATHS:                        # read-only re-binds of the card's own procfs
+        return fstype == "proc" and root == target[len("/proc"):]
+    if target in USERDATA_TARGETS:
+        return (fstype == "tmpfs" and isinstance(card_id, str) and HEX64.fullmatch(card_id) is not None
+                and root == f"/containers/overlay-containers/{card_id}/userdata/{posixpath.basename(target)}")
+    source = bound.get(target)
+    if source is None:
+        return False
+    for host, path in ((expected["source_host"], expected["source_path"]),
+                       (expected["venv_host"], expected["venv_path"])):
+        if _within(source, [host]):
+            if target == path:
+                return True                                   # the kept tree's own bind is the reference
+            reference = by_target.get(path, [])
+            if len(reference) != 1:
+                return False
+            ref = reference[0]
+            return (row["device"] == ref["device"] and fstype == ref["fstype"]
+                    and root == posixpath.normpath(ref["root"].rstrip("/") + "/" + source[len(host):].lstrip("/")))
+    return False
 
 
 def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings, phase: str,
-            bound: set[str] | None) -> dict[str, str]:
+            bound: Mapping[str, str] | None) -> dict[str, str]:
     """Reconcile the three inventories and classify every writable row; return {target: mount id} of the declared
     private mounts (empty when the inventory itself cannot be trusted)."""
     try:
@@ -256,9 +296,9 @@ def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findin
     private: dict[str, str] = {}
     for row, rt in zip(parsed, runtime):
         if "rw" not in row["options"]:
-            if rt.get("backing") in ("host", "windows") and not _host_read_only_admitted(row, bound or set()):
-                found.add("UNDECLARED_HOST_MOUNT", f"{phase}: mount {row['id']} {row['target']} ({row['fstype']}) "
-                                                   "exposes an undeclared host path read-only")
+            if not _read_only_admitted(row, by_target, bound or {}, expected, card.get("id")):
+                found.add("UNDECLARED_HOST_MOUNT", f"{phase}: read-only mount {row['id']} {row['target']} "
+                                                   f"({row['fstype']}, root {row['root']}) is not on the allowlist")
             continue
         where = f"{phase}: mount {row['id']} {row['target']} ({row['fstype']})"
         if any(child["parent"] == row["id"] and child["target"] == row["target"] for child in parsed):

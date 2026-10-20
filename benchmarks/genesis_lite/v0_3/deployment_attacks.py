@@ -34,6 +34,9 @@ CHANNELS = ("cmdline", "root_file", "network", "persistence", "package_write", "
 SCAN_SKIP = ("proc", "sys", "dev", "usr", "lib", "lib32", "lib64", "libx32", "bin", "sbin", "boot", "snap",
              "lost+found")
 REACHED, REFUSED, UNTESTABLE = "REACHED", "REFUSED", "UNTESTABLE"
+#: the only cross_card_state outcome the container canary evidence may turn into REFUSED (N-1)
+CROSS_CARD_NO_MARKER = ("no earlier marker in one directory; not evidence about every writable mount (the container "
+                        "canary evidence decides)")
 
 
 def _answer(card: Mapping[str, Any], channel: str, reached: bool | None, detail: str) -> dict[str, Any]:
@@ -185,8 +188,7 @@ def cross_card_state(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> 
         return _answer(card, "cross_card_state", None, f"setup failed: {type(exc).__name__}")
     if seen:
         return _answer(card, "cross_card_state", True, f"{seen} earlier marker(s) found")
-    return _answer(card, "cross_card_state", None, "no earlier marker in one directory; not evidence about every "
-                                                   "writable mount (the container canary evidence decides)")
+    return _answer(card, "cross_card_state", None, CROSS_CARD_NO_MARKER)
 
 
 def operator_process(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
@@ -391,8 +393,8 @@ def verify_deployment(run: Any, scan_findings: list[Any] | None = None,
     containers_pass = isinstance(container_validation, Mapping) and container_validation.get("status") == "PASS"
     verdicts = dict(probed)
     if "cross_card_state" in verdicts and verdicts["cross_card_state"] != REACHED:
-        # the container evidence stands in only for "found no earlier marker"; a probe that could not run stays so
-        ran = bool(cross) and not any(r.startswith("cross_card_state:UNTESTABLE:setup failed") for r in cross)
+        # the container evidence stands in only for "found no earlier marker"; any other outcome stays as it is
+        ran = bool(cross) and all(r == f"cross_card_state:{UNTESTABLE}:{CROSS_CARD_NO_MARKER}" for r in cross)
         verdicts["cross_card_state"] = REFUSED if containers_pass and ran else UNTESTABLE
     missing = sorted(set(CHANNELS) - set(verdicts))
     return {"verdicts": verdicts, "probed": probed, "missing": missing, "secret_scan": scan_findings,

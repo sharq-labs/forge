@@ -387,7 +387,8 @@ def _provenance() -> dict[str, Any]:
     podman = _run([_podman(), "--version"]).stdout.strip() if available() else "UNAVAILABLE"
     return {"head": git("rev-parse", "HEAD"), "tree_clean": git("status", "--porcelain") == "", "code_sha256": code,
             "python": sys.version.split()[0], "platform": platform.platform(), "kernel": platform.release(),
-            "podman": podman, "wsl": pathlib.Path("/proc/sys/fs/binfmt_misc/WSLInterop").exists()}
+            "podman": podman, "wsl_kernel": "microsoft" in platform.release().lower(),
+            "wsl_interop_registered": pathlib.Path("/proc/sys/fs/binfmt_misc/WSLInterop").exists()}
 
 
 def verify(cards: int = 2) -> dict[str, Any]:

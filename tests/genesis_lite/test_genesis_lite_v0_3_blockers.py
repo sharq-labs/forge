@@ -235,23 +235,29 @@ def test_readiness_p3_package_write_probe_writes_nothing():
 def test_readiness_p3_the_deployment_is_verified_only_if_every_channel_is_refused_and_the_scan_is_clean():
     """D5-A1b: also only with N-1 container evidence that PASSED; cross_card_state is refused on that evidence only."""
     ok = {"status": "PASS", "reasons": []}
-    refused = lambda spec: [f"{spec.rsplit(':', 1)[1]}:{attacks.REFUSED}:x"]  # noqa: E731
+    no_marker = f"cross_card_state:{attacks.UNTESTABLE}:{attacks.CROSS_CARD_NO_MARKER}"   # what the probe really says
+
+    def line(spec, verdict):
+        channel = spec.rsplit(":", 1)[1]
+        return no_marker if channel == "cross_card_state" and verdict == attacks.REFUSED else f"{channel}:{verdict}:x"
+
+    refused = lambda spec: [line(spec, attacks.REFUSED)]  # noqa: E731
     assert attacks.verify_deployment(refused, scan_findings=[], container_validation=ok)["verified"] is True
     assert attacks.verify_deployment(refused, scan_findings=[])["verified"] is False      # no container evidence
     blocked = {"status": "BLOCKED", "reasons": ["DEVICE_NODE_WRITABLE_MOUNT"]}
     assert attacks.verify_deployment(refused, scan_findings=[], container_validation=blocked)["verified"] is False
     assert attacks.verify_deployment(refused, container_validation=ok)["verified"] is False   # the scan did not run
     assert attacks.verify_deployment(refused, scan_findings=[{"path": "x"}], container_validation=ok)["verified"] is False
-    leaky = lambda spec: [f"{spec.rsplit(':', 1)[1]}:{attacks.REACHED if 'network' in spec else attacks.REFUSED}:x"]  # noqa: E731
+    leaky = lambda spec: [line(spec, attacks.REACHED if 'network' in spec else attacks.REFUSED)]  # noqa: E731
     out = attacks.verify_deployment(leaky, scan_findings=[], container_validation=ok)
     assert out["verified"] is False and out["verdicts"]["network"] == attacks.REACHED
     assert attacks.verify_deployment(lambda spec: [], scan_findings=[])["missing"] == sorted(attacks.CHANNELS)
-    untestable = lambda spec: [f"{spec.rsplit(':', 1)[1]}:{attacks.UNTESTABLE if 'cmdline' in spec else attacks.REFUSED}:x"]  # noqa: E731
+    untestable = lambda spec: [line(spec, attacks.UNTESTABLE if 'cmdline' in spec else attacks.REFUSED)]  # noqa: E731
     assert attacks.verify_deployment(untestable, scan_findings=[], container_validation=ok)["verified"] is False
-    quiet = lambda spec: [f"{spec.rsplit(':', 1)[1]}:{attacks.UNTESTABLE if 'cross_card' in spec else attacks.REFUSED}:x"]  # noqa: E731
+    quiet = refused
     assert attacks.verify_deployment(quiet, scan_findings=[], container_validation=ok)["verdicts"]["cross_card_state"]         == attacks.REFUSED
     assert attacks.verify_deployment(quiet, scan_findings=[])["verdicts"]["cross_card_state"] == attacks.UNTESTABLE
-    reached = lambda spec: [f"{spec.rsplit(':', 1)[1]}:{attacks.REACHED if 'cross_card' in spec else attacks.REFUSED}:x"]  # noqa: E731
+    reached = lambda spec: [line(spec, attacks.REACHED if 'cross_card' in spec else attacks.REFUSED)]  # noqa: E731
     assert attacks.verify_deployment(reached, scan_findings=[], container_validation=ok)["verdicts"][
         "cross_card_state"] == attacks.REACHED                          # evidence never overrides a reached channel
 
