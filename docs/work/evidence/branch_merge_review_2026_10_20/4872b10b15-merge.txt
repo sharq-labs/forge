@@ -1,6 +1,0 @@
-2f92c918bdb8c8e4f9e6729eef3102da1a8a0ca4
-100644 c9ee21437d71f10334e11a08590035f978a206f5 2	docs/discovery/FORGE_GENESIS.md
-100644 97435d2a1d36d30cee1d7d73dcbb131829aaf0d4 3	docs/discovery/FORGE_GENESIS.md
-
-Auto-merging docs/discovery/FORGE_GENESIS.md
-CONFLICT (add/add): Merge conflict in docs/discovery/FORGE_GENESIS.md

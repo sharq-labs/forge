@@ -1,7 +1,0 @@
-f06aaf8b0656a45d4f090b93d28e0661e1ae390e
-100644 767a6d5a47d45f1fa0db5c2be8a493eb510c1f00 1	docs/work/PROGRESS.md
-100644 b53df02e461dbd2077dbdf513883e10b6872ecf3 2	docs/work/PROGRESS.md
-100644 be3aed6a54d2b9a445c5bcd6b71cc4179ce455d5 3	docs/work/PROGRESS.md
-
-Auto-merging docs/work/PROGRESS.md
-CONFLICT (content): Merge conflict in docs/work/PROGRESS.md

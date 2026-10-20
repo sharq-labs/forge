@@ -1,1 +1,0 @@
-{"status": "EXECUTION_COMPLETE", "summary": {"recorded_cards": 36, "replay_cards": 36, "outcomes": {"insufficient_evidence": 19, "law_pass": 3, "no_law": 2, "confounded": 2, "law_fail": 10}, "observation_calls": 660, "evaluator_agreement": {"True": 36}}, "output": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/public-demo-v1-evidence/report"}

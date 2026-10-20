@@ -1,8 +1,0 @@
-ffca74cbb8e1600c528a4ed1cd69fd960310c219
-100644 7f5d50363665719926223d1ef2271824d94374dd 1	docs/work/PROGRESS.md
-100644 b53df02e461dbd2077dbdf513883e10b6872ecf3 2	docs/work/PROGRESS.md
-100644 5fa7fbf0bf57e1f74a44f76f0c3ee6078577b44c 3	docs/work/PROGRESS.md
-
-Auto-merging docs/work/ACTIVE_PLAN.md
-Auto-merging docs/work/PROGRESS.md
-CONFLICT (content): Merge conflict in docs/work/PROGRESS.md

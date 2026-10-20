@@ -1,6 +1,0 @@
-{
-  "head": "1cb5e187ef46ba2735fa292112a5e2bfd2334007",
-  "compared_files": 4608,
-  "method": "working bytes == git show HEAD:path for every tracked benchmarks/ and src/ file",
-  "differences": []
-}
