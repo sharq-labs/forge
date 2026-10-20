@@ -8093,3 +8093,39 @@ Environment: `{"TMPDIR": "D:/tmp/agent-archive-final", "PYTHONPATH": "C:\\Users\
 Result:94 passed; exit0; wall seconds 9.618442600010894. Output SHA256 `f75e069f24587ae62416522acbc9e5c5498e672480338a60c39a06ef6fa6e4c4`. No failures. Raw output and metadata: `docs/work/evidence/branch_ci_investigation_2026_10_20/agent-archive-final-gate.txt` and `.json`.
 
 Live GitHub Tests39488053735 and Branch Policy39488053796 failed with empty step metadata; dependent jobs reported skipped. Logs for branch-policy118853558670 and scope118853560388 returned404 BlobNotFound. Annotations unavailable through connector; browser signed out. Root cause UNVERIFIED pending owner-provided annotation. No billing diagnosis, workflow repair or hosted rerun claimed. Formal, full assurance and OD3 NOT RUN.
+
+## 2026-10-20 - Genesis-lite v0.3 clean rebuild on restored main (N-1 open)
+
+PR #182 restored main to 12862b0b (tree 9e84851a, identical to pre-#174 main 9f1c24f1). Branch `feat/genesis-lite-v03-clean-n1` was rebuilt from that base without re-merging `feat/genesis-lite-v03-escrow-fda05` (b4fbb1d5) or `codex/mind-development-evidence-2026-10-20` (5935958c). Both remain preservation history.
+
+Brought forward as byte copies in transfer commit 32f8854d; no file was edited:
+- From 1cb5e187, the Genesis tip before PR #175 was stacked on it. All 32 paths are unchanged through b4fbb1d5:
+  - `benchmarks/genesis_lite/v0_3/` (16 files);
+  - the v0.3 preregistration and its pin (026f538d);
+  - `src/engcore/blindfold/pair_bound.py`;
+  - `docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md` and its DOCSET line;
+  - the three preregistration-pinned evidence records: power study 9ad27938, D5 deployment 519f3669, D7 timing pilot 3759ff33;
+  - five v0.3 test modules and helpers.
+- From 1b90f94c (PR #175), only the N-1 failing-first files: `test_genesis_lite_v0_3_container_isolation.py`, `test_genesis_lite_v0_3_container_contract.py` and `container_isolation_probe.py`.
+
+Excluded:
+- `engcore.mind.minimal`, `benchmarks/genesis_lite_mind`, `tests/genesis_lite_mind`;
+- the three `tools/forge_*` Mind/demo scripts and `test_blindfold_demo.py`;
+- the Blindfold demo and Mind discovery docs;
+- the 269 PR #175 evidence files (Mind diagnosis and readiness, public demo, checkpoint-2);
+- the two Podman runtime rigs `test_genesis_lite_v0_3_container_runtime.py` and `test_genesis_lite_v0_3_readonly_inventory.py`, which are gated on a local image and environment and pin `source_sha == 1cb5e187`;
+- the PR #174/#175 ACTIVE_PLAN and PROGRESS narrative.
+
+Evidence binding. All three evidence records are HISTORICAL_ONLY for their recorded heads: power study 20f3d379, D5 a4d73dd4, D7 f7df8968. f7df8968 is on no remote branch. D5 and D7 REQUIRE_RERUN and REQUIRE_REPIN after the N-1 repair. Nothing was regenerated.
+
+Status: D5 = NOT_PROVEN; FDA-18 residual = NOT_PROVEN; N-1 = OPEN; formal campaign FORBIDDEN. `pair_bound.py` is the only certified-scope change against main (verdict_authority area, ADDED). It stays UNCERTIFIED until OD-3. No formal run, freeze, OD-3 or certification happened.
+
+Tests ran at 32f8854d on Windows, using the shared venv with `PYTHONPATH=D:/forge-genesis-clean/src;D:/forge-genesis-clean`:
+- `python -m pytest -q -p no:cacheprovider -n 4 -rfEs tests/genesis_lite`: 90 failed, 292 passed, 1 skipped, identical in both runs. All 90 failures are N-1 failing-first:
+  - 73 in container_contract, all `MISSING_VALIDATION_CONTRACT`;
+  - 17 in container_isolation: the fresh-container argv, seven security flags, four private tmpfs mounts, read-only binds, image digest, deployment verification, runtime-failure-before-admission and the private-/tmp counterexample.
+  - The shared-volume positive control passed.
+  - Skipped: `test_probe_uses_fd_mount_and_distinguishes_absence_error_and_obscured` (Linux fdinfo; NOT RUN).
+- `python -m benchmarks.genesis_lite.v0_3.readiness`: BLOCKED_TECHNICAL on exactly the three NOT_PROVEN rows (FDA-18 residual, D5 boundary, P-1/P-2). 177 v0.3 tests passed at the clean HEAD, and evaluator and escrow agreed on 48 of 48 cases.
+- `python -m pytest tests/test_core_certificate.py tests/test_certified_dependency_closure.py tests/test_recertification_scope.py tests/test_certificate_verdict_scope.py`: 2 failed, 241 passed, 2 skipped. The result is the same on the main tree (504ef32f), and both failures already exist there (OD-3 drift). The verifier output differs from main only by `ADDED: src/engcore/blindfold/pair_bound.py`.
+- FAST, SCIENTIFIC, FULL and hardened recertification: NOT RUN.
