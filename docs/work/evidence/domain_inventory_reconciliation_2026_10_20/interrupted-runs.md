@@ -10,4 +10,4 @@ An initial parallel-baseline invocation accidentally omitted --dist loadfile:
 
 Cwd merge-main-control/wonderful-gould-1c576f, main31192784. Terminated that invocation and its recording wrapper shortly after launch. No final result/output was captured; NOT COMPLETED. Reissued as main-fast-loadfile with --dist loadfile, matching forge_check's exact scheduler. This is an invocation correction, not an ignored test outcome.
 
-Only explicitly identified owned process trees were stopped. Required final FAST and matching pristine-main FAST remain running; all test selections retained.
+Only explicitly identified owned process trees were stopped. At the time this interruption record was prepared, final FAST and matching pristine-main FAST were running. Both subsequently completed with exit1; see final-changed-gate.md and main-fast-loadfile.md. All test selections were retained.
