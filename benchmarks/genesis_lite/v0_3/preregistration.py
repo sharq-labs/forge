@@ -117,9 +117,13 @@ OWNER_DECISIONS_TAKEN = {
 #: the ODC-O1b study (non-formal, synthetic); its findings are open as D3b
 POWER_STUDY_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json"
 POWER_STUDY_EVIDENCE_SHA256 = "9ad27938a5a553ba1f7ee671270c80c607476f2783ef9f80cb7f4ec6cc571939"
-#: D5 (owner, 2026-10-20, option A1): the deployment verification, run on WSL Ubuntu from a clean clone
-DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json"
-DEPLOYMENT_EVIDENCE_SHA256 = "519f3669b48b5bd08f79af172af51e590ce7e1432141e96bfc7446edd8c2f0c7"
+#: D5 (owner, 2026-10-20, option A1): the historical A1 deployment verification (superseded 2026-10-21; HISTORICAL_ONLY)
+A1_DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json"
+A1_DEPLOYMENT_EVIDENCE_SHA256 = "519f3669b48b5bd08f79af172af51e590ce7e1432141e96bfc7446edd8c2f0c7"
+#: D5-A1b (owner, 2026-10-21): the deployment verification on the formal machine from a clean clone of c09b0ef5;
+#: BLOCKED by the six writable host device nodes (owner: no exemption), so D5 stays NOT_PROVEN
+DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/result.json"
+DEPLOYMENT_EVIDENCE_SHA256 = "5ccccd4202b2407cc8ea2e413afb86af5fb28a3939f051d5537be41c6d3561e3"
 #: D7 (owner, 2026-10-20): the timing pilot on the formal machine, before the formal budget is approved
 TIMING_PILOT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json"
 TIMING_PILOT_EVIDENCE_SHA256 = "3759ff334f690f4d3601b588a4bfb6c9dd71f186975a45d024a8714cb85beb4f"
@@ -340,7 +344,9 @@ def build() -> dict[str, Any]:
             "deployment": {"decided": "D5 option A1 (owner, 2026-10-20); amended to D5-A1b (owner, 2026-10-21)",
                            "kind": isolation.DEPLOYMENT,
                            "superseded": {"A1": "rootless_namespaces: superseded for the formal deployment by D5-A1b "
-                                                "(2026-10-21); its evidence is historical"},
+                                                "(2026-10-21); its evidence is historical",
+                                          "A1_evidence": A1_DEPLOYMENT_EVIDENCE,
+                                          "A1_evidence_sha256": A1_DEPLOYMENT_EVIDENCE_SHA256},
                            "image": f"{isolation.IMAGE_REPOSITORY}@{isolation.IMAGE_DIGEST}",
                            "image_id": isolation.IMAGE_ID, "podman_version": isolation.PODMAN_VERSION,
                            "private_tmpfs": list(isolation.PRIVATE_TMPFS), "device_nodes": "no exemption (owner, "

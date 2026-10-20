@@ -362,8 +362,8 @@
   "deployment": {
    "decided": "D5 option A1 (owner, 2026-10-20); amended to D5-A1b (owner, 2026-10-21)",
    "device_nodes": "no exemption (owner, 2026-10-21)",
-   "evidence": "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json",
-   "evidence_sha256": "519f3669b48b5bd08f79af172af51e590ce7e1432141e96bfc7446edd8c2f0c7",
+   "evidence": "docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/result.json",
+   "evidence_sha256": "5ccccd4202b2407cc8ea2e413afb86af5fb28a3939f051d5537be41c6d3561e3",
    "image": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
    "image_id": "2d2651e4d002c518bb669cb044209897ff02e33318a4b92ac185cf23be33f532",
    "kind": "rootless_podman_per_card",
@@ -376,7 +376,9 @@
    ],
    "rule": "every formal card through isolation.formal_launcher(): a brand-new rootless Podman container, refused where unavailable; before admission formal.deployment_problems() collects fresh A/B/C container evidence and refuses unless it PASSES",
    "superseded": {
-    "A1": "rootless_namespaces: superseded for the formal deployment by D5-A1b (2026-10-21); its evidence is historical"
+    "A1": "rootless_namespaces: superseded for the formal deployment by D5-A1b (2026-10-21); its evidence is historical",
+    "A1_evidence": "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json",
+    "A1_evidence_sha256": "519f3669b48b5bd08f79af172af51e590ce7e1432141e96bfc7446edd8c2f0c7"
    }
   },
   "driver": "benchmarks/genesis_lite/v0_3/formal.py",
@@ -568,7 +570,7 @@
   "formal.py": "6d725b643b3beebabc7989005a14ce900a2df89b9c1fac0b2536392d170caaff",
   "harness.py": "63103416641a40594041105191e9241cb8757d01e76b4bc855ac939445fa29a7",
   "isolation.py": "9470e4a364709e4efca286bb3ecfd075020beca92574ef0fd8e0e40bb9a6c650",
-  "preregistration.py": "752e3ee8424b04486216cb386931334296c101bc39016fb38bb29e9488d3bb28",
+  "preregistration.py": "6d80eddf04ba5d7410dd30e71156030d6a3dbe6e184601081fad8844c549e195",
   "readiness.py": "395d9321cda910282fbf4f8790ae4e2fed88a524700f0f651075c8f62aa1de07",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",
