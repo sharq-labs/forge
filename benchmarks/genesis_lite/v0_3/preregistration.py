@@ -120,10 +120,10 @@ POWER_STUDY_EVIDENCE_SHA256 = "9ad27938a5a553ba1f7ee671270c80c607476f2783ef9f80c
 #: D5 (owner, 2026-10-20, option A1): the historical A1 deployment verification (superseded 2026-10-21; HISTORICAL_ONLY)
 A1_DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json"
 A1_DEPLOYMENT_EVIDENCE_SHA256 = "519f3669b48b5bd08f79af172af51e590ce7e1432141e96bfc7446edd8c2f0c7"
-#: D5-A1b (owner, 2026-10-21): the deployment verification on the formal machine from a clean clone of 754f6cdb;
+#: D5-A1b (owner, 2026-10-21): the deployment verification on the formal machine from a clean clone of d4ead0b2;
 #: BLOCKED by the six writable host device nodes (owner: no exemption), so D5 stays NOT_PROVEN
 DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/result.json"
-DEPLOYMENT_EVIDENCE_SHA256 = "590bfa4f557f921e74eab50015125d32fd7eb66eb88dbb149f9b597c7e622b57"
+DEPLOYMENT_EVIDENCE_SHA256 = "29c7241125e6e19f7891d76b7e8f4b357dcc34f695b042f98ba3c48c43825fe4"
 #: D7 (owner, 2026-10-20): the timing pilot on the formal machine, before the formal budget is approved
 TIMING_PILOT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json"
 TIMING_PILOT_EVIDENCE_SHA256 = "3759ff334f690f4d3601b588a4bfb6c9dd71f186975a45d024a8714cb85beb4f"

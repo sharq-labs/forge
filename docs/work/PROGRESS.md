@@ -8175,7 +8175,7 @@ Tests:
 
 Failed approaches, recorded so later sessions do not repeat them:
 1. A strict validator compared the card's mount view with the operator's host-side view field for field. Every real run failed on the cgroup2 root, which the kernel reports relative to the reader's cgroup namespace. Fixed by tolerating exactly that field on cgroup rows.
-2. Rootless Podman options cannot remove the six device binds. `/dev` as a read-only tmpfs only drops devpts and mqueue.
+2. The launcher options tried did not remove the six device binds: `/dev` as a read-only tmpfs only drops devpts and mqueue. No other launcher configuration was tested, so this is a finding about this launcher, not a proof about rootless Podman.
 3. UNC access to the WSL distro is unavailable (hardened). Files go in through `wsl.exe` stdin, and shell variables in inline `bash -c` strings get expanded early, so use `bash -s` scripts.
 
 Evidence. `docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/result.json`, sha256 590bfa4f..., pinned. It comes from a clean clone of 754f6cdb on the formal machine.
@@ -8199,3 +8199,16 @@ Commands run. Windows uses the shared venv with `PYTHONPATH=D:/forge-genesis-cle
 | Windows | a1935b72 | certificate verifier render diff against the transfer commit | identical (only `ADDED pair_bound.py` against main) |
 
 NOT RUN: FAST, SCIENTIFIC, FULL, hardened recertification, the D7 timing pilot rerun and any formal campaign.
+
+Addendum (2026-10-21), second review pass and re-pin:
+- The second read-only pass found 0 BLOCKER, 1 MAJOR and 5 MINOR. MAJOR-1 was only partly closed by 754f6cdb, and that commit's message overclaimed: a read-only bind of a whole host tmpfs (such as a socket directory) or of the host's procfs is labelled "container" or "kernel" and was never checked.
+- d4ead0b2 replaces that rule with an allowlist for every read-only row, by target and filesystem and whatever the backing label. It also adds:
+  - binds tied to their kept tree by device and root;
+  - userdata tied to this container id;
+  - Podman's fixed default mask lists;
+  - normalised volume sources;
+  - an exact-sentinel `cross_card_state` upgrade.
+- The verification was re-run from a clean clone of d4ead0b2. `result.json` sha256 29c72411... is now pinned, with the same verdict: BLOCKED solely by the six host device nodes. No undeclared read-only mount was found, and 11 of 12 channels were REFUSED.
+- The runs at 754f6cdb (590bfa4f) and c09b0ef5 (5ccccd42) are kept under `superseded-*/`.
+- Tests: on Windows at the re-pin commit, `python -m pytest -q -p no:cacheprovider -n 4 -rfEs tests/genesis_lite` gave 388 passed, 2 skipped (Linux-only). The Linux run at 9a4b53c6 gave 390 passed, 0 skipped, with readiness BLOCKED_TECHNICAL on the three D5 rows and the D7 evidence row.
+- NOT RUN: FAST, SCIENTIFIC, FULL, hardened recertification, the D7 rerun and any formal campaign.

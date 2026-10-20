@@ -188,3 +188,7 @@ bullet is now decided by D5-A1b. Nothing above is rewritten.
   held, and 11 of 12 attack channels were REFUSED (`cross_card_state` stays UNTESTABLE without passing container
   evidence). The earlier run at `c09b0ef5` is kept as superseded history. "Cannot pass with this runtime" refers to
   this runtime and launcher: no alternative launcher configuration was tested beyond `/dev` as a read-only tmpfs.
+- **Evidence re-pinned (2026-10-21).** The second review pass replaced the read-only rule with an allowlist that
+  ignores the operator's backing label. The verification was re-run from a clean clone of `d4ead0b2` (sha256
+  `29c72411…`, now the pinned file) with the same verdict: BLOCKED solely by the six host device nodes. The `754f6cdb`
+  run is kept as superseded history.
