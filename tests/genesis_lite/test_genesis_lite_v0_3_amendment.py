@@ -592,11 +592,19 @@ def test_d3b_the_per_kind_margin_is_0_15_and_every_kind_is_still_required():
 
 
 # ---- D2b (owner, 2026-10-20): the admission nonce is bound into the claim's stream ------------------------------
-def _admitted(path, root, prereg):
-    from benchmarks.genesis_lite.v0_3.registry import AttemptRegistry
+def _admitted(path, root, prereg, nonce="5a" * 16):
+    """A real registry admission with a FIXED nonce: the registry's own nonce is random, which made every keyed p (and
+    a coincidence of two Monte-Carlo counts, about 1 % of runs) differ from run to run."""
+    from unittest import mock
 
-    return AttemptRegistry(path).admit(root_commitment_sha256=hashlib.sha256(root).hexdigest(), prereg_sha256=prereg,
-                                       campaign_set_sha256=prereg, tier="formal")
+    from benchmarks.genesis_lite.v0_3 import registry
+
+    with mock.patch.object(registry.secrets, "token_hex", lambda n=16: nonce):
+        entry = registry.AttemptRegistry(path).admit(root_commitment_sha256=hashlib.sha256(root).hexdigest(),
+                                                     prereg_sha256=prereg, campaign_set_sha256=prereg, tier="formal")
+    entry = dict(entry, admitted_at="2026-10-20T00:00:00+00:00")       # the clock enters the digest too
+    entry["attempt_sha256"] = registry.entry_digest(entry)
+    return entry
 
 
 def test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream(tmp_path, monkeypatch):
@@ -612,7 +620,8 @@ def test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream(tmp_pa
 
     root = hashlib.sha256(b"a root ground before the commitment").digest()
     identity = v03p.identity_problems()[1]
-    first, second = _admitted(tmp_path / "one", root, identity), _admitted(tmp_path / "two", root, identity)
+    first = _admitted(tmp_path / "one", root, identity, nonce="11" * 16)
+    second = _admitted(tmp_path / "two", root, identity, nonce="22" * 16)
     claim = v03a.sign_flip_stream(root, identity, first)
     pre_commit = hmac.new(root, f"{v03a.SIGN_FLIP_KEY_LABEL}/{identity}".encode(), hashlib.sha256).digest()
     assert claim != pre_commit and claim != v03a.sign_flip_stream(root, identity, second)
