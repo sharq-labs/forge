@@ -1,5 +1,11 @@
 # Active Plan
 
+Active epic: `engrt.numerical_foundations` (research program; OD-6 decided 2026-10-18; in force when branch
+`feat/od6-engineering-program-epic` merges). Earlier entries below that call `battery.thevenin_1rc` the epic, list OD-6
+as open, or list EXC-1 as an open exception are superseded by that decision on merge. The program's gates M1-E3 are
+bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
+reference application).
+
 ## Current bounded task — FAST runtime profiling (2026-10-20)
 
 Owner authorized trying FAST acceleration in this chat. Base: remote main
@@ -22,12 +28,6 @@ Owner authorized publishing this bounded change to its branch on 2026-10-20,
 before inspecting further quick performance opportunities. No merge, dependency
 install or hardened recertification is part of this task. Existing scientific
 work and capability maturity remain unchanged.
-
-Active epic: `engrt.numerical_foundations` (research program; OD-6 decided 2026-10-18; in force when branch
-`feat/od6-engineering-program-epic` merges). Earlier entries below that call `battery.thevenin_1rc` the epic, list OD-6
-as open, or list EXC-1 as an open exception are superseded by that decision on merge. The program's gates M1-E3 are
-bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
-reference application).
 
 ## Current bounded task — BUY-01 MCP UQ repair, FDA-04 / FDA-14 (2026-10-19)
 
