@@ -6,6 +6,14 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task - reviewed branch reconciliation (2026-10-20)
+
+Owner approved PR176 explicitly and authorized resolving remaining branch blockers sequentially, without bypassing tests or OD3. PR176 merged at3213bb35. Exclude preserve/* and wip/*; preserve scientific contracts and byte-pinned evidence.
+
+- [x] Verify three residual branch histories contain no new content: historical main-check entry byte-present; critical-production and multiphysics-lifecycle commits patch-equivalent. Merge their ancestry with the main tree unchanged.
+- [ ] Reconcile domain-real-data archival inventory versus live coverage; retain historical bytes and fail closed for undeclared provenance.
+- [ ] Reconcile other unique changes only after their targeted tests and independent review; certified/trust changes remain blocked pending applicable OD3. No formal Genesis run, freeze or candidate behavioral tuning authorized.
+
 ## Current bounded task — FAST runtime profiling (2026-10-20)
 
 Owner authorized trying FAST acceleration in this chat. Base: remote main
