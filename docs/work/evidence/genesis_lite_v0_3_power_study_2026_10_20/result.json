@@ -2,7 +2,7 @@
  "args": {
   "crosscheck_reps": "20",
   "null_reps": "2000",
-  "out": "D:\\gl03tmp\\power_study3\\result.json",
+  "out": "D:\\gl03tmp\\power_study4\\result.json",
   "reps": "100",
   "seed": "20261020",
   "workers": "4"
@@ -222,43 +222,43 @@
  "null_calibration": [
   {
    "holm_familywise_95ci": [
-    0.036337957311261826,
-    0.055025252847450856
+    0.03184255731109807,
+    0.04953834224746623
    ],
-   "holm_familywise_rate": 0.045,
+   "holm_familywise_rate": 0.04,
    "rejection_95ci": {
     "pooled@0.01": [
-     0.0049591350217812556,
-     0.013574546199731806
+     0.005729035522963454,
+     0.01479583217228858
     ],
     "pooled@0.05": [
-     0.03995675692495896,
-     0.05939264512468933
+     0.04450462313867373,
+     0.06482785476884043
     ],
     "pooled@0.1": [
-     0.07968824739647237,
-     0.10552232908439697
+     0.08954735419896909,
+     0.11663068395544832
     ],
     "presentation@0.01": [
-     0.006511085658164156,
-     0.01600579487869697
+     0.005729035522963454,
+     0.01479583217228858
     ],
     "presentation@0.05": [
-     0.03724090203436901,
-     0.05611883054343632
+     0.039050337055576895,
+     0.058302492341145686
     ],
     "presentation@0.1": [
-     0.07828372151323154,
-     0.10393153017708454
+     0.08156253373039694,
+     0.10764182036221447
     ]
    },
    "rejection_rates": {
-    "pooled@0.01": 0.0085,
-    "pooled@0.05": 0.049,
-    "pooled@0.1": 0.092,
-    "presentation@0.01": 0.0105,
-    "presentation@0.05": 0.046,
-    "presentation@0.1": 0.0905
+    "pooled@0.01": 0.0095,
+    "pooled@0.05": 0.054,
+    "pooled@0.1": 0.1025,
+    "presentation@0.01": 0.0095,
+    "presentation@0.05": 0.048,
+    "presentation@0.1": 0.094
    },
    "reps": 2000,
    "seed": 20261021,
@@ -270,43 +270,43 @@
   },
   {
    "holm_familywise_95ci": [
-    0.030434706263140023,
-    0.05635029157574473
+    0.025338914929837753,
+    0.04949291171801237
    ],
-   "holm_familywise_rate": 0.042,
+   "holm_familywise_rate": 0.036,
    "rejection_95ci": {
     "pooled@0.01": [
-     0.006939617502851476,
-     0.022127803636778486
+     0.0055035941923135875,
+     0.019596628222016514
     ],
     "pooled@0.05": [
      0.04963308929184901,
      0.08099507436705101
     ],
     "pooled@0.1": [
-     0.08943903298240023,
-     0.12890376087999794
+     0.09772900249506664,
+     0.13855746639058336
     ],
     "presentation@0.01": [
-     0.0016254195175627604,
-     0.011629470559812147
+     0.0022049824851513777,
+     0.013013423270974496
     ],
     "presentation@0.05": [
-     0.028727625285890793,
-     0.0540726968193685
+     0.026182708843737336,
+     0.05064112305992485
     ],
     "presentation@0.1": [
-     0.08027750545100505,
-     0.11812845443123607
+     0.0675527419705832,
+     0.10294299899173501
     ]
    },
    "rejection_rates": {
-    "pooled@0.01": 0.013,
+    "pooled@0.01": 0.011,
     "pooled@0.05": 0.064,
-    "pooled@0.1": 0.108,
-    "presentation@0.01": 0.005,
-    "presentation@0.05": 0.04,
-    "presentation@0.1": 0.098
+    "pooled@0.1": 0.117,
+    "presentation@0.01": 0.006,
+    "presentation@0.05": 0.037,
+    "presentation@0.1": 0.084
    },
    "reps": 1000,
    "seed": 20261022,
@@ -333,101 +333,6 @@
      "default": 0.1
     },
     "rho": 0.0
-   },
-   "claim_rate": 0.0,
-   "claim_rate_95ci": [
-    0.0,
-    0.03621669264517641
-   ],
-   "condition_pass_rates": {
-    "baseline": 1.0,
-    "claim": 0.0,
-    "holm_pooled": 0.03,
-    "kinds": 1.0,
-    "pooled_lower95": 0.0,
-    "presentations": 1.0
-   },
-   "coverage_problems_seen": [
-    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
-    "7200 record(s) do not carry harness = the preregistered/formal value",
-    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
-    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
-    "7200 record(s) do not carry tier = the preregistered/formal value",
-    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
-    "always_insufficient",
-    "always_law",
-    "always_refuse",
-    "careful vs candidate",
-    "extrapolating_fit",
-    "extrapolating_fit_dof",
-    "extrapolation_pair",
-    "extrapolation_pair_dof",
-    "fit_all_gated",
-    "fit_all_gated_dof",
-    "greedy_forward",
-    "greedy_forward_dof",
-    "monomial_enumeration vs candidate",
-    "monomial_enumeration_dof",
-    "no formal root commitment is preregistered",
-    "random_structures",
-    "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
-    "single_setting",
-    "space_filling",
-    "space_filling_dof",
-    "v0.3 is a DRAFT identity (not FROZEN)"
-   ],
-   "kind_noninferiority_stats": {
-    "confounded": {
-     "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03895,
-     "sd_mean_difference": 0.013112610554559895
-    },
-    "discoverable": {
-     "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.045541666666666675,
-     "sd_mean_difference": 0.02086713258265788
-    },
-    "indistinguishable": {
-     "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03904166666666667,
-     "sd_mean_difference": 0.014633352315857088
-    },
-    "insufficient_evidence": {
-     "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.039175,
-     "sd_mean_difference": 0.012379112672383088
-    },
-    "no_solution": {
-     "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.038408333333333336,
-     "sd_mean_difference": 0.013340425197288295
-    },
-    "spurious_correlate": {
-     "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03850833333333334,
-     "sd_mean_difference": 0.01467957765060017
-    }
-   },
-   "mean_pooled_difference": -0.09099166666666669,
-   "reps": 100,
-   "seed": 20261120
-  },
-  {
-   "cell": {
-    "candidate": {
-     "default": 0.8,
-     "discoverable": 0.2
-    },
-    "careful": {
-     "default": 0.8,
-     "discoverable": 0.2
-    },
-    "name": "controls_solved/delta=0.0/rho=0.5",
-    "representation": {
-     "default": 0.1
-    },
-    "rho": 0.5
    },
    "claim_rate": 0.0,
    "claim_rate_95ci": [
@@ -466,7 +371,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -475,36 +379,130 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.02735,
-     "sd_mean_difference": 0.00952824383375843
+     "mean_of_mean_minus_lower95": 0.03912499999999999,
+     "sd_mean_difference": 0.013273456700414472
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.032025,
-     "sd_mean_difference": 0.01595269917948405
+     "mean_of_mean_minus_lower95": 0.04553333333333334,
+     "sd_mean_difference": 0.021432607556400286
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.02731666666666667,
-     "sd_mean_difference": 0.009834953962497457
+     "mean_of_mean_minus_lower95": 0.038233333333333334,
+     "sd_mean_difference": 0.014032313898047365
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.028141666666666672,
-     "sd_mean_difference": 0.011119414952635274
+     "mean_of_mean_minus_lower95": 0.03873333333333333,
+     "sd_mean_difference": 0.014267640153702908
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027416666666666666,
-     "sd_mean_difference": 0.00924879496655285
+     "mean_of_mean_minus_lower95": 0.038725,
+     "sd_mean_difference": 0.013499678494114016
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027308333333333334,
-     "sd_mean_difference": 0.01055667245552941
+     "mean_of_mean_minus_lower95": 0.039191666666666666,
+     "sd_mean_difference": 0.012623490008709954
     }
    },
-   "mean_pooled_difference": -0.06385833333333334,
+   "mean_pooled_difference": -0.09241666666666667,
+   "reps": 100,
+   "seed": 20261120
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.0/rho=0.5",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.5
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.02,
+    "kinds": 1.0,
+    "pooled_lower95": 0.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.02786666666666667,
+     "sd_mean_difference": 0.009535529321670845
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03190833333333334,
+     "sd_mean_difference": 0.018175066865229288
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.027175,
+     "sd_mean_difference": 0.009550756223694773
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.026674999999999994,
+     "sd_mean_difference": 0.008942482100128081
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.027041666666666665,
+     "sd_mean_difference": 0.009377958792355142
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.02759166666666667,
+     "sd_mean_difference": 0.01236622865351887
+    }
+   },
+   "mean_pooled_difference": -0.0645,
    "reps": 100,
    "seed": 20261121
   },
@@ -561,7 +559,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -570,36 +567,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012508333333333337,
-     "sd_mean_difference": 0.004406836544884928
+     "mean_of_mean_minus_lower95": 0.012075,
+     "sd_mean_difference": 0.004050814389998907
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.014175000000000002,
-     "sd_mean_difference": 0.007367741248925014
+     "mean_of_mean_minus_lower95": 0.014133333333333333,
+     "sd_mean_difference": 0.0073225109536733815
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012016666666666669,
-     "sd_mean_difference": 0.003932865438272146
+     "mean_of_mean_minus_lower95": 0.012858333333333336,
+     "sd_mean_difference": 0.003917553091181053
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012091666666666665,
-     "sd_mean_difference": 0.004566514596008159
+     "mean_of_mean_minus_lower95": 0.01205,
+     "sd_mean_difference": 0.004359050291570911
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012549999999999997,
-     "sd_mean_difference": 0.004300872004605578
+     "mean_of_mean_minus_lower95": 0.012174999999999998,
+     "sd_mean_difference": 0.0043736823412568755
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.011966666666666665,
-     "sd_mean_difference": 0.004350734293069262
+     "mean_of_mean_minus_lower95": 0.012283333333333334,
+     "sd_mean_difference": 0.004218016911614587
     }
    },
-   "mean_pooled_difference": -0.02806666666666667,
+   "mean_pooled_difference": -0.028275,
    "reps": 100,
    "seed": 20261122
   },
@@ -656,7 +653,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -722,7 +718,7 @@
    "condition_pass_rates": {
     "baseline": 1.0,
     "claim": 0.0,
-    "holm_pooled": 0.99,
+    "holm_pooled": 0.96,
     "kinds": 1.0,
     "pooled_lower95": 0.0,
     "presentations": 1.0
@@ -751,7 +747,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -760,36 +755,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03900833333333333,
-     "sd_mean_difference": 0.012308745197351895
+     "mean_of_mean_minus_lower95": 0.03895833333333334,
+     "sd_mean_difference": 0.014862789105682688
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.047083333333333324,
-     "sd_mean_difference": 0.025167046078817697
+     "mean_of_mean_minus_lower95": 0.04695000000000001,
+     "sd_mean_difference": 0.02345692713369668
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03870833333333334,
-     "sd_mean_difference": 0.013398307832624901
+     "mean_of_mean_minus_lower95": 0.039066666666666666,
+     "sd_mean_difference": 0.013140205477845468
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.0388,
-     "sd_mean_difference": 0.014111598854212877
+     "mean_of_mean_minus_lower95": 0.03915,
+     "sd_mean_difference": 0.01520704104098566
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.038383333333333325,
-     "sd_mean_difference": 0.013968953671147553
+     "mean_of_mean_minus_lower95": 0.038858333333333335,
+     "sd_mean_difference": 0.011452692550953538
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03953333333333334,
-     "sd_mean_difference": 0.013325359594897742
+     "mean_of_mean_minus_lower95": 0.03913333333333333,
+     "sd_mean_difference": 0.013260559209760183
     }
    },
-   "mean_pooled_difference": 0.009649999999999999,
+   "mean_pooled_difference": 0.005508333333333335,
    "reps": 100,
    "seed": 20261124
   },
@@ -809,17 +804,17 @@
     },
     "rho": 0.5
    },
-   "claim_rate": 0.05,
+   "claim_rate": 0.04,
    "claim_rate_95ci": [
-    0.016431879182052158,
-    0.11283491110546275
+    0.011004493986188201,
+    0.09925715671265992
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.05,
+    "claim": 0.04,
     "holm_pooled": 1.0,
     "kinds": 1.0,
-    "pooled_lower95": 0.05,
+    "pooled_lower95": 0.04,
     "presentations": 1.0
    },
    "coverage_problems_seen": [
@@ -846,7 +841,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -855,36 +849,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027691666666666667,
-     "sd_mean_difference": 0.008161439653775688
+     "mean_of_mean_minus_lower95": 0.027166666666666672,
+     "sd_mean_difference": 0.008715706607422411
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03544166666666668,
-     "sd_mean_difference": 0.017273556781650063
+     "mean_of_mean_minus_lower95": 0.03559999999999999,
+     "sd_mean_difference": 0.017778138885221426
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.02684166666666667,
-     "sd_mean_difference": 0.00747590574222727
+     "mean_of_mean_minus_lower95": 0.027616666666666668,
+     "sd_mean_difference": 0.00812651267970052
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027483333333333332,
-     "sd_mean_difference": 0.010757978305528517
+     "mean_of_mean_minus_lower95": 0.027858333333333332,
+     "sd_mean_difference": 0.01006325480260846
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027733333333333336,
-     "sd_mean_difference": 0.009538896977929657
+     "mean_of_mean_minus_lower95": 0.02765,
+     "sd_mean_difference": 0.008633606816775169
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.02743333333333333,
-     "sd_mean_difference": 0.01024877702731187
+     "mean_of_mean_minus_lower95": 0.027791666666666673,
+     "sd_mean_difference": 0.011587361409934724
     }
    },
-   "mean_pooled_difference": 0.03713333333333333,
+   "mean_pooled_difference": 0.038425,
    "reps": 100,
    "seed": 20261125
   },
@@ -904,17 +898,17 @@
     },
     "rho": 0.9
    },
-   "claim_rate": 0.97,
+   "claim_rate": 0.98,
    "claim_rate_95ci": [
-    0.91482394702572,
-    0.9937700284616936
+    0.9296160675289299,
+    0.9975686631760574
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.97,
+    "claim": 0.98,
     "holm_pooled": 1.0,
     "kinds": 1.0,
-    "pooled_lower95": 0.97,
+    "pooled_lower95": 0.98,
     "presentations": 1.0
    },
    "coverage_problems_seen": [
@@ -941,7 +935,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -950,36 +943,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.01225,
-     "sd_mean_difference": 0.0034608524961344425
+     "mean_of_mean_minus_lower95": 0.012508333333333333,
+     "sd_mean_difference": 0.00375410886008029
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.021983333333333334,
-     "sd_mean_difference": 0.011658342268283448
+     "mean_of_mean_minus_lower95": 0.021983333333333327,
+     "sd_mean_difference": 0.010616663396127178
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012591666666666668,
-     "sd_mean_difference": 0.00409840754982279
+     "mean_of_mean_minus_lower95": 0.012200000000000003,
+     "sd_mean_difference": 0.004273781502759978
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012191666666666667,
-     "sd_mean_difference": 0.0038577033322950076
+     "mean_of_mean_minus_lower95": 0.012283333333333334,
+     "sd_mean_difference": 0.003941411196795156
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012116666666666664,
-     "sd_mean_difference": 0.004262066204710261
+     "mean_of_mean_minus_lower95": 0.012200000000000003,
+     "sd_mean_difference": 0.003887444176090793
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012066666666666668,
-     "sd_mean_difference": 0.004026957770934392
+     "mean_of_mean_minus_lower95": 0.012341666666666666,
+     "sd_mean_difference": 0.003816084380618437
     }
    },
-   "mean_pooled_difference": 0.07318333333333334,
+   "mean_pooled_difference": 0.07320000000000002,
    "reps": 100,
    "seed": 20261126
   },
@@ -1036,7 +1029,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1050,8 +1042,8 @@
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.01705833333333333,
-     "sd_mean_difference": 0.009103357134107785
+     "mean_of_mean_minus_lower95": 0.01709166666666667,
+     "sd_mean_difference": 0.009402345304349453
     },
     "indistinguishable": {
      "fail_rate": 0.0,
@@ -1074,7 +1066,7 @@
      "sd_mean_difference": 0.0
     }
    },
-   "mean_pooled_difference": 0.10013333333333334,
+   "mean_pooled_difference": 0.101325,
    "reps": 100,
    "seed": 20261127
   },
@@ -1094,17 +1086,17 @@
     },
     "rho": 0.0
    },
-   "claim_rate": 0.42,
+   "claim_rate": 0.35,
    "claim_rate_95ci": [
-    0.321985539354797,
-    0.5228808042760862
+    0.2572937785314512,
+    0.4518493618239694
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.42,
+    "claim": 0.35,
     "holm_pooled": 1.0,
     "kinds": 1.0,
-    "pooled_lower95": 0.42,
+    "pooled_lower95": 0.35,
     "presentations": 1.0
    },
    "coverage_problems_seen": [
@@ -1131,7 +1123,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1140,36 +1131,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03841666666666667,
-     "sd_mean_difference": 0.012034164329570671
+     "mean_of_mean_minus_lower95": 0.039325,
+     "sd_mean_difference": 0.013289456451555036
     },
     "discoverable": {
      "fail_rate": 0.0,
      "mean_of_mean_minus_lower95": 0.048841666666666665,
-     "sd_mean_difference": 0.025883310528000254
+     "sd_mean_difference": 0.02420266858564705
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03969166666666666,
-     "sd_mean_difference": 0.011978731151503485
+     "mean_of_mean_minus_lower95": 0.03901666666666667,
+     "sd_mean_difference": 0.010970022282971394
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03829166666666667,
-     "sd_mean_difference": 0.015887230634135774
+     "mean_of_mean_minus_lower95": 0.03924166666666667,
+     "sd_mean_difference": 0.013966288777704056
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03830833333333333,
-     "sd_mean_difference": 0.013493236474454731
+     "mean_of_mean_minus_lower95": 0.038125,
+     "sd_mean_difference": 0.014264979943125675
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03895833333333333,
-     "sd_mean_difference": 0.012060507175626295
+     "mean_of_mean_minus_lower95": 0.03830833333333333,
+     "sd_mean_difference": 0.014725759271124565
     }
    },
-   "mean_pooled_difference": 0.11039166666666667,
+   "mean_pooled_difference": 0.106275,
    "reps": 100,
    "seed": 20261128
   },
@@ -1189,17 +1180,17 @@
     },
     "rho": 0.5
    },
-   "claim_rate": 0.92,
+   "claim_rate": 0.91,
    "claim_rate_95ci": [
-    0.848442364135579,
-    0.9648284374818372
+    0.8360177449703647,
+    0.9580164043716077
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.92,
+    "claim": 0.91,
     "holm_pooled": 1.0,
     "kinds": 1.0,
-    "pooled_lower95": 0.92,
+    "pooled_lower95": 0.91,
     "presentations": 1.0
    },
    "coverage_problems_seen": [
@@ -1226,7 +1217,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1235,36 +1225,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027841666666666664,
-     "sd_mean_difference": 0.008923015652420057
+     "mean_of_mean_minus_lower95": 0.028041666666666666,
+     "sd_mean_difference": 0.00889872025755514
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03831666666666667,
-     "sd_mean_difference": 0.02028206651754752
+     "mean_of_mean_minus_lower95": 0.038650000000000004,
+     "sd_mean_difference": 0.018612665565266154
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.026891666666666664,
-     "sd_mean_difference": 0.009009759369089104
+     "mean_of_mean_minus_lower95": 0.026958333333333338,
+     "sd_mean_difference": 0.008929290129804396
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.02738333333333333,
-     "sd_mean_difference": 0.009108527750288616
+     "mean_of_mean_minus_lower95": 0.027141666666666668,
+     "sd_mean_difference": 0.009306270287642986
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027774999999999998,
-     "sd_mean_difference": 0.00886544477796298
+     "mean_of_mean_minus_lower95": 0.02733333333333333,
+     "sd_mean_difference": 0.008759344216955463
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027091666666666667,
-     "sd_mean_difference": 0.010378409747590855
+     "mean_of_mean_minus_lower95": 0.027625,
+     "sd_mean_difference": 0.009831341606198911
     }
    },
-   "mean_pooled_difference": 0.13366666666666668,
+   "mean_pooled_difference": 0.13220833333333332,
    "reps": 100,
    "seed": 20261129
   },
@@ -1321,7 +1311,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1330,36 +1319,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012249999999999999,
-     "sd_mean_difference": 0.003858711284584243
+     "mean_of_mean_minus_lower95": 0.012466666666666666,
+     "sd_mean_difference": 0.003954419117336396
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027183333333333327,
-     "sd_mean_difference": 0.013781456442142343
+     "mean_of_mean_minus_lower95": 0.02739166666666667,
+     "sd_mean_difference": 0.014953861912934437
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012241666666666666,
-     "sd_mean_difference": 0.004934543770423181
+     "mean_of_mean_minus_lower95": 0.012016666666666669,
+     "sd_mean_difference": 0.00461497411814098
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012075000000000002,
-     "sd_mean_difference": 0.004114498416845269
+     "mean_of_mean_minus_lower95": 0.012308333333333336,
+     "sd_mean_difference": 0.0041153844156881485
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012175,
-     "sd_mean_difference": 0.004525391327461822
+     "mean_of_mean_minus_lower95": 0.012150000000000003,
+     "sd_mean_difference": 0.004545227961524286
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012508333333333333,
-     "sd_mean_difference": 0.00390379978710202
+     "mean_of_mean_minus_lower95": 0.012174999999999997,
+     "sd_mean_difference": 0.0035453020557727755
     }
    },
-   "mean_pooled_difference": 0.17351666666666662,
+   "mean_pooled_difference": 0.17251666666666665,
    "reps": 100,
    "seed": 20261130
   },
@@ -1416,7 +1405,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1430,8 +1418,8 @@
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.02364166666666667,
-     "sd_mean_difference": 0.01153293592764267
+     "mean_of_mean_minus_lower95": 0.02361666666666667,
+     "sd_mean_difference": 0.012351776750285315
     },
     "indistinguishable": {
      "fail_rate": 0.0,
@@ -1454,7 +1442,7 @@
      "sd_mean_difference": 0.0
     }
    },
-   "mean_pooled_difference": 0.1997833333333333,
+   "mean_pooled_difference": 0.20114999999999994,
    "reps": 100,
    "seed": 20261131
   },
@@ -1511,7 +1499,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1520,36 +1507,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.037725,
-     "sd_mean_difference": 0.013607644399789082
+     "mean_of_mean_minus_lower95": 0.038375,
+     "sd_mean_difference": 0.014475983463040505
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05066666666666667,
-     "sd_mean_difference": 0.02346454772630404
+     "mean_of_mean_minus_lower95": 0.050625,
+     "sd_mean_difference": 0.02078815768652913
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03944166666666667,
-     "sd_mean_difference": 0.015119567435758355
+     "mean_of_mean_minus_lower95": 0.038625,
+     "sd_mean_difference": 0.013945040934564038
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.039525000000000005,
-     "sd_mean_difference": 0.012880160777982031
+     "mean_of_mean_minus_lower95": 0.038975,
+     "sd_mean_difference": 0.009768145508061736
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03915833333333333,
-     "sd_mean_difference": 0.014162342477303832
+     "mean_of_mean_minus_lower95": 0.039216666666666664,
+     "sd_mean_difference": 0.014687246451712224
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03925833333333333,
-     "sd_mean_difference": 0.012233523499884331
+     "mean_of_mean_minus_lower95": 0.03966666666666667,
+     "sd_mean_difference": 0.01377113275014885
     }
    },
-   "mean_pooled_difference": 0.30689999999999995,
+   "mean_pooled_difference": 0.3028416666666667,
    "reps": 100,
    "seed": 20261132
   },
@@ -1606,7 +1593,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1615,36 +1601,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.0281,
-     "sd_mean_difference": 0.009550072716418914
+     "mean_of_mean_minus_lower95": 0.027799999999999995,
+     "sd_mean_difference": 0.011117978433350393
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.04241666666666668,
-     "sd_mean_difference": 0.020358746073043565
+     "mean_of_mean_minus_lower95": 0.04242500000000002,
+     "sd_mean_difference": 0.018636575448414454
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027325,
-     "sd_mean_difference": 0.009428307701338089
+     "mean_of_mean_minus_lower95": 0.027375000000000003,
+     "sd_mean_difference": 0.008307037678980396
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.02739166666666666,
-     "sd_mean_difference": 0.009269405320731207
+     "mean_of_mean_minus_lower95": 0.02728333333333334,
+     "sd_mean_difference": 0.010597336536444743
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.026808333333333326,
-     "sd_mean_difference": 0.00997753031120984
+     "mean_of_mean_minus_lower95": 0.026775000000000004,
+     "sd_mean_difference": 0.009429456653369682
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.02739166666666667,
-     "sd_mean_difference": 0.00972780593624962
+     "mean_of_mean_minus_lower95": 0.027949999999999996,
+     "sd_mean_difference": 0.009027500423089932
     }
    },
-   "mean_pooled_difference": 0.3349666666666667,
+   "mean_pooled_difference": 0.33466666666666667,
    "reps": 100,
    "seed": 20261133
   },
@@ -1701,7 +1687,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1710,36 +1695,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012133333333333336,
-     "sd_mean_difference": 0.0044228808484968254
+     "mean_of_mean_minus_lower95": 0.012150000000000001,
+     "sd_mean_difference": 0.0038103933159481344
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03403333333333333,
-     "sd_mean_difference": 0.01654140218092502
+     "mean_of_mean_minus_lower95": 0.034225000000000005,
+     "sd_mean_difference": 0.018917209977513425
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012324999999999997,
-     "sd_mean_difference": 0.004034572812303402
+     "mean_of_mean_minus_lower95": 0.012450000000000001,
+     "sd_mean_difference": 0.0040367753907736255
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012008333333333336,
-     "sd_mean_difference": 0.004305124530396563
+     "mean_of_mean_minus_lower95": 0.012158333333333335,
+     "sd_mean_difference": 0.004289999676249664
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012274999999999998,
-     "sd_mean_difference": 0.004213692956698831
+     "mean_of_mean_minus_lower95": 0.012325,
+     "sd_mean_difference": 0.0047801383057629425
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.012500000000000002,
-     "sd_mean_difference": 0.003927502740645483
+     "mean_of_mean_minus_lower95": 0.012033333333333332,
+     "sd_mean_difference": 0.004205576654871482
     }
    },
-   "mean_pooled_difference": 0.3676999999999999,
+   "mean_pooled_difference": 0.36982499999999996,
    "reps": 100,
    "seed": 20261134
   },
@@ -1796,7 +1781,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1810,8 +1794,8 @@
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03178333333333333,
-     "sd_mean_difference": 0.014251050156236051
+     "mean_of_mean_minus_lower95": 0.03188333333333333,
+     "sd_mean_difference": 0.015846047526819496
     },
     "indistinguishable": {
      "fail_rate": 0.0,
@@ -1834,7 +1818,7 @@
      "sd_mean_difference": 0.0
     }
    },
-   "mean_pooled_difference": 0.4015583333333334,
+   "mean_pooled_difference": 0.3991666666666667,
    "reps": 100,
    "seed": 20261135
   },
@@ -1863,8 +1847,8 @@
     "baseline": 1.0,
     "claim": 0.01,
     "holm_pooled": 0.01,
-    "kinds": 1.0,
-    "pooled_lower95": 0.03,
+    "kinds": 0.99,
+    "pooled_lower95": 0.01,
     "presentations": 0.98
    },
    "coverage_problems_seen": [
@@ -1891,7 +1875,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1899,37 +1882,37 @@
    ],
    "kind_noninferiority_stats": {
     "confounded": {
-     "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05564166666666666,
-     "sd_mean_difference": 0.025722843015066933
+     "fail_rate": 0.01,
+     "mean_of_mean_minus_lower95": 0.05554166666666667,
+     "sd_mean_difference": 0.029383804826998004
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.04524166666666666,
-     "sd_mean_difference": 0.02281213127555892
+     "mean_of_mean_minus_lower95": 0.045308333333333346,
+     "sd_mean_difference": 0.025325004113194795
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05568333333333333,
-     "sd_mean_difference": 0.028698548163045928
+     "mean_of_mean_minus_lower95": 0.05533333333333333,
+     "sd_mean_difference": 0.029462616378877298
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05546666666666666,
-     "sd_mean_difference": 0.030101005889430932
+     "mean_of_mean_minus_lower95": 0.055966666666666665,
+     "sd_mean_difference": 0.030558554903296356
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05575,
-     "sd_mean_difference": 0.027801742301517725
+     "mean_of_mean_minus_lower95": 0.055624999999999994,
+     "sd_mean_difference": 0.023260427769067362
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05558333333333334,
-     "sd_mean_difference": 0.02937666780135404
+     "mean_of_mean_minus_lower95": 0.055758333333333326,
+     "sd_mean_difference": 0.025264731676126438
     }
    },
-   "mean_pooled_difference": -6.666666666666584e-05,
+   "mean_pooled_difference": -0.0024500000000000012,
    "reps": 100,
    "seed": 20261136
   },
@@ -1949,15 +1932,15 @@
     },
     "rho": 0.5
    },
-   "claim_rate": 0.0,
+   "claim_rate": 0.01,
    "claim_rate_95ci": [
-    0.0,
-    0.03621669264517641
+    0.0002531460329774208,
+    0.054459385392080645
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.0,
-    "holm_pooled": 0.0,
+    "claim": 0.01,
+    "holm_pooled": 0.01,
     "kinds": 1.0,
     "pooled_lower95": 0.01,
     "presentations": 1.0
@@ -1986,7 +1969,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -1995,36 +1977,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03928333333333334,
-     "sd_mean_difference": 0.02242872042716659
+     "mean_of_mean_minus_lower95": 0.039608333333333336,
+     "sd_mean_difference": 0.020274683173302062
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.032025,
-     "sd_mean_difference": 0.013338863436506792
+     "mean_of_mean_minus_lower95": 0.03190833333333334,
+     "sd_mean_difference": 0.01475686281023172
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03942500000000001,
-     "sd_mean_difference": 0.01959184212313323
+     "mean_of_mean_minus_lower95": 0.03935833333333333,
+     "sd_mean_difference": 0.02097969256209442
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03935,
-     "sd_mean_difference": 0.020113870283408358
+     "mean_of_mean_minus_lower95": 0.03954166666666667,
+     "sd_mean_difference": 0.018681311219742817
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.039233333333333335,
-     "sd_mean_difference": 0.019919936970002914
+     "mean_of_mean_minus_lower95": 0.039316666666666666,
+     "sd_mean_difference": 0.02099536985993711
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03921666666666667,
-     "sd_mean_difference": 0.016846356348546775
+     "mean_of_mean_minus_lower95": 0.03925833333333333,
+     "sd_mean_difference": 0.01889352292012618
     }
    },
-   "mean_pooled_difference": -0.008366666666666666,
+   "mean_pooled_difference": -0.007975000000000001,
    "reps": 100,
    "seed": 20261137
   },
@@ -2044,17 +2026,17 @@
     },
     "rho": 0.9
    },
-   "claim_rate": 0.03,
+   "claim_rate": 0.01,
    "claim_rate_95ci": [
-    0.006229971538306397,
-    0.08517605297428002
+    0.0002531460329774208,
+    0.054459385392080645
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.03,
-    "holm_pooled": 0.03,
+    "claim": 0.01,
+    "holm_pooled": 0.01,
     "kinds": 1.0,
-    "pooled_lower95": 0.06,
+    "pooled_lower95": 0.02,
     "presentations": 1.0
    },
    "coverage_problems_seen": [
@@ -2081,7 +2063,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -2090,36 +2071,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017483333333333333,
-     "sd_mean_difference": 0.009389873386911147
+     "mean_of_mean_minus_lower95": 0.017575,
+     "sd_mean_difference": 0.009946928615853683
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.01435,
-     "sd_mean_difference": 0.007413501197140257
+     "mean_of_mean_minus_lower95": 0.014425,
+     "sd_mean_difference": 0.007310494739300025
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017625000000000005,
-     "sd_mean_difference": 0.009781998773256927
+     "mean_of_mean_minus_lower95": 0.017525000000000002,
+     "sd_mean_difference": 0.008477093317353013
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
      "mean_of_mean_minus_lower95": 0.017433333333333335,
-     "sd_mean_difference": 0.00809578079413386
+     "sd_mean_difference": 0.008422436141375935
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017650000000000002,
-     "sd_mean_difference": 0.009188096163575516
+     "mean_of_mean_minus_lower95": 0.01755,
+     "sd_mean_difference": 0.00997601289761262
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017600000000000005,
-     "sd_mean_difference": 0.009288448620613551
+     "mean_of_mean_minus_lower95": 0.01759166666666667,
+     "sd_mean_difference": 0.009491589844582296
     }
    },
-   "mean_pooled_difference": 0.002483333333333333,
+   "mean_pooled_difference": 0.0015916666666666674,
    "reps": 100,
    "seed": 20261138
   },
@@ -2176,7 +2157,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -2234,17 +2214,17 @@
     },
     "rho": 0.0
    },
-   "claim_rate": 0.2,
+   "claim_rate": 0.19,
    "claim_rate_95ci": [
-    0.12665555210195584,
-    0.2918426890886281
+    0.11844319613254362,
+    0.28069795797361247
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.2,
-    "holm_pooled": 0.2,
+    "claim": 0.19,
+    "holm_pooled": 0.19,
     "kinds": 1.0,
-    "pooled_lower95": 0.32,
+    "pooled_lower95": 0.28,
     "presentations": 1.0
    },
    "coverage_problems_seen": [
@@ -2271,7 +2251,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -2280,36 +2259,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05570833333333333,
-     "sd_mean_difference": 0.028533041275763865
+     "mean_of_mean_minus_lower95": 0.05552499999999999,
+     "sd_mean_difference": 0.027213317562873107
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.047333333333333345,
-     "sd_mean_difference": 0.02412686953032518
+     "mean_of_mean_minus_lower95": 0.04735000000000001,
+     "sd_mean_difference": 0.023964121040051148
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.055675,
-     "sd_mean_difference": 0.029908670008321446
+     "mean_of_mean_minus_lower95": 0.05557499999999999,
+     "sd_mean_difference": 0.03117939134178928
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05545,
-     "sd_mean_difference": 0.02763423802298719
+     "mean_of_mean_minus_lower95": 0.055591666666666664,
+     "sd_mean_difference": 0.028034278372893583
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05560833333333335,
-     "sd_mean_difference": 0.026681083342573127
+     "mean_of_mean_minus_lower95": 0.05543333333333333,
+     "sd_mean_difference": 0.02615113525260423
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05552499999999999,
-     "sd_mean_difference": 0.027896739156316384
+     "mean_of_mean_minus_lower95": 0.05574166666666666,
+     "sd_mean_difference": 0.028359805035766145
     }
    },
-   "mean_pooled_difference": 0.10026666666666667,
+   "mean_pooled_difference": 0.09687499999999999,
    "reps": 100,
    "seed": 20261140
   },
@@ -2329,17 +2308,17 @@
     },
     "rho": 0.5
    },
-   "claim_rate": 0.39,
+   "claim_rate": 0.38,
    "claim_rate_95ci": [
-    0.294010414853417,
-    0.49268552036763646
+    0.2847674761414795,
+    0.4825393057508065
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.39,
-    "holm_pooled": 0.39,
+    "claim": 0.38,
+    "holm_pooled": 0.38,
     "kinds": 1.0,
-    "pooled_lower95": 0.57,
+    "pooled_lower95": 0.52,
     "presentations": 1.0
    },
    "coverage_problems_seen": [
@@ -2366,7 +2345,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -2375,36 +2353,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03925833333333333,
-     "sd_mean_difference": 0.01870959349876124
+     "mean_of_mean_minus_lower95": 0.039275000000000004,
+     "sd_mean_difference": 0.02080130871951196
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.035416666666666666,
-     "sd_mean_difference": 0.018347222011943814
+     "mean_of_mean_minus_lower95": 0.03551666666666666,
+     "sd_mean_difference": 0.017538867551811888
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.039375,
-     "sd_mean_difference": 0.021368608531103648
+     "mean_of_mean_minus_lower95": 0.03915833333333333,
+     "sd_mean_difference": 0.02021764218586222
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03943333333333333,
-     "sd_mean_difference": 0.01683640854748357
+     "mean_of_mean_minus_lower95": 0.039275,
+     "sd_mean_difference": 0.01866385953595284
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.039275000000000004,
-     "sd_mean_difference": 0.01863020807124219
+     "mean_of_mean_minus_lower95": 0.03938333333333333,
+     "sd_mean_difference": 0.017971681041139265
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.039400000000000004,
-     "sd_mean_difference": 0.019702114945693856
+     "mean_of_mean_minus_lower95": 0.0392,
+     "sd_mean_difference": 0.021284781991940734
     }
    },
-   "mean_pooled_difference": 0.09980833333333333,
+   "mean_pooled_difference": 0.10152499999999998,
    "reps": 100,
    "seed": 20261141
   },
@@ -2424,17 +2402,17 @@
     },
     "rho": 0.9
    },
-   "claim_rate": 0.98,
+   "claim_rate": 0.99,
    "claim_rate_95ci": [
-    0.9296160675289299,
-    0.9975686631760574
+    0.9455406146079194,
+    0.9997468539670226
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.98,
-    "holm_pooled": 0.98,
+    "claim": 0.99,
+    "holm_pooled": 0.99,
     "kinds": 1.0,
-    "pooled_lower95": 0.98,
+    "pooled_lower95": 0.99,
     "presentations": 1.0
    },
    "coverage_problems_seen": [
@@ -2461,7 +2439,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -2470,36 +2447,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.0176,
-     "sd_mean_difference": 0.0076202216357385425
+     "mean_of_mean_minus_lower95": 0.01745,
+     "sd_mean_difference": 0.008033242565185686
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.02208333333333333,
-     "sd_mean_difference": 0.010524689887223385
+     "mean_of_mean_minus_lower95": 0.022058333333333326,
+     "sd_mean_difference": 0.009899140675387491
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.01755,
-     "sd_mean_difference": 0.007655789385237235
+     "mean_of_mean_minus_lower95": 0.017525000000000002,
+     "sd_mean_difference": 0.0075239017286393515
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017491666666666666,
-     "sd_mean_difference": 0.009149225832458904
+     "mean_of_mean_minus_lower95": 0.01765833333333333,
+     "sd_mean_difference": 0.009395813931982924
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017625,
-     "sd_mean_difference": 0.00852438902991489
+     "mean_of_mean_minus_lower95": 0.0176,
+     "sd_mean_difference": 0.008181427985925738
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017583333333333333,
-     "sd_mean_difference": 0.008355985878398791
+     "mean_of_mean_minus_lower95": 0.017533333333333335,
+     "sd_mean_difference": 0.009037975437010215
     }
    },
-   "mean_pooled_difference": 0.09681666666666666,
+   "mean_pooled_difference": 0.09625833333333336,
    "reps": 100,
    "seed": 20261142
   },
@@ -2556,7 +2533,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -2570,8 +2546,8 @@
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017175,
-     "sd_mean_difference": 0.009924422737200723
+     "mean_of_mean_minus_lower95": 0.01715,
+     "sd_mean_difference": 0.008768135966859396
     },
     "indistinguishable": {
      "fail_rate": 0.0,
@@ -2594,7 +2570,7 @@
      "sd_mean_difference": 0.0
     }
    },
-   "mean_pooled_difference": 0.10148333333333333,
+   "mean_pooled_difference": 0.10054166666666665,
    "reps": 100,
    "seed": 20261143
   },
@@ -2614,17 +2590,17 @@
     },
     "rho": 0.0
    },
-   "claim_rate": 0.71,
+   "claim_rate": 0.7,
    "claim_rate_95ci": [
-    0.6107340410925517,
-    0.7964258107492681
+    0.600185323820196,
+    0.7875935795104634
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.71,
-    "holm_pooled": 0.71,
+    "claim": 0.7,
+    "holm_pooled": 0.7,
     "kinds": 1.0,
-    "pooled_lower95": 0.8,
+    "pooled_lower95": 0.77,
     "presentations": 1.0
    },
    "coverage_problems_seen": [
@@ -2651,7 +2627,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -2660,36 +2635,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.055624999999999994,
-     "sd_mean_difference": 0.022033338061018152
+     "mean_of_mean_minus_lower95": 0.05559166666666665,
+     "sd_mean_difference": 0.023075990107565145
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.04877499999999999,
-     "sd_mean_difference": 0.02425355644024191
+     "mean_of_mean_minus_lower95": 0.04849166666666667,
+     "sd_mean_difference": 0.025671724339349618
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05516666666666667,
-     "sd_mean_difference": 0.02442647698252406
+     "mean_of_mean_minus_lower95": 0.055575,
+     "sd_mean_difference": 0.02694863942143771
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.055399999999999984,
-     "sd_mean_difference": 0.026888260294534984
+     "mean_of_mean_minus_lower95": 0.05546666666666668,
+     "sd_mean_difference": 0.027268310616701007
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05564166666666666,
-     "sd_mean_difference": 0.027171618924900297
+     "mean_of_mean_minus_lower95": 0.05554166666666666,
+     "sd_mean_difference": 0.02450904594906406
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05530833333333333,
-     "sd_mean_difference": 0.02646598839391166
+     "mean_of_mean_minus_lower95": 0.055749999999999994,
+     "sd_mean_difference": 0.025782579174490842
     }
    },
-   "mean_pooled_difference": 0.19453333333333334,
+   "mean_pooled_difference": 0.19545833333333335,
    "reps": 100,
    "seed": 20261144
   },
@@ -2719,7 +2694,7 @@
     "claim": 0.94,
     "holm_pooled": 0.94,
     "kinds": 1.0,
-    "pooled_lower95": 1.0,
+    "pooled_lower95": 0.98,
     "presentations": 1.0
    },
    "coverage_problems_seen": [
@@ -2746,7 +2721,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -2755,36 +2729,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03918333333333334,
-     "sd_mean_difference": 0.020734070190550305
+     "mean_of_mean_minus_lower95": 0.03910833333333333,
+     "sd_mean_difference": 0.022732164864887914
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.038275,
-     "sd_mean_difference": 0.018668943313547355
+     "mean_of_mean_minus_lower95": 0.038258333333333325,
+     "sd_mean_difference": 0.018067858201790275
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03928333333333333,
-     "sd_mean_difference": 0.021016831878811378
+     "mean_of_mean_minus_lower95": 0.0394,
+     "sd_mean_difference": 0.02088669665653768
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.039325,
-     "sd_mean_difference": 0.017099015160074112
+     "mean_of_mean_minus_lower95": 0.0392,
+     "sd_mean_difference": 0.020028582007277057
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03954166666666667,
-     "sd_mean_difference": 0.021233455978191065
+     "mean_of_mean_minus_lower95": 0.039525,
+     "sd_mean_difference": 0.01883900357119653
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03925,
-     "sd_mean_difference": 0.021913250684358895
+     "mean_of_mean_minus_lower95": 0.039491666666666675,
+     "sd_mean_difference": 0.02089679667104772
     }
    },
-   "mean_pooled_difference": 0.20234999999999995,
+   "mean_pooled_difference": 0.20285833333333333,
    "reps": 100,
    "seed": 20261145
   },
@@ -2841,7 +2815,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -2850,36 +2823,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017433333333333335,
-     "sd_mean_difference": 0.008896534905980717
+     "mean_of_mean_minus_lower95": 0.017475,
+     "sd_mean_difference": 0.007836962811645282
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.02729166666666667,
-     "sd_mean_difference": 0.014229007441764087
+     "mean_of_mean_minus_lower95": 0.02749166666666666,
+     "sd_mean_difference": 0.014952877370816183
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017666666666666667,
-     "sd_mean_difference": 0.008887487302694477
+     "mean_of_mean_minus_lower95": 0.017683333333333332,
+     "sd_mean_difference": 0.008828029067817019
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.01753333333333333,
-     "sd_mean_difference": 0.009479671231992524
+     "mean_of_mean_minus_lower95": 0.01745,
+     "sd_mean_difference": 0.009752845026509502
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017583333333333333,
-     "sd_mean_difference": 0.008612990834263735
+     "mean_of_mean_minus_lower95": 0.017616666666666666,
+     "sd_mean_difference": 0.009563308789326003
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017566666666666664,
-     "sd_mean_difference": 0.008617210653363678
+     "mean_of_mean_minus_lower95": 0.01764166666666667,
+     "sd_mean_difference": 0.008249343408215388
     }
    },
-   "mean_pooled_difference": 0.19760833333333339,
+   "mean_pooled_difference": 0.19702500000000003,
    "reps": 100,
    "seed": 20261146
   },
@@ -2936,7 +2909,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -2950,8 +2922,8 @@
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.023733333333333332,
-     "sd_mean_difference": 0.01210508100390539
+     "mean_of_mean_minus_lower95": 0.023733333333333335,
+     "sd_mean_difference": 0.011967258574033477
     },
     "indistinguishable": {
      "fail_rate": 0.0,
@@ -2974,7 +2946,7 @@
      "sd_mean_difference": 0.0
     }
    },
-   "mean_pooled_difference": 0.20020833333333335,
+   "mean_pooled_difference": 0.2004166666666667,
    "reps": 100,
    "seed": 20261147
   },
@@ -3031,7 +3003,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -3040,36 +3011,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05549999999999999,
-     "sd_mean_difference": 0.030757893070090334
+     "mean_of_mean_minus_lower95": 0.05564166666666666,
+     "sd_mean_difference": 0.029745770007403298
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05096666666666666,
-     "sd_mean_difference": 0.024009747731101032
+     "mean_of_mean_minus_lower95": 0.05068333333333333,
+     "sd_mean_difference": 0.029538698722560923
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.055775,
-     "sd_mean_difference": 0.02819229603199348
+     "mean_of_mean_minus_lower95": 0.055958333333333325,
+     "sd_mean_difference": 0.02846162621261594
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.05544166666666667,
-     "sd_mean_difference": 0.029854130320982757
+     "mean_of_mean_minus_lower95": 0.05518333333333333,
+     "sd_mean_difference": 0.030170638550676306
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.055508333333333326,
-     "sd_mean_difference": 0.028792721881290298
+     "mean_of_mean_minus_lower95": 0.05535833333333333,
+     "sd_mean_difference": 0.029491684327017414
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.055491666666666654,
-     "sd_mean_difference": 0.031428516774844255
+     "mean_of_mean_minus_lower95": 0.05575,
+     "sd_mean_difference": 0.030722570195939734
     }
    },
-   "mean_pooled_difference": 0.3884416666666667,
+   "mean_pooled_difference": 0.3905833333333333,
    "reps": 100,
    "seed": 20261148
   },
@@ -3126,7 +3097,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -3135,36 +3105,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03920833333333333,
-     "sd_mean_difference": 0.018845267236688952
+     "mean_of_mean_minus_lower95": 0.039225,
+     "sd_mean_difference": 0.02082110307676645
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.042233333333333324,
-     "sd_mean_difference": 0.02010831088546889
+     "mean_of_mean_minus_lower95": 0.04228333333333333,
+     "sd_mean_difference": 0.01940063000122533
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.0392,
-     "sd_mean_difference": 0.01995682144586713
+     "mean_of_mean_minus_lower95": 0.03928333333333334,
+     "sd_mean_difference": 0.018149875650017855
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.039516666666666665,
-     "sd_mean_difference": 0.017279312856065134
+     "mean_of_mean_minus_lower95": 0.039216666666666664,
+     "sd_mean_difference": 0.018410540082004958
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.039174999999999995,
-     "sd_mean_difference": 0.01811057663662621
+     "mean_of_mean_minus_lower95": 0.03900000000000001,
+     "sd_mean_difference": 0.017842092864285224
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03929166666666667,
-     "sd_mean_difference": 0.01982302953637511
+     "mean_of_mean_minus_lower95": 0.039224999999999996,
+     "sd_mean_difference": 0.019298350174158527
     }
    },
-   "mean_pooled_difference": 0.401075,
+   "mean_pooled_difference": 0.398975,
    "reps": 100,
    "seed": 20261149
   },
@@ -3221,7 +3191,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -3230,36 +3199,36 @@
    "kind_noninferiority_stats": {
     "confounded": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017599999999999998,
-     "sd_mean_difference": 0.00873712942307458
+     "mean_of_mean_minus_lower95": 0.017483333333333337,
+     "sd_mean_difference": 0.008495664744117698
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.03425833333333333,
-     "sd_mean_difference": 0.015320363627103198
+     "mean_of_mean_minus_lower95": 0.034291666666666665,
+     "sd_mean_difference": 0.017558811890330168
     },
     "indistinguishable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017525000000000002,
-     "sd_mean_difference": 0.008550743145091737
+     "mean_of_mean_minus_lower95": 0.01759166666666667,
+     "sd_mean_difference": 0.010007840676189844
     },
     "insufficient_evidence": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.017574999999999997,
-     "sd_mean_difference": 0.008436544184544864
+     "mean_of_mean_minus_lower95": 0.0175,
+     "sd_mean_difference": 0.008619084122522016
     },
     "no_solution": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.01755833333333334,
-     "sd_mean_difference": 0.009440526556642202
+     "mean_of_mean_minus_lower95": 0.017566666666666668,
+     "sd_mean_difference": 0.008864818103040807
     },
     "spurious_correlate": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.0176,
-     "sd_mean_difference": 0.00979065242974134
+     "mean_of_mean_minus_lower95": 0.01749166666666667,
+     "sd_mean_difference": 0.00925837083700775
     }
    },
-   "mean_pooled_difference": 0.3996916666666666,
+   "mean_pooled_difference": 0.40023333333333333,
    "reps": 100,
    "seed": 20261150
   },
@@ -3316,7 +3285,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -3330,8 +3298,8 @@
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.031466666666666664,
-     "sd_mean_difference": 0.015940958775013083
+     "mean_of_mean_minus_lower95": 0.031875,
+     "sd_mean_difference": 0.014802505418565695
     },
     "indistinguishable": {
      "fail_rate": 0.0,
@@ -3354,7 +3322,7 @@
      "sd_mean_difference": 0.0
     }
    },
-   "mean_pooled_difference": 0.3969500000000001,
+   "mean_pooled_difference": 0.3977833333333332,
    "reps": 100,
    "seed": 20261151
   },
@@ -3412,7 +3380,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -3426,8 +3393,8 @@
     },
     "discoverable": {
      "fail_rate": 0.0,
-     "mean_of_mean_minus_lower95": 0.027383333333333332,
-     "sd_mean_difference": 0.014193513776839525
+     "mean_of_mean_minus_lower95": 0.02749166666666666,
+     "sd_mean_difference": 0.014902169398372096
     },
     "indistinguishable": {
      "fail_rate": 0.0,
@@ -3450,7 +3417,7 @@
      "sd_mean_difference": 0.0
     }
    },
-   "mean_pooled_difference": 0.28004999999999997,
+   "mean_pooled_difference": 0.28054166666666663,
    "reps": 100,
    "seed": 20261152
   },
@@ -3508,7 +3475,6 @@
     "no formal root commitment is preregistered",
     "random_structures",
     "random_structures_dof",
-    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
     "single_setting",
     "space_filling",
     "space_filling_dof",
@@ -3522,8 +3488,8 @@
     },
     "discoverable": {
      "fail_rate": 1.0,
-     "mean_of_mean_minus_lower95": 0.050908333333333326,
-     "sd_mean_difference": 0.023223401751011608
+     "mean_of_mean_minus_lower95": 0.05040833333333333,
+     "sd_mean_difference": 0.028608238663791318
     },
     "indistinguishable": {
      "fail_rate": 0.0,
@@ -3551,15 +3517,15 @@
    "seed": 20261153
   }
  ],
- "prereg_sha256": "b876b2fefcf2e49b105873f030c799356996cf63dca7cc59bf4b1e8695dcd6ba",
+ "prereg_sha256": "c3c1108f79b7d26ce607f9d79d1bf34a47926790f62d594996b928b9af81477e",
  "provenance": {
   "code_sha256": {
    "../analysis.py": "76eea7c01fa971e2ce0a8f462ff79e7ab3eb1611ba6af8878994c84d8e01a0a9",
-   "analysis.py": "a66c822f45f07998539a6476b925cd480c4c7872a29b180c1dc5b953ad833dcc",
-   "power_study.py": "ef54a3caf18cbf7299faa67ca3e03a1e5b44a60fcb04a7acac72bf97ca1320a0",
-   "preregistration.py": "00f5738542fb353fd5d5dbf3954468a765c258ff984647ce1e5b1d9502c0b2e0"
+   "analysis.py": "03936fd18a1d951296c74b7a2de8aa01e55a47f73840ff43750f50496fd16bab",
+   "power_study.py": "a38568d897beb3bb1b380bab453ce2d5d2d10c40c1d975eef38e2ef2a7445c1b",
+   "preregistration.py": "ceccbb438e26aaaf259afe619c4ccfbeffed03af62064cb7fbebc12e4e675d92"
   },
-  "head": "f76c1ca966aac6dbdb9185c4d8e5dd836b50052a",
+  "head": "d0e679e8dbae5435361e2f6098bada5bb55609c2",
   "numpy": "2.5.2",
   "platform": "Windows-11-10.0.26200-SP0",
   "python": "3.14.2",
@@ -3567,5 +3533,5 @@
  },
  "schema": "forge.genesis_lite.v0_3/power_study/1",
  "status": "NON_FORMAL_SYNTHETIC_STUDY",
- "wall_seconds": 2733.3
+ "wall_seconds": 2627.3
 }

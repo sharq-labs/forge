@@ -8175,3 +8175,11 @@ Failing-first evidence for D2b:
 - `pytest tests/genesis_lite/test_genesis_lite_v0_3_amendment.py -k d2b` then gave 1 failed (TypeError: the stream took no admission).
 
 Implementation: K = HMAC(root, label/prereg/admission nonce/admission digest). `analysis.admission_problems` refuses a missing, tampered, foreign-root, foreign-preregistration or non-formal admission, and records of another attempt. Afterwards the targeted tests gave 4 passed. Full genesis_lite suite: 238 passed, 1 failed; the failure is `test_o1_power_study_evidence_measured_the_rule_that_is_in_the_tree`, as intended until the study is re-run on the changed rule code.
+
+**Study re-run on the D2b rule** (clean HEAD d0e679e8, exit 0, 2,627 s): result sha256 a26705f74e566bc016f2035df84bc4b9808e9f3ddc1ed6091985d7e58f1f5b68, pinned. Every replicate used the admission-keyed stream; no admission or root problem was seen.
+- Exchangeable null: 0.054 at alpha 0.05 (new Monte-Carlo draws); Holm family-wise rate 0.040.
+- Equal-skill false claims: 3/300 with unsolved controls, 0/300 with solved controls.
+- Kind conjunction failure at equal skill: 0.01.
+- Cap bias: -0.092.
+
+`python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 239 passed.

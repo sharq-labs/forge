@@ -77,7 +77,7 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "pass route with an arbitrary partner (ODC-05d)": (DECIDED, (), "D1, 2026-10-20: kept at +1.0 as in v0.2"),
     "power and null-calibration study (ODC-O1b)": (FIXED, ("test_o1_power_study_",), "ran 2026-10-20 on synthetic "
                                                    "records (docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20, sha256 pinned in the preregistration); exchangeable null "
-                                                   "0.0490 at alpha 0.05, Holm FWER 0.0450"),
+                                                   "0.0540 at alpha 0.05, Holm FWER 0.0400"),
     "root grinding before the commitment (review I-1)": (DECIDED, (), "D2b, 2026-10-20: the admission nonce is bound "
                                                                      "into the key"),
     "D2b nonce-bound stream": (FIXED, ("test_d2b_",), "a root ground before the commitment cannot fix the claim's "

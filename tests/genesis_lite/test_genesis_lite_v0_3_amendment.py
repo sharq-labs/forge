@@ -456,7 +456,7 @@ def test_o1_power_study_evidence_is_pinned_and_says_what_the_ledger_quotes():
     assert f"{symmetric['rejection_rates']['pooled@0.05']:.4f}" in note
     assert f"{symmetric['holm_familywise_rate']:.4f}" in note
     kinds = next(r for r in doc["power"] if r["cell"]["name"] == "controls_unsolved/delta=0.0/rho=0.0")
-    assert round(1 - kinds["condition_pass_rates"]["kinds"], 2) == 0.0       # quoted by the README (D3b-2 decided)
+    assert round(1 - kinds["condition_pass_rates"]["kinds"], 2) == 0.01       # quoted by the README (D3b-2 decided)
 
 
 def _rule_code(source: bytes) -> str:
