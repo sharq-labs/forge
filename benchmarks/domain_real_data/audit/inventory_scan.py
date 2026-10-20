@@ -19,7 +19,8 @@ The classes are the round's five:
     UNKNOWN_PROVENANCE  nothing establishes where it came from
 
 Historical classifications are inherited only for unchanged historical blobs.
-New/changed paths are UNKNOWN_PROVENANCE, even under a known directory prefix.
+New/changed paths require explicit artifact/source declarations matching both
+raw working bytes and the Git index; directory prefixes grant no new coverage.
 The preserved report describes its pinned historical tree, not today's checkout.
 Classification never says a file is useful; claim mapping lives in DATASETS.json.
 """
@@ -223,13 +224,29 @@ def reviewed_declarations(root=None, manifest=None) -> dict:
         return {}
     if manifest.is_symlink() or not manifest.resolve().is_relative_to(root.resolve()):
         raise ValueError("provenance review must be a local regular file")
-    doc = json.loads(manifest.read_bytes())
+    manifest_body = manifest.read_bytes()
+    doc = json.loads(manifest_body)
     if (set(doc) != {"schema", "review_base", "records"}
             or doc["schema"] != "domain_real_data_provenance_review/1"
             or not re.fullmatch(r"[0-9a-f]{40}", doc["review_base"])
             or not isinstance(doc["records"], list)):
         raise ValueError("invalid provenance review schema")
     seen, accepted = set(), {}
+    env = {key: value for key, value in os.environ.items() if not key.upper().startswith("GIT_")}
+    indexed = {}
+    for row in subprocess.run(
+            ["git", "ls-files", "--stage", "-z"], cwd=root, env=env,
+            check=True, capture_output=True).stdout.split(b"\0"):
+        if not row:
+            continue
+        metadata, name = row.decode("utf-8").split("\t", 1)
+        mode, blob, stage = metadata.split()
+        if stage == "0" and mode in ("100644", "100755"):
+            indexed[name] = blob
+
+    def index_matches(name, body):
+        blob = hashlib.sha1(b"blob " + str(len(body)).encode() + b"\0" + body).hexdigest()
+        return indexed.get(name) == blob
 
     def bound_file(entry):
         name, digest = entry["path"], entry["sha256"]
@@ -247,9 +264,11 @@ def reviewed_declarations(root=None, manifest=None) -> dict:
             ).stdout
             return hashlib.sha256(body).hexdigest() == digest
         file = root / name
-        return (file.is_file() and not file.is_symlink()
-                and file.resolve().is_relative_to(root.resolve())
-                and hashlib.sha256(file.read_bytes()).hexdigest() == digest)
+        if (not file.is_file() or file.is_symlink()
+                or not file.resolve().is_relative_to(root.resolve())):
+            return False
+        body = file.read_bytes()
+        return hashlib.sha256(body).hexdigest() == digest and index_matches(name, body)
 
     for entry in doc["records"]:
         required = {"path", "sha256", "class", "role", "rationale", "evidence"}
@@ -273,7 +292,9 @@ def reviewed_declarations(root=None, manifest=None) -> dict:
                 raise ValueError("physical/reference declaration requires dataset_record evidence")
         if bound_file(entry) and all(bound_file(e) for e in evidence):
             accepted[path] = entry
-    return accepted
+    # Preserve record-field errors before refusing an unstaged manifest.
+    manifest_name = manifest.resolve().relative_to(root.resolve()).as_posix()
+    return accepted if index_matches(manifest_name, manifest_body) else {}
 
 
 def _declared_classification(path, declarations):
@@ -312,7 +333,7 @@ def scan(include_untracked: bool = False) -> dict:
         rows.append(row)
     return {
         "schema": "domain_real_data_repository_scan/2",
-        "method": "NUL-delimited live tracked/staged paths; pinned historical classes inherited only when index and raw working bytes match historical blobs; new, changed or checkout-normalized bytes remain UNKNOWN_PROVENANCE",
+        "method": "NUL-delimited live tracked/staged paths; pinned historical classes inherited only when index and raw working bytes match historical blobs; new or changed bytes require explicit reviewed artifact/source bindings matching the index; otherwise UNKNOWN_PROVENANCE",
         "historical_commit": HISTORICAL_COMMIT,
         "classification_limit": "inherited historical classification is not independently validated provenance",
         "data_suffixes": list(DATA_SUFFIXES),

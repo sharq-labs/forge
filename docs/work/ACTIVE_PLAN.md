@@ -8,9 +8,18 @@ reference application).
 
 ## Current bounded task - domain inventory integration (2026-10-20)
 
-Owner authorized resolving branch blockers after merging approved PR176, without bypassing tests or OD3. Domain-data integration preserves historical bytes and separates archival replay from live provenance coverage. Owner selected full433-file provenance audit. Audit completed with exact per-file/source hashes;30domain tests passed after failing-first boundary regressions. Final independent manifest review and changed-file gate remain before merge. Do not promote origin classifications into validation or current certification. Other certified branch merges remain subject to OD3; no freeze, formal run or Mind behavior change.
+Owner authorized resolving branch blockers after merging approved PR176, without bypassing tests or OD3. Domain-data integration preserves historical bytes and separates archival replay from live provenance coverage. Owner selected full433-file provenance audit. Audit completed with exact per-file/source hashes;33 domain tests passed after failing-first boundary regressions and staged-identity repair. Five authored analytical metadata records correctly classified DERIVED. Final independent manifest review and changed-file gate remain before merge. Do not promote origin classifications into validation or current certification. Other certified branch merges remain subject to OD3; no freeze, formal run or Mind behavior change.
 
-## Current bounded task â€” FAST runtime profiling (2026-10-20)
+
+## Current bounded task - reviewed branch reconciliation (2026-10-20)
+
+Owner approved PR176 explicitly and authorized resolving remaining branch blockers sequentially, without bypassing tests or OD3. PR176 merged at3213bb35. Exclude preserve/* and wip/*; preserve scientific contracts and byte-pinned evidence.
+
+- [x] Verify three residual branch histories contain no new content: historical main-check entry byte-present; critical-production and multiphysics-lifecycle commits patch-equivalent. Merge their ancestry with the main tree unchanged.
+- [ ] Reconcile domain-real-data archival inventory versus live coverage; retain historical bytes and fail closed for undeclared provenance.
+- [ ] Reconcile other unique changes only after their targeted tests and independent review; certified/trust changes remain blocked pending applicable OD3. No formal Genesis run, freeze or candidate behavioral tuning authorized.
+
+## Current bounded task — FAST runtime profiling (2026-10-20)
 
 Owner authorized trying FAST acceleration in this chat. Base: remote main
 `8ec97064c35144405e3eba53a4282e90f8593b1c`; branch `codex/fast-runtime-profile`.
@@ -33,14 +42,14 @@ before inspecting further quick performance opportunities. No merge, dependency
 install or hardened recertification is part of this task. Existing scientific
 work and capability maturity remain unchanged.
 
-## Current bounded task â€” BUY-01 MCP UQ repair, FDA-04 / FDA-14 (2026-10-19)
+## Current bounded task — BUY-01 MCP UQ repair, FDA-04 / FDA-14 (2026-10-19)
 
 Branch `fix/buy01-fda04-fda14-qmc` (local `17e2edd5`, `428993b1`; base `origin/main` `d3c9cd45`). This is a trust-lane
 repair of the uncertified MCP tool, and it does not expand the active epic. Evidence: PROGRESS 2026-10-19.
 
 - [x] Reproduce FDA-04 and FDA-14 (R-04) on `d3c9cd45`; write failing-first tests; repair the sampler, the quantile
       rule and the sigma spread units; bump the schemas to /2.
-- [x] Owner: ODC-14a approved (refuse a tail below 0.5/n). ODC-04a approved, Option D (Imanâ€“Conover re-pairing; refuse
+- [x] Owner: ODC-14a approved (refuse a tail below 0.5/n). ODC-04a approved, Option D (Iman–Conover re-pairing; refuse
       n <= k or lambda_min < 0.64).
 - [x] ODC-14b: the interval is stated as an empirical central quantile interval at the requested mass, with no
       guaranteed or calibrated coverage; wording-guard tests added. The ODC-04a guard is labelled a design diagnostic.
@@ -51,7 +60,7 @@ repair of the uncertified MCP tool, and it does not expand the active epic. Evid
 - [ ] ODC-04b, deferred to its own bounded PR: move the computation into a UQ-owned module. Any new
       `src/engcore/uq/*` file is certification_pinned (`certified:predictive_representation`).
 
-## Current bounded task â€” final owner-decision preflight (2026-10-18)
+## Current bounded task — final owner-decision preflight (2026-10-18)
 
 - [x] Analyze D1 gate dependency, D2 OD-31 census and D3 M1A issuance-refusal mismatch; preserve existing evidence and source.
 - [x] Create FINAL_OWNER_DISPOSITIONS_2026_10_18.md with exact unapplied proposals, independent read-only reviews, impacts and explicit approval questions.
@@ -63,7 +72,7 @@ repair of the uncertified MCP tool, and it does not expand the active epic. Evid
 
 Read-only census confirms20 versus historical19, sole added M1C physical model0.1.0; realization0.2.0 is not another model. Registry full-readback refusal for frozen diffusion is preserved as a separate pre-existing compatibility/contract limitation, not repaired by the count proposal. No epic/maturity/ledger change.
 
-## Current bounded task â€” P0 scientific correctness closure (2026-10-18)
+## Current bounded task — P0 scientific correctness closure (2026-10-18)
 
 Existing branch/HEAD unchanged: `fix/post-merge-remediation-2026-10-18` / `93ed64b0`.
 The preceding verification's eight uncommitted files were inventoried, hashed and copied to ignored task evidence before edits.
@@ -89,7 +98,7 @@ Owner-approved identity/policy decisions are documented in `docs/work/proposals/
 Report target: `docs/work/P0_SCIENTIFIC_CORRECTNESS_CLOSURE.md`.
 Earlier verification findings below are historical baseline; superseded scientific outcomes are recorded without deleting negative evidence.
 
-## Current bounded verification â€” post-merge remediation (2026-10-18)
+## Current bounded verification — post-merge remediation (2026-10-18)
 
 User-authorized verification of `fix/post-merge-remediation-2026-10-18`,
 HEAD `93ed64b0292e9fea714ac83affb64b71488ac050`, base `337519d1`.
@@ -100,7 +109,7 @@ This task does not expand the active epic or scientific roadmap.
 - [x] Execute all seven exact remediation recipes and preserve original collection failures.
 - [x] Apply independently reviewed import-order correction; add fresh-process regressions.
 - [x] Execute corrected recipes and bounded scientific/checkpoint/semantic/compatibility checks; record failures.
-- [x] Independently derive and execute source-extracted energy admission diagnostic: 1e-7 J leak rejected at4 cells, admitted at256/512 due to NÂ² arithmetic floor.
+- [x] Independently derive and execute source-extracted energy admission diagnostic: 1e-7 J leak rejected at4 cells, admitted at256/512 due to N² arithmetic floor.
 - [x] Record owner decisions, source digests, OD-3 procedure, Phase3.5 and Genesis assessment.
 - [ ] SCIENTIFIC_DESIGN_REQUIRED: conservation floor must not become permissive under refinement; no tolerance adjustment approved.
 - [ ] OWNER_DECISION_REQUIRED (OD-31): invalid M1C realization lacks provided capability; resolve scientific declaration/identity before model census pin change.
@@ -238,7 +247,7 @@ its changes are not included here. Build-First: no tests/provider execution/assu
 
 See SEMANTIC_COMPATIBILITY_PROPOSAL.md and SEMANTIC_IMPACT_MATRIX.md.
 
-## Active repair â€” checkpoint integrity R1â€“R5 (2026-10-18)
+## Active repair — checkpoint integrity R1–R5 (2026-10-18)
 
 Owner-authorized bounded Build-First repair from main `0284ae161ad957d51674ee481e47cfd43d10c5f0`.
 Branch `codex/checkpoint-integrity-hardening`; isolated worktree
@@ -258,7 +267,7 @@ The shared stale main checkout and its existing edits are preserved.
 Contract/compatibility/limitations: [CHECKPOINT_HARDENING.md](CHECKPOINT_HARDENING.md).
 This slice does not authorize implementation of A-1/A-2/A-13 or A-3 semantics.
 
-## Integration â€” Codex handoff (2026-10-18)
+## Integration — Codex handoff (2026-10-18)
 
 By owner confirmation in chat, branch `integration/codex-handoff-2026-10-18` merges into `main`, in order: I-8
 (`fix/engrt-v1-phase1-interop` `c68f9fc1`), Phase 1, Phase 2, Phase 3, Phase 3.5, the CDAR fixtures and OD-6, plus
@@ -271,7 +280,7 @@ force from this merge.
 - [ ] Owner: authorize DV-31..DV-100; OD-3 recertification of the new `main` HEAD; route the preserved, unintegrated
       `preserve/*` and battery Pass 1 branches.
 
-## Active override â€” Phase 3.5: engineering foundation completion, build phase (2026-10-18)
+## Active override — Phase 3.5: engineering foundation completion, build phase (2026-10-18)
 
 Branch `feat/phase35-engineering-foundation-completion` (worktree `D:/forge-phase35`), on Phase 3 `7389f4b4`. Local
 commits only; no test execution, push, PR, merge or certification. Deferred checks: DEFERRED_VALIDATION.md DV-87..DV-98
@@ -286,7 +295,7 @@ commits only; no test execution, push, PR, merge or certification. Deferred chec
 - [x] OD-6 / OD-P35-2 decided 2026-10-18: active epic -> research program `engrt.numerical_foundations` (branch `feat/od6-engineering-program-epic` `a40ddc5d`, in force on merge); WS4-WS6 and real FE/CFD become program gates M1, M2, E1-E3.
 - [ ] Owner: review/merge the OD-6 branch; OD-P35-1, OD-P35-3..5; regenerate two flagship bundles (DV-93); authorize deferred validation; OD-3.
 
-## Active override â€” Phase 3: advanced numerical & multiphysics engine, build phase (2026-10-17)
+## Active override — Phase 3: advanced numerical & multiphysics engine, build phase (2026-10-17)
 
 Branch `feat/phase3-advanced-numerical-multiphysics` (worktree `D:/forge-phase3`), stacked on Phase 2 `2661b640`.
 Local commits only: no push, PR, merge, certificate or test execution (owner direction). Rocks are P3-BR13..P3-BR17.
@@ -305,7 +314,7 @@ DV-48..DV-64 unchanged). Phase 4 not started.
       OD-P3-6 (schedule-forced windows below minimum_window), OD-P3-7 (make l2_measure / error control mandatory anywhere).
 - [ ] Owner: authorize Phase 1 + 2 + 3 deferred validation; push/PR; OD-3. Phase 2 decisions OD-P2-1..OD-P2-5 still open.
 
-## Active override â€” Phase 2: unified solver & multiphysics architecture, build phase (2026-10-17)
+## Active override — Phase 2: unified solver & multiphysics architecture, build phase (2026-10-17)
 
 Branch `feat/phase2-unified-solver-architecture` (worktree `D:/forge-phase2`), stacked on Phase 1 `6249c2d2`. Local
 commits only: no push, PR, merge, certificate or test execution (owner direction). Rocks are P2-BR8..P2-BR12. Deferred
@@ -320,7 +329,7 @@ checks: [DEFERRED_VALIDATION.md](DEFERRED_VALIDATION.md) DV-48..DV-64 (and Phase
       OD-P2-3 (compare_providers refuses without same-problem admission), OD-P2-4 (preCICE role), OD-P2-5 (hex / mixed 3D remap).
 - [ ] Owner: authorize Phase 1 + Phase 2 deferred validation; push/PR; OD-3. Phase 3 not started (waits for authorization).
 
-## Active override â€” Phase 1: scientific & numerical correctness, build phase (2026-10-17)
+## Active override — Phase 1: scientific & numerical correctness, build phase (2026-10-17)
 
 Branch `fix/phase1-scientific-numerical-correctness` (worktree `D:/forge-phase1`), base `origin/main` `de11dffa`.
 Local commits only: no push, PR, merge, certificate or test execution (owner direction). Rocks are P1-BR1..P1-BR7
@@ -337,7 +346,7 @@ Every changed capability is IMPLEMENTED / UNVERIFIED; every touched pinned file 
 - [ ] Owner: authorize the Phase 1 deferred validation (DV-31..DV-47); push/PR; OD-3 recertification.
 - [ ] Owner decisions recorded in PROGRESS 2026-10-17 "Phase 1" (Phase 2 not started; waits for authorization).
 
-## Active override â€” Engineering Runtime V1 Big Rocks, build phase (2026-10-17)
+## Active override — Engineering Runtime V1 Big Rocks, build phase (2026-10-17)
 
 Branch `feat/engrt-v1-big-rocks` (worktree `D:/forge-engrt-br`), stacked on `fix/engrt-v1-phase1-interop`. Local
 commits only. **Build phase:** tests are written, not run, until the owner authorizes stabilization; see
@@ -376,7 +385,7 @@ ledger capability).
 - [ ] Owner: wiring adaptive resolution into uq_studies (changes which run carries a claim's evidence); a claims-layer CapabilityDeclaration for the steady path; sourced validity conditions; a transient non-uniform solver.
 - [ ] Owner: authorize the deferred validation (DV-1..DV-7); push/PR; OD-3.
 
-## Active override â€” Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)
+## Active override — Engineering Runtime V1, Phase 1: interoperability defects (2026-10-17)
 
 Branch `fix/engrt-v1-phase1-interop` (worktree `D:/forge-engrt-p1`), base `origin/main` `de7527fd`, committed
 locally as `04b12344` (owner direction). No push, PR, merge, certificate or hardened run without the owner. Details: PROGRESS, 2026-10-17
@@ -399,7 +408,7 @@ locally as `04b12344` (owner direction). No push, PR, merge, certificate or hard
       build tag are kept; a checkpoint of another participant object is refused (stricter than P2-BR10's
       cross-object restore with a build pin). Tests NOT RUN (DV-55, I-8 gates); needs OD-3 (`external.py`).
 
-## Active override â€” Open problems pass (2026-10-16)
+## Active override — Open problems pass (2026-10-16)
 
 Branch `fix/open-problems-2026-10-16` (worktree `D:/forge-open-problems`), base `origin/main` `36306da5`, merged with `062e1153`; pushed for a PR.
 Details and exact commands: PROGRESS, 2026-10-16 "Open problems pass".
@@ -412,7 +421,7 @@ Details and exact commands: PROGRESS, 2026-10-16 "Open problems pass".
 - [ ] Owner: review/merge of the PR; OD-3 recertification (touched pinned files; `main` already needs it); CI
       billing; `authority_result_id` binding and any-of enforcement are design decisions.
 
-## Active override â€” Battery 1RC identifiability (2026-10-14)
+## Active override — Battery 1RC identifiability (2026-10-14)
 
 Branch `feat/battery-1rc-identifiability` (worktree `D:/forge-battery-ident`), stacked on the closure branch. Local only.
 
@@ -423,7 +432,7 @@ Branch `feat/battery-1rc-identifiability` (worktree `D:/forge-battery-ident`), s
 - [ ] Owner: the Kirkaldy 2024 download (cross-cell), Type B admissibility, and one recertification of the merged
       battery + G0/A1 source.
 
-## Active override â€” Battery 1RC scientific closure (2026-10-14)
+## Active override — Battery 1RC scientific closure (2026-10-14)
 
 Branch `feat/battery-1rc-scientific-closure` (worktree `D:/forge-battery-1rc`), base `origin/main` `e193e573`. Local
 only: no push, PR, merge or recertification without the owner. Evidence package:
@@ -440,7 +449,7 @@ only: no push, PR, merge or recertification without the owner. Evidence package:
 - [ ] Owner: recertification (new model definition under engcore.domains plus test edits), and a decision on the new
       measurement campaign (OCV characterization, pulses at >= 1 Hz) that calibration requires.
 
-## Active override â€” G0/A1 final closure (2026-10-14)
+## Active override — G0/A1 final closure (2026-10-14)
 
 Same local branch `integration/g0-a1-unblock`. Report: [G0_A1_FINAL_CLOSURE.md](G0_A1_FINAL_CLOSURE.md). Nothing pushed.
 
@@ -452,7 +461,7 @@ Same local branch `integration/g0-a1-unblock`. Report: [G0_A1_FINAL_CLOSURE.md](
 - [x] OD-6 package prepared (Option C recommended; nothing applied).
 - [ ] Owner: OD-3, OD-19 (v0.2), OD-20, OD-8, OD-18, OD-6, OD-1. BR-17/BR-18 stay closed until A1 PASS.
 
-## Superseded override â€” G0/A1 unblocking sprint (2026-10-14)
+## Superseded override — G0/A1 unblocking sprint (2026-10-14)
 
 Local integration branch `integration/g0-a1-unblock` (worktree `D:/forge-g0a1`) = `origin/main` `e193e573` + BR-15 +
 BR-16. Nothing is pushed or merged to `main`. Report: [G0_A1_UNBLOCKING.md](G0_A1_UNBLOCKING.md).
@@ -461,13 +470,13 @@ BR-16. Nothing is pushed or merged to `main`. Report: [G0_A1_UNBLOCKING.md](G0_A
 - [x] Escrow leak: heap-scan and stack-walk attacks reproduced; isolated proposer process (same-account, NOT_PROVEN).
 - [x] Genesis-lite v0.1: P-1 root cause, joint-credit contract, new identity; v0 preserved.
 - [x] Genesis-lite v0.1 Tier-1 cost pilot with isolated proposers: 1,560 runs, 0 invalid, 374.6 s (MEASURED);
-      formal baseline tier 31,200 runs â‰ˆ 6,451 s (ESTIMATE). Preregistration `94efff08â€¦`, FREEZE_READY.
+      formal baseline tier 31,200 runs ≈ 6,451 s (ESTIMATE). Preregistration `94efff08…`, FREEZE_READY.
 - [ ] Owner: OD-1 governance (plan or visibility for branch protection; disable squash/rebase merges); push the
       candidate so CI exercises the F-7 workflow step (not yet observed on GitHub).
 - [ ] Owner: OD-3 recertification of this integration HEAD; OD-8 evaluator; OD-18 budget; OD-19 v0.1 identity;
       OD-20 escrow deployment; OD-6 active epic (exception or ledger change). BR-17/BR-18 stay closed until then.
 
-## Superseded override â€” BR-15 authority boundary & certification closure (2026-10-14)
+## Superseded override — BR-15 authority boundary & certification closure (2026-10-14)
 
 Branch `fix/br15-authority-closure`, base `origin/main` `e193e573`. No push, PR, merge, settings change or
 recertification without the owner. Report: [BR15_AUTHORITY_CLOSURE.md](BR15_AUTHORITY_CLOSURE.md).
@@ -476,31 +485,31 @@ recertification without the owner. Report: [BR15_AUTHORITY_CLOSURE.md](BR15_AUTH
 - [x] Independent review of 659da048, 313bbf1e, 05522b59 (ACCEPT) and f869a737 (nested-summary defect, fixed).
 - [x] Certified-imports-uncertified gap: derived closure of every certified module, +71 pinned files, one declared
       non-authority edge; red reproducer `dc26175d`, fix `6d62e5cf`, `a49e8d12`, `01073787`; review ACCEPT.
-- [ ] Owner: hardened recertification (OD-3) of the intended HEAD â€” BR-15 cannot PASS without it.
+- [ ] Owner: hardened recertification (OD-3) of the intended HEAD — BR-15 cannot PASS without it.
 - [ ] Owner: disable squash/rebase merges; branch protection needs GitHub Pro or a public repository (HTTP 403).
 - [ ] Next bounded tasks (not started): CI V4 workspace vs `actions/checkout` `config.worktree` (F-7); keyed
       campaign records / restored `stop_review_outcome` (F-9). BR-16 is not started.
 
-Status: PARTIALLY_CLOSED â€” BLOCKED_OWNER_RECERTIFICATION, BLOCKED_OWNER_GOVERNANCE.
+Status: PARTIALLY_CLOSED — BLOCKED_OWNER_RECERTIFICATION, BLOCKED_OWNER_GOVERNANCE.
 
-## Superseded override â€” BR-16 Genesis-lite v0 preparation (2026-10-14)
+## Superseded override — BR-16 Genesis-lite v0 preparation (2026-10-14)
 
 Branch `feat/br16-genesis-lite-benchmark` (worktree `D:/forge-br16`), base `origin/main` `e193e573`. This is A1
 preparation only: no certified file was touched and no Mind capability was added. Report:
 [GENESIS_LITE_V0.md](../discovery/GENESIS_LITE_V0.md). No push, PR or merge without the owner.
 
 - [x] Benchmark layer over `engcore.blindfold`: presentations (renamed, paraphrased, trap), equal-budget arms,
-      reveal step, separately implemented evaluator, leakage tests (Genesis F1â€“F8).
-- [x] Preregistration frozen for the pilot (`f99fcfbdâ€¦`); two review rounds, every finding fixed.
-- [x] Tier-1 cost pilot: 960 runs, 0 invalid, 85 s (MEASURED); formal baseline tier â‰ˆ 1,185 s (ESTIMATE).
+      reveal step, separately implemented evaluator, leakage tests (Genesis F1–F8).
+- [x] Preregistration frozen for the pilot (`f99fcfbd…`); two review rounds, every finding fixed.
+- [x] Tier-1 cost pilot: 960 runs, 0 invalid, 85 s (MEASURED); formal baseline tier ≈ 1,185 s (ESTIMATE).
 - [ ] Owner: OD-3/G0 exit, OD-8 evaluator, OD-18 budget, OD-19 v0.1 identity (pilot finding P-1), OD-20 escrow
-      deployment (renumbered: open PR #130 uses OD-15..17). Formal â‰¥20-seed runs wait for all of these.
+      deployment (renumbered: open PR #130 uses OD-15..17). Formal ≥20-seed runs wait for all of these.
 
-Status: PILOT_COMPLETE Â· BLOCKED_OWNER_APPROVAL (not GENESIS_A1_PASS).
+Status: PILOT_COMPLETE · BLOCKED_OWNER_APPROVAL (not GENESIS_A1_PASS).
 
-## Superseded override â€” hostile remediation round 1 (2026-10-13)
+## Superseded override — hostile remediation round 1 (2026-10-13)
 
-The current user scope is F1â€“F8 plus scanner/genesis/empty-UQ closure, with no
+The current user scope is F1–F8 plus scanner/genesis/empty-UQ closure, with no
 push, PR, merge or Mind work. Branch `fix/hostile-review-p0-p1`, clean worktree
 `D:/forge-hostile-remediation`, base `5d73e8f5118aa845f1957decc5aae986e72476a9`.
 This bounded task supersedes the older executable queue below for this branch.
@@ -527,12 +536,12 @@ PR #140 (623149f3, tree identical to the reviewed branch tip 52bf55d3).
 Evidence: PROGRESS.md and `~/forge-hostile-evidence/` in WSL. Historical
 phase-0 blocker report: [HOSTILE_REMEDIATION_ROUND1.md](HOSTILE_REMEDIATION_ROUND1.md).
 
-**The only executable queue.** Scope (Master Plan Â§1): this file owns only "what work is active right now?". It may not
+**The only executable queue.** Scope (Master Plan §1): this file owns only "what work is active right now?". It may not
 override Genesis science, Completion maturity rules, Performance measurement semantics or `CLAUDE.md` repository
 constraints; execution authority does not imply semantic authority outside its scope. Strategy: `docs/project/FORGE_MASTER_PLAN.md` Part I. Track A science:
 `docs/discovery/FORGE_GENESIS.md`. Maturity: `docs/project/SCIENTIFIC_CAPABILITY_COMPLETION_POLICY.md`. History up to
-2026-10-10 (BIG 14 queue, Big Rocks program, Local Assurance passes 2â€“13): `docs/work/archive/ACTIVE_PLAN_HISTORY_TO_2026-10-10.md`
-â€” not a queue. Last consolidated: 2026-10-11.
+2026-10-10 (BIG 14 queue, Big Rocks program, Local Assurance passes 2–13): `docs/work/archive/ACTIVE_PLAN_HISTORY_TO_2026-10-10.md`
+— not a queue. Last consolidated: 2026-10-11.
 
 ## Objective
 
@@ -550,8 +559,8 @@ historical benchmark gates). Freeze checks pass on the committed tree. Integrati
 remains blocked by these red gates; this slice does not declare G0 PASS or change
 scientific maturity. Exact commands and failures are in PROGRESS.
 
-Prove a trustworthy, measurable scientific reasoning loop. Order: **G0** Trust lane â†’ **A1** Genesis-lite measurement â†’
-**A2** Minimal Mind â†’ **B1** narrow real demo. One Trust architecture, one Mind; no second authority.
+Prove a trustworthy, measurable scientific reasoning loop. Order: **G0** Trust lane → **A1** Genesis-lite measurement →
+**A2** Minimal Mind → **B1** narrow real demo. One Trust architecture, one Mind; no second authority.
 
 ## Verified state (2026-10-13; re-check before relying on it)
 
@@ -576,7 +585,7 @@ Historical snapshot, 2026-10-12 (superseded above; kept for the record):
 
 - `main` = `2d0fa6c3`. Since `4634eba` it also carries #128 (planning consolidation), #129 (test-suite runtime),
   #126 (authority ledger, real escrow, battery blind readiness `NOT_READY`), #123 (Trust Repair Pass 1: R3-01, R3-02)
-  and #117 (NASA PCoE raw ingestion). Together with #124 (Big Rocks foundations) and #125 (Roadmap V2 R1â€“R8) these are
+  and #117 (NASA PCoE raw ingestion). Together with #124 (Big Rocks foundations) and #125 (Roadmap V2 R1–R8) these are
   built, **not certified and not qualified**.
 - The hardened certificate (`certification/current_core_v2.json`, the owner's 2026-10-09 recertification carried by
   #123) binds `39d43456` (the #123 tree), **not** `main`. FAST on each landing tree (PROGRESS 2026-10-12, CPython 3.12,
@@ -592,22 +601,22 @@ Historical snapshot, 2026-10-12 (superseded above; kept for the record):
   Local-only, not on the remote: Battery Practical Pass 1 `7e923e75` (WEAKLY_IDENTIFIABLE). Trust Repair Pass 1
   `803946af` is on `main` through #123.
 
-## Current gate: G0 â€” Trust lane
+## Current gate: G0 — Trust lane
 
 | Field | Value |
 |---|---|
 | Start condition | Now. |
 | Window | OWNER_DECISION_REQUIRED (OD-7). |
 | Exit gate | The certificate binds the intended `main` HEAD, **or** every unresolved failure is classified with evidence and no `SCIENTIFIC_CORRECTNESS` or `UNCLASSIFIED` item remains open. |
-| Circuit breaker | Window expired â†’ Master Plan Â§5.2: classify (unclassified = blocking), preserve the red result, document here, then fix / isolate / ask. Never loosen a gate. |
-| Outcomes | PASS Â· FAIL Â· BLOCKED_WITH_EVIDENCE Â· DEFERRED_BY_OWNER |
+| Circuit breaker | Window expired → Master Plan §5.2: classify (unclassified = blocking), preserve the red result, document here, then fix / isolate / ask. Never loosen a gate. |
+| Outcomes | PASS · FAIL · BLOCKED_WITH_EVIDENCE · DEFERRED_BY_OWNER |
 
 Next actions (agent-executable now):
 
 1. Run the FAST tier on the intended certification HEAD selected by OD-3, normally the post-merge `main` HEAD, in a
    supported environment (3.11 or 3.12); record exact failures in PROGRESS. Compare failures against the previously
    recorded 14-test drift set only where still applicable; the historical drift set is not current truth.
-2. Classify every failure as `SCIENTIFIC_CORRECTNESS`, `GOVERNANCE_ONLY` or `UNCLASSIFIED` (Master Plan Â§5.2).
+2. Classify every failure as `SCIENTIFIC_CORRECTNESS`, `GOVERNANCE_ONLY` or `UNCLASSIFIED` (Master Plan §5.2).
    `GOVERNANCE_ONLY` needs the complete six-question evidence record; anything less stays `UNCLASSIFIED` and blocking.
 3. DONE 2026-10-12: PR #123 landed by merge commit after the `CLAUDE.md` gates and `forge-scientific-review` (PASS).
    The review's open LOWs: a REGISTRY_CHANGED bundle result carries the stored verdict without re-deriving it
@@ -615,29 +624,29 @@ Next actions (agent-executable now):
 
 Owner-run: hardened recertification (it writes the certificate); merges (OD-3, OD-4).
 
-## Track A â€” Discovery credibility
+## Track A — Discovery credibility
 
-**A1 Genesis-lite measurement** (Genesis Â§18 Step 1, on the existing `engcore.blindfold`)
+**A1 Genesis-lite measurement** (Genesis §18 Step 1, on the existing `engcore.blindfold`)
 
 | Field | Value |
 |---|---|
-| Start condition | Preparation now, limited to benchmark, governance, measurement, stabilization or evaluation infrastructure as the Completion Policy allows for A1 (documents, specifications, a pilot cost measurement; no certified file touched; no new scientific capability). The preregistration freeze and the formal â‰¥20-seed baseline runs start when G0 exits (PASS, or `GOVERNANCE_ONLY` blockers isolated with complete evidence records). |
+| Start condition | Preparation now, limited to benchmark, governance, measurement, stabilization or evaluation infrastructure as the Completion Policy allows for A1 (documents, specifications, a pilot cost measurement; no certified file touched; no new scientific capability). The preregistration freeze and the formal ≥20-seed baseline runs start when G0 exits (PASS, or `GOVERNANCE_ONLY` blockers isolated with complete evidence records). |
 | Window | OWNER_DECISION_REQUIRED (OD-7). |
-| Exit gate | Genesis Step 1 gate: frozen preregistration digest, frozen baseline set (Genesis Â§10.5), baseline distributions over â‰¥20 seeds, owner-approved compute estimate (Genesis Â§10.6). |
-| Circuit breaker | Window expired â†’ record what was measured as smoke-scope only and ask the owner. No maturity claim. |
-| Outcomes | PASS Â· FAIL Â· BLOCKED_WITH_EVIDENCE Â· DEFERRED_BY_OWNER |
+| Exit gate | Genesis Step 1 gate: frozen preregistration digest, frozen baseline set (Genesis §10.5), baseline distributions over ≥20 seeds, owner-approved compute estimate (Genesis §10.6). |
+| Circuit breaker | Window expired → record what was measured as smoke-scope only and ask the owner. No maturity claim. |
+| Outcomes | PASS · FAIL · BLOCKED_WITH_EVIDENCE · DEFERRED_BY_OWNER |
 
 Next actions: draft the Genesis-lite preregistration (task classes, scoring, baselines, leakage-control status
 including the escrow's `SECURITY_BOUNDARY_NOT_PROVEN` label); measure per-run cost at the 10-run rung; write the compute
 estimate.
 
-**A2 Minimal Mind** (Genesis Step 2). Start: A1 PASS **and** the Completion Policy condition â€” the active epic formally
+**A2 Minimal Mind** (Genesis Step 2). Start: A1 PASS **and** the Completion Policy condition — the active epic formally
 changed (OD-6) or a complete, owner-approved, unexpired narrowly scoped exception. Neither exists today. Window: OWNER_DECISION_REQUIRED. Exit: lift over the strongest
 applicable frozen baseline with confidence intervals, calibrated predictions scored by a proper scoring rule, LLM-ablation
 arm reported. Reuse owners from `docs/architecture/discovery_authority_map.md`; new Mind code must justify why an
 existing owner cannot serve.
 
-## Track B â€” Narrow real demo
+## Track B — Narrow real demo
 
 **B1 Infeasible-specification refusal and correction** (candidate: drone; OD-13)
 
@@ -646,8 +655,8 @@ existing owner cannot serve.
 | Start condition | Preparatory engineering when A2 starts. The demo itself runs only after the A2 gate PASSES. |
 | Window | OWNER_DECISION_REQUIRED (OD-7). |
 | Exit gate | The user's infeasible requirement is refused and the binding physical constraint is named; a corrected admissible specification is executed through real providers; uncertainty and applicability are reported; the evidence bundle replays; a scientific review is clean. |
-| Circuit breaker | Window expired â†’ the existing Trust-only refusal behavior may be recorded or demonstrated separately, explicitly labelled as NOT a B1 completion and NOT evidence of Minimal Mind / Genesis capability, with no maturity change and no bypass of the A2 PASS gate; otherwise BLOCKED_WITH_EVIDENCE. |
-| Outcomes | PASS Â· FAIL Â· BLOCKED_WITH_EVIDENCE Â· DEFERRED_BY_OWNER |
+| Circuit breaker | Window expired → the existing Trust-only refusal behavior may be recorded or demonstrated separately, explicitly labelled as NOT a B1 completion and NOT evidence of Minimal Mind / Genesis capability, with no maturity change and no bypass of the A2 PASS gate; otherwise BLOCKED_WITH_EVIDENCE. |
+| Outcomes | PASS · FAIL · BLOCKED_WITH_EVIDENCE · DEFERRED_BY_OWNER |
 
 Substrate: `engcore.systems.products.drone_coupled` (steady algebraic hover chain; every coefficient a declared input;
 uncertainty UNKNOWN) through MCP `run_product_screening(..., screening="coupled_hover")`. Missing: admitted component
@@ -658,7 +667,7 @@ hypothesis until the Trust Layer admits it; the demo changes no maturity stage; 
 
 ## Not now
 
-Everything in Master Plan Â§4 NEXT, LATER and DEFERRED. In particular: no new providers without a named benchmark, no
+Everything in Master Plan §4 NEXT, LATER and DEFERRED. In particular: no new providers without a named benchmark, no
 product depth beyond B1, no viewer/assembly/motion work, no GPU/HPC orchestration, no fusion, biomedical or
 therapeutic work.
 
@@ -677,18 +686,18 @@ therapeutic work.
 | OD-9 | RESOLVED. PR #128 supersedes PR #127 and contains Genesis plus the reviewed planning consolidation. PR #127 was closed without merge; its branch remains preserved. | PR #127 existed as the standalone Genesis document. |
 | OD-10 | Publish or record the local-only commit `7e923e75`. (`803946af` is on `main` via #123.) | Not verifiable from the remote. |
 | OD-11 | Branch and PR hygiene: close, rebuild or land #107, #39, #24. | About 119 remote branches. #107 (237 behind): certificate conflict between two owner certificates, and it rewrites the CI control-plane workflows and adds self-hosted runners with secrets. #39 / #24 (1,500+ behind) edit frozen Core; see OD-21. |
-| OD-12 | Confirm the control-plane budget signal (Master Plan Â§5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |
+| OD-12 | Confirm the control-plane budget signal (Master Plan §5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |
 | OD-13 | Confirm the B1 demo system. | Drone recommended: the only executable product chain today. |
-| OD-14 | LANDED as #129 (`de36168e`); recertification still OD-3. Was: branch `perf/test-suite-runtime`: land it (needs the OD-3 recertification: it touches `certified:harness`, `inference_admission`, `certification_control`), and decide whether to add V4 mutation entries for the admission-record memo (changes the certified population count of 680). | Owner-requested. FAST 992 s -> 476 s, SCIENTIFIC 1448 s -> 1024 s, same failure sets (PROGRESS 2026-10-12). Review F1â€“F4 fixed; the memo's three mutants are killed by `tests/inference/test_admission_record_memo.py` today, outside the certified population. |
-| OD-15 | CI policy conflict: `CLAUDE.md` Â§ CI policy says PRs are classified and tested automatically and pushes to `main` rerun checks; every workflow has been `workflow_dispatch`-only since `c19d3177` (2026-10-06). Align one with the other. | Last automatic `main` runs 2026-09-28, both failed. MV-10 drift went unnoticed for a month. |
+| OD-14 | LANDED as #129 (`de36168e`); recertification still OD-3. Was: branch `perf/test-suite-runtime`: land it (needs the OD-3 recertification: it touches `certified:harness`, `inference_admission`, `certification_control`), and decide whether to add V4 mutation entries for the admission-record memo (changes the certified population count of 680). | Owner-requested. FAST 992 s -> 476 s, SCIENTIFIC 1448 s -> 1024 s, same failure sets (PROGRESS 2026-10-12). Review F1–F4 fixed; the memo's three mutants are killed by `tests/inference/test_admission_record_memo.py` today, outside the certified population. |
+| OD-15 | CI policy conflict: `CLAUDE.md` § CI policy says PRs are classified and tested automatically and pushes to `main` rerun checks; every workflow has been `workflow_dispatch`-only since `c19d3177` (2026-10-06). Align one with the other. | Last automatic `main` runs 2026-09-28, both failed. MV-10 drift went unnoticed for a month. |
 | OD-16 | Freeze v4 API surface is Python-version-bound: it records methods inherited from builtins, so it verifies only on <= 3.12. Exclude inherited builtin members (a surface-version decision) or declare 3.12 the certification interpreter (with OD-2). | PROGRESS 2026-10-12 G0 evidence: 106 added + 29 changed entries on 3.13, zero Forge-defined. |
 | OD-17 | Benchmark rounds pinning a digest of live `src/engcore/scientific` (`model_measurement_validation`, `empirical_validation`): re-pin, or bind the "changed nothing" claim to the round's own commit. | Broken since PR #21 (2026-09-12); the MV test rewrites committed `SAFETY_GATES.json`. |
-| OD-18 | Approve the Genesis-lite formal compute budget. | Baselines: 15,120 campaign runs â‰ˆ 1,185 s ESTIMATED from the BR-16 pilot; Mind/LLM arms UNMEASURED. |
+| OD-18 | Approve the Genesis-lite formal compute budget. | Baselines: 15,120 campaign runs ≈ 1,185 s ESTIMATED from the BR-16 pilot; Mind/LLM arms UNMEASURED. |
 | OD-19 | Approve Genesis-lite v0.1 before any formal run. | Pilot finding P-1: the floor arm `always_law` dominates the discoverable cell (0.70 vs 0.27), so the lift bar must be the strongest non-adversarial arm, with no loss allowed in control cells. Optional: PySR/BoTorch, a full-grammar enumerator, a distinguishable-rival kind (certified change). |
-| OD-20 | Choose the escrow deployment for formal runs. | The in-process escrow leaks (attack test `test_l2_in_processâ€¦`); formal runs need the isolated escrow (isolation demo). |
-| OD-21 | `ScientificResult.is_usable`: keep "converged and no failed check" (validity excluded), or require every declared model IN_DOMAIN as #39 / #24 propose. | `docs/assurance/CORE_SEMANTIC_INVARIANTS.md` records the exclusion as deliberate and a test pins the 6Ã—4 truth table; on `main`, OUTSIDE_VALIDATED_DOMAIN and UNKNOWN validity are `is_usable`. A scientific-design decision on frozen Core, not a merge fix. #24's UQ refusals already exist on `main` (different messages). |
+| OD-20 | Choose the escrow deployment for formal runs. | The in-process escrow leaks (attack test `test_l2_in_process…`); formal runs need the isolated escrow (isolation demo). |
+| OD-21 | `ScientificResult.is_usable`: keep "converged and no failed check" (validity excluded), or require every declared model IN_DOMAIN as #39 / #24 propose. | `docs/assurance/CORE_SEMANTIC_INVARIANTS.md` records the exclusion as deliberate and a test pins the 6×4 truth table; on `main`, OUTSIDE_VALIDATED_DOMAIN and UNKNOWN validity are `is_usable`. A scientific-design decision on frozen Core, not a merge fix. #24's UQ refusals already exist on `main` (different messages). |
 | OD-22 | Window-control step-size memory: `tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable` expects 8 subdivisions without memory over 2 s; the runtime with Phase 1 BR4 exact rational windows makes 7. Decide which behaviour is specified, then fix the code or the test. **2026-10-18 remediation: an exact-rational replay (`docs/work/proposals/od22_replay.py`, re-derived independently by a reviewer) gives 7 without memory and 4 with growth 2: the last window [7/4, 2] is cut to 1/4 s by the horizon and never fails, which `plan.py` ("Events and input-change instants still cut windows") covers. Recommended: apply `docs/work/proposals/OD22_window_control_subdivisions.patch` (test 8 -> 7). Not applied.** | Found 2026-10-18 solver audit, after the `min()` fix (`cf74cf1c`) let the suite run. BR1/BR11/BR17 and BR4 were built without running each other's tests. |
-| OD-23 | Electrothermal native loop relaxation: BR18 / WS2 added `FixedPointCouplingPlan.relaxation_factor` to `systems/electrothermal/coupled.py`; `tests/test_electrothermal_vertical.py::test_l3_no_relaxation_appears_anywhere_in_the_module` pins fail condition Â§12.10 (relaxation is a separate decision, not a knob in that module) and the module docstring still says there is no relaxation. Remove the knob (relaxation lives in `MultiphysicsRuntime` only) or amend Â§12.10, the test and the docstring. | Not chosen by the builder (CLAUDE.md: conflicts are recorded, not resolved silently). |
+| OD-23 | Electrothermal native loop relaxation: BR18 / WS2 added `FixedPointCouplingPlan.relaxation_factor` to `systems/electrothermal/coupled.py`; `tests/test_electrothermal_vertical.py::test_l3_no_relaxation_appears_anywhere_in_the_module` pins fail condition §12.10 (relaxation is a separate decision, not a knob in that module) and the module docstring still says there is no relaxation. Remove the knob (relaxation lives in `MultiphysicsRuntime` only) or amend §12.10, the test and the docstring. | Not chosen by the builder (CLAUDE.md: conflicts are recorded, not resolved silently). |
 | OD-24 | Self-loop coupling edges: `tests/test_phase1_coupling_convergence_coverage.py::test_a_self_loop_is_a_lagged_edge` (Phase 1 BR1) expects an edge between two ports of one participant to be a lagged edge; `scientific/multiphysics/graph.py::_validate_edges` (older rule) refuses it as internal physics. Keep the refusal and drop the test, or admit self-loops as lagged edges. | Graph rule predates BR1; the BR1 test never ran. |
 | OD-25 | GitHub Actions has started no job since 2026-10-15 ("recent account payments have failed or your spending limit needs to be increased"); 15 PRs and 209 non-merge commits (+12.9k lines in `src`) landed on `main` with no CI. Restore billing, use a self-hosted runner, or make local assurance the recorded merge control (with OD-1 / OD-15). | Read from the GitHub API 2026-10-18: last executed `main` run 2026-10-14 (`e193e573`, failed); `main` is unprotected. |
 | OD-26 | `tests/test_phase2_review_regressions.py::test_a_redundant_forward_tear_is_refused` has no valid fixture in the electrothermal series pack: `test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal` enumerates every tear set of 1-3 stages and none reaches `runtime_equivalent`'s forward-tear refusal (mixed dimensions are refused by the plan; single-dimension sets that break every cycle are all backward). Delete the test, mark it strict-xfail citing the enumeration, or keep it until a pack (or a mixed-dimension normalization rule) makes a forward tear reachable. | Batch 4B, 2026-10-18. The guard in `runtime_adapter.py` stays as a defensive check; no fixture was fabricated. Independent review (MINOR-3): no passing test protects the guard; a tampered-record test (a frozen plan altered after `__post_init__`) would, without inventing an admissible plan. **2026-10-18 remediation (A2): added `test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build` (genuine 1-stage records; the nominal plan plus the heat edge, set with `object.__setattr__` after the constructor refuses it as mixed-dimension; the test pins that the edge is forward in the derived order P, E, T). The original test is unchanged and still fails at `dataclasses.replace` (static reading, NOT RUN). Owner: replace it with the tampered-record test, or keep both.** |
@@ -802,49 +811,49 @@ solver agreement as validation; change a tolerance or criterion after seeing a r
 
 ## Checkpoint log
 
-- 2026-10-11 â€” planning consolidation (docs only): Big Rocks First and P0â€“P40 superseded; this file reduced to the live
+- 2026-10-11 — planning consolidation (docs only): Big Rocks First and P0–P40 superseded; this file reduced to the live
   queue; history archived. No code, test, result, threshold or certificate changed.
-- 2026-10-12 â€” owner-requested, outside the queue: test-suite runtime branch `perf/test-suite-runtime` (OD-14). Tier
+- 2026-10-12 — owner-requested, outside the queue: test-suite runtime branch `perf/test-suite-runtime` (OD-14). Tier
   relabelling and duplicate-work removal; no assertion, tolerance or result changed. Not merged, not recertified.
-- 2026-10-12 â€” PR #126 (authority ledger, real escrow, battery blind readiness `NOT_READY`) merged with `main` on owner
+- 2026-10-12 — PR #126 (authority ledger, real escrow, battery blind readiness `NOT_READY`) merged with `main` on owner
   direction (OD-5). Its follow-ups (designate the battery confirmatory dataset, provision a production authority ledger,
   seal real battery falsifiers, systematic prior-art search, deploy the data authority behind the escrow) are owner-gated
   and sit under LATER with row 47. Kirkaldy stays NOT MET; no confirmatory datum was exposed. Not recertified (OD-3).
-- 2026-10-12 â€” PR #123 Trust Repair Pass 1 (R3-01 offline revalidation, R3-02 MCP `assess_claim` delegating to the
+- 2026-10-12 — PR #123 Trust Repair Pass 1 (R3-01 offline revalidation, R3-02 MCP `assess_claim` delegating to the
   canonical claim runtime) merged with `main` on owner direction (OD-4). `803946af` is therefore on the remote (OD-10,
   partly). R3-03 to R3-16 stay open. Not recertified on the merged tree (OD-3).
-- 2026-10-12 â€” PR #117 (deterministic NASA PCoE raw ingestion for the active epic `battery.thevenin_1rc`) merged with
+- 2026-10-12 — PR #117 (deterministic NASA PCoE raw ingestion for the active epic `battery.thevenin_1rc`) merged with
   `main` on owner direction. Ingestion only: `real_data` stays `MISSING`, no SOC / pulse-rest / sensor uncertainty /
   R0-R1-C1 is inferred, and the capability stays FOUNDATION. Its ACTIVE_PLAN edit (an old-queue section with
   re-encoded characters) was not carried; its prereg is `docs/milestones/battery-1rc-production-closure-prereg.md`.
-- 2026-10-12 â€” owner-requested, outside the queue: engineering / scientific-integrity program on local branch
+- 2026-10-12 — owner-requested, outside the queue: engineering / scientific-integrity program on local branch
   `perf/engineering-program-2026-10-12` (not pushed). Selection, robustness, challenge, impact, provider-timeout and
   changed-file-selection defects fixed; FAST failure set identical to `2d0fa6c3`. `tools/forge_check.py` is
   certification-pinned: landing it needs OD-3. Report `docs/audits/ENGINEERING_PROGRAM_2026-10-12.md`.
-- 2026-10-13 â€” owner-requested, outside the queue: test-loop round 3 on local branch `perf/test-loop-round3` (base
+- 2026-10-13 — owner-requested, outside the queue: test-loop round 3 on local branch `perf/test-loop-round3` (base
   `9ca337f9`, not pushed). `forge_check --dev` (one command, next required gate) and `--scientific` (developer aid that
   refuses to narrow shared, trust, configuration or unknown changes); timing telemetry with a measured large-slowdown
   guard. Measured and rejected: provider-probe memoization (< 1 s), giant-module splits (no wall gain at -n 4).
   FAST / SCIENTIFIC failure sets identical to base. `tools/forge_check.py` and harness tests changed:
   RECERTIFICATION_REQUIRED (OD-3).
-- 2026-10-13 â€” owner-requested, outside the queue: test-loop round 2 on local branch `perf/test-loop-round2` (base
+- 2026-10-13 — owner-requested, outside the queue: test-loop round 2 on local branch `perf/test-loop-round2` (base
   `ca24b152`, not pushed). Benchmark rebuild tests isolated (no tracked file written); `forge_check --changed` dry-run
   6.37 s -> 1.81 s with a content-addressed impact cache (identical selections); opt-in `--workers safe-auto`;
   standalone audit of 569 modules found no order-dependent module; probes, escrow stop/close, Dakota version probe and
   preCICE directory removal hardened. FAST / SCIENTIFIC failure sets identical to base. `tools/forge_check.py` changed:
   RECERTIFICATION_REQUIRED (OD-3).
-- 2026-10-13 â€” owner-requested, outside the queue: scientific-integrity / certification / engineering remediation on
+- 2026-10-13 — owner-requested, outside the queue: scientific-integrity / certification / engineering remediation on
   local branch `fix/remediation-2026-10-12` (uncommitted, not pushed). Fixed: guard-band SURVIVED on an undecided
   verdict, model-form bridge promoting a FAILED_VALIDATION discrepancy (and replay crashes, ported), selection D3,
   provider timeouts that an escaped descendant could hold for its lifetime, discovery/ngspice untyped failures, sweep
   budgets (`run_sweep_within_budget`). Recorded owner decisions OD-R1..OD-R8 in `docs/audits/REMEDIATION_2026-10-13.md`.
   `execution/sweep.py`, `ngspice.py` and 8 harness tests need the OD-3 recertification.
-- 2026-10-12 â€” owner-requested, outside the queue: test-loop round on local branch `perf/test-loop-cleanup` (not
+- 2026-10-12 — owner-requested, outside the queue: test-loop round on local branch `perf/test-loop-cleanup` (not
   pushed). FAST -14 % at `-n 4`, -28 % at `-n 8`; CI-equivalent SCIENTIFIC -15 %; identical failure sets. The changed-file
   gate now runs the tests a change reaches. Certified harness and `tools/forge_check.py` changed: one owner-run
   recertification (OD-3) covers the batch. Two benchmark rebuild tests still write committed JSON in place (open).
 
-- 2026-10-12 â€” landing pass closed: #126, #123, #117 merged (`2d0fa6c3`); #107, #39, #24 blocked (OD-11, OD-21).
+- 2026-10-12 — landing pass closed: #126, #123, #117 merged (`2d0fa6c3`); #107, #39, #24 blocked (OD-11, OD-21).
   Verified state updated. Next agent-executable G0 action is unchanged: FAST on the OD-3 HEAD in a full-history
   checkout, then classify the 14 failures.
 
@@ -853,5 +862,5 @@ solver agreement as validation; change a tolerance or criterion after seeing a r
 
 Owner-requested closeout measured origin/main `5d73e8f5118aa845f1957decc5aae986e72476a9` in clean dedicated trees. Outcome: **TEST_INFRASTRUCTURE_FINAL_ASSURANCE_BLOCKED**. Supported FAST/SCIENTIFIC retain certificate drift and the impact scanner parsing .forge/venvs; scanner failure reproduced before Round3 on both supported Python versions. Unrestricted supported FULL: 10607 passed, 4 failed, 157 skipped; added failures are documented benchmark digest baseline. Owner runner REFUSED at fast311 before certificate generation; no mutation completion, certificate child, push or current-main certification is claimed. Primary Windows attribution remains incomplete because the same-environment baseline and FULL stalled.
 
-Evidence and exact next bounded repair: `docs/work/FINAL_TEST_INFRASTRUCTURE_ASSURANCE_2026-10-13.md`; PROGRESS records commands/results. Do not mark Rounds1â€“3 assurance closed or continue new performance work on this evidence. No scientific verdict, evidence, UQ, Trust/Mind, numerical or frozen experiment change was made.
-- 2026-10-16 â€” landing pass: recent active work merged into `main` by owner direction (PROGRESS 2026-10-16); `main` carries uncertified changes to certified files until the OD-3 hardened run on the new HEAD; `fix/final-assurance-blockers` left out as superseded; stale branches listed for OD-11.
+Evidence and exact next bounded repair: `docs/work/FINAL_TEST_INFRASTRUCTURE_ASSURANCE_2026-10-13.md`; PROGRESS records commands/results. Do not mark Rounds1–3 assurance closed or continue new performance work on this evidence. No scientific verdict, evidence, UQ, Trust/Mind, numerical or frozen experiment change was made.
+- 2026-10-16 — landing pass: recent active work merged into `main` by owner direction (PROGRESS 2026-10-16); `main` carries uncertified changes to certified files until the OD-3 hardened run on the new HEAD; `fix/final-assurance-blockers` left out as superseded; stale branches listed for OD-11.

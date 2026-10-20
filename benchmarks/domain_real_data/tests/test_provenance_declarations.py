@@ -33,6 +33,9 @@ def declaration(tmp_path):
         "schema": "domain_real_data_provenance_review/1",
         "review_base": "3" * 40, "records": [record],
     }).encode())
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run(["git", "-C", str(tmp_path), "config", "core.autocrlf", "false"], check=True)
+    subprocess.run(["git", "-C", str(tmp_path), "add", "."], check=True)
     return scan, tmp_path, manifest, target, evidence, record
 
 
@@ -78,6 +81,7 @@ def test_archived_source_is_bound_to_full_commit_not_current_working_bytes(decla
     doc = json.loads(manifest.read_bytes())
     doc["records"][0]["evidence"][0]["commit"] = commit
     manifest.write_text(json.dumps(doc))
+    subprocess.run(["git", "-C", str(root), "add", "review.json"], check=True)
     evidence.write_bytes(b"later source revision")
     assert "artifact.json" in scan.reviewed_declarations(root, manifest)
     doc["records"][0]["evidence"][0]["commit"] = "HEAD"

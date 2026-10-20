@@ -5807,9 +5807,9 @@
     {
       "path": "docs/flagships/runs/battery_hot/references/first-law-cold-plate.json",
       "sha256": "1c669d7024e857826f34ea26cf9ba50eb075aa1db49e9b5e41164ecd6db40649",
-      "class": "REFERENCE_ONLY",
-      "role": "ANALYTICAL_OR_NUMERICAL_REFERENCE",
-      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Ghia is a numerical reference with unverified printed-paper transcription; first-law/bar references are implementation/approximation checks. Preserve insufficient-evidence, refusal and approximation statements.",
+      "class": "DERIVED",
+      "role": "AUTHORED_ANALYTICAL_REFERENCE_METADATA",
+      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Ghia is a numerical reference with unverified printed-paper transcription; first-law/bar references are implementation/approximation checks. Preserve insufficient-evidence, refusal and approximation statements. Origin is locally authored analytical metadata; reference purpose does not establish an independently published reference.",
       "evidence": [
         {
           "path": "flagships/forge_flagships/battery_cooling.py",
@@ -5823,8 +5823,7 @@
           "path": "docs/flagships/README.md",
           "sha256": "0cbffa61d914a302d26e28c124f5eeb566345d041b32ce44223164e0add053ae"
         }
-      ],
-      "dataset_record": "flagships/forge_flagships/battery_cooling.py"
+      ]
     },
     {
       "path": "docs/flagships/runs/battery_hot/references/nasa.li_ion_battery_aging.json",
@@ -6051,9 +6050,9 @@
     {
       "path": "docs/flagships/runs/battery_normal/references/first-law-cold-plate.json",
       "sha256": "1c669d7024e857826f34ea26cf9ba50eb075aa1db49e9b5e41164ecd6db40649",
-      "class": "REFERENCE_ONLY",
-      "role": "ANALYTICAL_OR_NUMERICAL_REFERENCE",
-      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Ghia is a numerical reference with unverified printed-paper transcription; first-law/bar references are implementation/approximation checks. Preserve insufficient-evidence, refusal and approximation statements.",
+      "class": "DERIVED",
+      "role": "AUTHORED_ANALYTICAL_REFERENCE_METADATA",
+      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Ghia is a numerical reference with unverified printed-paper transcription; first-law/bar references are implementation/approximation checks. Preserve insufficient-evidence, refusal and approximation statements. Origin is locally authored analytical metadata; reference purpose does not establish an independently published reference.",
       "evidence": [
         {
           "path": "flagships/forge_flagships/battery_cooling.py",
@@ -6067,8 +6066,7 @@
           "path": "docs/flagships/README.md",
           "sha256": "0cbffa61d914a302d26e28c124f5eeb566345d041b32ce44223164e0add053ae"
         }
-      ],
-      "dataset_record": "flagships/forge_flagships/battery_cooling.py"
+      ]
     },
     {
       "path": "docs/flagships/runs/battery_normal/references/nasa.li_ion_battery_aging.json",
@@ -6959,9 +6957,9 @@
     {
       "path": "docs/flagships/runs/structure_flagship/references/bar-theory-mid-plate-stress.json",
       "sha256": "539f06a828401afcebfeea33aa56866fc7a923c8d9010201fb246f2faf5b5e7b",
-      "class": "REFERENCE_ONLY",
-      "role": "ANALYTICAL_OR_NUMERICAL_REFERENCE",
-      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Ghia is a numerical reference with unverified printed-paper transcription; first-law/bar references are implementation/approximation checks. Preserve insufficient-evidence, refusal and approximation statements.",
+      "class": "DERIVED",
+      "role": "AUTHORED_ANALYTICAL_REFERENCE_METADATA",
+      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Ghia is a numerical reference with unverified printed-paper transcription; first-law/bar references are implementation/approximation checks. Preserve insufficient-evidence, refusal and approximation statements. Origin is locally authored analytical metadata; reference purpose does not establish an independently published reference.",
       "evidence": [
         {
           "path": "flagships/forge_flagships/thermo_mechanical.py",
@@ -6975,15 +6973,14 @@
           "path": "docs/flagships/README.md",
           "sha256": "0cbffa61d914a302d26e28c124f5eeb566345d041b32ce44223164e0add053ae"
         }
-      ],
-      "dataset_record": "flagships/forge_flagships/thermo_mechanical.py"
+      ]
     },
     {
       "path": "docs/flagships/runs/structure_flagship/references/uniform-constrained-thermal-stress.json",
       "sha256": "f39355e3f0b6c431292d0829f3d16ede7c15ef114a77ab1207f88ef51b32b36a",
-      "class": "REFERENCE_ONLY",
-      "role": "ANALYTICAL_OR_NUMERICAL_REFERENCE",
-      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Ghia is a numerical reference with unverified printed-paper transcription; first-law/bar references are implementation/approximation checks. Preserve insufficient-evidence, refusal and approximation statements.",
+      "class": "DERIVED",
+      "role": "AUTHORED_ANALYTICAL_REFERENCE_METADATA",
+      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Ghia is a numerical reference with unverified printed-paper transcription; first-law/bar references are implementation/approximation checks. Preserve insufficient-evidence, refusal and approximation statements. Origin is locally authored analytical metadata; reference purpose does not establish an independently published reference.",
       "evidence": [
         {
           "path": "flagships/forge_flagships/thermo_mechanical.py",
@@ -6997,15 +6994,14 @@
           "path": "docs/flagships/README.md",
           "sha256": "0cbffa61d914a302d26e28c124f5eeb566345d041b32ce44223164e0add053ae"
         }
-      ],
-      "dataset_record": "flagships/forge_flagships/thermo_mechanical.py"
+      ]
     },
     {
       "path": "docs/flagships/runs/structure_flagship/references/uniform-free-thermal-expansion.json",
       "sha256": "d1f5ebd56c554d0d526e336784b709330f345e3b0a79ef73a681e6f69399f949",
-      "class": "REFERENCE_ONLY",
-      "role": "ANALYTICAL_OR_NUMERICAL_REFERENCE",
-      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Ghia is a numerical reference with unverified printed-paper transcription; first-law/bar references are implementation/approximation checks. Preserve insufficient-evidence, refusal and approximation statements.",
+      "class": "DERIVED",
+      "role": "AUTHORED_ANALYTICAL_REFERENCE_METADATA",
+      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Ghia is a numerical reference with unverified printed-paper transcription; first-law/bar references are implementation/approximation checks. Preserve insufficient-evidence, refusal and approximation statements. Origin is locally authored analytical metadata; reference purpose does not establish an independently published reference.",
       "evidence": [
         {
           "path": "flagships/forge_flagships/thermo_mechanical.py",
@@ -7019,8 +7015,7 @@
           "path": "docs/flagships/README.md",
           "sha256": "0cbffa61d914a302d26e28c124f5eeb566345d041b32ce44223164e0add053ae"
         }
-      ],
-      "dataset_record": "flagships/forge_flagships/thermo_mechanical.py"
+      ]
     },
     {
       "path": "docs/flagships/runs/structure_flagship/request.json",
