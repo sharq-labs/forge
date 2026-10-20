@@ -6,9 +6,13 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task - preserve superseded documentation branches (2026-10-20)
+
+Owner authorized reviewing and reconciling unmerged work, excluding preserve/* and wip/*. Preserve exact historical deltas from fix-bisect-table, evidence-v11, blind-rediscovery-benchmark-v1 and big-13-flagship-demonstrations in docs/archive/branch_deltas_2026_10_20/. Reconcile ancestry only with that explicit archive-only disposition: no superseded text is applied to live contracts, benchmark semantics or task queues. Independent review PASS; ordinary219-node gate217passed2failed, exactsamefailed nodes as pristine main. Await concrete PR approval; no green-gate claim. Scientific/certified implementation branches remain separate and subject to existing decisions/OD3.
+
 ## Current bounded task - reconcile preserved assurance history (2026-10-20)
 
-Continue owner-authorized branch reconciliation, excluding preserve/* and wip/*. The entire assurance-performance-investigation report and its progress addition already exist byte-for-byte on current main. Reconcile ancestry while preserving the current tree and historical-source warning; read-only review PASS; normal changed-file gate217passed2failed, identical to pristine main219-node selection. Await concrete PR review approval; do not call the gate green. No source, certification, policy or measurement changes authorized by this history reconciliation.
+Continue owner-authorized branch reconciliation, excluding preserve/* and wip/*. The entire assurance-performance-investigation report and its progress addition already exist byte-for-byte on current main. Reconcile ancestry while preserving the current tree and historical-source warning; read-only review PASS; normal changed-file gate217passed2failed, identical to pristine main219-node selection. Owner approved PR179; merged at8b29fc07. Do not call the gate green. No source, certification, policy or measurement changes authorized by this history reconciliation.
 
 ## Current bounded task - domain inventory integration (2026-10-20)
 
