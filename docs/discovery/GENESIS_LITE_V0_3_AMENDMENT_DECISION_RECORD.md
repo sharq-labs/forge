@@ -149,11 +149,11 @@ This section supersedes the status statements in the header blockquote, in secti
   - FDA-18 residual (same-account files, helper processes);
   - the isolation boundary (D5);
   - readiness P-1/P-2.
-  The evaluator and the escrow agree on 48 of 48 synthetic cases.
+  The evaluator and the escrow agree on 48 of 48 synthetic cases, which supersedes the 40/40 in the section 1 FDA-05 escrow-half row.
 - **Truthful status.** D5 = NOT_PROVEN. FDA-18 residual = NOT_PROVEN. N-1 = OPEN. A formal campaign is FORBIDDEN.
-- **Evidence.** The D5 deployment (519f3669) and D7 timing pilot (3759ff33) records are historical. Their recorded heads (a4d73dd4 and f7df8968) are not this branch, and f7df8968 is on no remote branch. Both records require a rerun and a re-pin after N-1. The power study (9ad27938, head 20f3d379) is historical evidence for D2/D3b.
+- **Evidence.** The D5 deployment (519f3669) and D7 timing pilot (3759ff33) records are historical. Their recorded heads (a4d73dd4 and f7df8968) are not this branch's HEAD, and f7df8968 is on no remote branch. Both records require a rerun and a re-pin after N-1. The power study (9ad27938, head 20f3d379) is historical evidence for D2/D3b.
 - **An open owner decision, not recorded above.** The N-1 failing-first tests carried onto this branch require a fresh Podman container per card:
   - `test_genesis_lite_v0_3_container_isolation.py`;
   - `test_genesis_lite_v0_3_container_contract.py`;
   - `container_isolation_probe.py`.
-  They require pinned `podman` arguments, a `localhost/forge-card@sha256:...` image digest, and a proposed `validate_container_evidence` contract with schema `checkpoint2.container_evidence.contract/2`. The recorded D5 decision (option A1, rootless namespaces, `isolation.DEPLOYMENT = "rootless_namespaces"`) does not say this. Implementing those tests changes the D5 deployment, so the owner must record the change as an amendment to D5 before the N-1 repair. Nothing in these tests is a decision.
+  They require pinned `podman` arguments, a `localhost/forge-card@sha256:...` image digest, and a proposed `validate_container_evidence` contract with schema `checkpoint2.container_evidence.contract/2`. The recorded D5 decision (option A1, rootless namespaces, `isolation.DEPLOYMENT = "rootless_namespaces"`) does not say this. Implementing those tests as written changes the D5 deployment. Before the N-1 repair, the owner must either record that change as an amendment to D5, or keep A1 and have the tests recast. Nothing in these tests is a decision.

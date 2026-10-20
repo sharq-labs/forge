@@ -8106,7 +8106,7 @@ Brought forward as byte copies in transfer commit 32f8854d; no file was edited:
   - `docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md` and its DOCSET line;
   - the three preregistration-pinned evidence records: power study 9ad27938, D5 deployment 519f3669, D7 timing pilot 3759ff33;
   - three v0.3 test modules (amendment, blockers, escrow_fda05) and two helpers (`stateful_arms.py`, `vacuous_arm.py`).
-- From 1b90f94c (PR #175), only the N-1 failing-first files: `test_genesis_lite_v0_3_container_isolation.py`, `test_genesis_lite_v0_3_container_contract.py` and `container_isolation_probe.py`. They need no environment variable and no SHA pin. One contract test is Linux-only. The 32f8854d message calls them "platform-independent"; that is true of all but that one test.
+- From 1b90f94c (PR #175), only the N-1 failing-first files: `test_genesis_lite_v0_3_container_isolation.py`, `test_genesis_lite_v0_3_container_contract.py` and `container_isolation_probe.py`. They need no environment variable and no source-SHA pin, although the contract fixtures carry a pinned image digest. One contract test is Linux-only. The 32f8854d message calls them "platform-independent"; that is true of all but that one test.
 
 A separate commit adds a dated status correction (§6 plus a banner) to the decision record. Its inherited header and §1/§4 status claims (READY_TO_FREEZE_PENDING_OWNER, FDA-18 residual "closed by D5", P-1/P-2 "FIXED by D5", "D5 verified") contradict `readiness.LEDGER`. No D1-D7 decision text was changed. §6 also records an open owner decision: the N-1 tests presuppose a Podman container launcher and a pinned local image, but the recorded D5 decision is option A1 (rootless namespaces). The owner must record that D5 amendment before the N-1 repair.
 
@@ -8118,7 +8118,7 @@ Excluded:
 - the two Podman runtime rigs:
   - `test_genesis_lite_v0_3_container_runtime.py` needs a local image, `/home/dev_kaeem/forge-card/Containerfile` and `FORGE_CHECKPOINT_SOURCE_SHA`;
   - `test_genesis_lite_v0_3_readonly_inventory.py` asserts `source_sha == 1cb5e187`;
-  - both are Linux-only. The isolation module's docstring still mentions those sibling rigs.
+  - both are Linux-only. The docstring of `test_genesis_lite_v0_3_container_isolation.py` still mentions those sibling rigs.
 - the PR #174/#175 ACTIVE_PLAN and PROGRESS narrative.
 
 Evidence binding. All three evidence records are HISTORICAL_ONLY for their recorded heads: power study 20f3d379, D5 a4d73dd4, D7 f7df8968. f7df8968 is reachable from no ref. D5 and D7 REQUIRE_RERUN and REQUIRE_REPIN after the N-1 repair. Nothing was regenerated.
