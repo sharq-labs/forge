@@ -1,0 +1,16 @@
+.........F...                                                            [100%]
+================================== FAILURES ===================================
+_______________________ test_repository_scan_is_current _______________________
+
+    def test_repository_scan_is_current():
+        scan = _load("_drd_scan", ROUND / "audit" / "inventory_scan.py")
+>       assert scan.render(scan.scan()) == scan.OUT.read_bytes()
+E       assert b'{\n "schema...n  }\n ]\n}\n' == b'{\n "schema...n  }\n ]\n}\n'
+E         
+E         At index 600 diff: b'5' != b'1'
+E         Use -v to get more diff
+
+benchmarks\domain_real_data\tests\test_domain_real_data.py:137: AssertionError
+=========================== short test summary info ===========================
+FAILED benchmarks/domain_real_data/tests/test_domain_real_data.py::test_repository_scan_is_current
+1 failed, 12 passed in 0.50s

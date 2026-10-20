@@ -6,6 +6,40 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Bounded Mind trace diagnosis (2026-10-20)
+
+Owner authorized fresh development cases and full step traces to diagnose no_solution/confounded misses. Scope: unchanged mind_full and v0.3, twelve fixed new world sets (72 cards), replay of retained observations and one trace-disabled control. No candidate/scoring/threshold edits, formal run, freeze, evaluator appointment or CP3. Results and smallest proposed change must be shown before behavioral work. New diagnostic driver/tests only; prior evidence preserved. Status: bounded diagnosis COMPLETE; 9 tests passed,72 valid cards/trace replays,one matching control. Original driver exit1 at final evidence-path lookup; offline finalization exit0 without rerunning worlds. no_solution:6 correct/5 abstentions/1 false confounded; confounded:12 correct, historical misses NOT REPRODUCED. See docs/discovery/MIND_FULL_V03_TRACE_DIAGNOSIS.md. Narrow association-confirmation design is PROPOSED ONLY; awaiting owner review, no implementation.
+
+
+## Bounded Mind readiness development screen (2026-10-20)
+
+Owner explicitly authorized mind_full as development starting point under v0.3;
+evaluator selection stays with owner. This permits the bounded screen before
+naming D6; it does not choose/freeze the formal D4 candidate or authorize formal
+execution. Fixed plan: 40 new public development world sets, all 20 registered
+baseline arms plus unchanged mind_full; no tuning or seed replacement. Candidate
+source imported byte-identically from 20069cc2; existing scientific files unchanged.
+Sixteen adapter/reporting tests passed on a separate unit-fixture namespace; independent
+pre-run static review PASS. Fixed v3 development run COMPLETE:840 valid runs,
+5040 evaluator agreements,4 replay matches. Capped difference -0.025, lower95 -0.200;
+recommendation IMPROVEMENT_OR_MORE_EVIDENCE_NEEDED. No formal attempt warranted now.
+See docs/discovery/MIND_FULL_V03_DEVELOPMENT_READINESS.md. Further improvement is
+proposed only; no behavior change authorized or performed by this screen.
+Evidence: docs/work/evidence/mind_full_v03_readiness_2026_10_20_v1/.
+No formal root, admission, freeze, OD-3, evaluator appointment or CP3 work.
+
+
+## Bounded public Blindfold demo (2026-10-20)
+
+Owner authorized a public-seed NON-FORMAL demonstration through the existing v0.3
+in-process development harness: three trusted built-ins, six kinds, anonymous /
+paraphrased presentations, 36 cards plus semantic replay. Implemented and executed;
+15 targeted tests pass, 36/36 evaluator agreements, six replay matches. No formal
+or maturity/lift claim; SECURITY_BOUNDARY_NOT_PROVEN. CP2 preserved; CP3 not started.
+See [demo](../discovery/BLINDFOLD_DEMO.md) and PROGRESS for exact commands/evidence.
+Supervisor review/delivery remains pending; no merge, freeze or certification.
+
+
 ## Current bounded task - remaining branches and post-merge CI (2026-10-20)
 
 Owner authorized continuing branch review and investigating Tests/Branch Policy without bypassing gates or OD3. PR180 merged with explicit archival-only approval at67585300. Twenty residual tips / fifteen maximal groups remain; nineteen tips trigger recertification. Prepare archive-only reconciliation of the seven ignored agent/configuration files from c4b9d950; do not activate their historical instructions. Review and run the changed-file gate before concrete PR approval. Investigate GitHub failure from actual job evidence: empty steps and missing log blobs currently leave root cause UNVERIFIED; obtain Annotations before prescribing a hosted-runner repair. Report: BRANCH_RECONCILIATION_CI_2026_10_20.md. No certification-sensitive implementation adoption, freeze or formal run.
@@ -53,6 +87,42 @@ Owner authorized publishing this bounded change to its branch on 2026-10-20,
 before inspecting further quick performance opportunities. No merge, dependency
 install or hardened recertification is part of this task. Existing scientific
 work and capability maturity remain unchanged.
+
+## Current bounded task — Genesis-lite v0.3 freeze readiness, BR-MIND-02B (2026-10-20)
+
+Branches `feat/genesis-lite-v03-amendment-draft` (uncertified: `benchmarks/genesis_lite/v0_3/**`, tests, docs) and
+`feat/genesis-lite-v03-escrow-fda05` (stacked; adds the NEW certified-scope file `src/engcore/blindfold/pair_bound.py`),
+both from `origin/main` `8ec97064`, local only. Decision record:
+[GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md](../discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md).
+Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
+
+- [x] FDA-05 (evaluator + escrow half), FDA-06, O-1, FDA-18, FDA-19 (benchmark side), FDA-21, FDA-22, pilot P-1/P-2/P-3,
+      readiness P-3, the v0.3 harness, one attempt per root, post-reveal verification: fixed with named tests.
+- [x] Freeze-readiness gate (`python -m benchmarks.genesis_lite.v0_3.readiness`): READY_TO_FREEZE_PENDING_OWNER on the
+      escrow-branch tip; five hostile review rounds dispositioned.
+- [x] Owner D1-scoring DECIDED 2026-10-20: (i) bracket-route cap, w = 3 x tol, v0.3 only, pass route kept at +1.0.
+- [x] Owner D2-significance DECIDED 2026-10-20: sign-flip route B, Monte-Carlo stream keyed by the revealed formal root, exchangeability null scope accepted and stated, power/null-calibration study authorised after D3.
+- [x] Bounded power and null-calibration study (ODC-O1b) RAN 2026-10-20 (synthetic, non-formal):
+      `docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/` (re-run after review, sha256-pinned). The D2 statistic is consistent with nominal under its exchangeable null (implementation check).
+- [x] Owner D2b-root-grinding DECIDED 2026-10-20: the admission nonce and digest are bound into the sign-flip key (test_d2b_*).
+- [x] Owner D3b-1-cap-form DECIDED 2026-10-20: cell-level cap, min(0, cell net difference) in the effect size (per bootstrap resample) and kind non-inferiority; significance from uncapped differences only (P2).
+- [x] Owner D3b-2-kind-noninferiority DECIDED 2026-10-20 and RECONFIRMED the same day: per-kind margin 0.15, every kind
+      required. It is a non-inferiority guardrail, not an equivalence or acceptable-degradation claim; the 7.5 / 15 / 30-point
+      readings are recorded.
+- [x] Owner D5 deployment DECIDED 2026-10-20: A1 rootless namespaces; VERIFIED (all 10 channels REFUSED), evidence 519f3669b48b.
+- [x] Owner D7 DECIDED 2026-10-20: machine = this WSL Ubuntu; timing pilot MEASURED 43.5 s per world set (ESTIMATED 58 h); budget 72 h for the baselines + the candidate's measured cost; run_formal enforces it.
+- [x] Owner D6 DECIDED 2026-10-20: the evaluator is chosen by a selection process; the name is due by 2026-11-17 (else D6 reopens).
+- [ ] Owner: name the evaluator (D6, by 2026-11-17).
+- [ ] Owner D4 (candidate DEFERRED until the evaluator is named): candidate + pin + one-campaign timing (completes the budget); then OD-3 on that final HEAD; fresh root; manifest; approvals record; FROZEN. No freeze or push before the approvals record. No freeze or push
+      until every decision and approval is bound to the final preregistration digest.
+- [x] Owner D3-baselines-and-tells DECIDED 2026-10-20, option A as drafted: section 10.5 cap over all four law-credit kinds, careful keeps ddof = 0 plus _dof arms, form tell declared and measured (not equalised), one process per card, CONTROL_SOLVED >= 0.5.
+- [ ] Owner: D4-identity-freeze (OD-19, candidate,
+      fresh root), D5-deployment (OD-20), D6-evaluator (OD-8), D7-budget-and-machine (OD-18): the approval record
+      `benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.owner_approvals.json` (owner's file).
+- [x] RESOLVED by the owner's D2 (2026-10-20, route B now; not deferred) (live-document tension): ODC-O1a recommends sign-flip route B; `BVB_RESUME_HANDOFF_2026_10_19.md`
+      §3 row 2 defers O-1 until the scoring is frozen. Folded into D2.
+- [ ] OD-3 (owner, scheduled 2026-10-20 on the FINAL pre-freeze HEAD): recertify a HEAD containing `pair_bound.py` and the new tests (`tests/**` is an `assurance_suites` trigger).
+- [ ] Owner: push / PR (not authorized). No freeze, formal baseline or Mind tier is authorized.
 
 ## Current bounded task — BUY-01 MCP UQ repair, FDA-04 / FDA-14 (2026-10-19)
 

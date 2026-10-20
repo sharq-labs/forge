@@ -1,0 +1,2225 @@
+{
+  "metadata": {
+    "containerfile_sha256": "9aaf37bda8e73f396a67a4f609d4e321f71e9bff2462035c1c6e54d686cb8000",
+    "host_listener": [
+      "127.0.0.1",
+      57759
+    ],
+    "image": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+    "image_inspection": {
+      "Annotations": {
+        "org.opencontainers.image.base.digest": "sha256:a2d43bffc46670d7108bb3c0468c67c5557c4c92e83e1e34cbff1322ad1b94dc",
+        "org.opencontainers.image.base.name": "docker.io/library/ubuntu:24.04"
+      },
+      "Architecture": "amd64",
+      "Author": "",
+      "Comment": "",
+      "Config": {
+        "Cmd": [
+          "/bin/bash"
+        ],
+        "Env": [
+          "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        ],
+        "Labels": {
+          "io.buildah.version": "1.33.7",
+          "org.opencontainers.image.version": "24.04"
+        }
+      },
+      "Created": "2026-10-20T15:26:00.801218871Z",
+      "Digest": "sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+      "GraphDriver": {
+        "Data": {
+          "LowerDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/32ab39660fd51c6dc3aae486b42d42bbe8fe4c1db78eaf57bb9c21198de48a16/diff",
+          "UpperDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/ccc584eb258259693708e1010baac4b35d39fd670981ef73fe21c31cc4191a9d/diff",
+          "WorkDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/ccc584eb258259693708e1010baac4b35d39fd670981ef73fe21c31cc4191a9d/work"
+        },
+        "Name": "overlay"
+      },
+      "History": [
+        {
+          "created": "2026-10-02T08:10:52.386018095Z",
+          "created_by": "/bin/sh -c #(nop)  ARG RELEASE",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-10-02T08:10:52.440009331Z",
+          "created_by": "/bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-10-02T08:10:52.472504693Z",
+          "created_by": "/bin/sh -c #(nop)  LABEL org.opencontainers.image.version=24.04",
+          "empty_layer": true
+        },
+        {
+          "created": "2026-10-02T08:10:54.613002376Z",
+          "created_by": "/bin/sh -c #(nop) ADD file:7121eb4a5ba391efb4ba9a38c532d1c5dc2d22d276f04e062f357eea36ee62c4 in / "
+        },
+        {
+          "created": "2026-10-02T08:10:55.064306818Z",
+          "created_by": "/bin/sh -c #(nop)  CMD [\"/bin/bash\"]",
+          "empty_layer": true
+        },
+        {
+          "comment": "FROM docker.io/library/ubuntu:24.04",
+          "created": "2026-10-20T15:26:00.88006134Z",
+          "created_by": "/bin/sh -c apt-get update && apt-get install -y --no-install-recommends python3-minimal libpython3.12-stdlib && rm -rf /var/lib/apt/lists/*"
+        }
+      ],
+      "Id": "2d2651e4d002c518bb669cb044209897ff02e33318a4b92ac185cf23be33f532",
+      "Labels": {
+        "io.buildah.version": "1.33.7",
+        "org.opencontainers.image.version": "24.04"
+      },
+      "ManifestType": "application/vnd.oci.image.manifest.v1+json",
+      "NamesHistory": [
+        "localhost/forge-card:24.04"
+      ],
+      "Os": "linux",
+      "Parent": "6277ab668b2ad3c3ab851d370faa1690d324b30db29d342527f61fed28f20f36",
+      "RepoDigests": [
+        "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261"
+      ],
+      "RepoTags": [
+        "localhost/forge-card:24.04"
+      ],
+      "RootFS": {
+        "Layers": [
+          "sha256:32ab39660fd51c6dc3aae486b42d42bbe8fe4c1db78eaf57bb9c21198de48a16",
+          "sha256:bdf375e050614f40d304f0c56f9286b02c40e41f188b661e5416098e81bd8bd1"
+        ],
+        "Type": "layers"
+      },
+      "Size": 147508052,
+      "User": "",
+      "Version": "",
+      "VirtualSize": 147508052
+    },
+    "launcher_sha256": "d7f96b37608d799fe9d7729ba6fb8fbea2384f475bec5905590df587a1967164",
+    "podman": "podman version 4.9.3",
+    "probe_sha256": "f62769583f6b899c496ceb5bf8c027a73e2a4fb070adb0690eddfd3c7b4b72da",
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "rootless": "true",
+    "source_sha": "1cb5e187ef46ba2735fa292112a5e2bfd2334007",
+    "test_sha256": {
+      "test_genesis_lite_v0_3_container_isolation.py": "a811919e3b387f87f7b7cddde0d3ac2e2a5a6266443b1299e62cd03c47f46938",
+      "test_genesis_lite_v0_3_container_runtime.py": "806f88d4ee67a0e7f9048e7f07a429f155946459a14eaa480accfb1636c41494"
+    }
+  },
+  "transcripts": [
+    {
+      "argv": [
+        "podman",
+        "create",
+        "--pull=never",
+        "--rm",
+        "--read-only",
+        "--network=none",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--userns=keep-id",
+        "--cidfile",
+        "/tmp/forge-cp2-ozVlV6-final/container-cp20/44993e6e8b0e3e28.cid",
+        "-i",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/var/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/run:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/dev/shm:rw,nosuid,nodev,mode=1777",
+        "--volume",
+        "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+        "--volume",
+        "/home/dev_kaeem/venvs/forge312:/venv:ro",
+        "--workdir",
+        "/tmp",
+        "--env",
+        "HOME=/tmp/home",
+        "--env",
+        "TMPDIR=/tmp",
+        "--env",
+        "XDG_CACHE_HOME=/tmp/cache",
+        "--env",
+        "PYTHONPYCACHEPREFIX=/tmp/pycache",
+        "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+        "python3",
+        "-",
+        "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+      ],
+      "cid": "2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2",
+      "config": {
+        "marker": "cp2-b8bc2cfc1e4739299ef8e48f",
+        "network_targets": {
+          "external": [
+            "192.0.2.1",
+            9
+          ],
+          "host_listener": [
+            "127.0.0.1",
+            57759
+          ]
+        },
+        "read_only_files": {
+          "source": "/source/benchmarks/genesis_lite/v0_3/isolation.py",
+          "venv": "/venv/pyvenv.cfg"
+        },
+        "token": "0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28",
+        "write_canaries": true
+      },
+      "create_stderr": "",
+      "create_stdout": "2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2\n",
+      "inspect": [
+        {
+          "AppArmorProfile": "",
+          "Args": [
+            "-",
+            "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+          ],
+          "BoundingCaps": null,
+          "Config": {
+            "Annotations": {
+              "io.podman.annotations.autoremove": "TRUE",
+              "io.podman.annotations.cid-file": "/tmp/forge-cp2-ozVlV6-final/container-cp20/44993e6e8b0e3e28.cid"
+            },
+            "AttachStderr": false,
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "Cmd": [
+              "python3",
+              "-",
+              "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+            ],
+            "CreateCommand": [
+              "podman",
+              "create",
+              "--pull=never",
+              "--rm",
+              "--read-only",
+              "--network=none",
+              "--cap-drop=ALL",
+              "--security-opt=no-new-privileges",
+              "--userns=keep-id",
+              "--cidfile",
+              "/tmp/forge-cp2-ozVlV6-final/container-cp20/44993e6e8b0e3e28.cid",
+              "-i",
+              "--tmpfs",
+              "/tmp:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/var/tmp:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/run:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/dev/shm:rw,nosuid,nodev,mode=1777",
+              "--volume",
+              "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+              "--volume",
+              "/home/dev_kaeem/venvs/forge312:/venv:ro",
+              "--workdir",
+              "/tmp",
+              "--env",
+              "HOME=/tmp/home",
+              "--env",
+              "TMPDIR=/tmp",
+              "--env",
+              "XDG_CACHE_HOME=/tmp/cache",
+              "--env",
+              "PYTHONPYCACHEPREFIX=/tmp/pycache",
+              "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+              "python3",
+              "-",
+              "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+            ],
+            "Domainname": "",
+            "Entrypoint": "",
+            "Env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+              "container=podman",
+              "HOME=/tmp/home",
+              "TMPDIR=/tmp",
+              "XDG_CACHE_HOME=/tmp/cache",
+              "PYTHONPYCACHEPREFIX=/tmp/pycache"
+            ],
+            "HealthcheckOnFailureAction": "none",
+            "Hostname": "2c897f23bc3d",
+            "Image": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+            "Labels": {
+              "io.buildah.version": "1.33.7",
+              "org.opencontainers.image.version": "24.04"
+            },
+            "OnBuild": null,
+            "OpenStdin": true,
+            "Passwd": true,
+            "StdinOnce": false,
+            "StopSignal": 15,
+            "StopTimeout": 10,
+            "Timeout": 0,
+            "Tty": false,
+            "Umask": "0022",
+            "User": "1000:1000",
+            "Volumes": null,
+            "WorkingDir": "/tmp",
+            "sdNotifyMode": "container"
+          },
+          "ConmonPidFile": "/run/user/1000/containers/overlay-containers/2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2/userdata/conmon.pid",
+          "Created": "2026-10-20T19:20:27.029041976+03:00",
+          "Dependencies": [],
+          "Driver": "overlay",
+          "EffectiveCaps": null,
+          "ExecIDs": [],
+          "GraphDriver": {
+            "Data": {
+              "LowerDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/0b4b151e224e0bdadc96bcd68365bfd5a2387abd3ecd9985829084590ee9033f/diff:/home/dev_kaeem/.local/share/containers/storage/overlay/ccc584eb258259693708e1010baac4b35d39fd670981ef73fe21c31cc4191a9d/diff:/home/dev_kaeem/.local/share/containers/storage/overlay/32ab39660fd51c6dc3aae486b42d42bbe8fe4c1db78eaf57bb9c21198de48a16/diff",
+              "UpperDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/16135067da886a32501f7ead605640d8b6d16fc9b9ad7a73180d3d3aea0ed1e6/diff",
+              "WorkDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/16135067da886a32501f7ead605640d8b6d16fc9b9ad7a73180d3d3aea0ed1e6/work"
+            },
+            "Name": "overlay"
+          },
+          "HostConfig": {
+            "AutoRemove": true,
+            "Binds": [
+              "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro,rprivate,rbind",
+              "/home/dev_kaeem/venvs/forge312:/venv:ro,rprivate,rbind"
+            ],
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceWriteIOps": null,
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "CapAdd": [],
+            "CapDrop": [
+              "CAP_CHOWN",
+              "CAP_DAC_OVERRIDE",
+              "CAP_FOWNER",
+              "CAP_FSETID",
+              "CAP_KILL",
+              "CAP_NET_BIND_SERVICE",
+              "CAP_SETFCAP",
+              "CAP_SETGID",
+              "CAP_SETPCAP",
+              "CAP_SETUID",
+              "CAP_SYS_CHROOT"
+            ],
+            "Cgroup": "",
+            "CgroupConf": null,
+            "CgroupManager": "systemd",
+            "CgroupMode": "private",
+            "CgroupParent": "user.slice",
+            "Cgroups": "default",
+            "ConsoleSize": [
+              0,
+              0
+            ],
+            "ContainerIDFile": "/tmp/forge-cp2-ozVlV6-final/container-cp20/44993e6e8b0e3e28.cid",
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpuShares": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DiskQuota": 0,
+            "Dns": [],
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": [],
+            "GroupAdd": [],
+            "IDMappings": {
+              "GidMap": [
+                "0:1:1000",
+                "1000:0:1",
+                "1001:1001:64536"
+              ],
+              "UidMap": [
+                "0:1:1000",
+                "1000:0:1",
+                "1001:1001:64536"
+              ]
+            },
+            "IOMaximumBandwidth": 0,
+            "IOMaximumIOps": 0,
+            "IpcMode": "shareable",
+            "Isolation": "",
+            "KernelMemory": 0,
+            "Links": null,
+            "LogConfig": {
+              "Config": null,
+              "Path": "",
+              "Size": "0B",
+              "Tag": "",
+              "Type": "journald"
+            },
+            "Memory": 0,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": 0,
+            "NanoCpus": 0,
+            "NetworkMode": "none",
+            "OomKillDisable": false,
+            "OomScoreAdj": 0,
+            "PidMode": "private",
+            "PidsLimit": 2048,
+            "PortBindings": {},
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "RestartPolicy": {
+              "MaximumRetryCount": 0,
+              "Name": ""
+            },
+            "Runtime": "oci",
+            "SecurityOpt": [
+              "no-new-privileges"
+            ],
+            "ShmSize": 65536000,
+            "Tmpfs": {
+              "/dev/shm": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/run": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/tmp": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/var/tmp": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup"
+            },
+            "UTSMode": "private",
+            "Ulimits": [],
+            "UsernsMode": "private",
+            "VolumeDriver": "",
+            "VolumesFrom": null
+          },
+          "HostnamePath": "",
+          "HostsPath": "",
+          "Id": "2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2",
+          "Image": "2d2651e4d002c518bb669cb044209897ff02e33318a4b92ac185cf23be33f532",
+          "ImageDigest": "sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+          "ImageName": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+          "IsInfra": false,
+          "IsService": false,
+          "KubeExitCodePropagation": "invalid",
+          "MountLabel": "",
+          "Mounts": [
+            {
+              "Destination": "/source",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": false,
+              "Source": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+              "Type": "bind"
+            },
+            {
+              "Destination": "/venv",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": false,
+              "Source": "/home/dev_kaeem/venvs/forge312",
+              "Type": "bind"
+            }
+          ],
+          "Name": "stupefied_heyrovsky",
+          "Namespace": "",
+          "NetworkSettings": {
+            "Bridge": "",
+            "EndpointID": "",
+            "Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "HairpinMode": false,
+            "IPAddress": "",
+            "IPPrefixLen": 0,
+            "IPv6Gateway": "",
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "MacAddress": "",
+            "Networks": {
+              "none": {
+                "DriverOpts": null,
+                "EndpointID": "",
+                "Gateway": "",
+                "GlobalIPv6Address": "",
+                "GlobalIPv6PrefixLen": 0,
+                "IPAMConfig": null,
+                "IPAddress": "",
+                "IPPrefixLen": 0,
+                "IPv6Gateway": "",
+                "Links": null,
+                "MacAddress": "",
+                "NetworkID": "none"
+              }
+            },
+            "Ports": {},
+            "SandboxID": "",
+            "SandboxKey": ""
+          },
+          "OCIRuntime": "crun",
+          "Path": "python3",
+          "PidFile": "/run/user/1000/containers/overlay-containers/2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2/userdata/pidfile",
+          "Pod": "",
+          "ProcessLabel": "",
+          "ResolvConfPath": "",
+          "RestartCount": 0,
+          "Rootfs": "",
+          "State": {
+            "CheckpointedAt": "0001-01-01T00:00:00Z",
+            "Dead": false,
+            "Error": "",
+            "ExitCode": 0,
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+              "FailingStreak": 0,
+              "Log": null,
+              "Status": ""
+            },
+            "OOMKilled": false,
+            "OciVersion": "1.1.0",
+            "Paused": false,
+            "Pid": 0,
+            "Restarting": false,
+            "RestoredAt": "0001-01-01T00:00:00Z",
+            "Running": false,
+            "StartedAt": "0001-01-01T00:00:00Z",
+            "Status": "created"
+          },
+          "StaticDir": "/home/dev_kaeem/.local/share/containers/storage/overlay-containers/2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2/userdata",
+          "lockNumber": 0
+        }
+      ],
+      "restart": {
+        "returncode": 125,
+        "stderr": "Error: no container with name or ID \"2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2\" found: no such container\n",
+        "stdout": ""
+      },
+      "returncode": 0,
+      "start_argv": [
+        "podman",
+        "start",
+        "--attach",
+        "--interactive",
+        "2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2"
+      ],
+      "stderr": "",
+      "stdout": "{\"container_id\": null, \"containerenv\": \"\", \"cwd\": \"/tmp\", \"environment\": {\"HOME\": \"/tmp/home\", \"HOME_seen\": null, \"PYTHONPYCACHEPREFIX\": \"/tmp/pycache\", \"PYTHONPYCACHEPREFIX_seen\": null, \"TMPDIR\": \"/tmp\", \"TMPDIR_seen\": null, \"XDG_CACHE_HOME\": \"/tmp/cache\", \"XDG_CACHE_HOME_seen\": null}, \"interfaces\": [\"lo\"], \"machine\": \"2c897f23bc3d\", \"mountinfo\": \"569 433 0:81 / / ro,relatime - overlay overlay rw,lowerdir=/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7:/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7/../diff1:/home/dev_kaeem/.local/share/containers/storage/overlay/l/KIMJ3FO6WVHDSTOF6NVPL2V3MP:/home/dev_kaeem/.local/share/containers/storage/overlay/l/J2XILIV6KG237ZWC6HOFVURHAX,upperdir=/home/dev_kaeem/.local/share/containers/storage/overlay/16135067da886a32501f7ead605640d8b6d16fc9b9ad7a73180d3d3aea0ed1e6/diff,workdir=/home/dev_kaeem/.local/share/containers/storage/overlay/16135067da886a32501f7ead605640d8b6d16fc9b9ad7a73180d3d3aea0ed1e6/work,redirect_dir=nofollow,uuid=on,volatile,userxattr\\n570 569 0:84 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,uid=100000,gid=100000\\n571 569 0:85 / /sys ro,nosuid,nodev,noexec,relatime - sysfs sysfs rw\\n572 569 0:86 / /run rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n564 569 8:48 /home/dev_kaeem/venvs/forge312 /venv ro,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n573 569 0:87 / /tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n565 569 8:48 /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo /source ro,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n574 569 0:88 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw\\n575 570 0:89 / /dev/shm rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n576 570 0:90 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=100005,mode=620,ptmxmode=666\\n577 570 0:83 / /dev/mqueue rw,nosuid,nodev,noexec,relatime - mqueue mqueue rw\\n578 569 0:91 / /var/tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n566 569 0:79 /containers/overlay-containers/2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2/userdata/hosts /etc/hosts ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n567 572 0:79 /containers/overlay-containers/2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2/userdata/.containerenv /run/.containerenv ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n568 569 0:79 /containers/overlay-containers/2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2/userdata/hostname /etc/hostname ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n579 571 0:23 / /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime - cgroup2 cgroup2 rw,nsdelegate\\n580 570 0:5 /null /dev/null rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n581 570 0:5 /zero /dev/zero rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n582 570 0:5 /full /dev/full rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n583 570 0:5 /tty /dev/tty rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n584 570 0:5 /random /dev/random rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n585 570 0:5 /urandom /dev/urandom rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n586 574 0:92 / /proc/acpi ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n587 574 0:5 /null /proc/kcore ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n588 574 0:5 /null /proc/keys ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n589 574 0:5 /null /proc/latency_stats ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n590 574 0:5 /null /proc/timer_list ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n591 574 0:93 / /proc/scsi ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n592 571 0:94 / /sys/firmware ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n593 571 0:95 / /sys/fs/selinux ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n594 571 0:96 / /sys/dev/block ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n595 574 0:88 /bus /proc/bus ro,nosuid,nodev,noexec,relatime - proc proc rw\\n596 574 0:88 /fs /proc/fs ro,nosuid,nodev,noexec,relatime - proc proc rw\\n597 574 0:88 /irq /proc/irq ro,nosuid,nodev,noexec,relatime - proc proc rw\\n598 574 0:88 /sys /proc/sys ro,nosuid,nodev,noexec,relatime - proc proc rw\\n599 574 0:88 /sysrq-trigger /proc/sysrq-trigger ro,nosuid,nodev,noexec,relatime - proc proc rw\\n\", \"mounts\": [{\"canary\": \"READ_ONLY\", \"device\": \"0:81\", \"fstype\": \"overlay\", \"id\": \"569\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"433\", \"root\": \"/\", \"source\": \"overlay\", \"super_options\": [\"rw\", \"lowerdir=/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7:/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7/../diff1:/home/dev_kaeem/.local/share/containers/storage/overlay/l/KIMJ3FO6WVHDSTOF6NVPL2V3MP:/home/dev_kaeem/.local/share/containers/storage/overlay/l/J2XILIV6KG237ZWC6HOFVURHAX\", \"upperdir=/home/dev_kaeem/.local/share/containers/storage/overlay/16135067da886a32501f7ead605640d8b6d16fc9b9ad7a73180d3d3aea0ed1e6/diff\", \"workdir=/home/dev_kaeem/.local/share/containers/storage/overlay/16135067da886a32501f7ead605640d8b6d16fc9b9ad7a73180d3d3aea0ed1e6/work\", \"redirect_dir=nofollow\", \"uuid=on\", \"volatile\", \"userxattr\"], \"target\": \"/\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:84\", \"error\": \"PermissionError\", \"fstype\": \"tmpfs\", \"id\": \"570\", \"optional\": [], \"options\": [\"rw\", \"nosuid\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=65536k\", \"mode=755\", \"uid=100000\", \"gid=100000\"], \"target\": \"/dev\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:85\", \"fstype\": \"sysfs\", \"id\": \"571\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"source\": \"sysfs\", \"super_options\": [\"rw\"], \"target\": \"/sys\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:86\", \"fstype\": \"tmpfs\", \"id\": \"572\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/run\"}, {\"canary\": \"READ_ONLY\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"564\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"569\", \"root\": \"/home/dev_kaeem/venvs/forge312\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/venv\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:87\", \"fstype\": \"tmpfs\", \"id\": \"573\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/tmp\"}, {\"canary\": \"READ_ONLY\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"565\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"569\", \"root\": \"/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/source\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"574\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:89\", \"fstype\": \"tmpfs\", \"id\": \"575\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/dev/shm\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:90\", \"fstype\": \"devpts\", \"id\": \"576\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"source\": \"devpts\", \"super_options\": [\"rw\", \"gid=100005\", \"mode=620\", \"ptmxmode=666\"], \"target\": \"/dev/pts\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:83\", \"fstype\": \"mqueue\", \"id\": \"577\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"source\": \"mqueue\", \"super_options\": [\"rw\"], \"target\": \"/dev/mqueue\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:91\", \"fstype\": \"tmpfs\", \"id\": \"578\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/var/tmp\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"566\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/containers/overlay-containers/2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2/userdata/hosts\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/etc/hosts\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"567\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"572\", \"root\": \"/containers/overlay-containers/2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2/userdata/.containerenv\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/run/.containerenv\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"568\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/containers/overlay-containers/2c897f23bc3da74059c2f149ab0190206d518f606bd91ff3f7e4f38b38605db2/userdata/hostname\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/etc/hostname\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:23\", \"fstype\": \"cgroup2\", \"id\": \"579\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"cgroup2\", \"super_options\": [\"rw\", \"nsdelegate\"], \"target\": \"/sys/fs/cgroup\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"580\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/null\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"581\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/zero\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/zero\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"582\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/full\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/full\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"583\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/tty\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/tty\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"584\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/random\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/random\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"585\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/urandom\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/urandom\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:92\", \"fstype\": \"tmpfs\", \"id\": \"586\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"574\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/proc/acpi\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"587\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"574\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/kcore\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"588\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"574\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/keys\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"589\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"574\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/latency_stats\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"590\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"574\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/timer_list\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:93\", \"fstype\": \"tmpfs\", \"id\": \"591\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"574\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/proc/scsi\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:94\", \"fstype\": \"tmpfs\", \"id\": \"592\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/firmware\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:95\", \"fstype\": \"tmpfs\", \"id\": \"593\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/fs/selinux\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:96\", \"fstype\": \"tmpfs\", \"id\": \"594\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/dev/block\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"595\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"574\", \"root\": \"/bus\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/bus\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"596\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"574\", \"root\": \"/fs\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/fs\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"597\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"574\", \"root\": \"/irq\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/irq\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"598\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"574\", \"root\": \"/sys\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/sys\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"599\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"574\", \"root\": \"/sysrq-trigger\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/sysrq-trigger\"}], \"network\": {\"external\": \"OSError\", \"host_listener\": \"ConnectionRefusedError\"}, \"status\": {\"CapAmb\": \"\\t0000000000000000\", \"CapBnd\": \"\\t0000000000000000\", \"CapEff\": \"\\t0000000000000000\", \"CapInh\": \"\\t0000000000000000\", \"CapPrm\": \"\\t0000000000000000\", \"CoreDumping\": \"\\t0\", \"Cpus_allowed\": \"\\tfffff\", \"Cpus_allowed_list\": \"\\t0-19\", \"FDSize\": \"\\t64\", \"Gid\": \"\\t1000\\t1000\\t1000\\t1000\", \"Groups\": \"\\t1000 \", \"HugetlbPages\": \"\\t       0 kB\", \"Kthread\": \"\\t0\", \"Mems_allowed\": \"\\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\", \"Mems_allowed_list\": \"\\t0\", \"NSpgid\": \"\\t1\", \"NSpid\": \"\\t1\", \"NSsid\": \"\\t1\", \"NStgid\": \"\\t1\", \"Name\": \"\\tpython3\", \"Ngid\": \"\\t0\", \"NoNewPrivs\": \"\\t1\", \"PPid\": \"\\t0\", \"Pid\": \"\\t1\", \"RssAnon\": \"\\t    9556 kB\", \"RssFile\": \"\\t    9600 kB\", \"RssShmem\": \"\\t       0 kB\", \"Seccomp\": \"\\t2\", \"Seccomp_filters\": \"\\t1\", \"ShdPnd\": \"\\t0000000000000000\", \"SigBlk\": \"\\t0000000000000000\", \"SigCgt\": \"\\t0000000000000002\", \"SigIgn\": \"\\t0000000001001000\", \"SigPnd\": \"\\t0000000000000000\", \"SigQ\": \"\\t0/96085\", \"SpeculationIndirectBranch\": \"\\tconditional enabled\", \"Speculation_Store_Bypass\": \"\\tthread vulnerable\", \"State\": \"\\tR (running)\", \"THP_enabled\": \"\\t1\", \"Tgid\": \"\\t1\", \"Threads\": \"\\t1\", \"TracerPid\": \"\\t0\", \"Uid\": \"\\t1000\\t1000\\t1000\\t1000\", \"Umask\": \"\\t0022\", \"VmData\": \"\\t   10280 kB\", \"VmExe\": \"\\t    2956 kB\", \"VmHWM\": \"\\t   19240 kB\", \"VmLck\": \"\\t       0 kB\", \"VmLib\": \"\\t    5788 kB\", \"VmPTE\": \"\\t      84 kB\", \"VmPeak\": \"\\t   26480 kB\", \"VmPin\": \"\\t       0 kB\", \"VmRSS\": \"\\t   19156 kB\", \"VmSize\": \"\\t   25916 kB\", \"VmStk\": \"\\t     132 kB\", \"VmSwap\": \"\\t       0 kB\", \"nonvoluntary_ctxt_switches\": \"\\t2\", \"untag_mask\": \"\\t0xffffffffffffffff\", \"voluntary_ctxt_switches\": \"\\t6\"}, \"uid\": 1000, \"writes\": {\"source\": \"OSError\", \"venv\": \"OSError\"}}\n"
+    },
+    {
+      "argv": [
+        "podman",
+        "create",
+        "--pull=never",
+        "--rm",
+        "--read-only",
+        "--network=none",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--userns=keep-id",
+        "--cidfile",
+        "/tmp/forge-cp2-ozVlV6-final/container-cp20/c6f87d998a387aff.cid",
+        "-i",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/var/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/run:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/dev/shm:rw,nosuid,nodev,mode=1777",
+        "--volume",
+        "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+        "--volume",
+        "/home/dev_kaeem/venvs/forge312:/venv:ro",
+        "--workdir",
+        "/tmp",
+        "--env",
+        "HOME=/tmp/home",
+        "--env",
+        "TMPDIR=/tmp",
+        "--env",
+        "XDG_CACHE_HOME=/tmp/cache",
+        "--env",
+        "PYTHONPYCACHEPREFIX=/tmp/pycache",
+        "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+        "python3",
+        "-",
+        "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+      ],
+      "cid": "5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d",
+      "config": {
+        "marker": "cp2-b8bc2cfc1e4739299ef8e48f",
+        "network_targets": {
+          "external": [
+            "192.0.2.1",
+            9
+          ],
+          "host_listener": [
+            "127.0.0.1",
+            57759
+          ]
+        },
+        "read_only_files": {
+          "source": "/source/benchmarks/genesis_lite/v0_3/isolation.py",
+          "venv": "/venv/pyvenv.cfg"
+        },
+        "token": "0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28",
+        "write_canaries": true
+      },
+      "create_stderr": "",
+      "create_stdout": "5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d\n",
+      "inspect": [
+        {
+          "AppArmorProfile": "",
+          "Args": [
+            "-",
+            "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+          ],
+          "BoundingCaps": null,
+          "Config": {
+            "Annotations": {
+              "io.podman.annotations.autoremove": "TRUE",
+              "io.podman.annotations.cid-file": "/tmp/forge-cp2-ozVlV6-final/container-cp20/c6f87d998a387aff.cid"
+            },
+            "AttachStderr": false,
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "Cmd": [
+              "python3",
+              "-",
+              "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+            ],
+            "CreateCommand": [
+              "podman",
+              "create",
+              "--pull=never",
+              "--rm",
+              "--read-only",
+              "--network=none",
+              "--cap-drop=ALL",
+              "--security-opt=no-new-privileges",
+              "--userns=keep-id",
+              "--cidfile",
+              "/tmp/forge-cp2-ozVlV6-final/container-cp20/c6f87d998a387aff.cid",
+              "-i",
+              "--tmpfs",
+              "/tmp:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/var/tmp:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/run:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/dev/shm:rw,nosuid,nodev,mode=1777",
+              "--volume",
+              "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+              "--volume",
+              "/home/dev_kaeem/venvs/forge312:/venv:ro",
+              "--workdir",
+              "/tmp",
+              "--env",
+              "HOME=/tmp/home",
+              "--env",
+              "TMPDIR=/tmp",
+              "--env",
+              "XDG_CACHE_HOME=/tmp/cache",
+              "--env",
+              "PYTHONPYCACHEPREFIX=/tmp/pycache",
+              "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+              "python3",
+              "-",
+              "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+            ],
+            "Domainname": "",
+            "Entrypoint": "",
+            "Env": [
+              "HOME=/tmp/home",
+              "TMPDIR=/tmp",
+              "XDG_CACHE_HOME=/tmp/cache",
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+              "container=podman",
+              "PYTHONPYCACHEPREFIX=/tmp/pycache"
+            ],
+            "HealthcheckOnFailureAction": "none",
+            "Hostname": "5bbb4c474dae",
+            "Image": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+            "Labels": {
+              "io.buildah.version": "1.33.7",
+              "org.opencontainers.image.version": "24.04"
+            },
+            "OnBuild": null,
+            "OpenStdin": true,
+            "Passwd": true,
+            "StdinOnce": false,
+            "StopSignal": 15,
+            "StopTimeout": 10,
+            "Timeout": 0,
+            "Tty": false,
+            "Umask": "0022",
+            "User": "1000:1000",
+            "Volumes": null,
+            "WorkingDir": "/tmp",
+            "sdNotifyMode": "container"
+          },
+          "ConmonPidFile": "/run/user/1000/containers/overlay-containers/5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d/userdata/conmon.pid",
+          "Created": "2026-10-20T19:20:27.306188854+03:00",
+          "Dependencies": [],
+          "Driver": "overlay",
+          "EffectiveCaps": null,
+          "ExecIDs": [],
+          "GraphDriver": {
+            "Data": {
+              "LowerDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/0b4b151e224e0bdadc96bcd68365bfd5a2387abd3ecd9985829084590ee9033f/diff:/home/dev_kaeem/.local/share/containers/storage/overlay/ccc584eb258259693708e1010baac4b35d39fd670981ef73fe21c31cc4191a9d/diff:/home/dev_kaeem/.local/share/containers/storage/overlay/32ab39660fd51c6dc3aae486b42d42bbe8fe4c1db78eaf57bb9c21198de48a16/diff",
+              "UpperDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/487a9f93f520a54630cd4f93a78fb3e3c1c7a92d3718cc2566f4d34c5a84985a/diff",
+              "WorkDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/487a9f93f520a54630cd4f93a78fb3e3c1c7a92d3718cc2566f4d34c5a84985a/work"
+            },
+            "Name": "overlay"
+          },
+          "HostConfig": {
+            "AutoRemove": true,
+            "Binds": [
+              "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro,rprivate,rbind",
+              "/home/dev_kaeem/venvs/forge312:/venv:ro,rprivate,rbind"
+            ],
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceWriteIOps": null,
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "CapAdd": [],
+            "CapDrop": [
+              "CAP_CHOWN",
+              "CAP_DAC_OVERRIDE",
+              "CAP_FOWNER",
+              "CAP_FSETID",
+              "CAP_KILL",
+              "CAP_NET_BIND_SERVICE",
+              "CAP_SETFCAP",
+              "CAP_SETGID",
+              "CAP_SETPCAP",
+              "CAP_SETUID",
+              "CAP_SYS_CHROOT"
+            ],
+            "Cgroup": "",
+            "CgroupConf": null,
+            "CgroupManager": "systemd",
+            "CgroupMode": "private",
+            "CgroupParent": "user.slice",
+            "Cgroups": "default",
+            "ConsoleSize": [
+              0,
+              0
+            ],
+            "ContainerIDFile": "/tmp/forge-cp2-ozVlV6-final/container-cp20/c6f87d998a387aff.cid",
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpuShares": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DiskQuota": 0,
+            "Dns": [],
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": [],
+            "GroupAdd": [],
+            "IDMappings": {
+              "GidMap": [
+                "0:1:1000",
+                "1000:0:1",
+                "1001:1001:64536"
+              ],
+              "UidMap": [
+                "0:1:1000",
+                "1000:0:1",
+                "1001:1001:64536"
+              ]
+            },
+            "IOMaximumBandwidth": 0,
+            "IOMaximumIOps": 0,
+            "IpcMode": "shareable",
+            "Isolation": "",
+            "KernelMemory": 0,
+            "Links": null,
+            "LogConfig": {
+              "Config": null,
+              "Path": "",
+              "Size": "0B",
+              "Tag": "",
+              "Type": "journald"
+            },
+            "Memory": 0,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": 0,
+            "NanoCpus": 0,
+            "NetworkMode": "none",
+            "OomKillDisable": false,
+            "OomScoreAdj": 0,
+            "PidMode": "private",
+            "PidsLimit": 2048,
+            "PortBindings": {},
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "RestartPolicy": {
+              "MaximumRetryCount": 0,
+              "Name": ""
+            },
+            "Runtime": "oci",
+            "SecurityOpt": [
+              "no-new-privileges"
+            ],
+            "ShmSize": 65536000,
+            "Tmpfs": {
+              "/dev/shm": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/run": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/tmp": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/var/tmp": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup"
+            },
+            "UTSMode": "private",
+            "Ulimits": [],
+            "UsernsMode": "private",
+            "VolumeDriver": "",
+            "VolumesFrom": null
+          },
+          "HostnamePath": "",
+          "HostsPath": "",
+          "Id": "5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d",
+          "Image": "2d2651e4d002c518bb669cb044209897ff02e33318a4b92ac185cf23be33f532",
+          "ImageDigest": "sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+          "ImageName": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+          "IsInfra": false,
+          "IsService": false,
+          "KubeExitCodePropagation": "invalid",
+          "MountLabel": "",
+          "Mounts": [
+            {
+              "Destination": "/source",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": false,
+              "Source": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+              "Type": "bind"
+            },
+            {
+              "Destination": "/venv",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": false,
+              "Source": "/home/dev_kaeem/venvs/forge312",
+              "Type": "bind"
+            }
+          ],
+          "Name": "practical_raman",
+          "Namespace": "",
+          "NetworkSettings": {
+            "Bridge": "",
+            "EndpointID": "",
+            "Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "HairpinMode": false,
+            "IPAddress": "",
+            "IPPrefixLen": 0,
+            "IPv6Gateway": "",
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "MacAddress": "",
+            "Networks": {
+              "none": {
+                "DriverOpts": null,
+                "EndpointID": "",
+                "Gateway": "",
+                "GlobalIPv6Address": "",
+                "GlobalIPv6PrefixLen": 0,
+                "IPAMConfig": null,
+                "IPAddress": "",
+                "IPPrefixLen": 0,
+                "IPv6Gateway": "",
+                "Links": null,
+                "MacAddress": "",
+                "NetworkID": "none"
+              }
+            },
+            "Ports": {},
+            "SandboxID": "",
+            "SandboxKey": ""
+          },
+          "OCIRuntime": "crun",
+          "Path": "python3",
+          "PidFile": "/run/user/1000/containers/overlay-containers/5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d/userdata/pidfile",
+          "Pod": "",
+          "ProcessLabel": "",
+          "ResolvConfPath": "",
+          "RestartCount": 0,
+          "Rootfs": "",
+          "State": {
+            "CheckpointedAt": "0001-01-01T00:00:00Z",
+            "Dead": false,
+            "Error": "",
+            "ExitCode": 0,
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+              "FailingStreak": 0,
+              "Log": null,
+              "Status": ""
+            },
+            "OOMKilled": false,
+            "OciVersion": "1.1.0",
+            "Paused": false,
+            "Pid": 0,
+            "Restarting": false,
+            "RestoredAt": "0001-01-01T00:00:00Z",
+            "Running": false,
+            "StartedAt": "0001-01-01T00:00:00Z",
+            "Status": "created"
+          },
+          "StaticDir": "/home/dev_kaeem/.local/share/containers/storage/overlay-containers/5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d/userdata",
+          "lockNumber": 0
+        }
+      ],
+      "restart": {
+        "returncode": 125,
+        "stderr": "Error: no container with name or ID \"5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d\" found: no such container\n",
+        "stdout": ""
+      },
+      "returncode": 0,
+      "start_argv": [
+        "podman",
+        "start",
+        "--attach",
+        "--interactive",
+        "5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d"
+      ],
+      "stderr": "",
+      "stdout": "{\"container_id\": null, \"containerenv\": \"\", \"cwd\": \"/tmp\", \"environment\": {\"HOME\": \"/tmp/home\", \"HOME_seen\": null, \"PYTHONPYCACHEPREFIX\": \"/tmp/pycache\", \"PYTHONPYCACHEPREFIX_seen\": null, \"TMPDIR\": \"/tmp\", \"TMPDIR_seen\": null, \"XDG_CACHE_HOME\": \"/tmp/cache\", \"XDG_CACHE_HOME_seen\": null}, \"interfaces\": [\"lo\"], \"machine\": \"5bbb4c474dae\", \"mountinfo\": \"569 433 0:81 / / ro,relatime - overlay overlay rw,lowerdir=/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7:/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7/../diff1:/home/dev_kaeem/.local/share/containers/storage/overlay/l/KIMJ3FO6WVHDSTOF6NVPL2V3MP:/home/dev_kaeem/.local/share/containers/storage/overlay/l/J2XILIV6KG237ZWC6HOFVURHAX,upperdir=/home/dev_kaeem/.local/share/containers/storage/overlay/487a9f93f520a54630cd4f93a78fb3e3c1c7a92d3718cc2566f4d34c5a84985a/diff,workdir=/home/dev_kaeem/.local/share/containers/storage/overlay/487a9f93f520a54630cd4f93a78fb3e3c1c7a92d3718cc2566f4d34c5a84985a/work,redirect_dir=nofollow,uuid=on,volatile,userxattr\\n570 569 0:84 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw\\n571 569 0:85 / /sys ro,nosuid,nodev,noexec,relatime - sysfs sysfs rw\\n572 569 0:86 / /run rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n564 569 8:48 /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo /source ro,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n565 569 8:48 /home/dev_kaeem/venvs/forge312 /venv ro,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n573 569 0:87 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,uid=100000,gid=100000\\n574 569 0:88 / /tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n575 573 0:89 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=100005,mode=620,ptmxmode=666\\n576 569 0:90 / /var/tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n577 573 0:83 / /dev/mqueue rw,nosuid,nodev,noexec,relatime - mqueue mqueue rw\\n578 573 0:91 / /dev/shm rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n566 569 0:79 /containers/overlay-containers/5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d/userdata/hosts /etc/hosts ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n567 572 0:79 /containers/overlay-containers/5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d/userdata/.containerenv /run/.containerenv ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n568 569 0:79 /containers/overlay-containers/5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d/userdata/hostname /etc/hostname ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n579 571 0:23 / /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime - cgroup2 cgroup2 rw,nsdelegate\\n580 573 0:5 /null /dev/null rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n581 573 0:5 /zero /dev/zero rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n582 573 0:5 /full /dev/full rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n583 573 0:5 /tty /dev/tty rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n584 573 0:5 /random /dev/random rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n585 573 0:5 /urandom /dev/urandom rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n586 570 0:92 / /proc/acpi ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n587 570 0:5 /null /proc/kcore ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n588 570 0:5 /null /proc/keys ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n589 570 0:5 /null /proc/latency_stats ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n590 570 0:5 /null /proc/timer_list ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n591 570 0:93 / /proc/scsi ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n592 571 0:94 / /sys/firmware ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n593 571 0:95 / /sys/fs/selinux ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n594 571 0:96 / /sys/dev/block ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n595 570 0:84 /bus /proc/bus ro,nosuid,nodev,noexec,relatime - proc proc rw\\n596 570 0:84 /fs /proc/fs ro,nosuid,nodev,noexec,relatime - proc proc rw\\n597 570 0:84 /irq /proc/irq ro,nosuid,nodev,noexec,relatime - proc proc rw\\n598 570 0:84 /sys /proc/sys ro,nosuid,nodev,noexec,relatime - proc proc rw\\n599 570 0:84 /sysrq-trigger /proc/sysrq-trigger ro,nosuid,nodev,noexec,relatime - proc proc rw\\n\", \"mounts\": [{\"canary\": \"READ_ONLY\", \"device\": \"0:81\", \"fstype\": \"overlay\", \"id\": \"569\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"433\", \"root\": \"/\", \"source\": \"overlay\", \"super_options\": [\"rw\", \"lowerdir=/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7:/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7/../diff1:/home/dev_kaeem/.local/share/containers/storage/overlay/l/KIMJ3FO6WVHDSTOF6NVPL2V3MP:/home/dev_kaeem/.local/share/containers/storage/overlay/l/J2XILIV6KG237ZWC6HOFVURHAX\", \"upperdir=/home/dev_kaeem/.local/share/containers/storage/overlay/487a9f93f520a54630cd4f93a78fb3e3c1c7a92d3718cc2566f4d34c5a84985a/diff\", \"workdir=/home/dev_kaeem/.local/share/containers/storage/overlay/487a9f93f520a54630cd4f93a78fb3e3c1c7a92d3718cc2566f4d34c5a84985a/work\", \"redirect_dir=nofollow\", \"uuid=on\", \"volatile\", \"userxattr\"], \"target\": \"/\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"570\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:85\", \"fstype\": \"sysfs\", \"id\": \"571\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"source\": \"sysfs\", \"super_options\": [\"rw\"], \"target\": \"/sys\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:86\", \"fstype\": \"tmpfs\", \"id\": \"572\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/run\"}, {\"canary\": \"READ_ONLY\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"564\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"569\", \"root\": \"/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/source\"}, {\"canary\": \"READ_ONLY\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"565\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"569\", \"root\": \"/home/dev_kaeem/venvs/forge312\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/venv\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:87\", \"error\": \"PermissionError\", \"fstype\": \"tmpfs\", \"id\": \"573\", \"optional\": [], \"options\": [\"rw\", \"nosuid\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=65536k\", \"mode=755\", \"uid=100000\", \"gid=100000\"], \"target\": \"/dev\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:88\", \"fstype\": \"tmpfs\", \"id\": \"574\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/tmp\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:89\", \"fstype\": \"devpts\", \"id\": \"575\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"573\", \"root\": \"/\", \"source\": \"devpts\", \"super_options\": [\"rw\", \"gid=100005\", \"mode=620\", \"ptmxmode=666\"], \"target\": \"/dev/pts\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:90\", \"fstype\": \"tmpfs\", \"id\": \"576\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/var/tmp\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:83\", \"fstype\": \"mqueue\", \"id\": \"577\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"573\", \"root\": \"/\", \"source\": \"mqueue\", \"super_options\": [\"rw\"], \"target\": \"/dev/mqueue\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:91\", \"fstype\": \"tmpfs\", \"id\": \"578\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"573\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/dev/shm\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"566\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/containers/overlay-containers/5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d/userdata/hosts\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/etc/hosts\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"567\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"572\", \"root\": \"/containers/overlay-containers/5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d/userdata/.containerenv\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/run/.containerenv\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"568\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/containers/overlay-containers/5bbb4c474dae020bcfcdea25f9cda9f49debd7768a001b09beac05f1b6e2fd8d/userdata/hostname\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/etc/hostname\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:23\", \"fstype\": \"cgroup2\", \"id\": \"579\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"cgroup2\", \"super_options\": [\"rw\", \"nsdelegate\"], \"target\": \"/sys/fs/cgroup\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"580\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"573\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/null\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"581\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"573\", \"root\": \"/zero\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/zero\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"582\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"573\", \"root\": \"/full\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/full\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"583\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"573\", \"root\": \"/tty\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/tty\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"584\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"573\", \"root\": \"/random\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/random\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"585\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"573\", \"root\": \"/urandom\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/urandom\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:92\", \"fstype\": \"tmpfs\", \"id\": \"586\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/proc/acpi\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"587\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"570\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/kcore\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"588\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"570\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/keys\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"589\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"570\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/latency_stats\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"590\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"570\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/timer_list\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:93\", \"fstype\": \"tmpfs\", \"id\": \"591\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/proc/scsi\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:94\", \"fstype\": \"tmpfs\", \"id\": \"592\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/firmware\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:95\", \"fstype\": \"tmpfs\", \"id\": \"593\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/fs/selinux\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:96\", \"fstype\": \"tmpfs\", \"id\": \"594\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/dev/block\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"595\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/bus\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/bus\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"596\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/fs\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/fs\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"597\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/irq\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/irq\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"598\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/sys\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/sys\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"599\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/sysrq-trigger\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/sysrq-trigger\"}], \"network\": {\"external\": \"OSError\", \"host_listener\": \"ConnectionRefusedError\"}, \"status\": {\"CapAmb\": \"\\t0000000000000000\", \"CapBnd\": \"\\t0000000000000000\", \"CapEff\": \"\\t0000000000000000\", \"CapInh\": \"\\t0000000000000000\", \"CapPrm\": \"\\t0000000000000000\", \"CoreDumping\": \"\\t0\", \"Cpus_allowed\": \"\\tfffff\", \"Cpus_allowed_list\": \"\\t0-19\", \"FDSize\": \"\\t64\", \"Gid\": \"\\t1000\\t1000\\t1000\\t1000\", \"Groups\": \"\\t1000 \", \"HugetlbPages\": \"\\t       0 kB\", \"Kthread\": \"\\t0\", \"Mems_allowed\": \"\\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\", \"Mems_allowed_list\": \"\\t0\", \"NSpgid\": \"\\t1\", \"NSpid\": \"\\t1\", \"NSsid\": \"\\t1\", \"NStgid\": \"\\t1\", \"Name\": \"\\tpython3\", \"Ngid\": \"\\t0\", \"NoNewPrivs\": \"\\t1\", \"PPid\": \"\\t0\", \"Pid\": \"\\t1\", \"RssAnon\": \"\\t    9420 kB\", \"RssFile\": \"\\t    9440 kB\", \"RssShmem\": \"\\t       0 kB\", \"Seccomp\": \"\\t2\", \"Seccomp_filters\": \"\\t1\", \"ShdPnd\": \"\\t0000000000000000\", \"SigBlk\": \"\\t0000000000000000\", \"SigCgt\": \"\\t0000000000000002\", \"SigIgn\": \"\\t0000000001001000\", \"SigPnd\": \"\\t0000000000000000\", \"SigQ\": \"\\t0/96085\", \"SpeculationIndirectBranch\": \"\\tconditional enabled\", \"Speculation_Store_Bypass\": \"\\tthread vulnerable\", \"State\": \"\\tR (running)\", \"THP_enabled\": \"\\t1\", \"Tgid\": \"\\t1\", \"Threads\": \"\\t1\", \"TracerPid\": \"\\t0\", \"Uid\": \"\\t1000\\t1000\\t1000\\t1000\", \"Umask\": \"\\t0022\", \"VmData\": \"\\t   10280 kB\", \"VmExe\": \"\\t    2956 kB\", \"VmHWM\": \"\\t   19008 kB\", \"VmLck\": \"\\t       0 kB\", \"VmLib\": \"\\t    5788 kB\", \"VmPTE\": \"\\t      88 kB\", \"VmPeak\": \"\\t   26480 kB\", \"VmPin\": \"\\t       0 kB\", \"VmRSS\": \"\\t   18860 kB\", \"VmSize\": \"\\t   25916 kB\", \"VmStk\": \"\\t     132 kB\", \"VmSwap\": \"\\t       0 kB\", \"nonvoluntary_ctxt_switches\": \"\\t3\", \"untag_mask\": \"\\t0xffffffffffffffff\", \"voluntary_ctxt_switches\": \"\\t5\"}, \"uid\": 1000, \"writes\": {\"source\": \"OSError\", \"venv\": \"OSError\"}}\n"
+    },
+    {
+      "argv": [
+        "podman",
+        "create",
+        "--pull=never",
+        "--rm",
+        "--read-only",
+        "--network=none",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--userns=keep-id",
+        "--cidfile",
+        "/tmp/forge-cp2-ozVlV6-final/container-cp20/2b1ab0adc9acf36e.cid",
+        "-i",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/var/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/run:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/dev/shm:rw,nosuid,nodev,mode=1777",
+        "--volume",
+        "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+        "--volume",
+        "/home/dev_kaeem/venvs/forge312:/venv:ro",
+        "--workdir",
+        "/tmp",
+        "--env",
+        "HOME=/tmp/home",
+        "--env",
+        "TMPDIR=/tmp",
+        "--env",
+        "XDG_CACHE_HOME=/tmp/cache",
+        "--env",
+        "PYTHONPYCACHEPREFIX=/tmp/pycache",
+        "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+        "python3",
+        "-",
+        "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+      ],
+      "cid": "fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813",
+      "config": {
+        "marker": "cp2-b8bc2cfc1e4739299ef8e48f",
+        "network_targets": {
+          "external": [
+            "192.0.2.1",
+            9
+          ],
+          "host_listener": [
+            "127.0.0.1",
+            57759
+          ]
+        },
+        "read_only_files": {
+          "source": "/source/benchmarks/genesis_lite/v0_3/isolation.py",
+          "venv": "/venv/pyvenv.cfg"
+        },
+        "token": "0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28",
+        "write_canaries": true
+      },
+      "create_stderr": "",
+      "create_stdout": "fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813\n",
+      "inspect": [
+        {
+          "AppArmorProfile": "",
+          "Args": [
+            "-",
+            "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+          ],
+          "BoundingCaps": null,
+          "Config": {
+            "Annotations": {
+              "io.podman.annotations.autoremove": "TRUE",
+              "io.podman.annotations.cid-file": "/tmp/forge-cp2-ozVlV6-final/container-cp20/2b1ab0adc9acf36e.cid"
+            },
+            "AttachStderr": false,
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "Cmd": [
+              "python3",
+              "-",
+              "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+            ],
+            "CreateCommand": [
+              "podman",
+              "create",
+              "--pull=never",
+              "--rm",
+              "--read-only",
+              "--network=none",
+              "--cap-drop=ALL",
+              "--security-opt=no-new-privileges",
+              "--userns=keep-id",
+              "--cidfile",
+              "/tmp/forge-cp2-ozVlV6-final/container-cp20/2b1ab0adc9acf36e.cid",
+              "-i",
+              "--tmpfs",
+              "/tmp:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/var/tmp:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/run:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/dev/shm:rw,nosuid,nodev,mode=1777",
+              "--volume",
+              "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+              "--volume",
+              "/home/dev_kaeem/venvs/forge312:/venv:ro",
+              "--workdir",
+              "/tmp",
+              "--env",
+              "HOME=/tmp/home",
+              "--env",
+              "TMPDIR=/tmp",
+              "--env",
+              "XDG_CACHE_HOME=/tmp/cache",
+              "--env",
+              "PYTHONPYCACHEPREFIX=/tmp/pycache",
+              "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+              "python3",
+              "-",
+              "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+            ],
+            "Domainname": "",
+            "Entrypoint": "",
+            "Env": [
+              "PYTHONPYCACHEPREFIX=/tmp/pycache",
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+              "container=podman",
+              "HOME=/tmp/home",
+              "TMPDIR=/tmp",
+              "XDG_CACHE_HOME=/tmp/cache"
+            ],
+            "HealthcheckOnFailureAction": "none",
+            "Hostname": "fcd0d12b6c4d",
+            "Image": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+            "Labels": {
+              "io.buildah.version": "1.33.7",
+              "org.opencontainers.image.version": "24.04"
+            },
+            "OnBuild": null,
+            "OpenStdin": true,
+            "Passwd": true,
+            "StdinOnce": false,
+            "StopSignal": 15,
+            "StopTimeout": 10,
+            "Timeout": 0,
+            "Tty": false,
+            "Umask": "0022",
+            "User": "1000:1000",
+            "Volumes": null,
+            "WorkingDir": "/tmp",
+            "sdNotifyMode": "container"
+          },
+          "ConmonPidFile": "/run/user/1000/containers/overlay-containers/fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813/userdata/conmon.pid",
+          "Created": "2026-10-20T19:20:27.597185887+03:00",
+          "Dependencies": [],
+          "Driver": "overlay",
+          "EffectiveCaps": null,
+          "ExecIDs": [],
+          "GraphDriver": {
+            "Data": {
+              "LowerDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/0b4b151e224e0bdadc96bcd68365bfd5a2387abd3ecd9985829084590ee9033f/diff:/home/dev_kaeem/.local/share/containers/storage/overlay/ccc584eb258259693708e1010baac4b35d39fd670981ef73fe21c31cc4191a9d/diff:/home/dev_kaeem/.local/share/containers/storage/overlay/32ab39660fd51c6dc3aae486b42d42bbe8fe4c1db78eaf57bb9c21198de48a16/diff",
+              "UpperDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/9b7ddce435609953dcd26bf4166bdd444f1b289978bf14832c8c3edd6399141a/diff",
+              "WorkDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/9b7ddce435609953dcd26bf4166bdd444f1b289978bf14832c8c3edd6399141a/work"
+            },
+            "Name": "overlay"
+          },
+          "HostConfig": {
+            "AutoRemove": true,
+            "Binds": [
+              "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro,rprivate,rbind",
+              "/home/dev_kaeem/venvs/forge312:/venv:ro,rprivate,rbind"
+            ],
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceWriteIOps": null,
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "CapAdd": [],
+            "CapDrop": [
+              "CAP_CHOWN",
+              "CAP_DAC_OVERRIDE",
+              "CAP_FOWNER",
+              "CAP_FSETID",
+              "CAP_KILL",
+              "CAP_NET_BIND_SERVICE",
+              "CAP_SETFCAP",
+              "CAP_SETGID",
+              "CAP_SETPCAP",
+              "CAP_SETUID",
+              "CAP_SYS_CHROOT"
+            ],
+            "Cgroup": "",
+            "CgroupConf": null,
+            "CgroupManager": "systemd",
+            "CgroupMode": "private",
+            "CgroupParent": "user.slice",
+            "Cgroups": "default",
+            "ConsoleSize": [
+              0,
+              0
+            ],
+            "ContainerIDFile": "/tmp/forge-cp2-ozVlV6-final/container-cp20/2b1ab0adc9acf36e.cid",
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpuShares": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DiskQuota": 0,
+            "Dns": [],
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": [],
+            "GroupAdd": [],
+            "IDMappings": {
+              "GidMap": [
+                "0:1:1000",
+                "1000:0:1",
+                "1001:1001:64536"
+              ],
+              "UidMap": [
+                "0:1:1000",
+                "1000:0:1",
+                "1001:1001:64536"
+              ]
+            },
+            "IOMaximumBandwidth": 0,
+            "IOMaximumIOps": 0,
+            "IpcMode": "shareable",
+            "Isolation": "",
+            "KernelMemory": 0,
+            "Links": null,
+            "LogConfig": {
+              "Config": null,
+              "Path": "",
+              "Size": "0B",
+              "Tag": "",
+              "Type": "journald"
+            },
+            "Memory": 0,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": 0,
+            "NanoCpus": 0,
+            "NetworkMode": "none",
+            "OomKillDisable": false,
+            "OomScoreAdj": 0,
+            "PidMode": "private",
+            "PidsLimit": 2048,
+            "PortBindings": {},
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "RestartPolicy": {
+              "MaximumRetryCount": 0,
+              "Name": ""
+            },
+            "Runtime": "oci",
+            "SecurityOpt": [
+              "no-new-privileges"
+            ],
+            "ShmSize": 65536000,
+            "Tmpfs": {
+              "/dev/shm": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/run": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/tmp": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/var/tmp": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup"
+            },
+            "UTSMode": "private",
+            "Ulimits": [],
+            "UsernsMode": "private",
+            "VolumeDriver": "",
+            "VolumesFrom": null
+          },
+          "HostnamePath": "",
+          "HostsPath": "",
+          "Id": "fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813",
+          "Image": "2d2651e4d002c518bb669cb044209897ff02e33318a4b92ac185cf23be33f532",
+          "ImageDigest": "sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+          "ImageName": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+          "IsInfra": false,
+          "IsService": false,
+          "KubeExitCodePropagation": "invalid",
+          "MountLabel": "",
+          "Mounts": [
+            {
+              "Destination": "/source",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": false,
+              "Source": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+              "Type": "bind"
+            },
+            {
+              "Destination": "/venv",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": false,
+              "Source": "/home/dev_kaeem/venvs/forge312",
+              "Type": "bind"
+            }
+          ],
+          "Name": "adoring_perlman",
+          "Namespace": "",
+          "NetworkSettings": {
+            "Bridge": "",
+            "EndpointID": "",
+            "Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "HairpinMode": false,
+            "IPAddress": "",
+            "IPPrefixLen": 0,
+            "IPv6Gateway": "",
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "MacAddress": "",
+            "Networks": {
+              "none": {
+                "DriverOpts": null,
+                "EndpointID": "",
+                "Gateway": "",
+                "GlobalIPv6Address": "",
+                "GlobalIPv6PrefixLen": 0,
+                "IPAMConfig": null,
+                "IPAddress": "",
+                "IPPrefixLen": 0,
+                "IPv6Gateway": "",
+                "Links": null,
+                "MacAddress": "",
+                "NetworkID": "none"
+              }
+            },
+            "Ports": {},
+            "SandboxID": "",
+            "SandboxKey": ""
+          },
+          "OCIRuntime": "crun",
+          "Path": "python3",
+          "PidFile": "/run/user/1000/containers/overlay-containers/fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813/userdata/pidfile",
+          "Pod": "",
+          "ProcessLabel": "",
+          "ResolvConfPath": "",
+          "RestartCount": 0,
+          "Rootfs": "",
+          "State": {
+            "CheckpointedAt": "0001-01-01T00:00:00Z",
+            "Dead": false,
+            "Error": "",
+            "ExitCode": 0,
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+              "FailingStreak": 0,
+              "Log": null,
+              "Status": ""
+            },
+            "OOMKilled": false,
+            "OciVersion": "1.1.0",
+            "Paused": false,
+            "Pid": 0,
+            "Restarting": false,
+            "RestoredAt": "0001-01-01T00:00:00Z",
+            "Running": false,
+            "StartedAt": "0001-01-01T00:00:00Z",
+            "Status": "created"
+          },
+          "StaticDir": "/home/dev_kaeem/.local/share/containers/storage/overlay-containers/fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813/userdata",
+          "lockNumber": 0
+        }
+      ],
+      "restart": {
+        "returncode": 125,
+        "stderr": "Error: no container with name or ID \"fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813\" found: no such container\n",
+        "stdout": ""
+      },
+      "returncode": 0,
+      "start_argv": [
+        "podman",
+        "start",
+        "--attach",
+        "--interactive",
+        "fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813"
+      ],
+      "stderr": "",
+      "stdout": "{\"container_id\": null, \"containerenv\": \"\", \"cwd\": \"/tmp\", \"environment\": {\"HOME\": \"/tmp/home\", \"HOME_seen\": null, \"PYTHONPYCACHEPREFIX\": \"/tmp/pycache\", \"PYTHONPYCACHEPREFIX_seen\": null, \"TMPDIR\": \"/tmp\", \"TMPDIR_seen\": null, \"XDG_CACHE_HOME\": \"/tmp/cache\", \"XDG_CACHE_HOME_seen\": null}, \"interfaces\": [\"lo\"], \"machine\": \"fcd0d12b6c4d\", \"mountinfo\": \"569 433 0:81 / / ro,relatime - overlay overlay rw,lowerdir=/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7:/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7/../diff1:/home/dev_kaeem/.local/share/containers/storage/overlay/l/KIMJ3FO6WVHDSTOF6NVPL2V3MP:/home/dev_kaeem/.local/share/containers/storage/overlay/l/J2XILIV6KG237ZWC6HOFVURHAX,upperdir=/home/dev_kaeem/.local/share/containers/storage/overlay/9b7ddce435609953dcd26bf4166bdd444f1b289978bf14832c8c3edd6399141a/diff,workdir=/home/dev_kaeem/.local/share/containers/storage/overlay/9b7ddce435609953dcd26bf4166bdd444f1b289978bf14832c8c3edd6399141a/work,redirect_dir=nofollow,uuid=on,volatile,userxattr\\n570 569 0:84 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw\\n571 569 0:85 / /sys ro,nosuid,nodev,noexec,relatime - sysfs sysfs rw\\n572 569 0:86 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,uid=100000,gid=100000\\n564 569 8:48 /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo /source ro,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n565 569 8:48 /home/dev_kaeem/venvs/forge312 /venv ro,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n573 569 0:87 / /tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n574 569 0:88 / /run rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n575 572 0:89 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=100005,mode=620,ptmxmode=666\\n576 569 0:90 / /var/tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n577 572 0:83 / /dev/mqueue rw,nosuid,nodev,noexec,relatime - mqueue mqueue rw\\n578 572 0:91 / /dev/shm rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n566 569 0:79 /containers/overlay-containers/fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813/userdata/hosts /etc/hosts ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n567 574 0:79 /containers/overlay-containers/fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813/userdata/.containerenv /run/.containerenv ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n568 569 0:79 /containers/overlay-containers/fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813/userdata/hostname /etc/hostname ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n579 571 0:23 / /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime - cgroup2 cgroup2 rw,nsdelegate\\n580 572 0:5 /null /dev/null rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n581 572 0:5 /zero /dev/zero rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n582 572 0:5 /full /dev/full rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n583 572 0:5 /tty /dev/tty rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n584 572 0:5 /random /dev/random rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n585 572 0:5 /urandom /dev/urandom rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n586 570 0:92 / /proc/acpi ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n587 570 0:5 /null /proc/kcore ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n588 570 0:5 /null /proc/keys ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n589 570 0:5 /null /proc/latency_stats ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n590 570 0:5 /null /proc/timer_list ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n591 570 0:93 / /proc/scsi ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n592 571 0:94 / /sys/firmware ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n593 571 0:95 / /sys/fs/selinux ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n594 571 0:96 / /sys/dev/block ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n595 570 0:84 /bus /proc/bus ro,nosuid,nodev,noexec,relatime - proc proc rw\\n596 570 0:84 /fs /proc/fs ro,nosuid,nodev,noexec,relatime - proc proc rw\\n597 570 0:84 /irq /proc/irq ro,nosuid,nodev,noexec,relatime - proc proc rw\\n598 570 0:84 /sys /proc/sys ro,nosuid,nodev,noexec,relatime - proc proc rw\\n599 570 0:84 /sysrq-trigger /proc/sysrq-trigger ro,nosuid,nodev,noexec,relatime - proc proc rw\\n\", \"mounts\": [{\"canary\": \"READ_ONLY\", \"device\": \"0:81\", \"fstype\": \"overlay\", \"id\": \"569\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"433\", \"root\": \"/\", \"source\": \"overlay\", \"super_options\": [\"rw\", \"lowerdir=/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7:/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7/../diff1:/home/dev_kaeem/.local/share/containers/storage/overlay/l/KIMJ3FO6WVHDSTOF6NVPL2V3MP:/home/dev_kaeem/.local/share/containers/storage/overlay/l/J2XILIV6KG237ZWC6HOFVURHAX\", \"upperdir=/home/dev_kaeem/.local/share/containers/storage/overlay/9b7ddce435609953dcd26bf4166bdd444f1b289978bf14832c8c3edd6399141a/diff\", \"workdir=/home/dev_kaeem/.local/share/containers/storage/overlay/9b7ddce435609953dcd26bf4166bdd444f1b289978bf14832c8c3edd6399141a/work\", \"redirect_dir=nofollow\", \"uuid=on\", \"volatile\", \"userxattr\"], \"target\": \"/\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"570\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:85\", \"fstype\": \"sysfs\", \"id\": \"571\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"source\": \"sysfs\", \"super_options\": [\"rw\"], \"target\": \"/sys\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:86\", \"error\": \"PermissionError\", \"fstype\": \"tmpfs\", \"id\": \"572\", \"optional\": [], \"options\": [\"rw\", \"nosuid\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=65536k\", \"mode=755\", \"uid=100000\", \"gid=100000\"], \"target\": \"/dev\"}, {\"canary\": \"READ_ONLY\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"564\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"569\", \"root\": \"/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/source\"}, {\"canary\": \"READ_ONLY\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"565\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"569\", \"root\": \"/home/dev_kaeem/venvs/forge312\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/venv\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:87\", \"fstype\": \"tmpfs\", \"id\": \"573\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/tmp\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:88\", \"fstype\": \"tmpfs\", \"id\": \"574\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/run\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:89\", \"fstype\": \"devpts\", \"id\": \"575\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"572\", \"root\": \"/\", \"source\": \"devpts\", \"super_options\": [\"rw\", \"gid=100005\", \"mode=620\", \"ptmxmode=666\"], \"target\": \"/dev/pts\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:90\", \"fstype\": \"tmpfs\", \"id\": \"576\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"569\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/var/tmp\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:83\", \"fstype\": \"mqueue\", \"id\": \"577\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"572\", \"root\": \"/\", \"source\": \"mqueue\", \"super_options\": [\"rw\"], \"target\": \"/dev/mqueue\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:91\", \"fstype\": \"tmpfs\", \"id\": \"578\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"572\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/dev/shm\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"566\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/containers/overlay-containers/fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813/userdata/hosts\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/etc/hosts\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"567\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"574\", \"root\": \"/containers/overlay-containers/fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813/userdata/.containerenv\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/run/.containerenv\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"568\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"569\", \"root\": \"/containers/overlay-containers/fcd0d12b6c4deb5666385400efe80bb8a833e68713b3983af3df2ede691e8813/userdata/hostname\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/etc/hostname\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:23\", \"fstype\": \"cgroup2\", \"id\": \"579\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"cgroup2\", \"super_options\": [\"rw\", \"nsdelegate\"], \"target\": \"/sys/fs/cgroup\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"580\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"572\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/null\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"581\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"572\", \"root\": \"/zero\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/zero\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"582\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"572\", \"root\": \"/full\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/full\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"583\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"572\", \"root\": \"/tty\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/tty\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"584\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"572\", \"root\": \"/random\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/random\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"585\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"572\", \"root\": \"/urandom\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/urandom\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:92\", \"fstype\": \"tmpfs\", \"id\": \"586\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/proc/acpi\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"587\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"570\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/kcore\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"588\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"570\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/keys\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"589\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"570\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/latency_stats\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"590\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"570\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/timer_list\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:93\", \"fstype\": \"tmpfs\", \"id\": \"591\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/proc/scsi\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:94\", \"fstype\": \"tmpfs\", \"id\": \"592\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/firmware\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:95\", \"fstype\": \"tmpfs\", \"id\": \"593\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/fs/selinux\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:96\", \"fstype\": \"tmpfs\", \"id\": \"594\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/dev/block\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"595\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/bus\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/bus\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"596\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/fs\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/fs\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"597\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/irq\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/irq\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"598\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/sys\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/sys\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:84\", \"fstype\": \"proc\", \"id\": \"599\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/sysrq-trigger\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/sysrq-trigger\"}], \"network\": {\"external\": \"OSError\", \"host_listener\": \"ConnectionRefusedError\"}, \"status\": {\"CapAmb\": \"\\t0000000000000000\", \"CapBnd\": \"\\t0000000000000000\", \"CapEff\": \"\\t0000000000000000\", \"CapInh\": \"\\t0000000000000000\", \"CapPrm\": \"\\t0000000000000000\", \"CoreDumping\": \"\\t0\", \"Cpus_allowed\": \"\\tfffff\", \"Cpus_allowed_list\": \"\\t0-19\", \"FDSize\": \"\\t64\", \"Gid\": \"\\t1000\\t1000\\t1000\\t1000\", \"Groups\": \"\\t1000 \", \"HugetlbPages\": \"\\t       0 kB\", \"Kthread\": \"\\t0\", \"Mems_allowed\": \"\\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\", \"Mems_allowed_list\": \"\\t0\", \"NSpgid\": \"\\t1\", \"NSpid\": \"\\t1\", \"NSsid\": \"\\t1\", \"NStgid\": \"\\t1\", \"Name\": \"\\tpython3\", \"Ngid\": \"\\t0\", \"NoNewPrivs\": \"\\t1\", \"PPid\": \"\\t0\", \"Pid\": \"\\t1\", \"RssAnon\": \"\\t    9488 kB\", \"RssFile\": \"\\t    9600 kB\", \"RssShmem\": \"\\t       0 kB\", \"Seccomp\": \"\\t2\", \"Seccomp_filters\": \"\\t1\", \"ShdPnd\": \"\\t0000000000000000\", \"SigBlk\": \"\\t0000000000000000\", \"SigCgt\": \"\\t0000000000000002\", \"SigIgn\": \"\\t0000000001001000\", \"SigPnd\": \"\\t0000000000000000\", \"SigQ\": \"\\t0/96085\", \"SpeculationIndirectBranch\": \"\\tconditional enabled\", \"Speculation_Store_Bypass\": \"\\tthread vulnerable\", \"State\": \"\\tR (running)\", \"THP_enabled\": \"\\t1\", \"Tgid\": \"\\t1\", \"Threads\": \"\\t1\", \"TracerPid\": \"\\t0\", \"Uid\": \"\\t1000\\t1000\\t1000\\t1000\", \"Umask\": \"\\t0022\", \"VmData\": \"\\t   10280 kB\", \"VmExe\": \"\\t    2956 kB\", \"VmHWM\": \"\\t   19188 kB\", \"VmLck\": \"\\t       0 kB\", \"VmLib\": \"\\t    5788 kB\", \"VmPTE\": \"\\t      88 kB\", \"VmPeak\": \"\\t   26480 kB\", \"VmPin\": \"\\t       0 kB\", \"VmRSS\": \"\\t   19088 kB\", \"VmSize\": \"\\t   25916 kB\", \"VmStk\": \"\\t     132 kB\", \"VmSwap\": \"\\t       0 kB\", \"nonvoluntary_ctxt_switches\": \"\\t1\", \"untag_mask\": \"\\t0xffffffffffffffff\", \"voluntary_ctxt_switches\": \"\\t6\"}, \"uid\": 1000, \"writes\": {\"source\": \"OSError\", \"venv\": \"OSError\"}}\n"
+    },
+    {
+      "argv": [
+        "podman",
+        "create",
+        "--pull=never",
+        "--rm",
+        "--read-only",
+        "--network=none",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--userns=keep-id",
+        "--cidfile",
+        "/tmp/forge-cp2-ozVlV6-final/container-cp20/6695d2df9826de60.cid",
+        "-i",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/var/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/run:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/dev/shm:rw,nosuid,nodev,mode=1777",
+        "--volume",
+        "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+        "--volume",
+        "/home/dev_kaeem/venvs/forge312:/venv:ro",
+        "--workdir",
+        "/tmp",
+        "--env",
+        "HOME=/tmp/home",
+        "--env",
+        "TMPDIR=/tmp",
+        "--env",
+        "XDG_CACHE_HOME=/tmp/cache",
+        "--env",
+        "PYTHONPYCACHEPREFIX=/tmp/pycache",
+        "--volume",
+        "/tmp/forge-cp2-ozVlV6-final/container-cp20/shared:/shared:rw",
+        "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+        "python3",
+        "-",
+        "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+      ],
+      "cid": "8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0",
+      "config": {
+        "marker": "cp2-b8bc2cfc1e4739299ef8e48f",
+        "network_targets": {
+          "external": [
+            "192.0.2.1",
+            9
+          ],
+          "host_listener": [
+            "127.0.0.1",
+            57759
+          ]
+        },
+        "read_only_files": {
+          "source": "/source/benchmarks/genesis_lite/v0_3/isolation.py",
+          "venv": "/venv/pyvenv.cfg"
+        },
+        "token": "0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28",
+        "write_canaries": true
+      },
+      "create_stderr": "",
+      "create_stdout": "8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0\n",
+      "inspect": [
+        {
+          "AppArmorProfile": "",
+          "Args": [
+            "-",
+            "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+          ],
+          "BoundingCaps": null,
+          "Config": {
+            "Annotations": {
+              "io.podman.annotations.autoremove": "TRUE",
+              "io.podman.annotations.cid-file": "/tmp/forge-cp2-ozVlV6-final/container-cp20/6695d2df9826de60.cid"
+            },
+            "AttachStderr": false,
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "Cmd": [
+              "python3",
+              "-",
+              "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+            ],
+            "CreateCommand": [
+              "podman",
+              "create",
+              "--pull=never",
+              "--rm",
+              "--read-only",
+              "--network=none",
+              "--cap-drop=ALL",
+              "--security-opt=no-new-privileges",
+              "--userns=keep-id",
+              "--cidfile",
+              "/tmp/forge-cp2-ozVlV6-final/container-cp20/6695d2df9826de60.cid",
+              "-i",
+              "--tmpfs",
+              "/tmp:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/var/tmp:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/run:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/dev/shm:rw,nosuid,nodev,mode=1777",
+              "--volume",
+              "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+              "--volume",
+              "/home/dev_kaeem/venvs/forge312:/venv:ro",
+              "--workdir",
+              "/tmp",
+              "--env",
+              "HOME=/tmp/home",
+              "--env",
+              "TMPDIR=/tmp",
+              "--env",
+              "XDG_CACHE_HOME=/tmp/cache",
+              "--env",
+              "PYTHONPYCACHEPREFIX=/tmp/pycache",
+              "--volume",
+              "/tmp/forge-cp2-ozVlV6-final/container-cp20/shared:/shared:rw",
+              "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+              "python3",
+              "-",
+              "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+            ],
+            "Domainname": "",
+            "Entrypoint": "",
+            "Env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+              "container=podman",
+              "XDG_CACHE_HOME=/tmp/cache",
+              "PYTHONPYCACHEPREFIX=/tmp/pycache",
+              "HOME=/tmp/home",
+              "TMPDIR=/tmp"
+            ],
+            "HealthcheckOnFailureAction": "none",
+            "Hostname": "8d3483fc1235",
+            "Image": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+            "Labels": {
+              "io.buildah.version": "1.33.7",
+              "org.opencontainers.image.version": "24.04"
+            },
+            "OnBuild": null,
+            "OpenStdin": true,
+            "Passwd": true,
+            "StdinOnce": false,
+            "StopSignal": 15,
+            "StopTimeout": 10,
+            "Timeout": 0,
+            "Tty": false,
+            "Umask": "0022",
+            "User": "1000:1000",
+            "Volumes": null,
+            "WorkingDir": "/tmp",
+            "sdNotifyMode": "container"
+          },
+          "ConmonPidFile": "/run/user/1000/containers/overlay-containers/8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0/userdata/conmon.pid",
+          "Created": "2026-10-20T19:20:27.862474823+03:00",
+          "Dependencies": [],
+          "Driver": "overlay",
+          "EffectiveCaps": null,
+          "ExecIDs": [],
+          "GraphDriver": {
+            "Data": {
+              "LowerDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/0b4b151e224e0bdadc96bcd68365bfd5a2387abd3ecd9985829084590ee9033f/diff:/home/dev_kaeem/.local/share/containers/storage/overlay/ccc584eb258259693708e1010baac4b35d39fd670981ef73fe21c31cc4191a9d/diff:/home/dev_kaeem/.local/share/containers/storage/overlay/32ab39660fd51c6dc3aae486b42d42bbe8fe4c1db78eaf57bb9c21198de48a16/diff",
+              "UpperDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/1a24f49c86cca1edc477918313e4debfa04f393511c79b97ca44668edc6bb60e/diff",
+              "WorkDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/1a24f49c86cca1edc477918313e4debfa04f393511c79b97ca44668edc6bb60e/work"
+            },
+            "Name": "overlay"
+          },
+          "HostConfig": {
+            "AutoRemove": true,
+            "Binds": [
+              "/home/dev_kaeem/venvs/forge312:/venv:ro,rprivate,rbind",
+              "/tmp/forge-cp2-ozVlV6-final/container-cp20/shared:/shared:rw,rprivate,rbind",
+              "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro,rprivate,rbind"
+            ],
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceWriteIOps": null,
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "CapAdd": [],
+            "CapDrop": [
+              "CAP_CHOWN",
+              "CAP_DAC_OVERRIDE",
+              "CAP_FOWNER",
+              "CAP_FSETID",
+              "CAP_KILL",
+              "CAP_NET_BIND_SERVICE",
+              "CAP_SETFCAP",
+              "CAP_SETGID",
+              "CAP_SETPCAP",
+              "CAP_SETUID",
+              "CAP_SYS_CHROOT"
+            ],
+            "Cgroup": "",
+            "CgroupConf": null,
+            "CgroupManager": "systemd",
+            "CgroupMode": "private",
+            "CgroupParent": "user.slice",
+            "Cgroups": "default",
+            "ConsoleSize": [
+              0,
+              0
+            ],
+            "ContainerIDFile": "/tmp/forge-cp2-ozVlV6-final/container-cp20/6695d2df9826de60.cid",
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpuShares": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DiskQuota": 0,
+            "Dns": [],
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": [],
+            "GroupAdd": [],
+            "IDMappings": {
+              "GidMap": [
+                "0:1:1000",
+                "1000:0:1",
+                "1001:1001:64536"
+              ],
+              "UidMap": [
+                "0:1:1000",
+                "1000:0:1",
+                "1001:1001:64536"
+              ]
+            },
+            "IOMaximumBandwidth": 0,
+            "IOMaximumIOps": 0,
+            "IpcMode": "shareable",
+            "Isolation": "",
+            "KernelMemory": 0,
+            "Links": null,
+            "LogConfig": {
+              "Config": null,
+              "Path": "",
+              "Size": "0B",
+              "Tag": "",
+              "Type": "journald"
+            },
+            "Memory": 0,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": 0,
+            "NanoCpus": 0,
+            "NetworkMode": "none",
+            "OomKillDisable": false,
+            "OomScoreAdj": 0,
+            "PidMode": "private",
+            "PidsLimit": 2048,
+            "PortBindings": {},
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "RestartPolicy": {
+              "MaximumRetryCount": 0,
+              "Name": ""
+            },
+            "Runtime": "oci",
+            "SecurityOpt": [
+              "no-new-privileges"
+            ],
+            "ShmSize": 65536000,
+            "Tmpfs": {
+              "/dev/shm": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/run": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/tmp": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/var/tmp": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup"
+            },
+            "UTSMode": "private",
+            "Ulimits": [],
+            "UsernsMode": "private",
+            "VolumeDriver": "",
+            "VolumesFrom": null
+          },
+          "HostnamePath": "",
+          "HostsPath": "",
+          "Id": "8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0",
+          "Image": "2d2651e4d002c518bb669cb044209897ff02e33318a4b92ac185cf23be33f532",
+          "ImageDigest": "sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+          "ImageName": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+          "IsInfra": false,
+          "IsService": false,
+          "KubeExitCodePropagation": "invalid",
+          "MountLabel": "",
+          "Mounts": [
+            {
+              "Destination": "/venv",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": false,
+              "Source": "/home/dev_kaeem/venvs/forge312",
+              "Type": "bind"
+            },
+            {
+              "Destination": "/shared",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": true,
+              "Source": "/tmp/forge-cp2-ozVlV6-final/container-cp20/shared",
+              "Type": "bind"
+            },
+            {
+              "Destination": "/source",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": false,
+              "Source": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+              "Type": "bind"
+            }
+          ],
+          "Name": "charming_stonebraker",
+          "Namespace": "",
+          "NetworkSettings": {
+            "Bridge": "",
+            "EndpointID": "",
+            "Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "HairpinMode": false,
+            "IPAddress": "",
+            "IPPrefixLen": 0,
+            "IPv6Gateway": "",
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "MacAddress": "",
+            "Networks": {
+              "none": {
+                "DriverOpts": null,
+                "EndpointID": "",
+                "Gateway": "",
+                "GlobalIPv6Address": "",
+                "GlobalIPv6PrefixLen": 0,
+                "IPAMConfig": null,
+                "IPAddress": "",
+                "IPPrefixLen": 0,
+                "IPv6Gateway": "",
+                "Links": null,
+                "MacAddress": "",
+                "NetworkID": "none"
+              }
+            },
+            "Ports": {},
+            "SandboxID": "",
+            "SandboxKey": ""
+          },
+          "OCIRuntime": "crun",
+          "Path": "python3",
+          "PidFile": "/run/user/1000/containers/overlay-containers/8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0/userdata/pidfile",
+          "Pod": "",
+          "ProcessLabel": "",
+          "ResolvConfPath": "",
+          "RestartCount": 0,
+          "Rootfs": "",
+          "State": {
+            "CheckpointedAt": "0001-01-01T00:00:00Z",
+            "Dead": false,
+            "Error": "",
+            "ExitCode": 0,
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+              "FailingStreak": 0,
+              "Log": null,
+              "Status": ""
+            },
+            "OOMKilled": false,
+            "OciVersion": "1.1.0",
+            "Paused": false,
+            "Pid": 0,
+            "Restarting": false,
+            "RestoredAt": "0001-01-01T00:00:00Z",
+            "Running": false,
+            "StartedAt": "0001-01-01T00:00:00Z",
+            "Status": "created"
+          },
+          "StaticDir": "/home/dev_kaeem/.local/share/containers/storage/overlay-containers/8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0/userdata",
+          "lockNumber": 0
+        }
+      ],
+      "restart": {
+        "returncode": 125,
+        "stderr": "Error: no container with name or ID \"8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0\" found: no such container\n",
+        "stdout": ""
+      },
+      "returncode": 0,
+      "start_argv": [
+        "podman",
+        "start",
+        "--attach",
+        "--interactive",
+        "8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0"
+      ],
+      "stderr": "",
+      "stdout": "{\"container_id\": null, \"containerenv\": \"\", \"cwd\": \"/tmp\", \"environment\": {\"HOME\": \"/tmp/home\", \"HOME_seen\": null, \"PYTHONPYCACHEPREFIX\": \"/tmp/pycache\", \"PYTHONPYCACHEPREFIX_seen\": null, \"TMPDIR\": \"/tmp\", \"TMPDIR_seen\": null, \"XDG_CACHE_HOME\": \"/tmp/cache\", \"XDG_CACHE_HOME_seen\": null}, \"interfaces\": [\"lo\"], \"machine\": \"8d3483fc1235\", \"mountinfo\": \"570 433 0:81 / / ro,relatime - overlay overlay rw,lowerdir=/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7:/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7/../diff1:/home/dev_kaeem/.local/share/containers/storage/overlay/l/KIMJ3FO6WVHDSTOF6NVPL2V3MP:/home/dev_kaeem/.local/share/containers/storage/overlay/l/J2XILIV6KG237ZWC6HOFVURHAX,upperdir=/home/dev_kaeem/.local/share/containers/storage/overlay/1a24f49c86cca1edc477918313e4debfa04f393511c79b97ca44668edc6bb60e/diff,workdir=/home/dev_kaeem/.local/share/containers/storage/overlay/1a24f49c86cca1edc477918313e4debfa04f393511c79b97ca44668edc6bb60e/work,redirect_dir=nofollow,uuid=on,volatile,userxattr\\n571 570 0:84 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,uid=100000,gid=100000\\n564 570 8:48 /tmp/forge-cp2-ozVlV6-final/container-cp20/shared /shared rw,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n565 570 8:48 /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo /source ro,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n572 570 0:85 / /tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n566 570 8:48 /home/dev_kaeem/venvs/forge312 /venv ro,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n573 570 0:86 / /run rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n574 570 0:87 / /sys ro,nosuid,nodev,noexec,relatime - sysfs sysfs rw\\n575 570 0:88 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw\\n576 570 0:89 / /var/tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n577 571 0:90 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=100005,mode=620,ptmxmode=666\\n578 571 0:83 / /dev/mqueue rw,nosuid,nodev,noexec,relatime - mqueue mqueue rw\\n579 571 0:91 / /dev/shm rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n567 570 0:79 /containers/overlay-containers/8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0/userdata/hosts /etc/hosts ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n568 573 0:79 /containers/overlay-containers/8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0/userdata/.containerenv /run/.containerenv ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n569 570 0:79 /containers/overlay-containers/8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0/userdata/hostname /etc/hostname ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n580 574 0:23 / /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime - cgroup2 cgroup2 rw,nsdelegate\\n581 571 0:5 /null /dev/null rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n582 571 0:5 /zero /dev/zero rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n583 571 0:5 /full /dev/full rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n584 571 0:5 /tty /dev/tty rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n585 571 0:5 /random /dev/random rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n586 571 0:5 /urandom /dev/urandom rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n587 575 0:92 / /proc/acpi ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n588 575 0:5 /null /proc/kcore ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n589 575 0:5 /null /proc/keys ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n590 575 0:5 /null /proc/latency_stats ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n591 575 0:5 /null /proc/timer_list ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n592 575 0:93 / /proc/scsi ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n593 574 0:94 / /sys/firmware ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n594 574 0:95 / /sys/fs/selinux ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n595 574 0:96 / /sys/dev/block ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n596 575 0:88 /bus /proc/bus ro,nosuid,nodev,noexec,relatime - proc proc rw\\n597 575 0:88 /fs /proc/fs ro,nosuid,nodev,noexec,relatime - proc proc rw\\n598 575 0:88 /irq /proc/irq ro,nosuid,nodev,noexec,relatime - proc proc rw\\n599 575 0:88 /sys /proc/sys ro,nosuid,nodev,noexec,relatime - proc proc rw\\n600 575 0:88 /sysrq-trigger /proc/sysrq-trigger ro,nosuid,nodev,noexec,relatime - proc proc rw\\n\", \"mounts\": [{\"canary\": \"READ_ONLY\", \"device\": \"0:81\", \"fstype\": \"overlay\", \"id\": \"570\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"433\", \"root\": \"/\", \"source\": \"overlay\", \"super_options\": [\"rw\", \"lowerdir=/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7:/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7/../diff1:/home/dev_kaeem/.local/share/containers/storage/overlay/l/KIMJ3FO6WVHDSTOF6NVPL2V3MP:/home/dev_kaeem/.local/share/containers/storage/overlay/l/J2XILIV6KG237ZWC6HOFVURHAX\", \"upperdir=/home/dev_kaeem/.local/share/containers/storage/overlay/1a24f49c86cca1edc477918313e4debfa04f393511c79b97ca44668edc6bb60e/diff\", \"workdir=/home/dev_kaeem/.local/share/containers/storage/overlay/1a24f49c86cca1edc477918313e4debfa04f393511c79b97ca44668edc6bb60e/work\", \"redirect_dir=nofollow\", \"uuid=on\", \"volatile\", \"userxattr\"], \"target\": \"/\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:84\", \"error\": \"PermissionError\", \"fstype\": \"tmpfs\", \"id\": \"571\", \"optional\": [], \"options\": [\"rw\", \"nosuid\"], \"parent\": \"570\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=65536k\", \"mode=755\", \"uid=100000\", \"gid=100000\"], \"target\": \"/dev\"}, {\"canary\": \"WRITTEN\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"564\", \"optional\": [], \"options\": [\"rw\", \"relatime\"], \"parent\": \"570\", \"root\": \"/tmp/forge-cp2-ozVlV6-final/container-cp20/shared\", \"seen\": null, \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/shared\"}, {\"canary\": \"READ_ONLY\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"565\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"570\", \"root\": \"/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/source\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:85\", \"fstype\": \"tmpfs\", \"id\": \"572\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/tmp\"}, {\"canary\": \"READ_ONLY\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"566\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"570\", \"root\": \"/home/dev_kaeem/venvs/forge312\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/venv\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:86\", \"fstype\": \"tmpfs\", \"id\": \"573\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/run\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:87\", \"fstype\": \"sysfs\", \"id\": \"574\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"source\": \"sysfs\", \"super_options\": [\"rw\"], \"target\": \"/sys\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"575\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:89\", \"fstype\": \"tmpfs\", \"id\": \"576\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/var/tmp\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:90\", \"fstype\": \"devpts\", \"id\": \"577\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"devpts\", \"super_options\": [\"rw\", \"gid=100005\", \"mode=620\", \"ptmxmode=666\"], \"target\": \"/dev/pts\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:83\", \"fstype\": \"mqueue\", \"id\": \"578\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"mqueue\", \"super_options\": [\"rw\"], \"target\": \"/dev/mqueue\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:91\", \"fstype\": \"tmpfs\", \"id\": \"579\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/dev/shm\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"567\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/containers/overlay-containers/8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0/userdata/hosts\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/etc/hosts\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"568\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"573\", \"root\": \"/containers/overlay-containers/8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0/userdata/.containerenv\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/run/.containerenv\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"569\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/containers/overlay-containers/8d3483fc1235b72edb6630ceddcef6fe7b391f17f4dd06e0a762e116e3f151e0/userdata/hostname\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/etc/hostname\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:23\", \"fstype\": \"cgroup2\", \"id\": \"580\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"574\", \"root\": \"/\", \"source\": \"cgroup2\", \"super_options\": [\"rw\", \"nsdelegate\"], \"target\": \"/sys/fs/cgroup\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"581\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/null\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"582\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/zero\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/zero\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"583\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/full\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/full\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"584\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/tty\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/tty\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"585\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/random\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/random\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"586\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/urandom\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/urandom\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:92\", \"fstype\": \"tmpfs\", \"id\": \"587\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"575\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/proc/acpi\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"588\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"575\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/kcore\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"589\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"575\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/keys\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"590\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"575\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/latency_stats\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"591\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"575\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/timer_list\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:93\", \"fstype\": \"tmpfs\", \"id\": \"592\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"575\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/proc/scsi\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:94\", \"fstype\": \"tmpfs\", \"id\": \"593\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"574\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/firmware\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:95\", \"fstype\": \"tmpfs\", \"id\": \"594\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"574\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/fs/selinux\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:96\", \"fstype\": \"tmpfs\", \"id\": \"595\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"574\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/dev/block\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"596\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"575\", \"root\": \"/bus\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/bus\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"597\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"575\", \"root\": \"/fs\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/fs\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"598\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"575\", \"root\": \"/irq\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/irq\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"599\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"575\", \"root\": \"/sys\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/sys\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"600\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"575\", \"root\": \"/sysrq-trigger\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/sysrq-trigger\"}], \"network\": {\"external\": \"OSError\", \"host_listener\": \"ConnectionRefusedError\"}, \"status\": {\"CapAmb\": \"\\t0000000000000000\", \"CapBnd\": \"\\t0000000000000000\", \"CapEff\": \"\\t0000000000000000\", \"CapInh\": \"\\t0000000000000000\", \"CapPrm\": \"\\t0000000000000000\", \"CoreDumping\": \"\\t0\", \"Cpus_allowed\": \"\\tfffff\", \"Cpus_allowed_list\": \"\\t0-19\", \"FDSize\": \"\\t64\", \"Gid\": \"\\t1000\\t1000\\t1000\\t1000\", \"Groups\": \"\\t1000 \", \"HugetlbPages\": \"\\t       0 kB\", \"Kthread\": \"\\t0\", \"Mems_allowed\": \"\\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\", \"Mems_allowed_list\": \"\\t0\", \"NSpgid\": \"\\t1\", \"NSpid\": \"\\t1\", \"NSsid\": \"\\t1\", \"NStgid\": \"\\t1\", \"Name\": \"\\tpython3\", \"Ngid\": \"\\t0\", \"NoNewPrivs\": \"\\t1\", \"PPid\": \"\\t0\", \"Pid\": \"\\t1\", \"RssAnon\": \"\\t    9564 kB\", \"RssFile\": \"\\t    9600 kB\", \"RssShmem\": \"\\t       0 kB\", \"Seccomp\": \"\\t2\", \"Seccomp_filters\": \"\\t1\", \"ShdPnd\": \"\\t0000000000000000\", \"SigBlk\": \"\\t0000000000000000\", \"SigCgt\": \"\\t0000000000000002\", \"SigIgn\": \"\\t0000000001001000\", \"SigPnd\": \"\\t0000000000000000\", \"SigQ\": \"\\t0/96085\", \"SpeculationIndirectBranch\": \"\\tconditional enabled\", \"Speculation_Store_Bypass\": \"\\tthread vulnerable\", \"State\": \"\\tR (running)\", \"THP_enabled\": \"\\t1\", \"Tgid\": \"\\t1\", \"Threads\": \"\\t1\", \"TracerPid\": \"\\t0\", \"Uid\": \"\\t1000\\t1000\\t1000\\t1000\", \"Umask\": \"\\t0022\", \"VmData\": \"\\t   10280 kB\", \"VmExe\": \"\\t    2956 kB\", \"VmHWM\": \"\\t   19264 kB\", \"VmLck\": \"\\t       0 kB\", \"VmLib\": \"\\t    5788 kB\", \"VmPTE\": \"\\t      88 kB\", \"VmPeak\": \"\\t   26480 kB\", \"VmPin\": \"\\t       0 kB\", \"VmRSS\": \"\\t   19164 kB\", \"VmSize\": \"\\t   25916 kB\", \"VmStk\": \"\\t     132 kB\", \"VmSwap\": \"\\t       0 kB\", \"nonvoluntary_ctxt_switches\": \"\\t1\", \"untag_mask\": \"\\t0xffffffffffffffff\", \"voluntary_ctxt_switches\": \"\\t6\"}, \"uid\": 1000, \"writes\": {\"source\": \"OSError\", \"venv\": \"OSError\"}}\n"
+    },
+    {
+      "argv": [
+        "podman",
+        "create",
+        "--pull=never",
+        "--rm",
+        "--read-only",
+        "--network=none",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--userns=keep-id",
+        "--cidfile",
+        "/tmp/forge-cp2-ozVlV6-final/container-cp20/2b44b77d16f32691.cid",
+        "-i",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/var/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/run:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/dev/shm:rw,nosuid,nodev,mode=1777",
+        "--volume",
+        "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+        "--volume",
+        "/home/dev_kaeem/venvs/forge312:/venv:ro",
+        "--workdir",
+        "/tmp",
+        "--env",
+        "HOME=/tmp/home",
+        "--env",
+        "TMPDIR=/tmp",
+        "--env",
+        "XDG_CACHE_HOME=/tmp/cache",
+        "--env",
+        "PYTHONPYCACHEPREFIX=/tmp/pycache",
+        "--volume",
+        "/tmp/forge-cp2-ozVlV6-final/container-cp20/shared:/shared:rw",
+        "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+        "python3",
+        "-",
+        "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+      ],
+      "cid": "aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f",
+      "config": {
+        "marker": "cp2-b8bc2cfc1e4739299ef8e48f",
+        "network_targets": {
+          "external": [
+            "192.0.2.1",
+            9
+          ],
+          "host_listener": [
+            "127.0.0.1",
+            57759
+          ]
+        },
+        "read_only_files": {
+          "source": "/source/benchmarks/genesis_lite/v0_3/isolation.py",
+          "venv": "/venv/pyvenv.cfg"
+        },
+        "token": "0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28",
+        "write_canaries": true
+      },
+      "create_stderr": "",
+      "create_stdout": "aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f\n",
+      "inspect": [
+        {
+          "AppArmorProfile": "",
+          "Args": [
+            "-",
+            "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+          ],
+          "BoundingCaps": null,
+          "Config": {
+            "Annotations": {
+              "io.podman.annotations.autoremove": "TRUE",
+              "io.podman.annotations.cid-file": "/tmp/forge-cp2-ozVlV6-final/container-cp20/2b44b77d16f32691.cid"
+            },
+            "AttachStderr": false,
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "Cmd": [
+              "python3",
+              "-",
+              "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+            ],
+            "CreateCommand": [
+              "podman",
+              "create",
+              "--pull=never",
+              "--rm",
+              "--read-only",
+              "--network=none",
+              "--cap-drop=ALL",
+              "--security-opt=no-new-privileges",
+              "--userns=keep-id",
+              "--cidfile",
+              "/tmp/forge-cp2-ozVlV6-final/container-cp20/2b44b77d16f32691.cid",
+              "-i",
+              "--tmpfs",
+              "/tmp:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/var/tmp:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/run:rw,nosuid,nodev,mode=1777",
+              "--tmpfs",
+              "/dev/shm:rw,nosuid,nodev,mode=1777",
+              "--volume",
+              "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+              "--volume",
+              "/home/dev_kaeem/venvs/forge312:/venv:ro",
+              "--workdir",
+              "/tmp",
+              "--env",
+              "HOME=/tmp/home",
+              "--env",
+              "TMPDIR=/tmp",
+              "--env",
+              "XDG_CACHE_HOME=/tmp/cache",
+              "--env",
+              "PYTHONPYCACHEPREFIX=/tmp/pycache",
+              "--volume",
+              "/tmp/forge-cp2-ozVlV6-final/container-cp20/shared:/shared:rw",
+              "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+              "python3",
+              "-",
+              "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+            ],
+            "Domainname": "",
+            "Entrypoint": "",
+            "Env": [
+              "HOME=/tmp/home",
+              "TMPDIR=/tmp",
+              "XDG_CACHE_HOME=/tmp/cache",
+              "PYTHONPYCACHEPREFIX=/tmp/pycache",
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+              "container=podman"
+            ],
+            "HealthcheckOnFailureAction": "none",
+            "Hostname": "aa8767edf5b8",
+            "Image": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+            "Labels": {
+              "io.buildah.version": "1.33.7",
+              "org.opencontainers.image.version": "24.04"
+            },
+            "OnBuild": null,
+            "OpenStdin": true,
+            "Passwd": true,
+            "StdinOnce": false,
+            "StopSignal": 15,
+            "StopTimeout": 10,
+            "Timeout": 0,
+            "Tty": false,
+            "Umask": "0022",
+            "User": "1000:1000",
+            "Volumes": null,
+            "WorkingDir": "/tmp",
+            "sdNotifyMode": "container"
+          },
+          "ConmonPidFile": "/run/user/1000/containers/overlay-containers/aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f/userdata/conmon.pid",
+          "Created": "2026-10-20T19:20:28.158731838+03:00",
+          "Dependencies": [],
+          "Driver": "overlay",
+          "EffectiveCaps": null,
+          "ExecIDs": [],
+          "GraphDriver": {
+            "Data": {
+              "LowerDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/0b4b151e224e0bdadc96bcd68365bfd5a2387abd3ecd9985829084590ee9033f/diff:/home/dev_kaeem/.local/share/containers/storage/overlay/ccc584eb258259693708e1010baac4b35d39fd670981ef73fe21c31cc4191a9d/diff:/home/dev_kaeem/.local/share/containers/storage/overlay/32ab39660fd51c6dc3aae486b42d42bbe8fe4c1db78eaf57bb9c21198de48a16/diff",
+              "UpperDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/170059cd27045c30d217e56a7e1448791f01c8b6263869a5f766e8ed9fd69787/diff",
+              "WorkDir": "/home/dev_kaeem/.local/share/containers/storage/overlay/170059cd27045c30d217e56a7e1448791f01c8b6263869a5f766e8ed9fd69787/work"
+            },
+            "Name": "overlay"
+          },
+          "HostConfig": {
+            "AutoRemove": true,
+            "Binds": [
+              "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro,rprivate,rbind",
+              "/home/dev_kaeem/venvs/forge312:/venv:ro,rprivate,rbind",
+              "/tmp/forge-cp2-ozVlV6-final/container-cp20/shared:/shared:rw,rprivate,rbind"
+            ],
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceWriteIOps": null,
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "CapAdd": [],
+            "CapDrop": [
+              "CAP_CHOWN",
+              "CAP_DAC_OVERRIDE",
+              "CAP_FOWNER",
+              "CAP_FSETID",
+              "CAP_KILL",
+              "CAP_NET_BIND_SERVICE",
+              "CAP_SETFCAP",
+              "CAP_SETGID",
+              "CAP_SETPCAP",
+              "CAP_SETUID",
+              "CAP_SYS_CHROOT"
+            ],
+            "Cgroup": "",
+            "CgroupConf": null,
+            "CgroupManager": "systemd",
+            "CgroupMode": "private",
+            "CgroupParent": "user.slice",
+            "Cgroups": "default",
+            "ConsoleSize": [
+              0,
+              0
+            ],
+            "ContainerIDFile": "/tmp/forge-cp2-ozVlV6-final/container-cp20/2b44b77d16f32691.cid",
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpuShares": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DiskQuota": 0,
+            "Dns": [],
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": [],
+            "GroupAdd": [],
+            "IDMappings": {
+              "GidMap": [
+                "0:1:1000",
+                "1000:0:1",
+                "1001:1001:64536"
+              ],
+              "UidMap": [
+                "0:1:1000",
+                "1000:0:1",
+                "1001:1001:64536"
+              ]
+            },
+            "IOMaximumBandwidth": 0,
+            "IOMaximumIOps": 0,
+            "IpcMode": "shareable",
+            "Isolation": "",
+            "KernelMemory": 0,
+            "Links": null,
+            "LogConfig": {
+              "Config": null,
+              "Path": "",
+              "Size": "0B",
+              "Tag": "",
+              "Type": "journald"
+            },
+            "Memory": 0,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": 0,
+            "NanoCpus": 0,
+            "NetworkMode": "none",
+            "OomKillDisable": false,
+            "OomScoreAdj": 0,
+            "PidMode": "private",
+            "PidsLimit": 2048,
+            "PortBindings": {},
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "RestartPolicy": {
+              "MaximumRetryCount": 0,
+              "Name": ""
+            },
+            "Runtime": "oci",
+            "SecurityOpt": [
+              "no-new-privileges"
+            ],
+            "ShmSize": 65536000,
+            "Tmpfs": {
+              "/dev/shm": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/run": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/tmp": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup",
+              "/var/tmp": "rw,nosuid,nodev,mode=1777,rprivate,tmpcopyup"
+            },
+            "UTSMode": "private",
+            "Ulimits": [],
+            "UsernsMode": "private",
+            "VolumeDriver": "",
+            "VolumesFrom": null
+          },
+          "HostnamePath": "",
+          "HostsPath": "",
+          "Id": "aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f",
+          "Image": "2d2651e4d002c518bb669cb044209897ff02e33318a4b92ac185cf23be33f532",
+          "ImageDigest": "sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+          "ImageName": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+          "IsInfra": false,
+          "IsService": false,
+          "KubeExitCodePropagation": "invalid",
+          "MountLabel": "",
+          "Mounts": [
+            {
+              "Destination": "/source",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": false,
+              "Source": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+              "Type": "bind"
+            },
+            {
+              "Destination": "/venv",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": false,
+              "Source": "/home/dev_kaeem/venvs/forge312",
+              "Type": "bind"
+            },
+            {
+              "Destination": "/shared",
+              "Driver": "",
+              "Mode": "",
+              "Options": [
+                "rbind"
+              ],
+              "Propagation": "rprivate",
+              "RW": true,
+              "Source": "/tmp/forge-cp2-ozVlV6-final/container-cp20/shared",
+              "Type": "bind"
+            }
+          ],
+          "Name": "peaceful_dubinsky",
+          "Namespace": "",
+          "NetworkSettings": {
+            "Bridge": "",
+            "EndpointID": "",
+            "Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "HairpinMode": false,
+            "IPAddress": "",
+            "IPPrefixLen": 0,
+            "IPv6Gateway": "",
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "MacAddress": "",
+            "Networks": {
+              "none": {
+                "DriverOpts": null,
+                "EndpointID": "",
+                "Gateway": "",
+                "GlobalIPv6Address": "",
+                "GlobalIPv6PrefixLen": 0,
+                "IPAMConfig": null,
+                "IPAddress": "",
+                "IPPrefixLen": 0,
+                "IPv6Gateway": "",
+                "Links": null,
+                "MacAddress": "",
+                "NetworkID": "none"
+              }
+            },
+            "Ports": {},
+            "SandboxID": "",
+            "SandboxKey": ""
+          },
+          "OCIRuntime": "crun",
+          "Path": "python3",
+          "PidFile": "/run/user/1000/containers/overlay-containers/aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f/userdata/pidfile",
+          "Pod": "",
+          "ProcessLabel": "",
+          "ResolvConfPath": "",
+          "RestartCount": 0,
+          "Rootfs": "",
+          "State": {
+            "CheckpointedAt": "0001-01-01T00:00:00Z",
+            "Dead": false,
+            "Error": "",
+            "ExitCode": 0,
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+              "FailingStreak": 0,
+              "Log": null,
+              "Status": ""
+            },
+            "OOMKilled": false,
+            "OciVersion": "1.1.0",
+            "Paused": false,
+            "Pid": 0,
+            "Restarting": false,
+            "RestoredAt": "0001-01-01T00:00:00Z",
+            "Running": false,
+            "StartedAt": "0001-01-01T00:00:00Z",
+            "Status": "created"
+          },
+          "StaticDir": "/home/dev_kaeem/.local/share/containers/storage/overlay-containers/aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f/userdata",
+          "lockNumber": 0
+        }
+      ],
+      "restart": {
+        "returncode": 125,
+        "stderr": "Error: no container with name or ID \"aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f\" found: no such container\n",
+        "stdout": ""
+      },
+      "returncode": 0,
+      "start_argv": [
+        "podman",
+        "start",
+        "--attach",
+        "--interactive",
+        "aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f"
+      ],
+      "stderr": "",
+      "stdout": "{\"container_id\": null, \"containerenv\": \"\", \"cwd\": \"/tmp\", \"environment\": {\"HOME\": \"/tmp/home\", \"HOME_seen\": null, \"PYTHONPYCACHEPREFIX\": \"/tmp/pycache\", \"PYTHONPYCACHEPREFIX_seen\": null, \"TMPDIR\": \"/tmp\", \"TMPDIR_seen\": null, \"XDG_CACHE_HOME\": \"/tmp/cache\", \"XDG_CACHE_HOME_seen\": null}, \"interfaces\": [\"lo\"], \"machine\": \"aa8767edf5b8\", \"mountinfo\": \"570 433 0:81 / / ro,relatime - overlay overlay rw,lowerdir=/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7:/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7/../diff1:/home/dev_kaeem/.local/share/containers/storage/overlay/l/KIMJ3FO6WVHDSTOF6NVPL2V3MP:/home/dev_kaeem/.local/share/containers/storage/overlay/l/J2XILIV6KG237ZWC6HOFVURHAX,upperdir=/home/dev_kaeem/.local/share/containers/storage/overlay/170059cd27045c30d217e56a7e1448791f01c8b6263869a5f766e8ed9fd69787/diff,workdir=/home/dev_kaeem/.local/share/containers/storage/overlay/170059cd27045c30d217e56a7e1448791f01c8b6263869a5f766e8ed9fd69787/work,redirect_dir=nofollow,uuid=on,volatile,userxattr\\n571 570 0:84 / /dev rw,nosuid - tmpfs tmpfs rw,size=65536k,mode=755,uid=100000,gid=100000\\n564 570 8:48 /home/dev_kaeem/venvs/forge312 /venv ro,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n572 570 0:85 / /tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n565 570 8:48 /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo /source ro,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n573 570 0:86 / /run rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n566 570 8:48 /tmp/forge-cp2-ozVlV6-final/container-cp20/shared /shared rw,relatime - ext4 /dev/sdd rw,discard,errors=remount-ro,data=ordered\\n574 570 0:87 / /sys ro,nosuid,nodev,noexec,relatime - sysfs sysfs rw\\n575 570 0:88 / /proc rw,nosuid,nodev,noexec,relatime - proc proc rw\\n576 570 0:89 / /var/tmp rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n577 571 0:90 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=100005,mode=620,ptmxmode=666\\n578 571 0:83 / /dev/mqueue rw,nosuid,nodev,noexec,relatime - mqueue mqueue rw\\n579 571 0:91 / /dev/shm rw,nosuid,nodev,relatime - tmpfs tmpfs rw,uid=100000,gid=100000\\n567 570 0:79 /containers/overlay-containers/aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f/userdata/hosts /etc/hosts ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n568 573 0:79 /containers/overlay-containers/aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f/userdata/.containerenv /run/.containerenv ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n569 570 0:79 /containers/overlay-containers/aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f/userdata/hostname /etc/hostname ro,nosuid,nodev,noexec,relatime - tmpfs tmpfs rw,size=2460788k,nr_inodes=615197,mode=700,uid=1000,gid=1000\\n580 574 0:23 / /sys/fs/cgroup ro,nosuid,nodev,noexec,relatime - cgroup2 cgroup2 rw,nsdelegate\\n581 571 0:5 /null /dev/null rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n582 571 0:5 /zero /dev/zero rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n583 571 0:5 /full /dev/full rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n584 571 0:5 /tty /dev/tty rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n585 571 0:5 /random /dev/random rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n586 571 0:5 /urandom /dev/urandom rw,nosuid,noexec,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n587 575 0:92 / /proc/acpi ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n588 575 0:5 /null /proc/kcore ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n589 575 0:5 /null /proc/keys ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n590 575 0:5 /null /proc/latency_stats ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n591 575 0:5 /null /proc/timer_list ro,nosuid,relatime - devtmpfs none rw,size=12298904k,nr_inodes=3074726,mode=755\\n592 575 0:93 / /proc/scsi ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n593 574 0:94 / /sys/firmware ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n594 574 0:95 / /sys/fs/selinux ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n595 574 0:96 / /sys/dev/block ro,relatime - tmpfs tmpfs rw,size=0k,uid=100000,gid=100000\\n596 575 0:88 /bus /proc/bus ro,nosuid,nodev,noexec,relatime - proc proc rw\\n597 575 0:88 /fs /proc/fs ro,nosuid,nodev,noexec,relatime - proc proc rw\\n598 575 0:88 /irq /proc/irq ro,nosuid,nodev,noexec,relatime - proc proc rw\\n599 575 0:88 /sys /proc/sys ro,nosuid,nodev,noexec,relatime - proc proc rw\\n600 575 0:88 /sysrq-trigger /proc/sysrq-trigger ro,nosuid,nodev,noexec,relatime - proc proc rw\\n\", \"mounts\": [{\"canary\": \"READ_ONLY\", \"device\": \"0:81\", \"fstype\": \"overlay\", \"id\": \"570\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"433\", \"root\": \"/\", \"source\": \"overlay\", \"super_options\": [\"rw\", \"lowerdir=/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7:/home/dev_kaeem/.local/share/containers/storage/overlay/l/JK6427SMG46OC4AYCNQ4DM2GQ7/../diff1:/home/dev_kaeem/.local/share/containers/storage/overlay/l/KIMJ3FO6WVHDSTOF6NVPL2V3MP:/home/dev_kaeem/.local/share/containers/storage/overlay/l/J2XILIV6KG237ZWC6HOFVURHAX\", \"upperdir=/home/dev_kaeem/.local/share/containers/storage/overlay/170059cd27045c30d217e56a7e1448791f01c8b6263869a5f766e8ed9fd69787/diff\", \"workdir=/home/dev_kaeem/.local/share/containers/storage/overlay/170059cd27045c30d217e56a7e1448791f01c8b6263869a5f766e8ed9fd69787/work\", \"redirect_dir=nofollow\", \"uuid=on\", \"volatile\", \"userxattr\"], \"target\": \"/\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:84\", \"error\": \"PermissionError\", \"fstype\": \"tmpfs\", \"id\": \"571\", \"optional\": [], \"options\": [\"rw\", \"nosuid\"], \"parent\": \"570\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=65536k\", \"mode=755\", \"uid=100000\", \"gid=100000\"], \"target\": \"/dev\"}, {\"canary\": \"READ_ONLY\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"564\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"570\", \"root\": \"/home/dev_kaeem/venvs/forge312\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/venv\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:85\", \"fstype\": \"tmpfs\", \"id\": \"572\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/tmp\"}, {\"canary\": \"READ_ONLY\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"565\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"570\", \"root\": \"/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/source\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:86\", \"fstype\": \"tmpfs\", \"id\": \"573\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/run\"}, {\"canary\": \"WRITTEN\", \"device\": \"8:48\", \"fstype\": \"ext4\", \"id\": \"566\", \"optional\": [], \"options\": [\"rw\", \"relatime\"], \"parent\": \"570\", \"root\": \"/tmp/forge-cp2-ozVlV6-final/container-cp20/shared\", \"seen\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"source\": \"/dev/sdd\", \"super_options\": [\"rw\", \"discard\", \"errors=remount-ro\", \"data=ordered\"], \"target\": \"/shared\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:87\", \"fstype\": \"sysfs\", \"id\": \"574\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"source\": \"sysfs\", \"super_options\": [\"rw\"], \"target\": \"/sys\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"575\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:89\", \"fstype\": \"tmpfs\", \"id\": \"576\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"570\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/var/tmp\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:90\", \"fstype\": \"devpts\", \"id\": \"577\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"devpts\", \"super_options\": [\"rw\", \"gid=100005\", \"mode=620\", \"ptmxmode=666\"], \"target\": \"/dev/pts\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:83\", \"fstype\": \"mqueue\", \"id\": \"578\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"source\": \"mqueue\", \"super_options\": [\"rw\"], \"target\": \"/dev/mqueue\"}, {\"canary\": \"WRITTEN\", \"device\": \"0:91\", \"fstype\": \"tmpfs\", \"id\": \"579\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"nodev\", \"relatime\"], \"parent\": \"571\", \"root\": \"/\", \"seen\": null, \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"uid=100000\", \"gid=100000\"], \"target\": \"/dev/shm\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"567\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/containers/overlay-containers/aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f/userdata/hosts\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/etc/hosts\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"568\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"573\", \"root\": \"/containers/overlay-containers/aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f/userdata/.containerenv\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/run/.containerenv\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:79\", \"fstype\": \"tmpfs\", \"id\": \"569\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"570\", \"root\": \"/containers/overlay-containers/aa8767edf5b8bddd6235a085ff86a4d0c5d355743e9e10377687925a0300b01f/userdata/hostname\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=2460788k\", \"nr_inodes=615197\", \"mode=700\", \"uid=1000\", \"gid=1000\"], \"target\": \"/etc/hostname\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:23\", \"fstype\": \"cgroup2\", \"id\": \"580\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"574\", \"root\": \"/\", \"source\": \"cgroup2\", \"super_options\": [\"rw\", \"nsdelegate\"], \"target\": \"/sys/fs/cgroup\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"581\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/null\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"582\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/zero\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/zero\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"583\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/full\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/full\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"584\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/tty\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/tty\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"585\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/random\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/random\"}, {\"canary\": \"UNPROBEABLE\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"586\", \"optional\": [], \"options\": [\"rw\", \"nosuid\", \"noexec\", \"relatime\"], \"parent\": \"571\", \"root\": \"/urandom\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/dev/urandom\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:92\", \"fstype\": \"tmpfs\", \"id\": \"587\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"575\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/proc/acpi\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"588\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"575\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/kcore\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"589\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"575\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/keys\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"590\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"575\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/latency_stats\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:5\", \"fstype\": \"devtmpfs\", \"id\": \"591\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"relatime\"], \"parent\": \"575\", \"root\": \"/null\", \"source\": \"none\", \"super_options\": [\"rw\", \"size=12298904k\", \"nr_inodes=3074726\", \"mode=755\"], \"target\": \"/proc/timer_list\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:93\", \"fstype\": \"tmpfs\", \"id\": \"592\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"575\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/proc/scsi\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:94\", \"fstype\": \"tmpfs\", \"id\": \"593\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"574\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/firmware\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:95\", \"fstype\": \"tmpfs\", \"id\": \"594\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"574\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/fs/selinux\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:96\", \"fstype\": \"tmpfs\", \"id\": \"595\", \"optional\": [], \"options\": [\"ro\", \"relatime\"], \"parent\": \"574\", \"root\": \"/\", \"source\": \"tmpfs\", \"super_options\": [\"rw\", \"size=0k\", \"uid=100000\", \"gid=100000\"], \"target\": \"/sys/dev/block\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"596\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"575\", \"root\": \"/bus\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/bus\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"597\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"575\", \"root\": \"/fs\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/fs\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"598\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"575\", \"root\": \"/irq\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/irq\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"599\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"575\", \"root\": \"/sys\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/sys\"}, {\"canary\": \"READ_ONLY\", \"device\": \"0:88\", \"fstype\": \"proc\", \"id\": \"600\", \"optional\": [], \"options\": [\"ro\", \"nosuid\", \"nodev\", \"noexec\", \"relatime\"], \"parent\": \"575\", \"root\": \"/sysrq-trigger\", \"source\": \"proc\", \"super_options\": [\"rw\"], \"target\": \"/proc/sysrq-trigger\"}], \"network\": {\"external\": \"OSError\", \"host_listener\": \"ConnectionRefusedError\"}, \"status\": {\"CapAmb\": \"\\t0000000000000000\", \"CapBnd\": \"\\t0000000000000000\", \"CapEff\": \"\\t0000000000000000\", \"CapInh\": \"\\t0000000000000000\", \"CapPrm\": \"\\t0000000000000000\", \"CoreDumping\": \"\\t0\", \"Cpus_allowed\": \"\\tfffff\", \"Cpus_allowed_list\": \"\\t0-19\", \"FDSize\": \"\\t64\", \"Gid\": \"\\t1000\\t1000\\t1000\\t1000\", \"Groups\": \"\\t1000 \", \"HugetlbPages\": \"\\t       0 kB\", \"Kthread\": \"\\t0\", \"Mems_allowed\": \"\\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\", \"Mems_allowed_list\": \"\\t0\", \"NSpgid\": \"\\t1\", \"NSpid\": \"\\t1\", \"NSsid\": \"\\t1\", \"NStgid\": \"\\t1\", \"Name\": \"\\tpython3\", \"Ngid\": \"\\t0\", \"NoNewPrivs\": \"\\t1\", \"PPid\": \"\\t0\", \"Pid\": \"\\t1\", \"RssAnon\": \"\\t    9456 kB\", \"RssFile\": \"\\t    9600 kB\", \"RssShmem\": \"\\t       0 kB\", \"Seccomp\": \"\\t2\", \"Seccomp_filters\": \"\\t1\", \"ShdPnd\": \"\\t0000000000000000\", \"SigBlk\": \"\\t0000000000000000\", \"SigCgt\": \"\\t0000000000000002\", \"SigIgn\": \"\\t0000000001001000\", \"SigPnd\": \"\\t0000000000000000\", \"SigQ\": \"\\t0/96085\", \"SpeculationIndirectBranch\": \"\\tconditional enabled\", \"Speculation_Store_Bypass\": \"\\tthread vulnerable\", \"State\": \"\\tR (running)\", \"THP_enabled\": \"\\t1\", \"Tgid\": \"\\t1\", \"Threads\": \"\\t1\", \"TracerPid\": \"\\t0\", \"Uid\": \"\\t1000\\t1000\\t1000\\t1000\", \"Umask\": \"\\t0022\", \"VmData\": \"\\t   10280 kB\", \"VmExe\": \"\\t    2956 kB\", \"VmHWM\": \"\\t   19156 kB\", \"VmLck\": \"\\t       0 kB\", \"VmLib\": \"\\t    5788 kB\", \"VmPTE\": \"\\t      84 kB\", \"VmPeak\": \"\\t   26480 kB\", \"VmPin\": \"\\t       0 kB\", \"VmRSS\": \"\\t   19056 kB\", \"VmSize\": \"\\t   25916 kB\", \"VmStk\": \"\\t     132 kB\", \"VmSwap\": \"\\t       0 kB\", \"nonvoluntary_ctxt_switches\": \"\\t2\", \"untag_mask\": \"\\t0xffffffffffffffff\", \"voluntary_ctxt_switches\": \"\\t7\"}, \"uid\": 1000, \"writes\": {\"source\": \"OSError\", \"venv\": \"OSError\"}}\n"
+    },
+    {
+      "argv": [
+        "podman",
+        "create",
+        "--pull=never",
+        "--rm",
+        "--read-only",
+        "--network=none",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--userns=keep-id",
+        "--cidfile",
+        "/tmp/forge-cp2-ozVlV6-final/container-cp20/ade1455efb1e65b1.cid",
+        "-i",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/var/tmp:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/run:rw,nosuid,nodev,mode=1777",
+        "--tmpfs",
+        "/dev/shm:rw,nosuid,nodev,mode=1777",
+        "--volume",
+        "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo:/source:ro",
+        "--volume",
+        "/home/dev_kaeem/venvs/forge312:/venv:ro",
+        "--workdir",
+        "/tmp",
+        "--env",
+        "HOME=/tmp/home",
+        "--env",
+        "TMPDIR=/tmp",
+        "--env",
+        "XDG_CACHE_HOME=/tmp/cache",
+        "--env",
+        "PYTHONPYCACHEPREFIX=/tmp/pycache",
+        "localhost/forge-card@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "python3",
+        "-",
+        "{\"write_canaries\": true, \"marker\": \"cp2-b8bc2cfc1e4739299ef8e48f\", \"token\": \"0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28\", \"read_only_files\": {\"source\": \"/source/benchmarks/genesis_lite/v0_3/isolation.py\", \"venv\": \"/venv/pyvenv.cfg\"}, \"network_targets\": {\"host_listener\": [\"127.0.0.1\", 57759], \"external\": [\"192.0.2.1\", 9]}}"
+      ],
+      "cid": null,
+      "config": {
+        "marker": "cp2-b8bc2cfc1e4739299ef8e48f",
+        "network_targets": {
+          "external": [
+            "192.0.2.1",
+            9
+          ],
+          "host_listener": [
+            "127.0.0.1",
+            57759
+          ]
+        },
+        "read_only_files": {
+          "source": "/source/benchmarks/genesis_lite/v0_3/isolation.py",
+          "venv": "/venv/pyvenv.cfg"
+        },
+        "token": "0470e9b8072c589fb57ad5627656705dfb738a1c7915a6fb48ea8d3fae000c28",
+        "write_canaries": true
+      },
+      "create_stderr": "Error: localhost/forge-card@sha256:0000000000000000000000000000000000000000000000000000000000000000: image not known\n",
+      "create_stdout": "",
+      "inspect": null,
+      "returncode": 125,
+      "start_argv": null,
+      "stderr": "Error: localhost/forge-card@sha256:0000000000000000000000000000000000000000000000000000000000000000: image not known\n",
+      "stdout": ""
+    }
+  ]
+}

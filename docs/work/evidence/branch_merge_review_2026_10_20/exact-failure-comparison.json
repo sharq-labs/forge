@@ -1,0 +1,15 @@
+{
+  "main_failures": [
+    "tests/foundations/test_v2_blindfold.py::test_the_subprocess_escrow_keeps_its_secrets_in_the_child",
+    "tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic",
+    "tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable"
+  ],
+  "changed_failures": [
+    "tests/foundations/test_v2_blindfold.py::test_the_subprocess_escrow_keeps_its_secrets_in_the_child",
+    "tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable"
+  ],
+  "new_failures": [],
+  "removed_failures": [
+    "tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic"
+  ]
+}

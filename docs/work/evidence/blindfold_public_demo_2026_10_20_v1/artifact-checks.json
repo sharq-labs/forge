@@ -1,0 +1,10 @@
+{
+  "html_card_count": 36,
+  "embedded_json_matches": true,
+  "semantic_replay_matches": 6,
+  "cp2_test_source_hashes_match": true,
+  "cp2_evidence_manifest_matches": true,
+  "production_file_hashes_match": 4608,
+  "visual_render": "BLOCKED_BY_BROWSER_FILE_URL_POLICY",
+  "codex_file_panel": "QUEUED"
+}

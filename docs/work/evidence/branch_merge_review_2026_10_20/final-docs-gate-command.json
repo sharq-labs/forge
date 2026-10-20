@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe",
+    "tools/forge_check.py",
+    "--changed",
+    "--base",
+    "origin/main"
+  ],
+  "cwd": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f",
+  "head": "d293fa2e1d420ba00f4507bca1ff38f8e08d73d1",
+  "environment": {
+    "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f",
+    "TMPDIR": "D:/tmp/merge-review-final",
+    "PYTEST_ADDOPTS": "--basetemp=D:/tmp/merge-review-final/bt"
+  },
+  "exit_code": 1,
+  "elapsed_seconds": 13.897056099958718
+}

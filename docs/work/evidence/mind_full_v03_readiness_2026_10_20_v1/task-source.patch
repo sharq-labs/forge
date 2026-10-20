@@ -1,0 +1,2915 @@
+--- /dev/null
++++ b/src/engcore/mind/minimal/__init__.py
+@@ -0,0 +1,39 @@
++"""The Minimal Mind (BR-MIND-01): the smallest closed scientific loop, built on the canonical owners.
++
++    state view -> competing hypotheses -> pre-result predictions -> candidate experiments -> selection -> execution
++    -> evidence release / sealed falsifier verdicts -> belief update -> stop / replan
++
++Canonical owners reused, never duplicated: hypotheses are :class:`engcore.sria.decision.Hypothesis` records; their
++statuses come only from :mod:`engcore.claims.falsification` (sealed falsifiers, an exposure authority's clock, verified
++against the expected registry anchor); candidates carry :class:`engcore.sria.decision.ActionProposal` provenance with an
++:class:`~engcore.sria.decision.ActionFamily`; outside suggestions enter only as
++:class:`~engcore.sria.decision.ExternalSuggestion`; utility terms are :class:`~engcore.sria.decision.ScoreComponent`
++records; the search's multiplicity is counted by :class:`engcore.claims.multiplicity.MultiplicityLedger`.
++
++What is new here (no existing owner computes it): a posterior over rival structures from admitted evidence, a
++hypothesis-conditioned outcome model, an expected-discrimination experiment selection, a falsifier role, a stopping
++rule, and content-addressed step records with exact replay.  This layer issues no verdict, admits no evidence, sets
++no uncertainty an authority did not derive, and promotes nothing: its conclusion is a proposal for the caller's
++authority.
++"""
++
++from .competition import HypothesisCompetition, mixture_logscore, pure_error
++from .experiments import ExperimentCandidate, Selection, from_suggestion
++from .outcome_model import AdmittedObservation, OutcomeModel, OutcomeModelRefused, OutcomePrediction
++from .problem import ExperimentalProblem, InputSpec, ProblemRefused
++from .runner import (
++    FULL, MIND_ID, MIND_VERSION, NO_ADAPTIVE_SELECTION, NO_BELIEF_UPDATE, NO_FALSIFIER, PRECISION, VARIANTS,
++    ConclusionKind, FittedLaw, MindConclusion, MindConfig, MindRun, ObservationRefused, conclude, replay, run_mind,
++)
++from .stopping import StopDecision, StopKind
++from .structures import Structure, StructureRefused
++from .trace import ReplayRefused, verify_chain
++
++__all__ = [
++    "AdmittedObservation", "ConclusionKind", "ExperimentCandidate", "ExperimentalProblem", "FULL", "FittedLaw",
++    "HypothesisCompetition", "InputSpec", "MIND_ID", "MIND_VERSION", "MindConclusion", "MindConfig", "MindRun",
++    "NO_ADAPTIVE_SELECTION", "NO_BELIEF_UPDATE", "NO_FALSIFIER", "ObservationRefused", "OutcomeModel", "OutcomeModelRefused",
++    "OutcomePrediction", "PRECISION", "ProblemRefused", "ReplayRefused", "Selection", "StopDecision", "StopKind", "Structure",
++    "StructureRefused", "VARIANTS", "conclude", "from_suggestion", "mixture_logscore", "pure_error", "replay", "run_mind",
++    "verify_chain",
++]
+--- /dev/null
++++ b/src/engcore/mind/minimal/competition.py
+@@ -0,0 +1,372 @@
++"""HypothesisCompetition (M-2), BeliefUpdate (M-7) and the read-only MindStateView (M-1).
++
++The competition holds EVERY rival structure for the whole run.  Nothing is ever deleted:
++
++* a hypothesis's scientific STATUS (PROPOSED, SURVIVING, REFUTED, UNKNOWN) is set only by
++  :func:`engcore.claims.falsification.apply_verdicts` from sealed falsifier verdicts, and every status the Mind acts on
++  is first checked with :func:`~engcore.claims.falsification.verify_status` against the registry anchor the Mind
++  expects (a status label alone is never trusted -- deep-audit observation OBS-06);
++* a hypothesis's STANDING (its posterior weight) is a number derived from admitted evidence by the outcome model and the
++  declared prior, with its basis digest; it is not a status, and a low weight removes nothing;
++* a REFUTED hypothesis stays in the competition with its refuting verdicts; it only stops receiving weight.
++
++The exposure authority here is the Mind's local wrapper around the observations the escrow returns: it RELEASES each
++observation once, on its clock, so a falsifier sealed before a query is provably sealed before its result.  The
++observation uncertainty attached to a release is an ESTIMATE from replicate observations (a pooled pure-error
++standard deviation, raised to its one-sided 95% upper confidence bound), with the replicates' evidence ids as its
++basis.  Without a replicate degree of freedom it is UNKNOWN (``None``) and every verdict is INCONCLUSIVE: missing
++uncertainty never becomes zero.  Within one process the authority's key protects ordering by construction only (the
++Blindfold escrow's SECURITY_BOUNDARY_NOT_PROVEN caveat applies unchanged).
++"""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import math
++from dataclasses import dataclass
++from typing import Any, Iterable, Mapping, Sequence
++
++import numpy as np
++
++from ...claims.falsification import (
++    CriterionKind, EvidenceItem, EvidenceSource, ExposureAuthority, FalsificationRefused, Falsifier, K_MAX,
++    MAX_RELATIVE_RESOLUTION, apply_verdicts, verify_status,
++)
++from ...sria.decision import Hypothesis, HypothesisStatus, ProposalProvenance, ProposerKind
++from .outcome_model import AdmittedObservation, FittedStructure, OutcomeModel, OutcomePrediction
++from .problem import ExperimentalProblem
++from .structures import PRIOR_SPEC, Structure, hypothesis_for, log_prior, structure_from_proposal, structures_for
++
++STATE_VIEW_SCHEMA = "forge.mind.minimal.state_view/1"
++#: coverage factor of every sealed falsifier (policy ceiling K_MAX in claims.falsification)
++FALSIFIER_K = 4.0
++#: one-sided 5% lower quantiles of chi-square(dof), dof = 1..10 (exact); Wilson-Hilferty beyond
++_CHI2_LOW05 = (0.003932, 0.102587, 0.351846, 0.710723, 1.145476, 1.635383, 2.167350, 2.732637, 3.325113, 3.940299)
++#: hypotheses below this posterior weight are not tested by a sealed falsifier at a step (they stay in the competition)
++TEST_WEIGHT_FLOOR = 0.02
++#: largest |ln y| a sealed prediction may state (exp() of it stays a finite double with room for k * u)
++MAX_LN = 600.0
++MAX_TESTED_PER_STEP = 4
++
++
++def _digest(payload: Any) -> str:
++    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
++
++
++def _chi2_low05(dof: int) -> float:
++    if dof <= len(_CHI2_LOW05):
++        return _CHI2_LOW05[dof - 1]
++    z = -1.6448536269514722
++    return dof * (1 - 2 / (9 * dof) + z * math.sqrt(2 / (9 * dof))) ** 3
++
++
++@dataclass(frozen=True)
++class NoiseEstimate:
++    """Pooled replicate (pure-error) sd of ln(observable) and its 95% upper bound; None when no replicate exists."""
++
++    sd: float | None
++    upper95: float | None
++    dof: int
++    basis: tuple[str, ...]
++
++    def to_dict(self) -> dict[str, Any]:
++        r = (lambda x: None if x is None else round(x, 9))
++        return {"sd_ln": r(self.sd), "upper95_ln": r(self.upper95), "dof": self.dof, "basis": list(self.basis),
++                "kind": "ESTIMATED_FROM_REPLICATES" if self.dof else "UNKNOWN"}
++
++
++def pure_error(rows: Sequence[AdmittedObservation]) -> NoiseEstimate:
++    groups: dict[str, list[AdmittedObservation]] = {}
++    for r in rows:
++        groups.setdefault(json.dumps(dict(sorted(r.settings.items())), sort_keys=True), []).append(r)
++    ss, dof, basis = 0.0, 0, []
++    for members in groups.values():
++        if len(members) > 1:
++            logs = [math.log(m.value) for m in members if m.value > 0]
++            if len(logs) == len(members):
++                mu = sum(logs) / len(logs)
++                ss += sum((v - mu) ** 2 for v in logs)
++                dof += len(logs) - 1
++                basis += [m.evidence_id for m in members]
++    if dof == 0:
++        return NoiseEstimate(None, None, 0, ())
++    sd = math.sqrt(ss / dof)
++    return NoiseEstimate(sd, sd * math.sqrt(dof / _chi2_low05(dof)), dof, tuple(sorted(basis)))
++
++
++@dataclass
++class Rival:
++    structure: Structure
++    hypothesis: Hypothesis
++    ticket: Any
++    log_prior: float
++    fitted: FittedStructure | None = None
++    weight: float | None = None
++
++
++class HypothesisCompetition:
++    """All rivals, their statuses (from the falsification registry only) and their standing (from evidence only)."""
++
++    def __init__(self, problem: ExperimentalProblem, *, seed: int, authority_key: bytes, campaign_id: str,
++                 extra: Iterable[Structure] = (), falsify: bool = True) -> None:
++        self.problem = problem
++        self.model = OutcomeModel(problem)
++        self.falsify = falsify
++        self.authority = ExposureAuthority("forge.mind.minimal.observation_release", key=authority_key, derived_tickets=True)
++        self.registry = self.authority.registry(campaign_id)
++        self.anchor = self.registry.anchor
++        self.rows: list[AdmittedObservation] = []
++        self.items: dict[str, EvidenceItem] = {}
++        self.rivals: dict[str, Rival] = {}
++        self.proposals: list[dict[str, Any]] = []
++        for s in structures_for(problem, extra):
++            self._add(s)
++        self.covmodels: dict = {}
++        self.noise = NoiseEstimate(None, None, 0, ())
++        self.verdict_digests: list[str] = []
++        self._sealed_at: dict[str, set[str]] = {}
++        self._verified: dict[str, HypothesisStatus] = {}
++        self.refit()
++
++    # ---- membership --------------------------------------------------------------------------------------------------
++    def _add(self, s: Structure, proposer: ProposalProvenance | None = None) -> Rival:
++        h = hypothesis_for(s, self.problem, proposer=proposer)
++        if h.hypothesis_id in self.rivals:
++            return self.rivals[h.hypothesis_id]
++        ticket = self.registry.register(h)
++        rival = Rival(s, h, ticket, log_prior(s, self.problem))
++        self.rivals[h.hypothesis_id] = rival
++        return rival
++
++    def ingest_proposal(self, proposal: Mapping[str, Any], *, proposer_kind: ProposerKind | str, proposer_id: str) -> str:
++        """An external (e.g. language-model) structure proposal joins the competition PROPOSED, at the declared prior.
++
++        It names variables only: any status, weight, confidence, uncertainty, threshold or outcome is refused
++        (``StructureRefused``).  A proposal of a structure already in the competition adds its provenance and nothing
++        else -- the same claim is one hypothesis."""
++        s = structure_from_proposal(proposal, self.problem)
++        prov = ProposalProvenance(proposer_kind, proposer_id, proposal_digest=_digest(dict(proposal)))
++        rival = self._add(s, prov)
++        self.proposals.append({"hypothesis_id": rival.hypothesis.hypothesis_id, "provenance": prov.to_dict()})
++        self.refit()
++        return rival.hypothesis.hypothesis_id
++
++    # ---- status (from the registry only) -----------------------------------------------------------------------------
++    def status(self, hid: str) -> HypothesisStatus:
++        h = self.rivals[hid].hypothesis
++        problems = verify_status(h, self.registry, anchor=self.anchor)
++        if problems:
++            raise FalsificationRefused(f"status of {hid} does not verify against the expected registry: {problems}")
++        return h.status
++
++    def refuted(self, hid: str) -> bool:
++        return self.falsify and self.status(hid) is HypothesisStatus.REFUTED
++
++    def faced_decisive_test(self, hid: str) -> bool:
++        """Whether this rival has at least one NOT_REFUTED verdict on its current content (a decisive test it survived)."""
++        h = self.rivals[hid].hypothesis
++        return any(v.verdict.value == "not_refuted" for v in self.registry.verdicts_for(hid, h.content_digest))
++
++    def _verify(self, hid: str) -> None:
++        """Every status the Mind will act on is verified against the expected registry when it is set (OBS-06)."""
++        h = self.rivals[hid].hypothesis
++        problems = verify_status(h, self.registry, anchor=self.anchor)
++        if problems:
++            raise FalsificationRefused(f"status of {hid} does not verify against the expected registry: {problems}")
++        self._verified[h.digest] = h.status
++
++    # ---- belief update (M-7) -----------------------------------------------------------------------------------------
++    def refit(self) -> None:
++        """Refit every non-refuted rival to the admitted evidence and recompute the posterior weights."""
++        self.covmodels = self.model.covariate_models(self.rows) if self.rows else {}
++        self.noise = pure_error(self.rows)
++        logw = {}
++        for hid, r in self.rivals.items():
++            if self.falsify and r.hypothesis.status is HypothesisStatus.REFUTED                     and self._verified.get(r.hypothesis.digest) is HypothesisStatus.REFUTED:
++                r.fitted, r.weight = None, 0.0
++                continue
++            r.fitted = self.model.fit(r.structure, self.rows, hid)
++            if r.fitted.fit_ok:
++                logw[hid] = r.log_prior + float(r.fitted.log_bf_null)
++            else:
++                r.weight = None                         # no number exists: never a default
++        if logw:
++            top = max(logw.values())
++            z = sum(math.exp(v - top) for v in logw.values())
++            for hid, v in logw.items():
++                self.rivals[hid].weight = math.exp(v - top) / z
++
++    def weights(self, *, prior_only: bool = False) -> dict[str, float]:
++        """Posterior weights of the fitted, non-refuted rivals (or, for the fixed-policy ablation, the declared prior
++        renormalised over the same set)."""
++        live = {hid: r for hid, r in self.rivals.items() if r.fitted is not None and r.fitted.fit_ok}
++        if prior_only:
++            if not live:
++                return {}
++            top = max(r.log_prior for r in live.values())
++            z = sum(math.exp(r.log_prior - top) for r in live.values())
++            return {hid: math.exp(r.log_prior - top) / z for hid, r in live.items()}
++        return {hid: float(r.weight) for hid, r in live.items() if r.weight is not None}
++
++    def leading(self, weights: Mapping[str, float] | None = None) -> str | None:
++        w = self.weights() if weights is None else weights
++        return max(sorted(w), key=lambda h: w[h]) if w else None
++
++    # ---- predictions (M-3) --------------------------------------------------------------------------------------------
++    def predictions(self, point: Mapping[str, float], query_ref: str, hids: Iterable[str]) -> dict[str, OutcomePrediction]:
++        out = {}
++        for hid in hids:
++            r = self.rivals[hid]
++            if r.fitted is None:
++                out[hid] = OutcomePrediction(hid, query_ref, False, None, None, None, None, "", reason="REFUTED: not fitted")
++            else:
++                out[hid] = self.model.prediction(r.fitted, point, self.covmodels, query_ref)
++        return out
++
++    # ---- sealed falsifiers ---------------------------------------------------------------------------------------------
++    def seal(self, query_ref: str, settings: Mapping[str, float], predictions: Mapping[str, OutcomePrediction],
++             weights: Mapping[str, float]) -> list[dict]:
++        """Seal one PREDICTION_DEVIATION falsifier per tested hypothesis at this setting, BEFORE its result exists.
++
++        The test conditions are the SETTINGS: the registry refuses a seal where an observation at those settings was
++        already released (a replicate's outcome could be read off the data, so it is never a falsifier test)."""
++        sealed = []
++        if not self.falsify:
++            return sealed
++        conditions = {"settings": dict(sorted((k, float(v)) for k, v in settings.items()))}
++        skey = _digest(conditions)
++        tested = [h for h in sorted(weights, key=lambda h: (-weights[h], h)) if weights[h] >= TEST_WEIGHT_FLOOR][:MAX_TESTED_PER_STEP]
++        for hid in tested:
++            p = predictions.get(hid)
++            r = self.rivals[hid]
++            if p is None or not p.available or r.hypothesis.status is HypothesisStatus.REFUTED:
++                continue
++            if not (math.isfinite(p.mean) and math.isfinite(p.sd_mean) and abs(p.mean) < MAX_LN):
++                sealed.append({"hypothesis_id": hid, "sealed": False,
++                               "reason": "the prediction is not a finite representable value; no falsifier is sealed on it"})
++                continue
++            predicted = math.exp(p.mean)
++            # the structure claims that ln y is its linear form PLUS MEASUREMENT NOISE ONLY: when replicates bound the
++            # measurement noise, its parameter uncertainty is computed with that bound, never with a residual variance
++            # inflated by its own misfit (a misfitting structure would otherwise be too vague ever to be refuted)
++            sd_mean = p.sd_mean
++            fitted = r.fitted
++            if self.noise.upper95 is not None and fitted is not None and fitted.fit_ok and fitted.s2 > 0:
++                own = math.sqrt(fitted.s2 * fitted.dof / max(fitted.dof - 2, 1))
++                sd_mean = p.sd_mean * min(1.0, self.noise.upper95 / own)
++            pred_u = predicted * sd_mean
++            resolution = MAX_RELATIVE_RESOLUTION * predicted
++            if not FALSIFIER_K * pred_u < resolution:
++                sealed.append({"hypothesis_id": hid, "sealed": False,
++                               "reason": "the prediction is too uncertain to be a falsifier (k x u_pred >= resolution)"})
++                continue
++            f = Falsifier(falsifier_id=f"{hid}|{query_ref[:24]}", hypothesis_id=hid,
++                          hypothesis_content_digest=r.hypothesis.content_digest, observable=self.problem.observable,
++                          unit=self.problem.observable_unit or "1", test_conditions=conditions,
++                          evidence_source=EvidenceSource.ESCROW_OBSERVATION, criterion=CriterionKind.PREDICTION_DEVIATION,
++                          parameters={"k": FALSIFIER_K, "predicted": predicted, "prediction_uncertainty": pred_u,
++                                      "resolution": resolution})
++            assert FALSIFIER_K <= K_MAX
++            try:
++                entry = self.registry.seal(f, r.ticket)
++            except FalsificationRefused as exc:
++                sealed.append({"hypothesis_id": hid, "sealed": False, "reason": f"registry refused the seal: {exc}"})
++                continue
++            self._sealed_at.setdefault(skey, set()).add(hid)
++            r.hypothesis = r.hypothesis.revise(falsifier_refs=tuple(sorted({*r.hypothesis.falsifier_refs, f.ref})))
++            sealed.append({"hypothesis_id": hid, "sealed": True, "falsifier_ref": f.ref, "falsifier_digest": f.digest,
++                           "registry_entry": entry.digest})
++        return sealed
++
++    # ---- admission of an executed observation --------------------------------------------------------------------------
++    def admit(self, query_ref: str, settings: Mapping[str, float], observation: Mapping[str, float]) -> tuple[AdmittedObservation, EvidenceItem, list[dict]]:
++        """Release the observation on the authority's clock, judge every sealed falsifier it matches, refit."""
++        value = float(observation[self.problem.observable])
++        covs = {c: float(observation[c]) for c in self.problem.covariates if c in observation}
++        provisional = [*self.rows, AdmittedObservation(query_ref, "", query_ref, dict(settings), covs, value)]
++        noise = pure_error(provisional)
++        u = None if noise.upper95 is None or not math.isfinite(value) else abs(value) * noise.upper95
++        conditions = {"settings": dict(sorted((k, float(v)) for k, v in settings.items()))}
++        item = self.authority.release(evidence_id=query_ref, source=EvidenceSource.ESCROW_OBSERVATION,
++                                      observable=self.problem.observable, unit=self.problem.observable_unit or "1",
++                                      value=value, uncertainty=u, conditions={**conditions, "query_ref": query_ref})
++        row = AdmittedObservation(query_ref, item.content_digest, query_ref, dict(settings), covs, value)
++        self.rows.append(row)
++        self.items[query_ref] = item
++        verdicts = []
++        if self.falsify:
++            for hid in sorted(self._sealed_at.get(_digest(conditions), ())):
++                r = self.rivals[hid]
++                before = r.hypothesis.status
++                r.hypothesis = apply_verdicts(r.hypothesis, self.registry)
++                self._verify(hid)
++                for b in r.hypothesis.status_basis:
++                    if b.verdict_digest not in self.verdict_digests:
++                        self.verdict_digests.append(b.verdict_digest)
++                verdicts.append({"hypothesis_id": hid, "before": before.value, "after": r.hypothesis.status.value,
++                                 "basis": [b.verdict_digest for b in r.hypothesis.status_basis]})
++        self.refit()
++        return row, item, verdicts
++
++    # ---- M-1: read-only view -----------------------------------------------------------------------------------------
++    def view(self, *, budget_spent: int, actions: Sequence[str] = ()) -> dict[str, Any]:
++        w = self.weights()
++        hyps = []
++        for hid in sorted(self.rivals):
++            r = self.rivals[hid]
++            hyps.append({"hypothesis_id": hid, "claim_digest": r.hypothesis.claim_digest, "status": r.hypothesis.status.value,
++                         "falsifiers": len(r.hypothesis.falsifier_refs),
++                         "verdicts": [b.verdict_digest for b in r.hypothesis.status_basis],
++                         "weight": None if hid not in w else round(w[hid], 9),
++                         "fit": None if r.fitted is None else r.fitted.summary(),
++                         "proposer": r.hypothesis.proposal.proposer_kind.value if r.hypothesis.proposal else None})
++        unknowns = []
++        if self.noise.upper95 is None:
++            unknowns.append("observation uncertainty: UNKNOWN (no replicate degree of freedom yet)")
++        unfit = sorted(h["hypothesis_id"] for h in hyps if h["fit"] is not None and not h["fit"]["fit_ok"])
++        if unfit:
++            unknowns.append(f"{len(unfit)} rival(s) UNFIT: no standing can be computed for them yet")
++        if self.problem.covariates:
++            unknowns.append("passive covariates at a planned query: predicted through a fitted submodel, never set")
++        return {
++            "schema": STATE_VIEW_SCHEMA,
++            "problem_digest": self.problem.digest,
++            "knowns": {"admitted_evidence": [r.evidence_digest for r in self.rows], "noise": self.noise.to_dict()},
++            "unknowns": unknowns,
++            "hypotheses": hyps,
++            "contradictions": sorted(h["hypothesis_id"] for h in hyps if h["status"] == HypothesisStatus.REFUTED.value),
++            "evidence_count": len(self.rows),
++            "actions": list(actions),
++            "budget": {"spent": budget_spent, "remaining": self.problem.budget - budget_spent, "total": self.problem.budget},
++            "prior": PRIOR_SPEC, "outcome_model": OutcomeModel.identity,
++            "registry_head": self.registry.head, "proposals": list(self.proposals),
++        }
++
++
++def view_digest(view: Mapping[str, Any]) -> str:
++    return _digest(dict(view))
++
++
++def mixture_logscore(predictions: Mapping[str, OutcomePrediction], weights: Mapping[str, float], t_obs: float) -> dict[str, Any]:
++    """Proper scoring of a sealed mixture prediction after its result: log predictive density, PIT, 90% coverage."""
++    from .outcome_model import t_cdf, t_logpdf
++
++    terms, cdf, wsum = [], 0.0, 0.0
++    for hid, p in predictions.items():
++        w = weights.get(hid, 0.0)
++        if not p.available or w <= 0 or not (math.isfinite(p.mean) and math.isfinite(p.sd_obs) and p.sd_obs > 0):
++            continue
++        terms.append(math.log(w) + t_logpdf(t_obs, p.mean, p.sd_obs, p.dof))
++        cdf += w * t_cdf(t_obs, p.mean, p.sd_obs, p.dof)
++        wsum += w
++    if not terms or wsum <= 0:
++        return {"available": False, "reason": "no sealed prediction was available before this result"}
++    top = max(terms)
++    log_score = top + math.log(sum(math.exp(t - top) for t in terms)) - math.log(wsum)
++    pit = cdf / wsum
++    return {"available": True, "log_score": round(log_score, 9), "pit": round(pit, 9), "covered90": 0.05 <= pit <= 0.95}
++
++
++__all__ = ["FALSIFIER_K", "HypothesisCompetition", "NoiseEstimate", "Rival", "STATE_VIEW_SCHEMA", "mixture_logscore",
++           "pure_error", "view_digest"]
+--- /dev/null
++++ b/src/engcore/mind/minimal/experiments.py
+@@ -0,0 +1,268 @@
++"""ExperimentCandidate (M-5) and ExperimentSelection (M-6).
++
++A candidate is a typed admissible scientific action: a setting of every settable input inside the box, labelled with
++the canonical :class:`~engcore.sria.decision.ActionFamily` of the generator that proposed it and an
++:class:`~engcore.sria.decision.ActionProposal` saying what it targets and why.  An outside engine (a language model,
++a Bayesian-optimisation library) may SUGGEST a candidate only as an :class:`~engcore.sria.decision.ExternalSuggestion`
++(which refuses any authority key); its acquisition value is recorded as the engine's own number and never enters the
++ranking.  A setting outside the box is INFEASIBLE and never reaches scoring.
++
++Selection ranks every feasible candidate with ONE utility whose terms are :class:`~engcore.sria.decision.ScoreComponent`
++records citing the outcome-model basis they were computed from:
++
++* ``expected_discrimination`` -- sum over pairs of rivals of w_a w_b (m_a - m_b)^2 / (s2_a + s2_b + v_a + v_b), the
++  Box-Hill style divergence of the rivals' sealed-to-be predictions at that setting (posterior weights w, predictive
++  means m, noise variances s2, parameter variances v);
++* ``expected_precision_gain`` -- for the leading rival, 0.5 ln(V_now / V_after): the reduction of the mean predictive
++  variance over the region where the conclusion will be used if this setting is added (a V-optimal design term);
++* the query cost from the problem statement (every query costs the same here; the utility is divided by it).
++
++The utility is a ranking device of this Mind, not a FORGE expected utility, and decides nothing about any hypothesis.
++"""
++
++from __future__ import annotations
++
++import hashlib
++import itertools
++import json
++import math
++import random
++from dataclasses import dataclass, field
++from typing import Any, Iterable, Mapping, Sequence
++
++import numpy as np
++
++from ...sria.decision import ActionFamily, ActionProposal, ComponentStatus, ScoreComponent
++from ...sria.decision.external import ExternalSuggestion
++from .competition import HypothesisCompetition
++from .problem import ExperimentalProblem
++
++CANDIDATE_SCHEMA = "forge.mind.minimal.experiment_candidate/1"
++RANDOM_CANDIDATES = 32
++MAX_RIVALS_IN_UTILITY = 8
++
++
++def _digest(payload: Any) -> str:
++    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
++
++
++def _round(v: float) -> float:
++    return float(f"{float(v):.12g}")
++
++
++@dataclass(frozen=True)
++class ExperimentCandidate:
++    settings: Mapping[str, float]
++    proposal: ActionProposal
++    generator: str
++    suggestion_digest: str = ""
++
++    def __post_init__(self) -> None:
++        object.__setattr__(self, "settings", {k: _round(v) for k, v in sorted(dict(self.settings).items())})
++
++    @property
++    def family(self) -> ActionFamily:
++        return self.proposal.family
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"schema": CANDIDATE_SCHEMA, "settings": dict(self.settings), "proposal": self.proposal.to_dict(),
++                "generator": self.generator, "suggestion_digest": self.suggestion_digest}
++
++    @property
++    def candidate_id(self) -> str:
++        return _digest({"settings": dict(self.settings), "family": self.family.value, "generator": self.generator})
++
++    def feasible(self, problem: ExperimentalProblem) -> tuple[bool, str]:
++        names = {x.name for x in problem.inputs}
++        if set(self.settings) != names:
++            return False, "a candidate sets every settable input and nothing else"
++        for x in problem.inputs:
++            v = self.settings[x.name]
++            if not (math.isfinite(v) and x.low <= v <= x.high):
++                return False, f"{x.name}={v} lies outside the settable box"
++        return True, "inside the settable box"
++
++
++def candidate(settings: Mapping[str, float], family: ActionFamily, generator: str, target: str, rationale: str,
++              assumptions: Sequence[str] = (), suggestion_digest: str = "") -> ExperimentCandidate:
++    return ExperimentCandidate(settings, ActionProposal(family=family, target_ref=target, rationale=rationale,
++                                                        assumptions=tuple(assumptions), expected_observable="observable"),
++                               generator, suggestion_digest)
++
++
++def from_suggestion(s: ExternalSuggestion) -> ExperimentCandidate:
++    """An outside engine's suggestion becomes a candidate with its provenance; its acquisition value is not used."""
++    if not isinstance(s, ExternalSuggestion):
++        raise TypeError("only an ExternalSuggestion becomes a candidate")
++    settings = {str(k): float(v) for k, v in dict(s.point).items()}
++    return candidate(settings, s.family, f"external:{s.engine_kind.value}:{s.engine_id}@{s.engine_version}", s.target_ref,
++                     s.rationale, (f"suggestion_digest={s.digest}",
++                                   "the engine's acquisition value is its own number and is not used here"), s.digest)
++
++
++# ---- generators -----------------------------------------------------------------------------------------------------------
++def lhs(problem: ExperimentalProblem, n: int, rng: random.Random) -> list[dict[str, float]]:
++    """Latin hypercube in log space over the box (canonical input order, so renaming changes nothing)."""
++    xs = problem.canonical_inputs()
++    cols = {}
++    for x in xs:
++        lo, hi = math.log(x.low), math.log(x.high)
++        cells = [lo + (hi - lo) * (i + rng.random()) / n for i in range(n)]
++        rng.shuffle(cells)
++        cols[x.name] = cells
++    return [{x.name: math.exp(cols[x.name][i]) for x in xs} for i in range(n)]
++
++
++def corners(problem: ExperimentalProblem) -> list[dict[str, float]]:
++    xs = problem.canonical_inputs()
++    if len(xs) > 5:
++        return []
++    return [dict(zip([x.name for x in xs], combo)) for combo in itertools.product(*[(x.low, x.high) for x in xs])]
++
++
++def center(problem: ExperimentalProblem) -> dict[str, float]:
++    return {x.name: math.sqrt(x.low * x.high) for x in problem.inputs}
++
++
++def adaptive_candidates(problem: ExperimentalProblem, rng: random.Random, competition: HypothesisCompetition,
++                        extra: Iterable[ExperimentCandidate] = ()) -> list[ExperimentCandidate]:
++    out = [candidate(p, ActionFamily.EXPLORE, "space_filling", "design", "space-filling coverage of the box")
++           for p in lhs(problem, RANDOM_CANDIDATES, rng)]
++    out += [candidate(p, ActionFamily.DISCRIMINATE, "corner", "design", "box corner: largest leverage on every slope")
++            for p in corners(problem)]
++    out.append(candidate(center(problem), ActionFamily.CHARACTERIZE, "center", "design", "box centre: curvature contrast"))
++    if competition.rows:
++        out.append(candidate(dict(competition.rows[-1].settings), ActionFamily.REDUCE_UNCERTAINTY, "replicate", "noise",
++                             "replicate the latest setting: a redundant confirmation that only refines the noise estimate"))
++    out += list(extra)
++    # an already observed setting re-enters ONLY as the declared replicate: a generator that keeps returning to the same
++    # corner (as optimal designs for an assumed model do) would spend the budget re-confirming that model and could never
++    # check it (found on development worlds: up to 18 of 30 queries were repeats)
++    observed = {json.dumps(dict(sorted((k, _round(v)) for k, v in r.settings.items()))) for r in competition.rows}
++    seen, unique = set(), []
++    for c in out:
++        key = json.dumps(dict(c.settings))
++        if c.generator != "replicate" and key in observed:
++            continue
++        if c.candidate_id not in seen:
++            seen.add(c.candidate_id)
++            unique.append(c)
++    return unique
++
++
++# ---- selection ----------------------------------------------------------------------------------------------------------
++@dataclass(frozen=True)
++class ScoredCandidate:
++    candidate: ExperimentCandidate
++    feasible: bool
++    reason: str
++    components: tuple[ScoreComponent, ...] = ()
++    total: float | None = None
++
++    def component(self, name: str) -> ScoreComponent | None:
++        return next((c for c in self.components if c.name == name), None)
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"candidate_id": self.candidate.candidate_id, "family": self.candidate.family.value,
++                "generator": self.candidate.generator, "feasible": self.feasible, "reason": self.reason,
++                "total": None if self.total is None else round(self.total, 9),
++                "components": [c.to_dict() for c in self.components]}
++
++
++@dataclass(frozen=True)
++class Selection:
++    selected: ExperimentCandidate | None
++    scored: tuple[ScoredCandidate, ...]
++    weights_used: Mapping[str, float]
++    basis_digest: str
++    policy: str
++    max_utility: float | None = None
++
++    def summary(self, top: int = 8) -> dict[str, Any]:
++        ranked = sorted((s for s in self.scored if s.total is not None), key=lambda s: (-s.total, s.candidate.candidate_id))
++        return {"policy": self.policy, "candidates": len(self.scored),
++                "candidate_set_digest": _digest(sorted(s.candidate.candidate_id for s in self.scored)),
++                "infeasible": sum(not s.feasible for s in self.scored), "basis_digest": self.basis_digest,
++                "weights_used_digest": _digest({k: round(v, 12) for k, v in sorted(self.weights_used.items())}),
++                "top": [s.to_dict() for s in ranked[:top]],
++                "selected": None if self.selected is None else self.selected.to_dict(),
++                "max_utility": None if self.max_utility is None else round(self.max_utility, 9)}
++
++
++def score_candidates(problem: ExperimentalProblem, competition: HypothesisCompetition,
++                     candidates: Sequence[ExperimentCandidate], weights: Mapping[str, float]) -> list[ScoredCandidate]:
++    feas = [(c, *c.feasible(problem)) for c in candidates]
++    ok = [c for c, f, _ in feas if f]
++    out = [ScoredCandidate(c, False, why) for c, f, why in feas if not f]
++    if not ok:
++        return out
++    basis = competition.model.basis_digest(competition.rows)
++    live = sorted(weights, key=lambda h: (-weights[h], h))[:MAX_RIVALS_IN_UTILITY]
++    pts = [c.settings for c in ok]
++    preds = {}
++    for hid in live:
++        fitted = competition.rivals[hid].fitted
++        loc, sdm, sdo = competition.model.predict_many(fitted, pts, competition.covmodels)
++        preds[hid] = (loc, sdm ** 2, sdo ** 2 - sdm ** 2)
++    disc = np.zeros(len(ok))
++    with np.errstate(all="ignore"):
++        for a, b in itertools.combinations(live, 2):
++            la, va, na = preds[a]
++            lb, vb, nb = preds[b]
++            term = weights[a] * weights[b] * (la - lb) ** 2 / (na + nb + va + vb)
++            # a rival whose prediction is not finite at a setting contributes nothing there (never an infinite pull)
++            disc += np.where(np.isfinite(term), term, 0.0)
++    lead = live[0] if live else None
++    prec = np.zeros(len(ok))
++    if lead is not None:
++        prec = _precision_gain(problem, competition, lead, pts)
++    w_lead = weights.get(lead, 0.0) if lead else 0.0
++    cost = float(problem.query_cost)
++    src = f"outcome_model:{basis[:16]}"
++    for i, c in enumerate(ok):
++        comps = (ScoreComponent("expected_discrimination", float(disc[i]), ComponentStatus.AVAILABLE, source=src, unit="1",
++                                detail=f"{len(live)} rivals by posterior weight"),
++                 ScoreComponent("expected_precision_gain", float(prec[i]), ComponentStatus.AVAILABLE, source=src, unit="nat",
++                                detail=f"leading rival {lead}"),
++                 ScoreComponent("query_cost", cost, ComponentStatus.AVAILABLE, source="problem statement", unit="query"))
++        total = (float(disc[i]) + w_lead * float(prec[i])) / cost
++        out.append(ScoredCandidate(c, True, "inside the settable box", comps, total))
++    return out
++
++
++def _precision_gain(problem: ExperimentalProblem, competition: HypothesisCompetition, lead: str,
++                    pts: Sequence[Mapping[str, float]]) -> np.ndarray:
++    fitted = competition.rivals[lead].fitted
++    if fitted is None or not fitted.fit_ok or fitted.p == 0:
++        return np.zeros(len(pts))
++    region = problem.region_points()
++    R = competition.model.design_matrix(fitted, region, competition.covmodels)
++    A = competition.model.design_matrix(fitted, pts, competition.covmodels)
++    n = fitted.n
++    Rt = np.column_stack([np.full(len(R), 1.0 / math.sqrt(n)), R])     # intercept variance 1/n (centred design)
++    At = np.column_stack([np.full(len(A), 1.0 / math.sqrt(n)), A])
++    M = np.zeros((fitted.p + 1, fitted.p + 1))
++    M[0, 0] = 1.0
++    M[1:, 1:] = fitted.inv
++    v_now = np.einsum("ij,jk,ik->i", Rt, M, Rt).mean()
++    MA = At @ M                                                       # (k, p+1)
++    lev = np.einsum("ij,ij->i", MA, At)
++    cross = Rt @ MA.T                                                 # (r, k)
++    reduction = (cross ** 2).mean(axis=0) / (1.0 + lev)
++    v_after = np.maximum(v_now - reduction, 1e-300)
++    with np.errstate(all="ignore"):
++        gain = 0.5 * np.log(v_now / v_after)
++    return np.where(np.isfinite(gain), gain, 0.0)
++
++
++def select(problem: ExperimentalProblem, competition: HypothesisCompetition, candidates: Sequence[ExperimentCandidate],
++           weights: Mapping[str, float], policy: str) -> Selection:
++    scored = score_candidates(problem, competition, candidates, weights)
++    ranked = sorted((s for s in scored if s.total is not None), key=lambda s: (-s.total, s.candidate.candidate_id))
++    chosen = ranked[0].candidate if ranked else None
++    return Selection(chosen, tuple(scored), dict(weights), competition.model.basis_digest(competition.rows), policy,
++                     ranked[0].total if ranked else None)
++
++
++__all__ = ["ExperimentCandidate", "ScoredCandidate", "Selection", "adaptive_candidates", "candidate", "center", "corners",
++           "from_suggestion", "lhs", "score_candidates", "select"]
+--- /dev/null
++++ b/src/engcore/mind/minimal/falsifier.py
+@@ -0,0 +1,88 @@
++"""The FALSIFIER role: for each strong hypothesis, the admissible experiment most likely to falsify it.
++
++It PROPOSES tests; it decides nothing.  For a hypothesis H with substantial standing and its strongest live rival R,
++it searches the admissible candidate settings for the one where H's sealed-to-be prediction and R's differ most
++relative to their combined predictive uncertainty, and proposes it as a DISCRIMINATE candidate.  Whether that
++experiment is run is the selection's decision; whether H is falsified is the falsification registry's verdict on the
++released observation.
++
++It also reports when NO admissible experiment can discriminate two rivals (their predictions agree within noise at
++every admissible setting): that is a finding about the problem -- what the box of settable inputs can and cannot
++reach -- and the conclusion uses it to preserve rivals instead of choosing one.
++"""
++
++from __future__ import annotations
++
++import math
++from dataclasses import dataclass
++from typing import Any, Mapping, Sequence
++
++import numpy as np
++
++from ...sria.decision import ActionFamily
++from .competition import HypothesisCompetition
++from .experiments import ExperimentCandidate, candidate
++from .problem import ExperimentalProblem
++
++FALSIFIER_ROLE_ID = "forge.mind.minimal.falsifier_role"
++STRONG_WEIGHT = 0.2
++MAX_PROPOSALS = 2
++
++
++@dataclass(frozen=True)
++class FalsificationProposal:
++    hypothesis_id: str
++    rival_id: str
++    candidate: ExperimentCandidate
++    separation_sigmas: float
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"hypothesis_id": self.hypothesis_id, "rival_id": self.rival_id, "candidate_id": self.candidate.candidate_id,
++                "separation_sigmas": round(self.separation_sigmas, 9), "role": FALSIFIER_ROLE_ID}
++
++
++def separation(competition: HypothesisCompetition, a: str, b: str, points: Sequence[Mapping[str, float]]) -> np.ndarray:
++    """|m_a - m_b| / sqrt(total predictive variance) at each point (ln units)."""
++    fa, fb = competition.rivals[a].fitted, competition.rivals[b].fitted
++    la, sa, oa = competition.model.predict_many(fa, points, competition.covmodels)
++    lb, sb, ob = competition.model.predict_many(fb, points, competition.covmodels)
++    with np.errstate(all="ignore"):
++        sep = np.abs(la - lb) / np.sqrt(oa ** 2 + ob ** 2)
++    return np.where(np.isfinite(sep), sep, 0.0)
++
++
++def propose(problem: ExperimentalProblem, competition: HypothesisCompetition, weights: Mapping[str, float],
++            pool: Sequence[ExperimentCandidate]) -> list[FalsificationProposal]:
++    ranked = sorted(weights, key=lambda h: (-weights[h], h))
++    strong = [h for h in ranked if weights[h] >= STRONG_WEIGHT][:MAX_PROPOSALS]
++    pts = [c.settings for c in pool if c.feasible(problem)[0]]
++    out = []
++    if not pts:
++        return out
++    for h in strong:
++        rivals = [r for r in ranked if r != h]
++        if not rivals:
++            continue
++        r = rivals[0]
++        sep = separation(competition, h, r, pts)
++        if not np.any(sep > 0):
++            continue
++        i = int(np.argmax(sep))
++        c = candidate(pts[i], ActionFamily.DISCRIMINATE, "falsifier", h,
++                      f"the admissible setting where {h} and its strongest rival {r} disagree most "
++                      f"({sep[i]:.3g} predictive sigmas): most likely to falsify one of them",
++                      (f"role={FALSIFIER_ROLE_ID}",))
++        out.append(FalsificationProposal(h, r, c, float(sep[i])))
++    return out
++
++
++def admissible_discriminator(competition: HypothesisCompetition, a: str, b: str, points: Sequence[Mapping[str, float]],
++                             sigmas: float = 2.0) -> bool:
++    """Whether any admissible setting separates rivals a and b by more than ``sigmas`` predictive sigmas."""
++    if not points:
++        return False
++    sep = separation(competition, a, b, points)
++    return bool(np.any(np.isfinite(sep) & (sep > sigmas)))
++
++
++__all__ = ["FALSIFIER_ROLE_ID", "FalsificationProposal", "admissible_discriminator", "propose", "separation"]
+--- /dev/null
++++ b/src/engcore/mind/minimal/outcome_model.py
+@@ -0,0 +1,395 @@
++"""The OutcomeModel boundary (M-4) and pre-result predictions (M-3).
++
++Every number the Mind uses to rank an experiment or weigh a hypothesis comes from here, and every one of them cites
++the admitted observations it was computed from (``basis``: their evidence digests).  Nothing here is a caller
++assertion: a structure is fitted to ADMITTED EVIDENCE ONLY (observations the exposure authority released), with a
++declared prior, and the predictive distribution is the closed-form posterior predictive of that fit.
++
++Model (per structure S with p features): ln y = a + f_S(x)' b + e, e ~ N(0, s^2).
++
++* MODEL COMPARISON uses Zellner's g-prior on b with the hyper-g/n prior on g (Liang, Paulo, Molina, Clyde & Berger
++  2008, a = :data:`HYPER_G_A`), flat on a, Jeffreys on s^2: the marginal likelihood relative to the NULL structure is
++  BF = (a - 2)/(2n) * integral_0^inf (1 + g/n)^(-a/2) (1 + g)^((n - 1 - p) / 2) (1 + g (1 - R^2))^(-(n - 1) / 2) dg,
++  computed on a fixed log-g grid.  Two simpler choices failed on development worlds and are recorded: a FIXED g caps
++  the Bayes factor at (1 + g)^((n - 1 - p) / 2) however overwhelming the evidence (the "information paradox": a structure
++  leaving 3,600x more residual variance kept 8% of the posterior); the plain hyper-g prior has almost no Occam penalty
++  at these sample sizes (no world without any dependence was ever concluded to have none).  Hyper-g/n is consistent,
++  has no information paradox, and penalises like a unit-information prior.
++* ESTIMATION AND PREDICTION, conditional on a structure, use the reference prior (flat on a and b, Jeffreys on s^2):
++  the posterior predictive at a new setting is Student-t with n - 1 - p degrees of freedom around the least-squares
++  fit.  (The g-prior's posterior mean shrinks every coefficient by g/(1+g); it is used for the Occam factor only.)
++
++A structure that cannot be fitted (fewer observations than its features need, collinear features, no spread in the
++observable) is UNFIT: it keeps its place in the competition and gets no number -- never a default.
++
++A passive covariate is not set by an experiment, so its value at a planned query is unknown.  A structure that uses
++one predicts through a covariate submodel fitted to the same evidence (ln u linear in the settable ln x), with the
++submodel's residual variance carried into the prediction -- uncertainty is propagated, never dropped.
++"""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import math
++from dataclasses import dataclass, field
++from typing import Any, Mapping, Sequence
++
++import numpy as np
++
++from .problem import ExperimentalProblem
++from .structures import Structure
++
++OUTCOME_MODEL_ID = "forge.mind.minimal.bayes_loglinear_gprior"
++OUTCOME_MODEL_VERSION = "3"
++HYPER_G_A = 3.0
++_LOG_G = np.linspace(-12.0, 75.0, 1741)          # integration grid over t = ln g (step 0.05)
++_DT = float(_LOG_G[1] - _LOG_G[0])
++PREDICTION_SCHEMA = "forge.mind.minimal.outcome_prediction/1"
++
++
++def _digest(payload: Any) -> str:
++    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
++
++
++@dataclass(frozen=True)
++class AdmittedObservation:
++    """One observation the exposure authority released (``evidence_id``/``evidence_digest`` are its identity there)."""
++
++    evidence_id: str
++    evidence_digest: str
++    query_ref: str
++    settings: Mapping[str, float]
++    covariates: Mapping[str, float]
++    value: float
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"evidence_id": self.evidence_id, "evidence_digest": self.evidence_digest, "query_ref": self.query_ref,
++                "settings": dict(sorted(self.settings.items())), "covariates": dict(sorted(self.covariates.items())),
++                "value": self.value}
++
++
++class OutcomeModelRefused(ValueError):
++    """The evidence cannot support this model at all (a non-positive observable for a log model)."""
++
++
++@dataclass
++class FittedStructure:
++    structure: Structure
++    key: str
++    n: int
++    p: int
++    fit_ok: bool
++    reason: str = ""
++    log_bf_null: float | None = None
++    r2: float | None = None
++    ybar: float = 0.0
++    coef: np.ndarray = field(default_factory=lambda: np.zeros(0))
++    means: np.ndarray = field(default_factory=lambda: np.zeros(0))
++    inv: np.ndarray = field(default_factory=lambda: np.zeros((0, 0)))
++    shrink: float = 0.0
++    s2: float = 0.0
++    dof: int = 0
++    basis_digest: str = ""
++
++    def summary(self) -> dict[str, Any]:
++        return {"key": self.key, "n": self.n, "p": self.p, "fit_ok": self.fit_ok, "reason": self.reason,
++                "log_bf_null": None if self.log_bf_null is None else round(self.log_bf_null, 9),
++                "r2": None if self.r2 is None else round(self.r2, 9), "s": round(math.sqrt(self.s2), 9) if self.fit_ok else None,
++                "coef": [round(float(c), 9) for c in self.coef], "basis_digest": self.basis_digest}
++
++
++@dataclass(frozen=True)
++class CovariateModel:
++    """ln u = c0 + c' ln x + r, fitted to the admitted evidence; a planned query predicts u through it."""
++
++    name: str
++    mean: float
++    coef: tuple[float, ...]
++    names: tuple[str, ...]
++    resid_var: float
++    r2: float
++
++
++@dataclass(frozen=True)
++class OutcomePrediction:
++    """A hypothesis-conditioned prediction made BEFORE the result is exposed (M-3).
++
++    ``mean``/``sd_mean`` describe ln(observable) under the hypothesis' posterior; ``sd_obs`` adds the observation
++    noise; ``dof`` is the Student-t degrees of freedom.  ``available`` False means no prediction exists (UNFIT, or no
++    evidence yet): the numbers are then None, never zero."""
++
++    hypothesis_key: str
++    query_ref: str
++    available: bool
++    mean: float | None
++    sd_mean: float | None
++    sd_obs: float | None
++    dof: int | None
++    basis_digest: str
++    model: str = f"{OUTCOME_MODEL_ID}@{OUTCOME_MODEL_VERSION}"
++    reason: str = ""
++
++    def interval(self, mass: float = 0.9) -> tuple[float, float] | None:
++        if not self.available:
++            return None
++        q = _t_quantile(0.5 + mass / 2, self.dof)
++        return (self.mean - q * self.sd_obs * _t_scale(self.dof), self.mean + q * self.sd_obs * _t_scale(self.dof))
++
++    def to_dict(self) -> dict[str, Any]:
++        def r(x: float | None) -> float | None:
++            return None if x is None else round(float(x), 9)
++        return {"schema": PREDICTION_SCHEMA, "hypothesis_key": self.hypothesis_key, "query_ref": self.query_ref,
++                "available": self.available, "mean_ln": r(self.mean), "sd_mean_ln": r(self.sd_mean),
++                "sd_obs_ln": r(self.sd_obs), "dof": self.dof, "basis_digest": self.basis_digest, "model": self.model,
++                "reason": self.reason}
++
++
++def _t_scale(dof: int | None) -> float:
++    """sd of a unit-scale Student-t is sqrt(dof/(dof-2)); the predictive sd is reported, so the scale is divided back."""
++    return 1.0 if not dof or dof <= 2 else math.sqrt((dof - 2) / dof)
++
++
++def _t_quantile(p: float, dof: int | None) -> float:
++    """Student-t quantile (Hill 1970 expansion; exact enough for intervals and never used as a test statistic)."""
++    z = _norm_quantile(p)
++    if not dof or dof > 1e6:
++        return z
++    g1 = (z ** 3 + z) / 4
++    g2 = (5 * z ** 5 + 16 * z ** 3 + 3 * z) / 96
++    g3 = (3 * z ** 7 + 19 * z ** 5 + 17 * z ** 3 - 15 * z) / 384
++    return z + g1 / dof + g2 / dof ** 2 + g3 / dof ** 3
++
++
++def _norm_quantile(p: float) -> float:
++    # Acklam's rational approximation
++    a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02,
++         -3.066479806614716e+01, 2.506628277459239e+00]
++    b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01]
++    c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00,
++         4.374664141464968e+00, 2.938163982698783e+00]
++    d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00]
++    if p < 0.02425:
++        q = math.sqrt(-2 * math.log(p))
++        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1)
++    if p > 1 - 0.02425:
++        return -_norm_quantile(1 - p)
++    q = p - 0.5
++    r = q * q
++    return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / \
++        (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1)
++
++
++def t_logpdf(x: float, loc: float, scale_sd: float, dof: int) -> float:
++    """Log density of a Student-t given its SD (not its scale)."""
++    scale = scale_sd * _t_scale(dof)
++    zz = (x - loc) / scale
++    return (math.lgamma((dof + 1) / 2) - math.lgamma(dof / 2) - 0.5 * math.log(dof * math.pi) - math.log(scale)
++            - (dof + 1) / 2 * math.log1p(zz * zz / dof))
++
++
++def t_cdf(x: float, loc: float, scale_sd: float, dof: int) -> float:
++    """Student-t CDF via the regularised incomplete beta function (continued fraction)."""
++    scale = scale_sd * _t_scale(dof)
++    t = (x - loc) / scale
++    xb = dof / (dof + t * t)
++    ib = _betainc(dof / 2, 0.5, xb)
++    return 1 - 0.5 * ib if t > 0 else 0.5 * ib
++
++
++def _betainc(a: float, b: float, x: float) -> float:
++    if x <= 0:
++        return 0.0
++    if x >= 1:
++        return 1.0
++    lbeta = math.lgamma(a + b) - math.lgamma(a) - math.lgamma(b) + a * math.log(x) + b * math.log1p(-x)
++    if x < (a + 1) / (a + b + 2):
++        return math.exp(lbeta) * _betacf(a, b, x) / a
++    return 1 - math.exp(lbeta) * _betacf(b, a, 1 - x) / b
++
++
++def _betacf(a: float, b: float, x: float) -> float:
++    qab, qap, qam = a + b, a + 1, a - 1
++    c, d = 1.0, 1 - qab * x / qap
++    d = 1 / (d if abs(d) > 1e-300 else 1e-300)
++    h = d
++    for m in range(1, 300):
++        m2 = 2 * m
++        aa = m * (b - m) * x / ((qam + m2) * (a + m2))
++        d = 1 + aa * d
++        d = 1 / (d if abs(d) > 1e-300 else 1e-300)
++        c = 1 + aa / c if abs(1 + aa / c) > 1e-300 else 1e-300
++        h *= d * c
++        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2))
++        d = 1 + aa * d
++        d = 1 / (d if abs(d) > 1e-300 else 1e-300)
++        c = 1 + aa / c if abs(1 + aa / c) > 1e-300 else 1e-300
++        delta = d * c
++        h *= delta
++        if abs(delta - 1) < 1e-12:
++            break
++    return h
++
++
++def hyper_g_log_bf(n: int, p: int, r2: float, a: float = HYPER_G_A) -> float:
++    """ln BF(S : null) under the hyper-g/n prior (trapezoid rule in ln g on a fixed grid; log-sum-exp for stability)."""
++    if p == 0:
++        return 0.0
++    t = _LOG_G
++    g = np.exp(t)
++    log_f = (math.log((a - 2) / (2 * n)) + t - 0.5 * a * np.log1p(g / n) + 0.5 * (n - 1 - p) * np.log1p(g)
++             - 0.5 * (n - 1) * np.log1p(g * (1.0 - r2)))
++    top = float(np.max(log_f))
++    w = np.exp(log_f - top)
++    return top + math.log(float(np.sum(w) - 0.5 * (w[0] + w[-1])) * _DT)
++
++
++class OutcomeModel:
++    """Fits structures to admitted evidence and predicts outcomes; identity = (id, version, prior)."""
++
++    identity = {"model": OUTCOME_MODEL_ID, "version": OUTCOME_MODEL_VERSION, "g": f"hyper-g/n, a={HYPER_G_A}",
++                "sigma_prior": "jeffreys", "intercept_prior": "flat", "estimation": "reference prior (least squares)"}
++
++    def __init__(self, problem: ExperimentalProblem) -> None:
++        self.problem = problem
++        self.settable = [x.name for x in problem.canonical_inputs()]
++
++    # ---- evidence -> arrays ---------------------------------------------------------------------------------------
++    def _logs(self, rows: Sequence[AdmittedObservation]) -> tuple[dict[str, np.ndarray], np.ndarray]:
++        cols: dict[str, np.ndarray] = {}
++        for name in self.settable:
++            cols[name] = np.log(np.array([r.settings[name] for r in rows], dtype=float))
++        for name in self.problem.covariates:
++            vals = np.array([r.covariates.get(name, float("nan")) for r in rows], dtype=float)
++            if np.any(~np.isfinite(vals)) or np.any(vals <= 0):
++                raise OutcomeModelRefused(f"passive covariate {name!r} is missing or non-positive in an admitted observation; "
++                                          "a log model of it is inapplicable")
++            cols[name] = np.log(vals)
++        y = np.array([r.value for r in rows], dtype=float)
++        if np.any(~np.isfinite(y)) or np.any(y <= 0):
++            raise OutcomeModelRefused("the observable is non-positive or non-finite in an admitted observation: a model of "
++                                      "ln(observable) is inapplicable")
++        return cols, np.log(y)
++
++    @staticmethod
++    def _features(structure: Structure, cols: Mapping[str, np.ndarray]) -> np.ndarray:
++        parts = [cols[n] for n in structure.linear] + [cols[n] ** 2 for n in structure.quadratic]
++        n = len(next(iter(cols.values()))) if cols else 0
++        return np.column_stack(parts) if parts else np.zeros((n, 0))
++
++    @staticmethod
++    def basis_digest(rows: Sequence[AdmittedObservation]) -> str:
++        return _digest(sorted(r.evidence_digest for r in rows))
++
++    def fit(self, structure: Structure, rows: Sequence[AdmittedObservation], key: str) -> FittedStructure:
++        n, p = len(rows), structure.n_features
++        basis = self.basis_digest(rows)
++        if n < p + 4:
++            return FittedStructure(structure, key, n, p, False, f"UNFIT: {n} observations, {p} features need >= {p + 4}",
++                                   basis_digest=basis)
++        cols, t = self._logs(rows)
++        X = self._features(structure, cols)
++        ybar = float(np.mean(t))
++        yc = t - ybar
++        sst = float(yc @ yc)
++        if not sst > 1e-300:
++            return FittedStructure(structure, key, n, p, False, "UNFIT: the observable has no spread", basis_digest=basis)
++        if p == 0:
++            s2 = sst / (n - 1)
++            return FittedStructure(structure, key, n, 0, True, log_bf_null=0.0, r2=0.0, ybar=ybar, coef=np.zeros(0),
++                                   means=np.zeros(0), inv=np.zeros((0, 0)), shrink=0.0, s2=s2, dof=n - 1, basis_digest=basis)
++        means = X.mean(axis=0)
++        Xc = X - means
++        xtx = Xc.T @ Xc
++        try:
++            cond = np.linalg.cond(xtx)
++        except np.linalg.LinAlgError:
++            cond = math.inf
++        if not math.isfinite(cond) or cond > 1e12:
++            return FittedStructure(structure, key, n, p, False, "UNFIT: collinear features in this design (not identifiable)",
++                                   basis_digest=basis)
++        inv = np.linalg.inv(xtx)
++        beta = inv @ (Xc.T @ yc)
++        ssr = float(beta @ (xtx @ beta))
++        r2 = min(max(ssr / sst, 0.0), 1.0 - 1e-15)
++        log_bf = hyper_g_log_bf(n, p, r2)
++        # estimation conditional on the structure uses the reference (flat) prior: the g-prior's shrinkage by g/(1+g)
++        # serves model comparison only; applied to the coefficients it would bias every exponent toward zero
++        sse = max(sst - ssr, 0.0)
++        return FittedStructure(structure, key, n, p, True, log_bf_null=log_bf, r2=r2, ybar=ybar, coef=beta,
++                               means=means, inv=inv, shrink=1.0, s2=sse / (n - 1 - p), dof=n - 1 - p, basis_digest=basis)
++
++    # ---- covariate submodels ----------------------------------------------------------------------------------------
++    def covariate_models(self, rows: Sequence[AdmittedObservation]) -> dict[str, CovariateModel]:
++        out = {}
++        if not rows or not self.problem.covariates:
++            return out
++        cols, _ = self._logs(rows)
++        Z = np.column_stack([cols[n] for n in self.settable])
++        for name in self.problem.covariates:
++            w = cols[name]
++            n, k = Z.shape
++            if n >= k + 3:
++                zm = Z.mean(axis=0)
++                Zc = Z - zm
++                coef, *_ = np.linalg.lstsq(Zc, w - w.mean(), rcond=None)
++                resid = (w - w.mean()) - Zc @ coef
++                rv = float(resid @ resid) / (n - k - 1)
++                sst = float((w - w.mean()) @ (w - w.mean()))
++                r2 = 1 - float(resid @ resid) / sst if sst > 0 else 0.0
++                out[name] = CovariateModel(name, float(w.mean() - zm @ coef), tuple(float(c) for c in coef),
++                                           tuple(self.settable), rv, r2)
++            else:
++                rv = float(np.var(w, ddof=1)) if n > 1 else float("inf")
++                out[name] = CovariateModel(name, float(w.mean()), tuple(0.0 for _ in self.settable), tuple(self.settable), rv, 0.0)
++        return out
++
++    # ---- prediction --------------------------------------------------------------------------------------------------
++    def predict_many(self, fitted: FittedStructure, points: Sequence[Mapping[str, float]],
++                     covmodels: Mapping[str, CovariateModel]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
++        """(mean ln y, sd of the mean, sd of a new observation) at planned settings; covariates through their submodels."""
++        m = len(points)
++        if not fitted.fit_ok:
++            nan = np.full(m, np.nan)
++            return nan, nan, nan
++        z = {n: np.log(np.array([pt[n] for pt in points], dtype=float)) for n in self.settable}
++        extra_var = np.zeros(m)
++        cols: dict[str, np.ndarray] = dict(z)
++        for name in self.problem.covariates:
++            if name in fitted.structure.linear:
++                cm = covmodels[name]
++                cols[name] = cm.mean + sum(c * z[nm] for c, nm in zip(cm.coef, cm.names))
++                j = list(fitted.structure.linear).index(name)
++                extra_var += float(fitted.coef[j]) ** 2 * cm.resid_var
++        F = self._features(fitted.structure, cols) if fitted.p else np.zeros((m, 0))
++        fc = F - fitted.means if fitted.p else F
++        loc = fitted.ybar + (fc @ fitted.coef if fitted.p else 0.0)
++        lev = fitted.shrink * np.einsum("ij,jk,ik->i", fc, fitted.inv, fc) if fitted.p else np.zeros(m)
++        infl = fitted.dof / (fitted.dof - 2) if fitted.dof > 2 else math.inf
++        var_mean = fitted.s2 * (1.0 / fitted.n + lev) * infl
++        var_obs = var_mean + fitted.s2 * infl + extra_var
++        return np.asarray(loc, dtype=float) * np.ones(m), np.sqrt(var_mean), np.sqrt(var_obs)
++
++    def prediction(self, fitted: FittedStructure, point: Mapping[str, float], covmodels: Mapping[str, CovariateModel],
++                   query_ref: str) -> OutcomePrediction:
++        if not fitted.fit_ok:
++            return OutcomePrediction(fitted.key, query_ref, False, None, None, None, None, fitted.basis_digest, reason=fitted.reason)
++        loc, sdm, sdo = self.predict_many(fitted, [point], covmodels)
++        return OutcomePrediction(fitted.key, query_ref, True, float(loc[0]), float(sdm[0]), float(sdo[0]), fitted.dof,
++                                 fitted.basis_digest)
++
++    def design_matrix(self, fitted: FittedStructure, points: Sequence[Mapping[str, float]],
++                      covmodels: Mapping[str, CovariateModel]) -> np.ndarray:
++        """Centred feature rows (for the expected-precision computation of a planned design)."""
++        z = {n: np.log(np.array([pt[n] for pt in points], dtype=float)) for n in self.settable}
++        cols: dict[str, np.ndarray] = dict(z)
++        for name in self.problem.covariates:
++            if name in fitted.structure.linear:
++                cm = covmodels[name]
++                cols[name] = cm.mean + sum(c * z[nm] for c, nm in zip(cm.coef, cm.names))
++        F = self._features(fitted.structure, cols)
++        return F - fitted.means if fitted.p else F
++
++
++__all__ = ["HYPER_G_A", "hyper_g_log_bf", "AdmittedObservation", "CovariateModel", "FittedStructure", "OUTCOME_MODEL_ID", "OUTCOME_MODEL_VERSION",
++           "OutcomeModel", "OutcomeModelRefused", "OutcomePrediction", "t_cdf", "t_logpdf"]
+--- /dev/null
++++ b/src/engcore/mind/minimal/problem.py
+@@ -0,0 +1,145 @@
++"""The experimental problem a Minimal Mind works on, stated without any benchmark vocabulary.
++
++A problem is what an experimenter is told before the first query: the settable inputs and the box they may be set in,
++the passively observed covariates (returned with every observation, never set), the observable, the query budget and
++cost, and the region where the conclusion will be used.  It carries no law, kind, tolerance or truth.
++
++Two presentations of one problem that differ only in NAMES or in the ORDER of the inputs are the same problem to the
++Mind: :meth:`ExperimentalProblem.canonical_inputs` orders inputs by their box, and :meth:`design_seed` is derived from
++the box, the budget and the region values only.  Renaming or reordering therefore leaves the experiment design, the
++hypotheses and the conclusion unchanged up to the renaming (acceptance test 5).
++"""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import math
++import random
++from dataclasses import dataclass
++from typing import Any, Mapping
++
++PROBLEM_SCHEMA = "forge.mind.minimal.problem/1"
++
++
++class ProblemRefused(ValueError):
++    """A problem statement the Mind cannot work on (no settable input, a non-positive range, a missing budget)."""
++
++
++def _digest(payload: Any) -> str:
++    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
++
++
++@dataclass(frozen=True)
++class InputSpec:
++    name: str
++    low: float
++    high: float
++    unit: str = "1"
++
++    def __post_init__(self) -> None:
++        if not str(self.name).strip():
++            raise ProblemRefused("an input has a name")
++        lo, hi = float(self.low), float(self.high)
++        if not (math.isfinite(lo) and math.isfinite(hi) and 0 < lo < hi):
++            raise ProblemRefused(f"input {self.name!r}: the settable box is a positive interval low < high")
++        object.__setattr__(self, "low", lo)
++        object.__setattr__(self, "high", hi)
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"name": self.name, "low": self.low, "high": self.high, "unit": self.unit}
++
++
++@dataclass(frozen=True)
++class ExperimentalProblem:
++    problem_id: str
++    inputs: tuple[InputSpec, ...]
++    covariates: tuple[str, ...]
++    observable: str
++    observable_unit: str
++    budget: int
++    query_cost: float
++    region: Mapping[str, tuple[float, float]]
++
++    def __post_init__(self) -> None:
++        if not str(self.problem_id).strip():
++            raise ProblemRefused("a problem has an id")
++        object.__setattr__(self, "inputs", tuple(self.inputs))
++        object.__setattr__(self, "covariates", tuple(sorted(self.covariates)))
++        if not self.inputs:
++            raise ProblemRefused("a problem without a settable input admits no experiment")
++        names = [x.name for x in self.inputs] + list(self.covariates) + [self.observable]
++        if len(set(names)) != len(names):
++            raise ProblemRefused("input, covariate and observable names are distinct")
++        if isinstance(self.budget, bool) or not isinstance(self.budget, int) or self.budget < 1:
++            raise ProblemRefused("the query budget is a positive integer")
++        if not (math.isfinite(float(self.query_cost)) and float(self.query_cost) > 0):
++            raise ProblemRefused("the query cost is positive")
++        region = {}
++        for x in self.inputs:
++            lo, hi = self.region.get(x.name, (x.low, x.high))
++            lo, hi = float(lo), float(hi)
++            if not (math.isfinite(lo) and math.isfinite(hi) and 0 < lo <= hi):
++                raise ProblemRefused(f"the region for {x.name!r} is a positive interval")
++            region[x.name] = (lo, hi)
++        unknown = set(self.region) - {x.name for x in self.inputs}
++        if unknown:
++            raise ProblemRefused(f"the region names unknown inputs {sorted(unknown)}")
++        object.__setattr__(self, "region", region)
++
++    # ---- canonical, name-free views -------------------------------------------------------------------------------
++    def canonical_inputs(self) -> tuple[InputSpec, ...]:
++        """Inputs ordered by their box (then region): independent of names and of presentation order."""
++        return tuple(sorted(self.inputs, key=lambda x: (x.low, x.high, self.region[x.name], x.unit)))
++
++    def design_seed(self, seed: int) -> str:
++        """The Mind's randomness is derived from the problem's numbers only (never names, never the pseudonymous id)."""
++        shape = [[x.low, x.high, list(self.region[x.name])] for x in self.canonical_inputs()]
++        return _digest({"seed": int(seed), "shape": shape, "covariates": len(self.covariates), "budget": self.budget})
++
++    def rng(self, seed: int, purpose: str) -> random.Random:
++        return random.Random(f"{self.design_seed(seed)}\n{purpose}")
++
++    @property
++    def extrapolates(self) -> bool:
++        """Whether the region where the conclusion will be used leaves the box any experiment can reach."""
++        return any(self.region[x.name][0] < x.low * (1 - 1e-12) or self.region[x.name][1] > x.high * (1 + 1e-12)
++                   for x in self.inputs)
++
++    def region_points(self, n: int = 24) -> list[dict[str, float]]:
++        """A deterministic, name-free sample of the region (corners of the log box when few, else a Halton-like grid)."""
++        xs = self.canonical_inputs()
++        pts = []
++        for i in range(n):
++            pt = {}
++            for j, x in enumerate(xs):
++                lo, hi = self.region[x.name]
++                frac = _van_der_corput(i + 1, _PRIMES[j % len(_PRIMES)])
++                pt[x.name] = math.exp(math.log(lo) + frac * (math.log(hi) - math.log(lo))) if hi > lo else lo
++            pts.append(pt)
++        return pts
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"schema": PROBLEM_SCHEMA, "problem_id": self.problem_id, "inputs": [x.to_dict() for x in self.inputs],
++                "covariates": list(self.covariates), "observable": self.observable, "observable_unit": self.observable_unit,
++                "budget": self.budget, "query_cost": float(self.query_cost),
++                "region": {k: list(v) for k, v in sorted(self.region.items())}}
++
++    @property
++    def digest(self) -> str:
++        return _digest(self.to_dict())
++
++
++_PRIMES = (2, 3, 5, 7, 11, 13)
++
++
++def _van_der_corput(i: int, base: int) -> float:
++    out, f = 0.0, 1.0 / base
++    while i > 0:
++        out += f * (i % base)
++        i //= base
++        f /= base
++    return out
++
++
++__all__ = ["ExperimentalProblem", "InputSpec", "PROBLEM_SCHEMA", "ProblemRefused"]
+--- /dev/null
++++ b/src/engcore/mind/minimal/runner.py
+@@ -0,0 +1,442 @@
++"""The Minimal Mind's closed loop and its conclusion.
++
++    scientific state -> competing hypotheses -> pre-result predictions -> candidate experiments -> selection
++    -> execution (the caller's observe) -> evidence release / falsifier verdicts -> belief update -> stop / replan
++
++:func:`run_mind` drives the loop; :func:`conclude` turns the final state into ONE of six conclusions.  The conclusion
++is a proposal for the caller's authority (a benchmark evaluator, an evidence gateway); it is not a verdict, it carries
++the leading hypothesis's registry status exactly as verified, and nothing in it is promoted beyond what the evidence
++shows:
++
++* ``LAW`` -- the region of use lies inside the box, the leading rival predicts it to within :data:`PRECISION` (ln
++  units, the same bar as the Genesis-lite baselines' ``arms.PRECISION``), the rivals that still carry weight agree
++  with it to that precision, and it fits to within the replicate noise.
++* ``NO_DEPENDENCE`` -- rivals that use no settable input hold at least half of the posterior.
++* ``UNIDENTIFIABLE_PASSIVE_ASSOCIATION`` -- the posterior inclusion of a passive covariate is at least
++  :data:`ASSOCIATION_INCLUSION` (strong evidence of association) and the covariate varies
++  independently of every settable input.  No admissible experiment sets it, so its causal coefficient cannot be
++  separated from a hidden common cause: the association is reported, never promoted to a mechanism.
++* ``INDISTINGUISHABLE`` -- the region leaves the box and two rivals that both carry weight, are both pinned down to
++  :data:`PRECISION` inside the box and agree there within the noise, diverge in the region: both are preserved,
++  neither is chosen.
++* ``INSUFFICIENT_EVIDENCE`` -- anything else (precision not reached; extrapolation with no rival to preserve; no
++  rival survives).
++* ``REFUSED`` -- the model of the observable is inapplicable (e.g. a non-positive observation).
++
++Once any rival has been refuted by a sealed falsifier, only rivals that have themselves survived a decisive sealed test
++carry the conclusion: an untested rival does not inherit the standing of the refuted ones.
++
++A passive covariate that is (almost) a function of the settable inputs (R^2 >= :data:`COPY_R2`) is a copy of the
++intervened inputs: the rivals that use it are set aside for the conclusion, because the intervened inputs identify
++the interventional dependence and the copy adds nothing that an intervention could test (SPURIOUS_CORRELATE).
++
++Ablations (:class:`MindConfig`) remove one capability at a time and keep everything else identical.
++"""
++
++from __future__ import annotations
++
++import hashlib
++import math
++from dataclasses import dataclass, field
++from enum import Enum
++from typing import Any, Callable, Iterable, Mapping, Sequence
++
++import numpy as np
++
++from ...claims.multiplicity import MultiplicityLedger
++from ...sria.decision import ActionFamily, HypothesisStatus
++from ...sria.decision.external import ExternalSuggestion
++from . import experiments as ex
++from . import falsifier as fz
++from .competition import HypothesisCompetition, mixture_logscore, view_digest
++from .outcome_model import OutcomeModelRefused
++from .problem import ExperimentalProblem
++from .stopping import StopKind, decide
++from .structures import Structure
++from .trace import GENESIS, TRACE_SCHEMA, ReplayObserver, ReplayRefused, compare, digest, step_record, verify_chain
++
++MIND_ID = "forge.mind.minimal"
++MIND_VERSION = "1.0.0"
++PRECISION = 0.02
++COPY_R2 = 0.9
++ASSOCIATION_INCLUSION = 0.9
++NULL_DECISION = 0.5
++PRESERVE_WEIGHT = 0.1
++MAX_SEALED_PREDICTIONS = 8
++CONCLUSION_SCHEMA = "forge.mind.minimal.conclusion/1"
++
++
++class ObservationRefused(RuntimeError):
++    """The world refused an observation; ``budget`` says whether it was the budget."""
++
++    def __init__(self, message: str, *, budget: bool = False) -> None:
++        super().__init__(message)
++        self.budget = budget
++
++
++@dataclass(frozen=True)
++class MindConfig:
++    variant: str = "full"
++    adaptive_selection: bool = True
++    belief_update: bool = True
++    falsifier: bool = True
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"variant": self.variant, "adaptive_selection": self.adaptive_selection, "belief_update": self.belief_update,
++                "falsifier": self.falsifier, "mind": f"{MIND_ID}@{MIND_VERSION}", "precision": PRECISION}
++
++
++FULL = MindConfig("full")
++NO_BELIEF_UPDATE = MindConfig("no_belief_update", belief_update=False)
++NO_ADAPTIVE_SELECTION = MindConfig("no_adaptive_selection", adaptive_selection=False)
++NO_FALSIFIER = MindConfig("no_falsifier", falsifier=False)
++VARIANTS = {c.variant: c for c in (FULL, NO_BELIEF_UPDATE, NO_ADAPTIVE_SELECTION, NO_FALSIFIER)}
++
++
++class ConclusionKind(str, Enum):
++    LAW = "law"
++    NO_DEPENDENCE = "no_dependence"
++    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
++    UNIDENTIFIABLE_PASSIVE_ASSOCIATION = "unidentifiable_passive_association"
++    INDISTINGUISHABLE = "indistinguishable"
++    REFUSED = "refused"
++
++
++@dataclass(frozen=True)
++class FittedLaw:
++    """ln y = intercept + sum b_i ln x_i + sum c_j (ln x_j)^2 (the leading rival's least-squares fit)."""
++
++    hypothesis_id: str
++    intercept: float
++    linear: Mapping[str, float]
++    quadratic: Mapping[str, float]
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"hypothesis_id": self.hypothesis_id, "intercept": round(self.intercept, 12),
++                "linear": {k: round(v, 12) for k, v in sorted(self.linear.items())},
++                "quadratic": {k: round(v, 12) for k, v in sorted(self.quadratic.items())}}
++
++
++@dataclass(frozen=True)
++class MindConclusion:
++    kind: ConclusionKind
++    reason: str
++    laws: tuple[FittedLaw, ...] = ()
++    leading_status: str = ""
++    diagnostics: Mapping[str, Any] = field(default_factory=dict)
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"schema": CONCLUSION_SCHEMA, "kind": self.kind.value, "reason": self.reason,
++                "laws": [law.to_dict() for law in self.laws], "leading_status": self.leading_status,
++                "diagnostics": dict(self.diagnostics)}
++
++
++@dataclass
++class MindRun:
++    trace: dict[str, Any]
++    conclusion: MindConclusion
++    competition: HypothesisCompetition
++
++
++def initial_design(problem: ExperimentalProblem, seed: int) -> list[dict[str, float]]:
++    """A space-filling start (the rivals cannot predict anything before data) plus replicates for the noise estimate."""
++    d = len(problem.inputs)
++    replicates = min(4, problem.budget // 6)
++    base = min(max(d + 2, problem.budget // 4), problem.budget - replicates)
++    pts = ex.lhs(problem, max(base, 1), problem.rng(seed, "initial_design"))
++    return (pts + pts[:replicates])[: problem.budget]
++
++
++def _authority_key(problem: ExperimentalProblem, seed: int) -> bytes:
++    return hashlib.sha256(f"forge.mind.minimal.release-authority\n{problem.design_seed(seed)}".encode()).digest()
++
++
++def _region_sd(problem: ExperimentalProblem, comp: HypothesisCompetition, hid: str | None) -> float | None:
++    if hid is None or comp.rivals[hid].fitted is None or not comp.rivals[hid].fitted.fit_ok:
++        return None
++    _, sdm, _ = comp.model.predict_many(comp.rivals[hid].fitted, problem.region_points(), comp.covmodels)
++    return float(np.sqrt(np.mean(sdm ** 2)))
++
++
++def run_mind(problem: ExperimentalProblem, observe: Callable[[Mapping[str, float], str], Mapping[str, float]], *,
++             seed: int = 0, config: MindConfig = FULL, proposals: Sequence[tuple[Mapping[str, Any], str, str]] = (),
++             suggestions: Sequence[ExternalSuggestion] = (), ledger_campaign: str | None = None) -> MindRun:
++    """Run the closed loop on one problem.  ``observe(settings, query_ref)`` returns the observation (every input, every
++    covariate, the observable) or raises :class:`ObservationRefused`."""
++    comp = HypothesisCompetition(problem, seed=seed, authority_key=_authority_key(problem, seed),
++                                 campaign_id=f"mind-{problem.design_seed(seed)[:16]}", falsify=config.falsifier)
++    for payload, kind, pid in proposals:
++        comp.ingest_proposal(payload, proposer_kind=kind, proposer_id=pid)
++    ledger = MultiplicityLedger(ledger_campaign) if ledger_campaign else None
++    if ledger is not None:
++        ledger.strategy(MIND_ID, MIND_VERSION)
++        ledger.seed(problem.design_seed(seed))
++        ledger.count("generated", len(comp.rivals))
++        ledger.count("deduplicated", len(comp.rivals))
++        ledger.count("admitted", len(comp.rivals))
++    initial = initial_design(problem, seed)
++    fixed = ex.lhs(problem, max(problem.budget - len(initial), 1), problem.rng(seed, "fixed_policy"))
++    cand_rng = problem.rng(seed, "candidates")
++    suggested = [ex.from_suggestion(s) for s in suggestions]
++    steps: list[dict[str, Any]] = []
++    executions: list[dict[str, Any]] = []
++    observations: list[dict[str, float]] = []
++    previous, spent = GENESIS, 0
++    refusal: dict[str, Any] | None = None
++    inapplicable: str | None = None
++    final_stop = None
++    while True:
++        prior_view = comp.view(budget_spent=spent)
++        prior_digest = view_digest(prior_view)
++        posterior = comp.weights()
++        used = posterior if config.belief_update else comp.weights(prior_only=True)
++        lead = comp.leading(posterior)
++        fprops: list[fz.FalsificationProposal] = []
++        if spent < len(initial):
++            phase, policy = False, "initial_design"
++            chosen = ex.candidate(initial[spent], ActionFamily.EXPLORE, "initial_design", "design",
++                                  "space-filling start and replicates; no rival can predict before evidence exists")
++            selection = ex.Selection(chosen, (), dict(used), comp.model.basis_digest(comp.rows), policy, None)
++        elif not config.adaptive_selection:
++            phase, policy = False, "fixed_space_filling"
++            chosen = ex.candidate(fixed[(spent - len(initial)) % len(fixed)], ActionFamily.EXPLORE, "fixed_space_filling",
++                                  "design", "matched fixed policy: the next point of a preset space-filling design")
++            selection = ex.Selection(chosen, (), dict(used), comp.model.basis_digest(comp.rows), policy, None)
++        else:
++            phase, policy = True, "expected_discrimination_plus_precision"
++            pool = ex.adaptive_candidates(problem, cand_rng, comp, suggested) if used else []
++            if config.falsifier and used:
++                fprops = fz.propose(problem, comp, used, pool)
++                pool += [fp.candidate for fp in fprops]
++            if used:
++                selection = ex.select(problem, comp, pool, used, policy)
++            else:                                        # no rival can be fitted yet: keep exploring, matched to the start
++                chosen = ex.candidate(fixed[(spent - len(initial)) % len(fixed)], ActionFamily.EXPLORE, "no_fitted_rival",
++                                      "design", "no rival is fitted yet; continue the space-filling design")
++                selection = ex.Selection(chosen, (), {}, comp.model.basis_digest(comp.rows), "no_fitted_rival", None)
++        stop = decide(budget_remaining=problem.budget - spent, inapplicable=inapplicable,
++                      has_candidate=selection.selected is not None, adaptive_phase=phase,
++                      leading_weight=posterior.get(lead) if lead else None, region_sd=_region_sd(problem, comp, lead),
++                      max_utility=selection.max_utility, precision=PRECISION)
++        if stop.kind is not StopKind.CONTINUE:
++            final_stop = stop
++            break
++        settings = dict(selection.selected.settings)
++        query_ref = f"mind-{spent:03d}-{selection.selected.candidate_id[:12]}"
++        tested = sorted(posterior, key=lambda h: (-posterior[h], h))[:MAX_SEALED_PREDICTIONS]
++        preds = comp.predictions(settings, query_ref, tested)
++        seals = comp.seal(query_ref, settings, preds, {h: posterior[h] for h in tested})
++        mix = {h: posterior[h] for h in tested}
++        pre_result = {"query_ref": query_ref, "settings": settings,
++                      "predictions": {h: p.to_dict() for h, p in sorted(preds.items())},
++                      "mixture_weights": {h: round(w, 12) for h, w in sorted(mix.items())},
++                      "falsifiers": seals, "expected_cost": float(problem.query_cost)}
++        prediction_seal_digest = digest(pre_result)
++        try:
++            obs = dict(observe(settings, query_ref))
++        except ObservationRefused as exc:
++            refusal = {"query_index": spent, "budget": bool(exc.budget), "message": str(exc)[:300]}
++            final_stop = decide(budget_remaining=0 if exc.budget else problem.budget - spent, inapplicable=None if exc.budget
++                                else f"the world refused the query: {exc}", has_candidate=True, adaptive_phase=False,
++                                leading_weight=None, region_sd=None, max_utility=None, precision=PRECISION)
++            break
++        execution = {"query_ref": query_ref, "settings": settings, "observation_digest": digest(obs)}
++        executions.append(execution)
++        observations.append(obs)
++        spent += 1
++        try:
++            row, item, verdicts = comp.admit(query_ref, settings, obs)
++        except OutcomeModelRefused as exc:
++            inapplicable = str(exc)
++            row, item, verdicts = None, None, []
++        y = float(obs.get(problem.observable, float("nan")))
++        score = (mixture_logscore(preds, mix, math.log(y)) if y > 0 and math.isfinite(y)
++                 else {"available": False, "reason": "non-positive observation: no ln-scale score"})
++        if ledger is not None:
++            ledger.count("escrow_queries")
++            if phase:
++                ledger.count("adaptive_decisions")
++            for v in verdicts:
++                ledger.tested(v["hypothesis_id"])
++                if v["after"] == HypothesisStatus.REFUTED.value and v["before"] != HypothesisStatus.REFUTED.value:
++                    ledger.count("eliminated")
++        post_digest = view_digest(comp.view(budget_spent=spent))
++        rec = step_record(step=spent - 1, previous=previous, prior_state_digest=prior_digest, policy=policy,
++                          selection=selection.summary(), falsifier_proposals=[fp.to_dict() for fp in fprops],
++                          pre_result=pre_result, prediction_seal_digest=prediction_seal_digest, execution=execution,
++                          evidence=None if item is None else {"evidence_digest": item.content_digest,
++                                                               "exposure_sequence": item.exposure_sequence,
++                                                               "uncertainty": item.uncertainty,
++                                                               "noise": comp.noise.to_dict()},
++                          verdicts=verdicts, posterior_state_digest=post_digest, stop=stop.to_dict(),
++                          prediction_score=score)
++        steps.append(rec)
++        previous = rec["record_digest"]
++    conclusion = conclude(problem, comp, inapplicable=inapplicable)
++    multiplicity = None
++    if ledger is not None:
++        if conclusion.kind is ConclusionKind.LAW:
++            lead_id = conclusion.laws[0].hypothesis_id
++            ledger.tested(lead_id)
++            from ...claims.multiplicity import promote  # noqa: PLC0415
++            multiplicity = {"promoted": promote(f"conclusion:{lead_id}", lead_id, ledger).hypothesis_id}
++        ctx = ledger.close()
++        multiplicity = {**(multiplicity or {}), "family_size": ctx.family_size, "context_digest": ctx.digest,
++                        "statement": ctx.statement()}
++    trace = {"schema": TRACE_SCHEMA, "mind": f"{MIND_ID}@{MIND_VERSION}", "config": config.to_dict(), "seed": seed,
++             "problem": problem.to_dict(), "problem_digest": problem.digest, "steps": steps, "executions": executions,
++             "observations": observations, "refusal": refusal,
++             "final_stop": None if final_stop is None else final_stop.to_dict(),
++             "conclusion": conclusion.to_dict(), "final_state": comp.view(budget_spent=spent),
++             "registry": {"head": comp.registry.head, "entries": len(comp.registry.entries),
++                          "verdicts": list(comp.verdict_digests)},
++             "multiplicity": multiplicity}
++    return MindRun(trace, conclusion, comp)
++
++
++def replay(trace: Mapping[str, Any], problem: ExperimentalProblem, *, config: MindConfig | None = None,
++           proposals: Sequence[tuple[Mapping[str, Any], str, str]] = ()) -> dict[str, Any]:
++    """Exact reasoning-path replay: re-run the Mind on the recorded observations (no world is queried)."""
++    if problem.digest != trace["problem_digest"]:
++        return {"status": "DIVERGED", "detail": "another problem than the trace's"}
++    cfg = config or VARIANTS[trace["config"]["variant"]]
++    observer = ReplayObserver(trace["executions"], trace["observations"], trace.get("refusal"))
++    try:
++        again = run_mind(problem, observer, seed=int(trace["seed"]), config=cfg, proposals=proposals)
++    except ReplayRefused as exc:
++        chain = verify_chain(trace["steps"])
++        if chain:
++            return {"status": "CHAIN_BROKEN", "steps": len(trace["steps"]), "first_divergence": None,
++                    "detail": "; ".join(chain[:3])}
++        return {"status": "DIVERGED", "steps": len(trace["steps"]), "first_divergence": observer.calls, "detail": str(exc)}
++    return compare(trace, again.trace).to_dict()
++
++
++# ---------------------------------------------------------------------------------------------------- the conclusion
++def _law(comp: HypothesisCompetition, hid: str) -> FittedLaw:
++    f = comp.rivals[hid].fitted
++    s = f.structure
++    names = list(s.linear) + list(s.quadratic)
++    coef = {n: float(c) for n, c in zip(names[:len(s.linear)], f.coef[:len(s.linear)])}
++    quad = {n: float(c) for n, c in zip(s.quadratic, f.coef[len(s.linear):])}
++    intercept = f.ybar - float(np.dot(f.coef, f.means)) if f.p else f.ybar
++    return FittedLaw(hid, intercept, coef, quad)
++
++
++def conclude(problem: ExperimentalProblem, comp: HypothesisCompetition, *, inapplicable: str | None = None) -> MindConclusion:
++    if inapplicable:
++        return MindConclusion(ConclusionKind.REFUSED, inapplicable)
++    w = comp.weights()
++    diag: dict[str, Any] = {"evidence": len(comp.rows), "noise": comp.noise.to_dict(),
++                            "refuted": sorted(h for h, r in comp.rivals.items() if r.hypothesis.status is HypothesisStatus.REFUTED),
++                            "extrapolates": problem.extrapolates}
++    if not w:
++        return MindConclusion(ConclusionKind.INSUFFICIENT_EVIDENCE, "no rival is both fitted and unrefuted", diagnostics=diag)
++    if diag["refuted"]:
++        # survivorship of the untested: once tested rivals were refuted, a rival that never faced a decisive test does
++        # not inherit their standing (found on development worlds: refuting the tested leaders left untested rivals that
++        # use a passive covariate holding the posterior, and the conclusion read association into them)
++        tested = {h: v for h, v in w.items() if comp.faced_decisive_test(h)}
++        diag["untested_set_aside"] = sorted(set(w) - set(tested))
++        z = sum(tested.values())
++        if z <= 0:
++            return MindConclusion(ConclusionKind.INSUFFICIENT_EVIDENCE, "every rival that faced a decisive test was refuted; "
++                                  "the untested rivals have not earned standing", diagnostics=diag)
++        w = {h: v / z for h, v in tested.items()}
++    for cov in problem.covariates:
++        model = comp.covmodels.get(cov)
++        diag[f"settable_r2:{cov}"] = None if model is None else round(model.r2, 9)
++        if model is not None and model.r2 >= COPY_R2:
++            diag[f"copy:{cov}"] = "set aside: a function of the settable inputs, which identify the interventional dependence"
++            w = {h: v for h, v in w.items() if cov not in comp.rivals[h].structure.linear}
++            z = sum(w.values())
++            w = {h: v / z for h, v in w.items()} if z > 0 else {}
++    if not w:
++        return MindConclusion(ConclusionKind.INSUFFICIENT_EVIDENCE, "no rival remains without the copied covariate",
++                              diagnostics=diag)
++    # no association is read from a structure that does not fit: a misfitting family can absorb its misfit into any
++    # covariate (found on development worlds: after refutations, a lone misfitting survivor that used u1 read as
++    # confounding in worlds where u1 is irrelevant)
++    first = max(sorted(w), key=lambda h: w[h])
++    first_sd = math.sqrt(comp.rivals[first].fitted.s2)
++    if comp.noise.upper95 is not None and first_sd > 2.0 * comp.noise.upper95:
++        diag["leading"], diag["fit_sd"] = first, round(first_sd, 9)
++        return MindConclusion(ConclusionKind.INSUFFICIENT_EVIDENCE, "the leading rival does not fit to within the replicate "
++                              "noise: the rivals entertained do not contain the dependence",
++                              leading_status=comp.rivals[first].hypothesis.status.value, diagnostics=diag)
++    for cov in problem.covariates:
++        if f"copy:{cov}" in diag:
++            continue
++        pi = sum(v for h, v in w.items() if cov in comp.rivals[h].structure.linear)
++        diag[f"inclusion:{cov}"] = round(pi, 9)
++        if pi < ASSOCIATION_INCLUSION:
++            continue
++        return MindConclusion(ConclusionKind.UNIDENTIFIABLE_PASSIVE_ASSOCIATION,
++                              f"the observable is associated with the passive covariate {cov} (inclusion {pi:.3f}), which varies "
++                              "independently of every settable input; no admissible experiment sets it, so its causal effect "
++                              "cannot be separated from a hidden common cause", diagnostics=diag)
++    settable = {x.name for x in problem.inputs}
++    p_null = sum(v for h, v in w.items() if not set(comp.rivals[h].structure.linear) & settable)
++    diag["p_null"] = round(p_null, 9)
++    if p_null >= NULL_DECISION:
++        return MindConclusion(ConclusionKind.NO_DEPENDENCE, f"rivals using no settable input hold {p_null:.3f} of the "
++                              "posterior", diagnostics=diag)
++    lead = max(sorted(w), key=lambda h: w[h])
++    status = comp.rivals[lead].hypothesis.status.value
++    diag["leading"] = lead
++    diag["leading_weight"] = round(w[lead], 9)
++    region = problem.region_points()
++    model = comp.model
++    lf = comp.rivals[lead].fitted
++    lm, lsd, _ = model.predict_many(lf, region, comp.covmodels)
++    region_sd = float(np.sqrt(np.mean(lsd ** 2)))
++    disagreement = 0.0
++    for h, v in w.items():
++        if h != lead and v >= 1e-3:
++            hm, _, _ = model.predict_many(comp.rivals[h].fitted, region, comp.covmodels)
++            disagreement += v * float(np.mean((hm - lm) ** 2))
++    disagreement = math.sqrt(disagreement)
++    diag["region_sd"] = round(region_sd, 9)
++    diag["model_disagreement"] = round(disagreement, 9)
++    s_fit = math.sqrt(lf.s2)
++    diag["fit_sd"] = round(s_fit, 9)
++    if comp.noise.upper95 is not None and s_fit > 2.0 * comp.noise.upper95:
++        return MindConclusion(ConclusionKind.INSUFFICIENT_EVIDENCE, "the leading rival does not fit to within the replicate "
++                              "noise: the rivals entertained do not contain the dependence", leading_status=status, diagnostics=diag)
++    if problem.extrapolates:
++        box_pts = ex.lhs(problem, 24, problem.rng(0, "box_probe"))
++        lm_box, lsd_box, _ = model.predict_many(lf, box_pts, comp.covmodels)
++        lead_box_sd = float(np.sqrt(np.mean(lsd_box ** 2)))
++        diag["leading_box_sd"] = round(lead_box_sd, 9)
++        for h in sorted(w, key=lambda h: (-w[h], h)):
++            if h == lead or w[h] < PRESERVE_WEIGHT or lead_box_sd > PRECISION:
++                continue
++            hm_box, hsd_box, _ = model.predict_many(comp.rivals[h].fitted, box_pts, comp.covmodels)
++            hm_reg, _, _ = model.predict_many(comp.rivals[h].fitted, region, comp.covmodels)
++            inbox = float(np.sqrt(np.mean((hm_box - lm_box) ** 2)))
++            outside = float(np.sqrt(np.mean((hm_reg - lm) ** 2)))
++            # both rivals are pinned down inside the box, agree there to within the noise, and differ in the region
++            if float(np.sqrt(np.mean(hsd_box ** 2))) <= PRECISION and inbox <= s_fit and outside > 3 * PRECISION:
++                diag["preserved_rival"] = {"hypothesis_id": h, "inbox_rms": round(inbox, 9), "region_rms": round(outside, 9)}
++                return MindConclusion(ConclusionKind.INDISTINGUISHABLE, "two rivals agree inside the box and diverge in the "
++                                      "region; no admissible experiment reaches the region, so both are preserved",
++                                      laws=(_law(comp, lead), _law(comp, h)), leading_status=status, diagnostics=diag)
++        return MindConclusion(ConclusionKind.INSUFFICIENT_EVIDENCE, "the region of use leaves the box every experiment can "
++                              "reach; the in-box evidence does not determine the dependence there", leading_status=status,
++                              diagnostics=diag)
++    law = _law(comp, lead)
++    finite = all(math.isfinite(x) and abs(x) < 600 for x in (law.intercept, *law.linear.values(), *law.quadratic.values()))
++    if region_sd <= PRECISION and disagreement <= PRECISION and not finite:
++        return MindConclusion(ConclusionKind.INSUFFICIENT_EVIDENCE, "the leading rival's fitted constants are not representable",
++                              leading_status=status, diagnostics=diag)
++    if region_sd <= PRECISION and disagreement <= PRECISION:
++        return MindConclusion(ConclusionKind.LAW, f"the leading rival predicts the region to {region_sd:.4f} (ln) and the "
++                              f"weighted rivals agree to {disagreement:.4f}", laws=(_law(comp, lead),), leading_status=status,
++                              diagnostics=diag)
++    return MindConclusion(ConclusionKind.INSUFFICIENT_EVIDENCE, f"precision not reached (region sd {region_sd:.4f}, rival "
++                          f"disagreement {disagreement:.4f}, required {PRECISION})", leading_status=status, diagnostics=diag)
++
++
++__all__ = ["COPY_R2", "ConclusionKind", "FULL", "FittedLaw", "MIND_ID", "MIND_VERSION", "MindConclusion", "MindConfig",
++           "MindRun", "NO_ADAPTIVE_SELECTION", "NO_BELIEF_UPDATE", "NO_FALSIFIER", "ObservationRefused", "PRECISION",
++           "VARIANTS", "conclude", "initial_design", "replay", "run_mind"]
+--- /dev/null
++++ b/src/engcore/mind/minimal/stopping.py
+@@ -0,0 +1,63 @@
++"""ScientificStopping (M-8): STOP, CONTINUE or REFUSE, from explicit cost and remaining uncertainty.
++
++* REFUSE -- the model of the observable is inapplicable to the admitted evidence, or no admissible experiment exists.
++* STOP   -- the budget is spent; or the decision no longer needs evidence: the leading rival holds at least
++  :data:`DECIDED_WEIGHT` of the posterior, the predictive sd over the region of use is under half the precision the
++  conclusion requires, and no candidate's utility per unit cost reaches :data:`UTILITY_FLOOR` (another query would
++  cost without an expected change).
++* CONTINUE -- otherwise.
++
++The thresholds are part of the Mind's identity; none of them is a scientific threshold of any authority, and a STOP
++decides nothing about any hypothesis.
++"""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from enum import Enum
++from typing import Any
++
++DECIDED_WEIGHT = 0.995
++UTILITY_FLOOR = 1e-3
++
++
++class StopKind(str, Enum):
++    CONTINUE = "continue"
++    STOP = "stop"
++    REFUSE = "refuse"
++
++
++@dataclass(frozen=True)
++class StopDecision:
++    kind: StopKind
++    reason: str
++    budget_remaining: int
++    leading_weight: float | None
++    region_sd: float | None
++    max_utility: float | None
++
++    def to_dict(self) -> dict[str, Any]:
++        r = (lambda x: None if x is None else round(float(x), 9))
++        return {"kind": self.kind.value, "reason": self.reason, "budget_remaining": self.budget_remaining,
++                "leading_weight": r(self.leading_weight), "region_sd": r(self.region_sd), "max_utility": r(self.max_utility)}
++
++
++def decide(*, budget_remaining: int, inapplicable: str | None, has_candidate: bool, adaptive_phase: bool,
++           leading_weight: float | None, region_sd: float | None, max_utility: float | None, precision: float) -> StopDecision:
++    def out(kind: StopKind, reason: str) -> StopDecision:
++        return StopDecision(kind, reason, budget_remaining, leading_weight, region_sd, max_utility)
++
++    if inapplicable:
++        return out(StopKind.REFUSE, f"inapplicable: {inapplicable}")
++    if budget_remaining <= 0:
++        return out(StopKind.STOP, "the query budget is spent")
++    if not has_candidate:
++        return out(StopKind.REFUSE, "no admissible experiment remains")
++    if (adaptive_phase and leading_weight is not None and leading_weight >= DECIDED_WEIGHT and region_sd is not None
++            and region_sd <= precision / 2 and max_utility is not None and max_utility < UTILITY_FLOOR):
++        return out(StopKind.STOP, "decided: the leading rival dominates, the region is predicted to well under the required "
++                                  "precision, and no admissible query is expected to change that")
++    return out(StopKind.CONTINUE, "evidence can still change the decision")
++
++
++__all__ = ["DECIDED_WEIGHT", "StopDecision", "StopKind", "UTILITY_FLOOR", "decide"]
+--- /dev/null
++++ b/src/engcore/mind/minimal/structures.py
+@@ -0,0 +1,186 @@
++"""Rival structural hypotheses, as canonical :class:`engcore.sria.decision.Hypothesis` records (M-2 input side).
++
++A structure states that the logarithm of the observable is linear in the logarithms of a chosen set of variables
++(``linear``), optionally plus the squares of the log of some settable inputs (``quadratic``: curvature that no power
++law has).  The empty structure is the NULL hypothesis: the observable does not depend on any variable.
++
++The structure is the CLAIM; its coefficients are fitted to evidence and are never part of the claim (a falsifier
++judges the structure, so refitting does not mint new content).  Every structure is a hypothesis of the canonical
++record type, proposed by a named algorithm or by an external proposer (a language model included), and starts
++PROPOSED: its scientific status changes only through sealed falsifier verdicts (``engcore.claims.falsification``).
++
++The PRIOR over structures is a declared design choice (:data:`PRIOR_SPEC`), never a proposer's confidence: a
++beta-binomial(1, 1) multiplicity prior over the number of SETTABLE inputs used (Scott & Berger 2010), an independent
++prior inclusion of :data:`COVARIATE_PRIOR_INCLUSION` for each passive covariate, and :data:`CURVATURE_PRIOR_MASS` of
++the mass on the curved family.  (A beta-binomial over inputs and covariates together gives a structure that uses
++every variable several times the prior of one that omits a single irrelevant covariate, which manufactures
++association with that covariate whenever the true dependence uses every input -- found on development worlds.)  It is
++part of the Mind's identity.
++"""
++
++from __future__ import annotations
++
++import hashlib
++import itertools
++import json
++import math
++from dataclasses import dataclass
++from typing import Any, Iterable, Mapping
++
++from ...sria.decision import (
++    Hypothesis, HypothesisKind, HypothesisPrediction, ProposalProvenance, ProposerKind,
++)
++from .problem import ExperimentalProblem
++
++MODEL_REF = "forge.mind.minimal.loglinear/1"
++ENUMERATOR_ID = "forge.mind.minimal.structure_enumerator"
++ENUMERATOR_VERSION = "1"
++CURVATURE_PRIOR_MASS = 0.2
++COVARIATE_PRIOR_INCLUSION = 0.5
++PRIOR_SPEC = {"family": "beta_binomial_1_1_over_settable_inputs", "covariate_prior_inclusion": COVARIATE_PRIOR_INCLUSION,
++              "curvature_prior_mass": CURVATURE_PRIOR_MASS,
++              "curvature_form": "squares of the log of every settable input in the structure"}
++
++
++def _digest(payload: Any) -> str:
++    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
++
++
++class StructureRefused(ValueError):
++    """A structure that names variables the problem does not have, or squares a passive covariate."""
++
++
++@dataclass(frozen=True)
++class Structure:
++    linear: tuple[str, ...]
++    quadratic: tuple[str, ...] = ()
++
++    def __post_init__(self) -> None:
++        object.__setattr__(self, "linear", tuple(sorted(set(self.linear))))
++        object.__setattr__(self, "quadratic", tuple(sorted(set(self.quadratic))))
++        if set(self.quadratic) - set(self.linear):
++            raise StructureRefused("a curvature term needs its variable's linear term")
++
++    @property
++    def is_null(self) -> bool:
++        return not self.linear
++
++    @property
++    def n_features(self) -> int:
++        return len(self.linear) + len(self.quadratic)
++
++    def check(self, problem: ExperimentalProblem) -> "Structure":
++        settable = {x.name for x in problem.inputs}
++        allowed = settable | set(problem.covariates)
++        if set(self.linear) - allowed:
++            raise StructureRefused(f"the structure names variables not in the problem: {sorted(set(self.linear) - allowed)}")
++        if set(self.quadratic) - settable:
++            raise StructureRefused("curvature is entertained for settable inputs only")
++        return self
++
++    def canonical_key(self, problem: ExperimentalProblem) -> str:
++        """Name-free identity: settable inputs by canonical index, covariates by sorted index."""
++        index = {x.name: f"x{i}" for i, x in enumerate(problem.canonical_inputs())}
++        index.update({c: f"u{i}" for i, c in enumerate(problem.covariates)})
++        lin = sorted(index[n] for n in self.linear)
++        quad = sorted(index[n] for n in self.quadratic)
++        return f"L[{','.join(lin)}]Q[{','.join(quad)}]"
++
++    def hypothesis_id(self, problem: ExperimentalProblem) -> str:
++        return f"mind:{self.canonical_key(problem)}"
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"linear": list(self.linear), "quadratic": list(self.quadratic)}
++
++
++def enumerate_structures(problem: ExperimentalProblem) -> list[Structure]:
++    """Every linear subset of the variables, plus one curved variant per subset with a settable input."""
++    variables = [x.name for x in problem.canonical_inputs()] + list(problem.covariates)
++    settable = {x.name for x in problem.inputs}
++    out: list[Structure] = []
++    for k in range(len(variables) + 1):
++        for subset in itertools.combinations(variables, k):
++            out.append(Structure(subset))
++            curved = tuple(n for n in subset if n in settable)
++            if curved:
++                out.append(Structure(subset, curved))
++    return out
++
++
++def log_prior(structure: Structure, problem: ExperimentalProblem) -> float:
++    """The declared prior (unnormalised log): beta-binomial(1,1) over the settable inputs used, an independent inclusion
++    prior per passive covariate, curvature mass split."""
++    settable = {x.name for x in problem.inputs}
++    m = len(settable)
++    k = len(set(structure.linear) & settable)
++    base = -math.log(m + 1) - math.log(math.comb(m, k))
++    for cov in problem.covariates:
++        base += math.log(COVARIATE_PRIOR_INCLUSION if cov in structure.linear else 1 - COVARIATE_PRIOR_INCLUSION)
++    if structure.quadratic:
++        return base + math.log(CURVATURE_PRIOR_MASS)
++    return base + math.log(1 - CURVATURE_PRIOR_MASS)
++
++
++def hypothesis_for(structure: Structure, problem: ExperimentalProblem, *,
++                   proposer: ProposalProvenance | None = None) -> Hypothesis:
++    """The canonical hypothesis record of a structure (status PROPOSED; coefficients are never part of the claim)."""
++    structure.check(problem)
++    key = structure.canonical_key(problem)
++    if structure.is_null:
++        statement = f"ln({problem.observable}) does not depend on any variable of the problem"
++    else:
++        terms = [f"ln({n})" for n in structure.linear] + [f"ln({n})^2" for n in structure.quadratic]
++        statement = f"ln({problem.observable}) is linear in {', '.join(terms)} inside the settable box"
++    return Hypothesis(
++        hypothesis_id=structure.hypothesis_id(problem), model_ref=MODEL_REF,
++        description="structural rival in the Minimal Mind's competition",
++        kind=HypothesisKind.NULL if structure.is_null else HypothesisKind.EQUATION,
++        statement=statement,
++        statement_payload={"observable": problem.observable, "structure": structure.to_dict(), "canonical": key},
++        structure_digest=_digest({"model_ref": MODEL_REF, "canonical": key}),
++        predictions=(HypothesisPrediction(observable=problem.observable, unit=problem.observable_unit or "1",
++                                          condition_ref="settable_box", description="hypothesis-conditioned posterior "
++                                          "predictive of the observable at each admissible setting"),),
++        complexity=structure.n_features,
++        proposal=proposer or ProposalProvenance(ProposerKind.ALGORITHM, f"{ENUMERATOR_ID}@{ENUMERATOR_VERSION}"),
++    )
++
++
++#: keys an external structure proposal may not carry: what a proposer may never decide (sria.decision.external's list
++#: plus every belief-shaped number a proposer could try to smuggle into the competition)
++_FORBIDDEN_PROPOSAL_KEYS = frozenset({"status", "verdict", "verdicts", "evidence", "evidence_level", "validation",
++                                      "validated", "applicable", "applicability", "admitted", "supported", "support",
++                                      "uncertainty", "novel", "novelty", "qualified", "weight", "prior", "posterior",
++                                      "probability", "confidence", "score", "credit", "threshold", "stop", "outcome"})
++
++
++def structure_from_proposal(proposal: Mapping[str, Any], problem: ExperimentalProblem) -> Structure:
++    """An external (e.g. language-model) structure proposal: variable names only.  Refused when it tries to carry
++    authority or a number the competition would read as belief."""
++    keys = {str(k).lower() for k in proposal}
++    bad = sorted(keys & _FORBIDDEN_PROPOSAL_KEYS)
++    if bad:
++        raise StructureRefused(f"a structure proposal carries {bad}: a proposer names variables, it never sets status, "
++                               "belief, uncertainty, thresholds or outcomes")
++    extra = sorted(keys - {"linear", "quadratic", "rationale"})
++    if extra:
++        raise StructureRefused(f"unknown structure proposal keys {extra}")
++    linear = proposal.get("linear", ())
++    quadratic = proposal.get("quadratic", ())
++    if not isinstance(linear, (list, tuple)) or not isinstance(quadratic, (list, tuple)):
++        raise StructureRefused("linear and quadratic are lists of variable names")
++    return Structure(tuple(str(n) for n in linear), tuple(str(n) for n in quadratic)).check(problem)
++
++
++def structures_for(problem: ExperimentalProblem, extra: Iterable[Structure] = ()) -> list[Structure]:
++    seen, out = set(), []
++    for s in [*enumerate_structures(problem), *extra]:
++        key = s.canonical_key(problem)
++        if key not in seen:
++            seen.add(key)
++            out.append(s)
++    return out
++
++
++__all__ = ["COVARIATE_PRIOR_INCLUSION", "CURVATURE_PRIOR_MASS", "ENUMERATOR_ID", "MODEL_REF", "PRIOR_SPEC", "Structure", "StructureRefused",
++           "enumerate_structures", "hypothesis_for", "log_prior", "structure_from_proposal", "structures_for"]
+--- /dev/null
++++ b/src/engcore/mind/minimal/trace.py
+@@ -0,0 +1,109 @@
++"""MindStepRecord (M-9) and MindReplay (M-10).
++
++Every step of the loop is one content-addressed record chained to the previous one.  It binds:
++
++* the PRIOR state (digest of the read-only state view before the step);
++* the candidate set and the selection (with its utility components and the weights it used);
++* the falsifier role's proposals;
++* the PRE-RESULT predictions of every tested rival at the selected setting and the falsifiers sealed on them -- their
++  digest (``prediction_seal_digest``) is fixed before the observation exists;
++* the execution (query reference, settings, the digest of the observation as returned);
++* the evidence (the release's content digest, exposure sequence and the uncertainty basis);
++* the falsifier verdicts the release produced;
++* the POSTERIOR state (digest of the state view after the step);
++* the post-result score of the sealed prediction (kept apart from any final credit).
++
++Replay re-executes the same Mind on the recorded observations (it never queries a world) and must reproduce every
++step record digest and the conclusion digest exactly; any divergence names the first step that differs.
++"""
++
++from __future__ import annotations
++
++import hashlib
++import json
++from dataclasses import dataclass, field
++from typing import Any, Callable, Mapping, Sequence
++
++STEP_SCHEMA = "forge.mind.minimal.step_record/1"
++TRACE_SCHEMA = "forge.mind.minimal.trace/1"
++GENESIS = "0" * 64
++
++
++def digest(payload: Any) -> str:
++    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
++
++
++class ReplayRefused(RuntimeError):
++    """The replayed Mind asked for an experiment the recorded trace did not run (the reasoning path diverged)."""
++
++
++def step_record(**fields: Any) -> dict[str, Any]:
++    body = {"schema": STEP_SCHEMA, **fields}
++    return {**body, "record_digest": digest(body)}
++
++
++def verify_chain(steps: Sequence[Mapping[str, Any]]) -> list[str]:
++    problems, previous = [], GENESIS
++    for i, s in enumerate(steps):
++        body = {k: v for k, v in s.items() if k != "record_digest"}
++        if s.get("schema") != STEP_SCHEMA:
++            problems.append(f"step {i}: schema {s.get('schema')!r}")
++        if digest(body) != s.get("record_digest"):
++            problems.append(f"step {i}: record digest does not match its content")
++        if s.get("previous") != previous:
++            problems.append(f"step {i}: not chained to the previous record")
++        previous = s.get("record_digest")
++    return problems
++
++
++@dataclass
++class ReplayObserver:
++    """Feeds the recorded observations back in order; refuses a query the trace did not make."""
++
++    executions: Sequence[Mapping[str, Any]]
++    observations: Sequence[Mapping[str, float]]
++    refusal: Mapping[str, Any] | None = None
++    calls: int = 0
++
++    def __call__(self, settings: Mapping[str, float], query_ref: str) -> Mapping[str, float]:
++        if self.calls >= len(self.observations):
++            if self.refusal is not None and int(self.refusal["query_index"]) == self.calls:
++                from .runner import ObservationRefused  # noqa: PLC0415 - the world's recorded refusal, replayed as recorded
++                raise ObservationRefused(str(self.refusal["message"]), budget=bool(self.refusal["budget"]))
++            raise ReplayRefused(f"the replay asked for query {self.calls}, the trace ran {len(self.observations)}")
++        rec = self.executions[self.calls]
++        if rec["query_ref"] != query_ref or rec["settings"] != {k: float(f"{float(v):.12g}") for k, v in sorted(settings.items())}:
++            raise ReplayRefused(f"step {self.calls}: the replay chose {query_ref}, the trace ran {rec['query_ref']}")
++        obs = self.observations[self.calls]
++        self.calls += 1
++        return obs
++
++
++@dataclass(frozen=True)
++class ReplayReport:
++    status: str                       # VERIFIED | DIVERGED | CHAIN_BROKEN
++    steps: int
++    first_divergence: int | None
++    detail: str = ""
++
++    def to_dict(self) -> dict[str, Any]:
++        return {"status": self.status, "steps": self.steps, "first_divergence": self.first_divergence, "detail": self.detail}
++
++
++def compare(original: Mapping[str, Any], replayed: Mapping[str, Any]) -> ReplayReport:
++    a, b = original["steps"], replayed["steps"]
++    problems = verify_chain(a)
++    if problems:
++        return ReplayReport("CHAIN_BROKEN", len(a), None, "; ".join(problems[:3]))
++    for i, (x, y) in enumerate(zip(a, b)):
++        if x["record_digest"] != y["record_digest"]:
++            return ReplayReport("DIVERGED", len(a), i, "step record digests differ")
++    if len(a) != len(b):
++        return ReplayReport("DIVERGED", len(a), min(len(a), len(b)), "different number of steps")
++    if digest(original["conclusion"]) != digest(replayed["conclusion"]):
++        return ReplayReport("DIVERGED", len(a), len(a), "the conclusion differs")
++    return ReplayReport("VERIFIED", len(a), None)
++
++
++__all__ = ["GENESIS", "ReplayObserver", "ReplayRefused", "ReplayReport", "STEP_SCHEMA", "TRACE_SCHEMA", "compare", "digest",
++           "step_record", "verify_chain"]
+--- /dev/null
++++ b/benchmarks/genesis_lite_mind/__init__.py
+@@ -0,0 +1 @@
++"""Genesis-lite Minimal Mind arms and the BR-MIND-01 pilot (outside the v0.2 preregistered package, which is unchanged)."""
+--- /dev/null
++++ b/benchmarks/genesis_lite_mind/arm.py
+@@ -0,0 +1,127 @@
++"""The Minimal Mind as Genesis-lite arms: same signature, same card, same observe client, same budget as every baseline.
++
++``arm(card, client, *, seed) -> proposal``.  The arm sees exactly what a v0.2 baseline sees: the presented card and an
++observe client whose budget the escrow enforces.  It translates the card into a name-free
++:class:`engcore.mind.minimal.ExperimentalProblem`, runs the loop, and maps the conclusion onto the Blindfold answer
++vocabulary:
++
++=========================================  =====================================================
++Mind conclusion                            Blindfold answer
++=========================================  =====================================================
++LAW                                        ``law`` (the fitted law in the expression grammar)
++NO_DEPENDENCE                              ``no_law``
++UNIDENTIFIABLE_PASSIVE_ASSOCIATION         ``confounded``
++INDISTINGUISHABLE                          ``indistinguishable`` (the two preserved rivals)
++INSUFFICIENT_EVIDENCE, REFUSED             ``insufficient_evidence``
++=========================================  =====================================================
++
++Trace export: when the operator sets ``TMPDIR`` to a directory holding a ``forge-mind-traces`` folder, the arm writes
++its full trace there, named by the digest of the card it was shown (the operator pairs it with the run record's
++``presented_card_digests``).  The trace never reaches scoring; it is read after the campaign for prediction scoring and
++replay.  Nothing the arm writes can reach another proposer: every campaign runs in a fresh process.
++"""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import math
++import os
++import pathlib
++from typing import Any, Mapping
++
++from engcore.blindfold.escrow import EscrowRefused, is_budget_refusal
++from engcore.blindfold.expression import c, mul, pw, v
++from engcore.mind.minimal import (
++    VARIANTS, ConclusionKind, ExperimentalProblem, FittedLaw, InputSpec, MindConfig, ObservationRefused, run_mind,
++)
++
++ARM_PREFIX = "mind_"
++_SEARCHES: list[str] = []
++TRACE_FOLDER = "forge-mind-traces"
++
++
++def card_digest(card: Mapping[str, Any]) -> str:
++    """The harness's own card digest (``harness._digest``), so a trace pairs with ``presented_card_digests``."""
++    return hashlib.sha256(json.dumps(card, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
++
++
++def problem_from_card(card: Mapping[str, Any]) -> ExperimentalProblem:
++    inputs = tuple(InputSpec(x["name"], x["range"][0], x["range"][1], x.get("unit", "1")) for x in card["inputs"]
++                   if x.get("settable", True))
++    region = {k: (float(lo), float(hi)) for k, (lo, hi) in card.get("assessment_region", {}).items()}
++    return ExperimentalProblem(problem_id=str(card["universe_id"]), inputs=inputs,
++                               covariates=tuple(card.get("observed_covariates", ())), observable=card["output"]["name"],
++                               observable_unit=card["output"].get("unit", "1"), budget=int(card["query_budget"]),
++                               query_cost=float(card.get("query_cost", 1.0)), region=region)
++
++
++def law_expression(law: FittedLaw) -> dict:
++    """exp(a) * prod x_i^b_i * prod exp(c_j ln(x_j)^2), in the Blindfold grammar."""
++    factors: list[dict] = [c(math.exp(law.intercept))]
++    factors += [pw(v(n), float(b)) for n, b in sorted(law.linear.items())]
++    factors += [{"exp": mul(c(float(q)), {"log": v(n)}, {"log": v(n)})} for n, q in sorted(law.quadratic.items())]
++    return factors[0] if len(factors) == 1 else mul(*factors)
++
++
++def _proposal(card: Mapping[str, Any], kind: ConclusionKind, laws: tuple[FittedLaw, ...], reason: str) -> dict[str, Any]:
++    uid = card["universe_id"]
++    if kind is ConclusionKind.LAW:
++        return {"universe_id": uid, "answer": "law", "law": law_expression(laws[0]), "rationale": reason}
++    if kind is ConclusionKind.INDISTINGUISHABLE:
++        return {"universe_id": uid, "answer": "indistinguishable", "laws": [law_expression(x) for x in laws[:2]],
++                "rationale": reason}
++    answer = {ConclusionKind.NO_DEPENDENCE: "no_law", ConclusionKind.UNIDENTIFIABLE_PASSIVE_ASSOCIATION: "confounded"}.get(
++        kind, "insufficient_evidence")
++    return {"universe_id": uid, "answer": answer, "rationale": reason}
++
++
++def run_on_card(card: Mapping[str, Any], client: Any, *, seed: int, config: MindConfig) -> tuple[dict[str, Any], dict[str, Any]]:
++    problem = problem_from_card(card)
++    uid = card["universe_id"]
++
++    def observe(settings: Mapping[str, float], query_ref: str) -> Mapping[str, float]:
++        try:
++            return client.observe(uid, dict(settings), query_id=query_ref)["observation"]
++        except EscrowRefused as exc:
++            raise ObservationRefused(str(exc), budget=is_budget_refusal(exc)) from None
++
++    # one run is one declared search: a world searched twice in one process is a second search with its own ledger
++    _SEARCHES.append(uid)
++    ledger = f"mind:{config.variant}:{uid}:search{len(_SEARCHES)}"
++    run = run_mind(problem, observe, seed=seed, config=config, ledger_campaign=ledger)
++    con = run.conclusion
++    proposal = _proposal(card, con.kind, con.laws, con.reason[:400])
++    return proposal, run.trace
++
++
++def _export(card: Mapping[str, Any], trace: Mapping[str, Any], variant: str, seed: int) -> None:
++    root = os.environ.get("TMPDIR", "")
++    folder = pathlib.Path(root) / TRACE_FOLDER if root else None
++    if folder is None or not folder.is_dir():
++        return
++    name = f"{variant}-{seed}-{card_digest(card)}.json"
++    blob = json.dumps({"card_digest": card_digest(card), "card": dict(card), "trace": trace}, sort_keys=True,
++                      separators=(",", ":"), default=str).encode()
++    (folder / name).write_bytes(blob)
++
++
++def _arm(variant: str):
++    config = VARIANTS[variant]
++
++    def arm(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
++        proposal, trace = run_on_card(card, client, seed=seed, config=config)
++        _export(card, trace, variant, seed)
++        return proposal
++
++    arm.__name__ = f"{ARM_PREFIX}{variant}"
++    return arm
++
++
++mind_full = _arm("full")
++mind_no_belief_update = _arm("no_belief_update")
++mind_no_adaptive_selection = _arm("no_adaptive_selection")
++mind_no_falsifier = _arm("no_falsifier")
++
++#: candidate arm name -> (module:function spec for the isolated proposer process, Mind variant)
++MIND_ARMS = {f"{ARM_PREFIX}{k}": (f"benchmarks.genesis_lite_mind.arm:{ARM_PREFIX}{k}", k) for k in VARIANTS}
+--- /dev/null
++++ b/tools/forge_mind_readiness.py
+@@ -0,0 +1,234 @@
++"""Bounded v0.3 public development screen. Never formal admission or freeze."""
++from __future__ import annotations
++import argparse
++import collections
++from concurrent.futures import ThreadPoolExecutor, as_completed
++import hashlib
++import json
++import os
++from pathlib import Path
++import statistics
++import signal
++import subprocess
++import sys
++import tempfile
++import time
++
++ROOT=Path(__file__).resolve().parents[1]
++PUBLIC_SEED="forge-mind-full-v03-development-readiness-2026-10-20-v1"
++CANDIDATE="mind_full"
++PRESENTATIONS=("anonymous","renamed","paraphrased","trap")
++CAMPAIGNS=tuple("mind-readiness-development-v1-"+str(i) for i in range(5))
++SEEDS=(0,1)
++TIMEOUT=60
++TOTAL_SECONDS=1200
++
++
++def canonical(value):
++    return (json.dumps(value,indent=2,sort_keys=True,allow_nan=False)+"\n").encode()
++
++
++def digest(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
++
++
++def source_pins():
++    names=["tools/forge_mind_readiness.py","tests/genesis_lite_mind/test_readiness_v03.py",
++           "tools/forge_blindfold_demo.py",
++           "benchmarks/genesis_lite_mind/arm.py","benchmarks/genesis_lite_mind/__init__.py"]
++    names += [p.relative_to(ROOT).as_posix() for p in sorted((ROOT/"src/engcore/mind/minimal").glob("*.py"))]
++    return {n:digest(ROOT/n) for n in names}
++
++def dependency_pins():
++    return {p.relative_to(ROOT).as_posix():digest(p) for folder in
++            (ROOT/"src/engcore",ROOT/"benchmarks/genesis_lite") for p in sorted(folder.rglob("*.py"))}
++
++
++def plan():
++    from benchmarks.genesis_lite.v0_3 import arms, harness, preregistration, environment
++    binding=harness.bind(preregistration.PREREG_PATH.read_bytes(),tier="development")
++    manifest=environment.build_manifest()
++    return dict(schema="forge.mind.development_readiness/1",status="DEVELOPMENT_PLAN_NOT_FORMAL_FREEZE",
++        labels=["NON-FORMAL","SECURITY_BOUNDARY_NOT_PROVEN"],public_seed=PUBLIC_SEED,candidate=CANDIDATE,
++        candidate_origin="20069cc2e9aadea6c5662a872626c1b8ef3dadd0",sources=source_pins(),
++        dependency_sha256=hashlib.sha256(canonical(dependency_pins())).hexdigest(),
++        prereg_sha256=binding.prereg_sha256,pair_bound=binding.pair_bound.to_dict(),
++        environment_manifest=manifest,environment_manifest_sha256=environment.manifest_digest(manifest),
++        arms=sorted(arms.ARMS)+[CANDIDATE],roles={k:v[3] for k,v in arms.ARMS.items()},
++        campaigns=list(CAMPAIGNS),presentations=list(PRESENTATIONS),seeds=list(SEEDS),world_sets=40,
++        master_derivation="sha256(public_seed | campaign | presentation | seed); new namespace, independent of demo/pilot",
++        expected_runs=840,expected_cards=5040,workers=4,timeout_seconds=TIMEOUT,total_seconds=TOTAL_SECONDS,
++        budget_scope="1200s for scheduled workers including replay; preparation/analysis excluded; process-group kill then communicate bounded to5s; outer command cap1500s",
++        isolation="fresh worker and private temp directory per six-card run; trusted code in_process; module state can persist across six cards, unlike formal per-card processes; no security claim",
++        replay="mind_full only: first campaign/seed0 for each presentation, same public fixtures",
++        decision="All existing v0.3 directional performance checks (pooled lower95>0, pooled Holm, presentation and kind noninferiority) plus complete valid data and matching replay => PROMISING_FOR_FORMAL_PREPARATION only. Otherwise IMPROVEMENT_OR_MORE_EVIDENCE_NEEDED. Invalid/incomplete execution => BLOCKED_EXECUTION.",
++        limits=["40 development world sets, 10 per presentation; not a power guarantee",
++                "all repeated lookups, ranks, confidence bounds and p values exploratory",
++                "no tuning, seed replacement, retry or hidden/formal root access",
++                "candidate not yet chosen for formal freeze; external evaluator remains owner's choice",
++                "same generator family as prior development, not independent real-world validation",
++                "v0.3 analysis caps/thresholds unchanged; final lift_claimed must remain false"])
++
++
++def verify_plan(doc):
++    if doc != plan(): raise ValueError("plan/code/environment mismatch; no execution")
++
++
++def worker(doc,arm,presentation,campaign,seed):
++    verify_plan(doc)
++    if arm not in doc["arms"] or presentation not in PRESENTATIONS or campaign not in CAMPAIGNS or seed not in SEEDS:
++        raise ValueError("outside fixed development matrix")
++    from benchmarks.genesis_lite.v0_3 import arms,harness,preregistration
++    binding=harness.bind(preregistration.PREREG_PATH.read_bytes(),tier="development")
++    if arm==CANDIDATE:
++        from benchmarks.genesis_lite_mind.arm import mind_full
++        # Development-only registry insertion after binding, in this fresh worker.
++        # File registry/scoring/preregistration remain untouched; candidate source
++        # is separately measured against the prewritten development plan.
++        arms.ARMS[CANDIDATE]=(mind_full,"fixed Minimal Mind FULL development candidate",False,"candidate")
++        if mind_full.__module__!="benchmarks.genesis_lite_mind.arm":
++            raise ValueError("candidate callable identity mismatch")
++    master=hashlib.sha256(f"{PUBLIC_SEED}|{campaign}|{presentation}|{seed}".encode()).digest()
++    result=harness.run_one(arm,binding=binding,master_seed=master,campaign_id=campaign,
++                          presentation=presentation,seed=seed,isolation="in_process").to_dict()
++    if source_pins()!=doc["sources"]: raise ValueError("candidate/driver changed during run")
++    result["development_source_pins"]=doc["sources"]
++    result["actual_import_locations"]={"harness":str(Path(harness.__file__).resolve())}
++    if arm==CANDIDATE:
++        import benchmarks.genesis_lite_mind.arm as candidate_module
++        result["arm_spec"]="benchmarks.genesis_lite_mind.arm:mind_full"
++        result["arm_code_sha256"]={k:v for k,v in doc["sources"].items() if k.startswith(("src/","benchmarks/"))}
++        result["actual_import_locations"]["candidate"]=str(Path(candidate_module.__file__).resolve())
++    return result
++
++
++def execute(plan_path,job,deadline):
++    arm,presentation,campaign,seed=job
++    failed=dict(arm=arm,presentation=presentation,campaign_id=campaign,seed=seed,status="DEVELOPMENT_EXECUTION_FAILED",
++                universes=[],reasons=[],evaluator_status="UNKNOWN")
++    remaining=deadline-time.monotonic()
++    if remaining<=0: return failed|dict(reasons=["total development wall budget exhausted; NOT RUN"])
++    argv=[sys.executable,str(Path(__file__).resolve()),"--worker",str(plan_path),arm,presentation,campaign,str(seed)]
++    env=dict(os.environ,PYTHONPATH=str(ROOT/"src")+os.pathsep+str(ROOT),OMP_NUM_THREADS="1",OPENBLAS_NUM_THREADS="1")
++    with tempfile.TemporaryDirectory(prefix="mind-ready-dev-") as temp:
++        env.update(TMPDIR=temp,TMP=temp,TEMP=temp)
++        p=subprocess.Popen(argv,cwd=temp,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
++        try: stdout,stderr=p.communicate(timeout=min(TIMEOUT,remaining))
++        except subprocess.TimeoutExpired:
++            os.killpg(p.pid,signal.SIGKILL)
++            try:stdout,stderr=p.communicate(timeout=5)
++            except subprocess.TimeoutExpired:
++                return failed|dict(reasons=["worker killed but cleanup did not finish within5s; no retry"])
++            return failed|dict(reasons=["worker process group timeout; terminated; no retry"],stdout=stdout,stderr=stderr)
++    if p.returncode: return failed|dict(reasons=[f"worker exit {p.returncode}"],stderr=stderr,stdout=stdout)
++    try: return json.loads(stdout)
++    except ValueError: return failed|dict(reasons=["malformed worker JSON"],stdout=stdout,stderr=stderr)
++
++
++def semantic(row):
++    from tools.forge_blindfold_demo import semantic as view
++    return view(row)
++
++
++def summarize(rows,replays,doc):
++    from benchmarks.genesis_lite.v0_3 import analysis as a
++    grid=frozenset((p,c,s) for p in PRESENTATIONS for c in CAMPAIGNS for s in SEEDS)
++    required=[arm for arm,role in doc["roles"].items() if role in a.NON_ADVERSARIAL_ROLES]+[CANDIDATE]
++    screened=a.screened_world_sets(rows,required)&grid
++    retained=[r for r in rows if (r["presentation"],r["campaign_id"],r["seed"]) not in screened]
++    expected={(arm,p,c,s) for arm in doc["arms"] for p in PRESENTATIONS for c in CAMPAIGNS for s in SEEDS}
++    actual=[(r["arm"],r["presentation"],r["campaign_id"],r["seed"]) for r in rows]
++    complete=(len(actual)==len(expected) and set(actual)==expected and all(
++        r["status"]=="VALID" and len(r.get("universes",[]))==6 and all(u.get("independent_agrees") is True
++        for u in r["universes"]) for r in retained))
++    pairs=collections.defaultdict(set)
++    for row in retained:
++        pairs[(row["presentation"],row["campaign_id"],row["seed"])].add(row.get("key_digest","UNKNOWN"))
++    pairing_ok=(len(pairs)==40-len(screened) and all(len(v)==1 and "UNKNOWN" not in v for v in pairs.values()) and
++                len(set().union(*pairs.values()))==40-len(screened))
++    complete=complete and pairing_ok
++    replay=[]
++    for rep in replays:
++        matches=[r for r in rows if all(r.get(k)==rep.get(k) for k in ("arm","presentation","campaign_id","seed"))]
++        expected_screen=(rep["presentation"],rep["campaign_id"],rep["seed"]) in screened
++        replay.append(dict(presentation=rep["presentation"],status="MATCH" if len(matches)==1 and
++            (rep["status"]=="VALID" or expected_screen and rep["status"]=="INVALID_BENCHMARK") and
++            semantic(matches[0])==semantic(rep) else "UNKNOWN_OR_MISMATCH"))
++    replay_ok=(len(replay)==4 and {r["presentation"] for r in replay}==set(PRESENTATIONS) and
++               all(r["status"]=="MATCH" for r in replay))
++    complete=complete and replay_ok and len(screened)<=2
++    result=dict(labels=doc["labels"],formal_lift_claimed=False,complete=complete,pairing_ok=pairing_ok,replay=replay,
++                screened_world_sets=sorted(screened),screen_cap_exceeded=len(screened)>2,replay_ok=replay_ok,
++                recorded_runs=len(rows),invalid_runs=[{k:r.get(k) for k in ("arm","presentation","campaign_id","seed","reasons")}
++                    for r in rows if r["status"]!="VALID"],candidate=CANDIDATE)
++    by_arm={}
++    for arm in doc["arms"]:
++        rs=[r for r in retained if r["arm"]==arm];us=[u for r in rs for u in r.get("universes",[])]
++        by_arm[arm]=dict(valid_runs=sum(r["status"]=="VALID" for r in rs),recorded_cards=len(us),
++            mean_six_kind_credit=statistics.mean(sum(u["credit"] for u in r["universes"]) for r in rs) if complete else None,
++            total_seconds=sum(r.get("wall_seconds",0) for r in rs),observations=sum(u.get("observe_calls",0) for u in us),
++            outcomes=dict(collections.Counter(u["outcome"] for u in us)),
++            kinds={k:dict(mean_credit=statistics.mean(u["credit"] for u in us if u["kind"]==k) if complete else None,
++                outcomes=dict(collections.Counter(u["outcome"] for u in us if u["kind"]==k)),
++                reasons=dict(collections.Counter((u.get("proposal") or {}).get("rationale","UNKNOWN") for u in us if u["kind"]==k))) for k in a.KINDS})
++    result["arms"]=by_arm
++    if not complete:
++        result["recommendation"]="BLOCKED_EXECUTION";return result
++    decision=a.lift_decision(rows,CANDIDATE,grid=grid)
++    assert decision["lift_claimed"] is False,"development must never claim formal lift"
++    result["exploratory_v03_analysis"]=decision
++    checks=dict(positive_pooled_lower95=decision["primary"]["pooled"]["lower95"]>0,
++                pooled_holm=decision["holm_significant"]["pooled"],
++                presentation_noninferiority=all(decision["presentation_noninferiority"].values()),
++                kind_noninferiority=all(v["ok"] for v in decision["kind_noninferiority"].values()),
++                replay=len(replay)==4 and all(r["status"]=="MATCH" for r in replay))
++    result["development_checks"]=checks
++    result["recommendation"]="PROMISING_FOR_FORMAL_PREPARATION" if all(checks.values()) else "IMPROVEMENT_OR_MORE_EVIDENCE_NEEDED"
++    return result
++
++
++def run(plan_path,out):
++    doc=json.loads(plan_path.read_bytes());verify_plan(doc);out.mkdir(parents=True,exist_ok=False)
++    deps=dependency_pins()
++    expected_deps=json.loads(plan_path.with_name("dependency-pins.json").read_bytes())
++    if deps!=expected_deps:raise ValueError("transitive first-party dependency identity mismatch")
++    (out/"plan.json").write_bytes(canonical(doc))
++    jobs=[(arm,p,c,s) for p in PRESENTATIONS for c in CAMPAIGNS for s in SEEDS for arm in doc["arms"]]
++    deadline=time.monotonic()+TOTAL_SECONDS;started=time.monotonic();rows=[]
++    with (out/"runs.jsonl").open("wb") as sink,ThreadPoolExecutor(max_workers=4) as pool:
++        tasks=[pool.submit(execute,plan_path,job,deadline) for job in jobs]
++        for task in as_completed(tasks):
++            row=task.result();rows.append(row);sink.write(canonical(row).replace(b"\n",b" ")+b"\n");sink.flush()
++            if len(rows)%40==0:print(f"Completed {len(rows)}/{len(jobs)} development runs",flush=True)
++    replays=[execute(plan_path,(CANDIDATE,p,CAMPAIGNS[0],0),deadline) for p in PRESENTATIONS]
++    (out/"replay.json").write_bytes(canonical(replays))
++    result=summarize(rows,replays,doc);result["elapsed_seconds"]=time.monotonic()-started
++    result["dependencies_unchanged"]=dependency_pins()==deps
++    if not result["dependencies_unchanged"]:
++        result["recommendation"]="BLOCKED_DEPENDENCY_CHANGED";result["complete"]=False
++    result["plan_sha256"]=digest(plan_path)
++    (out/"summary.json").write_bytes(canonical(result))
++    print(json.dumps({k:result[k] for k in ("recommendation","complete","recorded_runs","elapsed_seconds")}))
++    return 0 if result["complete"] else 1
++
++
++def main():
++    parser=argparse.ArgumentParser(description=__doc__,allow_abbrev=False)
++    parser.add_argument("--prepare",type=Path);parser.add_argument("--plan",type=Path);parser.add_argument("--output",type=Path)
++    parser.add_argument("--worker",nargs=5,help=argparse.SUPPRESS)
++    args=parser.parse_args()
++    if args.worker:
++        path,arm,p,c,s=args.worker
++        print(json.dumps(worker(json.loads(Path(path).read_bytes()),arm,p,c,int(s)),sort_keys=True));return 0
++    if args.prepare:
++        if args.plan or args.output:parser.error("prepare only")
++        deps=dependency_pins()
++        with args.prepare.with_name("dependency-pins.json").open("xb") as f:f.write(canonical(deps))
++        with args.prepare.open("xb") as f:f.write(canonical(plan()))
++        print(digest(args.prepare));return 0
++    if not args.plan or not args.output:parser.error("--plan and new --output required")
++    return run(args.plan.resolve(),args.output)
++
++
++if __name__=="__main__":
++    sys.path[:0]=[str(ROOT/"src"),str(ROOT)]
++    raise SystemExit(main())
+--- /dev/null
++++ b/tests/genesis_lite_mind/test_readiness_v03.py
+@@ -0,0 +1,152 @@
++"""Development adapter guards; actual test fixtures use a different namespace."""
++import copy
++import importlib.util
++import json
++from pathlib import Path
++import subprocess
++import time
++
++import pytest
++
++spec=importlib.util.spec_from_file_location("mind_readiness",Path(__file__).resolve().parents[2]/"tools/forge_mind_readiness.py")
++driver=importlib.util.module_from_spec(spec);spec.loader.exec_module(driver)
++
++
++def test_fixed_plan_has_all_registered_baselines():
++    doc=driver.plan()
++    assert len(doc["arms"])==21 and len(doc["roles"])==20
++    assert doc["expected_cards"]==5040 and doc["world_sets"]==40
++    assert doc["roles"]["historical_answer"]=="adversarial"
++    assert "NON-FORMAL" in doc["labels"]
++
++
++def test_real_candidate_pairing_and_semantic_repeat_separate_test_namespace(monkeypatch):
++    from benchmarks.genesis_lite.v0_3 import arms,formal,registry
++    def forbidden(*a,**k): raise AssertionError("formal access")
++    monkeypatch.setattr(formal,"run_formal",forbidden)
++    monkeypatch.setattr(registry.AttemptRegistry,"__init__",forbidden)
++    monkeypatch.setattr(driver,"CAMPAIGNS",("adapter-unit-development-only",))
++    monkeypatch.setattr(driver,"PUBLIC_SEED","mind-adapter-unit-only-v1")
++    doc=driver.plan()
++    def run(arm,seed=0):
++        saved=dict(arms.ARMS)
++        try:return driver.worker(doc,arm,"anonymous",driver.CAMPAIGNS[0],seed)
++        finally:arms.ARMS.clear();arms.ARMS.update(saved)
++    first=run("mind_full");again=run("mind_full");base=run("careful")
++    assert first["status"]==again["status"]==base["status"]=="VALID"
++    assert first["key_digest"]==base["key_digest"]
++    assert first["key_digest"]!=run("careful",1)["key_digest"]
++    assert driver.semantic(first)==driver.semantic(again)
++    assert first["tier_bound"]=="development" and first["pair_bound"]==doc["pair_bound"]
++    assert first["arm_spec"]=="benchmarks.genesis_lite_mind.arm:mind_full"
++    assert all(u["independent_agrees"] for u in first["universes"])
++
++
++@pytest.mark.parametrize("field",["prereg_sha256","sources","pair_bound","dependency_sha256"])
++def test_changed_plan_refuses(field):
++    doc=driver.plan();doc[field]="tampered"
++    with pytest.raises(ValueError,match="mismatch"):driver.verify_plan(doc)
++
++
++def test_wrong_candidate_callable_refused(monkeypatch):
++    from benchmarks.genesis_lite_mind import arm
++    from benchmarks.genesis_lite.v0_3 import arms
++    doc=driver.plan()
++    monkeypatch.setattr(arm,"mind_full",lambda *a,**k: {})
++    saved=dict(arms.ARMS)
++    try:
++        with pytest.raises(ValueError,match="callable identity"):
++            driver.worker(doc,"mind_full","anonymous",driver.CAMPAIGNS[0],0)
++    finally:arms.ARMS.clear();arms.ARMS.update(saved)
++
++
++def test_missing_coverage_cannot_be_promising():
++    result=driver.summarize([],[],driver.plan())
++    assert result["recommendation"]=="BLOCKED_EXECUTION"
++    assert result["formal_lift_claimed"] is False
++    assert all(a["mean_six_kind_credit"] is None for a in result["arms"].values())
++
++
++def test_exhausted_budget_keeps_unstarted_job(tmp_path):
++    record=driver.execute(tmp_path/"unused.json",("mind_full","anonymous",driver.CAMPAIGNS[0],0),time.monotonic()-1)
++    assert record["status"]=="DEVELOPMENT_EXECUTION_FAILED" and "NOT RUN" in record["reasons"][0]
++
++
++def test_timeout_kills_own_process_group_and_retains_record(monkeypatch,tmp_path):
++    killed=[]
++    class Process:
++        pid=12345
++        calls=0
++        def __init__(self,*a,**kw):
++            assert kw["start_new_session"] is True
++            assert kw["cwd"]==kw["env"]["TMPDIR"]
++        def communicate(self,timeout=None):
++            self.calls+=1
++            if self.calls==1:raise subprocess.TimeoutExpired("test",timeout)
++            assert timeout==5
++            return "partial", "error"
++    monkeypatch.setattr(driver.subprocess,"Popen",Process)
++    monkeypatch.setattr(driver.os,"killpg",lambda pid,sig:killed.append(pid))
++    result=driver.execute(tmp_path/"unused.json",("mind_full","anonymous",driver.CAMPAIGNS[0],0),time.monotonic()+10)
++    assert killed==[12345] and result["stdout"]=="partial"
++    assert result["status"]=="DEVELOPMENT_EXECUTION_FAILED"
++
++
++def synthetic_complete(monkeypatch):
++    from benchmarks.genesis_lite.v0_3 import analysis as a
++    from engcore.blindfold.roles import DEFAULT_CREDIT
++    doc=driver.plan()
++    rows=[dict(arm=arm,presentation=p,campaign_id=c,seed=s,status="VALID",reasons=[],
++        key_digest=f"synthetic-{p}-{c}-{s}",universes=[dict(kind=k,outcome="insufficient_evidence",
++            credit=DEFAULT_CREDIT[k].get("insufficient_evidence",0),independent_agrees=True,
++            truth_in_searched_family=True,proposal={"rationale":"synthetic-only"}) for k in a.KINDS])
++        for arm in doc["arms"] for p in driver.PRESENTATIONS for c in driver.CAMPAIGNS for s in driver.SEEDS]
++    replay=copy.deepcopy([r for r in rows if r["arm"]=="mind_full" and
++                         r["campaign_id"]==driver.CAMPAIGNS[0] and r["seed"]==0])
++    def analysis_only(*args,**kwargs):
++        return dict(lift_claimed=False,screened_world_sets=1,primary={"pooled":{"lower95":1}},
++                    holm_significant={"pooled":True},presentation_noninferiority={"all":True},
++                    kind_noninferiority={"all":{"ok":True}})
++    monkeypatch.setattr(a,"lift_decision",analysis_only)
++    return doc,rows,replay
++
++
++def test_one_symmetric_screen_retained_without_survivor_bias(monkeypatch):
++    doc,rows,replay=synthetic_complete(monkeypatch)
++    # Not one of the four replay slots.
++    for row in rows:
++        if row["seed"]==1 and row["presentation"]=="anonymous" and row["campaign_id"]==driver.CAMPAIGNS[0]:
++            row.update(status="INVALID_BENCHMARK",reasons=["trap synthetic: invalid world"],universes=[])
++    result=driver.summarize(rows,replay,doc)
++    assert result["complete"] and len(result["screened_world_sets"])==1
++    assert all(v["recorded_cards"]==39*6 for v in result["arms"].values())
++    assert result["invalid_runs"]  # original failed record remains present
++
++
++def test_excessive_screening_is_execution_blocker(monkeypatch):
++    doc,rows,replay=synthetic_complete(monkeypatch)
++    for row in rows:
++        if row["seed"]==1 and row["presentation"]=="anonymous" and row["campaign_id"] in driver.CAMPAIGNS[:3]:
++            row.update(status="INVALID_BENCHMARK",reasons=["trap synthetic: invalid world"],universes=[])
++    result=driver.summarize(rows,replay,doc)
++    assert result["screen_cap_exceeded"] and not result["complete"]
++    assert result["recommendation"]=="BLOCKED_EXECUTION"
++
++
++def test_one_arm_invalid_is_not_a_symmetric_screen(monkeypatch):
++    doc,rows,replay=synthetic_complete(monkeypatch)
++    row=next(r for r in rows if r["arm"]=="careful" and r["seed"]==1)
++    row.update(status="INVALID_BENCHMARK",reasons=["trap synthetic: invalid world"],universes=[])
++    result=driver.summarize(rows,replay,doc)
++    assert not result["screened_world_sets"] and not result["complete"]
++
++
++@pytest.mark.parametrize("failure",["missing","timeout","mismatch"])
++def test_replay_failure_blocks_execution_not_mind_performance(monkeypatch,failure):
++    doc,rows,replay=synthetic_complete(monkeypatch)
++    if failure=="missing":replay.pop()
++    elif failure=="timeout":replay[0].update(status="DEVELOPMENT_EXECUTION_FAILED",universes=[])
++    else:replay[0]["key_digest"]="tampered"
++    result=driver.summarize(rows,replay,doc)
++    assert not result["complete"] and not result["replay_ok"]
++    assert result["recommendation"]=="BLOCKED_EXECUTION"
+--- /dev/null
++++ b/docs/discovery/MIND_FULL_V03_DEVELOPMENT_READINESS.md
+@@ -0,0 +1,138 @@
++# mind_full v0.3 — bounded development readiness result
++
++**NON-FORMAL / SECURITY_BOUNDARY_NOT_PROVEN. Recommendation: do not spend the
++formal attempt on this candidate yet. Targeted diagnosis/improvement is warranted;
++no frozen/formal claim is established.**
++
++## Scope and fixed protocol
++
++Owner approved mind_full as a development starting point; evaluator selection
++remains the owner's choice. This does not appoint D6, select/freeze the formal
++D4 candidate, authorize OD-3 or admit a formal root. No deployment/CP3 changes.
++Existing worktree HEAD1cb5e187ef46ba2735fa292112a5e2bfd2334007 plus explicit
++uncommitted additions.12 candidate files imported byte-identically from
++feat/br-mind-01-minimal-mind at20069cc2e9aadea6c5662a872626c1b8ef3dadd0.
++No Mind behavior, scientific thresholds, baseline registry file or v0.3 scoring
++was changed. A development-only in-memory adapter registers the actual pinned
++Mind callable in each fresh worker AFTER development binding.
++
++Final plan SHA256:
++`5d40f4c8e51696fedc4078efac91beb63685afb2597b93b5d97d427072294bbc`.
++Written before final tests/fixed-grid execution; hash is local content identity,
++not independent witnessing or formal preregistration. Prior plans are preserved;
++no fixed-grid world was run under them. The seed/grid never changed.
++
++5 new public-development campaigns ×4 presentations ×2 seeds=40 world sets.
++20 registered baseline arms (19 non-adversarial, one adversarial) plus mind_full:
++840 six-card runs /5040 primary card executions, followed by4 predetermined Mind
++semantic replays /24 cards. Masters derive from public development seed plus
++campaign/presentation/seed, excluding arm; pairing/different-world checks passed.
++All four presentations were included, unlike the two-presentation public demo.
++
++Fresh process/private temp per six-card run; trusted in_process behavior retains
++module state across six cards, unlike formal per-card processes. No security
++claim.4 workers,60s/run,1200s workers/replay budget,1500s outer cap; no retries or
++tuning. Existing v0.3 cap, sign-flip, Holm and noninferiority calculations retained.
++Formal refusals remain in the machine-readable analysis; lift_claimed=False.
++
++## Executed results
++
++| Check | Observed |
++|---|---|
++| Adapter/reporting tests |16 passed in12.25s |
++| Primary runs |840 valid,0 invalid,0 screened,0 missing |
++| Automated evaluator re-score |Agrees on5040/5040 primary cards; no external evaluator appointed |
++| World identity |40 distinct world-set key digests, same key across21 arms per set |
++| Semantic replay |4/4 MATCH; not cryptographic verification of archived logs |
++| Dependencies |Unchanged before/after; candidate/adapter hashes match source |
++| Runtime |197.00s outer elapsed, exit0;196.37s measured run/analysis |
++| Formal lift |False; developmental grid, draft identity and security/approval gates remain |
++
++## Performance assessment
++
++| Metric | Result |
++|---|---:|
++| Mind raw mean six-kind credit |3.675 |
++| Strongest non-adversarial baseline, careful |3.250 |
++| Raw paired difference |+0.425 |
++| v0.3 capped pooled difference |−0.025 |
++| Capped bootstrap95% lower bound |−0.200 |
++| Uncapped sign-flip p, descriptive |0.015625 |
++| Pooled Holm condition |Not met |
++
++Do not interpret the raw rank as discovery lift. Control-solved and
++representation/out-of-family caps remove gains the registered scientific
++contract does not permit as evidence of improvement. The uncapped p concerns a
++different statistic from the capped effect and is not corrected evidence of
++success: the Holm family condition fails, and the capped effect is nonpositive.
++All confidence bounds/p-values here are exploratory on40 development world sets.
++
++| Kind | Mind outcomes /40 | Existing guardrail |
++|---|---|---|
++| no_solution |27 no_law;10 insufficient;3 confounded |Fails vs always_refuse: mean−0.325, lower−0.475, margin0.15 |
++| confounded |36 confounded;4 insufficient |Fails vs single_setting: mean−0.100, lower−0.200, margin0.15 |
++| discoverable |11 law_pass;28 insufficient;1 confounded |Passes this exploratory guardrail vs extrapolating_fit |
++| spurious_correlate |13 law_pass;27 insufficient |Passes this exploratory guardrail |
++| indistinguishable |40 insufficient |Passes guardrail; no distinguishable-pair capability demonstrated |
++| insufficient_evidence |40 insufficient |Passes guardrail |
++
++Mind has24 law_pass,0 law_fail and0 negative-credit outcomes in240 primary cards.
++That is measured conservatism in this sample, not a general false-law guarantee;
++four false confounded classifications still occur (3 no_solution,1 discoverable).
++The trap-presentation guardrail also fails: lower−0.700 vs required greater than
++−0.600. Different presentations have different worlds in this plan; this does
++NOT identify wording sensitivity or textbook leakage as the cause. No_solution
++recognition was4/10 in trap-labelled worlds versus9/10 paraphrased-labelled worlds;
++these are separate draws, not a controlled vocabulary intervention.
++
++## Smallest justified next improvement target (not implemented)
++
++Prioritize **null-versus-effect and passive-association decisions**, not a larger
++Mind or relaxed benchmark rules. The concrete target is13 missed no_solution
++classifications, including3 spurious confounded conclusions; the4 missed
++confounded classifications are secondary. Preserve successful refusal behavior.
++
++Recorded rationale for no_solution misses:7 extrapolation refusals,3 precision
++refusals,3 passive-association conclusions. Static inspection shows the null
++posterior decision already precedes the extrapolation gate; therefore simply
++reordering that gate is not supported. The next bounded task should inspect why
++the null hypothesis fails to accumulate sufficient standing, whether evidence
++allocation and the association decision remain calibrated under pure noise, and
++how to distinguish passive association from absence of a controllable effect.
++
++These are diagnostic hypotheses, not proven root causes or promised fixes.
++Full per-step Mind traces were not captured in this screen; retained sealed
++proposals/rationales cannot establish which experiment-selection or posterior
++update caused a miss. Before changing behavior, reproduce the decision-path issue
++on new development fixtures with traces, then test a narrowly specified change
++on a new predeclared development set, preserving the false-law/refusal checks.
++Do not lower thresholds, suppress UNKNOWN/refusals, permit unsupported
++extrapolation, add benchmark-kind tells, or rescore/tune against these40 worlds.
++No ablations were run: adaptive selection, belief update and falsifier contribution
++cannot be attributed by this result.
++
++A larger sample of the unchanged candidate could reduce uncertainty, but there
++is no current basis to promise that it will reverse the capped−0.025 mean or
++repair the no_solution deficit. Close the targeted issue before spending the
++formal attempt; external evaluator/isolation/certification remain separate gates.
++
++## Cost and practical stop
++
++Mind harness wall time summed over40 runs:84.059s (~2.10s per six-card run).
++careful:2.754s (~0.069s/run). These concurrent development timings exclude worker
++startup/identity validation and are NOT a formal deployment budget prediction.
++No formal baselines, official root, admission/registry storage, freeze, OD-3,
++commit/push/merge or evaluator selection occurred. No candidate tuning occurred.
++
++Existing4608 production file hashes and CP2 source/evidence hashes remain intact;
++only new candidate source, development driver/tests and docs were added. Candidate
++source is an uncommitted import, not a claim of integration/certification. Full
++regression, changed-file gate and formal deployment timing NOT RUN in this bounded
++screen. Original main and divergent Linux checkout were preserved.
++
++## Evidence
++
++[Plan, tests, raw records, replay and commands](../work/evidence/mind_full_v03_readiness_2026_10_20_v1/).
++[Machine-readable summary](../work/evidence/mind_full_v03_readiness_2026_10_20_v1/v3/results/summary.json).
++[Raw per-run/card records](../work/evidence/mind_full_v03_readiness_2026_10_20_v1/v3/results/runs.jsonl).
++Pre-run independent static review PASS. Final independent read-only interpretation review: PASS; raw-record checks corroborated counts, pairing and numerical conclusions. This is review evidence, not certification or formal validation. See [review](../work/evidence/mind_full_v03_readiness_2026_10_20_v1/final-review.md).
+--- a/docs/work/ACTIVE_PLAN.md
++++ b/docs/work/ACTIVE_PLAN.md
+@@ -1,4 +1,22 @@
+ # Active Plan
++
++## Bounded Mind readiness development screen (2026-10-20)
++
++Owner explicitly authorized mind_full as development starting point under v0.3;
++evaluator selection stays with owner. This permits the bounded screen before
++naming D6; it does not choose/freeze the formal D4 candidate or authorize formal
++execution. Fixed plan: 40 new public development world sets, all 20 registered
++baseline arms plus unchanged mind_full; no tuning or seed replacement. Candidate
++source imported byte-identically from 20069cc2; existing scientific files unchanged.
++Sixteen adapter/reporting tests passed on a separate unit-fixture namespace; independent
++pre-run static review PASS. Fixed v3 development run COMPLETE:840 valid runs,
++5040 evaluator agreements,4 replay matches. Capped difference -0.025, lower95 -0.200;
++recommendation IMPROVEMENT_OR_MORE_EVIDENCE_NEEDED. No formal attempt warranted now.
++See docs/discovery/MIND_FULL_V03_DEVELOPMENT_READINESS.md. Further improvement is
++proposed only; no behavior change authorized or performed by this screen.
++Evidence: docs/work/evidence/mind_full_v03_readiness_2026_10_20_v1/.
++No formal root, admission, freeze, OD-3, evaluator appointment or CP3 work.
++
+ 
+ ## Bounded public Blindfold demo (2026-10-20)
+ 
+--- a/docs/work/PROGRESS.md
++++ b/docs/work/PROGRESS.md
+@@ -8633,3 +8633,83 @@
+ Full regression/changed-file gate NOT RUN (bounded targeted execution only).
+ 
+ 
++## 2026-10-20 — mind_full v0.3 readiness screen pre-execution checkpoint
++
++Owner authorization: bounded development screen; independent evaluator remains owner choice.
++Plan SHA256 fc82771c4b8ba1d4eba9cc15c1c4b04795306bd372019220ae385d751ada8c6a
++was written before unit tests and fixed-grid execution; local hash establishes
++content identity, not external witnessing or formal preregistration.
++Ten targeted tests passed in 10.55s, exit0, on separate unit namespace.
++
++Cwd: /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
++```sh
++PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_readiness.py --prepare /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v1/plan.json
++```
++Exit 0.
++
++Cwd: /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
++```sh
++PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite_mind/test_readiness_v03.py -q -p no:cacheprovider --basetemp=/tmp/mind-readiness-unit-v1 -rA --tb=short
++```
++Exit 0.
++
++
++### Mind readiness pre-run review corrections and final test result
++
++Independent read-only forge-scientific-review found summary defects: symmetric
++screen handling occurred after early invalidity return; replay failure could be
++misclassified as weak performance and exit0. Corrected before fixed-grid execution.
++Original plan/tests preserved. v2 tests:2failed13passed11.63s because synthetic
++screen fixtures marked one arm instead of all arms invalid; fixed fixtures to
++match the unchanged screening rule, added asymmetric-invalid regression.
++v3 tests:16passed12.25s, exit0. Independent final static review PASS (not validation).
++v3 plan SHA2565d40f4c8e51696fedc4078efac91beb63685afb2597b93b5d97d427072294bbc
++prepared before tests/fixed-grid execution. No fixed-grid worlds run under v1/v2.
++
++v2 prepare cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
++```sh
++PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_readiness.py --prepare /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v2/plan.json
++```
++Exit 0.
++
++v2 test cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
++```sh
++PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite_mind/test_readiness_v03.py -q -p no:cacheprovider --basetemp=/tmp/mind-readiness-unit-v2 -rA --tb=short
++```
++Exit 1.
++
++v3 prepare cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
++```sh
++PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_readiness.py --prepare /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v3/plan.json
++```
++Exit 0.
++
++v3 test cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
++```sh
++PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite_mind/test_readiness_v03.py -q -p no:cacheprovider --basetemp=/tmp/mind-readiness-unit-v3 -rA --tb=short
++```
++Exit 0.
++
++
++### mind_full readiness fixed development run complete
++
++Plan5d40f4c8e51696fedc4078efac91beb63685afb2597b93b5d97d427072294bbc; no retries.
++840/840 valid runs,5040 cards,0invalid/screens;5040/5040 evaluator agreement.
++Four prescribed Mind semantic replays MATCH (24 more cards); dependencies unchanged.
++Outer197.002s exit0; worker/analysis196.371s. Strongest baseline careful3.250 versus
++Mind3.675 raw; capped difference−0.025, lower95−0.200, pooled Holm fails.
++no_solution/confounded and trap presentation guardrails fail. Recommendation:
++IMPROVEMENT_OR_MORE_EVIDENCE_NEEDED; do not spend formal attempt on current candidate.
++No behavior/scoring change made. Diagnostic improvement target: null/effect and
++passive-association decision; not a proven cause or approved implementation.
++
++Exact command cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
++```sh
++PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_readiness.py --plan /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v3/plan.json --output /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v3/results
++```
++Outer cap1500s; worker cap1200s,60s/run. Exit0.
++
++Report: docs/discovery/MIND_FULL_V03_DEVELOPMENT_READINESS.md.
++Full regression/changed-file gate NOT RUN; no formal/freeze/OD-3/commit/push/merge.
++
++Final independent interpretation review (Halley): PASS; raw records corroborated. No test/campaign rerun by reviewer. Preserved uncertainty and diagnosis-before-calibration caveats; external evaluator still owner-selected. Final packaging checks: `git diff --check` exit 0; `git rev-parse HEAD` = 1cb5e187ef46ba2735fa292112a5e2bfd2334007. SHA256 recheck: 4608 existing production files, five CP2 sources and twelve imported candidate files unchanged (final-preservation.json). No additional test execution.

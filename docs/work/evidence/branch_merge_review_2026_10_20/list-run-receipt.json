@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe",
+    "tools/forge_check.py",
+    "--changed",
+    "--base",
+    "origin/main",
+    "--list"
+  ],
+  "cwd": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f",
+  "environment": {
+    "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f",
+    "TMPDIR": "NOT SET",
+    "PYTEST_ADDOPTS": "NOT SET"
+  },
+  "exit_code": 1,
+  "result": "2 failed,199 passed,18 setup PermissionErrors,12.93s",
+  "error": "--list displays selection but still executes; should use --dry-run. Retrying with explicit short temporary path."
+}

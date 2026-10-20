@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_repository_architecture.py",
+    "tests/test_core_api_layering.py",
+    "tests/test_scientific_regression_manifest.py",
+    "tests/test_forge_check.py",
+    "tests/test_agent_workflow_contract.py",
+    "tests/test_capability_completion.py",
+    "benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py",
+    "benchmarks/battery_1rc_crosscell/tests/test_battery_1rc_crosscell.py",
+    "benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py",
+    "tests/foundations/test_v2_blindfold.py",
+    "tests/test_multiphysics_window_control.py",
+    "--basetemp=D:/tmp/merge-main-control/bt"
+  ],
+  "cwd": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f",
+  "environment": {
+    "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f",
+    "TMPDIR": "D:/tmp/merge-main-control"
+  },
+  "exit_code": 1,
+  "elapsed_seconds": 13.028979999944568
+}

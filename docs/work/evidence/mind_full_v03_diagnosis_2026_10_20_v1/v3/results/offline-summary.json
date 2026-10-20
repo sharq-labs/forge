@@ -1,0 +1,39 @@
+{
+  "counts": {
+    "confounded": {
+      "confounded": 12
+    },
+    "discoverable": {
+      "insufficient_evidence": 9,
+      "law": 3
+    },
+    "indistinguishable": {
+      "insufficient_evidence": 12
+    },
+    "insufficient_evidence": {
+      "insufficient_evidence": 12
+    },
+    "no_solution": {
+      "confounded": 1,
+      "insufficient_evidence": 5,
+      "no_law": 6
+    },
+    "spurious_correlate": {
+      "insufficient_evidence": 9,
+      "law": 3
+    }
+  },
+  "distinct_new_world_sets": 12,
+  "formal": false,
+  "original_failure": "post-execution prior-record path absent in dedicated Linux checkout",
+  "original_run_exit_code": 1,
+  "primary_cards": 72,
+  "primary_runs": 12,
+  "prior_keys_checked": 40,
+  "prior_run_records_path": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v3/results/runs.jsonl",
+  "prior_run_records_sha256": "2415b840e7fa96913351548b4e4a2d0c8a9db4ee3d9b7f6e0491a069ebdd9c8a",
+  "replayed_traces": 72,
+  "source_pins_match": true,
+  "status": "DIAGNOSTIC_DATA_COMPLETE_OFFLINE_FINALIZATION",
+  "trace_disabled_control": "MATCH"
+}

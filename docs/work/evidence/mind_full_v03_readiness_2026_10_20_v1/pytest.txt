@@ -1,0 +1,14 @@
+..........                                                               [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_fixed_plan_has_all_registered_baselines
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_real_candidate_pairing_and_semantic_repeat_separate_test_namespace
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_changed_plan_refuses[prereg_sha256]
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_changed_plan_refuses[sources]
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_changed_plan_refuses[pair_bound]
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_changed_plan_refuses[dependency_sha256]
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_wrong_candidate_callable_refused
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_missing_coverage_cannot_be_promising
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_exhausted_budget_keeps_unstarted_job
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_timeout_kills_own_process_group_and_retains_record
+10 passed in 10.55s
