@@ -670,10 +670,13 @@ def test_attempt_a_screened_world_set_verifies_only_if_its_screen_rederives(tmp_
     rec = screened["records"][0]
     assert rec["status"] == "INVALID_BENCHMARK" and all(r.startswith("trap ") for r in rec["reasons"])
     assert _publish_and_verify(screened, screened["records"]) == []
+    dropped = _attempt(tmp_path, "dropped", presentation="trap")
+    edited = dict(dropped["records"][0], reasons=dropped["records"][0]["reasons"] + ["leakage audit: [forged]"])
+    assert any("do not re-derive exactly" in p for p in _publish_and_verify(dropped, [edited]))
     monkeypatch.setattr(v02_harness, "_textbook_could_pass", lambda textbook, entry: False)
     claimed = _attempt(tmp_path, "claimed", presentation="renamed")
     fake = dict(claimed["records"][0], status="INVALID_BENCHMARK", reasons=["trap bf-x (discoverable): claimed"])
-    assert any("does not re-derive" in p for p in _publish_and_verify(claimed, [fake]))
+    assert any("do not re-derive exactly" in p for p in _publish_and_verify(claimed, [fake]))
     other = _attempt(tmp_path, "other-reason")
     odd = dict(other["records"][0], status="INVALID_BENCHMARK", reasons=["run aborted: boom"])
     assert any("no preregistered screen explains" in p for p in _publish_and_verify(other, [odd]))
@@ -693,6 +696,9 @@ def test_p4_candidate_dynamic_calls_twins_and_markers(tmp_path, monkeypatch):
     (pkg / "__init__.py").write_bytes(b"")
     (pkg / "a.py").write_bytes(b"import builtins\n\ndef run(card, client, *, seed=0):\n    builtins.exec('1')\n")
     (pkg / "b.py").write_bytes(b"from os import *\n\ndef run(card, client, *, seed=0):\n    return {}\n")
+    (pkg / "c.py").write_bytes(b"import re\n\ndef run(card, client, *, seed=0, model=None):\n"
+                               b"    re.compile('x')\n    return model.eval() if model else {}\n")
+    (pkg / "d.py").write_bytes(b"from builtins import exec as run_it\n\ndef run(card, client, *, seed=0):\n    return {}\n")
     monkeypatch.setattr(formal, "_ROOT", tmp_path)
     monkeypatch.setattr(formal, "_identity_pinned_files", lambda: frozenset())
     monkeypatch.setattr(formal, "_tracked_engcore", lambda: frozenset())
@@ -703,6 +709,8 @@ def test_p4_candidate_dynamic_calls_twins_and_markers(tmp_path, monkeypatch):
 
     assert any("dynamic loading" in p for p in formal.candidate_code_problems(cand("dyn.a", "dyn/__init__.py", "dyn/a.py")))
     assert formal.candidate_code_problems(cand("dyn.b", "dyn/__init__.py", "dyn/b.py")) == []      # '*' is not a file
+    assert formal.candidate_code_problems(cand("dyn.c", "dyn/__init__.py", "dyn/c.py")) == []      # ordinary methods
+    assert any("dynamic loading" in p for p in formal.candidate_code_problems(cand("dyn.d", "dyn/__init__.py", "dyn/d.py")))
     (pkg / "__init__.pyc").write_bytes(b"\x00")
     assert any("ambiguous" in p for p in formal.candidate_code_problems(cand("dyn.b", "dyn/__init__.py", "dyn/b.py")))
     markers = json.loads(v03p.PREREG_PATH.read_bytes())["package_markers"]

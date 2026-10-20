@@ -143,7 +143,9 @@ def candidate_of(doc: Mapping[str, Any]) -> Mapping[str, Any] | None:
 _ROOT = pathlib.Path(__file__).resolve().parents[3]
 #: modules and calls that would load or run code the static pin cannot see (a static screen, not a proof: behaviour is
 #: the external evaluator's source review, D6)
-_DYNAMIC = frozenset({"importlib", "__import__", "exec", "eval", "compile", "runpy", "imp", "import_module"})
+_DYNAMIC_CALLS = frozenset({"exec", "eval", "compile", "__import__", "import_module"})
+#: modules whose import, or whose attribute call to a dynamic name, loads or runs unseen code
+_DYNAMIC_MODULES = frozenset({"importlib", "runpy", "imp", "builtins"})
 
 
 def _identity_pinned_files() -> frozenset[str]:
@@ -233,14 +235,21 @@ def _static_imports(rel: str) -> tuple[set[str], set[str]]:
             modules = [base] + [f"{base}.{a.name}" for a in node.names]
         elif isinstance(node, ast.Call):
             func = node.func
-            name = func.id if isinstance(func, ast.Name) else func.attr if isinstance(func, ast.Attribute) else None
-            if name in _DYNAMIC:
-                dynamic.add(name)
+            if isinstance(func, ast.Name) and func.id in _DYNAMIC_CALLS:
+                dynamic.add(func.id)                              # exec(...), eval(...), compile(...), __import__(...)
+            elif isinstance(func, ast.Attribute) and func.attr in _DYNAMIC_CALLS and (
+                    func.attr in ("__import__", "import_module")
+                    or (isinstance(func.value, ast.Name) and func.value.id in _DYNAMIC_MODULES)):
+                dynamic.add(func.attr)                            # builtins.exec(...), importlib.import_module(...)
+            # re.compile(...), model.eval(), torch.compile(...) are ordinary method calls, not dynamic loading
         for module in modules:
             if module.endswith(".*"):
                 continue
-            if module.split(".")[0] in _DYNAMIC:
-                dynamic.add(module.split(".")[0])
+            top = module.split(".")[0]
+            if top in _DYNAMIC_MODULES and module != "builtins":
+                dynamic.add(top)                                  # importlib / runpy / imp imported at all
+            if module.startswith("builtins.") and module.split(".", 1)[1] in _DYNAMIC_CALLS:
+                dynamic.add(module.split(".", 1)[1])              # from builtins import exec
             files.update(_with_parents(module))
     return files, dynamic
 
@@ -379,8 +388,14 @@ SCREEN_PREFIXES = v02_analysis.SCREEN_PREFIXES
 
 
 def screen_rederives(master: bytes, arm: str, campaign_id: str, presentation: str, seed: int) -> bool:
-    """Whether an arm-independent screen of the harness (the literal leakage audit of the presented cards, or a trap
-    world whose best-constant textbook law would pass) re-derives for this world set from its master."""
+    """Whether any arm-independent screen of the harness fires for this world set (:func:`screen_reasons`)."""
+    return bool(screen_reasons(master, arm, campaign_id, presentation, seed))
+
+
+def screen_reasons(master: bytes, arm: str, campaign_id: str, presentation: str, seed: int) -> list[str]:
+    """The exact reasons the harness records when an arm-independent screen fires, re-derived from the master: the
+    literal leakage audit of the presented cards, then every trap world whose best-constant textbook law would pass, in
+    the harness's order and wording (benchmarks/genesis_lite/harness.py, ``_run``)."""
     from engcore.blindfold.escrow import EscrowService  # noqa: PLC0415
     from engcore.blindfold.expression import c, mul, pw, v  # noqa: PLC0415
     from engcore.blindfold.universe import UniverseKind  # noqa: PLC0415
@@ -397,16 +412,18 @@ def screen_rederives(master: bytes, arm: str, campaign_id: str, presentation: st
              for uid in camp.order}
     key = export_answer_key(master, campaign_id, v02h.MIX, list(camp.order))
     audit = audit_presented_cards([{**p.card, "universe_id": uid} for uid, p in shown.items()], key)
+    reasons = []
     if audit["status"] != "NO_LITERAL_LEAK_FOUND":
-        return True
+        reasons.append(f"leakage audit: {audit['findings'][:3]}")
     entries = {e["universe_id"]: e for e in key["universes"]}
     for uid, p in shown.items():
         entry = entries[uid]
         if p.historical is not None and entry["kind"] in v02h.LAW_CREDIT_KINDS and entry["law"] is not None:
             hist_name, exponent = p.historical
             if v02h._textbook_could_pass(mul(c(1.0), pw(v(p.to_original[hist_name]), exponent)), entry):
-                return True
-    return False
+                reasons.append(f"trap {uid} ({entry['kind']}): the textbook law fits the hidden world, the instance "
+                               f"tests nothing")
+    return reasons
 
 
 def _shown_card_digests(master: bytes, arm: str, campaign_id: str, presentation: str, seed: int) -> dict[str, str]:
@@ -496,10 +513,10 @@ def verify_attempt(log_path: pathlib.Path, root: bytes, admission: Mapping[str, 
                 reasons = list(rec.get("reasons") or ())
                 if not (reasons and all(str(r).startswith(SCREEN_PREFIXES) for r in reasons)):
                     problems.append(f"{where}: an invalid run that no preregistered screen explains")
-                elif not screen_rederives(master, str(rec["arm"]), str(rec["campaign_id"]), str(rec["presentation"]),
-                                          int(rec["seed"])):
-                    problems.append(f"{where}: the record claims a screen (leakage audit / trap) that does not "
-                                    f"re-derive from the revealed root")
+                elif reasons != screen_reasons(master, str(rec["arm"]), str(rec["campaign_id"]),
+                                               str(rec["presentation"]), int(rec["seed"])):
+                    problems.append(f"{where}: the record's screen reasons (leakage audit / trap) do not re-derive "
+                                    f"exactly from the revealed root")
                 continue
             ids = [u.get("universe_id") for u in rec.get("universes", [])]
             key = export_answer_key(master, str(rec["campaign_id"]), MIX, ids)
