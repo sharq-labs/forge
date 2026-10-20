@@ -445,6 +445,34 @@ def test_o1_power_study_evidence_is_pinned_and_says_what_the_ledger_quotes():
     note = readiness.LEDGER["power and null-calibration study (ODC-O1b)"][2]
     assert f"{symmetric['rejection_rates']['pooled@0.05']:.4f}" in note
     assert f"{symmetric['holm_familywise_rate']:.4f}" in note
+    kinds = next(r for r in doc["power"] if r["cell"]["name"] == "controls_unsolved/delta=0.0/rho=0.0")
+    assert round(1 - kinds["condition_pass_rates"]["kinds"], 2) == 0.33       # quoted by D3b-2 and the README
+
+
+def _rule_code(source: bytes) -> str:
+    """The module with every docstring removed: what decides, not what describes."""
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        body = getattr(node, "body", None)
+        if isinstance(body, list) and body and isinstance(body[0], ast.Expr) \
+                and isinstance(getattr(body[0], "value", None), ast.Constant) and isinstance(body[0].value.value, str):
+            node.body = body[1:] or [ast.Pass()]
+    return ast.dump(tree)
+
+
+def test_o1_power_study_evidence_measured_the_rule_that_is_in_the_tree():
+    """Review m-4: the study is evidence about the rule only while the rule is the one it ran. The recorded code
+    digests must be those of the recorded clean HEAD, and the live rule (docstrings aside) must equal that code;
+    changing the cap or the margins (D3b) fails this test until the study is re-run."""
+    doc = json.loads((v03p.HERE.parents[2] / v03p.POWER_STUDY_EVIDENCE).read_bytes())
+    head, digests = doc["provenance"]["head"], doc["provenance"]["code_sha256"]
+    repo = v03p.HERE.parents[2]
+    for name, path in (("analysis.py", "benchmarks/genesis_lite/v0_3/analysis.py"),
+                       ("power_study.py", "benchmarks/genesis_lite/v0_3/power_study.py"),
+                       ("../analysis.py", "benchmarks/genesis_lite/analysis.py")):
+        then = subprocess.run(["git", "show", f"{head}:{path}"], cwd=repo, capture_output=True, check=True).stdout
+        assert hashlib.sha256(then).hexdigest() == digests[name], name
+        assert _rule_code((repo / path).read_bytes()) == _rule_code(then), f"{path} changed since the study ran"
 
 
 def test_o1_holm_is_unchanged():
@@ -500,7 +528,7 @@ def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
     assert set(doc["owner_decisions_open"]) == {"D4-identity-freeze", "D5-deployment", "D6-evaluator",
                                                  "D7-budget-and-machine", "OD-3",
-                                                 "D3b-cap-form-and-noninferiority", "D2b-root-grinding"}
+                                                 "D3b-1-cap-form", "D3b-2-kind-noninferiority", "D2b-root-grinding"}
     assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells"}
     covered = " ".join(list(doc["owner_decisions_open"].values()) + list(doc["owner_decisions_taken"].values()))
     for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",

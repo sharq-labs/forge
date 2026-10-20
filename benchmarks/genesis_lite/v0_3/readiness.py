@@ -51,7 +51,7 @@ TEST_FILES = ("tests/genesis_lite/test_genesis_lite_v0_3_amendment.py",
 #: the consolidated owner decision set (decision record section 5)
 REQUIRED_APPROVALS = ("D1-scoring", "D2-significance", "D3-baselines-and-tells", "D4-identity-freeze", "D5-deployment",
                       "D6-evaluator", "D7-budget-and-machine", "OD-3",
-                      "D3b-cap-form-and-noninferiority", "D2b-root-grinding")
+                      "D3b-1-cap-form", "D3b-2-kind-noninferiority", "D2b-root-grinding")
 
 #: name -> (status, test prefixes that must pass, note). FIXED / NOT_A_BLOCKER rows are verified against evidence.
 LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
@@ -80,9 +80,10 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
                                                    "0.0500 at alpha 0.05, Holm FWER 0.0450"),
     "root grinding before the commitment (review I-1)": (OWNER, (), "D2b: the root generator can choose among roots "
                                                                    "before committing; mitigation is the owner's"),
-    "cap form and non-inferiority power (ODC-O1b study findings)": (OWNER, (), "D3b: per-world-set min cap needs near "
-                                                                   "world-by-world dominance; five control-kind margins cap power "
-                                                                   "near 0.7"),
+    "cap form (ODC-O1b study finding)": (OWNER, (), "D3b-1: the per-world-set min cap needs near world-by-world "
+                                                    "dominance on capped cells"),
+    "per-kind non-inferiority conjunction (ODC-O1b study finding)": (OWNER, (), "D3b-2: equal skill fails 33/100 "
+                                                                    "(predicted 0.26); power saturates near 0.7"),
 }
 
 
@@ -119,6 +120,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p',
         'test_o1_a_revealed_root_that_is_not_bytes_is_refused',
         'test_o1_power_study_evidence_is_pinned_and_says_what_the_ledger_quotes',
+        'test_o1_power_study_evidence_measured_the_rule_that_is_in_the_tree',
         'test_o1_holm_is_unchanged',
         'test_o1_v0_3_lift_decision_uses_sign_flip_p_and_claims_nothing_while_draft',
     ),
@@ -200,6 +202,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',
         'test_o1_power_study_scores_with_the_real_rule_and_restores_it',
         'test_o1_power_study_evidence_is_pinned_and_says_what_the_ledger_quotes',
+        'test_o1_power_study_evidence_measured_the_rule_that_is_in_the_tree',
     ),
     'v0.3 harness binding': (
         'test_harness_refuses_the_v0_2_preregistration',

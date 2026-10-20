@@ -77,6 +77,12 @@ Two further cells:
 
 ## Findings (conditional on the ±1 credit model)
 
+These findings are also limited in coverage:
+- The study fields two baselines; the real rule takes its maximum over about 20 registered arms.
+- Choosing the best arm on the same data raises the reference.
+- So the power figures here are optimistic. That direction costs power and adds non-inferiority false failures; it never creates false support.
+- The observed cap penalties match (1 − rho)·(−1.6) + 2·delta in the solved-controls cells.
+
 1. **False claims under the null.**
    - The informative null cells are those with unsolved controls, delta 0 and rho in {0, 0.5, 0.9}. They give
      4/300 claims; the exact 95 % interval is [0.004, 0.034].
@@ -85,7 +91,8 @@ Two further cells:
    - The rho = 1 cells are excluded because they are degenerate: every difference is 0, so p = 1.
 2. **The cap form decides the claimable region (owner question D3b(a)).**
    - The FDA-06 / CONTROL_SOLVED cap is a per-world-set `min(mine, theirs)`, as in v0.2.
-   - With ±1 credits a capped cell contributes −E[(ref − mine)⁺] = −2·p_ref·(1 − p_mine). That is −2p(1−p) for equal rates
+   - With ±1 credits a capped cell contributes −E[(ref − mine)⁺] = −2·P(ref = 1, mine = −1). For independent outcomes
+     (rho = 0) that is −2·p_ref·(1 − p_mine), so −2p(1−p) for equal rates
      with independent outcomes.
    - With five solved control kinds at 0.8 this predicts −1.6 + 2·delta, which matches the observed pooled means.
    - A candidate whose outcomes are not near-copies of `careful`'s (rho ≤ 0.5) therefore does not claim, even when it
@@ -96,7 +103,10 @@ Two further cells:
    - Setting: unsolved controls, delta 0, rho 0 (per-kind statistics over that cell's replicates).
    - At equal skill, each control kind's 95 % lower bound sits about 0.056 below its mean. That is about two standard errors,
      with SE ≈ 0.028 at p = 0.4 and 2,400 world sets.
-   - So the 0.10 margin fails about 6 % of the time per control kind, and about 26 % across the five control kinds.
+   - The normal approximation predicts the 0.10 margin to fail about 6 % of the time per control kind, and about 26 %
+     across the five control kinds.
+   - Observed in this cell: per-kind fail rates 0.07–0.10, and the conjunction fails in 33/100 replicates (exact 95 %
+     interval 0.24–0.43).
      Discoverable fails rarely (≈ 0.9 %).
    - The independent-outcome cells therefore saturate below a claim rate of 1.
 
@@ -127,7 +137,7 @@ Method: the SAME records and root were scored with both bootstraps, in cells nea
 Note: the pooled mean does not depend on the bootstrap, so it is not part of the comparison.
 
 **Reading:** the two bootstraps are statistically equivalent but NOT identical.
-- Lower bounds differ by up to about 0.01.
+- Lower bounds differ by up to 0.02.
 - In replicates sitting on a threshold, that gap can flip a decision (1 of 20 in the boundary cell above).
 - Part B claim rates near the boundary therefore carry this extra error of a few percentage points, on top of the binomial error of 100 replicates.
 - Cells far from the boundary (claim rate 0 or 1) are not affected.

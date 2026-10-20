@@ -19,9 +19,11 @@ claim harder, never easier.
   p-value: under a sign-symmetric null it rejects at alpha / 5 = 0.01 in 1/32 of six-world-set worlds (tested). v0.3
   takes p from the paired SIGN-FLIP randomisation test of the world-set differences (one-sided, statistic = their
   sum). It enumerates the exact null distribution when that is cheap (:data:`EXACT_WORK_LIMIT`). Otherwise it draws
-  :data:`SIGN_FLIP_RESAMPLES` sign vectors from a fixed SHAKE-256 stream and uses p = (b + 1) / (M + 1). That p is
-  finite-sample valid for any M when the sign vectors are random. With one fixed, public stream the size is
-  approximately alpha (up to Monte-Carlo error), not guaranteed; the exact path has no such caveat. The bootstrap is
+  :data:`SIGN_FLIP_RESAMPLES` sign vectors from a SHAKE-256 stream and uses p = (b + 1) / (M + 1). That p is
+  finite-sample valid for any M when the sign vectors are random. For a CLAIM the stream is keyed by the revealed formal
+  root (D2, :func:`sign_flip_stream`): unknown to the proposer during the attempt and fixed once the root is committed.
+  Whoever generates the root can still try roots before committing (open owner decision D2b). Without the root the
+  public stream :data:`SIGN_FLIP_STREAM` is used and p is descriptive only. The exact path has no such caveat. The bootstrap is
   kept ONLY for the effect-size lower bound. Holm, ALPHA and the fixed family are unchanged.
 
   The null this tests is exchangeability of the two arms within a world set (a sign-symmetric difference). Capping makes
@@ -121,8 +123,9 @@ def _lattice(diffs: Sequence[float]) -> list[int]:
 
 def sign_flip_stream(revealed_root: bytes, prereg_sha256: str) -> bytes:
     """D2: the Monte-Carlo stream seed of a claim, derived from the revealed formal root (HMAC-SHA256 under its own
-    label and the identity's digest). It was secret while the attempt ran, so the (b + 1) / (M + 1) guarantee holds over
-    the root's randomness; and it is fixed by the commitment, so no one can try streams until a p looks good."""
+    label and the identity's digest). It is unknown to the proposer while the attempt runs and fixed once the root is
+    committed, so no stream can be chosen AFTER the commitment. It does NOT stop whoever generates the root from trying
+    many roots BEFORE committing (scientific review 2026-10-20, I-1; open owner decision D2b)."""
     import hmac  # noqa: PLC0415
 
     return hmac.new(revealed_root, f"{SIGN_FLIP_KEY_LABEL}/{prereg_sha256}".encode(), hashlib.sha256).digest()

@@ -8126,3 +8126,17 @@ Review fixes on the escrow branch (tip 5dcd6866, rebased on draft 2dbbd462; Wind
 - Readiness gate: READY_TO_FREEZE_PENDING_OWNER, no technical rows, 48 agreement cases; D2b and D3b are listed as owner items.
 - `python tools/forge_check.py --regression`: 279 passed.
 - The D3b wording now says five control kinds (review I-7). The review itself was not re-run after these fixes.
+
+**Second forge-scientific-review (2026-10-20, escrow tip 04bc7a04): CHANGES REQUIRED.** The review was read-only and static. It found 0 BLOCKERs and no unresolved MAJOR affecting scientific validity or benchmark authority. Status of the first review's findings: I-1 is resolved pending an owner decision (D2b); I-2 to I-8 are resolved.
+
+Its MINOR findings are fixed on the draft branch:
+- m-1: the remaining 'cannot be shopped' and 'guarantee holds over the root' wording is qualified (analysis docstrings and the D2 row of the decision record).
+- m-2: the README bootstrap gap now reads 0.02.
+- m-3: the observed 33/100 joint failure (95% CI 0.24-0.43) is given beside the 0.26 prediction.
+- m-4: `test_o1_power_study_evidence_measured_the_rule_that_is_in_the_tree` binds the evidence to the rule code it measured. It checks that the recorded digests equal the blobs at HEAD 70195498, and that the live rule, with docstrings removed, equals that code. A mutation check (min -> max in `capped`) makes it fail; with the file restored it passes.
+
+D3b is split into D3b-1-cap-form and D3b-2-kind-noninferiority. The D2b options now include mixing the admission nonce into the HMAC.
+
+The builder verified the code hashes the reviewer marked UNVERIFIED. The recorded sha256 values of power_study.py, v0.3 analysis.py and v0.2 analysis.py equal the git blobs at 70195498. result.json has sha256 282b4213...8b36, as pinned.
+
+`python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 230 passed.
