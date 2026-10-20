@@ -145,9 +145,9 @@ def test_readiness_with_the_escrow_half_has_no_technical_row_left():
     out = readiness.check(evidence=evidence)
     assert out["agreement_cases"] == 2 * len(selfcheck.PAIRS) * len(selfcheck.BOUNDS) and out["technical_blockers"] == []
     assert out["status"] == readiness.PENDING_OWNER
-    for row in ("cap form (ODC-O1b study finding)", "per-kind non-inferiority conjunction (ODC-O1b study finding)",
-                "root grinding before the commitment (review I-1)"):
-        assert any(r.startswith(row) for r in out["owner_and_certification"]), row
+    assert any(r.startswith("root grinding before the commitment (review I-1)") for r in out["owner_and_certification"])
+    for decided in ("cap form (ODC-O1b study finding)", "per-kind non-inferiority conjunction (ODC-O1b study finding)"):
+        assert not any(r.startswith(decided) for r in out["owner_and_certification"]), decided   # D3b-1 / D3b-2
     assert any("pair_bound.py is certified scope" in r for r in out["owner_and_certification"])
 
 
