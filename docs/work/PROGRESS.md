@@ -8282,3 +8282,22 @@ Owner decision (2026-10-20, in session): keep WSL, hardened as a dedicated forma
 Until the re-run: the FDA-18 residual, readiness P-1/P-2 and a new "isolation boundary (D5)" row are BLOCKED_WITH_EVIDENCE_NOT_PROVEN (technical), so the gate is BLOCKED_TECHNICAL. `run_formal` now checks the deployment before admission (`test_d5_a_failed_deployment_check_never_consumes_the_attempt`).
 
 `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: exit 0, 251 passed.
+
+**Fresh hardened distro (2026-10-20).** The owner backed up the old Ubuntu (`D:\wsluntu-forge.tar`, 35.5 GB), unregistered every distro, installed Ubuntu-24.04 and applied `/etc/wsl.conf` (interop and automount disabled).
+
+Read-only checks:
+- no WSLInterop binfmt handler is registered;
+- no Windows PATH entries;
+- /mnt/c, /mnt/d, /mnt/k are empty and not mounted;
+- the only Windows-backed mount, /usr/lib/wsl/drivers (9p), is read-only;
+- the /run/WSL interop sockets remain; D5 masks /run.
+
+Repo cloned from a git bundle into ~/forge; venv ~/venvs/forge312 (numpy 2.5.4, scipy 1.18.1, editable install with [dev,authority]). `pytest tests/genesis_lite -n 4` on Linux: 271 passed.
+
+D5 verification on the hardened distro at a4d73dd4: exit 0, 400.5 s. 12/12 channels REFUSED with capabilities dropped, power shown for every probe. Evidence sha256 519f3669b48b5bd08f79af172af51e590ce7e1432141e96bfc7446edd8c2f0c7, identical on both sides of the copy, re-pinned.
+
+The ledger STAYS BLOCKED_WITH_EVIDENCE_NOT_PROVEN for D5, FDA-18 and the isolation boundary: N-1 (cross-card state probed only in the private /tmp) is open.
+
+Note: the D7 timing pilot (4361bb62) ran on the old distro; re-run it on Ubuntu-24.04 before the freeze manifest is measured.
+
+`python -m pytest tests/genesis_lite -q -n 4` on the Windows draft branch: exit 0, 251 passed.

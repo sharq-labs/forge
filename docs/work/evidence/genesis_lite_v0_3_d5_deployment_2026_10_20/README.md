@@ -9,15 +9,15 @@ measurement of any arm, not a certification, and it does not replace the certifi
 
 | | |
 |---|---|
-| HEAD | `3d960cd0e336184a6cb71d59aa9a880e69df0369` (draft branch) |
+| HEAD | `a4d73dd4f57592e191cb757dd91be21a6427d306` (draft branch) |
 | Tree | a clean native WSL clone (`tree_clean: true`) |
 | Python | 3.12.3 |
 | Kernel | 6.6.87.2-microsoft-standard-WSL2 |
 | Tools | setpriv: setpriv from util-linux 2.39.3; unshare: unshare from util-linux 2.39.3 |
-| WSL | True |
+| WSL | False |
 | Code sha256 | `deployment_attacks.py` `6961025b26a9…`, `harness.py` `331edd8a5a8f…`, `isolation.py` `d7f96b37608d…`, `secret_scan.py` `da7eb1d83336…` |
-| Wall time | 576.4 s |
-| `result.json` sha256 | `8031b422a3d7b590209455231493388697294198fcbb39227483aee094400f6d` |
+| Wall time | 400.5 s |
+| `result.json` sha256 | `519f3669b48b5bd08f79af172af51e590ce7e1432141e96bfc7446edd8c2f0c7` |
 
 The `result.json` digest is pinned in `preregistration.DEPLOYMENT_EVIDENCE_SHA256` and checked by
 `test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code`. That test also refuses the evidence once the
@@ -34,7 +34,20 @@ launcher, the attack suite, the harness or the scanner changes.
   - `remount_rw` had no power (it probed a non-mount point);
   - `secret_inventory` was REACHED, because the committed preregistration held the registry-line marker in compact JSON.
   Both are fixed in `3d960cd0`.
-- `3d960cd0`: verified. This is the run pinned here.
+- `3d960cd0` (`8031b422a3d7b590…`): verified on the old Ubuntu distro. Superseded when the owner wiped every distro and
+  installed a fresh, hardened Ubuntu-24.04.
+- `a4d73dd4`: verified on the hardened Ubuntu-24.04 distro. This is the run pinned here. The hardening is the
+  owner's, in `/etc/wsl.conf` (`[interop] enabled=false, appendWindowsPath=false`; `[automount] enabled=false,
+  mountFsTab=false`). Confirmed read-only before the run:
+  - no `WSLInterop` binfmt handler is registered;
+  - PATH has no Windows entries;
+  - `/mnt/c`, `/mnt/d` and `/mnt/k` are empty, not mounted;
+  - the only Windows-backed mount, `/usr/lib/wsl/drivers` (9p), is read-only;
+  - the `/run/WSL/*_interop` sockets still exist, and the deployment masks `/run` for every card.
+
+**Still NOT_PROVEN** (fifth scientific review, N-1): the cross-card channel probes only the card's private `/tmp`. A
+REFUSED there does not show that no writable location is shared between cards. The readiness ledger keeps D5, FDA-18
+and the isolation boundary at BLOCKED_WITH_EVIDENCE_NOT_PROVEN until a per-card writable-mount inventory proves it.
 
 Command, in WSL Ubuntu, from a fresh clone of the draft branch at that HEAD:
 

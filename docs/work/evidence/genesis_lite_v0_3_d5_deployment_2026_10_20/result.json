@@ -3,8 +3,8 @@
  "deployment": {
   "deployment": "rootless_namespaces",
   "kept_read_only": [
-   "/home/dev_kaeem/forge-gl03-d5",
-   "/home/dev_kaeem/forge-hostile-remediation/.forge/venvs/3.12"
+   "/home/dev_kaeem/forge",
+   "/home/dev_kaeem/venvs/forge312"
   ],
   "masked": [
    "/mnt",
@@ -72,7 +72,7 @@
    "isolation.py": "d7f96b37608d799fe9d7729ba6fb8fbea2384f475bec5905590df587a1967164",
    "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab"
   },
-  "head": "3d960cd0e336184a6cb71d59aa9a880e69df0369",
+  "head": "a4d73dd4f57592e191cb757dd91be21a6427d306",
   "kernel": "6.6.87.2-microsoft-standard-WSL2",
   "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
   "python": "3.12.3",
@@ -81,12 +81,12 @@
    "unshare": "unshare from util-linux 2.39.3"
   },
   "tree_clean": true,
-  "wsl": true
+  "wsl": false
  },
  "schema": "forge.genesis_lite.v0_3/deployment_evidence/2",
  "status": "DEPLOYMENT_VERIFICATION",
  "verified": true,
- "wall_seconds": 576.4,
+ "wall_seconds": 400.5,
  "with_namespaces": {
   "cmdline": "REFUSED",
   "cross_card_state": "REFUSED",

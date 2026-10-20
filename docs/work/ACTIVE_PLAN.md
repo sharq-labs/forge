@@ -50,7 +50,7 @@ Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
 - [x] Owner D3b-2-kind-noninferiority DECIDED 2026-10-20 and RECONFIRMED the same day: per-kind margin 0.15, every kind
       required. It is a non-inferiority guardrail, not an equivalence or acceptable-degradation claim; the 7.5 / 15 / 30-point
       readings are recorded.
-- [x] Owner D5 deployment DECIDED 2026-10-20: A1 rootless namespaces; VERIFIED (all 10 channels REFUSED), evidence 8031b422a3d7.
+- [x] Owner D5 deployment DECIDED 2026-10-20: A1 rootless namespaces; VERIFIED (all 10 channels REFUSED), evidence 519f3669b48b.
 - [x] Owner D7 DECIDED 2026-10-20: machine = this WSL Ubuntu; timing pilot MEASURED 43.5 s per world set (ESTIMATED 58 h); budget 72 h for the baselines + the candidate's measured cost; run_formal enforces it.
 - [x] Owner D6 DECIDED 2026-10-20: the evaluator is chosen by a selection process; the name is due by 2026-11-17 (else D6 reopens).
 - [ ] Owner: name the evaluator (D6, by 2026-11-17).
