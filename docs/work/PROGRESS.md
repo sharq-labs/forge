@@ -7849,3 +7849,44 @@ byte-for-byte move (LF only); no other text changed. The same fix exists on the 
   repo venv).
 - Same environment, `.venv/Scripts/python.exe tools/forge_check.py --regression --workers 4`: 279 passed, exit 0.
 - FAST / SCIENTIFIC / FULL tiers and recertification: NOT RUN (documentation-only change). Not pushed; no PR.
+
+## 2026-10-20 — Reviewed branch publication and active-epic repair
+
+Owner requested publishing all work and merging reviewed unmerged branches, explicitly excluding preserve/* and wip/*. This supersedes older no-push/no-merge instructions for this publication task only; it does not authorize formal measurement, freeze or waive scientific/certification gates. Origin main was eb113ab7e74580d47e6aa1210d02e45a49124724. Isolated integration worktree; shared checkouts untouched.
+
+Merged fix/active-plan-epic-line locally: exact paragraph move to restore the ledger epic to line3. No production/test/certification bytes changed. Runtime for checks: repository Windows venv, Python 3.14.2. These local results do not substitute for 3.11/3.12 scientific assurance.
+
+Cwd: `C:\Users\dev_kaeem\.codex\worktrees\review-unmerged-work\wonderful-gould-1c576f`. Environment: `{"PYTEST_ADDOPTS": "--basetemp=D:/tmp/merge-review-docs/bt", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f", "TMPDIR": "D:/tmp/merge-review-docs"}`.
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest tests/test_capability_completion.py -q -p no:cacheprovider`
+
+Exit 0; elapsed 0.663630299968645 seconds.
+
+Cwd: `C:\Users\dev_kaeem\.codex\worktrees\review-unmerged-work\wonderful-gould-1c576f`. Environment: `{"PYTEST_ADDOPTS": "--basetemp=D:/tmp/merge-review-docs/bt", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f", "TMPDIR": "D:/tmp/merge-review-docs"}`.
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main`
+
+Exit 1; elapsed 21.811875500017777 seconds.
+
+Cwd: `C:\Users\dev_kaeem\.codex\worktrees\merge-main-control\wonderful-gould-1c576f`. Environment: `{"PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f", "TMPDIR": "D:/tmp/merge-main-control"}`.
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest -q tests/test_repository_architecture.py tests/test_core_api_layering.py tests/test_scientific_regression_manifest.py tests/test_forge_check.py tests/test_agent_workflow_contract.py tests/test_capability_completion.py benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py benchmarks/battery_1rc_crosscell/tests/test_battery_1rc_crosscell.py benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py tests/foundations/test_v2_blindfold.py tests/test_multiphysics_window_control.py --basetemp=D:/tmp/merge-main-control/bt`
+
+Exit 1; elapsed 13.028979999944568 seconds.
+
+Targeted:28 passed. Changed-file gate:2 failed,217 passed. Exact same selected node set against pristine eb113ab7:3 failed,216 passed. New failing nodes: NONE. Removed failing node: tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic. Common failing nodes:
+
+- tests/foundations/test_v2_blindfold.py::test_the_subprocess_escrow_keeps_its_secrets_in_the_child (child interpreter cannot import engcore.blindfold in this Windows environment).
+- tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable (7 subdivisions vs expected8).
+
+The whole gate is NOT green; no baseline failure was suppressed. Full tiers and recertification NOT RUN for this documentation-only repair.
+
+Publication: complete current Mind/demo/diagnostic/CP2 work preserved byte-identically (251 files) in 1b90f94c on codex/mind-development-evidence-2026-10-20, draft PR175 stacked on PR174. CP2 remains94failed/28passed, no merge-readiness claim. Original pinned logs/patch evidence contain whitespace; authored-source diff check passes, historical bytes were not rewritten. Published local-only Mind, M1D, OD-CAP-0 and active-plan-fix branch tips without force-push.
+
+Branch review: legacy Genesis/planning documents must not replace strengthened contracts; M1D needs a port preserving current conservation semantics; OD-CAP-0 test edits require current applicable gates; Genesis isolation and OD3 remain blockers. Old certificate-only tips must not replace the current certificate. Main-equivalent patches and nested branch histories were identified separately. Existing unrelated dirty worktrees were inventoried and left untouched.
+
+Trial merge of claude/domain-real-data was aborted after its tests:1failed/12passed; failing node benchmarks/domain_real_data/tests/test_domain_real_data.py::test_repository_scan_is_current. Its historical scan differs from current tree; no historical evidence was regenerated to silence it. Exact command:
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest benchmarks/domain_real_data/tests/test_domain_real_data.py -q -p no:cacheprovider --basetemp=D:/tmp/merge-review-domain/bt`
+
+Cwd `C:\Users\dev_kaeem\.codex\worktrees\review-unmerged-work\wonderful-gould-1c576f`; environment `{"PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f", "TMPDIR": "D:/tmp/merge-review-domain"}`; exit1. Read-only independent scientific review returned CHANGES REQUIRED for the combined scientific branches; no unreviewed wholesale merge. Branch inventory, exact receipts and conflict previews are retained in the publication audit package.
