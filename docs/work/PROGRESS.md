@@ -8096,7 +8096,7 @@ Live GitHub Tests39488053735 and Branch Policy39488053796 failed with empty step
 
 ## 2026-10-20 - Genesis-lite v0.3 clean rebuild on restored main (N-1 open)
 
-PR #182 restored main to 12862b0b (tree 9e84851a, identical to pre-#174 main 9f1c24f1). Branch `feat/genesis-lite-v03-clean-n1` was rebuilt from that base without re-merging `feat/genesis-lite-v03-escrow-fda05` (b4fbb1d5) or `codex/mind-development-evidence-2026-10-20` (5935958c). Both remain preservation history.
+PR #182 restored main to 12862b0b (tree 9e84851a, identical to pre-#174 main 9f1c24f1). Branch `feat/genesis-lite-v03-clean-n1` was rebuilt from 12862b0b without re-merging `feat/genesis-lite-v03-escrow-fda05` (b4fbb1d5) or `codex/mind-development-evidence-2026-10-20` (5935958c). Both remain preservation history.
 
 Brought forward as byte copies in transfer commit 32f8854d; no file was edited:
 - From 1cb5e187, the Genesis tip before PR #175 was stacked on it. All 32 paths are unchanged through b4fbb1d5:
@@ -8105,27 +8105,35 @@ Brought forward as byte copies in transfer commit 32f8854d; no file was edited:
   - `src/engcore/blindfold/pair_bound.py`;
   - `docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md` and its DOCSET line;
   - the three preregistration-pinned evidence records: power study 9ad27938, D5 deployment 519f3669, D7 timing pilot 3759ff33;
-  - five v0.3 test modules and helpers.
-- From 1b90f94c (PR #175), only the N-1 failing-first files: `test_genesis_lite_v0_3_container_isolation.py`, `test_genesis_lite_v0_3_container_contract.py` and `container_isolation_probe.py`.
+  - three v0.3 test modules (amendment, blockers, escrow_fda05) and two helpers (`stateful_arms.py`, `vacuous_arm.py`).
+- From 1b90f94c (PR #175), only the N-1 failing-first files: `test_genesis_lite_v0_3_container_isolation.py`, `test_genesis_lite_v0_3_container_contract.py` and `container_isolation_probe.py`. They need no environment variable and no SHA pin. One contract test is Linux-only. The 32f8854d message calls them "platform-independent"; that is true of all but that one test.
+
+A separate commit adds a dated status correction (§6 plus a banner) to the decision record. Its inherited header and §1/§4 status claims (READY_TO_FREEZE_PENDING_OWNER, FDA-18 residual "closed by D5", P-1/P-2 "FIXED by D5", "D5 verified") contradict `readiness.LEDGER`. No D1-D7 decision text was changed. §6 also records an open owner decision: the N-1 tests presuppose a Podman container launcher and a pinned local image, but the recorded D5 decision is option A1 (rootless namespaces). The owner must record that D5 amendment before the N-1 repair.
 
 Excluded:
 - `engcore.mind.minimal`, `benchmarks/genesis_lite_mind`, `tests/genesis_lite_mind`;
 - the three `tools/forge_*` Mind/demo scripts and `test_blindfold_demo.py`;
 - the Blindfold demo and Mind discovery docs;
-- the 269 PR #175 evidence files (Mind diagnosis and readiness, public demo, checkpoint-2);
-- the two Podman runtime rigs `test_genesis_lite_v0_3_container_runtime.py` and `test_genesis_lite_v0_3_readonly_inventory.py`, which are gated on a local image and environment and pin `source_sha == 1cb5e187`;
+- the 269 PR #175 evidence files: Mind diagnosis 129, Mind readiness 34, checkpoint-2 47, public demo 13, branch merge review 46;
+- the two Podman runtime rigs:
+  - `test_genesis_lite_v0_3_container_runtime.py` needs a local image, `/home/dev_kaeem/forge-card/Containerfile` and `FORGE_CHECKPOINT_SOURCE_SHA`;
+  - `test_genesis_lite_v0_3_readonly_inventory.py` asserts `source_sha == 1cb5e187`;
+  - both are Linux-only. The isolation module's docstring still mentions those sibling rigs.
 - the PR #174/#175 ACTIVE_PLAN and PROGRESS narrative.
 
-Evidence binding. All three evidence records are HISTORICAL_ONLY for their recorded heads: power study 20f3d379, D5 a4d73dd4, D7 f7df8968. f7df8968 is on no remote branch. D5 and D7 REQUIRE_RERUN and REQUIRE_REPIN after the N-1 repair. Nothing was regenerated.
+Evidence binding. All three evidence records are HISTORICAL_ONLY for their recorded heads: power study 20f3d379, D5 a4d73dd4, D7 f7df8968. f7df8968 is reachable from no ref. D5 and D7 REQUIRE_RERUN and REQUIRE_REPIN after the N-1 repair. Nothing was regenerated.
 
 Status: D5 = NOT_PROVEN; FDA-18 residual = NOT_PROVEN; N-1 = OPEN; formal campaign FORBIDDEN. `pair_bound.py` is the only certified-scope change against main (verdict_authority area, ADDED). It stays UNCERTIFIED until OD-3. No formal run, freeze, OD-3 or certification happened.
 
-Tests ran at 32f8854d on Windows, using the shared venv with `PYTHONPATH=D:/forge-genesis-clean/src;D:/forge-genesis-clean`:
-- `python -m pytest -q -p no:cacheprovider -n 4 -rfEs tests/genesis_lite`: 90 failed, 292 passed, 1 skipped, identical in both runs. All 90 failures are N-1 failing-first:
+Tests ran on Windows, using the shared venv with `PYTHONPATH=D:/forge-genesis-clean/src;D:/forge-genesis-clean`:
+- `python -m pytest -q -p no:cacheprovider -n 4 -rfEs tests/genesis_lite` at 32f8854d: 90 failed, 292 passed, 1 skipped, identical in both runs. All 90 failures are N-1 failing-first:
   - 73 in container_contract, all `MISSING_VALIDATION_CONTRACT`;
   - 17 in container_isolation: the fresh-container argv, seven security flags, four private tmpfs mounts, read-only binds, image digest, deployment verification, runtime-failure-before-admission and the private-/tmp counterexample.
-  - The shared-volume positive control passed.
+  - The shared-directory positive control passed. It is a filesystem control, not a mounted Podman volume.
   - Skipped: `test_probe_uses_fd_mount_and_distinguishes_absence_error_and_obscured` (Linux fdinfo; NOT RUN).
-- `python -m benchmarks.genesis_lite.v0_3.readiness`: BLOCKED_TECHNICAL on exactly the three NOT_PROVEN rows (FDA-18 residual, D5 boundary, P-1/P-2). 177 v0.3 tests passed at the clean HEAD, and evaluator and escrow agreed on 48 of 48 cases.
-- `python -m pytest tests/test_core_certificate.py tests/test_certified_dependency_closure.py tests/test_recertification_scope.py tests/test_certificate_verdict_scope.py`: 2 failed, 241 passed, 2 skipped. The result is the same on the main tree (504ef32f), and both failures already exist there (OD-3 drift). The verifier output differs from main only by `ADDED: src/engcore/blindfold/pair_bound.py`.
-- FAST, SCIENTIFIC, FULL and hardened recertification: NOT RUN.
+- `python -m benchmarks.genesis_lite.v0_3.readiness` at 32f8854d and fb23bc35: BLOCKED_TECHNICAL on exactly the three NOT_PROVEN rows. 177 v0.3 tests passed at the clean HEAD, and evaluator and escrow agreed on 48 of 48 cases.
+- `python -m pytest tests/test_core_certificate.py tests/test_certified_dependency_closure.py tests/test_recertification_scope.py tests/test_certificate_verdict_scope.py`: 2 failed, 241 passed, 2 skipped at both 32f8854d and the PR #182 revert commit 504ef32f, whose tree equals 12862b0b. The two failures already exist on main (OD-3 drift):
+  - `test_core_certificate.py::test_the_certificate_describes_this_tree`;
+  - `test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully`.
+  The verifier output differs from main only by `ADDED: src/engcore/blindfold/pair_bound.py`.
+- FAST, SCIENTIFIC, FULL and hardened recertification: NOT RUN. `benchmarks/domain_real_data/audit/inventory_scan.py --check` was also NOT RUN. Its `CURRENT_PROVENANCE.json` pins main's DOCSET blob, so the branch's added DOCSET line is undeclared there.

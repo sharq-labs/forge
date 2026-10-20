@@ -10,6 +10,10 @@ last_reviewed: 2026-10-20
 supersedes: none
 ---
 
+> **Status correction 2026-10-21:** the status statements below predate the fifth review and are superseded by
+> §6. They are the READY_TO_FREEZE_PENDING_OWNER verdict, the FDA-18 residual "closed by D5", readiness P-1/P-2
+> "FIXED by D5", "D5 ... verified" and the source refs in §0. The D1-D7 decision text is unchanged.
+
 # Genesis-lite v0.3: freeze readiness and the owner's decisions
 
 > **Nothing here is approved, frozen or certified.** v0.3 is a DRAFT identity on two local branches, and v0.2 stays
@@ -135,3 +139,21 @@ The gate then reports PASS or names exactly what is still missing.
 - No freeze, push, PR, merge, recertification, formal baseline, Mind tier or formal measurement.
 - No change to v0/v0.1/v0.2 or to any existing certified file.
 - No re-scoring of v0.2 records.
+
+## 6. Status correction (2026-10-21, clean rebuild on restored main)
+
+This section supersedes the status statements in the header blockquote, in section 0 and in section 1 (the FDA-18 and readiness P-1/P-2 rows), and the claim in section 4 that D5 is verified. Everything else above is unchanged; in particular, no D1-D7 decision text was edited.
+
+- **Where the work is.** The premature PR #174 merge (070f47db) was reverted by PR #182, so main 12862b0b has a tree identical to pre-#174 main 9f1c24f1. This record now lives on `feat/genesis-lite-v03-clean-n1`, which was rebuilt from that main by byte copies from 1cb5e187. The branches named in section 0 are preservation history.
+- **The gate.** `python -m benchmarks.genesis_lite.v0_3.readiness` reports **BLOCKED_TECHNICAL**, not READY_TO_FREEZE_PENDING_OWNER. Its technical blockers are exactly the three rows that `readiness.LEDGER` marks BLOCKED_WITH_EVIDENCE_NOT_PROVEN:
+  - FDA-18 residual (same-account files, helper processes);
+  - the isolation boundary (D5);
+  - readiness P-1/P-2.
+  The evaluator and the escrow agree on 48 of 48 synthetic cases.
+- **Truthful status.** D5 = NOT_PROVEN. FDA-18 residual = NOT_PROVEN. N-1 = OPEN. A formal campaign is FORBIDDEN.
+- **Evidence.** The D5 deployment (519f3669) and D7 timing pilot (3759ff33) records are historical. Their recorded heads (a4d73dd4 and f7df8968) are not this branch, and f7df8968 is on no remote branch. Both records require a rerun and a re-pin after N-1. The power study (9ad27938, head 20f3d379) is historical evidence for D2/D3b.
+- **An open owner decision, not recorded above.** The N-1 failing-first tests carried onto this branch require a fresh Podman container per card:
+  - `test_genesis_lite_v0_3_container_isolation.py`;
+  - `test_genesis_lite_v0_3_container_contract.py`;
+  - `container_isolation_probe.py`.
+  They require pinned `podman` arguments, a `localhost/forge-card@sha256:...` image digest, and a proposed `validate_container_evidence` contract with schema `checkpoint2.container_evidence.contract/2`. The recorded D5 decision (option A1, rootless namespaces, `isolation.DEPLOYMENT = "rootless_namespaces"`) does not say this. Implementing those tests changes the D5 deployment, so the owner must record the change as an amendment to D5 before the N-1 repair. Nothing in these tests is a decision.
