@@ -27,7 +27,8 @@ import tempfile
 import uuid
 from typing import Any, Mapping
 
-CHANNELS = ("cmdline", "root_file", "network", "persistence", "package_write", "run_log", "cross_card_state")
+CHANNELS = ("cmdline", "root_file", "network", "persistence", "package_write", "run_log", "cross_card_state",
+            "operator_process", "wsl_interop", "secret_inventory")
 REACHED, REFUSED, UNTESTABLE = "REACHED", "REFUSED", "UNTESTABLE"
 
 
@@ -59,7 +60,17 @@ def cmdline(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str,
 
 
 def root_file(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
-    """Can it read a file named on the parent's command line after a ``--root-file`` / ``--registry`` / ``--out`` flag?"""
+    """Can it read the root file? Operator-named canaries in FORGE_ATTACK_ROOT_FILES (os.pathsep-separated) are tried
+    first; otherwise a file named on the parent's command line after ``--root-file`` / ``--registry`` / ``--out``."""
+    named = [raw for raw in os.environ.get("FORGE_ATTACK_ROOT_FILES", "").split(os.pathsep) if raw]
+    if named:
+        for raw in named:
+            try:
+                pathlib.Path(raw).read_bytes()[:1]
+                return _answer(card, "root_file", True, "operator-named root file readable")
+            except OSError:
+                continue
+        return _answer(card, "root_file", False, "no operator-named root file reachable")
     if not _proc_available():
         return _answer(card, "root_file", None, "no /proc on this platform: the probe cannot run")
     text = _parent_cmdline() or ""
@@ -165,6 +176,57 @@ def cross_card_state(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> 
         return _answer(card, "cross_card_state", None, f"setup failed: {type(exc).__name__}")
 
 
+def operator_process(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    """Can it reach another process of the account (the first step of heap, stack and environment attacks on the
+    operator or an in-process escrow)? Tries to read the environment of every other visible process."""
+    if not _proc_available():
+        return _answer(card, "operator_process", None, "no /proc on this platform: the probe cannot run")
+    me, readable = os.getpid(), 0
+    for entry in pathlib.Path("/proc").iterdir():
+        if not entry.name.isdigit() or int(entry.name) == me:
+            continue
+        try:
+            (entry / "environ").read_bytes()[:1]
+            readable += 1
+        except OSError:
+            continue
+    return _answer(card, "operator_process", readable > 0, f"{readable} other process(es) readable")
+
+
+def wsl_interop(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    """Can it start a Windows process through WSL interop (outside every Linux namespace)? Tries the Windows command
+    interpreter at its usual paths, with the interop socket the operator names in FORGE_ATTACK_WSL_INTEROP (an attacker
+    can guess it). No Windows executable reachable is REFUSED; on a non-WSL host there is none."""
+    import shutil  # noqa: PLC0415
+
+    candidates = [p for p in (shutil.which("cmd.exe"), "/mnt/c/Windows/System32/cmd.exe", "/mnt/c/WINDOWS/system32/cmd.exe")
+                  if p and pathlib.Path(p).is_file()]
+    env = dict(os.environ)
+    if os.environ.get("FORGE_ATTACK_WSL_INTEROP"):
+        env["WSL_INTEROP"] = os.environ["FORGE_ATTACK_WSL_INTEROP"]
+    for exe in candidates:
+        try:
+            done = subprocess.run([exe, "/c", "exit 0"], env=env, capture_output=True, timeout=15)
+            if done.returncode == 0:
+                return _answer(card, "wsl_interop", True, f"started {exe}")
+        except (OSError, subprocess.SubprocessError):
+            continue
+    return _answer(card, "wsl_interop", False, f"no Windows executable could be started ({len(candidates)} found)")
+
+
+def secret_inventory(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    """FDA-19, proposer side: does any file it can read under FORGE_ATTACK_SCAN_ROOTS hold a secret whose digest the
+    operator lists in FORGE_ATTACK_SCAN_DIGESTS (comma-separated, :func:`.secret_scan.digests_for`)?"""
+    from . import secret_scan  # noqa: PLC0415
+
+    roots = [raw for raw in os.environ.get("FORGE_ATTACK_SCAN_ROOTS", "").split(os.pathsep) if raw]
+    digests = [d for d in os.environ.get("FORGE_ATTACK_SCAN_DIGESTS", "").split(",") if d]
+    if not roots or not digests:
+        return _answer(card, "secret_inventory", None, "no scan roots or digests configured")
+    found = secret_scan.scan([pathlib.Path(r) for r in roots], digests)
+    return _answer(card, "secret_inventory", bool(found), f"{len(found)} readable file(s) hold a secret")
+
+
 def channel_verdicts(rationales: list[str]) -> dict[str, str]:
     """REACHED if any card of a channel reached it; UNTESTABLE if any could not test it; REFUSED only if every card
     tested it and was refused."""
@@ -177,17 +239,20 @@ def channel_verdicts(rationales: list[str]) -> dict[str, str]:
     return out
 
 
-def deployment_runner(attack_env: Mapping[str, str] | None = None, cards: int = 2) -> Any:
+def deployment_runner(attack_env: Mapping[str, str] | None = None, cards: int = 2, host_factory: Any = None) -> Any:
     """``run(spec) -> rationales`` for :func:`verify_deployment`: each attack runs ``cards`` times, each time in a fresh
-    per-card proposer process (the v0.3 harness's), with only FORGE_ATTACK_* variables added to its environment."""
+    per-card proposer process (the v0.3 harness's, or ``host_factory(attack_env=...)``, e.g. one in the D5 namespaces),
+    with only FORGE_ATTACK_* variables added to its environment."""
     from .harness import CardProposerHost  # noqa: PLC0415
+
+    make = host_factory or CardProposerHost
 
     def run(spec: str) -> list[str]:
         import time  # noqa: PLC0415
 
         out = []
         for i in range(cards):
-            host = CardProposerHost(attack_env=attack_env)
+            host = make(attack_env=attack_env)
             try:
                 out.append(host.propose(spec, {"universe_id": f"bf-attack-{i}"}, 0, None)["rationale"])
             finally:

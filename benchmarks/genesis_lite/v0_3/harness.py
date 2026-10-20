@@ -177,7 +177,7 @@ class CardProposerHost(_v02h.ProposerHost):
     (TEMP, TMP and TMPDIR point into it), so temp files do not survive into the next card's process."""
 
     def __init__(self, extra_paths: tuple[str, ...] = (), timeout: float = 600.0,  # noqa: D107
-                 attack_env: Mapping[str, str] | None = None) -> None:
+                 attack_env: Mapping[str, str] | None = None, launcher: Any = None) -> None:
         self._dir = tempfile.TemporaryDirectory(prefix="gl-card-", ignore_cleanup_errors=True)  # a lingering helper
         env = {k: os.environ[k] for k in ("PATH", "SYSTEMROOT", "WINDIR") if k in os.environ}
         env.update(TEMP=self._dir.name, TMP=self._dir.name, TMPDIR=self._dir.name, PYTHONDONTWRITEBYTECODE="1")
@@ -187,8 +187,9 @@ class CardProposerHost(_v02h.ProposerHost):
             env[k] = str(v)
         paths = [str(_v02h._ROOT), str(_v02h._ROOT / "src"), *extra_paths]
         # -X pycache_prefix: bytecode is read and written only inside this card's directory, never a planted .pyc
-        self._proc = subprocess.Popen([sys.executable, "-I", "-X", f"pycache_prefix={self._dir.name}", str(_v02h._HOST),
-                                       *paths], cwd=self._dir.name, env=env,
+        inner = [sys.executable, "-I", "-X", f"pycache_prefix={self._dir.name}", str(_v02h._HOST), *paths]
+        argv = launcher.argv(inner, self._dir.name) if launcher is not None else inner    # D5: the namespaces
+        self._proc = subprocess.Popen(argv, cwd=self._dir.name, env=env,
                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0)
         self._lines: queue.Queue = queue.Queue()
         threading.Thread(target=self._pump, daemon=True).start()
@@ -209,8 +210,8 @@ def measured_code(code: Mapping[str, str]) -> dict[str, str]:
     return out
 
 
-def fresh_process_per_card(spec: str, extra_paths: tuple[str, ...] = (),
-                           pinned: Mapping[str, str] | None = None) -> Callable[..., dict[str, Any]]:
+def fresh_process_per_card(spec: str, extra_paths: tuple[str, ...] = (), pinned: Mapping[str, str] | None = None,
+                           launcher: Any = None) -> Callable[..., dict[str, Any]]:
     """FDA-18: an arm callable that starts a new isolated proposer process for every card and ends it after the card.
     With ``pinned`` (path -> sha256), the code is re-measured before EVERY card; a change aborts the run."""
     starts: list[float] = []
@@ -221,7 +222,7 @@ def fresh_process_per_card(spec: str, extra_paths: tuple[str, ...] = (),
         if pinned is not None and measured_code(pinned) != dict(pinned):
             raise HarnessRefused("the arm's pinned code changed during the run")
         t0 = time.perf_counter()
-        host = CardProposerHost(extra_paths)
+        host = CardProposerHost(extra_paths, launcher=launcher)
         starts.append(time.perf_counter() - t0)
         try:
             return host.propose(spec, card, seed, client)
@@ -264,6 +265,14 @@ def run_one(arm_name: str, *, binding: Binding, master_seed: bytes, campaign_id:
             raise HarnessRefused("a formal run takes no card hook, extra path or caller-chosen arm spec")
         if arm_name not in v03_arms.ARMS and not (candidate and arm_name == candidate["name"]):
             raise HarnessRefused(f"{arm_name!r} is neither a registered v0.3 arm nor the identity's candidate")
+        from .isolation import DeploymentUnavailable, formal_launcher  # noqa: PLC0415
+
+        try:
+            launcher = formal_launcher()                       # D5 (owner, 2026-10-20): every formal card isolated
+        except DeploymentUnavailable as exc:
+            raise HarnessRefused(f"a formal run needs the D5 deployment: {exc}") from exc
+    else:
+        launcher = None
     if candidate and arm_name == candidate["name"]:
         spec, pinned = candidate["spec"], dict(candidate["code_sha256"])
     else:
@@ -275,7 +284,7 @@ def run_one(arm_name: str, *, binding: Binding, master_seed: bytes, campaign_id:
     rec = _v02h.RunRecord(arm_name, seed, campaign_id, presentation, isolation=isolation)
     rec.prereg_sha256 = binding.prereg_sha256
     if isolation == "proposer_process":
-        arm = fresh_process_per_card(spec, extra_paths, pinned)
+        arm = fresh_process_per_card(spec, extra_paths, pinned, launcher=launcher)
     else:
         arm = v03_arms.ARMS[arm_name][0]
     evaluator = _Evaluator(binding)

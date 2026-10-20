@@ -28,7 +28,7 @@ PREREG_PATH = v02.HERE / "preregistration" / "genesis_lite_v0_3.json"
 V0_2_PREREG_SHA256 = "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64"
 V0_3_FILES = ("__init__.py", "analysis.py", "arms.py", "deployment_attacks.py", "environment.py", "evaluator.py",
               "formal.py", "harness.py", "preregistration.py", "readiness.py", "registry.py", "secret_scan.py",
-              "selfcheck.py")
+              "selfcheck.py", "isolation.py")
 #: the certified escrow half of FDA-05 (Batch A, OD-3); pinned by digest when it is in the tree
 ESCROW_HALF = "pair_bound.py"
 ODR = "OWNER_DECISION_REQUIRED"

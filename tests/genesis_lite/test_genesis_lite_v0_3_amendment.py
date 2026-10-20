@@ -640,6 +640,53 @@ def test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream(tmp_pa
         assert set(seen) == {v03a.SIGN_FLIP_STREAM}                          # descriptive public stream only
 
 
+# ---- D5 (owner, 2026-10-20: A1 rootless namespaces) ---------------------------------------------------------------
+def test_d5_the_launcher_masks_operator_state_and_keeps_only_the_tree_read_only(monkeypatch):
+    from benchmarks.genesis_lite.v0_3 import isolation
+
+    monkeypatch.setattr(isolation, "available", lambda: True)
+    monkeypatch.setattr(isolation.shutil, "which", lambda name: "/usr/bin/unshare")
+    launcher = isolation.NamespaceLauncher(("/home/u/repo", "/home/u/venv"))
+    argv = launcher.argv(["python", "-I", "host.py"], "/tmp/gl-card-x")
+    assert argv[0] == "/usr/bin/unshare" and set(isolation.UNSHARE_FLAGS) <= set(argv[:argv.index("--")])
+    for flag in ("--user", "--pid", "--net", "--mount", "--kill-child"):
+        assert flag in isolation.UNSHARE_FLAGS
+    tail = argv[argv.index("gl-d5"):]
+    assert tail[:5] == ["gl-d5", "/tmp/gl-card-x", "2", "/home/u/repo", "/home/u/venv"]
+    assert tail[5:5 + len(isolation.MASKED)] == list(isolation.MASKED) and tail[-3:] == ["python", "-I", "host.py"]
+    for masked in ("/mnt", "/home", "/tmp", "/run", "/dev/shm"):
+        assert masked in isolation.MASKED
+    script = argv[argv.index("-c") + 1]
+    assert "remount,bind,ro" in script and "exec \"$@\"" in script and "umount -R" in script
+    with pytest.raises(isolation.DeploymentUnavailable, match="masked root"):
+        isolation.NamespaceLauncher(("/usr/lib/python3",))
+
+
+def test_d5_a_formal_card_cannot_start_without_the_deployment(monkeypatch):
+    from benchmarks.genesis_lite.v0_3 import isolation
+
+    monkeypatch.setattr(isolation, "available", lambda: False)
+    with pytest.raises(isolation.DeploymentUnavailable, match="D5 deployment"):
+        isolation.formal_launcher()
+    import inspect
+
+    from benchmarks.genesis_lite.v0_3 import harness as v03h
+
+    source = inspect.getsource(v03h.run_one)
+    assert "formal_launcher()" in source and "a formal run needs the D5 deployment" in source
+
+
+def test_d5_the_new_probes_never_report_refused_without_a_mechanism(monkeypatch):
+    from benchmarks.genesis_lite.v0_3 import deployment_attacks as attacks
+
+    card = {"universe_id": "bf-d5"}
+    monkeypatch.delenv("FORGE_ATTACK_SCAN_ROOTS", raising=False)
+    assert ":UNTESTABLE:" in attacks.secret_inventory(card, None)["rationale"]
+    monkeypatch.setattr(attacks, "_proc_available", lambda: False)
+    assert ":UNTESTABLE:" in attacks.operator_process(card, None)["rationale"]
+    assert {"operator_process", "wsl_interop", "secret_inventory"} <= set(attacks.CHANNELS)
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,

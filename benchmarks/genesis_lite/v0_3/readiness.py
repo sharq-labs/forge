@@ -212,6 +212,11 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
     'D2b nonce-bound stream': (
         'test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream',
     ),
+    'D5 rootless-namespace deployment': (
+        'test_d5_the_launcher_masks_operator_state_and_keeps_only_the_tree_read_only',
+        'test_d5_a_formal_card_cannot_start_without_the_deployment',
+        'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
+    ),
     'power and null-calibration study (ODC-O1b)': (
         'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',
         'test_o1_power_study_scores_with_the_real_rule_and_restores_it',
