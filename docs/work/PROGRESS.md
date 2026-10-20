@@ -8100,3 +8100,9 @@ Both findings are opened as owner decision D3b-cap-form-and-noninferiority; the 
 Failed approach: running the study through v0.2's pure-Python `bootstrap_mean_ci` costs about 14 s per formal-size decision. The study vectorises it with the same estimator, cross-checked on two cells.
 
 New tests: `test_o1_power_study_*` (2). `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 226 passed.
+
+D3 and study evidence on the escrow branch (tip 097194c1, rebased on draft f4d50f0e; Windows venv, PYTHONPATH=src;., TMP on D:):
+- `python -m pytest tests/genesis_lite -q -n 4`: 246 passed.
+- `python -m benchmarks.genesis_lite.v0_3.readiness`: READY_TO_FREEZE_PENDING_OWNER, no technical rows, 48 agreement cases. The owner items now include D3b (the cap form and non-inferiority power findings of the study) beside D1-D7 and OD-3 approvals, FDA-18 residual, P-1/P-2, pair_bound.py (OD-3), root/manifest/candidate and DRAFT status.
+- `python tools/forge_check.py --regression`: 279 passed.
+- `forge-scientific-review` of the D2 stream change and the study: NOT RUN yet.
