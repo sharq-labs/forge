@@ -8140,3 +8140,62 @@ Tests ran on Windows, using the shared venv with `PYTHONPATH=D:/forge-genesis-cl
   - main tree (504ef32f): 6 live UNKNOWN_PROVENANCE files, all under `branch_ci_investigation_2026_10_20`;
   - this branch: 11. The 5 extra are `genesis_lite_v0_3.json`, `docs/ai/DOCSET.txt`, and the D5, D7 and power-study `result.json` files.
   No provenance declaration was added; that is a separate reviewed edit to `CURRENT_PROVENANCE.json`. No test or workflow runs this scan.
+
+## 2026-10-21 - D5-A1b implemented; N-1 evidence pinned and BLOCKED by host device nodes (N-1 open)
+
+Owner decisions (2026-10-21, in session):
+- **D5-A1b.** Rootless Podman per-card isolation supersedes A1 for the formal deployment. The fifth review showed the hand-built namespace probe had not proven cross-card state isolation outside /tmp.
+- **D7 head preserved.** The annotated local tag `evidence/d7-timing-pilot-head-2026-10-20` now points at f7df8968. It is not pushed. D7 stays HISTORICAL_ONLY / REQUIRES_RERUN / REQUIRES_REPIN_AFTER_N1.
+- **Device nodes: "Keep strict: block".** Rootless crun bind-mounts six host character devices read-write into every container (/dev/null, zero, full, random, urandom, tty). They get no exemption.
+
+Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), on top of 5b30c09b:
+
+| Commit | Content |
+|---|---|
+| d2d0cb4b | Implementation (below). |
+| c09b0ef5 | The cgroup-root reconciliation fix. |
+| a1935b72 | First evidence pin and the decision record. |
+| 754f6cdb | Read-only review fixes (MAJOR-1 and minors). |
+| 4ec70275 | Evidence re-pin. |
+
+Implementation:
+- `container_evidence.py`: the pure validator for the 64-case N-1 contract.
+- `container_probe.py`: the in-container probe, which uses the validator's own parser.
+- `isolation.py`: the A1b launcher, card removal, and the collection and verification of container evidence.
+- `deployment_attacks.py`: `cross_card_state` is never REFUSED from one directory, and `verify_deployment` needs container evidence that PASSED.
+- `formal.deployment_problems`: fresh A/B/C container evidence must PASS before admission, on a clean committed tree. A production run refuses a caller-supplied check.
+- `harness.py`: per-card container name, environment forwarding and removal on close.
+- `readiness.py`: the D5 rows and the D7 evidence row follow their pinned evidence.
+- `container/Containerfile`: byte copy of the pinned image's build file.
+- Preregistration regenerated; still DRAFT.
+
+Tests:
+- The A1 launcher tests were replaced by A1b equivalents.
+- One positive-control assertion changed from REFUSED to UNTESTABLE. The sibling N-1 test forbids REFUSED from a tmp parent, and a probe cannot tell the two inputs apart.
+
+Failed approaches, recorded so later sessions do not repeat them:
+1. A strict validator compared the card's mount view with the operator's host-side view field for field. Every real run failed on the cgroup2 root, which the kernel reports relative to the reader's cgroup namespace. Fixed by tolerating exactly that field on cgroup rows.
+2. Rootless Podman options cannot remove the six device binds. `/dev` as a read-only tmpfs only drops devpts and mqueue.
+3. UNC access to the WSL distro is unavailable (hardened). Files go in through `wsl.exe` stdin, and shell variables in inline `bash -c` strings get expanded early, so use `bash -s` scripts.
+
+Evidence. `docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/result.json`, sha256 590bfa4f..., pinned. It comes from a clean clone of 754f6cdb on the formal machine.
+- The verdict is `verified: false`.
+- Container evidence is BLOCKED solely by DEVICE_NODE_WRITABLE_MOUNT and UNDECLARED_WRITABLE_MOUNT, on the six devices in each of cards A, B and C. Every other contract check held.
+- 11 of 12 channels are REFUSED. `cross_card_state` is UNTESTABLE, and every probe has power.
+- The c09b0ef5 run (5ccccd42) is kept under `superseded-c09b0ef5/`.
+
+Status: D5 = NOT_PROVEN; FDA-18 residual = NOT_PROVEN; N-1 = OPEN; formal campaign FORBIDDEN. `src/`, `certification/` and `.github/` are untouched in this range. `pair_bound.py` stays the only certified-scope change against main. No formal run, freeze, OD-3 or certification happened.
+
+Commands run. Windows uses the shared venv with `PYTHONPATH=D:/forge-genesis-clean/src;D:/forge-genesis-clean`. Linux uses `~/venvs/forge312`, inside a fresh clone.
+
+| Where | Commit | Command | Result |
+|---|---|---|---|
+| Windows | 4ec70275 | `python -m pytest -q -p no:cacheprovider -n 4 -rfEs tests/genesis_lite` | 388 passed, 2 skipped (both Linux-only fdinfo tests) |
+| Linux | d2d0cb4b | `python -m pytest -q -p no:cacheprovider -n 4 tests/genesis_lite` | 384 passed, 1 failed: the D5 evidence test, which waited for the A1b evidence |
+| Linux | a1935b72 | same | 387 passed, 0 skipped |
+| Linux | a1935b72 | `python -m benchmarks.genesis_lite.v0_3.readiness` | BLOCKED_TECHNICAL on the three D5 rows plus D7 timing pilot evidence (REQUIRES_RERUN); 293 v0.3 tests passed; agreement 48/48 |
+| Linux | c09b0ef5 | `python -m benchmarks.genesis_lite.v0_3.isolation --out result.json --cards 2` | exit 1, BLOCKED (superseded) |
+| Linux | 754f6cdb | same | exit 1, BLOCKED (pinned) |
+| Windows | a1935b72 | certificate verifier render diff against the transfer commit | identical (only `ADDED pair_bound.py` against main) |
+
+NOT RUN: FAST, SCIENTIFIC, FULL, hardened recertification, the D7 timing pilot rerun and any formal campaign.
