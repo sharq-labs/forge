@@ -461,7 +461,7 @@
   "start_condition": "G0 exit (OD-3), OD-20 deployment verified by an independent isolation-probe rerun that covers the Genesis-lite secret inventory (FDA-19 / ODC-BL1), OD-18 budget, OD-8 evaluator, this identity frozen and approved (OD-19)",
   "timing_pilot": {
    "evidence": "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json",
-   "evidence_sha256": "a543bc217fdcba296d4fe64616ec0f667462beab5543d483f89f5ba9e5e285e8",
+   "evidence_sha256": "4361bb626c5df8f4273dab7b54d3bc34ee2bd378e7bae7b048b09a6c7a82c4d4",
    "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are ESTIMATED from it and exclude the candidate's own cost (D4)"
   },
   "world_sets": 2400
@@ -552,7 +552,7 @@
   "formal.py": "9ddaf964215805601d90736544b7517f139dc21ee17346c23d1e52844b84576a",
   "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
   "isolation.py": "d7f96b37608d799fe9d7729ba6fb8fbea2384f475bec5905590df587a1967164",
-  "preregistration.py": "438d48dcb983cbe2a91557b4e026c79bf00bbc7e14d363c109d20ee94d415f8f",
+  "preregistration.py": "5b10386b104af466fa940fe5cfa7b00bf179b62fe39576fe177a23a2b1cecb90",
   "readiness.py": "c3ba3eb5ea30dbb72c1b7a2b6de3dd9643266bd862e1557808c8e87e62dc2ec0",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",

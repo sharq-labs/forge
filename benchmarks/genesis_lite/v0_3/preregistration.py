@@ -105,7 +105,7 @@ DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_1
 DEPLOYMENT_EVIDENCE_SHA256 = "8031b422a3d7b590209455231493388697294198fcbb39227483aee094400f6d"
 #: D7 (owner, 2026-10-20): the timing pilot on the formal machine, before the formal budget is approved
 TIMING_PILOT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json"
-TIMING_PILOT_EVIDENCE_SHA256 = "a543bc217fdcba296d4fe64616ec0f667462beab5543d483f89f5ba9e5e285e8"
+TIMING_PILOT_EVIDENCE_SHA256 = "4361bb626c5df8f4273dab7b54d3bc34ee2bd378e7bae7b048b09a6c7a82c4d4"
 #: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
 RETIRED_PILOT_ROOT_COMMITMENTS = (
     "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",   # v0

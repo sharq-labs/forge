@@ -8265,3 +8265,7 @@ With this commit, three evidence-binding tests fail BY DESIGN (D5, study, pilot 
 - Evidence sha256 8031b422a3d7b590209455231493388697294198fcbb39227483aee094400f6d, identical on both sides of the copy, re-pinned. The D5 evidence test now checks power across both controls and the setpriv flags.
 
 Suite: 249 passed, 1 failed BY DESIGN (the D7 pilot binding, pending re-run).
+
+**D7 pilot re-run under the capability drop** (WSL, clean escrow clone at d5852482, exit 0): 200/200 runs VALID. MEASURED 43.7 s per world set; ESTIMATED 58.2 h (57.5-59.0 h) with replay, about 29.1 h for the operator's run. Evidence sha256 4361bb626c5df8f4273dab7b54d3bc34ee2bd378e7bae7b048b09a6c7a82c4d4, identical on both sides of the copy, re-pinned; the first pilot (a543bc21) is superseded.
+
+`python -m pytest tests/genesis_lite -q -n 4` on the draft branch: exit 0, 250 passed.
