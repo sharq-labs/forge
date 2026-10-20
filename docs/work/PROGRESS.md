@@ -8120,3 +8120,9 @@ D3 and study evidence on the escrow branch (tip 097194c1, rebased on draft f4d50
 The study was re-run from clean HEAD 70195498: exit 0, 1725.0 s, result sha256 282b42131b074a7b... Exchangeable null 0.0500 at alpha 0.05, Holm family-wise rate 0.0450.
 
 `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 229 passed.
+
+Review fixes on the escrow branch (tip 5dcd6866, rebased on draft 2dbbd462; Windows venv):
+- `python -m pytest tests/genesis_lite -q -n 4`: 249 passed.
+- Readiness gate: READY_TO_FREEZE_PENDING_OWNER, no technical rows, 48 agreement cases; D2b and D3b are listed as owner items.
+- `python tools/forge_check.py --regression`: 279 passed.
+- The D3b wording now says five control kinds (review I-7). The review itself was not re-run after these fixes.

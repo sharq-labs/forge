@@ -463,7 +463,7 @@
  },
  "owner_decisions_open": {
   "D2b-root-grinding": "raised by the scientific review 2026-10-20 (I-1): the sign-flip key is HMAC(root, ...), and whoever generates the root can try many roots before committing and keep one whose stream is favourable (no effect after the commitment). Accept and state it with a bound; or mix in a value the root generator cannot control that is fixed after commitment and before the first world (e.g. an evaluator salt published in the admission inbox); or raise M",
-  "D3b-cap-form-and-noninferiority": "raised by the ODC-O1b study (2026-10-20, docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20): (a) the FDA-06 / CONTROL_SOLVED cap is a per-world-set min(mine, theirs), so a capped cell contributes -E[(ref - mine)+] < 0 and a candidate whose outcomes are not near-copies of the baseline's never claims (doubling discoverable success 0.2 -> 0.4 with independent outcomes: claim 0/100, pooled mean -1.20); keep it, or cap at the cell level (no gain, losses still count); (b) six per-kind non-inferiority margins of 0.10 fail together ~30 % of the time at equal skill with independent outcomes, which caps power near 0.7; accept, or revise the margin / the conjunction",
+  "D3b-cap-form-and-noninferiority": "raised by the ODC-O1b study (2026-10-20, docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20): (a) the FDA-06 / CONTROL_SOLVED cap is a per-world-set min(mine, theirs), so a capped cell contributes -E[(ref - mine)+] < 0 and a candidate whose outcomes are not near-copies of the baseline's never claims (doubling discoverable success 0.2 -> 0.4 with independent outcomes: claim 0/100, pooled mean -1.20); keep it, or cap at the cell level (no gain, losses still count); (b) the per-kind non-inferiority margins of 0.10 fail together ~26 % of the time at equal skill with independent outcomes (driven by the five control kinds), which caps power near 0.7; both under the study's +/-1 credit model; accept, or revise the margin / the conjunction",
   "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a baseline-only attempt); the operator generates a fresh formal root and commits it",
   "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse every channel",
   "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
@@ -518,8 +518,8 @@
   "evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
   "formal.py": "dfbf372c084bfe9107425bcb098e58ff0d6aff199bc8680000863c6c510363d8",
   "harness.py": "ce603d0175dd3c1248ae32ed9e9286284723112c6687def143f56fc79176f15d",
-  "preregistration.py": "f1b8d7dc16eba807bb8d383bf65482567ab9326b4e7ee935ddec9440912c4ca1",
-  "readiness.py": "ecab18bcd9631db799d9b9c01142ac89a35aef88b482150ae6bf93e67ca73504",
+  "preregistration.py": "7ba800ce40d9b025a9f7488a48eee22f096fa9adc1c91070ed55405fcbd472e5",
+  "readiness.py": "db1d35882133109f1c0b7d30468777df22561bab0471b1ca18055763ed11aba8",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "4763de7c3878c8b82f9209285d0d9cc2c720ab3b22708141f260ce0f0bb001d9",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8"

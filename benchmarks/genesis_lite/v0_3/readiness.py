@@ -81,7 +81,7 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "root grinding before the commitment (review I-1)": (OWNER, (), "D2b: the root generator can choose among roots "
                                                                    "before committing; mitigation is the owner's"),
     "cap form and non-inferiority power (ODC-O1b study findings)": (OWNER, (), "D3b: per-world-set min cap needs near "
-                                                                   "world-by-world dominance; six kind margins cap power "
+                                                                   "world-by-world dominance; five control-kind margins cap power "
                                                                    "near 0.7"),
 }
 

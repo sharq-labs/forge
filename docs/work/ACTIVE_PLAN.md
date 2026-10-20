@@ -48,7 +48,7 @@ Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
 - [ ] Owner D2b-root-grinding (scientific review I-1): the root generator can grind roots before committing.
 - [ ] Owner D3b-cap-form-and-noninferiority, raised by the study:
       (a) the per-world-set min cap needs world-by-world dominance;
-      (b) six kind margins cap power near 0.7.
+      (b) the five control-kind margins cap power near 0.7 (both under the study's ±1 credit model).
 - [x] Owner D3-baselines-and-tells DECIDED 2026-10-20, option A as drafted: section 10.5 cap over all four law-credit kinds, careful keeps ddof = 0 plus _dof arms, form tell declared and measured (not equalised), one process per card, CONTROL_SOLVED >= 0.5.
 - [ ] Owner: D4-identity-freeze (OD-19, candidate,
       fresh root), D5-deployment (OD-20), D6-evaluator (OD-8), D7-budget-and-machine (OD-18): the approval record
