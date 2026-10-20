@@ -8072,3 +8072,9 @@ Recorded as `evaluator.PAIR_BOUND` and the preregistration's `owner_decisions_ta
 - ODC-O1b: a bounded, non-formal power and null-calibration study on synthetic records is authorised, to run after D3. The readiness ledger carries it as `AUTHORISED_NOT_YET_RUN` (technical), so the gate is BLOCKED_TECHNICAL until it has run.
 
 New test: `test_o1_the_claims_monte_carlo_stream_comes_from_the_committed_root`. `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 224 passed.
+
+D2 evidence on the escrow branch (tip 2cdd2be3, rebased on the draft's D2 commit ff0012ff; Windows venv, PYTHONPATH=src;., TMP on D:):
+- `python -m pytest tests/genesis_lite -q -n 4`: 244 passed.
+- `python -m benchmarks.genesis_lite.v0_3.readiness`: BLOCKED_TECHNICAL, by design. Its one technical row is `power and null-calibration study (ODC-O1b): AUTHORISED_NOT_YET_RUN`. Agreement cases: 48. Owner items: D1-D7 and OD-3 approvals, FDA-18 residual, P-1/P-2, pair_bound.py (OD-3), root/manifest/candidate (D4/D7), DRAFT status.
+- `python tools/forge_check.py --regression`: 279 passed.
+The escrow test formerly named `test_readiness_with_the_escrow_half_has_no_technical_row_left` is now `test_readiness_with_the_escrow_half_leaves_only_the_authorised_power_study`.
