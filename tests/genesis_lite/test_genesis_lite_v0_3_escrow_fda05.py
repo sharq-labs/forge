@@ -19,7 +19,7 @@ from engcore.blindfold import pair_bound as pb
 from engcore.blindfold.roles import EvaluatorConfig
 
 MASTER = bytes(range(32))
-TEST_BOUND = v03e.PairBound("tol_multiple", 5.0)
+TEST_BOUND = v03e.PAIR_BOUND                      # the owner's w (D1, 2026-10-20): 3 x tol
 #: the v0.2 escrow configuration digest at origin/main 8ec97064 (harness.CONFIG); it must not move
 V0_2_CONFIG_DIGEST = EvaluatorConfig("forge.genesis_lite.v0_2", "1").digest
 
@@ -103,7 +103,7 @@ def test_escrow_fda05_the_bounded_escrow_runs_the_v0_2_score_procedure_unchanged
 
 # ---- the v0.3 harness end to end (development tier: the owner's w is still open) --------------------------------------
 def _binding():
-    return harness.bind(v03p.PREREG_PATH.read_bytes(), tier="development", development_bound=TEST_BOUND)
+    return harness.bind(v03p.PREREG_PATH.read_bytes(), tier="development")       # w comes from the preregistration
 
 
 def test_harness_binds_with_the_escrow_half_and_seals_w_in_the_config():
@@ -141,7 +141,7 @@ def test_readiness_with_the_escrow_half_has_no_technical_row_left():
     assert set(readiness.ESCROW_TESTS["FDA-05 escrow half"]) <= required
     evidence = {"head": readiness._head(), "clean": True, "tests": {name: "passed" for name in required}}
     out = readiness.check(evidence=evidence)
-    assert out["agreement_cases"] == 40 and out["technical_blockers"] == []
+    assert out["agreement_cases"] == 2 * len(selfcheck.PAIRS) * len(selfcheck.BOUNDS) and out["technical_blockers"] == []
     assert out["status"] == readiness.PENDING_OWNER
     assert any("pair_bound.py is certified scope" in r for r in out["owner_and_certification"])
 
