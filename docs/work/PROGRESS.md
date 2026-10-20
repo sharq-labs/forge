@@ -8007,3 +8007,43 @@ The 64 baseline failures and remaining integration gates are unchanged.
 - No additional performance claim follows from this static inspection. The only
   new measured improvement remains the previous n=4 before/after result.
   No additional tests run for this documentation-only publication record.
+
+**BR-MIND-02B addendum (2026-10-20, after syncing with main `eb113ab7`).**
+
+**Sync.** `origin/main` `eb113ab7` (PR #173, the FAST runtime fix) was merged into the draft branch with the app's
+sync, and the escrow branch was rebased onto it. The only conflict was `PROGRESS.md`, resolved by keeping both
+entries. The v0.3 preregistration still rebuilds byte-identically. Both branches contain `origin/main`.
+
+**Round 6 (static, read-only).** No BLOCKER and no MAJOR code defect. `screen_rederives` matches the harness. The
+MINORs it raised were fixed in `94b94c22`:
+- exact screen-reason comparison;
+- a narrower dynamic-code screen (`re.compile` / `model.eval()` are no longer refused; `builtins.exec`,
+  `from builtins import exec` and `importlib` still are).
+
+Residual governance limits are unchanged (decision record §2).
+
+**main regression found and fixed on the branch.** `eb113ab7` itself fails
+`tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic`. PR #173 put its
+section above the "Active epic" line that the test reads at line 3. The failure is in the FAST failure set of a
+pristine `eb113ab7` worktree and absent at `8ec97064`. On the draft branch, `ACTIVE_PLAN.md` is reordered (Active
+epic paragraph first) and that file passes: `tests/test_capability_completion.py`, 28 passed. **main still needs the
+same one-line fix.**
+
+**FAST with the main speed-up.** `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rf`:
+
+| Tree | Failed | Passed | Skipped | Errors | Time |
+|---|---|---|---|---|---|
+| pristine `eb113ab7` (worktree `D:/gl03-pristine2`, removed afterwards) | 185 | 11,703 | 224 | 22 | 361 s |
+| escrow tip `b46afed2` | 186 | 11,851 | 224 | 22 | 389 s |
+| escrow tip `35e98591` | 186 | 11,851 | 224 | 22 | 395 s |
+
+The FAST run took about 1000 s before the main fix. Against pristine, both branch tips differ only in the known
+environmental `tests/test_test_timing.py::test_the_plugin_records_telemetry_and_never_changes_an_outcome`, which
+passes with a same-drive basetemp.
+
+**Regression pack at `35e98591`:** 278 passed, 1 failed: the main-inherited governance test above, fixed after that
+run.
+
+**Gate at `35e98591`:** READY_TO_FREEZE_PENDING_OWNER; 149 named tests, 40/40 agreement, 0 technical blockers.
+
+The final tip's results follow below.
