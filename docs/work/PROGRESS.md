@@ -8166,6 +8166,16 @@ Dispositions, all text, disclosure or tests, with no rule-code change, so the pi
 - I-5: the numpy dependence of the bootstrap is disclosed; the formal manifest binds it.
 - I-6: the approximate level of the bootstrap guard is disclosed.
 
+**Decision-cycle close (2026-10-20).** Escrow tip 8321b32e on draft c63a9636. Code is identical in the commit that adds this entry (docs only). Windows venv, PYTHONPATH=src;., TMP on D:.
+
+- `python -m pytest tests/genesis_lite -q -n 4`: 12 runs. 11 passed (258 each), 1 run had 1 failed + 257 passed. That run was the first after the rebase; the failing test's name was not captured (no -rf), and the failure did not reproduce in 11 reruns. It is recorded as UNIDENTIFIED INTERMITTENT, not explained away.
+- `python -m benchmarks.genesis_lite.v0_3.readiness`: READY_TO_FREEZE_PENDING_OWNER, technical_blockers [], 48 agreement cases, 19 owner/certification items, prereg sha256 29b5f9eb9ffa1db92646c798de52f2874bf1c626838ec253c70bedfe8b138a36.
+- `python tools/forge_check.py --regression`: 279 passed.
+- Study evidence result.json sha256 a732df70f3a7540cbc4d96461af0b1c882b993f60b16890282b862c5b19b36fa, from clean HEAD f76c1ca9, pinned and bound to the live rule.
+- The pinned historical identities are unchanged: v0 f99fcfbd..., v0.2 878e6812...
+- The only certified-scope file touched is src/engcore/blindfold/pair_bound.py (escrow branch, additive, UNCERTIFIED, OD-3).
+- Nothing pushed, merged or certified; no formal campaign run; no approvals file written.
+- Three forge-scientific-review rounds. The final one: CHANGES REQUIRED with MINORs only (0 BLOCKER, 0 MAJOR); all addressed by text, disclosure or tests.
 **Owner decisions D2b and D3b-2 reconfirmation (2026-10-20).** Relayed verbatim from the parent session:
 - D2b approved: bind the admission nonce into the HMAC/root derivation so pre-commit root grinding is refused.
 - D3b-2 reconfirmed at 0.15 as a non-inferiority guardrail, not an equivalence or acceptable-degradation claim. The 7.5 / 15 / 30-point readings are recorded in the preregistration, the decision record and ACTIVE_PLAN.
