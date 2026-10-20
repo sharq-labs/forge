@@ -84,6 +84,23 @@ def _outcome(kind: str, value: float) -> str:
     return next(o for o, c in sorted(DEFAULT_CREDIT[kind].items()) if c == value)
 
 
+def study_admission(root: bytes, rng: np.random.Generator) -> dict[str, Any]:
+    """A self-consistent synthetic formal admission of ``root`` (D2b binds its nonce into the claim's key)."""
+    from .registry import REGISTRY_SCHEMA, entry_digest  # noqa: PLC0415
+
+    sha = _prereg_sha()
+    entry = {"schema": REGISTRY_SCHEMA, "prev_sha256": "0" * 64, "tier": "formal",
+             "root_commitment_sha256": hashlib.sha256(root).hexdigest(), "prereg_sha256": sha,
+             "campaign_set_sha256": sha, "attempt_label": "power-study (synthetic)", "nonce": rng.bytes(16).hex(),
+             "admitted_at": "synthetic"}
+    entry["attempt_sha256"] = entry_digest(entry)
+    return entry
+
+
+def _bind(rows: list[dict], admission: dict[str, Any]) -> list[dict]:
+    return [dict(r, attempt_sha256=admission["attempt_sha256"]) for r in rows]
+
+
 def _records(arm: str, success: np.ndarray, grid: list, sha: str, in_family: np.ndarray) -> list[dict]:
     out = []
     for i, (p, c, s) in enumerate(grid):
@@ -130,8 +147,10 @@ def run_cell(cell: dict[str, Any], reps: int, seed: int, fast: bool = True) -> d
     for _ in range(reps):
         rows = scenario_records(cell, rng)
         root = rng.bytes(32)
+        admission = study_admission(root, rng)
         with _study_scoring(root, fast):
-            out = v03a.lift_decision(rows, CANDIDATE, revealed_root=root, verification=[])
+            out = v03a.lift_decision(_bind(rows, admission), CANDIDATE, revealed_root=root, verification=[],
+                                     admission=admission)
         for name, ok in statistical_claim(out).items():
             tally[name] = tally.get(name, 0) + int(ok)
         pooled_mean.append(out["primary"]["pooled"]["mean_difference"])
@@ -157,10 +176,12 @@ def bootstrap_crosscheck(cell: dict[str, Any], reps: int, seed: int) -> dict[str
     for _ in range(reps):
         rows = scenario_records(cell, rng)
         root = rng.bytes(32)
+        admission = study_admission(root, rng)
         outs = []
         for fast in (True, False):
             with _study_scoring(root, fast):
-                outs.append(v03a.lift_decision(rows, CANDIDATE, revealed_root=root, verification=[]))
+                outs.append(v03a.lift_decision(_bind(rows, admission), CANDIDATE, revealed_root=root, verification=[],
+                                               admission=admission))
         bounds = [{**{f"primary/{p}": o["primary"][p]["lower95"] for p in o["primary"]},
                    **{f"kind/{k}": v["lower95"] for k, v in o["kind_noninferiority"].items()}} for o in outs]
         gap = max(abs(bounds[0][k] - bounds[1][k]) for k in bounds[0])
@@ -200,7 +221,8 @@ def null_calibration(reps: int, seed: int, symmetric: bool = True) -> dict[str, 
     holm_any = 0
     sha = _prereg_sha()
     for _ in range(reps):
-        stream = v03a.sign_flip_stream(rng.bytes(32), sha)
+        null_root = rng.bytes(32)
+        stream = v03a.sign_flip_stream(null_root, sha, study_admission(null_root, rng))
         diffs = _null_diffs(rng, 4 * per, symmetric)
         ps = {"pooled": v03a.sign_flip_p(diffs, stream=stream)["p"]}
         for i, part in enumerate(v03a.PRIMARY_FAMILY[1:]):

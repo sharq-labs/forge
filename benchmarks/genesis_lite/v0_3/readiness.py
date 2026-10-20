@@ -78,8 +78,10 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "power and null-calibration study (ODC-O1b)": (FIXED, ("test_o1_power_study_",), "ran 2026-10-20 on synthetic "
                                                    "records (docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20, sha256 pinned in the preregistration); exchangeable null "
                                                    "0.0490 at alpha 0.05, Holm FWER 0.0450"),
-    "root grinding before the commitment (review I-1)": (OWNER, (), "D2b: the root generator can choose among roots "
-                                                                   "before committing; mitigation is the owner's"),
+    "root grinding before the commitment (review I-1)": (DECIDED, (), "D2b, 2026-10-20: the admission nonce is bound "
+                                                                     "into the key"),
+    "D2b nonce-bound stream": (FIXED, ("test_d2b_",), "a root ground before the commitment cannot fix the claim's "
+                                                      "stream; missing, tampered or foreign admissions are refused"),
     "cap form (ODC-O1b study finding)": (DECIDED, (), "D3b-1, 2026-10-20: cell-level cap"),
     "per-kind non-inferiority conjunction (ODC-O1b study finding)": (DECIDED, (), "D3b-2, 2026-10-20: margin 0.15, "
                                                                                  "every kind"),
@@ -206,6 +208,9 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d3b_a_gain_cell_never_offsets_a_loss_cell_of_another_presentation',
         'test_d3b_capped_data_never_move_the_significance_test',
         'test_d3b_the_per_kind_margin_is_0_15_and_every_kind_is_still_required',
+    ),
+    'D2b nonce-bound stream': (
+        'test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream',
     ),
     'power and null-calibration study (ODC-O1b)': (
         'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',

@@ -8165,3 +8165,13 @@ Dispositions, all text, disclosure or tests, with no rule-code change, so the pi
 - I-4: the P2 test now has uncapped discoverable differences (p < 1), asserts every control cell is CONTROL_SOLVED, and checks the statistical claim conditions. A test is added that a gain cell never offsets a loss cell of another presentation.
 - I-5: the numpy dependence of the bootstrap is disclosed; the formal manifest binds it.
 - I-6: the approximate level of the bootstrap guard is disclosed.
+
+**Owner decisions D2b and D3b-2 reconfirmation (2026-10-20).** Relayed verbatim from the parent session:
+- D2b approved: bind the admission nonce into the HMAC/root derivation so pre-commit root grinding is refused.
+- D3b-2 reconfirmed at 0.15 as a non-inferiority guardrail, not an equivalence or acceptable-degradation claim. The 7.5 / 15 / 30-point readings are recorded in the preregistration, the decision record and ACTIVE_PLAN.
+
+Failing-first evidence for D2b:
+- On the prior code, `sign_flip_stream(root, prereg) == HMAC(root, label/prereg)` was True: the claim's stream was computable at commitment time.
+- `pytest tests/genesis_lite/test_genesis_lite_v0_3_amendment.py -k d2b` then gave 1 failed (TypeError: the stream took no admission).
+
+Implementation: K = HMAC(root, label/prereg/admission nonce/admission digest). `analysis.admission_problems` refuses a missing, tampered, foreign-root, foreign-preregistration or non-formal admission, and records of another attempt. Afterwards the targeted tests gave 4 passed. Full genesis_lite suite: 238 passed, 1 failed; the failure is `test_o1_power_study_evidence_measured_the_rule_that_is_in_the_tree`, as intended until the study is re-run on the changed rule code.

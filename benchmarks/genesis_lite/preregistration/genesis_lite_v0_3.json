@@ -56,7 +56,7 @@
    "monte_carlo_p": "(b + 1) / (M + 1); the exact path is exact",
    "monte_carlo_resamples": 19999,
    "statistic": "sum over world sets of the paired difference over UNCAPPED kinds only (one-sided, H1 candidate better); capped cells never enter the significance test (D3b-1, P2). They enter the effect size: sum of the uncapped differences + sum over capped (kind, presentation) cells of min(0, the cell's summed difference), per world set",
-   "stream": "SHAKE-256(K || resample index, 8 bytes big-endian), bits in numpy.unpackbits order, K = HMAC-SHA256(revealed formal root, 'forge.genesis_lite.v0_3/sign_flip_stream/' + the preregistration digest) (D2): secret from the proposer until the reveal, and fixed once the root is committed, so no stream can be chosen after the commitment; lift_decision refuses a root whose sha256 is not the commitment. NOT prevented: whoever generates the root can try many roots BEFORE committing and keep one whose stream is favourable (scientific review 2026-10-20, I-1); the mitigation is an open owner decision (D2b)"
+   "stream": "SHAKE-256(K || resample index, 8 bytes big-endian), bits in numpy.unpackbits order, K = HMAC-SHA256(revealed formal root, 'forge.genesis_lite.v0_3/sign_flip_stream/' + the preregistration digest + '/' + the admission nonce + '/' + the admission digest) (D2 + D2b): secret from the proposer until the reveal, and not computable at commitment time because the admission is created afterwards, so pre-commit root grinding cannot fix the stream; lift_decision refuses a root whose sha256 is not the commitment and an admission that is tampered, of another root, preregistration or tier, or not the attempt every record carries. Residual (disclosed): whoever runs the registry could generate unpublished admissions and keep one; the evaluator's inbox binds the first published admission, and the worlds mix in the same nonce"
   },
   "significance": "paired sign-flip randomisation (one-sided); bootstrap for the lower bound only",
   "unchanged": "unit of analysis, grid, comparison set, strongest baseline, representation-limited rule, presentation non-inferiority margin, screening and its cap, identity binding: as in v0.2"
@@ -469,7 +469,6 @@
   "readiness P-1 / P-2": "the isolation deployment and an out-of-process escrow (OD-20); the deployment attack suite must report every channel REFUSED there"
  },
  "owner_decisions_open": {
-  "D2b-root-grinding": "raised by the scientific review 2026-10-20 (I-1): the sign-flip key is HMAC(root, ...). Whoever generates the root can try roots before committing and keep one whose stream has a favourable tail; the worlds also depend on the admission nonce, so such grinding is blind to the data, and its effect on size is small (reviewer estimate, unverified: about +0.008 at 10^6 tries, M = 19,999). No effect after the commitment. Options: accept and state it; mix the admission nonce or admission digest into the HMAC message (no cost); or an evaluator salt fixed after commitment (touches D6). Pre-running whole attempts off the registry is a separate, pre-existing exposure (D5/D6)",
   "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a baseline-only attempt); the operator generates a fresh formal root and commits it",
   "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse every channel",
   "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
@@ -479,9 +478,10 @@
  "owner_decisions_taken": {
   "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d; decided by the owner in session on 2026-10-20: ODC-05a form (i), a ratio cap max/min <= 1 + w outside the box, on the BRACKET route only; ODC-05b w = 3 x tol (tol_multiple 3.0), anchored a priori on the generator's declared separation scale (OUTSIDE_TOLERANCES = 3 in universe.py), never tuned on pilot or formal worlds; ODC-05c v0.3 only, never retroactive to v0.2 records; ODC-05d the pass route keeps +1.0 as in v0.2",
   "D2-significance": "covers ODC-O1a and ODC-O1b; decided by the owner in session on 2026-10-20: ODC-O1a route B, the one-sided paired sign-flip p with the Monte-Carlo stream derived from the revealed formal root (HMAC, own label; Holm, alpha and the family unchanged; bootstrap for the lower bound only); the exchangeability null scope is accepted and stated; ODC-O1b a bounded, non-formal power and null-calibration study on synthetic records is authorised, to run after D3",
+  "D2b-root-grinding": "decided by the owner in session on 2026-10-20: bind the admission nonce into the key derivation so pre-commit root grinding is refused. K = HMAC-SHA256(revealed root, label / preregistration digest / admission nonce / admission digest); the admission is created by the one-attempt registry after the commitment, so no stream is computable at commitment time; lift_decision uses the keyed stream only with a self-consistent formal admission of this root and this preregistration that every record carries (test_d2b_*). Residual, disclosed: whoever runs the registry could generate unpublished admissions and keep one; blind to the data",
   "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, spurious_correlate, confounded, indistinguishable); FDA-21 careful keeps ddof = 0 (certified, a documented exception) and the corrected <name>_dof arms join the strongest-baseline maximum; FDA-22 the form tell is declared and law_form measured, the generator's priors are NOT equalised (no certified change); FDA-18 one proposer process per card; pilot P-2 CONTROL_SOLVED with the exact binary-bootstrap lower bound >= 0.5",
   "D3b-1-cap-form": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, a cell-level cap. A capped (kind, presentation) cell contributes min(0, its summed paired difference): no gain, a net loss counts, in the effect size (recomputed per bootstrap resample) and the per-kind non-inferiority. Implementation P2 (owner, same session): the sign-flip p uses the uncapped differences only, because the min inside every sign vector let capped wins raise significance (p = 0.002 at a mean difference of 0, adversarial test). v0.3 only",
-  "D3b-2-kind-noninferiority": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, the per-kind non-inferiority margin is 0.15 (v0.2: 0.10) and every kind is still required; the presentation margin is unchanged. v0.3 only"
+  "D3b-2-kind-noninferiority": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, the per-kind non-inferiority margin is 0.15 (v0.2: 0.10) and every kind is still required; the presentation margin is unchanged. v0.3 only. RECONFIRMED by the owner on 2026-10-20 at 0.15, with the corrected interpretation: a NON-INFERIORITY GUARDRAIL, not an equivalence claim and not a statement of acceptable degradation. The margin bounds the 95 % lower bound of the per-kind mean credit difference; read as a success rate it allows about 7.5 points for success -> failure (+1 -> -1), 15 points for success -> refusal (1 -> 0) and 30 points for indistinguishable_hit -> insufficient_evidence (1 -> 0.5)"
  },
  "package_markers": {
   "benchmarks/__init__.py": "06dd19293c8381eafa491dfd1be8ca413dcb3ea20a1c490cf24b810e6720c7df",
@@ -519,15 +519,15 @@
  "status_note": "DRAFT (not FREEZE_READY): no pilot, formal run or measurement may be produced under this document; v0.2 remains the active identity until the owner approves v0.3 (OD-19). Every value marked OWNER_DECISION_REQUIRED blocks the freeze.",
  "v0_3_files": {
   "__init__.py": "f8af0c58db79ad76a213ad6fb8c771a55114b34503f7452eb3fab3116d1e4905",
-  "analysis.py": "8518057331d18621dc78f907b93055f85ff26bbc6fdb2e2ff08e3ab319e65494",
+  "analysis.py": "03936fd18a1d951296c74b7a2de8aa01e55a47f73840ff43750f50496fd16bab",
   "arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
   "deployment_attacks.py": "47c5c6406c918948436107bc5bf2306bd4a0486ecf8487ae39f6e825422510f4",
   "environment.py": "d9ab7044c74cb941e9d4c0b8973284ab73a26f5ff702fdf9b61b2b37b760a06f",
   "evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
   "formal.py": "dfbf372c084bfe9107425bcb098e58ff0d6aff199bc8680000863c6c510363d8",
   "harness.py": "ce603d0175dd3c1248ae32ed9e9286284723112c6687def143f56fc79176f15d",
-  "preregistration.py": "ec0661c5fb8e742ab92468edb591918510003a0781bf31697872653bb2cba58a",
-  "readiness.py": "63607423cd1baa801d33c200ed3f08a5df8cec9eb47eaecfe26aab98216252c0",
+  "preregistration.py": "ceccbb438e26aaaf259afe619c4ccfbeffed03af62064cb7fbebc12e4e675d92",
+  "readiness.py": "e49e9c0d3257e0e865a2feb298fa43d18bba6bbec15e0094325d24288722abac",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "4763de7c3878c8b82f9209285d0d9cc2c720ab3b22708141f260ce0f0bb001d9",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8"

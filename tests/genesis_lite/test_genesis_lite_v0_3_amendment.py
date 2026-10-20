@@ -346,26 +346,30 @@ def test_o1_v0_3_refuses_differences_outside_the_credit_lattice():
             v03a.sign_flip_p(bad)
 
 
-def test_o1_the_claims_monte_carlo_stream_comes_from_the_committed_root(monkeypatch):
-    """D2 (owner, 2026-10-20): the stream is keyed by the revealed root, fixed by its commitment, so a different key
-    gives a different (still valid) p and no other key is accepted for a claim."""
+def test_o1_the_claims_monte_carlo_stream_comes_from_the_committed_root(monkeypatch, tmp_path):
+    """D2 + D2b (owner, 2026-10-20): the stream is keyed by the revealed root and the attempt's admission, fixed by the
+    commitment and the registry, so a different key gives a different (still valid) p and no other key is accepted."""
     diffs = [((i * 7) % 9 - 3) * 0.5 for i in range(60)]
     public = v03a.sign_flip_p(diffs, exact_work_limit=0)
     root = hashlib.sha256(b"test-only formal root for the stream").digest()
-    keyed = v03a.sign_flip_p(diffs, exact_work_limit=0, stream=v03a.sign_flip_stream(root, "a" * 64))
-    assert keyed["p"] != public["p"] and keyed == v03a.sign_flip_p(diffs, exact_work_limit=0,
-                                                                     stream=v03a.sign_flip_stream(root, "a" * 64))
-    assert v03a.sign_flip_stream(root, "a" * 64) != v03a.sign_flip_stream(root, "b" * 64)
+    admission = _admitted(tmp_path / "reg", root, "a" * 64)
+    key = v03a.sign_flip_stream(root, "a" * 64, admission)
+    keyed = v03a.sign_flip_p(diffs, exact_work_limit=0, stream=key)
+    assert keyed["p"] != public["p"] and keyed == v03a.sign_flip_p(diffs, exact_work_limit=0, stream=key)
+    assert key != v03a.sign_flip_stream(root, "b" * 64, admission)
     from tests.genesis_lite import lift_records as lr
 
-    rows = lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", lr.BETTER)
+    identity = v03p.identity_problems()[1]
+    admission = _admitted(tmp_path / "formal", root, identity)
+    rows = [dict(r, attempt_sha256=admission["attempt_sha256"])
+            for r in lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", lr.BETTER)]
     stream_problem = "revealed formal root is missing"
     assert any(stream_problem in p for p in v03a.lift_decision(rows, "mind", grid=lr.GRID)["coverage_problems"])
     monkeypatch.setattr(v03a, "_formal_root_commitment", lambda: hashlib.sha256(root).hexdigest())
-    good = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root)["coverage_problems"]
-    assert not any(stream_problem in p for p in good)
-    bad = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=b"x" * 32)["coverage_problems"]
-    assert any(stream_problem in p for p in bad)
+    good = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root, admission=admission)["coverage_problems"]
+    assert not any(stream_problem in p or "admission" in p for p in good)
+    bad = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=b"x" * 32, admission=admission)
+    assert any(stream_problem in p for p in bad["coverage_problems"])
 
 
 def test_o1_power_study_vectorised_bootstrap_is_the_same_estimator():
@@ -395,7 +399,7 @@ def test_o1_power_study_scores_with_the_real_rule_and_restores_it():
     assert (v03a._formal_root_commitment, v03a.bootstrap_mean_ci, v02_analysis.bootstrap_mean_ci) == saved
 
 
-def test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p(monkeypatch):
+def test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p(monkeypatch, tmp_path):
     """Review I-6: the committed root's stream must reach sign_flip_p. With the Monte-Carlo path forced, every p in the
     family is computed on HMAC(root, identity); two roots give two pooled p values, and no root gives the public one."""
     from tests.genesis_lite import lift_records as lr
@@ -416,11 +420,13 @@ def test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p(monkeypat
     ps = {}
     for tag in (b"root one", b"root two"):
         root = hashlib.sha256(tag).digest()
+        admission = _admitted(tmp_path / tag.decode().replace(" ", "_"), root, identity)
+        bound = [dict(r, attempt_sha256=admission["attempt_sha256"]) for r in rows]
         monkeypatch.setattr(v03a, "_formal_root_commitment", lambda r=root: hashlib.sha256(r).hexdigest())
         seen.clear()
-        out = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root)
+        out = v03a.lift_decision(bound, "mind", grid=lr.GRID, revealed_root=root, admission=admission)
         assert out["primary"]["pooled"]["p_method"] == "monte_carlo"
-        assert seen and set(seen) == {v03a.sign_flip_stream(root, identity)}
+        assert seen and set(seen) == {v03a.sign_flip_stream(root, identity, admission)}
         ps[tag] = out["primary"]["pooled"]["p"]
     seen.clear()
     public = v03a.lift_decision(rows, "mind", grid=lr.GRID)["primary"]["pooled"]["p"]
@@ -585,6 +591,55 @@ def test_d3b_the_per_kind_margin_is_0_15_and_every_kind_is_still_required():
     assert bad["kind_noninferiority"]["no_solution"]["ok"] is False and bad["lift_claimed"] is False
 
 
+# ---- D2b (owner, 2026-10-20): the admission nonce is bound into the claim's stream ------------------------------
+def _admitted(path, root, prereg):
+    from benchmarks.genesis_lite.v0_3.registry import AttemptRegistry
+
+    return AttemptRegistry(path).admit(root_commitment_sha256=hashlib.sha256(root).hexdigest(), prereg_sha256=prereg,
+                                       campaign_set_sha256=prereg, tier="formal")
+
+
+def test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream(tmp_path, monkeypatch):
+    """Owner D2b: the claim's Monte-Carlo key is HMAC(revealed root, label / preregistration / admission nonce /
+    admission digest). The admission exists only after the root is committed, so a grinder holding the root and the
+    preregistration at commitment time cannot compute the stream: the stream any such grinder could compute (here the
+    D2 key) is not the claim's, two admissions of one root give two streams, and a decision whose admission is missing,
+    tampered, of another root or of another attempt than its records is refused the keyed stream."""
+    import hmac
+
+    from benchmarks.genesis_lite.v0_3.registry import entry_digest
+    from tests.genesis_lite import lift_records as lr
+
+    root = hashlib.sha256(b"a root ground before the commitment").digest()
+    identity = v03p.identity_problems()[1]
+    first, second = _admitted(tmp_path / "one", root, identity), _admitted(tmp_path / "two", root, identity)
+    claim = v03a.sign_flip_stream(root, identity, first)
+    pre_commit = hmac.new(root, f"{v03a.SIGN_FLIP_KEY_LABEL}/{identity}".encode(), hashlib.sha256).digest()
+    assert claim != pre_commit and claim != v03a.sign_flip_stream(root, identity, second)
+
+    rows = [dict(r, attempt_sha256=first["attempt_sha256"])
+            for r in lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", lr.BETTER)]
+    monkeypatch.setattr(v03a, "_formal_root_commitment", lambda: hashlib.sha256(root).hexdigest())
+    original, seen = v03a.sign_flip_p, []
+
+    def recording(diffs, **kw):
+        seen.append(kw.get("stream", v03a.SIGN_FLIP_STREAM))
+        return original(diffs, **kw)
+
+    monkeypatch.setattr(v03a, "sign_flip_p", recording)
+    problem = "admission"
+    out = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root, admission=first)
+    assert not any(problem in p or "revealed formal root" in p for p in out["coverage_problems"])
+    assert seen and set(seen) == {claim}
+    other_root = dict(first, root_commitment_sha256="0" * 64)
+    other_root["attempt_sha256"] = entry_digest(other_root)
+    for bad in (None, second, dict(first, nonce="0" * 32), other_root):
+        seen.clear()
+        out = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root, admission=bad)
+        assert any(problem in p for p in out["coverage_problems"]), bad
+        assert set(seen) == {v03a.SIGN_FLIP_STREAM}                          # descriptive public stream only
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,
@@ -638,9 +693,9 @@ def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
     assert set(doc["owner_decisions_open"]) == {"D4-identity-freeze", "D5-deployment", "D6-evaluator",
                                                  "D7-budget-and-machine", "OD-3",
-                                                 "D2b-root-grinding"}
+                                                 }
     assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells",
-                                                  "D3b-1-cap-form", "D3b-2-kind-noninferiority"}
+                                                  "D3b-1-cap-form", "D3b-2-kind-noninferiority", "D2b-root-grinding"}
     covered = " ".join(list(doc["owner_decisions_open"].values()) + list(doc["owner_decisions_taken"].values()))
     for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",
                   "OD-20", "OD-8", "OD-18"):

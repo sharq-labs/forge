@@ -45,9 +45,13 @@ Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
 - [x] Owner D2-significance DECIDED 2026-10-20: sign-flip route B, Monte-Carlo stream keyed by the revealed formal root, exchangeability null scope accepted and stated, power/null-calibration study authorised after D3.
 - [x] Bounded power and null-calibration study (ODC-O1b) RAN 2026-10-20 (synthetic, non-formal):
       `docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/` (re-run after review, sha256-pinned). The D2 statistic is consistent with nominal under its exchangeable null (implementation check).
-- [ ] Owner D2b-root-grinding (scientific review I-1): the root generator can grind roots before committing.
+- [x] Owner D2b-root-grinding DECIDED 2026-10-20: the admission nonce and digest are bound into the sign-flip key (test_d2b_*).
 - [x] Owner D3b-1-cap-form DECIDED 2026-10-20: cell-level cap, min(0, cell net difference) in the effect size (per bootstrap resample) and kind non-inferiority; significance from uncapped differences only (P2).
-- [x] Owner D3b-2-kind-noninferiority DECIDED 2026-10-20: per-kind margin 0.15, every kind still required.
+- [x] Owner D3b-2-kind-noninferiority DECIDED 2026-10-20 and RECONFIRMED the same day: per-kind margin 0.15, every kind
+      required. It is a non-inferiority guardrail, not an equivalence or acceptable-degradation claim; the 7.5 / 15 / 30-point
+      readings are recorded.
+- [ ] Owner, in order: D5 deployment, D7 budget and machine, D6 evaluator, D4 identity freeze, OD-3. No freeze or push
+      until every decision and approval is bound to the final preregistration digest.
 - [x] Owner D3-baselines-and-tells DECIDED 2026-10-20, option A as drafted: section 10.5 cap over all four law-credit kinds, careful keeps ddof = 0 plus _dof arms, form tell declared and measured (not equalised), one process per card, CONTROL_SOLVED >= 0.5.
 - [ ] Owner: D4-identity-freeze (OD-19, candidate,
       fresh root), D5-deployment (OD-20), D6-evaluator (OD-8), D7-budget-and-machine (OD-18): the approval record

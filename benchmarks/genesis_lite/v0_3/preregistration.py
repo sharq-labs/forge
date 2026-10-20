@@ -49,7 +49,14 @@ OWNER_DECISIONS_TAKEN = {
                       "(p = 0.002 at a mean difference of 0, adversarial test). v0.3 only",
     "D3b-2-kind-noninferiority": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, the "
                                  "per-kind non-inferiority margin is 0.15 (v0.2: 0.10) and every kind is still required; "
-                                 "the presentation margin is unchanged. v0.3 only",
+                                 "the presentation margin is unchanged. v0.3 only. RECONFIRMED by the owner on 2026-10-20 at 0.15, with the corrected interpretation: a NON-INFERIORITY GUARDRAIL, not an equivalence claim and not a statement of acceptable degradation. The margin bounds the 95 % lower bound of the per-kind mean credit difference; read as a success rate it allows about 7.5 points for success -> failure (+1 -> -1), 15 points for success -> refusal (1 -> 0) and 30 points for indistinguishable_hit -> insufficient_evidence (1 -> 0.5)",
+    "D2b-root-grinding": "decided by the owner in session on 2026-10-20: bind the admission nonce into the key derivation "
+                         "so pre-commit root grinding is refused. K = HMAC-SHA256(revealed root, label / preregistration "
+                         "digest / admission nonce / admission digest); the admission is created by the one-attempt "
+                         "registry after the commitment, so no stream is computable at commitment time; lift_decision "
+                         "uses the keyed stream only with a self-consistent formal admission of this root and this "
+                         "preregistration that every record carries (test_d2b_*). Residual, disclosed: whoever runs the "
+                         "registry could generate unpublished admissions and keep one; blind to the data",
     "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in "
                               "session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs "
                               "over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, "
@@ -226,12 +233,14 @@ def build() -> dict[str, Any]:
                           "monte_carlo_p": "(b + 1) / (M + 1); the exact path is exact",
                           "stream": "SHAKE-256(K || resample index, 8 bytes big-endian), bits in numpy.unpackbits "
                                     "order, K = HMAC-SHA256(revealed formal root, '" + analysis.SIGN_FLIP_KEY_LABEL
-                                    + "/' + the preregistration digest) (D2): secret from the proposer until the reveal, and fixed "
-                                    "once the root is committed, so no stream can be chosen after the commitment; "
-                                    "lift_decision refuses a root whose sha256 is not the commitment. NOT prevented: "
-                                    "whoever generates the root can try many roots BEFORE committing and keep one whose "
-                                    "stream is favourable (scientific review 2026-10-20, I-1); the mitigation is an open "
-                                    "owner decision (D2b)"},
+                                    + "/' + the preregistration digest + '/' + the admission nonce + '/' + the admission "
+                                    "digest) (D2 + D2b): secret from the proposer until the reveal, and not computable at "
+                                    "commitment time because the admission is created afterwards, so pre-commit root "
+                                    "grinding cannot fix the stream; lift_decision refuses a root whose sha256 is not the "
+                                    "commitment and an admission that is tampered, of another root, preregistration or "
+                                    "tier, or not the attempt every record carries. Residual (disclosed): whoever runs the "
+                                    "registry could generate unpublished admissions and keep one; the evaluator's inbox "
+                                    "binds the first published admission, and the worlds mix in the same nonce"},
             "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference), tested on "
                           "the UNCAPPED differences (D3b-1, P2); a composite null 'mean <= 0' with an asymmetric "
                           "difference distribution is not covered. Accepted by the owner and stated as the claim's scope "
@@ -329,7 +338,6 @@ def build() -> dict[str, Any]:
             "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse "
                              "every channel",
             "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
-            "D2b-root-grinding": "raised by the scientific review 2026-10-20 (I-1): the sign-flip key is HMAC(root, ...). Whoever generates the root can try roots before committing and keep one whose stream has a favourable tail; the worlds also depend on the admission nonce, so such grinding is blind to the data, and its effect on size is small (reviewer estimate, unverified: about +0.008 at 10^6 tries, M = 19,999). No effect after the commitment. Options: accept and state it; mix the admission nonce or admission digest into the HMAC message (no cost); or an evaluator salt fixed after commitment (touches D6). Pre-running whole attempts off the registry is a separate, pre-existing exposure (D5/D6)",
             "D7-budget-and-machine": "OD-18: formal compute (one proposer process per card adds per-card start cost) and "
                                      "the formal machine, which fixes the environment manifest",
             "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)",

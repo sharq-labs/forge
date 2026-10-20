@@ -34,8 +34,9 @@ per-kind non-inferiority count; neither lets a capped class contribute a gain.
   sum). It enumerates the exact null distribution when that is cheap (:data:`EXACT_WORK_LIMIT`). Otherwise it draws
   :data:`SIGN_FLIP_RESAMPLES` sign vectors from a SHAKE-256 stream and uses p = (b + 1) / (M + 1). That p is
   finite-sample valid for any M when the sign vectors are random, conditional on which cells are capped (see below). For a CLAIM the stream is keyed by the revealed formal
-  root (D2, :func:`sign_flip_stream`): unknown to the proposer during the attempt and fixed once the root is committed.
-  Whoever generates the root can still try roots before committing (open owner decision D2b). Without the root the
+  root and the attempt's admission (D2 + D2b, :func:`sign_flip_stream`): unknown to the proposer during the attempt, and
+  not computable at commitment time because the admission nonce is created afterwards, so pre-commit root grinding
+  cannot fix it. Without the root the
   public stream :data:`SIGN_FLIP_STREAM` is used and p is descriptive only. The exact path has no such caveat. The bootstrap is
   kept ONLY for the effect-size lower bound. Holm, ALPHA and the fixed family are unchanged.
 
@@ -191,14 +192,39 @@ def _lattice(diffs: Sequence[float]) -> list[int]:
     return out
 
 
-def sign_flip_stream(revealed_root: bytes, prereg_sha256: str) -> bytes:
-    """D2: the Monte-Carlo stream seed of a claim, derived from the revealed formal root (HMAC-SHA256 under its own
-    label and the identity's digest). It is unknown to the proposer while the attempt runs and fixed once the root is
-    committed, so no stream can be chosen AFTER the commitment. It does NOT stop whoever generates the root from trying
-    many roots BEFORE committing (scientific review 2026-10-20, I-1; open owner decision D2b)."""
+def sign_flip_stream(revealed_root: bytes, prereg_sha256: str, admission: Mapping[str, Any]) -> bytes:
+    """D2 + D2b: the Monte-Carlo key of a claim, HMAC-SHA256(revealed root, label / preregistration digest / admission
+    nonce / admission digest). The admission is written by the one-attempt registry AFTER the root is committed
+    (``registry.AttemptRegistry.admit``), so nobody can compute the key at commitment time: a root ground before the
+    commitment cannot fix the claim's stream (owner D2b, 2026-10-20; test_d2b_*). The key is unknown to the proposer
+    while the attempt runs. Residual, disclosed: whoever runs the registry could generate admissions without publishing
+    them and keep one; the evaluator's inbox binds the first PUBLISHED admission of a root, so this needs unpublished
+    registries, and it is blind to the data because the worlds mix in the same nonce (``formal.master_for``)."""
     import hmac  # noqa: PLC0415
 
-    return hmac.new(revealed_root, f"{SIGN_FLIP_KEY_LABEL}/{prereg_sha256}".encode(), hashlib.sha256).digest()
+    message = f"{SIGN_FLIP_KEY_LABEL}/{prereg_sha256}/{admission['nonce']}/{admission['attempt_sha256']}"
+    return hmac.new(revealed_root, message.encode(), hashlib.sha256).digest()
+
+
+def admission_problems(admission: Any, revealed_root: bytes, prereg_sha256: str,
+                       rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    """Why ``admission`` cannot key this claim's stream: not a self-consistent registry entry, not of this root, not of
+    this preregistration, not formal, or not the attempt every record carries."""
+    from .registry import entry_digest  # noqa: PLC0415
+
+    if not isinstance(admission, Mapping) or not all(isinstance(admission.get(k), str) for k in
+                                                     ("nonce", "attempt_sha256", "root_commitment_sha256", "prereg_sha256")):
+        return ["no admission entry of the attempt is given: the claim's stream is keyed by its nonce (D2b)"]
+    problems = []
+    if entry_digest(admission) != admission["attempt_sha256"]:
+        problems.append("the admission entry does not match its own digest (tampered)")
+    if admission["root_commitment_sha256"] != hashlib.sha256(revealed_root).hexdigest():
+        problems.append("the admission is of another root than the revealed one")
+    if admission["prereg_sha256"] != prereg_sha256 or admission.get("tier") != "formal":
+        problems.append("the admission is not a formal admission under this preregistration")
+    if {r.get("attempt_sha256") for r in rows} != {admission["attempt_sha256"]}:
+        problems.append("the records do not all come from the given admission's attempt")
+    return problems
 
 
 def sign_flip_p(diffs: Sequence[float], *, exact_work_limit: int = EXACT_WORK_LIMIT,
@@ -316,7 +342,8 @@ def _formal_root_commitment() -> str:
 
 
 def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[WorldSet] | None = None,
-                  verification: Sequence[str] | None = None, revealed_root: bytes | None = None) -> dict[str, Any]:
+                  verification: Sequence[str] | None = None, revealed_root: bytes | None = None,
+                  admission: Mapping[str, Any] | None = None) -> dict[str, Any]:
     """The v0.2 lift rule with the FDA-06 cap and the O-1 significance. Claims nothing unless every condition holds,
     including a clean post-reveal verification of the attempt (``formal.verify_attempt`` returned no problem) and the
     revealed formal root, whose sha256 must be the preregistered commitment: the sign-flip stream is derived from it
@@ -340,7 +367,11 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
         problems.append("the revealed formal root is missing or is not the preregistered commitment: the sign-flip "
                         "stream is not the claim's (D2), p values are descriptive only")
     else:
-        stream = sign_flip_stream(revealed_root, identity)
+        refused = admission_problems(admission, revealed_root, identity, rows)
+        if refused:
+            problems += [f"admission (D2b): {p}; p values are descriptive only" for p in refused]
+        else:
+            stream = sign_flip_stream(revealed_root, identity, admission)
     if verification is None:
         problems.append("the attempt was not verified after the reveal (formal.verify_attempt)")
     elif verification:
