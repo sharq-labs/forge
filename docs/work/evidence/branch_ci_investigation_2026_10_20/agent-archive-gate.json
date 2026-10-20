@@ -1,0 +1,19 @@
+{
+  "command": [
+    "C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe",
+    "tools/forge_check.py",
+    "--changed",
+    "--base",
+    "origin/main"
+  ],
+  "cwd": "C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f",
+  "environment": {
+    "TMPDIR": "D:/tmp/agent-archive-gate",
+    "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f",
+    "PYTEST_ADDOPTS": "--basetemp=D:/tmp/agent-archive-gate/bt"
+  },
+  "exit_code": 0,
+  "elapsed_seconds": 9.46724779997021,
+  "completed_utc": "2026-10-20T20:02:11.486079+00:00",
+  "output_sha256": "855ffe277d9873091431c6b907203b110686f72306d4914d9a224d8b849a18f7"
+}

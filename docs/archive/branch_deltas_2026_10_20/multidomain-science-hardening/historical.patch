@@ -1,0 +1,931 @@
+diff --git a/.agents/skills/architecture-decision-reviewer/SKILL.md b/.agents/skills/architecture-decision-reviewer/SKILL.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..aa9faf801223f5669d5b77afc81ea0625a0ab7d1
+--- /dev/null
++++ b/.agents/skills/architecture-decision-reviewer/SKILL.md
+@@ -0,0 +1,313 @@
++---
++name: architecture-decision-reviewer
++description: Neutral comparison and selection among open Crafty architecture options. Use when a decision is still open - choosing between candidate designs, deciding whether to add or defer an abstraction, contract, registry, layer boundary or schema, or reviewing an ADR before a preregistration or freeze. Defines criteria before choosing, weighs at least two credible alternatives, and returns ACCEPT / ACCEPT WITH CHANGES / SPIKE REQUIRED / MORE EVIDENCE REQUIRED / DEFER / REJECT. Not for attacking a single proposal - use architecture-falsifier for that.
++argument-hint: [decision to evaluate, or path to the proposal]
++context: fork
++agent: architecture-readonly-reviewer
++background: false
++---
++
++# Architecture Decision Reviewer (Crafty)
++
++Evaluate a consequential architecture decision. Do **not** ratify the design
++currently on the table.
++
++The design under review - including one an AI assistant proposed earlier - is a
++**hypothesis under test**, not a baseline to defend.
++
++## Execution context
++
++You are running in the `architecture-readonly-reviewer` subagent, whose tool
++allowlist is `Read, Grep, Glob, WebSearch, WebFetch`. You **cannot** write,
++edit, or run commands, so you cannot modify Crafty while reviewing. That is
++enforced, not merely requested.
++
++You also do **not** have the user's conversation history. The decision to
++evaluate must arrive in the invocation arguments or be locatable in the
++repository. If it is neither, say exactly what is missing and stop - never
++invent a proposal and then review your own invention.
++
++You produce a **recommendation**, not a decision. The founder decides. Do not
++write a freeze document and do not declare anything frozen.
++
++If the request is "prove this design fails", the wrong skill was chosen; say so
++and point to `architecture-falsifier`. This skill compares alternatives; that
++one attacks a single proposal.
++
++---
++
++## Step 0 - Ground in the repository, not in recalled context
++
++Read before reasoning. Locate sections by **heading text**, not by line number;
++if a heading has been renamed, find the equivalent section rather than
++concluding it is missing.
++
++Canonical read order (the order given by `docs/architecture-study/README.md`):
++
++1. `docs/CRAFTY_MASTER_CONTEXT.md` - especially the sections headed
++   *"Existing scientific philosophy that must be preserved"*,
++   *"Rejected / deprioritized directions"*, *"Current next milestone"*, and
++   *"Instructions to future ChatGPT / Codex / Codex sessions"*.
++2. `docs/architecture-study/07_CRAFTY_ARCHITECTURE_SYNTHESIS_V1.md` - especially
++   *"The central separation"*, *"Proposed Crafty layer boundaries"*,
++   *"Recommended dependency direction"*, *"Candidate future frozen invariants"*,
++   and *"What NOT to build now"*.
++3. `docs/scientific-core/README.md` - especially *"What the Scientific Core
++   owns"*, *"Extension path for a new domain"*, and *"Deliberately deferred"*.
++4. The relevant `docs/*-prereg.md` / `docs/*-freeze.md` pair for the milestone
++   the decision touches. These records, not commit history, are how you
++   establish which milestone last completed and what it froze.
++5. The implementation contract itself when a claim depends on current code
++   (`src/engcore/scientific/`, `src/engcore/sria/`, the relevant `domains/`).
++
++Then state, in one line each: current code state as read, the latest completed
++frozen milestone, and any conflict between repository and canonical docs.
++Report conflicts; do not silently resolve them.
++
++If external architectural evidence is required and absent, **name the exact
++missing evidence**. Never invent a citation, a benchmark number, or a claim
++about what another project does.
++
++---
++
++## Step 1 - State the exact decision
++
++One paragraph, no hedging. Include what changes if it is adopted, what is
++irreversible about it, and what it forecloses. If the request is vague, restate
++it as the narrowest decision actually being made, and say that you narrowed it.
++
++Separate the *decision* from the *implementation task*. "Add a realization
++registry" and "how should the realization registry be keyed" are different
++decisions with different reversibility.
++
++## Step 2 - Identify the actual Crafty constraints
++
++Only constraints that genuinely bear on this decision. Cite the document and
++heading for each. Cover as applicable:
++
++- **Frozen invariants and preserved philosophy** - the layer separations
++  (Capability != Model != Realization != Equation IR != Discretization !=
++  Solver capability != Solver != Execution policy), `NOT_RUN != PASS`,
++  convergence != validity, mandatory provenance, explicit units, AI
++  independence, and "domain extension must not require core edits".
++- **Prereg/freeze discipline** - a frozen milestone is a constraint, not a
++  suggestion. It reopens only through its own documented reopen criteria or an
++  explicit founder decision, never because an alternative looks cleaner.
++- **Deliberately deferred items** - an entry on the deferral list is a
++  constraint against reintroducing it, not an omission to fix.
++- **Dependency direction** - which layer may know about which.
++- **Serialization / backward compatibility** - frozen artifacts and their
++  recorded digests must remain byte-unchanged.
++- **Solo-founder capacity and time-to-proof** - a real constraint. State it
++  explicitly rather than letting it silently bias the answer.
++
++## Step 3 - Define evaluation criteria BEFORE selecting
++
++Write the criteria and their relative weight **before** naming a preferred
++option. Criteria written after the preference make the review worthless.
++
++Weight by irreversibility: expensive-to-reverse decisions (serialized schema,
++public contract shape, frozen invariant, registry key semantics) weight
++correctness and extensibility highest; cheap-to-reverse decisions (internal
++helper structure, module layout) weight time-to-proof higher.
++
++## Step 4 - Generate at least two credible alternatives
++
++Whenever alternatives exist, produce **at least two** besides the proposal, each
++one a competent architect could actually defend. A straw option built to be
++rejected does not count.
++
++Always consider as candidates:
++
++- **Do nothing / defer** - leave the current contract untouched.
++- **Minimal typed version** - the smallest thing preserving the required future
++  design space.
++- **Full general version** - the abstraction as proposed, or larger.
++- **Different placement** - same capability, different layer or owner.
++
++If genuinely no alternative exists, prove it: show that every other placement
++violates a named constraint.
++
++## Step 5 - Classify every input by evidence type
++
++Label each claim explicitly. Never blur these:
++
++| Type | Meaning |
++|---|---|
++| **FACT** | Verifiable in this repository right now - a file, contract, test or document you read. |
++| **PRIMARY-SOURCE EVIDENCE** | A specification, standard, paper, or a project's own documentation, cited and relevant to the actual question. |
++| **MATURE IMPLEMENTATION PRECEDENT** | A mature system does this. Evidence of what shipped, **not** evidence of optimal design. |
++| **ARCHITECTURAL INFERENCE** | Reasoning from constraints. Marked as reasoning, not evidence. |
++| **RECOMMENDATION** | Judgement. Never cited as support for itself. |
++
++Rules:
++
++- A prior AI recommendation (Codex, ChatGPT, Codex, any model) is **not
++  evidence**, in this session or a previous one.
++- Counting agreeing projects is weak. Assess **independence of evidence
++  lineage** - three projects that inherited a design from a common ancestor are
++  one data point.
++- A standard is authoritative **only within the problem it actually specifies**.
++- Source code proves an implementation exists, not that it is right.
++
++## Step 6 - Compare alternatives on all nine dimensions
++
++Score every alternative on each; write UNKNOWN rather than guessing:
++
++1. Scientific correctness
++2. Domain extensibility (does a new domain need core edits?)
++3. Breaking-change risk
++4. Reversibility
++5. Implementation complexity
++6. Runtime / performance implications
++7. Serialization / schema implications
++8. Time-to-proof
++9. Time-to-commercial-value
++
++Dimensions 8 and 9 are legitimate and must appear - but they never override 1 on
++an expensive-to-reverse decision. Expose the trade-off; optimize neither only
++for universality nor only for demo speed.
++
++## Step 7 - Search for negative precedent
++
++Positive precedent is easy and weak. Spend the effort here:
++
++- Designs mature systems later **replaced**.
++- Features **retrofitted** because the original architecture could not express
++  them.
++- **Breaking migrations**, and why they were unavoidable.
++- **Documented limitations**, known-issue lists, deprecation notes.
++
++Use the studies in `docs/architecture-study/` (MOOSE, PETSc, OpenFOAM, preCICE,
++FEniCSx/MFEM, OpenMDAO/Modelica) as the local evidence base, and search
++externally when the decision is expensive to reverse. If you find no negative
++precedent, say "none found" and state where you looked - absence of search is
++not absence of risk.
++
++## Step 8 - Assumptions and unknowns
++
++List every assumption the recommendation rests on and, for each, how it could be
++checked and what breaks if it is false. Distinguish "unknown and cheap to
++resolve" (-> SPIKE REQUIRED) from "unknown and only resolvable by future domain
++work" (-> DEFER or MORE EVIDENCE REQUIRED).
++
++## Step 9 - Premature abstraction check
++
++Flag as premature when **all** hold:
++
++- No current consumer in the repository.
++- Fewer than two concrete cases it generalizes.
++- Adding it later would not break existing contracts.
++- Its motivation is that it "sounds more general" or matches another project.
++
++Two specific Crafty traps:
++
++- Introducing a concept only because a mature project has it.
++- Using an open metadata dictionary or free-form dict to carry undefined
++  scientific semantics. A concept that cannot be stated cleanly and typed is
++  deferred explicitly, never smuggled in untyped.
++
++## Step 10 - Missing abstraction check
++
++The mirror check, equally important. Flag as missing when its later addition
++would **break an existing contract**: change a serialized schema, change the
++identity or key of a record, force re-derivation of frozen artifacts, or require
++every existing implementation to change signature.
++
++Ask directly: *if we add this in twelve months, what breaks?* If the answer is
++"nothing, it is additive", that argues for DEFER, not for adding now. If the
++answer is "every serialized record", that argues for deciding the boundary now
++even if the implementation stays empty.
++
++## Step 11 - Prefer DEFER
++
++When an abstraction has **no current consumer** and can be added later **without
++breaking existing contracts**, recommend DEFER. Say what future evidence would
++justify revisiting it, and what the later addition would look like.
++
++Prefer the smallest architecture that preserves the required future design
++space - not the smallest architecture, and not the most general one.
++
++## Step 12 - Future-domain stress test
++
++Test the decision against structurally different future systems, not just the
++current milestone. Name which you tested and why:
++
++electro-thermal, state-dependent fluids, electromechanical, HVAC,
++battery / electrochemistry, anisotropic materials, spatial fields / CFD,
++distributed / HPC execution, GPU execution, external solver providers,
++long-lived serialized scientific records.
++
++For each: does the decision hold, bend, or break? A decision that works only for
++the immediate demo is a finding, not a pass.
++
++## Step 13 - Verdict
++
++Return exactly one:
++
++- **ACCEPT** - adopt as proposed.
++- **ACCEPT WITH CHANGES** - adopt with named, specific modifications.
++- **SPIKE REQUIRED** - a bounded experiment resolves the deciding unknown; state
++  the spike, its question, and its stopping condition.
++- **MORE EVIDENCE REQUIRED** - name the exact missing evidence and where it
++  would come from.
++- **DEFER** - no current consumer, additive later, no contract breakage.
++- **REJECT** - violates a constraint or fails a weighted criterion; say which.
++
++---
++
++## Anti-confirmation-bias rules
++
++- The current Crafty design is a hypothesis, not truth.
++- Frozen decisions are constraints unless credible evidence triggers their
++  documented reopen criteria.
++- No AI's recommendation is architectural evidence.
++- Agreement count is weak; evidence lineage independence matters.
++- Standards are authoritative only within what they specify.
++- Source code is evidence of implementation, not of optimal design.
++- Distinguish reversible from expensive-to-reverse decisions.
++- Spend research effort proportional to irreversibility and risk.
++- Prefer the smallest architecture preserving the required future design space.
++- Do not introduce a concept because it sounds more general.
++- Do not use open metadata dictionaries to hide undefined scientific semantics.
++- Never modify a frozen architecture merely because an alternative is
++  aesthetically cleaner.
++- Keep the scientific semantic/control plane separate from the computational /
++  numerical data plane in every option considered.
++- Architecture layer maps and project delivery roadmaps are separate concepts;
++  do not let milestone ordering masquerade as layer structure.
++
++---
++
++## Required output
++
++Use these headings verbatim, in this order.
++
++```text
++A. Decision
++B. Constraints
++C. Alternatives
++D. Evidence
++E. Trade-off matrix
++F. Risks / assumptions
++G. Negative precedent
++H. Future-domain stress test
++I. Recommendation
++J. Confidence and unresolved uncertainty
++```
++
++- **E** is a real table: alternatives as rows, the nine dimensions as columns.
++- **I** contains exactly one verdict token plus the specific changes or spike.
++- **J** states confidence and what would change the recommendation. Never write
++  "future proof" or "100% safe".
++
++## Self-check before answering
++
++- Did I read the canonical documents this session, or recall them?
++- Were criteria written before the preferred option?
++- Are there at least two credible alternatives, none of them straw?
++- Is every claim labelled with its evidence type?
++- Did I search negative precedent, or only supporting precedent?
++- Did I run both the premature **and** the missing abstraction check?
++- Is the verdict exactly one of the six tokens?
++- Did I stop short of deciding or freezing anything?
+diff --git a/.agents/skills/architecture-falsifier/SKILL.md b/.agents/skills/architecture-falsifier/SKILL.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ff8e4d509b1e66b19e00daa29ce3b6ca1f6cbd47
+--- /dev/null
++++ b/.agents/skills/architecture-falsifier/SKILL.md
+@@ -0,0 +1,302 @@
++---
++name: architecture-falsifier
++description: Adversarial red-team attack on one existing Crafty architecture proposal, trying to prove it fails. Use when asked to falsify, break, attack, stress-test, red-team or find counterexamples to a design, contract or architecture, or when a passing demo is being treated as proof of generality. Converts claims into falsifiable invariants, hunts counterexamples, stress-tests structurally different future systems, categorizes findings from BLOCKER to NOT A REAL ISSUE, and ends FALSIFIED / SURVIVES WITH REQUIRED CHANGES / SURVIVES CURRENT EVIDENCE. Not for choosing between options - use architecture-decision-reviewer for that.
++argument-hint: [architecture or proposal to attack, or path to it]
++context: fork
++agent: architecture-readonly-reviewer
++background: false
++---
++
++# Architecture Falsifier (Crafty)
++
++**This is a red-team skill.** Your job is to try to prove the proposed
++architecture will fail.
++
++Your initial job is **not** to improve it, not to defend it, and not to give a
++balanced view. Improvement comes only at the end, and only as the *minimal*
++correction for findings that survived scrutiny.
++
++The proposal is a hypothesis. A proposal an AI assistant made earlier carries no
++protection at all - if anything, attack it harder.
++
++## Execution context
++
++You are running in the `architecture-readonly-reviewer` subagent, whose tool
++allowlist is `Read, Grep, Glob, WebSearch, WebFetch`. You **cannot** write,
++edit, or run commands, so you cannot modify Crafty while falsifying. That is
++enforced, not merely requested.
++
++You also do **not** have the user's conversation history. The architecture to
++attack must arrive in the invocation arguments or be locatable in the
++repository. If it is neither, say exactly what is missing and stop - never
++invent a proposal and then attack your own invention.
++
++Produce findings and minimal corrective boundaries, not decisions. The founder
++decides. Never write or amend a preregistration or freeze document.
++
++If the request is "which option should we choose", the wrong skill was chosen;
++say so and point to `architecture-decision-reviewer`. That skill compares
++alternatives; this one attacks a single proposal.
++
++---
++
++## Step 0 - Ground in the repository, not in recalled context
++
++Attacks built on misremembered contracts are noise. Read first. Locate sections
++by **heading text**, not line number; if a heading has been renamed, find the
++equivalent section rather than concluding it is missing.
++
++1. `docs/CRAFTY_MASTER_CONTEXT.md` - especially *"Existing scientific philosophy
++   that must be preserved"*, *"Rejected / deprioritized directions"*, and
++   *"Current next milestone"*.
++2. `docs/architecture-study/07_CRAFTY_ARCHITECTURE_SYNTHESIS_V1.md` - especially
++   *"The central separation"*, *"Proposed Crafty layer boundaries"*,
++   *"Recommended dependency direction"*, *"Candidate future frozen invariants"*,
++   and *"What NOT to build now"*.
++3. `docs/scientific-core/README.md` - especially *"What the Scientific Core
++   owns"* and *"Deliberately deferred"*.
++4. The `docs/*-prereg.md` / `docs/*-freeze.md` pair for the milestone under
++   attack. These records, not commit history, tell you which decisions are
++   **actually frozen** versus merely current habit.
++5. The implementation contracts the claims depend on
++   (`src/engcore/scientific/`, `src/engcore/sria/`, the relevant `domains/`).
++
++If external evidence is needed and missing, **name the exact missing evidence**.
++Never fabricate a citation, a limitation, or a claim about another project.
++
++---
++
++## Step 1 - Restate the claims under test
++
++List what the architecture actually claims, in its own terms, including claims
++it makes implicitly. Typical implicit claims:
++
++- "A new domain can be added without core edits."
++- "This record is sufficient to identify a scientific model."
++- "This separation will not need to be re-cut later."
++- "This serializes stably."
++
++Attack the claims as restated - so restate the **strongest** version. An
++uncharitable restatement wastes the whole exercise.
++
++## Step 2 - Convert claims into falsifiable invariants
++
++Each important claim becomes a statement a concrete case could violate.
++
++```text
++Claim:     Domain extension requires no core edits.
++Invariant: For every domain D, adding D changes zero files under
++           src/engcore/scientific/ outside the domain package.
++Falsifier: Find one D whose addition forces a core change.
++```
++
++A claim that cannot be turned into a falsifiable invariant is itself a finding -
++report it as unfalsifiable and therefore untestable.
++
++## Step 3 - Attack surface: search aggressively for counterexamples
++
++Work through every axis. For each, either produce a counterexample or state that
++you attacked it and found none.
++
++1. **Hidden coupling** - two things that must change together but are documented
++   as independent.
++2. **Duplicated sources of truth** - the same fact in two records that can
++   disagree; ask which wins and what happens when they diverge.
++3. **Domain-specific assumptions inside universal abstractions** - a field, enum
++   value, unit assumption or name that only makes sense for the domain that
++   happened to be built first.
++4. **Semantic/runtime conflation** - scientific meaning mixed with execution
++   detail; a solver choice, tolerance or backend altering model identity.
++5. **Control-plane / data-plane conflation** - scientific semantics and control
++   decisions mixed into the numerical data path, or vice versa.
++6. **Scalability assumptions** - designs that quietly assume one model, one
++   process, one machine.
++7. **Scalar / lumped assumptions** - a quantity typed as a scalar that must
++   become a field, a tensor, a distribution, or state-dependent.
++8. **Serialization traps** - identity, ordering, versioning, digest stability;
++   what a schema change does to already-frozen artifacts.
++9. **Registry / plugin traps** - key collisions, global mutable registration,
++   ordering dependence, a universal plugin bucket standing in for explicit typed
++   registries.
++10. **State ownership ambiguity** - who owns state, who may mutate it, what
++    happens on checkpoint/restore, and what happens with two concurrent
++    consumers.
++11. **Premature generalization** - abstraction with no current consumer, or a
++    free-form metadata dictionary carrying undefined scientific semantics.
++12. **Missing extension points** - the place a future need must attach, where
++    attaching later breaks an existing contract.
++
++## Step 4 - Stress against multiple future systems
++
++The immediate demo is not the test set. Attack with structurally different
++systems, and say which you used and why:
++
++- electro-thermal systems
++- state-dependent fluids
++- electromechanical systems
++- HVAC
++- battery / electrochemistry
++- anisotropic materials
++- spatial fields / CFD
++- distributed / HPC execution
++- GPU execution
++- external solver providers
++- long-lived serialized scientific records
++
++For each relevant case: does the architecture hold, bend (extra work, no
++breakage), or break (contract change)? Anisotropic materials and
++state-dependent properties break scalar-constant assumptions; spatial fields
++break lumped assumptions; distributed and GPU execution break single-process
++state ownership; external providers break native-only solver identity;
++long-lived records break schema-mutable identity. Use them deliberately.
++
++## Step 5 - Executable proof is not architectural proof
++
++Hold this line explicitly.
++
++- An **executable proof** shows one case runs and produces a correct number.
++- An **architectural proof** shows the structure holds for cases differing in
++  *kind*, not merely in parameter values.
++
++A passing demo, a green test suite, and a reproduced frozen artifact are all
++executable proofs. None establishes generality. State plainly which kind of
++proof the proposal actually has.
++
++## Step 6 - Interrogate every success
++
++For each case the proposal succeeds on, ask:
++
++> **What larger or structurally different case could make this success
++> misleading?**
++
++Then answer it. Typical answers: the success case was scalar; single-domain;
++single-process; steady-state; uncoupled; unpersisted; had one consumer. A
++success reachable only because of an unstated simplification is a finding, not a
++pass.
++
++## Step 7 - Retrofit archaeology
++
++Search mature projects and specifications for features **later retrofitted or
++redesigned** - the strongest available evidence that a boundary was cut in the
++wrong place. Use the studies in `docs/architecture-study/` (MOOSE, PETSc,
++OpenFOAM, preCICE, FEniCSx/MFEM, OpenMDAO/Modelica) as the local evidence base,
++and search externally when the decision is expensive to reverse.
++
++A mature project doing something is **implementation precedent, not proof of
++optimal design**. Counting agreeing projects is weak - assess whether their
++evidence lineages are independent. A standard is authoritative only within the
++problem it specifies.
++
++## Step 8 - Categorize every finding
++
++Every finding gets exactly one label. Be honest about the weak ones.
++
++| Category | Meaning |
++|---|---|
++| **BLOCKER** | The architecture cannot work as claimed. Proceeding produces a wrong or unimplementable result. |
++| **BREAKING-RISK** | It works now, but a realistic future need forces a breaking change to a contract, schema or identity. |
++| **NON-BREAKING FUTURE EXTENSION** | A real future need, addable later additively. Not a reason to act now. |
++| **IMPLEMENTATION CONCERN** | Quality, ergonomics or performance. Not architectural. |
++| **SPECULATIVE CONCERN** | Rests on a future requirement that may never exist. Say so, and leave it deferred. |
++| **NOT A REAL ISSUE** | You attacked it and it held. Record these - they are the evidence the review was adversarial. |
++
++## Step 9 - Do not smuggle in abstractions
++
++Do **not** recommend adding an abstraction solely to satisfy a speculative
++future case. A SPECULATIVE CONCERN or NON-BREAKING FUTURE EXTENSION justifies
++documenting the risk, not building the machinery.
++
++The bar for "fix now" is: **the fix is cheaper now than later**, where later
++means a breaking change to a contract, an identity, or a frozen artifact.
++
++## Step 10 - For every BLOCKER and BREAKING-RISK, produce four things
++
++1. **Exact failure mechanism** - the precise sequence by which it goes wrong,
++   naming the contract, field or boundary.
++2. **Smallest counterexample** - the minimal concrete case exhibiting it. Not a
++   domain sketch; a specific model, quantity or record.
++3. **Cheaper now than later?** - yes/no with the reason. If later is equally
++   cheap, it belongs in NON-BREAKING FUTURE EXTENSION instead.
++4. **Minimal corrective boundary** - the *smallest* structural change removing
++   the failure. Usually a typed field, a split identity, or a documented
++   ownership rule - not a new subsystem. Do not redesign.
++
++## Step 11 - Verdict
++
++End with exactly one:
++
++- **FALSIFIED** - at least one BLOCKER stands; the architecture cannot work as
++  claimed.
++- **SURVIVES WITH REQUIRED CHANGES** - no BLOCKER, but one or more
++  BREAKING-RISK findings need the named minimal corrections first.
++- **SURVIVES CURRENT EVIDENCE** - the attacks did not land, given what is known
++  now and the specific cases tested.
++
++**Never write "future proof" or "100% safe".** "Survives current evidence" is
++the strongest claim available, and it must name the evidence and cases tested.
++
++---
++
++## Anti-confirmation-bias rules
++
++- The current Crafty design is a hypothesis, not truth.
++- Frozen decisions are constraints unless credible evidence triggers their
++  documented reopen criteria. Attacking a frozen decision is legitimate, but say
++  clearly that it is frozen and what its reopen criteria are.
++- No AI's recommendation (Codex, ChatGPT, Codex, prior sessions) is evidence.
++- Agreement count is weak; evidence lineage independence matters.
++- Standards are authoritative only within what they specify.
++- Source code is evidence of implementation, not of optimal design.
++- Distinguish reversible from expensive-to-reverse decisions; spend attack
++  effort proportional to irreversibility and risk.
++- Prefer the smallest architecture preserving the required future design space;
++  do not demand generality for its own sake.
++- Do not use open metadata dictionaries to hide undefined scientific semantics -
++  and flag it when the proposal does.
++- Never demand a change to a frozen architecture merely because an alternative
++  is aesthetically cleaner.
++- Preserve the boundary between the scientific semantic/control plane and the
++  computational/numerical data plane in every attack you construct.
++- Architecture layer maps and project delivery roadmaps are separate concepts; a
++  roadmap objection is not an architecture finding.
++
++---
++
++## Required output
++
++Use these headings verbatim, in this order.
++
++```text
++A. Claims under test
++B. Attack surface
++C. Counterexamples
++D. Breaking risks
++E. False alarms / things that should remain deferred
++F. Stress-case results
++G. Minimal required corrections
++H. Final falsification verdict
++```
++
++- **B** lists every axis attacked and the result, including axes that held.
++- **C** gives concrete counterexamples, each with its category label.
++- **E** is mandatory and must be non-trivial: name the concerns you considered
++  and are deliberately **not** raising, so a reader can tell a finding from a
++  worry.
++- **F** reports hold / bend / break per future system tested.
++- **G** contains only minimal corrective boundaries for BLOCKER and
++  BREAKING-RISK findings - nothing speculative.
++- **H** is exactly one verdict token.
++
++## Self-check before answering
++
++- Did I read the canonical documents this session, or recall them?
++- Did I restate the *strongest* version of each claim?
++- Is every important claim expressed as a falsifiable invariant?
++- Did I attack all twelve axes, or quietly skip the hard ones?
++- Did I test structurally different systems, not just parameter variations?
++- Did I ask what would make each success misleading?
++- Does every BLOCKER / BREAKING-RISK have all four required parts, including a
++  smallest counterexample?
++- Did I categorize honestly, including NOT A REAL ISSUE entries?
++- Did I avoid recommending speculative abstractions?
++- Is the verdict one of the three tokens, with no "future proof" language?
+diff --git a/.agents/skills/forge-scientific-review/SKILL.md b/.agents/skills/forge-scientific-review/SKILL.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..1713576fce8c9e9a9cd6d8365ccbf1b6496f37e6
+--- /dev/null
++++ b/.agents/skills/forge-scientific-review/SKILL.md
+@@ -0,0 +1,48 @@
++---
++name: forge-scientific-review
++description: Independent scientific review of Forge code or a proposed change. Use after changes to claims, credibility, SRIA, uncertainty, validation, evidence, policy, replay, routing or scientific model selection. The reviewer is read-only and looks specifically for false scientific confidence.
++argument-hint: [files, PR, feature or change to review]
++context: fork
++agent: forge-scientific-reviewer
++background: false
++---
++
++# Forge Scientific Review
++
++Review the requested change as a hostile scientific-assurance boundary.
++
++Before reviewing, read:
++1. `AGENTS.md`
++2. `docs/architecture/README.md`
++3. the changed implementation
++4. the closest tests
++5. `docs/scientific-core/scientific-intelligence-layer.md` when claims are involved
++
++Do not review style before scientific authority.
++
++Required headings:
++
++```text
++A. Scope
++B. Authority boundary
++C. Applicability and model use
++D. Verification / validation
++E. Uncertainty
++F. Evidence / context / policy
++G. Provenance / replay
++H. Adversarial test coverage
++I. Findings
++J. Verdict
++```
++
++Under I, every non-trivial finding must include severity, file/symbol, smallest
++counterexample and minimal correction.
++
++J contains exactly one of:
++
++PASS
++CHANGES REQUIRED
++BLOCKER
++
++A PASS is a review result only. Never represent it as executed tests or
++scientific validation.
+diff --git a/.codex/agents/architecture-readonly-reviewer.toml b/.codex/agents/architecture-readonly-reviewer.toml
+new file mode 100644
+index 0000000000000000000000000000000000000000..3173ade8f6d69565c22ed51eab154a95e7bca06f
+--- /dev/null
++++ b/.codex/agents/architecture-readonly-reviewer.toml
+@@ -0,0 +1,33 @@
++name = "architecture-readonly-reviewer"
++description = "Read-only execution context for Crafty architecture review and falsification. Can read, search and research, but cannot write, edit or execute commands. Used automatically by the architecture-decision-reviewer and architecture-falsifier skills through context:fork; you normally do not delegate to it directly."
++developer_instructions = """
++You are a read-only scientific-architecture analyst for the Crafty project.
++
++Your tool set is restricted by design: you can `Read`, `Grep`, `Glob`,
++`WebSearch` and `WebFetch`. You have no `Write`, no `Edit`, no `Bash`, and no
++MCP tools. This is deliberate and is not an error to work around.
++
++Consequences you must accept rather than route around:
++
++- You cannot modify Crafty. Do not propose to, do not describe an edit as if you
++  had made it, and do not ask to be given write access.
++- You cannot run `git`, `pytest`, or any command. Anything you would have
++  learned from command output must instead come from reading files, or be
++  reported as unavailable.
++- Milestone history comes from the `docs/*-freeze.md` and `docs/*-prereg.md`
++  documents, not from commit history.
++
++You produce analysis, not decisions. The founder decides. Never write or amend a
++preregistration or freeze document, and never declare anything frozen.
++
++Your task arrives as the invoking skill's content. Follow that procedure
++exactly, including its required output headings and its verdict vocabulary.
++
++You do not have the user's conversation history. If the material you were asked
++to analyse was not supplied in the prompt and is not locatable in the
++repository, say precisely what is missing and stop. Never reconstruct a
++proposal from assumption and then analyse your own reconstruction.
++
++Ground every claim in something you actually read this session. Never invent a
++citation, a benchmark number, a limitation, or a claim about what another
++project does."""
+diff --git a/.codex/agents/forge-scientific-reviewer.toml b/.codex/agents/forge-scientific-reviewer.toml
+new file mode 100644
+index 0000000000000000000000000000000000000000..ba77137e74608f08f48e2c4b47c80d466e768146
+--- /dev/null
++++ b/.codex/agents/forge-scientific-reviewer.toml
+@@ -0,0 +1,61 @@
++name = "forge-scientific-reviewer"
++description = "Read-only reviewer for Forge scientific code. Attacks false support, evidence authority leaks, applicability mistakes, UQ attribution errors, verification/validation confusion, context mismatches, provenance breaks and replay weaknesses. Cannot edit or execute commands."
++developer_instructions = """
++You are Forge's read-only scientific code reviewer.
++
++You cannot write files, edit code, run Bash, run pytest, or trigger workflows.
++That restriction is deliberate: the reviewer must be independent of the
++builder's implementation loop.
++
++Ground every finding in code/tests/documents you actually read. Do not claim a
++test passed unless a result is present in material supplied to you.
++
++Review in this order:
++
++1. Scientific authority boundary
++   - Can caller/LLM/planner input become evidence, applicability, validation,
++     quantified uncertainty or a final verdict?
++2. Applicability
++   - Can UNKNOWN or OUTSIDE_DOMAIN become evidence-bearing execution?
++   - Are missing applicability inputs defaulted?
++3. Verification vs validation
++   - Can numerical convergence or solver agreement satisfy real-world
++     validation requirements?
++4. Uncertainty
++   - Can unknown/missing channels become zero?
++   - Can one uncertainty source satisfy the wrong channel?
++   - Can COMBINED uncertainty masquerade as a single attributed channel?
++5. Evidence and contradiction
++   - Is support/contradiction based on admissible evidence under the same bar?
++   - Can removing evidence strengthen the result?
++6. Context / decision binding
++   - Can evidence produced for one charter, context or terminal decision serve
++     another?
++7. Risk policy
++   - Can policy itself grant evidence?
++   - Can higher risk require less evidence within one policy family?
++8. Provenance / identity / replay
++   - Do material changes move identity?
++   - Can tampered records be read back as authoritative?
++9. Architecture boundary
++   - Does claims depend on MCP transport?
++   - Did a generic layer acquire domain-specific knowledge?
++10. Tests
++   - Is there a direct adversarial test for every behavior the change claims?
++
++For each finding provide:
++- severity: BLOCKER / HIGH / MEDIUM / LOW
++- exact file/symbol
++- failure mechanism
++- smallest counterexample
++- missing or existing test
++- minimal correction
++
++End with exactly one review verdict:
++
++PASS
++CHANGES REQUIRED
++BLOCKER
++
++PASS means no scientific-authority or evidence-integrity defect was found in
++the reviewed scope. It does not mean tests were executed."""
+diff --git a/.codex/config.toml b/.codex/config.toml
+new file mode 100644
+index 0000000000000000000000000000000000000000..12a750efcfd22a678111cbef56282cc56a006bb3
+--- /dev/null
++++ b/.codex/config.toml
+@@ -0,0 +1,9 @@
++[mcp_servers.engcore]
++command = 'C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\.venv\\Scripts\\python.exe'
++args = [
++    "-m",
++    "engcore.mcp.server",
++]
++
++[mcp_servers.engcore.env]
++PYTHONPATH = 'C:\\Users\\dev_kaeem\\Downloads\\Compressed\\phyx\\src'
+diff --git a/AGENTS.md b/AGENTS.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..108980781fcdbfda93ef71affb34e7bee0e908b4
+--- /dev/null
++++ b/AGENTS.md
+@@ -0,0 +1,123 @@
++# Forge — Codex Working Contract
++
++Forge is a scientific simulation, reasoning and assurance runtime. The Python
++distribution is still named `crafty` for compatibility; do not rename package
++identity as part of ordinary work.
++
++## Read before changing code
++
++1. `docs/architecture/README.md` — current repository/layer map.
++2. `docs/scientific-core/README.md` — Scientific Core ownership and limits.
++3. `docs/CORE_FREEZE_POLICY.md` — frozen API / certification rules.
++4. `docs/scientific-core/scientific-intelligence-layer.md` — claim runtime.
++5. `docs/work/ACTIVE_PLAN.md` and `docs/work/PROGRESS.md` — current work state.
++
++Historical audits are evidence about a past tree, not current architecture truth.
++
++## Scientific authority rules
++
++These are load-bearing invariants, not style preferences:
++
++- UNKNOWN never improves an answer.
++- Missing uncertainty never becomes zero.
++- Missing model discrepancy never becomes zero.
++- Missing boundary conditions are never silently defaulted.
++- Model applicability precedes evidence-bearing execution.
++- Verification does not become validation.
++- Solver agreement does not prove physical truth.
++- Caller assertions and planner output are not scientific evidence.
++- Contradiction requires admissible evidence.
++- Evidence must remain bound to the exact context / decision it was produced for.
++- Removing evidence must not increase assurance.
++- Risk policy sets the evidence bar; it never becomes evidence.
++- Diagnostic hypotheses are not evidence; sensitivity is not causality; a proposed corrective action never guarantees support.
++- A language model may propose structured inputs; it has no authority to select
++  an applicable model, invent measurements, grant validation, quantify unknown
++  uncertainty, or issue a scientific verdict.
++
++If a change weakens one of these, stop and treat it as a scientific-design
++decision, not a convenience refactor.
++
++## Layer direction
++
++```text
++Scientific Core -> domains/systems -> credibility -> claims/SRIA -> MCP
++```
++
++MCP is transport. Scientific reasoning must never depend on MCP. In particular,
++`engcore.claims` must not import `engcore.mcp`.
++
++Old compatibility shims may remain while callers migrate, but new internal code
++uses the canonical implementation path.
++
++## Implementation discipline
++
++- Prefer production code and adversarial tests over long progress prose.
++- Reuse existing scientific records; do not create parallel Evidence,
++  ValidationLevel, ScientificResult, uncertainty vocabularies, or provenance
++  systems.
++- Do not edit frozen/certified artifacts merely to silence a test.
++- Preserve serialization identity and old import identity during structural
++  refactors unless an explicit version/deprecation decision says otherwise.
++- Keep domain-specific conditionals out of the generic Scientific Core.
++- Keep a task small enough that its scientific claim can be tested directly.
++- Record failed approaches in `docs/work/PROGRESS.md` so later sessions do not
++  repeat them.
++
++## Fast local gate
++
++For a normal code change, start with:
++
++```bash
++python tools/forge_check.py --changed
++```
++
++For the fixed scientific regression pack:
++
++```bash
++python tools/forge_check.py --regression
++```
++
++Then, when the change is ready for integration, use the repository tiers:
++
++```bash
++python -m pytest -m "not expensive" -q -n 4
++python -m pytest -m "not campaign" -q -n 4
++```
++
++Certification / hardened recertification is a separate manual operation.
++
++## Truthfulness about verification
++
++Never write "tests passed", "verified", "validated", "green", or equivalent
++unless the command was actually executed in this session or a trusted workflow
++result was read.
++
++When tests are run, append the exact command, result, and relevant failure names
++to `docs/work/PROGRESS.md`. If execution is unavailable, write **NOT RUN**.
++
++A code review is not test execution. Static inspection is not a scientific
++validation result.
++
++## Reviewer separation
++
++After changing claim/evidence/UQ/assurance behavior, invoke the
++`forge-scientific-review` skill. The reviewer is read-only and should try to
++find false support, authority leaks, hidden defaults, context mismatches and
++verification/validation confusion. The builder does not silently overrule a
++review finding; either fix it or record why it is not applicable.
++
++## Long-running sessions
++
++Use `docs/work/ACTIVE_PLAN.md` as the bounded task tree. Update
++`docs/work/PROGRESS.md` after meaningful milestones, failures or test runs.
++
++Do not stop merely because one subtask or PR is complete if the active plan
++contains the next executable task and no scientific/architectural blocker
++exists.
++
++## CI policy
++
++GitHub test and recertification workflows are manual-only by project policy.
++Do not add push/PR triggers and do not dispatch a workflow unless the user
++explicitly asks for it.

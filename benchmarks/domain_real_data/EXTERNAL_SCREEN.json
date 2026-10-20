@@ -1,0 +1,494 @@
+{
+ "schema": "domain_real_data_external_screen/1",
+ "scope": "readiness only, over copies fetched by acquire.py fetch; not vendored",
+ "wesskamp_melbert_shunt": {
+  "md5": "1cb9400f75d324b11b2d1387829c5ac8",
+  "sha256": "ab6a0e2d072d3e00973b41f07c52064c690520b60786d52261ab6bed04a382f2",
+  "structs": [
+   "AutomatedCalibrationSequence",
+   "CalibrationParameterDrift",
+   "CalibrationParameterStatistic",
+   "DynamicBehaviorExample",
+   "ProfileMeasurement",
+   "PulseMeasurement",
+   "StaticCalibrationMeasurement",
+   "TemperatureCoefficientResistor"
+  ],
+  "TemperatureCoefficientResistor": {
+   "description_in_file": "Measurement of the temperature change of a single 10mOhm shunt resistor. The ambient temperature was varied, and the resistance measured in thermal steady state.",
+   "points": 9,
+   "all_finite": true,
+   "ambient_temperature_range": [
+    20.07,
+    89.405
+   ],
+   "ambient_temperature_unit": "UNKNOWN in the file; values span 20-89 and the static struct names 20 degC / 30 degC",
+   "resistance_range": [
+    0.01003668710423158,
+    0.010330686501155895
+   ],
+   "resistance_unit": "UNKNOWN in the file; the description says a 10 mOhm shunt",
+   "closest_temperature_pair_gap": 0.10000000000000853,
+   "uncertainty_in_file": "none"
+  },
+  "StaticCalibrationMeasurement": {
+   "fields": [
+    "referenceCurrent_T20C",
+    "shuntVoltage_T20C",
+    "cubicFitCoefficients_T20C",
+    "linearFitCoefficients_T20C",
+    "referenceCurrent_T30C",
+    "shuntVoltage_T30C",
+    "steadyStateHeatsinkTemperature_T30C",
+    "steadyStateHeatsinkTemperature_T20C",
+    "ambientTemperature_T20C",
+    "ambientTemperature_T30C",
+    "cubicFitCoefficients_T30C",
+    "WaterTemperatureFitCoefficients",
+    "Description"
+   ],
+   "points_20C": 21,
+   "points_30C": 6,
+   "heatsink_temperature_points_20C": 6,
+   "reference_current_range_A_20C": [
+    0.4062387119033548,
+    592.815931743772
+   ],
+   "note": "20 degC current points (21) outnumber heat-sink temperature points (6); the pairing is not stated in the file"
+  },
+  "time_series": {
+   "ProfileMeasurement": {
+    "samples": 1143250,
+    "dt_first_s": 0.0010000000474974513,
+    "all_finite": true
+   },
+   "PulseMeasurement": {
+    "samples": 219823,
+    "dt_first_s": 0.0010000000000012221,
+    "all_finite": true
+   }
+  }
+ },
+ "nasa_tm_2018_219758": {
+  "sha256": "eb6182b47c58b4109bfd3890c93ada902defcbd2bf46e29d25e41a932831493b",
+  "extraction": "pdftotext -layout; rows = lines of '<run> <point> <numbers...>' inside an Appendix C hover table",
+  "hover_tables": {
+   "C74a": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR SOLO",
+    "title_tail": "RPM = 3,500 to 8,000 (uniform) - Conditions",
+    "rows": 15,
+    "non_finite": 0,
+    "column_counts_seen": [
+     9
+    ]
+   },
+   "C74b": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR SOLO",
+    "title_tail": "RPM = 3,500 to 8,000 (uniform) - Measurements",
+    "rows": 15,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C74c": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR SOLO",
+    "title_tail": "RPM = 3,500 to 8,000 (uniform) - Uncertainty",
+    "rows": 15,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C75a": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR SOLO",
+    "title_tail": "RPM = 4,600 to 6,800 (differential) - Conditions",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     9
+    ]
+   },
+   "C75b": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR SOLO",
+    "title_tail": "RPM = 4,600 to 6,800 (differential) - Measurements",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C75c": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR SOLO",
+    "title_tail": "RPM = 4,600 to 6,800 (differential) - Uncertainty",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C76a": {
+    "configuration": "Full Vehicle",
+    "vehicle": "DJI Phantom 3",
+    "title_tail": "RPM = 3,500 to 7,500 (uniform) - Conditions",
+    "rows": 14,
+    "non_finite": 0,
+    "column_counts_seen": [
+     9
+    ]
+   },
+   "C76b": {
+    "configuration": "Full Vehicle",
+    "vehicle": "DJI Phantom 3",
+    "title_tail": "RPM = 3,500 to 7,500 (uniform) - Measurements",
+    "rows": 14,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C76c": {
+    "configuration": "Full Vehicle",
+    "vehicle": "DJI Phantom 3",
+    "title_tail": "RPM = 3,500 to 7,500 (uniform) - Uncertainty",
+    "rows": 14,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C77a": {
+    "configuration": "Full Vehicle",
+    "vehicle": "DJI Phantom 3",
+    "title_tail": "RPM = 4,200 to 6,400 (differential) - Conditions",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     9
+    ]
+   },
+   "C77b": {
+    "configuration": "Full Vehicle",
+    "vehicle": "DJI Phantom 3",
+    "title_tail": "RPM = 4,200 to 6,400 (differential) - Measurements",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C77c": {
+    "configuration": "Full Vehicle",
+    "vehicle": "DJI Phantom 3",
+    "title_tail": "RPM = 4,200 to 6,400 (differential) - Uncertainty",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C78a": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR Iris+",
+    "title_tail": "RPM = 2,500 to 8,000 (uniform) - Conditions",
+    "rows": 15,
+    "non_finite": 0,
+    "column_counts_seen": [
+     9
+    ]
+   },
+   "C78b": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR Iris+",
+    "title_tail": "RPM = 2,500 to 8,000 (uniform) - Measurements",
+    "rows": 15,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C78c": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR Iris+",
+    "title_tail": "RPM = 2,500 to 8,000 (uniform) - Uncertainty",
+    "rows": 15,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C79a": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR Iris+",
+    "title_tail": "RPM = 4,300 to 6,500 (differential) - Conditions",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     9
+    ]
+   },
+   "C79b": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR Iris+",
+    "title_tail": "RPM = 4,300 to 6,500 (differential) - Measurements",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C79c": {
+    "configuration": "Full Vehicle",
+    "vehicle": "3DR Iris+",
+    "title_tail": "RPM = 4,300 to 6,500 (differential) - Uncertainty",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C80a": {
+    "configuration": "Full Vehicle",
+    "vehicle": "Drone America x8",
+    "title_tail": "RPM = 4,500 to 9,000 (uniform) - Conditions",
+    "rows": 10,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C80b": {
+    "configuration": "Full Vehicle",
+    "vehicle": "Drone America x8",
+    "title_tail": "RPM = 4,500 to 9,000 (uniform) - Measurements",
+    "rows": 10,
+    "non_finite": 0,
+    "column_counts_seen": [
+     17
+    ]
+   },
+   "C80c": {
+    "configuration": "Full Vehicle",
+    "vehicle": "Drone America x8",
+    "title_tail": "RPM = 4,500 to 9,000 (uniform) - Uncertainty",
+    "rows": 10,
+    "non_finite": 0,
+    "column_counts_seen": [
+     17
+    ]
+   },
+   "C81a": {
+    "configuration": "Full Vehicle",
+    "vehicle": "Drone America x8",
+    "title_tail": "RPM = 6,200 to 7,700 (differential) - Conditions",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C81b": {
+    "configuration": "Full Vehicle",
+    "vehicle": "Drone America x8",
+    "title_tail": "RPM = 6,200 to 7,700 (differential) - Measurements",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     17
+    ]
+   },
+   "C81c": {
+    "configuration": "Full Vehicle",
+    "vehicle": "Drone America x8",
+    "title_tail": "RPM = 6,200 to 7,700 (differential) - Uncertainty",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     17
+    ]
+   },
+   "C82a": {
+    "configuration": "Full Vehicle",
+    "vehicle": "SUI Endurance",
+    "title_tail": "RPM = 1,500 to 4,600 (uniform) - Conditions",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     9
+    ]
+   },
+   "C82b": {
+    "configuration": "Full Vehicle",
+    "vehicle": "SUI Endurance",
+    "title_tail": "RPM = 1,500 to 4,600 (uniform) - Measurements",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C82c": {
+    "configuration": "Full Vehicle",
+    "vehicle": "SUI Endurance",
+    "title_tail": "RPM = 1,500 to 4,600 (uniform) - Uncertainty",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C83a": {
+    "configuration": "Full Vehicle",
+    "vehicle": "SUI Endurance",
+    "title_tail": "RPM = 2,800 to 4,200 (differential) - Conditions",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     9
+    ]
+   },
+   "C83b": {
+    "configuration": "Full Vehicle",
+    "vehicle": "SUI Endurance",
+    "title_tail": "RPM = 2,800 to 4,200 (differential) - Measurements",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C83c": {
+    "configuration": "Full Vehicle",
+    "vehicle": "SUI Endurance",
+    "title_tail": "RPM = 2,800 to 4,200 (differential) - Uncertainty",
+    "rows": 12,
+    "non_finite": 0,
+    "column_counts_seen": [
+     13
+    ]
+   },
+   "C84a": {
+    "configuration": "Isolated Rotor",
+    "vehicle": "3DR SOLO",
+    "title_tail": "RPM = 2,500 to 8,000 - Conditions and Measurements",
+    "rows": 13,
+    "non_finite": 0,
+    "column_counts_seen": [
+     14
+    ]
+   },
+   "C84b": {
+    "configuration": "Isolated Rotor",
+    "vehicle": "3DR SOLO",
+    "title_tail": "RPM = 2,500 to 8,000 - Uncertainty",
+    "rows": 13,
+    "non_finite": 0,
+    "column_counts_seen": [
+     8
+    ]
+   },
+   "C85a": {
+    "configuration": "Isolated Rotor",
+    "vehicle": "DJI Phantom 3",
+    "title_tail": "RPM = 2,500 to 8,000 - Conditions and Measurements",
+    "rows": 13,
+    "non_finite": 0,
+    "column_counts_seen": [
+     14
+    ]
+   },
+   "C85b": {
+    "configuration": "Isolated Rotor",
+    "vehicle": "DJI Phantom 3",
+    "title_tail": "RPM = 2,500 to 8,000 - Uncertainty",
+    "rows": 13,
+    "non_finite": 0,
+    "column_counts_seen": [
+     8
+    ]
+   },
+   "C86a": {
+    "configuration": "Isolated Rotor",
+    "vehicle": "3DR Iris+",
+    "title_tail": "RPM = 2,500 to 8,000 - Conditions and Measurements",
+    "rows": 13,
+    "non_finite": 0,
+    "column_counts_seen": [
+     14
+    ]
+   },
+   "C86b": {
+    "configuration": "Isolated Rotor",
+    "vehicle": "3DR Iris+",
+    "title_tail": "RPM = 2,500 to 8,000 - Uncertainty",
+    "rows": 13,
+    "non_finite": 0,
+    "column_counts_seen": [
+     8
+    ]
+   },
+   "C87a": {
+    "configuration": "Isolated Rotor",
+    "vehicle": "Drone America x8",
+    "title_tail": "RPM = 2,500 to 8,500 - Conditions and Measurements",
+    "rows": 13,
+    "non_finite": 0,
+    "column_counts_seen": [
+     14
+    ]
+   },
+   "C87b": {
+    "configuration": "Isolated Rotor",
+    "vehicle": "Drone America x8",
+    "title_tail": "RPM = 2,500 to 8,500 - Uncertainty",
+    "rows": 13,
+    "non_finite": 0,
+    "column_counts_seen": [
+     8
+    ]
+   },
+   "C88a": {
+    "configuration": "Isolated Rotor",
+    "vehicle": "SUI Endurance",
+    "title_tail": "RPM = 2,000 to 4,500 - Conditions and Measurements",
+    "rows": 6,
+    "non_finite": 0,
+    "column_counts_seen": [
+     14
+    ]
+   },
+   "C88b": {
+    "configuration": "Isolated Rotor",
+    "vehicle": "SUI Endurance",
+    "title_tail": "RPM = 2,000 to 4,500 - Uncertainty",
+    "rows": 6,
+    "non_finite": 0,
+    "column_counts_seen": [
+     8
+    ]
+   }
+  },
+  "hover_tables_with_rows": 40,
+  "hover_rows_total": 494,
+  "note": "column_counts_seen > 1 value means pdftotext split or merged a column on some line; a transcription must be checked against the PDF page, not trusted from text extraction"
+ },
+ "uiuc_propeller_database_static": {
+  "files_present": 262,
+  "files_in_manifest": 262,
+  "files_changed_upstream": 0,
+  "data_rows": 4145,
+  "non_finite_values": 0,
+  "files_with_a_repeated_header_line": 0,
+  "rpm_range": [
+   940.0,
+   27050.0
+  ],
+  "columns": "RPM CT CP (dimensionless coefficients); no uncertainty, no air density, no motor electrical data in the files"
+ }
+}

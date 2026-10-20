@@ -1,0 +1,79 @@
+diff --git a/NEEDS.md b/NEEDS.md
+index fdbe0f80f8d17f0d64e714cfe828a5995e65db11..0957aee62d279f4ce92555220b7e771e91b5651d 100644
+--- a/NEEDS.md
++++ b/NEEDS.md
+@@ -3547,15 +3547,26 @@ which is exactly the class of defect P.1 records.
+ **Not this round's defect and not fixed here** — recorded because measuring it
+ cost something and the lesson generalises.
+ 
+-`evidence-package` is based on `c0ec657` (GUARD 3) on `core-guards`. Running
+-`tests/domains/kinetics/` at each commit:
+-
+-| commit | result |
+-|---|---|
+-| `dd4f698` merge base | 227 passed |
+-| `40e8956` GUARD 2 | passed |
+-| **`c0ec657` GUARD 3** | **7 failed**, 220 passed |
+-| `9e41f5a` GUARD 7, `core-guards` tip | **227 passed — already repaired** |
++`evidence-package` is based on `c0ec657` (GUARD 3) on `core-guards`.
++
++**The table that stood here was wrong and is deleted rather than patched.** It
++said `dd4f698` 227 passed — a number carried over from `9e41f5a` and never
++measured at the base — and jumped from `c0ec657` straight to `9e41f5a`, calling
++it "already repaired" without running either of the two red commits in between.
++Re-measured across all eight commits: the base is **226**, **three** tips are
++red (`c0ec657`, `3609864`, `149b68f`), and the repair is at **`944a48b`
++(GUARD 6)**, not GUARD 7.
++
++The authoritative table is the one the `core-guards` session measured, earlier
++in this file under *a check whose failure has never been observed*. There is one
++bisect of this and it lives there — the same "one number, one place" rule this
++round applied to `results_hard.json`, applied to a table.
++
++**The failure that produced the wrong version is the rule one level up.** An
++inference published in a measurement's format, inside the round whose subject is
++that distinction, and it was the *format* that did the lying: 227 was correct for
++seven of the eight commits, so the number was almost right and the claim to have
++observed it was entirely false. Being right is not the same as having checked.
+ 
+ Two causes. `cstr/validation.py:605` returns `self._tolerance_rel_tol` from a
+ property, and that attribute is never assigned to the instance — it exists only
+@@ -3566,7 +3577,8 @@ string `CSTR`, failing `test_the_scientific_core_owns_no_cstr_specific_rule` —
+ the layering invariant that commit's own message reports having swept for.
+ 
+ **The lesson is the tier, not the bug.** These live in `expensive` and appear in
+-neither FAST nor any developer's default loop. GUARD 3's commit message reports
++neither FAST nor any developer's default loop, which is how they survived three
++consecutive commits. GUARD 3's commit message reports
+ "FAST 2140 passed"; the evidence round's baseline reports "FAST 2146 passed".
+ Both are true, both were checked honestly, and both missed seven failures
+ because the tier that runs them is the one nobody runs locally. A green FAST
+@@ -3581,6 +3593,28 @@ pins, which must be re-read and the tag re-cut after a rebase.
+ 
+ ---
+ 
++### The false-reject rate reached 0/241 because the generator changed, not the tool
++
++Recorded here because it is the number most likely to be quoted out of the v1.1
++release page, and quoting it without this sentence would be a false claim about
++the tool.
++
++v1.0 measured false reject `1/241 (0.4 %)` on the fourth draw. v1.1 measures
++`0/241 (0.0 %)` on the fifth. The single case is **`S00709`**, which v1.0's own
++`benchmarks/hard/README.md` diagnosed at length as a **mislabel** — the tool was
++right, the expectation was computed at an operating point the case does not
++declare — and explicitly declined to fix, because fixing it meant moving the
++ratings cases across the whole draw. `5cd1b75` ("ratings are sized at the
++operating point the run reaches, not the asymptote") is that fix. **No code
++changed. The tool's answer is the same before and after.**
++
++It is the fifth correction to this generator, and it is the cleanest example of
++why the hold-out exists: a headline rate went to zero because the benchmark came
++round to the tool's answer. Every other figure held across a draw that rewrote
++1744 of 2000 case files, which is the reassuring half — the regeneration touched
++what it claimed to and nothing else.
++
++
+ ## RULE — a check whose failure has never been observed is unverified
+ 
+ Not a note. A rule, because there are now three instances in two rounds and the

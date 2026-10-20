@@ -1,0 +1,83 @@
+{
+ "schema": "domain_real_data_zenodo_manifest/1",
+ "record_id": "11958572",
+ "doi": "10.5281/zenodo.11958572",
+ "title": "Probability distributed equivalent circuit model - Data",
+ "licence": "cc-by-4.0",
+ "creators": [
+  {
+   "name": "Jahn, Leonard",
+   "affiliation": "UNKNOWN"
+  }
+ ],
+ "publication_date": "2024-06-17",
+ "retrieved_on": "2026-09-13",
+ "files": [
+  {
+   "filename": "20230125_HysPowerTest_A123_01_25deg_SOC100.csv",
+   "bytes": 47380,
+   "checksum_published_by_zenodo": "md5:588ecca63c63ebc21204a10d5d123958",
+   "download_url": "https://zenodo.org/records/11958572/files/20230125_HysPowerTest_A123_01_25deg_SOC100.csv?download=1"
+  },
+  {
+   "filename": "20230125_HysPowerTest_A123_01_25deg_SOC50.csv",
+   "bytes": 20988,
+   "checksum_published_by_zenodo": "md5:e043115d3e8aaf1e83f7d5a7670c409e",
+   "download_url": "https://zenodo.org/records/11958572/files/20230125_HysPowerTest_A123_01_25deg_SOC50.csv?download=1"
+  },
+  {
+   "filename": "20230125_Hys_A123_01_25deg_incrOCV.csv",
+   "bytes": 7242,
+   "checksum_published_by_zenodo": "md5:196f0ca05003ceb8a11039665da1d815",
+   "download_url": "https://zenodo.org/records/11958572/files/20230125_Hys_A123_01_25deg_incrOCV.csv?download=1"
+  },
+  {
+   "filename": "20230125_Hys_A123_01_25deg_pOCV.csv",
+   "bytes": 691936,
+   "checksum_published_by_zenodo": "md5:62dbf637d9ed8d568576ccdff2c692b0",
+   "download_url": "https://zenodo.org/records/11958572/files/20230125_Hys_A123_01_25deg_pOCV.csv?download=1"
+  },
+  {
+   "filename": "20230221_graphite_opt_parameter_man.mat",
+   "bytes": 189,
+   "checksum_published_by_zenodo": "md5:30a6f8b24daaa3a4b11cd26226256e7b",
+   "download_url": "https://zenodo.org/records/11958572/files/20230221_graphite_opt_parameter_man.mat?download=1"
+  },
+  {
+   "filename": "20230221_lfp_opt_parameter_man.mat",
+   "bytes": 192,
+   "checksum_published_by_zenodo": "md5:5847a9bd0b0aae72c1a68874b85e6f03",
+   "download_url": "https://zenodo.org/records/11958572/files/20230221_lfp_opt_parameter_man.mat?download=1"
+  },
+  {
+   "filename": "A123_parameter_negPulse.csv",
+   "bytes": 6135,
+   "checksum_published_by_zenodo": "md5:d3b1c1e5e39cc125390cec58af8bbe82",
+   "download_url": "https://zenodo.org/records/11958572/files/A123_parameter_negPulse.csv?download=1"
+  },
+  {
+   "filename": "A123_parameter_posPulse.csv",
+   "bytes": 6169,
+   "checksum_published_by_zenodo": "md5:2a201848bb63eaee9c4f1e8cbd9cd27d",
+   "download_url": "https://zenodo.org/records/11958572/files/A123_parameter_posPulse.csv?download=1"
+  },
+  {
+   "filename": "Hysteresis_SOC50Loops_C10_A123_01_t_SOC_U_I_Ah.mat",
+   "bytes": 720941,
+   "checksum_published_by_zenodo": "md5:84f99a78b32067de7e59360728bd364e",
+   "download_url": "https://zenodo.org/records/11958572/files/Hysteresis_SOC50Loops_C10_A123_01_t_SOC_U_I_Ah.mat?download=1"
+  },
+  {
+   "filename": "param_ocpn_graphite.mat",
+   "bytes": 8977,
+   "checksum_published_by_zenodo": "md5:3fcaf7d0923b0e4012f8cea9eaf25dc9",
+   "download_url": "https://zenodo.org/records/11958572/files/param_ocpn_graphite.mat?download=1"
+  },
+  {
+   "filename": "param_ocpn_lfp.mat",
+   "bytes": 5266,
+   "checksum_published_by_zenodo": "md5:f26df0a8520966721871116c963a47bf",
+   "download_url": "https://zenodo.org/records/11958572/files/param_ocpn_lfp.mat?download=1"
+  }
+ ]
+}

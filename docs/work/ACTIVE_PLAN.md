@@ -1,5 +1,11 @@
 # Active Plan
 
+Active epic: `engrt.numerical_foundations` (research program; OD-6 decided 2026-10-18; in force when branch
+`feat/od6-engineering-program-epic` merges). Earlier entries below that call `battery.thevenin_1rc` the epic, list OD-6
+as open, or list EXC-1 as an open exception are superseded by that decision on merge. The program's gates M1-E3 are
+bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
+reference application).
+
 ## Bounded Mind trace diagnosis (2026-10-20)
 
 Owner authorized fresh development cases and full step traces to diagnose no_solution/confounded misses. Scope: unchanged mind_full and v0.3, twelve fixed new world sets (72 cards), replay of retained observations and one trace-disabled control. No candidate/scoring/threshold edits, formal run, freeze, evaluator appointment or CP3. Results and smallest proposed change must be shown before behavioral work. New diagnostic driver/tests only; prior evidence preserved. Status: bounded diagnosis COMPLETE; 9 tests passed,72 valid cards/trace replays,one matching control. Original driver exit1 at final evidence-path lookup; offline finalization exit0 without rerunning worlds. no_solution:6 correct/5 abstentions/1 false confounded; confounded:12 correct, historical misses NOT REPRODUCED. See docs/discovery/MIND_FULL_V03_TRACE_DIAGNOSIS.md. Narrow association-confirmation design is PROPOSED ONLY; awaiting owner review, no implementation.
@@ -34,11 +40,30 @@ See [demo](../discovery/BLINDFOLD_DEMO.md) and PROGRESS for exact commands/evide
 Supervisor review/delivery remains pending; no merge, freeze or certification.
 
 
-Active epic: `engrt.numerical_foundations` (research program; OD-6 decided 2026-10-18; in force when branch
-`feat/od6-engineering-program-epic` merges). Earlier entries below that call `battery.thevenin_1rc` the epic, list OD-6
-as open, or list EXC-1 as an open exception are superseded by that decision on merge. The program's gates M1-E3 are
-bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
-reference application).
+## Current bounded task - remaining branches and post-merge CI (2026-10-20)
+
+Owner authorized continuing branch review and investigating Tests/Branch Policy without bypassing gates or OD3. PR180 merged with explicit archival-only approval at67585300. Twenty residual tips / fifteen maximal groups remain; nineteen tips trigger recertification. Prepare archive-only reconciliation of the seven ignored agent/configuration files from c4b9d950; do not activate their historical instructions. Review and run the changed-file gate before concrete PR approval. Investigate GitHub failure from actual job evidence: empty steps and missing log blobs currently leave root cause UNVERIFIED; obtain Annotations before prescribing a hosted-runner repair. Report: BRANCH_RECONCILIATION_CI_2026_10_20.md. No certification-sensitive implementation adoption, freeze or formal run.
+
+## Current bounded task - preserve superseded documentation branches (2026-10-20)
+
+Owner authorized reviewing and reconciling unmerged work, excluding preserve/* and wip/*. Preserve exact historical deltas from fix-bisect-table, evidence-v11, blind-rediscovery-benchmark-v1 and big-13-flagship-demonstrations in docs/archive/branch_deltas_2026_10_20/. Reconcile ancestry only with that explicit archive-only disposition: no superseded text is applied to live contracts, benchmark semantics or task queues. Independent review PASS; ordinary219-node gate217passed2failed, exactsamefailed nodes as pristine main. Await concrete PR approval; no green-gate claim. Scientific/certified implementation branches remain separate and subject to existing decisions/OD3.
+
+## Current bounded task - reconcile preserved assurance history (2026-10-20)
+
+Continue owner-authorized branch reconciliation, excluding preserve/* and wip/*. The entire assurance-performance-investigation report and its progress addition already exist byte-for-byte on current main. Reconcile ancestry while preserving the current tree and historical-source warning; read-only review PASS; normal changed-file gate217passed2failed, identical to pristine main219-node selection. Owner approved PR179; merged at8b29fc07. Do not call the gate green. No source, certification, policy or measurement changes authorized by this history reconciliation.
+
+## Current bounded task - domain inventory integration (2026-10-20)
+
+Owner authorized resolving branch blockers after merging approved PR176, without bypassing tests or OD3. Domain-data integration preserves historical bytes and separates archival replay from live provenance coverage. Owner selected full433-file provenance audit. Audit completed with exact per-file/source hashes;33 domain tests passed after failing-first boundary regressions and staged-identity repair. Five authored analytical metadata records correctly classified DERIVED. Independent review PASS. Full FAST completed with existing failures/errors; exact pristine-main comparison shows zero new failing/error nodes. Owner explicitly approved PR178 with the disclosed baseline results; merged at94aab1f6. No green-gate claim. Do not promote origin classifications into validation or current certification. Other certified branch merges remain subject to OD3; no freeze, formal run or Mind behavior change.
+
+
+## Current bounded task - reviewed branch reconciliation (2026-10-20)
+
+Owner approved PR176 explicitly and authorized resolving remaining branch blockers sequentially, without bypassing tests or OD3. PR176 merged at3213bb35. Exclude preserve/* and wip/*; preserve scientific contracts and byte-pinned evidence.
+
+- [x] Verify three residual branch histories contain no new content: historical main-check entry byte-present; critical-production and multiphysics-lifecycle commits patch-equivalent. Merge their ancestry with the main tree unchanged.
+- [ ] Reconcile domain-real-data archival inventory versus live coverage; retain historical bytes and fail closed for undeclared provenance.
+- [ ] Reconcile other unique changes only after their targeted tests and independent review; certified/trust changes remain blocked pending applicable OD3. No formal Genesis run, freeze or candidate behavioral tuning authorized.
 
 ## Current bounded task — FAST runtime profiling (2026-10-20)
 

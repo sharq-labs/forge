@@ -1,0 +1,556 @@
+{
+ "schema": "domain_real_data_repository_scan/1",
+ "method": "git ls-files (tracked and staged), filtered to data-bearing suffixes, each matched against an ordered prefix rule table (audit/inventory_scan.py)",
+ "data_suffixes": [
+  ".csv",
+  ".tsv",
+  ".xlsx",
+  ".xls",
+  ".xlsm",
+  ".json",
+  ".jsonl",
+  ".parquet",
+  ".feather",
+  ".h5",
+  ".hdf5",
+  ".mat",
+  ".npz",
+  ".npy",
+  ".dat",
+  ".txt",
+  ".log",
+  ".h"
+ ],
+ "extra_data_files": [
+  "benchmarks/empirical_validation/evidence/scipy_codata.py"
+ ],
+ "excluded_as_not_data": [
+  "requirements.txt"
+ ],
+ "totals_by_class": {
+  "DERIVED": 162,
+  "REAL_MEASURED": 11,
+  "REFERENCE_ONLY": 4,
+  "SYNTHETIC": 2980
+ },
+ "total_files": 3157,
+ "unknown_provenance_files": 0,
+ "groups": [
+  {
+   "rule_prefix": "benchmarks/",
+   "class": "DERIVED",
+   "role": "ROUND_ARTIFACT",
+   "rationale": "Preregistrations, results, audits, mutation logs and reports written by a repository round",
+   "file_count": 72,
+   "files_sample": [
+    "benchmarks/battery_flagship_b1/DATA_INTEGRITY.json",
+    "benchmarks/battery_flagship_b1/PREREGISTRATION.json",
+    "benchmarks/battery_flagship_b1/RESULTS.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/ai_designs/",
+   "class": "DERIVED",
+   "role": "ROUND_ARTIFACT",
+   "rationale": "Schema, prompts and scored results of the AI-designs round",
+   "file_count": 3,
+   "files": [
+    "benchmarks/ai_designs/design_schema.json",
+    "benchmarks/ai_designs/prompts.json",
+    "benchmarks/ai_designs/results_ai_designs.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/battery_flagship_b3/evidence/PROVENANCE.json",
+   "class": "DERIVED",
+   "role": "PROVENANCE_RECORD",
+   "rationale": "Provenance metadata for the B3 raw files",
+   "file_count": 1,
+   "files": [
+    "benchmarks/battery_flagship_b3/evidence/PROVENANCE.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/blind/",
+   "class": "DERIVED",
+   "role": "ROUND_ARTIFACT",
+   "rationale": "Spec, freeze, comparisons and triage of the blind v1 challenge",
+   "file_count": 12,
+   "files": [
+    "benchmarks/blind/BLIND_CHALLENGE_SPEC.json",
+    "benchmarks/blind/v1/BLINDNESS_AUDIT.json",
+    "benchmarks/blind/v1/COMPARISON.json",
+    "benchmarks/blind/v1/COMPARISON_POST_FIX.json",
+    "benchmarks/blind/v1/FAILURE_TRIAGE.json",
+    "benchmarks/blind/v1/FIRST_RUN_SEAL.json",
+    "benchmarks/blind/v1/FORGE_FIRST_RUN.json",
+    "benchmarks/blind/v1/FORGE_POST_FIX.json",
+    "benchmarks/blind/v1/FREEZE.json",
+    "benchmarks/blind/v1/MANIFEST.json",
+    "benchmarks/blind/v1/ORACLE_DISAGREEMENTS.json",
+    "benchmarks/blind/v1/TRUTH_ERRATA.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/blind_v2/",
+   "class": "DERIVED",
+   "role": "ROUND_ARTIFACT",
+   "rationale": "Runs, comparisons, freezes and audits of the blind v2 challenge",
+   "file_count": 19,
+   "files": [
+    "benchmarks/blind_v2/ADJUDICATION.json",
+    "benchmarks/blind_v2/BOUND_REGISTER.json",
+    "benchmarks/blind_v2/CHALLENGE_SPEC.json",
+    "benchmarks/blind_v2/COMPARISON.json",
+    "benchmarks/blind_v2/CONTRACT_SURFACE.json",
+    "benchmarks/blind_v2/FIRST_RUN.json",
+    "benchmarks/blind_v2/FREEZE.json",
+    "benchmarks/blind_v2/GENERATION_LOG.json",
+    "benchmarks/blind_v2/POLICY_SENSITIVITY.json",
+    "benchmarks/blind_v2/POST_FIX.json",
+    "benchmarks/blind_v2/PRE_FREEZE_ALLOWED_SOURCE_READS.json",
+    "benchmarks/blind_v2/SAFETY_GATES.json",
+    "benchmarks/blind_v2/SYSTEM_INVENTORY.json",
+    "benchmarks/blind_v2/TRUTH_ERRATA.json",
+    "benchmarks/blind_v2/VALIDITY_AUDIT.json",
+    "benchmarks/blind_v2/runs/FIRST_RUN_primary.json",
+    "benchmarks/blind_v2/runs/FIRST_RUN_shadows.json",
+    "benchmarks/blind_v2/runs/POST_FIX_primary.json",
+    "benchmarks/blind_v2/runs/POST_FIX_shadows.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/core_runtime_finalization/",
+   "class": "DERIVED",
+   "role": "COMPUTE_MEASUREMENT",
+   "rationale": "Profiles, scaling and mutation results of this software",
+   "file_count": 4,
+   "files": [
+    "benchmarks/core_runtime_finalization/MUTATIONS.json",
+    "benchmarks/core_runtime_finalization/PARALLEL.json",
+    "benchmarks/core_runtime_finalization/PROFILE.json",
+    "benchmarks/core_runtime_finalization/SCALED.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/domain_real_data/",
+   "class": "DERIVED",
+   "role": "INVENTORY_ARTIFACT",
+   "rationale": "Written by this round: registry, manifests, provenance records, screens and reports",
+   "file_count": 12,
+   "files": [
+    "benchmarks/domain_real_data/DATASETS.json",
+    "benchmarks/domain_real_data/DATA_QUALITY.json",
+    "benchmarks/domain_real_data/EXTERNAL_SCREEN.json",
+    "benchmarks/domain_real_data/REPOSITORY_SCAN.json",
+    "benchmarks/domain_real_data/aerospace/nasa_tm_2018_219758/RETRIEVAL_MANIFEST.json",
+    "benchmarks/domain_real_data/aerospace/uiuc_propeller_database/STATIC_MANIFEST.json",
+    "benchmarks/domain_real_data/battery/jahn_a123_bayreuth/ZENODO_MANIFEST.json",
+    "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/MENDELEY_MANIFEST.json",
+    "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/PROVENANCE.json",
+    "benchmarks/domain_real_data/battery/panasonic_18650pf_wisconsin/MENDELEY_MANIFEST.json",
+    "benchmarks/domain_real_data/electrical/wesskamp_melbert_shunt/ZENODO_MANIFEST.json",
+    "benchmarks/domain_real_data/kinetics/sciexpem_jsr_dagaut_2010/ZENODO_MANIFEST.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/hard/",
+   "class": "DERIVED",
+   "role": "ROUND_ARTIFACT",
+   "rationale": "Indices, splits, adjudications and scored results of the synthetic hard benchmark",
+   "file_count": 9,
+   "files": [
+    "benchmarks/hard/ADJUDICATIONS.json",
+    "benchmarks/hard/GROUND_TRUTH_SCHEMA.json",
+    "benchmarks/hard/HOLDOUT_OPENINGS.log",
+    "benchmarks/hard/index_battery.json",
+    "benchmarks/hard/index_hard.json",
+    "benchmarks/hard/results_battery.json",
+    "benchmarks/hard/results_hard.json",
+    "benchmarks/hard/split_battery.json",
+    "benchmarks/hard/split_hard.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/model_measurement_validation/evidence/discharge_curves_1min.json",
+   "class": "DERIVED",
+   "role": "REDUCTION_OF_MEASURED",
+   "rationale": "Every 60th sample of the measured IEEE DataPort 10.21227/cm0f-jg66 workbook; the upstream file is REAL_MEASURED, this reduction is not the raw bytes (S-DCHG)",
+   "file_count": 1,
+   "files": [
+    "benchmarks/model_measurement_validation/evidence/discharge_curves_1min.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/perf_runtime_audit/",
+   "class": "DERIVED",
+   "role": "COMPUTE_MEASUREMENT",
+   "rationale": "Profiles and call counts of this software",
+   "file_count": 6,
+   "files": [
+    "benchmarks/perf_runtime_audit/baseline_campaign_checkpoint_scaling.json",
+    "benchmarks/perf_runtime_audit/baseline_decision_scaling.json",
+    "benchmarks/perf_runtime_audit/baseline_k1_gate_profile.json",
+    "benchmarks/perf_runtime_audit/baseline_k1_solver_calls.json",
+    "benchmarks/perf_runtime_audit/paired_gate_after.json",
+    "benchmarks/perf_runtime_audit/paired_gate_base.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/performance/",
+   "class": "DERIVED",
+   "role": "COMPUTE_MEASUREMENT",
+   "rationale": "Wall-clock timings of this software; not a physical dataset",
+   "file_count": 12,
+   "files": [
+    "benchmarks/performance/results/_suite.json",
+    "benchmarks/performance/results/bench_applicability.json",
+    "benchmarks/performance/results/bench_consensus.json",
+    "benchmarks/performance/results/bench_dependency_dag.json",
+    "benchmarks/performance/results/bench_end_to_end_core.json",
+    "benchmarks/performance/results/bench_evidence.json",
+    "benchmarks/performance/results/bench_freeze.json",
+    "benchmarks/performance/results/bench_problem.json",
+    "benchmarks/performance/results/bench_provenance.json",
+    "benchmarks/performance/results/bench_serialization.json",
+    "benchmarks/performance/results/bench_units.json",
+    "benchmarks/performance/results/bench_validity.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/performance_campaign/",
+   "class": "DERIVED",
+   "role": "COMPUTE_MEASUREMENT",
+   "rationale": "Wall-clock timings of this software",
+   "file_count": 2,
+   "files": [
+    "benchmarks/performance_campaign/results/campaign_after.json",
+    "benchmarks/performance_campaign/results/campaign_before.json"
+   ]
+  },
+  {
+   "rule_prefix": "certification/",
+   "class": "DERIVED",
+   "role": "CERTIFICATION_MANIFEST",
+   "rationale": "Core certificate and freeze manifests",
+   "file_count": 5,
+   "files": [
+    "certification/core_freeze_v1.json",
+    "certification/core_freeze_v1_assurance.json",
+    "certification/current_core_v1.json",
+    "certification/current_core_v2.json",
+    "certification/sprint10_assurance.json"
+   ]
+  },
+  {
+   "rule_prefix": "docs/",
+   "class": "DERIVED",
+   "role": "ROUND_ARTIFACT",
+   "rationale": "Milestone freeze records",
+   "file_count": 1,
+   "files": [
+    "docs/milestones/core-v0.3-campaign-persistence-prereg.freeze.json"
+   ]
+  },
+  {
+   "rule_prefix": "experiments/design_d3/",
+   "class": "DERIVED",
+   "role": "ROUND_ARTIFACT",
+   "rationale": "Design-loop results over synthetic reference models",
+   "file_count": 1,
+   "files": [
+    "experiments/design_d3/artifacts/d3_results.json"
+   ]
+  },
+  {
+   "rule_prefix": "tests/api/",
+   "class": "DERIVED",
+   "role": "API_SNAPSHOT",
+   "rationale": "Frozen API snapshots",
+   "file_count": 2,
+   "files": [
+    "tests/api/frozen_api_snapshot.json",
+    "tests/api/full_api_snapshot.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/battery_flagship_b3/evidence/raw/",
+   "class": "REAL_MEASURED",
+   "role": "DATASET",
+   "rationale": "Vendored bytes of Zenodo 10.5281/zenodo.10852930 (Univ. Bayreuth, BaSyTec CTS), MD5 equal to Zenodo's; see battery_flagship_b3/evidence/PROVENANCE.json",
+   "file_count": 4,
+   "files": [
+    "benchmarks/battery_flagship_b3/evidence/raw/20230125_HysPowerTest_A123_01_25deg_SOC100.csv",
+    "benchmarks/battery_flagship_b3/evidence/raw/20230125_HysPowerTest_A123_01_25deg_SOC50.csv",
+    "benchmarks/battery_flagship_b3/evidence/raw/20230125_Hys_A123_01_25deg_incrOCV.csv",
+    "benchmarks/battery_flagship_b3/evidence/raw/20230125_Hys_A123_01_25deg_pOCV.csv"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/",
+   "class": "REAL_MEASURED",
+   "role": "DATASET",
+   "rationale": "Vendored bytes of Mendeley Data 10.17632/cp3473x7xv.3 (McMaster, Digatron cycler), SHA-256 equal to the repository's published hash; see battery/lg_hg2_mcmaster/PROVENANCE.json",
+   "file_count": 5,
+   "files": [
+    "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_C20DisCh.csv",
+    "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_Dis_0p5C.csv",
+    "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_Dis_2C.csv",
+    "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_HPPC.csv",
+    "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/551_Cap_1C.csv"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/Readme file",
+   "class": "REAL_MEASURED",
+   "role": "DATASET_DOCUMENTATION",
+   "rationale": "The published record's own readme, vendored beside its raw files: documentation of the measured dataset, not a measurement channel",
+   "file_count": 1,
+   "files": [
+    "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/Readme file - Description of Experimental Tests.txt"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/model_measurement_validation/evidence/ocv_relaxation_24h.xlsx",
+   "class": "REAL_MEASURED",
+   "role": "DATASET",
+   "rationale": "IEEE DataPort 10.21227/651q-8v82 via a CC BY 4.0 mirror; 24 h OCV relaxation at 1 min, NI USB-6251; see model_measurement_validation/EVIDENCE_PROVENANCE.json S-OCV",
+   "file_count": 1,
+   "files": [
+    "benchmarks/model_measurement_validation/evidence/ocv_relaxation_24h.xlsx"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/ai_designs/components.json",
+   "class": "REFERENCE_ONLY",
+   "role": "DATASHEET_VALUES",
+   "rationale": "Manufacturer datasheet ratings transcribed from PDFs (ai_designs/components.md); ratings, not specimen measurements",
+   "file_count": 1,
+   "files": [
+    "benchmarks/ai_designs/components.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/empirical_validation/evidence/scipy_codata.py",
+   "class": "REFERENCE_ONLY",
+   "role": "REFERENCE_CONSTANTS",
+   "rationale": "scipy 1.17.1 CODATA 2022 table copy (CODATA-2022-R)",
+   "file_count": 1,
+   "files": [
+    "benchmarks/empirical_validation/evidence/scipy_codata.py"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/empirical_validation/fixtures/platinum_iec60751.json",
+   "class": "REFERENCE_ONLY",
+   "role": "REFERENCE_COEFFICIENTS",
+   "rationale": "IEC 60751 Callendar-Van Dusen coefficients recited, not retrieved; its own evidence_level field says not a measurement",
+   "file_count": 1,
+   "files": [
+    "benchmarks/empirical_validation/fixtures/platinum_iec60751.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/model_measurement_validation/evidence/pt100rtd_table.h",
+   "class": "REFERENCE_ONLY",
+   "role": "REFERENCE_TABLE",
+   "rationale": "Third-party transcription of the DIN 43760 / IEC 60751 Pt100 table: a standardised relation, not a specimen (S-PT100)",
+   "file_count": 1,
+   "files": [
+    "benchmarks/model_measurement_validation/evidence/pt100rtd_table.h"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/ai_designs/designs/",
+   "class": "SYNTHETIC",
+   "role": "BENCHMARK_CASE",
+   "rationale": "Hand-written designs; ai_designs/README.md: no laboratory measurement",
+   "file_count": 100,
+   "files_sample": [
+    "benchmarks/ai_designs/designs/seed/S001.json",
+    "benchmarks/ai_designs/designs/seed/S002.json",
+    "benchmarks/ai_designs/designs/seed/S003.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/blind/v1/TRUTH.json",
+   "class": "SYNTHETIC",
+   "role": "ORACLE_TRUTH",
+   "rationale": "Oracle-decided truth for generated cases",
+   "file_count": 1,
+   "files": [
+    "benchmarks/blind/v1/TRUTH.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/blind/v1/cases/",
+   "class": "SYNTHETIC",
+   "role": "BENCHMARK_CASE",
+   "rationale": "Generated payloads with oracle truth; blind/README.md: nothing checked against a measurement",
+   "file_count": 444,
+   "files_sample": [
+    "benchmarks/blind/v1/cases/BAT00207.json",
+    "benchmarks/blind/v1/cases/BAT00208.json",
+    "benchmarks/blind/v1/cases/BAT00209.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/blind_v2/cases/",
+   "class": "SYNTHETIC",
+   "role": "BENCHMARK_CASE",
+   "rationale": "Generated cases; the generator states an intent, oracles decide",
+   "file_count": 2,
+   "files": [
+    "benchmarks/blind_v2/cases/primary.jsonl",
+    "benchmarks/blind_v2/cases/shadows.jsonl"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/blind_v2/runner/",
+   "class": "SYNTHETIC",
+   "role": "BENCHMARK_CASE",
+   "rationale": "Smoke subsets of the generated cases",
+   "file_count": 2,
+   "files": [
+    "benchmarks/blind_v2/runner/smoke_cases.jsonl",
+    "benchmarks/blind_v2/runner/smoke_cases_full.jsonl"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/blind_v2/truth/",
+   "class": "SYNTHETIC",
+   "role": "ORACLE_TRUTH",
+   "rationale": "Dual-oracle truth (closed form + numerical solver / ngspice)",
+   "file_count": 1,
+   "files": [
+    "benchmarks/blind_v2/truth/truth.jsonl"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/empirical_validation/fixtures/",
+   "class": "SYNTHETIC",
+   "role": "CONSTRUCTED_PROBLEM",
+   "rationale": "Hand-constructed operating points labelled LEVEL 5 independent analytical; battery_cell.json says nothing here is called a measurement",
+   "file_count": 7,
+   "files": [
+    "benchmarks/empirical_validation/fixtures/battery_cell.json",
+    "benchmarks/empirical_validation/fixtures/circuits.json",
+    "benchmarks/empirical_validation/fixtures/conductor.json",
+    "benchmarks/empirical_validation/fixtures/holdout.json",
+    "benchmarks/empirical_validation/fixtures/lumped_body.json",
+    "benchmarks/empirical_validation/fixtures/reactor.json",
+    "benchmarks/empirical_validation/fixtures/slab.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/hard/cases_battery/",
+   "class": "SYNTHETIC",
+   "role": "BENCHMARK_CASE",
+   "rationale": "Generated by generate_battery.py; truth computed from first principles",
+   "file_count": 400,
+   "files_sample": [
+    "benchmarks/hard/cases_battery/B00006.json",
+    "benchmarks/hard/cases_battery/B00007.json",
+    "benchmarks/hard/cases_battery/B00008.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/hard/cases_hard/",
+   "class": "SYNTHETIC",
+   "role": "BENCHMARK_CASE",
+   "rationale": "Generated by generate_hard.py; truth computed from first principles (hard/README.md)",
+   "file_count": 2000,
+   "files_sample": [
+    "benchmarks/hard/cases_hard/S00007.json",
+    "benchmarks/hard/cases_hard/S00008.json",
+    "benchmarks/hard/cases_hard/S00013.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/oracles/results/",
+   "class": "SYNTHETIC",
+   "role": "ORACLE_TRUTH",
+   "rationale": "Independent oracle outputs over generated development cases",
+   "file_count": 2,
+   "files": [
+    "benchmarks/oracles/results/independent_case_truth_dev.json",
+    "benchmarks/oracles/results/independent_reason_truth_dev.json"
+   ]
+  },
+  {
+   "rule_prefix": "benchmarks/scientific_truth/REFERENCE_CASES.json",
+   "class": "SYNTHETIC",
+   "role": "ORACLE_TRUTH",
+   "rationale": "Reference cases solved by code oracles (scientific_truth/oracles)",
+   "file_count": 1,
+   "files": [
+    "benchmarks/scientific_truth/REFERENCE_CASES.json"
+   ]
+  },
+  {
+   "rule_prefix": "experiments/electrical_e",
+   "class": "SYNTHETIC",
+   "role": "SYNTHETIC_OBSERVATIONS",
+   "rationale": "Hidden misspecification law with injected noise (electrical_e2/e2_truth.py)",
+   "file_count": 6,
+   "files": [
+    "experiments/electrical_e1/e1_config_frozen.json",
+    "experiments/electrical_e1/e1_results.json",
+    "experiments/electrical_e2/e2_config_frozen.json",
+    "experiments/electrical_e2/e2_results.json",
+    "experiments/electrical_e3/e3_config_frozen.json",
+    "experiments/electrical_e3/e3_results.json"
+   ]
+  },
+  {
+   "rule_prefix": "experiments/electrical_v01_demo/",
+   "class": "SYNTHETIC",
+   "role": "SYNTHETIC_OBSERVATIONS",
+   "rationale": "Demo configuration and results over analytic references",
+   "file_count": 2,
+   "files": [
+    "experiments/electrical_v01_demo/demo_config_frozen.json",
+    "experiments/electrical_v01_demo/demo_results.json"
+   ]
+  },
+  {
+   "rule_prefix": "experiments/falsification/",
+   "class": "SYNTHETIC",
+   "role": "SYNTHETIC_OBSERVATIONS",
+   "rationale": "Hidden truth g(x) with injected noise (falsification/truth.py, benchmark.py)",
+   "file_count": 4,
+   "files": [
+    "experiments/falsification/results.json",
+    "experiments/falsification/s11_config_frozen.json",
+    "experiments/falsification/s11_results_full.csv",
+    "experiments/falsification/s11_summary.json"
+   ]
+  },
+  {
+   "rule_prefix": "experiments/kinetics_k1/",
+   "class": "SYNTHETIC",
+   "role": "SOLVER_ADMISSION",
+   "rationale": "Numerical regimes R1-R8, no data",
+   "file_count": 2,
+   "files": [
+    "experiments/kinetics_k1/k1_config_frozen.json",
+    "experiments/kinetics_k1/k1_results.json"
+   ]
+  },
+  {
+   "rule_prefix": "experiments/thermal_t",
+   "class": "SYNTHETIC",
+   "role": "SYNTHETIC_OBSERVATIONS",
+   "rationale": "Synthetic alpha truth plus Gaussian noise (thermal_t1/t1_truth.py)",
+   "file_count": 6,
+   "files": [
+    "experiments/thermal_t1/t1_config_frozen.json",
+    "experiments/thermal_t1/t1_results.json",
+    "experiments/thermal_t2/t2_config_frozen.json",
+    "experiments/thermal_t2/t2_results.json",
+    "experiments/thermal_t3/t3_config_frozen.json",
+    "experiments/thermal_t3/t3_results.json"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1098 @@
+diff --git a/docs/discovery/FORGE_GENESIS.md b/docs/discovery/FORGE_GENESIS.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..97435d2a1d36d30cee1d7d73dcbb131829aaf0d4
+--- /dev/null
++++ b/docs/discovery/FORGE_GENESIS.md
+@@ -0,0 +1,1092 @@
++# FORGE Genesis — Measurement-First Scientific Discovery Benchmark
++
++Status: **design / preregistration**
++Owner intent: validate a domain-general FORGE scientific reasoning loop under controlled, blinded and independently scoreable conditions.
++
++This document defines the target architecture and benchmark for FORGE Genesis. It does **not** change current scientific maturity, validation status, certification state or production readiness.
++
++The governing rule is:
++
++> **Measure first. Build the minimum generic mechanism that improves the measurement. Keep only capabilities that survive ablation.**
++
++FORGE is not a universal solver. It is a scientific reasoning and trust layer over external providers/solvers. AI workers may propose; providers compute; the FORGE Trust Layer controls what may be admitted as evidence and what may be claimed.
++
++---
++
++## 1. Purpose
++
++Genesis asks a narrower and falsifiable question than “can FORGE invent new science?”:
++
++> Given a bounded objective, a frozen admissible-knowledge contract, a fixed compute budget and no access to the hidden answer, can one generic FORGE Mind propose hypotheses, make scoreable predictions, choose informative experiments, execute them through providers, falsify wrong paths, revise belief, invalidate dependent conclusions, replan and either recover a valid mechanism or refuse correctly?
++
++The benchmark exists to test the **scientific reasoning loop**, not to claim novelty.
++
++A defensible progression is:
++
++```text
++land + recertify the Trust lane
++        ↓
++Genesis-lite on Blindfold
++        ↓
++Minimal Mind loop
++        ↓
++one justification graph
++        ↓
++port-based mechanism reasoning
++        ↓
++cross-domain transfer + measured compute scaling
++        ↓
++held-out-domain graduation
++        ↓
++only then: stronger autonomous-discovery claims
++```
++
++Historical rediscovery is a **demonstration**. Blinded synthetic, transformed and trap-world performance is the evidence for reasoning competence.
++
++---
++
++## 2. Core claim under test
++
++Genesis does **not** preregister the claim that FORGE discovers unknown laws of nature.
++
++It preregisters the weaker claim:
++
++> A frozen, domain-general FORGE Mind can outperform equal-budget baselines on blinded discovery and correct-refusal tasks while producing calibrated predictions, replayable evidence, dependency-correct replanning and no target-specific reasoning code.
++
++A successful benchmark program must demonstrate:
++
++1. the hidden target and evaluator material were withheld from the Mind;
++2. the benchmark representation did not encode the answer;
++3. the same generic reasoning loop operated across tasks and domains;
++4. predictions were emitted **before** observing experiment results;
++5. planner-relevant numbers were grounded in execution/surrogate records, not LLM assertions;
++6. wrong hypotheses and invalid candidates were explicitly falsified or retained as unresolved;
++7. later evidence could invalidate earlier assumptions and trigger bounded replanning;
++8. unaffected evidence/results were preserved when scientifically still applicable;
++9. correct refusal earned credit;
++10. benchmark scoring was performed outside the scientific authority being evaluated;
++11. the result beat preregistered equal-budget baselines with confidence intervals;
++12. removing a claimed cognition capability measurably reduced benchmark performance before that capability was accepted into the core.
++
++---
++
++## 3. Non-goals
++
++Genesis v0.1 is **not**:
++
++- proof of novel science;
++- proof that a pretrained language model has no historical memory;
++- unrestricted autonomous internet research;
++- a competition to maximize raw solver-call count;
++- evidence that a simulated design will work experimentally;
++- permission to bypass ordinary FORGE evidence gates;
++- a replacement for experiment, domain expertise, safety review or engineering sign-off;
++- a reason to build duplicate Evidence, Hypothesis, Belief, State or Coupling authorities;
++- a requirement to build GPU/HPC scheduling before a workload justifies it;
++- a requirement to implement every proposed cognition feature before the core loop is measurable.
++
++High-consequence subjects remain outside the Genesis core program unless separately reviewed under an appropriate scientific and safety contract.
++
++---
++
++## 4. Reuse existing FORGE substrate
++
++The Mind is an **orchestration layer over existing owners**, not a second scientific authority.
++
++Where suitable owners already exist, Genesis must reuse them rather than create parallel types or graphs.
++
++Expected existing owners include, where applicable:
++
++- Trust / credibility / verdict semantics;
++- `sria.decision` hypothesis and utility concepts;
++- sealed falsification and multiplicity tracking;
++- Blindfold preregistration / escrow / synthetic controls;
++- Scientific Twin / TwinRevision / SystemState views;
++- claim impact and diagnostics;
++- design fidelity relationships;
++- PhysicsGraph / CouplingPlan / ConservationBalance;
++- provider identity and execution provenance.
++
++New Mind code must justify why an existing owner cannot satisfy the requirement.
++
++---
++
++## 5. Minimal FORGE Mind loop
++
++The first real target is not “advanced cognition”. It is one measurable closed loop:
++
++```text
++objective
++  ↓
++read-only scientific state view
++  ↓
++competing hypotheses / candidate mechanisms
++  ↓
++predictive distributions
++  ↓
++next-best experiment / simulation
++  ↓
++provider execution
++  ↓
++falsification + evidence admission
++  ↓
++belief update
++  ↓
++dependency invalidation
++  ↓
++replanning / redesign / stopping
++  ↺
++Trust Layer assessment
++```
++
++### 5.1 Read-only scientific state view
++
++Do not introduce a second world-state authority.
++
++The Mind consumes a read-only view over existing Scientific Twin, TwinRevision, SystemState, ScientificBelief and relevant execution/evidence records.
++
++The view must expose:
++
++- known state;
++- explicit unknowns;
++- assumptions;
++- active hypotheses;
++- applicable evidence;
++- unresolved contradictions;
++- available actions/providers;
++- remaining budget.
++
++### 5.2 Competing hypotheses
++
++The active set must permit rival explanations or candidate mechanisms.
++
++Each hypothesis must record:
++
++- typed proposition/mechanism;
++- parent/derivation lineage;
++- assumptions;
++- proposer kind;
++- supporting and contradicting evidence links;
++- status derived only through authoritative FORGE mechanisms;
++- pruning/deactivation reason when removed from the active set.
++
++Silent hypothesis deletion is prohibited.
++
++### 5.3 Predictive Outcome Model
++
++A next-best-experiment policy is hollow without predicted outcome distributions.
++
++Before an experiment is selected, the Mind must be able to ask, for each relevant hypothesis/action pair:
++
++```text
++P(outcome | hypothesis, action, current evidence)
++```
++
++The first production OutcomeModel may be simple and domain-bounded, but it must be:
++
++- calibrated on generated or held-out cases;
++- explicit about uncertainty;
++- grounded in solver/surrogate execution;
++- replayable;
++- independently scoreable.
++
++### 5.4 Probabilistic belief
++
++Belief must distinguish:
++
++- admitted evidence;
++- hypothesis plausibility;
++- model uncertainty;
++- unresolved conflict;
++- unavailable posterior information.
++
++The design must not convert missing uncertainty into certainty.
++
++Where probabilities are used, their provenance and update rule must be explicit and testable.
++
++### 5.5 Next-best experiment / value of information
++
++The planner may use EVSI / expected information / decision value only when its inputs are grounded.
++
++Candidate actions may include:
++
++- discriminate rival hypotheses;
++- falsify a high-impact assumption;
++- reduce decision-critical uncertainty;
++- change fidelity;
++- acquire a missing measurement;
++- rerun an invalidated coupled calculation;
++- stop and refuse.
++
++The planner must distinguish **solver failure** from **scientific outcome**.
++
++### 5.6 Decision-theoretic stopping
++
++Stopping is part of scientific reasoning.
++
++The run must preregister asymmetric losses where appropriate, including the cost of:
++
++- false support;
++- false refusal;
++- unnecessary compute;
++- unresolved uncertainty.
++
++The Mind should stop when the expected value of another admissible experiment is below its scientific/compute cost or when no admissible path remains.
++
++---
++
++## 6. Scoreable predictions
++
++Every selected scientific experiment must have a pre-result predictive record.
++
++The record should include, as applicable:
++
++- predicted distribution or interval;
++- hypothesis-conditioned alternatives;
++- expected discriminating power;
++- uncertainty;
++- action cost;
++- record identities used to compute the prediction.
++
++After execution, score the prediction with an appropriate proper scoring rule.
++
++Campaign-level metrics include:
++
++- calibration;
++- sharpness;
++- prediction score;
++- information gained per provider call;
++- information gained per unit compute;
++- decision improvement after evidence.
++
++This makes “reasoning quality” measurable instead of impressionistic.
++
++---
++
++## 7. One justification graph
++
++FORGE should build **one** content-addressed justification/dependency graph rather than separate graphs for Mind invalidation, design impact and coupling staleness.
++
++Nodes should include existing content identities for:
++
++- assumptions;
++- hypotheses;
++- claims;
++- plans;
++- runs;
++- evidence;
++- twin revisions;
++- design decisions/components;
++- coupling results;
++- fidelity links.
++
++Edges should represent typed relationships such as:
++
++- depends_on;
++- supports;
++- contradicts;
++- derived_from;
++- invalidates;
++- supersedes;
++- requires_context;
++- transfers_to.
++
++The graph must support queries for:
++
++1. what becomes stale after an assumption/context/design change;
++2. what remains valid;
++3. what must be rerun;
++4. what claim confidence must be recomputed;
++5. which redesigns affect which physics;
++6. which coupled results are no longer applicable.
++
++### 7.1 Invalidation benchmark
++
++Genesis must inject an incorrect assumption at a random dependency depth.
++
++The evaluator knows the true affected set.
++
++Score:
++
++- invalidation precision;
++- invalidation recall;
++- preserved-unaffected-work rate;
++- recovery cost;
++- replay completeness.
++
++“Invalidate everything” and “invalidate nothing” must both fail.
++
++---
++
++## 8. AI-worker boundary
++
++AI workers are replaceable proposers, not scientific authorities.
++
++### 8.1 Typed proposals, not authority blocklists
++
++LLM output must enter through typed proposal schemas.
++
++Allowed examples:
++
++- a hypothesis statement in the mechanism grammar;
++- parameter ranges with units;
++- a proposed action family;
++- a suggested variable/measurement to test.
++
++Free text may be stored for audit but must never be parsed into planner authority.
++
++### 8.2 Decisions an LLM must not control
++
++An AI worker must not set:
++
++- hypothesis status;
++- evidence admission;
++- applicability verdicts;
++- uncertainty values;
++- priors/weights that the belief updater consumes;
++- predicted divergence used to rank experiments;
++- falsification thresholds;
++- success criteria;
++- benchmark equivalence/novelty;
++- utility/cost exchange rates;
++- budget expansion;
++- stopping policy;
++- silent hypothesis pruning;
++- evaluator verdicts.
++
++### 8.3 Every planner number must cite execution
++
++Any numerical value used by the planner for expected outcome, divergence, cost or uncertainty must reference an execution/surrogate record.
++
++A caller-supplied “confidence”, “weight” or “separation” without execution provenance is non-authoritative.
++
++### 8.4 Multiplicity applies to AI proposals
++
++Every tested AI proposal enters the multiplicity ledger.
++
++If ten hypotheses were proposed and tested, the final scientific record must not present the surviving one as if it were the only attempt.
++
++### 8.5 Mandatory LLM ablation
++
++Every Genesis evaluation includes a matched arm where LLM workers are replaced by a non-LLM proposer such as:
++
++- grammar enumeration;
++- random valid proposals;
++- a fixed heuristic;
++- BO/search-only proposals where applicable.
++
++If performance is unchanged, the LLM is decoration.
++
++If performance holds on historical tasks but collapses on synthetic/trap worlds, the likely gain is memory rather than general reasoning.
++
++---
++
++## 9. Port-based universal mechanism representation
++
++The preferred generic mechanism grammar is a port-based representation inspired by bond graphs / port-Hamiltonian structure.
++
++Domains provide:
++
++- port types;
++- admissible effort/flow variables;
++- constitutive laws;
++- storage elements;
++- dissipation elements;
++- transformers/gyrators or equivalent converters;
++- conservation constraints;
++- units and applicability.
++
++The generic Mind searches **graph structure + admissible parameters**, not answer names.
++
++Expected benefits:
++
++1. a canonical mechanism digest;
++2. energy/flow conservation checks by construction where applicable;
++3. structural cross-domain analogy without LLM storytelling;
++4. a concrete definition of mechanism distance/equivalence;
++5. one representation for G1–G4 mechanism tasks;
++6. domain packs that add semantics without changing generic reasoning code.
++
++Cross-domain analogy remains a capability, but it is implemented as **structural mapping over typed mechanism graphs**, not as a standalone LLM analogy engine.
++
++---
++
++## 10. Genesis-lite on Blindfold
++
++Genesis-lite is the first measurement harness and comes **before** advanced cognition.
++
++It should extend/reuse Blindfold rather than build a second benchmark authority.
++
++### 10.1 Mandatory anti-leakage controls
++
++Every benchmark class must use, where applicable:
++
++- one shared primitive library frozen before task authoring;
++- frozen Mind code digest before hidden tasks are revealed;
++- evaluator code outside the Mind/Core authority being evaluated;
++- third-party task authoring for held-out evaluation;
++- network/search isolation;
++- frozen dependency/environment manifest;
++- hidden evaluator answer key;
++- immutable event log;
++- equal-budget baselines;
++- LLM-ablation/model-swap arms;
++- renamed/paraphrased task variants;
++- transformed/synthetic universes;
++- anti-historical trap worlds.
++
++### 10.2 Anti-historical trap worlds
++
++A trap world preserves the high-level objective but changes admissible properties/relationships such that the familiar textbook answer is wrong.
++
++A system that returns the historical answer in the trap world fails the reasoning test.
++
++### 10.3 Representation-circularity control
++
++The benchmark author must not tailor the primitive set to each answer.
++
++A task does not count as meaningful discovery if an equal-budget enumerative/random baseline succeeds because the representation already narrows the solution to the historical mechanism.
++
++### 10.4 Statistical floor
++
++Before reporting a discovery/refusal rate:
++
++- use **at least 30 generated instances per benchmark class per domain** for a formal rate claim;
++- compare policies over **at least 20 seeds** where stochastic search is material;
++- report confidence intervals;
++- report the equal-budget baseline for every task/class, not only selected wins.
++
++Small smoke tests may exist below this floor but cannot support a maturity claim.
++
++---
++
++## 11. Benchmark families
++
++### G0 — Search sanity
++
++Small analytically/numerically checkable spaces.
++
++Goal: prove logging, execution, scoring and replay.
++
++### G1 — Mechanism recovery
++
++Recover a functionally equivalent mechanism from admissible primitives without target names/topology.
++
++Mechanism equivalence must be computed from the canonical mechanism representation, not an LLM judgement.
++
++### G2 — Coupled mechanism recovery
++
++Compose two or more physical domains with correct interface semantics.
++
++Success requires coupled verification, not merely two independent successful simulations.
++
++### G3 — Competing-mechanism falsification
++
++Include plausible but wrong rival mechanisms and require explicit falsification/refusal.
++
++### G4 — Anonymous primitive selection
++
++Select useful primitives from a bounded neutral library using allowed properties only.
++
++Report:
++
++- selection efficiency;
++- false elimination;
++- invalid survivor rate;
++- compute cost.
++
++### G5 — Synthetic / transformed universes
++
++Change names, constants, scales and/or admissible relationships while preserving a hidden solvable structure.
++
++### G6 — No-solution / insufficient-evidence
++
++Correct output may be `REFUSED` or `INSUFFICIENT_EVIDENCE`.
++
++A system that always returns a candidate fails.
++
++### Historical tasks
++
++Historical rediscovery remains useful as a demo and pipeline sanity check, but never as the primary evidence for reasoning because pretrained models and development agents may already know the answer.
++
++---
++
++## 12. Scoring
++
++Genesis reports a measurement vector, not one opaque score.
++
++| Metric | Meaning |
++|---|---|
++| Discovery success | Hidden mechanism recovered under the preregistered equivalence rule |
++| Correct refusal | No-solution / insufficient-evidence cases refused correctly |
++| Proper prediction score | Quality of pre-result predictive distributions |
++| Calibration | Stated confidence vs empirical hit rate |
++| Sharpness | Informativeness of calibrated predictions |
++| Information gain | Evidence gained per experiment/provider call |
++| Baseline lift | Improvement over equal-budget baseline |
++| LLM ablation lift | Improvement attributable to AI proposer rather than memory/decorative text |
++| Invalidation precision | Invalidated nodes that truly depended on the broken assumption |
++| Invalidation recall | True dependents that were correctly invalidated |
++| Preserved-work rate | Unaffected valid evidence/results retained |
++| Falsification quality | Wrong candidates rejected for valid scientific reasons |
++| False-elimination rate | Viable candidates incorrectly removed |
++| Invalid-survivor rate | Invalid candidates incorrectly retained |
++| Mechanism distance | Canonical structural/functional distance to hidden evaluator target |
++| Solver-call count | Provider executions |
++| Compute cost | Measured CPU/GPU/wall-clock consumption |
++| Time to first feasible | Anytime usefulness |
++| Time to shortlist | Search usefulness |
++| Replay success | Evidence bundle reproduces the assessed result |
++| Leakage audit | PASS / FAIL / UNKNOWN |
++| Evidence completeness | Required identities/provenance/receipts present |
++
++No run passes if replay or leakage control fails, even if the final answer resembles the hidden target.
++
++---
++
++## 13. Multiphysics intelligence
++
++FORGE already has execution-level coupling primitives; Genesis should extend them instead of creating a new parallel coupling authority.
++
++The generic multiphysics layer must eventually support:
++
++### 13.1 Coupling stability and strength
++
++Estimate whether partitioned coupling is likely to be stable and whether explicit, implicit, quasi-Newton or monolithic treatment is required.
++
++Relevant signals may include fixed-point spectral behavior, stiffness ratios and added-mass-like coupling strength where scientifically appropriate.
++
++### 13.2 Strong-coupling path
++
++Aitken relaxation is not sufficient for every strongly coupled problem.
++
++Provide a qualified path for stronger algorithms such as IQN-ILS and, where a provider stack supports it, a monolithic option.
++
++### 13.3 Coupled-level verification
++
++Single-physics verification does not verify the coupling.
++
++Qualification should include, where suitable:
++
++- manufactured/analytic coupled cases;
++- coupled-window convergence;
++- code-to-code comparison at the coupled level;
++- interface conservation closure.
++
++### 13.4 Error transport across interfaces
++
++Field mapping/transfer error is an uncertainty channel.
++
++It must flow into the coupled uncertainty budget rather than remain only a diagnostic.
++
++### 13.5 Consistent constitutive state
++
++Coupled domains must evaluate material/constitutive properties at a consistent thermodynamic/mechanical/compositional state.
++
++### 13.6 Instability and regime detection
++
++The Red Team / falsification space should include regime transitions such as instability, bifurcation or runaway behavior where the modeled domain permits them.
++
++### 13.7 Geometry–physics relevance
++
++A geometry or component change must invalidate only the physics whose applicability/input identity changed.
++
++This plugs into the same justification graph used by Mind replanning.
++
++### 13.8 Certified reduced-order models
++
++Adaptive fidelity should prefer ROM/surrogate paths with qualified error bounds rather than heuristic cheap models when such qualification is available.
++
++### 13.9 DAE initialization / index handling
++
++Modelica/FMU-style couplings must qualify consistent initialization and relevant index-reduction behavior.
++
++### 13.10 Coupled identifiability
++
++Calibration across coupled domains must detect when parameters are confounded across subsystems.
++
++---
++
++## 14. Compute architecture — build when measurement requires it
++
++Do not build a bespoke scheduler as a moat.
++
++The preferred execution architecture is:
++
++1. **content-addressed task graph** — provider execution identity determines scientifically valid reuse;
++2. **process workers per provider environment** — avoid GIL-bound thread-only execution;
++3. **existing schedulers** — Ray/Dask/Parsl locally where appropriate; Slurm-compatible submission on HPC;
++4. **vectorized cheap tiers** — NumPy/JAX/batched surrogate inference before GPU-specific orchestration;
++5. **telemetry as provenance** — wall time, utilization, calls, cache hits, promotions;
++6. **anytime outputs** — provisional search rankings remain explicitly non-validation evidence.
++
++### 14.1 Performance benchmark ladder
++
++| Campaign size | Primary purpose |
++|---:|---|
++| 10 | establish measured per-tier cost, variance and failure rate |
++| 100 | measure strong scaling, cache correctness and worker efficiency |
++| 1,000 | measure funnel regret, false elimination and time-to-feasible vs ground truth/equal-budget baseline |
++| 10,000 | measure authority-layer scaling, memory/ledger growth and funnel economics |
++
++GPU scheduling comes only after a real accelerator-suitable workload exists.
++
++Large CFD/PDE candidate counts should be reduced by the funnel to a small promoted subset rather than brute-forced.
++
++---
++
++## 15. Intelligent design
++
++The first intelligent-design milestone should be **catalog-constrained synthesis + bounded continuous parameters**, not free-form geometric creativity.
++
++For a drone-class example, a first version may reason over:
++
++- motor;
++- propeller;
++- battery;
++- ESC;
++- mass/balance constraints;
++- thermal/electrical/mechanical compatibility;
++- a small set of continuous design variables.
++
++Requirements:
++
++- semantic components/interfaces;
++- typed ports;
++- constraint propagation;
++- design-decision lineage;
++- reserved-interface/design margins where justified;
++- local replacement/editing;
++- impact analysis through the justification graph;
++- recompute only scientifically affected results.
++
++Free-form/parametric geometry generation becomes a later milestone after at least one geometry-driven coupled case executes and validates the relevance/invalidation path.
++
++---
++
++## 16. Lightweight cognition policy
++
++Capabilities are retained as **semantics**, not necessarily as standalone subsystems.
++
++### Scientific imagination
++
++Keep as `PROPOSED/SPECULATIVE` hypotheses generated through ordinary proposer contracts.
++
++Speculation never inherits support.
++
++### Cross-domain analogy
++
++Keep as structural proposal over port/mechanism graphs.
++
++No standalone LLM analogy engine is required.
++
++### Causal / counterfactual reasoning
++
++Use typed intervention hypotheses/actions and discriminating runs.
++
++A model-internal intervention is not automatically a world-causal claim.
++
++### Unknown-unknown detection
++
++Treat primarily as model criticism / search-space adequacy tests, not a magical detector.
++
++### Evidence conflict
++
++Contradiction should generate discriminating experiments when possible; otherwise the state remains unresolved.
++
++### Meta-learning
++
++Postpone strategy meta-learning until there is a sufficiently large campaign history (target: at least 50 comparable recorded campaigns). Before that, it is likely to learn benchmark quirks.
++
++---
++
++## 17. Graduation by reasoning structure
++
++Counting disciplines is the wrong primary axis.
++
++A domain-general claim requires the **same frozen Mind** to succeed across different reasoning structures and then transfer to a held-out domain with no generic-code change.
++
++Recommended sequence:
++
++| Reasoning structure | Suggested domain |
++|---|---|
++| Law / scaling discovery | thermal / heat transfer in transformed universes |
++| Mechanism composition | mechanics + lumped electromechanics via port networks |
++| Feedback / stability | control and dynamical systems |
++| Kinetics / networks | chemical kinetics and bounded bio-kinetics |
++| Inverse problem / identification | battery equivalent-circuit/degradation tasks |
++| Coupled multiphysics | electro-thermal or thermo-structural |
++| Held-out transfer | third-party domain chosen after Mind freeze |
++
++Requirements:
++
++- domain pack only for the held-out domain;
++- zero target-specific reasoning path;
++- zero-line diff to generic Mind code for the graduation attempt;
++- benchmark authored/revealed after Mind digest freeze.
++
++### 17.1 Therapeutics
++
++Therapeutic Hypothesis Assurance remains a possible later product, not a Genesis-core graduation requirement.
++
++Clinical/therapeutic evidence needs evidence semantics distinct from deterministic/mechanistic solver evidence. Start biology in Genesis with bounded, mechanistically checkable bio-kinetics.
++
++### 17.2 Materials / chemistry
++
++Use as a strengthening domain after the core reasoning structures are measurable.
++
++### 17.3 Nuclear
++
++Remove nuclear-energy rediscovery from the Genesis roadmap. It adds little new reasoning structure relative to thermal/transport, has maximal historical-memory contamination and widens the safety/diligence surface without a clear benchmark gain.
++
++---
++
++## 18. Implementation sequence
++
++Each step has an exit gate. Do not advance merely because code exists.
++
++### Step 0 — Land the Trust lane
++
++- merge/resolve the active Trust/authority work;
++- recertify against the intended HEAD;
++- record the battery decision honestly, whether met or not;
++- do not let a blocked battery claim freeze all Mind work indefinitely.
++
++**Gate:** certificate/authority state matches the intended code state; unresolved failures are explicitly classified.
++
++### Step 1 — Genesis-lite on Blindfold
++
++- freeze scoring;
++- freeze baseline budgets;
++- add trap-world and leakage controls;
++- place evaluator scoring outside the Mind/Core authority being evaluated;
++- run baseline seeds.
++
++**Gate:** baseline distributions are known over at least 20 seeds; benchmark identity/preregistration is frozen.
++
++### Step 2 — Minimal Mind loop
++
++Implement only what the closed loop requires:
++
++- active competing hypotheses;
++- calibrated OutcomeModel;
++- probabilistic/explicit belief;
++- proposer boundary;
++- VoI/action selection;
++- falsification;
++- stopping.
++
++**Gate:** the Mind beats the careful equal-budget baseline with confidence intervals and its predictions are calibrated by a proper scoring rule.
++
++### Step 3 — One justification graph
++
++Unify assumption/evidence/plan/run/design/coupling dependency and staleness semantics.
++
++**Gate:** injected-wrong-assumption tests meet preregistered invalidation precision/recall and preserve unaffected work.
++
++### Step 4 — Port-based mechanisms
++
++Implement canonical mechanism grammar/digest and mechanism-level benchmark classes.
++
++**Gate:** G1/G3/G4-style tasks beat equal-budget baselines and anti-historical trap worlds are not answered by historical recall.
++
++### Step 5 — Transfer + measured compute
++
++- add a distinct reasoning domain through a pack;
++- add process-worker execution;
++- content-addressed result reuse with proof;
++- telemetry;
++- measure scaling from 10 → 1,000 before larger claims.
++
++**Gate:** new domain requires no Mind-specific patch; measured scaling and cache correctness are reported.
++
++### Step 6 — Demo + graduation
++
++Run:
++
++- a narrow real engineering demo, preferably refusal/correction of an infeasible design requirement using real provider executions and stated uncertainty;
++- the reasoning-structure suite;
++- a third-party held-out domain after Mind freeze.
++
++**Gate:** held-out domain passes without modifying generic Mind code; evidence bundle is replayable and externally auditable.
++
++---
++
++## 19. Ablation gate
++
++A cognition capability is not accepted because it sounds intelligent.
++
++Before merging a capability into the required Mind core:
++
++1. preregister the benchmark slice it should improve;
++2. run the full system;
++3. run the same system with that capability removed/replaced;
++4. keep budget and task identities matched;
++5. report effect size + confidence interval.
++
++**Merge rule:** the capability becomes required only if its removal causes a meaningful preregistered degradation without creating a new leakage path or authority violation.
++
++This gate applies to:
++
++- AI proposer assistance;
++- analogy;
++- causal/intervention planning;
++- search-space adequacy checks;
++- adaptive fidelity policies;
++- discrepancy-directed testing;
++- strategy reuse;
++- any future “advanced cognition” feature.
++
++---
++
++## 20. Evidence model
++
++Every Genesis run emits an immutable evidence bundle containing at least:
++
++```text
++benchmark_id
++mind_code_digest
++evaluator_digest
++preregistration_digest
++primitive_library_digest
++environment_digest
++allowed_knowledge_digest
++forbidden_knowledge_contract
++objective
++seed / determinism settings
++solver/provider versions
++hypothesis event log
++prediction records
++proper-score records
++experiment event log
++candidate lineage
++justification graph references
++belief revisions
++invalidation / replanning events
++rejection reasons
++resource consumption
++baseline arm identity
++LLM-ablation arm identity
++final candidate / refusal
++validation checks
++uncertainty state
++applicability state
++leakage audit
++replay receipt
++final benchmark verdict
++```
++
++Unknown uncertainty remains unknown.
++
++Failed runs, rejected hypotheses and abandoned branches remain part of the record.
++
++---
++
++## 21. Evidence-preserving cache rule
++
++Scientifically valid reuse should be proven, not globally prohibited.
++
++For each provider/cacheable execution class, add a property test that:
++
++> two executions with the same complete scientific execution identity produce equivalent results within the declared deterministic/tolerance contract.
++
++Only then may that identity license reuse.
++
++A cache hit must preserve provenance showing which original execution produced the reused result.
++
++---
++
++## 22. Promotion gates
++
++### Gate A — Runtime integrity
++
++- immutable event log;
++- reproducible environment;
++- correct provenance;
++- replay succeeds.
++
++### Gate B — Baseline competence
++
++- beats equal-budget baseline with uncertainty reported;
++- result is not attributable only to representation narrowing.
++
++### Gate C — Prediction quality
++
++- predictive distributions are preregistered before outcomes;
++- calibration and proper score meet the declared threshold.
++
++### Gate D — Falsification + refusal
++
++- invalid candidates are rejected for explicit reasons;
++- no unsupported success verdict;
++- no-solution/insufficient-evidence controls are handled correctly.
++
++### Gate E — Leakage resistance
++
++- synthetic/transformed tasks;
++- anti-historical traps;
++- frozen shared primitive library;
++- LLM ablation/model swap;
++- evaluator separated from the Mind;
++- task authoring/reveal protocol recorded.
++
++### Gate F — Replanning correctness
++
++- injected invalid assumptions produce precise dependency invalidation;
++- unaffected evidence survives.
++
++### Gate G — Cross-domain transfer
++
++- a new domain is added via a domain pack only;
++- generic Mind code remains frozen.
++
++### Gate H — Trust integration
++
++- applicability, uncertainty, provenance and replay remain governed by normal FORGE evidence semantics;
++- benchmark success cannot self-promote into a scientific claim.
++
++---
++
++## 23. Failure rules
++
++Do not:
++
++- loosen thresholds after seeing failure;
++- expand the compute budget mid-run;
++- tailor primitives after seeing the hidden target;
++- delete failed hypotheses;
++- silently prune rivals;
++- convert missing uncertainty to zero;
++- let an LLM provide planner-authoritative priors/separations/thresholds;
++- let model disagreement masquerade as uncertainty;
++- silently patch a downstream design after an upstream assumption fails;
++- discard unrelated valid evidence during replanning;
++- call historical recovery “novel discovery”;
++- use internal FORGE trust code as the sole benchmark grader.
++
++A defective task is marked `INVALID_BENCHMARK`, assigned a new identity after correction, and rerun from preregistration.
++
++---
++
++## 24. Genesis v0.1 — trimmed definition of done
++
++Genesis v0.1 is deliberately smaller than the full roadmap.
++
++It is complete when:
++
++- [ ] benchmark schema/event model is frozen;
++- [ ] preregistration is immutable and hash-addressed;
++- [ ] evaluator scoring is separated from the Mind/Core authority being evaluated;
++- [ ] Blindfold/Genesis-lite baselines are recorded over ≥20 seeds;
++- [ ] one generic Minimal Mind loop runs end-to-end;
++- [ ] the Mind emits predictive distributions before experiments;
++- [ ] predictions are scored with a proper scoring rule;
++- [ ] a production OutcomeModel exists for the v0.1 task family;
++- [ ] competing hypotheses are explicit;
++- [ ] no LLM-origin numerical prior/weight/separation/threshold can steer authority;
++- [ ] every planner-used number cites an execution/surrogate record;
++- [ ] one G1 mechanism-recovery task runs end-to-end;
++- [ ] one G3 competing-mechanism falsification task runs end-to-end;
++- [ ] one G4 anonymous-primitive task runs end-to-end;
++- [ ] one G5 synthetic/transformed task runs end-to-end;
++- [ ] one G6 no-solution/insufficient-evidence task runs end-to-end;
++- [ ] one anti-historical trap task is included;
++- [ ] one deliberate wrong-early-assumption task demonstrates dependency-aware recovery;
++- [ ] invalidation precision/recall and preserved-work rate are reported;
++- [ ] an equal-budget baseline exists for every scored task;
++- [ ] an LLM-ablation arm exists;
++- [ ] replay succeeds;
++- [ ] leakage audit is recorded;
++- [ ] failed hypotheses and negative evidence remain in the ledger;
++- [ ] no target-specific rescue or reasoning path exists;
++- [ ] final claims stay at the maturity actually demonstrated.
++
++Genesis v0.1 does **not** require:
++
++- GPU/HPC scheduling;
++- meta-learning;
++- a standalone imagination subsystem;
++- a standalone analogy engine;
++- full multiphysics graduation;
++- free-form generative geometry;
++- materials/chemistry graduation;
++- therapeutics;
++- frontier historical tasks;
++- five-domain graduation.
++
++Those are later capabilities only if measurement shows they are needed.
++
++---
++
++## 25. Deferred backlog
++
++Postpone until the corresponding prerequisite is real:
++
++- GPU scheduling — until accelerator-suitable workloads exist;
++- strategy meta-learning — until ≥50 comparable campaigns exist;
++- full multiscale reasoning — until more than one task needs it;
++- full free-form generative geometry — until geometry-driven coupling is executable;
++- therapeutics assurance — until biological/clinical evidence semantics are independently designed and validated;
++- materials/chemistry as a strengthening domain — until the core loop transfers;
++- frontier historical rediscovery — historical memory makes it weak evidence.
++
++---
++
++## 26. External evaluation
++
++Externalize Blindfold/Genesis early.
++
++A strong external-evaluation protocol is:
++
++1. outside party authors hidden tasks;
++2. FORGE Mind code digest is frozen;
++3. evaluator material remains outside development sessions;
++4. outside proposer or outside task set runs against the escrow;
++5. scoring is generated by independent evaluator code;
++6. the resulting score/evidence bundle is published or shared for technical diligence.
++
++One credible external score is more valuable than many self-authored demos.
++
++---
++
++## 27. Commercial interpretation
++
++The near-term demo should be narrow, real and auditable.
++
++A strong engineering demo is:
++
++> FORGE refuses an infeasible drone/system requirement, identifies the binding constraint, proposes a corrected admissible specification, executes real providers, and reports uncertainty, applicability and replayable evidence.
++
++That demonstrates the distinctive combination of:
++
++- scientific search;
++- refusal;
++- explanation;
++- provider execution;
++- evidence-bound authority.
++
++Blindfold/Genesis may also stand alone as assurance/evaluation infrastructure for AI-for-science systems.
++
++---
++
++## 28. Final program principle
++
++FORGE should not try to prove intelligence by accumulating named capabilities.
++
++The program succeeds when the same frozen scientific loop:
++
++- makes calibrated predictions;
++- chooses informative actions;
++- falsifies wrong hypotheses;
++- revises belief;
++- invalidates dependencies correctly;
++- preserves unaffected evidence;
++- transfers across reasoning structures;
++- refuses when evidence is insufficient;
++- beats matched baselines;
++- survives LLM ablation and anti-memory controls;
++- and produces externally auditable evidence.
++
++The central gap to close is **discovery credibility**, not feature count.
++
++> **Close it with measurement, not with more capabilities.**

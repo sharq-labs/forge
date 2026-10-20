@@ -8769,3 +8769,261 @@ Owner authorized reviewed publication/merges excluding preserve/* and wip/*. Pub
 Documentation repair PR176 at1e109c66: targeted capability tests28passed; changed gate217passed/2failed versus pristine origin/main216passed/3failed over identical219nodes, zero new failing nodes. Final corrected command, environment and failures are recorded in final-docs-gate-command.json/final-docs-gate.txt and exact-failure-comparison.json. Intermediate --list call also executed tests and produced18temp setup errors; recorded in list-run-receipt.json, not suppressed. Domain-data trial12passed/1failed (test_repository_scan_is_current), trial merge aborted. No scientific source fixes performed during publication.
 
 Remote main unchanged at eb113ab7. No remote merge attempted: PR176 has no approving review; repository policy requires>=1. GitHub classifier jobs failed before tests; logs unavailable, cause UNKNOWN. Live facts in github-status.json. Source branches remain blocked by exact conflicts, independent scientific findings and applicable certification/OD3. Full assurance, formal tier and freeze NOT RUN. Publication is not integration, certification or scientific validation.
+## 2026-10-20 — Restore ACTIVE_PLAN's Active-epic line (main eb113ab7 regression)
+
+Branch `fix/active-plan-epic-line` from `origin/main` `eb113ab7`. PR #173 inserted its "Current bounded task — FAST
+runtime profiling" section above the "Active epic: ..." paragraph, so
+`tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic` (reads line 3) failed
+on main. The paragraph is moved back directly under `# Active Plan`; the FAST section follows it unchanged. One-file,
+byte-for-byte move (LF only); no other text changed. The same fix exists on the local Genesis-lite branch
+`feat/genesis-lite-v03-amendment-draft` (`3bab1715`); this branch carries it for main alone.
+
+- `PYTHONPATH=<worktree>/src;<worktree> TMPDIR=D:/tmp/aplan-fix .venv/Scripts/python.exe -m pytest
+  tests/test_capability_completion.py -q -p no:cacheprovider --basetemp=D:/tmp/aplan-fix/bt`: 28 passed (Windows,
+  repo venv).
+- Same environment, `.venv/Scripts/python.exe tools/forge_check.py --regression --workers 4`: 279 passed, exit 0.
+- FAST / SCIENTIFIC / FULL tiers and recertification: NOT RUN (documentation-only change). Not pushed; no PR.
+
+## 2026-10-20 — Reviewed branch publication and active-epic repair
+
+Owner requested publishing all work and merging reviewed unmerged branches, explicitly excluding preserve/* and wip/*. This supersedes older no-push/no-merge instructions for this publication task only; it does not authorize formal measurement, freeze or waive scientific/certification gates. Origin main was eb113ab7e74580d47e6aa1210d02e45a49124724. Isolated integration worktree; shared checkouts untouched.
+
+Merged fix/active-plan-epic-line locally: exact paragraph move to restore the ledger epic to line3. No production/test/certification bytes changed. Runtime for checks: repository Windows venv, Python 3.14.2. These local results do not substitute for 3.11/3.12 scientific assurance.
+
+Cwd: `C:\Users\dev_kaeem\.codex\worktrees\review-unmerged-work\wonderful-gould-1c576f`. Environment: `{"PYTEST_ADDOPTS": "--basetemp=D:/tmp/merge-review-docs/bt", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f", "TMPDIR": "D:/tmp/merge-review-docs"}`.
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest tests/test_capability_completion.py -q -p no:cacheprovider`
+
+Exit 0; elapsed 0.663630299968645 seconds.
+
+Cwd: `C:\Users\dev_kaeem\.codex\worktrees\review-unmerged-work\wonderful-gould-1c576f`. Environment: `{"PYTEST_ADDOPTS": "--basetemp=D:/tmp/merge-review-docs/bt", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f", "TMPDIR": "D:/tmp/merge-review-docs"}`.
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main`
+
+Exit 1; elapsed 21.811875500017777 seconds.
+
+Cwd: `C:\Users\dev_kaeem\.codex\worktrees\merge-main-control\wonderful-gould-1c576f`. Environment: `{"PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f", "TMPDIR": "D:/tmp/merge-main-control"}`.
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest -q tests/test_repository_architecture.py tests/test_core_api_layering.py tests/test_scientific_regression_manifest.py tests/test_forge_check.py tests/test_agent_workflow_contract.py tests/test_capability_completion.py benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py benchmarks/battery_1rc_crosscell/tests/test_battery_1rc_crosscell.py benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py tests/foundations/test_v2_blindfold.py tests/test_multiphysics_window_control.py --basetemp=D:/tmp/merge-main-control/bt`
+
+Exit 1; elapsed 13.028979999944568 seconds.
+
+Targeted:28 passed. Changed-file gate:2 failed,217 passed. Exact same selected node set against pristine eb113ab7:3 failed,216 passed. New failing nodes: NONE. Removed failing node: tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic. Common failing nodes:
+
+- tests/foundations/test_v2_blindfold.py::test_the_subprocess_escrow_keeps_its_secrets_in_the_child (child interpreter cannot import engcore.blindfold in this Windows environment).
+- tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable (7 subdivisions vs expected8).
+
+The whole gate is NOT green; no baseline failure was suppressed. Full tiers and recertification NOT RUN for this documentation-only repair.
+
+Publication: complete current Mind/demo/diagnostic/CP2 work preserved byte-identically (251 files) in 1b90f94c on codex/mind-development-evidence-2026-10-20, draft PR175 stacked on PR174. CP2 remains94failed/28passed, no merge-readiness claim. Original pinned logs/patch evidence contain whitespace; authored-source diff check passes, historical bytes were not rewritten. Published local-only Mind, M1D, OD-CAP-0 and active-plan-fix branch tips without force-push.
+
+Branch review: legacy Genesis/planning documents must not replace strengthened contracts; M1D needs a port preserving current conservation semantics; OD-CAP-0 test edits require current applicable gates; Genesis isolation and OD3 remain blockers. Old certificate-only tips must not replace the current certificate. Main-equivalent patches and nested branch histories were identified separately. Existing unrelated dirty worktrees were inventoried and left untouched.
+
+Trial merge of claude/domain-real-data was aborted after its tests:1failed/12passed; failing node benchmarks/domain_real_data/tests/test_domain_real_data.py::test_repository_scan_is_current. Its historical scan differs from current tree; no historical evidence was regenerated to silence it. Exact command:
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest benchmarks/domain_real_data/tests/test_domain_real_data.py -q -p no:cacheprovider --basetemp=D:/tmp/merge-review-domain/bt`
+
+Cwd `C:\Users\dev_kaeem\.codex\worktrees\review-unmerged-work\wonderful-gould-1c576f`; environment `{"PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f", "TMPDIR": "D:/tmp/merge-review-domain"}`; exit1. Read-only independent scientific review returned CHANGES REQUIRED for the combined scientific branches; no unreviewed wholesale merge. Branch inventory, exact receipts and conflict previews are retained in the publication audit package.
+
+Follow-up verification on documentation head d293fa2e: an intended selection listing used `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main --list`. This flag still executes pytest; TMPDIR/basetemp were not set in that invocation. Exit1:2failed,199passed,18setup PermissionErrors in12.93s. This was an invocation error, not discarded evidence. Exact failing/error node names are preserved in the publication audit list-run-lastfailed.json; no environment permissions were changed.
+
+Corrected repeat: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main`, environment `{"PYTEST_ADDOPTS": "--basetemp=D:/tmp/merge-review-final/bt", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f\\src;C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f", "TMPDIR": "D:/tmp/merge-review-final"}`, same cwd as above. Exit1:2failed/217passed/0errors in10.42s. Exactly the two baseline failing nodes listed above; no new failures. Authored documentation diff check passed. This final addition records that execution only; no code/tests changed.
+
+
+## 2026-10-20 - PR176 merged; reconcile already-integrated branch histories
+
+Owner explicitly approved PR176 in chat; merged via GitHub merge-commit API with expected head1e109c667018be219f6da1df8bc7049caa11ebb9. Returned merge SHA3213bb35b2e222c5eddd86012aa8e179cee6c4a6; fetched origin/main matches. No test or OD3 waiver.
+
+The complete27-line historical section added by docs/main-check-2026-10-13 is byte-present in main PROGRESS (Python substring assertion executed). git cherry origin/main origin/codex/critical-production-closure reports four equivalent commits and no unique commit; origin/feat/multiphysics-lifecycle-foundation reports one equivalent/no unique. Merged these three histories individually. Conflicting historical PROGRESS/MCP files were retained at current-main bytes only after those equivalence checks. git diff --cached --exit-code executed after each resolution (exit0); the final tree at93c6f21 equals3213bb35's tree exactly. No source, certificate, workflow or old evidence changed. These are ancestry reconciliations, not newly implemented capabilities.
+
+Domain-data trial at3213bb35+a80b4df5: exact command C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest benchmarks/domain_real_data/tests/test_domain_real_data.py -q -p no:cacheprovider --basetemp=D:/tmp/domain-reconcile-red; PYTHONPATH=checkout/src;checkout, TMPDIR=D:/tmp. Result1failed12passed0.45s, exit1, test_repository_scan_is_current. Historical tree replay of a80b4df5 reconstructs the old scan exactly; its SHA256 remains a26fe3c3b9fd7bc5b0cb6f3d158dcd4997f27ec977ab8275e1a7db2e027768c5. Independent review identified prefix-derived false provenance for new files; do not simply regenerate the old snapshot. Domain branch not merged.
+
+Verification on reconciliation tree93c6f21 plus documentation: first targeted command `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest tests/test_capability_completion.py -q -p no:cacheprovider`, PYTHONPATH=checkout/src;checkout, TMPDIR=D:/tmp/history-reconcile, PYTEST_ADDOPTS=--basetemp=D:/tmp/history-reconcile/bt, returned27passed/1setup error0.30s: test_a_superseded_schema_is_refused_not_read, missing parent temp directory (WinError3). Created that directory only, then executed `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main` with the same environment:217passed/2failed10.92s, exit1. Exact failed nodes: tests/foundations/test_v2_blindfold.py::test_the_subprocess_escrow_keeps_its_secrets_in_the_child and tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable. Same219node set and two failures as accepted PR176; zero new failures, zero removed failures. All28capability tests passed within corrected gate. Full suites and OD3 NOT RUN; no green-gate claim.
+
+
+## 2026-10-20 - Domain inventory reconciliation: red first, provenance boundary repaired
+
+Base3213bb35 (approved PR176 merged), trial merge a80b4df5. Original domain suite command: C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest benchmarks/domain_real_data/tests/test_domain_real_data.py -q -p no:cacheprovider --basetemp=D:/tmp/domain-reconcile-red. PYTHONPATH=checkout/src;checkout; TMPDIR=D:/tmp. Result1failed12passed0.45s exit1, test_repository_scan_is_current.
+
+Added six boundary regressions, then executed same interpreter -m pytest benchmarks/domain_real_data/tests/test_inventory_boundary.py -q -p no:cacheprovider --basetemp=D:/tmp/domain-boundary-red. Result6failed0.10s exit1: three new-path cases inherited DERIVED/REAL_MEASURED, altered measurement inherited REAL_MEASURED, historical replay/identity API absent. These were real red runs before implementation.
+
+Implementation binds archival commit/tree/scanner/report; replays original scan without overwriting it. Live classification no longer grants origin from a prefix to new or changed data. Current coverage/measurement tests read the live inventory. Original dataset/report bytes preserved. Post-change command: same interpreter -m pytest benchmarks/domain_real_data/tests -q -p no:cacheprovider --basetemp=D:/tmp/domain-boundary-fixed; same environment. Result18passed2failed1.83s exit1. Remaining failures: test_synthetic_data_is_never_called_measured (433unknowns) and test_current_repository_inventory_has_no_unreviewed_provenance. Unknowns are not relabeled just to pass. Full assurance/OD3/formal runs NOT RUN. Merge remains BLOCKED pending explicit current provenance reconciliation. Receipts: shared side-session-notes domain-reconcile-2026-10-20/{red,boundary-red,fixed}.{json,txt}; live-inventory.json enumerates exact candidates.
+
+Owner explicitly approved PR177; merged through GitHub with expected headc85f3f7708a8cfaac2ce25a871b45279f7b30dd5. Remote merge31192784a946a3f379422da11d8a2bcf867f62ce fetched. The three already-present branch histories are now ancestors of main. No scientific source changed in that PR.
+
+Owner selected full provenance audit of433files, not a narrower inventory scope. Two independent read-only slice reviews covered245benchmark and157other candidates; parent examined31measurement/reduction/flagship records. Exact declarations bind433artifacts:400DERIVED,22SYNTHETIC,8REFERENCE_ONLY,3REAL_MEASURED. Secondary157-file review-set digest independently matched670c92e9d91935c300ef374c32f63e533170190e16da47ef84cf4b43ff3ef97e. Chen2020 raw SHA256/MD5/length checked against existing manifest; reduced battery role hashes and matching prereg identities checked (closure usesv2). No upstream fetch or raw-data regeneration.
+
+Reviewer Unicode and assume-unchanged counterexamples: command same repository interpreter -m pytest benchmarks/domain_real_data/tests/test_inventory_boundary.py -q -p no:cacheprovider --basetemp=D:/tmp/domain-review-red returned2failed7passed1.28s. Corrected NUL path handling, raw-byte identity and pinned classification source; full domain then21passed2failed6.84s, with433coverage unknowns still explicit. Added5declaration-binding tests: same interpreter -m pytest benchmarks/domain_real_data/tests/test_provenance_declarations.py -q -p no:cacheprovider --basetemp=D:/tmp/domain-declarations-red returned5failed0.10s (missing API); implemented explicit path/artifact/source digest checks, duplicate refusal and required dataset-record references; --basetemp=D:/tmp/domain-declarations-fixed returned5passed0.05s. Added positive historical-control and immutable archived-source test.
+
+After explicit433-file audit: C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest benchmarks/domain_real_data/tests -q -p no:cacheprovider --basetemp=D:/tmp/domain-audited; TMPDIR=D:/tmp; result30passed10.63s exit0. Captured commands/logs preserved as Markdown in docs/work/evidence/domain_inventory_reconciliation_2026_10_20/. Historical21non-code artifacts matched a80b4df5 byte-for-byte. No certificate, certified source, thresholds, formal Genesis run or candidate behavior changed.
+
+Pre-existing scientific finding from provenance review: benchmarks/battery_1rc_closure/evaluate.py::applicable_acceptance retains FAIL when out_of_domain>0. Existing test encodes that behavior. Origin declarations explicitly mark such rejection inadmissible as scientific contradiction; existing evidence bytes remain preserved. This audit does not repair or endorse that scientific acceptance rule.
+
+## 2026-10-20 - Domain provenance final review corrections
+
+Final review reproduced a Git-index/working-tree mismatch in artifact, current producer and review manifest: all3 regression cases failed before repair. Explicit declarations now require stage-0 regular-file identity and raw working bytes to agree, in addition to SHA256 bindings. Archived sources remain bound to their specified immutable Git object. Five locally authored analytical metadata records were corrected REFERENCE_ONLY->DERIVED after independent reviewer agreement; final433 counts405DERIVED22SYNTHETIC3REFERENCE_ONLY3REAL_MEASURED. Earlier400/8 counts above describe the superseded pre-review classification.
+
+The original FAST candidate remains unchanged at tree85b4c044ced35350e6cc583d0ca99821a82394ed (base3213bb35, pending domain merge). To preserve that running measurement, copied its exact index tree into local merge snapshotd5876407c02c4c409bc44f97445dac6247b4539b without changing the measured worktree or HEAD. Final fixes are isolated in codex/domain-inventory-reviewed-2026-10-20. Restored ACTIVE_PLAN historical UTF-8 bytes from main31192784 and retained current domain addition; preserved main's newer PR177 history in PROGRESS.
+
+External trial of the proposed patch: repository interpreter -m pytest D:/tmp/domain-index-trial/benchmarks/domain_real_data/tests -q -p no:cacheprovider --basetemp=D:/tmp/domain-index-trial-bt returned9passed1.70s. This was a copied scanner/test trial, not the integration gate. Final worktree's full domain suite then returned33passed13.00s, including all3 formerly failing staged-identity regressions.
+
+Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest C:/Users/dev_kaeem/AppData/Roaming/Claude/side-session-notes/local_dac3224f-3028-46a9-ab85-20d361143aa4/domain-reconcile-2026-10-20/test_staged_declarations.py -q -p no:cacheprovider --basetemp=D:/tmp/domain-index-red-recorded/bt`
+
+Cwd: `C:/Users/dev_kaeem/.codex/worktrees/review-unmerged-work/wonderful-gould-1c576f`; environment: `{"TMPDIR": "D:/tmp/domain-index-red-recorded", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\review-unmerged-work\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/review-unmerged-work/wonderful-gould-1c576f"}`. Exit 1; elapsed 1.664s. Full output: evidence/domain_inventory_reconciliation_2026_10_20/index-red-recorded.md.
+
+Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest benchmarks/domain_real_data/tests -q -p no:cacheprovider --basetemp=D:/tmp/domain-index-fixed/bt`
+
+Cwd: `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; environment: `{"TMPDIR": "D:/tmp/domain-index-fixed", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f"}`. Exit 0; elapsed 13.512s. Full output: evidence/domain_inventory_reconciliation_2026_10_20/index-fixed.md.
+
+Post-PR177 GitHub runs were read live at merge31192784: Tests39474579471 and Branch Policy39474579541 both failure. Scope/reproduce/layout/benchmark/tests-gate and branch-policy jobs expose no executed steps; downstream scientific/mutations/certificate-child/FAST jobs skipped. Cause remains UNVERIFIED; no CI-green or policy-enforcement claim. Local FAST candidate and pristine-main runs still in progress at this entry. No gate bypass, certified-source change, recertification, formal measurement or freeze.
+
+## 2026-10-20 - Domain PR178 full FAST comparison and review
+
+PR https://github.com/sharq-labs/forge/pull/178 published as DRAFT from measured source0047321df0522cbc78bb0a7160aace434699c093. Main control31192784a946a3f379422da11d8a2bcf867f62ce. Independent scientific review PASS (read-only),433 declarations checked;21 historical non-code artifacts byte-identical;43 changed paths at measured source, zero recertification triggers.
+
+The initial two sequential FAST runs were interrupted and cannot establish outcomes; raw partial logs and exact commands/exits retained externally, with interrupted-runs.md describing both. One brief baseline invocation omitted --dist loadfile and was stopped with no captured final result; corrected invocation below matches the final gate's scheduler. No test was excluded to obtain the final comparison.
+
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main --workers 4`
+  Cwd `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/domain-final-gate", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f", "PYTEST_ADDOPTS": "--basetemp=D:/tmp/domain-final-gate/bt"}`; exit1; elapsed509.451s. Summary:         assert run.returncode == 1 and "1 failed, 1 passed" in run.stdout  # the failure stays a failure; 185 failed, 11725 passed, 235 skipped, 74 warnings, 22 errors in 499.53s (0:08:19). Full node list in `final-changed-gate.md`.
+
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest -q -n 4 --dist loadfile -m not expensive --basetemp=D:/tmp/domain-main-loadfile/bt`
+  Cwd `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/domain-main-loadfile", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f"}`; exit1; elapsed431.538s. Summary:         assert run.returncode == 1 and "1 failed, 1 passed" in run.stdout  # the failure stays a failure; 185 failed, 11692 passed, 235 skipped, 74 warnings, 22 errors in 430.69s (0:07:10). Full node list in `main-fast-loadfile.md`.
+
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest --collect-only -q -m not expensive --basetemp=D:/tmp/final-collection/bt`
+  Cwd `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/final-collection", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f"}`; exit0; elapsed14.822s. Summary: 12147/12729 tests collected (582 deselected) in 12.59s. Full node list in `final-collection.md`.
+
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest --collect-only -q -m not expensive --basetemp=D:/tmp/main-collection/bt`
+  Cwd `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/main-collection", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f"}`; exit0; elapsed14.906s. Summary: 12114/12696 tests collected (582 deselected) in 12.60s. Full node list in `main-collection.md`.
+
+
+Exact selection comparison:12114 unchanged main nodes,33 added domain nodes,0 removed; shared-node digestda86790a515371f61a87e10946c74e54f5c29154a3b46103815aa8300b834120. Initial helper omitted flagships/providers; corrected parser included all12147/12114 nodes and asserted those totals before comparison.
+
+Exact failing/error node comparison: 0 new, 0 removed, 0 changed failure/error labels. Complete sorted sets and raw-log SHA256s in final-changed-gate-comparison.md. This is not a green gate: baseline failures/errors remain unresolved and are explicitly disclosed for owner review. No test/OD3 bypass or unsupported certification claim.
+
+Preservation classifier helper initially passed a list to its single-path API and raised AttributeError; corrected per-path invocation returned zero recertification paths. Earlier artifacts and scientific behavior unchanged. Final current task: full433-file origin audit completed, PR178 awaits owner review of the concrete change and the failing baseline; no merge performed.
+
+Final documentation check: C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe docs/ai/check_docs.py; cwd final domain worktree, TMPDIR=D:/tmp/domain-doc-check, PYTHONPATH=checkout/src;checkout. Exit0, AI_DOCS: PASS (7documents; metadata/local paths only),0.071s. git diff --check also exit0. Only Markdown documentation/receipts changed after measured0047321d; no source or test edits.
+
+## 2026-10-20 - PR178 merged; assurance history reconciliation
+
+Owner explicitly approved PR178 with the documented completed FAST baseline comparison. Marked ready and merged through GitHub with expected head922745bdf65f5c3d33f589d191f40fc9b24e5461. Merge94aab1f664e79515322a29d203fb02d2d2d9c874 fetched; local origin/main matches. Audit of433files completed; no scientific correctness/certification promotion.
+
+Next branch origin/docs/assurance-performance-investigation tip8862cb5391f3a7bd12fb200d4fa65a2b0ed1b2a1: exact original397-line report is a byte substring of main's report, whose historical-source warning is retained. Report SHA256153ff34e5c621832093b5745ae6fd453132f79eb19ce058346833d7596a45125. All55added PROGRESS lines, including separating blank line, are byte-present on main; SHA2563b6e41361964704281df72e648035ff5290c05b331b75d17bc2656c812f458fe. Python byte assertions executed successfully. Normal merge produced two historical documentation conflicts; retained verified current-main bytes in both. git diff --cached --exit-code returned0. Merge485e272 and base94aab1f6 share exact treeadb7aae9152dd571d098d738958376b44e2110af. Only subsequent task/progress documentation additions differ. No old queue restored, no performance recommendations executed. Changed-file gate and final review pending.
+
+Assurance-history independent read-only review PASS: exact merge-parent/tree identity,397-line report containment,55-line progress containment and unchanged historical warning verified. Executed changed-file gate219nodes:217passed2failed9.75s. Pristine main94aab1f6 same219nodes:217passed2failed10.92s. Exact failed-node sets equal (zero new/removed); failures are tests/foundations/test_v2_blindfold.py::test_the_subprocess_escrow_keeps_its_secrets_in_the_child (isolated Python cannot import engcore.blindfold) and tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable (7versus8 subdivisions). Neither gate is green; no source or test alteration. Commands/receipts:
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main`
+
+Cwd `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/assurance-history-gate", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f", "PYTEST_ADDOPTS": "--basetemp=D:/tmp/assurance-history-gate/bt"}`; exit1; elapsed13.666233700001612s.
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest -q tests/test_repository_architecture.py tests/test_core_api_layering.py tests/test_scientific_regression_manifest.py tests/test_forge_check.py tests/test_agent_workflow_contract.py tests/test_capability_completion.py benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py benchmarks/battery_1rc_crosscell/tests/test_battery_1rc_crosscell.py benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py tests/foundations/test_v2_blindfold.py tests/test_multiphysics_window_control.py --basetemp=D:/tmp/assurance-history-main/bt`
+
+Cwd `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/assurance-history-main", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f"}`; exit1; elapsed11.699759900104254s.
+
+Post-PR178 automatic checks inspected at94aab1f6: Tests39481352938 and Branch Policy39481352941 failed with zero job steps exposed; downstream FAST/scientific/mutations/certificate-child skipped. Cause UNVERIFIED; no CI-green or branch-policy-enforcement claim. No gates bypassed or branch rules changed.
+
+## 2026-10-20 - PR179 merged; archive-only documentation reconciliation
+
+Owner explicitly approved PR179. GitHub merge used expected headffc3a8992c18b89e8204a7495db5d13d32ba7058; returned8b29fc076ba5a9af6e591b5e7acb380ca83ee4f2, fetched and verified. Its automatic Tests39481975853 and Branch Policy39481975898 both reported failure; no green-CI claim.
+
+Read-only review established historical archiving is permitted without adopting superseded scientific wording. Four branches each affect Markdown only. Extracted exact git diff --binary --full-index <merge-base-with-8b29fc07> <source-tip> -- before merging. Preserved those bytes in separate historical.patch archives with source/base IDs, byte lengths and SHA256; wrappers explicitly say not applied, no scientific or execution authority. Kept every live document at pre-merge bytes while reconciling each branch ancestry. This is archive-only preservation, not adoption or full behavioral integration. No source, benchmark, live scientific contract or certificate change.
+
+The earlier fix-bisect reviewer used default abbreviated-index diff (4314bytes/e4f38c...); archived full-index diff is4378bytes/bf3e65... by its explicitly stated command. Both describe the same original change; no historical test was rerun or promoted.
+
+Archive receipts:
+
+```json
+[
+  {
+    "name": "fix-bisect-table",
+    "tip": "1cd5ca6c18a4efed4a9c2780b762eff73751d391",
+    "base": "2f7e2ef0d5a48e5d828c1fb5bc12a56a601b5d02",
+    "before": "8b29fc076ba5a9af6e591b5e7acb380ca83ee4f2",
+    "commit": "14f5c5075d60083371cb2dacc1372ea0a1c65d15",
+    "paths": [
+      "NEEDS.md"
+    ],
+    "patch_sha256": "bf3e65bd6ac7faa1d278d684a543ba9811f4d8c532ec933facd1c2e7ec76103e",
+    "bytes": 4378,
+    "merge_exit": 1,
+    "merge_output": "Auto-merging docs/project/needs.md\nCONFLICT (content): Merge conflict in docs/project/needs.md\nAutomatic merge failed; fix conflicts and then commit the result.\n"
+  },
+  {
+    "name": "evidence-v11",
+    "tip": "9a34727e40cddad9b58f004e6ee4626fc0f3fda6",
+    "base": "c3837690537a443b6b9d58b500c6db0b27429d74",
+    "before": "14f5c5075d60083371cb2dacc1372ea0a1c65d15",
+    "commit": "91eda4f24b44534a30f8b35be39c67c0af413da8",
+    "paths": [
+      "NEEDS.md"
+    ],
+    "patch_sha256": "c8cdbc1e9056eb49be26034a7f5ef5cbc269af5945a10eaa9037a7b77cffd64f",
+    "bytes": 4691,
+    "merge_exit": 1,
+    "merge_output": "Auto-merging docs/project/needs.md\nCONFLICT (content): Merge conflict in docs/project/needs.md\nAutomatic merge failed; fix conflicts and then commit the result.\n"
+  },
+  {
+    "name": "blind-rediscovery-benchmark-v1",
+    "tip": "4872b10b15e7d4b41a19a965998765d9884963f5",
+    "base": "4634eba2bb947bbcce0f54406464766ea08167d9",
+    "before": "91eda4f24b44534a30f8b35be39c67c0af413da8",
+    "commit": "b2c59bbc552d76c14135675c2bc921572c567de3",
+    "paths": [
+      "docs/discovery/FORGE_GENESIS.md"
+    ],
+    "patch_sha256": "eeb8d22c02c1ad903872895a6d9fa453e22f8eba66eab9eb0d78d0f20da7ce88",
+    "bytes": 38393,
+    "merge_exit": 1,
+    "merge_output": "Auto-merging docs/discovery/FORGE_GENESIS.md\nCONFLICT (add/add): Merge conflict in docs/discovery/FORGE_GENESIS.md\nAutomatic merge failed; fix conflicts and then commit the result.\n"
+  },
+  {
+    "name": "big-13-flagship-demonstrations",
+    "tip": "6dfc60b0d88abeb465e9cea43fea8c7a32282d0d",
+    "base": "ac600555e5b2b4c824b05d815eae4ae18e895cc7",
+    "before": "b2c59bbc552d76c14135675c2bc921572c567de3",
+    "commit": "0297363215fa85073bb946649166425010823309",
+    "paths": [
+      "docs/architecture/README.md",
+      "docs/architecture/design_synthesis.md",
+      "docs/architecture/mechanistic_discovery.md",
+      "docs/project/FORGE_MASTER_PLAN.md",
+      "docs/work/ACTIVE_PLAN.md",
+      "docs/work/PROGRESS.md"
+    ],
+    "patch_sha256": "bd9f84e9c0055db757e418949f1cff95b6e92fe6931254c9fa16d791e048e852",
+    "bytes": 48669,
+    "merge_exit": 1,
+    "merge_output": "Auto-merging docs/architecture/README.md\nCONFLICT (content): Merge conflict in docs/architecture/README.md\nAuto-merging docs/architecture/design_synthesis.md\nCONFLICT (add/add): Merge conflict in docs/architecture/design_synthesis.md\nAuto-merging docs/project/FORGE_MASTER_PLAN.md\nCONFLICT (content): Merge conflict in docs/project/FORGE_MASTER_PLAN.md\nAuto-merging docs/work/ACTIVE_PLAN.md\nCONFLICT (content): Merge conflict in docs/work/ACTIVE_PLAN.md\nAuto-merging docs/work/PROGRESS.md\nCONFLICT (content): Merge conflict in docs/work/PROGRESS.md\nAutomatic merge failed; fix conflicts and then commit the result.\n"
+  }
+]
+```
+
+Archive independent review PASS at02973632: all4payloads reproduced byte-identically, wrappers/hash/base/ancestry/links verified; each merge only added its two archive files. No live scientific contracts, tests, source or policies changed. Reviewer ran git diff --check and observed exit1 because exact raw Git patches contain single-space context lines; those bytes are intentionally preserved, not normalized. Authored documentation is checked separately; no claim that raw-payload whitespace check passed.
+
+Changed-file gate217passed2failed (219nodes); pristine main8b29fc07 exactsame219nodes217passed2failed8.92s. Same failed nodes as preceding history gate: subprocess escrow module import, window subdivision7versus8. Zero new/removed failed nodes; no green gate. Exact receipts:
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main`
+
+Cwd `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/archive-doc-gate", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f", "PYTEST_ADDOPTS": "--basetemp=D:/tmp/archive-doc-gate/bt"}`; exit1; elapsed12.023089699912816s.
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest -q tests/test_repository_architecture.py tests/test_core_api_layering.py tests/test_scientific_regression_manifest.py tests/test_forge_check.py tests/test_agent_workflow_contract.py tests/test_capability_completion.py benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py benchmarks/battery_1rc_crosscell/tests/test_battery_1rc_crosscell.py benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py tests/foundations/test_v2_blindfold.py tests/test_multiphysics_window_control.py --basetemp=D:/tmp/archive-doc-main/bt`
+
+Cwd `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/archive-doc-main", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f"}`; exit1; elapsed9.596498799975961s.
+
+
+## 2026-10-20 — agent configuration archive and post-PR180 CI diagnosis
+Base main67585300; archive merge ce32f6a6. Owner authorized continuing review, not automatic merge or OD3. No source/config/test behavior changed. Exact source delta42088 bytes SHA256409329d709dce4878fbe1f7269709b16b22254e365111e65c9156894e498046b.
+
+### agent-archive-gate
+Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main`
+CWD: `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`
+Environment: `{"TMPDIR": "D:/tmp/agent-archive-gate", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f", "PYTEST_ADDOPTS": "--basetemp=D:/tmp/agent-archive-gate/bt"}`
+Result:94 passed; exit0; wall seconds 9.46724779997021. Output SHA256 `855ffe277d9873091431c6b907203b110686f72306d4914d9a224d8b849a18f7`. No failures. Raw output and metadata: `docs/work/evidence/branch_ci_investigation_2026_10_20/agent-archive-gate.txt` and `.json`.
+
+### agent-archive-final-gate
+Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main`
+CWD: `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`
+Environment: `{"TMPDIR": "D:/tmp/agent-archive-final", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f", "PYTEST_ADDOPTS": "--basetemp=D:/tmp/agent-archive-final/bt"}`
+Result:94 passed; exit0; wall seconds 9.618442600010894. Output SHA256 `f75e069f24587ae62416522acbc9e5c5498e672480338a60c39a06ef6fa6e4c4`. No failures. Raw output and metadata: `docs/work/evidence/branch_ci_investigation_2026_10_20/agent-archive-final-gate.txt` and `.json`.
+
+Live GitHub Tests39488053735 and Branch Policy39488053796 failed with empty step metadata; dependent jobs reported skipped. Logs for branch-policy118853558670 and scope118853560388 returned404 BlobNotFound. Annotations unavailable through connector; browser signed out. Root cause UNVERIFIED pending owner-provided annotation. No billing diagnosis, workflow repair or hosted rerun claimed. Formal, full assurance and OD3 NOT RUN.
