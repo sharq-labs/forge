@@ -8224,3 +8224,5 @@ The first pilot attempt on the draft branch was refused by `bind` (the escrow ha
 Placement fix found by the D6 test: the D5 deployment, D7 timing pilot, D7 budget and D6 evaluator entries had been written into the preregistration's `analysis` section. They are moved to `formal`, where `formal.budget_hours` reads the budget. The committed DRAFT now gives budget_hours None (the total is due at D4). `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 247 passed.
 
 **Owner decision D4 (2026-10-20, in session): candidate DEFERRED until the evaluator is named.** D4 stays open. The freeze sequence is recorded in the preregistration (`owner_decisions_open.D4-identity-freeze`), the decision record and ACTIVE_PLAN: evaluator, then candidate pin and timing, then OD-3 on the final HEAD, then a fresh root, then the manifest, then the approvals record, then FROZEN.
+
+**Owner decision OD-3 timing (2026-10-20, in session).** Recertify once, on the final pre-freeze HEAD, after the D4 candidate is pinned and timed. This is the owner's manual operation; nothing was certified here.

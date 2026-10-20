@@ -494,7 +494,7 @@
  },
  "owner_decisions_open": {
   "D4-identity-freeze": "OD-19; candidate DEFERRED by the owner (2026-10-20) until the evaluator is named; freeze sequence (owner, 2026-10-20): (1) the evaluator is named (D6, by 2026-11-17); (2) the candidate is chosen AFTER that (deferred by the owner), its code brought into this tree and pinned by sha256 (or NONE), and a one-campaign candidate timing completes the D7 budget total; (3) OD-3 recertifies that final pre-freeze HEAD; (4) the operator generates a fresh formal root and commits its sha256; (5) the environment manifest is measured on the D7 machine; (6) the owner's approvals record binds every decision to the final preregistration digest; only then is the status set to FROZEN. Nothing is frozen or pushed before (6)",
-  "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)"
+  "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope); scheduled by the owner (2026-10-20) on the FINAL pre-freeze HEAD, after the D4 candidate is pinned and timed; the owner's manual operation"
  },
  "owner_decisions_taken": {
   "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d; decided by the owner in session on 2026-10-20: ODC-05a form (i), a ratio cap max/min <= 1 + w outside the box, on the BRACKET route only; ODC-05b w = 3 x tol (tol_multiple 3.0), anchored a priori on the generator's declared separation scale (OUTSIDE_TOLERANCES = 3 in universe.py), never tuned on pilot or formal worlds; ODC-05c v0.3 only, never retroactive to v0.2 records; ODC-05d the pass route keeps +1.0 as in v0.2",
@@ -551,7 +551,7 @@
   "formal.py": "5e526783d3120d59b8b6c353a56c93dcfa17cc2f664619cf4746dd45aa08b310",
   "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
   "isolation.py": "21d237a0d133ca49fcdba674580d6ecedf5c70ff1dd3a1e7c90358f7b500dce7",
-  "preregistration.py": "3d90f1054dcc8909af966a3ded972ec92a9fc7f199c10cc9c07acebd6fa67e60",
+  "preregistration.py": "e7795b6576cd7dd0bc9735f713b6bb4c222b6e3df5c340321be4fd8f9245d82f",
   "readiness.py": "94e2af960cef9e82bc4a61a3a393953130a72ede84bcdb49f113bfd3db7e8e3c",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",

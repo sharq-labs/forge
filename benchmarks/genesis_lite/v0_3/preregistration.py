@@ -379,7 +379,9 @@ def build() -> dict[str, Any]:
         "owner_decisions_taken": dict(OWNER_DECISIONS_TAKEN),
         "owner_decisions_open": {
             "D4-identity-freeze": "OD-19; candidate DEFERRED by the owner (2026-10-20) until the evaluator is named; freeze sequence (owner, 2026-10-20): (1) the evaluator is named (D6, by 2026-11-17); (2) the candidate is chosen AFTER that (deferred by the owner), its code brought into this tree and pinned by sha256 (or NONE), and a one-campaign candidate timing completes the D7 budget total; (3) OD-3 recertifies that final pre-freeze HEAD; (4) the operator generates a fresh formal root and commits its sha256; (5) the environment manifest is measured on the D7 machine; (6) the owner's approvals record binds every decision to the final preregistration digest; only then is the status set to FROZEN. Nothing is frozen or pushed before (6)",
-            "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)",
+            "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope); scheduled by "
+                    "the owner (2026-10-20) on the FINAL pre-freeze HEAD, after the D4 candidate is pinned and timed; the "
+                    "owner's manual operation",
         },
     }
     if doc["status"] == "FROZEN" and formal._mentions_owner_decision(doc):

@@ -62,7 +62,7 @@ Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
       `benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.owner_approvals.json` (owner's file).
 - [x] RESOLVED by the owner's D2 (2026-10-20, route B now; not deferred) (live-document tension): ODC-O1a recommends sign-flip route B; `BVB_RESUME_HANDOFF_2026_10_19.md`
       §3 row 2 defers O-1 until the scoring is frozen. Folded into D2.
-- [ ] OD-3: recertify a HEAD containing `pair_bound.py` and the new tests (`tests/**` is an `assurance_suites` trigger).
+- [ ] OD-3 (owner, scheduled 2026-10-20 on the FINAL pre-freeze HEAD): recertify a HEAD containing `pair_bound.py` and the new tests (`tests/**` is an `assurance_suites` trigger).
 - [ ] Owner: push / PR (not authorized). No freeze, formal baseline or Mind tier is authorized.
 
 ## Current bounded task — BUY-01 MCP UQ repair, FDA-04 / FDA-14 (2026-10-19)
