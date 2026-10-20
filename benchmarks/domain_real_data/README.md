@@ -1,0 +1,16 @@
+# Domain real-data inventory: archival evidence and live gate
+
+The original ROUND_REPORT.md, INVENTORY.md, DATASETS.json, REPOSITORY_SCAN.json and dataset bytes describe commit a80b4df5e4cb6e0cdfc4e4e87f9f09d13a7823db (tree45ba44977eb7a4f06dc1f8fe5a17776e5bff05aa). They remain byte-identical. Their completeness/certification statements are historical, not current-main assurances.
+
+The scanner now has two separate checks:
+
+- Historical replay verifies the commit/tree, original scanner SHA256 and report SHA256, and reproduces the archived report with the original classification program. Missing Git history fails explicitly. This reconstructs a historical statement; it does not independently validate that statement's provenance.
+- Live coverage enumerates current tracked/staged data candidates. It inherits historical classifications only for identical historical indexed blobs and identical raw working bytes (including files hidden by Git index flags). All new/changed candidates remain UNKNOWN_PROVENANCE, regardless of directory prefix. Measured/reference coverage tests consume this live inventory; registered byte hashes remain checked independently.
+
+Run `python benchmarks/domain_real_data/audit/inventory_scan.py --check` for both. It returns nonzero when live coverage is incomplete. Running without --check prints a live report; it never overwrites the historical report. --include-untracked widens live coverage explicitly.
+
+The owner chose a complete audit of the433initially unreviewed files before merge. CURRENT_PROVENANCE.json is the explicit result:400DERIVED,22SYNTHETIC,8REFERENCE_ONLY,3REAL_MEASURED. Every reviewed artifact is bound by SHA256 to supporting producer, source-manifest or report identities. Physical/reference entries identify their existing dataset/reference record. An immutable Git source reference is allowed where a historical report is supported by archived PROGRESS; mutable branch names are refused. New files and changed artifact/source bytes remain unknown. The schema-checked declaration document is bookkeeping metadata, never a measurement.
+
+Origin classification does not authenticate every historical execution or reproduce every upstream source. In particular, unknown sensor uncertainty, superseded analyses, synthetic simulations, external archive gaps, reference transcription caveats and unverified timing reports retain their limits in each declaration. A pre-existing battery-closure report can retain FAIL despite out-of-domain cycles; its declaration explicitly refuses to treat that verdict as admissible scientific contradiction. No old report or model behavior was rewritten.
+
+The original domain failure and both rounds of boundary tests were executed failing-first. After the full provenance audit,30domain tests passed. Exact commands/results and intermediate failures are in docs/work/PROGRESS.md and docs/work/evidence/domain_inventory_reconciliation_2026_10_20/. Integration still requires final review and the changed-file gate; this is not certification or physical validation.
