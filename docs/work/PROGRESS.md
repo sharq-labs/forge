@@ -8140,3 +8140,18 @@ D3b is split into D3b-1-cap-form and D3b-2-kind-noninferiority. The D2b options 
 The builder verified the code hashes the reviewer marked UNVERIFIED. The recorded sha256 values of power_study.py, v0.3 analysis.py and v0.2 analysis.py equal the git blobs at 70195498. result.json has sha256 282b4213...8b36, as pinned.
 
 `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 230 passed.
+
+**Owner decisions D3b-1 and D3b-2 (2026-10-20, in session).**
+- D3b-1: option B, a cell-level cap. A capped (kind, presentation) cell contributes min(0, net difference) to the effect size (recomputed per bootstrap resample) and to the per-kind non-inferiority.
+- D3b-2: option B, a per-kind margin of 0.15 with the conjunction kept; the presentation margin is unchanged.
+
+**Failed approach, recorded so it is not repeated:** the first D3b-1 implementation recomputed the min inside every sign vector of the randomisation test. The adversarial test `test_d3b_no_gain_leaks_through_capped_cells_into_a_claim` caught it: p = 0.002 at a pooled mean difference of exactly 0, because flipped capped cells fall below 0, so capped wins raised significance. The owner chose implementation P2: the sign-flip p uses the uncapped differences only.
+
+**Study re-run on the decided rule** (clean HEAD f76c1ca9, exit 0, 2,733 s, result sha256 a732df70...):
+- Exchangeable null: 0.049 at alpha 0.05; Holm family-wise rate 0.045.
+- Equal-skill false claims: 4/300 with unsolved controls, 0/300 with solved controls.
+- Kind non-inferiority at equal skill: 0.00 failures (it was 0.33 under the 0.10 margin).
+- Solved controls, delta 0.2, independent outcomes: claim 1.00 (it was 0.00 under the per-world-set min).
+- The residual cell-cap noise bias is -0.091 per world set (20 noisy capped cells). The builder's earlier "about -0.006" was wrong because it omitted the sum over cells; the README and decision record now say so.
+
+`python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 237 passed.

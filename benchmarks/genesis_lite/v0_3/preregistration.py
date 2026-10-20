@@ -67,7 +67,7 @@ OWNER_DECISIONS_TAKEN = {
 }
 #: the ODC-O1b study (non-formal, synthetic); its findings are open as D3b
 POWER_STUDY_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json"
-POWER_STUDY_EVIDENCE_SHA256 = "282b42131b074a7b1c7f599e54f784f78ffc37763c185fc545a7b781b6ce8b36"
+POWER_STUDY_EVIDENCE_SHA256 = "a732df70f3a7540cbc4d96461af0b1c882b993f60b16890282b862c5b19b36fa"
 #: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
 RETIRED_PILOT_ROOT_COMMITMENTS = (
     "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",   # v0

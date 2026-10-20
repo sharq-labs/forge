@@ -77,7 +77,7 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "pass route with an arbitrary partner (ODC-05d)": (DECIDED, (), "D1, 2026-10-20: kept at +1.0 as in v0.2"),
     "power and null-calibration study (ODC-O1b)": (FIXED, ("test_o1_power_study_",), "ran 2026-10-20 on synthetic "
                                                    "records (docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20, sha256 pinned in the preregistration); exchangeable null "
-                                                   "0.0500 at alpha 0.05, Holm FWER 0.0450"),
+                                                   "0.0490 at alpha 0.05, Holm FWER 0.0450"),
     "root grinding before the commitment (review I-1)": (OWNER, (), "D2b: the root generator can choose among roots "
                                                                    "before committing; mitigation is the owner's"),
     "cap form (ODC-O1b study finding)": (DECIDED, (), "D3b-1, 2026-10-20: cell-level cap"),

@@ -4,140 +4,137 @@
 credit model. It is not a measurement of any arm, not a validation, and not a lift result. It read no hidden world, no pilot
 record and no formal root.
 
-**Authorisation:** owner D2 (2026-10-20), run after D3 (decided 2026-10-20).
+**Authorisation:** owner D2 (2026-10-20).
 
-**Provenance** (`result.json`, `provenance`):
+**Rule measured:** the rule DECIDED by the owner on 2026-10-20:
+- D1: the pair bound.
+- D2: the root-keyed sign-flip p.
+- D3: the comparison set and the caps.
+- D3b-1: cell-level cap, implementation P2. A capped (kind, presentation) cell contributes min(0, its net difference) to the
+  effect size and the per-kind non-inferiority. Significance comes from the uncapped differences only.
+- D3b-2: per-kind non-inferiority margin 0.15, with every kind still required.
+
+**Provenance** (`result.json` → `provenance`):
 
 | | |
 |---|---|
-| HEAD | `70195498bd82437e951e93df7f5594c71a1d4eda` |
+| HEAD | `f76c1ca966aac6dbdb9185c4d8e5dd836b50052a` |
 | Tree | clean (`tree_clean: true`) |
-| Code sha256 (`power_study.py`) | `ef54a3caf18cbf7299faa67ca3e03a1e5b44a60fcb04a7acac72bf97ca1320a0` |
-| Code sha256 (`analysis.py`) | `f896bea914000c15f201c36e243aa2b480d6612e3f7660bcb7c97b36189e5242` |
+| Code sha256: `power_study.py` | `ef54a3caf18cbf7299faa67ca3e03a1e5b44a60fcb04a7acac72bf97ca1320a0` |
+| Code sha256: `analysis.py` | `a66c822f45f07998539a6476b925cd480c4c7872a29b180c1dc5b953ad833dcc` |
+| Code sha256: v0.2 `analysis.py` | `76eea7c01fa971e2ce0a8f462ff79e7ab3eb1611ba6af8878994c84d8e01a0a9` |
 | Python | 3.14.2 |
 | numpy | 2.5.2 |
 | Platform | Windows-11-10.0.26200-SP0 |
-| Draft preregistration at run time | `455c9f3dfe32b5514f3dddf32631dbf69f003bf2870c6c6b2818e0612cd16fe1` (before the evidence digest was pinned into it) |
-| Wall time | 1725.0 s |
-| `result.json` sha256 | `282b42131b074a7b1c7f599e54f784f78ffc37763c185fc545a7b781b6ce8b36` (pinned in `preregistration.POWER_STUDY_EVIDENCE_SHA256`; checked by `test_o1_power_study_evidence_is_pinned_and_says_what_the_ledger_quotes`) |
+| Draft preregistration at run time | `b876b2fefcf2e49b105873f030c799356996cf63dca7cc59bf4b1e8695dcd6ba` (before this evidence digest was pinned into it) |
+| Wall time | 2733.3 s |
+| `result.json` sha256 | `a732df70f3a7540cbc4d96461af0b1c882b993f60b16890282b862c5b19b36fa` |
+
+The `result.json` digest is pinned in `preregistration.POWER_STUDY_EVIDENCE_SHA256`. Two tests check it:
+- `test_o1_power_study_evidence_is_pinned_and_says_what_the_ledger_quotes`
+- `test_o1_power_study_evidence_measured_the_rule_that_is_in_the_tree` (the recorded code digests equal the git blobs at
+  HEAD, and the live rule, docstrings aside, equals that code)
 
 Command:
 
 `python -m benchmarks.genesis_lite.v0_3.power_study --out <result.json> --reps 100 --null-reps 2000 --crosscheck-reps 20 --workers 4`
 
-A first run (HEAD `27a5d6db`, from an uncommitted study file) is superseded by this one. It was re-run after the scientific
-review of 2026-10-20 to record provenance and a real bootstrap cross-check.
+**Superseded runs, all measuring the pre-D3b rule (per-world-set min cap, 0.10 margins):**
+- the first run at HEAD `27a5d6db`, from an uncommitted file;
+- the post-review run at HEAD `70195498`, result sha256 `282b4213…8b36` (commit `2dbbd462`).
+
+Their findings are what D3b-1 and D3b-2 decided on:
+- With the per-world-set min, solved controls, independent outcomes and doubled discoverable success, claims were 0/100
+  (pooled mean −1.20).
+- The all-kind 0.10 conjunction failed 33/100 at equal skill.
 
 **Credit model:** per-universe credits +1 / -1 only (the maximum-variance case); DEFAULT_CREDIT also has 0, +0.5 and -0.5 outcomes, so the power figures and the cap penalty hold for this model only
 
 ## Part A: null calibration of the D2 statistic
 
-Method: the one-sided paired sign-flip p, with a fresh root-keyed Monte-Carlo stream in every replicate, at the formal sizes
-(600 world sets per presentation and 2,400 pooled).
+Method: the one-sided paired sign-flip p, with a fresh root-keyed Monte-Carlo stream per replicate, at the formal sizes
+(600 / 2,400 world sets). Under P2 this is the statistic the decision uses: capped cells never enter it.
 
 Brackets are exact 95 % Clopper-Pearson intervals.
 
-| null | n | alpha 0.01 | alpha 0.05 | alpha 0.10 | Holm family-wise rate (5-member family) |
+| null | n | alpha 0.01 | alpha 0.05 | alpha 0.10 | Holm family-wise rate |
 |---|---|---|---|---|---|
-| exchangeable (in scope), 2000 reps | pooled | 0.0090 | 0.0500 [0.041, 0.060] | 0.0935 | 0.0450 [0.036, 0.055] |
-| exchangeable, 2000 reps | one presentation | 0.0105 | 0.0465 | 0.0900 | |
-| skewed mean-zero (outside the scope), 1000 reps | pooled | 0.0130 | 0.0640 [0.050, 0.081] | 0.1060 | 0.0420 |
+| exchangeable (in scope), 2000 reps | pooled | 0.0085 | 0.0490 [0.040, 0.059] | 0.0920 | 0.0450 [0.036, 0.055] |
+| exchangeable, 2000 reps | one presentation | 0.0105 | 0.0460 | 0.0905 | |
+| skewed mean-zero (outside the scope), 1000 reps | pooled | 0.0130 | 0.0640 [0.050, 0.081] | 0.1080 | 0.0420 |
 
 **Reading.**
-- Under the exchangeable null, the rejection rates are consistent with nominal. At 2000 replicates this resolves the
-  size only to about ±0.01.
-- This is an implementation check of a guarantee that holds by construction ((b+1)/(M+1) with random sign vectors). It is
-  not a new statistical result.
-- The skewed null lies outside the covered scope. Its rates are not distinguishable from nominal at this replicate count.
-  Nothing here establishes that the test is anti-conservative there.
+- The in-scope rates are consistent with nominal, resolved to about ±0.01. This is an implementation check of a guarantee that
+  holds by construction.
+- The skewed null is outside the covered scope. Its rates are not distinguishable from nominal at this replicate count.
 
-## Part B: power of the whole v0.3 decision (100 reps per cell)
+## Part B: power of the whole decided v0.3 decision (100 reps per cell)
 
 Each cell shows the claim rate with the mean pooled difference in parentheses.
 - `careful` has discoverable success 0.2.
 - The candidate has discoverable success 0.2 + delta and equals `careful` on every other kind.
-- rho is the probability that the candidate's outcome copies `careful`'s, through a shared uniform.
+- rho is the probability that the candidate's outcome copies `careful`'s.
 
 | controls (careful's rate) | delta | rho 0 | rho 0.5 | rho 0.9 | rho 1.0 |
 |---|---|---|---|---|---|
-| solved (0.8 → CONTROL_SOLVED) | 0.0 | 0.00 (-1.60) | 0.00 (-0.80) | 0.00 (-0.16) | 0.00 (+0.00) |
-| solved (0.8 → CONTROL_SOLVED) | 0.05 | 0.00 (-1.50) | 0.00 (-0.70) | 0.00 (-0.06) | 1.00 (+0.10) |
-| solved (0.8 → CONTROL_SOLVED) | 0.1 | 0.00 (-1.40) | 0.00 (-0.60) | 0.47 (+0.04) | 1.00 (+0.20) |
-| solved (0.8 → CONTROL_SOLVED) | 0.2 | 0.00 (-1.20) | 0.00 (-0.40) | 1.00 (+0.24) | 1.00 (+0.40) |
-| unsolved (0.4) | 0.0 | 0.01 (-0.00) | 0.00 (-0.01) | 0.03 (+0.00) | 0.00 (+0.00) |
-| unsolved (0.4) | 0.05 | 0.20 (+0.10) | 0.41 (+0.10) | 0.98 (+0.10) | 1.00 (+0.10) |
-| unsolved (0.4) | 0.1 | 0.66 (+0.19) | 0.94 (+0.20) | 1.00 (+0.20) | 1.00 (+0.20) |
-| unsolved (0.4) | 0.2 | 0.69 (+0.39) | 0.99 (+0.40) | 1.00 (+0.40) | 1.00 (+0.40) |
+| solved (0.8 → CONTROL_SOLVED) | 0.0 | 0.00 (-0.091) | 0.00 (-0.064) | 0.00 (-0.028) | 0.00 (+0.000) |
+| solved (0.8 → CONTROL_SOLVED) | 0.05 | 0.00 (+0.010) | 0.05 (+0.037) | 0.97 (+0.073) | 1.00 (+0.100) |
+| solved (0.8 → CONTROL_SOLVED) | 0.1 | 0.42 (+0.110) | 0.92 (+0.134) | 1.00 (+0.174) | 1.00 (+0.200) |
+| solved (0.8 → CONTROL_SOLVED) | 0.2 | 1.00 (+0.307) | 1.00 (+0.335) | 1.00 (+0.368) | 1.00 (+0.402) |
+| unsolved (0.4) | 0.0 | 0.01 (-0.000) | 0.00 (-0.008) | 0.03 (+0.002) | 0.00 (+0.000) |
+| unsolved (0.4) | 0.05 | 0.20 (+0.100) | 0.39 (+0.100) | 0.98 (+0.097) | 1.00 (+0.101) |
+| unsolved (0.4) | 0.1 | 0.71 (+0.195) | 0.94 (+0.202) | 1.00 (+0.198) | 1.00 (+0.200) |
+| unsolved (0.4) | 0.2 | 1.00 (+0.388) | 1.00 (+0.401) | 1.00 (+0.400) | 1.00 (+0.397) |
 
 Two further cells:
-- Unsolved controls, delta 0.2, rho 1, with 30 % of the truths out of family: claim rate 1.00 (pooled mean
-  +0.28).
-- Unsolved controls, delta 0.2, rho 1, with the representation arm solving discoverable at 0.8: 0.00, by
-  design (§10.3).
+- 30 % of truths out of family: 1.00 (pooled mean +0.280).
+- The representation arm solves discoverable: 0.00, by design (§10.3).
 
 ## Findings (conditional on the ±1 credit model)
 
-These findings are also limited in coverage:
-- The study fields two baselines; the real rule takes its maximum over about 20 registered arms.
-- Choosing the best arm on the same data raises the reference.
-- So the power figures here are optimistic. That direction costs power and adds non-inferiority false failures; it never creates false support.
-- The observed cap penalties match (1 − rho)·(−1.6) + 2·delta in the solved-controls cells.
-
-1. **False claims under the null.**
-   - The informative null cells are those with unsolved controls, delta 0 and rho in {0, 0.5, 0.9}. They give
-     4/300 claims; the exact 95 % interval is [0.004, 0.034].
-   - The solved-controls delta-0 cells with rho < 1 are excluded because they are not null: the cap makes their mean
-     negative by construction.
-   - The rho = 1 cells are excluded because they are degenerate: every difference is 0, so p = 1.
-2. **The cap form decides the claimable region (owner question D3b(a)).**
-   - The FDA-06 / CONTROL_SOLVED cap is a per-world-set `min(mine, theirs)`, as in v0.2.
-   - With ±1 credits a capped cell contributes −E[(ref − mine)⁺] = −2·P(ref = 1, mine = −1). For independent outcomes
-     (rho = 0) that is −2·p_ref·(1 − p_mine), so −2p(1−p) for equal rates
-     with independent outcomes.
-   - With five solved control kinds at 0.8 this predicts −1.6 + 2·delta, which matches the observed pooled means.
-   - A candidate whose outcomes are not near-copies of `careful`'s (rho ≤ 0.5) therefore does not claim, even when it
-     doubles discoverable success. Claims need world-by-world dominance on the capped cells.
-   - The `min` itself can only lower the candidate's credit. Whether the whole decision avoids false support is shown here
-     only for this synthetic model.
-3. **The kind non-inferiority conjunction caps power (owner question D3b(b)).**
-   - Setting: unsolved controls, delta 0, rho 0 (per-kind statistics over that cell's replicates).
-   - At equal skill, each control kind's 95 % lower bound sits about 0.056 below its mean. That is about two standard errors,
-     with SE ≈ 0.028 at p = 0.4 and 2,400 world sets.
-   - The normal approximation predicts the 0.10 margin to fail about 6 % of the time per control kind, and about 26 %
-     across the five control kinds.
-   - Observed in this cell: per-kind fail rates 0.07–0.10, and the conjunction fails in 33/100 replicates (exact 95 %
-     interval 0.24–0.43).
-     Discoverable fails rarely (≈ 0.9 %).
-   - The independent-outcome cells therefore saturate below a claim rate of 1.
+1. **False claims under equal skill.**
+   - Unsolved controls, delta 0, rho in {0, 0.5, 0.9}: 4/300 claims (95 % interval [0.004, 0.034]).
+   - Solved controls, the same cells: 0/300 claims (95 % interval [0.000, 0.012]).
+   - The rho = 1 cells are degenerate: every difference is 0.
+2. **The cell-level cap (D3b-1).**
+   - A difference that lies only in capped cells can no longer win or lose by noise world set by world set.
+   - With solved controls and independent outcomes, delta 0.2 now claims 1.00.
+     Under the per-world-set min it claimed 0.00.
+   - **A residual noise bias remains.** Each noisy capped cell contributes E[min(0, X)] = −σ_cell/√(2π) at equal skill.
+     Summed over the 20 capped control cells (5 kinds × 4 presentations) this is about −0.09 per world set; observed
+     -0.091 at solved/delta 0/rho 0.
+   - So small gains with solved controls still do not claim: delta 0.05 at rho 0 gives
+     0.00.
+   - The bias shrinks as outcomes correlate and grows with the number of noisy capped cells.
+   - This corrects the builder's earlier estimate to the owner ("about −0.006"), which omitted the sum over cells.
+3. **No gain through a capped cell (P2).** Capped data never enter the sign-flip p. They enter the effect size only through
+   min(0, net). Both properties are tested adversarially in `test_d3b_*`.
+4. **Per-kind non-inferiority (D3b-2).**
+   - At equal skill the conjunction of 0.15 margins failed in 0.00 of the replicates in the unsolved/delta-0/rho-0
+     cell. Under 0.10 it failed 0.33.
+   - Each kind's lower bound sits about 0.056 below its mean (SE ≈ 0.028), so 0.15 is about 3.4 SE beyond the bound.
 
 | kind | SD of the mean difference | mean (mean − lower95) | fail rate |
 |---|---|---|---|
-| confounded | 0.0257 | 0.0555 | 0.07 |
-| discoverable | 0.0228 | 0.0454 | 0.01 |
-| indistinguishable | 0.0287 | 0.0557 | 0.07 |
-| insufficient_evidence | 0.0301 | 0.0559 | 0.10 |
-| no_solution | 0.0278 | 0.0554 | 0.08 |
-| spurious_correlate | 0.0294 | 0.0554 | 0.07 |
+| confounded | 0.0257 | 0.0556 | 0.00 |
+| discoverable | 0.0228 | 0.0452 | 0.00 |
+| indistinguishable | 0.0287 | 0.0557 | 0.00 |
+| insufficient_evidence | 0.0301 | 0.0555 | 0.00 |
+| no_solution | 0.0278 | 0.0558 | 0.00 |
+| spurious_correlate | 0.0294 | 0.0556 | 0.00 |
+
+5. **Coverage limits.**
+   - The study fields two baselines; the real rule takes its maximum over about 20 registered arms. Selection on the same data
+     raises the reference, so these power figures are optimistic.
+   - That direction costs power; it never creates false support.
 
 ## Bootstrap cross-check
 
-The vectorised bootstrap is the same estimator as v0.2's original, with a different random generator:
-- B = 2,000 resamples of world sets;
-- the floor 2.5 % order statistic at index max(int(0.025·B)−1, 0);
-- a fixed seed.
+Under D3b-1 the decision's bootstrap is `analysis.capped_bootstrap_ci` (numpy). The study uses that production function
+unchanged. The vectorised substitute now affects only v0.2's `representation_limited`. The cross-check scores the same records
+and root with and without that substitute:
 
-Method: the SAME records and root were scored with both bootstraps, in cells near the decision boundary. Every lower bound
-(pooled, presentations, kinds) and the claim were compared replicate by replicate.
-
-| cell | reps | claims agree | max abs lower-bound gap | replicates where a pooled or kind threshold flips |
+| cell | reps | claims agree | max abs lower-bound gap | threshold flips |
 |---|---|---|---|---|
-| controls_solved/delta=0.1/rho=0.9 | 20 | 19/20 | 0.0100 | 1 |
-| controls_unsolved/delta=0.05/rho=0.5 | 20 | 20/20 | 0.0200 | 0 |
-
-Note: the pooled mean does not depend on the bootstrap, so it is not part of the comparison.
-
-**Reading:** the two bootstraps are statistically equivalent but NOT identical.
-- Lower bounds differ by up to 0.02.
-- In replicates sitting on a threshold, that gap can flip a decision (1 of 20 in the boundary cell above).
-- Part B claim rates near the boundary therefore carry this extra error of a few percentage points, on top of the binomial error of 100 replicates.
-- Cells far from the boundary (claim rate 0 or 1) are not affected.
+| controls_solved/delta=0.1/rho=0.9 | 20 | 20/20 | 0.0000 | 0 |
+| controls_unsolved/delta=0.05/rho=0.5 | 20 | 20/20 | 0.0000 | 0 |
