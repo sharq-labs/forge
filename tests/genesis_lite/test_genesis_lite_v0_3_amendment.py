@@ -687,6 +687,27 @@ def test_d5_the_new_probes_never_report_refused_without_a_mechanism(monkeypatch)
     assert {"operator_process", "wsl_interop", "secret_inventory"} <= set(attacks.CHANNELS)
 
 
+def test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code():
+    """D5 (A1): the verification ran on the formal tree. Its file is the pinned one, every channel was REFUSED with the
+    namespaces and REACHED by the same probe without them, and the launcher, the attack suite, the harness and the
+    scanner it ran are, docstrings aside, the code in this tree (else re-run the verification)."""
+    repo = v03p.HERE.parents[2]
+    data = (repo / v03p.DEPLOYMENT_EVIDENCE).read_bytes()
+    assert hashlib.sha256(data).hexdigest() == v03p.DEPLOYMENT_EVIDENCE_SHA256
+    doc = json.loads(data)
+    from benchmarks.genesis_lite.v0_3 import deployment_attacks as attacks
+
+    assert doc["verified"] is True and doc["provenance"]["tree_clean"] is True
+    assert doc["with_namespaces"] == {c: attacks.REFUSED for c in attacks.CHANNELS}
+    assert doc["without_namespaces"] == {c: attacks.REACHED for c in attacks.CHANNELS}
+    head = doc["provenance"]["head"]
+    for name, digest in doc["provenance"]["code_sha256"].items():
+        path = f"benchmarks/genesis_lite/v0_3/{name}"
+        then = subprocess.run(["git", "show", f"{head}:{path}"], cwd=repo, capture_output=True, check=True).stdout
+        assert hashlib.sha256(then).hexdigest() == digest, name
+        assert _rule_code((repo / path).read_bytes()) == _rule_code(then), f"{path} changed since the verification"
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,
@@ -738,11 +759,12 @@ def test_v0_3_draft_is_exactly_what_the_code_rebuilds():
 
 def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
-    assert set(doc["owner_decisions_open"]) == {"D4-identity-freeze", "D5-deployment", "D6-evaluator",
+    assert set(doc["owner_decisions_open"]) == {"D4-identity-freeze", "D6-evaluator",
                                                  "D7-budget-and-machine", "OD-3",
                                                  }
     assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells",
-                                                  "D3b-1-cap-form", "D3b-2-kind-noninferiority", "D2b-root-grinding"}
+                                                  "D3b-1-cap-form", "D3b-2-kind-noninferiority", "D2b-root-grinding",
+                                                  "D5-deployment"}
     covered = " ".join(list(doc["owner_decisions_open"].values()) + list(doc["owner_decisions_taken"].values()))
     for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",
                   "OD-20", "OD-8", "OD-18"):

@@ -41,6 +41,15 @@ CANDIDATE = ODR                              # {name, spec, code_sha256} named i
 DECISION_RECORD = "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md"
 #: owner decisions taken so far (each also needs its entry in the owner's approval record at freeze)
 OWNER_DECISIONS_TAKEN = {
+    "D5-deployment": "OD-20; decided by the owner in session on 2026-10-20: option A1, rootless Linux namespaces. Every "
+                     "formal proposer card runs under unshare in fresh user, PID, mount, network, IPC and UTS namespaces, "
+                     "with operator state masked by private tmpfs mounts and only the benchmark tree and the Python "
+                     "environment re-bound read-only (isolation.py); a formal card cannot start without it. Verified on "
+                     "2026-10-20 (evidence pinned by sha256): every one of the ten attack channels REFUSED with the "
+                     "namespaces and REACHED by the same probe without them. Residual, disclosed: same Linux account "
+                     "outside the namespaces; readable tree and environment; WSL shares the host's utility VM; the "
+                     "certified escrow stays in the operator process (the operator_process channel shows a proposer "
+                     "cannot reach it); the certified isolation-probe rerun belongs to OD-3",
     "D3b-1-cap-form": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, a cell-level "
                       "cap. A capped (kind, presentation) cell contributes min(0, its summed paired difference): no "
                       "gain, a net loss counts, in the effect size (recomputed per bootstrap resample) and the per-kind "
@@ -75,6 +84,9 @@ OWNER_DECISIONS_TAKEN = {
 #: the ODC-O1b study (non-formal, synthetic); its findings are open as D3b
 POWER_STUDY_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json"
 POWER_STUDY_EVIDENCE_SHA256 = "a26705f74e566bc016f2035df84bc4b9808e9f3ddc1ed6091985d7e58f1f5b68"
+#: D5 (owner, 2026-10-20, option A1): the deployment verification, run on WSL Ubuntu from a clean clone
+DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json"
+DEPLOYMENT_EVIDENCE_SHA256 = "80db5957d71755d76f349383f735c8c2ca61d606e38f20efe51edb17e9617df7"
 #: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
 RETIRED_PILOT_ROOT_COMMITMENTS = (
     "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",   # v0
@@ -252,6 +264,9 @@ def build() -> dict[str, Any]:
                           "only by the percentile-bootstrap lower bound, whose level is approximate. (I-5) the bootstrap "
                           "uses numpy's Generator.multinomial; the numpy version is bound by the formal environment "
                           "manifest (D7)",
+            "deployment": {"decided": "D5 option A1 (owner, 2026-10-20)", "kind": "rootless_namespaces",
+                           "evidence": DEPLOYMENT_EVIDENCE, "evidence_sha256": DEPLOYMENT_EVIDENCE_SHA256,
+                           "rule": "every formal card through isolation.formal_launcher(); refused where unavailable"},
             "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and "
                            "null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result "
                            "is evidence for the owner, never a formal measurement. RAN 2026-10-20: " + POWER_STUDY_EVIDENCE
@@ -335,8 +350,6 @@ def build() -> dict[str, Any]:
         "owner_decisions_open": {
             "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a "
                                   "baseline-only attempt); the operator generates a fresh formal root and commits it",
-            "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse "
-                             "every channel",
             "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
             "D7-budget-and-machine": "OD-18: formal compute (one proposer process per card adds per-card start cost) and "
                                      "the formal machine, which fixes the environment manifest",

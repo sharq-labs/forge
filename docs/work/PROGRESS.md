@@ -8183,3 +8183,10 @@ Implementation: K = HMAC(root, label/prereg/admission nonce/admission digest). `
 - Cap bias: -0.092.
 
 `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 239 passed.
+
+**Owner decision D5 (2026-10-20, in session): A1, rootless namespaces.** Implemented in `isolation.py` (e15801b0); `run_one` refuses a formal card without the launcher. The attack suite gains three channels: operator_process, wsl_interop and secret_inventory.
+
+Verification command, in WSL Ubuntu from a fresh native clone of the draft branch: `python -m benchmarks.genesis_lite.v0_3.isolation --out ~/gl03-d5-evidence.json --cards 2`.
+- Run 1 at e15801b0: exit 1, NOT verified. secret_inventory was REACHED inside the namespaces, because the scanner flagged its own .pyc (CPython constant-folds the marker pieces).
+- Fix, test-first: `test_fda19_the_scan_does_not_flag_its_own_compiled_bytecode` failed, then passed (70f85161).
+- Run 2 at 70f85161: exit 0, VERIFIED. All 10 channels REFUSED with the namespaces and all 10 REACHED without them; 39 s. Evidence sha256 80db5957d71755d76f349383f735c8c2ca61d606e38f20efe51edb17e9617df7, identical on both sides of the WSL copy, pinned in the preregistration.

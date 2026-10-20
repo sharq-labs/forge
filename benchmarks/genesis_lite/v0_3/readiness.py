@@ -60,7 +60,7 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "O-1": (FIXED, ("test_o1_",), "sign-flip p; bootstrap for the bound only; Holm unchanged"),
     "FDA-18 (process memory and temp files)": (FIXED, ("test_fda18_",), "one process and temp dir per card"),
     "FDA-18 residual (same-account files, helper processes)": (
-        OWNER, (), "D5 / OD-20: the cross_card_state and persistence attacks must be REFUSED in the deployment"),
+        FIXED, ("test_d5_",), "D5 A1 verified 2026-10-20: cross_card_state and persistence REFUSED in the namespaces"),
     "FDA-19 (Genesis-lite secret inventory)": (FIXED, ("test_fda19_",), "proposer-side secret_scan; the certified "
                                                                         "isolation_probe is not extended"),
     "FDA-21": (FIXED, ("test_fda21_",), "corrected-dof arms ADDED beside the v0.2 arms"),
@@ -69,7 +69,9 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "pilot P-1 (always_law)": (NOT_A_BLOCKER, ("test_pilot_p1_",), "solved by the v0.1 joint endpoint"),
     "pilot P-2 (control cells)": (FIXED, ("test_pilot_p2_",), "CONTROL_SOLVED cap"),
     "pilot P-3 (out-of-family share)": (FIXED, ("test_pilot_p3_",), "FDA-06 cap"),
-    "readiness P-1/P-2 (isolation deployment, escrow out of process)": (OWNER, (), "D5 / OD-20"),
+    "readiness P-1/P-2 (isolation deployment, escrow out of process)": (FIXED, ("test_d5_",), "D5 A1 verified: every "
+                                                                        "channel REFUSED, operator_process included; "
+                                                                        "the certified isolation-probe rerun is OD-3"),
     "readiness P-3 (attack arms)": (FIXED, ("test_readiness_p3_",), "suite exists; verdicts come from the deployment"),
     "P-4 formal driver, candidate in the attempt": (FIXED, ("test_p4_",), "review 2026-10-20 finding 1"),
     "P-5 environment manifest": (FIXED, ("test_p5_",), "measured inside bind for the formal tier"),
@@ -213,10 +215,17 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
     'D2b nonce-bound stream': (
         'test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream',
     ),
-    'D5 rootless-namespace deployment': (
+    'FDA-18 residual (same-account files, helper processes)': (
         'test_d5_the_launcher_masks_operator_state_and_keeps_only_the_tree_read_only',
         'test_d5_a_formal_card_cannot_start_without_the_deployment',
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
+        'test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code',
+    ),
+    'readiness P-1/P-2 (isolation deployment, escrow out of process)': (
+        'test_d5_the_launcher_masks_operator_state_and_keeps_only_the_tree_read_only',
+        'test_d5_a_formal_card_cannot_start_without_the_deployment',
+        'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
+        'test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code',
     ),
     'power and null-calibration study (ODC-O1b)': (
         'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',
