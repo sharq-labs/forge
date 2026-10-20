@@ -8258,3 +8258,10 @@ With this commit, three evidence-binding tests fail BY DESIGN (D5, study, pilot 
   - remount_rw had no power: it probed benchmarks/, which is not a mount point. It now targets the repo root through util-linux mount.
   - secret_inventory was REACHED: the committed preregistration recorded the registry schema under the key "schema", which is the registry-line marker in compact JSON. The key is renamed registry_schema, and test_fda19_no_tracked_file_holds_an_inventory_marker scans every tracked file.
 - Suite: 248 passed, 2 failed BY DESIGN (the D5 and D7 evidence bindings, pending re-runs).
+
+**D5 VERIFIED at clean 3d960cd0** (WSL, fresh native clone, 576 s, exit 0):
+- With capabilities dropped, all 12 channels REFUSED.
+- Power: 10 channels REACHED without namespaces; unmask and remount_rw REACHED in the namespaces-with-capabilities control (the escape the review found).
+- Evidence sha256 8031b422a3d7b590209455231493388697294198fcbb39227483aee094400f6d, identical on both sides of the copy, re-pinned. The D5 evidence test now checks power across both controls and the setpriv flags.
+
+Suite: 249 passed, 1 failed BY DESIGN (the D7 pilot binding, pending re-run).

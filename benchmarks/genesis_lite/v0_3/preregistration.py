@@ -102,7 +102,7 @@ POWER_STUDY_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10
 POWER_STUDY_EVIDENCE_SHA256 = "9ad27938a5a553ba1f7ee671270c80c607476f2783ef9f80cb7f4ec6cc571939"
 #: D5 (owner, 2026-10-20, option A1): the deployment verification, run on WSL Ubuntu from a clean clone
 DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json"
-DEPLOYMENT_EVIDENCE_SHA256 = "782a1b914a748a12e59a465d8c6429851df67cba7fb53b142c78246add0259fa"
+DEPLOYMENT_EVIDENCE_SHA256 = "8031b422a3d7b590209455231493388697294198fcbb39227483aee094400f6d"
 #: D7 (owner, 2026-10-20): the timing pilot on the formal machine, before the formal budget is approved
 TIMING_PILOT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json"
 TIMING_PILOT_EVIDENCE_SHA256 = "a543bc217fdcba296d4fe64616ec0f667462beab5543d483f89f5ba9e5e285e8"

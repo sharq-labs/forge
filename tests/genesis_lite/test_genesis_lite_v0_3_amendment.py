@@ -764,7 +764,10 @@ def test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code():
 
     assert doc["verified"] is True and doc["provenance"]["tree_clean"] is True
     assert doc["with_namespaces"] == {c: attacks.REFUSED for c in attacks.CHANNELS}
-    assert doc["without_namespaces"] == {c: attacks.REACHED for c in attacks.CHANNELS}
+    for c in attacks.CHANNELS:            # power: each probe reached its channel in at least one control configuration
+        assert attacks.REACHED in (doc["without_namespaces"][c], doc["namespaces_with_capabilities"][c]), c
+    assert doc["probe_power"] == {c: True for c in attacks.CHANNELS}
+    assert doc["deployment"]["setpriv_flags"] == ["--inh-caps=-all", "--bounding-set=-all", "--no-new-privs"]
     head = doc["provenance"]["head"]
     for name, digest in doc["provenance"]["code_sha256"].items():
         path = f"benchmarks/genesis_lite/v0_3/{name}"
