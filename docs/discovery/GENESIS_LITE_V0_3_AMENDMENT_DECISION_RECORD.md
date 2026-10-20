@@ -182,3 +182,9 @@ bullet is now decided by D5-A1b. Nothing above is rewritten.
 - **Status.** D5 = NOT_PROVEN. FDA-18 residual = NOT_PROVEN. N-1 = OPEN. A formal campaign is FORBIDDEN. The gate
   derives the D5 rows from the preregistration-pinned evidence (`readiness.deployment_status`), so D5 cannot be marked
   proven by hand.
+- **Evidence (2026-10-21).** The D5-A1b verification ran on the formal machine from a clean clone of `754f6cdb`
+  ([evidence](../work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/README.md), sha256 `590bfa4f…`, pinned
+  in the preregistration). It is BLOCKED solely by the six writable host device nodes; every other contract check
+  held, and 11 of 12 attack channels were REFUSED (`cross_card_state` stays UNTESTABLE without passing container
+  evidence). The earlier run at `c09b0ef5` is kept as superseded history. "Cannot pass with this runtime" refers to
+  this runtime and launcher: no alternative launcher configuration was tested beyond `/dev` as a read-only tmpfs.
