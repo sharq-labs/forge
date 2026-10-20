@@ -53,7 +53,8 @@ Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
 - [x] Owner D5 deployment DECIDED 2026-10-20: A1 rootless namespaces; VERIFIED (all 10 channels REFUSED), evidence 782a1b914a74.
 - [x] Owner D7 DECIDED 2026-10-20: machine = this WSL Ubuntu; timing pilot MEASURED 43.5 s per world set (ESTIMATED 58 h); budget 72 h for the baselines + the candidate's measured cost; run_formal enforces it.
 - [x] Owner D6 DECIDED 2026-10-20: the evaluator is chosen by a selection process; the name is due by 2026-11-17 (else D6 reopens).
-- [ ] Owner: name the evaluator (D6, by 2026-11-17); D4 identity freeze (candidate, candidate timing, fresh root, manifest); OD-3. No freeze or push
+- [ ] Owner: name the evaluator (D6, by 2026-11-17).
+- [ ] Owner D4 (candidate DEFERRED until the evaluator is named): candidate + pin + one-campaign timing (completes the budget); then OD-3 on that final HEAD; fresh root; manifest; approvals record; FROZEN. No freeze or push before the approvals record. No freeze or push
       until every decision and approval is bound to the final preregistration digest.
 - [x] Owner D3-baselines-and-tells DECIDED 2026-10-20, option A as drafted: section 10.5 cap over all four law-credit kinds, careful keeps ddof = 0 plus _dof arms, form tell declared and measured (not equalised), one process per card, CONTROL_SOLVED >= 0.5.
 - [ ] Owner: D4-identity-freeze (OD-19, candidate,

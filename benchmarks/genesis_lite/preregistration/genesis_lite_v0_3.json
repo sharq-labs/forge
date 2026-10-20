@@ -493,7 +493,7 @@
   "readiness P-1 / P-2": "the isolation deployment and an out-of-process escrow (OD-20); the deployment attack suite must report every channel REFUSED there"
  },
  "owner_decisions_open": {
-  "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a baseline-only attempt); the operator generates a fresh formal root and commits it",
+  "D4-identity-freeze": "OD-19; candidate DEFERRED by the owner (2026-10-20) until the evaluator is named; freeze sequence (owner, 2026-10-20): (1) the evaluator is named (D6, by 2026-11-17); (2) the candidate is chosen AFTER that (deferred by the owner), its code brought into this tree and pinned by sha256 (or NONE), and a one-campaign candidate timing completes the D7 budget total; (3) OD-3 recertifies that final pre-freeze HEAD; (4) the operator generates a fresh formal root and commits its sha256; (5) the environment manifest is measured on the D7 machine; (6) the owner's approvals record binds every decision to the final preregistration digest; only then is the status set to FROZEN. Nothing is frozen or pushed before (6)",
   "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)"
  },
  "owner_decisions_taken": {
@@ -551,7 +551,7 @@
   "formal.py": "5e526783d3120d59b8b6c353a56c93dcfa17cc2f664619cf4746dd45aa08b310",
   "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
   "isolation.py": "21d237a0d133ca49fcdba674580d6ecedf5c70ff1dd3a1e7c90358f7b500dce7",
-  "preregistration.py": "87f9d94c022041f56b3de5980715a1e9864ac89073c8b977d386ffcf31ab97d8",
+  "preregistration.py": "3d90f1054dcc8909af966a3ded972ec92a9fc7f199c10cc9c07acebd6fa67e60",
   "readiness.py": "94e2af960cef9e82bc4a61a3a393953130a72ede84bcdb49f113bfd3db7e8e3c",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",
