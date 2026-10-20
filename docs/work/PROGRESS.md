@@ -9027,3 +9027,14 @@ Environment: `{"TMPDIR": "D:/tmp/agent-archive-final", "PYTHONPATH": "C:\\Users\
 Result:94 passed; exit0; wall seconds 9.618442600010894. Output SHA256 `f75e069f24587ae62416522acbc9e5c5498e672480338a60c39a06ef6fa6e4c4`. No failures. Raw output and metadata: `docs/work/evidence/branch_ci_investigation_2026_10_20/agent-archive-final-gate.txt` and `.json`.
 
 Live GitHub Tests39488053735 and Branch Policy39488053796 failed with empty step metadata; dependent jobs reported skipped. Logs for branch-policy118853558670 and scope118853560388 returned404 BlobNotFound. Annotations unavailable through connector; browser signed out. Root cause UNVERIFIED pending owner-provided annotation. No billing diagnosis, workflow repair or hosted rerun claimed. Formal, full assurance and OD3 NOT RUN.
+
+**PR #174 merge preparation (2026-10-20).** origin/main `9f1c24f1` merged into the PR head `7535bb26` locally
+(`D:/forge-merge174`, branch `merge/pr174-main`, `8eeda1ae`). Conflicts only in `docs/work/ACTIVE_PLAN.md` and
+`docs/work/PROGRESS.md`, resolved by keeping both sides; the Active epic line stays on line 3 of ACTIVE_PLAN.md.
+- `python -m pytest tests/test_capability_completion.py tests/test_agent_workflow_contract.py tests/genesis_lite -q -n 4`
+  on the merge result: 337 passed, 11 skipped, 90 failed.
+- `python -m pytest tests/genesis_lite -q -n 4` on the unmerged PR head `7535bb26`: 307 passed, 11 skipped, 90 failed.
+- All 90 failures are the failing-first N-1 contract files added in `1b90f94c`:
+  `test_genesis_lite_v0_3_container_contract.py` (73) and `test_genesis_lite_v0_3_container_isolation.py` (17);
+  `validate_container_evidence` is not implemented (MISSING_VALIDATION_CONTRACT). The merge introduces no new failure.
+- FAST and SCIENTIFIC tiers: NOT RUN. No push, no merge into main yet.
