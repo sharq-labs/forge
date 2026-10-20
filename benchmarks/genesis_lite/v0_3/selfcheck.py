@@ -55,7 +55,8 @@ def _narrow(spread: float) -> list[dict]:
 
 PAIRS = {"vacuous": _spread(FIT, 1e-3, 60), "honest": [T_UP, T_DOWN], "narrow_0.1": _narrow(0.1),
          "inbox_disagree": _spread(FIT, 5e-2, 1)}
-BOUNDS = [("tol_multiple", 0.5), ("tol_multiple", 5.0), ("absolute", 0.15), ("absolute", 0.25), ("absolute", 1e6)]
+BOUNDS = [("tol_multiple", 0.5), ("tol_multiple", 3.0), ("tol_multiple", 5.0), ("absolute", 0.15), ("absolute", 0.25),
+          ("absolute", 1e6)]                       # tol_multiple 3.0 is the owner's w (D1, 2026-10-20)
 
 
 def _world(truth: dict, alternative: dict) -> Any:

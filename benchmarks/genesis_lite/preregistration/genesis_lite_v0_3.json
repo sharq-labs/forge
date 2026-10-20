@@ -519,6 +519,6 @@
   "readiness.py": "ba7042c70bff482e1b8155ef8d753dfe152435eb9b322d4adbc7388922239d0a",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "4763de7c3878c8b82f9209285d0d9cc2c720ab3b22708141f260ce0f0bb001d9",
-  "selfcheck.py": "09efb6aab132e2ee6a12a5e5dd484ebf0a069f8f34c5386fae7ed685fb323bea"
+  "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8"
  }
 }
