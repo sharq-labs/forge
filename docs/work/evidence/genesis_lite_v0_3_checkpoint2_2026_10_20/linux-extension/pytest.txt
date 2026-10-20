@@ -1,0 +1,352 @@
+FFFFFFFFFFFFFF...F.F....FFFFFFFFFFFFFFFFFFFFFFF.F                        [100%]
+=================================== FAILURES ===================================
+________ test_launch_uses_a_fresh_container_without_shell_construction _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:38: in test_launch_uses_a_fresh_container_without_shell_construction
+    assert pathlib.PurePosixPath(argv[0]).name == "podman", argv[0]
+E   AssertionError: /usr/bin/unshare
+E   assert 'unshare' == 'podman'
+E     
+E     - podman
+E     + unshare
+______________ test_container_security_options_are_explicit[--rm] ______________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --rm
+E   assert '--rm' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+__________ test_container_security_options_are_explicit[--read-only] ___________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --read-only
+E   assert '--read-only' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+_________ test_container_security_options_are_explicit[--network=none] _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --network=none
+E   assert '--network=none' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+_________ test_container_security_options_are_explicit[--cap-drop=ALL] _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --cap-drop=ALL
+E   assert '--cap-drop=ALL' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+_ test_container_security_options_are_explicit[--security-opt=no-new-privileges] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --security-opt=no-new-privileges
+E   assert '--security-opt=no-new-privileges' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+________ test_container_security_options_are_explicit[--userns=keep-id] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --userns=keep-id
+E   assert '--userns=keep-id' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+______ test_each_required_writable_mount_is_explicit_private_tmpfs[/tmp] _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:62: in test_each_required_writable_mount_is_explicit_private_tmpfs
+    assert any(value.split(":", 1)[0] == target for value in specifications), (
+E   AssertionError: /tmp has no explicit per-container tmpfs declaration
+E   assert False
+E    +  where False = any(<generator object test_each_required_writable_mount_is_explicit_private_tmpfs.<locals>.<genexpr> at 0x7b1c9c0ca260>)
+____ test_each_required_writable_mount_is_explicit_private_tmpfs[/var/tmp] _____
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:62: in test_each_required_writable_mount_is_explicit_private_tmpfs
+    assert any(value.split(":", 1)[0] == target for value in specifications), (
+E   AssertionError: /var/tmp has no explicit per-container tmpfs declaration
+E   assert False
+E    +  where False = any(<generator object test_each_required_writable_mount_is_explicit_private_tmpfs.<locals>.<genexpr> at 0x7b1c9bf68120>)
+______ test_each_required_writable_mount_is_explicit_private_tmpfs[/run] _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:62: in test_each_required_writable_mount_is_explicit_private_tmpfs
+    assert any(value.split(":", 1)[0] == target for value in specifications), (
+E   AssertionError: /run has no explicit per-container tmpfs declaration
+E   assert False
+E    +  where False = any(<generator object test_each_required_writable_mount_is_explicit_private_tmpfs.<locals>.<genexpr> at 0x7b1c9bf68ac0>)
+____ test_each_required_writable_mount_is_explicit_private_tmpfs[/dev/shm] _____
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:62: in test_each_required_writable_mount_is_explicit_private_tmpfs
+    assert any(value.split(":", 1)[0] == target for value in specifications), (
+E   AssertionError: /dev/shm has no explicit per-container tmpfs declaration
+E   assert False
+E    +  where False = any(<generator object test_each_required_writable_mount_is_explicit_private_tmpfs.<locals>.<genexpr> at 0x7b1c9bf69460>)
+__________ test_source_and_venv_bind_mounts_are_explicitly_read_only ___________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:73: in test_source_and_venv_bind_mounts_are_explicitly_read_only
+    assert any(source in mount and (
+E   AssertionError: no read-only container bind for /home/forge/source
+E   assert False
+E    +  where False = any(<generator object test_source_and_venv_bind_mounts_are_explicitly_read_only.<locals>.<genexpr> at 0x7b1c9c042b60>)
+_________________ test_launch_pins_an_immutable_image_identity _________________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:80: in test_launch_pins_an_immutable_image_identity
+    assert any("@sha256:" in value and len(value.rsplit("@sha256:", 1)[1]) == 64
+E   AssertionError: launch can proceed without an immutable image digest
+E   assert False
+E    +  where False = any(<generator object test_launch_pins_an_immutable_image_identity.<locals>.<genexpr> at 0x7b1c9c042f20>)
+__ test_deployment_report_cannot_verify_without_mount_and_container_evidence ___
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:91: in test_deployment_report_cannot_verify_without_mount_and_container_evidence
+    assert result["verified"] is False, (
+E   AssertionError: accepted without complete mountinfo reconciliation, writable-mount canaries, A/B container identities, image digest, runtime flags or launcher/probe provenance
+E   assert True is False
+______ test_runtime_launch_failure_is_detected_before_consuming_the_root _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:142: in test_runtime_launch_failure_is_detected_before_consuming_the_root
+    assert registry.entries() == [], "failed isolation consumed the one allowed root attempt"
+E   AssertionError: failed isolation consumed the one allowed root attempt
+E   assert [{'admitted_a...02b945', ...}] == []
+E     
+E     Left contains one more item: {'admitted_at': '2026-10-20T16:20:26+00:00', 'attempt_label': '', 'attempt_sha256': '68172b219ac36fe7d995a2f6430ed2cbe...c8b6b1cea39116a00b384', 'campaign_set_sha256': '4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945', ...}
+E     Use -v to get more diff
+___ test_private_tmp_is_not_evidence_that_other_writable_mounts_are_private ____
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:198: in test_private_tmp_is_not_evidence_that_other_writable_mounts_are_private
+    assert all(not rationale.startswith("cross_card_state:REFUSED:") for rationale in observed), (
+E   AssertionError: probe certified REFUSED from private TMP while a shared writable canary remained readable across cards and restart: ['cross_card_state:REFUSED:0 earlier marker(s) found', 'cross_card_state:REFUSED:0 earlier marker(s) found', 'cross_card_state:REFUSED:0 earlier marker(s) found']
+E   assert False
+E    +  where False = all(<generator object test_private_tmp_is_not_evidence_that_other_writable_mounts_are_private.<locals>.<genexpr> at 0x7b1c9bf47510>)
+______ test_real_unprobeable_writable_mounts_cannot_be_silently_verified _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:182: in test_real_unprobeable_writable_mounts_cannot_be_silently_verified
+    assert _verdict(report)["verified"] is False, unprobeable
+E   AssertionError: [{'canary': 'UNPROBEABLE', 'device': '0:84', 'error': 'PermissionError', 'fstype': 'tmpfs', ...}, {'canary': 'UNPROBEA...'devtmpfs', 'id': '580', ...}, {'canary': 'UNPROBEABLE', 'device': '0:5', 'fstype': 'devtmpfs', 'id': '581', ...}, ...]
+E   assert True is False
+________ test_real_shared_host_mount_must_override_old_refused_channels ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:188: in test_real_shared_host_mount_must_override_old_refused_channels
+    assert _verdict(report)["verified"] is False
+E   assert True is False
+________________ test_complete_admissible_evidence_is_accepted _________________
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:244: in test_complete_admissible_evidence_is_accepted
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[missing_mount-MOUNT_INVENTORY_MISMATCH] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[duplicate_mount-MOUNT_INVENTORY_MISMATCH] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[windows_writable-WINDOWS_WRITABLE_MOUNT] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[host_writable-HOST_WRITABLE_MOUNT] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[shared_propagation-SHARED_WRITABLE_MOUNT] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[undeclared_writable-UNDECLARED_WRITABLE_MOUNT] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[unprobeable-UNPROBEABLE_WRITABLE_MOUNT] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[image_mismatch-IMAGE_DIGEST_MISMATCH] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[reused_container-CONTAINER_REUSED] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[writable_source-SOURCE_WRITABLE] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+__ test_evidence_mutation_has_specific_rejection[writable_venv-VENV_WRITABLE] __
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[nonzero_caps-NONZERO_CAPABILITIES] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[nnp_off-NO_NEW_PRIVILEGES_MISSING] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[network_reached-NETWORK_REACHED] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[shared_home-PATH_OUTSIDE_PRIVATE_MOUNTS] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[shared_cache-PATH_OUTSIDE_PRIVATE_MOUNTS] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[canary_leak-CROSS_CARD_CANARY_REACHED] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[missing_probe-CANARY_COVERAGE_INCOMPLETE] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[failed_positive_control-CANARY_CONTROL_FAILED] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_ test_evidence_mutation_has_specific_rejection[source_mismatch-SOURCE_IDENTITY_MISMATCH] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:282: in test_evidence_mutation_has_specific_rejection
+    result = validator_contract()(report, expected=expected)
+             ^^^^^^^^^^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:234: in validator_contract
+    assert callable(fn), (
+E   AssertionError: MISSING_VALIDATION_CONTRACT: isolation.validate_container_evidence(report, expected=...) must reconcile inventory and runtime identities and return PASS/BLOCKED with named reasons; old channel verdict strings cannot establish this contract
+E   assert False
+E    +  where False = callable(None)
+_____________ test_current_launcher_binds_actual_runtime_identity ______________
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:297: in test_current_launcher_binds_actual_runtime_identity
+    assert description.get("image_digest") == metadata["image"].split("@")[1], (
+E   AssertionError: production launcher has no image identity despite the real Podman image being available
+E   assert None == 'sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261'
+E    +  where None = <built-in method get of dict object at 0x7b1c9bf79c40>('image_digest')
+E    +    where <built-in method get of dict object at 0x7b1c9bf79c40> = {'deployment': 'rootless_namespaces', 'unshare_flags': ['--user', '--map-root-user', '--pid', '--fork', '--kill-child'..., '/tmp', '/var/tmp', '/run', ...], 'setpriv_flags': ['--inh-caps=-all', '--bounding-set=-all', '--no-new-privs'], ...}.get
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_existing_negative_channel_controls_stay_blocking[REACHED]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_existing_negative_channel_controls_stay_blocking[UNTESTABLE]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_unavailable_runtime_is_refused_before_admission
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_shared_probe_directory_positive_control_survives_process_restart
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_real_kernel_security_controls
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_real_card_identities_and_private_home_cache
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_real_inventory_reconciles_runtime_declared_mounts
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_real_all_mount_canaries_and_shared_volume_positive_control
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_actual_wrong_image_is_refused_by_runtime
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_launch_uses_a_fresh_container_without_shell_construction
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--rm]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--read-only]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--network=none]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--cap-drop=ALL]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--security-opt=no-new-privileges]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--userns=keep-id]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_each_required_writable_mount_is_explicit_private_tmpfs[/tmp]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_each_required_writable_mount_is_explicit_private_tmpfs[/var/tmp]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_each_required_writable_mount_is_explicit_private_tmpfs[/run]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_each_required_writable_mount_is_explicit_private_tmpfs[/dev/shm]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_source_and_venv_bind_mounts_are_explicitly_read_only
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_launch_pins_an_immutable_image_identity
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_deployment_report_cannot_verify_without_mount_and_container_evidence
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_runtime_launch_failure_is_detected_before_consuming_the_root
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_private_tmp_is_not_evidence_that_other_writable_mounts_are_private
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_real_unprobeable_writable_mounts_cannot_be_silently_verified
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_real_shared_host_mount_must_override_old_refused_channels
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_complete_admissible_evidence_is_accepted
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[missing_mount-MOUNT_INVENTORY_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[duplicate_mount-MOUNT_INVENTORY_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[windows_writable-WINDOWS_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[host_writable-HOST_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[shared_propagation-SHARED_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[undeclared_writable-UNDECLARED_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[unprobeable-UNPROBEABLE_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[image_mismatch-IMAGE_DIGEST_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[reused_container-CONTAINER_REUSED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[writable_source-SOURCE_WRITABLE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[writable_venv-VENV_WRITABLE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[nonzero_caps-NONZERO_CAPABILITIES]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[nnp_off-NO_NEW_PRIVILEGES_MISSING]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[network_reached-NETWORK_REACHED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[shared_home-PATH_OUTSIDE_PRIVATE_MOUNTS]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[shared_cache-PATH_OUTSIDE_PRIVATE_MOUNTS]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[canary_leak-CROSS_CARD_CANARY_REACHED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[missing_probe-CANARY_COVERAGE_INCOMPLETE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[failed_positive_control-CANARY_CONTROL_FAILED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_evidence_mutation_has_specific_rejection[source_mismatch-SOURCE_IDENTITY_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_current_launcher_binds_actual_runtime_identity
+40 failed, 9 passed in 2.22s

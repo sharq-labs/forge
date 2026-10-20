@@ -1,0 +1,2396 @@
+{
+  "arms": {
+    "always_insufficient": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "baseline: blanket refusal": 40
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "baseline: blanket refusal": 40
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.5,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "baseline: blanket refusal": 40
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 1.0,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "baseline: blanket refusal": 40
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "baseline: blanket refusal": 40
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "baseline: blanket refusal": 40
+          }
+        }
+      },
+      "mean_six_kind_credit": 1.5,
+      "observations": 0,
+      "outcomes": {
+        "insufficient_evidence": 240
+      },
+      "recorded_cards": 240,
+      "total_seconds": 0.6277479830023367,
+      "valid_runs": 40
+    },
+    "always_law": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": -1.0,
+          "outcomes": {
+            "law_fail": 40
+          },
+          "reasons": {
+            "baseline: always fits": 40
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "law_fail": 20,
+            "law_pass": 20
+          },
+          "reasons": {
+            "baseline: always fits": 40
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": -0.9,
+          "outcomes": {
+            "law_fail": 36,
+            "law_pass": 4
+          },
+          "reasons": {
+            "baseline: always fits": 40
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": -1.0,
+          "outcomes": {
+            "law_fail": 40
+          },
+          "reasons": {
+            "baseline: always fits": 40
+          }
+        },
+        "no_solution": {
+          "mean_credit": -1.0,
+          "outcomes": {
+            "law_fail": 40
+          },
+          "reasons": {
+            "baseline: always fits": 40
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": -0.95,
+          "outcomes": {
+            "law_fail": 39,
+            "law_pass": 1
+          },
+          "reasons": {
+            "baseline: always fits": 40
+          }
+        }
+      },
+      "mean_six_kind_credit": -4.85,
+      "observations": 7668,
+      "outcomes": {
+        "law_fail": 215,
+        "law_pass": 25
+      },
+      "recorded_cards": 240,
+      "total_seconds": 2.809144424995793,
+      "valid_runs": 40
+    },
+    "always_refuse": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "no_law": 40
+          },
+          "reasons": {
+            "baseline: never proposes": 40
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "no_law": 40
+          },
+          "reasons": {
+            "baseline: never proposes": 40
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "no_law": 40
+          },
+          "reasons": {
+            "baseline: never proposes": 40
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "no_law": 40
+          },
+          "reasons": {
+            "baseline: never proposes": 40
+          }
+        },
+        "no_solution": {
+          "mean_credit": 1.0,
+          "outcomes": {
+            "no_law": 40
+          },
+          "reasons": {
+            "baseline: never proposes": 40
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "no_law": 40
+          },
+          "reasons": {
+            "baseline: never proposes": 40
+          }
+        }
+      },
+      "mean_six_kind_credit": 1.0,
+      "observations": 0,
+      "outcomes": {
+        "no_law": 240
+      },
+      "recorded_cards": 240,
+      "total_seconds": 0.6308802279972952,
+      "valid_runs": 40
+    },
+    "careful": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 0.625,
+          "outcomes": {
+            "confounded": 25,
+            "insufficient_evidence": 13,
+            "no_law": 2
+          },
+          "reasons": {
+            "on held-out queries the inputs do not beat a constant": 2,
+            "residuals track a passively observed covariate that cannot be set: its effect is not identifiable": 25,
+            "the predicted mean is known only to 0.83 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.88 (needs 0.02)": 1,
+            "too few observations for the input count": 11
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.175,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 31,
+            "law_pass": 7,
+            "no_law": 1
+          },
+          "reasons": {
+            "log-linear fit on intervened inputs, checked on own held-out queries": 7,
+            "on held-out queries the inputs do not beat a constant": 1,
+            "residuals track a passively observed covariate that cannot be set: its effect is not identifiable": 1,
+            "scatter (held-out rms 0.00923, fit 0.0133) exceeds 3.5x the replicate noise (0.00215): wrong form": 1,
+            "scatter (held-out rms 0.0115, fit 0.00843) exceeds 3.5x the replicate noise (0.00121): wrong form": 1,
+            "scatter (held-out rms 0.0212, fit 0.0188) exceeds 3.5x the replicate noise (0.00239): wrong form": 1,
+            "scatter (held-out rms 0.0225, fit 0.0242) exceeds 3.5x the replicate noise (0.00539): wrong form": 1,
+            "scatter (held-out rms 0.0342, fit 0.0197) exceeds 3.5x the replicate noise (0.00861): wrong form": 1,
+            "scatter (held-out rms 0.0358, fit 0.0297) exceeds 3.5x the replicate noise (0.00997): wrong form": 1,
+            "scatter (held-out rms 0.0642, fit 0.013) exceeds 3.5x the replicate noise (0.00356): wrong form": 1,
+            "scatter (held-out rms 0.0777, fit 0.0509) exceeds 3.5x the replicate noise (0.0135): wrong form": 1,
+            "scatter (held-out rms 0.119, fit 0.000956) exceeds 3.5x the replicate noise (0.014): wrong form": 1,
+            "the law is checked only inside the box; the assessment region lies outside it": 3,
+            "the predicted mean is known only to 0.023 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.0581 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.073 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.565 (needs 0.02)": 1,
+            "the predicted mean is known only to 1.05 (needs 0.02)": 1,
+            "too few observations for the input count": 14
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.5,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "scatter (held-out rms 0.0137, fit 0.004) exceeds 3.5x the replicate noise (0.00179): wrong form": 1,
+            "scatter (held-out rms 0.0162, fit 0.0142) exceeds 3.5x the replicate noise (0.00371): wrong form": 1,
+            "scatter (held-out rms 0.0265, fit 0.0367) exceeds 3.5x the replicate noise (0.00602): wrong form": 1,
+            "scatter (held-out rms 0.0343, fit 0.0423) exceeds 3.5x the replicate noise (0.00674): wrong form": 1,
+            "scatter (held-out rms 0.0398, fit 0.0343) exceeds 3.5x the replicate noise (0.00813): wrong form": 1,
+            "scatter (held-out rms 0.0625, fit 0.0291) exceeds 3.5x the replicate noise (0.00243): wrong form": 1,
+            "scatter (held-out rms 0.118, fit 0.0236) exceeds 3.5x the replicate noise (0.0117): wrong form": 1,
+            "the law is checked only inside the box; the assessment region lies outside it": 18,
+            "the predicted mean is known only to 0.0203 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.021 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.0252 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.0295 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.0318 (needs 0.02)": 1,
+            "too few observations for the input count": 10
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.9,
+          "outcomes": {
+            "confounded": 3,
+            "insufficient_evidence": 36,
+            "no_law": 1
+          },
+          "reasons": {
+            "on held-out queries the inputs do not beat a constant": 1,
+            "residuals track a passively observed covariate that cannot be set: its effect is not identifiable": 3,
+            "the predicted mean is known only to 0.172 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.19 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.212 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.215 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.232 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.24 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.248 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.252 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.258 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.303 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.304 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.325 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.327 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.331 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.344 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.351 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.352 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.354 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.362 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.381 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.41 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.476 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.494 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.498 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.547 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.669 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.695 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.921 (needs 0.02)": 1,
+            "too few observations for the input count": 8
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.8,
+          "outcomes": {
+            "insufficient_evidence": 8,
+            "no_law": 32
+          },
+          "reasons": {
+            "on held-out queries the inputs do not beat a constant": 32,
+            "the predicted mean is known only to 0.336 (needs 0.02)": 1,
+            "too few observations for the input count": 7
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.25,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 28,
+            "law_pass": 10,
+            "no_law": 1
+          },
+          "reasons": {
+            "log-linear fit on intervened inputs, checked on own held-out queries": 10,
+            "on held-out queries the inputs do not beat a constant": 1,
+            "residuals track a passively observed covariate that cannot be set: its effect is not identifiable": 1,
+            "scatter (held-out rms 0.0188, fit 0.0196) exceeds 3.5x the replicate noise (0.00491): wrong form": 1,
+            "scatter (held-out rms 0.0422, fit 0.0427) exceeds 3.5x the replicate noise (0.006): wrong form": 1,
+            "the law is checked only inside the box; the assessment region lies outside it": 8,
+            "the predicted mean is known only to 0.0664 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.142 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.299 (needs 0.02)": 1,
+            "the predicted mean is known only to 0.306 (needs 0.02)": 1,
+            "too few observations for the input count": 14
+          }
+        }
+      },
+      "mean_six_kind_credit": 3.25,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 30,
+        "insufficient_evidence": 156,
+        "law_pass": 17,
+        "no_law": 37
+      },
+      "recorded_cards": 240,
+      "total_seconds": 2.7535965879978903,
+      "valid_runs": 40
+    },
+    "extrapolating_fit": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": -0.35,
+          "outcomes": {
+            "confounded": 6,
+            "insufficient_evidence": 11,
+            "law_fail": 20,
+            "no_law": 3
+          },
+          "reasons": {
+            "monomial enumeration, extrapolated": 20,
+            "on held-out queries the variables do not beat a constant": 3,
+            "precision or lack-of-fit bar not met": 11,
+            "residuals track a passive covariate": 6
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.2,
+          "outcomes": {
+            "insufficient_evidence": 22,
+            "law_fail": 1,
+            "law_pass": 9,
+            "no_law": 8
+          },
+          "reasons": {
+            "monomial enumeration, extrapolated": 10,
+            "on held-out queries the variables do not beat a constant": 8,
+            "precision or lack-of-fit bar not met": 22
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": -0.15,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 18,
+            "law_fail": 15,
+            "law_pass": 3,
+            "no_law": 3
+          },
+          "reasons": {
+            "monomial enumeration, extrapolated": 18,
+            "on held-out queries the variables do not beat a constant": 3,
+            "precision or lack-of-fit bar not met": 18,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.725,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 29,
+            "no_law": 10
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 10,
+            "precision or lack-of-fit bar not met": 29,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.9,
+          "outcomes": {
+            "insufficient_evidence": 4,
+            "no_law": 36
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 36,
+            "precision or lack-of-fit bar not met": 4
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.2,
+          "outcomes": {
+            "confounded": 3,
+            "insufficient_evidence": 8,
+            "law_fail": 5,
+            "law_pass": 13,
+            "no_law": 11
+          },
+          "reasons": {
+            "monomial enumeration, extrapolated": 18,
+            "on held-out queries the variables do not beat a constant": 11,
+            "precision or lack-of-fit bar not met": 8,
+            "residuals track a passive covariate": 3
+          }
+        }
+      },
+      "mean_six_kind_credit": 1.525,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 11,
+        "insufficient_evidence": 92,
+        "law_fail": 41,
+        "law_pass": 25,
+        "no_law": 71
+      },
+      "recorded_cards": 240,
+      "total_seconds": 3.541159247003634,
+      "valid_runs": 40
+    },
+    "extrapolating_fit_dof": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": -0.3,
+          "outcomes": {
+            "confounded": 7,
+            "insufficient_evidence": 9,
+            "law_fail": 19,
+            "no_law": 5
+          },
+          "reasons": {
+            "monomial enumeration, extrapolated": 19,
+            "on held-out queries the variables do not beat a constant": 5,
+            "precision or lack-of-fit bar not met": 9,
+            "residuals track a passive covariate": 7
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.175,
+          "outcomes": {
+            "confounded": 3,
+            "insufficient_evidence": 24,
+            "law_fail": 1,
+            "law_pass": 8,
+            "no_law": 4
+          },
+          "reasons": {
+            "monomial enumeration, extrapolated": 9,
+            "on held-out queries the variables do not beat a constant": 4,
+            "precision or lack-of-fit bar not met": 24,
+            "residuals track a passive covariate": 3
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.0125,
+          "outcomes": {
+            "insufficient_evidence": 23,
+            "law_fail": 11,
+            "law_pass": 4,
+            "no_law": 2
+          },
+          "reasons": {
+            "monomial enumeration, extrapolated": 15,
+            "on held-out queries the variables do not beat a constant": 2,
+            "precision or lack-of-fit bar not met": 23
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.775,
+          "outcomes": {
+            "confounded": 2,
+            "insufficient_evidence": 31,
+            "no_law": 7
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 7,
+            "precision or lack-of-fit bar not met": 31,
+            "residuals track a passive covariate": 2
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.85,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 5,
+            "no_law": 34
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 34,
+            "precision or lack-of-fit bar not met": 5,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.2,
+          "outcomes": {
+            "confounded": 5,
+            "insufficient_evidence": 15,
+            "law_fail": 4,
+            "law_pass": 12,
+            "no_law": 4
+          },
+          "reasons": {
+            "monomial enumeration, extrapolated": 16,
+            "on held-out queries the variables do not beat a constant": 4,
+            "precision or lack-of-fit bar not met": 15,
+            "residuals track a passive covariate": 5
+          }
+        }
+      },
+      "mean_six_kind_credit": 1.7125,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 18,
+        "insufficient_evidence": 107,
+        "law_fail": 35,
+        "law_pass": 24,
+        "no_law": 56
+      },
+      "recorded_cards": 240,
+      "total_seconds": 3.3674801360002675,
+      "valid_runs": 40
+    },
+    "extrapolation_pair": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 0.6,
+          "outcomes": {
+            "confounded": 24,
+            "insufficient_evidence": 12,
+            "no_law": 4
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 4,
+            "precision or lack-of-fit bar not met": 1,
+            "residuals track a passive covariate": 24,
+            "too few observations": 11
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.0875,
+          "outcomes": {
+            "indistinguishable_hit": 1,
+            "indistinguishable_miss": 3,
+            "insufficient_evidence": 28,
+            "law_pass": 7,
+            "no_law": 1
+          },
+          "reasons": {
+            "in-box fit plus an outward-diverging rival within half a noise sigma in the box": 4,
+            "in-box law": 7,
+            "on held-out queries the variables do not beat a constant": 1,
+            "precision or lack-of-fit bar not met": 14,
+            "too few observations": 14
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": -0.025,
+          "outcomes": {
+            "indistinguishable_hit": 3,
+            "indistinguishable_miss": 15,
+            "insufficient_evidence": 22
+          },
+          "reasons": {
+            "in-box fit plus an outward-diverging rival within half a noise sigma in the box": 18,
+            "precision or lack-of-fit bar not met": 12,
+            "too few observations": 10
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.825,
+          "outcomes": {
+            "insufficient_evidence": 33,
+            "no_law": 7
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 7,
+            "precision or lack-of-fit bar not met": 25,
+            "too few observations": 8
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.8,
+          "outcomes": {
+            "insufficient_evidence": 8,
+            "no_law": 32
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 32,
+            "precision or lack-of-fit bar not met": 1,
+            "too few observations": 7
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.0625,
+          "outcomes": {
+            "indistinguishable_hit": 5,
+            "indistinguishable_miss": 3,
+            "insufficient_evidence": 24,
+            "law_pass": 8
+          },
+          "reasons": {
+            "in-box fit plus an outward-diverging rival within half a noise sigma in the box": 8,
+            "in-box law": 8,
+            "precision or lack-of-fit bar not met": 10,
+            "too few observations": 14
+          }
+        }
+      },
+      "mean_six_kind_credit": 2.35,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 24,
+        "indistinguishable_hit": 9,
+        "indistinguishable_miss": 21,
+        "insufficient_evidence": 127,
+        "law_pass": 15,
+        "no_law": 44
+      },
+      "recorded_cards": 240,
+      "total_seconds": 2.8235147479999796,
+      "valid_runs": 40
+    },
+    "extrapolation_pair_dof": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 0.625,
+          "outcomes": {
+            "confounded": 25,
+            "insufficient_evidence": 12,
+            "no_law": 3
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 3,
+            "precision or lack-of-fit bar not met": 1,
+            "residuals track a passive covariate": 25,
+            "too few observations": 11
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.1375,
+          "outcomes": {
+            "indistinguishable_hit": 1,
+            "indistinguishable_miss": 2,
+            "insufficient_evidence": 26,
+            "law_pass": 8,
+            "no_law": 3
+          },
+          "reasons": {
+            "in-box fit plus an outward-diverging rival within half a noise sigma in the box": 3,
+            "in-box law": 8,
+            "on held-out queries the variables do not beat a constant": 3,
+            "precision or lack-of-fit bar not met": 12,
+            "too few observations": 14
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": -0.0125,
+          "outcomes": {
+            "indistinguishable_hit": 4,
+            "indistinguishable_miss": 15,
+            "insufficient_evidence": 21
+          },
+          "reasons": {
+            "in-box fit plus an outward-diverging rival within half a noise sigma in the box": 19,
+            "precision or lack-of-fit bar not met": 11,
+            "too few observations": 10
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.875,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 35,
+            "no_law": 4
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 4,
+            "precision or lack-of-fit bar not met": 27,
+            "residuals track a passive covariate": 1,
+            "too few observations": 8
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.775,
+          "outcomes": {
+            "insufficient_evidence": 9,
+            "no_law": 31
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 31,
+            "precision or lack-of-fit bar not met": 2,
+            "too few observations": 7
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.0625,
+          "outcomes": {
+            "indistinguishable_hit": 5,
+            "indistinguishable_miss": 4,
+            "insufficient_evidence": 20,
+            "law_pass": 9,
+            "no_law": 2
+          },
+          "reasons": {
+            "in-box fit plus an outward-diverging rival within half a noise sigma in the box": 9,
+            "in-box law": 9,
+            "on held-out queries the variables do not beat a constant": 2,
+            "precision or lack-of-fit bar not met": 6,
+            "too few observations": 14
+          }
+        }
+      },
+      "mean_six_kind_credit": 2.4625,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 26,
+        "indistinguishable_hit": 10,
+        "indistinguishable_miss": 21,
+        "insufficient_evidence": 123,
+        "law_pass": 17,
+        "no_law": 43
+      },
+      "recorded_cards": 240,
+      "total_seconds": 2.834764064005867,
+      "valid_runs": 40
+    },
+    "fit_all_gated": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": -0.575,
+          "outcomes": {
+            "insufficient_evidence": 14,
+            "law_fail": 23,
+            "no_law": 3
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 23,
+            "on held-out queries the variables do not beat a constant": 3,
+            "too few observations": 14
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.2,
+          "outcomes": {
+            "insufficient_evidence": 29,
+            "law_fail": 1,
+            "law_pass": 9,
+            "no_law": 1
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 10,
+            "on held-out queries the variables do not beat a constant": 1,
+            "precision or lack-of-fit bar not met": 12,
+            "too few observations": 17
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": -0.025,
+          "outcomes": {
+            "insufficient_evidence": 24,
+            "law_fail": 13,
+            "law_pass": 3
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 16,
+            "precision or lack-of-fit bar not met": 10,
+            "too few observations": 14
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": -0.025,
+          "outcomes": {
+            "insufficient_evidence": 18,
+            "law_fail": 19,
+            "no_law": 3
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 19,
+            "on held-out queries the variables do not beat a constant": 3,
+            "precision or lack-of-fit bar not met": 3,
+            "too few observations": 15
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.625,
+          "outcomes": {
+            "insufficient_evidence": 11,
+            "law_fail": 2,
+            "no_law": 27
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 2,
+            "on held-out queries the variables do not beat a constant": 27,
+            "too few observations": 11
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": -0.375,
+          "outcomes": {
+            "insufficient_evidence": 24,
+            "law_fail": 15,
+            "no_law": 1
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 15,
+            "on held-out queries the variables do not beat a constant": 1,
+            "precision or lack-of-fit bar not met": 6,
+            "too few observations": 18
+          }
+        }
+      },
+      "mean_six_kind_credit": -0.175,
+      "observations": 7668,
+      "outcomes": {
+        "insufficient_evidence": 120,
+        "law_fail": 73,
+        "law_pass": 12,
+        "no_law": 35
+      },
+      "recorded_cards": 240,
+      "total_seconds": 2.7722443280017615,
+      "valid_runs": 40
+    },
+    "fit_all_gated_dof": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": -0.6,
+          "outcomes": {
+            "insufficient_evidence": 14,
+            "law_fail": 24,
+            "no_law": 2
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 24,
+            "on held-out queries the variables do not beat a constant": 2,
+            "too few observations": 14
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.175,
+          "outcomes": {
+            "insufficient_evidence": 31,
+            "law_fail": 1,
+            "law_pass": 8
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 9,
+            "precision or lack-of-fit bar not met": 14,
+            "too few observations": 17
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": -0.05,
+          "outcomes": {
+            "insufficient_evidence": 24,
+            "law_fail": 14,
+            "law_pass": 2
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 16,
+            "precision or lack-of-fit bar not met": 10,
+            "too few observations": 14
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": -0.15,
+          "outcomes": {
+            "insufficient_evidence": 15,
+            "law_fail": 21,
+            "no_law": 4
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 21,
+            "on held-out queries the variables do not beat a constant": 4,
+            "too few observations": 15
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.675,
+          "outcomes": {
+            "insufficient_evidence": 11,
+            "law_fail": 1,
+            "no_law": 28
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 1,
+            "on held-out queries the variables do not beat a constant": 28,
+            "too few observations": 11
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": -0.325,
+          "outcomes": {
+            "insufficient_evidence": 23,
+            "law_fail": 15,
+            "law_pass": 2
+          },
+          "reasons": {
+            "log-linear fit on every observed variable, control-checked": 17,
+            "precision or lack-of-fit bar not met": 5,
+            "too few observations": 18
+          }
+        }
+      },
+      "mean_six_kind_credit": -0.275,
+      "observations": 7668,
+      "outcomes": {
+        "insufficient_evidence": 118,
+        "law_fail": 76,
+        "law_pass": 12,
+        "no_law": 34
+      },
+      "recorded_cards": 240,
+      "total_seconds": 2.706768593997367,
+      "valid_runs": 40
+    },
+    "greedy_forward": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": -0.075,
+          "outcomes": {
+            "confounded": 6,
+            "insufficient_evidence": 20,
+            "law_fail": 9,
+            "no_law": 5
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 9,
+            "greedy forward variable selection": 9,
+            "on held-out queries the variables do not beat a constant": 5,
+            "precision or lack-of-fit bar not met": 11,
+            "residuals track a passive covariate": 6
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.175,
+          "outcomes": {
+            "insufficient_evidence": 26,
+            "law_pass": 7,
+            "no_law": 7
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 3,
+            "greedy forward variable selection": 7,
+            "on held-out queries the variables do not beat a constant": 7,
+            "precision or lack-of-fit bar not met": 23
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.4375,
+          "outcomes": {
+            "confounded": 3,
+            "insufficient_evidence": 35,
+            "no_law": 2
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 20,
+            "on held-out queries the variables do not beat a constant": 2,
+            "precision or lack-of-fit bar not met": 15,
+            "residuals track a passive covariate": 3
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.75,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 30,
+            "no_law": 9
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 9,
+            "precision or lack-of-fit bar not met": 30,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.925,
+          "outcomes": {
+            "insufficient_evidence": 3,
+            "no_law": 37
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 37,
+            "precision or lack-of-fit bar not met": 3
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.15,
+          "outcomes": {
+            "confounded": 3,
+            "insufficient_evidence": 20,
+            "law_fail": 2,
+            "law_pass": 8,
+            "no_law": 7
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 6,
+            "greedy forward variable selection": 10,
+            "on held-out queries the variables do not beat a constant": 7,
+            "precision or lack-of-fit bar not met": 14,
+            "residuals track a passive covariate": 3
+          }
+        }
+      },
+      "mean_six_kind_credit": 2.3625,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 13,
+        "insufficient_evidence": 134,
+        "law_fail": 11,
+        "law_pass": 15,
+        "no_law": 67
+      },
+      "recorded_cards": 240,
+      "total_seconds": 3.0822404739992635,
+      "valid_runs": 40
+    },
+    "greedy_forward_dof": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": -0.1,
+          "outcomes": {
+            "confounded": 5,
+            "insufficient_evidence": 15,
+            "law_fail": 9,
+            "no_law": 11
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 8,
+            "greedy forward variable selection": 9,
+            "on held-out queries the variables do not beat a constant": 11,
+            "precision or lack-of-fit bar not met": 7,
+            "residuals track a passive covariate": 5
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.175,
+          "outcomes": {
+            "insufficient_evidence": 23,
+            "law_pass": 7,
+            "no_law": 10
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 2,
+            "greedy forward variable selection": 7,
+            "on held-out queries the variables do not beat a constant": 10,
+            "precision or lack-of-fit bar not met": 21
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.425,
+          "outcomes": {
+            "confounded": 2,
+            "insufficient_evidence": 34,
+            "no_law": 4
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 19,
+            "on held-out queries the variables do not beat a constant": 4,
+            "precision or lack-of-fit bar not met": 15,
+            "residuals track a passive covariate": 2
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.625,
+          "outcomes": {
+            "insufficient_evidence": 25,
+            "no_law": 15
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 15,
+            "precision or lack-of-fit bar not met": 25
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.825,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 6,
+            "no_law": 33
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 33,
+            "precision or lack-of-fit bar not met": 6,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": -0.025,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 20,
+            "law_fail": 5,
+            "law_pass": 4,
+            "no_law": 10
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 7,
+            "greedy forward variable selection": 9,
+            "on held-out queries the variables do not beat a constant": 10,
+            "precision or lack-of-fit bar not met": 13,
+            "residuals track a passive covariate": 1
+          }
+        }
+      },
+      "mean_six_kind_credit": 1.925,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 9,
+        "insufficient_evidence": 123,
+        "law_fail": 14,
+        "law_pass": 11,
+        "no_law": 83
+      },
+      "recorded_cards": 240,
+      "total_seconds": 3.072908653994091,
+      "valid_runs": 40
+    },
+    "historical_answer": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": -0.25,
+          "outcomes": {
+            "insufficient_evidence": 30,
+            "law_fail": 10
+          },
+          "reasons": {
+            "no familiar law for this vocabulary": 30,
+            "the textbook law": 10
+          }
+        },
+        "discoverable": {
+          "mean_credit": -0.25,
+          "outcomes": {
+            "insufficient_evidence": 30,
+            "law_fail": 10
+          },
+          "reasons": {
+            "no familiar law for this vocabulary": 30,
+            "the textbook law": 10
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.125,
+          "outcomes": {
+            "insufficient_evidence": 30,
+            "law_fail": 10
+          },
+          "reasons": {
+            "no familiar law for this vocabulary": 30,
+            "the textbook law": 10
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.5,
+          "outcomes": {
+            "insufficient_evidence": 30,
+            "law_fail": 10
+          },
+          "reasons": {
+            "no familiar law for this vocabulary": 30,
+            "the textbook law": 10
+          }
+        },
+        "no_solution": {
+          "mean_credit": -0.25,
+          "outcomes": {
+            "insufficient_evidence": 30,
+            "law_fail": 10
+          },
+          "reasons": {
+            "no familiar law for this vocabulary": 30,
+            "the textbook law": 10
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": -0.25,
+          "outcomes": {
+            "insufficient_evidence": 30,
+            "law_fail": 10
+          },
+          "reasons": {
+            "no familiar law for this vocabulary": 30,
+            "the textbook law": 10
+          }
+        }
+      },
+      "mean_six_kind_credit": -0.375,
+      "observations": 2064,
+      "outcomes": {
+        "insufficient_evidence": 180,
+        "law_fail": 60
+      },
+      "recorded_cards": 240,
+      "total_seconds": 1.2057088299961833,
+      "valid_runs": 40
+    },
+    "mind_full": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 0.9,
+          "outcomes": {
+            "confounded": 36,
+            "insufficient_evidence": 4
+          },
+          "reasons": {
+            "the leading rival does not fit to within the replicate noise: the rivals entertained do not contain the dependence": 2,
+            "the observable is associated with the passive covariate draft_index (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate epoch_index (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 4,
+            "the observable is associated with the passive covariate roughness_index (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 2,
+            "the observable is associated with the passive covariate season_index (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 3,
+            "the observable is associated with the passive covariate u1 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 8,
+            "the observable is associated with the passive covariate v119 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v148 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v191 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v240 (inclusion 0.989), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v384 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v422 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v490 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v517 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v590 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v668 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v700 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v710 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v793 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v821 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v831 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v928 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v935 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate v960 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the region of use leaves the box every experiment can reach; the in-box evidence does not determine the dependence there": 2
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.275,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 28,
+            "law_pass": 11
+          },
+          "reasons": {
+            "every rival that faced a decisive test was refuted; the untested rivals have not earned standing": 12,
+            "no rival is both fitted and unrefuted": 4,
+            "precision not reached (region sd 0.0202, rival disagreement 0.0000, required 0.02)": 1,
+            "precision not reached (region sd 0.0652, rival disagreement 0.0404, required 0.02)": 1,
+            "the leading rival does not fit to within the replicate noise: the rivals entertained do not contain the dependence": 6,
+            "the leading rival predicts the region to 0.0021 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0035 (ln) and the weighted rivals agree to 0.0001": 1,
+            "the leading rival predicts the region to 0.0037 (ln) and the weighted rivals agree to 0.0001": 1,
+            "the leading rival predicts the region to 0.0037 (ln) and the weighted rivals agree to 0.0008": 1,
+            "the leading rival predicts the region to 0.0038 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0042 (ln) and the weighted rivals agree to 0.0004": 1,
+            "the leading rival predicts the region to 0.0048 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0090 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0118 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0136 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0145 (ln) and the weighted rivals agree to 0.0001": 1,
+            "the observable is associated with the passive covariate epoch_index (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the region of use leaves the box every experiment can reach; the in-box evidence does not determine the dependence there": 4
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.5,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "every rival that faced a decisive test was refuted; the untested rivals have not earned standing": 6,
+            "no rival is both fitted and unrefuted": 4,
+            "the leading rival does not fit to within the replicate noise: the rivals entertained do not contain the dependence": 6,
+            "the region of use leaves the box every experiment can reach; the in-box evidence does not determine the dependence there": 24
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 1.0,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "precision not reached (region sd 0.1501, rival disagreement 0.0090, required 0.02)": 1,
+            "precision not reached (region sd 0.1598, rival disagreement 0.0000, required 0.02)": 1,
+            "precision not reached (region sd 0.1792, rival disagreement 0.1233, required 0.02)": 1,
+            "precision not reached (region sd 0.2152, rival disagreement 0.1448, required 0.02)": 1,
+            "precision not reached (region sd 0.2253, rival disagreement 0.0737, required 0.02)": 1,
+            "precision not reached (region sd 0.2627, rival disagreement 0.1644, required 0.02)": 1,
+            "precision not reached (region sd 0.3077, rival disagreement 0.0000, required 0.02)": 1,
+            "precision not reached (region sd 0.3193, rival disagreement 0.1344, required 0.02)": 1,
+            "precision not reached (region sd 0.3397, rival disagreement 0.0870, required 0.02)": 1,
+            "precision not reached (region sd 0.3755, rival disagreement 0.1599, required 0.02)": 1,
+            "precision not reached (region sd 0.4267, rival disagreement 0.0000, required 0.02)": 1,
+            "precision not reached (region sd 0.4616, rival disagreement 0.2596, required 0.02)": 1,
+            "precision not reached (region sd 0.4735, rival disagreement 0.4429, required 0.02)": 1,
+            "precision not reached (region sd 0.8418, rival disagreement 0.9539, required 0.02)": 1,
+            "the leading rival does not fit to within the replicate noise: the rivals entertained do not contain the dependence": 3,
+            "the region of use leaves the box every experiment can reach; the in-box evidence does not determine the dependence there": 23
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.675,
+          "outcomes": {
+            "confounded": 3,
+            "insufficient_evidence": 10,
+            "no_law": 27
+          },
+          "reasons": {
+            "precision not reached (region sd 0.1059, rival disagreement 0.1248, required 0.02)": 1,
+            "precision not reached (region sd 0.1577, rival disagreement 0.2171, required 0.02)": 1,
+            "precision not reached (region sd 0.3563, rival disagreement 0.5175, required 0.02)": 1,
+            "rivals using no settable input hold 0.518 of the posterior": 1,
+            "rivals using no settable input hold 0.538 of the posterior": 1,
+            "rivals using no settable input hold 0.547 of the posterior": 1,
+            "rivals using no settable input hold 0.561 of the posterior": 1,
+            "rivals using no settable input hold 0.586 of the posterior": 1,
+            "rivals using no settable input hold 0.593 of the posterior": 1,
+            "rivals using no settable input hold 0.627 of the posterior": 1,
+            "rivals using no settable input hold 0.630 of the posterior": 1,
+            "rivals using no settable input hold 0.634 of the posterior": 1,
+            "rivals using no settable input hold 0.640 of the posterior": 1,
+            "rivals using no settable input hold 0.641 of the posterior": 1,
+            "rivals using no settable input hold 0.648 of the posterior": 1,
+            "rivals using no settable input hold 0.680 of the posterior": 1,
+            "rivals using no settable input hold 0.683 of the posterior": 1,
+            "rivals using no settable input hold 0.687 of the posterior": 1,
+            "rivals using no settable input hold 0.705 of the posterior": 1,
+            "rivals using no settable input hold 0.707 of the posterior": 1,
+            "rivals using no settable input hold 0.708 of the posterior": 2,
+            "rivals using no settable input hold 0.724 of the posterior": 1,
+            "rivals using no settable input hold 0.734 of the posterior": 1,
+            "rivals using no settable input hold 0.739 of the posterior": 1,
+            "rivals using no settable input hold 0.782 of the posterior": 1,
+            "rivals using no settable input hold 0.784 of the posterior": 1,
+            "rivals using no settable input hold 0.786 of the posterior": 1,
+            "rivals using no settable input hold 0.792 of the posterior": 1,
+            "rivals using no settable input hold 0.808 of the posterior": 1,
+            "the observable is associated with the passive covariate draft_index (inclusion 0.922), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate epoch_index (inclusion 0.905), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the observable is associated with the passive covariate u1 (inclusion 0.984), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause": 1,
+            "the region of use leaves the box every experiment can reach; the in-box evidence does not determine the dependence there": 7
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.325,
+          "outcomes": {
+            "insufficient_evidence": 27,
+            "law_pass": 13
+          },
+          "reasons": {
+            "every rival that faced a decisive test was refuted; the untested rivals have not earned standing": 8,
+            "no rival is both fitted and unrefuted": 3,
+            "no rival remains without the copied covariate": 2,
+            "the leading rival does not fit to within the replicate noise: the rivals entertained do not contain the dependence": 4,
+            "the leading rival predicts the region to 0.0017 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0021 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0023 (ln) and the weighted rivals agree to 0.0000": 2,
+            "the leading rival predicts the region to 0.0031 (ln) and the weighted rivals agree to 0.0002": 1,
+            "the leading rival predicts the region to 0.0039 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0041 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0042 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0068 (ln) and the weighted rivals agree to 0.0002": 1,
+            "the leading rival predicts the region to 0.0090 (ln) and the weighted rivals agree to 0.0004": 1,
+            "the leading rival predicts the region to 0.0103 (ln) and the weighted rivals agree to 0.0038": 1,
+            "the leading rival predicts the region to 0.0104 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the leading rival predicts the region to 0.0138 (ln) and the weighted rivals agree to 0.0000": 1,
+            "the region of use leaves the box every experiment can reach; the in-box evidence does not determine the dependence there": 10
+          }
+        }
+      },
+      "mean_six_kind_credit": 3.675,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 40,
+        "insufficient_evidence": 149,
+        "law_pass": 24,
+        "no_law": 27
+      },
+      "recorded_cards": 240,
+      "total_seconds": 84.0591928970025,
+      "valid_runs": 40
+    },
+    "monomial_enumeration": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": -0.05,
+          "outcomes": {
+            "confounded": 7,
+            "insufficient_evidence": 17,
+            "law_fail": 9,
+            "no_law": 7
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 9,
+            "enumeration over the frozen monomial family": 9,
+            "on held-out queries the variables do not beat a constant": 7,
+            "precision or lack-of-fit bar not met": 8,
+            "residuals track a passive covariate": 7
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.175,
+          "outcomes": {
+            "confounded": 3,
+            "insufficient_evidence": 23,
+            "law_pass": 7,
+            "no_law": 7
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 2,
+            "enumeration over the frozen monomial family": 7,
+            "on held-out queries the variables do not beat a constant": 7,
+            "precision or lack-of-fit bar not met": 21,
+            "residuals track a passive covariate": 3
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.475,
+          "outcomes": {
+            "confounded": 2,
+            "insufficient_evidence": 38
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 18,
+            "precision or lack-of-fit bar not met": 20,
+            "residuals track a passive covariate": 2
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.7,
+          "outcomes": {
+            "confounded": 4,
+            "insufficient_evidence": 28,
+            "no_law": 8
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 8,
+            "precision or lack-of-fit bar not met": 28,
+            "residuals track a passive covariate": 4
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.975,
+          "outcomes": {
+            "insufficient_evidence": 1,
+            "no_law": 39
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 39,
+            "precision or lack-of-fit bar not met": 1
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.15,
+          "outcomes": {
+            "confounded": 5,
+            "insufficient_evidence": 18,
+            "law_fail": 2,
+            "law_pass": 8,
+            "no_law": 7
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 7,
+            "enumeration over the frozen monomial family": 10,
+            "on held-out queries the variables do not beat a constant": 7,
+            "precision or lack-of-fit bar not met": 11,
+            "residuals track a passive covariate": 5
+          }
+        }
+      },
+      "mean_six_kind_credit": 2.425,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 21,
+        "insufficient_evidence": 125,
+        "law_fail": 11,
+        "law_pass": 15,
+        "no_law": 68
+      },
+      "recorded_cards": 240,
+      "total_seconds": 3.449008742998558,
+      "valid_runs": 40
+    },
+    "monomial_enumeration_dof": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": -0.05,
+          "outcomes": {
+            "confounded": 7,
+            "insufficient_evidence": 21,
+            "law_fail": 9,
+            "no_law": 3
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 9,
+            "enumeration over the frozen monomial family": 9,
+            "on held-out queries the variables do not beat a constant": 3,
+            "precision or lack-of-fit bar not met": 12,
+            "residuals track a passive covariate": 7
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.175,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 23,
+            "law_pass": 7,
+            "no_law": 9
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 4,
+            "enumeration over the frozen monomial family": 7,
+            "on held-out queries the variables do not beat a constant": 9,
+            "precision or lack-of-fit bar not met": 19,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.45,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 36,
+            "no_law": 3
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 20,
+            "on held-out queries the variables do not beat a constant": 3,
+            "precision or lack-of-fit bar not met": 16,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.65,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 26,
+            "no_law": 13
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 13,
+            "precision or lack-of-fit bar not met": 26,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.9,
+          "outcomes": {
+            "insufficient_evidence": 4,
+            "no_law": 36
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 36,
+            "precision or lack-of-fit bar not met": 4
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.275,
+          "outcomes": {
+            "confounded": 3,
+            "insufficient_evidence": 20,
+            "law_pass": 11,
+            "no_law": 6
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 8,
+            "enumeration over the frozen monomial family": 11,
+            "on held-out queries the variables do not beat a constant": 6,
+            "precision or lack-of-fit bar not met": 12,
+            "residuals track a passive covariate": 3
+          }
+        }
+      },
+      "mean_six_kind_credit": 2.4,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 13,
+        "insufficient_evidence": 130,
+        "law_fail": 9,
+        "law_pass": 18,
+        "no_law": 70
+      },
+      "recorded_cards": 240,
+      "total_seconds": 3.315312699997776,
+      "valid_runs": 40
+    },
+    "random_structures": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 0.15,
+          "outcomes": {
+            "confounded": 9,
+            "insufficient_evidence": 21,
+            "law_fail": 3,
+            "no_law": 7
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 6,
+            "constrained random valid structures": 3,
+            "on held-out queries the variables do not beat a constant": 7,
+            "precision or lack-of-fit bar not met": 15,
+            "residuals track a passive covariate": 9
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.175,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 20,
+            "law_pass": 7,
+            "no_law": 12
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 2,
+            "constrained random valid structures": 7,
+            "on held-out queries the variables do not beat a constant": 12,
+            "precision or lack-of-fit bar not met": 18,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.45,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 36,
+            "no_law": 3
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 15,
+            "on held-out queries the variables do not beat a constant": 3,
+            "precision or lack-of-fit bar not met": 21,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.65,
+          "outcomes": {
+            "confounded": 2,
+            "insufficient_evidence": 26,
+            "no_law": 12
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 12,
+            "precision or lack-of-fit bar not met": 26,
+            "residuals track a passive covariate": 2
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.85,
+          "outcomes": {
+            "insufficient_evidence": 6,
+            "no_law": 34
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 34,
+            "precision or lack-of-fit bar not met": 6
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.2,
+          "outcomes": {
+            "insufficient_evidence": 24,
+            "law_fail": 1,
+            "law_pass": 9,
+            "no_law": 6
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 6,
+            "constrained random valid structures": 10,
+            "on held-out queries the variables do not beat a constant": 6,
+            "precision or lack-of-fit bar not met": 18
+          }
+        }
+      },
+      "mean_six_kind_credit": 2.475,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 13,
+        "insufficient_evidence": 133,
+        "law_fail": 4,
+        "law_pass": 16,
+        "no_law": 74
+      },
+      "recorded_cards": 240,
+      "total_seconds": 3.443427535999035,
+      "valid_runs": 40
+    },
+    "random_structures_dof": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "confounded": 8,
+            "insufficient_evidence": 17,
+            "law_fail": 8,
+            "no_law": 7
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 7,
+            "constrained random valid structures": 8,
+            "on held-out queries the variables do not beat a constant": 7,
+            "precision or lack-of-fit bar not met": 10,
+            "residuals track a passive covariate": 8
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.15,
+          "outcomes": {
+            "insufficient_evidence": 21,
+            "law_fail": 1,
+            "law_pass": 7,
+            "no_law": 11
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 2,
+            "constrained random valid structures": 8,
+            "on held-out queries the variables do not beat a constant": 11,
+            "precision or lack-of-fit bar not met": 19
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.45,
+          "outcomes": {
+            "insufficient_evidence": 36,
+            "no_law": 4
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 18,
+            "on held-out queries the variables do not beat a constant": 4,
+            "precision or lack-of-fit bar not met": 18
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.775,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 31,
+            "no_law": 8
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 8,
+            "precision or lack-of-fit bar not met": 31,
+            "residuals track a passive covariate": 1
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.925,
+          "outcomes": {
+            "insufficient_evidence": 3,
+            "no_law": 37
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 37,
+            "precision or lack-of-fit bar not met": 3
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.05,
+          "outcomes": {
+            "confounded": 3,
+            "insufficient_evidence": 23,
+            "law_fail": 3,
+            "law_pass": 5,
+            "no_law": 6
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 7,
+            "constrained random valid structures": 8,
+            "on held-out queries the variables do not beat a constant": 6,
+            "precision or lack-of-fit bar not met": 16,
+            "residuals track a passive covariate": 3
+          }
+        }
+      },
+      "mean_six_kind_credit": 2.35,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 12,
+        "insufficient_evidence": 131,
+        "law_fail": 12,
+        "law_pass": 12,
+        "no_law": 73
+      },
+      "recorded_cards": 240,
+      "total_seconds": 3.334116963997076,
+      "valid_runs": 40
+    },
+    "single_setting": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 1.0,
+          "outcomes": {
+            "confounded": 40
+          },
+          "reasons": {
+            "the output co-varies with a passive covariate at fixed inputs": 40
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "one setting cannot identify a law": 40
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.5,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "one setting cannot identify a law": 40
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.975,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 39
+          },
+          "reasons": {
+            "one setting cannot identify a law": 39,
+            "the output co-varies with a passive covariate at fixed inputs": 1
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "confounded": 5,
+            "insufficient_evidence": 35
+          },
+          "reasons": {
+            "one setting cannot identify a law": 35,
+            "the output co-varies with a passive covariate at fixed inputs": 5
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.0,
+          "outcomes": {
+            "confounded": 4,
+            "insufficient_evidence": 36
+          },
+          "reasons": {
+            "one setting cannot identify a law": 36,
+            "the output co-varies with a passive covariate at fixed inputs": 4
+          }
+        }
+      },
+      "mean_six_kind_credit": 2.475,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 50,
+        "insufficient_evidence": 190
+      },
+      "recorded_cards": 240,
+      "total_seconds": 2.7141524909993677,
+      "valid_runs": 40
+    },
+    "space_filling": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 0.675,
+          "outcomes": {
+            "confounded": 27,
+            "insufficient_evidence": 11,
+            "no_law": 2
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 2,
+            "residuals track a passive covariate": 27,
+            "too few observations": 11
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.15,
+          "outcomes": {
+            "insufficient_evidence": 31,
+            "law_fail": 1,
+            "law_pass": 7,
+            "no_law": 1
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 4,
+            "on held-out queries the variables do not beat a constant": 1,
+            "precision or lack-of-fit bar not met": 13,
+            "space-filling design, log-linear fit on intervened inputs": 8,
+            "too few observations": 14
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.5,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 18,
+            "precision or lack-of-fit bar not met": 12,
+            "too few observations": 10
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.875,
+          "outcomes": {
+            "confounded": 1,
+            "insufficient_evidence": 35,
+            "no_law": 4
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 4,
+            "precision or lack-of-fit bar not met": 27,
+            "residuals track a passive covariate": 1,
+            "too few observations": 8
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.825,
+          "outcomes": {
+            "insufficient_evidence": 7,
+            "no_law": 33
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 33,
+            "too few observations": 7
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.2,
+          "outcomes": {
+            "insufficient_evidence": 30,
+            "law_pass": 8,
+            "no_law": 2
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 7,
+            "on held-out queries the variables do not beat a constant": 2,
+            "precision or lack-of-fit bar not met": 9,
+            "space-filling design, log-linear fit on intervened inputs": 8,
+            "too few observations": 14
+          }
+        }
+      },
+      "mean_six_kind_credit": 3.225,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 28,
+        "insufficient_evidence": 154,
+        "law_fail": 1,
+        "law_pass": 15,
+        "no_law": 42
+      },
+      "recorded_cards": 240,
+      "total_seconds": 2.7098808130022007,
+      "valid_runs": 40
+    },
+    "space_filling_dof": {
+      "kinds": {
+        "confounded": {
+          "mean_credit": 0.575,
+          "outcomes": {
+            "confounded": 23,
+            "insufficient_evidence": 13,
+            "no_law": 4
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 4,
+            "precision or lack-of-fit bar not met": 2,
+            "residuals track a passive covariate": 23,
+            "too few observations": 11
+          }
+        },
+        "discoverable": {
+          "mean_credit": 0.2,
+          "outcomes": {
+            "insufficient_evidence": 31,
+            "law_pass": 8,
+            "no_law": 1
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 2,
+            "on held-out queries the variables do not beat a constant": 1,
+            "precision or lack-of-fit bar not met": 15,
+            "space-filling design, log-linear fit on intervened inputs": 8,
+            "too few observations": 14
+          }
+        },
+        "indistinguishable": {
+          "mean_credit": 0.5,
+          "outcomes": {
+            "insufficient_evidence": 40
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 20,
+            "precision or lack-of-fit bar not met": 10,
+            "too few observations": 10
+          }
+        },
+        "insufficient_evidence": {
+          "mean_credit": 0.9,
+          "outcomes": {
+            "insufficient_evidence": 36,
+            "no_law": 4
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 4,
+            "precision or lack-of-fit bar not met": 28,
+            "too few observations": 8
+          }
+        },
+        "no_solution": {
+          "mean_credit": 0.825,
+          "outcomes": {
+            "insufficient_evidence": 7,
+            "no_law": 33
+          },
+          "reasons": {
+            "on held-out queries the variables do not beat a constant": 33,
+            "too few observations": 7
+          }
+        },
+        "spurious_correlate": {
+          "mean_credit": 0.2,
+          "outcomes": {
+            "insufficient_evidence": 30,
+            "law_pass": 8,
+            "no_law": 2
+          },
+          "reasons": {
+            "assessment region lies outside the query box": 8,
+            "on held-out queries the variables do not beat a constant": 2,
+            "precision or lack-of-fit bar not met": 8,
+            "space-filling design, log-linear fit on intervened inputs": 8,
+            "too few observations": 14
+          }
+        }
+      },
+      "mean_six_kind_credit": 3.2,
+      "observations": 7668,
+      "outcomes": {
+        "confounded": 23,
+        "insufficient_evidence": 157,
+        "law_pass": 16,
+        "no_law": 44
+      },
+      "recorded_cards": 240,
+      "total_seconds": 2.733978878999551,
+      "valid_runs": 40
+    }
+  },
+  "candidate": "mind_full",
+  "complete": true,
+  "dependencies_unchanged": true,
+  "development_checks": {
+    "kind_noninferiority": false,
+    "pooled_holm": false,
+    "positive_pooled_lower95": false,
+    "presentation_noninferiority": false,
+    "replay": true
+  },
+  "elapsed_seconds": 196.3705341369996,
+  "exploratory_v03_analysis": {
+    "candidate": "mind_full",
+    "cap_rule": "cell-level (D3b-1): a capped (kind, presentation) cell contributes min(0, its summed paired difference) to the effect size and the per-kind non-inferiority, recomputed inside every bootstrap resample; the significance test uses the uncapped differences only (P2)",
+    "claim_scope": "JOINT_BENCHMARK_LIFT (all six kinds; never a discovery-only lift)",
+    "control_noninferiority": {
+      "confounded": {
+        "lower95": -0.2,
+        "margin": 0.15,
+        "mean_difference": -0.1,
+        "ok": false,
+        "reference_arm": "single_setting"
+      },
+      "indistinguishable": {
+        "lower95": 0.0,
+        "margin": 0.15,
+        "mean_difference": 0.0,
+        "ok": true,
+        "reference_arm": "always_insufficient"
+      },
+      "insufficient_evidence": {
+        "lower95": 0.0,
+        "margin": 0.15,
+        "mean_difference": 0.0,
+        "ok": true,
+        "reference_arm": "always_insufficient"
+      },
+      "no_solution": {
+        "lower95": -0.475,
+        "margin": 0.15,
+        "mean_difference": -0.325,
+        "ok": false,
+        "reference_arm": "always_refuse"
+      },
+      "spurious_correlate": {
+        "lower95": -0.05,
+        "margin": 0.15,
+        "mean_difference": 0.05,
+        "ok": true,
+        "reference_arm": "monomial_enumeration_dof"
+      }
+    },
+    "control_solved_cells": [
+      [
+        "confounded",
+        "anonymous"
+      ],
+      [
+        "confounded",
+        "paraphrased"
+      ],
+      [
+        "confounded",
+        "renamed"
+      ],
+      [
+        "confounded",
+        "trap"
+      ],
+      [
+        "insufficient_evidence",
+        "anonymous"
+      ],
+      [
+        "insufficient_evidence",
+        "paraphrased"
+      ],
+      [
+        "insufficient_evidence",
+        "renamed"
+      ],
+      [
+        "insufficient_evidence",
+        "trap"
+      ],
+      [
+        "no_solution",
+        "anonymous"
+      ],
+      [
+        "no_solution",
+        "paraphrased"
+      ],
+      [
+        "no_solution",
+        "renamed"
+      ],
+      [
+        "no_solution",
+        "trap"
+      ]
+    ],
+    "coverage_problems": [
+      "the grid is not the preregistered formal grid: exploratory, no claim",
+      "v0.3 is a DRAFT identity (not FROZEN): exploratory, no claim",
+      "no formal root commitment is preregistered",
+      "840 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+      "840 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+      "840 record(s) do not carry tier = the preregistered/formal value",
+      "840 record(s) do not carry tier_bound = the preregistered/formal value",
+      "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+      "the revealed formal root is missing or is not the preregistered commitment: the sign-flip stream is not the claim's (D2), p values are descriptive only",
+      "the attempt was not verified after the reveal (formal.verify_attempt)",
+      "mind_full: run(s) were not proposer-process isolated",
+      "always_insufficient: run(s) were not proposer-process isolated",
+      "always_law: run(s) were not proposer-process isolated",
+      "always_refuse: run(s) were not proposer-process isolated",
+      "careful: run(s) were not proposer-process isolated",
+      "extrapolating_fit: run(s) were not proposer-process isolated",
+      "extrapolating_fit_dof: run(s) were not proposer-process isolated",
+      "extrapolation_pair: run(s) were not proposer-process isolated",
+      "extrapolation_pair_dof: run(s) were not proposer-process isolated",
+      "fit_all_gated: run(s) were not proposer-process isolated",
+      "fit_all_gated_dof: run(s) were not proposer-process isolated",
+      "greedy_forward: run(s) were not proposer-process isolated",
+      "greedy_forward_dof: run(s) were not proposer-process isolated",
+      "monomial_enumeration: run(s) were not proposer-process isolated",
+      "monomial_enumeration_dof: run(s) were not proposer-process isolated",
+      "random_structures: run(s) were not proposer-process isolated",
+      "random_structures_dof: run(s) were not proposer-process isolated",
+      "single_setting: run(s) were not proposer-process isolated",
+      "space_filling: run(s) were not proposer-process isolated",
+      "space_filling_dof: run(s) were not proposer-process isolated"
+    ],
+    "holm_significant": {
+      "anonymous": false,
+      "paraphrased": false,
+      "pooled": false,
+      "renamed": false,
+      "trap": false
+    },
+    "kind_noninferiority": {
+      "confounded": {
+        "lower95": -0.2,
+        "margin": 0.15,
+        "mean_difference": -0.1,
+        "ok": false,
+        "reference_arm": "single_setting"
+      },
+      "discoverable": {
+        "lower95": -0.075,
+        "margin": 0.15,
+        "mean_difference": 0.05,
+        "ok": true,
+        "reference_arm": "extrapolating_fit"
+      },
+      "indistinguishable": {
+        "lower95": 0.0,
+        "margin": 0.15,
+        "mean_difference": 0.0,
+        "ok": true,
+        "reference_arm": "always_insufficient"
+      },
+      "insufficient_evidence": {
+        "lower95": 0.0,
+        "margin": 0.15,
+        "mean_difference": 0.0,
+        "ok": true,
+        "reference_arm": "always_insufficient"
+      },
+      "no_solution": {
+        "lower95": -0.475,
+        "margin": 0.15,
+        "mean_difference": -0.325,
+        "ok": false,
+        "reference_arm": "always_refuse"
+      },
+      "spurious_correlate": {
+        "lower95": -0.05,
+        "margin": 0.15,
+        "mean_difference": 0.05,
+        "ok": true,
+        "reference_arm": "monomial_enumeration_dof"
+      }
+    },
+    "lift_claimed": false,
+    "out_of_family_universes": {
+      "confounded": 17,
+      "discoverable": 29,
+      "indistinguishable": 35,
+      "spurious_correlate": 21
+    },
+    "presentation_noninferiority": {
+      "anonymous": true,
+      "paraphrased": true,
+      "renamed": true,
+      "trap": false
+    },
+    "primary": {
+      "anonymous": {
+        "capped_cells": 6,
+        "lower95": 0.0,
+        "mean_difference": 0.1,
+        "p": 0.5,
+        "p_method": "exact",
+        "world_sets": 10
+      },
+      "paraphrased": {
+        "capped_cells": 6,
+        "lower95": -0.3,
+        "mean_difference": 0.1,
+        "p": 0.25,
+        "p_method": "exact",
+        "world_sets": 10
+      },
+      "pooled": {
+        "capped_cells": 24,
+        "lower95": -0.2,
+        "mean_difference": -0.025,
+        "p": 0.015625,
+        "p_method": "exact",
+        "world_sets": 40
+      },
+      "renamed": {
+        "capped_cells": 6,
+        "lower95": -0.3,
+        "mean_difference": -0.1,
+        "p": 0.5,
+        "p_method": "exact",
+        "world_sets": 10
+      },
+      "trap": {
+        "capped_cells": 6,
+        "lower95": -0.7,
+        "mean_difference": -0.2,
+        "p": 0.25,
+        "p_method": "exact",
+        "world_sets": 10
+      }
+    },
+    "representation_limited_cells": [
+      [
+        "insufficient_evidence",
+        "anonymous"
+      ],
+      [
+        "insufficient_evidence",
+        "renamed"
+      ],
+      [
+        "insufficient_evidence",
+        "trap"
+      ],
+      [
+        "no_solution",
+        "anonymous"
+      ],
+      [
+        "no_solution",
+        "paraphrased"
+      ],
+      [
+        "no_solution",
+        "renamed"
+      ],
+      [
+        "no_solution",
+        "trap"
+      ]
+    ],
+    "screened_world_sets": 0,
+    "shared_world_sets": 40,
+    "significance": "paired sign-flip randomisation (one-sided); bootstrap for the lower bound only",
+    "strongest_baseline": "careful"
+  },
+  "formal_lift_claimed": false,
+  "invalid_runs": [],
+  "labels": [
+    "NON-FORMAL",
+    "SECURITY_BOUNDARY_NOT_PROVEN"
+  ],
+  "pairing_ok": true,
+  "plan_sha256": "5d40f4c8e51696fedc4078efac91beb63685afb2597b93b5d97d427072294bbc",
+  "recommendation": "IMPROVEMENT_OR_MORE_EVIDENCE_NEEDED",
+  "recorded_runs": 840,
+  "replay": [
+    {
+      "presentation": "anonymous",
+      "status": "MATCH"
+    },
+    {
+      "presentation": "renamed",
+      "status": "MATCH"
+    },
+    {
+      "presentation": "paraphrased",
+      "status": "MATCH"
+    },
+    {
+      "presentation": "trap",
+      "status": "MATCH"
+    }
+  ],
+  "replay_ok": true,
+  "screen_cap_exceeded": false,
+  "screened_world_sets": []
+}

@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "/home/dev_kaeem/venvs/forge312/bin/python",
+    "-m",
+    "pytest",
+    "tests/genesis_lite_mind/test_diagnosis.py",
+    "-q",
+    "--basetemp=/tmp/mind-diag-unit-v3"
+  ],
+  "cwd": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+    "TMPDIR": "/tmp",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "exit_code": 0,
+  "elapsed_seconds": 13.878353558000526
+}

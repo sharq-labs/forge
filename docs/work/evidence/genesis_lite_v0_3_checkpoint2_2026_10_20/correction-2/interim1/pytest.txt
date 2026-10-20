@@ -1,0 +1,747 @@
+FFFFFFFFFFFFFF...F.F...FF.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF [ 69%]
+FFFFFFFFFFFFF..................F                                         [100%]
+=================================== FAILURES ===================================
+________ test_launch_uses_a_fresh_container_without_shell_construction _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:38: in test_launch_uses_a_fresh_container_without_shell_construction
+    assert pathlib.PurePosixPath(argv[0]).name == "podman", argv[0]
+E   AssertionError: /usr/bin/unshare
+E   assert 'unshare' == 'podman'
+E     
+E     - podman
+E     + unshare
+______________ test_container_security_options_are_explicit[--rm] ______________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --rm
+E   assert '--rm' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+__________ test_container_security_options_are_explicit[--read-only] ___________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --read-only
+E   assert '--read-only' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+_________ test_container_security_options_are_explicit[--network=none] _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --network=none
+E   assert '--network=none' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+_________ test_container_security_options_are_explicit[--cap-drop=ALL] _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --cap-drop=ALL
+E   assert '--cap-drop=ALL' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+_ test_container_security_options_are_explicit[--security-opt=no-new-privileges] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --security-opt=no-new-privileges
+E   assert '--security-opt=no-new-privileges' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+________ test_container_security_options_are_explicit[--userns=keep-id] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:53: in test_container_security_options_are_explicit
+    assert flag in argv, f"required container launch option absent: {flag}"
+E   AssertionError: required container launch option absent: --userns=keep-id
+E   assert '--userns=keep-id' in ['/usr/bin/unshare', '--user', '--map-root-user', '--pid', '--fork', '--kill-child', ...]
+______ test_each_required_writable_mount_is_explicit_private_tmpfs[/tmp] _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:62: in test_each_required_writable_mount_is_explicit_private_tmpfs
+    assert any(value.split(":", 1)[0] == target for value in specifications), (
+E   AssertionError: /tmp has no explicit per-container tmpfs declaration
+E   assert False
+E    +  where False = any(<generator object test_each_required_writable_mount_is_explicit_private_tmpfs.<locals>.<genexpr> at 0x74bede7258c0>)
+____ test_each_required_writable_mount_is_explicit_private_tmpfs[/var/tmp] _____
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:62: in test_each_required_writable_mount_is_explicit_private_tmpfs
+    assert any(value.split(":", 1)[0] == target for value in specifications), (
+E   AssertionError: /var/tmp has no explicit per-container tmpfs declaration
+E   assert False
+E    +  where False = any(<generator object test_each_required_writable_mount_is_explicit_private_tmpfs.<locals>.<genexpr> at 0x74bede726260>)
+______ test_each_required_writable_mount_is_explicit_private_tmpfs[/run] _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:62: in test_each_required_writable_mount_is_explicit_private_tmpfs
+    assert any(value.split(":", 1)[0] == target for value in specifications), (
+E   AssertionError: /run has no explicit per-container tmpfs declaration
+E   assert False
+E    +  where False = any(<generator object test_each_required_writable_mount_is_explicit_private_tmpfs.<locals>.<genexpr> at 0x74bede726c00>)
+____ test_each_required_writable_mount_is_explicit_private_tmpfs[/dev/shm] _____
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:62: in test_each_required_writable_mount_is_explicit_private_tmpfs
+    assert any(value.split(":", 1)[0] == target for value in specifications), (
+E   AssertionError: /dev/shm has no explicit per-container tmpfs declaration
+E   assert False
+E    +  where False = any(<generator object test_each_required_writable_mount_is_explicit_private_tmpfs.<locals>.<genexpr> at 0x74bede7275a0>)
+__________ test_source_and_venv_bind_mounts_are_explicitly_read_only ___________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:73: in test_source_and_venv_bind_mounts_are_explicitly_read_only
+    assert any(source in mount and (
+E   AssertionError: no read-only container bind for /home/forge/source
+E   assert False
+E    +  where False = any(<generator object test_source_and_venv_bind_mounts_are_explicitly_read_only.<locals>.<genexpr> at 0x74bede87ba60>)
+_________________ test_launch_pins_an_immutable_image_identity _________________
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:80: in test_launch_pins_an_immutable_image_identity
+    assert any("@sha256:" in value and len(value.rsplit("@sha256:", 1)[1]) == 64
+E   AssertionError: launch can proceed without an immutable image digest
+E   assert False
+E    +  where False = any(<generator object test_launch_pins_an_immutable_image_identity.<locals>.<genexpr> at 0x74bede87bc40>)
+__ test_deployment_report_cannot_verify_without_mount_and_container_evidence ___
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:91: in test_deployment_report_cannot_verify_without_mount_and_container_evidence
+    assert result["verified"] is False, (
+E   AssertionError: accepted without complete mountinfo reconciliation, writable-mount canaries, A/B container identities, image digest, runtime flags or launcher/probe provenance
+E   assert True is False
+______ test_runtime_launch_failure_is_detected_before_consuming_the_root _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:142: in test_runtime_launch_failure_is_detected_before_consuming_the_root
+    assert registry.entries() == [], "failed isolation consumed the one allowed root attempt"
+E   AssertionError: failed isolation consumed the one allowed root attempt
+E   assert [{'admitted_a...02b945', ...}] == []
+E     
+E     Left contains one more item: {'admitted_at': '2026-10-20T16:41:54+00:00', 'attempt_label': '', 'attempt_sha256': 'b5e8f194cdbcf2dd5713a05336ed950f8...9cceca6d851e4fda6287b', 'campaign_set_sha256': '4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945', ...}
+E     Use -v to get more diff
+___ test_private_tmp_is_not_evidence_that_other_writable_mounts_are_private ____
+tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py:198: in test_private_tmp_is_not_evidence_that_other_writable_mounts_are_private
+    assert all(not rationale.startswith("cross_card_state:REFUSED:") for rationale in observed), (
+E   AssertionError: probe certified REFUSED from private TMP while a shared writable canary remained readable across cards and restart: ['cross_card_state:REFUSED:0 earlier marker(s) found', 'cross_card_state:REFUSED:0 earlier marker(s) found', 'cross_card_state:REFUSED:0 earlier marker(s) found']
+E   assert False
+E    +  where False = all(<generator object test_private_tmp_is_not_evidence_that_other_writable_mounts_are_private.<locals>.<genexpr> at 0x74bedfb872a0>)
+___________ test_legacy_interface_does_not_accept_unprobeable_detail ___________
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:197: in test_legacy_interface_does_not_accept_unprobeable_detail
+    assert _legacy_verdict(report)["verified"] is False, blockers
+E   AssertionError: [{'canary': 'UNPROBEABLE', 'device': '0:90', 'fstype': 'devpts', 'id': '576', ...}, {'canary': 'UNPROBEABLE', 'device'...'devtmpfs', 'id': '582', ...}, {'canary': 'UNPROBEABLE', 'device': '0:5', 'fstype': 'devtmpfs', 'id': '583', ...}, ...]
+E   assert True is False
+_____________ test_legacy_interface_does_not_accept_shared_detail ______________
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:201: in test_legacy_interface_does_not_accept_shared_detail
+    assert _legacy_verdict(observations[4][1])["verified"] is False
+E   assert True is False
+______________________ test_current_launcher_binds_image _______________________
+tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py:212: in test_current_launcher_binds_image
+    assert launcher.describe().get("image_digest")==rig[2]["image"].split("@")[1]
+E   AssertionError: assert None == 'sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261'
+E    +  where None = <built-in method get of dict object at 0x74bede7fffc0>('image_digest')
+E    +    where <built-in method get of dict object at 0x74bede7fffc0> = {'deployment': 'rootless_namespaces', 'unshare_flags': ['--user', '--map-root-user', '--pid', '--fork', '--kill-child'..., '/tmp', '/var/tmp', '/run', ...], 'setpriv_flags': ['--inh-caps=-all', '--bounding-set=-all', '--no-new-privs'], ...}.get
+E    +      where {'deployment': 'rootless_namespaces', 'unshare_flags': ['--user', '--map-root-user', '--pid', '--fork', '--kill-child'..., '/tmp', '/var/tmp', '/run', ...], 'setpriv_flags': ['--inh-caps=-all', '--bounding-set=-all', '--no-new-privs'], ...} = describe()
+E    +        where describe = <benchmarks.genesis_lite.v0_3.isolation.NamespaceLauncher object at 0x74bede7baae0>.describe
+___________________ test_complete_per_card_evidence_accepted ___________________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:96: in test_complete_per_card_evidence_accepted
+    assert validator()(report,expected=expected)==dict(status="PASS",reasons=[])
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+______________ test_specific_rejection[empty-EVIDENCE_INCOMPLETE] ______________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______________ test_specific_rejection[schema-SCHEMA_MISMATCH] ________________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+__________ test_specific_rejection[missing_card-EVIDENCE_INCOMPLETE] ___________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+__________ test_specific_rejection[missing_field-EVIDENCE_INCOMPLETE] __________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+______ test_specific_rejection[empty_inventory-MOUNT_INVENTORY_MISMATCH] _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______ test_specific_rejection[parsed_missing-MOUNT_INVENTORY_MISMATCH] _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________ test_specific_rejection[raw_missing-MOUNT_INVENTORY_MISMATCH] _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+______ test_specific_rejection[runtime_missing-MOUNT_INVENTORY_MISMATCH] _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________ test_specific_rejection[parsed_spoof-MOUNT_INVENTORY_MISMATCH] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______ test_specific_rejection[runtime_spoof-MOUNT_INVENTORY_MISMATCH] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________ test_specific_rejection[duplicate_id-MOUNT_INVENTORY_MISMATCH] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+___________ test_specific_rejection[windows-WINDOWS_WRITABLE_MOUNT] ____________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+______________ test_specific_rejection[host-HOST_WRITABLE_MOUNT] _______________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+____________ test_specific_rejection[shared-SHARED_WRITABLE_MOUNT] _____________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________ test_specific_rejection[undeclared-UNDECLARED_WRITABLE_MOUNT] _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______ test_specific_rejection[unprobeable-UNPROBEABLE_WRITABLE_MOUNT] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_____________ test_specific_rejection[image-IMAGE_DIGEST_MISMATCH] _____________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_____________ test_specific_rejection[image_id-IMAGE_ID_MISMATCH] ______________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______________ test_specific_rejection[reuse-CONTAINER_REUSED] ________________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+______________ test_specific_rejection[source_rw-SOURCE_WRITABLE] ______________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________________ test_specific_rejection[venv_rw-VENV_WRITABLE] ________________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+______________ test_specific_rejection[caps-NONZERO_CAPABILITIES] ______________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+____________ test_specific_rejection[nnp-NO_NEW_PRIVILEGES_MISSING] ____________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______________ test_specific_rejection[network-NETWORK_REACHED] _______________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_________________ test_specific_rejection[ipc-IPC_NOT_PRIVATE] _________________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+__________ test_specific_rejection[home-PATH_OUTSIDE_PRIVATE_MOUNTS] ___________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+__________ test_specific_rejection[cache-PATH_OUTSIDE_PRIVATE_MOUNTS] __________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________ test_specific_rejection[canary_seen-CROSS_CARD_CANARY_REACHED] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+______ test_specific_rejection[missing_canary-CANARY_COVERAGE_INCOMPLETE] ______
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+____________ test_specific_rejection[read_error-CANARY_READ_ERROR] _____________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________ test_specific_rejection[not_probed-CANARY_COVERAGE_INCOMPLETE] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+__________ test_specific_rejection[write_failed-CANARY_WRITE_FAILED] ___________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+__________ test_specific_rejection[bad_readback-CANARY_WRITE_FAILED] ___________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+__________ test_specific_rejection[wrong_mount-CANARY_MOUNT_MISMATCH] __________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+___________ test_specific_rejection[wrong_path-CANARY_PATH_MISMATCH] ___________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+__________ test_specific_rejection[wrong_token-CANARY_TOKEN_MISMATCH] __________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________ test_specific_rejection[shared_control-CANARY_CONTROL_FAILED] _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_________ test_specific_rejection[host_control-NETWORK_CONTROL_FAILED] _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________ test_specific_rejection[restart_succeeded-RESTART_NOT_REFUSED] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______ test_specific_rejection[restart_unattempted-RESTART_NOT_REFUSED] _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+__________ test_specific_rejection[not_removed-CONTAINER_NOT_REMOVED] __________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+____ test_specific_rejection[missing_tmpfs-RUNTIME_CONFIGURATION_MISMATCH] _____
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_____ test_specific_rejection[missing_env-RUNTIME_CONFIGURATION_MISMATCH] ______
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______ test_specific_rejection[bind_rw-RUNTIME_CONFIGURATION_MISMATCH] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_________ test_specific_rejection[stacked_rw-OBSCURED_WRITABLE_MOUNT] __________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______ test_specific_rejection[nested_overmount-CANARY_MOUNT_MISMATCH] ________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________ test_specific_rejection[bind_alias-UNDECLARED_WRITABLE_MOUNT] _________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+______ test_specific_rejection[provenance_source_sha-PROVENANCE_MISMATCH] ______
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+____ test_specific_rejection[provenance_podman_version-PROVENANCE_MISMATCH] ____
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_ test_specific_rejection[provenance_containerfile_sha256-PROVENANCE_MISMATCH] _
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+___ test_specific_rejection[provenance_launcher_sha256-PROVENANCE_MISMATCH] ____
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_____ test_specific_rejection[provenance_probe_sha256-PROVENANCE_MISMATCH] _____
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______ test_specific_rejection[provenance_rootless-PROVENANCE_MISMATCH] _______
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:197: in test_specific_rejection
+    result=validator()(report,expected=expected)
+           ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+_______________ test_verifier_process_restart_consistency[None] ________________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:205: in test_verifier_process_restart_consistency
+    validator()  # explicit missing contract assertion; never import/collection error
+    ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+____________ test_verifier_process_restart_consistency[read_error] _____________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:205: in test_verifier_process_restart_consistency
+    validator()  # explicit missing contract assertion; never import/collection error
+    ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+____________ test_verifier_process_restart_consistency[canary_seen] ____________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:205: in test_verifier_process_restart_consistency
+    validator()  # explicit missing contract assertion; never import/collection error
+    ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+____________ test_verifier_process_restart_consistency[stacked_rw] _____________
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:205: in test_verifier_process_restart_consistency
+    validator()  # explicit missing contract assertion; never import/collection error
+    ^^^^^^^^^^^
+tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py:90: in validator
+    assert callable(fn), "MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)"
+E   AssertionError: MISSING_VALIDATION_CONTRACT: validate_container_evidence(report, expected=...)
+E   assert False
+E    +  where False = callable(None)
+________________________ test_strict_readonly_inventory ________________________
+tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py:59: in test_strict_readonly_inventory
+    assert not remaining, [
+E   AssertionError: [('576', '/dev/pts', 'devpts', ['rw', 'nosuid', 'noexec', 'relatime']), ('577', '/dev/mqueue', 'mqueue', ['rw', 'nosui... ['rw', 'nosuid', 'noexec', 'relatime']), ('583', '/dev/tty', 'devtmpfs', ['rw', 'nosuid', 'noexec', 'relatime']), ...]
+E   assert not [{'canary': 'NOT_PROBED', 'device': '0:90', 'fstype': 'devpts', 'id': '576', ...}, {'canary': 'NOT_PROBED', 'device': ... 'devtmpfs', 'id': '582', ...}, {'canary': 'NOT_PROBED', 'device': '0:5', 'fstype': 'devtmpfs', 'id': '583', ...}, ...]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_existing_negative_channel_controls_stay_blocking[REACHED]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_existing_negative_channel_controls_stay_blocking[UNTESTABLE]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_unavailable_runtime_is_refused_before_admission
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_shared_probe_directory_positive_control_survives_process_restart
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_real_kernel_security_controls
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_fresh_cards_paths_and_inventory
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_explicit_per_mount_a_write_b_absence_and_shared_control
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_absent_digest_refused_not_valid_image_substitution
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_baseline_test_fixture_is_complete_and_reconciles
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_policy_mutants_preserve_raw_parsed_runtime_agreement[windows]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_policy_mutants_preserve_raw_parsed_runtime_agreement[host]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_policy_mutants_preserve_raw_parsed_runtime_agreement[shared]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_policy_mutants_preserve_raw_parsed_runtime_agreement[source_rw]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_policy_mutants_preserve_raw_parsed_runtime_agreement[venv_rw]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_policy_mutants_preserve_raw_parsed_runtime_agreement[stacked_rw]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_policy_mutants_preserve_raw_parsed_runtime_agreement[nested_overmount]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_policy_mutants_preserve_raw_parsed_runtime_agreement[bind_alias]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_parser_escapes_bind_roots_and_readonly_view
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_parser_rejects_malformed_rows[]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_parser_rejects_malformed_rows[1 0 0:1 / / ro - tmpfs]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_parser_rejects_malformed_rows[x 0 0:1 / / ro - tmpfs tmpfs rw]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_parser_rejects_malformed_rows[1 0 x / / ro - tmpfs tmpfs rw]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_parser_rejects_malformed_rows[1 0 0:1 / / rw,ro - tmpfs tmpfs rw]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_parser_rejects_malformed_rows[1 0 0:1 / / ro - tmpfs tmpfs rw extra]
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_parser_retains_stacked_and_nested_topology
+PASSED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_probe_uses_fd_mount_and_distinguishes_absence_error_and_obscured
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_launch_uses_a_fresh_container_without_shell_construction
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--rm]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--read-only]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--network=none]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--cap-drop=ALL]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--security-opt=no-new-privileges]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_container_security_options_are_explicit[--userns=keep-id]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_each_required_writable_mount_is_explicit_private_tmpfs[/tmp]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_each_required_writable_mount_is_explicit_private_tmpfs[/var/tmp]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_each_required_writable_mount_is_explicit_private_tmpfs[/run]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_each_required_writable_mount_is_explicit_private_tmpfs[/dev/shm]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_source_and_venv_bind_mounts_are_explicitly_read_only
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_launch_pins_an_immutable_image_identity
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_deployment_report_cannot_verify_without_mount_and_container_evidence
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_runtime_launch_failure_is_detected_before_consuming_the_root
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py::test_private_tmp_is_not_evidence_that_other_writable_mounts_are_private
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_legacy_interface_does_not_accept_unprobeable_detail
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_legacy_interface_does_not_accept_shared_detail
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py::test_current_launcher_binds_image
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_complete_per_card_evidence_accepted
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[empty-EVIDENCE_INCOMPLETE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[schema-SCHEMA_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[missing_card-EVIDENCE_INCOMPLETE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[missing_field-EVIDENCE_INCOMPLETE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[empty_inventory-MOUNT_INVENTORY_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[parsed_missing-MOUNT_INVENTORY_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[raw_missing-MOUNT_INVENTORY_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[runtime_missing-MOUNT_INVENTORY_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[parsed_spoof-MOUNT_INVENTORY_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[runtime_spoof-MOUNT_INVENTORY_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[duplicate_id-MOUNT_INVENTORY_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[windows-WINDOWS_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[host-HOST_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[shared-SHARED_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[undeclared-UNDECLARED_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[unprobeable-UNPROBEABLE_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[image-IMAGE_DIGEST_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[image_id-IMAGE_ID_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[reuse-CONTAINER_REUSED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[source_rw-SOURCE_WRITABLE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[venv_rw-VENV_WRITABLE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[caps-NONZERO_CAPABILITIES]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[nnp-NO_NEW_PRIVILEGES_MISSING]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[network-NETWORK_REACHED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[ipc-IPC_NOT_PRIVATE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[home-PATH_OUTSIDE_PRIVATE_MOUNTS]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[cache-PATH_OUTSIDE_PRIVATE_MOUNTS]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[canary_seen-CROSS_CARD_CANARY_REACHED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[missing_canary-CANARY_COVERAGE_INCOMPLETE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[read_error-CANARY_READ_ERROR]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[not_probed-CANARY_COVERAGE_INCOMPLETE]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[write_failed-CANARY_WRITE_FAILED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[bad_readback-CANARY_WRITE_FAILED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[wrong_mount-CANARY_MOUNT_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[wrong_path-CANARY_PATH_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[wrong_token-CANARY_TOKEN_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[shared_control-CANARY_CONTROL_FAILED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[host_control-NETWORK_CONTROL_FAILED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[restart_succeeded-RESTART_NOT_REFUSED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[restart_unattempted-RESTART_NOT_REFUSED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[not_removed-CONTAINER_NOT_REMOVED]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[missing_tmpfs-RUNTIME_CONFIGURATION_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[missing_env-RUNTIME_CONFIGURATION_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[bind_rw-RUNTIME_CONFIGURATION_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[stacked_rw-OBSCURED_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[nested_overmount-CANARY_MOUNT_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[bind_alias-UNDECLARED_WRITABLE_MOUNT]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[provenance_source_sha-PROVENANCE_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[provenance_podman_version-PROVENANCE_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[provenance_containerfile_sha256-PROVENANCE_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[provenance_launcher_sha256-PROVENANCE_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[provenance_probe_sha256-PROVENANCE_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_specific_rejection[provenance_rootless-PROVENANCE_MISMATCH]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_verifier_process_restart_consistency[None]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_verifier_process_restart_consistency[read_error]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_verifier_process_restart_consistency[canary_seen]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py::test_verifier_process_restart_consistency[stacked_rw]
+FAILED tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py::test_strict_readonly_inventory
+78 failed, 26 passed in 2.54s

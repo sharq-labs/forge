@@ -1,0 +1,16 @@
+{
+  "cwd": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+  "argv": [
+    "/home/dev_kaeem/venvs/forge312/bin/python",
+    "tools/forge_blindfold_demo.py",
+    "--output",
+    "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/public-demo-v1-evidence/report",
+    "--timeout",
+    "30"
+  ],
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+    "TMPDIR": "/tmp"
+  },
+  "exit_code": 0
+}

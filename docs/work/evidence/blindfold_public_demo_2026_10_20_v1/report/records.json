@@ -1,0 +1,3624 @@
+{
+  "arm_seed": 0,
+  "description": "Public-seed rehearsal; trusted built-ins only; in-process development harness",
+  "exclusions": "No formal root/registry/holdout access, lift, maturity, A2/B1, or formal discovery claim",
+  "labels": [
+    "DEMO",
+    "NON-FORMAL",
+    "SECURITY_BOUNDARY_NOT_PROVEN"
+  ],
+  "planned_card_executions": 36,
+  "planned_replay_executions": 36,
+  "provenance": {
+    "executable": "/home/dev_kaeem/venvs/forge312/bin/python",
+    "head": "1cb5e187ef46ba2735fa292112a5e2bfd2334007",
+    "local_diff": "Uncommitted demo glue/tests/docs plus preserved checkpoint-2 work; HEAD alone is not source identity",
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "source_sha256": {
+      "benchmarks/genesis_lite/harness.py": "fce0dc4289d615f62ee21f6d3210c8a0835c6969f3975f32ca1e75081469bce1",
+      "benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.json": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "benchmarks/genesis_lite/presentation.py": "bc83318e792ddc705976d34378512bae2f34b72af020e5c8e08beb357197a137",
+      "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
+      "benchmarks/genesis_lite/v0_3/evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
+      "benchmarks/genesis_lite/v0_3/harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
+      "src/engcore/blindfold/pair_bound.py": "3477b1f5c1ef4709b8c4fc026be84cddf95d19315f590f2e2865f11f838a7b12",
+      "tests/genesis_lite/test_blindfold_demo.py": "125e5ca4e0f04b1395ec56cfccef3d1884e36f08ce4d6921defc330b2d370899",
+      "tools/forge_blindfold_demo.py": "1395f9e17cf5b35eb68b11a061b19450306fbfcbbe0d1a8bc9b0a2cb8556eda9"
+    }
+  },
+  "public_seed_utf8": "forge-blindfold-demo-public-seed-v1-2026-10-20",
+  "replay_runs": [
+    {
+      "arm": "careful",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:careful",
+      "campaign_id": "public-demo-v1-anonymous",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "6a21230fa3cc697a74673dedbb92d2fad74f2002a08b11b65bd3f9a05350b216",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 156,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "anonymous",
+      "presented_card_digests": {
+        "bf-3003d7051eb1d868": "14c009f07a12080e545c7a564a6617806d644fb1ac7769e935b5177e600e708d",
+        "bf-701de6227dd78fe9": "04800666d76b546fa95460dfbfdaa7670327371d99e9fc3b7c3eb14a0c462e59",
+        "bf-77b0ef68f1604f81": "de25e913c77b586eab067a961213f52cb1f16287a8bcfcc4ceebb08879514632",
+        "bf-9007e9193a75a801": "a2f9c36fedfb4ee398fd51e72186ea6cb9adef2bdea7cc7e889c2d42cc64d638",
+        "bf-c3f6df57c0677bf5": "e68b307888808d4257fda91131b63c8badb4ea62a095a358d3437dd3b9f09922",
+        "bf-d4104e47b0d04603": "6473caf147f92fe6abe69f1403ad2f0047654380ea4f6e9f40358da109788ca3"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "a12de47f9aca76fd1172603016f5ac6fc54b7c9b8fc71e1563fcf3fad2506e2c",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.5,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "exp",
+          "observe_calls": 30,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "scatter (held-out rms 0.036, fit 0.0319) exceeds 3.5x the replicate noise (0.00494): wrong form",
+            "universe_id": "bf-77b0ef68f1604f81"
+          },
+          "proposer_seconds": 0.007401640000352927,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-77b0ef68f1604f81"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "two_term",
+          "observe_calls": 12,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "the predicted mean is known only to 0.0658 (needs 0.02)",
+            "universe_id": "bf-c3f6df57c0677bf5"
+          },
+          "proposer_seconds": 0.0033295399998678477,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-c3f6df57c0677bf5"
+        },
+        {
+          "answer": "law",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "power",
+          "observe_calls": 12,
+          "outcome": "law_pass",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.13485620735017562
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w1"
+                    },
+                    {
+                      "const": 3.26123
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w2"
+                    },
+                    {
+                      "const": 1.632044
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w3"
+                    },
+                    {
+                      "const": -2.638027
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "log-linear fit on intervened inputs, checked on own held-out queries",
+            "universe_id": "bf-701de6227dd78fe9"
+          },
+          "proposer_seconds": 0.0028630260003410513,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-701de6227dd78fe9"
+        },
+        {
+          "answer": "no_law",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 60,
+          "outcome": "no_law",
+          "proposal": {
+            "answer": "no_law",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "on held-out queries the inputs do not beat a constant",
+            "universe_id": "bf-9007e9193a75a801"
+          },
+          "proposer_seconds": 0.01323558799958846,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-9007e9193a75a801"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "regime",
+          "observe_calls": 12,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "too few observations for the input count",
+            "universe_id": "bf-d4104e47b0d04603"
+          },
+          "proposer_seconds": 0.0026720140003817505,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-d4104e47b0d04603"
+        },
+        {
+          "answer": "confounded",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 30,
+          "outcome": "confounded",
+          "proposal": {
+            "answer": "confounded",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "residuals track a passively observed covariate that cannot be set: its effect is not identifiable",
+            "universe_id": "bf-3003d7051eb1d868"
+          },
+          "proposer_seconds": 0.0066245050002180506,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-3003d7051eb1d868"
+        }
+      ],
+      "wall_seconds": 0.05184953499974654
+    },
+    {
+      "arm": "always_law",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:always_law",
+      "campaign_id": "public-demo-v1-anonymous",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "6a21230fa3cc697a74673dedbb92d2fad74f2002a08b11b65bd3f9a05350b216",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 156,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "anonymous",
+      "presented_card_digests": {
+        "bf-3003d7051eb1d868": "324be5252196464ae4381ff2f2bd6ddf3b6a78762705e4f873aa1e1719231d9e",
+        "bf-701de6227dd78fe9": "26f16f9c4b38c3be442e507acedcb255dd531a9648f787b7774e086d408f8a0d",
+        "bf-77b0ef68f1604f81": "1b1e7add82d5c890f8778759dd0afb68640f295a94e5a809d6fab63b0fb61d21",
+        "bf-9007e9193a75a801": "370f05dfb255ece26609a75ae7b4f7c457dd6898086006f4880b9aa8eb1371de",
+        "bf-c3f6df57c0677bf5": "66feb43ac6cb7781aefb3ee18fef21ce942e84ec51c995413e63b7e86c78fee3",
+        "bf-d4104e47b0d04603": "397ae390e3859db43845648a915b9f81e91a7de0c8e1a18f171b42318d1a4b81"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "ab76aaebadfb90dbebf3b4702b1e3cdb366ea16e1eb32c35a07f2201aba0791a",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "exp",
+          "observe_calls": 30,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 6.341749887710885
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q1"
+                    },
+                    {
+                      "const": 5.707927
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q2"
+                    },
+                    {
+                      "const": -3.431763
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q3"
+                    },
+                    {
+                      "const": -1.182056
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q4"
+                    },
+                    {
+                      "const": -2.547629
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 0.002298
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-77b0ef68f1604f81"
+          },
+          "proposer_seconds": 0.007433186000525893,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-77b0ef68f1604f81"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "two_term",
+          "observe_calls": 12,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.4312831305088629
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w1"
+                    },
+                    {
+                      "const": 2.371272
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w2"
+                    },
+                    {
+                      "const": 1.758825
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w3"
+                    },
+                    {
+                      "const": 2.453645
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 1.313277
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-c3f6df57c0677bf5"
+          },
+          "proposer_seconds": 0.00347850100024516,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-c3f6df57c0677bf5"
+        },
+        {
+          "answer": "law",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "power",
+          "observe_calls": 12,
+          "outcome": "law_pass",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.13753380687645994
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w1"
+                    },
+                    {
+                      "const": 3.264288
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w2"
+                    },
+                    {
+                      "const": 1.623813
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w3"
+                    },
+                    {
+                      "const": -2.632634
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 0.009502
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-701de6227dd78fe9"
+          },
+          "proposer_seconds": 0.002609189999930095,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-701de6227dd78fe9"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 60,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 1.2291621216464403
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w1"
+                    },
+                    {
+                      "const": 0.134826
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w2"
+                    },
+                    {
+                      "const": 0.039255
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w3"
+                    },
+                    {
+                      "const": 0.086356
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w4"
+                    },
+                    {
+                      "const": 0.032401
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": -0.108193
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-9007e9193a75a801"
+          },
+          "proposer_seconds": 0.014245010999729857,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-9007e9193a75a801"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "regime",
+          "observe_calls": 12,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 5.666355748657585e-05
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s1"
+                    },
+                    {
+                      "const": -0.899379
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s2"
+                    },
+                    {
+                      "const": -2.870437
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s3"
+                    },
+                    {
+                      "const": -1.374643
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s4"
+                    },
+                    {
+                      "const": -0.968623
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 2.338307
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-d4104e47b0d04603"
+          },
+          "proposer_seconds": 0.002763616000265756,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-d4104e47b0d04603"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 30,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.5344594195980324
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q1"
+                    },
+                    {
+                      "const": -1.845107
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q2"
+                    },
+                    {
+                      "const": -0.92074
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q3"
+                    },
+                    {
+                      "const": 2.848872
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 1.515571
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-3003d7051eb1d868"
+          },
+          "proposer_seconds": 0.006584552999811422,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-3003d7051eb1d868"
+        }
+      ],
+      "wall_seconds": 0.05379708899999969
+    },
+    {
+      "arm": "always_insufficient",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:always_insufficient",
+      "campaign_id": "public-demo-v1-anonymous",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "6a21230fa3cc697a74673dedbb92d2fad74f2002a08b11b65bd3f9a05350b216",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 0,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "anonymous",
+      "presented_card_digests": {
+        "bf-3003d7051eb1d868": "2111ea8d15368226cf1d671bba1f0aea7a2018224265fb1314f02f99887c5bd7",
+        "bf-701de6227dd78fe9": "fac8bf99dcae2a6b4c78f16bd21730b80bdcbab0be3c51d52b9ea9fcbaac0111",
+        "bf-77b0ef68f1604f81": "0b834adaf0ceadf7344156a3e005388b967547879fca2cc610da94992f95d351",
+        "bf-9007e9193a75a801": "b5b0654860f8283e962973fd4a0d7ef76f8908cdee3c0a40f2a4423063ea0149",
+        "bf-c3f6df57c0677bf5": "b55707dd29968ad02036cba4dd571af935e2a6cfc7a05d666e4b673fa3b899ff",
+        "bf-d4104e47b0d04603": "0a2b1ba4e13010b9909e68b2bb4fb2ba2eb5d78458c8834c7c1da0251e45b723"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "27dbc060f0ad78cd365b48f73d0a0bcdc2d55a2329a88baa9499fd0ca66812be",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.5,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "exp",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-77b0ef68f1604f81"
+          },
+          "proposer_seconds": 1.390999386785552e-06,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-77b0ef68f1604f81"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "two_term",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-c3f6df57c0677bf5"
+          },
+          "proposer_seconds": 9.79000105871819e-07,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-c3f6df57c0677bf5"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "power",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-701de6227dd78fe9"
+          },
+          "proposer_seconds": 6.339996616588905e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-701de6227dd78fe9"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-9007e9193a75a801"
+          },
+          "proposer_seconds": 5.590000000665896e-07,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-9007e9193a75a801"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "regime",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-d4104e47b0d04603"
+          },
+          "proposer_seconds": 6.359996405080892e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-d4104e47b0d04603"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-3003d7051eb1d868"
+          },
+          "proposer_seconds": 7.009994078543968e-07,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-3003d7051eb1d868"
+        }
+      ],
+      "wall_seconds": 0.013188139999328996
+    },
+    {
+      "arm": "careful",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:careful",
+      "campaign_id": "public-demo-v1-paraphrased",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "e2e013585cd26e5106701e6d27269beb03099ac3a9fa18e95c2e6b78ebd73f71",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 174,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "paraphrased",
+      "presented_card_digests": {
+        "bf-234ac67082c33783": "cabaaf4c4c6b005582acae46c4c669c792cb215fe8efd9344fd3f29b823c208e",
+        "bf-671d5e64d1d6d278": "14f7a335afd7f4d4ba7df1a241911575f0a986c3b61d1bb28b65b8a5c7923c4d",
+        "bf-710954723742535f": "e29fffa6b01bb17d291106833cce60e42bce3fe2deeb8363d93741c50e701568",
+        "bf-8408ec44d4766ca4": "f60b65501802decf28ba5bcba4af61341b8ec4797d84faf4b0048b5c40533129",
+        "bf-ce924423f484bd89": "a34d517bb591c5f37533d60e68d1e8e20b02b5760a359805f4e8c9d8bb11e33e",
+        "bf-dd19d604fdf2f158": "4d912fb543240a898d06c1ea2340cd865be19e8126a513e70fe33c63dae4ab97"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "0d6c441ca37d0c7bb05b84a9d828082401d41c88db280737d27a6fce66cdd5c5",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "regime",
+          "observe_calls": 60,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "the predicted mean is known only to 0.196 (needs 0.02)",
+            "universe_id": "bf-8408ec44d4766ca4"
+          },
+          "proposer_seconds": 0.014498237999760022,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-8408ec44d4766ca4"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.5,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "power",
+          "observe_calls": 12,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "too few observations for the input count",
+            "universe_id": "bf-710954723742535f"
+          },
+          "proposer_seconds": 0.002953285000330652,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-710954723742535f"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "power",
+          "observe_calls": 30,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "the predicted mean is known only to 0.343 (needs 0.02)",
+            "universe_id": "bf-dd19d604fdf2f158"
+          },
+          "proposer_seconds": 0.006502470999294019,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-dd19d604fdf2f158"
+        },
+        {
+          "answer": "confounded",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 30,
+          "outcome": "confounded",
+          "proposal": {
+            "answer": "confounded",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "residuals track a passively observed covariate that cannot be set: its effect is not identifiable",
+            "universe_id": "bf-ce924423f484bd89"
+          },
+          "proposer_seconds": 0.006883609000396973,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-ce924423f484bd89"
+        },
+        {
+          "answer": "no_law",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 30,
+          "outcome": "no_law",
+          "proposal": {
+            "answer": "no_law",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "on held-out queries the inputs do not beat a constant",
+            "universe_id": "bf-671d5e64d1d6d278"
+          },
+          "proposer_seconds": 0.006646486999670742,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-671d5e64d1d6d278"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "regime",
+          "observe_calls": 12,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "too few observations for the input count",
+            "universe_id": "bf-234ac67082c33783"
+          },
+          "proposer_seconds": 0.0027014469997084234,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-234ac67082c33783"
+        }
+      ],
+      "wall_seconds": 0.055362200999297784
+    },
+    {
+      "arm": "always_law",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:always_law",
+      "campaign_id": "public-demo-v1-paraphrased",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "e2e013585cd26e5106701e6d27269beb03099ac3a9fa18e95c2e6b78ebd73f71",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 174,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "paraphrased",
+      "presented_card_digests": {
+        "bf-234ac67082c33783": "0e12902dfaff3890083d1e5d08230f1bc805aea78a275cc589cbe146591cf6fe",
+        "bf-671d5e64d1d6d278": "7239d128047a4102871c03f3c4810695facc04fe4687b74cf7371f518a53295e",
+        "bf-710954723742535f": "a0c654dd3ff0d9147222985cffb43afee5e8faf36c0d92a318fbf49e680efb90",
+        "bf-8408ec44d4766ca4": "ccf9591d90ab7f48ad79bdce05c14c2c6723293ac6df4e92870c988f47868f27",
+        "bf-ce924423f484bd89": "559fd1499185d69b23e79bd844bee5c85ffbed84ee7ef8e2f13476e97a132292",
+        "bf-dd19d604fdf2f158": "8f127d2683b2c1fd5141110ba703d20282ce5df160f92a0aab7ef48d12e588c5"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "41a2db740eca342473b5e180a2baaa4c56770ccc406c914447a2add1f3101735",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "regime",
+          "observe_calls": 60,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 28.479001881234858
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s2"
+                    },
+                    {
+                      "const": -1.137613
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s3"
+                    },
+                    {
+                      "const": 0.84693
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s1"
+                    },
+                    {
+                      "const": 1.774436
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s4"
+                    },
+                    {
+                      "const": -1.91719
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": -0.063181
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-8408ec44d4766ca4"
+          },
+          "proposer_seconds": 0.014196731000083673,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-8408ec44d4766ca4"
+        },
+        {
+          "answer": "law",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "power",
+          "observe_calls": 12,
+          "outcome": "law_pass",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 2.7057099757481526
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s3"
+                    },
+                    {
+                      "const": 5.95229
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s1"
+                    },
+                    {
+                      "const": -4.973829
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s2"
+                    },
+                    {
+                      "const": 0.004233
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s4"
+                    },
+                    {
+                      "const": 4.950122
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": -0.013913
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-710954723742535f"
+          },
+          "proposer_seconds": 0.002814997999848856,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-710954723742535f"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "power",
+          "observe_calls": 30,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.5473606841094142
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q4"
+                    },
+                    {
+                      "const": 1.330604
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q3"
+                    },
+                    {
+                      "const": -0.305304
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q1"
+                    },
+                    {
+                      "const": -0.417691
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q2"
+                    },
+                    {
+                      "const": -0.558314
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 0.767446
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-dd19d604fdf2f158"
+          },
+          "proposer_seconds": 0.006870424000226194,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-dd19d604fdf2f158"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 30,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 1.27653137417869
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q1"
+                    },
+                    {
+                      "const": -1.216705
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q3"
+                    },
+                    {
+                      "const": 3.181439
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q2"
+                    },
+                    {
+                      "const": 1.691456
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 1.741862
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-ce924423f484bd89"
+          },
+          "proposer_seconds": 0.00646579699969152,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-ce924423f484bd89"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 30,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.7436545832233629
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s4"
+                    },
+                    {
+                      "const": 0.20002
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s1"
+                    },
+                    {
+                      "const": -0.129075
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s2"
+                    },
+                    {
+                      "const": 0.149757
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s3"
+                    },
+                    {
+                      "const": 0.039263
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 0.33643
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-671d5e64d1d6d278"
+          },
+          "proposer_seconds": 0.006756434999260819,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-671d5e64d1d6d278"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "regime",
+          "observe_calls": 12,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.8887523132094844
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w1"
+                    },
+                    {
+                      "const": -5.246219
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w4"
+                    },
+                    {
+                      "const": 46.706247
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w3"
+                    },
+                    {
+                      "const": -0.078875
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w2"
+                    },
+                    {
+                      "const": -4.528455
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": -39.419971
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-234ac67082c33783"
+          },
+          "proposer_seconds": 0.002836181000020588,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-234ac67082c33783"
+        }
+      ],
+      "wall_seconds": 0.05723598500026128
+    },
+    {
+      "arm": "always_insufficient",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:always_insufficient",
+      "campaign_id": "public-demo-v1-paraphrased",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "e2e013585cd26e5106701e6d27269beb03099ac3a9fa18e95c2e6b78ebd73f71",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 0,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "paraphrased",
+      "presented_card_digests": {
+        "bf-234ac67082c33783": "07a3ea7281317a15259073a26a67b447fe597dc735275d7eabc8cf4c7c1f5ee4",
+        "bf-671d5e64d1d6d278": "51d65dfc06f47e2f7a3f5a8143459f5d1f918cb640b2875d3d66d5c1c028c29b",
+        "bf-710954723742535f": "06cdf46b442ccd81541ba72d0ce9aab21efb1ce098a910ecf6c97419b1add5d0",
+        "bf-8408ec44d4766ca4": "936a0d42770ab304fb41e65bb903cd1c7b04d3f308b470c25e7aa8253f115db6",
+        "bf-ce924423f484bd89": "1afe62e28b35d023ddd4bf1125377ea6d9dd42965068695731744abc6828d460",
+        "bf-dd19d604fdf2f158": "61f37066805bf3cba0a9c16dbcd501cafe1012761fbeb9635e335057af6dca2c"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "8cb4ad90330b12d10cdb124515476015f7f9f5d2ce7a53a10f1416e50a5cadb1",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "regime",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-8408ec44d4766ca4"
+          },
+          "proposer_seconds": 1.1729998732334934e-06,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-8408ec44d4766ca4"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.5,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "power",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-710954723742535f"
+          },
+          "proposer_seconds": 9.230006980942562e-07,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-710954723742535f"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "power",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-dd19d604fdf2f158"
+          },
+          "proposer_seconds": 6.880000000819564e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-dd19d604fdf2f158"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-ce924423f484bd89"
+          },
+          "proposer_seconds": 6.119998943177052e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-ce924423f484bd89"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-671d5e64d1d6d278"
+          },
+          "proposer_seconds": 9.870000212686136e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-671d5e64d1d6d278"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "regime",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-234ac67082c33783"
+          },
+          "proposer_seconds": 8.679999154992402e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-234ac67082c33783"
+        }
+      ],
+      "wall_seconds": 0.014209478000339004
+    }
+  ],
+  "runs": [
+    {
+      "arm": "careful",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:careful",
+      "campaign_id": "public-demo-v1-anonymous",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "6a21230fa3cc697a74673dedbb92d2fad74f2002a08b11b65bd3f9a05350b216",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 156,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "anonymous",
+      "presented_card_digests": {
+        "bf-3003d7051eb1d868": "14c009f07a12080e545c7a564a6617806d644fb1ac7769e935b5177e600e708d",
+        "bf-701de6227dd78fe9": "04800666d76b546fa95460dfbfdaa7670327371d99e9fc3b7c3eb14a0c462e59",
+        "bf-77b0ef68f1604f81": "de25e913c77b586eab067a961213f52cb1f16287a8bcfcc4ceebb08879514632",
+        "bf-9007e9193a75a801": "a2f9c36fedfb4ee398fd51e72186ea6cb9adef2bdea7cc7e889c2d42cc64d638",
+        "bf-c3f6df57c0677bf5": "e68b307888808d4257fda91131b63c8badb4ea62a095a358d3437dd3b9f09922",
+        "bf-d4104e47b0d04603": "6473caf147f92fe6abe69f1403ad2f0047654380ea4f6e9f40358da109788ca3"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "d98c8c9fdd1c333a5f16a682adaddaffecb29f5c577a1c7dd69e25b267da9e0e",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.5,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "exp",
+          "observe_calls": 30,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "scatter (held-out rms 0.036, fit 0.0319) exceeds 3.5x the replicate noise (0.00494): wrong form",
+            "universe_id": "bf-77b0ef68f1604f81"
+          },
+          "proposer_seconds": 0.008035810999899695,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-77b0ef68f1604f81"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "two_term",
+          "observe_calls": 12,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "the predicted mean is known only to 0.0658 (needs 0.02)",
+            "universe_id": "bf-c3f6df57c0677bf5"
+          },
+          "proposer_seconds": 0.002894431000640907,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-c3f6df57c0677bf5"
+        },
+        {
+          "answer": "law",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "power",
+          "observe_calls": 12,
+          "outcome": "law_pass",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.13485620735017562
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w1"
+                    },
+                    {
+                      "const": 3.26123
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w2"
+                    },
+                    {
+                      "const": 1.632044
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w3"
+                    },
+                    {
+                      "const": -2.638027
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "log-linear fit on intervened inputs, checked on own held-out queries",
+            "universe_id": "bf-701de6227dd78fe9"
+          },
+          "proposer_seconds": 0.002755665000222507,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-701de6227dd78fe9"
+        },
+        {
+          "answer": "no_law",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 60,
+          "outcome": "no_law",
+          "proposal": {
+            "answer": "no_law",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "on held-out queries the inputs do not beat a constant",
+            "universe_id": "bf-9007e9193a75a801"
+          },
+          "proposer_seconds": 0.0136825770005089,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-9007e9193a75a801"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "regime",
+          "observe_calls": 12,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "too few observations for the input count",
+            "universe_id": "bf-d4104e47b0d04603"
+          },
+          "proposer_seconds": 0.00250460799998109,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-d4104e47b0d04603"
+        },
+        {
+          "answer": "confounded",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 30,
+          "outcome": "confounded",
+          "proposal": {
+            "answer": "confounded",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "residuals track a passively observed covariate that cannot be set: its effect is not identifiable",
+            "universe_id": "bf-3003d7051eb1d868"
+          },
+          "proposer_seconds": 0.006931515000360378,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-3003d7051eb1d868"
+        }
+      ],
+      "wall_seconds": 0.05226366099941515
+    },
+    {
+      "arm": "always_law",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:always_law",
+      "campaign_id": "public-demo-v1-anonymous",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "6a21230fa3cc697a74673dedbb92d2fad74f2002a08b11b65bd3f9a05350b216",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 156,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "anonymous",
+      "presented_card_digests": {
+        "bf-3003d7051eb1d868": "324be5252196464ae4381ff2f2bd6ddf3b6a78762705e4f873aa1e1719231d9e",
+        "bf-701de6227dd78fe9": "26f16f9c4b38c3be442e507acedcb255dd531a9648f787b7774e086d408f8a0d",
+        "bf-77b0ef68f1604f81": "1b1e7add82d5c890f8778759dd0afb68640f295a94e5a809d6fab63b0fb61d21",
+        "bf-9007e9193a75a801": "370f05dfb255ece26609a75ae7b4f7c457dd6898086006f4880b9aa8eb1371de",
+        "bf-c3f6df57c0677bf5": "66feb43ac6cb7781aefb3ee18fef21ce942e84ec51c995413e63b7e86c78fee3",
+        "bf-d4104e47b0d04603": "397ae390e3859db43845648a915b9f81e91a7de0c8e1a18f171b42318d1a4b81"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "24ec57df3ed75d2f6dec3239e1709f2bf7d69bd1bb0797bfffc8096c9d83fce8",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "exp",
+          "observe_calls": 30,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 6.341749887710885
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q1"
+                    },
+                    {
+                      "const": 5.707927
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q2"
+                    },
+                    {
+                      "const": -3.431763
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q3"
+                    },
+                    {
+                      "const": -1.182056
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q4"
+                    },
+                    {
+                      "const": -2.547629
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 0.002298
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-77b0ef68f1604f81"
+          },
+          "proposer_seconds": 0.00739197700022487,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-77b0ef68f1604f81"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "two_term",
+          "observe_calls": 12,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.4312831305088629
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w1"
+                    },
+                    {
+                      "const": 2.371272
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w2"
+                    },
+                    {
+                      "const": 1.758825
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w3"
+                    },
+                    {
+                      "const": 2.453645
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 1.313277
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-c3f6df57c0677bf5"
+          },
+          "proposer_seconds": 0.0030350569995789556,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-c3f6df57c0677bf5"
+        },
+        {
+          "answer": "law",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "power",
+          "observe_calls": 12,
+          "outcome": "law_pass",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.13753380687645994
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w1"
+                    },
+                    {
+                      "const": 3.264288
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w2"
+                    },
+                    {
+                      "const": 1.623813
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w3"
+                    },
+                    {
+                      "const": -2.632634
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 0.009502
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-701de6227dd78fe9"
+          },
+          "proposer_seconds": 0.0027380089995858725,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-701de6227dd78fe9"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 60,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 1.2291621216464403
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w1"
+                    },
+                    {
+                      "const": 0.134826
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w2"
+                    },
+                    {
+                      "const": 0.039255
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w3"
+                    },
+                    {
+                      "const": 0.086356
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w4"
+                    },
+                    {
+                      "const": 0.032401
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": -0.108193
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-9007e9193a75a801"
+          },
+          "proposer_seconds": 0.013313191000634106,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-9007e9193a75a801"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "regime",
+          "observe_calls": 12,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 5.666355748657585e-05
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s1"
+                    },
+                    {
+                      "const": -0.899379
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s2"
+                    },
+                    {
+                      "const": -2.870437
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s3"
+                    },
+                    {
+                      "const": -1.374643
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s4"
+                    },
+                    {
+                      "const": -0.968623
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 2.338307
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-d4104e47b0d04603"
+          },
+          "proposer_seconds": 0.002942685000562051,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-d4104e47b0d04603"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 30,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.5344594195980324
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q1"
+                    },
+                    {
+                      "const": -1.845107
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q2"
+                    },
+                    {
+                      "const": -0.92074
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q3"
+                    },
+                    {
+                      "const": 2.848872
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 1.515571
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-3003d7051eb1d868"
+          },
+          "proposer_seconds": 0.00764350299959915,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-3003d7051eb1d868"
+        }
+      ],
+      "wall_seconds": 0.05483573399942543
+    },
+    {
+      "arm": "always_insufficient",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:always_insufficient",
+      "campaign_id": "public-demo-v1-anonymous",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "6a21230fa3cc697a74673dedbb92d2fad74f2002a08b11b65bd3f9a05350b216",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 0,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "anonymous",
+      "presented_card_digests": {
+        "bf-3003d7051eb1d868": "2111ea8d15368226cf1d671bba1f0aea7a2018224265fb1314f02f99887c5bd7",
+        "bf-701de6227dd78fe9": "fac8bf99dcae2a6b4c78f16bd21730b80bdcbab0be3c51d52b9ea9fcbaac0111",
+        "bf-77b0ef68f1604f81": "0b834adaf0ceadf7344156a3e005388b967547879fca2cc610da94992f95d351",
+        "bf-9007e9193a75a801": "b5b0654860f8283e962973fd4a0d7ef76f8908cdee3c0a40f2a4423063ea0149",
+        "bf-c3f6df57c0677bf5": "b55707dd29968ad02036cba4dd571af935e2a6cfc7a05d666e4b673fa3b899ff",
+        "bf-d4104e47b0d04603": "0a2b1ba4e13010b9909e68b2bb4fb2ba2eb5d78458c8834c7c1da0251e45b723"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "123f9412ab75ae6bc6a9bdf4f8084cfa139013a4d0e8f90f53bbdd67ae7ae2f6",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.5,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "exp",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-77b0ef68f1604f81"
+          },
+          "proposer_seconds": 1.3469998521031812e-06,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-77b0ef68f1604f81"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "two_term",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-c3f6df57c0677bf5"
+          },
+          "proposer_seconds": 1.0109997674589977e-06,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-c3f6df57c0677bf5"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "power",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-701de6227dd78fe9"
+          },
+          "proposer_seconds": 6.700001904391684e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-701de6227dd78fe9"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-9007e9193a75a801"
+          },
+          "proposer_seconds": 5.330002750270069e-07,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-9007e9193a75a801"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "regime",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-d4104e47b0d04603"
+          },
+          "proposer_seconds": 5.399997462518513e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-d4104e47b0d04603"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-3003d7051eb1d868"
+          },
+          "proposer_seconds": 6.149994078441523e-07,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-3003d7051eb1d868"
+        }
+      ],
+      "wall_seconds": 0.013421974999801023
+    },
+    {
+      "arm": "careful",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:careful",
+      "campaign_id": "public-demo-v1-paraphrased",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "e2e013585cd26e5106701e6d27269beb03099ac3a9fa18e95c2e6b78ebd73f71",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 174,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "paraphrased",
+      "presented_card_digests": {
+        "bf-234ac67082c33783": "cabaaf4c4c6b005582acae46c4c669c792cb215fe8efd9344fd3f29b823c208e",
+        "bf-671d5e64d1d6d278": "14f7a335afd7f4d4ba7df1a241911575f0a986c3b61d1bb28b65b8a5c7923c4d",
+        "bf-710954723742535f": "e29fffa6b01bb17d291106833cce60e42bce3fe2deeb8363d93741c50e701568",
+        "bf-8408ec44d4766ca4": "f60b65501802decf28ba5bcba4af61341b8ec4797d84faf4b0048b5c40533129",
+        "bf-ce924423f484bd89": "a34d517bb591c5f37533d60e68d1e8e20b02b5760a359805f4e8c9d8bb11e33e",
+        "bf-dd19d604fdf2f158": "4d912fb543240a898d06c1ea2340cd865be19e8126a513e70fe33c63dae4ab97"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "7f8f58f30552a7272a9c7e355bc65e34aa1fe28e89df51265c448509888cd4ca",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "regime",
+          "observe_calls": 60,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "the predicted mean is known only to 0.196 (needs 0.02)",
+            "universe_id": "bf-8408ec44d4766ca4"
+          },
+          "proposer_seconds": 0.013609094000457844,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-8408ec44d4766ca4"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.5,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "power",
+          "observe_calls": 12,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "too few observations for the input count",
+            "universe_id": "bf-710954723742535f"
+          },
+          "proposer_seconds": 0.002674770999874454,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-710954723742535f"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "power",
+          "observe_calls": 30,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "the predicted mean is known only to 0.343 (needs 0.02)",
+            "universe_id": "bf-dd19d604fdf2f158"
+          },
+          "proposer_seconds": 0.00683303400001023,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-dd19d604fdf2f158"
+        },
+        {
+          "answer": "confounded",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 30,
+          "outcome": "confounded",
+          "proposal": {
+            "answer": "confounded",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "residuals track a passively observed covariate that cannot be set: its effect is not identifiable",
+            "universe_id": "bf-ce924423f484bd89"
+          },
+          "proposer_seconds": 0.008400199999414326,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-ce924423f484bd89"
+        },
+        {
+          "answer": "no_law",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 30,
+          "outcome": "no_law",
+          "proposal": {
+            "answer": "no_law",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "on held-out queries the inputs do not beat a constant",
+            "universe_id": "bf-671d5e64d1d6d278"
+          },
+          "proposer_seconds": 0.007164280000324652,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-671d5e64d1d6d278"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "regime",
+          "observe_calls": 12,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "careful",
+              "kind": "baseline"
+            },
+            "rationale": "too few observations for the input count",
+            "universe_id": "bf-234ac67082c33783"
+          },
+          "proposer_seconds": 0.003217124999537191,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-234ac67082c33783"
+        }
+      ],
+      "wall_seconds": 0.058217341999807104
+    },
+    {
+      "arm": "always_law",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:always_law",
+      "campaign_id": "public-demo-v1-paraphrased",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "e2e013585cd26e5106701e6d27269beb03099ac3a9fa18e95c2e6b78ebd73f71",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 174,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "paraphrased",
+      "presented_card_digests": {
+        "bf-234ac67082c33783": "0e12902dfaff3890083d1e5d08230f1bc805aea78a275cc589cbe146591cf6fe",
+        "bf-671d5e64d1d6d278": "7239d128047a4102871c03f3c4810695facc04fe4687b74cf7371f518a53295e",
+        "bf-710954723742535f": "a0c654dd3ff0d9147222985cffb43afee5e8faf36c0d92a318fbf49e680efb90",
+        "bf-8408ec44d4766ca4": "ccf9591d90ab7f48ad79bdce05c14c2c6723293ac6df4e92870c988f47868f27",
+        "bf-ce924423f484bd89": "559fd1499185d69b23e79bd844bee5c85ffbed84ee7ef8e2f13476e97a132292",
+        "bf-dd19d604fdf2f158": "8f127d2683b2c1fd5141110ba703d20282ce5df160f92a0aab7ef48d12e588c5"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "7141e63c8bc314bb4d725c3f38527f7d6ad8016436bb43ecb6cbd9658cd430e7",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "regime",
+          "observe_calls": 60,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 28.479001881234858
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s2"
+                    },
+                    {
+                      "const": -1.137613
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s3"
+                    },
+                    {
+                      "const": 0.84693
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s1"
+                    },
+                    {
+                      "const": 1.774436
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s4"
+                    },
+                    {
+                      "const": -1.91719
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": -0.063181
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-8408ec44d4766ca4"
+          },
+          "proposer_seconds": 0.012976648999938334,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-8408ec44d4766ca4"
+        },
+        {
+          "answer": "law",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "power",
+          "observe_calls": 12,
+          "outcome": "law_pass",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 2.7057099757481526
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s3"
+                    },
+                    {
+                      "const": 5.95229
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s1"
+                    },
+                    {
+                      "const": -4.973829
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s2"
+                    },
+                    {
+                      "const": 0.004233
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s4"
+                    },
+                    {
+                      "const": 4.950122
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": -0.013913
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-710954723742535f"
+          },
+          "proposer_seconds": 0.0026881160001721582,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-710954723742535f"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "power",
+          "observe_calls": 30,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.5473606841094142
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q4"
+                    },
+                    {
+                      "const": 1.330604
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q3"
+                    },
+                    {
+                      "const": -0.305304
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q1"
+                    },
+                    {
+                      "const": -0.417691
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q2"
+                    },
+                    {
+                      "const": -0.558314
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 0.767446
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-dd19d604fdf2f158"
+          },
+          "proposer_seconds": 0.006292040000516863,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-dd19d604fdf2f158"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 30,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 1.27653137417869
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q1"
+                    },
+                    {
+                      "const": -1.216705
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q3"
+                    },
+                    {
+                      "const": 3.181439
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "q2"
+                    },
+                    {
+                      "const": 1.691456
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 1.741862
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-ce924423f484bd89"
+          },
+          "proposer_seconds": 0.006583680999938224,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-ce924423f484bd89"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 30,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.7436545832233629
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s4"
+                    },
+                    {
+                      "const": 0.20002
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s1"
+                    },
+                    {
+                      "const": -0.129075
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s2"
+                    },
+                    {
+                      "const": 0.149757
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "s3"
+                    },
+                    {
+                      "const": 0.039263
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": 0.33643
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-671d5e64d1d6d278"
+          },
+          "proposer_seconds": 0.006210958999872673,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-671d5e64d1d6d278"
+        },
+        {
+          "answer": "law",
+          "credit": -1.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "regime",
+          "observe_calls": 12,
+          "outcome": "law_fail",
+          "proposal": {
+            "answer": "law",
+            "law": {
+              "mul": [
+                {
+                  "const": 0.8887523132094844
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w1"
+                    },
+                    {
+                      "const": -5.246219
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w4"
+                    },
+                    {
+                      "const": 46.706247
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w3"
+                    },
+                    {
+                      "const": -0.078875
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "w2"
+                    },
+                    {
+                      "const": -4.528455
+                    }
+                  ]
+                },
+                {
+                  "pow": [
+                    {
+                      "var": "u1"
+                    },
+                    {
+                      "const": -39.419971
+                    }
+                  ]
+                }
+              ]
+            },
+            "proposer": {
+              "id": "always_law",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: always fits",
+            "universe_id": "bf-234ac67082c33783"
+          },
+          "proposer_seconds": 0.00326961599967035,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-234ac67082c33783"
+        }
+      ],
+      "wall_seconds": 0.05519085699961579
+    },
+    {
+      "arm": "always_insufficient",
+      "arm_code_sha256": {
+        "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+        "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+      },
+      "arm_spec": "benchmarks.genesis_lite.v0_3.arms:always_insufficient",
+      "campaign_id": "public-demo-v1-paraphrased",
+      "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+      "evaluator_status": "VALID",
+      "harness": "forge.genesis_lite.harness.v0_3",
+      "host_start_seconds": 0.0,
+      "isolation": "in_process",
+      "key_digest": "e2e013585cd26e5106701e6d27269beb03099ac3a9fa18e95c2e6b78ebd73f71",
+      "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+      "memory_instrumented": false,
+      "observe_calls": 0,
+      "pair_bound": {
+        "form": "tol_multiple",
+        "value": 3.0
+      },
+      "peak_traced_kib": null,
+      "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+      "presentation": "paraphrased",
+      "presented_card_digests": {
+        "bf-234ac67082c33783": "07a3ea7281317a15259073a26a67b447fe597dc735275d7eabc8cf4c7c1f5ee4",
+        "bf-671d5e64d1d6d278": "51d65dfc06f47e2f7a3f5a8143459f5d1f918cb640b2875d3d66d5c1c028c29b",
+        "bf-710954723742535f": "06cdf46b442ccd81541ba72d0ce9aab21efb1ce098a910ecf6c97419b1add5d0",
+        "bf-8408ec44d4766ca4": "936a0d42770ab304fb41e65bb903cd1c7b04d3f308b470c25e7aa8253f115db6",
+        "bf-ce924423f484bd89": "1afe62e28b35d023ddd4bf1125377ea6d9dd42965068695731744abc6828d460",
+        "bf-dd19d604fdf2f158": "61f37066805bf3cba0a9c16dbcd501cafe1012761fbeb9635e335057af6dca2c"
+      },
+      "proposer_processes": 0,
+      "reasons": [],
+      "report_digest": "cdd42ccb6b175c7bd281dbe4d3ecee408b262593aba13a466de9d65348e38dc5",
+      "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+      "seed": 0,
+      "status": "VALID",
+      "tier_bound": "development",
+      "universes": [
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "discoverable",
+          "law_form": "regime",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-8408ec44d4766ca4"
+          },
+          "proposer_seconds": 1.731999873300083e-06,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-8408ec44d4766ca4"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.5,
+          "independent_agrees": true,
+          "kind": "indistinguishable",
+          "law_form": "power",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-710954723742535f"
+          },
+          "proposer_seconds": 8.500001058564521e-07,
+          "region_tell": "ordinary_extension",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-710954723742535f"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 1.0,
+          "independent_agrees": true,
+          "kind": "insufficient_evidence",
+          "law_form": "power",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-dd19d604fdf2f158"
+          },
+          "proposer_seconds": 8.03999682830181e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": true,
+          "universe_id": "bf-dd19d604fdf2f158"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "confounded",
+          "law_form": "two_term",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-ce924423f484bd89"
+          },
+          "proposer_seconds": 6.210002538864501e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-ce924423f484bd89"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "no_solution",
+          "law_form": null,
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-671d5e64d1d6d278"
+          },
+          "proposer_seconds": 6.319996828096919e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-671d5e64d1d6d278"
+        },
+        {
+          "answer": "insufficient_evidence",
+          "credit": 0.0,
+          "independent_agrees": true,
+          "kind": "spurious_correlate",
+          "law_form": "regime",
+          "observe_calls": 0,
+          "outcome": "insufficient_evidence",
+          "proposal": {
+            "answer": "insufficient_evidence",
+            "proposer": {
+              "id": "always_insufficient",
+              "kind": "baseline"
+            },
+            "rationale": "baseline: blanket refusal",
+            "universe_id": "bf-234ac67082c33783"
+          },
+          "proposer_seconds": 6.809996193624102e-07,
+          "region_tell": "box",
+          "trap": false,
+          "truth_in_searched_family": false,
+          "universe_id": "bf-234ac67082c33783"
+        }
+      ],
+      "wall_seconds": 0.014928233000318869
+    }
+  ],
+  "schema": "forge.blindfold.public_demo/1",
+  "semantic_replay": [
+    {
+      "arm": "careful",
+      "meaning": "Deterministic public-fixture semantic rerun, not cryptographic verification of archived records",
+      "presentation": "anonymous",
+      "status": "MATCH"
+    },
+    {
+      "arm": "always_law",
+      "meaning": "Deterministic public-fixture semantic rerun, not cryptographic verification of archived records",
+      "presentation": "anonymous",
+      "status": "MATCH"
+    },
+    {
+      "arm": "always_insufficient",
+      "meaning": "Deterministic public-fixture semantic rerun, not cryptographic verification of archived records",
+      "presentation": "anonymous",
+      "status": "MATCH"
+    },
+    {
+      "arm": "careful",
+      "meaning": "Deterministic public-fixture semantic rerun, not cryptographic verification of archived records",
+      "presentation": "paraphrased",
+      "status": "MATCH"
+    },
+    {
+      "arm": "always_law",
+      "meaning": "Deterministic public-fixture semantic rerun, not cryptographic verification of archived records",
+      "presentation": "paraphrased",
+      "status": "MATCH"
+    },
+    {
+      "arm": "always_insufficient",
+      "meaning": "Deterministic public-fixture semantic rerun, not cryptographic verification of archived records",
+      "presentation": "paraphrased",
+      "status": "MATCH"
+    }
+  ],
+  "status": "EXECUTION_COMPLETE",
+  "summary": {
+    "evaluator_agreement": {
+      "True": 36
+    },
+    "observation_calls": 660,
+    "outcomes": {
+      "confounded": 2,
+      "insufficient_evidence": 19,
+      "law_fail": 10,
+      "law_pass": 3,
+      "no_law": 2
+    },
+    "recorded_cards": 36,
+    "replay_cards": 36
+  },
+  "timeout_seconds_per_run": 30.0
+}

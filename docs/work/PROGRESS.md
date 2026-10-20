@@ -8317,3 +8317,446 @@ Note: the D7 timing pilot (4361bb62) ran on the old distro; re-run it on Ubuntu-
 **D7 timing pilot on the hardened Ubuntu-24.04** (escrow f7df8968 in ~/forge, venv ~/venvs/forge312, exit 0, 455 s): 200/200 VALID. MEASURED 42.8 s per world set; ESTIMATED 57.0 h (56.2-57.8) with replay. Evidence sha256 3759ff334f690f4d3601b588a4bfb6c9dd71f186975a45d024a8714cb85beb4f, identical on both sides of the copy, re-pinned. Commits reach the distro through a piped git bundle (automount is off).
 
 `pytest tests/genesis_lite -n 4` on the draft branch: exit 0, 251 passed.
+## 2026-10-20 — Checkpoint 2: failing-first container-isolation tests (parent review pending)
+
+Authorized scope: tests and execution evidence only; no production changes or commit.
+Source: branch feat/genesis-lite-v03-escrow-fda05, HEAD
+1cb5e187ef46ba2735fa292112a5e2bfd2334007 (also the local remote-tracking branch).
+The live PR SHA is reported by the parent census; no network refetch was performed here.
+Scoped Get-CimInstance Win32_Process census outside the sandbox, before edits and at close:
+no claude-named process or node process with claude-code in its command line returned.
+Unsandboxed git status was initially clean. Sandboxed git misleadingly lists the existing
+.claude/settings.local.json because user Git ignore configuration is inaccessible; it was
+not edited (SHA256 afd4024befb318dfc0d7bcd4d0a6ab474efcdd3b8257caf37335d55bda8d861d).
+The initial sandbox process census and interpreter version command returned Access denied;
+the scoped read-only retries were approved and succeeded. No process was killed.
+
+Added tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py only.
+Environment: Windows 11 10.0.26200, CPython 3.14.2, pytest 9.1.1, repository venv.
+Exact PowerShell setup and final test command (cwd = this worktree):
+```powershell
+$env:PYTHONPATH="$PWD/src;$PWD"
+$env:TMPDIR='D:/gl03tmp'
+$env:TMP='D:/gl03tmp'
+$env:TEMP='D:/gl03tmp'
+& 'C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe' -m pytest tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py -q -p no:cacheprovider --basetemp=D:/gl03tmp/codex-checkpoint2-final -rA --tb=short
+```
+Result: exit 1; 16 failed, 4 passed, 0 errors/skips, 0.73 s. All failures are assertions
+against existing behavior, not missing imports or missing container dependencies. Earlier
+run (same command, basetemp D:/gl03tmp/codex-checkpoint2, without --tb=short) gave
+16 failed, 4 passed in 0.64 s; the final run strengthens N-1 by having each child read
+and hash the shared canary itself rather than having only the parent read it.
+
+Evidence: docs/work/evidence/genesis_lite_v0_3_checkpoint2_2026_10_20/pytest.txt
+contains the exact final output, assertion details and every failed node name;
+tests.patch is the complete test-only diff; SHA256SUMS binds these and the test source.
+
+Failure families (all in the new module):
+- test_launch_uses_a_fresh_container_without_shell_construction: still unshare + shell.
+- test_container_security_options_are_explicit (6 cases): missing required Podman flags.
+- test_each_required_writable_mount_is_explicit_private_tmpfs (4 cases): no explicit
+  container tmpfs declarations for /tmp, /var/tmp, /run, /dev/shm.
+- test_source_and_venv_bind_mounts_are_explicitly_read_only: no container bind declarations.
+- test_launch_pins_an_immutable_image_identity: no immutable image in launch argv.
+- test_deployment_report_cannot_verify_without_mount_and_container_evidence: old
+  channel transcripts can yield verified=True without any complete mount inventory.
+- test_runtime_launch_failure_is_detected_before_consuming_the_root: real deployment
+  check accepts tool discovery alone; synthetic registry admission occurs without a
+  runtime startup test. Identity gates and world plan are test doubles, no worlds run.
+- test_private_tmp_is_not_evidence_that_other_writable_mounts_are_private: A/B/restarted
+  B can all read a random 32-byte shared canary while the real probe reports REFUSED.
+
+Passing controls: REACHED and UNTESTABLE remain blocking; missing runtime is refused;
+shared probe-directory state is detected in fresh child processes and after restart.
+The shared-directory control is a filesystem control, NOT a mounted Podman volume.
+Command assertions are launch-contract specifications, NOT proof of kernel enforcement.
+Runtime mountinfo reconciliation, host/Windows-backed mount refusal, unprobeable-mount
+refusal, image-mismatch injection, zero capabilities/no-network/no-new-privileges at
+runtime, complete A/B canaries, private HOME/cache, container reuse impossibility and
+real shared-volume positive control remain NOT RUN and must be completed in the later
+implementation/runtime checkpoints. The current production API lacks those admission
+inputs; tests deliberately do not fail solely on nonexistent replacement APIs.
+
+Production byte identities read for this run:
+- isolation.py: d7f96b37608d799fe9d7729ba6fb8fbea2384f475bec5905590df587a1967164
+- deployment_attacks.py: 6961025b26a958b6b11e5cfdf76cbabb05cef95e192542e3c9575eef000788cc
+- formal.py: aa30cc7d58d0e459d16472666bef58afdfd6e271e9d0c6bf2f86f41b054ba6dd
+
+No production/scientific/owner-decision changes. No WSL transfer needed for these
+host-independent tests. Existing WSL and main checkouts were not modified. Full suites,
+changed-file gate, runtime deployment verification, formal campaign and OD-3: NOT RUN
+in checkpoint 2. No commit, push, merge or freeze. Overall: BLOCKED_WITH_PRECISE_EVIDENCE.
+Stop here for parent review before checkpoint 3.
+
+## 2026-10-20 — Checkpoint 2 extension: real container controls and specific validation contract
+
+User explicitly authorized completing missing checkpoint-2 tests and failing-first execution,
+with production unchanged and stop before checkpoint 3. Parent review required a complete
+admissible synthetic validation baseline and named rejection codes, separate from unsafe
+real runtime observations. Added only two test files (container_isolation_probe.py and
+ test_genesis_lite_v0_3_container_runtime.py); the original checkpoint-2 test remains unchanged.
+
+Dedicated Linux Git checkout: /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo, detached at
+1cb5e187ef46ba2735fa292112a5e2bfd2334007. Created non-destructively by shared clone from
+/home/dev_kaeem/forge plus an incremental local bundle of the PR-only commits. The dedicated
+checkout was initially clean; after transfer only the three test files are untracked.
+Existing WSL checkout remains f7df896836b62e7bc96f2eaee28883d655cb4e3a. Main and existing WSL
+tracked files were not edited. No competing Claude writer was found in scoped censuses.
+
+Exact final command, in the dedicated checkout (Linux CPython 3.12.3, existing venv):
+```bash
+export PYTHONPATH="$PWD/src:$PWD"
+export TMPDIR=/tmp
+export FORGE_CHECKPOINT_SOURCE_SHA=1cb5e187ef46ba2735fa292112a5e2bfd2334007
+export FORGE_CHECKPOINT_EVIDENCE=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/evidence
+/home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py -q -p no:cacheprovider --basetemp=/tmp/forge-cp2-ozVlV6-final -rA --tb=short
+```
+Result: exit 1, **40 failed, 9 passed, zero errors/skips, 2.22 s**. Full failed node names,
+assertions and exact argv/env are in linux-extension/pytest.txt and command.json beneath
+ docs/work/evidence/genesis_lite_v0_3_checkpoint2_2026_10_20/.
+
+Failure classification: 16 original current-behavior assertions; 2 actual unsafe runtime
+reports accepted by the old channel verifier; 1 absent production image binding; 21 explicit
+MISSING_VALIDATION_CONTRACT assertions (one admissible baseline and 20 independent mutations
+with required rejection codes). The 21 are future-contract specifications, not distinct
+executed exploits. No failure depends on absent runtime/import dependencies.
+
+Passing controls include real rootless Podman 4.9.3: five unique containers, automatic removal
+and refusal to restart each removed ID, zero CapInh/CapPrm/CapEff/CapBnd/CapAmb, NNP=1,
+loopback-only interfaces and failed host/external socket probes (host listener control works),
+read-only source/venv opens and mount flags, private HOME/work/tmp/cache, 36-entry inventory,
+no A canaries in fresh B/C, and a real host-bind shared-volume A/B positive control. Actual
+wrong absent image digest refused with --pull=never. Actual image/container inspections bind
+sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261.
+
+Unprobeable writable mounts are retained, not exempted: /dev, /proc, /dev/pts, /dev/mqueue,
+and six /dev device endpoints. The test rig therefore does NOT establish deployment acceptance.
+Production mount validation is absent. Windows-backed/shared-propagation and valid-but-wrong
+image substitutions are synthetic validator specifications; do not report them as real mounts
+or substitutions observed. Complete coverage interpretation and API proposal are in the evidence
+README. The test-only create/start rig is not a production launcher implementation.
+
+Failed approaches: initial CID-file read after --rm and then empty containerenv recovery each
+produced 17 failures/5 passes/19 setup errors; saved transcripts identify these fixture defects.
+One orchestration quoting error ran no tests. After CID capture via create/inspect/start,
+pre-review run was 33 failed/8 passed/0 errors. Parent review then corrected mutation specificity.
+Final run above supersedes these attempts; no failed fixture approach was counted as a defect.
+
+Evidence: linux-extension/runtime.json (raw argv/inspect/mountinfo/status/canaries/transcripts),
+tests-consolidated.patch (all three files), production-preservation.json, README.md and SHA256SUMS.
+Production preservation: git diff --exit-code HEAD -- benchmarks src passed on BOTH checkouts;
+exact bytes of isolation.py, deployment_attacks.py, formal.py and harness.py also compared to HEAD.
+No containers remained at close. No production/preregistration/scientific semantics changes.
+No commits, installs, security changes, pushes, merge, freeze or formal campaign. Full suite,
+changed-file gate, OD-3 and checkpoint-3 implementation: NOT RUN. Stop for checkpoint-2 review;
+overall BLOCKED_WITH_PRECISE_EVIDENCE.
+
+
+## 2026-10-20 — checkpoint 2 correction attempt: strict runtime inventory BLOCKED
+
+## Bounded feasibility execution
+
+Added only `tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py`.
+This is a new test-only configuration of the existing pinned development image.
+It adds `--read-only-tmpfs=false`,
+`--security-opt=proc-opts=ro,nosuid,nodev,noexec`, and `--ipc=private`;
+explicit private tmpfs mounts at /tmp, /var/tmp, /run and /dev/shm remain.
+No privileged mode, added capabilities, device writes, canaries, installations,
+image rebuilds or host security changes. The existing probe runs with
+`write_canaries=false`; it reads the complete raw mountinfo inventory only plus
+process/network-interface metadata. No host/venv write probes are configured.
+
+Exact pytest command (cwd is the dedicated Linux checkout):
+
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp FORGE_CHECKPOINT_EVIDENCE=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/correction-evidence /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py -q -p no:cacheprovider --basetemp=/tmp/forge-cp2-correction-ro -rA --tb=short
+```
+
+Result: **1 failed, 0 passed, 0 errors/skips, exit 1, 0.33 s**.
+The failed node is `test_strict_readonly_inventory` at the final remaining-mount
+assertion, after successful create, inspect, start, JSON parsing and cleanup.
+This is the expected failing-first strict-policy counterexample, not a runtime
+unavailability or setup error. Unexpected setup failures are not converted to skips.
+Full exact argv/environment/exit are in command-readonly.json; raw inventory,
+inspection, stdout/stderr and cleanup are in readonly-runtime.json.
+
+Per-mount ro controls view writeability; superblock rw on an ro bind is not
+classified as writable. This configuration makes /proc and /dev ro, but still
+leaves the following eight writable pseudo/device mounts:
+
+| Mount ID | Target | Filesystem | Per-mount options |
+|---|---|---|---|
+| 576 | /dev/pts | devpts | rw,nosuid,noexec,relatime |
+| 577 | /dev/mqueue | mqueue | rw,nosuid,nodev,noexec,relatime |
+| 580 | /dev/null | devtmpfs | rw,nosuid,noexec,relatime |
+| 581 | /dev/zero | devtmpfs | rw,nosuid,noexec,relatime |
+| 582 | /dev/full | devtmpfs | rw,nosuid,noexec,relatime |
+| 583 | /dev/tty | devtmpfs | rw,nosuid,noexec,relatime |
+| 584 | /dev/random | devtmpfs | rw,nosuid,noexec,relatime |
+| 585 | /dev/urandom | devtmpfs | rw,nosuid,noexec,relatime |
+
+The complete raw inventory contains 36 rows. No writable pseudo/device
+mount is exempted or touched. The strict assertion includes every rw mount
+outside the four explicitly restored private tmpfs targets. Passing this narrow
+assertion alone would not establish private propagation, topology reconciliation,
+canary coverage or deployment acceptance. Actual inspected IPC mode is private.
+Own created CID is cleaned in finally with rm --force --ignore; cleanup exit 0.
+
+
+Independent review supersedes earlier checkpoint-2-ready wording. All five MAJORs
+remain open; corrected full contract suite NOT RUN. Stopped at the explicitly
+authorized strict-runtime blocker before checkpoint 3. No production edits.
+Evidence: `docs/work/evidence/genesis_lite_v0_3_checkpoint2_2026_10_20/correction-1/README.md`.
+
+
+## 2026-10-20 — checkpoint 2 independent test-method corrections, review pending
+
+## Exact execution
+
+Cwd: `/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo`.
+Existing Python 3.12.3 venv and rootless Podman 4.9.3; immutable image unchanged.
+No installations, host security changes, image rebuilds or additional runtime
+configurations after the permitted read-only experiment.
+
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp FORGE_CHECKPOINT_EVIDENCE=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/correction-2-final5-evidence FORGE_CHECKPOINT_SOURCE_SHA=1cb5e187ef46ba2735fa292112a5e2bfd2334007 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py -q -p no:cacheprovider --basetemp=/tmp/forge-cp2-correction-2-final5 -rA --tb=short
+```
+
+`command.json` preserves the same argv/environment/cwd and child exit code.
+`pytest.txt` contains every failed/passed node. Runtime stdout/stderr, argv,
+inspections, raw mountinfo, parsed rows, mount-attributed cryptographic canaries,
+image identities and cleanup are in runtime.json and readonly-runtime.json.
+
+| Failure group | Count | Interpretation |
+|---|---:|---|
+| Existing launcher/checker regressions | 17 | Includes explicit private IPC; synthetic pre-admission test only |
+| Legacy interface evidence regressions / image binding | 3 | Two fabricated REFUSED-detail enforcement tests; one missing launcher image identity |
+| Proposed validator contract | 73 | Explicit MISSING_VALIDATION_CONTRACT assertions, not independent exploit reproductions |
+| Strict real runtime inventory | 1 | Eight remaining rw pseudo/device mounts |
+
+28 controls pass: 4 existing isolation controls, 6 runtime/control/cleanup tests,
+and 18 fixture/parser/open-fd controls. No collection/setup failure in final run.
+
+
+Five review findings now have tests-only correction candidates; parent acceptance
+remains pending. Strict runtime still BLOCKED by eight rw pseudo/device mounts.
+No production changes; 4,608 tracked production files byte-identical to HEAD.
+No checkpoint 3. Complete evidence and limitations:
+`docs/work/evidence/genesis_lite_v0_3_checkpoint2_2026_10_20/correction-2/README.md`.
+
+## Preserved intermediate runs
+
+- interim1: 78 failed, 26 passed, 2.54 s, no errors/skips.
+- interim2: 90 failed, 28 passed, 2.85 s, no errors/skips.
+- interim3: 94 failed, 28 passed, 2.96 s, no errors/skips.
+- collection-error: 1 collection error, 0.11 s; direct sibling test import was
+  incompatible with pytest import mode. Corrected using file-specific importlib.
+- final: 94 failed, 28 passed, 2.76 s, no errors/skips.
+
+Each preserved subdirectory contains exact command.json and pytest transcript;
+successful runtime runs retain observations too. Prior linux-extension evidence
+hashes still match the correction-1 snapshot. No prior artifact was rewritten.
+
+Complete current five-file test patch: `complete-tests.patch` (55+ KB; exact size
+is recorded by filesystem). SHA256: `2cf3f5dc46fa5a353959ff1928f4987111f19fb6b05552095f5d2db2551ce81a`.
+`test-sources.json` binds all final test sources; SHA256SUMS binds this package.
+The patch is a review candidate, not an assertion that every MAJOR is closed.
+
+Exact interim1 command (cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo):
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp FORGE_CHECKPOINT_EVIDENCE=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/correction-2-evidence FORGE_CHECKPOINT_SOURCE_SHA=1cb5e187ef46ba2735fa292112a5e2bfd2334007 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py -q -p no:cacheprovider --basetemp=/tmp/forge-cp2-correction-2 -rA --tb=short
+```
+Exit 1.
+
+Exact interim2 command (cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo):
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp FORGE_CHECKPOINT_EVIDENCE=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/correction-2-final-evidence FORGE_CHECKPOINT_SOURCE_SHA=1cb5e187ef46ba2735fa292112a5e2bfd2334007 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py -q -p no:cacheprovider --basetemp=/tmp/forge-cp2-correction-2-final -rA --tb=short
+```
+Exit 1.
+
+Exact interim3 command (cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo):
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp FORGE_CHECKPOINT_EVIDENCE=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/correction-2-reviewed-evidence FORGE_CHECKPOINT_SOURCE_SHA=1cb5e187ef46ba2735fa292112a5e2bfd2334007 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py -q -p no:cacheprovider --basetemp=/tmp/forge-cp2-correction-2-reviewed -rA --tb=short
+```
+Exit 1.
+
+Exact collection-error command (cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo):
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp FORGE_CHECKPOINT_EVIDENCE=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/correction-2-final4-evidence FORGE_CHECKPOINT_SOURCE_SHA=1cb5e187ef46ba2735fa292112a5e2bfd2334007 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py -q -p no:cacheprovider --basetemp=/tmp/forge-cp2-correction-2-final4 -rA --tb=short
+```
+Exit 2.
+
+
+## 2026-10-20 — bounded NON-FORMAL Blindfold demo
+
+Owner-authorized pivot: demo glue/tests/docs only; preserve CP2, do not implement
+CP3. Public fixed seed, trusted built-ins, existing v0.3 development harness.
+Actual outcome: 36 primary +36 replay cards, 36/36 independent evaluator agreement,
+six MATCH replay comparisons, 660 primary observations. Outcome counts: 19
+insufficient_evidence, 3 law_pass, 2 no_law, 2 confounded, 10 law_fail. No failures
+removed. No formal root, registry storage or holdout access; no scientific claim.
+
+Initial targeted run: 1 failed /14 passed in 0.19s; test guard wrongly blocked
+identity-builder imports of formal/registry modules. Corrected to forbid actual
+formal execution/registry construction, and assert public-seed key derivation.
+Final targeted run: 15 passed in 0.83s. Actual demo: exit 0, EXECUTION_COMPLETE
+(execution only). Exact commands follow in order: initial test, corrected test, demo.
+
+Cwd: `/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo`
+
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite/test_blindfold_demo.py -q -p no:cacheprovider --basetemp=/tmp/forge-public-demo-test-v1 -rA --tb=short
+```
+Exit: 1.
+
+Cwd: `/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo`
+
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite/test_blindfold_demo.py -q -p no:cacheprovider --basetemp=/tmp/forge-public-demo-test-v2 -rA --tb=short
+```
+Exit: 0.
+
+Cwd: `/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo`
+
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp /home/dev_kaeem/venvs/forge312/bin/python tools/forge_blindfold_demo.py --output /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/public-demo-v1-evidence/report --timeout 30
+```
+Exit: 0.
+
+Artifact check: 36 HTML cards, embedded JSON exact match, six semantic replays
+MATCH; all 4,608 production hashes unchanged, CP2 source/evidence hashes unchanged.
+Browser rendering blocked by file-URL protocol policy; no workaround attempted.
+Codex file open queued; visual rendering NOT VERIFIED. Local report copies and
+complete patch are in docs/work/evidence/blindfold_public_demo_2026_10_20_v1/.
+No installs, security changes, formal attempt, commit, push, merge, freeze or OD-3.
+Full regression/changed-file gate NOT RUN (bounded targeted execution only).
+
+
+## 2026-10-20 — mind_full v0.3 readiness screen pre-execution checkpoint
+
+Owner authorization: bounded development screen; independent evaluator remains owner choice.
+Plan SHA256 fc82771c4b8ba1d4eba9cc15c1c4b04795306bd372019220ae385d751ada8c6a
+was written before unit tests and fixed-grid execution; local hash establishes
+content identity, not external witnessing or formal preregistration.
+Ten targeted tests passed in 10.55s, exit0, on separate unit namespace.
+
+Cwd: /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_readiness.py --prepare /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v1/plan.json
+```
+Exit 0.
+
+Cwd: /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite_mind/test_readiness_v03.py -q -p no:cacheprovider --basetemp=/tmp/mind-readiness-unit-v1 -rA --tb=short
+```
+Exit 0.
+
+
+### Mind readiness pre-run review corrections and final test result
+
+Independent read-only forge-scientific-review found summary defects: symmetric
+screen handling occurred after early invalidity return; replay failure could be
+misclassified as weak performance and exit0. Corrected before fixed-grid execution.
+Original plan/tests preserved. v2 tests:2failed13passed11.63s because synthetic
+screen fixtures marked one arm instead of all arms invalid; fixed fixtures to
+match the unchanged screening rule, added asymmetric-invalid regression.
+v3 tests:16passed12.25s, exit0. Independent final static review PASS (not validation).
+v3 plan SHA2565d40f4c8e51696fedc4078efac91beb63685afb2597b93b5d97d427072294bbc
+prepared before tests/fixed-grid execution. No fixed-grid worlds run under v1/v2.
+
+v2 prepare cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_readiness.py --prepare /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v2/plan.json
+```
+Exit 0.
+
+v2 test cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite_mind/test_readiness_v03.py -q -p no:cacheprovider --basetemp=/tmp/mind-readiness-unit-v2 -rA --tb=short
+```
+Exit 1.
+
+v3 prepare cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_readiness.py --prepare /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v3/plan.json
+```
+Exit 0.
+
+v3 test cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite_mind/test_readiness_v03.py -q -p no:cacheprovider --basetemp=/tmp/mind-readiness-unit-v3 -rA --tb=short
+```
+Exit 0.
+
+
+### mind_full readiness fixed development run complete
+
+Plan5d40f4c8e51696fedc4078efac91beb63685afb2597b93b5d97d427072294bbc; no retries.
+840/840 valid runs,5040 cards,0invalid/screens;5040/5040 evaluator agreement.
+Four prescribed Mind semantic replays MATCH (24 more cards); dependencies unchanged.
+Outer197.002s exit0; worker/analysis196.371s. Strongest baseline careful3.250 versus
+Mind3.675 raw; capped difference−0.025, lower95−0.200, pooled Holm fails.
+no_solution/confounded and trap presentation guardrails fail. Recommendation:
+IMPROVEMENT_OR_MORE_EVIDENCE_NEEDED; do not spend formal attempt on current candidate.
+No behavior/scoring change made. Diagnostic improvement target: null/effect and
+passive-association decision; not a proven cause or approved implementation.
+
+Exact command cwd /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo
+```sh
+PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo TMPDIR=/tmp OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 /home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_readiness.py --plan /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v3/plan.json --output /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v3/results
+```
+Outer cap1500s; worker cap1200s,60s/run. Exit0.
+
+Report: docs/discovery/MIND_FULL_V03_DEVELOPMENT_READINESS.md.
+Full regression/changed-file gate NOT RUN; no formal/freeze/OD-3/commit/push/merge.
+
+Final independent interpretation review (Halley): PASS; raw records corroborated. No test/campaign rerun by reviewer. Preserved uncertainty and diagnosis-before-calibration caveats; external evaluator still owner-selected. Final packaging checks: `git diff --check` exit 0; `git rev-parse HEAD` = 1cb5e187ef46ba2735fa292112a5e2bfd2334007. SHA256 recheck: 4608 existing production files, five CP2 sources and twelve imported candidate files unchanged (final-preservation.json). No additional test execution.
+
+## 2026-10-20 — bounded mind_full trace diagnosis (owner-authorized, no behavior change)
+
+HEAD 1cb5e187ef46ba2735fa292112a5e2bfd2334007 plus unchanged imported Mind and diagnostic additions. Twelve fixed NEW public development world sets; no thresholds/scoring/candidate edits. Dedicated Linux checkout /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo; Python3.12.3. For the following commands PYTHONPATH=/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo, TMPDIR=/tmp, OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1.
+
+`/home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_diagnosis.py --prepare /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-diagnosis-v1/plan.json`
+
+Exit 0; elapsed 0.4697656119997191s. Plan written before tests; no grid execution under v1/v2.
+
+`/home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite_mind/test_diagnosis.py -q --basetemp=/tmp/mind-diag-unit-v1`
+
+Exit 1; elapsed 8.143378070000836s. 1 failed, 7 passed in 7.93s
+
+`/home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_diagnosis.py --prepare /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-diagnosis-v2/plan.json`
+
+Exit 0; elapsed 0.46936442399965017s. Plan written before tests; no grid execution under v1/v2.
+
+`/home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite_mind/test_diagnosis.py -q --basetemp=/tmp/mind-diag-unit-v2`
+
+Exit 0; elapsed 13.704528132000632s. 8 passed in 13.52s
+
+`/home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_diagnosis.py --prepare /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-diagnosis-v3/plan.json`
+
+Exit 0; elapsed 0.4400991189995693s. Plan written before tests; no grid execution under v1/v2.
+
+`/home/dev_kaeem/venvs/forge312/bin/python -m pytest tests/genesis_lite_mind/test_diagnosis.py -q --basetemp=/tmp/mind-diag-unit-v3`
+
+Exit 0; elapsed 13.878353558000526s. 9 passed in 13.69s
+
+v1 failed node: tests/genesis_lite_mind/test_diagnosis.py::test_real_export_replay_control_and_no_formal_access. Diagnostic join assumed shown IDs equal sealed IDs; fixed inverse-digest join (no production change). Independent pre-run review additionally required UNKNOWN empty posterior, final stop/state equality and private worker cwd; corrected before v3. Initial Windows UNC and /mnt/c copy attempts failed (paths unavailable); file bytes transferred over WSL stdin, no mount/security changes.
+
+`/home/dev_kaeem/venvs/forge312/bin/python tools/forge_mind_diagnosis.py --plan /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-diagnosis-v3/plan.json --output /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-diagnosis-v3/results`
+
+Exit 1 after 79.52668873500079s. All12 primary/replay workers and control exited0;72 valid cards,72 replay agreements,semantic control MATCH. Final driver lookup of prior evidence under repo failed FileNotFoundError; actual prior evidence was beside Linux checkout. No campaign/replay rerun or seed replacement. Original error/output retained.
+
+Offline Linux saved-record checks verified12 disjoint keys against prior40 using /home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v3/results/runs.jsonl. Hash matched Windows prior records. Reproducible Windows finalization command (cwd this worktree):
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe docs/work/evidence/mind_full_v03_diagnosis_2026_10_20_v1/finalize_evidence.py`
+
+Exit0. Pure offline file/identity/control checks, no Mind execution. All1125 preexisting src/benchmarks Python files and executed plan pins unchanged.
+
+`/home/dev_kaeem/venvs/forge312/bin/python tools/forge_check.py --changed --base HEAD --dry-run`
+
+Dry-run exit0. Broad selection includes preexisting shared CP2/import work and scientific regression. Actual changed-file pytest/full regression/certification NOT RUN in this bounded diagnostic task; no integration-readiness claim.
+
+Result: no_solution6no_law/5insufficient/1confounded; confounded12correct, old misses NOT REPRODUCED. Independent read-only scientific review PASS; no claim that abstentions are defects or proposal improves performance. Proposed association-specific prospective confirmation requires design/owner review; no behavior changes. Evidence docs/work/evidence/mind_full_v03_diagnosis_2026_10_20_v1/; report docs/discovery/MIND_FULL_V03_TRACE_DIAGNOSIS.md. No formal/freeze/evaluator/OD3/CP3/commit/push/merge.
+
+Final preservation checks: `git diff --check` exit0; original4608 tracked production files,12 candidate files,five CP2 source files and both prior evidence manifests match their SHA256 values. No existing production changes. Evidence source-preservation.json.

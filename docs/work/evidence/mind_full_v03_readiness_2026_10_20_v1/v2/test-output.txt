@@ -1,0 +1,28 @@
+..........FF...                                                          [100%]
+=================================== FAILURES ===================================
+___________ test_one_symmetric_screen_retained_without_survivor_bias ___________
+tests/genesis_lite_mind/test_readiness_v03.py:120: in test_one_symmetric_screen_retained_without_survivor_bias
+    assert result["complete"] and len(result["screened_world_sets"])==1
+E   assert (False)
+________________ test_excessive_screening_is_execution_blocker _________________
+tests/genesis_lite_mind/test_readiness_v03.py:130: in test_excessive_screening_is_execution_blocker
+    assert result["screen_cap_exceeded"] and not result["complete"]
+E   assert (False)
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_fixed_plan_has_all_registered_baselines
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_real_candidate_pairing_and_semantic_repeat_separate_test_namespace
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_changed_plan_refuses[prereg_sha256]
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_changed_plan_refuses[sources]
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_changed_plan_refuses[pair_bound]
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_changed_plan_refuses[dependency_sha256]
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_wrong_candidate_callable_refused
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_missing_coverage_cannot_be_promising
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_exhausted_budget_keeps_unstarted_job
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_timeout_kills_own_process_group_and_retains_record
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_replay_failure_blocks_execution_not_mind_performance[missing]
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_replay_failure_blocks_execution_not_mind_performance[timeout]
+PASSED tests/genesis_lite_mind/test_readiness_v03.py::test_replay_failure_blocks_execution_not_mind_performance[mismatch]
+FAILED tests/genesis_lite_mind/test_readiness_v03.py::test_one_symmetric_screen_retained_without_survivor_bias
+FAILED tests/genesis_lite_mind/test_readiness_v03.py::test_excessive_screening_is_execution_blocker
+2 failed, 13 passed in 11.63s
