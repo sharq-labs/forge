@@ -829,6 +829,15 @@ def test_d7_the_driver_stops_and_invalidates_an_attempt_over_budget(stand_in_acc
         assert any("budget" in p for p in formal.preflight(unset, FRESH_ROOT, MANIFEST)), bad
 
 
+def test_d5_a_failed_deployment_check_never_consumes_the_attempt(stand_in_accepted, registry):
+    """Owner 2026-10-20: the D5 deployment is checked BEFORE admission; a failed check refuses the run and the registry
+    stays empty, so the one allowed attempt on the root is not consumed."""
+    with pytest.raises(formal.FormalRefused, match="D5 deployment is not ready"):
+        formal.run_formal(FRESH_ROOT, frozen_doc(), manifest=MANIFEST, registry=registry, sink=lambda r: None,
+                          publish=lambda e: None, runner=lambda *a, **k: {}, deployment_check=lambda: ["no unshare"])
+    assert registry.entries() == []
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,

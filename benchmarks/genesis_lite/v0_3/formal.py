@@ -306,6 +306,17 @@ def budget_hours(doc: Mapping[str, Any]) -> float | None:
     return float(hours)
 
 
+def deployment_problems() -> list[str]:
+    """Why a formal card could not start in the D5 deployment on this machine (checked before admission)."""
+    from .isolation import DeploymentUnavailable, formal_launcher  # noqa: PLC0415
+
+    try:
+        formal_launcher()
+    except DeploymentUnavailable as exc:
+        return [str(exc)]
+    return []
+
+
 def preflight(doc: Mapping[str, Any], root: bytes, manifest: Mapping[str, Any]) -> list[str]:
     """Every reason the formal tier may not start under ``doc`` with ``root`` in the environment ``manifest``."""
     problems = []
@@ -355,7 +366,8 @@ def harness_runner(doc: Mapping[str, Any]) -> Runner:
 
 def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, Any], registry: AttemptRegistry,
                publish: Callable[[Mapping[str, Any]], None], sink: Callable[[dict[str, Any]], None],
-               runner: Runner | None = None, clock: Callable[[], float] | None = None) -> dict[str, Any]:
+               runner: Runner | None = None, clock: Callable[[], float] | None = None,
+               deployment_check: Callable[[], list[str]] | None = None) -> dict[str, Any]:
     """Run every registered arm and the named candidate once on every world set of FORMAL_GRID, world set by world set.
     ``runner`` and ``clock`` exist for orchestration tests only; production uses :func:`harness_runner` and
     ``time.monotonic``. ``publish`` delivers the admission to the external evaluator; if it fails, the attempt is
@@ -371,8 +383,12 @@ def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, An
         raise FormalRefused("a formal attempt is admitted to the operator's registry and published to the evaluator first")
     cand = candidate_of(doc)
     names = registered_arms() + ([cand["name"]] if cand else [])
-    if runner is None:
+    if runner is None:                                       # production: the D5 deployment is checked BEFORE admission
         runner = harness_runner(doc)
+        deployment_check = deployment_check or deployment_problems
+    blocked = deployment_check() if deployment_check is not None else []
+    if blocked:                                              # a failed D5 check never consumes the one allowed attempt
+        raise FormalRefused("the D5 deployment is not ready: " + "; ".join(blocked))
     expected, commitment = identity(doc), hashlib.sha256(root).hexdigest()
     try:                                                     # consumed here, before the first world is derived
         attempt = registry.admit(root_commitment_sha256=commitment, prereg_sha256=expected,

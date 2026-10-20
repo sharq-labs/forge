@@ -8269,3 +8269,16 @@ Suite: 249 passed, 1 failed BY DESIGN (the D7 pilot binding, pending re-run).
 **D7 pilot re-run under the capability drop** (WSL, clean escrow clone at d5852482, exit 0): 200/200 runs VALID. MEASURED 43.7 s per world set; ESTIMATED 58.2 h (57.5-59.0 h) with replay, about 29.1 h for the operator's run. Evidence sha256 4361bb626c5df8f4273dab7b54d3bc34ee2bd378e7bae7b048b09a6c7a82c4d4, identical on both sides of the copy, re-pinned; the first pilot (a543bc21) is superseded.
 
 `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: exit 0, 250 passed.
+
+**Fifth forge-scientific-review (2026-10-20, escrow 96c9d050): CHANGES REQUIRED.**
+- Resolved: I-1, I-2, I-5, I-7, I-8, I-9.
+- Partially resolved: I-3, I-4, I-6.
+- New MAJORs:
+  - N-1: cross-card state was probed only in the private /tmp.
+  - N-2: WSL interop REFUSED reflected visibility, not reachability.
+
+Owner decision (2026-10-20, in session): keep WSL, hardened as a dedicated formal-evaluation distro. The owner disables interop and automount in /etc/wsl.conf. Every card gets a private writable root; writable mounts are inventoried from mountinfo; Card-A/Card-B canaries and a positive shared-mount control are added; the deployment is verified before formal admission.
+
+Until the re-run: the FDA-18 residual, readiness P-1/P-2 and a new "isolation boundary (D5)" row are BLOCKED_WITH_EVIDENCE_NOT_PROVEN (technical), so the gate is BLOCKED_TECHNICAL. `run_formal` now checks the deployment before admission (`test_d5_a_failed_deployment_check_never_consumes_the_attempt`).
+
+`python -m pytest tests/genesis_lite -q -n 4` on the draft branch: exit 0, 251 passed.
