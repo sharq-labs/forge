@@ -41,6 +41,7 @@ from . import preregistration as v03p
 PASS, PENDING_OWNER, BLOCKED = "PASS", "READY_TO_FREEZE_PENDING_OWNER", "BLOCKED_TECHNICAL"
 FIXED, NOT_A_BLOCKER = "FIXED_AND_TESTED", "NOT_A_REAL_BLOCKER"
 BLOCKED_OD3, OWNER = "SPECIFIED_BLOCKED_BY_OD3", "OWNER_DECISION_REQUIRED"
+DECIDED = "OWNER_DECIDED"                    # an owner decision already taken: recorded, not pending
 V0_2_SHA256 = "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64"
 APPROVALS_PATH = v03p.PREREG_PATH.with_name("genesis_lite_v0_3.owner_approvals.json")
 TEST_FILES = ("tests/genesis_lite/test_genesis_lite_v0_3_amendment.py",
@@ -70,7 +71,7 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "P-4 formal driver, candidate in the attempt": (FIXED, ("test_p4_",), "review 2026-10-20 finding 1"),
     "P-5 environment manifest": (FIXED, ("test_p5_",), "measured inside bind for the formal tier"),
     "one attempt per root": (FIXED, ("test_attempt_",), "registry + publication + post-reveal verify_attempt"),
-    "pass route with an arbitrary partner (ODC-05d)": (OWNER, (), "D1"),
+    "pass route with an arbitrary partner (ODC-05d)": (DECIDED, (), "D1, 2026-10-20: kept at +1.0 as in v0.2"),
     "no preregistered power analysis (review note 13)": (OWNER, (), "D2: the claimable region may be small"),
 }
 
@@ -342,7 +343,7 @@ def check(approvals_path: pathlib.Path | None = None, evidence: Mapping[str, Any
                                  f"here")
         elif status == BLOCKED_OD3:
             technical.append(f"{name}: {status} ({note})")
-        else:
+        elif status != DECIDED:
             owner.append(f"{name}: {status} ({note})")
     if _escrow_half() is not None:
         owner.append("engcore/blindfold/pair_bound.py is certified scope and UNCERTIFIED: OD-3")
