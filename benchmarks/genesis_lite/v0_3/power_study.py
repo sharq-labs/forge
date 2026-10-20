@@ -19,7 +19,9 @@ presentation and every kind non-inferior.
 
 Speed: v0.2's pure-Python ``bootstrap_mean_ci`` costs ~14 s per decision at the formal size. The study replaces it with a
 vectorised bootstrap with the same estimator (B = 2,000 resamples of world sets, the floor 2.5 % order statistic, a fixed
-seed). Statistically equivalent, not bit-identical; ``bootstrap_crosscheck`` re-runs some cells with the original.
+seed). Since D3b-1 the decision's own bootstrap is ``analysis.capped_bootstrap_ci`` (numpy, used unchanged), so the
+substitute reaches only v0.2's ``representation_limited``; ``bootstrap_crosscheck`` re-runs some cells with the original.
+Its threshold-flip count uses -0.1 for the kind bound, a study constant from before D3b-2 (the rule's margin is 0.15).
 """
 
 from __future__ import annotations

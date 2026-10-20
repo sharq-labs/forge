@@ -519,6 +519,23 @@ def test_d3b_no_gain_leaks_through_capped_cells_into_a_claim():
     assert out["primary"]["pooled"]["mean_difference"] == 0.0
     assert out["primary"]["pooled"]["p"] > 0.5 and out["lift_claimed"] is False
     assert out["cap_rule"].startswith("cell-level")
+    from benchmarks.genesis_lite.v0_3 import power_study
+
+    stat = power_study.statistical_claim(out)                              # not vacuous: the DRAFT problem aside
+    assert stat["claim"] is False and stat["holm_pooled"] is False and stat["pooled_lower95"] is False
+
+
+def test_d3b_a_gain_cell_never_offsets_a_loss_cell_of_another_presentation():
+    """Cells are (kind, presentation): a confounded gain in one presentation cannot cancel a confounded loss in
+    another; the loss counts in full, the gain not at all."""
+    gain = _cell([1.0, 1.0, 1.0], presentation="anonymous")
+    loss = _cell([-1.0, -1.0, -0.5], presentation="renamed")
+    mine, ref = {**gain[0], **loss[0]}, {**gain[1], **loss[1]}
+    sets, limited, off = gain[2] + loss[2], gain[3] | loss[3], {**gain[4], **loss[4]}
+    u, c = v03a.capped_parts(mine, ref, sets, limited, off)
+    assert c.shape == (6, 2) and not u.any()
+    total = v03a.capped_statistic(u, c, np.ones((1, 6), dtype=np.int64))[0] / v03a.LATTICE
+    assert total == -2.5
 
 
 def test_d3b_capped_data_never_move_the_significance_test():
@@ -526,25 +543,30 @@ def test_d3b_capped_data_never_move_the_significance_test():
     capped cells leaves every p unchanged; a capped net loss lowers the effect size and its lower bound instead."""
     from tests.genesis_lite import lift_records as lr
 
-    everywhere = lambda ws: True  # noqa: E731
-    base = []
-    for name in lr.BASELINES:
-        base += lr.records(name, lr.CAREFUL if name == "careful" else lr.WEAK, out_of_family=everywhere)
+    from benchmarks.genesis_lite.v0_3 import power_study
+
+    base = lr.field(careful=lr.records("careful", lr.CAREFUL))
+    # discoverable stays in family (uncapped); every control kind is CONTROL_SOLVED by careful (capped)
 
     def candidate(capped_credit):
         def fn(p, c, s, k):
             i = int(c[1:])
-            if k in v03a.CAPPED_KINDS:
-                return capped_credit if capped_credit is not None else lr.credit(lr.CAREFUL[k], i, s, k)
-            return 1.0 if (i + s) % 3 else lr.credit(lr.CAREFUL[k], i, s, k)     # mixed uncapped gain
-        return lr.records("mind", None, credit_fn=fn, out_of_family=everywhere)
+            if k == "discoverable":                                          # mixed UNCAPPED differences
+                return 1.0 if (i + s) % 3 else -1.0
+            return capped_credit if capped_credit is not None else lr.credit(lr.CAREFUL[k], i, s, k)
+        return lr.records("mind", None, credit_fn=fn)
 
     outs = {tag: v03a.lift_decision(base + candidate(v), "mind", grid=lr.GRID)
             for tag, v in (("same", None), ("wins", 1.0), ("losses", -1.0))}
+    assert all({(k, p) for k in v03a.CONTROL_KINDS for p in lr.PRESENTATIONS} <= set(o["control_solved_cells"])
+               for o in outs.values())
     for part in v03a.PRIMARY_FAMILY:
         assert outs["same"]["primary"][part]["p"] == outs["wins"]["primary"][part]["p"] \
-            == outs["losses"]["primary"][part]["p"]
+            == outs["losses"]["primary"][part]["p"] < 1.0                   # u != 0, and capped data never move p
     pooled = {t: o["primary"]["pooled"] for t, o in outs.items()}
+    assert pooled["wins"]["lower95"] == pooled["same"]["lower95"]
+    claims = {t: power_study.statistical_claim(o) for t, o in outs.items()}
+    assert claims["wins"] == claims["same"]                                 # capped wins change no claim condition
     assert pooled["wins"]["mean_difference"] == pooled["same"]["mean_difference"]       # no gain through a cap
     assert pooled["losses"]["mean_difference"] < pooled["same"]["mean_difference"]      # a net loss counts
     assert pooled["losses"]["lower95"] < pooled["same"]["lower95"]

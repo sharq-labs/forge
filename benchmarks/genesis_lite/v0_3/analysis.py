@@ -33,15 +33,20 @@ per-kind non-inferiority count; neither lets a capped class contribute a gain.
   takes p from the paired SIGN-FLIP randomisation test of the world-set differences (one-sided, statistic = their
   sum). It enumerates the exact null distribution when that is cheap (:data:`EXACT_WORK_LIMIT`). Otherwise it draws
   :data:`SIGN_FLIP_RESAMPLES` sign vectors from a SHAKE-256 stream and uses p = (b + 1) / (M + 1). That p is
-  finite-sample valid for any M when the sign vectors are random. For a CLAIM the stream is keyed by the revealed formal
+  finite-sample valid for any M when the sign vectors are random, conditional on which cells are capped (see below). For a CLAIM the stream is keyed by the revealed formal
   root (D2, :func:`sign_flip_stream`): unknown to the proposer during the attempt and fixed once the root is committed.
   Whoever generates the root can still try roots before committing (open owner decision D2b). Without the root the
   public stream :data:`SIGN_FLIP_STREAM` is used and p is descriptive only. The exact path has no such caveat. The bootstrap is
   kept ONLY for the effect-size lower bound. Holm, ALPHA and the fixed family are unchanged.
 
-  The null this tests is exchangeability of the two arms within a world set (a sign-symmetric difference). Capping makes
-  the candidate's difference stochastically smaller, so it errs conservative. The test does NOT cover a composite null
-  "mean difference <= 0" with an asymmetric difference distribution. Accepting that scope is part of ODC-O1a.
+  The null this tests is exchangeability of the two arms within a world set (a sign-symmetric difference), on the
+  UNCAPPED differences (D3b-1, P2). Which cells are capped is decided partly from registered arms' outcomes, the
+  comparator's included (CONTROL_SOLVED, representation-limited): a cell is left uncapped when the comparator happened
+  to do poorly there, so the size is conditional on that partition and can exceed nominal slightly (final scientific
+  review 2026-10-20, I-1; the candidate cannot steer it). A candidate that gains uncapped but loses in capped cells is
+  stopped only by the percentile-bootstrap lower bound, whose level is approximate (I-6). The test does NOT cover a
+  composite null "mean difference <= 0" with an asymmetric difference distribution. Accepting that scope is part of
+  ODC-O1a.
 
 * Pilot P-2 (``docs/discovery/GENESIS_LITE_V0.md``): control cells are solved by arms that discover nothing
   (``single_setting`` earned 1.00 on confounded). v0.2 capped only cells where ``monomial_enumeration`` reaches full

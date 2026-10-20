@@ -140,8 +140,13 @@ def build() -> dict[str, Any]:
                 "pair rule (d'): the bracket route additionally requires max(|A|,|B|)/min(|A|,|B|) <= 1 + w at every "
                 "outside-box evaluation point; the 'one law passes' route is unchanged (evaluator.py)",
                 "the no-strong-baseline cap covers every kind with a positive law_pass or indistinguishable_hit "
-                "(discoverable, spurious_correlate, confounded, indistinguishable), per universe (analysis.capped / "
-                "analysis.out_of_family)",
+                "(discoverable, spurious_correlate, confounded, indistinguishable); which universes are capped is "
+                "decided per universe (analysis.is_capped / analysis.out_of_family)",
+                "D3b-1 (owner, 2026-10-20): capped universes count per (kind, presentation) cell as min(0, the cell's "
+                "net difference) in the effect size and the per-kind non-inferiority; the significance test uses the "
+                "uncapped differences only (P2) (analysis.capped_parts / capped_bootstrap_ci)",
+                "D3b-2 (owner, 2026-10-20): per-kind non-inferiority margin 0.15, every kind required "
+                "(analysis.KIND_NONINFERIORITY_MARGIN)",
                 "significance: paired sign-flip randomisation p (exact or Monte-Carlo (b+1)/(M+1)); bootstrap for the "
                 "lower bound only; Holm, alpha and the family unchanged (analysis.sign_flip_p)",
                 "formal driver: world-set-major order, tier-tagged masters, retired-root refusal, root from stdin, "
@@ -227,9 +232,17 @@ def build() -> dict[str, Any]:
                                     "whoever generates the root can try many roots BEFORE committing and keep one whose "
                                     "stream is favourable (scientific review 2026-10-20, I-1); the mitigation is an open "
                                     "owner decision (D2b)"},
-            "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference); capping errs "
-                          "conservative; a composite null 'mean <= 0' with an asymmetric difference distribution is not "
-                          "covered. Accepted by the owner and stated as the claim's scope (D2, 2026-10-20)",
+            "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference), tested on "
+                          "the UNCAPPED differences (D3b-1, P2); a composite null 'mean <= 0' with an asymmetric "
+                          "difference distribution is not covered. Accepted by the owner and stated as the claim's scope "
+                          "(D2, 2026-10-20). Disclosed by the final scientific review (2026-10-20): (I-1) which cells are "
+                          "capped depends partly on registered arms' outcomes, the comparator's included, so the size is "
+                          "conditional on that partition and can exceed nominal slightly; the candidate cannot steer it; "
+                          "an owner option not taken is to derive the cap set from arms other than the comparator or from "
+                          "separate seeds. (I-6) a candidate that gains uncapped but loses in capped cells is stopped "
+                          "only by the percentile-bootstrap lower bound, whose level is approximate. (I-5) the bootstrap "
+                          "uses numpy's Generator.multinomial; the numpy version is bound by the formal environment "
+                          "manifest (D7)",
             "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and "
                            "null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result "
                            "is evidence for the owner, never a formal measurement. RAN 2026-10-20: " + POWER_STUDY_EVIDENCE
@@ -237,7 +250,8 @@ def build() -> dict[str, Any]:
             "holm": {"alpha": v02_analysis.ALPHA, "family": list(v02_analysis.PRIMARY_FAMILY), "procedure": "unchanged"},
             "control_solved_rule": "a control cell (non-discoverable kind, per presentation) where any registered "
                                    "non-adversarial arm earns full credit with an exact binary-bootstrap lower bound >= "
-                                   + str(analysis.CONTROL_SOLVED_LIMIT) + " is capped at the comparator (pilot P-2)",
+                                   + str(analysis.CONTROL_SOLVED_LIMIT) + " is capped (pilot P-2); capped cells count "
+                                   "as in cap_rule (D3b-1)",
             "claim_scope": analysis.CLAIM_SCOPE,
             "record_binding": "every analysed record carries tier and tier_bound 'formal', the v0.3 harness id, the "
                               "preregistered root commitment, w and environment digest, and ONE attempt digest (D-09); "

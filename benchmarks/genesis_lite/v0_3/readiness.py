@@ -83,8 +83,9 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "cap form (ODC-O1b study finding)": (DECIDED, (), "D3b-1, 2026-10-20: cell-level cap"),
     "per-kind non-inferiority conjunction (ODC-O1b study finding)": (DECIDED, (), "D3b-2, 2026-10-20: margin 0.15, "
                                                                                  "every kind"),
-    "D3b cell-level cap and per-kind margin": (FIXED, ("test_d3b_",), "no gain through a capped cell; the min inside "
-                                                                     "every sign vector and resample; margin 0.15"),
+    "D3b cell-level cap and per-kind margin": (FIXED, ("test_d3b_",), "no gain through a capped cell; min(0, cell net) "
+                                                                     "in every bootstrap resample; p from uncapped "
+                                                                     "differences only (P2); margin 0.15"),
 }
 
 
@@ -202,6 +203,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
     'D3b cell-level cap and per-kind margin': (
         'test_d3b_a_capped_cell_contributes_min_of_zero_and_its_net_difference',
         'test_d3b_no_gain_leaks_through_capped_cells_into_a_claim',
+        'test_d3b_a_gain_cell_never_offsets_a_loss_cell_of_another_presentation',
         'test_d3b_capped_data_never_move_the_significance_test',
         'test_d3b_the_per_kind_margin_is_0_15_and_every_kind_is_still_required',
     ),

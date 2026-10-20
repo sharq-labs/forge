@@ -8155,3 +8155,13 @@ The builder verified the code hashes the reviewer marked UNVERIFIED. The recorde
 - The residual cell-cap noise bias is -0.091 per world set (20 noisy capped cells). The builder's earlier "about -0.006" was wrong because it omitted the sum over cells; the README and decision record now say so.
 
 `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 237 passed.
+
+**Final forge-scientific-review (2026-10-20, escrow tip 15abebd9): CHANGES REQUIRED, MINOR only.** The review was read-only and static. It found 0 BLOCKERs and 0 MAJORs; m-1 to m-4 are resolved or superseded.
+
+Dispositions, all text, disclosure or tests, with no rule-code change, so the pinned study still measures the live rule:
+- I-1: the cap partition depends on the comparator's outcomes. This is disclosed in `null_scope`, the analysis docstring, the README and the D3b-1 row, together with the owner option not taken.
+- I-2: stale per-world-set and min-inside-flips text is removed from the ledger, the preregistration `changes`/`control_solved_rule` and the power_study docstring.
+- I-3: the D3b-2 consequence is restated per outcome (7.5, 15 or 30 points). The owner is to reconfirm D3b-2 before signing.
+- I-4: the P2 test now has uncapped discoverable differences (p < 1), asserts every control cell is CONTROL_SOLVED, and checks the statistical claim conditions. A test is added that a gain cell never offsets a loss cell of another presentation.
+- I-5: the numpy dependence of the bootstrap is disclosed; the formal manifest binds it.
+- I-6: the approximate level of the bootstrap guard is disclosed.

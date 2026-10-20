@@ -126,9 +126,16 @@ Two further cells:
 5. **Coverage limits.**
    - The study fields two baselines; the real rule takes its maximum over about 20 registered arms. Selection on the same data
      raises the reference, so these power figures are optimistic.
-   - That direction costs power; it never creates false support.
+   - That direction costs power in this synthetic model.
+   - The final scientific review (2026-10-20, I-1) adds a caveat. Which cells are capped depends partly on the
+     comparator's own outcomes, so the size of the significance test is conditional on that partition and can exceed
+     nominal slightly. The study does not measure this.
 
 ## Bootstrap cross-check
+
+**Note:** in this run the cross-check is uninformative. The representation arm's rates (0.1, and 0.8 in one cell) sit far
+from the 0.5 threshold of `representation_limited`, so a zero gap is expected. Its threshold-flip count also uses a −0.1 kind
+bound, a study constant from before D3b-2.
 
 Under D3b-1 the decision's bootstrap is `analysis.capped_bootstrap_ci` (numpy). The study uses that production function
 unchanged. The vectorised substitute now affects only v0.2's `representation_limited`. The cross-check scores the same records
