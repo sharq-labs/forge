@@ -1,7 +1,0 @@
-f3e2f8ed2783f0c6b6ef3d4d5daa43c5d2967b8f
-100644 f0c17b18621f8c21a198088451a0181d91da34a7 1	docs/project/needs.md
-100644 b7b04a84e1941e65d7889f09d89f563c381ed931 2	docs/project/needs.md
-100644 2ce74d345449c6f59affc5b072c52a6a0d907a21 3	docs/project/needs.md
-
-Auto-merging docs/project/needs.md
-CONFLICT (content): Merge conflict in docs/project/needs.md

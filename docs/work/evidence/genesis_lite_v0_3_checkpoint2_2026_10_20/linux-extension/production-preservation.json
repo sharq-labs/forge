@@ -1,9 +1,0 @@
-{
-  "head": "1cb5e187ef46ba2735fa292112a5e2bfd2334007",
-  "production": {
-    "benchmarks/genesis_lite/v0_3/isolation.py": "d7f96b37608d799fe9d7729ba6fb8fbea2384f475bec5905590df587a1967164",
-    "benchmarks/genesis_lite/v0_3/deployment_attacks.py": "6961025b26a958b6b11e5cfdf76cbabb05cef95e192542e3c9575eef000788cc",
-    "benchmarks/genesis_lite/v0_3/formal.py": "aa30cc7d58d0e459d16472666bef58afdfd6e271e9d0c6bf2f86f41b054ba6dd",
-    "benchmarks/genesis_lite/v0_3/harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23"
-  }
-}

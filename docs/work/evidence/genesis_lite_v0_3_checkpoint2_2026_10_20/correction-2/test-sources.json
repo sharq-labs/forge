@@ -1,7 +1,0 @@
-{
-  "tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py": "d1af2316a058ca4405a54077b92bc68abbe39dacd886475c7ce9af80c1f8d2cd",
-  "tests/genesis_lite/container_isolation_probe.py": "c9a6033f91b2ee6e36222eff476c8e1c10871fbb52b2703bfbd7f1ce7566e383",
-  "tests/genesis_lite/test_genesis_lite_v0_3_container_runtime.py": "39b423be02eb33592c70b89b08bc028a5dc4d8ae1083357b1f770e615bad0be6",
-  "tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py": "81d2dfd7eec983fcca200c250f69a2869081bb3d7a9a7f4a4cceff33a8319000",
-  "tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py": "c7803d5969b4e2115a942ffb0d557661cd08914a53f70239c2705d91f4bf1ee3"
-}
