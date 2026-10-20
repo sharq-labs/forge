@@ -8136,4 +8136,7 @@ Tests ran on Windows, using the shared venv with `PYTHONPATH=D:/forge-genesis-cl
   - `test_core_certificate.py::test_the_certificate_describes_this_tree`;
   - `test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully`.
   The verifier output differs from main only by `ADDED: src/engcore/blindfold/pair_bound.py`.
-- FAST, SCIENTIFIC, FULL and hardened recertification: NOT RUN. `benchmarks/domain_real_data/audit/inventory_scan.py --check` was also NOT RUN. Its `CURRENT_PROVENANCE.json` pins main's DOCSET blob, so the branch's added DOCSET line is undeclared there.
+- FAST, SCIENTIFIC, FULL and hardened recertification: NOT RUN. `python -X utf8 benchmarks/domain_real_data/audit/inventory_scan.py --check` reproduced the historical REPOSITORY_SCAN.json on both trees. It exits 1 on both:
+  - main tree (504ef32f): 6 live UNKNOWN_PROVENANCE files, all under `branch_ci_investigation_2026_10_20`;
+  - this branch: 11. The 5 extra are `genesis_lite_v0_3.json`, `docs/ai/DOCSET.txt`, and the D5, D7 and power-study `result.json` files.
+  No provenance declaration was added; that is a separate reviewed edit to `CURRENT_PROVENANCE.json`. No test or workflow runs this scan.
