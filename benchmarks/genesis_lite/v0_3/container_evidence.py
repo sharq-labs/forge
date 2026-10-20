@@ -52,6 +52,7 @@ TMPFS_OPTIONS = "rw,nosuid,nodev,mode=1777"
 EXTRA_ENV = ("PYTHONDONTWRITEBYTECODE",)
 WINDOWS_FSTYPES = ("9p", "drvfs", "v9fs")
 DEVICE_FSTYPES = ("devtmpfs", "devpts", "mqueue")
+CGROUP_FSTYPES = ("cgroup", "cgroup2")
 HEX64 = re.compile(r"[0-9a-f]{64}")
 
 
@@ -89,6 +90,14 @@ def parse_mountinfo(raw: str) -> list[dict[str, Any]]:
     if not rows:
         raise ValueError("EMPTY_MOUNTINFO")
     return rows
+
+
+def _reconciled(row: Mapping[str, Any]) -> tuple[str, ...]:
+    """The fields the card's and the operator's views must agree on. The one exception is the ``root`` of a
+    cgroup filesystem. The kernel reports it relative to the READER's cgroup namespace (cgroup_namespaces(7)): "/"
+    inside the card, the libpod scope path from the host. Every other field of that row, and every field of every
+    other row, must match."""
+    return tuple(k for k in RUNTIME_KEYS if not (k == "root" and row["fstype"] in CGROUP_FSTYPES))
 
 
 def _within(path: Any, targets: list[str]) -> bool:
@@ -196,7 +205,7 @@ def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findin
         found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: parsed rows differ from the raw inventory")
         return {}
     if len(runtime) != len(parsed) or any(
-            not isinstance(rt, Mapping) or any(rt.get(k) != row[k] for k in RUNTIME_KEYS)
+            not isinstance(rt, Mapping) or any(rt.get(k) != row[k] for k in _reconciled(row))
             for rt, row in zip(runtime, parsed)):
         found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: the runtime view differs from the card's inventory")
         return {}

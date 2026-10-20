@@ -798,6 +798,69 @@ def test_d5_the_container_probe_attributes_every_canary_to_its_mount(tmp_path):
     assert other["read"] == "OBSCURED_MOUNT" and not (tmp_path / "never").exists()
 
 
+def _contract_fixture():
+    from tests.genesis_lite import test_genesis_lite_v0_3_container_contract as contract_tests
+
+    return contract_tests
+
+
+def test_d5_the_validator_reconciles_only_the_namespace_relative_cgroup_root():
+    """D5-A1b: the card's and the operator's mount views agree field for field. The single exception is the
+    ``root`` of a cgroup filesystem, which the kernel reports relative to the reader's cgroup namespace."""
+    import copy
+
+    from benchmarks.genesis_lite.v0_3 import container_evidence
+
+    fx = _contract_fixture()
+    report, expected = fx.baseline()
+    for card in report["cards"]:
+        row = dict(copy.deepcopy(card["mounts"][1]), id=str(int(card["mounts"][-1]["id"]) + 1), target="/sys/fs/cgroup",
+                   fstype="cgroup2", source="cgroup2", options=["ro", "nosuid"])
+        card["mounts"].append(row)
+        fx.synchronize(card)
+        card["runtime_mounts"][-1].update(root="/user.slice/libpod-x.scope/container", backing="kernel")
+        image = card["argv"].index("localhost/forge-card@" + fx.IMAGE)
+        assert image > 0
+    assert container_evidence.validate_container_evidence(report, expected=expected)["status"] == "PASS"
+    other = copy.deepcopy(report)
+    other["cards"][0]["runtime_mounts"][-1]["options"] = ["rw", "nosuid"]          # any other field: mismatch
+    assert "MOUNT_INVENTORY_MISMATCH" in container_evidence.validate_container_evidence(other, expected=expected)[
+        "reasons"]
+    proc = copy.deepcopy(report)
+    proc["cards"][1]["runtime_mounts"][1]["root"] = "/elsewhere"                     # a non-cgroup root: mismatch
+    assert "MOUNT_INVENTORY_MISMATCH" in container_evidence.validate_container_evidence(proc, expected=expected)[
+        "reasons"]
+    writable = copy.deepcopy(report)
+    for card in writable["cards"]:
+        card["mounts"][-1]["options"] = ["rw", "nosuid"]
+        raw_root = card["runtime_mounts"][-1]["root"]
+        fx.synchronize(card)
+        card["runtime_mounts"][-1].update(root=raw_root, backing="kernel")
+    reasons = container_evidence.validate_container_evidence(writable, expected=expected)["reasons"]
+    assert "UNDECLARED_WRITABLE_MOUNT" in reasons and "HOST_WRITABLE_MOUNT" in reasons
+
+
+def test_d5_writable_host_device_nodes_stay_blocking():
+    """Owner decision 2026-10-21 (D5-A1b): no device-node exemption. Rootless Podman binds host character devices
+    read-write (devtmpfs), and the validator blocks them. Even the standard /dev/null cannot pass."""
+    import copy
+
+    from benchmarks.genesis_lite.v0_3 import container_evidence
+
+    fx = _contract_fixture()
+    report, expected = fx.baseline()
+    for card in report["cards"]:
+        row = dict(copy.deepcopy(card["mounts"][1]), id=str(int(card["mounts"][-1]["id"]) + 1), root="/null",
+                   target="/dev/null", fstype="devtmpfs", source="none", options=["rw", "nosuid", "noexec"])
+        card["mounts"].append(row)
+        fx.synchronize(card)
+        card["runtime_mounts"][-1]["backing"] = "host"
+    out = container_evidence.validate_container_evidence(report, expected=expected)
+    assert out["status"] == "BLOCKED"
+    assert {"DEVICE_NODE_WRITABLE_MOUNT", "UNDECLARED_WRITABLE_MOUNT"} <= set(out["reasons"])
+    assert not hasattr(container_evidence, "ADMITTED_DEVICE_NODES")
+
+
 def test_d5_a_formal_card_cannot_start_without_the_deployment(monkeypatch):
     from benchmarks.genesis_lite.v0_3 import isolation
 
