@@ -7987,3 +7987,91 @@ Cwd `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c57
 Cwd `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/assurance-history-main", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f"}`; exit1; elapsed11.699759900104254s.
 
 Post-PR178 automatic checks inspected at94aab1f6: Tests39481352938 and Branch Policy39481352941 failed with zero job steps exposed; downstream FAST/scientific/mutations/certificate-child skipped. Cause UNVERIFIED; no CI-green or branch-policy-enforcement claim. No gates bypassed or branch rules changed.
+
+## 2026-10-20 - PR179 merged; archive-only documentation reconciliation
+
+Owner explicitly approved PR179. GitHub merge used expected headffc3a8992c18b89e8204a7495db5d13d32ba7058; returned8b29fc076ba5a9af6e591b5e7acb380ca83ee4f2, fetched and verified. Its automatic Tests39481975853 and Branch Policy39481975898 both reported failure; no green-CI claim.
+
+Read-only review established historical archiving is permitted without adopting superseded scientific wording. Four branches each affect Markdown only. Extracted exact git diff --binary --full-index <merge-base-with-8b29fc07> <source-tip> -- before merging. Preserved those bytes in separate historical.patch archives with source/base IDs, byte lengths and SHA256; wrappers explicitly say not applied, no scientific or execution authority. Kept every live document at pre-merge bytes while reconciling each branch ancestry. This is archive-only preservation, not adoption or full behavioral integration. No source, benchmark, live scientific contract or certificate change.
+
+The earlier fix-bisect reviewer used default abbreviated-index diff (4314bytes/e4f38c...); archived full-index diff is4378bytes/bf3e65... by its explicitly stated command. Both describe the same original change; no historical test was rerun or promoted.
+
+Archive receipts:
+
+```json
+[
+  {
+    "name": "fix-bisect-table",
+    "tip": "1cd5ca6c18a4efed4a9c2780b762eff73751d391",
+    "base": "2f7e2ef0d5a48e5d828c1fb5bc12a56a601b5d02",
+    "before": "8b29fc076ba5a9af6e591b5e7acb380ca83ee4f2",
+    "commit": "14f5c5075d60083371cb2dacc1372ea0a1c65d15",
+    "paths": [
+      "NEEDS.md"
+    ],
+    "patch_sha256": "bf3e65bd6ac7faa1d278d684a543ba9811f4d8c532ec933facd1c2e7ec76103e",
+    "bytes": 4378,
+    "merge_exit": 1,
+    "merge_output": "Auto-merging docs/project/needs.md\nCONFLICT (content): Merge conflict in docs/project/needs.md\nAutomatic merge failed; fix conflicts and then commit the result.\n"
+  },
+  {
+    "name": "evidence-v11",
+    "tip": "9a34727e40cddad9b58f004e6ee4626fc0f3fda6",
+    "base": "c3837690537a443b6b9d58b500c6db0b27429d74",
+    "before": "14f5c5075d60083371cb2dacc1372ea0a1c65d15",
+    "commit": "91eda4f24b44534a30f8b35be39c67c0af413da8",
+    "paths": [
+      "NEEDS.md"
+    ],
+    "patch_sha256": "c8cdbc1e9056eb49be26034a7f5ef5cbc269af5945a10eaa9037a7b77cffd64f",
+    "bytes": 4691,
+    "merge_exit": 1,
+    "merge_output": "Auto-merging docs/project/needs.md\nCONFLICT (content): Merge conflict in docs/project/needs.md\nAutomatic merge failed; fix conflicts and then commit the result.\n"
+  },
+  {
+    "name": "blind-rediscovery-benchmark-v1",
+    "tip": "4872b10b15e7d4b41a19a965998765d9884963f5",
+    "base": "4634eba2bb947bbcce0f54406464766ea08167d9",
+    "before": "91eda4f24b44534a30f8b35be39c67c0af413da8",
+    "commit": "b2c59bbc552d76c14135675c2bc921572c567de3",
+    "paths": [
+      "docs/discovery/FORGE_GENESIS.md"
+    ],
+    "patch_sha256": "eeb8d22c02c1ad903872895a6d9fa453e22f8eba66eab9eb0d78d0f20da7ce88",
+    "bytes": 38393,
+    "merge_exit": 1,
+    "merge_output": "Auto-merging docs/discovery/FORGE_GENESIS.md\nCONFLICT (add/add): Merge conflict in docs/discovery/FORGE_GENESIS.md\nAutomatic merge failed; fix conflicts and then commit the result.\n"
+  },
+  {
+    "name": "big-13-flagship-demonstrations",
+    "tip": "6dfc60b0d88abeb465e9cea43fea8c7a32282d0d",
+    "base": "ac600555e5b2b4c824b05d815eae4ae18e895cc7",
+    "before": "b2c59bbc552d76c14135675c2bc921572c567de3",
+    "commit": "0297363215fa85073bb946649166425010823309",
+    "paths": [
+      "docs/architecture/README.md",
+      "docs/architecture/design_synthesis.md",
+      "docs/architecture/mechanistic_discovery.md",
+      "docs/project/FORGE_MASTER_PLAN.md",
+      "docs/work/ACTIVE_PLAN.md",
+      "docs/work/PROGRESS.md"
+    ],
+    "patch_sha256": "bd9f84e9c0055db757e418949f1cff95b6e92fe6931254c9fa16d791e048e852",
+    "bytes": 48669,
+    "merge_exit": 1,
+    "merge_output": "Auto-merging docs/architecture/README.md\nCONFLICT (content): Merge conflict in docs/architecture/README.md\nAuto-merging docs/architecture/design_synthesis.md\nCONFLICT (add/add): Merge conflict in docs/architecture/design_synthesis.md\nAuto-merging docs/project/FORGE_MASTER_PLAN.md\nCONFLICT (content): Merge conflict in docs/project/FORGE_MASTER_PLAN.md\nAuto-merging docs/work/ACTIVE_PLAN.md\nCONFLICT (content): Merge conflict in docs/work/ACTIVE_PLAN.md\nAuto-merging docs/work/PROGRESS.md\nCONFLICT (content): Merge conflict in docs/work/PROGRESS.md\nAutomatic merge failed; fix conflicts and then commit the result.\n"
+  }
+]
+```
+
+Archive independent review PASS at02973632: all4payloads reproduced byte-identically, wrappers/hash/base/ancestry/links verified; each merge only added its two archive files. No live scientific contracts, tests, source or policies changed. Reviewer ran git diff --check and observed exit1 because exact raw Git patches contain single-space context lines; those bytes are intentionally preserved, not normalized. Authored documentation is checked separately; no claim that raw-payload whitespace check passed.
+
+Changed-file gate217passed2failed (219nodes); pristine main8b29fc07 exactsame219nodes217passed2failed8.92s. Same failed nodes as preceding history gate: subprocess escrow module import, window subdivision7versus8. Zero new/removed failed nodes; no green gate. Exact receipts:
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main`
+
+Cwd `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/archive-doc-gate", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f", "PYTEST_ADDOPTS": "--basetemp=D:/tmp/archive-doc-gate/bt"}`; exit1; elapsed12.023089699912816s.
+
+`C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest -q tests/test_repository_architecture.py tests/test_core_api_layering.py tests/test_scientific_regression_manifest.py tests/test_forge_check.py tests/test_agent_workflow_contract.py tests/test_capability_completion.py benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py benchmarks/battery_1rc_crosscell/tests/test_battery_1rc_crosscell.py benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py tests/foundations/test_v2_blindfold.py tests/test_multiphysics_window_control.py --basetemp=D:/tmp/archive-doc-main/bt`
+
+Cwd `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/archive-doc-main", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f"}`; exit1; elapsed9.596498799975961s.
