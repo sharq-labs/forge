@@ -1,5 +1,39 @@
 # Active Plan
 
+## Bounded Mind trace diagnosis (2026-10-20)
+
+Owner authorized fresh development cases and full step traces to diagnose no_solution/confounded misses. Scope: unchanged mind_full and v0.3, twelve fixed new world sets (72 cards), replay of retained observations and one trace-disabled control. No candidate/scoring/threshold edits, formal run, freeze, evaluator appointment or CP3. Results and smallest proposed change must be shown before behavioral work. New diagnostic driver/tests only; prior evidence preserved. Status: bounded diagnosis COMPLETE; 9 tests passed,72 valid cards/trace replays,one matching control. Original driver exit1 at final evidence-path lookup; offline finalization exit0 without rerunning worlds. no_solution:6 correct/5 abstentions/1 false confounded; confounded:12 correct, historical misses NOT REPRODUCED. See docs/discovery/MIND_FULL_V03_TRACE_DIAGNOSIS.md. Narrow association-confirmation design is PROPOSED ONLY; awaiting owner review, no implementation.
+
+
+## Bounded Mind readiness development screen (2026-10-20)
+
+Owner explicitly authorized mind_full as development starting point under v0.3;
+evaluator selection stays with owner. This permits the bounded screen before
+naming D6; it does not choose/freeze the formal D4 candidate or authorize formal
+execution. Fixed plan: 40 new public development world sets, all 20 registered
+baseline arms plus unchanged mind_full; no tuning or seed replacement. Candidate
+source imported byte-identically from 20069cc2; existing scientific files unchanged.
+Sixteen adapter/reporting tests passed on a separate unit-fixture namespace; independent
+pre-run static review PASS. Fixed v3 development run COMPLETE:840 valid runs,
+5040 evaluator agreements,4 replay matches. Capped difference -0.025, lower95 -0.200;
+recommendation IMPROVEMENT_OR_MORE_EVIDENCE_NEEDED. No formal attempt warranted now.
+See docs/discovery/MIND_FULL_V03_DEVELOPMENT_READINESS.md. Further improvement is
+proposed only; no behavior change authorized or performed by this screen.
+Evidence: docs/work/evidence/mind_full_v03_readiness_2026_10_20_v1/.
+No formal root, admission, freeze, OD-3, evaluator appointment or CP3 work.
+
+
+## Bounded public Blindfold demo (2026-10-20)
+
+Owner authorized a public-seed NON-FORMAL demonstration through the existing v0.3
+in-process development harness: three trusted built-ins, six kinds, anonymous /
+paraphrased presentations, 36 cards plus semantic replay. Implemented and executed;
+15 targeted tests pass, 36/36 evaluator agreements, six replay matches. No formal
+or maturity/lift claim; SECURITY_BOUNDARY_NOT_PROVEN. CP2 preserved; CP3 not started.
+See [demo](../discovery/BLINDFOLD_DEMO.md) and PROGRESS for exact commands/evidence.
+Supervisor review/delivery remains pending; no merge, freeze or certification.
+
+
 Active epic: `engrt.numerical_foundations` (research program; OD-6 decided 2026-10-18; in force when branch
 `feat/od6-engineering-program-epic` merges). Earlier entries below that call `battery.thevenin_1rc` the epic, list OD-6
 as open, or list EXC-1 as an open exception are superseded by that decision on merge. The program's gates M1-E3 are

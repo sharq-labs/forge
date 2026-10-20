@@ -1,0 +1,1346 @@
+{
+  "base": "eb113ab7e74580d47e6aa1210d02e45a49124724",
+  "branches": [
+    {
+      "sha": "bebb66208a10457d9e5ff86adb5f56198bb39cbc",
+      "refs": [
+        "ci/local-only-assurance"
+      ],
+      "ahead": 4,
+      "patch_unique": 4,
+      "patch_equivalent": 0,
+      "files": [
+        ".github/workflows/branch-policy.yml",
+        ".github/workflows/recertify-hardened-core.yml",
+        ".github/workflows/tests.yml",
+        ".github/workflows/trust-mutations.yml",
+        ".gitignore",
+        "CLAUDE.md",
+        "docs/TESTING.md",
+        "docs/assurance/BRANCH_PROTECTION.md",
+        "docs/assurance/LOCAL_ASSURANCE.md",
+        "docs/scientific-core/scientific-intelligence-layer.md",
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/PROGRESS.md",
+        "tests/test_agent_workflow_contract.py",
+        "tests/test_branch_policy.py",
+        "tests/test_certification_control_plane.py",
+        "tests/test_local_assurance.py",
+        "tests/test_recertification_scope.py",
+        "tools/certification/branch_policy.py",
+        "tools/certification/certificate_lineage.py",
+        "tools/certification/core_certificate.py",
+        "tools/certification/hardening_assurance.py",
+        "tools/certification/local_assurance.py"
+      ],
+      "commits": [
+        "bebb6620 feat(ci): overlap isolated local mutation shards",
+        "9dc14a7d fix(ci): create isolated gate scratch parents",
+        "88081023 fix(ci): bind local runtime imports to measured source",
+        "cd0e3663 ci: add fail-closed local-only assurance"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "f86b5afb447241d5c5d93589f3109b5f8ee051c8",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in .github/workflows/branch-policy.yml",
+        "CONFLICT (content): Merge conflict in .github/workflows/recertify-hardened-core.yml",
+        "CONFLICT (content): Merge conflict in .github/workflows/tests.yml",
+        "CONFLICT (content): Merge conflict in .github/workflows/trust-mutations.yml",
+        "CONFLICT (content): Merge conflict in .gitignore",
+        "CONFLICT (content): Merge conflict in CLAUDE.md",
+        "CONFLICT (content): Merge conflict in docs/TESTING.md",
+        "CONFLICT (content): Merge conflict in docs/assurance/BRANCH_PROTECTION.md",
+        "CONFLICT (add/add): Merge conflict in docs/assurance/LOCAL_ASSURANCE.md",
+        "CONFLICT (content): Merge conflict in docs/work/ACTIVE_PLAN.md",
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md",
+        "CONFLICT (content): Merge conflict in tests/test_branch_policy.py",
+        "CONFLICT (add/add): Merge conflict in tests/test_local_assurance.py",
+        "CONFLICT (content): Merge conflict in tests/test_recertification_scope.py",
+        "CONFLICT (content): Merge conflict in tools/certification/branch_policy.py",
+        "CONFLICT (content): Merge conflict in tools/certification/hardening_assurance.py",
+        "CONFLICT (add/add): Merge conflict in tools/certification/local_assurance.py"
+      ]
+    },
+    {
+      "sha": "ca5eb7ed589efa252979b4787e256e86816df3ed",
+      "refs": [
+        "ci/self-hosted-heavy-runner"
+      ],
+      "ahead": 2,
+      "patch_unique": 2,
+      "patch_equivalent": 0,
+      "files": [
+        ".github/workflows/recertify-hardened-core.yml",
+        ".github/workflows/self-hosted-smoke.yml",
+        ".github/workflows/tests.yml",
+        ".github/workflows/trust-mutations.yml",
+        "docs/assurance/SELF_HOSTED_RUNNER.md",
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/PROGRESS.md",
+        "tests/test_ci_runner_selection.py",
+        "tests/test_ci_self_hosted_scripts.py",
+        "tools/ci/__init__.py",
+        "tools/ci/runner_guard.py",
+        "tools/ci/select_heavy_runner.py",
+        "tools/ci/self-hosted/bin/maintenance.sh",
+        "tools/ci/self-hosted/bin/reset-instance.sh",
+        "tools/ci/self-hosted/hooks/job-completed.sh",
+        "tools/ci/self-hosted/hooks/job-started.sh",
+        "tools/ci/self-hosted/install-host.sh",
+        "tools/ci/self-hosted/install-runner-instance.sh",
+        "tools/ci/self-hosted/systemd/forge-runner-maintenance.service",
+        "tools/ci/self-hosted/systemd/forge-runner-maintenance.timer",
+        "tools/ci/self-hosted/windows/New-ForgeRunnerDistro.ps1"
+      ],
+      "commits": [
+        "ca5eb7ed ci: address the scientific review of the self-hosted runner design",
+        "db0e97c3 ci: route the heavy jobs to an opt-in self-hosted runner without weakening any gate"
+      ],
+      "contained_in": [
+        "origin/ci/self-hosted-heavy-runner"
+      ]
+    },
+    {
+      "sha": "7aff1449952a33c51eef8a99b192a5eb6352d729",
+      "refs": [
+        "claude/battery-thermal-flagship-sprint-3",
+        "origin/claude/battery-thermal-flagship-sprint-3"
+      ],
+      "ahead": 7,
+      "patch_unique": 7,
+      "patch_equivalent": 0,
+      "files": [
+        "benchmarks/battery_thermal_flagship_s3/RESULT.json",
+        "benchmarks/battery_thermal_flagship_s3/ROUND_REPORT.md",
+        "benchmarks/battery_thermal_flagship_s3/evidence/.gitignore",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CALIBRATION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN_HOLDOUT.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN_HOLDOUT_v3_superseded.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN_VALIDATION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/DATA_SELECTION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/FLAGSHIP.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/GATE_A.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/GATE_A_v3_superseded.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/INVENTORY.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/OCV_AUTHORITY.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/PREREGISTRATION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/selected_trajectories.json",
+        "benchmarks/battery_thermal_flagship_s3/harness/acquire.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/calibrate.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/campaign.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/emit_ocv_module.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/flagship.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/gate_a.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/march.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/ocv.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/prereg.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/report.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/simulate.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/vendor.py",
+        "benchmarks/battery_thermal_flagship_s3/tests/test_battery_thermal_flagship_s3.py",
+        "docs/domains/evidentiary-levels.md",
+        "docs/milestones/battery-thermal-flagship-s3-gapmap.md",
+        "docs/work/PROGRESS.md",
+        "src/engcore/assembly/domainpacks.py",
+        "src/engcore/compositionpacks/builtin_battery_electrothermal.py",
+        "src/engcore/compositionpacks/references/battery_electrothermal.py",
+        "src/engcore/domainpacks/builtin_battery_electrothermal.py",
+        "src/engcore/domains/battery/electrothermal.py",
+        "src/engcore/domains/battery/flagship.py",
+        "src/engcore/domains/battery/flagship_ocv.py",
+        "src/engcore/domains/battery/measurement.py",
+        "src/engcore/execution/multiphysics/runtime.py",
+        "src/engcore/executionpacks/builtin_battery_electrothermal.py",
+        "tests/domains/test_evidentiary_level_audit.py",
+        "tests/test_core_guards.py"
+      ],
+      "commits": [
+        "7aff1449 docs(battery-s3): correct three stale numbers in the round report",
+        "8aee8181 feat(battery-s3): corrected evaluation, regression tests and the flagship artifacts",
+        "5ae262e5 result(battery-s3): the locked holdout, opened once, and Gate A",
+        "22e8ac88 feat(battery-s3): numerical evidence, UQ, replay and certification",
+        "c1248804 feat(battery-s3): calibration and the independent validation campaign",
+        "709eb084 feat(battery-s3): the flagship runs as a coupled system through Forge",
+        "1297648e prereg(battery-s3): freeze the flagship protocol before any fit"
+      ],
+      "contained_in": [
+        "claude/battery-voltage-s3-recovery",
+        "claude/provider-architecture-pybamm-pybop"
+      ]
+    },
+    {
+      "sha": "0b032c970612748b1064f8f142ebb5e69ecdac0c",
+      "refs": [
+        "claude/battery-voltage-s3-recovery",
+        "origin/claude/battery-voltage-s3-recovery"
+      ],
+      "ahead": 15,
+      "patch_unique": 15,
+      "patch_equivalent": 0,
+      "files": [
+        "benchmarks/battery_thermal_flagship_s3/RESULT.json",
+        "benchmarks/battery_thermal_flagship_s3/ROUND_REPORT.md",
+        "benchmarks/battery_thermal_flagship_s3/evidence/.gitignore",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CALIBRATION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN_HOLDOUT.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN_HOLDOUT_v3_superseded.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN_VALIDATION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/DATA_SELECTION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/FLAGSHIP.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/GATE_A.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/GATE_A_v3_superseded.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/INVENTORY.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/OCV_AUTHORITY.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/PREREGISTRATION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/selected_trajectories.json",
+        "benchmarks/battery_thermal_flagship_s3/harness/acquire.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/calibrate.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/campaign.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/emit_ocv_module.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/flagship.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/gate_a.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/march.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/ocv.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/prereg.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/report.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/simulate.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/vendor.py",
+        "benchmarks/battery_thermal_flagship_s3/tests/test_battery_thermal_flagship_s3.py",
+        "benchmarks/battery_voltage_s3_recovery/MODEL_SELECTION_REPORT.md",
+        "benchmarks/battery_voltage_s3_recovery/S3_RECOVERY_REPORT.md",
+        "benchmarks/battery_voltage_s3_recovery/evidence/.gitignore",
+        "benchmarks/battery_voltage_s3_recovery/evidence/ASYMMETRY.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/BATTERY_STATE_AUTHORITY.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/CYCLE_INVENTORY.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/FAILURE_DIAGNOSIS.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/HISTORICAL_DIAGNOSTIC.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/MODEL_CANDIDATES.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/NEW_GATE_A_PREREGISTRATION.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/NEW_GATE_A_RESULT.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/OCV_AUTHORITY_V2.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/PRE_OPENING_REHEARSAL.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/RELAXATION.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/S3_RECOVERY_BASELINE.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/SELECTION.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/selected_trajectories_holdout.json",
+        "benchmarks/battery_voltage_s3_recovery/harness/asymmetry.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/baseline.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/candidates.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/corpus.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/cycles.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/diagnose.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/emit_ocv_v2.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/freeze.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/historical.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/holdout.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/ocv2.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/predict.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/relaxation.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/report_recovery.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/report_selection.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/state.py",
+        "benchmarks/battery_voltage_s3_recovery/tests/test_battery_voltage_s3_recovery.py",
+        "docs/domains/evidentiary-levels.md",
+        "docs/milestones/battery-thermal-flagship-s3-gapmap.md",
+        "docs/work/PROGRESS.md",
+        "src/engcore/assembly/domainpacks.py",
+        "src/engcore/compositionpacks/builtin_battery_electrothermal.py",
+        "src/engcore/compositionpacks/references/battery_electrothermal.py",
+        "src/engcore/domainpacks/builtin_battery_electrothermal.py",
+        "src/engcore/domains/battery/capacity.py",
+        "src/engcore/domains/battery/electrothermal.py",
+        "src/engcore/domains/battery/flagship.py",
+        "src/engcore/domains/battery/flagship_ocv.py",
+        "src/engcore/domains/battery/flagship_ocv_v2.py",
+        "src/engcore/domains/battery/flagship_v2.py",
+        "src/engcore/domains/battery/initial_state.py",
+        "src/engcore/domains/battery/measurement.py",
+        "src/engcore/execution/multiphysics/runtime.py",
+        "src/engcore/executionpacks/builtin_battery_electrothermal.py",
+        "tests/domains/test_evidentiary_level_audit.py",
+        "tests/test_core_guards.py"
+      ],
+      "commits": [
+        "0b032c97 docs(s3-recovery): the round report, and what a later session should not repeat",
+        "c845d8a5 result(s3-recovery): the holdout opened once, and it says the model is missing impedance growth",
+        "67ec87d8 holdout(s3-recovery): the evaluation machinery, committed before it sees the holdout",
+        "f58f81b9 freeze(s3-recovery): the selected model, its parameters and a Gate A policy that cannot move",
+        "426eae82 model(s3-recovery): the fix adds no parameters, and two candidates that did were rejected",
+        "e5cdea6c ocv(s3-recovery): the axis was carrying most of the curve's scatter",
+        "ffcd037e corpus(s3-recovery): the only untouched cell, and what its charge protocol admits",
+        "f0387c61 baseline(s3-recovery): reproduce Sprint 3, and two authorities the failure needs",
+        "7aff1449 docs(battery-s3): correct three stale numbers in the round report",
+        "8aee8181 feat(battery-s3): corrected evaluation, regression tests and the flagship artifacts",
+        "5ae262e5 result(battery-s3): the locked holdout, opened once, and Gate A",
+        "22e8ac88 feat(battery-s3): numerical evidence, UQ, replay and certification",
+        "c1248804 feat(battery-s3): calibration and the independent validation campaign",
+        "709eb084 feat(battery-s3): the flagship runs as a coupled system through Forge",
+        "1297648e prereg(battery-s3): freeze the flagship protocol before any fit"
+      ],
+      "contained_in": [
+        "claude/provider-architecture-pybamm-pybop"
+      ]
+    },
+    {
+      "sha": "a80b4df5e4cb6e0cdfc4e4e87f9f09d13a7823db",
+      "refs": [
+        "claude/domain-real-data",
+        "origin/claude/domain-real-data"
+      ],
+      "ahead": 4,
+      "patch_unique": 4,
+      "patch_equivalent": 0,
+      "files": [
+        "benchmarks/domain_real_data/DATASETS.json",
+        "benchmarks/domain_real_data/DATA_QUALITY.json",
+        "benchmarks/domain_real_data/EXTERNAL_SCREEN.json",
+        "benchmarks/domain_real_data/INVENTORY.md",
+        "benchmarks/domain_real_data/REPOSITORY_SCAN.json",
+        "benchmarks/domain_real_data/ROUND_REPORT.md",
+        "benchmarks/domain_real_data/aerospace/nasa_tm_2018_219758/RETRIEVAL_MANIFEST.json",
+        "benchmarks/domain_real_data/aerospace/uiuc_propeller_database/STATIC_MANIFEST.json",
+        "benchmarks/domain_real_data/audit/acquire.py",
+        "benchmarks/domain_real_data/audit/external_screen.py",
+        "benchmarks/domain_real_data/audit/inventory_scan.py",
+        "benchmarks/domain_real_data/audit/quality_screen.py",
+        "benchmarks/domain_real_data/battery/jahn_a123_bayreuth/ZENODO_MANIFEST.json",
+        "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/MENDELEY_MANIFEST.json",
+        "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/PROVENANCE.json",
+        "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/.gitattributes",
+        "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_C20DisCh.csv",
+        "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_Dis_0p5C.csv",
+        "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_Dis_2C.csv",
+        "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/549_HPPC.csv",
+        "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/551_Cap_1C.csv",
+        "benchmarks/domain_real_data/battery/lg_hg2_mcmaster/raw/Readme file - Description of Experimental Tests.txt",
+        "benchmarks/domain_real_data/battery/panasonic_18650pf_wisconsin/MENDELEY_MANIFEST.json",
+        "benchmarks/domain_real_data/electrical/wesskamp_melbert_shunt/ZENODO_MANIFEST.json",
+        "benchmarks/domain_real_data/kinetics/sciexpem_jsr_dagaut_2010/ZENODO_MANIFEST.json",
+        "benchmarks/domain_real_data/tests/test_domain_real_data.py"
+      ],
+      "commits": [
+        "a80b4df5 docs(domains): record the push in the round report",
+        "41b1f4c4 docs(domains): the domain real-data round report",
+        "1ba08ee8 data(domains): repository-wide real-data inventory, dataset registry, readiness screens",
+        "22a4383b evidence(domains): vendor LG HG2 25 degC cycler exports byte-for-byte; external record manifests"
+      ],
+      "contained_in": [],
+      "merge_exit": 0,
+      "merge_tree": "a6980c9536107094c123e747ec33c67f200a9c59",
+      "conflicts": []
+    },
+    {
+      "sha": "9ef234d982648d964180235b8db62ca71556decf",
+      "refs": [
+        "claude/provider-architecture-pybamm-pybop",
+        "origin/claude/provider-architecture-pybamm-pybop"
+      ],
+      "ahead": 27,
+      "patch_unique": 27,
+      "patch_equivalent": 0,
+      "files": [
+        "benchmarks/battery_thermal_flagship_s3/RESULT.json",
+        "benchmarks/battery_thermal_flagship_s3/ROUND_REPORT.md",
+        "benchmarks/battery_thermal_flagship_s3/evidence/.gitignore",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CALIBRATION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN_HOLDOUT.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN_HOLDOUT_v3_superseded.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/CAMPAIGN_VALIDATION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/DATA_SELECTION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/FLAGSHIP.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/GATE_A.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/GATE_A_v3_superseded.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/INVENTORY.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/OCV_AUTHORITY.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/PREREGISTRATION.json",
+        "benchmarks/battery_thermal_flagship_s3/evidence/selected_trajectories.json",
+        "benchmarks/battery_thermal_flagship_s3/harness/acquire.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/calibrate.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/campaign.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/emit_ocv_module.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/flagship.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/gate_a.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/march.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/ocv.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/prereg.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/report.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/simulate.py",
+        "benchmarks/battery_thermal_flagship_s3/harness/vendor.py",
+        "benchmarks/battery_thermal_flagship_s3/tests/test_battery_thermal_flagship_s3.py",
+        "benchmarks/battery_voltage_s3_recovery/MODEL_SELECTION_REPORT.md",
+        "benchmarks/battery_voltage_s3_recovery/S3_RECOVERY_REPORT.md",
+        "benchmarks/battery_voltage_s3_recovery/evidence/.gitignore",
+        "benchmarks/battery_voltage_s3_recovery/evidence/ASYMMETRY.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/BATTERY_STATE_AUTHORITY.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/CYCLE_INVENTORY.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/FAILURE_DIAGNOSIS.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/HISTORICAL_DIAGNOSTIC.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/MODEL_CANDIDATES.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/NEW_GATE_A_PREREGISTRATION.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/NEW_GATE_A_RESULT.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/OCV_AUTHORITY_V2.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/PRE_OPENING_REHEARSAL.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/RELAXATION.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/S3_RECOVERY_BASELINE.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/SELECTION.json",
+        "benchmarks/battery_voltage_s3_recovery/evidence/selected_trajectories_holdout.json",
+        "benchmarks/battery_voltage_s3_recovery/harness/asymmetry.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/baseline.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/candidates.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/corpus.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/cycles.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/diagnose.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/emit_ocv_v2.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/freeze.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/historical.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/holdout.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/ocv2.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/predict.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/relaxation.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/report_recovery.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/report_selection.py",
+        "benchmarks/battery_voltage_s3_recovery/harness/state.py",
+        "benchmarks/battery_voltage_s3_recovery/tests/test_battery_voltage_s3_recovery.py",
+        "benchmarks/provider_pivot_s1/PROVIDER_PIVOT_S1_REPORT.md",
+        "benchmarks/provider_pivot_s1/evidence/COMPARISON.json",
+        "benchmarks/provider_pivot_s1/evidence/FIT.json",
+        "benchmarks/provider_pivot_s1/evidence/FREEZE.json",
+        "benchmarks/provider_pivot_s1/evidence/SENSITIVITY.json",
+        "benchmarks/provider_pivot_s1/harness/common.py",
+        "benchmarks/provider_pivot_s1/harness/compare.py",
+        "benchmarks/provider_pivot_s1/harness/fit.py",
+        "benchmarks/provider_pivot_s1/harness/freeze.py",
+        "benchmarks/provider_pivot_s1/harness/sensitivity.py",
+        "benchmarks/provider_pivot_s1/tests/test_provider_pivot_s1.py",
+        "docs/CORE_FREEZE_POLICY.md",
+        "docs/architecture/README.md",
+        "docs/domains/evidentiary-levels.md",
+        "docs/milestones/battery-thermal-flagship-s3-gapmap.md",
+        "docs/providers/PROVIDER_LICENSES.md",
+        "docs/providers/README.md",
+        "docs/work/PROGRESS.md",
+        "pyproject.toml",
+        "src/engcore/assembly/domainpacks.py",
+        "src/engcore/compositionpacks/builtin_battery_electrothermal.py",
+        "src/engcore/compositionpacks/references/battery_electrothermal.py",
+        "src/engcore/credibility/risk_coverage.py",
+        "src/engcore/domainpacks/builtin_battery_electrothermal.py",
+        "src/engcore/domains/battery/capacity.py",
+        "src/engcore/domains/battery/electrothermal.py",
+        "src/engcore/domains/battery/flagship.py",
+        "src/engcore/domains/battery/flagship_ocv.py",
+        "src/engcore/domains/battery/flagship_ocv_v2.py",
+        "src/engcore/domains/battery/flagship_v2.py",
+        "src/engcore/domains/battery/initial_state.py",
+        "src/engcore/domains/battery/measurement.py",
+        "src/engcore/execution/multiphysics/runtime.py",
+        "src/engcore/executionpacks/builtin_battery_electrothermal.py",
+        "src/engcore/providers/__init__.py",
+        "src/engcore/providers/contract.py",
+        "src/engcore/providers/environment.py",
+        "src/engcore/providers/licenses.py",
+        "src/engcore/providers/pybamm_provider.py",
+        "src/engcore/providers/pybop_provider.py",
+        "src/engcore/providers/salib_provider.py",
+        "tests/conftest.py",
+        "tests/credibility/test_risk_coverage.py",
+        "tests/domains/test_evidentiary_level_audit.py",
+        "tests/providers/test_provider_contract.py",
+        "tests/providers/test_provider_evidence_boundaries.py",
+        "tests/providers/test_provider_replay.py",
+        "tests/providers/test_provider_trust_path.py",
+        "tests/test_core_api_layering.py",
+        "tests/test_core_guards.py",
+        "tests/test_heterogeneous_ngspice.py"
+      ],
+      "commits": [
+        "9ef234d9 freeze(provider-pivot): pin the round, and the defect the freeze test found",
+        "e4626cb2 docs(report): list the OCV padding as a declared approximation with zero measured cost",
+        "84700b9e docs(report): say the trade in the direction it goes, and name the denominators",
+        "1990359d docs(providers): record what R1 now asserts and what it stopped asserting",
+        "3c35f819 docs(report): the guards subsection lists four, and section 3 no longer claims the first table is a comparison",
+        "0fe302bd bench(provider-pivot): the calibration comparison was not like for like",
+        "79380647 docs(report): a status block in the shape the sprint asked for",
+        "dfc8557b docs(report): the battery-physics row overstated what ran",
+        "dcd3cf9b guards: the second provider arrived, so R1 asserts what it stood for",
+        "c7c62c0d providers: screen the sensitivity design inside the same window as the fit",
+        "5479608f bench(provider-pivot): the comparison, and three things the screens caught",
+        "6110fb5a providers: PyBaMM, PyBOP and SALib as external scientific providers",
+        "0b032c97 docs(s3-recovery): the round report, and what a later session should not repeat",
+        "c845d8a5 result(s3-recovery): the holdout opened once, and it says the model is missing impedance growth",
+        "67ec87d8 holdout(s3-recovery): the evaluation machinery, committed before it sees the holdout",
+        "f58f81b9 freeze(s3-recovery): the selected model, its parameters and a Gate A policy that cannot move",
+        "426eae82 model(s3-recovery): the fix adds no parameters, and two candidates that did were rejected",
+        "e5cdea6c ocv(s3-recovery): the axis was carrying most of the curve's scatter",
+        "ffcd037e corpus(s3-recovery): the only untouched cell, and what its charge protocol admits",
+        "f0387c61 baseline(s3-recovery): reproduce Sprint 3, and two authorities the failure needs",
+        "7aff1449 docs(battery-s3): correct three stale numbers in the round report",
+        "8aee8181 feat(battery-s3): corrected evaluation, regression tests and the flagship artifacts",
+        "5ae262e5 result(battery-s3): the locked holdout, opened once, and Gate A",
+        "22e8ac88 feat(battery-s3): numerical evidence, UQ, replay and certification",
+        "c1248804 feat(battery-s3): calibration and the independent validation campaign",
+        "709eb084 feat(battery-s3): the flagship runs as a coupled system through Forge",
+        "1297648e prereg(battery-s3): freeze the flagship protocol before any fit"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "be7fde41824c784f6dc8e06baa45a2917541793c",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in docs/CORE_FREEZE_POLICY.md",
+        "CONFLICT (content): Merge conflict in docs/architecture/README.md",
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md",
+        "CONFLICT (content): Merge conflict in src/engcore/execution/multiphysics/runtime.py",
+        "CONFLICT (add/add): Merge conflict in src/engcore/providers/__init__.py",
+        "CONFLICT (content): Merge conflict in tests/domains/test_evidentiary_level_audit.py",
+        "CONFLICT (content): Merge conflict in tests/test_core_guards.py",
+        "CONFLICT (content): Merge conflict in tests/test_heterogeneous_ngspice.py"
+      ]
+    },
+    {
+      "sha": "5fd797ddef0c5ea44ebc7ef2a3ca825c666ea574",
+      "refs": [
+        "codex/m1d-adaptive-transient"
+      ],
+      "ahead": 2,
+      "patch_unique": 2,
+      "patch_equivalent": 0,
+      "files": [
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/DEFERRED_VALIDATION.md",
+        "docs/work/M1D_ARCHITECTURE_DECISION.md",
+        "docs/work/M1D_COMPATIBILITY_MATRIX.md",
+        "docs/work/M1D_MERGE_PACKAGE.md",
+        "docs/work/M1D_MODEL_DISCOVERY_COMPATIBILITY.md",
+        "docs/work/M1D_STATIC_REVIEW.md",
+        "docs/work/PROGRESS.md",
+        "src/engcore/domains/thermal_models/adaptive_conduction1d.py",
+        "src/engcore/domains/thermal_models/conduction1d_transient_fv.py",
+        "src/engcore/numerical/adaptive_transient.py",
+        "tests/test_m1d_adaptive_transient.py"
+      ],
+      "commits": [
+        "5fd797dd Compose issued adaptive transient windows with bounded rollback",
+        "67cd3134 docs: decide bounded adaptive transient and rollback-or-poison architecture"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "80f8681146aaca22e4364ab3b675e10b87e53a82",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in docs/work/ACTIVE_PLAN.md",
+        "CONFLICT (content): Merge conflict in docs/work/DEFERRED_VALIDATION.md",
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md",
+        "CONFLICT (content): Merge conflict in src/engcore/domains/thermal_models/conduction1d_transient_fv.py"
+      ]
+    },
+    {
+      "sha": "c4b9d9500807a33a1209cffeef83303ca16c8656",
+      "refs": [
+        "codex/multidomain-science-hardening",
+        "origin/codex/multidomain-science-hardening"
+      ],
+      "ahead": 2,
+      "patch_unique": 1,
+      "patch_equivalent": 0,
+      "files": [
+        ".agents/skills/architecture-decision-reviewer/SKILL.md",
+        ".agents/skills/architecture-falsifier/SKILL.md",
+        ".agents/skills/forge-scientific-review/SKILL.md",
+        ".codex/agents/architecture-readonly-reviewer.toml",
+        ".codex/agents/forge-scientific-reviewer.toml",
+        ".codex/config.toml",
+        "AGENTS.md"
+      ],
+      "commits": [
+        "c4b9d950 Merge branch 'main' of github.com:sharq-labs/forge into codex/multidomain-science-hardening",
+        "8e17a12a WIP: epitaxy pre-switch from codex/multidomain-science-hardening"
+      ],
+      "contained_in": [],
+      "merge_exit": 0,
+      "merge_tree": "1cb2b6b54aedbf8bc69785819d71b14222fa62ef",
+      "conflicts": []
+    },
+    {
+      "sha": "9a34727e40cddad9b58f004e6ee4626fc0f3fda6",
+      "refs": [
+        "evidence-v11",
+        "origin/evidence-v11"
+      ],
+      "ahead": 1,
+      "patch_unique": 1,
+      "patch_equivalent": 0,
+      "files": [
+        "NEEDS.md"
+      ],
+      "commits": [
+        "9a34727e Correct the bisect table: three red tips, repaired at GUARD 6, and 226 at the base"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "f3e2f8ed2783f0c6b6ef3d4d5daa43c5d2967b8f",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in docs/project/needs.md"
+      ]
+    },
+    {
+      "sha": "7e923e75f38644d567748d2a2ec223a80762d6dc",
+      "refs": [
+        "feat/battery-real-data-identifiability",
+        "origin/feat/battery-real-data-identifiability"
+      ],
+      "ahead": 1,
+      "patch_unique": 1,
+      "patch_equivalent": 0,
+      "files": [
+        "benchmarks/battery_real_data_identifiability/IDENTIFIABILITY_GATE.json",
+        "benchmarks/battery_real_data_identifiability/QUALITY.json",
+        "benchmarks/battery_real_data_identifiability/README.md",
+        "benchmarks/battery_real_data_identifiability/RECEIPT.json",
+        "benchmarks/battery_real_data_identifiability/SPLIT.json",
+        "benchmarks/battery_real_data_identifiability/audit/run_pass1.py",
+        "docs/work/BATTERY_PRACTICAL_PASS_1.md",
+        "docs/work/PROGRESS.md",
+        "src/engcore/claims/empirical_uq_trust.py",
+        "src/engcore/claims/measurement_dataset.py",
+        "src/engcore/domains/battery/real_data/__init__.py",
+        "src/engcore/domains/battery/real_data/identifiability.py",
+        "src/engcore/domains/battery/real_data/ingest.py",
+        "src/engcore/domains/battery/real_data/quality.py",
+        "src/engcore/domains/battery/real_data/sources.py",
+        "src/engcore/domains/battery/real_data/split.py",
+        "tests/domains/battery/test_battery_real_data_a123.py",
+        "tests/domains/battery/test_battery_real_data_ingestion.py",
+        "tests/domains/battery/test_battery_thevenin_identifiability.py"
+      ],
+      "commits": [
+        "7e923e75 battery: add real-data ingestion and identifiability gate"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "f06aaf8b0656a45d4f090b93d28e0661e1ae390e",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md"
+      ]
+    },
+    {
+      "sha": "20069cc2e9aadea6c5662a872626c1b8ef3dadd0",
+      "refs": [
+        "feat/br-mind-01-minimal-mind"
+      ],
+      "ahead": 3,
+      "patch_unique": 3,
+      "patch_equivalent": 0,
+      "files": [
+        "benchmarks/genesis_lite_mind/MIND_PILOT_PLAN.json",
+        "benchmarks/genesis_lite_mind/__init__.py",
+        "benchmarks/genesis_lite_mind/arm.py",
+        "benchmarks/genesis_lite_mind/pilot.py",
+        "benchmarks/genesis_lite_mind/pilot_results/v1-2026-10-19/ARTIFACTS.sha256",
+        "benchmarks/genesis_lite_mind/pilot_results/v1-2026-10-19/summary.json",
+        "docs/discovery/BR_MIND_01_MINIMAL_MIND.md",
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/PROGRESS.md",
+        "src/engcore/mind/minimal/__init__.py",
+        "src/engcore/mind/minimal/competition.py",
+        "src/engcore/mind/minimal/experiments.py",
+        "src/engcore/mind/minimal/falsifier.py",
+        "src/engcore/mind/minimal/outcome_model.py",
+        "src/engcore/mind/minimal/problem.py",
+        "src/engcore/mind/minimal/runner.py",
+        "src/engcore/mind/minimal/stopping.py",
+        "src/engcore/mind/minimal/structures.py",
+        "src/engcore/mind/minimal/trace.py",
+        "tests/genesis_lite_mind/test_mind_arm.py",
+        "tests/mind/test_minimal_mind.py"
+      ],
+      "commits": [
+        "20069cc2 docs(mind): BR-MIND-01 gate comparison against pristine main",
+        "48d48f01 evidence(mind): BR-MIND-01 Stage-2 pilot results, report, PROGRESS and ACTIVE_PLAN",
+        "e2b8037c feat(mind): BR-MIND-01 Minimal Mind loop (engcore.mind.minimal), Genesis-lite Mind arms, frozen Stage-2 pilot plan"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "ffca74cbb8e1600c528a4ed1cd69fd960310c219",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md"
+      ]
+    },
+    {
+      "sha": "42b5645fbab815e8a6469c39de70d7b18fe89b7e",
+      "refs": [
+        "feat/genesis-lite-v03-amendment-draft",
+        "origin/feat/genesis-lite-v03-amendment-draft"
+      ],
+      "ahead": 50,
+      "patch_unique": 49,
+      "patch_equivalent": 0,
+      "files": [
+        "benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.json",
+        "benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.sha256",
+        "benchmarks/genesis_lite/v0_3/__init__.py",
+        "benchmarks/genesis_lite/v0_3/analysis.py",
+        "benchmarks/genesis_lite/v0_3/arms.py",
+        "benchmarks/genesis_lite/v0_3/deployment_attacks.py",
+        "benchmarks/genesis_lite/v0_3/environment.py",
+        "benchmarks/genesis_lite/v0_3/evaluator.py",
+        "benchmarks/genesis_lite/v0_3/formal.py",
+        "benchmarks/genesis_lite/v0_3/harness.py",
+        "benchmarks/genesis_lite/v0_3/isolation.py",
+        "benchmarks/genesis_lite/v0_3/power_study.py",
+        "benchmarks/genesis_lite/v0_3/preregistration.py",
+        "benchmarks/genesis_lite/v0_3/readiness.py",
+        "benchmarks/genesis_lite/v0_3/registry.py",
+        "benchmarks/genesis_lite/v0_3/secret_scan.py",
+        "benchmarks/genesis_lite/v0_3/selfcheck.py",
+        "benchmarks/genesis_lite/v0_3/timing_pilot.py",
+        "docs/ai/DOCSET.txt",
+        "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md",
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/PROGRESS.md",
+        "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/README.md",
+        "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json",
+        "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/README.md",
+        "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json",
+        "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/README.md",
+        "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json",
+        "tests/genesis_lite/stateful_arms.py",
+        "tests/genesis_lite/test_genesis_lite_v0_3_amendment.py",
+        "tests/genesis_lite/test_genesis_lite_v0_3_blockers.py"
+      ],
+      "commits": [
+        "42b5645f feat(genesis-lite): D7 timing pilot on the hardened Ubuntu-24.04 (evidence 3759ff33; 42.8 s per world set)",
+        "d6773060 docs(genesis-lite): fifth-review text fixes - hardened machine, twelve channels, NOT_PROVEN boundary, probe rerun required, SCAN_SKIP disclosed",
+        "89327bc0 feat(genesis-lite): D5 re-verified on the owner's hardened Ubuntu-24.04 distro (evidence 519f3669); ledger stays NOT_PROVEN pending N-1",
+        "a4d73dd4 fix(genesis-lite): D5/FDA-18/isolation boundary downgraded to NOT_PROVEN pending re-verification; deployment checked before formal admission",
+        "2693e782 feat(genesis-lite): D7 pilot re-run under the D5 capability drop (evidence 4361bb62 pinned; 43.7 s per world set)",
+        "b205bf6b feat(genesis-lite): D5 re-verified with capabilities dropped - 12/12 channels REFUSED, power shown (evidence 8031b422)",
+        "3d960cd0 fix(genesis-lite): D5 re-run findings - remount probe targets the kept mount, prereg key no longer carries the registry marker (tracked-tree marker test); study evidence 9ad27938 pinned",
+        "20f3d379 fix(genesis-lite): fourth scientific review - D5 proposer runs without capabilities (BLOCKER I-1), inbox-bound admission (I-2), non-vacuous probes (I-3), operator paths (I-4); evidence re-runs pending",
+        "dcddf137 test(genesis-lite): PASS-path stand-in fills the budget total and evaluator name (fixes 3cff02bc, committed red)",
+        "3cff02bc fix(genesis-lite): readiness names every open owner value precisely (manifest at freeze, candidate deferred, budget total, evaluator name)",
+        "a203f340 docs(genesis-lite): OD-3 scheduled on the final pre-freeze HEAD (owner)",
+        "a24df47e docs(genesis-lite): owner D4 - candidate deferred until the evaluator is named; freeze sequence recorded",
+        "0051fb72 feat(genesis-lite): owner D6 - evaluator chosen by a selection process (deadline 2026-11-17); D5/D7/D6 entries moved into the preregistration's formal section",
+        "51205360 feat(genesis-lite): owner D7 budget - 72 h baselines + candidate's measured cost; run_formal stops past the cap (BUDGET_EXCEEDED)",
+        "8ef93aad feat(genesis-lite): D7 timing pilot evidence pinned (MEASURED 43.5 s per world set; ESTIMATED 58 h formal, candidate excluded)",
+        "1abcd544 feat(genesis-lite): D5 re-verified after the D7 harness change (evidence 782a1b91 re-pinned)",
+        "f9909822 feat(genesis-lite): owner D7 - formal machine is this WSL Ubuntu; timing pilot (development tier, D5 namespaces) before the budget",
+        "4296d535 test(genesis-lite): keyed-stream tests use fixed admissions (nonce and clock) - the random registry nonce made two Monte-Carlo counts coincide in ~1% of runs",
+        "ead03d74 feat(genesis-lite): D5 verified - all ten attack channels REFUSED in the rootless namespaces (evidence 80db5957 pinned); FDA-18 residual and readiness P-1/P-2 closed",
+        "70f85161 fix(genesis-lite): FDA-19 scanner no longer flags its own bytecode (markers assembled at run time); failing-first test",
+        "e15801b0 feat(genesis-lite): owner D5 (A1) - rootless-namespace launcher for every formal card; attack suite gains operator_process, wsl_interop and secret_inventory",
+        "68948f9a feat(genesis-lite): ODC-O1b study re-run on the D2b rule (clean d0e679e8), evidence a26705f7 pinned",
+        "d0e679e8 feat(genesis-lite): owner D2b - admission nonce bound into the sign-flip key (failing-first test); D3b-2 reconfirmed as a non-inferiority guardrail",
+        "c63a9636 fix(genesis-lite): final scientific review I-1..I-6 - partition-conditional size and bootstrap-level disclosures, stale cap text, D3b-2 consequence per outcome, P2 test exercises uncapped differences",
+        "7ee2a78b feat(genesis-lite): ODC-O1b study re-run on the decided D3b rule (clean f76c1ca9), evidence a732df70 pinned",
+        "f76c1ca9 feat(genesis-lite): owner D3b-1 (cell-level cap, P2: significance from uncapped differences only) and D3b-2 (per-kind margin 0.15); study evidence pending re-run",
+        "059a596d fix(genesis-lite): second scientific review m-1..m-4 - qualified stream wording, evidence bound to the measured rule, observed vs predicted non-inferiority failure; D3b split into D3b-1 / D3b-2",
+        "11bf589b docs(genesis-lite): D3b wording - five control-kind margins, +/-1 credit model (review I-7); evidence of the review fixes",
+        "2dbbd462 feat(genesis-lite): ODC-O1b study re-run from clean HEAD 70195498, evidence sha256-pinned; review I-1 opened as owner decision D2b",
+        "70195498 fix(genesis-lite): scientific review of D2/study - stream wiring test, root type refusal, honest grinding wording, study provenance and per-replicate bootstrap cross-check",
+        "78da8c62 docs(work): D3 + ODC-O1b study evidence (escrow tip 097194c1)",
+        "f4d50f0e feat(genesis-lite): ODC-O1b power and null-calibration study (non-formal, synthetic); findings opened as owner decision D3b",
+        "27a5d6db feat(genesis-lite): owner decision D3 - baselines and tells as drafted (option A); O-1 tension resolved by D2",
+        "038f979b docs(work): D2 evidence (escrow tip 2cdd2be3)",
+        "ff0012ff feat(genesis-lite): owner decision D2 - root-keyed sign-flip stream, null scope stated, power study authorised",
+        "61e36a4d fix(genesis-lite): readiness ledger records the decided pass route (D1) as OWNER_DECIDED",
+        "b0d7549c test(genesis-lite): evaluator/escrow self-check includes the owner's w (3 x tol)",
+        "5c45232d feat(genesis-lite): owner decision D1 - bracket-route cap, w = 3 x tol, pass route kept",
+        "947f31b8 docs(work): BR-MIND-02B final-tip evidence (20265e92)",
+        "3bab1715 docs(work): BR-MIND-02B addendum; restore ACTIVE_PLAN's Active-epic line (main eb113ab7 regression)",
+        "94b94c22 fix(genesis-lite): v0.3 round-6 review MINORs",
+        "766c1fb6 Merge remote-tracking branch 'origin/main' into feat/genesis-lite-v03-amendment-draft",
+        "5e39f437 fix(genesis-lite): v0.3 round-5 review dispositions; BR-MIND-02B records",
+        "47cd0dbf fix(genesis-lite): v0.3 round-4 review dispositions",
+        "ec6615d7 fix(genesis-lite): v0.3 round-3 review dispositions",
+        "342545b4 fix(genesis-lite): v0.3 round-2 review dispositions",
+        "a93c1cfb fix(genesis-lite): v0.3 hostile-review dispositions (candidate in attempt, nonce masters, formal lockdown, evidence-bound gate)",
+        "f8aaacdc feat(genesis-lite): v0.3 freeze blockers - harness, attempt registry, FDA-18/21/22, pilot P-2 cap, readiness gate",
+        "a8cc9811 docs(work): record the clean-tree rerun of the three branch-only FAST failures",
+        "94955f88 feat(genesis-lite): v0.3 amendment package, DRAFT (FDA-05 evaluator half, FDA-06, O-1, P-4, P-5)"
+      ],
+      "contained_in": [
+        "feat/genesis-lite-v03-escrow-fda05"
+      ]
+    },
+    {
+      "sha": "1cb5e187ef46ba2735fa292112a5e2bfd2334007",
+      "refs": [
+        "feat/genesis-lite-v03-escrow-fda05",
+        "origin/feat/genesis-lite-v03-escrow-fda05"
+      ],
+      "ahead": 63,
+      "patch_unique": 62,
+      "patch_equivalent": 0,
+      "files": [
+        "benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.json",
+        "benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.sha256",
+        "benchmarks/genesis_lite/v0_3/__init__.py",
+        "benchmarks/genesis_lite/v0_3/analysis.py",
+        "benchmarks/genesis_lite/v0_3/arms.py",
+        "benchmarks/genesis_lite/v0_3/deployment_attacks.py",
+        "benchmarks/genesis_lite/v0_3/environment.py",
+        "benchmarks/genesis_lite/v0_3/evaluator.py",
+        "benchmarks/genesis_lite/v0_3/formal.py",
+        "benchmarks/genesis_lite/v0_3/harness.py",
+        "benchmarks/genesis_lite/v0_3/isolation.py",
+        "benchmarks/genesis_lite/v0_3/power_study.py",
+        "benchmarks/genesis_lite/v0_3/preregistration.py",
+        "benchmarks/genesis_lite/v0_3/readiness.py",
+        "benchmarks/genesis_lite/v0_3/registry.py",
+        "benchmarks/genesis_lite/v0_3/secret_scan.py",
+        "benchmarks/genesis_lite/v0_3/selfcheck.py",
+        "benchmarks/genesis_lite/v0_3/timing_pilot.py",
+        "docs/ai/DOCSET.txt",
+        "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md",
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/PROGRESS.md",
+        "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/README.md",
+        "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json",
+        "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/README.md",
+        "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json",
+        "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/README.md",
+        "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json",
+        "src/engcore/blindfold/pair_bound.py",
+        "tests/genesis_lite/stateful_arms.py",
+        "tests/genesis_lite/test_genesis_lite_v0_3_amendment.py",
+        "tests/genesis_lite/test_genesis_lite_v0_3_blockers.py",
+        "tests/genesis_lite/test_genesis_lite_v0_3_escrow_fda05.py",
+        "tests/genesis_lite/vacuous_arm.py"
+      ],
+      "commits": [
+        "1cb5e187 test(genesis-lite): escrow-branch readiness expects the three NOT_PROVEN D5 rows until re-verification",
+        "eba31c18 test(genesis-lite): escrow e2e fixture uses a fixed admission nonce; the swap test asserts its precondition (arms differ)",
+        "1f034e41 test(genesis-lite): escrow-branch readiness: D2b, D5 rows decided (FDA-18 residual, P-1/P-2 closed)",
+        "4d4f7e18 docs(work): Genesis-lite v0.3 decision-cycle close evidence (escrow 8321b32e on draft c63a9636)",
+        "dedaffb7 test(genesis-lite): escrow-branch readiness keeps D2b open and D3b-1/D3b-2 decided",
+        "e9b34a38 test(genesis-lite): escrow-branch readiness names the D3b-1, D3b-2 and D2b owner rows",
+        "85d58529 test(genesis-lite): escrow-branch readiness has no technical row once the ODC-O1b study ran; D3b is the owner's",
+        "2411f076 test(genesis-lite): escrow-branch readiness leaves only the authorised power study (D2)",
+        "5640b19a test(genesis-lite): escrow-branch tests bind the owner's w (D1)",
+        "fa127c53 test(genesis-lite): end-to-end post-reveal verification on real v0.3 records (honest, forged credit, record swap)",
+        "78e296a1 test(genesis-lite): escrow-branch readiness test uses exact named evidence",
+        "da1a2cd3 test(genesis-lite): evidence-bound readiness check with the escrow half present",
+        "74302eec feat(blindfold): FDA-05 escrow half - additive pair_bound module (CERTIFIED SCOPE, UNCERTIFIED until OD-3)",
+        "42b5645f feat(genesis-lite): D7 timing pilot on the hardened Ubuntu-24.04 (evidence 3759ff33; 42.8 s per world set)",
+        "d6773060 docs(genesis-lite): fifth-review text fixes - hardened machine, twelve channels, NOT_PROVEN boundary, probe rerun required, SCAN_SKIP disclosed",
+        "89327bc0 feat(genesis-lite): D5 re-verified on the owner's hardened Ubuntu-24.04 distro (evidence 519f3669); ledger stays NOT_PROVEN pending N-1",
+        "a4d73dd4 fix(genesis-lite): D5/FDA-18/isolation boundary downgraded to NOT_PROVEN pending re-verification; deployment checked before formal admission",
+        "2693e782 feat(genesis-lite): D7 pilot re-run under the D5 capability drop (evidence 4361bb62 pinned; 43.7 s per world set)",
+        "b205bf6b feat(genesis-lite): D5 re-verified with capabilities dropped - 12/12 channels REFUSED, power shown (evidence 8031b422)",
+        "3d960cd0 fix(genesis-lite): D5 re-run findings - remount probe targets the kept mount, prereg key no longer carries the registry marker (tracked-tree marker test); study evidence 9ad27938 pinned",
+        "20f3d379 fix(genesis-lite): fourth scientific review - D5 proposer runs without capabilities (BLOCKER I-1), inbox-bound admission (I-2), non-vacuous probes (I-3), operator paths (I-4); evidence re-runs pending",
+        "dcddf137 test(genesis-lite): PASS-path stand-in fills the budget total and evaluator name (fixes 3cff02bc, committed red)",
+        "3cff02bc fix(genesis-lite): readiness names every open owner value precisely (manifest at freeze, candidate deferred, budget total, evaluator name)",
+        "a203f340 docs(genesis-lite): OD-3 scheduled on the final pre-freeze HEAD (owner)",
+        "a24df47e docs(genesis-lite): owner D4 - candidate deferred until the evaluator is named; freeze sequence recorded",
+        "0051fb72 feat(genesis-lite): owner D6 - evaluator chosen by a selection process (deadline 2026-11-17); D5/D7/D6 entries moved into the preregistration's formal section",
+        "51205360 feat(genesis-lite): owner D7 budget - 72 h baselines + candidate's measured cost; run_formal stops past the cap (BUDGET_EXCEEDED)",
+        "8ef93aad feat(genesis-lite): D7 timing pilot evidence pinned (MEASURED 43.5 s per world set; ESTIMATED 58 h formal, candidate excluded)",
+        "1abcd544 feat(genesis-lite): D5 re-verified after the D7 harness change (evidence 782a1b91 re-pinned)",
+        "f9909822 feat(genesis-lite): owner D7 - formal machine is this WSL Ubuntu; timing pilot (development tier, D5 namespaces) before the budget",
+        "4296d535 test(genesis-lite): keyed-stream tests use fixed admissions (nonce and clock) - the random registry nonce made two Monte-Carlo counts coincide in ~1% of runs",
+        "ead03d74 feat(genesis-lite): D5 verified - all ten attack channels REFUSED in the rootless namespaces (evidence 80db5957 pinned); FDA-18 residual and readiness P-1/P-2 closed",
+        "70f85161 fix(genesis-lite): FDA-19 scanner no longer flags its own bytecode (markers assembled at run time); failing-first test",
+        "e15801b0 feat(genesis-lite): owner D5 (A1) - rootless-namespace launcher for every formal card; attack suite gains operator_process, wsl_interop and secret_inventory",
+        "68948f9a feat(genesis-lite): ODC-O1b study re-run on the D2b rule (clean d0e679e8), evidence a26705f7 pinned",
+        "d0e679e8 feat(genesis-lite): owner D2b - admission nonce bound into the sign-flip key (failing-first test); D3b-2 reconfirmed as a non-inferiority guardrail",
+        "c63a9636 fix(genesis-lite): final scientific review I-1..I-6 - partition-conditional size and bootstrap-level disclosures, stale cap text, D3b-2 consequence per outcome, P2 test exercises uncapped differences",
+        "7ee2a78b feat(genesis-lite): ODC-O1b study re-run on the decided D3b rule (clean f76c1ca9), evidence a732df70 pinned",
+        "f76c1ca9 feat(genesis-lite): owner D3b-1 (cell-level cap, P2: significance from uncapped differences only) and D3b-2 (per-kind margin 0.15); study evidence pending re-run",
+        "059a596d fix(genesis-lite): second scientific review m-1..m-4 - qualified stream wording, evidence bound to the measured rule, observed vs predicted non-inferiority failure; D3b split into D3b-1 / D3b-2",
+        "11bf589b docs(genesis-lite): D3b wording - five control-kind margins, +/-1 credit model (review I-7); evidence of the review fixes",
+        "2dbbd462 feat(genesis-lite): ODC-O1b study re-run from clean HEAD 70195498, evidence sha256-pinned; review I-1 opened as owner decision D2b",
+        "70195498 fix(genesis-lite): scientific review of D2/study - stream wiring test, root type refusal, honest grinding wording, study provenance and per-replicate bootstrap cross-check",
+        "78da8c62 docs(work): D3 + ODC-O1b study evidence (escrow tip 097194c1)",
+        "f4d50f0e feat(genesis-lite): ODC-O1b power and null-calibration study (non-formal, synthetic); findings opened as owner decision D3b",
+        "27a5d6db feat(genesis-lite): owner decision D3 - baselines and tells as drafted (option A); O-1 tension resolved by D2",
+        "038f979b docs(work): D2 evidence (escrow tip 2cdd2be3)",
+        "ff0012ff feat(genesis-lite): owner decision D2 - root-keyed sign-flip stream, null scope stated, power study authorised",
+        "61e36a4d fix(genesis-lite): readiness ledger records the decided pass route (D1) as OWNER_DECIDED",
+        "b0d7549c test(genesis-lite): evaluator/escrow self-check includes the owner's w (3 x tol)",
+        "5c45232d feat(genesis-lite): owner decision D1 - bracket-route cap, w = 3 x tol, pass route kept",
+        "947f31b8 docs(work): BR-MIND-02B final-tip evidence (20265e92)",
+        "3bab1715 docs(work): BR-MIND-02B addendum; restore ACTIVE_PLAN's Active-epic line (main eb113ab7 regression)",
+        "94b94c22 fix(genesis-lite): v0.3 round-6 review MINORs",
+        "766c1fb6 Merge remote-tracking branch 'origin/main' into feat/genesis-lite-v03-amendment-draft",
+        "5e39f437 fix(genesis-lite): v0.3 round-5 review dispositions; BR-MIND-02B records",
+        "47cd0dbf fix(genesis-lite): v0.3 round-4 review dispositions",
+        "ec6615d7 fix(genesis-lite): v0.3 round-3 review dispositions",
+        "342545b4 fix(genesis-lite): v0.3 round-2 review dispositions",
+        "a93c1cfb fix(genesis-lite): v0.3 hostile-review dispositions (candidate in attempt, nonce masters, formal lockdown, evidence-bound gate)",
+        "f8aaacdc feat(genesis-lite): v0.3 freeze blockers - harness, attempt registry, FDA-18/21/22, pilot P-2 cap, readiness gate",
+        "a8cc9811 docs(work): record the clean-tree rerun of the three branch-only FAST failures",
+        "94955f88 feat(genesis-lite): v0.3 amendment package, DRAFT (FDA-05 evaluator half, FDA-06, O-1, P-4, P-5)"
+      ],
+      "contained_in": [],
+      "merge_exit": 0,
+      "merge_tree": "8d1bc4fc617be9c7354b278b99f628d8b2d90b12",
+      "conflicts": []
+    },
+    {
+      "sha": "1cd5ca6c18a4efed4a9c2780b762eff73751d391",
+      "refs": [
+        "fix-bisect-table",
+        "origin/fix-bisect-table"
+      ],
+      "ahead": 1,
+      "patch_unique": 1,
+      "patch_equivalent": 0,
+      "files": [
+        "NEEDS.md"
+      ],
+      "commits": [
+        "1cd5ca6c Delete a bisect table I published without measuring it, and attribute FR 0/241"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "a163e0b5cae297828f3b107ca77ecd43ef1d0192",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in docs/project/needs.md"
+      ]
+    },
+    {
+      "sha": "ecce9a0dd62c247fb685f0c9c94894bc356d0650",
+      "refs": [
+        "fix/active-plan-epic-line"
+      ],
+      "ahead": 1,
+      "patch_unique": 1,
+      "patch_equivalent": 0,
+      "files": [
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/PROGRESS.md"
+      ],
+      "commits": [
+        "ecce9a0d docs(work): restore ACTIVE_PLAN's Active-epic line to line 3 (main eb113ab7 regression)"
+      ],
+      "contained_in": [],
+      "merge_exit": 0,
+      "merge_tree": "70ce6465f62adcb8d20cfb4c455b50e6c1771d24",
+      "conflicts": []
+    },
+    {
+      "sha": "aab8d0320a42b210787faf16d41ab58317892fa5",
+      "refs": [
+        "fix/final-assurance-blockers",
+        "origin/fix/final-assurance-blockers"
+      ],
+      "ahead": 3,
+      "patch_unique": 3,
+      "patch_equivalent": 0,
+      "files": [
+        "benchmarks/model_measurement_validation/audit/build_gates.py",
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/FINAL_ASSURANCE_BLOCKER_REPAIR_2026-10-13.md",
+        "docs/work/PROGRESS.md",
+        "tests/test_impact_repository_scope.py",
+        "tools/test_impact.py"
+      ],
+      "commits": [
+        "aab8d032 docs: record corrected assurance repair evidence and remaining blockers",
+        "781a6492 fix(assurance): retain empirical pin until fresh execution completes",
+        "5d3dd047 fix(assurance): bound impact scans by repository ownership and refresh source pins"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "e0728f3ec474122685ed76988e81d5755380143e",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in docs/work/ACTIVE_PLAN.md",
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md",
+        "CONFLICT (content): Merge conflict in tools/test_impact.py"
+      ]
+    },
+    {
+      "sha": "2bfc378528cbcb0cf5182d88e182c1e8d5f4f69f",
+      "refs": [
+        "governance/od-cap-0-quantitative-scope"
+      ],
+      "ahead": 1,
+      "patch_unique": 1,
+      "patch_equivalent": 0,
+      "files": [
+        "docs/SCIENTIFIC_CAPABILITY_MATRIX.md",
+        "docs/project/ENGINEERING_FOUNDATIONS_PROGRAM.md",
+        "docs/project/scientific_capability_completion.json",
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/PROGRESS.md",
+        "docs/work/SCIENTIFIC_CAPABILITY_FREEZE_2026_10_19.md",
+        "tests/test_capability_completion.py"
+      ],
+      "commits": [
+        "2bfc3785 governance(od-cap-0): extend engrt.numerical_foundations with DA-1, RE-1, IP-1"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "3958e346bb3b72952ac0d255dcefd1758d2c719a",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md"
+      ]
+    },
+    {
+      "sha": "5a6ce4a319aaec63da8c9b4de5b2d573ef62f7d0",
+      "refs": [
+        "origin/chatgpt/core-v2-trust-repair-1-4"
+      ],
+      "ahead": 11,
+      "patch_unique": 11,
+      "patch_equivalent": 0,
+      "files": [
+        "src/engcore/hybrid_uq/local_gaussian.py",
+        "src/engcore/hybrid_uq/predictive.py",
+        "src/engcore/hybrid_uq/router.py",
+        "src/engcore/inference/calibration.py",
+        "src/engcore/scientific/results/result.py",
+        "src/engcore/scientific/solvers/protocol.py",
+        "src/engcore/scientific/solvers/registry.py",
+        "tests/hybrid_uq/test_hybrid_uq_records.py",
+        "tests/hybrid_uq/test_trust_repairs_5_8.py",
+        "tests/test_core_v2_trust_repairs.py"
+      ],
+      "commits": [
+        "5a6ce4a3 test(core): finalize trust regression coverage",
+        "e1911946 fix(core): harden trust boundaries 5-8",
+        "5e4a4959 ci: trigger one-off trust repair 5-8",
+        "ca38167e ci: apply and verify trust repair 5-8",
+        "9c6edaf2 chore: stage trust repair 5-8 patcher",
+        "fe5814fa test(uq): keep digest checks consistent with derived intervals",
+        "1a09e6b5 test(core): reproduce four V2 trust-boundary defects",
+        "c9283d1c fix(uq): refuse internally inconsistent predictive records",
+        "4cce9fa3 fix(core): bind result usability and attribution to scientific validity",
+        "626be28c fix(core): preserve solver contract while matching exact model versions",
+        "9c58321f fix(core): make solver support model-version aware"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "ea84b30e73f19e53eb35f26caec819c58d518f2b",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in src/engcore/hybrid_uq/local_gaussian.py",
+        "CONFLICT (content): Merge conflict in src/engcore/hybrid_uq/predictive.py",
+        "CONFLICT (content): Merge conflict in src/engcore/hybrid_uq/router.py",
+        "CONFLICT (content): Merge conflict in src/engcore/inference/calibration.py",
+        "CONFLICT (content): Merge conflict in src/engcore/scientific/results/result.py",
+        "CONFLICT (content): Merge conflict in src/engcore/scientific/solvers/protocol.py",
+        "CONFLICT (content): Merge conflict in src/engcore/scientific/solvers/registry.py",
+        "CONFLICT (content): Merge conflict in tests/hybrid_uq/test_hybrid_uq_records.py"
+      ]
+    },
+    {
+      "sha": "e741aee0063a3d1a8c0ea9deb8e26652e5572f11",
+      "refs": [
+        "origin/ci/self-hosted-heavy-runner"
+      ],
+      "ahead": 5,
+      "patch_unique": 5,
+      "patch_equivalent": 0,
+      "files": [
+        ".github/workflows/recertify-hardened-core.yml",
+        ".github/workflows/self-hosted-smoke.yml",
+        ".github/workflows/tests.yml",
+        ".github/workflows/trust-mutations.yml",
+        "certification/current_core_v2.json",
+        "docs/assurance/SELF_HOSTED_RUNNER.md",
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/PROGRESS.md",
+        "tests/test_ci_runner_selection.py",
+        "tests/test_ci_self_hosted_scripts.py",
+        "tools/ci/__init__.py",
+        "tools/ci/runner_guard.py",
+        "tools/ci/select_heavy_runner.py",
+        "tools/ci/self-hosted/bin/maintenance.sh",
+        "tools/ci/self-hosted/bin/reset-instance.sh",
+        "tools/ci/self-hosted/check-isolation.sh",
+        "tools/ci/self-hosted/hooks/job-completed.sh",
+        "tools/ci/self-hosted/hooks/job-started.sh",
+        "tools/ci/self-hosted/install-host.sh",
+        "tools/ci/self-hosted/install-runner-instance.sh",
+        "tools/ci/self-hosted/systemd/forge-runner-maintenance.service",
+        "tools/ci/self-hosted/systemd/forge-runner-maintenance.timer",
+        "tools/ci/self-hosted/windows/New-ForgeRunnerDistro.ps1"
+      ],
+      "commits": [
+        "e741aee0 certification: recertify hardened core",
+        "c947599e ci(self-hosted): judge WSL isolation by the mount and binfmt tables, not by directories",
+        "b5d95ed9 docs(ci): start self-hosted pool at three runners",
+        "ca5eb7ed ci: address the scientific review of the self-hosted runner design",
+        "db0e97c3 ci: route the heavy jobs to an opt-in self-hosted runner without weakening any gate"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "905b22f88ed4866fcb41e73d1f87525c6e23884f",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in .github/workflows/recertify-hardened-core.yml",
+        "CONFLICT (content): Merge conflict in .github/workflows/tests.yml",
+        "CONFLICT (content): Merge conflict in .github/workflows/trust-mutations.yml",
+        "CONFLICT (content): Merge conflict in certification/current_core_v2.json",
+        "CONFLICT (content): Merge conflict in docs/work/ACTIVE_PLAN.md",
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md"
+      ]
+    },
+    {
+      "sha": "bc402380aee81d5130946f48e0aaf218c8c811d0",
+      "refs": [
+        "origin/codex/critical-production-closure"
+      ],
+      "ahead": 4,
+      "patch_unique": 0,
+      "patch_equivalent": 4,
+      "files": [
+        "src/engcore/claims/external_evidence.py",
+        "src/engcore/domains/battery/coupling.py",
+        "src/engcore/mcp/battery.py",
+        "src/engcore/mcp/capabilities.py"
+      ],
+      "commits": [
+        "bc402380 Bind held-out S-OCV measurements to the production OCV QOI",
+        "6a647c81 Make battery OCV a routable production QOI with parameter UQ",
+        "3c433232 Expose open-circuit voltage as a battery production result",
+        "f79c1032 Carry battery open-circuit voltage through the executed march"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "fd30f624fecddfbaef62730d0c9b442db71fc49f",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in src/engcore/mcp/battery.py",
+        "CONFLICT (content): Merge conflict in src/engcore/mcp/capabilities.py"
+      ]
+    },
+    {
+      "sha": "70194416459e16e328ee3f96775e443f31a6c480",
+      "refs": [
+        "origin/core/p0-trust-boundaries-v2"
+      ],
+      "ahead": 7,
+      "patch_unique": 7,
+      "patch_equivalent": 0,
+      "files": [
+        "src/engcore/scientific/results/result.py",
+        "src/engcore/scientific/solvers/protocol.py",
+        "src/engcore/sria/evidence.py",
+        "src/engcore/sria/gateway.py",
+        "src/engcore/sria/uncertainty.py",
+        "tests/test_p0_trust_repairs.py",
+        "tests/test_sria_identity_immutability.py"
+      ],
+      "commits": [
+        "70194416 Add P0 result and solver support regression tests",
+        "238296fa Match solver support on exact model versions",
+        "24f85306 Fail closed on result validity and provenance attribution",
+        "55f82780 Test SRIA evidence and belief identity immutability",
+        "a34875f4 Make scientific belief entries recursively immutable",
+        "790756c0 Bind SRIA evidence identity to immutable content",
+        "8c94bec9 Harden SRIA uncertainty channel immutability"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "83ea6ffb711c9734d829c2c98dbd94333b964854",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in src/engcore/scientific/results/result.py",
+        "CONFLICT (content): Merge conflict in src/engcore/scientific/solvers/protocol.py",
+        "CONFLICT (content): Merge conflict in src/engcore/sria/evidence.py",
+        "CONFLICT (content): Merge conflict in src/engcore/sria/gateway.py",
+        "CONFLICT (content): Merge conflict in src/engcore/sria/uncertainty.py"
+      ]
+    },
+    {
+      "sha": "8862cb5391f3a7bd12fb200d4fa65a2b0ed1b2a1",
+      "refs": [
+        "origin/docs/assurance-performance-investigation"
+      ],
+      "ahead": 3,
+      "patch_unique": 2,
+      "patch_equivalent": 0,
+      "files": [
+        "docs/work/LOCAL_ASSURANCE_PERFORMANCE_INVESTIGATION_2026-10-16.md",
+        "docs/work/PROGRESS.md"
+      ],
+      "commits": [
+        "8862cb53 docs(work): re-check the assurance investigation against main 91b44e22",
+        "75a975b3 Merge remote-tracking branch 'origin/main' into docs/assurance-performance-investigation",
+        "13d39577 docs(work): local assurance performance investigation and quick-win review"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "576842babe800553ea0fc50296cd79a54d16dc49",
+      "conflicts": [
+        "CONFLICT (add/add): Merge conflict in docs/work/LOCAL_ASSURANCE_PERFORMANCE_INVESTIGATION_2026-10-16.md",
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md"
+      ]
+    },
+    {
+      "sha": "4872b10b15e7d4b41a19a965998765d9884963f5",
+      "refs": [
+        "origin/docs/blind-rediscovery-benchmark-v1"
+      ],
+      "ahead": 8,
+      "patch_unique": 8,
+      "patch_equivalent": 0,
+      "files": [
+        "docs/discovery/FORGE_GENESIS.md"
+      ],
+      "commits": [
+        "4872b10b docs(discovery): make Genesis measurement-first and benchmark-driven",
+        "510ba7ed docs(discovery): align execution plan with mind and graduation roadmap",
+        "d955bee9 docs(discovery): add multiphysics intelligence requirements",
+        "de6a7faa docs(discovery): add advanced cognition roadmap",
+        "e2e02a88 docs(discovery): capture universal mind and graduation requirements",
+        "b3a27858 docs(discovery): require dependency-aware replanning",
+        "167e8cdc docs(discovery): add anonymous primitive selection challenge",
+        "cccee524 docs(discovery): preregister FORGE Genesis blind rediscovery"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "2f92c918bdb8c8e4f9e6729eef3102da1a8a0ca4",
+      "conflicts": [
+        "CONFLICT (add/add): Merge conflict in docs/discovery/FORGE_GENESIS.md"
+      ]
+    },
+    {
+      "sha": "7af25ec1d574a76f4ad5832405db8f74821f966c",
+      "refs": [
+        "origin/docs/main-check-2026-10-13"
+      ],
+      "ahead": 1,
+      "patch_unique": 1,
+      "patch_equivalent": 0,
+      "files": [
+        "docs/work/PROGRESS.md"
+      ],
+      "commits": [
+        "7af25ec1 docs(progress): record 2026-10-13 check of main @ 5d73e8f5 on Python 3.12"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "e0b1a750fdfc194f22a696fa879d0c8d3716caaf",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md"
+      ]
+    },
+    {
+      "sha": "6dfc60b0d88abeb465e9cea43fea8c7a32282d0d",
+      "refs": [
+        "origin/feat/big-13-flagship-demonstrations"
+      ],
+      "ahead": 11,
+      "patch_unique": 11,
+      "patch_equivalent": 0,
+      "files": [
+        "docs/architecture/README.md",
+        "docs/architecture/design_synthesis.md",
+        "docs/architecture/mechanistic_discovery.md",
+        "docs/project/FORGE_MASTER_PLAN.md",
+        "docs/work/ACTIVE_PLAN.md",
+        "docs/work/PROGRESS.md"
+      ],
+      "commits": [
+        "6dfc60b0 docs(progress): record assembly synthesis strategic decision",
+        "42fcc79a docs(architecture): index assembly design synthesis",
+        "2c5040f2 docs(mechanisms): link discovery to assembly synthesis",
+        "b4f05568 docs(active): record assembly and design synthesis direction",
+        "c45ccf9a docs(architecture): define design synthesis and assembly layer",
+        "a28bd328 docs(plan): add assembly-first design synthesis roadmap",
+        "81be0b62 docs(progress): record mechanism-aware discovery decision",
+        "ac129a1f docs(work): record post-hardening discovery direction",
+        "7f5bc383 docs(architecture): link mechanism-aware discovery design",
+        "451cc7c6 docs(plan): add mechanism-aware discovery strategy",
+        "a900d545 docs(architecture): define mechanism-aware discovery direction"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "a98e55d0b16272158ecf37a2ba0e68a28c18b73b",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in docs/architecture/README.md",
+        "CONFLICT (add/add): Merge conflict in docs/architecture/design_synthesis.md",
+        "CONFLICT (content): Merge conflict in docs/project/FORGE_MASTER_PLAN.md",
+        "CONFLICT (content): Merge conflict in docs/work/ACTIVE_PLAN.md",
+        "CONFLICT (content): Merge conflict in docs/work/PROGRESS.md"
+      ]
+    },
+    {
+      "sha": "1641d5878926abb7f90e6f526b644b5e9af34c89",
+      "refs": [
+        "origin/feat/multiphysics-lifecycle-foundation"
+      ],
+      "ahead": 1,
+      "patch_unique": 0,
+      "patch_equivalent": 1,
+      "files": [
+        "tests/test_core_freeze_v4_manifest.py",
+        "tools/certification/core_freeze_v4.py"
+      ],
+      "commits": [
+        "1641d587 fix(certification): keep V4 assurance historical on descendants"
+      ],
+      "contained_in": [],
+      "merge_exit": 0,
+      "merge_tree": "9acb0ded4d68e144166a63c744688962845fafb2",
+      "conflicts": []
+    },
+    {
+      "sha": "c57df279f718e0664fba4121fc3160171b85da62",
+      "refs": [
+        "origin/fix/p0-1-scientific-correctness-hardening"
+      ],
+      "ahead": 1,
+      "patch_unique": 1,
+      "patch_equivalent": 0,
+      "files": [
+        "certification/current_core_v2.json"
+      ],
+      "commits": [
+        "c57df279 certification: recertify hardened core"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "04e95a7cebf4a64ceab46b27b02898b53edb3c58",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in certification/current_core_v2.json"
+      ]
+    },
+    {
+      "sha": "33a8ef744b2517dc32769bb0016683e1509d2b68",
+      "refs": [
+        "origin/fix/p0-trust-boundaries"
+      ],
+      "ahead": 1,
+      "patch_unique": 1,
+      "patch_equivalent": 0,
+      "files": [
+        "certification/current_core_v2.json"
+      ],
+      "commits": [
+        "33a8ef74 certification: recertify hardened core"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "15068005ef6df0771b3f0334c57b766d093e1f2a",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in certification/current_core_v2.json"
+      ]
+    },
+    {
+      "sha": "5bdb086ad1499a5078284d162c6ffcda70115e64",
+      "refs": [
+        "origin/fix/p0-v4-assurance-descendants"
+      ],
+      "ahead": 1,
+      "patch_unique": 1,
+      "patch_equivalent": 0,
+      "files": [
+        "certification/current_core_v2.json"
+      ],
+      "commits": [
+        "5bdb086a certification: recertify hardened core"
+      ],
+      "contained_in": [],
+      "merge_exit": 1,
+      "merge_tree": "714c05d0c6ec3ca2a3d6d74fb651ac2e7324243e",
+      "conflicts": [
+        "CONFLICT (content): Merge conflict in certification/current_core_v2.json"
+      ]
+    }
+  ]
+}

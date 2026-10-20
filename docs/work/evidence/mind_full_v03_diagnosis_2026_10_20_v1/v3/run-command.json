@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "/home/dev_kaeem/venvs/forge312/bin/python",
+    "tools/forge_mind_diagnosis.py",
+    "--plan",
+    "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-diagnosis-v3/plan.json",
+    "--output",
+    "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-diagnosis-v3/results"
+  ],
+  "cwd": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+    "TMPDIR": "/tmp",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "outer_timeout_seconds": 960,
+  "plan_sha256": "c99ed3462cd16eb47bd4502e54876263b5ace50fe111794fa16d1016bb3a6d54",
+  "exit_code": 1,
+  "elapsed_seconds": 79.52668873500079
+}

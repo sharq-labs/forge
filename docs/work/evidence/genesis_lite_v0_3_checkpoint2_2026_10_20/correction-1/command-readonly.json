@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "/home/dev_kaeem/venvs/forge312/bin/python",
+    "-m",
+    "pytest",
+    "tests/genesis_lite/test_genesis_lite_v0_3_readonly_inventory.py",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp=/tmp/forge-cp2-correction-ro",
+    "-rA",
+    "--tb=short"
+  ],
+  "cwd": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+    "TMPDIR": "/tmp",
+    "FORGE_CHECKPOINT_EVIDENCE": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/correction-evidence"
+  },
+  "exit_code": 1
+}

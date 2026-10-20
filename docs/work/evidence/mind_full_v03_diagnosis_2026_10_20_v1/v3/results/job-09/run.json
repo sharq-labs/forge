@@ -1,0 +1,196 @@
+{
+  "arm": "mind_full",
+  "arm_code_sha256": {
+    "benchmarks/genesis_lite/arms.py": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+    "benchmarks/genesis_lite/v0_3/arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1"
+  },
+  "arm_spec": "benchmarks.genesis_lite_mind.arm:mind_full",
+  "campaign_id": "mind-trace-diagnosis-dev-2",
+  "candidate_source_sha256": {
+    "benchmarks/genesis_lite_mind/__init__.py": "b0c2b529bd038c1bed916af8b43348053d6fddbf52ece6c2f8d8b0f5bebb86fc",
+    "benchmarks/genesis_lite_mind/arm.py": "abf5cd88a562da3b8a32bac6227877fbda5056bc2950a11525bb813081d9879e",
+    "src/engcore/mind/minimal/__init__.py": "c42b41b8a7fc8718f1a089f0406c09b99e89a76d0f68e9e87356faeb712c7e94",
+    "src/engcore/mind/minimal/competition.py": "d92d6104b8cdfe6075a742c36e0181c7f227a78e834fe6df2e90521f24e08ee7",
+    "src/engcore/mind/minimal/experiments.py": "f06886b6c25c221d1df90e62364b54e7faacc789db1ffe3573ba7b8a56f931a1",
+    "src/engcore/mind/minimal/falsifier.py": "cde282cfb68ef49d51812e9befb26c9affaf04deb206bd0e27d5da3b9f8d1332",
+    "src/engcore/mind/minimal/outcome_model.py": "282a421d4574cc7caff6a053375f1f9700c2b219ae7408ae9399371407ab146e",
+    "src/engcore/mind/minimal/problem.py": "5d2856fc00facaa2e21c024e40390d5f3a377b536b5b1de08f0117eec8b6f3cd",
+    "src/engcore/mind/minimal/runner.py": "4b2350234f7b2276c3d162ac5249a745cc14e20c995715d5e7f309fcc588b8b8",
+    "src/engcore/mind/minimal/stopping.py": "0363a830449c1eedcff88462fcedba0ec61efc4579104d481149c3b5e8630fed",
+    "src/engcore/mind/minimal/structures.py": "cb0b83274832160da978257a67198d7ee2f2f9a9bd74c6f6d8c6ed4d0011deff",
+    "src/engcore/mind/minimal/trace.py": "1260f09d007e39399d3f23767a77cdf9ac56016f0392125998e1a7e920b77c01"
+  },
+  "diagnostic_plan_sha256": "c99ed3462cd16eb47bd4502e54876263b5ace50fe111794fa16d1016bb3a6d54",
+  "environment_manifest_sha256": "42794a7972041ae791826924261970460cc2a112ec100d341825523461789497",
+  "evaluator_status": "VALID",
+  "harness": "forge.genesis_lite.harness.v0_3",
+  "host_start_seconds": 0.0,
+  "isolation": "in_process",
+  "key_digest": "4fe6ba9e3835c8c88b384537440a1b4d383d225cc50076e4f9b74e39cf561777",
+  "leakage_audit": "NO_LITERAL_LEAK_FOUND",
+  "memory_instrumented": false,
+  "observe_calls": 282,
+  "pair_bound": {
+    "form": "tol_multiple",
+    "value": 3.0
+  },
+  "peak_traced_kib": null,
+  "prereg_sha256": "026f538d8c6a4dc7cfecfea7d196487c76f0af5950bc828e96ad92e94b971b1d",
+  "presentation": "renamed",
+  "presented_card_digests": {
+    "bf-0c05ac99590ad98d": "0ff40b58b5b4adc01370789eb68dc0ebf71b53930cb117ba7d4ca2886e7a031c",
+    "bf-911454d7fca9a942": "15bc562fb0356bce1bb346c1f10b9782e85d4554aa0578263b2348796fa34e33",
+    "bf-a71dac722bff8530": "dcce99a871c8a011c5e005e2edc2b9d5099d8d322ee9c4028127e274c5f523de",
+    "bf-d079d511ae708a74": "9fb39ebf35076c49ddeade47ebbe35ecc3228f841e351e30654d4f267d7af2f2",
+    "bf-e13f412e3d2d32e5": "9d9dba19202e30366f4882bd6e020a0eca84e97415c7354bad3f5d04fe376392",
+    "bf-fd29aba552331d8c": "736f036835dda0001257f0da1e18326fc653b7513781be3b99e939cc68d3c109"
+  },
+  "proposer_processes": 0,
+  "reasons": [],
+  "report_digest": "e51e57f52e4fad15f339415599ab016db431e82342d5b47bc3df95206b1297cf",
+  "security_boundary": "SECURITY_BOUNDARY_NOT_PROVEN",
+  "seed": 17,
+  "status": "VALID",
+  "tier_bound": "development",
+  "universes": [
+    {
+      "answer": "no_law",
+      "credit": 1.0,
+      "independent_agrees": true,
+      "kind": "no_solution",
+      "law_form": null,
+      "observe_calls": 60,
+      "outcome": "no_law",
+      "proposal": {
+        "answer": "no_law",
+        "proposer": {
+          "id": "mind_full",
+          "kind": "baseline"
+        },
+        "rationale": "rivals using no settable input hold 0.677 of the posterior",
+        "universe_id": "bf-fd29aba552331d8c"
+      },
+      "proposer_seconds": 0.3946506000002046,
+      "region_tell": "ordinary_extension",
+      "trap": false,
+      "truth_in_searched_family": false,
+      "universe_id": "bf-fd29aba552331d8c"
+    },
+    {
+      "answer": "insufficient_evidence",
+      "credit": 0.0,
+      "independent_agrees": true,
+      "kind": "spurious_correlate",
+      "law_form": "regime",
+      "observe_calls": 60,
+      "outcome": "insufficient_evidence",
+      "proposal": {
+        "answer": "insufficient_evidence",
+        "proposer": {
+          "id": "mind_full",
+          "kind": "baseline"
+        },
+        "rationale": "no rival is both fitted and unrefuted",
+        "universe_id": "bf-e13f412e3d2d32e5"
+      },
+      "proposer_seconds": 0.29415104700001393,
+      "region_tell": "ordinary_extension",
+      "trap": false,
+      "truth_in_searched_family": false,
+      "universe_id": "bf-e13f412e3d2d32e5"
+    },
+    {
+      "answer": "insufficient_evidence",
+      "credit": 0.0,
+      "independent_agrees": true,
+      "kind": "discoverable",
+      "law_form": "two_term",
+      "observe_calls": 30,
+      "outcome": "insufficient_evidence",
+      "proposal": {
+        "answer": "insufficient_evidence",
+        "proposer": {
+          "id": "mind_full",
+          "kind": "baseline"
+        },
+        "rationale": "every rival that faced a decisive test was refuted; the untested rivals have not earned standing",
+        "universe_id": "bf-a71dac722bff8530"
+      },
+      "proposer_seconds": 0.3677185559999998,
+      "region_tell": "ordinary_extension",
+      "trap": false,
+      "truth_in_searched_family": false,
+      "universe_id": "bf-a71dac722bff8530"
+    },
+    {
+      "answer": "insufficient_evidence",
+      "credit": 1.0,
+      "independent_agrees": true,
+      "kind": "insufficient_evidence",
+      "law_form": "power",
+      "observe_calls": 12,
+      "outcome": "insufficient_evidence",
+      "proposal": {
+        "answer": "insufficient_evidence",
+        "proposer": {
+          "id": "mind_full",
+          "kind": "baseline"
+        },
+        "rationale": "precision not reached (region sd 0.6003, rival disagreement 0.7567, required 0.02)",
+        "universe_id": "bf-d079d511ae708a74"
+      },
+      "proposer_seconds": 0.08850444800009427,
+      "region_tell": "box",
+      "trap": false,
+      "truth_in_searched_family": true,
+      "universe_id": "bf-d079d511ae708a74"
+    },
+    {
+      "answer": "insufficient_evidence",
+      "credit": 0.5,
+      "independent_agrees": true,
+      "kind": "indistinguishable",
+      "law_form": "power",
+      "observe_calls": 60,
+      "outcome": "insufficient_evidence",
+      "proposal": {
+        "answer": "insufficient_evidence",
+        "proposer": {
+          "id": "mind_full",
+          "kind": "baseline"
+        },
+        "rationale": "the region of use leaves the box every experiment can reach; the in-box evidence does not determine the dependence there",
+        "universe_id": "bf-911454d7fca9a942"
+      },
+      "proposer_seconds": 0.9500360670008376,
+      "region_tell": "ordinary_extension",
+      "trap": false,
+      "truth_in_searched_family": false,
+      "universe_id": "bf-911454d7fca9a942"
+    },
+    {
+      "answer": "confounded",
+      "credit": 1.0,
+      "independent_agrees": true,
+      "kind": "confounded",
+      "law_form": "exp",
+      "observe_calls": 60,
+      "outcome": "confounded",
+      "proposal": {
+        "answer": "confounded",
+        "proposer": {
+          "id": "mind_full",
+          "kind": "baseline"
+        },
+        "rationale": "the observable is associated with the passive covariate v171 (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause",
+        "universe_id": "bf-0c05ac99590ad98d"
+      },
+      "proposer_seconds": 0.9835892119999698,
+      "region_tell": "box",
+      "trap": false,
+      "truth_in_searched_family": false,
+      "universe_id": "bf-0c05ac99590ad98d"
+    }
+  ],
+  "wall_seconds": 3.0969791460001943
+}

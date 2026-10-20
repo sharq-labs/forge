@@ -1,0 +1,16 @@
+{
+  "cwd": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+  "argv": [
+    "/home/dev_kaeem/venvs/forge312/bin/python",
+    "tools/forge_mind_readiness.py",
+    "--prepare",
+    "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/mind-readiness-v03-dev-v1/plan.json"
+  ],
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo/src:/home/dev_kaeem/forge-cp2-1cb5e187-ozVlV6/repo",
+    "TMPDIR": "/tmp",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "exit_code": 0
+}

@@ -1,0 +1,85 @@
+f86b5afb447241d5c5d93589f3109b5f8ee051c8
+100644 91f98195cab10f858c38bbedf37d90a4bdf4633c 1	.github/workflows/branch-policy.yml
+100644 b24d9a44c6ca0dc0d8ce104a87a01b3284320b0a 2	.github/workflows/branch-policy.yml
+100644 3747e918bcbfabe775f6eb69ce58181edcc0c8f6 3	.github/workflows/branch-policy.yml
+100644 74accacecfef66d3bdea9a1c9c4369adadc12210 1	.github/workflows/recertify-hardened-core.yml
+100644 b7732a5455dc0a5ed2d9ffd8d72266912357e157 2	.github/workflows/recertify-hardened-core.yml
+100644 88d5aa9dbb6f85074634a8518fab4acab86178d9 3	.github/workflows/recertify-hardened-core.yml
+100644 88cae53b97874345b98c1c03f903b35139bd28fb 1	.github/workflows/tests.yml
+100644 1d30fcab40be3d5184491d51b58f9a43040ae967 2	.github/workflows/tests.yml
+100644 4f149c8a7d6b0b9424f4c6f98a9061920fc5bcb3 3	.github/workflows/tests.yml
+100644 9607a445c5c7b44dc9e582656441b0f3437caf9a 1	.github/workflows/trust-mutations.yml
+100644 a7633421ae0fb3e359574d51a3657c7a3b054139 2	.github/workflows/trust-mutations.yml
+100644 e38e6a5c02e598642b77dfb10a277edb1756ced4 3	.github/workflows/trust-mutations.yml
+100644 19357b844a3792355a61bf2b48a0609c09de7bc3 1	.gitignore
+100644 07f0683de7d28c5db7a0d667df2f99c14f0182ca 2	.gitignore
+100644 c31f40e6186bbc5d50ab667752c2738b6f16dbae 3	.gitignore
+100644 b78797c828608620fe3fddc9ab741a91a6b179b6 1	CLAUDE.md
+100644 03dc14000fe465a4fb9f040184c59db2e5e5a59b 2	CLAUDE.md
+100644 c732c10683564a9ab88baf913ee567b08f50f17a 3	CLAUDE.md
+100644 a675f542dc300185fe2990093384b689ae2a9618 1	docs/TESTING.md
+100644 88fa1392fd2430f2146975cedc44203eadb531e1 2	docs/TESTING.md
+100644 6ff55775a4ca6f02d9b8e1ddbf8255781e44484a 3	docs/TESTING.md
+100644 e864ac95c007ca224877fc4982fa7fd7b09b2833 1	docs/assurance/BRANCH_PROTECTION.md
+100644 077bea09a4be74f27f4d3270392b76b7658fe3f0 2	docs/assurance/BRANCH_PROTECTION.md
+100644 6f88fb2f009edcc0963efe9e2b00b908e0873486 3	docs/assurance/BRANCH_PROTECTION.md
+100644 451dd4733fea55115bea6d69ad9757376a447933 2	docs/assurance/LOCAL_ASSURANCE.md
+100644 26f8d1845d6a51ad4317e0cbb843ba75a94af31f 3	docs/assurance/LOCAL_ASSURANCE.md
+100644 2464517e36189d72730cc22e2f134c5804766e29 1	docs/work/ACTIVE_PLAN.md
+100644 45bce73764e8ae13a02eac0f4e81cf25414ba843 2	docs/work/ACTIVE_PLAN.md
+100644 2d9727c6037a98df4e2ae9a0beb421f2df78bbf7 3	docs/work/ACTIVE_PLAN.md
+100644 c1d63292c862352c7c61bbb3587589b9a26b652a 1	docs/work/PROGRESS.md
+100644 b53df02e461dbd2077dbdf513883e10b6872ecf3 2	docs/work/PROGRESS.md
+100644 43a6c6d034ce8a841bd91c45fdfb85c193fa40e4 3	docs/work/PROGRESS.md
+100644 0303e3582d51a8e3ffbf4cd3c751faa220bf5b2a 1	tests/test_branch_policy.py
+100644 9e196668726e56cec867b905e6a32daa97e30c95 2	tests/test_branch_policy.py
+100644 96a1401b0d7e3dd37f559feba2bfcf097c360e2d 3	tests/test_branch_policy.py
+100644 545e2a9e93203503f33a00e6addd7da1d8fbf358 2	tests/test_local_assurance.py
+100644 c7ea392a954d1a2732479a8149732ce2fc7f8d56 3	tests/test_local_assurance.py
+100644 9fec2acb2e1aa1a0ce8ebfdf97ab50bc37c54ee0 1	tests/test_recertification_scope.py
+100644 5de9b428639fab77274ae519dd83b3629388d2f7 2	tests/test_recertification_scope.py
+100644 ee4945532a00421f8daa8079a41acc112634ebc2 3	tests/test_recertification_scope.py
+100644 4f763dc6f95a1e96dad7dcea4c5c316175c49f4b 1	tools/certification/branch_policy.py
+100644 b64df08f66031af5049eeba4478be09fbf197b99 2	tools/certification/branch_policy.py
+100644 9a7d02fc4d0d011ff9a46f4b393370ca6be77aa9 3	tools/certification/branch_policy.py
+100644 149cb29f0005375a9007ffd1091e2849d64b3f9e 1	tools/certification/hardening_assurance.py
+100644 8247d2489bfa76d30d317dcc5f68ae05b28b2402 2	tools/certification/hardening_assurance.py
+100644 01821afa5f48e925ad55e908ee48d8bc144b1d4d 3	tools/certification/hardening_assurance.py
+100644 d499e1a8ec41d124870883d1289305017f37b62b 2	tools/certification/local_assurance.py
+100644 0617467957874931f1084d521fd3710c25ad57ff 3	tools/certification/local_assurance.py
+
+Auto-merging .github/workflows/branch-policy.yml
+CONFLICT (content): Merge conflict in .github/workflows/branch-policy.yml
+Auto-merging .github/workflows/recertify-hardened-core.yml
+CONFLICT (content): Merge conflict in .github/workflows/recertify-hardened-core.yml
+Auto-merging .github/workflows/tests.yml
+CONFLICT (content): Merge conflict in .github/workflows/tests.yml
+Auto-merging .github/workflows/trust-mutations.yml
+CONFLICT (content): Merge conflict in .github/workflows/trust-mutations.yml
+Auto-merging .gitignore
+CONFLICT (content): Merge conflict in .gitignore
+Auto-merging CLAUDE.md
+CONFLICT (content): Merge conflict in CLAUDE.md
+Auto-merging docs/TESTING.md
+CONFLICT (content): Merge conflict in docs/TESTING.md
+Auto-merging docs/assurance/BRANCH_PROTECTION.md
+CONFLICT (content): Merge conflict in docs/assurance/BRANCH_PROTECTION.md
+Auto-merging docs/assurance/LOCAL_ASSURANCE.md
+CONFLICT (add/add): Merge conflict in docs/assurance/LOCAL_ASSURANCE.md
+Auto-merging docs/work/ACTIVE_PLAN.md
+CONFLICT (content): Merge conflict in docs/work/ACTIVE_PLAN.md
+Auto-merging docs/work/PROGRESS.md
+CONFLICT (content): Merge conflict in docs/work/PROGRESS.md
+Auto-merging tests/test_branch_policy.py
+CONFLICT (content): Merge conflict in tests/test_branch_policy.py
+Auto-merging tests/test_local_assurance.py
+CONFLICT (add/add): Merge conflict in tests/test_local_assurance.py
+Auto-merging tests/test_recertification_scope.py
+CONFLICT (content): Merge conflict in tests/test_recertification_scope.py
+Auto-merging tools/certification/branch_policy.py
+CONFLICT (content): Merge conflict in tools/certification/branch_policy.py
+Auto-merging tools/certification/core_certificate.py
+Auto-merging tools/certification/hardening_assurance.py
+CONFLICT (content): Merge conflict in tools/certification/hardening_assurance.py
+Auto-merging tools/certification/local_assurance.py
+CONFLICT (add/add): Merge conflict in tools/certification/local_assurance.py
