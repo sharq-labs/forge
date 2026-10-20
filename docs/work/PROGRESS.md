@@ -8178,7 +8178,7 @@ Failed approaches, recorded so later sessions do not repeat them:
 2. The launcher options tried did not remove the six device binds: `/dev` as a read-only tmpfs only drops devpts and mqueue. No other launcher configuration was tested, so this is a finding about this launcher, not a proof about rootless Podman.
 3. UNC access to the WSL distro is unavailable (hardened). Files go in through `wsl.exe` stdin, and shell variables in inline `bash -c` strings get expanded early, so use `bash -s` scripts.
 
-Evidence. `docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/result.json`, sha256 590bfa4f..., pinned. It comes from a clean clone of 754f6cdb on the formal machine.
+Evidence. `docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/result.json`, sha256 590bfa4f..., from a clean clone of 754f6cdb on the formal machine. It was pinned at 4ec70275 and superseded by the d4ead0b2 run (see the addendum).
 - The verdict is `verified: false`.
 - Container evidence is BLOCKED solely by DEVICE_NODE_WRITABLE_MOUNT and UNDECLARED_WRITABLE_MOUNT, on the six devices in each of cards A, B and C. Every other contract check held.
 - 11 of 12 channels are REFUSED. `cross_card_state` is UNTESTABLE, and every probe has power.
@@ -8212,3 +8212,8 @@ Addendum (2026-10-21), second review pass and re-pin:
 - The runs at 754f6cdb (590bfa4f) and c09b0ef5 (5ccccd42) are kept under `superseded-*/`.
 - Tests: on Windows at the re-pin commit, `python -m pytest -q -p no:cacheprovider -n 4 -rfEs tests/genesis_lite` gave 388 passed, 2 skipped (Linux-only). The Linux run at 9a4b53c6 gave 390 passed, 0 skipped, with readiness BLOCKED_TECHNICAL on the three D5 rows and the D7 evidence row.
 - NOT RUN: FAST, SCIENTIFIC, FULL, hardened recertification, the D7 rerun and any formal campaign.
+- Third read-only pass at e7e35546: 0 BLOCKER, 0 MAJOR (MAJOR-1 closed), 2 MINOR. Both MINORs stay OPEN, and both must be fixed (followed by a re-run and re-pin) before any D5-A1b evidence that PASSES is pinned:
+  1. Some allowlist rows check only fstype and root. Needed: a card-view root of `/` for `/sys/fs/cgroup`, the read-only `/proc` re-binds on the device of the card's own `/proc` row, and the masks and `/dev` as fresh `size=0k` or unique-device tmpfs. Without this, a host-configuration mount at the same target as one of Podman's own, such as a host procfs at `/proc/sys`, could pass.
+  2. Each kept tree needs exactly one row at its target, with `bound[path] == host`.
+  Neither can be produced by the current launcher. The current evidence is BLOCKED by the device nodes regardless.
+- Linux at e7e35546 (fresh clone): `python -m pytest -q -p no:cacheprovider -n 4 tests/genesis_lite` gave 390 passed, 0 skipped. `python -m benchmarks.genesis_lite.v0_3.readiness` gave BLOCKED_TECHNICAL on the three D5 rows and the D7 evidence row; 296 v0.3 tests passed, agreement 48/48. The tree was clean afterwards and no container was left.
