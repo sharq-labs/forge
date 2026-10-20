@@ -14,20 +14,24 @@
 
 | | |
 |---|---|
-| HEAD | `d58524826c81622d4dde4e402c998f3083cf415b` (escrow branch: `bind` requires the escrow half of FDA-05) |
+| HEAD | `f7df896836b62e7bc96f2eaee28883d655cb4e3a` (escrow branch: `bind` requires the escrow half of FDA-05) |
 | Tree | a clean native WSL clone |
 | Python | 3.12.3 |
 | Kernel | 6.6.87.2-microsoft-standard-WSL2 |
 | Code sha256 | `arms.py` `11a6fe0ca65f…`, `harness.py` `331edd8a5a8f…`, `isolation.py` `d7f96b37608d…`, `timing_pilot.py` `97ca7aa9ecb3…` |
-| Pilot wall time | 458.8 s |
-| `result.json` sha256 | `4361bb626c5df8f4273dab7b54d3bc34ee2bd378e7bae7b048b09a6c7a82c4d4` |
+| Pilot wall time | 455.3 s |
+| `result.json` sha256 | `3759ff334f690f4d3601b588a4bfb6c9dd71f186975a45d024a8714cb85beb4f` |
 
 The `result.json` digest is pinned in `preregistration.TIMING_PILOT_EVIDENCE_SHA256`. The test
 `test_d7_timing_pilot_evidence_is_pinned_and_timed_this_code` checks the code byte for byte, because the escrow branch is
 rebased and its commit identities move.
 
-**Superseded:** the first pilot (HEAD `10f892cd`, `a543bc217fdcba29…`, 43.5 s per world set). It timed the launcher before
-the fourth scientific review made every card drop its capabilities (`setpriv`).
+**Superseded runs:**
+- The first pilot (HEAD `10f892cd`, `a543bc217fdcba29…`, 43.5 s per world set). It timed the launcher before the
+  fourth scientific review made every card drop its capabilities (`setpriv`). The D7 budget was decided on this run.
+- The re-run under the capability drop (HEAD `d5852482`, `4361bb626c5df8f4…`, 43.7 s), on the earlier distro.
+
+This run is on the owner's fresh, hardened Ubuntu-24.04 distro, with interop and automount disabled.
 
 Command, in WSL Ubuntu, from a fresh clone of the escrow branch at that HEAD:
 
@@ -39,39 +43,39 @@ The pilot ran 10 world sets (presentation `paraphrased`, seed 0) against all 20
 registered arms, with [6] cards per world set. Every card ran in its own D5 namespace without
 capabilities. Every run was VALID.
 
-- **Seconds per world set, all arms: 43.7** (95 % interval ±0.56 over the
+- **Seconds per world set, all arms: 42.8** (95 % interval ±0.58 over the
   10 world sets).
 
 | arm | mean s / world set | max |
 |---|---|---|
-| always_insufficient | 2.11 | 2.26 |
-| always_law | 2.19 | 2.33 |
-| always_refuse | 2.08 | 2.28 |
-| careful | 2.19 | 2.37 |
-| extrapolating_fit | 2.20 | 2.36 |
-| extrapolating_fit_dof | 2.20 | 2.34 |
-| extrapolation_pair | 2.17 | 2.32 |
-| extrapolation_pair_dof | 2.20 | 2.33 |
-| fit_all_gated | 2.20 | 2.52 |
-| fit_all_gated_dof | 2.19 | 2.42 |
-| greedy_forward | 2.18 | 2.35 |
-| greedy_forward_dof | 2.17 | 2.30 |
-| historical_answer | 2.11 | 2.34 |
-| monomial_enumeration | 2.22 | 2.34 |
-| monomial_enumeration_dof | 2.21 | 2.33 |
-| random_structures | 2.19 | 2.35 |
-| random_structures_dof | 2.23 | 2.43 |
-| single_setting | 2.21 | 2.39 |
-| space_filling | 2.21 | 2.35 |
-| space_filling_dof | 2.19 | 2.34 |
+| always_insufficient | 2.05 | 2.12 |
+| always_law | 2.13 | 2.26 |
+| always_refuse | 2.04 | 2.22 |
+| careful | 2.15 | 2.21 |
+| extrapolating_fit | 2.16 | 2.26 |
+| extrapolating_fit_dof | 2.15 | 2.24 |
+| extrapolation_pair | 2.16 | 2.35 |
+| extrapolation_pair_dof | 2.17 | 2.26 |
+| fit_all_gated | 2.15 | 2.34 |
+| fit_all_gated_dof | 2.14 | 2.30 |
+| greedy_forward | 2.18 | 2.31 |
+| greedy_forward_dof | 2.17 | 2.24 |
+| historical_answer | 2.02 | 2.12 |
+| monomial_enumeration | 2.13 | 2.30 |
+| monomial_enumeration_dof | 2.16 | 2.31 |
+| random_structures | 2.15 | 2.25 |
+| random_structures_dof | 2.20 | 2.41 |
+| single_setting | 2.17 | 2.46 |
+| space_filling | 2.14 | 2.26 |
+| space_filling_dof | 2.16 | 2.28 |
 
 ## ESTIMATED
 
 The formal attempt is 2400 world sets × 2, counting the evaluator's replay of
 every record as one more run (ASSUMED).
 
-**Total: 58.2 h, 95 % interval 57.5–59.0 h.** Of
-that, the operator's run alone is about 29.1 h. The budget cap in
+**Total: 57.0 h, 95 % interval 56.2–57.8 h.** Of
+that, the operator's run alone is about 28.5 h. The budget cap in
 `formal.run_formal` times the operator's run only.
 
 Excluded: the candidate's own cost (D4); evaluator review time; restarts.

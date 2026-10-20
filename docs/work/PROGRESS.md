@@ -8303,3 +8303,7 @@ Note: the D7 timing pilot (4361bb62) ran on the old distro; re-run it on Ubuntu-
 `python -m pytest tests/genesis_lite -q -n 4` on the Windows draft branch: exit 0, 251 passed.
 
 **Fifth-review text fixes (N-6, N-9), 2026-10-20.** D7 and D5 decision texts now describe the hardened Ubuntu-24.04 machine, say the budget was decided on the first pilot, and list twelve channels with the capability drop; the isolation boundary is stated as NOT_PROVEN (N-1). FDA-19 open item: the certified probe rerun is a start condition, not optional. P-1/P-2 open item matches the ledger. D5 README lists SCAN_SKIP. `pytest tests/genesis_lite -n 4`: exit 0, 251 passed.
+
+**D7 timing pilot on the hardened Ubuntu-24.04** (escrow f7df8968 in ~/forge, venv ~/venvs/forge312, exit 0, 455 s): 200/200 VALID. MEASURED 42.8 s per world set; ESTIMATED 57.0 h (56.2-57.8) with replay. Evidence sha256 3759ff334f690f4d3601b588a4bfb6c9dd71f186975a45d024a8714cb85beb4f, identical on both sides of the copy, re-pinned. Commits reach the distro through a piped git bundle (automount is off).
+
+`pytest tests/genesis_lite -n 4` on the draft branch: exit 0, 251 passed.
