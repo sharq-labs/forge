@@ -61,7 +61,7 @@ Command, in WSL Ubuntu, from a fresh clone of the draft branch at that HEAD:
   - in the D5 deployment, with capabilities dropped.
 - The operator's canary secrets are a random root file, a run log holding the root, and a registry line, all in a host
   temp directory. A TCP listener runs on host loopback.
-- Inside a namespace, the scan covers everything visible except root-owned system directories.
+- Inside a namespace, the scan covers everything visible except `deployment_attacks.SCAN_SKIP`: /proc, /sys, /dev, /usr, /lib, /lib32, /lib64, /libx32, /bin, /sbin, /boot, /snap and /lost+found. Writing there needs root (or sudo); /etc, /var and the kept tree ARE scanned.
 - Verified requires every channel REFUSED in the D5 deployment, and the same probe REACHED in at least one control
   configuration (the probes have power).
 

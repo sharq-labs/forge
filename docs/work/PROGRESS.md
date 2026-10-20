@@ -8301,3 +8301,5 @@ The ledger STAYS BLOCKED_WITH_EVIDENCE_NOT_PROVEN for D5, FDA-18 and the isolati
 Note: the D7 timing pilot (4361bb62) ran on the old distro; re-run it on Ubuntu-24.04 before the freeze manifest is measured.
 
 `python -m pytest tests/genesis_lite -q -n 4` on the Windows draft branch: exit 0, 251 passed.
+
+**Fifth-review text fixes (N-6, N-9), 2026-10-20.** D7 and D5 decision texts now describe the hardened Ubuntu-24.04 machine, say the budget was decided on the first pilot, and list twelve channels with the capability drop; the isolation boundary is stated as NOT_PROVEN (N-1). FDA-19 open item: the certified probe rerun is a start condition, not optional. P-1/P-2 open item matches the ledger. D5 README lists SCAN_SKIP. `pytest tests/genesis_lite -n 4`: exit 0, 251 passed.

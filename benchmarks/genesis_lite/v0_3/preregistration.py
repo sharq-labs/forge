@@ -52,18 +52,22 @@ OWNER_DECISIONS_TAKEN = {
     "D6-evaluator": "OD-8; decided by the owner in session on 2026-10-20: a selection process with a deadline of "
                     "2026-11-17. Criteria: independent of the operator: no access to the operator's machine, the root, the run log or the registry before the reveal; holds the EvaluatorInbox on their own machine; can run formal.verify_attempt and analysis.lift_decision; agrees to publish the verdict whatever it is. The evaluator's name stays OWNER_DECISION_REQUIRED until "
                     "selected, so the freeze (D4) is refused until then; if nobody is named by the deadline, D6 reopens",
-    "D7-budget-and-machine": "OD-18; decided by the owner in session on 2026-10-20: the formal machine is this WSL Ubuntu "
-                             "(Linux 6.6 WSL2, Python 3.12 forge venv), where D5 was verified and the environment "
-                             "manifest is measured at freeze. A timing pilot measured first (MEASURED 43.5 s per world set "
-                             "for the 20 baselines; ESTIMATED 58 h formal with replay); budget approved: 72 h for the "
+    "D7-budget-and-machine": "OD-18; decided by the owner in session on 2026-10-20: the formal machine is the owner's WSL "
+                             "machine, since 2026-10-20 a fresh Ubuntu-24.04 distro hardened by the owner (interop and "
+                             "automount disabled), where D5 is verified and the environment manifest is measured at "
+                             "freeze. The budget was decided on the first timing pilot (MEASURED 43.5 s per world set for "
+                             "the 20 baselines; ESTIMATED 58 h formal with replay; the current pinned pilot is in "
+                             "formal.timing_pilot); budget approved: 72 h for the "
                              "baselines plus the candidate's cost measured by a one-campaign timing at D4; an overrun "
                              "stops the attempt as BUDGET_EXCEEDED, INVALID, never partially claimed",
     "D5-deployment": "OD-20; decided by the owner in session on 2026-10-20: option A1, rootless Linux namespaces. Every "
                      "formal proposer card runs under unshare in fresh user, PID, mount, network, IPC and UTS namespaces, "
                      "with operator state masked by private tmpfs mounts and only the benchmark tree and the Python "
-                     "environment re-bound read-only (isolation.py); a formal card cannot start without it. Verified on "
-                     "2026-10-20 (evidence pinned by sha256): every one of the ten attack channels REFUSED with the "
-                     "namespaces and REACHED by the same probe without them. Residual, disclosed: same Linux account "
+                     "environment re-bound read-only (isolation.py); a formal card cannot start without it, and proposers run "
+                     "without capabilities (setpriv). Verification evidence is pinned by sha256: twelve attack channels "
+                     "REFUSED in the deployment, each REACHED by the same probe in a control configuration. The isolation "
+                     "boundary stays NOT_PROVEN until every writable location is shown private to its card (fifth "
+                     "scientific review, N-1). Residual, disclosed: same Linux account "
                      "outside the namespaces; readable tree and environment; WSL shares the host's utility VM; the "
                      "certified escrow stays in the operator process (the operator_process channel shows a proposer "
                      "cannot reach it); the certified isolation-probe rerun belongs to OD-3",
@@ -375,9 +379,11 @@ def build() -> dict[str, Any]:
         "statistics_unchanged_from_v0_2": {k: old["statistics"][k] for k in ("unit_of_analysis",)},
         "open_items": {
             "FDA-19 / ODC-BL1": "closed on the benchmark side by v0_3/secret_scan.py (proposer-side scan of the root, "
-                                "masters, run log and registry); extending the certified isolation_probe stays optional",
-            "readiness P-1 / P-2": "the isolation deployment and an out-of-process escrow (OD-20); the deployment attack "
-                                   "suite must report every channel REFUSED there",
+                                "masters, run log and registry); the certified isolation_probe rerun that covers this inventory is a "
+                                "start condition (OD-3), not optional",
+            "readiness P-1 / P-2": "the isolation deployment is D5 (A1). The escrow stays in the operator process: the "
+                                   "operator_process channel shows no card reaches another process. NOT_PROVEN until "
+                                   "the per-card writable-mount check (N-1) passes",
         },
         "owner_decisions_taken": dict(OWNER_DECISIONS_TAKEN),
         "owner_decisions_open": {
