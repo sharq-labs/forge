@@ -8075,3 +8075,21 @@ Cwd `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c57
 `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest -q tests/test_repository_architecture.py tests/test_core_api_layering.py tests/test_scientific_regression_manifest.py tests/test_forge_check.py tests/test_agent_workflow_contract.py tests/test_capability_completion.py benchmarks/battery_1rc_closure/tests/test_battery_1rc_closure.py benchmarks/battery_1rc_crosscell/tests/test_battery_1rc_crosscell.py benchmarks/battery_1rc_identifiability/tests/test_battery_1rc_identifiability.py tests/foundations/test_v2_blindfold.py tests/test_multiphysics_window_control.py --basetemp=D:/tmp/archive-doc-main/bt`
 
 Cwd `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/archive-doc-main", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f"}`; exit1; elapsed9.596498799975961s.
+
+
+## 2026-10-20 — agent configuration archive and post-PR180 CI diagnosis
+Base main67585300; archive merge ce32f6a6. Owner authorized continuing review, not automatic merge or OD3. No source/config/test behavior changed. Exact source delta42088 bytes SHA256409329d709dce4878fbe1f7269709b16b22254e365111e65c9156894e498046b.
+
+### agent-archive-gate
+Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main`
+CWD: `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`
+Environment: `{"TMPDIR": "D:/tmp/agent-archive-gate", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f", "PYTEST_ADDOPTS": "--basetemp=D:/tmp/agent-archive-gate/bt"}`
+Result:94 passed; exit0; wall seconds 9.46724779997021. Output SHA256 `855ffe277d9873091431c6b907203b110686f72306d4914d9a224d8b849a18f7`. No failures. Raw output and metadata: `docs/work/evidence/branch_ci_investigation_2026_10_20/agent-archive-gate.txt` and `.json`.
+
+### agent-archive-final-gate
+Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main`
+CWD: `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`
+Environment: `{"TMPDIR": "D:/tmp/agent-archive-final", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f", "PYTEST_ADDOPTS": "--basetemp=D:/tmp/agent-archive-final/bt"}`
+Result:94 passed; exit0; wall seconds 9.618442600010894. Output SHA256 `f75e069f24587ae62416522acbc9e5c5498e672480338a60c39a06ef6fa6e4c4`. No failures. Raw output and metadata: `docs/work/evidence/branch_ci_investigation_2026_10_20/agent-archive-final-gate.txt` and `.json`.
+
+Live GitHub Tests39488053735 and Branch Policy39488053796 failed with empty step metadata; dependent jobs reported skipped. Logs for branch-policy118853558670 and scope118853560388 returned404 BlobNotFound. Annotations unavailable through connector; browser signed out. Root cause UNVERIFIED pending owner-provided annotation. No billing diagnosis, workflow repair or hosted rerun claimed. Formal, full assurance and OD3 NOT RUN.

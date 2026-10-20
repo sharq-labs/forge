@@ -6,6 +6,10 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task - remaining branches and post-merge CI (2026-10-20)
+
+Owner authorized continuing branch review and investigating Tests/Branch Policy without bypassing gates or OD3. PR180 merged with explicit archival-only approval at67585300. Twenty residual tips / fifteen maximal groups remain; nineteen tips trigger recertification. Prepare archive-only reconciliation of the seven ignored agent/configuration files from c4b9d950; do not activate their historical instructions. Review and run the changed-file gate before concrete PR approval. Investigate GitHub failure from actual job evidence: empty steps and missing log blobs currently leave root cause UNVERIFIED; obtain Annotations before prescribing a hosted-runner repair. Report: BRANCH_RECONCILIATION_CI_2026_10_20.md. No certification-sensitive implementation adoption, freeze or formal run.
+
 ## Current bounded task - preserve superseded documentation branches (2026-10-20)
 
 Owner authorized reviewing and reconciling unmerged work, excluding preserve/* and wip/*. Preserve exact historical deltas from fix-bisect-table, evidence-v11, blind-rediscovery-benchmark-v1 and big-13-flagship-demonstrations in docs/archive/branch_deltas_2026_10_20/. Reconcile ancestry only with that explicit archive-only disposition: no superseded text is applied to live contracts, benchmark semantics or task queues. Independent review PASS; ordinary219-node gate217passed2failed, exactsamefailed nodes as pristine main. Await concrete PR approval; no green-gate claim. Scientific/certified implementation branches remain separate and subject to existing decisions/OD3.
