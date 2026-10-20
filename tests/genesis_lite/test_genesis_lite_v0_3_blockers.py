@@ -519,7 +519,8 @@ def test_attempt_the_driver_consumes_the_root_before_any_world(monkeypatch, tmp_
     root = H(b"driver root").digest()
     doc = {"status": "FROZEN", "arms": {n: {} for n in formal.registered_arms()},
            "formal": {"root_commitment_sha256": H(root).hexdigest(), "candidate": formal.NO_CANDIDATE,
-                      "environment_manifest_sha256": environment.manifest_digest(MANIFEST)}}
+                      "environment_manifest_sha256": environment.manifest_digest(MANIFEST),
+                      "budget": {"total_hours": 72.0}}}
 
     def crash(*args, **kwargs):
         raise RuntimeError("crash in the first world")
@@ -540,7 +541,8 @@ def test_attempt_a_revealed_pilot_root_is_refused_before_admission(tmp_path):
                                         .read_bytes())["pilot_root_revealed_hex"])
     doc = {"status": "FROZEN", "arms": {n: {} for n in formal.registered_arms()},
            "formal": {"root_commitment_sha256": H(revealed).hexdigest(), "candidate": formal.NO_CANDIDATE,
-                      "environment_manifest_sha256": environment.manifest_digest(MANIFEST)}}
+                      "environment_manifest_sha256": environment.manifest_digest(MANIFEST),
+                      "budget": {"total_hours": 72.0}}}
     reg = AttemptRegistry(tmp_path / "reg")
     with pytest.raises(formal.FormalRefused, match="retired"):
         formal.run_formal(revealed, doc, manifest=MANIFEST, registry=reg, sink=lambda r: None, publish=print)
@@ -559,7 +561,8 @@ def test_attempt_a_fresh_registry_cannot_reproduce_an_attempt_or_its_worlds(tmp_
 def _stand_in(root, candidate):
     return {"status": "FROZEN", "arms": {n: {} for n in formal.registered_arms()},
             "formal": {"root_commitment_sha256": H(root).hexdigest(), "candidate": candidate,
-                       "environment_manifest_sha256": environment.manifest_digest(MANIFEST)}}
+                       "environment_manifest_sha256": environment.manifest_digest(MANIFEST),
+                      "budget": {"total_hours": 72.0}}}
 
 
 def test_p4_candidate_runs_inside_the_attempt_world_set_major(monkeypatch, tmp_path):

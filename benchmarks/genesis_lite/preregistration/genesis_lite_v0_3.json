@@ -22,6 +22,12 @@
  "analysis": {
   "base": "the v0.2 lift rule (benchmarks/genesis_lite/analysis.py, pinned above) with the changes below",
   "bootstrap": "lower bound only; 2000 resamples of world sets as multinomial counts from numpy default_rng(0), the capped statistic recomputed per resample, floor order statistic (D3b-1)",
+  "budget": {
+   "baseline_hours": 72.0,
+   "candidate_hours": "OWNER_DECISION_REQUIRED",
+   "rule": "formal.run_formal checks the elapsed time before each world set and stops past total_hours: BUDGET_EXCEEDED, INVALID, never partially claimed (Genesis section 10.6)",
+   "total_hours": "OWNER_DECISION_REQUIRED"
+  },
   "cap_rule": "which universes are capped: a capped kind whose truth is outside the searched family (or whose flag is unknown), and every REPRESENTATION_LIMITED / CONTROL_SOLVED cell; a VALID record without the flag for one of them is refused. How they count (D3b-1): cell-level (D3b-1): a capped (kind, presentation) cell contributes min(0, its summed paired difference) to the effect size and the per-kind non-inferiority, recomputed inside every bootstrap resample; the significance test uses the uncapped differences only (P2)",
   "capped_kinds": [
    "confounded",
@@ -483,7 +489,6 @@
  "owner_decisions_open": {
   "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a baseline-only attempt); the operator generates a fresh formal root and commits it",
   "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
-  "D7-budget-and-machine": "OD-18: formal compute (one proposer process per card adds per-card start cost) and the formal machine, which fixes the environment manifest",
   "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)"
  },
  "owner_decisions_taken": {
@@ -493,7 +498,8 @@
   "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, spurious_correlate, confounded, indistinguishable); FDA-21 careful keeps ddof = 0 (certified, a documented exception) and the corrected <name>_dof arms join the strongest-baseline maximum; FDA-22 the form tell is declared and law_form measured, the generator's priors are NOT equalised (no certified change); FDA-18 one proposer process per card; pilot P-2 CONTROL_SOLVED with the exact binary-bootstrap lower bound >= 0.5",
   "D3b-1-cap-form": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, a cell-level cap. A capped (kind, presentation) cell contributes min(0, its summed paired difference): no gain, a net loss counts, in the effect size (recomputed per bootstrap resample) and the per-kind non-inferiority. Implementation P2 (owner, same session): the sign-flip p uses the uncapped differences only, because the min inside every sign vector let capped wins raise significance (p = 0.002 at a mean difference of 0, adversarial test). v0.3 only",
   "D3b-2-kind-noninferiority": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, the per-kind non-inferiority margin is 0.15 (v0.2: 0.10) and every kind is still required; the presentation margin is unchanged. v0.3 only. RECONFIRMED by the owner on 2026-10-20 at 0.15, with the corrected interpretation: a NON-INFERIORITY GUARDRAIL, not an equivalence claim and not a statement of acceptable degradation. The margin bounds the 95 % lower bound of the per-kind mean credit difference; read as a success rate it allows about 7.5 points for success -> failure (+1 -> -1), 15 points for success -> refusal (1 -> 0) and 30 points for indistinguishable_hit -> insufficient_evidence (1 -> 0.5)",
-  "D5-deployment": "OD-20; decided by the owner in session on 2026-10-20: option A1, rootless Linux namespaces. Every formal proposer card runs under unshare in fresh user, PID, mount, network, IPC and UTS namespaces, with operator state masked by private tmpfs mounts and only the benchmark tree and the Python environment re-bound read-only (isolation.py); a formal card cannot start without it. Verified on 2026-10-20 (evidence pinned by sha256): every one of the ten attack channels REFUSED with the namespaces and REACHED by the same probe without them. Residual, disclosed: same Linux account outside the namespaces; readable tree and environment; WSL shares the host's utility VM; the certified escrow stays in the operator process (the operator_process channel shows a proposer cannot reach it); the certified isolation-probe rerun belongs to OD-3"
+  "D5-deployment": "OD-20; decided by the owner in session on 2026-10-20: option A1, rootless Linux namespaces. Every formal proposer card runs under unshare in fresh user, PID, mount, network, IPC and UTS namespaces, with operator state masked by private tmpfs mounts and only the benchmark tree and the Python environment re-bound read-only (isolation.py); a formal card cannot start without it. Verified on 2026-10-20 (evidence pinned by sha256): every one of the ten attack channels REFUSED with the namespaces and REACHED by the same probe without them. Residual, disclosed: same Linux account outside the namespaces; readable tree and environment; WSL shares the host's utility VM; the certified escrow stays in the operator process (the operator_process channel shows a proposer cannot reach it); the certified isolation-probe rerun belongs to OD-3",
+  "D7-budget-and-machine": "OD-18; decided by the owner in session on 2026-10-20: the formal machine is this WSL Ubuntu (Linux 6.6 WSL2, Python 3.12 forge venv), where D5 was verified and the environment manifest is measured at freeze. A timing pilot measured first (MEASURED 43.5 s per world set for the 20 baselines; ESTIMATED 58 h formal with replay); budget approved: 72 h for the baselines plus the candidate's cost measured by a one-campaign timing at D4; an overrun stops the attempt as BUDGET_EXCEEDED, INVALID, never partially claimed"
  },
  "package_markers": {
   "benchmarks/__init__.py": "06dd19293c8381eafa491dfd1be8ca413dcb3ea20a1c490cf24b810e6720c7df",
@@ -536,11 +542,11 @@
   "deployment_attacks.py": "5903ace4a733c255e8b057307754cdb5394a498c14ab56a2799d7e029fce55db",
   "environment.py": "d9ab7044c74cb941e9d4c0b8973284ab73a26f5ff702fdf9b61b2b37b760a06f",
   "evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
-  "formal.py": "dfbf372c084bfe9107425bcb098e58ff0d6aff199bc8680000863c6c510363d8",
+  "formal.py": "5e526783d3120d59b8b6c353a56c93dcfa17cc2f664619cf4746dd45aa08b310",
   "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
   "isolation.py": "21d237a0d133ca49fcdba674580d6ecedf5c70ff1dd3a1e7c90358f7b500dce7",
-  "preregistration.py": "ac70f040cbf2f1b45e2b7fad77dd1ecd7175a081dc8971d85a3323e86a6429a0",
-  "readiness.py": "2ac99d6e0287fa43ec117105d18b63af19953cb9394d38d7011ea01de1af4e5b",
+  "preregistration.py": "f630c7b0e9adc6c190b1ee1ecb184d4b6b7278392373b5c58c3c4739d7b3c810",
+  "readiness.py": "09a3fb8ceee37005b19b29fea434310300dc93ebb891602a88df42378f235b7d",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8",

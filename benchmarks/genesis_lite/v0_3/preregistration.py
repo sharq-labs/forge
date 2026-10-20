@@ -38,9 +38,20 @@ STATUS = "DRAFT"
 FORMAL_ROOT_COMMITMENT = ODR                 # a FRESH root, generated and committed by the operator at freeze
 ENVIRONMENT_MANIFEST_SHA256 = ODR            # measured on the owner-approved formal machine (environment.py)
 CANDIDATE = ODR                              # {name, spec, code_sha256} named in the freeze, or "NONE" (baselines only)
+#: D7 (owner, 2026-10-20): the formal wall-clock cap. Baselines: 72 h (about 1.25 x the ESTIMATED 58 h of the timing
+#: pilot). The candidate's cost is measured by a one-campaign timing at D4 and added before the freeze.
+BASELINE_BUDGET_HOURS = 72.0
+CANDIDATE_BUDGET_HOURS = ODR
+TOTAL_BUDGET_HOURS = ODR
 DECISION_RECORD = "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md"
 #: owner decisions taken so far (each also needs its entry in the owner's approval record at freeze)
 OWNER_DECISIONS_TAKEN = {
+    "D7-budget-and-machine": "OD-18; decided by the owner in session on 2026-10-20: the formal machine is this WSL Ubuntu "
+                             "(Linux 6.6 WSL2, Python 3.12 forge venv), where D5 was verified and the environment "
+                             "manifest is measured at freeze. A timing pilot measured first (MEASURED 43.5 s per world set "
+                             "for the 20 baselines; ESTIMATED 58 h formal with replay); budget approved: 72 h for the "
+                             "baselines plus the candidate's cost measured by a one-campaign timing at D4; an overrun "
+                             "stops the attempt as BUDGET_EXCEEDED, INVALID, never partially claimed",
     "D5-deployment": "OD-20; decided by the owner in session on 2026-10-20: option A1, rootless Linux namespaces. Every "
                      "formal proposer card runs under unshare in fresh user, PID, mount, network, IPC and UTS namespaces, "
                      "with operator state masked by private tmpfs mounts and only the benchmark tree and the Python "
@@ -267,6 +278,10 @@ def build() -> dict[str, Any]:
                           "only by the percentile-bootstrap lower bound, whose level is approximate. (I-5) the bootstrap "
                           "uses numpy's Generator.multinomial; the numpy version is bound by the formal environment "
                           "manifest (D7)",
+            "budget": {"baseline_hours": BASELINE_BUDGET_HOURS, "candidate_hours": CANDIDATE_BUDGET_HOURS,
+                       "total_hours": TOTAL_BUDGET_HOURS,
+                       "rule": "formal.run_formal checks the elapsed time before each world set and stops past "
+                               "total_hours: BUDGET_EXCEEDED, INVALID, never partially claimed (Genesis section 10.6)"},
             "timing_pilot": {"evidence": TIMING_PILOT_EVIDENCE, "evidence_sha256": TIMING_PILOT_EVIDENCE_SHA256,
                              "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are "
                                        "ESTIMATED from it and exclude the candidate's own cost (D4)"},
@@ -357,8 +372,6 @@ def build() -> dict[str, Any]:
             "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a "
                                   "baseline-only attempt); the operator generates a fresh formal root and commits it",
             "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
-            "D7-budget-and-machine": "OD-18: formal compute (one proposer process per card adds per-card start cost) and "
-                                     "the formal machine, which fixes the environment manifest",
             "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)",
         },
     }

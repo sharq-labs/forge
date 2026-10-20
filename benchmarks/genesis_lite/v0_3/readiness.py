@@ -230,6 +230,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
     'D7 timing pilot': (
         'test_d7_a_formal_run_never_takes_a_callers_launcher_and_the_pilot_stays_off_the_formal_grid',
         'test_d7_timing_pilot_evidence_is_pinned_and_timed_this_code',
+        'test_d7_the_driver_stops_and_invalidates_an_attempt_over_budget',
     ),
     'power and null-calibration study (ODC-O1b)': (
         'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',

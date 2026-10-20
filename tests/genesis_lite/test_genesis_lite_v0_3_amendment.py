@@ -747,6 +747,29 @@ def test_d7_timing_pilot_evidence_is_pinned_and_timed_this_code():
         assert hashlib.sha256((v03p.HERE / name).read_bytes()).hexdigest() == digest, f"{name} changed since the pilot"
 
 
+def test_d7_the_driver_stops_and_invalidates_an_attempt_over_budget(stand_in_accepted, registry):
+    """D7: past the preregistered total the attempt stops before the next world set and is BUDGET_EXCEEDED; a
+    preregistration without a positive total never starts."""
+    doc = frozen_doc()
+    doc["formal"]["budget"] = {"total_hours": 1.0}
+    identity = formal.identity(doc)
+    ticks = iter([0.0, 0.0, 3601.0] + [3601.0] * 10)
+    sunk = []
+
+    def runner(arm, *, master_seed, campaign_id, presentation, seed):
+        return {"arm": arm, "status": "VALID", "presentation": presentation, "campaign_id": campaign_id, "seed": seed,
+                "prereg_sha256": identity, "universes": []}
+
+    summary = formal.run_formal(FRESH_ROOT, doc, manifest=MANIFEST, runner=runner, sink=sunk.append, registry=registry,
+                                publish=lambda e: None, clock=lambda: next(ticks))
+    assert summary["status"] == "BUDGET_EXCEEDED" and summary["world_sets_run"] == 1
+    assert len(sunk) == len(formal.registered_arms())
+    for bad in ({}, {"total_hours": 0}, {"total_hours": "72"}, {"total_hours": True}):
+        unset = frozen_doc()
+        unset["formal"]["budget"] = bad
+        assert any("budget" in p for p in formal.preflight(unset, FRESH_ROOT, MANIFEST)), bad
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,
@@ -799,11 +822,11 @@ def test_v0_3_draft_is_exactly_what_the_code_rebuilds():
 def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
     assert set(doc["owner_decisions_open"]) == {"D4-identity-freeze", "D6-evaluator",
-                                                 "D7-budget-and-machine", "OD-3",
+                                                 "OD-3",
                                                  }
     assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells",
                                                   "D3b-1-cap-form", "D3b-2-kind-noninferiority", "D2b-root-grinding",
-                                                  "D5-deployment"}
+                                                  "D5-deployment", "D7-budget-and-machine"}
     covered = " ".join(list(doc["owner_decisions_open"].values()) + list(doc["owner_decisions_taken"].values()))
     for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",
                   "OD-20", "OD-8", "OD-18"):
@@ -826,7 +849,8 @@ def frozen_doc(root=FRESH_ROOT, manifest=MANIFEST):
     return {"status": "FROZEN", "benchmark_id": "genesis_lite.blindfold_l5.v0_3",
             "arms": {n: {} for n in formal.registered_arms()},
             "formal": {"root_commitment_sha256": hashlib.sha256(root).hexdigest(), "candidate": formal.NO_CANDIDATE,
-                       "environment_manifest_sha256": environment.manifest_digest(manifest)}}
+                       "environment_manifest_sha256": environment.manifest_digest(manifest),
+                       "budget": {"total_hours": 72.0}}}
 
 
 @pytest.fixture

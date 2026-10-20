@@ -8213,3 +8213,9 @@ The first pilot attempt on the draft branch was refused by `bind` (the escrow ha
 - Evidence sha256 a543bc217fdcba296d4fe64616ec0f667462beab5543d483f89f5ba9e5e285e8, identical on both sides of the copy, pinned; test_d7_timing_pilot_evidence_is_pinned_and_timed_this_code binds it byte for byte.
 
 `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 246 passed.
+
+**Owner decision D7 budget (2026-10-20, in session).** Approved: 72 h for the baselines plus the candidate's cost, measured by a one-campaign timing at D4. The preregistration `formal.budget` holds baseline_hours 72.0; candidate_hours and total_hours stay OWNER_DECISION_REQUIRED, so a freeze is refused until D4.
+
+`formal.preflight` refuses a FROZEN doc without a positive total_hours. `formal.run_formal` checks the elapsed time before each world set and stops past the cap as BUDGET_EXCEEDED. Test: `test_d7_the_driver_stops_and_invalidates_an_attempt_over_budget`. The test stand-in docs carry a budget.
+
+`python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 247 passed.

@@ -296,6 +296,16 @@ def candidate_code_problems(cand: Mapping[str, Any] | None) -> list[str]:
     return problems
 
 
+def budget_hours(doc: Mapping[str, Any]) -> float | None:
+    """D7: the approved wall-clock cap of the whole formal attempt (baselines + candidate), or None if not set."""
+    formal = doc.get("formal", {}) if isinstance(doc.get("formal"), Mapping) else {}
+    budget = formal.get("budget", {}) if isinstance(formal.get("budget"), Mapping) else {}
+    hours = budget.get("total_hours")
+    if isinstance(hours, bool) or not isinstance(hours, (int, float)) or not hours > 0 or hours != hours:
+        return None
+    return float(hours)
+
+
 def preflight(doc: Mapping[str, Any], root: bytes, manifest: Mapping[str, Any]) -> list[str]:
     """Every reason the formal tier may not start under ``doc`` with ``root`` in the environment ``manifest``."""
     problems = []
@@ -320,6 +330,8 @@ def preflight(doc: Mapping[str, Any], root: bytes, manifest: Mapping[str, Any]) 
         problems.append("the root is retired: an earlier preregistration committed it (and its pilot revealed it)")
     if formal.get("environment_manifest_sha256") != environment.manifest_digest(manifest):
         problems.append("the environment manifest differs from the preregistered one")
+    if budget_hours(doc) is None:
+        problems.append("the formal budget (D7: total_hours, baselines + candidate) is not a positive number")
     return problems
 
 
@@ -343,10 +355,13 @@ def harness_runner(doc: Mapping[str, Any]) -> Runner:
 
 def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, Any], registry: AttemptRegistry,
                publish: Callable[[Mapping[str, Any]], None], sink: Callable[[dict[str, Any]], None],
-               runner: Runner | None = None) -> dict[str, Any]:
+               runner: Runner | None = None, clock: Callable[[], float] | None = None) -> dict[str, Any]:
     """Run every registered arm and the named candidate once on every world set of FORMAL_GRID, world set by world set.
-    ``runner`` exists for orchestration tests only; production uses :func:`harness_runner`. ``publish`` delivers the
-    admission to the external evaluator; if it fails, the attempt is consumed and nothing runs."""
+    ``runner`` and ``clock`` exist for orchestration tests only; production uses :func:`harness_runner` and
+    ``time.monotonic``. ``publish`` delivers the admission to the external evaluator; if it fails, the attempt is
+    consumed and nothing runs. D7: before each world set the elapsed time is checked against the preregistered budget;
+    past it the attempt stops as BUDGET_EXCEEDED. It is INVALID and never partially claimed: the evaluator's
+    verification and the lift rule's coverage both need every world set."""
     problems = preflight(doc, root, manifest) + committed_identity_problems(doc)
     if problems:
         raise FormalRefused("; ".join(problems))
@@ -366,8 +381,16 @@ def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, An
         publish(dict(attempt))
     except AttemptRefused as exc:                             # the evaluator refused: the attempt is consumed, not run
         raise FormalRefused(f"the evaluator refused the admission: {exc}") from exc
+    import time  # noqa: PLC0415
+
+    clock = clock or time.monotonic
+    cap, started, status, ran = budget_hours(doc) * 3600.0, clock(), "COMPLETE", 0
     invalid = 0
     for index, (presentation, campaign_id, seed) in enumerate(plan()):
+        if clock() - started > cap:
+            status = "BUDGET_EXCEEDED"
+            break
+        ran += 1
         master = master_for(root, expected, attempt["nonce"], presentation, campaign_id, seed)
         held = [dict(runner(name, master_seed=master, campaign_id=campaign_id, presentation=presentation, seed=seed))
                 for name in names]                          # nothing of this world set leaves before every arm ran it
@@ -379,7 +402,8 @@ def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, An
             invalid += rec.get("status") != "VALID"
             sink({**rec, "tier": TIER, "root_commitment_sha256": commitment, "world_set_index": index,
                   "attempt_sha256": attempt["attempt_sha256"]})
-    return {"world_sets": len(v02_analysis.FORMAL_GRID), "arms": len(names), "invalid_runs": invalid,
+    return {"status": status, "world_sets_run": ran, "budget_hours": cap / 3600.0,
+            "world_sets": len(v02_analysis.FORMAL_GRID), "arms": len(names), "invalid_runs": invalid,
             "prereg_sha256": expected, "root_commitment_sha256": commitment,
             "attempt_sha256": attempt["attempt_sha256"], "registry_head": registry.head()}
 
