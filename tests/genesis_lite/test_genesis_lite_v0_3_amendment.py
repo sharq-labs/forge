@@ -418,10 +418,9 @@ def test_v0_3_draft_is_exactly_what_the_code_rebuilds():
 
 def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
-    assert set(doc["owner_decisions_open"]) == {"D3-baselines-and-tells",
-                                                 "D4-identity-freeze", "D5-deployment", "D6-evaluator",
+    assert set(doc["owner_decisions_open"]) == {"D4-identity-freeze", "D5-deployment", "D6-evaluator",
                                                  "D7-budget-and-machine", "OD-3"}
-    assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance"}
+    assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells"}
     covered = " ".join(list(doc["owner_decisions_open"].values()) + list(doc["owner_decisions_taken"].values()))
     for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",
                   "OD-20", "OD-8", "OD-18"):

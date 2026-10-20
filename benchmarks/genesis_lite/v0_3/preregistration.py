@@ -41,6 +41,14 @@ CANDIDATE = ODR                              # {name, spec, code_sha256} named i
 DECISION_RECORD = "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md"
 #: owner decisions taken so far (each also needs its entry in the owner's approval record at freeze)
 OWNER_DECISIONS_TAKEN = {
+    "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in "
+                              "session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs "
+                              "over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, "
+                              "spurious_correlate, confounded, indistinguishable); FDA-21 careful keeps ddof = 0 "
+                              "(certified, a documented exception) and the corrected <name>_dof arms join the strongest-"
+                              "baseline maximum; FDA-22 the form tell is declared and law_form measured, the generator's "
+                              "priors are NOT equalised (no certified change); FDA-18 one proposer process per card; "
+                              "pilot P-2 CONTROL_SOLVED with the exact binary-bootstrap lower bound >= 0.5",
     "D2-significance": "covers ODC-O1a and ODC-O1b; decided by the owner in session on 2026-10-20: ODC-O1a route B, the "
                        "one-sided paired sign-flip p with the Monte-Carlo stream derived from the revealed formal root "
                        "(HMAC, own label; Holm, alpha and the family unchanged; bootstrap for the lower bound only); the "
@@ -279,9 +287,6 @@ def build() -> dict[str, Any]:
         },
         "owner_decisions_taken": dict(OWNER_DECISIONS_TAKEN),
         "owner_decisions_open": {
-            "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2: section 10.5 governs the cap; "
-                                      "capped kinds; corrected-dof arms as the v0.3 baselines; the form tell declared "
-                                      "(not equalised); one proposer process per card; the CONTROL_SOLVED cap",
             "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a "
                                   "baseline-only attempt); the operator generates a fresh formal root and commits it",
             "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse "

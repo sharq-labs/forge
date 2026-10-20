@@ -63,7 +63,8 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "FDA-19 (Genesis-lite secret inventory)": (FIXED, ("test_fda19_",), "proposer-side secret_scan; the certified "
                                                                         "isolation_probe is not extended"),
     "FDA-21": (FIXED, ("test_fda21_",), "corrected-dof arms ADDED beside the v0.2 arms"),
-    "FDA-22": (FIXED, ("test_fda22_",), "tell declared, law_form measured; equalising the priors is a D3 option"),
+    "FDA-22": (FIXED, ("test_fda22_",), "tell declared, law_form measured; D3 (2026-10-20): priors not "
+                                         "equalised"),
     "pilot P-1 (always_law)": (NOT_A_BLOCKER, ("test_pilot_p1_",), "solved by the v0.1 joint endpoint"),
     "pilot P-2 (control cells)": (FIXED, ("test_pilot_p2_",), "CONTROL_SOLVED cap"),
     "pilot P-3 (out-of-family share)": (FIXED, ("test_pilot_p3_",), "FDA-06 cap"),
@@ -73,8 +74,8 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "P-5 environment manifest": (FIXED, ("test_p5_",), "measured inside bind for the formal tier"),
     "one attempt per root": (FIXED, ("test_attempt_",), "registry + publication + post-reveal verify_attempt"),
     "pass route with an arbitrary partner (ODC-05d)": (DECIDED, (), "D1, 2026-10-20: kept at +1.0 as in v0.2"),
-    "power and null-calibration study (ODC-O1b)": (PENDING, (), "authorised by the owner 2026-10-20 (D2); runs after D3 "
-                                                               "on synthetic records only"),
+    "power and null-calibration study (ODC-O1b)": (PENDING, (), "authorised by the owner 2026-10-20 (D2); D3 decided "
+                                                               "2026-10-20; runs on synthetic records only"),
 }
 
 

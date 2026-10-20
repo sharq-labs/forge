@@ -462,7 +462,6 @@
   "readiness P-1 / P-2": "the isolation deployment and an out-of-process escrow (OD-20); the deployment attack suite must report every channel REFUSED there"
  },
  "owner_decisions_open": {
-  "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2: section 10.5 governs the cap; capped kinds; corrected-dof arms as the v0.3 baselines; the form tell declared (not equalised); one proposer process per card; the CONTROL_SOLVED cap",
   "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a baseline-only attempt); the operator generates a fresh formal root and commits it",
   "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse every channel",
   "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
@@ -471,7 +470,8 @@
  },
  "owner_decisions_taken": {
   "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d; decided by the owner in session on 2026-10-20: ODC-05a form (i), a ratio cap max/min <= 1 + w outside the box, on the BRACKET route only; ODC-05b w = 3 x tol (tol_multiple 3.0), anchored a priori on the generator's declared separation scale (OUTSIDE_TOLERANCES = 3 in universe.py), never tuned on pilot or formal worlds; ODC-05c v0.3 only, never retroactive to v0.2 records; ODC-05d the pass route keeps +1.0 as in v0.2",
-  "D2-significance": "covers ODC-O1a and ODC-O1b; decided by the owner in session on 2026-10-20: ODC-O1a route B, the one-sided paired sign-flip p with the Monte-Carlo stream derived from the revealed formal root (HMAC, own label; Holm, alpha and the family unchanged; bootstrap for the lower bound only); the exchangeability null scope is accepted and stated; ODC-O1b a bounded, non-formal power and null-calibration study on synthetic records is authorised, to run after D3"
+  "D2-significance": "covers ODC-O1a and ODC-O1b; decided by the owner in session on 2026-10-20: ODC-O1a route B, the one-sided paired sign-flip p with the Monte-Carlo stream derived from the revealed formal root (HMAC, own label; Holm, alpha and the family unchanged; bootstrap for the lower bound only); the exchangeability null scope is accepted and stated; ODC-O1b a bounded, non-formal power and null-calibration study on synthetic records is authorised, to run after D3",
+  "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, spurious_correlate, confounded, indistinguishable); FDA-21 careful keeps ddof = 0 (certified, a documented exception) and the corrected <name>_dof arms join the strongest-baseline maximum; FDA-22 the form tell is declared and law_form measured, the generator's priors are NOT equalised (no certified change); FDA-18 one proposer process per card; pilot P-2 CONTROL_SOLVED with the exact binary-bootstrap lower bound >= 0.5"
  },
  "package_markers": {
   "benchmarks/__init__.py": "06dd19293c8381eafa491dfd1be8ca413dcb3ea20a1c490cf24b810e6720c7df",
@@ -516,8 +516,8 @@
   "evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
   "formal.py": "dfbf372c084bfe9107425bcb098e58ff0d6aff199bc8680000863c6c510363d8",
   "harness.py": "ce603d0175dd3c1248ae32ed9e9286284723112c6687def143f56fc79176f15d",
-  "preregistration.py": "8897fc0cb2bb87fa57307a1852d68335cc18f6e9a69e51bee48bc7655441b1d3",
-  "readiness.py": "00e031c87cdb6cc132998c48bf9d4640d42df4d388453b81beab716e0c86a103",
+  "preregistration.py": "4b993c93129c1fddb431a8cf66b75bc07279b407b986d8cdb61fad9872ad7437",
+  "readiness.py": "44ed921a0790ed2249c9c5ae666b0c789509b148c1b3db14f8932c2053c459a9",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "4763de7c3878c8b82f9209285d0d9cc2c720ab3b22708141f260ce0f0bb001d9",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8"
