@@ -42,8 +42,6 @@ from ..evaluator.score import (
 
 EVALUATOR_SCHEMA = "forge.genesis_lite.independent_evaluator/3"
 OWNER_DECISION_REQUIRED = "OWNER_DECISION_REQUIRED"
-#: ODC-05b: the owner's w. Never defaulted; a v0.3 identity cannot be FROZEN while this is the literal below.
-PAIR_BOUND: Any = OWNER_DECISION_REQUIRED
 BOUND_FORMS = ("absolute", "tol_multiple")
 
 
@@ -60,6 +58,11 @@ class PairBound:
 
     def to_dict(self) -> dict[str, Any]:
         return {"form": self.form, "value": float(self.value)}
+
+
+#: ODC-05b, decided by the owner on 2026-10-20 (D1-scoring): w = 3 x tol, anchored a priori on the generator's declared
+#: separation scale (OUTSIDE_TOLERANCES = 3); scoring itself still takes the bound explicitly and never defaults it.
+PAIR_BOUND: Any = PairBound("tol_multiple", 3.0)
 
 
 def _checked(bound: Any) -> PairBound:

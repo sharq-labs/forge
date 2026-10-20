@@ -368,7 +368,7 @@ def test_harness_a_formal_binding_never_takes_a_callers_manifest(frozen_stand_in
 def test_harness_refuses_a_changed_w():
     with pytest.raises(harness.HarnessRefused, match="is not the bound one"):
         harness.bind(v03p.PREREG_PATH.read_bytes(), tier="development", manifest=MANIFEST,
-                     development_bound=TEST_BOUND, pair_bound=v03e.PairBound("tol_multiple", 6.0))
+                     pair_bound=v03e.PairBound("tol_multiple", 6.0))
 
 
 def test_harness_refuses_a_changed_w_against_a_frozen_bound(frozen_stand_in):
@@ -384,7 +384,7 @@ def test_harness_refuses_a_changed_credit_table(monkeypatch):
     changed["indistinguishable"]["insufficient_evidence"] = 0.0
     monkeypatch.setattr(v03e, "CREDIT", changed)
     with pytest.raises(harness.HarnessRefused, match="credit table"):
-        harness.bind(v03p.PREREG_PATH.read_bytes(), tier="development", manifest=MANIFEST, development_bound=TEST_BOUND)
+        harness.bind(v03p.PREREG_PATH.read_bytes(), tier="development", manifest=MANIFEST)
 
 
 def test_harness_refuses_a_changed_environment_manifest(frozen_stand_in, monkeypatch):
@@ -398,15 +398,15 @@ def test_harness_refuses_a_modified_evaluator(monkeypatch):
     real = v03p._sha
     monkeypatch.setattr(v03p, "_sha", lambda path: "0" * 64 if path.name == "evaluator.py" else real(path))
     with pytest.raises(harness.HarnessRefused, match="does not rebuild"):
-        harness.bind(v03p.PREREG_PATH.read_bytes(), tier="development", manifest=MANIFEST, development_bound=TEST_BOUND)
+        harness.bind(v03p.PREREG_PATH.read_bytes(), tier="development", manifest=MANIFEST)
 
 
-def test_harness_refuses_a_formal_run_of_a_draft_and_an_open_w_outside_development():
+def test_harness_refuses_a_formal_run_of_a_draft_and_a_development_bound_other_than_the_decided_w():
     committed = v03p.PREREG_PATH.read_bytes()
     with pytest.raises(harness.HarnessRefused, match="FROZEN"):
         harness.bind(committed, tier="formal")
-    with pytest.raises(harness.HarnessRefused, match="OWNER_DECISION_REQUIRED"):
-        harness.bind(committed, tier="development", manifest=MANIFEST)
+    with pytest.raises(harness.HarnessRefused, match="may not differ"):          # w is decided (D1): no other bound
+        harness.bind(committed, tier="development", manifest=MANIFEST, development_bound=TEST_BOUND)
 
 
 def test_harness_never_falls_back_without_the_escrow_half(frozen_stand_in, monkeypatch):

@@ -101,7 +101,7 @@ behalf.
 
 | ID | Exact choice | Option A | Option B | Recommended | Scientific consequence |
 |---|---|---|---|---|---|
-| **D1-scoring** | The bracket bound, w, and the pass route | (i) ratio cap on the bracket route only. The owner sets w a priori (absolute, or a multiple of tol). v0.3 only. Pass route kept. | (iii) no bracket credit (w at most tol); pass-route pairs scored at the kind's `law_pass` value | A on the form (the audit's recommendation). **No recommendation on w**: it is the owner's. The pass route needs a deliberate choice. | A credits an honest spread up to w, and a pair just under w can be gamed. B is strictest: INDISTINGUISHABLE then rewards only "contains the truth" or refusal. |
+| **D1-scoring** | The bracket bound, w, and the pass route | **DECIDED 2026-10-20 (owner, in session):** (i) ratio cap on the bracket route only; **w = 3 × tol** (`tol_multiple` 3.0), anchored a priori on the generator's declared separation scale (`OUTSIDE_TOLERANCES = 3`), never tuned on pilot or formal worlds; v0.3 only; pass route kept at +1.0 | — | — | Honest spreads up to 3·tol (0.09–0.24) earn bracket credit; a pair just under the bound can still be gamed (threshold gaming). The honest (law, rival) pair is unaffected. A passing law with an arbitrary partner keeps +1.0 in INDISTINGUISHABLE worlds and −0.5 in discoverable ones. |
 | **D2-significance** | The O-1 route | Sign-flip p, as drafted. Null = exchangeability within a world set. Caps err conservative. With the fixed public stream the size is about alpha. | Defer O-1 until the scoring is frozen (BVB handoff §3). Run a bounded null-calibration and power study first. | A, plus a bounded power study on synthetic records before the formal tier (separate approval) | No power analysis is preregistered, and the caps may leave little claimable region. |
 | **D3-baselines-and-tells** | Comparison set and tells | As drafted: §10.5 governs the cap; four capped kinds; `_dof` arms added; FDA-22 declared and measured; one process per card; CONTROL_SOLVED | As A, plus equalising the generator's form priors and correcting `careful`'s ddof (both certified, OD-3) | A | A measures the tell; B removes it at the cost of certified changes. |
 | **D4-identity-freeze** | OD-19 | Freeze once D1–D3, D5 and D7 are settled. Name the candidate, or NONE for baselines only. The operator generates a fresh root and commits its sha256. | Keep the draft | A, after D5 is verified | Freezing fixes every bound value; a later change is a v0.4. |
@@ -120,7 +120,7 @@ D1 also names `pair_bound`, and OD-3 names `certified_head`. The gate never writ
 
 ## 4. The owner's next action
 
-1. Write the approval record for D1–D7. Option A in each row is the drafted state.
+1. Decide D2–D7. D1 is decided (2026-10-20): `PAIR_BOUND` is set in the evaluator, and the preregistration lists it under `owner_decisions_taken`. The approval record is written once all decisions are taken, so that every entry names the FINAL preregistration digest (each decision changes it).
 2. Set `PAIR_BOUND`, `CANDIDATE`, `FORMAL_ROOT_COMMITMENT` (a fresh root) and `ENVIRONMENT_MANIFEST_SHA256` (measured
    on the D7 machine), and set `STATUS = "FROZEN"`. Regenerate, commit, and rerun the gate.
 3. Run OD-3 on that HEAD.

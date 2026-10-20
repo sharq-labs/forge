@@ -146,7 +146,7 @@ def test_fda05_bracket_credit_survives_inside_the_bound_and_only_there():
                                  v03e.PairBound("absolute", math.inf), v03e.PairBound("absolute", math.nan),
                                  v03e.PairBound("log_width", 1.0)])
 def test_fda05_w_is_an_owner_decision_never_a_default(bad):
-    assert v03e.PAIR_BOUND == "OWNER_DECISION_REQUIRED"
+    assert v03e.PAIR_BOUND == v03e.PairBound("tol_multiple", 3.0)          # D1, owner decision 2026-10-20
     with pytest.raises(v03e.EvaluatorRefused):
         v03e.score_universe(pair(vacuous_pair()), entry(T_UP), bound=bad)
     with pytest.raises(TypeError):
@@ -396,14 +396,15 @@ def test_v0_3_draft_is_exactly_what_the_code_rebuilds():
 
 def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
-    assert set(doc["owner_decisions_open"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells",
+    assert set(doc["owner_decisions_open"]) == {"D2-significance", "D3-baselines-and-tells",
                                                  "D4-identity-freeze", "D5-deployment", "D6-evaluator",
                                                  "D7-budget-and-machine", "OD-3"}
-    covered = " ".join(doc["owner_decisions_open"].values())
+    assert set(doc["owner_decisions_taken"]) == {"D1-scoring"}
+    covered = " ".join(list(doc["owner_decisions_open"].values()) + list(doc["owner_decisions_taken"].values()))
     for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",
                   "OD-20", "OD-8", "OD-18"):
         assert older in covered, older                                     # every scattered question folds into one
-    assert doc["evaluator"]["pair_bound"] == "OWNER_DECISION_REQUIRED"
+    assert doc["evaluator"]["pair_bound"] == {"form": "tol_multiple", "value": 3.0}
     assert doc["formal"]["root_commitment_sha256"] == "OWNER_DECISION_REQUIRED"
     assert doc["formal"]["environment_manifest_sha256"] == "OWNER_DECISION_REQUIRED"
 

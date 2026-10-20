@@ -8057,3 +8057,11 @@ The final tip's results follow below.
   pristine: `tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic` (fixed here).
 - Regression pack: 279 passed, exit 0.
 - Later commits on top of `20265e92` change only `docs/work/PROGRESS.md`.
+
+**Owner decision D1 (2026-10-20, in session).** D1-scoring decided:
+- ODC-05a: (i) a ratio cap on the bracket route only.
+- ODC-05b: w = 3 x tol (`tol_multiple` 3.0), anchored a priori on the generator's `OUTSIDE_TOLERANCES = 3`.
+- ODC-05c: v0.3 only.
+- ODC-05d: the pass route is kept at +1.0.
+
+Recorded as `evaluator.PAIR_BOUND` and the preregistration's `owner_decisions_taken`; the draft preregistration is regenerated. `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 223 passed. The owner approval record is deferred until all decisions are taken, so every entry binds the final preregistration digest.

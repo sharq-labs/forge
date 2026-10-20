@@ -39,6 +39,10 @@ FORMAL_ROOT_COMMITMENT = ODR                 # a FRESH root, generated and commi
 ENVIRONMENT_MANIFEST_SHA256 = ODR            # measured on the owner-approved formal machine (environment.py)
 CANDIDATE = ODR                              # {name, spec, code_sha256} named in the freeze, or "NONE" (baselines only)
 DECISION_RECORD = "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md"
+#: owner decisions taken so far (each also needs its entry in the owner's approval record at freeze)
+OWNER_DECISIONS_TAKEN = {
+    "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d; decided by the owner in session on 2026-10-20: ODC-05a form (i), a ratio cap max/min <= 1 + w outside the box, on the BRACKET route only; ODC-05b w = 3 x tol (tol_multiple 3.0), anchored a priori on the generator's declared separation scale (OUTSIDE_TOLERANCES = 3 in universe.py), never tuned on pilot or formal worlds; ODC-05c v0.3 only, never retroactive to v0.2 records; ODC-05d the pass route keeps +1.0 as in v0.2",
+}
 #: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
 RETIRED_PILOT_ROOT_COMMITMENTS = (
     "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",   # v0
@@ -166,10 +170,10 @@ def build() -> dict[str, Any]:
                            else evaluator.PAIR_BOUND),
             "pair_bound_binding": "evaluate_campaign refuses any bound other than this recorded value",
             "pass_route_note": "a passing law paired with any in-box-agreeing, outside-diverging partner earns +1.0 where "
-                               "the law alone earns 0.0 (a v0.2 property kept unchanged; ODC-05d)",
+                               "the law alone earns 0.0 (a v0.2 property kept unchanged by owner decision ODC-05d)",
             "pair_bound_forms": list(evaluator.BOUND_FORMS),
-            "pair_bound_scope": "bracket route only (proposed); covering every hit would refuse the generator's honest "
-                                "pair, whose ratio grows without limit outside the box (ODC-05a)",
+            "pair_bound_scope": "bracket route only (owner decision ODC-05a); covering every hit would refuse the "
+                                "generator's honest pair, whose ratio grows without limit outside the box",
             "pair_bound_rule": "w is justified from the rule's purpose, never tuned on pilot or formal worlds (ODC-05b); "
                                "w <= tol is option (iii), no bracket credit at all",
             "escrow_half": "REQUIRED before any v0.3 run: engcore.blindfold.escrow._assess_pair must apply the same "
@@ -263,9 +267,8 @@ def build() -> dict[str, Any]:
             "readiness P-1 / P-2": "the isolation deployment and an out-of-process escrow (OD-20); the deployment attack "
                                    "suite must report every channel REFUSED there",
         },
+        "owner_decisions_taken": dict(OWNER_DECISIONS_TAKEN),
         "owner_decisions_open": {
-            "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d: the bound form (i) on the bracket route only; the value and form of w; "
-                          "v0.3 only; the pass route with an arbitrary partner (keep, constrain, or score at law_pass)",
             "D2-significance": "covers ODC-O1a and ODC-O1b: sign-flip route B with its null scope and fixed Monte-Carlo stream, or "
                                "route A, or defer; whether to run a bounded null-calibration study",
             "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2: section 10.5 governs the cap; "

@@ -188,7 +188,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_harness_refuses_a_changed_credit_table',
         'test_harness_refuses_a_changed_environment_manifest',
         'test_harness_refuses_a_modified_evaluator',
-        'test_harness_refuses_a_formal_run_of_a_draft_and_an_open_w_outside_development',
+        'test_harness_refuses_a_formal_run_of_a_draft_and_a_development_bound_other_than_the_decided_w',
         'test_harness_never_falls_back_without_the_escrow_half',
         'test_harness_a_formal_run_takes_no_hook_path_spec_or_in_process_arm',
         'test_harness_a_formal_run_refuses_an_arm_that_is_neither_registered_nor_the_candidate',
