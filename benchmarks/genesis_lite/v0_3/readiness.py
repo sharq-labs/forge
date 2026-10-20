@@ -48,7 +48,9 @@ V0_2_SHA256 = "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64"
 APPROVALS_PATH = v03p.PREREG_PATH.with_name("genesis_lite_v0_3.owner_approvals.json")
 TEST_FILES = ("tests/genesis_lite/test_genesis_lite_v0_3_amendment.py",
               "tests/genesis_lite/test_genesis_lite_v0_3_blockers.py",
-              "tests/genesis_lite/test_genesis_lite_v0_3_escrow_fda05.py")
+              "tests/genesis_lite/test_genesis_lite_v0_3_escrow_fda05.py",
+              "tests/genesis_lite/test_genesis_lite_v0_3_container_isolation.py",   # N-1 (D5-A1b)
+              "tests/genesis_lite/test_genesis_lite_v0_3_container_contract.py")
 #: the consolidated owner decision set (decision record section 5)
 REQUIRED_APPROVALS = ("D1-scoring", "D2-significance", "D3-baselines-and-tells", "D4-identity-freeze", "D5-deployment",
                       "D6-evaluator", "D7-budget-and-machine", "OD-3",
@@ -65,7 +67,8 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
                         "must be private to the card and shown so (owner, 2026-10-20)"),
     "isolation boundary (D5)": (
         NOT_PROVEN, (), "fifth review N-1/N-2: WSL interop unreachability and per-card private writable mounts are not "
-                        "yet demonstrated; re-verification pending on the hardened distro (owner, 2026-10-20)"),
+                        "yet demonstrated; re-verification pending on the hardened distro (owner, 2026-10-20). D5-A1b "
+                        "(owner, 2026-10-21): decided from the pinned evidence by deployment_status()"),
     "FDA-19 (Genesis-lite secret inventory)": (FIXED, ("test_fda19_",), "proposer-side secret_scan; the certified "
                                                                         "isolation_probe is not extended"),
     "FDA-21": (FIXED, ("test_fda21_",), "corrected-dof arms ADDED beside the v0.2 arms"),
@@ -223,27 +226,33 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream',
     ),
     'FDA-18 residual (same-account files, helper processes)': (
-        'test_d5_the_launcher_masks_operator_state_and_keeps_only_the_tree_read_only',
-        'test_d5_the_proposer_runs_without_capabilities_and_kept_paths_are_validated_resolved',
+        'test_d5_the_launcher_runs_every_card_in_a_new_read_only_container_keeping_only_the_tree',
+        'test_d5_the_card_runs_without_capabilities_and_kept_paths_and_environment_are_validated',
         'test_d5_operator_files_must_be_unreadable_to_cards',
+        'test_d5_a_card_container_is_removed_when_its_card_closes',
+        'test_d5_the_container_probe_attributes_every_canary_to_its_mount',
         'test_d5_a_formal_card_cannot_start_without_the_deployment',
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
-        'test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code',
+        'test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code',
         'test_d5_a_failed_deployment_check_never_consumes_the_attempt',
     ),
     'readiness P-1/P-2 (isolation deployment, escrow out of process)': (
-        'test_d5_the_launcher_masks_operator_state_and_keeps_only_the_tree_read_only',
-        'test_d5_the_proposer_runs_without_capabilities_and_kept_paths_are_validated_resolved',
+        'test_d5_the_launcher_runs_every_card_in_a_new_read_only_container_keeping_only_the_tree',
+        'test_d5_the_card_runs_without_capabilities_and_kept_paths_and_environment_are_validated',
         'test_d5_operator_files_must_be_unreadable_to_cards',
+        'test_d5_a_card_container_is_removed_when_its_card_closes',
+        'test_d5_the_container_probe_attributes_every_canary_to_its_mount',
         'test_d5_a_formal_card_cannot_start_without_the_deployment',
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
-        'test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code',
+        'test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code',
         'test_d5_a_failed_deployment_check_never_consumes_the_attempt',
     ),
     'D7 timing pilot and budget': (
         'test_d7_a_formal_run_never_takes_a_callers_launcher_and_the_pilot_stays_off_the_formal_grid',
-        'test_d7_timing_pilot_evidence_is_pinned_and_timed_this_code',
         'test_d7_the_driver_stops_and_invalidates_an_attempt_over_budget',
+    ),
+    'D7 timing pilot evidence': (
+        'test_d7_timing_pilot_evidence_is_pinned_and_a_stale_pilot_is_a_blocker',
     ),
     'power and null-calibration study (ODC-O1b)': (
         'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',
@@ -308,8 +317,58 @@ def agreement_cases() -> list[dict[str, Any]]:
     return selfcheck.compare(pair_bound)
 
 
+#: rows the pinned D5-A1b deployment evidence decides (owner, 2026-10-21: NOT_PROVEN until it passes and is pinned)
+D5_ROWS = ("FDA-18 residual (same-account files, helper processes)", "isolation boundary (D5)",
+           "readiness P-1/P-2 (isolation deployment, escrow out of process)")
+
+
+def _pinned(rel: str, sha: str) -> dict[str, Any] | None:
+    try:
+        data = (v02p.ROOT / rel).read_bytes()
+    except OSError:
+        return None
+    return json.loads(data) if hashlib.sha256(data).hexdigest() == sha else None
+
+
+def deployment_status() -> tuple[str, str]:
+    """(status, note) of D5 from the preregistration-pinned evidence: FIXED only for D5-A1b evidence that verified;
+    A1 evidence is historical; blocked evidence names its reasons."""
+    from . import isolation  # noqa: PLC0415
+
+    doc = _pinned(v03p.DEPLOYMENT_EVIDENCE, v03p.DEPLOYMENT_EVIDENCE_SHA256)
+    if doc is None:
+        return NOT_PROVEN, "the pinned D5 deployment evidence is missing or not the pinned bytes"
+    if doc.get("schema") != isolation.EVIDENCE_SCHEMA:
+        return NOT_PROVEN, ("the pinned D5 evidence is historical (A1, superseded 2026-10-21); D5-A1b evidence is "
+                            "required (N-1)")
+    if doc.get("verified") is not True:
+        reasons = (doc.get("container_validation") or {}).get("reasons", [])
+        refused = sorted(c for c, v in (doc.get("with_containers") or {}).items() if v != "REFUSED")
+        return NOT_PROVEN, (f"D5-A1b evidence pinned but BLOCKED (N-1 open): container evidence {reasons}; channels "
+                            f"not refused {refused}")
+    return FIXED, "D5-A1b evidence pinned and verified: container evidence PASS, every channel refused, probes have power"
+
+
+def timing_pilot_status() -> tuple[str, str]:
+    """(status, note) of the D7 timing evidence: FIXED only while it timed the code in this tree."""
+    doc = _pinned(v03p.TIMING_PILOT_EVIDENCE, v03p.TIMING_PILOT_EVIDENCE_SHA256)
+    if doc is None:
+        return NOT_PROVEN, "the pinned D7 timing evidence is missing or not the pinned bytes"
+    moved = sorted(n for n, digest in doc.get("provenance", {}).get("code_sha256", {}).items()
+                   if not (v03p.HERE / n).is_file() or hashlib.sha256((v03p.HERE / n).read_bytes()).hexdigest() != digest)
+    if moved:
+        return NOT_PROVEN, (f"HISTORICAL_ONLY, REQUIRES_RERUN, REQUIRES_REPIN_AFTER_N1: the timed code changed {moved} "
+                            "(D5-A1b, 2026-10-21)")
+    return FIXED, "the pinned pilot timed the code in this tree"
+
+
 def blockers() -> dict[str, tuple[str, tuple[str, ...], str]]:
     rows = dict(LEDGER)
+    status, note = deployment_status()
+    for name in D5_ROWS:
+        rows[name] = (status, (), f"{LEDGER[name][2]}. {note}" if status != FIXED else note)
+    d7_status, d7_note = timing_pilot_status()
+    rows["D7 timing pilot evidence"] = (d7_status, (), d7_note)
     present = _escrow_half() is not None
     rows["v0.3 harness binding"] = (FIXED, (), "refusals: identity, credit, w, environment, formal lockdown")
     rows["FDA-05 escrow half"] = ((FIXED, (), "engcore.blindfold.pair_bound; UNCERTIFIED (OD-3)")

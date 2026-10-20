@@ -188,7 +188,16 @@ class CardProposerHost(_v02h.ProposerHost):
         paths = [str(_v02h._ROOT), str(_v02h._ROOT / "src"), *extra_paths]
         # -X pycache_prefix: bytecode is read and written only inside this card's directory, never a planted .pyc
         inner = [sys.executable, "-I", "-X", f"pycache_prefix={self._dir.name}", str(_v02h._HOST), *paths]
-        argv = launcher.argv(inner, self._dir.name) if launcher is not None else inner    # D5: the namespaces
+        self._launcher, self._container = launcher, None
+        if launcher is not None:                    # D5-A1b: a brand-new container for this card, removed on close
+            from .isolation import new_card_name  # noqa: PLC0415
+
+            self._container = new_card_name()
+            forwarded = {k: v for k, v in env.items() if k.startswith("FORGE_ATTACK_") or k == "PYTHONDONTWRITEBYTECODE"}
+            argv = launcher.argv(inner, self._dir.name, name=self._container, env=forwarded)
+            env.update(launcher.client_env())       # the podman client's own environment; never the container's
+        else:
+            argv = inner
         self._proc = subprocess.Popen(argv, cwd=self._dir.name, env=env,
                                       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0)
         self._lines: queue.Queue = queue.Queue()
@@ -199,6 +208,13 @@ class CardProposerHost(_v02h.ProposerHost):
         if hello.get("op") != "hello" or str(pathlib.Path(hello.get("engcore", "")).resolve()) != expected:
             self.close()
             raise RuntimeError(f"the proposer process did not import this tree's engcore: {hello}")
+
+    def close(self) -> None:
+        try:
+            super().close()
+        finally:                                   # the container must not outlive its card, even if the client died
+            if self._launcher is not None and self._container is not None:
+                self._launcher.remove(self._container)
 
 
 def measured_code(code: Mapping[str, str]) -> dict[str, str]:

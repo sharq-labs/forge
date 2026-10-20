@@ -168,12 +168,14 @@ def _probe_in_fresh_interpreter(temp_directory: pathlib.Path, marker: pathlib.Pa
 
 
 def test_shared_probe_directory_positive_control_survives_process_restart(tmp_path):
+    """Power: a shared directory IS reached by the next card and after a restart. The first card finds nothing, and
+    that is UNTESTABLE, never REFUSED: one directory is no evidence about every writable mount (the next test, N-1)."""
     temporary = tmp_path / "private-tmp"
     temporary.mkdir()
     first = _probe_in_fresh_interpreter(temporary)
     second = _probe_in_fresh_interpreter(temporary)
     restarted = _probe_in_fresh_interpreter(temporary)
-    assert first["rationale"].startswith("cross_card_state:REFUSED:")
+    assert first["rationale"].startswith("cross_card_state:UNTESTABLE:")
     assert second["rationale"].startswith("cross_card_state:REACHED:")
     assert restarted["rationale"].startswith("cross_card_state:REACHED:")
 

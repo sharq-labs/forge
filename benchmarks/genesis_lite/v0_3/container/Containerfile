@@ -1,0 +1,2 @@
+FROM docker.io/library/ubuntu:24.04
+RUN apt-get update && apt-get install -y --no-install-recommends python3-minimal libpython3.12-stdlib && rm -rf /var/lib/apt/lists/*

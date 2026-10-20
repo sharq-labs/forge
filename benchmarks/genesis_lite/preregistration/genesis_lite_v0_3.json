@@ -360,11 +360,24 @@
   "candidate": "OWNER_DECISION_REQUIRED",
   "candidate_rule": "the candidate runs INSIDE the admitted attempt, world-set-major, beside every registered arm; its code is pinned by sha256 (its module, its parent packages and every first-party import, read statically; calls and imports of known dynamic-loading names are refused as a static screen); it may not take a registered arm's name. Static pinning proves WHICH bytes run, not what they do: the external evaluator reviews the pinned source before the attempt (D6)",
   "deployment": {
-   "decided": "D5 option A1 (owner, 2026-10-20)",
+   "decided": "D5 option A1 (owner, 2026-10-20); amended to D5-A1b (owner, 2026-10-21)",
+   "device_nodes": "no exemption (owner, 2026-10-21)",
    "evidence": "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json",
    "evidence_sha256": "519f3669b48b5bd08f79af172af51e590ce7e1432141e96bfc7446edd8c2f0c7",
-   "kind": "rootless_namespaces",
-   "rule": "every formal card through isolation.formal_launcher(); refused where unavailable"
+   "image": "localhost/forge-card@sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261",
+   "image_id": "2d2651e4d002c518bb669cb044209897ff02e33318a4b92ac185cf23be33f532",
+   "kind": "rootless_podman_per_card",
+   "podman_version": "4.9.3",
+   "private_tmpfs": [
+    "/tmp",
+    "/var/tmp",
+    "/run",
+    "/dev/shm"
+   ],
+   "rule": "every formal card through isolation.formal_launcher(): a brand-new rootless Podman container, refused where unavailable; before admission formal.deployment_problems() collects fresh A/B/C container evidence and refuses unless it PASSES",
+   "superseded": {
+    "A1": "rootless_namespaces: superseded for the formal deployment by D5-A1b (2026-10-21); its evidence is historical"
+   }
   },
   "driver": "benchmarks/genesis_lite/v0_3/formal.py",
   "environment_manifest_schema": "forge.genesis_lite.environment_manifest/1",
@@ -491,7 +504,7 @@
  },
  "open_items": {
   "FDA-19 / ODC-BL1": "closed on the benchmark side by v0_3/secret_scan.py (proposer-side scan of the root, masters, run log and registry); the certified isolation_probe rerun that covers this inventory is a start condition (OD-3), not optional",
-  "readiness P-1 / P-2": "the isolation deployment is D5 (A1). The escrow stays in the operator process: the operator_process channel shows no card reaches another process. NOT_PROVEN until the per-card writable-mount check (N-1) passes"
+  "readiness P-1 / P-2": "the isolation deployment is D5-A1b (rootless Podman per card; A1 superseded 2026-10-21). The escrow stays in the operator process: the operator_process channel shows no card reaches another process. NOT_PROVEN until the per-card writable-mount evidence (N-1) passes and is pinned"
  },
  "owner_decisions_open": {
   "D4-identity-freeze": "OD-19; candidate DEFERRED by the owner (2026-10-20) until the evaluator is named; freeze sequence (owner, 2026-10-20): (1) the evaluator is named (D6, by 2026-11-17); (2) the candidate is chosen AFTER that (deferred by the owner), its code brought into this tree and pinned by sha256 (or NONE), and a one-campaign candidate timing completes the D7 budget total; (3) OD-3 recertifies that final pre-freeze HEAD; (4) the operator generates a fresh formal root and commits its sha256; (5) the environment manifest is measured on the D7 machine; (6) the owner's approvals record binds every decision to the final preregistration digest; only then is the status set to FROZEN. Nothing is frozen or pushed before (6)",
@@ -504,7 +517,7 @@
   "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, spurious_correlate, confounded, indistinguishable); FDA-21 careful keeps ddof = 0 (certified, a documented exception) and the corrected <name>_dof arms join the strongest-baseline maximum; FDA-22 the form tell is declared and law_form measured, the generator's priors are NOT equalised (no certified change); FDA-18 one proposer process per card; pilot P-2 CONTROL_SOLVED with the exact binary-bootstrap lower bound >= 0.5",
   "D3b-1-cap-form": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, a cell-level cap. A capped (kind, presentation) cell contributes min(0, its summed paired difference): no gain, a net loss counts, in the effect size (recomputed per bootstrap resample) and the per-kind non-inferiority. Implementation P2 (owner, same session): the sign-flip p uses the uncapped differences only, because the min inside every sign vector let capped wins raise significance (p = 0.002 at a mean difference of 0, adversarial test). v0.3 only",
   "D3b-2-kind-noninferiority": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, the per-kind non-inferiority margin is 0.15 (v0.2: 0.10) and every kind is still required; the presentation margin is unchanged. v0.3 only. RECONFIRMED by the owner on 2026-10-20 at 0.15, with the corrected interpretation: a NON-INFERIORITY GUARDRAIL, not an equivalence claim and not a statement of acceptable degradation. The margin bounds the 95 % lower bound of the per-kind mean credit difference; read as a success rate it allows about 7.5 points for success -> failure (+1 -> -1), 15 points for success -> refusal (1 -> 0) and 30 points for indistinguishable_hit -> insufficient_evidence (1 -> 0.5)",
-  "D5-deployment": "OD-20; decided by the owner in session on 2026-10-20: option A1, rootless Linux namespaces. Every formal proposer card runs under unshare in fresh user, PID, mount, network, IPC and UTS namespaces, with operator state masked by private tmpfs mounts and only the benchmark tree and the Python environment re-bound read-only (isolation.py); a formal card cannot start without it, and proposers run without capabilities (setpriv). Verification evidence is pinned by sha256: twelve attack channels REFUSED in the deployment, each REACHED by the same probe in a control configuration. The isolation boundary stays NOT_PROVEN until every writable location is shown private to its card (fifth scientific review, N-1). Residual, disclosed: same Linux account outside the namespaces; readable tree and environment; WSL shares the host's utility VM; the certified escrow stays in the operator process (the operator_process channel shows a proposer cannot reach it); the certified isolation-probe rerun belongs to OD-3",
+  "D5-deployment": "OD-20; decided by the owner in session on 2026-10-20: option A1, rootless Linux namespaces. Every formal proposer card runs under unshare in fresh user, PID, mount, network, IPC and UTS namespaces, with operator state masked by private tmpfs mounts and only the benchmark tree and the Python environment re-bound read-only (isolation.py); a formal card cannot start without it, and proposers run without capabilities (setpriv). Verification evidence is pinned by sha256: twelve attack channels REFUSED in the deployment, each REACHED by the same probe in a control configuration. The isolation boundary stays NOT_PROVEN until every writable location is shown private to its card (fifth scientific review, N-1). Residual, disclosed: same Linux account outside the namespaces; readable tree and environment; WSL shares the host's utility VM; the certified escrow stays in the operator process (the operator_process channel shows a proposer cannot reach it); the certified isolation-probe rerun belongs to OD-3. AMENDED by the owner in session on 2026-10-21: D5-A1b, rootless Podman per-card isolation, a bounded implementation refinement of the approved rootless-namespace route, not a weakening of it. A1 is SUPERSEDED for the formal deployment because the fifth review showed that the hand-built namespace probe had not proven cross-card state isolation outside /tmp. Podman provides the rootless Linux namespace boundary; the deployment contract is: a brand-new container for every card; no container reuse; read-only root filesystem; read-only FORGE source and Python environment; network=none; all capabilities dropped; no-new-privileges; rootless user namespace; private writable mounts for the card; complete writable-mount inventory; Card-A/Card-B canary isolation; a deliberately shared-volume positive control; deployment verification before admission (isolation.py, container_evidence.py, container_probe.py; formal.deployment_problems). Device nodes (owner, 2026-10-21): no exemption; a writable device or pseudo-file mount stays blocking. D5 stays NOT_PROVEN until complete evidence passes and is pinned",
   "D6-evaluator": "OD-8; decided by the owner in session on 2026-10-20: a selection process with a deadline of 2026-11-17. Criteria: independent of the operator: no access to the operator's machine, the root, the run log or the registry before the reveal; holds the EvaluatorInbox on their own machine; can run formal.verify_attempt and analysis.lift_decision; agrees to publish the verdict whatever it is. The evaluator's name stays OWNER_DECISION_REQUIRED until selected, so the freeze (D4) is refused until then; if nobody is named by the deadline, D6 reopens",
   "D7-budget-and-machine": "OD-18; decided by the owner in session on 2026-10-20: the formal machine is the owner's WSL machine, since 2026-10-20 a fresh Ubuntu-24.04 distro hardened by the owner (interop and automount disabled), where D5 is verified and the environment manifest is measured at freeze. The budget was decided on the first timing pilot (MEASURED 43.5 s per world set for the 20 baselines; ESTIMATED 58 h formal with replay; the current pinned pilot is in formal.timing_pilot); budget approved: 72 h for the baselines plus the candidate's cost measured by a one-campaign timing at D4; an overrun stops the attempt as BUDGET_EXCEEDED, INVALID, never partially claimed"
  },
@@ -546,14 +559,17 @@
   "__init__.py": "f8af0c58db79ad76a213ad6fb8c771a55114b34503f7452eb3fab3116d1e4905",
   "analysis.py": "f04a7ca3f538153d94ba4716f5189a391701fdc014bfa89bb8dd4b251c7e6718",
   "arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
-  "deployment_attacks.py": "6961025b26a958b6b11e5cfdf76cbabb05cef95e192542e3c9575eef000788cc",
+  "container/Containerfile": "9aaf37bda8e73f396a67a4f609d4e321f71e9bff2462035c1c6e54d686cb8000",
+  "container_evidence.py": "8b978a43aa776423954a4b704d612ad5da6923e07d948fecc172008be26cbf9d",
+  "container_probe.py": "6ebde75ccb05465c1a7607a7177e8554e2c3a7e77e0960ffe4c15aaedd82d09f",
+  "deployment_attacks.py": "11960cccdf69b3f5c21ed177f7e2a62255ff54685ccbfb53e3e1e207604d988c",
   "environment.py": "d9ab7044c74cb941e9d4c0b8973284ab73a26f5ff702fdf9b61b2b37b760a06f",
   "evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
-  "formal.py": "aa30cc7d58d0e459d16472666bef58afdfd6e271e9d0c6bf2f86f41b054ba6dd",
-  "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
-  "isolation.py": "d7f96b37608d799fe9d7729ba6fb8fbea2384f475bec5905590df587a1967164",
-  "preregistration.py": "6c2b33d160600a5c9bb44369c3e7f663964fa03234ac0baeb1ac8472aba15f2e",
-  "readiness.py": "b6e231f747bb13a67cc3d0627154476157062d2eb818f485f3b67d6ee7b96d33",
+  "formal.py": "6d725b643b3beebabc7989005a14ce900a2df89b9c1fac0b2536392d170caaff",
+  "harness.py": "63103416641a40594041105191e9241cb8757d01e76b4bc855ac939445fa29a7",
+  "isolation.py": "9470e4a364709e4efca286bb3ecfd075020beca92574ef0fd8e0e40bb9a6c650",
+  "preregistration.py": "752e3ee8424b04486216cb386931334296c101bc39016fb38bb29e9488d3bb28",
+  "readiness.py": "e23d250c769a265af65143d08df20ef11d3770ded183f8eb831e20956e8b51f5",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8",

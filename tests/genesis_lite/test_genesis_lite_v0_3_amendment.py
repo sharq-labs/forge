@@ -667,64 +667,135 @@ def test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream(tmp_pa
         assert set(seen) == {v03a.SIGN_FLIP_STREAM}                          # descriptive public stream only
 
 
-# ---- D5 (owner, 2026-10-20: A1 rootless namespaces) ---------------------------------------------------------------
-def test_d5_the_launcher_masks_operator_state_and_keeps_only_the_tree_read_only(monkeypatch):
+# ---- D5 (owner, 2026-10-20: A1 rootless namespaces; 2026-10-21: superseded by D5-A1b, rootless Podman per card) --
+def test_d5_the_launcher_runs_every_card_in_a_new_read_only_container_keeping_only_the_tree(monkeypatch):
+    """D5-A1b: one ``podman run --rm`` per card with the contract options, /dev read-only, a private tmpfs for every
+    writable target, exactly the kept trees bound read-only at their own paths, the pinned image, a fresh name."""
+    from benchmarks.genesis_lite.v0_3 import container_evidence as contract
     from benchmarks.genesis_lite.v0_3 import isolation
 
     monkeypatch.setattr(isolation, "available", lambda: True)
-    monkeypatch.setattr(isolation.shutil, "which", lambda name: "/usr/bin/unshare")
+    monkeypatch.setattr(isolation.shutil, "which", lambda name: f"/usr/bin/{name}")
     launcher = isolation.NamespaceLauncher(("/home/u/repo", "/home/u/venv"))
     argv = launcher.argv(["python", "-I", "host.py"], "/tmp/gl-card-x")
-    assert argv[0] == "/usr/bin/unshare" and set(isolation.UNSHARE_FLAGS) <= set(argv[:argv.index("--")])
-    for flag in ("--user", "--pid", "--net", "--mount", "--kill-child"):
-        assert flag in isolation.UNSHARE_FLAGS
-    tail = argv[argv.index("gl-d5"):]
-    assert tail[:5] == ["gl-d5", "/tmp/gl-card-x", "2", "/home/u/repo", "/home/u/venv"]
-    assert tail[5:5 + len(isolation.MASKED)] == list(isolation.MASKED) and tail[-3:] == ["python", "-I", "host.py"]
-    for masked in ("/mnt", "/home", "/tmp", "/run", "/dev/shm"):
-        assert masked in isolation.MASKED
-    script = argv[argv.index("-c") + 1]
-    assert "remount,bind,ro" in script and "exec \"$@\"" in script and "umount -R" in script
-    with pytest.raises(isolation.DeploymentUnavailable, match="masked root"):
-        isolation.NamespaceLauncher(("/usr/lib/python3",))
+    assert argv[:3] == ["/usr/bin/podman", "run", "-i"] and argv[-3:] == ["python", "-I", "host.py"]
+    assert set(contract.REQUIRED_FLAGS) <= set(argv) and set(isolation.FINAL_FLAGS) == set(contract.REQUIRED_FLAGS)
+    assert argv[argv.index("--mount") + 1] == "type=tmpfs,destination=/dev,ro=true"
+    tmpfs = [argv[i + 1] for i, a in enumerate(argv) if a == "--tmpfs"]
+    assert tmpfs == [f"{t}:rw,nosuid,nodev,mode=1777" for t in isolation.PRIVATE_TMPFS]
+    assert set(isolation.PRIVATE_TMPFS) == {"/tmp", "/var/tmp", "/run", "/dev/shm"}
+    volumes = [argv[i + 1] for i, a in enumerate(argv) if a == "--volume"]
+    assert volumes == ["/home/u/repo:/home/u/repo:ro", "/home/u/venv:/home/u/venv:ro"]
+    image = argv[argv.index("--label") + 2]
+    assert image == f"localhost/forge-card@{isolation.IMAGE_DIGEST}" and len(isolation.IMAGE_DIGEST) == 71
+    names = {launcher.argv(["python"], "/tmp/c")[argv.index("--name") + 1] for _ in range(3)}
+    assert len(names) == 3                                             # never a reused container name
+    ok = {"source_sha": "1" * 40, "image_digest": isolation.IMAGE_DIGEST, "image_id": isolation.IMAGE_ID,
+          "podman_version": "4.9.3", "containerfile_sha256": "3" * 64, "launcher_sha256": "4" * 64,
+          "probe_sha256": "5" * 64, "writable_targets": list(isolation.PRIVATE_TMPFS), "source_host": "/home/u/repo",
+          "venv_host": "/home/u/venv", "source_path": "/home/u/repo", "venv_path": "/home/u/venv", "rootless": True}
+    found = contract._Findings()
+    card = {"argv": argv, "paths": dict(isolation.CARD_PATHS, workdir=isolation.WORKDIR)}
+    contract._argv(card, ok, found, "A")
+    assert found.reasons == set(), found.details                       # the launcher speaks the validator's contract
 
 
-def test_d5_the_proposer_runs_without_capabilities_and_kept_paths_are_validated_resolved(monkeypatch):
-    """Review I-1 / I-9: the proposer is exec'd through setpriv with every capability dropped (else, as root of its own
-    user namespace, it could unmount the masks or remount the kept tree read-write); kept paths are validated after
-    resolution and travel through a list file, never word-split."""
+def test_d5_the_card_runs_without_capabilities_and_kept_paths_and_environment_are_validated(monkeypatch):
+    """Review I-1 / I-9 under D5-A1b: every capability dropped and no-new-privileges for a formal card; only the
+    verification's power control keeps CAP_SYS_ADMIN; kept paths are validated after resolution and cannot inject a
+    volume option; only FORGE_ATTACK_* and PYTHONDONTWRITEBYTECODE reach a container."""
     from benchmarks.genesis_lite.v0_3 import isolation
 
     monkeypatch.setattr(isolation, "available", lambda: True)
     monkeypatch.setattr(isolation.shutil, "which", lambda name: f"/usr/bin/{name}")
     argv = isolation.NamespaceLauncher(("/home/u/repo",)).argv(["python", "host.py"], "/tmp/c")
-    tail = argv[argv.index("--", argv.index("gl-d5")) + 1:]
-    assert tail == ["/usr/bin/setpriv", *isolation.SETPRIV_FLAGS, "--", "python", "host.py"]
-    assert set(isolation.SETPRIV_FLAGS) == {"--inh-caps=-all", "--bounding-set=-all", "--no-new-privs"}
+    assert "--cap-drop=ALL" in argv and "--security-opt=no-new-privileges" in argv
+    assert not [a for a in argv if a.startswith(("--cap-add", "--privileged", "--user="))]
     escapable = isolation.NamespaceLauncher(("/home/u/repo",), drop_caps=False).argv(["python"], "/tmp/c")
-    assert "/usr/bin/setpriv" not in escapable                         # the verification's power control only
-    script = argv[argv.index("-c") + 1]
-    assert 'while IFS= read -r k' in script and "for k in $keep" not in script
-    for bad in ("/tmp/..", "/home/u/../../usr", "/home/u/a b"):
+    assert "--cap-drop=ALL" not in escapable and "--cap-add=SYS_ADMIN" in escapable   # the power control only
+    for bad in ("/tmp/..", "/home/u/a b", "/home/u/a:b", "/home/u/a,rw", "/"):
         with pytest.raises(isolation.DeploymentUnavailable):
             isolation.NamespaceLauncher((bad,))
+    with pytest.raises(ValueError, match="FORGE_ATTACK"):
+        isolation.NamespaceLauncher(("/home/u/repo",)).argv(["python"], "/tmp/c", env={"LD_PRELOAD": "x"})
+    with_env = isolation.NamespaceLauncher(("/home/u/repo",)).argv(["python"], "/tmp/c",
+                                                                   env={"FORGE_ATTACK_RUN_LOGS": "/r"})
+    assert "FORGE_ATTACK_RUN_LOGS=/r" in with_env
+    assert set(isolation.NamespaceLauncher.client_env()) <= {"HOME", "XDG_RUNTIME_DIR", "XDG_CONFIG_HOME",
+                                                             "XDG_DATA_HOME", "USER", "LOGNAME",
+                                                             "DBUS_SESSION_BUS_ADDRESS"}
 
 
 def test_d5_operator_files_must_be_unreadable_to_cards(monkeypatch):
-    """Review I-4: the run directory, registry and inbox must lie under a masked root and outside every kept tree."""
+    """Review I-4 under D5-A1b: a card container sees no host path but the kept trees, so the run directory, registry
+    and inbox must lie outside every kept tree."""
     from benchmarks.genesis_lite.v0_3 import isolation
 
     monkeypatch.setattr(isolation, "kept_paths", lambda: ("/home/u/repo", "/home/u/venv"))
     ok = isolation.operator_path_problems({"run directory": pathlib.PurePosixPath("/home/u/runs/a"),
-                                           "attempt registry": pathlib.PurePosixPath("/tmp/reg")})
+                                           "attempt registry": pathlib.PurePosixPath("/etc/gl-reg")})
     assert ok == []
     bad = isolation.operator_path_problems({"run directory": pathlib.PurePosixPath("/home/u/repo/.forge/out"),
-                                            "attempt registry": pathlib.PurePosixPath("/etc/gl-reg"),
+                                            "attempt registry": pathlib.PurePosixPath("/tmp/reg"),
                                             "evaluator inbox": pathlib.PurePosixPath("/home/u/venv/inbox")})
-    assert len(bad) == 3 and "masked root" in bad[1]
+    assert len(bad) == 2 and all("inside a tree every proposer can read" in p for p in bad)
     import inspect
 
     assert "operator_path_problems" in inspect.getsource(formal.main)
+
+
+def test_d5_a_card_container_is_removed_when_its_card_closes(monkeypatch):
+    """D5-A1b: no container outlives its card. CardProposerHost names the container and removes it on close even
+    when the client is gone; remove() only touches a container carrying that launcher label for that name."""
+    import inspect
+
+    from benchmarks.genesis_lite.v0_3 import harness as v03h
+    from benchmarks.genesis_lite.v0_3 import isolation
+
+    source = inspect.getsource(v03h.CardProposerHost)
+    assert "new_card_name()" in source and "self._launcher.remove(self._container)" in source
+    calls = []
+
+    def fake_run(argv, **kwargs):
+        calls.append(list(argv))
+        out = "gl-card-1\n" if argv[1:3] == ["container", "inspect"] and argv[-1] == "gl-card-1" else "other\n"
+        return isolation.subprocess.CompletedProcess(argv, 0, stdout=out, stderr="")
+
+    monkeypatch.setattr(isolation, "available", lambda: True)
+    monkeypatch.setattr(isolation.shutil, "which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr(isolation.subprocess, "run", fake_run)
+    launcher = isolation.NamespaceLauncher(("/home/u/repo",))
+    launcher.remove("gl-card-1")
+    launcher.remove("gl-card-2")
+    removals = [c for c in calls if c[1] == "rm"]
+    assert removals == [["/usr/bin/podman", "rm", "--force", "--time", "0", "gl-card-1"]]
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Linux fdinfo mount ids")
+def test_d5_the_container_probe_attributes_every_canary_to_its_mount(tmp_path):
+    """D5-A1b: the production probe writes a token only on the expected mount (O_EXCL, fsync, readback), a later
+    phase sees it at the identical path, an absent token is READ_ABSENT, and a directory on another mount is
+    OBSCURED_MOUNT with nothing written. It parses mount tables with the validator's own parser."""
+    import os
+
+    from benchmarks.genesis_lite.v0_3 import container_evidence
+    from benchmarks.genesis_lite.v0_3 import container_probe as probe
+
+    assert probe.contract.parse_mountinfo is container_evidence.parse_mountinfo
+    fd = os.open(tmp_path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        mid = probe.fd_mount_id(fd)
+    finally:
+        os.close(fd)
+    token = "ab" * 32
+    a = probe.observe_marker(str(tmp_path), "t", "A", token, mid)
+    assert (a["read"], a["write"], a["readback"]) == ("READ_ABSENT", "WRITE_OK", token)
+    assert a["write_mount"] == a["readback_mount"] == a["actual_mount"] == mid
+    b = probe.observe_marker(str(tmp_path), "t", "B", token, mid)
+    assert b["read"] == "READ_OK" and b["seen"] == token and b["write"] == "NOT_ATTEMPTED"
+    assert probe.observe_marker(str(tmp_path), "absent", "B", token, mid)["read"] == "READ_ABSENT"
+    other = probe.observe_marker(str(tmp_path), "never", "A", token, "-1")
+    assert other["read"] == "OBSCURED_MOUNT" and not (tmp_path / "never").exists()
 
 
 def test_d5_a_formal_card_cannot_start_without_the_deployment(monkeypatch):
@@ -752,28 +823,51 @@ def test_d5_the_new_probes_never_report_refused_without_a_mechanism(monkeypatch)
     assert {"operator_process", "wsl_interop", "secret_inventory"} <= set(attacks.CHANNELS)
 
 
-def test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code():
-    """D5 (A1): the verification ran on the formal tree. Its file is the pinned one, every channel was REFUSED with the
-    namespaces and REACHED by the same probe without them, and the launcher, the attack suite, the harness and the
-    scanner it ran are, docstrings aside, the code in this tree (else re-run the verification)."""
+def test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code():
+    """D5-A1b (owner, 2026-10-21). The pinned file is D5-A1b evidence from a clean tree. The code it ran (launcher,
+    probe, validator, attack suite, harness, scanner, Containerfile) is, docstrings aside, the code in this tree.
+    Its container verdict re-derives from its own evidence with the current validator. Its expected deployment is the
+    pinned image, Podman version and code at its own HEAD. "verified" is exactly: container evidence PASS, every
+    channel REFUSED, every probe with power. The gate's D5 rows follow it, so D5 is NOT_PROVEN unless it verified."""
+    from benchmarks.genesis_lite.v0_3 import container_evidence
+    from benchmarks.genesis_lite.v0_3 import deployment_attacks as attacks
+    from benchmarks.genesis_lite.v0_3 import isolation, readiness
+
     repo = v03p.HERE.parents[2]
     data = (repo / v03p.DEPLOYMENT_EVIDENCE).read_bytes()
     assert hashlib.sha256(data).hexdigest() == v03p.DEPLOYMENT_EVIDENCE_SHA256
     doc = json.loads(data)
-    from benchmarks.genesis_lite.v0_3 import deployment_attacks as attacks
-
-    assert doc["verified"] is True and doc["provenance"]["tree_clean"] is True
-    assert doc["with_namespaces"] == {c: attacks.REFUSED for c in attacks.CHANNELS}
-    for c in attacks.CHANNELS:            # power: each probe reached its channel in at least one control configuration
-        assert attacks.REACHED in (doc["without_namespaces"][c], doc["namespaces_with_capabilities"][c]), c
-    assert doc["probe_power"] == {c: True for c in attacks.CHANNELS}
-    assert doc["deployment"]["setpriv_flags"] == ["--inh-caps=-all", "--bounding-set=-all", "--no-new-privs"]
+    assert doc["schema"] == isolation.EVIDENCE_SCHEMA and doc["decision"] == "D5-A1b"
+    assert doc["provenance"]["tree_clean"] is True
     head = doc["provenance"]["head"]
+    assert set(doc["provenance"]["code_sha256"]) >= {"isolation.py", "container_evidence.py", "container_probe.py",
+                                                     "deployment_attacks.py", "harness.py", "container/Containerfile"}
     for name, digest in doc["provenance"]["code_sha256"].items():
-        path = f"benchmarks/genesis_lite/v0_3/{name}"
-        then = subprocess.run(["git", "show", f"{head}:{path}"], cwd=repo, capture_output=True, check=True).stdout
+        rel = f"benchmarks/genesis_lite/v0_3/{name}"
+        then = subprocess.run(["git", "show", f"{head}:{rel}"], cwd=repo, capture_output=True, check=True).stdout
         assert hashlib.sha256(then).hexdigest() == digest, name
-        assert _rule_code((repo / path).read_bytes()) == _rule_code(then), f"{path} changed since the verification"
+        now = (repo / rel).read_bytes()
+        same = _rule_code(now) == _rule_code(then) if name.endswith(".py") else now == then
+        assert same, f"{rel} changed since the verification (re-run it)"
+    expected = doc["container_expected"]
+    assert expected["source_sha"] == head and expected["rootless"] is True
+    assert (expected["image_digest"], expected["image_id"], expected["podman_version"]) == (
+        isolation.IMAGE_DIGEST, isolation.IMAGE_ID, isolation.PODMAN_VERSION)
+    assert expected["writable_targets"] == list(isolation.PRIVATE_TMPFS)
+    for key, name in (("launcher_sha256", "isolation.py"), ("probe_sha256", "container_probe.py"),
+                      ("containerfile_sha256", "container/Containerfile")):
+        assert expected[key] == doc["provenance"]["code_sha256"][name]
+    rederived = container_evidence.validate_container_evidence(doc["container_evidence"], expected=expected)
+    assert rederived == doc["container_validation"]
+    power = {c: attacks.REACHED in (doc["without_containers"][c], doc["containers_with_capabilities"][c])
+             for c in attacks.CHANNELS}
+    assert doc["probe_power"] == power
+    verified = (doc["container_validation"]["status"] == "PASS" and all(power.values())
+                and doc["with_containers"] == {c: attacks.REFUSED for c in attacks.CHANNELS})
+    assert doc["verified"] is verified
+    status, _ = readiness.deployment_status()
+    assert (status == readiness.FIXED) is verified
+    assert all(readiness.blockers()[row][0] == status for row in readiness.D5_ROWS)
 
 
 # ---- D7 (owner, 2026-10-20: this WSL Ubuntu; timing pilot before the budget) --------------------------------------
@@ -791,10 +885,12 @@ def test_d7_a_formal_run_never_takes_a_callers_launcher_and_the_pilot_stays_off_
     assert timing_pilot.REPLAY_FACTOR == 2.0
 
 
-def test_d7_timing_pilot_evidence_is_pinned_and_timed_this_code():
-    """D7: the pilot's file is the pinned one, every run of every registered arm was VALID, and the code it timed (the
-    pilot, the harness, the launcher, the arms) is byte for byte the code in this tree (else re-run the pilot)."""
+def test_d7_timing_pilot_evidence_is_pinned_and_a_stale_pilot_is_a_blocker():
+    """D7: the pilot's file is the pinned one and every run of every registered arm was VALID. While the code it timed
+    (the pilot, the harness, the launcher, the arms) is the code in this tree, its row is FIXED. Once that code changes
+    (D5-A1b, 2026-10-21) the evidence is HISTORICAL_ONLY and the gate carries REQUIRES_RERUN as a technical blocker."""
     from benchmarks.genesis_lite.v0_3 import arms as v03_arms
+    from benchmarks.genesis_lite.v0_3 import readiness
 
     data = (v03p.HERE.parents[2] / v03p.TIMING_PILOT_EVIDENCE).read_bytes()
     assert hashlib.sha256(data).hexdigest() == v03p.TIMING_PILOT_EVIDENCE_SHA256
@@ -802,8 +898,14 @@ def test_d7_timing_pilot_evidence_is_pinned_and_timed_this_code():
     assert doc["status"] == "NON_FORMAL_TIMING_PILOT" and doc["provenance"]["tree_clean"] is True
     assert sorted(doc["arms"]) == sorted(v03_arms.ARMS) and doc["campaigns"] >= 10
     assert all(v == ["VALID"] for v in doc["MEASURED"]["statuses"].values())
-    for name, digest in doc["provenance"]["code_sha256"].items():
-        assert hashlib.sha256((v03p.HERE / name).read_bytes()).hexdigest() == digest, f"{name} changed since the pilot"
+    moved = sorted(n for n, digest in doc["provenance"]["code_sha256"].items()
+                   if hashlib.sha256((v03p.HERE / n).read_bytes()).hexdigest() != digest)
+    status, note = readiness.timing_pilot_status()
+    if moved:
+        assert status == readiness.NOT_PROVEN and "REQUIRES_RERUN" in note and all(n in note for n in moved)
+    else:
+        assert status == readiness.FIXED
+    assert readiness.blockers()["D7 timing pilot evidence"][0] == status
 
 
 def test_d7_the_driver_stops_and_invalidates_an_attempt_over_budget(stand_in_accepted, registry):

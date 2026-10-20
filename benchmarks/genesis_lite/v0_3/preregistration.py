@@ -18,7 +18,7 @@ from typing import Any
 
 from .. import analysis as v02_analysis
 from .. import preregistration as v02
-from . import analysis, environment, evaluator, formal, registry
+from . import analysis, environment, evaluator, formal, isolation, registry
 from . import arms as v03_arms
 
 PREREG_SCHEMA = "forge.genesis_lite.preregistration/1"
@@ -28,7 +28,8 @@ PREREG_PATH = v02.HERE / "preregistration" / "genesis_lite_v0_3.json"
 V0_2_PREREG_SHA256 = "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64"
 V0_3_FILES = ("__init__.py", "analysis.py", "arms.py", "deployment_attacks.py", "environment.py", "evaluator.py",
               "formal.py", "harness.py", "preregistration.py", "readiness.py", "registry.py", "secret_scan.py",
-              "selfcheck.py", "isolation.py", "timing_pilot.py")
+              "selfcheck.py", "isolation.py", "timing_pilot.py", "container_evidence.py", "container_probe.py",
+              "container/Containerfile")
 #: the certified escrow half of FDA-05 (Batch A, OD-3); pinned by digest when it is in the tree
 ESCROW_HALF = "pair_bound.py"
 ODR = "OWNER_DECISION_REQUIRED"
@@ -70,7 +71,19 @@ OWNER_DECISIONS_TAKEN = {
                      "scientific review, N-1). Residual, disclosed: same Linux account "
                      "outside the namespaces; readable tree and environment; WSL shares the host's utility VM; the "
                      "certified escrow stays in the operator process (the operator_process channel shows a proposer "
-                     "cannot reach it); the certified isolation-probe rerun belongs to OD-3",
+                     "cannot reach it); the certified isolation-probe rerun belongs to OD-3. AMENDED by the owner "
+                     "in session on 2026-10-21: D5-A1b, rootless Podman per-card isolation, a bounded implementation "
+                     "refinement of the approved rootless-namespace route, not a weakening of it. A1 is SUPERSEDED for "
+                     "the formal deployment because the fifth review showed that the hand-built namespace probe had not "
+                     "proven cross-card state isolation outside /tmp. Podman provides the rootless Linux namespace "
+                     "boundary; the deployment contract is: a brand-new container for every card; no container reuse; "
+                     "read-only root filesystem; read-only FORGE source and Python environment; network=none; all "
+                     "capabilities dropped; no-new-privileges; rootless user namespace; private writable mounts for the "
+                     "card; complete writable-mount inventory; Card-A/Card-B canary isolation; a deliberately shared-"
+                     "volume positive control; deployment verification before admission (isolation.py, "
+                     "container_evidence.py, container_probe.py; formal.deployment_problems). Device nodes (owner, "
+                     "2026-10-21): no exemption; a writable device or pseudo-file mount stays blocking. D5 stays "
+                     "NOT_PROVEN until complete evidence passes and is pinned",
     "D3b-1-cap-form": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, a cell-level "
                       "cap. A capped (kind, presentation) cell contributes min(0, its summed paired difference): no "
                       "gain, a net loss counts, in the effect size (recomputed per bootstrap resample) and the per-kind "
@@ -324,9 +337,18 @@ def build() -> dict[str, Any]:
             "timing_pilot": {"evidence": TIMING_PILOT_EVIDENCE, "evidence_sha256": TIMING_PILOT_EVIDENCE_SHA256,
                              "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are "
                                        "ESTIMATED from it and exclude the candidate's own cost (D4)"},
-            "deployment": {"decided": "D5 option A1 (owner, 2026-10-20)", "kind": "rootless_namespaces",
+            "deployment": {"decided": "D5 option A1 (owner, 2026-10-20); amended to D5-A1b (owner, 2026-10-21)",
+                           "kind": isolation.DEPLOYMENT,
+                           "superseded": {"A1": "rootless_namespaces: superseded for the formal deployment by D5-A1b "
+                                                "(2026-10-21); its evidence is historical"},
+                           "image": f"{isolation.IMAGE_REPOSITORY}@{isolation.IMAGE_DIGEST}",
+                           "image_id": isolation.IMAGE_ID, "podman_version": isolation.PODMAN_VERSION,
+                           "private_tmpfs": list(isolation.PRIVATE_TMPFS), "device_nodes": "no exemption (owner, "
+                                                                                          "2026-10-21)",
                            "evidence": DEPLOYMENT_EVIDENCE, "evidence_sha256": DEPLOYMENT_EVIDENCE_SHA256,
-                           "rule": "every formal card through isolation.formal_launcher(); refused where unavailable"},
+                           "rule": "every formal card through isolation.formal_launcher(): a brand-new rootless Podman "
+                                   "container, refused where unavailable; before admission formal.deployment_problems() "
+                                   "collects fresh A/B/C container evidence and refuses unless it PASSES"},
             "grid": {"campaign_ids": list(v02_analysis.FORMAL_CAMPAIGNS), "seeds": list(v02_analysis.FORMAL_SEEDS),
                      "presentations": list(v02_analysis.PRIMARY_FAMILY[1:])},
             "world_sets": len(v02_analysis.FORMAL_GRID),
@@ -381,9 +403,10 @@ def build() -> dict[str, Any]:
             "FDA-19 / ODC-BL1": "closed on the benchmark side by v0_3/secret_scan.py (proposer-side scan of the root, "
                                 "masters, run log and registry); the certified isolation_probe rerun that covers this inventory is a "
                                 "start condition (OD-3), not optional",
-            "readiness P-1 / P-2": "the isolation deployment is D5 (A1). The escrow stays in the operator process: the "
-                                   "operator_process channel shows no card reaches another process. NOT_PROVEN until "
-                                   "the per-card writable-mount check (N-1) passes",
+            "readiness P-1 / P-2": "the isolation deployment is D5-A1b (rootless Podman per card; A1 superseded "
+                                   "2026-10-21). The escrow stays in the operator process: the operator_process "
+                                   "channel shows no card reaches another process. NOT_PROVEN until the per-card "
+                                   "writable-mount evidence (N-1) passes and is pinned",
         },
         "owner_decisions_taken": dict(OWNER_DECISIONS_TAKEN),
         "owner_decisions_open": {

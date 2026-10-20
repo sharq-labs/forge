@@ -164,22 +164,29 @@ def run_log(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str,
 
 
 def _shared_dir() -> pathlib.Path:
-    """A directory that outlives one card under the same account: the parent of the per-card temporary directory."""
-    return pathlib.Path(tempfile.gettempdir()).resolve().parent / "gl-cross-card-state"
+    """A directory that outlives one card under the same account: the parent of the per-card temporary directory, or
+    the temporary directory itself where that parent is read-only (a D5-A1b card's private /tmp)."""
+    temp = pathlib.Path(tempfile.gettempdir()).resolve()
+    return (temp.parent if os.access(temp.parent, os.W_OK) else temp) / "gl-cross-card-state"
 
 
 def cross_card_state(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     """FDA-18 residual: can one card leave state that a LATER card of the campaign reads? Each card writes a marker into
     a directory outside its own per-card temp directory and counts the markers it finds there. REACHED on any card
-    that finds a marker left by an earlier one."""
+    that finds a marker left by an earlier one. Finding none is never REFUSED (fifth review N-1): one directory says
+    nothing about every other writable mount. That verdict comes only from the mount-complete container canary
+    evidence (:mod:`.container_evidence`), in :func:`verify_deployment`."""
     try:
         shared = _shared_dir()
         shared.mkdir(exist_ok=True)
         seen = sum(1 for x in shared.iterdir() if x.name.startswith("card-"))
         (shared / f"card-{uuid.uuid4().hex}").write_bytes(b"")
-        return _answer(card, "cross_card_state", seen > 0, f"{seen} earlier marker(s) found")
     except OSError as exc:
         return _answer(card, "cross_card_state", None, f"setup failed: {type(exc).__name__}")
+    if seen:
+        return _answer(card, "cross_card_state", True, f"{seen} earlier marker(s) found")
+    return _answer(card, "cross_card_state", None, "no earlier marker in one directory; not evidence about every "
+                                                   "writable mount (the container canary evidence decides)")
 
 
 def operator_process(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
@@ -367,13 +374,23 @@ def deployment_runner(attack_env: Mapping[str, str] | None = None, cards: int = 
     return run
 
 
-def verify_deployment(run: Any, scan_findings: list[Any] | None = None) -> dict[str, Any]:
+def verify_deployment(run: Any, scan_findings: list[Any] | None = None,
+                      container_validation: Mapping[str, Any] | None = None) -> dict[str, Any]:
     """Run every attack once through ``run(attack_spec) -> rationales``, which the operator binds to the v0.3 harness in
     the OD-20 deployment, and take the proposer-side secret-inventory scan (:mod:`.secret_scan`, FDA-19). Verified only
-    if every channel is REFUSED and the scan ran and found nothing."""
-    verdicts = {}
+    if every channel is REFUSED, the scan ran and found nothing, AND the N-1 container evidence
+    (:func:`.container_evidence.validate_container_evidence`) PASSED: REFUSED transcripts of the old channels say
+    nothing about an unprobed writable mount, the container identities, the image or the runtime flags. The
+    ``cross_card_state`` channel is REFUSED only on that evidence (its probe never refuses by itself)."""
+    probed = {}
     for channel in CHANNELS:
-        verdicts.update(channel_verdicts(run(f"benchmarks.genesis_lite.v0_3.deployment_attacks:{channel}")))
+        probed.update(channel_verdicts(run(f"benchmarks.genesis_lite.v0_3.deployment_attacks:{channel}")))
+    containers_pass = isinstance(container_validation, Mapping) and container_validation.get("status") == "PASS"
+    verdicts = dict(probed)
+    if "cross_card_state" in verdicts and verdicts["cross_card_state"] != REACHED:
+        verdicts["cross_card_state"] = REFUSED if containers_pass else UNTESTABLE
     missing = sorted(set(CHANNELS) - set(verdicts))
-    return {"verdicts": verdicts, "missing": missing, "secret_scan": scan_findings,
-            "verified": not missing and all(v == REFUSED for v in verdicts.values()) and scan_findings == []}
+    return {"verdicts": verdicts, "probed": probed, "missing": missing, "secret_scan": scan_findings,
+            "container_validation": container_validation,
+            "verified": (not missing and all(v == REFUSED for v in verdicts.values()) and scan_findings == []
+                         and containers_pass)}

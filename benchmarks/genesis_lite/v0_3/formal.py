@@ -307,13 +307,24 @@ def budget_hours(doc: Mapping[str, Any]) -> float | None:
 
 
 def deployment_problems() -> list[str]:
-    """Why a formal card could not start in the D5 deployment on this machine (checked before admission)."""
-    from .isolation import DeploymentUnavailable, formal_launcher  # noqa: PLC0415
+    """Why a formal card could not start in the D5 deployment on this machine. Checked before admission (D5-A1b,
+    owner 2026-10-21): the launcher must be available AND fresh cards A, B and C plus the positive controls must yield
+    container evidence that PASSES :func:`.container_evidence.validate_container_evidence` now, on this machine. A
+    runtime that cannot start, or evidence that does not pass, refuses the run before the root is consumed."""
+    import json  # noqa: PLC0415
+    import subprocess  # noqa: PLC0415
+
+    from .isolation import DeploymentUnavailable, formal_launcher, verify_containers  # noqa: PLC0415
 
     try:
-        formal_launcher()
+        verdict = verify_containers(formal_launcher())["validation"]
     except DeploymentUnavailable as exc:
         return [str(exc)]
+    except (OSError, subprocess.SubprocessError, RuntimeError, ValueError, KeyError, IndexError,
+            json.JSONDecodeError) as exc:
+        return [f"the D5-A1b pre-admission verification could not run: {type(exc).__name__}: {str(exc)[:200]}"]
+    if verdict["status"] != "PASS":
+        return [f"the D5-A1b pre-admission container evidence is BLOCKED: {', '.join(verdict['reasons'])}"]
     return []
 
 

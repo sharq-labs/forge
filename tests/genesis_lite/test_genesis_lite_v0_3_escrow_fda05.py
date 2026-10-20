@@ -144,8 +144,12 @@ def test_readiness_with_the_escrow_half_has_no_technical_row_left():
     evidence = {"head": readiness._head(), "clean": True, "tests": {name: "passed" for name in required}}
     out = readiness.check(evidence=evidence)
     assert out["agreement_cases"] == 2 * len(selfcheck.PAIRS) * len(selfcheck.BOUNDS)
-    # owner 2026-10-20: until D5 is re-verified on the hardened distro, exactly these rows are technical
-    assert sorted(r.split(":")[0] for r in out["technical_blockers"]) == [
+    # owner 2026-10-20: until D5 is re-verified on the hardened distro, exactly these rows are technical. Owner
+    # 2026-10-21 (D5-A1b): they follow the pinned deployment evidence, and the D7 pilot is technical while it is stale
+    stale = [readiness.D5_ROWS if readiness.deployment_status()[0] == readiness.NOT_PROVEN else (),
+             ("D7 timing pilot evidence",) if readiness.timing_pilot_status()[0] == readiness.NOT_PROVEN else ()]
+    assert sorted(r.split(":")[0] for r in out["technical_blockers"]) == sorted(r for rows_ in stale for r in rows_)
+    assert sorted(readiness.D5_ROWS) == [
         "FDA-18 residual (same-account files, helper processes)", "isolation boundary (D5)",
         "readiness P-1/P-2 (isolation deployment, escrow out of process)"]
     assert all(readiness.NOT_PROVEN in r for r in out["technical_blockers"])
