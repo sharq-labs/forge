@@ -252,7 +252,7 @@ def law_form(entry: Mapping[str, Any]) -> str | None:
 
 def run_one(arm_name: str, *, binding: Binding, master_seed: bytes, campaign_id: str, presentation: str, seed: int = 0,
             isolation: str = "proposer_process", arm_spec: str | None = None, extra_paths: tuple[str, ...] = (),
-            card_hook: Callable[[dict], dict] | None = None) -> _v02h.RunRecord:
+            card_hook: Callable[[dict], dict] | None = None, launcher: Any = None) -> _v02h.RunRecord:
     if not isinstance(binding, Binding):
         raise HarnessRefused("a v0.3 run needs a Binding from harness.bind()")
     if isolation not in _v02h.ISOLATIONS:
@@ -267,12 +267,12 @@ def run_one(arm_name: str, *, binding: Binding, master_seed: bytes, campaign_id:
             raise HarnessRefused(f"{arm_name!r} is neither a registered v0.3 arm nor the identity's candidate")
         from .isolation import DeploymentUnavailable, formal_launcher  # noqa: PLC0415
 
+        if launcher is not None:
+            raise HarnessRefused("a formal run chooses its own launcher (D5); a caller's is never used")
         try:
             launcher = formal_launcher()                       # D5 (owner, 2026-10-20): every formal card isolated
         except DeploymentUnavailable as exc:
             raise HarnessRefused(f"a formal run needs the D5 deployment: {exc}") from exc
-    else:
-        launcher = None
     if candidate and arm_name == candidate["name"]:
         spec, pinned = candidate["spec"], dict(candidate["code_sha256"])
     else:

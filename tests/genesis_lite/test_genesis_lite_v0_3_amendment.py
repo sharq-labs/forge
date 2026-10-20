@@ -717,6 +717,21 @@ def test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code():
         assert _rule_code((repo / path).read_bytes()) == _rule_code(then), f"{path} changed since the verification"
 
 
+# ---- D7 (owner, 2026-10-20: this WSL Ubuntu; timing pilot before the budget) --------------------------------------
+def test_d7_a_formal_run_never_takes_a_callers_launcher_and_the_pilot_stays_off_the_formal_grid():
+    import inspect
+
+    from benchmarks.genesis_lite.v0_3 import harness as v03h
+    from benchmarks.genesis_lite.v0_3 import timing_pilot
+
+    source = inspect.getsource(v03h.run_one)
+    assert "a formal run chooses its own launcher" in source and "launcher: Any = None" in source
+    pilot = inspect.getsource(timing_pilot.run)
+    assert 'tier="development"' in pilot and "gl-pilot-" in pilot and "secrets.token_bytes(32)" in pilot
+    assert not any(c.startswith("gl-pilot-") for c in v02_analysis.FORMAL_CAMPAIGNS)
+    assert timing_pilot.REPLAY_FACTOR == 2.0
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,

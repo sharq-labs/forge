@@ -897,6 +897,6 @@ def test_readiness_required_tests_match_the_test_files():
         names |= {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name.startswith("test_")}
     required = {n for v in readiness.REQUIRED_TESTS.values() for n in v}
     prefixes = ("test_fda", "test_o1_", "test_pilot_", "test_readiness_p3_", "test_p4_", "test_p5_", "test_attempt_",
-                "test_harness_", "test_d3b_", "test_d2b_", "test_d5_")
+                "test_harness_", "test_d3b_", "test_d2b_", "test_d5_", "test_d7_")
     assert required <= names
     assert {n for n in names if n.startswith(prefixes)} == required

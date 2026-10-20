@@ -227,6 +227,9 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
         'test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code',
     ),
+    'D7 timing pilot': (
+        'test_d7_a_formal_run_never_takes_a_callers_launcher_and_the_pilot_stays_off_the_formal_grid',
+    ),
     'power and null-calibration study (ODC-O1b)': (
         'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',
         'test_o1_power_study_scores_with_the_real_rule_and_restores_it',
