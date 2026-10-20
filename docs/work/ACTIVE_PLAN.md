@@ -6,6 +6,11 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task - domain inventory integration (2026-10-20)
+
+Owner authorized resolving branch blockers after merging approved PR176, without bypassing tests or OD3. Domain-data integration preserves historical bytes and separates archival replay from live provenance coverage. Owner selected full433-file provenance audit. Audit completed with exact per-file/source hashes;33 domain tests passed after failing-first boundary regressions and staged-identity repair. Five authored analytical metadata records correctly classified DERIVED. Independent review PASS. Full FAST completed with existing failures/errors; exact pristine-main comparison shows zero new failing/error nodes. PR178 remains DRAFT for owner review, with full receipts; no green-gate or merge claim. Do not promote origin classifications into validation or current certification. Other certified branch merges remain subject to OD3; no freeze, formal run or Mind behavior change.
+
+
 ## Current bounded task - reviewed branch reconciliation (2026-10-20)
 
 Owner approved PR176 explicitly and authorized resolving remaining branch blockers sequentially, without bypassing tests or OD3. PR176 merged at3213bb35. Exclude preserve/* and wip/*; preserve scientific contracts and byte-pinned evidence.
