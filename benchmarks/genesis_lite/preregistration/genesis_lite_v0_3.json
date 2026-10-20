@@ -34,7 +34,7 @@
   "deployment": {
    "decided": "D5 option A1 (owner, 2026-10-20)",
    "evidence": "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json",
-   "evidence_sha256": "80db5957d71755d76f349383f735c8c2ca61d606e38f20efe51edb17e9617df7",
+   "evidence_sha256": "782a1b914a748a12e59a465d8c6429851df67cba7fb53b142c78246add0259fa",
    "kind": "rootless_namespaces",
    "rule": "every formal card through isolation.formal_launcher(); refused where unavailable"
   },
@@ -534,7 +534,7 @@
   "formal.py": "dfbf372c084bfe9107425bcb098e58ff0d6aff199bc8680000863c6c510363d8",
   "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
   "isolation.py": "21d237a0d133ca49fcdba674580d6ecedf5c70ff1dd3a1e7c90358f7b500dce7",
-  "preregistration.py": "a2814db8039bd074984367592fc008413d5144395d8f2f1fb11739e58eb03605",
+  "preregistration.py": "038dd6082a6a1ef5f89bdd8ca6330db73081a12d3db308ee1e579b925be9a0a9",
   "readiness.py": "5d1dc59aa14f65ae367640655d90023c899128da63a6f3a71c26b292ac21a5d4",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",

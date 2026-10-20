@@ -50,7 +50,7 @@ Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
 - [x] Owner D3b-2-kind-noninferiority DECIDED 2026-10-20 and RECONFIRMED the same day: per-kind margin 0.15, every kind
       required. It is a non-inferiority guardrail, not an equivalence or acceptable-degradation claim; the 7.5 / 15 / 30-point
       readings are recorded.
-- [x] Owner D5 deployment DECIDED 2026-10-20: A1 rootless namespaces; VERIFIED (all 10 channels REFUSED), evidence 80db5957d717.
+- [x] Owner D5 deployment DECIDED 2026-10-20: A1 rootless namespaces; VERIFIED (all 10 channels REFUSED), evidence 782a1b914a74.
 - [ ] Owner, in order: D7 budget and machine, D6 evaluator, D4 identity freeze, OD-3. No freeze or push
       until every decision and approval is bound to the final preregistration digest.
 - [x] Owner D3-baselines-and-tells DECIDED 2026-10-20, option A as drafted: section 10.5 cap over all four law-credit kinds, careful keeps ddof = 0 plus _dof arms, form tell declared and measured (not equalised), one process per card, CONTROL_SOLVED >= 0.5.

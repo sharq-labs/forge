@@ -9,18 +9,26 @@ measurement of any arm, not a certification, and it does not replace the certifi
 
 | | |
 |---|---|
-| HEAD | `70f851615c8da1272f8c23cafce13ee3a777c06c` (draft branch) |
+| HEAD | `f99098221b6de899403c2401bde394c676d124f1` (draft branch) |
 | Tree | a clean native WSL clone (`tree_clean: true`) |
 | Python | 3.12.3 |
 | Kernel | 6.6.87.2-microsoft-standard-WSL2 |
 | unshare | unshare from util-linux 2.39.3 |
 | WSL | True |
-| Code sha256 | `deployment_attacks.py` `5903ace4a733…`, `harness.py` `0dd5cab60079…`, `isolation.py` `21d237a0d133…`, `secret_scan.py` `da7eb1d83336…` |
-| Wall time | 39.0 s |
-| `result.json` sha256 | `80db5957d71755d76f349383f735c8c2ca61d606e38f20efe51edb17e9617df7` |
+| Code sha256 | `deployment_attacks.py` `5903ace4a733…`, `harness.py` `331edd8a5a8f…`, `isolation.py` `21d237a0d133…`, `secret_scan.py` `da7eb1d83336…` |
+| Wall time | 39.7 s |
+| `result.json` sha256 | `782a1b914a748a12e59a465d8c6429851df67cba7fb53b142c78246add0259fa` |
 
 The `result.json` digest is pinned in `preregistration.DEPLOYMENT_EVIDENCE_SHA256` and checked by
-`test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code`.
+`test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code`. That test also refuses the evidence once the
+launcher, the attack suite, the harness or the scanner changes.
+
+**Run history:**
+- `e15801b0`: NOT verified. `secret_inventory` was REACHED inside the namespaces, because the scanner flagged its own
+  bytecode (CPython constant-folds `b'a' + b'b'`). Fixed test-first in `70f85161`.
+- `70f85161`: verified (`80db5957d71755d7…`). Superseded when D7 changed `harness.run_one` (a launcher parameter for the
+  development tier, refused for formal runs).
+- `f9909822`: verified. This is the run pinned here.
 
 Command, in WSL Ubuntu, from a fresh clone of the draft branch at that HEAD:
 
@@ -46,12 +54,6 @@ Command, in WSL Ubuntu, from a fresh clone of the draft branch at that HEAD:
 | run_log | REACHED | REFUSED |
 | secret_inventory | REACHED | REFUSED |
 | wsl_interop | REACHED | REFUSED |
-
-**A defect found and fixed during verification.**
-- The first run (HEAD `e15801b0`) was NOT verified: `secret_inventory` was REACHED inside the namespaces.
-- Cause: the scanner flagged its own compiled bytecode in the card's private cache. CPython folds the marker pieces
-  `b'a' + b'b'` into one constant.
-- Fixed test-first in `70f85161` (`test_fda19_the_scan_does_not_flag_its_own_compiled_bytecode`), then re-run.
 
 **Residual risks, disclosed:**
 - Outside its namespaces the proposer runs under the same Linux account.

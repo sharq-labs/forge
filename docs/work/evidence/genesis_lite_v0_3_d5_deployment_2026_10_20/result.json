@@ -3,7 +3,7 @@
  "deployment": {
   "deployment": "rootless_namespaces",
   "kept_read_only": [
-   "/home/dev_kaeem/forge-gl03-d5",
+   "/home/dev_kaeem/forge-gl03-d7",
    "/home/dev_kaeem/forge-hostile-remediation/.forge/venvs/3.12"
   ],
   "masked": [
@@ -47,11 +47,11 @@
  "provenance": {
   "code_sha256": {
    "deployment_attacks.py": "5903ace4a733c255e8b057307754cdb5394a498c14ab56a2799d7e029fce55db",
-   "harness.py": "0dd5cab60079be2b0d1e0bed9f3bef293dab5b8a91783f415f20f54cd3648a58",
+   "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
    "isolation.py": "21d237a0d133ca49fcdba674580d6ecedf5c70ff1dd3a1e7c90358f7b500dce7",
    "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab"
   },
-  "head": "70f851615c8da1272f8c23cafce13ee3a777c06c",
+  "head": "f99098221b6de899403c2401bde394c676d124f1",
   "kernel": "6.6.87.2-microsoft-standard-WSL2",
   "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
   "python": "3.12.3",
@@ -62,7 +62,7 @@
  "schema": "forge.genesis_lite.v0_3/deployment_evidence/1",
  "status": "DEPLOYMENT_VERIFICATION",
  "verified": true,
- "wall_seconds": 39.0,
+ "wall_seconds": 39.7,
  "with_namespaces": {
   "cmdline": "REFUSED",
   "cross_card_state": "REFUSED",

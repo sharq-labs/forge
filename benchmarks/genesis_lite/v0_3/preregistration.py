@@ -86,7 +86,7 @@ POWER_STUDY_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10
 POWER_STUDY_EVIDENCE_SHA256 = "a26705f74e566bc016f2035df84bc4b9808e9f3ddc1ed6091985d7e58f1f5b68"
 #: D5 (owner, 2026-10-20, option A1): the deployment verification, run on WSL Ubuntu from a clean clone
 DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json"
-DEPLOYMENT_EVIDENCE_SHA256 = "80db5957d71755d76f349383f735c8c2ca61d606e38f20efe51edb17e9617df7"
+DEPLOYMENT_EVIDENCE_SHA256 = "782a1b914a748a12e59a465d8c6429851df67cba7fb53b142c78246add0259fa"
 #: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
 RETIRED_PILOT_ROOT_COMMITMENTS = (
     "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",   # v0

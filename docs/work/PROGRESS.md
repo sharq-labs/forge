@@ -8190,3 +8190,17 @@ Verification command, in WSL Ubuntu from a fresh native clone of the draft branc
 - Run 1 at e15801b0: exit 1, NOT verified. secret_inventory was REACHED inside the namespaces, because the scanner flagged its own .pyc (CPython constant-folds the marker pieces).
 - Fix, test-first: `test_fda19_the_scan_does_not_flag_its_own_compiled_bytecode` failed, then passed (70f85161).
 - Run 2 at 70f85161: exit 0, VERIFIED. All 10 channels REFUSED with the namespaces and all 10 REACHED without them; 39 s. Evidence sha256 80db5957d71755d76f349383f735c8c2ca61d606e38f20efe51edb17e9617df7, identical on both sides of the WSL copy, pinned in the preregistration.
+
+**Test determinism (2026-10-20).** A 16-run loop of the full genesis_lite suite caught 2 intermittent failures, both traced to random registry admissions in test fixtures:
+- The keyed-stream tests: a random nonce and clock let two Monte-Carlo counts coincide in about 1% of runs.
+- The escrow e2e swap test: with a random nonce, careful and always_refuse occasionally gave identical records, so the swap was vacuous.
+
+Fixed with fixed admissions and an explicit precondition. Re-loop: 16/16 runs passed (264 each).
+
+**Owner decision D7 (2026-10-20, in session).** The formal machine is this WSL Ubuntu, and a timing pilot runs before the budget. `run_one` accepts a launcher only in the development tier; a formal run refuses a caller's.
+
+D5 was re-verified after this harness change: run at f9909822, VERIFIED (10/10 channels REFUSED with the namespaces, 10/10 REACHED without), evidence sha256 782a1b914a748a12e59a465d8c6429851df67cba7fb53b142c78246add0259fa, re-pinned. The run at 70f85161 is superseded.
+
+The first pilot attempt on the draft branch was refused by `bind` (the escrow half of FDA-05 is only on the escrow branch), so the pilot runs on the escrow branch.
+
+`python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 245 passed.
