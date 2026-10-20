@@ -28,7 +28,11 @@ import uuid
 from typing import Any, Mapping
 
 CHANNELS = ("cmdline", "root_file", "network", "persistence", "package_write", "run_log", "cross_card_state",
-            "operator_process", "wsl_interop", "secret_inventory")
+            "operator_process", "wsl_interop", "secret_inventory", "unmask", "remount_rw")
+#: root-owned system directories the proposer-side scan skips when asked to scan "/" (an operator cannot place a file
+#: there without root; scanning them would take minutes per card)
+SCAN_SKIP = ("proc", "sys", "dev", "usr", "lib", "lib32", "lib64", "libx32", "bin", "sbin", "boot", "snap",
+             "lost+found")
 REACHED, REFUSED, UNTESTABLE = "REACHED", "REFUSED", "UNTESTABLE"
 
 
@@ -115,7 +119,9 @@ def persistence(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[
     except OSError as exc:
         return _answer(card, "persistence", None, f"setup failed: {type(exc).__name__}")
     marker = _shared_dir() / f"gl-persistence-marker-{uuid.uuid4().hex}"
-    code = f"import time, pathlib; time.sleep(5); pathlib.Path({str(marker)!r}).touch()"
+    # the helper's own command line carries the marker name: the runner detects it from the HOST while it lives, so a
+    # marker that is merely invisible to the host (a private /tmp) cannot pass for a refused helper (review I-3)
+    code = f"import time, pathlib; time.sleep(8); pathlib.Path({str(marker)!r}).touch()"
     try:
         kwargs: dict[str, Any] = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL,
                                   "cwd": str(_shared_dir())}
@@ -199,6 +205,13 @@ def wsl_interop(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[
     can guess it). No Windows executable reachable is REFUSED; on a non-WSL host there is none."""
     import shutil  # noqa: PLC0415
 
+    sockets = sorted(str(p) for p in pathlib.Path("/run/WSL").glob("*_interop")) if pathlib.Path("/run/WSL").is_dir() \
+        else []
+    named = os.environ.get("FORGE_ATTACK_WSL_INTEROP", "")
+    if named and pathlib.Path(named).exists():
+        sockets.append(named)
+    if sockets:
+        return _answer(card, "wsl_interop", True, f"interop socket visible: {sockets[0]}")
     candidates = [p for p in (shutil.which("cmd.exe"), "/mnt/c/Windows/System32/cmd.exe", "/mnt/c/WINDOWS/system32/cmd.exe")
                   if p and pathlib.Path(p).is_file()]
     env = dict(os.environ)
@@ -223,8 +236,82 @@ def secret_inventory(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> 
     digests = [d for d in os.environ.get("FORGE_ATTACK_SCAN_DIGESTS", "").split(",") if d]
     if not roots or not digests:
         return _answer(card, "secret_inventory", None, "no scan roots or digests configured")
-    found = secret_scan.scan([pathlib.Path(r) for r in roots], digests)
+    paths: list[pathlib.Path] = []
+    for raw in roots:
+        if raw == "/":
+            paths += [p for p in pathlib.Path("/").iterdir() if p.name not in SCAN_SKIP and not p.is_symlink()]
+        else:
+            paths.append(pathlib.Path(raw))
+    found = secret_scan.scan(paths, digests)
     return _answer(card, "secret_inventory", bool(found), f"{len(found)} readable file(s) hold a secret")
+
+
+def _libc() -> Any:
+    import ctypes  # noqa: PLC0415
+    import ctypes.util  # noqa: PLC0415
+
+    name = ctypes.util.find_library("c")
+    return ctypes.CDLL(name, use_errno=True) if name else None
+
+
+def _nested(command: str) -> bool:
+    """Run ``command`` in a NEW user + mount namespace (unprivileged); True if it printed ESCAPED."""
+    import shutil  # noqa: PLC0415
+
+    if shutil.which("unshare") is None:
+        return False
+    try:
+        done = subprocess.run(["unshare", "--user", "--map-root-user", "--mount", "sh", "-c", command],
+                              capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return "ESCAPED" in done.stdout
+
+
+def unmask(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    """Review I-1: can it remove a mask (unmount a tmpfs over an operator directory), directly or from a nested user
+    namespace? Tries every mount point among the masked roots."""
+    libc = _libc() if os.name == "posix" else None
+    if libc is None:
+        return _answer(card, "unmask", None, "no libc on this platform: the probe cannot run")
+    targets = [t for t in ("/home", "/mnt", "/run", "/tmp", "/root", "/var/tmp", "/opt", "/media", "/dev/shm")
+               if os.path.ismount(t)]
+    for t in targets:
+        if libc.umount2(t.encode(), 2) == 0:                   # MNT_DETACH
+            return _answer(card, "unmask", True, f"unmounted {t}")
+    for t in targets:
+        if _nested(f"umount -l {t} 2>/dev/null && echo ESCAPED"):
+            return _answer(card, "unmask", True, f"unmounted {t} from a nested namespace")
+    return _answer(card, "unmask", False, f"{len(targets)} mask(s) held")
+
+
+def remount_rw(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    """Review I-1: can it make the kept benchmark tree writable by remounting it, directly or from a nested user
+    namespace? Writes nothing: success of the remount call is the finding."""
+    libc = _libc() if os.name == "posix" else None
+    if libc is None:
+        return _answer(card, "remount_rw", None, "no libc on this platform: the probe cannot run")
+    target = str(pathlib.Path(__file__).resolve().parents[2])
+    if libc.mount(None, target.encode(), None, 32 | 4096, None) == 0:     # MS_REMOUNT | MS_BIND, no MS_RDONLY
+        return _answer(card, "remount_rw", True, "remounted the kept tree read-write")
+    if _nested(f"mount -o remount,bind,rw {target} 2>/dev/null && echo ESCAPED"):
+        return _answer(card, "remount_rw", True, "remounted the kept tree read-write from a nested namespace")
+    return _answer(card, "remount_rw", False, "the kept tree stays read-only")
+
+
+def _alive_with(token: str) -> bool:
+    """Whether any process on THIS host's view carries ``token`` in its command line."""
+    proc = pathlib.Path("/proc")
+    if not proc.is_dir():
+        return False
+    for entry in proc.iterdir():
+        if entry.name.isdigit():
+            try:
+                if token.encode() in (entry / "cmdline").read_bytes():
+                    return True
+            except OSError:
+                continue
+    return False
 
 
 def channel_verdicts(rationales: list[str]) -> dict[str, str]:
@@ -260,11 +347,13 @@ def deployment_runner(attack_env: Mapping[str, str] | None = None, cards: int = 
         resolved = []
         for text in out:                                   # a helper process proves itself by its marker
             channel, verdict, detail = (text.split(":", 2) + ["", ""])[:3]
-            if verdict == "PENDING":
+            if verdict == "PENDING":                        # seen alive from the host, or its marker appears
+                token, seen = pathlib.Path(detail).name, False
                 deadline = time.monotonic() + 12
-                while time.monotonic() < deadline and not pathlib.Path(detail).exists():
-                    time.sleep(0.5)
-                verdict = REACHED if pathlib.Path(detail).exists() else REFUSED
+                while time.monotonic() < deadline and not seen:
+                    seen = _alive_with(token) or pathlib.Path(detail).exists()
+                    time.sleep(0.25)
+                verdict = REACHED if seen else REFUSED
                 text = f"{channel}:{verdict}:{detail}"
             resolved.append(text)
         return resolved

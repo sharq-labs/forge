@@ -8228,3 +8228,26 @@ Placement fix found by the D6 test: the D5 deployment, D7 timing pilot, D7 budge
 **Owner decision OD-3 timing (2026-10-20, in session).** Recertify once, on the final pre-freeze HEAD, after the D4 candidate is pinned and timed. This is the owner's manual operation; nothing was certified here.
 
 Process slip, recorded: commit 3cff02bc (readiness messages) was made while `test_readiness_pass_needs_everything` failed, because the command chained the commit on a grep that matched the FAILED line. Its FROZEN stand-in now fills the new owner values (budget total, evaluator name). `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 247 passed. From now on, commits are gated on the pytest exit status, not on grep.
+
+**Fourth forge-scientific-review (2026-10-20, escrow 6e87e145): BLOCKER.**
+- I-1 BLOCKER: the proposer kept full capabilities as root of its user namespace, so it could unmount the D5 masks or remount the kept tree read-write. The D5 "VERIFIED" from the earlier runs is withdrawn.
+- I-2, I-3, I-4 MAJOR:
+  - I-2: the admission was accepted on self-consistency alone.
+  - I-3: some REFUSED verdicts were vacuous (persistence invisible rather than stopped; the scan covered only masked directories; interop was never tested independently; no remount attempt).
+  - I-4: operator files were allowed inside the kept tree.
+
+Fixes:
+- The proposer is exec'd through `setpriv --inh-caps=-all --bounding-set=-all --no-new-privs`, as the certified isolation does. A WSL probe confirmed: direct umount refused, nested userns refused.
+- New channels `unmask` and `remount_rw`, each tried directly and through a nested userns.
+- Persistence is detected from the host by process token.
+- The proposer-side scan covers "/" minus root-owned system directories.
+- A visible interop socket counts as REACHED.
+- Verification runs three configurations (plain; namespaces with capabilities; D5), and probe power requires REACHED in a control.
+- `lift_decision(inbox=)` requires the evaluator inbox's first admission.
+- `formal.main` refuses operator files inside kept trees or outside masked roots.
+- Kept paths are validated after realpath.
+- The budget scope is labelled and `main` exits 3 on BUDGET_EXCEEDED.
+- The D7 ledger row is added.
+- The residual and stale-row wording is fixed.
+
+With this commit, three evidence-binding tests fail BY DESIGN (D5, study, pilot measured the old code): 246 passed, 3 failed. Re-runs follow from this clean commit.

@@ -97,6 +97,16 @@ def study_admission(root: bytes, rng: np.random.Generator) -> dict[str, Any]:
     return entry
 
 
+class StudyInbox:
+    """The study's stand-in for the evaluator's inbox (synthetic; a real decision passes ``registry.EvaluatorInbox``)."""
+
+    def __init__(self, admission: dict[str, Any]) -> None:  # noqa: D107
+        self.admission = dict(admission)
+
+    def first_admission(self, commitment: str) -> dict[str, Any] | None:
+        return dict(self.admission) if self.admission["root_commitment_sha256"] == commitment else None
+
+
 def _bind(rows: list[dict], admission: dict[str, Any]) -> list[dict]:
     return [dict(r, attempt_sha256=admission["attempt_sha256"]) for r in rows]
 
@@ -150,7 +160,7 @@ def run_cell(cell: dict[str, Any], reps: int, seed: int, fast: bool = True) -> d
         admission = study_admission(root, rng)
         with _study_scoring(root, fast):
             out = v03a.lift_decision(_bind(rows, admission), CANDIDATE, revealed_root=root, verification=[],
-                                     admission=admission)
+                                     admission=admission, inbox=StudyInbox(admission))
         for name, ok in statistical_claim(out).items():
             tally[name] = tally.get(name, 0) + int(ok)
         pooled_mean.append(out["primary"]["pooled"]["mean_difference"])
@@ -181,7 +191,7 @@ def bootstrap_crosscheck(cell: dict[str, Any], reps: int, seed: int) -> dict[str
         for fast in (True, False):
             with _study_scoring(root, fast):
                 outs.append(v03a.lift_decision(_bind(rows, admission), CANDIDATE, revealed_root=root, verification=[],
-                                               admission=admission))
+                                               admission=admission, inbox=StudyInbox(admission)))
         bounds = [{**{f"primary/{p}": o["primary"][p]["lower95"] for p in o["primary"]},
                    **{f"kind/{k}": v["lower95"] for k, v in o["kind_noninferiority"].items()}} for o in outs]
         gap = max(abs(bounds[0][k] - bounds[1][k]) for k in bounds[0])

@@ -366,7 +366,8 @@ def test_o1_the_claims_monte_carlo_stream_comes_from_the_committed_root(monkeypa
     stream_problem = "revealed formal root is missing"
     assert any(stream_problem in p for p in v03a.lift_decision(rows, "mind", grid=lr.GRID)["coverage_problems"])
     monkeypatch.setattr(v03a, "_formal_root_commitment", lambda: hashlib.sha256(root).hexdigest())
-    good = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root, admission=admission)["coverage_problems"]
+    good = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root, admission=admission,
+                              inbox=_INBOXES[admission["attempt_sha256"]])["coverage_problems"]
     assert not any(stream_problem in p or "admission" in p for p in good)
     bad = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=b"x" * 32, admission=admission)
     assert any(stream_problem in p for p in bad["coverage_problems"])
@@ -424,7 +425,8 @@ def test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p(monkeypat
         bound = [dict(r, attempt_sha256=admission["attempt_sha256"]) for r in rows]
         monkeypatch.setattr(v03a, "_formal_root_commitment", lambda r=root: hashlib.sha256(r).hexdigest())
         seen.clear()
-        out = v03a.lift_decision(bound, "mind", grid=lr.GRID, revealed_root=root, admission=admission)
+        out = v03a.lift_decision(bound, "mind", grid=lr.GRID, revealed_root=root, admission=admission,
+                                 inbox=_INBOXES[admission["attempt_sha256"]])
         assert out["primary"]["pooled"]["p_method"] == "monte_carlo"
         assert seen and set(seen) == {v03a.sign_flip_stream(root, identity, admission)}
         ps[tag] = out["primary"]["pooled"]["p"]
@@ -604,7 +606,13 @@ def _admitted(path, root, prereg, nonce="5a" * 16):
                                                      prereg_sha256=prereg, campaign_set_sha256=prereg, tier="formal")
     entry = dict(entry, admitted_at="2026-10-20T00:00:00+00:00")       # the clock enters the digest too
     entry["attempt_sha256"] = registry.entry_digest(entry)
+    inbox = registry.EvaluatorInbox(path / "inbox.jsonl")               # review I-2: the evaluator's first admission
+    inbox.receive(entry)
+    _INBOXES[entry["attempt_sha256"]] = inbox
     return entry
+
+
+_INBOXES: dict = {}
 
 
 def test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream(tmp_path, monkeypatch):
@@ -637,14 +645,24 @@ def test_d2b_a_root_ground_before_commitment_cannot_fix_the_claims_stream(tmp_pa
 
     monkeypatch.setattr(v03a, "sign_flip_p", recording)
     problem = "admission"
-    out = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root, admission=first)
+    inbox = _INBOXES[first["attempt_sha256"]]
+    out = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root, admission=first, inbox=inbox)
     assert not any(problem in p or "revealed formal root" in p for p in out["coverage_problems"])
     assert seen and set(seen) == {claim}
     other_root = dict(first, root_commitment_sha256="0" * 64)
     other_root["attempt_sha256"] = entry_digest(other_root)
+    forged = dict(first, nonce="33" * 16)                         # review I-2: self-consistent, never in the inbox
+    forged["attempt_sha256"] = entry_digest(forged)
+    forged_rows = [dict(r, attempt_sha256=forged["attempt_sha256"]) for r in rows]
+    seen.clear()
+    out = v03a.lift_decision(forged_rows, "mind", grid=lr.GRID, revealed_root=root, admission=forged, inbox=inbox)
+    assert any("inbox" in p for p in out["coverage_problems"]) and set(seen) == {v03a.SIGN_FLIP_STREAM}
+    seen.clear()
+    out = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root, admission=first)    # no inbox at all
+    assert any("inbox" in p for p in out["coverage_problems"]) and set(seen) == {v03a.SIGN_FLIP_STREAM}
     for bad in (None, second, dict(first, nonce="0" * 32), other_root):
         seen.clear()
-        out = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root, admission=bad)
+        out = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root, admission=bad, inbox=inbox)
         assert any(problem in p for p in out["coverage_problems"]), bad
         assert set(seen) == {v03a.SIGN_FLIP_STREAM}                          # descriptive public stream only
 
@@ -669,6 +687,44 @@ def test_d5_the_launcher_masks_operator_state_and_keeps_only_the_tree_read_only(
     assert "remount,bind,ro" in script and "exec \"$@\"" in script and "umount -R" in script
     with pytest.raises(isolation.DeploymentUnavailable, match="masked root"):
         isolation.NamespaceLauncher(("/usr/lib/python3",))
+
+
+def test_d5_the_proposer_runs_without_capabilities_and_kept_paths_are_validated_resolved(monkeypatch):
+    """Review I-1 / I-9: the proposer is exec'd through setpriv with every capability dropped (else, as root of its own
+    user namespace, it could unmount the masks or remount the kept tree read-write); kept paths are validated after
+    resolution and travel through a list file, never word-split."""
+    from benchmarks.genesis_lite.v0_3 import isolation
+
+    monkeypatch.setattr(isolation, "available", lambda: True)
+    monkeypatch.setattr(isolation.shutil, "which", lambda name: f"/usr/bin/{name}")
+    argv = isolation.NamespaceLauncher(("/home/u/repo",)).argv(["python", "host.py"], "/tmp/c")
+    tail = argv[argv.index("--", argv.index("gl-d5")) + 1:]
+    assert tail == ["/usr/bin/setpriv", *isolation.SETPRIV_FLAGS, "--", "python", "host.py"]
+    assert set(isolation.SETPRIV_FLAGS) == {"--inh-caps=-all", "--bounding-set=-all", "--no-new-privs"}
+    escapable = isolation.NamespaceLauncher(("/home/u/repo",), drop_caps=False).argv(["python"], "/tmp/c")
+    assert "/usr/bin/setpriv" not in escapable                         # the verification's power control only
+    script = argv[argv.index("-c") + 1]
+    assert 'while IFS= read -r k' in script and "for k in $keep" not in script
+    for bad in ("/tmp/..", "/home/u/../../usr", "/home/u/a b"):
+        with pytest.raises(isolation.DeploymentUnavailable):
+            isolation.NamespaceLauncher((bad,))
+
+
+def test_d5_operator_files_must_be_unreadable_to_cards(monkeypatch):
+    """Review I-4: the run directory, registry and inbox must lie under a masked root and outside every kept tree."""
+    from benchmarks.genesis_lite.v0_3 import isolation
+
+    monkeypatch.setattr(isolation, "kept_paths", lambda: ("/home/u/repo", "/home/u/venv"))
+    ok = isolation.operator_path_problems({"run directory": pathlib.PurePosixPath("/home/u/runs/a"),
+                                           "attempt registry": pathlib.PurePosixPath("/tmp/reg")})
+    assert ok == []
+    bad = isolation.operator_path_problems({"run directory": pathlib.PurePosixPath("/home/u/repo/.forge/out"),
+                                            "attempt registry": pathlib.PurePosixPath("/etc/gl-reg"),
+                                            "evaluator inbox": pathlib.PurePosixPath("/home/u/venv/inbox")})
+    assert len(bad) == 3 and "masked root" in bad[1]
+    import inspect
+
+    assert "operator_path_problems" in inspect.getsource(formal.main)
 
 
 def test_d5_a_formal_card_cannot_start_without_the_deployment(monkeypatch):

@@ -69,9 +69,11 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "pilot P-1 (always_law)": (NOT_A_BLOCKER, ("test_pilot_p1_",), "solved by the v0.1 joint endpoint"),
     "pilot P-2 (control cells)": (FIXED, ("test_pilot_p2_",), "CONTROL_SOLVED cap"),
     "pilot P-3 (out-of-family share)": (FIXED, ("test_pilot_p3_",), "FDA-06 cap"),
-    "readiness P-1/P-2 (isolation deployment, escrow out of process)": (FIXED, ("test_d5_",), "D5 A1 verified: every "
-                                                                        "channel REFUSED, operator_process included; "
-                                                                        "the certified isolation-probe rerun is OD-3"),
+    "readiness P-1/P-2 (isolation deployment, escrow out of process)": (FIXED, ("test_d5_",), "D5 A1: every channel "
+                                                                        "REFUSED in the namespaces; the escrow stays in "
+                                                                        "the operator process, which operator_process "
+                                                                        "shows no card reaches; certified probe rerun: "
+                                                                        "OD-3"),
     "readiness P-3 (attack arms)": (FIXED, ("test_readiness_p3_",), "suite exists; verdicts come from the deployment"),
     "P-4 formal driver, candidate in the attempt": (FIXED, ("test_p4_",), "review 2026-10-20 finding 1"),
     "P-5 environment manifest": (FIXED, ("test_p5_",), "measured inside bind for the formal tier"),
@@ -83,6 +85,7 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "root grinding before the commitment (review I-1)": (DECIDED, (), "D2b, 2026-10-20: the admission nonce is bound "
                                                                      "into the key"),
     "external evaluator named (D6)": (OWNER, (), "selection process decided 2026-10-20; the name is due by 2026-11-17"),
+    "D7 timing pilot and budget": (FIXED, ("test_d7_",), "pilot pinned to the timed code; run_formal enforces the cap"),
     "D2b nonce-bound stream": (FIXED, ("test_d2b_",), "a root ground before the commitment cannot fix the claim's "
                                                       "stream; missing, tampered or foreign admissions are refused"),
     "cap form (ODC-O1b study finding)": (DECIDED, (), "D3b-1, 2026-10-20: cell-level cap"),
@@ -218,17 +221,21 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
     ),
     'FDA-18 residual (same-account files, helper processes)': (
         'test_d5_the_launcher_masks_operator_state_and_keeps_only_the_tree_read_only',
+        'test_d5_the_proposer_runs_without_capabilities_and_kept_paths_are_validated_resolved',
+        'test_d5_operator_files_must_be_unreadable_to_cards',
         'test_d5_a_formal_card_cannot_start_without_the_deployment',
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
         'test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code',
     ),
     'readiness P-1/P-2 (isolation deployment, escrow out of process)': (
         'test_d5_the_launcher_masks_operator_state_and_keeps_only_the_tree_read_only',
+        'test_d5_the_proposer_runs_without_capabilities_and_kept_paths_are_validated_resolved',
+        'test_d5_operator_files_must_be_unreadable_to_cards',
         'test_d5_a_formal_card_cannot_start_without_the_deployment',
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
         'test_d5_deployment_evidence_is_pinned_verified_and_measured_this_code',
     ),
-    'D7 timing pilot': (
+    'D7 timing pilot and budget': (
         'test_d7_a_formal_run_never_takes_a_callers_launcher_and_the_pilot_stays_off_the_formal_grid',
         'test_d7_timing_pilot_evidence_is_pinned_and_timed_this_code',
         'test_d7_the_driver_stops_and_invalidates_an_attempt_over_budget',

@@ -81,8 +81,7 @@ OWNER_DECISIONS_TAKEN = {
                          "digest / admission nonce / admission digest); the admission is created by the one-attempt "
                          "registry after the commitment, so no stream is computable at commitment time; lift_decision "
                          "uses the keyed stream only with a self-consistent formal admission of this root and this "
-                         "preregistration that every record carries (test_d2b_*). Residual, disclosed: whoever runs the "
-                         "registry could generate unpublished admissions and keep one; blind to the data",
+                         "preregistration that every record carries (test_d2b_*). admission must also be the evaluator inbox's first admission of the root. Residual, disclosed: an operator who runs complete attempts privately (off the registry) and publishes only the admission of the best one is NOT stopped by the key; the evaluator receiving each admission before the first world (D6) narrows this, but an inbox cannot order publication against execution. That is the operator-honesty residual of the decision record",
     "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in "
                               "session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs "
                               "over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, "
@@ -313,7 +312,11 @@ def build() -> dict[str, Any]:
             "budget": {"baseline_hours": BASELINE_BUDGET_HOURS, "candidate_hours": CANDIDATE_BUDGET_HOURS,
                        "total_hours": TOTAL_BUDGET_HOURS,
                        "rule": "formal.run_formal checks the elapsed time before each world set and stops past "
-                               "total_hours: BUDGET_EXCEEDED, INVALID, never partially claimed (Genesis section 10.6)"},
+                               "total_hours: BUDGET_EXCEEDED, INVALID, never partially claimed (Genesis section 10.6)",
+                       "scope": "the cap times the operator's run only (about half of the ESTIMATED 58 h, which counts "
+                                "the evaluator's replay as a second run); the evaluator's replay is budgeted separately; "
+                                "overshoot is bounded by the world set in progress (every arm's cards x the per-card "
+                                "timeout)"},
             "timing_pilot": {"evidence": TIMING_PILOT_EVIDENCE, "evidence_sha256": TIMING_PILOT_EVIDENCE_SHA256,
                              "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are "
                                        "ESTIMATED from it and exclude the candidate's own cost (D4)"},

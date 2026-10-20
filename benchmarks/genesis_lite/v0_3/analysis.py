@@ -197,9 +197,12 @@ def sign_flip_stream(revealed_root: bytes, prereg_sha256: str, admission: Mappin
     nonce / admission digest). The admission is written by the one-attempt registry AFTER the root is committed
     (``registry.AttemptRegistry.admit``), so nobody can compute the key at commitment time: a root ground before the
     commitment cannot fix the claim's stream (owner D2b, 2026-10-20; test_d2b_*). The key is unknown to the proposer
-    while the attempt runs. Residual, disclosed: whoever runs the registry could generate admissions without publishing
-    them and keep one; the evaluator's inbox binds the first PUBLISHED admission of a root, so this needs unpublished
-    registries, and it is blind to the data because the worlds mix in the same nonce (``formal.master_for``)."""
+    while the attempt runs. A decision also requires the admission to be the evaluator inbox's FIRST admission of the root
+    (:func:`admission_problems`). Residual, disclosed: an operator who runs complete attempts privately (off the
+    registry) and publishes only the admission of the best one is NOT stopped by the key; the evaluator receiving
+    each admission before the first world (D6) narrows this, but an inbox cannot order publication against
+    execution. That is the operator-honesty residual of the decision record.
+    """
     import hmac  # noqa: PLC0415
 
     message = f"{SIGN_FLIP_KEY_LABEL}/{prereg_sha256}/{admission['nonce']}/{admission['attempt_sha256']}"
@@ -207,10 +210,12 @@ def sign_flip_stream(revealed_root: bytes, prereg_sha256: str, admission: Mappin
 
 
 def admission_problems(admission: Any, revealed_root: bytes, prereg_sha256: str,
-                       rows: Sequence[Mapping[str, Any]]) -> list[str]:
+                       rows: Sequence[Mapping[str, Any]], inbox: Any = None) -> list[str]:
     """Why ``admission`` cannot key this claim's stream: not a self-consistent registry entry, not of this root, not of
-    this preregistration, not formal, or not the attempt every record carries."""
-    from .registry import entry_digest  # noqa: PLC0415
+    this preregistration, not formal, not the attempt every record carries, or (review I-2) not the FIRST admission of
+    this root in the evaluator's ``inbox`` (``registry.EvaluatorInbox``): self-consistency alone can be forged by anyone
+    who picks a nonce and digests an entry."""
+    from .registry import REGISTRY_SCHEMA, entry_digest  # noqa: PLC0415
 
     if not isinstance(admission, Mapping) or not all(isinstance(admission.get(k), str) for k in
                                                      ("nonce", "attempt_sha256", "root_commitment_sha256", "prereg_sha256")):
@@ -224,6 +229,11 @@ def admission_problems(admission: Any, revealed_root: bytes, prereg_sha256: str,
         problems.append("the admission is not a formal admission under this preregistration")
     if {r.get("attempt_sha256") for r in rows} != {admission["attempt_sha256"]}:
         problems.append("the records do not all come from the given admission's attempt")
+    if admission.get("schema") != REGISTRY_SCHEMA:
+        problems.append("the admission is not an attempt-registry entry")
+    first = inbox.first_admission(admission["root_commitment_sha256"]) if hasattr(inbox, "first_admission") else None
+    if first is None or dict(first) != dict(admission):
+        problems.append("the admission is not the evaluator inbox's first admission of this root")
     return problems
 
 
@@ -343,7 +353,7 @@ def _formal_root_commitment() -> str:
 
 def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[WorldSet] | None = None,
                   verification: Sequence[str] | None = None, revealed_root: bytes | None = None,
-                  admission: Mapping[str, Any] | None = None) -> dict[str, Any]:
+                  admission: Mapping[str, Any] | None = None, inbox: Any = None) -> dict[str, Any]:
     """The v0.2 lift rule with the FDA-06 cap and the O-1 significance. Claims nothing unless every condition holds,
     including a clean post-reveal verification of the attempt (``formal.verify_attempt`` returned no problem) and the
     revealed formal root, whose sha256 must be the preregistered commitment: the sign-flip stream is derived from it
@@ -367,7 +377,7 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
         problems.append("the revealed formal root is missing or is not the preregistered commitment: the sign-flip "
                         "stream is not the claim's (D2), p values are descriptive only")
     else:
-        refused = admission_problems(admission, revealed_root, identity, rows)
+        refused = admission_problems(admission, revealed_root, identity, rows, inbox)
         if refused:
             problems += [f"admission (D2b): {p}; p values are descriptive only" for p in refused]
         else:

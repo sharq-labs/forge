@@ -361,7 +361,9 @@ def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, An
     ``time.monotonic``. ``publish`` delivers the admission to the external evaluator; if it fails, the attempt is
     consumed and nothing runs. D7: before each world set the elapsed time is checked against the preregistered budget;
     past it the attempt stops as BUDGET_EXCEEDED. It is INVALID and never partially claimed: the evaluator's
-    verification and the lift rule's coverage both need every world set."""
+    verification and the lift rule's coverage both need every world set. Scope: the cap times the OPERATOR's run only
+    (the evaluator's replay is budgeted separately), and it can be overshot by at most the world set in progress (every
+    arm's cards, each bounded by the per-card timeout)."""
     problems = preflight(doc, root, manifest) + committed_identity_problems(doc)
     if problems:
         raise FormalRefused("; ".join(problems))
@@ -656,6 +658,10 @@ def main(argv: list[str] | None = None) -> int:
     for name, path in (("attempt registry", args.registry), ("evaluator inbox", args.publish_to)):
         if path.resolve().is_relative_to(args.out.resolve()):
             problems.append(f"the {name} lies inside the run directory")
+    from .isolation import operator_path_problems  # noqa: PLC0415
+
+    problems += operator_path_problems({"run directory": args.out, "attempt registry": args.registry,
+                                        "evaluator inbox": args.publish_to})        # review I-4: unreadable to cards
     if problems:                                             # refused before anything is created
         print("REFUSED: " + "; ".join(problems), file=sys.stderr)
         return 2
@@ -677,6 +683,9 @@ def main(argv: list[str] | None = None) -> int:
     summary["run_log_head"] = log.head
     EvaluatorInbox(args.publish_to).receive_heads(summary["attempt_sha256"], run_log=log.head, registry=registry.head())
     (args.out / "summary.json").write_bytes(json.dumps(summary, sort_keys=True, indent=1).encode() + b"\n")
+    if summary.get("status") == "BUDGET_EXCEEDED":
+        print("BUDGET_EXCEEDED: the attempt is INVALID and is never partially claimed", file=sys.stderr)
+        return 3
     return 0
 
 
