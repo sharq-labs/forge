@@ -44,7 +44,7 @@ __________ test_the_subprocess_escrow_keeps_its_secrets_in_the_child __________
 >       t = SubprocessTransport()
             ^^^^^^^^^^^^^^^^^^^^^
 
-tests\foundations\test_v2_blindfold.py:354: 
+tests\foundations\test_v2_blindfold.py:354:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <engcore.blindfold.escrow.SubprocessTransport object at 0x000001EA7681D550>
