@@ -143,8 +143,13 @@ def test_readiness_with_the_escrow_half_has_no_technical_row_left():
     assert set(readiness.ESCROW_TESTS["FDA-05 escrow half"]) <= required
     evidence = {"head": readiness._head(), "clean": True, "tests": {name: "passed" for name in required}}
     out = readiness.check(evidence=evidence)
-    assert out["agreement_cases"] == 2 * len(selfcheck.PAIRS) * len(selfcheck.BOUNDS) and out["technical_blockers"] == []
-    assert out["status"] == readiness.PENDING_OWNER
+    assert out["agreement_cases"] == 2 * len(selfcheck.PAIRS) * len(selfcheck.BOUNDS)
+    # owner 2026-10-20: until D5 is re-verified on the hardened distro, exactly these rows are technical
+    assert sorted(r.split(":")[0] for r in out["technical_blockers"]) == [
+        "FDA-18 residual (same-account files, helper processes)", "isolation boundary (D5)",
+        "readiness P-1/P-2 (isolation deployment, escrow out of process)"]
+    assert all(readiness.NOT_PROVEN in r for r in out["technical_blockers"])
+    assert out["status"] == readiness.BLOCKED
     for decided in ("cap form (ODC-O1b study finding)", "per-kind non-inferiority conjunction (ODC-O1b study finding)",
                     "root grinding before the commitment (review I-1)", "FDA-18 residual",
                     "readiness P-1/P-2"):                                  # D3b-1, D3b-2, D2b, D5: decided
