@@ -46,8 +46,8 @@ Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
 - [x] Bounded power and null-calibration study (ODC-O1b) RAN 2026-10-20 (synthetic, non-formal):
       `docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/` (re-run after review, sha256-pinned). The D2 statistic is consistent with nominal under its exchangeable null (implementation check).
 - [ ] Owner D2b-root-grinding (scientific review I-1): the root generator can grind roots before committing.
-- [ ] Owner D3b-1-cap-form (study): the per-world-set min cap needs world-by-world dominance.
-- [ ] Owner D3b-2-kind-noninferiority (study): the all-kind conjunction fails 33/100 at equal skill (±1 model).
+- [x] Owner D3b-1-cap-form DECIDED 2026-10-20: cell-level cap, min(0, cell net difference) in the effect size (per bootstrap resample) and kind non-inferiority; significance from uncapped differences only (P2).
+- [x] Owner D3b-2-kind-noninferiority DECIDED 2026-10-20: per-kind margin 0.15, every kind still required.
 - [x] Owner D3-baselines-and-tells DECIDED 2026-10-20, option A as drafted: section 10.5 cap over all four law-credit kinds, careful keeps ddof = 0 plus _dof arms, form tell declared and measured (not equalised), one process per card, CONTROL_SOLVED >= 0.5.
 - [ ] Owner: D4-identity-freeze (OD-19, candidate,
       fresh root), D5-deployment (OD-20), D6-evaluator (OD-8), D7-budget-and-machine (OD-18): the approval record

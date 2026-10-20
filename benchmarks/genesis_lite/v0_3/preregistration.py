@@ -41,6 +41,15 @@ CANDIDATE = ODR                              # {name, spec, code_sha256} named i
 DECISION_RECORD = "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md"
 #: owner decisions taken so far (each also needs its entry in the owner's approval record at freeze)
 OWNER_DECISIONS_TAKEN = {
+    "D3b-1-cap-form": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, a cell-level "
+                      "cap. A capped (kind, presentation) cell contributes min(0, its summed paired difference): no "
+                      "gain, a net loss counts, in the effect size (recomputed per bootstrap resample) and the per-kind "
+                      "non-inferiority. Implementation P2 (owner, same session): the sign-flip p uses the uncapped "
+                      "differences only, because the min inside every sign vector let capped wins raise significance "
+                      "(p = 0.002 at a mean difference of 0, adversarial test). v0.3 only",
+    "D3b-2-kind-noninferiority": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, the "
+                                 "per-kind non-inferiority margin is 0.15 (v0.2: 0.10) and every kind is still required; "
+                                 "the presentation margin is unchanged. v0.3 only",
     "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in "
                               "session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs "
                               "over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, "
@@ -197,13 +206,16 @@ def build() -> dict[str, Any]:
                            "pair and the run is EVALUATOR_DISAGREEMENT (tested)",
         },
         "analysis": {
-            "base": "the v0.2 lift rule (benchmarks/genesis_lite/analysis.py, pinned above) with two changes",
+            "base": "the v0.2 lift rule (benchmarks/genesis_lite/analysis.py, pinned above) with the changes below",
             "capped_kinds": list(analysis.CAPPED_KINDS),
-            "cap_rule": "per universe: a capped kind whose truth is outside the searched family (or whose flag is "
-                        "unknown) is capped at the comparator; a VALID record without the flag for one of them is "
-                        "refused",
+            "cap_rule": "which universes are capped: a capped kind whose truth is outside the searched family (or whose "
+                        "flag is unknown), and every REPRESENTATION_LIMITED / CONTROL_SOLVED cell; a VALID record without "
+                        "the flag for one of them is refused. How they count (D3b-1): " + analysis.CAP_RULE,
             "significance": analysis.SIGNIFICANCE,
-            "sign_flip": {"statistic": "sum of the paired world-set differences (one-sided, H1 candidate better)",
+            "sign_flip": {"statistic": "sum over world sets of the paired difference over UNCAPPED kinds only (one-sided, "
+                                       "H1 candidate better); capped cells never enter the significance test (D3b-1, P2). "
+                                       "They enter the effect size: sum of the uncapped differences + sum over capped "
+                                       "(kind, presentation) cells of min(0, the cell's summed difference), per world set",
                           "lattice": analysis.LATTICE, "exact_work_limit": analysis.EXACT_WORK_LIMIT,
                           "monte_carlo_resamples": analysis.SIGN_FLIP_RESAMPLES,
                           "monte_carlo_p": "(b + 1) / (M + 1); the exact path is exact",
@@ -230,9 +242,13 @@ def build() -> dict[str, Any]:
             "record_binding": "every analysed record carries tier and tier_bound 'formal', the v0.3 harness id, the "
                               "preregistered root commitment, w and environment digest, and ONE attempt digest (D-09); "
                               "these labels gain authority only through the evaluator's post-reveal verify_attempt",
-            "bootstrap": f"lower bound only; {v02_analysis.BOOTSTRAP} resamples, Random(0), floor order statistic (unchanged)",
+            "bootstrap": f"lower bound only; {v02_analysis.BOOTSTRAP} resamples of world sets as multinomial counts "
+                         "from numpy default_rng(0), the capped statistic recomputed per resample, floor order statistic "
+                         "(D3b-1)",
+            "kind_noninferiority": {"margin": analysis.KIND_NONINFERIORITY_MARGIN, "required": "every kind (D3b-2)",
+                                    "statistic": "the capped statistic of that kind alone, per world set"},
             "unchanged": "unit of analysis, grid, comparison set, strongest baseline, representation-limited rule, "
-                         "non-inferiority margins, screening and its cap, identity binding: as in v0.2",
+                         "presentation non-inferiority margin, screening and its cap, identity binding: as in v0.2",
         },
         "formal": {
             "driver": "benchmarks/genesis_lite/v0_3/formal.py",
@@ -299,8 +315,6 @@ def build() -> dict[str, Any]:
             "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse "
                              "every channel",
             "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
-            "D3b-1-cap-form": "raised by the ODC-O1b study (2026-10-20, docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20): the FDA-06 / CONTROL_SOLVED cap is a per-world-set min(mine, theirs), so each capped cell contributes -E[(ref - mine)+] <= 0 and a candidate whose outcomes are not near-copies of the baseline never claims (+/-1 credit model, independent outcomes: doubling discoverable success 0.2 -> 0.4 gives claim 0/100, pooled mean -1.20). Keep it, or a cell-level cap (no gain, net loss counts) recomputed inside every sign flip and bootstrap resample. Interacts with D3b-2",
-            "D3b-2-kind-noninferiority": "raised by the ODC-O1b study: the all-kind conjunction of 0.10 non-inferiority margins (an intersection-union test, level alpha without correction) fails at equal skill in 33/100 replicates (95 % CI 0.24-0.43; normal-approximation prediction 0.26), driven by the five control kinds, so power saturates near 0.7 (+/-1 credit model, independent outcomes). Keep it, or widen the margin, or a pooled control margin with a per-kind floor. Interacts with D3b-1",
             "D2b-root-grinding": "raised by the scientific review 2026-10-20 (I-1): the sign-flip key is HMAC(root, ...). Whoever generates the root can try roots before committing and keep one whose stream has a favourable tail; the worlds also depend on the admission nonce, so such grinding is blind to the data, and its effect on size is small (reviewer estimate, unverified: about +0.008 at 10^6 tries, M = 19,999). No effect after the commitment. Options: accept and state it; mix the admission nonce or admission digest into the HMAC message (no cost); or an evaluator salt fixed after commitment (touches D6). Pre-running whole attempts off the registry is a separate, pre-existing exposure (D5/D6)",
             "D7-budget-and-machine": "OD-18: formal compute (one proposer process per card adds per-card start cost) and "
                                      "the formal machine, which fixes the environment manifest",

@@ -1,7 +1,20 @@
 """Genesis-lite v0.3 DRAFT evaluation contract: FDA-06 and O-1 on top of the frozen v0.2 rule.
 
-Everything in ``benchmarks.genesis_lite.analysis`` (v0.2) holds unchanged except the two points below. Both make a lift
-claim harder, never easier.
+Everything in ``benchmarks.genesis_lite.analysis`` (v0.2) holds unchanged except the points below. FDA-06 and O-1 make a
+lift claim harder. D3b-1 and D3b-2 (owner, 2026-10-20, after the ODC-O1b power study) change how a capped cell and the
+per-kind non-inferiority count; neither lets a capped class contribute a gain.
+
+* D3b-1 (cell-level cap). v0.2 capped per world set: ``min(mine, ref)``. A capped cell then lost every world set the
+  comparator solved and the candidate missed and gained nothing back, so noise alone was a penalty (-2 p (1 - p) per
+  capped kind for independent outcomes; the study: doubling discoverable success never claimed). v0.3 caps per CELL,
+  (kind, presentation): the cell contributes ``min(0, its summed paired difference)`` to the effect size (whose
+  bootstrap lower bound must exceed 0) and to the per-kind non-inferiority. No gain, and a net loss still counts; the
+  ``min`` is recomputed inside every bootstrap resample. The significance test (sign-flip p, Holm) uses the UNCAPPED
+  differences only, so capped data can never raise significance (owner, 2026-10-20, implementation P2: with the
+  ``min`` recomputed inside every sign vector, a candidate whose only advantage lay in capped cells reached p = 0.002
+  at a mean difference of exactly 0, because flipped capped cells fall below 0).
+* D3b-2 (per-kind margin). The per-kind non-inferiority margin is :data:`KIND_NONINFERIORITY_MARGIN` = 0.15 (v0.2:
+  0.10), every kind still required. The presentation margin is v0.2's.
 
 * FDA-06 (deep audit 2026-10-19, R-06 EXECUTED_REPRODUCED; ODC-06a/b as proposed). v0.2 capped only the DISCOVERABLE
   world of a world set whose truth lies outside every arm's searched family. An out-of-family ``spurious_correlate`` world
@@ -103,12 +116,64 @@ def out_of_family(records: Iterable[Any]) -> dict[tuple[WorldSet, str], bool]:
     return out
 
 
+#: D3b-2 (owner, 2026-10-20): per-kind non-inferiority margin on the credit scale; the presentation margin is v0.2's
+KIND_NONINFERIORITY_MARGIN = 0.15
+CAP_RULE = ("cell-level (D3b-1): a capped (kind, presentation) cell contributes min(0, its summed paired difference) "
+            "to the effect size and the per-kind non-inferiority, recomputed inside every bootstrap resample; the "
+            "significance test uses the uncapped differences only (P2)")
+
+def is_capped(kind: str, ws: WorldSet, limited: set[tuple[str, str]],
+              off_family: Mapping[tuple[WorldSet, str], bool]) -> bool:
+    """A no-strong-baseline universe: a CAPPED kind whose truth is out of family (unknown counts as out), or a
+    REPRESENTATION_LIMITED / CONTROL_SOLVED cell."""
+    return (kind in CAPPED_KINDS and off_family.get((ws, kind), True)) or (kind, ws[0]) in limited
+
+
 def capped(mine: Mapping[str, float], ref: Mapping[str, float], ws: WorldSet, limited: set[tuple[str, str]],
            off_family: Mapping[tuple[WorldSet, str], bool]) -> dict[str, float]:
-    """The candidate's credits with every no-strong-baseline cell capped at the comparator's (lose, never gain): every
-    CAPPED kind whose truth is out of family (unknown counts as out), and every REPRESENTATION_LIMITED cell."""
-    return {k: min(c, ref[k]) if ((k in CAPPED_KINDS and off_family.get((ws, k), True)) or (k, ws[0]) in limited)
-            else c for k, c in mine.items()}
+    """Diagnostic view of ONE world set (which kinds are capped): capped kinds shown at the comparator's credit. The
+    decision does not use these values; it caps per cell (:func:`capped_parts`, D3b-1)."""
+    return {k: min(c, ref[k]) if is_capped(k, ws, limited, off_family) else c for k, c in mine.items()}
+
+
+def capped_parts(mine: Mapping[WorldSet, Mapping[str, float]], ref: Mapping[WorldSet, Mapping[str, float]],
+                 sets: Sequence[WorldSet], limited: set[tuple[str, str]],
+                 off_family: Mapping[tuple[WorldSet, str], bool],
+                 kinds: Sequence[str] = KINDS) -> tuple[np.ndarray, np.ndarray]:
+    """(u, c) on the 1/LATTICE lattice: u[i] = world set i's paired difference over its UNCAPPED kinds; column j of c =
+    the capped differences of one (kind, presentation) cell (0 outside it)."""
+    n = len(sets)
+    u = np.zeros(n, dtype=np.int64)
+    cells: dict[tuple[str, str], np.ndarray] = {}
+    for i, w in enumerate(sets):
+        for k, d in zip(kinds, _lattice([float(mine[w][k]) - float(ref[w][k]) for k in kinds])):
+            if is_capped(k, w, limited, off_family):
+                cells.setdefault((k, w[0]), np.zeros(n, dtype=np.int64))[i] += d
+            else:
+                u[i] += d
+    c = np.stack([cells[key] for key in sorted(cells)], axis=1) if cells else np.zeros((n, 0), dtype=np.int64)
+    return u, c
+
+
+def capped_statistic(u: np.ndarray, c: np.ndarray, weights: np.ndarray) -> np.ndarray:
+    """T per row of ``weights`` (sign vectors or bootstrap counts): weights @ u + sum over cells of min(0, weights @ c)."""
+    return weights @ u + np.minimum(0, weights @ c).sum(axis=1)
+
+
+def capped_bootstrap_ci(u: np.ndarray, c: np.ndarray, resamples: int | None = None) -> tuple[float, float, float]:
+    """(mean, conservative 2.5 % bound, fraction of resampled means <= 0) of the capped statistic per world set. World
+    sets are resampled as multinomial counts from numpy default_rng(0); the capped statistic is recomputed for every
+    resample; the bound is the floor order statistic (v0.2's estimator, D3b-1's statistic)."""
+    from ..analysis import BOOTSTRAP  # noqa: PLC0415
+
+    resamples = BOOTSTRAP if resamples is None else resamples
+    n = len(u)
+    if n == 0:
+        return float("nan"), float("nan"), 1.0
+    mean = float(capped_statistic(u, c, np.ones((1, n), dtype=np.int64))[0]) / (n * LATTICE)
+    counts = np.random.default_rng(0).multinomial(n, np.full(n, 1.0 / n), size=resamples)
+    means = np.sort(capped_statistic(u, c, counts) / (n * LATTICE))
+    return mean, float(means[max(int(0.025 * resamples) - 1, 0)]), float((means <= 0).mean())
 
 
 def _lattice(diffs: Sequence[float]) -> list[int]:
@@ -298,12 +363,12 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
     shared = sorted(set(mine) & set(theirs))
     tests, raw_p = {}, {}
     for part in PRIMARY_FAMILY:
-        diffs = [sum(capped(mine[w], theirs[w], w, limited, off_family).values()) - sum(theirs[w].values())
-                 for w in shared if part == "pooled" or w[0] == part]
-        mean, low, _bootstrap_fraction = bootstrap_mean_ci(diffs)
-        sf = sign_flip_p(diffs, stream=stream)
-        tests[part] = {"world_sets": len(diffs), "mean_difference": mean, "lower95": low, "p": sf["p"],
-                       "p_method": sf["method"]}
+        sets = [w for w in shared if part == "pooled" or w[0] == part]
+        u, c = capped_parts(mine, theirs, sets, limited, off_family)
+        mean, low, _bootstrap_fraction = capped_bootstrap_ci(u, c)
+        sf = sign_flip_p([float(x) / LATTICE for x in u], stream=stream)        # P2: capped data never enter p
+        tests[part] = {"world_sets": len(sets), "mean_difference": mean, "lower95": low, "p": sf["p"],
+                       "p_method": sf["method"], "capped_cells": int(c.shape[1])}
         raw_p[part] = sf["p"]
     holm_ok = holm(raw_p)
     presentations_ok = {part: tests[part]["world_sets"] > 0 and tests[part]["lower95"] > -PRESENTATION_MARGIN
@@ -311,16 +376,17 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
     noninf = {}
     for kind in KINDS:
         ref = on_grid.get(per_kind[kind], {}) if per_kind[kind] else {}
-        diffs = [capped(mine[w], ref[w], w, limited, off_family)[kind] - ref[w][kind] for w in sorted(set(mine) & set(ref))]
-        mean, low, _ = bootstrap_mean_ci(diffs)
+        sets = sorted(set(mine) & set(ref))
+        u, c = capped_parts(mine, ref, sets, limited, off_family, kinds=(kind,))
+        mean, low, _ = capped_bootstrap_ci(u, c)
         noninf[kind] = {"reference_arm": per_kind[kind], "mean_difference": mean, "lower95": low,
-                        "ok": bool(diffs) and low > -NONINFERIORITY_MARGIN}
+                        "margin": KIND_NONINFERIORITY_MARGIN, "ok": bool(sets) and low > -KIND_NONINFERIORITY_MARGIN}
     claim = (not problems and baseline is not None and holm_ok["pooled"] and tests["pooled"]["lower95"] > 0
              and all(presentations_ok.values()) and all(v["ok"] for v in noninf.values()))
     return {"candidate": candidate, "strongest_baseline": baseline, "shared_world_sets": len(shared),
             "screened_world_sets": len(screened), "coverage_problems": problems,
             "representation_limited_cells": sorted(representation), "control_solved_cells": sorted(solved),
-            "claim_scope": CLAIM_SCOPE,
+            "claim_scope": CLAIM_SCOPE, "cap_rule": CAP_RULE,
             "out_of_family_universes": {k: sum(off_family.get((w, k), False) for w in shared) for k in CAPPED_KINDS},
             "primary": tests, "significance": SIGNIFICANCE, "holm_significant": holm_ok,
             "presentation_noninferiority": presentations_ok, "kind_noninferiority": noninf,

@@ -18,9 +18,9 @@
   ]
  },
  "analysis": {
-  "base": "the v0.2 lift rule (benchmarks/genesis_lite/analysis.py, pinned above) with two changes",
-  "bootstrap": "lower bound only; 2000 resamples, Random(0), floor order statistic (unchanged)",
-  "cap_rule": "per universe: a capped kind whose truth is outside the searched family (or whose flag is unknown) is capped at the comparator; a VALID record without the flag for one of them is refused",
+  "base": "the v0.2 lift rule (benchmarks/genesis_lite/analysis.py, pinned above) with the changes below",
+  "bootstrap": "lower bound only; 2000 resamples of world sets as multinomial counts from numpy default_rng(0), the capped statistic recomputed per resample, floor order statistic (D3b-1)",
+  "cap_rule": "which universes are capped: a capped kind whose truth is outside the searched family (or whose flag is unknown), and every REPRESENTATION_LIMITED / CONTROL_SOLVED cell; a VALID record without the flag for one of them is refused. How they count (D3b-1): cell-level (D3b-1): a capped (kind, presentation) cell contributes min(0, its summed paired difference) to the effect size and the per-kind non-inferiority, recomputed inside every bootstrap resample; the significance test uses the uncapped differences only (P2)",
   "capped_kinds": [
    "confounded",
    "discoverable",
@@ -40,6 +40,11 @@
    ],
    "procedure": "unchanged"
   },
+  "kind_noninferiority": {
+   "margin": 0.15,
+   "required": "every kind (D3b-2)",
+   "statistic": "the capped statistic of that kind alone, per world set"
+  },
   "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference); capping errs conservative; a composite null 'mean <= 0' with an asymmetric difference distribution is not covered. Accepted by the owner and stated as the claim's scope (D2, 2026-10-20)",
   "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result is evidence for the owner, never a formal measurement. RAN 2026-10-20: docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json sha256 282b42131b074a7b1c7f599e54f784f78ffc37763c185fc545a7b781b6ce8b36",
   "record_binding": "every analysed record carries tier and tier_bound 'formal', the v0.3 harness id, the preregistered root commitment, w and environment digest, and ONE attempt digest (D-09); these labels gain authority only through the evaluator's post-reveal verify_attempt",
@@ -48,11 +53,11 @@
    "lattice": 2,
    "monte_carlo_p": "(b + 1) / (M + 1); the exact path is exact",
    "monte_carlo_resamples": 19999,
-   "statistic": "sum of the paired world-set differences (one-sided, H1 candidate better)",
+   "statistic": "sum over world sets of the paired difference over UNCAPPED kinds only (one-sided, H1 candidate better); capped cells never enter the significance test (D3b-1, P2). They enter the effect size: sum of the uncapped differences + sum over capped (kind, presentation) cells of min(0, the cell's summed difference), per world set",
    "stream": "SHAKE-256(K || resample index, 8 bytes big-endian), bits in numpy.unpackbits order, K = HMAC-SHA256(revealed formal root, 'forge.genesis_lite.v0_3/sign_flip_stream/' + the preregistration digest) (D2): secret from the proposer until the reveal, and fixed once the root is committed, so no stream can be chosen after the commitment; lift_decision refuses a root whose sha256 is not the commitment. NOT prevented: whoever generates the root can try many roots BEFORE committing and keep one whose stream is favourable (scientific review 2026-10-20, I-1); the mitigation is an open owner decision (D2b)"
   },
   "significance": "paired sign-flip randomisation (one-sided); bootstrap for the lower bound only",
-  "unchanged": "unit of analysis, grid, comparison set, strongest baseline, representation-limited rule, non-inferiority margins, screening and its cap, identity binding: as in v0.2"
+  "unchanged": "unit of analysis, grid, comparison set, strongest baseline, representation-limited rule, presentation non-inferiority margin, screening and its cap, identity binding: as in v0.2"
  },
  "arms": {
   "always_insufficient": {
@@ -463,8 +468,6 @@
  },
  "owner_decisions_open": {
   "D2b-root-grinding": "raised by the scientific review 2026-10-20 (I-1): the sign-flip key is HMAC(root, ...). Whoever generates the root can try roots before committing and keep one whose stream has a favourable tail; the worlds also depend on the admission nonce, so such grinding is blind to the data, and its effect on size is small (reviewer estimate, unverified: about +0.008 at 10^6 tries, M = 19,999). No effect after the commitment. Options: accept and state it; mix the admission nonce or admission digest into the HMAC message (no cost); or an evaluator salt fixed after commitment (touches D6). Pre-running whole attempts off the registry is a separate, pre-existing exposure (D5/D6)",
-  "D3b-1-cap-form": "raised by the ODC-O1b study (2026-10-20, docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20): the FDA-06 / CONTROL_SOLVED cap is a per-world-set min(mine, theirs), so each capped cell contributes -E[(ref - mine)+] <= 0 and a candidate whose outcomes are not near-copies of the baseline never claims (+/-1 credit model, independent outcomes: doubling discoverable success 0.2 -> 0.4 gives claim 0/100, pooled mean -1.20). Keep it, or a cell-level cap (no gain, net loss counts) recomputed inside every sign flip and bootstrap resample. Interacts with D3b-2",
-  "D3b-2-kind-noninferiority": "raised by the ODC-O1b study: the all-kind conjunction of 0.10 non-inferiority margins (an intersection-union test, level alpha without correction) fails at equal skill in 33/100 replicates (95 % CI 0.24-0.43; normal-approximation prediction 0.26), driven by the five control kinds, so power saturates near 0.7 (+/-1 credit model, independent outcomes). Keep it, or widen the margin, or a pooled control margin with a per-kind floor. Interacts with D3b-1",
   "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a baseline-only attempt); the operator generates a fresh formal root and commits it",
   "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse every channel",
   "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
@@ -474,7 +477,9 @@
  "owner_decisions_taken": {
   "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d; decided by the owner in session on 2026-10-20: ODC-05a form (i), a ratio cap max/min <= 1 + w outside the box, on the BRACKET route only; ODC-05b w = 3 x tol (tol_multiple 3.0), anchored a priori on the generator's declared separation scale (OUTSIDE_TOLERANCES = 3 in universe.py), never tuned on pilot or formal worlds; ODC-05c v0.3 only, never retroactive to v0.2 records; ODC-05d the pass route keeps +1.0 as in v0.2",
   "D2-significance": "covers ODC-O1a and ODC-O1b; decided by the owner in session on 2026-10-20: ODC-O1a route B, the one-sided paired sign-flip p with the Monte-Carlo stream derived from the revealed formal root (HMAC, own label; Holm, alpha and the family unchanged; bootstrap for the lower bound only); the exchangeability null scope is accepted and stated; ODC-O1b a bounded, non-formal power and null-calibration study on synthetic records is authorised, to run after D3",
-  "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, spurious_correlate, confounded, indistinguishable); FDA-21 careful keeps ddof = 0 (certified, a documented exception) and the corrected <name>_dof arms join the strongest-baseline maximum; FDA-22 the form tell is declared and law_form measured, the generator's priors are NOT equalised (no certified change); FDA-18 one proposer process per card; pilot P-2 CONTROL_SOLVED with the exact binary-bootstrap lower bound >= 0.5"
+  "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2; decided by the owner in session on 2026-10-20, option A as drafted: ODC-06a Genesis section 10.5 rule 4 governs over the v0.2 wording; ODC-06b the cap covers every law-credit kind (discoverable, spurious_correlate, confounded, indistinguishable); FDA-21 careful keeps ddof = 0 (certified, a documented exception) and the corrected <name>_dof arms join the strongest-baseline maximum; FDA-22 the form tell is declared and law_form measured, the generator's priors are NOT equalised (no certified change); FDA-18 one proposer process per card; pilot P-2 CONTROL_SOLVED with the exact binary-bootstrap lower bound >= 0.5",
+  "D3b-1-cap-form": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, a cell-level cap. A capped (kind, presentation) cell contributes min(0, its summed paired difference): no gain, a net loss counts, in the effect size (recomputed per bootstrap resample) and the per-kind non-inferiority. Implementation P2 (owner, same session): the sign-flip p uses the uncapped differences only, because the min inside every sign vector let capped wins raise significance (p = 0.002 at a mean difference of 0, adversarial test). v0.3 only",
+  "D3b-2-kind-noninferiority": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, the per-kind non-inferiority margin is 0.15 (v0.2: 0.10) and every kind is still required; the presentation margin is unchanged. v0.3 only"
  },
  "package_markers": {
   "benchmarks/__init__.py": "06dd19293c8381eafa491dfd1be8ca413dcb3ea20a1c490cf24b810e6720c7df",
@@ -512,15 +517,15 @@
  "status_note": "DRAFT (not FREEZE_READY): no pilot, formal run or measurement may be produced under this document; v0.2 remains the active identity until the owner approves v0.3 (OD-19). Every value marked OWNER_DECISION_REQUIRED blocks the freeze.",
  "v0_3_files": {
   "__init__.py": "f8af0c58db79ad76a213ad6fb8c771a55114b34503f7452eb3fab3116d1e4905",
-  "analysis.py": "c430dfc9d25ea8e2f3a6f020be710c2164687f48b8fe605f2609438c37c6174e",
+  "analysis.py": "a66c822f45f07998539a6476b925cd480c4c7872a29b180c1dc5b953ad833dcc",
   "arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
   "deployment_attacks.py": "47c5c6406c918948436107bc5bf2306bd4a0486ecf8487ae39f6e825422510f4",
   "environment.py": "d9ab7044c74cb941e9d4c0b8973284ab73a26f5ff702fdf9b61b2b37b760a06f",
   "evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
   "formal.py": "dfbf372c084bfe9107425bcb098e58ff0d6aff199bc8680000863c6c510363d8",
   "harness.py": "ce603d0175dd3c1248ae32ed9e9286284723112c6687def143f56fc79176f15d",
-  "preregistration.py": "5e36c1f597223498c666df04e7b31c6cc3cfefdceeb8c93f7920f98083c1eb5f",
-  "readiness.py": "f40b40188df3618b94b8a440db138cce7621594b377a7d36f2942067ffd30637",
+  "preregistration.py": "00f5738542fb353fd5d5dbf3954468a765c258ff984647ce1e5b1d9502c0b2e0",
+  "readiness.py": "c2ded7465fd1edbbda9f91b256043e47679731f6fbed0c798aca4b04ea999d36",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "4763de7c3878c8b82f9209285d0d9cc2c720ab3b22708141f260ce0f0bb001d9",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8"

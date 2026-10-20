@@ -18,6 +18,7 @@ import pathlib
 import subprocess
 import sys
 
+import numpy as np
 import pytest
 
 from benchmarks.genesis_lite import analysis as v02_analysis
@@ -406,8 +407,11 @@ def test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p(monkeypat
         return original(diffs, exact_work_limit=0, **{k: v for k, v in kw.items() if k != "exact_work_limit"})
 
     monkeypatch.setattr(v03a, "sign_flip_p", forced)
-    mixed = dict(lr.CAREFUL, discoverable=0.4, no_solution=0.7)      # signed differences: p is mid-range, not 1/(M+1)
-    rows = lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", mixed)
+
+    def mixed(p, c, s, k):          # signed UNCAPPED (discoverable) differences: p is mid-range, not 1/(M+1)
+        i = int(c[1:])
+        return (1.0 if (i + s) % 3 == 0 else -1.0) if k == "discoverable" else lr.credit(lr.CAREFUL[k], i, s, k)
+    rows = lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", None, credit_fn=mixed)
     identity = v03p.identity_problems()[1]
     ps = {}
     for tag in (b"root one", b"root two"):
@@ -475,6 +479,90 @@ def test_o1_power_study_evidence_measured_the_rule_that_is_in_the_tree():
         assert _rule_code((repo / path).read_bytes()) == _rule_code(then), f"{path} changed since the study ran"
 
 
+# ---- D3b-1 (cell-level cap) and D3b-2 (per-kind margin 0.15): owner, 2026-10-20 -------------------------------------
+def _cell(diffs_by_world_set, capped_kinds=("confounded",), presentation="anonymous"):
+    """Candidate and reference credits on n world sets of one presentation, with the given paired differences in the
+    first capped kind and nothing else differing; every listed kind is capped through CONTROL_SOLVED."""
+    sets = [(presentation, f"c{i}", 0) for i in range(len(diffs_by_world_set))]
+    ref = {w: {k: 0.0 for k in v03a.KINDS} for w in sets}
+    mine = {w: dict(ref[w], **{capped_kinds[0]: float(d)}) for w, d in zip(sets, diffs_by_world_set)}
+    limited = {(k, presentation) for k in capped_kinds}
+    off = {(w, k): False for w in sets for k in v03a.CAPPED_KINDS}
+    return mine, ref, sets, limited, off
+
+
+@pytest.mark.parametrize("diffs, contribution", [
+    ([1.0, 1.0, -0.5, 1.0], 0.0),              # net gain inside a capped cell: contributes nothing
+    ([1.0, -1.0, 0.5, -0.5], 0.0),             # net zero
+    ([1.0, -1.0, -1.0, -0.5], -1.5),           # net loss: counts in full
+    ([-1.0, -1.0, -1.0, -1.0], -4.0)])
+def test_d3b_a_capped_cell_contributes_min_of_zero_and_its_net_difference(diffs, contribution):
+    mine, ref, sets, limited, off = _cell(diffs)
+    u, c = v03a.capped_parts(mine, ref, sets, limited, off)
+    assert u.tolist() == [0] * len(sets) and c.shape == (len(sets), 1)
+    total = v03a.capped_statistic(u, c, np.ones((1, len(sets)), dtype=np.int64))[0] / v03a.LATTICE
+    assert total == contribution
+    assert v03a.capped_bootstrap_ci(u, c)[0] == contribution / len(sets)
+
+
+def test_d3b_no_gain_leaks_through_capped_cells_into_a_claim():
+    """Huge wins in capped cells and nothing else: the pooled difference is exactly 0, the p is not small, no claim."""
+    from tests.genesis_lite import lift_records as lr
+
+    everywhere = lambda ws: True  # noqa: E731
+    rows = []
+    for name in lr.BASELINES:
+        rows += lr.records(name, lr.CAREFUL if name == "careful" else lr.WEAK, out_of_family=everywhere)
+    wins = lambda p, c, s, k: 1.0 if k in v03a.CAPPED_KINDS else lr.credit(lr.CAREFUL[k], int(c[1:]), s, k)  # noqa: E731
+    rows += lr.records("mind", None, credit_fn=wins, out_of_family=everywhere)
+    out = v03a.lift_decision(rows, "mind", grid=lr.GRID)
+    assert out["primary"]["pooled"]["mean_difference"] == 0.0
+    assert out["primary"]["pooled"]["p"] > 0.5 and out["lift_claimed"] is False
+    assert out["cap_rule"].startswith("cell-level")
+
+
+def test_d3b_capped_data_never_move_the_significance_test():
+    """P2 (owner, 2026-10-20): the sign-flip p is computed on the uncapped differences only. Adding wins or losses inside
+    capped cells leaves every p unchanged; a capped net loss lowers the effect size and its lower bound instead."""
+    from tests.genesis_lite import lift_records as lr
+
+    everywhere = lambda ws: True  # noqa: E731
+    base = []
+    for name in lr.BASELINES:
+        base += lr.records(name, lr.CAREFUL if name == "careful" else lr.WEAK, out_of_family=everywhere)
+
+    def candidate(capped_credit):
+        def fn(p, c, s, k):
+            i = int(c[1:])
+            if k in v03a.CAPPED_KINDS:
+                return capped_credit if capped_credit is not None else lr.credit(lr.CAREFUL[k], i, s, k)
+            return 1.0 if (i + s) % 3 else lr.credit(lr.CAREFUL[k], i, s, k)     # mixed uncapped gain
+        return lr.records("mind", None, credit_fn=fn, out_of_family=everywhere)
+
+    outs = {tag: v03a.lift_decision(base + candidate(v), "mind", grid=lr.GRID)
+            for tag, v in (("same", None), ("wins", 1.0), ("losses", -1.0))}
+    for part in v03a.PRIMARY_FAMILY:
+        assert outs["same"]["primary"][part]["p"] == outs["wins"]["primary"][part]["p"] \
+            == outs["losses"]["primary"][part]["p"]
+    pooled = {t: o["primary"]["pooled"] for t, o in outs.items()}
+    assert pooled["wins"]["mean_difference"] == pooled["same"]["mean_difference"]       # no gain through a cap
+    assert pooled["losses"]["mean_difference"] < pooled["same"]["mean_difference"]      # a net loss counts
+    assert pooled["losses"]["lower95"] < pooled["same"]["lower95"]
+
+
+def test_d3b_the_per_kind_margin_is_0_15_and_every_kind_is_still_required():
+    from tests.genesis_lite import lift_records as lr
+
+    assert v03a.KIND_NONINFERIORITY_MARGIN == 0.15 and v03a.PRESENTATION_MARGIN == v02_analysis.PRESENTATION_MARGIN
+    rows = lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", lr.BETTER)
+    out = v03a.lift_decision(rows, "mind", grid=lr.GRID)
+    assert set(out["kind_noninferiority"]) == set(v03a.KINDS)
+    assert all(v["margin"] == 0.15 and v["ok"] == (v["lower95"] > -0.15) for v in out["kind_noninferiority"].values())
+    worse = lr.records("mind", dict(lr.CAREFUL, discoverable=0.8, no_solution=0.4))   # one kind clearly worse
+    bad = v03a.lift_decision(lr.field(careful=lr.records("careful", lr.CAREFUL)) + worse, "mind", grid=lr.GRID)
+    assert bad["kind_noninferiority"]["no_solution"]["ok"] is False and bad["lift_claimed"] is False
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,
@@ -528,8 +616,9 @@ def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
     assert set(doc["owner_decisions_open"]) == {"D4-identity-freeze", "D5-deployment", "D6-evaluator",
                                                  "D7-budget-and-machine", "OD-3",
-                                                 "D3b-1-cap-form", "D3b-2-kind-noninferiority", "D2b-root-grinding"}
-    assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells"}
+                                                 "D2b-root-grinding"}
+    assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells",
+                                                  "D3b-1-cap-form", "D3b-2-kind-noninferiority"}
     covered = " ".join(list(doc["owner_decisions_open"].values()) + list(doc["owner_decisions_taken"].values()))
     for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",
                   "OD-20", "OD-8", "OD-18"):

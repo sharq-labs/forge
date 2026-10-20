@@ -80,10 +80,11 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
                                                    "0.0500 at alpha 0.05, Holm FWER 0.0450"),
     "root grinding before the commitment (review I-1)": (OWNER, (), "D2b: the root generator can choose among roots "
                                                                    "before committing; mitigation is the owner's"),
-    "cap form (ODC-O1b study finding)": (OWNER, (), "D3b-1: the per-world-set min cap needs near world-by-world "
-                                                    "dominance on capped cells"),
-    "per-kind non-inferiority conjunction (ODC-O1b study finding)": (OWNER, (), "D3b-2: equal skill fails 33/100 "
-                                                                    "(predicted 0.26); power saturates near 0.7"),
+    "cap form (ODC-O1b study finding)": (DECIDED, (), "D3b-1, 2026-10-20: cell-level cap"),
+    "per-kind non-inferiority conjunction (ODC-O1b study finding)": (DECIDED, (), "D3b-2, 2026-10-20: margin 0.15, "
+                                                                                 "every kind"),
+    "D3b cell-level cap and per-kind margin": (FIXED, ("test_d3b_",), "no gain through a capped cell; the min inside "
+                                                                     "every sign vector and resample; margin 0.15"),
 }
 
 
@@ -197,6 +198,12 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_attempt_the_evaluator_verifies_the_whole_published_log_after_the_reveal',
         'test_attempt_a_screened_world_set_verifies_only_if_its_screen_rederives',
         'test_attempt_a_whole_record_swap_between_arms_does_not_replay',
+    ),
+    'D3b cell-level cap and per-kind margin': (
+        'test_d3b_a_capped_cell_contributes_min_of_zero_and_its_net_difference',
+        'test_d3b_no_gain_leaks_through_capped_cells_into_a_claim',
+        'test_d3b_capped_data_never_move_the_significance_test',
+        'test_d3b_the_per_kind_margin_is_0_15_and_every_kind_is_still_required',
     ),
     'power and null-calibration study (ODC-O1b)': (
         'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',
