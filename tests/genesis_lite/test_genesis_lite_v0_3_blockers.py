@@ -347,6 +347,8 @@ def _frozen_bytes(**changes):
     doc["evaluator"]["pair_bound"] = TEST_BOUND.to_dict()
     doc["formal"]["environment_manifest_sha256"] = environment.manifest_digest(MANIFEST)
     doc["formal"]["candidate"] = formal.NO_CANDIDATE
+    doc["formal"]["budget"]["candidate_hours"], doc["formal"]["budget"]["total_hours"] = 0.0, 72.0
+    doc["formal"]["evaluator"]["name"] = "stand-in evaluator (tests only)"
     for path, value in changes.items():
         node = doc
         *head, last = path.split(".")

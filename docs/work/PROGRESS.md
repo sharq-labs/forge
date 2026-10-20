@@ -8226,3 +8226,5 @@ Placement fix found by the D6 test: the D5 deployment, D7 timing pilot, D7 budge
 **Owner decision D4 (2026-10-20, in session): candidate DEFERRED until the evaluator is named.** D4 stays open. The freeze sequence is recorded in the preregistration (`owner_decisions_open.D4-identity-freeze`), the decision record and ACTIVE_PLAN: evaluator, then candidate pin and timing, then OD-3 on the final HEAD, then a fresh root, then the manifest, then the approvals record, then FROZEN.
 
 **Owner decision OD-3 timing (2026-10-20, in session).** Recertify once, on the final pre-freeze HEAD, after the D4 candidate is pinned and timed. This is the owner's manual operation; nothing was certified here.
+
+Process slip, recorded: commit 3cff02bc (readiness messages) was made while `test_readiness_pass_needs_everything` failed, because the command chained the commit on a grep that matched the FAILED line. Its FROZEN stand-in now fills the new owner values (budget total, evaluator name). `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 247 passed. From now on, commits are gated on the pytest exit status, not on grep.
