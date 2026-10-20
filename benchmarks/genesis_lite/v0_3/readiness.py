@@ -233,6 +233,9 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d5_the_container_probe_attributes_every_canary_to_its_mount',
         'test_d5_the_validator_reconciles_only_the_namespace_relative_cgroup_root',
         'test_d5_writable_host_device_nodes_stay_blocking',
+        'test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only',
+        'test_d5_a_cross_card_probe_that_could_not_run_stays_untestable_even_with_passing_containers',
+        'test_d5_a_production_run_never_takes_a_callers_deployment_check',
         'test_d5_a_formal_card_cannot_start_without_the_deployment',
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
         'test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code',
@@ -246,6 +249,9 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d5_the_container_probe_attributes_every_canary_to_its_mount',
         'test_d5_the_validator_reconciles_only_the_namespace_relative_cgroup_root',
         'test_d5_writable_host_device_nodes_stay_blocking',
+        'test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only',
+        'test_d5_a_cross_card_probe_that_could_not_run_stays_untestable_even_with_passing_containers',
+        'test_d5_a_production_run_never_takes_a_callers_deployment_check',
         'test_d5_a_formal_card_cannot_start_without_the_deployment',
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
         'test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code',
@@ -345,6 +351,10 @@ def deployment_status() -> tuple[str, str]:
     if doc.get("schema") != isolation.EVIDENCE_SCHEMA:
         return NOT_PROVEN, ("the pinned D5 evidence is historical (A1, superseded 2026-10-21); D5-A1b evidence is "
                             "required (N-1)")
+    moved = sorted(n for n, digest in doc.get("provenance", {}).get("code_sha256", {}).items()
+                   if not (v03p.HERE / n).is_file() or hashlib.sha256((v03p.HERE / n).read_bytes()).hexdigest() != digest)
+    if moved:
+        return NOT_PROVEN, f"the pinned D5-A1b evidence measured other code {moved}: REQUIRES_RERUN, REQUIRES_REPIN"
     if doc.get("verified") is not True:
         reasons = (doc.get("container_validation") or {}).get("reasons", [])
         refused = sorted(c for c, v in (doc.get("with_containers") or {}).items() if v != "REFUSED")

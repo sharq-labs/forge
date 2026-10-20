@@ -9,13 +9,19 @@ verified for N-1 only when per-card evidence shows, for three fresh cards A, B a
   Python environment are read-only binds; no writable mount is shared, host-backed, Windows-backed, stacked under
   another mount or undeclared. A writable device or pseudo-file mount is blocking (owner, 2026-10-21: no device-node
   exemption);
+* every READ-ONLY host-backed mount is one of: a declared ``--volume`` bind whose source is the source tree, the
+  Python environment or a path inside them; Podman's own userdata files (:data:`USERDATA_TARGETS`); or Podman's
+  read-only ``/dev/null`` masks over ``/proc`` and ``/sys`` pseudo-files. Any other host path visible to a card, even
+  read-only (``/``, a socket directory, a default volume), is blocking;
 * card A wrote a fresh token into each private mount (O_EXCL, fsync, readback, mount-attributed by the open file
   descriptor) and fresh cards B and C, at the identical path, found it ABSENT;
 * a deliberately shared volume IS seen across two containers (the probe has power), and a host listener the cards
   cannot reach IS reachable from the host (the network probe has power);
 * the container was new (distinct ids), ran the pinned image, had no capabilities, no-new-privileges, private IPC, no
   network but loopback, was removed after the card and could not be restarted;
-* the launcher, probe, Containerfile, image, Podman version and source revision are the expected ones.
+* the card's recorded provenance equals the expected deployment: image, Podman version, rootless mode, launcher,
+  probe, Containerfile and source revision (a full commit id). What makes the expected launcher, probe and source the
+  preregistered ones is the identity check of the formal driver, not this validator.
 
 :func:`validate_container_evidence` returns ``{"status": "PASS", "reasons": []}`` or ``{"status": "BLOCKED",
 "reasons": [...], "details": [...]}``. It never raises on malformed evidence, and it is deterministic. It decides
@@ -53,6 +59,9 @@ EXTRA_ENV = ("PYTHONDONTWRITEBYTECODE",)
 WINDOWS_FSTYPES = ("9p", "drvfs", "v9fs")
 DEVICE_FSTYPES = ("devtmpfs", "devpts", "mqueue")
 CGROUP_FSTYPES = ("cgroup", "cgroup2")
+#: Podman's own per-container files, bound read-only from the container's userdata directory
+USERDATA_TARGETS = ("/etc/hosts", "/etc/hostname", "/etc/resolv.conf", "/run/.containerenv")
+HEX40 = re.compile(r"[0-9a-f]{40}")
 HEX64 = re.compile(r"[0-9a-f]{64}")
 
 
@@ -114,18 +123,19 @@ class _Findings:
         self.details.add(f"{reason}: {detail}")
 
 
-def _argv(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings, phase: str) -> None:
+def _argv(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings, phase: str) -> set[str] | None:
+    """Check the launch command; return the container-side targets of its read-only binds (None if unparseable)."""
     argv = card["argv"]
     if not isinstance(argv, list) or len(argv) < 3 or not all(isinstance(a, str) for a in argv):
         found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: argv is not a list of strings")
-        return
+        return None
     if argv[0].rsplit("/", 1)[-1] != "podman" or argv[1] not in ("run", "create"):
         found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: not a podman run/create command")
-        return
+        return None
     image_at = next((i for i, a in enumerate(argv) if "@sha256:" in a and not a.startswith("-")), None)
     if image_at is None:
         found.add("IMAGE_DIGEST_MISMATCH", f"{phase}: no immutable image reference")
-        return
+        return None
     if not argv[image_at].endswith("@" + str(expected["image_digest"])):
         found.add("IMAGE_DIGEST_MISMATCH", f"{phase}: image {argv[image_at]!r} is not the pinned digest")
     flags, valued, i = set(), [], 2
@@ -164,9 +174,19 @@ def _argv(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings
                               (expected["venv_host"], expected["venv_path"], "venv")):
         if f"{host}:{path}:ro" not in volumes:
             found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: the {label} is not bound read-only")
+    bound: set[str] = set()
+    kept = [str(expected["source_host"]), str(expected["venv_host"])]
     for v in volumes:
-        if not v.endswith(":ro"):
-            found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: writable volume {v!r}")
+        parts = v.split(":")
+        if len(parts) != 3 or parts[2] != "ro":
+            found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: volume {v!r} is not a read-only host:target bind")
+            continue
+        if not _within(parts[0], kept):
+            found.add("UNDECLARED_HOST_MOUNT", f"{phase}: volume source {parts[0]!r} is outside the kept trees")
+        bound.add(parts[1])
+    for n in ("--name", "--label"):
+        if sum(1 for k, _v in valued if k == n) > 1:
+            found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: {n} given more than once")
     for n, v in valued:
         if n == "--mount" and v != DEV_READ_ONLY:
             found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: mount {v!r} is not part of the D5-A1b launch")
@@ -186,9 +206,21 @@ def _argv(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings
     workdirs = [v for n, v in valued if n == "--workdir"]
     if workdirs != [paths.get("workdir")]:
         found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: the working directory is not set as observed")
+    return bound
 
 
-def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings, phase: str) -> dict[str, str]:
+def _host_read_only_admitted(row: Mapping[str, Any], bound: set[str]) -> bool:
+    """A read-only host-backed row a card may see: a declared bind, Podman userdata, or a /proc or /sys mask."""
+    if row["target"] in bound:
+        return True
+    if row["target"] in USERDATA_TARGETS and row["fstype"] == "tmpfs" and "/userdata/" in row["root"]:
+        return True
+    return (row["fstype"] == "devtmpfs" and row["root"] == "/null"
+            and row["target"].startswith(("/proc/", "/sys/")))
+
+
+def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings, phase: str,
+            bound: set[str] | None) -> dict[str, str]:
     """Reconcile the three inventories and classify every writable row; return {target: mount id} of the declared
     private mounts (empty when the inventory itself cannot be trusted)."""
     try:
@@ -224,6 +256,9 @@ def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findin
     private: dict[str, str] = {}
     for row, rt in zip(parsed, runtime):
         if "rw" not in row["options"]:
+            if rt.get("backing") in ("host", "windows") and not _host_read_only_admitted(row, bound or set()):
+                found.add("UNDECLARED_HOST_MOUNT", f"{phase}: mount {row['id']} {row['target']} ({row['fstype']}) "
+                                                   "exposes an undeclared host path read-only")
             continue
         where = f"{phase}: mount {row['id']} {row['target']} ({row['fstype']})"
         if any(child["parent"] == row["id"] and child["target"] == row["target"] for child in parsed):
@@ -376,8 +411,8 @@ def _card(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings
         found.add("RESTART_NOT_REFUSED", f"{phase}: restart {dict(restart)}")
     if card["removed"] is not True:
         found.add("CONTAINER_NOT_REMOVED", f"{phase}: the container outlived its card")
-    _argv(card, expected, found, phase)
-    return _mounts(card, expected, found, phase)
+    bound = _argv(card, expected, found, phase)
+    return _mounts(card, expected, found, phase, bound)
 
 
 def validate_container_evidence(report: Any, *, expected: Any) -> dict[str, Any]:
@@ -398,6 +433,8 @@ def _validate(report: Any, expected: Any, found: _Findings) -> None:
         return
     if expected["rootless"] is not True:
         found.add("PROVENANCE_MISMATCH", "the expected deployment is not rootless")
+    if not isinstance(expected["source_sha"], str) or not HEX40.fullmatch(expected["source_sha"]):
+        found.add("PROVENANCE_MISMATCH", "the expected source revision is not a full commit id")
     if not isinstance(report, Mapping) or not report:
         found.add("EVIDENCE_INCOMPLETE", "empty report")
         return

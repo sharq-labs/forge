@@ -861,6 +861,78 @@ def test_d5_writable_host_device_nodes_stay_blocking():
     assert not hasattr(container_evidence, "ADMITTED_DEVICE_NODES")
 
 
+def test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only():
+    """Review MAJOR-1: a read-only view of the host is still a channel (``/`` or a socket directory). Every
+    host-backed read-only mount must be a declared bind of a kept tree, Podman's userdata or a /proc mask."""
+    import copy
+
+    from benchmarks.genesis_lite.v0_3 import container_evidence
+
+    fx = _contract_fixture()
+
+    def add(report, row_update, volume=None, backing="host"):
+        for card in report["cards"]:
+            row = dict(copy.deepcopy(card["mounts"][2]), id=str(int(card["mounts"][-1]["id"]) + 1), **row_update)
+            card["mounts"].append(row)
+            fx.synchronize(card)
+            card["runtime_mounts"][-1]["backing"] = backing
+            if volume:
+                image = card["argv"].index("localhost/forge-card@" + fx.IMAGE)
+                card["argv"][image:image] = ["--volume", volume]
+        return report
+
+    def verdict(report, expected):
+        return container_evidence.validate_container_evidence(report, expected=expected)
+
+    report, expected = fx.baseline()
+    out = verdict(add(report, {"root": "/", "target": "/host"}, "/:/host:ro"), expected)
+    assert out["status"] == "BLOCKED" and "UNDECLARED_HOST_MOUNT" in out["reasons"]       # / bound read-only
+    report, expected = fx.baseline()
+    out = verdict(add(report, {"root": "/run/user/1000/podman", "target": "/s"}), expected)
+    assert "UNDECLARED_HOST_MOUNT" in out["reasons"]                                     # not even declared
+    report, expected = fx.baseline()
+    out = verdict(add(report, {"root": "/podman", "target": "/s"}, "/run/user/1000/podman:/s:ro"), expected)
+    assert "UNDECLARED_HOST_MOUNT" in out["reasons"]                                     # a socket directory
+    report, expected = fx.baseline()
+    userdata = {"root": "/containers/overlay-containers/x/userdata/hosts", "target": "/etc/hosts", "fstype": "tmpfs",
+                "source": "tmpfs"}
+    assert verdict(add(report, userdata), expected)["status"] == "PASS"                  # Podman's own file
+    report, expected = fx.baseline()
+    mask = {"root": "/null", "target": "/proc/kcore", "fstype": "devtmpfs", "source": "none"}
+    assert verdict(add(report, mask), expected)["status"] == "PASS"                      # a read-only /proc mask
+    report, expected = fx.baseline()
+    wrong_mask = {"root": "/null", "target": "/etc/shadow", "fstype": "devtmpfs", "source": "none"}
+    assert "UNDECLARED_HOST_MOUNT" in verdict(add(report, wrong_mask), expected)["reasons"]
+    report, expected = fx.baseline()
+    expected["source_sha"] = "UNKNOWN"
+    for card in report["cards"]:
+        card["provenance"]["source_sha"] = "UNKNOWN"
+    assert "PROVENANCE_MISMATCH" in verdict(report, expected)["reasons"]                 # UNKNOWN never matches
+
+
+def test_d5_a_cross_card_probe_that_could_not_run_stays_untestable_even_with_passing_containers():
+    from benchmarks.genesis_lite.v0_3 import deployment_attacks as attacks
+
+    ok = {"status": "PASS", "reasons": []}
+
+    def run(spec):
+        channel = spec.rsplit(":", 1)[1]
+        if channel == "cross_card_state":
+            return ["cross_card_state:UNTESTABLE:setup failed: PermissionError"]
+        return [f"{channel}:{attacks.REFUSED}:x"]
+
+    out = attacks.verify_deployment(run, scan_findings=[], container_validation=ok)
+    assert out["verdicts"]["cross_card_state"] == attacks.UNTESTABLE and out["verified"] is False
+
+
+def test_d5_a_production_run_never_takes_a_callers_deployment_check(stand_in_accepted, registry):
+    """Review minor 7: the D5-A1b pre-admission verification cannot be replaced on the production path."""
+    with pytest.raises(formal.FormalRefused, match="a caller's check is never used"):
+        formal.run_formal(FRESH_ROOT, frozen_doc(), manifest=MANIFEST, registry=registry, sink=lambda r: None,
+                          publish=lambda e: None, deployment_check=lambda: [])
+    assert registry.entries() == []
+
+
 def test_d5_a_formal_card_cannot_start_without_the_deployment(monkeypatch):
     from benchmarks.genesis_lite.v0_3 import isolation
 
@@ -897,6 +969,8 @@ def test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code():
     from benchmarks.genesis_lite.v0_3 import isolation, readiness
 
     repo = v03p.HERE.parents[2]
+    historical = (repo / v03p.A1_DEPLOYMENT_EVIDENCE).read_bytes()                    # A1 stays as history
+    assert hashlib.sha256(historical).hexdigest() == v03p.A1_DEPLOYMENT_EVIDENCE_SHA256
     data = (repo / v03p.DEPLOYMENT_EVIDENCE).read_bytes()
     assert hashlib.sha256(data).hexdigest() == v03p.DEPLOYMENT_EVIDENCE_SHA256
     doc = json.loads(data)

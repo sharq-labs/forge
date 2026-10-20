@@ -317,7 +317,13 @@ def deployment_problems() -> list[str]:
     from .isolation import DeploymentUnavailable, formal_launcher, verify_containers  # noqa: PLC0415
 
     try:
-        verdict = verify_containers(formal_launcher())["validation"]
+        launcher = formal_launcher()
+        tree = launcher.keep[0]
+        head = subprocess.run(["git", "-C", tree, "rev-parse", "HEAD"], capture_output=True, text=True, timeout=60)
+        dirty = subprocess.run(["git", "-C", tree, "status", "--porcelain"], capture_output=True, text=True, timeout=60)
+        if head.returncode != 0 or dirty.returncode != 0 or dirty.stdout.strip():
+            return ["the D5-A1b pre-admission verification needs a clean committed tree (HEAD unknown or dirty)"]
+        verdict = verify_containers(launcher)["validation"]
     except DeploymentUnavailable as exc:
         return [str(exc)]
     except (OSError, subprocess.SubprocessError, RuntimeError, ValueError, KeyError, IndexError,
@@ -395,8 +401,10 @@ def run_formal(root: bytes, doc: Mapping[str, Any], *, manifest: Mapping[str, An
     cand = candidate_of(doc)
     names = registered_arms() + ([cand["name"]] if cand else [])
     if runner is None:                                       # production: the D5 deployment is checked BEFORE admission
+        if deployment_check is not None:
+            raise FormalRefused("a production run verifies the D5-A1b deployment itself; a caller's check is never used")
         runner = harness_runner(doc)
-        deployment_check = deployment_check or deployment_problems
+        deployment_check = deployment_problems
     blocked = deployment_check() if deployment_check is not None else []
     if blocked:                                              # a failed D5 check never consumes the one allowed attempt
         raise FormalRefused("the D5 deployment is not ready: " + "; ".join(blocked))
