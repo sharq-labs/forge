@@ -8204,3 +8204,12 @@ D5 was re-verified after this harness change: run at f9909822, VERIFIED (10/10 c
 The first pilot attempt on the draft branch was refused by `bind` (the escrow half of FDA-05 is only on the escrow branch), so the pilot runs on the escrow branch.
 
 `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 245 passed.
+
+**D7 timing pilot (2026-10-20, non-formal, development tier).**
+- Run in WSL Ubuntu from a clean native clone of the escrow branch at 10f892cd: `python -m benchmarks.genesis_lite.v0_3.timing_pilot --out ~/gl03-d7-pilot.json --campaigns 10`. Exit 0, 455 s.
+- Scope: 20 registered arms x 10 world sets (gl-pilot-*, synthetic root), 6 cards each, every card in its own D5 namespace. All 200 runs VALID.
+- MEASURED: 43.5 s per world set for all arms (+-0.74 s).
+- ESTIMATED: formal 58.0 h (57.0-59.0 h), sequential, with the evaluator replay counted as one more run; excludes the candidate.
+- Evidence sha256 a543bc217fdcba296d4fe64616ec0f667462beab5543d483f89f5ba9e5e285e8, identical on both sides of the copy, pinned; test_d7_timing_pilot_evidence_is_pinned_and_timed_this_code binds it byte for byte.
+
+`python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 246 passed.

@@ -1,0 +1,248 @@
+{
+ "ESTIMATED": {
+  "excludes": "the candidate's own cost (D4); evaluator review time; restarts",
+  "formal_hours": 57.98847921106667,
+  "formal_hours_ci95": [
+   57.00680717291292,
+   58.97015124922042
+  ],
+  "formal_world_sets": 2400,
+  "replay_factor": 2.0
+ },
+ "MEASURED": {
+  "seconds_per_arm_per_world_set": {
+   "always_insufficient": {
+    "max": 2.2686191730000003,
+    "mean": 2.0628428465000033
+   },
+   "always_law": {
+    "max": 2.3366007300000007,
+    "mean": 2.180921494599996
+   },
+   "always_refuse": {
+    "max": 2.133815779999999,
+    "mean": 2.0308937409000016
+   },
+   "careful": {
+    "max": 2.351075078000008,
+    "mean": 2.1895884135000028
+   },
+   "extrapolating_fit": {
+    "max": 2.4076664309999956,
+    "mean": 2.2149969420999978
+   },
+   "extrapolating_fit_dof": {
+    "max": 2.4275743720000094,
+    "mean": 2.2316899626000106
+   },
+   "extrapolation_pair": {
+    "max": 2.4130425110000004,
+    "mean": 2.2027034549999955
+   },
+   "extrapolation_pair_dof": {
+    "max": 2.336464553999999,
+    "mean": 2.1811185500000017
+   },
+   "fit_all_gated": {
+    "max": 2.341995698999998,
+    "mean": 2.1910970529999934
+   },
+   "fit_all_gated_dof": {
+    "max": 2.328787083000009,
+    "mean": 2.1990634410000016
+   },
+   "greedy_forward": {
+    "max": 2.4167133340000007,
+    "mean": 2.2195102907999944
+   },
+   "greedy_forward_dof": {
+    "max": 2.3469911910000008,
+    "mean": 2.2092301381999944
+   },
+   "historical_answer": {
+    "max": 2.1529739559999967,
+    "mean": 2.048703116900002
+   },
+   "monomial_enumeration": {
+    "max": 2.413307983000003,
+    "mean": 2.1912305221999993
+   },
+   "monomial_enumeration_dof": {
+    "max": 2.4328152639999985,
+    "mean": 2.2303234260000004
+   },
+   "random_structures": {
+    "max": 2.439129084000001,
+    "mean": 2.2247718493000077
+   },
+   "random_structures_dof": {
+    "max": 2.396418647999994,
+    "mean": 2.1849805279999956
+   },
+   "single_setting": {
+    "max": 2.348657604000003,
+    "mean": 2.169439148899992
+   },
+   "space_filling": {
+    "max": 2.3032363819999944,
+    "mean": 2.1587617375000128
+   },
+   "space_filling_dof": {
+    "max": 2.408484611999995,
+    "mean": 2.1694927513000004
+   }
+  },
+  "seconds_per_world_set_all_arms": {
+   "ci95_half_width": 0.7362540286153149,
+   "mean": 43.4913594083,
+   "values": [
+    46.168657126999996,
+    42.704374659,
+    44.00514665899999,
+    43.614082834000044,
+    42.42773014699995,
+    43.727969761,
+    41.95453998599987,
+    42.77882813000002,
+    43.30495953900015,
+    44.22730524100001
+   ]
+  },
+  "statuses": {
+   "always_insufficient": [
+    "VALID"
+   ],
+   "always_law": [
+    "VALID"
+   ],
+   "always_refuse": [
+    "VALID"
+   ],
+   "careful": [
+    "VALID"
+   ],
+   "extrapolating_fit": [
+    "VALID"
+   ],
+   "extrapolating_fit_dof": [
+    "VALID"
+   ],
+   "extrapolation_pair": [
+    "VALID"
+   ],
+   "extrapolation_pair_dof": [
+    "VALID"
+   ],
+   "fit_all_gated": [
+    "VALID"
+   ],
+   "fit_all_gated_dof": [
+    "VALID"
+   ],
+   "greedy_forward": [
+    "VALID"
+   ],
+   "greedy_forward_dof": [
+    "VALID"
+   ],
+   "historical_answer": [
+    "VALID"
+   ],
+   "monomial_enumeration": [
+    "VALID"
+   ],
+   "monomial_enumeration_dof": [
+    "VALID"
+   ],
+   "random_structures": [
+    "VALID"
+   ],
+   "random_structures_dof": [
+    "VALID"
+   ],
+   "single_setting": [
+    "VALID"
+   ],
+   "space_filling": [
+    "VALID"
+   ],
+   "space_filling_dof": [
+    "VALID"
+   ]
+  },
+  "wall_seconds": 455.2
+ },
+ "arms": [
+  "always_insufficient",
+  "always_law",
+  "always_refuse",
+  "careful",
+  "extrapolating_fit",
+  "extrapolating_fit_dof",
+  "extrapolation_pair",
+  "extrapolation_pair_dof",
+  "fit_all_gated",
+  "fit_all_gated_dof",
+  "greedy_forward",
+  "greedy_forward_dof",
+  "historical_answer",
+  "monomial_enumeration",
+  "monomial_enumeration_dof",
+  "random_structures",
+  "random_structures_dof",
+  "single_setting",
+  "space_filling",
+  "space_filling_dof"
+ ],
+ "campaigns": 10,
+ "cards_per_world_set": [
+  6
+ ],
+ "deployment": {
+  "deployment": "rootless_namespaces",
+  "kept_read_only": [
+   "/home/dev_kaeem/forge-gl03-d7e",
+   "/home/dev_kaeem/forge-hostile-remediation/.forge/venvs/3.12"
+  ],
+  "masked": [
+   "/mnt",
+   "/home",
+   "/root",
+   "/tmp",
+   "/var/tmp",
+   "/run",
+   "/opt",
+   "/media",
+   "/dev/shm"
+  ],
+  "script_sha256": "550d75c82c395a9fd992798244e33382f83265be4104734074d67ced151b5303",
+  "unshare_flags": [
+   "--user",
+   "--map-root-user",
+   "--pid",
+   "--fork",
+   "--kill-child",
+   "--mount",
+   "--mount-proc",
+   "--net",
+   "--ipc",
+   "--uts"
+  ]
+ },
+ "presentation": "paraphrased",
+ "provenance": {
+  "code_sha256": {
+   "arms.py": "11a6fe0ca65f90ffd970bc74e8923a1ee4b1a59019ef414eccd8668467079fe1",
+   "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
+   "isolation.py": "21d237a0d133ca49fcdba674580d6ecedf5c70ff1dd3a1e7c90358f7b500dce7",
+   "timing_pilot.py": "97ca7aa9ecb3e652ef02e2096ea2cf8e24eb3ee8ba2b8fa52c9aa63827c1a225"
+  },
+  "head": "10f892cde98f51099365d13badbfde717ed52248",
+  "kernel": "6.6.87.2-microsoft-standard-WSL2",
+  "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "tree_clean": true
+ },
+ "schema": "forge.genesis_lite.v0_3/timing_pilot/1",
+ "status": "NON_FORMAL_TIMING_PILOT"
+}

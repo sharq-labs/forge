@@ -87,6 +87,9 @@ POWER_STUDY_EVIDENCE_SHA256 = "a26705f74e566bc016f2035df84bc4b9808e9f3ddc1ed6091
 #: D5 (owner, 2026-10-20, option A1): the deployment verification, run on WSL Ubuntu from a clean clone
 DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/result.json"
 DEPLOYMENT_EVIDENCE_SHA256 = "782a1b914a748a12e59a465d8c6429851df67cba7fb53b142c78246add0259fa"
+#: D7 (owner, 2026-10-20): the timing pilot on the formal machine, before the formal budget is approved
+TIMING_PILOT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json"
+TIMING_PILOT_EVIDENCE_SHA256 = "a543bc217fdcba296d4fe64616ec0f667462beab5543d483f89f5ba9e5e285e8"
 #: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
 RETIRED_PILOT_ROOT_COMMITMENTS = (
     "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",   # v0
@@ -264,6 +267,9 @@ def build() -> dict[str, Any]:
                           "only by the percentile-bootstrap lower bound, whose level is approximate. (I-5) the bootstrap "
                           "uses numpy's Generator.multinomial; the numpy version is bound by the formal environment "
                           "manifest (D7)",
+            "timing_pilot": {"evidence": TIMING_PILOT_EVIDENCE, "evidence_sha256": TIMING_PILOT_EVIDENCE_SHA256,
+                             "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are "
+                                       "ESTIMATED from it and exclude the candidate's own cost (D4)"},
             "deployment": {"decided": "D5 option A1 (owner, 2026-10-20)", "kind": "rootless_namespaces",
                            "evidence": DEPLOYMENT_EVIDENCE, "evidence_sha256": DEPLOYMENT_EVIDENCE_SHA256,
                            "rule": "every formal card through isolation.formal_launcher(); refused where unavailable"},

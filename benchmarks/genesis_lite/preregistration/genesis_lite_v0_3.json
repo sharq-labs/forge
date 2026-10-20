@@ -66,6 +66,11 @@
    "stream": "SHAKE-256(K || resample index, 8 bytes big-endian), bits in numpy.unpackbits order, K = HMAC-SHA256(revealed formal root, 'forge.genesis_lite.v0_3/sign_flip_stream/' + the preregistration digest + '/' + the admission nonce + '/' + the admission digest) (D2 + D2b): secret from the proposer until the reveal, and not computable at commitment time because the admission is created afterwards, so pre-commit root grinding cannot fix the stream; lift_decision refuses a root whose sha256 is not the commitment and an admission that is tampered, of another root, preregistration or tier, or not the attempt every record carries. Residual (disclosed): whoever runs the registry could generate unpublished admissions and keep one; the evaluator's inbox binds the first published admission, and the worlds mix in the same nonce"
   },
   "significance": "paired sign-flip randomisation (one-sided); bootstrap for the lower bound only",
+  "timing_pilot": {
+   "evidence": "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json",
+   "evidence_sha256": "a543bc217fdcba296d4fe64616ec0f667462beab5543d483f89f5ba9e5e285e8",
+   "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are ESTIMATED from it and exclude the candidate's own cost (D4)"
+  },
   "unchanged": "unit of analysis, grid, comparison set, strongest baseline, representation-limited rule, presentation non-inferiority margin, screening and its cap, identity binding: as in v0.2"
  },
  "arms": {
@@ -534,8 +539,8 @@
   "formal.py": "dfbf372c084bfe9107425bcb098e58ff0d6aff199bc8680000863c6c510363d8",
   "harness.py": "331edd8a5a8f12d7ef9f9796f742cedd93dd05d19c44c1d5949ab59c19eb8f23",
   "isolation.py": "21d237a0d133ca49fcdba674580d6ecedf5c70ff1dd3a1e7c90358f7b500dce7",
-  "preregistration.py": "038dd6082a6a1ef5f89bdd8ca6330db73081a12d3db308ee1e579b925be9a0a9",
-  "readiness.py": "5d1dc59aa14f65ae367640655d90023c899128da63a6f3a71c26b292ac21a5d4",
+  "preregistration.py": "ac70f040cbf2f1b45e2b7fad77dd1ecd7175a081dc8971d85a3323e86a6429a0",
+  "readiness.py": "2ac99d6e0287fa43ec117105d18b63af19953cb9394d38d7011ea01de1af4e5b",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8",

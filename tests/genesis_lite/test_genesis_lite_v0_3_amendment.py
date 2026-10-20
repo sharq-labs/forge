@@ -732,6 +732,21 @@ def test_d7_a_formal_run_never_takes_a_callers_launcher_and_the_pilot_stays_off_
     assert timing_pilot.REPLAY_FACTOR == 2.0
 
 
+def test_d7_timing_pilot_evidence_is_pinned_and_timed_this_code():
+    """D7: the pilot's file is the pinned one, every run of every registered arm was VALID, and the code it timed (the
+    pilot, the harness, the launcher, the arms) is byte for byte the code in this tree (else re-run the pilot)."""
+    from benchmarks.genesis_lite.v0_3 import arms as v03_arms
+
+    data = (v03p.HERE.parents[2] / v03p.TIMING_PILOT_EVIDENCE).read_bytes()
+    assert hashlib.sha256(data).hexdigest() == v03p.TIMING_PILOT_EVIDENCE_SHA256
+    doc = json.loads(data)
+    assert doc["status"] == "NON_FORMAL_TIMING_PILOT" and doc["provenance"]["tree_clean"] is True
+    assert sorted(doc["arms"]) == sorted(v03_arms.ARMS) and doc["campaigns"] >= 10
+    assert all(v == ["VALID"] for v in doc["MEASURED"]["statuses"].values())
+    for name, digest in doc["provenance"]["code_sha256"].items():
+        assert hashlib.sha256((v03p.HERE / name).read_bytes()).hexdigest() == digest, f"{name} changed since the pilot"
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,
