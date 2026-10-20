@@ -8047,3 +8047,13 @@ run.
 **Gate at `35e98591`:** READY_TO_FREEZE_PENDING_OWNER; 149 named tests, 40/40 agreement, 0 technical blockers.
 
 The final tip's results follow below.
+
+**Final tip `20265e92` (escrow branch; executed 2026-10-20).**
+- `python -m pytest tests/genesis_lite -q -n 4`: 243 passed.
+- Gate: READY_TO_FREEZE_PENDING_OWNER; 149 named tests collected by the gate, 40/40 evaluator/escrow agreement, 0 technical
+  blockers, 18 owner/certification items.
+- FAST: 185 failed, 11,852 passed, 224 skipped, 22 errors, 390 s. Against pristine `eb113ab7`, only on the branch:
+  `tests/test_test_timing.py::test_the_plugin_records_telemetry_and_never_changes_an_outcome` (environmental); only on
+  pristine: `tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic` (fixed here).
+- Regression pack: 279 passed, exit 0.
+- Later commits on top of `20265e92` change only `docs/work/PROGRESS.md`.
