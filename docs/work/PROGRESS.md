@@ -8760,3 +8760,12 @@ Dry-run exit0. Broad selection includes preexisting shared CP2/import work and s
 Result: no_solution6no_law/5insufficient/1confounded; confounded12correct, old misses NOT REPRODUCED. Independent read-only scientific review PASS; no claim that abstentions are defects or proposal improves performance. Proposed association-specific prospective confirmation requires design/owner review; no behavior changes. Evidence docs/work/evidence/mind_full_v03_diagnosis_2026_10_20_v1/; report docs/discovery/MIND_FULL_V03_TRACE_DIAGNOSIS.md. No formal/freeze/evaluator/OD3/CP3/commit/push/merge.
 
 Final preservation checks: `git diff --check` exit0; original4608 tracked production files,12 candidate files,five CP2 source files and both prior evidence manifests match their SHA256 values. No existing production changes. Evidence source-preservation.json.
+
+
+## 2026-10-20 — Reviewed branch publication (integration held)
+
+Owner authorized reviewed publication/merges excluding preserve/* and wip/*. Published this chat's251files byte-identically in1b90f94c (draft PR175, based on draft PR174), and four previously local branch refs. Full disposition and exact command/result receipts: docs/work/evidence/branch_merge_review_2026_10_20/.
+
+Documentation repair PR176 at1e109c66: targeted capability tests28passed; changed gate217passed/2failed versus pristine origin/main216passed/3failed over identical219nodes, zero new failing nodes. Final corrected command, environment and failures are recorded in final-docs-gate-command.json/final-docs-gate.txt and exact-failure-comparison.json. Intermediate --list call also executed tests and produced18temp setup errors; recorded in list-run-receipt.json, not suppressed. Domain-data trial12passed/1failed (test_repository_scan_is_current), trial merge aborted. No scientific source fixes performed during publication.
+
+Remote main unchanged at eb113ab7. No remote merge attempted: PR176 has no approving review; repository policy requires>=1. GitHub classifier jobs failed before tests; logs unavailable, cause UNKNOWN. Live facts in github-status.json. Source branches remain blocked by exact conflicts, independent scientific findings and applicable certification/OD3. Full assurance, formal tier and freeze NOT RUN. Publication is not integration, certification or scientific validation.

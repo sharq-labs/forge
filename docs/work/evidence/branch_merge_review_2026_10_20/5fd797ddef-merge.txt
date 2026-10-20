@@ -1,0 +1,22 @@
+80f8681146aaca22e4364ab3b675e10b87e53a82
+100644 7fb68342cee20c9ff547133be1ee02dc45291cd4 1	docs/work/ACTIVE_PLAN.md
+100644 45bce73764e8ae13a02eac0f4e81cf25414ba843 2	docs/work/ACTIVE_PLAN.md
+100644 685a2fd8b1a12dfb5f6df76d6a0a20d2ab9b812f 3	docs/work/ACTIVE_PLAN.md
+100644 cfd67b283ac059abcc5ec9e6d3bcd92d236f5c09 1	docs/work/DEFERRED_VALIDATION.md
+100644 72058406d9a9ebec98b26b320b9e0ed4312c223e 2	docs/work/DEFERRED_VALIDATION.md
+100644 6ad41e41fa2dbbf0206525538bcb71bb9e5548d2 3	docs/work/DEFERRED_VALIDATION.md
+100644 a8f2a95da788d64f90958ec5afee3f33db7fa64b 1	docs/work/PROGRESS.md
+100644 b53df02e461dbd2077dbdf513883e10b6872ecf3 2	docs/work/PROGRESS.md
+100644 dfddb558ff4b74800eecae4d76fc36c7598f021b 3	docs/work/PROGRESS.md
+100644 a2a2336d28aa20ebf0a9d9bd4b1996d733d81fd9 1	src/engcore/domains/thermal_models/conduction1d_transient_fv.py
+100644 32956df1dd7075bbc0443c2dfbee60c1fd6e2716 2	src/engcore/domains/thermal_models/conduction1d_transient_fv.py
+100644 dd289c221a16448a1b0e1560afc1186ea62a42ec 3	src/engcore/domains/thermal_models/conduction1d_transient_fv.py
+
+Auto-merging docs/work/ACTIVE_PLAN.md
+CONFLICT (content): Merge conflict in docs/work/ACTIVE_PLAN.md
+Auto-merging docs/work/DEFERRED_VALIDATION.md
+CONFLICT (content): Merge conflict in docs/work/DEFERRED_VALIDATION.md
+Auto-merging docs/work/PROGRESS.md
+CONFLICT (content): Merge conflict in docs/work/PROGRESS.md
+Auto-merging src/engcore/domains/thermal_models/conduction1d_transient_fv.py
+CONFLICT (content): Merge conflict in src/engcore/domains/thermal_models/conduction1d_transient_fv.py

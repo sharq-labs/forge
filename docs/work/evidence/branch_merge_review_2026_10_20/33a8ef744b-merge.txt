@@ -1,0 +1,7 @@
+15068005ef6df0771b3f0334c57b766d093e1f2a
+100644 34ce3b4f77a73bca6ce478334ea1360847eb709f 1	certification/current_core_v2.json
+100644 f87139dd9eb9bb93ac9a4b1b37cd35d45f63c796 2	certification/current_core_v2.json
+100644 15bf2dd1a3cc3e3153d11813f71ade53696c58d1 3	certification/current_core_v2.json
+
+Auto-merging certification/current_core_v2.json
+CONFLICT (content): Merge conflict in certification/current_core_v2.json
