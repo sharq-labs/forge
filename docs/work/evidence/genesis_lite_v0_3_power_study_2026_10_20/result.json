@@ -1,0 +1,2517 @@
+{
+ "args": {
+  "crosscheck_reps": "3",
+  "null_reps": "2000",
+  "out": "D:\\gl03tmp\\power_study\\result.json",
+  "reps": "100",
+  "seed": "20261020",
+  "workers": "4"
+ },
+ "authorisation": "owner D2 (ODC-O1b), 2026-10-20; runs after D3 (decided 2026-10-20)",
+ "bootstrap_crosscheck": [
+  {
+   "fast": {
+    "cell": {
+     "candidate": {
+      "default": 0.8,
+      "discoverable": 0.4
+     },
+     "careful": {
+      "default": 0.8,
+      "discoverable": 0.2
+     },
+     "name": "controls_solved/delta=0.2/rho=1.0",
+     "representation": {
+      "default": 0.1
+     },
+     "rho": 1.0
+    },
+    "claim_rate": 1.0,
+    "claim_rate_95ci": [
+     0.29240177382128674,
+     1.0
+    ],
+    "condition_pass_rates": {
+     "baseline": 1.0,
+     "claim": 1.0,
+     "holm_pooled": 1.0,
+     "kinds": 1.0,
+     "pooled_lower95": 1.0,
+     "presentations": 1.0
+    },
+    "coverage_problems_seen": [
+     "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+     "7200 record(s) do not carry harness = the preregistered/formal value",
+     "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+     "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+     "7200 record(s) do not carry tier = the preregistered/formal value",
+     "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+     "always_insufficient",
+     "always_law",
+     "always_refuse",
+     "careful vs candidate",
+     "extrapolating_fit",
+     "extrapolating_fit_dof",
+     "extrapolation_pair",
+     "extrapolation_pair_dof",
+     "fit_all_gated",
+     "fit_all_gated_dof",
+     "greedy_forward",
+     "greedy_forward_dof",
+     "monomial_enumeration vs candidate",
+     "monomial_enumeration_dof",
+     "no formal root commitment is preregistered",
+     "random_structures",
+     "random_structures_dof",
+     "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+     "single_setting",
+     "space_filling",
+     "space_filling_dof",
+     "v0.3 is a DRAFT identity (not FROZEN)"
+    ],
+    "mean_pooled_difference": 0.40194444444444444,
+    "reps": 3,
+    "seed": 20261920
+   },
+   "original": {
+    "cell": {
+     "candidate": {
+      "default": 0.8,
+      "discoverable": 0.4
+     },
+     "careful": {
+      "default": 0.8,
+      "discoverable": 0.2
+     },
+     "name": "controls_solved/delta=0.2/rho=1.0",
+     "representation": {
+      "default": 0.1
+     },
+     "rho": 1.0
+    },
+    "claim_rate": 1.0,
+    "claim_rate_95ci": [
+     0.29240177382128674,
+     1.0
+    ],
+    "condition_pass_rates": {
+     "baseline": 1.0,
+     "claim": 1.0,
+     "holm_pooled": 1.0,
+     "kinds": 1.0,
+     "pooled_lower95": 1.0,
+     "presentations": 1.0
+    },
+    "coverage_problems_seen": [
+     "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+     "7200 record(s) do not carry harness = the preregistered/formal value",
+     "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+     "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+     "7200 record(s) do not carry tier = the preregistered/formal value",
+     "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+     "always_insufficient",
+     "always_law",
+     "always_refuse",
+     "careful vs candidate",
+     "extrapolating_fit",
+     "extrapolating_fit_dof",
+     "extrapolation_pair",
+     "extrapolation_pair_dof",
+     "fit_all_gated",
+     "fit_all_gated_dof",
+     "greedy_forward",
+     "greedy_forward_dof",
+     "monomial_enumeration vs candidate",
+     "monomial_enumeration_dof",
+     "no formal root commitment is preregistered",
+     "random_structures",
+     "random_structures_dof",
+     "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+     "single_setting",
+     "space_filling",
+     "space_filling_dof",
+     "v0.3 is a DRAFT identity (not FROZEN)"
+    ],
+    "mean_pooled_difference": 0.40194444444444444,
+    "reps": 3,
+    "seed": 20261920
+   }
+  },
+  {
+   "fast": {
+    "cell": {
+     "candidate": {
+      "default": 0.4,
+      "discoverable": 0.30000000000000004
+     },
+     "careful": {
+      "default": 0.4,
+      "discoverable": 0.2
+     },
+     "name": "controls_unsolved/delta=0.1/rho=0.5",
+     "representation": {
+      "default": 0.1
+     },
+     "rho": 0.5
+    },
+    "claim_rate": 1.0,
+    "claim_rate_95ci": [
+     0.29240177382128674,
+     1.0
+    ],
+    "condition_pass_rates": {
+     "baseline": 1.0,
+     "claim": 1.0,
+     "holm_pooled": 1.0,
+     "kinds": 1.0,
+     "pooled_lower95": 1.0,
+     "presentations": 1.0
+    },
+    "coverage_problems_seen": [
+     "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+     "7200 record(s) do not carry harness = the preregistered/formal value",
+     "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+     "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+     "7200 record(s) do not carry tier = the preregistered/formal value",
+     "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+     "always_insufficient",
+     "always_law",
+     "always_refuse",
+     "careful vs candidate",
+     "extrapolating_fit",
+     "extrapolating_fit_dof",
+     "extrapolation_pair",
+     "extrapolation_pair_dof",
+     "fit_all_gated",
+     "fit_all_gated_dof",
+     "greedy_forward",
+     "greedy_forward_dof",
+     "monomial_enumeration vs candidate",
+     "monomial_enumeration_dof",
+     "no formal root commitment is preregistered",
+     "random_structures",
+     "random_structures_dof",
+     "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+     "single_setting",
+     "space_filling",
+     "space_filling_dof",
+     "v0.3 is a DRAFT identity (not FROZEN)"
+    ],
+    "mean_pooled_difference": 0.22916666666666666,
+    "reps": 3,
+    "seed": 20261921
+   },
+   "original": {
+    "cell": {
+     "candidate": {
+      "default": 0.4,
+      "discoverable": 0.30000000000000004
+     },
+     "careful": {
+      "default": 0.4,
+      "discoverable": 0.2
+     },
+     "name": "controls_unsolved/delta=0.1/rho=0.5",
+     "representation": {
+      "default": 0.1
+     },
+     "rho": 0.5
+    },
+    "claim_rate": 1.0,
+    "claim_rate_95ci": [
+     0.29240177382128674,
+     1.0
+    ],
+    "condition_pass_rates": {
+     "baseline": 1.0,
+     "claim": 1.0,
+     "holm_pooled": 1.0,
+     "kinds": 1.0,
+     "pooled_lower95": 1.0,
+     "presentations": 1.0
+    },
+    "coverage_problems_seen": [
+     "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+     "7200 record(s) do not carry harness = the preregistered/formal value",
+     "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+     "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+     "7200 record(s) do not carry tier = the preregistered/formal value",
+     "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+     "always_insufficient",
+     "always_law",
+     "always_refuse",
+     "careful vs candidate",
+     "extrapolating_fit",
+     "extrapolating_fit_dof",
+     "extrapolation_pair",
+     "extrapolation_pair_dof",
+     "fit_all_gated",
+     "fit_all_gated_dof",
+     "greedy_forward",
+     "greedy_forward_dof",
+     "monomial_enumeration vs candidate",
+     "monomial_enumeration_dof",
+     "no formal root commitment is preregistered",
+     "random_structures",
+     "random_structures_dof",
+     "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+     "single_setting",
+     "space_filling",
+     "space_filling_dof",
+     "v0.3 is a DRAFT identity (not FROZEN)"
+    ],
+    "mean_pooled_difference": 0.22916666666666666,
+    "reps": 3,
+    "seed": 20261921
+   }
+  }
+ ],
+ "null_calibration": [
+  {
+   "holm_familywise_95ci": [
+    0.036337957311261826,
+    0.055025252847450856
+   ],
+   "holm_familywise_rate": 0.045,
+   "rejection_95ci": {
+    "pooled@0.01": [
+     0.005729035522963454,
+     0.01479583217228858
+    ],
+    "pooled@0.05": [
+     0.03995675692495896,
+     0.05939264512468933
+    ],
+    "pooled@0.1": [
+     0.08015665079544426,
+     0.10605236890702867
+    ],
+    "presentation@0.01": [
+     0.0061186575427434635,
+     0.015402125783560048
+    ],
+    "presentation@0.05": [
+     0.03769282441526969,
+     0.05666517604102989
+    ],
+    "presentation@0.1": [
+     0.07781577715467887,
+     0.10340103460035346
+    ]
+   },
+   "rejection_rates": {
+    "pooled@0.01": 0.0095,
+    "pooled@0.05": 0.049,
+    "pooled@0.1": 0.0925,
+    "presentation@0.01": 0.01,
+    "presentation@0.05": 0.0465,
+    "presentation@0.1": 0.09
+   },
+   "reps": 2000,
+   "seed": 20261021,
+   "symmetric_null": true,
+   "world_sets": {
+    "pooled": 2400,
+    "presentation": 600
+   }
+  },
+  {
+   "holm_familywise_95ci": [
+    0.0312911704560926,
+    0.057486257961972334
+   ],
+   "holm_familywise_rate": 0.043,
+   "rejection_95ci": {
+    "pooled@0.01": [
+     0.006939617502851476,
+     0.022127803636778486
+    ],
+    "pooled@0.05": [
+     0.048746927556580555,
+     0.0798880418733545
+    ],
+    "pooled@0.1": [
+     0.08943903298240023,
+     0.12890376087999794
+    ],
+    "presentation@0.01": [
+     0.0028188587596205245,
+     0.014369194978918632
+    ],
+    "presentation@0.05": [
+     0.027877148795336416,
+     0.052930935785445075
+    ],
+    "presentation@0.1": [
+     0.08027750545100505,
+     0.11812845443123607
+    ]
+   },
+   "rejection_rates": {
+    "pooled@0.01": 0.013,
+    "pooled@0.05": 0.063,
+    "pooled@0.1": 0.108,
+    "presentation@0.01": 0.007,
+    "presentation@0.05": 0.039,
+    "presentation@0.1": 0.098
+   },
+   "reps": 1000,
+   "seed": 20261022,
+   "symmetric_null": false,
+   "world_sets": {
+    "pooled": 2400,
+    "presentation": 600
+   }
+  }
+ ],
+ "power": [
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.0/rho=0.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.0
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 0.0,
+    "pooled_lower95": 0.0,
+    "presentations": 0.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -1.5987416666666667,
+   "reps": 100,
+   "seed": 20261120
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.0/rho=0.5",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.5
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 0.0,
+    "pooled_lower95": 0.0,
+    "presentations": 0.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -0.7994333333333334,
+   "reps": 100,
+   "seed": 20261121
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.0/rho=0.9",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.9
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 1.0,
+    "pooled_lower95": 0.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -0.15924166666666667,
+   "reps": 100,
+   "seed": 20261122
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.0/rho=1.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 1.0
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 1.0,
+    "pooled_lower95": 0.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.0,
+   "reps": 100,
+   "seed": 20261123
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.25
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.05/rho=0.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.0
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 0.0,
+    "pooled_lower95": 0.0,
+    "presentations": 0.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -1.4971583333333331,
+   "reps": 100,
+   "seed": 20261124
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.25
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.05/rho=0.5",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.5
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 0.0,
+    "pooled_lower95": 0.0,
+    "presentations": 0.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -0.6985583333333334,
+   "reps": 100,
+   "seed": 20261125
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.25
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.05/rho=0.9",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.9
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 1.0,
+    "pooled_lower95": 0.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -0.05905833333333333,
+   "reps": 100,
+   "seed": 20261126
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.25
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.05/rho=1.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 1.0
+   },
+   "claim_rate": 1.0,
+   "claim_rate_95ci": [
+    0.9637833073548235,
+    1.0
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 1.0,
+    "holm_pooled": 1.0,
+    "kinds": 1.0,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.10013333333333334,
+   "reps": 100,
+   "seed": 20261127
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.30000000000000004
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.1/rho=0.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.0
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 0.0,
+    "pooled_lower95": 0.0,
+    "presentations": 0.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -1.3956083333333336,
+   "reps": 100,
+   "seed": 20261128
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.30000000000000004
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.1/rho=0.5",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.5
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 0.0,
+    "pooled_lower95": 0.0,
+    "presentations": 0.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -0.6025916666666667,
+   "reps": 100,
+   "seed": 20261129
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.30000000000000004
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.1/rho=0.9",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.9
+   },
+   "claim_rate": 0.49,
+   "claim_rate_95ci": [
+    0.38864416516163774,
+    0.5919636708445463
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.49,
+    "holm_pooled": 0.49,
+    "kinds": 1.0,
+    "pooled_lower95": 0.62,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.041358333333333344,
+   "reps": 100,
+   "seed": 20261130
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.30000000000000004
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.1/rho=1.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 1.0
+   },
+   "claim_rate": 1.0,
+   "claim_rate_95ci": [
+    0.9637833073548235,
+    1.0
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 1.0,
+    "holm_pooled": 1.0,
+    "kinds": 1.0,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.1997833333333333,
+   "reps": 100,
+   "seed": 20261131
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.4
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.2/rho=0.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.0
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 0.0,
+    "pooled_lower95": 0.0,
+    "presentations": 0.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -1.19945,
+   "reps": 100,
+   "seed": 20261132
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.4
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.2/rho=0.5",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.5
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 0.0,
+    "pooled_lower95": 0.0,
+    "presentations": 0.58
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -0.3989416666666666,
+   "reps": 100,
+   "seed": 20261133
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.4
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.2/rho=0.9",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.9
+   },
+   "claim_rate": 1.0,
+   "claim_rate_95ci": [
+    0.9637833073548235,
+    1.0
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 1.0,
+    "holm_pooled": 1.0,
+    "kinds": 1.0,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.2374083333333333,
+   "reps": 100,
+   "seed": 20261134
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.4
+    },
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
+    },
+    "name": "controls_solved/delta=0.2/rho=1.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 1.0
+   },
+   "claim_rate": 1.0,
+   "claim_rate_95ci": [
+    0.9637833073548235,
+    1.0
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 1.0,
+    "holm_pooled": 1.0,
+    "kinds": 1.0,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.4015583333333334,
+   "reps": 100,
+   "seed": 20261135
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.0/rho=0.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.0
+   },
+   "claim_rate": 0.01,
+   "claim_rate_95ci": [
+    0.0002531460329774208,
+    0.054459385392080645
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.01,
+    "holm_pooled": 0.01,
+    "kinds": 0.67,
+    "pooled_lower95": 0.03,
+    "presentations": 0.98
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -6.666666666666584e-05,
+   "reps": 100,
+   "seed": 20261136
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.0/rho=0.5",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.5
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 0.98,
+    "pooled_lower95": 0.01,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": -0.008366666666666666,
+   "reps": 100,
+   "seed": 20261137
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.0/rho=0.9",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.9
+   },
+   "claim_rate": 0.02,
+   "claim_rate_95ci": [
+    0.0024313368239425436,
+    0.07038393247107011
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.02,
+    "holm_pooled": 0.02,
+    "kinds": 1.0,
+    "pooled_lower95": 0.06,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.002483333333333333,
+   "reps": 100,
+   "seed": 20261138
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.0/rho=1.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 1.0
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 1.0,
+    "pooled_lower95": 0.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.0,
+   "reps": 100,
+   "seed": 20261139
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.25
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.05/rho=0.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.0
+   },
+   "claim_rate": 0.2,
+   "claim_rate_95ci": [
+    0.12665555210195584,
+    0.2918426890886281
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.2,
+    "holm_pooled": 0.2,
+    "kinds": 0.75,
+    "pooled_lower95": 0.32,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.10026666666666667,
+   "reps": 100,
+   "seed": 20261140
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.25
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.05/rho=0.5",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.5
+   },
+   "claim_rate": 0.41,
+   "claim_rate_95ci": [
+    0.31261997656757085,
+    0.5128557962332292
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.41,
+    "holm_pooled": 0.41,
+    "kinds": 1.0,
+    "pooled_lower95": 0.56,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.09980833333333333,
+   "reps": 100,
+   "seed": 20261141
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.25
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.05/rho=0.9",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.9
+   },
+   "claim_rate": 0.98,
+   "claim_rate_95ci": [
+    0.9296160675289299,
+    0.9975686631760574
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.98,
+    "holm_pooled": 0.98,
+    "kinds": 1.0,
+    "pooled_lower95": 0.98,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.09681666666666666,
+   "reps": 100,
+   "seed": 20261142
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.25
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.05/rho=1.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 1.0
+   },
+   "claim_rate": 1.0,
+   "claim_rate_95ci": [
+    0.9637833073548235,
+    1.0
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 1.0,
+    "holm_pooled": 1.0,
+    "kinds": 1.0,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.10148333333333333,
+   "reps": 100,
+   "seed": 20261143
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.30000000000000004
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.1/rho=0.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.0
+   },
+   "claim_rate": 0.63,
+   "claim_rate_95ci": [
+    0.5276483594483168,
+    0.7244334203854484
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.63,
+    "holm_pooled": 0.69,
+    "kinds": 0.8,
+    "pooled_lower95": 0.81,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.19453333333333334,
+   "reps": 100,
+   "seed": 20261144
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.30000000000000004
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.1/rho=0.5",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.5
+   },
+   "claim_rate": 0.94,
+   "claim_rate_95ci": [
+    0.8739700654191771,
+    0.9776651139286836
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.94,
+    "holm_pooled": 0.94,
+    "kinds": 1.0,
+    "pooled_lower95": 0.99,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.20234999999999995,
+   "reps": 100,
+   "seed": 20261145
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.30000000000000004
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.1/rho=0.9",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.9
+   },
+   "claim_rate": 1.0,
+   "claim_rate_95ci": [
+    0.9637833073548235,
+    1.0
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 1.0,
+    "holm_pooled": 1.0,
+    "kinds": 1.0,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.19760833333333339,
+   "reps": 100,
+   "seed": 20261146
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.30000000000000004
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.1/rho=1.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 1.0
+   },
+   "claim_rate": 1.0,
+   "claim_rate_95ci": [
+    0.9637833073548235,
+    1.0
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 1.0,
+    "holm_pooled": 1.0,
+    "kinds": 1.0,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.20020833333333335,
+   "reps": 100,
+   "seed": 20261147
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.4
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.2/rho=0.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.0
+   },
+   "claim_rate": 0.69,
+   "claim_rate_95ci": [
+    0.5896854458398008,
+    0.778711207869329
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.69,
+    "holm_pooled": 1.0,
+    "kinds": 0.69,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.3884416666666667,
+   "reps": 100,
+   "seed": 20261148
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.4
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.2/rho=0.5",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.5
+   },
+   "claim_rate": 0.99,
+   "claim_rate_95ci": [
+    0.9455406146079194,
+    0.9997468539670226
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.99,
+    "holm_pooled": 1.0,
+    "kinds": 0.99,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.401075,
+   "reps": 100,
+   "seed": 20261149
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.4
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.2/rho=0.9",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.9
+   },
+   "claim_rate": 1.0,
+   "claim_rate_95ci": [
+    0.9637833073548235,
+    1.0
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 1.0,
+    "holm_pooled": 1.0,
+    "kinds": 1.0,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.3996916666666666,
+   "reps": 100,
+   "seed": 20261150
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.4
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.2/rho=1.0",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 1.0
+   },
+   "claim_rate": 1.0,
+   "claim_rate_95ci": [
+    0.9637833073548235,
+    1.0
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 1.0,
+    "holm_pooled": 1.0,
+    "kinds": 1.0,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.3969500000000001,
+   "reps": 100,
+   "seed": 20261151
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.4
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.2/rho=1.0/off_family=0.3",
+    "off_family": 0.3,
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 1.0
+   },
+   "claim_rate": 1.0,
+   "claim_rate_95ci": [
+    0.9637833073548235,
+    1.0
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 1.0,
+    "holm_pooled": 1.0,
+    "kinds": 1.0,
+    "pooled_lower95": 1.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.28004999999999997,
+   "reps": 100,
+   "seed": 20261152
+  },
+  {
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.4
+    },
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
+    },
+    "name": "controls_unsolved/delta=0.2/rho=1.0/representation_solves",
+    "representation": {
+     "default": 0.1,
+     "discoverable": 0.8
+    },
+    "rho": 1.0
+   },
+   "claim_rate": 0.0,
+   "claim_rate_95ci": [
+    0.0,
+    0.03621669264517641
+   ],
+   "condition_pass_rates": {
+    "baseline": 1.0,
+    "claim": 0.0,
+    "holm_pooled": 0.0,
+    "kinds": 0.0,
+    "pooled_lower95": 0.0,
+    "presentations": 1.0
+   },
+   "coverage_problems_seen": [
+    "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry harness = the preregistered/formal value",
+    "7200 record(s) do not carry pair_bound = the preregistered/formal value",
+    "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
+    "7200 record(s) do not carry tier = the preregistered/formal value",
+    "7200 record(s) do not carry tier_bound = the preregistered/formal value",
+    "always_insufficient",
+    "always_law",
+    "always_refuse",
+    "careful vs candidate",
+    "extrapolating_fit",
+    "extrapolating_fit_dof",
+    "extrapolation_pair",
+    "extrapolation_pair_dof",
+    "fit_all_gated",
+    "fit_all_gated_dof",
+    "greedy_forward",
+    "greedy_forward_dof",
+    "monomial_enumeration vs candidate",
+    "monomial_enumeration_dof",
+    "no formal root commitment is preregistered",
+    "random_structures",
+    "random_structures_dof",
+    "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
+    "single_setting",
+    "space_filling",
+    "space_filling_dof",
+    "v0.3 is a DRAFT identity (not FROZEN)"
+   ],
+   "mean_pooled_difference": 0.0,
+   "reps": 100,
+   "seed": 20261153
+  }
+ ],
+ "prereg_sha256": "b57d7775fbde30b12bc50b480eb9395bdfa74d63d3e508493e354b15e0fb4707",
+ "schema": "forge.genesis_lite.v0_3/power_study/1",
+ "status": "NON_FORMAL_SYNTHETIC_STUDY",
+ "wall_seconds": 1366.0
+}

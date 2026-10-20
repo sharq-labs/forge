@@ -56,6 +56,8 @@ OWNER_DECISIONS_TAKEN = {
                        "null-calibration study on synthetic records is authorised, to run after D3",
     "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d; decided by the owner in session on 2026-10-20: ODC-05a form (i), a ratio cap max/min <= 1 + w outside the box, on the BRACKET route only; ODC-05b w = 3 x tol (tol_multiple 3.0), anchored a priori on the generator's declared separation scale (OUTSIDE_TOLERANCES = 3 in universe.py), never tuned on pilot or formal worlds; ODC-05c v0.3 only, never retroactive to v0.2 records; ODC-05d the pass route keeps +1.0 as in v0.2",
 }
+#: the ODC-O1b study (non-formal, synthetic); its findings are open as D3b
+POWER_STUDY_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json"
 #: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
 RETIRED_PILOT_ROOT_COMMITMENTS = (
     "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",   # v0
@@ -214,7 +216,7 @@ def build() -> dict[str, Any]:
                           "covered. Accepted by the owner and stated as the claim's scope (D2, 2026-10-20)",
             "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and "
                            "null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result "
-                           "is evidence for the owner, never a formal measurement",
+                           "is evidence for the owner, never a formal measurement. RAN 2026-10-20: " + POWER_STUDY_EVIDENCE,
             "holm": {"alpha": v02_analysis.ALPHA, "family": list(v02_analysis.PRIMARY_FAMILY), "procedure": "unchanged"},
             "control_solved_rule": "a control cell (non-discoverable kind, per presentation) where any registered "
                                    "non-adversarial arm earns full credit with an exact binary-bootstrap lower bound >= "
@@ -292,6 +294,7 @@ def build() -> dict[str, Any]:
             "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse "
                              "every channel",
             "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
+            "D3b-cap-form-and-noninferiority": "raised by the ODC-O1b study (2026-10-20, docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20): (a) the FDA-06 / CONTROL_SOLVED cap is a per-world-set min(mine, theirs), so a capped cell contributes -E[(ref - mine)+] < 0 and a candidate whose outcomes are not near-copies of the baseline's never claims (doubling discoverable success 0.2 -> 0.4 with independent outcomes: claim 0/100, pooled mean -1.20); keep it, or cap at the cell level (no gain, losses still count); (b) six per-kind non-inferiority margins of 0.10 fail together ~30 % of the time at equal skill with independent outcomes, which caps power near 0.7; accept, or revise the margin / the conjunction",
             "D7-budget-and-machine": "OD-18: formal compute (one proposer process per card adds per-card start cost) and "
                                      "the formal machine, which fixes the environment manifest",
             "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)",

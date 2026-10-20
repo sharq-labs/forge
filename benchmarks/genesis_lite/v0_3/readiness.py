@@ -50,7 +50,8 @@ TEST_FILES = ("tests/genesis_lite/test_genesis_lite_v0_3_amendment.py",
               "tests/genesis_lite/test_genesis_lite_v0_3_escrow_fda05.py")
 #: the consolidated owner decision set (decision record section 5)
 REQUIRED_APPROVALS = ("D1-scoring", "D2-significance", "D3-baselines-and-tells", "D4-identity-freeze", "D5-deployment",
-                      "D6-evaluator", "D7-budget-and-machine", "OD-3")
+                      "D6-evaluator", "D7-budget-and-machine", "OD-3",
+                      "D3b-cap-form-and-noninferiority")
 
 #: name -> (status, test prefixes that must pass, note). FIXED / NOT_A_BLOCKER rows are verified against evidence.
 LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
@@ -74,8 +75,11 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "P-5 environment manifest": (FIXED, ("test_p5_",), "measured inside bind for the formal tier"),
     "one attempt per root": (FIXED, ("test_attempt_",), "registry + publication + post-reveal verify_attempt"),
     "pass route with an arbitrary partner (ODC-05d)": (DECIDED, (), "D1, 2026-10-20: kept at +1.0 as in v0.2"),
-    "power and null-calibration study (ODC-O1b)": (PENDING, (), "authorised by the owner 2026-10-20 (D2); D3 decided "
-                                                               "2026-10-20; runs on synthetic records only"),
+    "power and null-calibration study (ODC-O1b)": (FIXED, ("test_o1_power_study_",), "ran 2026-10-20 on synthetic "
+                                                   "records (docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20); symmetric null 0.049 at alpha 0.05, Holm FWER 0.045" ),
+    "cap form and non-inferiority power (ODC-O1b study findings)": (OWNER, (), "D3b: per-world-set min cap needs near "
+                                                                   "world-by-world dominance; six kind margins cap power "
+                                                                   "near 0.7"),
 }
 
 
@@ -107,6 +111,8 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_o1_v0_3_monte_carlo_path_is_valid_deterministic_and_agrees_with_exact',
         'test_o1_v0_3_refuses_differences_outside_the_credit_lattice',
         'test_o1_the_claims_monte_carlo_stream_comes_from_the_committed_root',
+        'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',
+        'test_o1_power_study_scores_with_the_real_rule_and_restores_it',
         'test_o1_holm_is_unchanged',
         'test_o1_v0_3_lift_decision_uses_sign_flip_p_and_claims_nothing_while_draft',
     ),
@@ -183,6 +189,10 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_attempt_the_evaluator_verifies_the_whole_published_log_after_the_reveal',
         'test_attempt_a_screened_world_set_verifies_only_if_its_screen_rederives',
         'test_attempt_a_whole_record_swap_between_arms_does_not_replay',
+    ),
+    'power and null-calibration study (ODC-O1b)': (
+        'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',
+        'test_o1_power_study_scores_with_the_real_rule_and_restores_it',
     ),
     'v0.3 harness binding': (
         'test_harness_refuses_the_v0_2_preregistration',

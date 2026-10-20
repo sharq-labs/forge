@@ -367,6 +367,33 @@ def test_o1_the_claims_monte_carlo_stream_comes_from_the_committed_root(monkeypa
     assert any(stream_problem in p for p in bad)
 
 
+def test_o1_power_study_vectorised_bootstrap_is_the_same_estimator():
+    """ODC-O1b study: the vectorised bootstrap keeps v0.2's estimator (same B, floor 2.5 % order statistic); only the
+    resampling stream differs, so the bound agrees within Monte-Carlo error and the mean exactly."""
+    from benchmarks.genesis_lite.v0_3 import power_study
+
+    values = [((i * 7) % 11 - 4) * 0.5 for i in range(300)]
+    mean, low, frac = power_study.fast_bootstrap_mean_ci(values)
+    o_mean, o_low, o_frac = v02_analysis.bootstrap_mean_ci(values)
+    assert mean == o_mean and abs(low - o_low) < 0.05 and abs(frac - o_frac) < 0.02
+    assert power_study.fast_bootstrap_mean_ci([])[2] == 1.0
+
+
+def test_o1_power_study_scores_with_the_real_rule_and_restores_it():
+    """The study calls lift_decision itself, under the keyed stream of a per-replicate root, and leaves the module as
+    it found it (the committed root commitment and the original bootstrap are back afterwards)."""
+    from benchmarks.genesis_lite.v0_3 import power_study
+
+    saved = (v03a._formal_root_commitment, v03a.bootstrap_mean_ci, v02_analysis.bootstrap_mean_ci)
+    cells = {c["name"]: c for c in power_study.cells()}
+    same = power_study.run_cell(cells["controls_unsolved/delta=0.0/rho=1.0"], 1, 7)
+    better = power_study.run_cell(cells["controls_unsolved/delta=0.2/rho=1.0"], 1, 7)
+    assert same["claim_rate"] == 0.0 and same["mean_pooled_difference"] == 0.0
+    assert better["claim_rate"] == 1.0 and better["mean_pooled_difference"] > 0
+    assert not any("revealed formal root" in p for p in better["coverage_problems_seen"])     # the keyed stream was used
+    assert (v03a._formal_root_commitment, v03a.bootstrap_mean_ci, v02_analysis.bootstrap_mean_ci) == saved
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,
@@ -419,7 +446,8 @@ def test_v0_3_draft_is_exactly_what_the_code_rebuilds():
 def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
     assert set(doc["owner_decisions_open"]) == {"D4-identity-freeze", "D5-deployment", "D6-evaluator",
-                                                 "D7-budget-and-machine", "OD-3"}
+                                                 "D7-budget-and-machine", "OD-3",
+                                                 "D3b-cap-form-and-noninferiority"}
     assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells"}
     covered = " ".join(list(doc["owner_decisions_open"].values()) + list(doc["owner_decisions_taken"].values()))
     for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",

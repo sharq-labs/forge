@@ -8078,3 +8078,25 @@ D2 evidence on the escrow branch (tip 2cdd2be3, rebased on the draft's D2 commit
 - `python -m benchmarks.genesis_lite.v0_3.readiness`: BLOCKED_TECHNICAL, by design. Its one technical row is `power and null-calibration study (ODC-O1b): AUTHORISED_NOT_YET_RUN`. Agreement cases: 48. Owner items: D1-D7 and OD-3 approvals, FDA-18 residual, P-1/P-2, pair_bound.py (OD-3), root/manifest/candidate (D4/D7), DRAFT status.
 - `python tools/forge_check.py --regression`: 279 passed.
 The escrow test formerly named `test_readiness_with_the_escrow_half_has_no_technical_row_left` is now `test_readiness_with_the_escrow_half_leaves_only_the_authorised_power_study`.
+
+**Owner decision D3 (2026-10-20, in session).** D3-baselines-and-tells decided as option A, as drafted:
+- §10.5 governs.
+- The cap covers all four law-credit kinds.
+- `careful` keeps ddof = 0, and the `_dof` arms are added.
+- The form tell is declared and measured, not equalised.
+- One process per card.
+- CONTROL_SOLVED at a lower bound of >= 0.5.
+
+The ACTIVE_PLAN O-1 tension row is closed by D2.
+
+**ODC-O1b power and null-calibration study (2026-10-20, non-formal, synthetic).** Evidence: `docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/`. Ran at HEAD 27a5d6db, study code sha256 23e459a44fd646de..., exit 0, 1,366 s.
+- The D2 statistic is calibrated: exchangeable null 0.049 at alpha 0.05, Holm FWER 0.045. A skewed null outside the scope gives 0.063.
+- False claims at delta 0: 3/800.
+- Finding (a): the per-world-set min cap makes a non-dominating candidate lose. Doubling discoverable success with independent outcomes and solved controls gives claim 0/100, pooled mean -1.20.
+- Finding (b): six per-kind non-inferiority margins fail together about 30% of the time at equal skill.
+
+Both findings are opened as owner decision D3b-cap-form-and-noninferiority; the rule is unchanged.
+
+Failed approach: running the study through v0.2's pure-Python `bootstrap_mean_ci` costs about 14 s per formal-size decision. The study vectorises it with the same estimator, cross-checked on two cells.
+
+New tests: `test_o1_power_study_*` (2). `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 226 passed.
