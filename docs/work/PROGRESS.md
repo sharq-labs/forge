@@ -7834,3 +7834,18 @@ The 64 baseline failures and remaining integration gates are unchanged.
 - No additional performance claim follows from this static inspection. The only
   new measured improvement remains the previous n=4 before/after result.
   No additional tests run for this documentation-only publication record.
+
+## 2026-10-20 — Restore ACTIVE_PLAN's Active-epic line (main eb113ab7 regression)
+
+Branch `fix/active-plan-epic-line` from `origin/main` `eb113ab7`. PR #173 inserted its "Current bounded task — FAST
+runtime profiling" section above the "Active epic: ..." paragraph, so
+`tests/test_capability_completion.py::test_the_governance_documents_name_the_ledgers_active_epic` (reads line 3) failed
+on main. The paragraph is moved back directly under `# Active Plan`; the FAST section follows it unchanged. One-file,
+byte-for-byte move (LF only); no other text changed. The same fix exists on the local Genesis-lite branch
+`feat/genesis-lite-v03-amendment-draft` (`3bab1715`); this branch carries it for main alone.
+
+- `PYTHONPATH=<worktree>/src;<worktree> TMPDIR=D:/tmp/aplan-fix .venv/Scripts/python.exe -m pytest
+  tests/test_capability_completion.py -q -p no:cacheprovider --basetemp=D:/tmp/aplan-fix/bt`: 28 passed (Windows,
+  repo venv).
+- Same environment, `.venv/Scripts/python.exe tools/forge_check.py --regression --workers 4`: 279 passed, exit 0.
+- FAST / SCIENTIFIC / FULL tiers and recertification: NOT RUN (documentation-only change). Not pushed; no PR.
