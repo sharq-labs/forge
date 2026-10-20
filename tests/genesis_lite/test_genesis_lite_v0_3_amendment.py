@@ -431,6 +431,22 @@ def test_o1_a_revealed_root_that_is_not_bytes_is_refused():
         v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root="00" * 32)
 
 
+def test_o1_power_study_evidence_is_pinned_and_says_what_the_ledger_quotes():
+    """Review I-2: the study row is verified against its evidence, not only against the study's machinery. The result
+    file's digest is the preregistered one, it came from a clean tree, it is labelled non-formal, and the numbers the
+    readiness ledger quotes are the file's."""
+    from benchmarks.genesis_lite.v0_3 import readiness
+
+    data = (v03p.HERE.parents[2] / v03p.POWER_STUDY_EVIDENCE).read_bytes()
+    assert hashlib.sha256(data).hexdigest() == v03p.POWER_STUDY_EVIDENCE_SHA256
+    doc = json.loads(data)
+    assert doc["status"] == "NON_FORMAL_SYNTHETIC_STUDY" and doc["provenance"]["tree_clean"] is True
+    symmetric = next(n for n in doc["null_calibration"] if n["symmetric_null"])
+    note = readiness.LEDGER["power and null-calibration study (ODC-O1b)"][2]
+    assert f"{symmetric['rejection_rates']['pooled@0.05']:.4f}" in note
+    assert f"{symmetric['holm_familywise_rate']:.4f}" in note
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,
@@ -484,7 +500,7 @@ def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
     assert set(doc["owner_decisions_open"]) == {"D4-identity-freeze", "D5-deployment", "D6-evaluator",
                                                  "D7-budget-and-machine", "OD-3",
-                                                 "D3b-cap-form-and-noninferiority"}
+                                                 "D3b-cap-form-and-noninferiority", "D2b-root-grinding"}
     assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance", "D3-baselines-and-tells"}
     covered = " ".join(list(doc["owner_decisions_open"].values()) + list(doc["owner_decisions_taken"].values()))
     for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",

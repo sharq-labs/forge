@@ -8106,3 +8106,17 @@ D3 and study evidence on the escrow branch (tip 097194c1, rebased on draft f4d50
 - `python -m benchmarks.genesis_lite.v0_3.readiness`: READY_TO_FREEZE_PENDING_OWNER, no technical rows, 48 agreement cases. The owner items now include D3b (the cap form and non-inferiority power findings of the study) beside D1-D7 and OD-3 approvals, FDA-18 residual, P-1/P-2, pair_bound.py (OD-3), root/manifest/candidate and DRAFT status.
 - `python tools/forge_check.py --regression`: 279 passed.
 - `forge-scientific-review` of the D2 stream change and the study: NOT RUN yet.
+
+**forge-scientific-review of D2 and the ODC-O1b study (2026-10-20): CHANGES REQUIRED.** The review was read-only; the reviewer ran no tests. Dispositions:
+- I-1 (MAJOR, root grinding before the commitment): the wording that streams "cannot be shopped" is corrected. The mitigation is opened as owner decision D2b.
+- I-2 (MAJOR, study row not bound to its evidence): `result.json` is pinned by sha256 in the preregistration, and `test_o1_power_study_evidence_is_pinned_and_says_what_the_ledger_quotes` checks the digest, a clean tree and the quoted rates.
+- I-3: false claims are now reported over the informative null cells only: 4/300, 95% interval [0.004, 0.034].
+- I-4: "anti-conservative" is withdrawn.
+- I-5: the bootstrap cross-check now compares every lower bound per replicate in boundary cells (20 reps each).
+- I-6: `test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p` is added.
+- I-7: stale and over-general wording is fixed (five control kinds, not six; the ±1 model limit is stated).
+- I-8: provenance is recorded in `result.json`; a non-bytes root is refused.
+
+The study was re-run from clean HEAD 70195498: exit 0, 1725.0 s, result sha256 282b42131b074a7b... Exchangeable null 0.0500 at alpha 0.05, Holm family-wise rate 0.0450.
+
+`python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 229 passed.

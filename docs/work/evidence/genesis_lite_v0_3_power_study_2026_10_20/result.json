@@ -1,8 +1,8 @@
 {
  "args": {
-  "crosscheck_reps": "3",
+  "crosscheck_reps": "20",
   "null_reps": "2000",
-  "out": "D:\\gl03tmp\\power_study\\result.json",
+  "out": "D:\\gl03tmp\\power_study2\\result.json",
   "reps": "100",
   "seed": "20261020",
   "workers": "4"
@@ -10,262 +10,215 @@
  "authorisation": "owner D2 (ODC-O1b), 2026-10-20; runs after D3 (decided 2026-10-20)",
  "bootstrap_crosscheck": [
   {
-   "fast": {
-    "cell": {
-     "candidate": {
-      "default": 0.8,
-      "discoverable": 0.4
-     },
-     "careful": {
-      "default": 0.8,
-      "discoverable": 0.2
-     },
-     "name": "controls_solved/delta=0.2/rho=1.0",
-     "representation": {
-      "default": 0.1
-     },
-     "rho": 1.0
+   "cell": {
+    "candidate": {
+     "default": 0.8,
+     "discoverable": 0.30000000000000004
     },
-    "claim_rate": 1.0,
-    "claim_rate_95ci": [
-     0.29240177382128674,
-     1.0
-    ],
-    "condition_pass_rates": {
-     "baseline": 1.0,
-     "claim": 1.0,
-     "holm_pooled": 1.0,
-     "kinds": 1.0,
-     "pooled_lower95": 1.0,
-     "presentations": 1.0
+    "careful": {
+     "default": 0.8,
+     "discoverable": 0.2
     },
-    "coverage_problems_seen": [
-     "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
-     "7200 record(s) do not carry harness = the preregistered/formal value",
-     "7200 record(s) do not carry pair_bound = the preregistered/formal value",
-     "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
-     "7200 record(s) do not carry tier = the preregistered/formal value",
-     "7200 record(s) do not carry tier_bound = the preregistered/formal value",
-     "always_insufficient",
-     "always_law",
-     "always_refuse",
-     "careful vs candidate",
-     "extrapolating_fit",
-     "extrapolating_fit_dof",
-     "extrapolation_pair",
-     "extrapolation_pair_dof",
-     "fit_all_gated",
-     "fit_all_gated_dof",
-     "greedy_forward",
-     "greedy_forward_dof",
-     "monomial_enumeration vs candidate",
-     "monomial_enumeration_dof",
-     "no formal root commitment is preregistered",
-     "random_structures",
-     "random_structures_dof",
-     "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
-     "single_setting",
-     "space_filling",
-     "space_filling_dof",
-     "v0.3 is a DRAFT identity (not FROZEN)"
-    ],
-    "mean_pooled_difference": 0.40194444444444444,
-    "reps": 3,
-    "seed": 20261920
+    "name": "controls_solved/delta=0.1/rho=0.9",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.9
    },
-   "original": {
-    "cell": {
-     "candidate": {
-      "default": 0.8,
-      "discoverable": 0.4
-     },
-     "careful": {
-      "default": 0.8,
-      "discoverable": 0.2
-     },
-     "name": "controls_solved/delta=0.2/rho=1.0",
-     "representation": {
-      "default": 0.1
-     },
-     "rho": 1.0
+   "claim_agreement": "19/20",
+   "max_abs_lower95_gap": 0.010000000000000002,
+   "replicates": [
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333334
     },
-    "claim_rate": 1.0,
-    "claim_rate_95ci": [
-     0.29240177382128674,
-     1.0
-    ],
-    "condition_pass_rates": {
-     "baseline": 1.0,
-     "claim": 1.0,
-     "holm_pooled": 1.0,
-     "kinds": 1.0,
-     "pooled_lower95": 1.0,
-     "presentations": 1.0
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333334
     },
-    "coverage_problems_seen": [
-     "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
-     "7200 record(s) do not carry harness = the preregistered/formal value",
-     "7200 record(s) do not carry pair_bound = the preregistered/formal value",
-     "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
-     "7200 record(s) do not carry tier = the preregistered/formal value",
-     "7200 record(s) do not carry tier_bound = the preregistered/formal value",
-     "always_insufficient",
-     "always_law",
-     "always_refuse",
-     "careful vs candidate",
-     "extrapolating_fit",
-     "extrapolating_fit_dof",
-     "extrapolation_pair",
-     "extrapolation_pair_dof",
-     "fit_all_gated",
-     "fit_all_gated_dof",
-     "greedy_forward",
-     "greedy_forward_dof",
-     "monomial_enumeration vs candidate",
-     "monomial_enumeration_dof",
-     "no formal root commitment is preregistered",
-     "random_structures",
-     "random_structures_dof",
-     "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
-     "single_setting",
-     "space_filling",
-     "space_filling_dof",
-     "v0.3 is a DRAFT identity (not FROZEN)"
-    ],
-    "mean_pooled_difference": 0.40194444444444444,
-    "reps": 3,
-    "seed": 20261920
-   }
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333334
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333341
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.006666666666666667
+    },
+    {
+     "claims_agree": false,
+     "max_abs_lower95_gap": 0.010000000000000002
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.0033333333333333335
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.0008333333333333387
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.006666666666666668
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.006666666666666667
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333334
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.006666666666666668
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.01
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333334
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333334
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333334
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.004166666666666667
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333334
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.006666666666666668
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333327
+    }
+   ],
+   "replicates_with_a_threshold_flip": 1,
+   "reps": 20,
+   "seed": 20261920
   },
   {
-   "fast": {
-    "cell": {
-     "candidate": {
-      "default": 0.4,
-      "discoverable": 0.30000000000000004
-     },
-     "careful": {
-      "default": 0.4,
-      "discoverable": 0.2
-     },
-     "name": "controls_unsolved/delta=0.1/rho=0.5",
-     "representation": {
-      "default": 0.1
-     },
-     "rho": 0.5
+   "cell": {
+    "candidate": {
+     "default": 0.4,
+     "discoverable": 0.25
     },
-    "claim_rate": 1.0,
-    "claim_rate_95ci": [
-     0.29240177382128674,
-     1.0
-    ],
-    "condition_pass_rates": {
-     "baseline": 1.0,
-     "claim": 1.0,
-     "holm_pooled": 1.0,
-     "kinds": 1.0,
-     "pooled_lower95": 1.0,
-     "presentations": 1.0
+    "careful": {
+     "default": 0.4,
+     "discoverable": 0.2
     },
-    "coverage_problems_seen": [
-     "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
-     "7200 record(s) do not carry harness = the preregistered/formal value",
-     "7200 record(s) do not carry pair_bound = the preregistered/formal value",
-     "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
-     "7200 record(s) do not carry tier = the preregistered/formal value",
-     "7200 record(s) do not carry tier_bound = the preregistered/formal value",
-     "always_insufficient",
-     "always_law",
-     "always_refuse",
-     "careful vs candidate",
-     "extrapolating_fit",
-     "extrapolating_fit_dof",
-     "extrapolation_pair",
-     "extrapolation_pair_dof",
-     "fit_all_gated",
-     "fit_all_gated_dof",
-     "greedy_forward",
-     "greedy_forward_dof",
-     "monomial_enumeration vs candidate",
-     "monomial_enumeration_dof",
-     "no formal root commitment is preregistered",
-     "random_structures",
-     "random_structures_dof",
-     "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
-     "single_setting",
-     "space_filling",
-     "space_filling_dof",
-     "v0.3 is a DRAFT identity (not FROZEN)"
-    ],
-    "mean_pooled_difference": 0.22916666666666666,
-    "reps": 3,
-    "seed": 20261921
+    "name": "controls_unsolved/delta=0.05/rho=0.5",
+    "representation": {
+     "default": 0.1
+    },
+    "rho": 0.5
    },
-   "original": {
-    "cell": {
-     "candidate": {
-      "default": 0.4,
-      "discoverable": 0.30000000000000004
-     },
-     "careful": {
-      "default": 0.4,
-      "discoverable": 0.2
-     },
-     "name": "controls_unsolved/delta=0.1/rho=0.5",
-     "representation": {
-      "default": 0.1
-     },
-     "rho": 0.5
+   "claim_agreement": "20/20",
+   "max_abs_lower95_gap": 0.020000000000000018,
+   "replicates": [
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.013333333333333336
     },
-    "claim_rate": 1.0,
-    "claim_rate_95ci": [
-     0.29240177382128674,
-     1.0
-    ],
-    "condition_pass_rates": {
-     "baseline": 1.0,
-     "claim": 1.0,
-     "holm_pooled": 1.0,
-     "kinds": 1.0,
-     "pooled_lower95": 1.0,
-     "presentations": 1.0
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.006666666666666668
     },
-    "coverage_problems_seen": [
-     "7200 record(s) do not carry environment_manifest_sha256 = the preregistered/formal value",
-     "7200 record(s) do not carry harness = the preregistered/formal value",
-     "7200 record(s) do not carry pair_bound = the preregistered/formal value",
-     "7200 record(s) do not carry root_commitment_sha256 = the preregistered/formal value",
-     "7200 record(s) do not carry tier = the preregistered/formal value",
-     "7200 record(s) do not carry tier_bound = the preregistered/formal value",
-     "always_insufficient",
-     "always_law",
-     "always_refuse",
-     "careful vs candidate",
-     "extrapolating_fit",
-     "extrapolating_fit_dof",
-     "extrapolation_pair",
-     "extrapolation_pair_dof",
-     "fit_all_gated",
-     "fit_all_gated_dof",
-     "greedy_forward",
-     "greedy_forward_dof",
-     "monomial_enumeration vs candidate",
-     "monomial_enumeration_dof",
-     "no formal root commitment is preregistered",
-     "random_structures",
-     "random_structures_dof",
-     "records come from 1 attempt(s); a lift decision reads exactly one admitted attempt",
-     "single_setting",
-     "space_filling",
-     "space_filling_dof",
-     "v0.3 is a DRAFT identity (not FROZEN)"
-    ],
-    "mean_pooled_difference": 0.22916666666666666,
-    "reps": 3,
-    "seed": 20261921
-   }
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.019999999999999997
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.006666666666666668
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.010000000000000009
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.013333333333333336
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.01
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.006666666666666668
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.009999999999999981
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.009999999999999995
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.013333333333333336
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.020000000000000004
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.010000000000000009
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.010000000000000009
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.01
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.020000000000000018
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.006666666666666661
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.003333333333333341
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.013333333333333336
+    },
+    {
+     "claims_agree": true,
+     "max_abs_lower95_gap": 0.0066666666666666645
+    }
+   ],
+   "replicates_with_a_threshold_flip": 0,
+   "reps": 20,
+   "seed": 20261921
   }
  ],
+ "credit_model": "per-universe credits +1 / -1 only (the maximum-variance case); DEFAULT_CREDIT also has 0, +0.5 and -0.5 outcomes, so the power figures and the cap penalty hold for this model only",
  "null_calibration": [
   {
    "holm_familywise_95ci": [
@@ -275,20 +228,20 @@
    "holm_familywise_rate": 0.045,
    "rejection_95ci": {
     "pooled@0.01": [
-     0.005729035522963454,
-     0.01479583217228858
+     0.005342443023395429,
+     0.014186714471514504
     ],
     "pooled@0.05": [
-     0.03995675692495896,
-     0.05939264512468933
+     0.04086426771825132,
+     0.060481722083151876
     ],
     "pooled@0.1": [
-     0.08015665079544426,
-     0.10605236890702867
+     0.08109379477276055,
+     0.10711211374592643
     ],
     "presentation@0.01": [
-     0.0061186575427434635,
-     0.015402125783560048
+     0.006511085658164156,
+     0.01600579487869697
     ],
     "presentation@0.05": [
      0.03769282441526969,
@@ -300,10 +253,10 @@
     ]
    },
    "rejection_rates": {
-    "pooled@0.01": 0.0095,
-    "pooled@0.05": 0.049,
-    "pooled@0.1": 0.0925,
-    "presentation@0.01": 0.01,
+    "pooled@0.01": 0.009,
+    "pooled@0.05": 0.05,
+    "pooled@0.1": 0.0935,
+    "presentation@0.01": 0.0105,
     "presentation@0.05": 0.0465,
     "presentation@0.1": 0.09
    },
@@ -317,22 +270,22 @@
   },
   {
    "holm_familywise_95ci": [
-    0.0312911704560926,
-    0.057486257961972334
+    0.030434706263140023,
+    0.05635029157574473
    ],
-   "holm_familywise_rate": 0.043,
+   "holm_familywise_rate": 0.042,
    "rejection_95ci": {
     "pooled@0.01": [
      0.006939617502851476,
      0.022127803636778486
     ],
     "pooled@0.05": [
-     0.048746927556580555,
-     0.0798880418733545
+     0.04963308929184901,
+     0.08099507436705101
     ],
     "pooled@0.1": [
-     0.08943903298240023,
-     0.12890376087999794
+     0.0876023650692121,
+     0.1267530087815625
     ],
     "presentation@0.01": [
      0.0028188587596205245,
@@ -349,8 +302,8 @@
    },
    "rejection_rates": {
     "pooled@0.01": 0.013,
-    "pooled@0.05": 0.063,
-    "pooled@0.1": 0.108,
+    "pooled@0.05": 0.064,
+    "pooled@0.1": 0.106,
     "presentation@0.01": 0.007,
     "presentation@0.05": 0.039,
     "presentation@0.1": 0.098
@@ -424,6 +377,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029633333333333334,
+     "sd_mean_difference": 0.015242965135140575
+    },
+    "discoverable": {
+     "fail_rate": 0.01,
+     "mean_of_mean_minus_lower95": 0.04515833333333333,
+     "sd_mean_difference": 0.02086713258265788
+    },
+    "indistinguishable": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029700000000000008,
+     "sd_mean_difference": 0.014603697686240676
+    },
+    "insufficient_evidence": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02977500000000001,
+     "sd_mean_difference": 0.01599451946067083
+    },
+    "no_solution": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029666666666666668,
+     "sd_mean_difference": 0.014110897581499046
+    },
+    "spurious_correlate": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029750000000000006,
+     "sd_mean_difference": 0.014190399238765465
+    }
+   },
    "mean_pooled_difference": -1.5987416666666667,
    "reps": 100,
    "seed": 20261120
@@ -487,6 +472,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02200833333333333,
+     "sd_mean_difference": 0.010416679999991466
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03208333333333333,
+     "sd_mean_difference": 0.01595269917948405
+    },
+    "indistinguishable": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02200833333333333,
+     "sd_mean_difference": 0.011321301824436976
+    },
+    "insufficient_evidence": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02219166666666667,
+     "sd_mean_difference": 0.012574939253221949
+    },
+    "no_solution": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.021983333333333334,
+     "sd_mean_difference": 0.009626854078277309
+    },
+    "spurious_correlate": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.021974999999999998,
+     "sd_mean_difference": 0.011973173138312166
+    }
+   },
    "mean_pooled_difference": -0.7994333333333334,
    "reps": 100,
    "seed": 20261121
@@ -550,6 +567,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010408333333333332,
+     "sd_mean_difference": 0.004932453468834979
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.014291666666666668,
+     "sd_mean_difference": 0.007367741248925014
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0103,
+     "sd_mean_difference": 0.00529188975907683
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0103,
+     "sd_mean_difference": 0.006000341425470906
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010408333333333335,
+     "sd_mean_difference": 0.0049300664859163465
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010341666666666667,
+     "sd_mean_difference": 0.005036698654211242
+    }
+   },
    "mean_pooled_difference": -0.15924166666666667,
    "reps": 100,
    "seed": 20261122
@@ -613,6 +662,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    }
+   },
    "mean_pooled_difference": 0.0,
    "reps": 100,
    "seed": 20261123
@@ -676,6 +757,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029775,
+     "sd_mean_difference": 0.014198814015418485
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.04705000000000001,
+     "sd_mean_difference": 0.025167046078817697
+    },
+    "indistinguishable": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029491666666666666,
+     "sd_mean_difference": 0.013409097243621174
+    },
+    "insufficient_evidence": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029641666666666667,
+     "sd_mean_difference": 0.015230032465129184
+    },
+    "no_solution": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029666666666666668,
+     "sd_mean_difference": 0.015620701630990984
+    },
+    "spurious_correlate": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02956666666666667,
+     "sd_mean_difference": 0.014883333333333332
+    }
+   },
    "mean_pooled_difference": -1.4971583333333331,
    "reps": 100,
    "seed": 20261124
@@ -739,6 +852,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.021966666666666662,
+     "sd_mean_difference": 0.009517567820731418
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03535833333333333,
+     "sd_mean_difference": 0.017273556781650063
+    },
+    "indistinguishable": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02205,
+     "sd_mean_difference": 0.010359761231697273
+    },
+    "insufficient_evidence": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02219166666666667,
+     "sd_mean_difference": 0.011608411102874213
+    },
+    "no_solution": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.022041666666666668,
+     "sd_mean_difference": 0.011535148580654596
+    },
+    "spurious_correlate": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.022116666666666663,
+     "sd_mean_difference": 0.011999143487951317
+    }
+   },
    "mean_pooled_difference": -0.6985583333333334,
    "reps": 100,
    "seed": 20261125
@@ -802,6 +947,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010416666666666668,
+     "sd_mean_difference": 0.005320583719020979
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.022083333333333333,
+     "sd_mean_difference": 0.011658342268283448
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.01053333333333333,
+     "sd_mean_difference": 0.004590721318292172
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010341666666666664,
+     "sd_mean_difference": 0.0044901976571193394
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010333333333333335,
+     "sd_mean_difference": 0.004766812352086035
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010391666666666665,
+     "sd_mean_difference": 0.0051800900893066845
+    }
+   },
    "mean_pooled_difference": -0.05905833333333333,
    "reps": 100,
    "seed": 20261126
@@ -865,6 +1042,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017124999999999998,
+     "sd_mean_difference": 0.009103357134107785
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    }
+   },
    "mean_pooled_difference": 0.10013333333333334,
    "reps": 100,
    "seed": 20261127
@@ -928,6 +1137,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02953333333333333,
+     "sd_mean_difference": 0.014049661423362168
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.04921666666666665,
+     "sd_mean_difference": 0.025883310528000254
+    },
+    "indistinguishable": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02963333333333333,
+     "sd_mean_difference": 0.012180061120080183
+    },
+    "insufficient_evidence": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029500000000000002,
+     "sd_mean_difference": 0.01614831217530523
+    },
+    "no_solution": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.0295,
+     "sd_mean_difference": 0.01407956310480628
+    },
+    "spurious_correlate": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029683333333333332,
+     "sd_mean_difference": 0.014198716197835163
+    }
+   },
    "mean_pooled_difference": -1.3956083333333336,
    "reps": 100,
    "seed": 20261128
@@ -991,6 +1232,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.0222,
+     "sd_mean_difference": 0.01181440975156092
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03855833333333334,
+     "sd_mean_difference": 0.02028206651754752
+    },
+    "indistinguishable": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02178333333333333,
+     "sd_mean_difference": 0.011943765807594632
+    },
+    "insufficient_evidence": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.022141666666666674,
+     "sd_mean_difference": 0.010536589686526767
+    },
+    "no_solution": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.022091666666666666,
+     "sd_mean_difference": 0.01058109884547809
+    },
+    "spurious_correlate": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.02209166666666667,
+     "sd_mean_difference": 0.010902583154667723
+    }
+   },
    "mean_pooled_difference": -0.6025916666666667,
    "reps": 100,
    "seed": 20261129
@@ -1011,15 +1284,15 @@
     },
     "rho": 0.9
    },
-   "claim_rate": 0.49,
+   "claim_rate": 0.47,
    "claim_rate_95ci": [
-    0.38864416516163774,
-    0.5919636708445463
+    0.36940516419439456,
+    0.5724185151099548
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.49,
-    "holm_pooled": 0.49,
+    "claim": 0.47,
+    "holm_pooled": 0.47,
     "kinds": 1.0,
     "pooled_lower95": 0.62,
     "presentations": 1.0
@@ -1054,6 +1327,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010275,
+     "sd_mean_difference": 0.005288903478037768
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.027358333333333328,
+     "sd_mean_difference": 0.013781456442142343
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0105,
+     "sd_mean_difference": 0.00526568424381443
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010366666666666666,
+     "sd_mean_difference": 0.0049171186232951055
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.01053333333333333,
+     "sd_mean_difference": 0.005720431219176866
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010499999999999999,
+     "sd_mean_difference": 0.005069646875714762
+    }
+   },
    "mean_pooled_difference": 0.041358333333333344,
    "reps": 100,
    "seed": 20261130
@@ -1117,6 +1422,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.023675000000000005,
+     "sd_mean_difference": 0.01153293592764267
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    }
+   },
    "mean_pooled_difference": 0.1997833333333333,
    "reps": 100,
    "seed": 20261131
@@ -1180,6 +1517,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029533333333333335,
+     "sd_mean_difference": 0.013752320511260798
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.05045833333333333,
+     "sd_mean_difference": 0.02346454772630404
+    },
+    "indistinguishable": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029941666666666665,
+     "sd_mean_difference": 0.014967177051431206
+    },
+    "insufficient_evidence": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029766666666666667,
+     "sd_mean_difference": 0.014851718475202346
+    },
+    "no_solution": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029416666666666667,
+     "sd_mean_difference": 0.015609138615994582
+    },
+    "spurious_correlate": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.029633333333333334,
+     "sd_mean_difference": 0.014586759121431557
+    }
+   },
    "mean_pooled_difference": -1.19945,
    "reps": 100,
    "seed": 20261132
@@ -1243,6 +1612,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.022033333333333332,
+     "sd_mean_difference": 0.010442953498784612
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.042608333333333324,
+     "sd_mean_difference": 0.020358746073043565
+    },
+    "indistinguishable": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.022166666666666664,
+     "sd_mean_difference": 0.011802951019883873
+    },
+    "insufficient_evidence": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.022091666666666666,
+     "sd_mean_difference": 0.010171365034579511
+    },
+    "no_solution": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.021858333333333334,
+     "sd_mean_difference": 0.013211976364058652
+    },
+    "spurious_correlate": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.022016666666666667,
+     "sd_mean_difference": 0.010979159550914833
+    }
+   },
    "mean_pooled_difference": -0.3989416666666666,
    "reps": 100,
    "seed": 20261133
@@ -1306,6 +1707,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010391666666666665,
+     "sd_mean_difference": 0.005772516300924966
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03418333333333333,
+     "sd_mean_difference": 0.01654140218092502
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.01040833333333333,
+     "sd_mean_difference": 0.0050435533659866786
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010225,
+     "sd_mean_difference": 0.005208239999163719
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010349999999999996,
+     "sd_mean_difference": 0.004947860087395807
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.010450000000000001,
+     "sd_mean_difference": 0.004499035390441428
+    }
+   },
    "mean_pooled_difference": 0.2374083333333333,
    "reps": 100,
    "seed": 20261134
@@ -1369,6 +1802,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.031875,
+     "sd_mean_difference": 0.014251050156236051
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    }
+   },
    "mean_pooled_difference": 0.4015583333333334,
    "reps": 100,
    "seed": 20261135
@@ -1432,6 +1897,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.07,
+     "mean_of_mean_minus_lower95": 0.05553333333333334,
+     "sd_mean_difference": 0.025722843015066933
+    },
+    "discoverable": {
+     "fail_rate": 0.01,
+     "mean_of_mean_minus_lower95": 0.04535833333333333,
+     "sd_mean_difference": 0.02281213127555892
+    },
+    "indistinguishable": {
+     "fail_rate": 0.07,
+     "mean_of_mean_minus_lower95": 0.05568333333333334,
+     "sd_mean_difference": 0.028698548163045928
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.1,
+     "mean_of_mean_minus_lower95": 0.055875,
+     "sd_mean_difference": 0.030101005889430932
+    },
+    "no_solution": {
+     "fail_rate": 0.08,
+     "mean_of_mean_minus_lower95": 0.05542499999999999,
+     "sd_mean_difference": 0.027801742301517725
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.07,
+     "mean_of_mean_minus_lower95": 0.05543333333333333,
+     "sd_mean_difference": 0.02937666780135404
+    }
+   },
    "mean_pooled_difference": -6.666666666666584e-05,
    "reps": 100,
    "seed": 20261136
@@ -1495,6 +1992,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.01,
+     "mean_of_mean_minus_lower95": 0.039174999999999995,
+     "sd_mean_difference": 0.02242872042716659
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.031950000000000006,
+     "sd_mean_difference": 0.013338863436506792
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03938333333333333,
+     "sd_mean_difference": 0.01959184212313323
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.039099999999999996,
+     "sd_mean_difference": 0.020113870283408358
+    },
+    "no_solution": {
+     "fail_rate": 0.01,
+     "mean_of_mean_minus_lower95": 0.039133333333333326,
+     "sd_mean_difference": 0.019919936970002914
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03944166666666666,
+     "sd_mean_difference": 0.016846356348546775
+    }
+   },
    "mean_pooled_difference": -0.008366666666666666,
    "reps": 100,
    "seed": 20261137
@@ -1515,15 +2044,15 @@
     },
     "rho": 0.9
    },
-   "claim_rate": 0.02,
+   "claim_rate": 0.03,
    "claim_rate_95ci": [
-    0.0024313368239425436,
-    0.07038393247107011
+    0.006229971538306397,
+    0.08517605297428002
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.02,
-    "holm_pooled": 0.02,
+    "claim": 0.03,
+    "holm_pooled": 0.03,
     "kinds": 1.0,
     "pooled_lower95": 0.06,
     "presentations": 1.0
@@ -1558,6 +2087,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017400000000000006,
+     "sd_mean_difference": 0.009389873386911147
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.014299999999999997,
+     "sd_mean_difference": 0.007413501197140257
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017558333333333336,
+     "sd_mean_difference": 0.009781998773256927
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017383333333333334,
+     "sd_mean_difference": 0.00809578079413386
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0175,
+     "sd_mean_difference": 0.009188096163575516
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.01751666666666667,
+     "sd_mean_difference": 0.009288448620613551
+    }
+   },
    "mean_pooled_difference": 0.002483333333333333,
    "reps": 100,
    "seed": 20261138
@@ -1621,6 +2182,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    }
+   },
    "mean_pooled_difference": 0.0,
    "reps": 100,
    "seed": 20261139
@@ -1649,7 +2242,7 @@
    "condition_pass_rates": {
     "baseline": 1.0,
     "claim": 0.2,
-    "holm_pooled": 0.2,
+    "holm_pooled": 0.21,
     "kinds": 0.75,
     "pooled_lower95": 0.32,
     "presentations": 1.0
@@ -1684,6 +2277,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.07,
+     "mean_of_mean_minus_lower95": 0.055325,
+     "sd_mean_difference": 0.028533041275763865
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.04724999999999999,
+     "sd_mean_difference": 0.02412686953032518
+    },
+    "indistinguishable": {
+     "fail_rate": 0.06,
+     "mean_of_mean_minus_lower95": 0.05541666666666667,
+     "sd_mean_difference": 0.029908670008321446
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.02,
+     "mean_of_mean_minus_lower95": 0.05564166666666666,
+     "sd_mean_difference": 0.02763423802298719
+    },
+    "no_solution": {
+     "fail_rate": 0.07,
+     "mean_of_mean_minus_lower95": 0.05570833333333333,
+     "sd_mean_difference": 0.026681083342573127
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.08,
+     "mean_of_mean_minus_lower95": 0.05546666666666666,
+     "sd_mean_difference": 0.027896739156316384
+    }
+   },
    "mean_pooled_difference": 0.10026666666666667,
    "reps": 100,
    "seed": 20261140
@@ -1747,6 +2372,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.039141666666666665,
+     "sd_mean_difference": 0.01870959349876124
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03560833333333333,
+     "sd_mean_difference": 0.018347222011943814
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03941666666666667,
+     "sd_mean_difference": 0.021368608531103648
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.039491666666666675,
+     "sd_mean_difference": 0.01683640854748357
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03938333333333333,
+     "sd_mean_difference": 0.01863020807124219
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03929166666666667,
+     "sd_mean_difference": 0.019702114945693856
+    }
+   },
    "mean_pooled_difference": 0.09980833333333333,
    "reps": 100,
    "seed": 20261141
@@ -1810,6 +2467,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.01759166666666667,
+     "sd_mean_difference": 0.0076202216357385425
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.022074999999999997,
+     "sd_mean_difference": 0.010524689887223385
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017525,
+     "sd_mean_difference": 0.007655789385237235
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017566666666666668,
+     "sd_mean_difference": 0.009149225832458904
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.01759166666666667,
+     "sd_mean_difference": 0.00852438902991489
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017633333333333338,
+     "sd_mean_difference": 0.008355985878398791
+    }
+   },
    "mean_pooled_difference": 0.09681666666666666,
    "reps": 100,
    "seed": 20261142
@@ -1873,6 +2562,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.01713333333333333,
+     "sd_mean_difference": 0.009924422737200723
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    }
+   },
    "mean_pooled_difference": 0.10148333333333333,
    "reps": 100,
    "seed": 20261143
@@ -1893,15 +2614,15 @@
     },
     "rho": 0.0
    },
-   "claim_rate": 0.63,
+   "claim_rate": 0.66,
    "claim_rate_95ci": [
-    0.5276483594483168,
-    0.7244334203854484
+    0.5584667322490411,
+    0.7517764984551558
    ],
    "condition_pass_rates": {
     "baseline": 1.0,
-    "claim": 0.63,
-    "holm_pooled": 0.69,
+    "claim": 0.66,
+    "holm_pooled": 0.73,
     "kinds": 0.8,
     "pooled_lower95": 0.81,
     "presentations": 1.0
@@ -1936,6 +2657,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.03,
+     "mean_of_mean_minus_lower95": 0.05531666666666665,
+     "sd_mean_difference": 0.022033338061018152
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.048883333333333334,
+     "sd_mean_difference": 0.02425355644024191
+    },
+    "indistinguishable": {
+     "fail_rate": 0.01,
+     "mean_of_mean_minus_lower95": 0.05557499999999999,
+     "sd_mean_difference": 0.02442647698252406
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.05,
+     "mean_of_mean_minus_lower95": 0.05594166666666666,
+     "sd_mean_difference": 0.026888260294534984
+    },
+    "no_solution": {
+     "fail_rate": 0.05,
+     "mean_of_mean_minus_lower95": 0.05534166666666666,
+     "sd_mean_difference": 0.027171618924900297
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.08,
+     "mean_of_mean_minus_lower95": 0.05528333333333332,
+     "sd_mean_difference": 0.02646598839391166
+    }
+   },
    "mean_pooled_difference": 0.19453333333333334,
    "reps": 100,
    "seed": 20261144
@@ -1999,6 +2752,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03915833333333334,
+     "sd_mean_difference": 0.020734070190550305
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03825833333333333,
+     "sd_mean_difference": 0.018668943313547355
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03941666666666666,
+     "sd_mean_difference": 0.021016831878811378
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.039224999999999996,
+     "sd_mean_difference": 0.017099015160074112
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03927499999999999,
+     "sd_mean_difference": 0.021233455978191065
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.039358333333333335,
+     "sd_mean_difference": 0.021913250684358895
+    }
+   },
    "mean_pooled_difference": 0.20234999999999995,
    "reps": 100,
    "seed": 20261145
@@ -2062,6 +2847,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017474999999999997,
+     "sd_mean_difference": 0.008896534905980717
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.027341666666666674,
+     "sd_mean_difference": 0.014229007441764087
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017683333333333336,
+     "sd_mean_difference": 0.008887487302694477
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017599999999999998,
+     "sd_mean_difference": 0.009479671231992524
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.01759166666666667,
+     "sd_mean_difference": 0.008612990834263735
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017700000000000004,
+     "sd_mean_difference": 0.008617210653363678
+    }
+   },
    "mean_pooled_difference": 0.19760833333333339,
    "reps": 100,
    "seed": 20261146
@@ -2125,6 +2942,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.023575000000000002,
+     "sd_mean_difference": 0.01210508100390539
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    }
+   },
    "mean_pooled_difference": 0.20020833333333335,
    "reps": 100,
    "seed": 20261147
@@ -2188,6 +3037,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.09,
+     "mean_of_mean_minus_lower95": 0.055324999999999985,
+     "sd_mean_difference": 0.030757893070090334
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.050499999999999996,
+     "sd_mean_difference": 0.024009747731101032
+    },
+    "indistinguishable": {
+     "fail_rate": 0.05,
+     "mean_of_mean_minus_lower95": 0.05548333333333333,
+     "sd_mean_difference": 0.02819229603199348
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.07,
+     "mean_of_mean_minus_lower95": 0.0559,
+     "sd_mean_difference": 0.029854130320982757
+    },
+    "no_solution": {
+     "fail_rate": 0.07,
+     "mean_of_mean_minus_lower95": 0.05554166666666666,
+     "sd_mean_difference": 0.028792721881290298
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.07,
+     "mean_of_mean_minus_lower95": 0.05575833333333333,
+     "sd_mean_difference": 0.031428516774844255
+    }
+   },
    "mean_pooled_difference": 0.3884416666666667,
    "reps": 100,
    "seed": 20261148
@@ -2251,6 +3132,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.01,
+     "mean_of_mean_minus_lower95": 0.039483333333333336,
+     "sd_mean_difference": 0.018845267236688952
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.042366666666666664,
+     "sd_mean_difference": 0.02010831088546889
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03933333333333334,
+     "sd_mean_difference": 0.01995682144586713
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03935,
+     "sd_mean_difference": 0.017279312856065134
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.039358333333333335,
+     "sd_mean_difference": 0.01811057663662621
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03938333333333333,
+     "sd_mean_difference": 0.01982302953637511
+    }
+   },
    "mean_pooled_difference": 0.401075,
    "reps": 100,
    "seed": 20261149
@@ -2314,6 +3227,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.01769166666666667,
+     "sd_mean_difference": 0.00873712942307458
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03415833333333333,
+     "sd_mean_difference": 0.015320363627103198
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017625000000000002,
+     "sd_mean_difference": 0.008550743145091737
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.01764166666666667,
+     "sd_mean_difference": 0.008436544184544864
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017575,
+     "sd_mean_difference": 0.009440526556642202
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.017491666666666666,
+     "sd_mean_difference": 0.00979065242974134
+    }
+   },
    "mean_pooled_difference": 0.3996916666666666,
    "reps": 100,
    "seed": 20261150
@@ -2377,6 +3322,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.03178333333333334,
+     "sd_mean_difference": 0.015940958775013083
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    }
+   },
    "mean_pooled_difference": 0.3969500000000001,
    "reps": 100,
    "seed": 20261151
@@ -2441,6 +3418,38 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "discoverable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.027408333333333326,
+     "sd_mean_difference": 0.014193513776839525
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    }
+   },
    "mean_pooled_difference": 0.28004999999999997,
    "reps": 100,
    "seed": 20261152
@@ -2505,13 +3514,58 @@
     "space_filling_dof",
     "v0.3 is a DRAFT identity (not FROZEN)"
    ],
+   "kind_noninferiority_stats": {
+    "confounded": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "discoverable": {
+     "fail_rate": 1.0,
+     "mean_of_mean_minus_lower95": 0.04000833333333333,
+     "sd_mean_difference": 0.01902551466671358
+    },
+    "indistinguishable": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "insufficient_evidence": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "no_solution": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    },
+    "spurious_correlate": {
+     "fail_rate": 0.0,
+     "mean_of_mean_minus_lower95": 0.0,
+     "sd_mean_difference": 0.0
+    }
+   },
    "mean_pooled_difference": 0.0,
    "reps": 100,
    "seed": 20261153
   }
  ],
- "prereg_sha256": "b57d7775fbde30b12bc50b480eb9395bdfa74d63d3e508493e354b15e0fb4707",
+ "prereg_sha256": "455c9f3dfe32b5514f3dddf32631dbf69f003bf2870c6c6b2818e0612cd16fe1",
+ "provenance": {
+  "code_sha256": {
+   "../analysis.py": "76eea7c01fa971e2ce0a8f462ff79e7ab3eb1611ba6af8878994c84d8e01a0a9",
+   "analysis.py": "f896bea914000c15f201c36e243aa2b480d6612e3f7660bcb7c97b36189e5242",
+   "power_study.py": "ef54a3caf18cbf7299faa67ca3e03a1e5b44a60fcb04a7acac72bf97ca1320a0",
+   "preregistration.py": "2e5d48267b58c2737c9035e27b3cfee25ce8e2a2276556eb36bac9c3675f0287"
+  },
+  "head": "70195498bd82437e951e93df7f5594c71a1d4eda",
+  "numpy": "2.5.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.14.2",
+  "tree_clean": true
+ },
  "schema": "forge.genesis_lite.v0_3/power_study/1",
  "status": "NON_FORMAL_SYNTHETIC_STUDY",
- "wall_seconds": 1366.0
+ "wall_seconds": 1725.0
 }

@@ -44,7 +44,8 @@ Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
 - [x] Owner D1-scoring DECIDED 2026-10-20: (i) bracket-route cap, w = 3 x tol, v0.3 only, pass route kept at +1.0.
 - [x] Owner D2-significance DECIDED 2026-10-20: sign-flip route B, Monte-Carlo stream keyed by the revealed formal root, exchangeability null scope accepted and stated, power/null-calibration study authorised after D3.
 - [x] Bounded power and null-calibration study (ODC-O1b) RAN 2026-10-20 (synthetic, non-formal):
-      `docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/`. The D2 statistic is calibrated.
+      `docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/` (re-run after review, sha256-pinned). The D2 statistic is consistent with nominal under its exchangeable null (implementation check).
+- [ ] Owner D2b-root-grinding (scientific review I-1): the root generator can grind roots before committing.
 - [ ] Owner D3b-cap-form-and-noninferiority, raised by the study:
       (a) the per-world-set min cap needs world-by-world dominance;
       (b) six kind margins cap power near 0.7.

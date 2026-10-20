@@ -41,7 +41,7 @@
    "procedure": "unchanged"
   },
   "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference); capping errs conservative; a composite null 'mean <= 0' with an asymmetric difference distribution is not covered. Accepted by the owner and stated as the claim's scope (D2, 2026-10-20)",
-  "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result is evidence for the owner, never a formal measurement. RAN 2026-10-20: docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json",
+  "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result is evidence for the owner, never a formal measurement. RAN 2026-10-20: docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json sha256 282b42131b074a7b1c7f599e54f784f78ffc37763c185fc545a7b781b6ce8b36",
   "record_binding": "every analysed record carries tier and tier_bound 'formal', the v0.3 harness id, the preregistered root commitment, w and environment digest, and ONE attempt digest (D-09); these labels gain authority only through the evaluator's post-reveal verify_attempt",
   "sign_flip": {
    "exact_work_limit": 1000000,
@@ -462,6 +462,7 @@
   "readiness P-1 / P-2": "the isolation deployment and an out-of-process escrow (OD-20); the deployment attack suite must report every channel REFUSED there"
  },
  "owner_decisions_open": {
+  "D2b-root-grinding": "raised by the scientific review 2026-10-20 (I-1): the sign-flip key is HMAC(root, ...), and whoever generates the root can try many roots before committing and keep one whose stream is favourable (no effect after the commitment). Accept and state it with a bound; or mix in a value the root generator cannot control that is fixed after commitment and before the first world (e.g. an evaluator salt published in the admission inbox); or raise M",
   "D3b-cap-form-and-noninferiority": "raised by the ODC-O1b study (2026-10-20, docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20): (a) the FDA-06 / CONTROL_SOLVED cap is a per-world-set min(mine, theirs), so a capped cell contributes -E[(ref - mine)+] < 0 and a candidate whose outcomes are not near-copies of the baseline's never claims (doubling discoverable success 0.2 -> 0.4 with independent outcomes: claim 0/100, pooled mean -1.20); keep it, or cap at the cell level (no gain, losses still count); (b) six per-kind non-inferiority margins of 0.10 fail together ~30 % of the time at equal skill with independent outcomes, which caps power near 0.7; accept, or revise the margin / the conjunction",
   "D4-identity-freeze": "OD-19: freeze v0.3 after D1-D3, D5 and D7; name the candidate (or NONE for a baseline-only attempt); the operator generates a fresh formal root and commits it",
   "D5-deployment": "OD-20: choose the deployment; the attack suite and the independent probe rerun must refuse every channel",
@@ -517,8 +518,8 @@
   "evaluator.py": "bbde7a5cb14c7d6068e9f7a0c0fe573a08f6b9862176780962c2f227bba2b959",
   "formal.py": "dfbf372c084bfe9107425bcb098e58ff0d6aff199bc8680000863c6c510363d8",
   "harness.py": "ce603d0175dd3c1248ae32ed9e9286284723112c6687def143f56fc79176f15d",
-  "preregistration.py": "2e5d48267b58c2737c9035e27b3cfee25ce8e2a2276556eb36bac9c3675f0287",
-  "readiness.py": "dbd7499d3ccb3a2ffc98557820f8e19e1a3db786d86eb9d124f57eab1a23187f",
+  "preregistration.py": "f1b8d7dc16eba807bb8d383bf65482567ab9326b4e7ee935ddec9440912c4ca1",
+  "readiness.py": "ecab18bcd9631db799d9b9c01142ac89a35aef88b482150ae6bf93e67ca73504",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "4763de7c3878c8b82f9209285d0d9cc2c720ab3b22708141f260ce0f0bb001d9",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8"

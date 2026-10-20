@@ -58,6 +58,7 @@ OWNER_DECISIONS_TAKEN = {
 }
 #: the ODC-O1b study (non-formal, synthetic); its findings are open as D3b
 POWER_STUDY_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20/result.json"
+POWER_STUDY_EVIDENCE_SHA256 = "282b42131b074a7b1c7f599e54f784f78ffc37763c185fc545a7b781b6ce8b36"
 #: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
 RETIRED_PILOT_ROOT_COMMITMENTS = (
     "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",   # v0
@@ -219,7 +220,8 @@ def build() -> dict[str, Any]:
                           "covered. Accepted by the owner and stated as the claim's scope (D2, 2026-10-20)",
             "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and "
                            "null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result "
-                           "is evidence for the owner, never a formal measurement. RAN 2026-10-20: " + POWER_STUDY_EVIDENCE,
+                           "is evidence for the owner, never a formal measurement. RAN 2026-10-20: " + POWER_STUDY_EVIDENCE
+                           + " sha256 " + POWER_STUDY_EVIDENCE_SHA256,
             "holm": {"alpha": v02_analysis.ALPHA, "family": list(v02_analysis.PRIMARY_FAMILY), "procedure": "unchanged"},
             "control_solved_rule": "a control cell (non-discoverable kind, per presentation) where any registered "
                                    "non-adversarial arm earns full credit with an exact binary-bootstrap lower bound >= "
@@ -298,6 +300,7 @@ def build() -> dict[str, Any]:
                              "every channel",
             "D6-evaluator": "OD-8: the external evaluator (receives the registry head, the run-log head and the keys)",
             "D3b-cap-form-and-noninferiority": "raised by the ODC-O1b study (2026-10-20, docs/work/evidence/genesis_lite_v0_3_power_study_2026_10_20): (a) the FDA-06 / CONTROL_SOLVED cap is a per-world-set min(mine, theirs), so a capped cell contributes -E[(ref - mine)+] < 0 and a candidate whose outcomes are not near-copies of the baseline's never claims (doubling discoverable success 0.2 -> 0.4 with independent outcomes: claim 0/100, pooled mean -1.20); keep it, or cap at the cell level (no gain, losses still count); (b) six per-kind non-inferiority margins of 0.10 fail together ~30 % of the time at equal skill with independent outcomes, which caps power near 0.7; accept, or revise the margin / the conjunction",
+            "D2b-root-grinding": "raised by the scientific review 2026-10-20 (I-1): the sign-flip key is HMAC(root, ...), and whoever generates the root can try many roots before committing and keep one whose stream is favourable (no effect after the commitment). Accept and state it with a bound; or mix in a value the root generator cannot control that is fixed after commitment and before the first world (e.g. an evaluator salt published in the admission inbox); or raise M",
             "D7-budget-and-machine": "OD-18: formal compute (one proposer process per card adds per-card start cost) and "
                                      "the formal machine, which fixes the environment manifest",
             "OD-3": "recertify the tree that contains engcore/blindfold/pair_bound.py (and the FDA-19 probe scope)",
