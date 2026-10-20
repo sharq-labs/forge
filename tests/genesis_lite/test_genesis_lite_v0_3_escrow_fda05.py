@@ -164,9 +164,15 @@ def _v03_attempt(tmp_path, tag, presentation="paraphrased"):
     from benchmarks.genesis_lite.v0_3.registry import AttemptRegistry, EvaluatorInbox
 
     root, prereg = hashlib.sha256(b"e2e root " + tag.encode()).digest(), hashlib.sha256(b"e2e prereg").hexdigest()
+    from unittest import mock
+
+    from benchmarks.genesis_lite.v0_3 import registry
+
     reg, inbox = AttemptRegistry(tmp_path / tag / "reg"), EvaluatorInbox(tmp_path / tag / "inbox.jsonl")
-    admission = reg.admit(root_commitment_sha256=hashlib.sha256(root).hexdigest(), prereg_sha256=prereg,
-                          campaign_set_sha256=prereg, tier="formal")
+    nonce = hashlib.sha256(b"e2e nonce " + tag.encode()).hexdigest()[:32]    # fixed: the worlds mix in the nonce
+    with mock.patch.object(registry.secrets, "token_hex", lambda n=16: nonce):
+        admission = reg.admit(root_commitment_sha256=hashlib.sha256(root).hexdigest(), prereg_sha256=prereg,
+                              campaign_set_sha256=prereg, tier="formal")
     inbox.receive(admission)
     binding = _binding()
 
@@ -211,6 +217,7 @@ def test_harness_a_forged_credit_or_flag_does_not_verify(tmp_path):
 def test_harness_a_whole_record_swap_between_arms_does_not_verify(tmp_path):
     records, verify = _v03_attempt(tmp_path, "swap")
     careful, refuse = records
+    assert careful["universes"] != refuse["universes"]       # else a swap misattributes nothing and the test is vacuous
     swapped = [{**careful, "arm": "always_refuse", "presented_card_digests": refuse["presented_card_digests"],
                 "universes": careful["universes"]},
                {**refuse, "arm": "careful", "presented_card_digests": careful["presented_card_digests"],
