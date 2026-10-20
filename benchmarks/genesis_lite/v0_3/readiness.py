@@ -41,6 +41,7 @@ from . import preregistration as v03p
 PASS, PENDING_OWNER, BLOCKED = "PASS", "READY_TO_FREEZE_PENDING_OWNER", "BLOCKED_TECHNICAL"
 FIXED, NOT_A_BLOCKER = "FIXED_AND_TESTED", "NOT_A_REAL_BLOCKER"
 BLOCKED_OD3, OWNER = "SPECIFIED_BLOCKED_BY_OD3", "OWNER_DECISION_REQUIRED"
+PENDING = "AUTHORISED_NOT_YET_RUN"          # owner-authorised work still owed: technical until done
 DECIDED = "OWNER_DECIDED"                    # an owner decision already taken: recorded, not pending
 V0_2_SHA256 = "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64"
 APPROVALS_PATH = v03p.PREREG_PATH.with_name("genesis_lite_v0_3.owner_approvals.json")
@@ -72,7 +73,8 @@ LEDGER: dict[str, tuple[str, tuple[str, ...], str]] = {
     "P-5 environment manifest": (FIXED, ("test_p5_",), "measured inside bind for the formal tier"),
     "one attempt per root": (FIXED, ("test_attempt_",), "registry + publication + post-reveal verify_attempt"),
     "pass route with an arbitrary partner (ODC-05d)": (DECIDED, (), "D1, 2026-10-20: kept at +1.0 as in v0.2"),
-    "no preregistered power analysis (review note 13)": (OWNER, (), "D2: the claimable region may be small"),
+    "power and null-calibration study (ODC-O1b)": (PENDING, (), "authorised by the owner 2026-10-20 (D2); runs after D3 "
+                                                               "on synthetic records only"),
 }
 
 
@@ -103,6 +105,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_o1_v0_3_exact_p_equals_brute_force_enumeration',
         'test_o1_v0_3_monte_carlo_path_is_valid_deterministic_and_agrees_with_exact',
         'test_o1_v0_3_refuses_differences_outside_the_credit_lattice',
+        'test_o1_the_claims_monte_carlo_stream_comes_from_the_committed_root',
         'test_o1_holm_is_unchanged',
         'test_o1_v0_3_lift_decision_uses_sign_flip_p_and_claims_nothing_while_draft',
     ),
@@ -341,7 +344,7 @@ def check(approvals_path: pathlib.Path | None = None, evidence: Mapping[str, Any
             if not _row_verified(prefixes, tests):
                 technical.append(f"{name}: claimed {status}, but its {len(prefixes)} named test(s) did not all pass "
                                  f"here")
-        elif status == BLOCKED_OD3:
+        elif status in (BLOCKED_OD3, PENDING):
             technical.append(f"{name}: {status} ({note})")
         elif status != DECIDED:
             owner.append(f"{name}: {status} ({note})")

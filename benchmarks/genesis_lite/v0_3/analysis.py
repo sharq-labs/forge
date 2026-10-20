@@ -67,7 +67,9 @@ CAPPED_KINDS = tuple(k for k in KINDS if any(float(DEFAULT_CREDIT[k].get(o, 0.0)
 #: every DEFAULT_CREDIT value is a multiple of 1/LATTICE, so every paired difference is too (checked at import)
 LATTICE = 2
 SIGN_FLIP_RESAMPLES = 19_999
-SIGN_FLIP_STREAM = b"forge.genesis_lite.v0_3/sign_flip/1"
+SIGN_FLIP_STREAM = b"forge.genesis_lite.v0_3/sign_flip/1"      # the public stream: descriptive use only
+#: D2 (owner, 2026-10-20): the stream of a CLAIM is keyed by the secret formal root, unknown until the reveal
+SIGN_FLIP_KEY_LABEL = "forge.genesis_lite.v0_3/sign_flip_stream"
 #: exact enumeration when (nonzero differences) x (support of the sum) is at most this
 EXACT_WORK_LIMIT = 1_000_000
 _CHUNK = 2048
@@ -117,11 +119,20 @@ def _lattice(diffs: Sequence[float]) -> list[int]:
     return out
 
 
+def sign_flip_stream(revealed_root: bytes, prereg_sha256: str) -> bytes:
+    """D2: the Monte-Carlo stream seed of a claim, derived from the revealed formal root (HMAC-SHA256 under its own
+    label and the identity's digest). It was secret while the attempt ran, so the (b + 1) / (M + 1) guarantee holds over
+    the root's randomness; and it is fixed by the commitment, so no one can try streams until a p looks good."""
+    import hmac  # noqa: PLC0415
+
+    return hmac.new(revealed_root, f"{SIGN_FLIP_KEY_LABEL}/{prereg_sha256}".encode(), hashlib.sha256).digest()
+
+
 def sign_flip_p(diffs: Sequence[float], *, exact_work_limit: int = EXACT_WORK_LIMIT,
-                resamples: int = SIGN_FLIP_RESAMPLES) -> dict[str, Any]:
+                resamples: int = SIGN_FLIP_RESAMPLES, stream: bytes = SIGN_FLIP_STREAM) -> dict[str, Any]:
     """One-sided paired sign-flip p for H1 'the candidate is better': P(T* >= T_obs) with T = sum of the differences and
     T* the sum under independent fair sign flips. Exact (integer enumeration of the null distribution) when cheap,
-    otherwise Monte-Carlo with p = (b + 1) / (M + 1)."""
+    otherwise Monte-Carlo with p = (b + 1) / (M + 1) over SHAKE-256(``stream`` || index)."""
     ints = _lattice(diffs)
     t_obs = sum(ints)
     a = [abs(x) for x in ints if x]
@@ -139,7 +150,7 @@ def sign_flip_p(diffs: Sequence[float], *, exact_work_limit: int = EXACT_WORK_LI
     nbytes, b = (len(a) + 7) // 8, 0
     for start in range(0, resamples, _CHUNK):
         stop = min(resamples, start + _CHUNK)
-        raw = b"".join(hashlib.shake_256(SIGN_FLIP_STREAM + r.to_bytes(8, "big")).digest(nbytes)
+        raw = b"".join(hashlib.shake_256(stream + r.to_bytes(8, "big")).digest(nbytes)
                        for r in range(start, stop))
         bits = np.unpackbits(np.frombuffer(raw, dtype=np.uint8).reshape(stop - start, nbytes), axis=1)[:, :len(a)]
         b += int(((2 * (bits.astype(np.int64) @ vec) - s) >= t_obs).sum())
@@ -225,10 +236,18 @@ def formal_binding_problems(rows: Sequence[Mapping[str, Any]]) -> list[str]:
     return problems
 
 
+def _formal_root_commitment() -> str:
+    from .preregistration import PREREG_PATH  # noqa: PLC0415
+
+    return str(__import__("json").loads(PREREG_PATH.read_bytes())["formal"]["root_commitment_sha256"])
+
+
 def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[WorldSet] | None = None,
-                  verification: Sequence[str] | None = None) -> dict[str, Any]:
+                  verification: Sequence[str] | None = None, revealed_root: bytes | None = None) -> dict[str, Any]:
     """The v0.2 lift rule with the FDA-06 cap and the O-1 significance. Claims nothing unless every condition holds,
-    including a clean post-reveal verification of the attempt (``formal.verify_attempt`` returned no problem)."""
+    including a clean post-reveal verification of the attempt (``formal.verify_attempt`` returned no problem) and the
+    revealed formal root, whose sha256 must be the preregistered commitment: the sign-flip stream is derived from it
+    (D2). Without it the p values use the public stream and are descriptive only."""
     rows = [_record(r) for r in records]
     grid = FORMAL_GRID if grid is None else frozenset(grid)
     roles = registered_roles()
@@ -241,6 +260,12 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
     problems = [] if grid == FORMAL_GRID else ["the grid is not the preregistered formal grid: exploratory, no claim"]
     code_problems, identity = _code_problems()
     problems += code_problems + formal_binding_problems(rows)
+    stream = SIGN_FLIP_STREAM
+    if revealed_root is None or hashlib.sha256(revealed_root).hexdigest() != _formal_root_commitment():
+        problems.append("the revealed formal root is missing or is not the preregistered commitment: the sign-flip "
+                        "stream is not the claim's (D2), p values are descriptive only")
+    else:
+        stream = sign_flip_stream(revealed_root, identity)
     if verification is None:
         problems.append("the attempt was not verified after the reveal (formal.verify_attempt)")
     elif verification:
@@ -271,7 +296,7 @@ def lift_decision(records: Iterable[Any], candidate: str, *, grid: Iterable[Worl
         diffs = [sum(capped(mine[w], theirs[w], w, limited, off_family).values()) - sum(theirs[w].values())
                  for w in shared if part == "pooled" or w[0] == part]
         mean, low, _bootstrap_fraction = bootstrap_mean_ci(diffs)
-        sf = sign_flip_p(diffs)
+        sf = sign_flip_p(diffs, stream=stream)
         tests[part] = {"world_sets": len(diffs), "mean_difference": mean, "lower95": low, "p": sf["p"],
                        "p_method": sf["method"]}
         raw_p[part] = sf["p"]

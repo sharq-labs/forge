@@ -42,7 +42,9 @@ Evidence: PROGRESS 2026-10-20 (BR-MIND-02B).
 - [x] Freeze-readiness gate (`python -m benchmarks.genesis_lite.v0_3.readiness`): READY_TO_FREEZE_PENDING_OWNER on the
       escrow-branch tip; five hostile review rounds dispositioned.
 - [x] Owner D1-scoring DECIDED 2026-10-20: (i) bracket-route cap, w = 3 x tol, v0.3 only, pass route kept at +1.0.
-- [ ] Owner: D2-significance, D3-baselines-and-tells, D4-identity-freeze (OD-19, candidate,
+- [x] Owner D2-significance DECIDED 2026-10-20: sign-flip route B, Monte-Carlo stream keyed by the revealed formal root, exchangeability null scope accepted and stated, power/null-calibration study authorised after D3.
+- [ ] Bounded power and null-calibration study (ODC-O1b), synthetic records only, after D3; non-formal.
+- [ ] Owner: D3-baselines-and-tells, D4-identity-freeze (OD-19, candidate,
       fresh root), D5-deployment (OD-20), D6-evaluator (OD-8), D7-budget-and-machine (OD-18): the approval record
       `benchmarks/genesis_lite/preregistration/genesis_lite_v0_3.owner_approvals.json` (owner's file).
 - [ ] OWNER_DECISION_REQUIRED (live-document tension): ODC-O1a recommends sign-flip route B; `BVB_RESUME_HANDOFF_2026_10_19.md`

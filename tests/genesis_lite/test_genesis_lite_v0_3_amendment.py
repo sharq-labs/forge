@@ -345,6 +345,28 @@ def test_o1_v0_3_refuses_differences_outside_the_credit_lattice():
             v03a.sign_flip_p(bad)
 
 
+def test_o1_the_claims_monte_carlo_stream_comes_from_the_committed_root(monkeypatch):
+    """D2 (owner, 2026-10-20): the stream is keyed by the revealed root, fixed by its commitment, so a different key
+    gives a different (still valid) p and no other key is accepted for a claim."""
+    diffs = [((i * 7) % 9 - 3) * 0.5 for i in range(60)]
+    public = v03a.sign_flip_p(diffs, exact_work_limit=0)
+    root = hashlib.sha256(b"test-only formal root for the stream").digest()
+    keyed = v03a.sign_flip_p(diffs, exact_work_limit=0, stream=v03a.sign_flip_stream(root, "a" * 64))
+    assert keyed["p"] != public["p"] and keyed == v03a.sign_flip_p(diffs, exact_work_limit=0,
+                                                                     stream=v03a.sign_flip_stream(root, "a" * 64))
+    assert v03a.sign_flip_stream(root, "a" * 64) != v03a.sign_flip_stream(root, "b" * 64)
+    from tests.genesis_lite import lift_records as lr
+
+    rows = lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", lr.BETTER)
+    stream_problem = "revealed formal root is missing"
+    assert any(stream_problem in p for p in v03a.lift_decision(rows, "mind", grid=lr.GRID)["coverage_problems"])
+    monkeypatch.setattr(v03a, "_formal_root_commitment", lambda: hashlib.sha256(root).hexdigest())
+    good = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=root)["coverage_problems"]
+    assert not any(stream_problem in p for p in good)
+    bad = v03a.lift_decision(rows, "mind", grid=lr.GRID, revealed_root=b"x" * 32)["coverage_problems"]
+    assert any(stream_problem in p for p in bad)
+
+
 def test_o1_holm_is_unchanged():
     p = {"pooled": 0.004, "anonymous": 0.03, "renamed": 0.011, "paraphrased": 0.2, "trap": 0.012}
     assert v03a.holm(p, 0.05) == {"pooled": True, "renamed": True, "trap": True, "anonymous": False,
@@ -396,10 +418,10 @@ def test_v0_3_draft_is_exactly_what_the_code_rebuilds():
 
 def test_v0_3_draft_names_every_open_owner_decision():
     doc = json.loads(v03p.PREREG_PATH.read_bytes())
-    assert set(doc["owner_decisions_open"]) == {"D2-significance", "D3-baselines-and-tells",
+    assert set(doc["owner_decisions_open"]) == {"D3-baselines-and-tells",
                                                  "D4-identity-freeze", "D5-deployment", "D6-evaluator",
                                                  "D7-budget-and-machine", "OD-3"}
-    assert set(doc["owner_decisions_taken"]) == {"D1-scoring"}
+    assert set(doc["owner_decisions_taken"]) == {"D1-scoring", "D2-significance"}
     covered = " ".join(list(doc["owner_decisions_open"].values()) + list(doc["owner_decisions_taken"].values()))
     for older in ("ODC-05a", "ODC-05b", "ODC-05c", "ODC-05d", "ODC-06a", "ODC-06b", "ODC-O1a", "ODC-O1b", "OD-19",
                   "OD-20", "OD-8", "OD-18"):

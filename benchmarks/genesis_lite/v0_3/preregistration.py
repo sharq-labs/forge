@@ -41,6 +41,11 @@ CANDIDATE = ODR                              # {name, spec, code_sha256} named i
 DECISION_RECORD = "docs/discovery/GENESIS_LITE_V0_3_AMENDMENT_DECISION_RECORD.md"
 #: owner decisions taken so far (each also needs its entry in the owner's approval record at freeze)
 OWNER_DECISIONS_TAKEN = {
+    "D2-significance": "covers ODC-O1a and ODC-O1b; decided by the owner in session on 2026-10-20: ODC-O1a route B, the "
+                       "one-sided paired sign-flip p with the Monte-Carlo stream derived from the revealed formal root "
+                       "(HMAC, own label; Holm, alpha and the family unchanged; bootstrap for the lower bound only); the "
+                       "exchangeability null scope is accepted and stated; ODC-O1b a bounded, non-formal power and "
+                       "null-calibration study on synthetic records is authorised, to run after D3",
     "D1-scoring": "covers ODC-05a, ODC-05b, ODC-05c and ODC-05d; decided by the owner in session on 2026-10-20: ODC-05a form (i), a ratio cap max/min <= 1 + w outside the box, on the BRACKET route only; ODC-05b w = 3 x tol (tol_multiple 3.0), anchored a priori on the generator's declared separation scale (OUTSIDE_TOLERANCES = 3 in universe.py), never tuned on pilot or formal worlds; ODC-05c v0.3 only, never retroactive to v0.2 records; ODC-05d the pass route keeps +1.0 as in v0.2",
 }
 #: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
@@ -190,13 +195,18 @@ def build() -> dict[str, Any]:
             "sign_flip": {"statistic": "sum of the paired world-set differences (one-sided, H1 candidate better)",
                           "lattice": analysis.LATTICE, "exact_work_limit": analysis.EXACT_WORK_LIMIT,
                           "monte_carlo_resamples": analysis.SIGN_FLIP_RESAMPLES,
-                          "monte_carlo_p": "(b + 1) / (M + 1); size approximately alpha for the one fixed public "
-                                           "stream (guaranteed only over random streams); the exact path is exact",
-                          "stream": "SHAKE-256(" + analysis.SIGN_FLIP_STREAM.decode() + " || resample index, 8 bytes "
-                                    "big-endian), bits in numpy.unpackbits order"},
+                          "monte_carlo_p": "(b + 1) / (M + 1); the exact path is exact",
+                          "stream": "SHAKE-256(K || resample index, 8 bytes big-endian), bits in numpy.unpackbits "
+                                    "order, K = HMAC-SHA256(revealed formal root, '" + analysis.SIGN_FLIP_KEY_LABEL
+                                    + "/' + the preregistration digest) (D2): secret until the reveal, so the Monte-Carlo "
+                                    "guarantee holds over the root's randomness, and fixed by the commitment, so streams "
+                                    "cannot be shopped; lift_decision refuses a root whose sha256 is not the commitment"},
             "null_scope": "exchangeability of the two arms within a world set (sign-symmetric difference); capping errs "
                           "conservative; a composite null 'mean <= 0' with an asymmetric difference distribution is not "
-                          "covered (ODC-O1a)",
+                          "covered. Accepted by the owner and stated as the claim's scope (D2, 2026-10-20)",
+            "power_study": "authorised by the owner (ODC-O1b, D2, 2026-10-20): a bounded, non-formal power and "
+                           "null-calibration study on SYNTHETIC records only, run after D3 fixes the caps; its result "
+                           "is evidence for the owner, never a formal measurement",
             "holm": {"alpha": v02_analysis.ALPHA, "family": list(v02_analysis.PRIMARY_FAMILY), "procedure": "unchanged"},
             "control_solved_rule": "a control cell (non-discoverable kind, per presentation) where any registered "
                                    "non-adversarial arm earns full credit with an exact binary-bootstrap lower bound >= "
@@ -269,8 +279,6 @@ def build() -> dict[str, Any]:
         },
         "owner_decisions_taken": dict(OWNER_DECISIONS_TAKEN),
         "owner_decisions_open": {
-            "D2-significance": "covers ODC-O1a and ODC-O1b: sign-flip route B with its null scope and fixed Monte-Carlo stream, or "
-                               "route A, or defer; whether to run a bounded null-calibration study",
             "D3-baselines-and-tells": "covers ODC-06a, ODC-06b, FDA-21, FDA-22, FDA-18 and pilot P-2: section 10.5 governs the cap; "
                                       "capped kinds; corrected-dof arms as the v0.3 baselines; the form tell declared "
                                       "(not equalised); one proposer process per card; the CONTROL_SOLVED cap",

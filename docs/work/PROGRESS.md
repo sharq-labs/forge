@@ -8065,3 +8065,10 @@ The final tip's results follow below.
 - ODC-05d: the pass route is kept at +1.0.
 
 Recorded as `evaluator.PAIR_BOUND` and the preregistration's `owner_decisions_taken`; the draft preregistration is regenerated. `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 223 passed. The owner approval record is deferred until all decisions are taken, so every entry binds the final preregistration digest.
+
+**Owner decision D2 (2026-10-20, in session).** D2-significance decided:
+- ODC-O1a: route B, the one-sided paired sign-flip p. The Monte-Carlo stream is now keyed by the revealed formal root: `analysis.sign_flip_stream(root, prereg_sha256)` (HMAC-SHA256, own label). `lift_decision(..., revealed_root=)` reports a problem when the root is missing or its sha256 is not the preregistered commitment; without it, p values use the public stream and are descriptive only.
+- Null scope (exchangeability within a world set) accepted and stated in the preregistration's `analysis.null_scope`.
+- ODC-O1b: a bounded, non-formal power and null-calibration study on synthetic records is authorised, to run after D3. The readiness ledger carries it as `AUTHORISED_NOT_YET_RUN` (technical), so the gate is BLOCKED_TECHNICAL until it has run.
+
+New test: `test_o1_the_claims_monte_carlo_stream_comes_from_the_committed_root`. `python -m pytest tests/genesis_lite -q -n 4` on the draft branch: 224 passed.
