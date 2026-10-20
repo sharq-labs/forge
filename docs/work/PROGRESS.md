@@ -7942,3 +7942,30 @@ Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe 
 Cwd: `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; environment: `{"TMPDIR": "D:/tmp/domain-index-fixed", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f"}`. Exit 0; elapsed 13.512s. Full output: evidence/domain_inventory_reconciliation_2026_10_20/index-fixed.md.
 
 Post-PR177 GitHub runs were read live at merge31192784: Tests39474579471 and Branch Policy39474579541 both failure. Scope/reproduce/layout/benchmark/tests-gate and branch-policy jobs expose no executed steps; downstream scientific/mutations/certificate-child/FAST jobs skipped. Cause remains UNVERIFIED; no CI-green or policy-enforcement claim. Local FAST candidate and pristine-main runs still in progress at this entry. No gate bypass, certified-source change, recertification, formal measurement or freeze.
+
+## 2026-10-20 - Domain PR178 full FAST comparison and review
+
+PR https://github.com/sharq-labs/forge/pull/178 published as DRAFT from measured source0047321df0522cbc78bb0a7160aace434699c093. Main control31192784a946a3f379422da11d8a2bcf867f62ce. Independent scientific review PASS (read-only),433 declarations checked;21 historical non-code artifacts byte-identical;43 changed paths at measured source, zero recertification triggers.
+
+The initial two sequential FAST runs were interrupted and cannot establish outcomes; raw partial logs and exact commands/exits retained externally, with interrupted-runs.md describing both. One brief baseline invocation omitted --dist loadfile and was stopped with no captured final result; corrected invocation below matches the final gate's scheduler. No test was excluded to obtain the final comparison.
+
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe tools/forge_check.py --changed --base origin/main --workers 4`
+  Cwd `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/domain-final-gate", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f", "PYTEST_ADDOPTS": "--basetemp=D:/tmp/domain-final-gate/bt"}`; exit1; elapsed509.451s. Summary:         assert run.returncode == 1 and "1 failed, 1 passed" in run.stdout  # the failure stays a failure; 185 failed, 11725 passed, 235 skipped, 74 warnings, 22 errors in 499.53s (0:08:19). Full node list in `final-changed-gate.md`.
+
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest -q -n 4 --dist loadfile -m not expensive --basetemp=D:/tmp/domain-main-loadfile/bt`
+  Cwd `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/domain-main-loadfile", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f"}`; exit1; elapsed431.538s. Summary:         assert run.returncode == 1 and "1 failed, 1 passed" in run.stdout  # the failure stays a failure; 185 failed, 11692 passed, 235 skipped, 74 warnings, 22 errors in 430.69s (0:07:10). Full node list in `main-fast-loadfile.md`.
+
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest --collect-only -q -m not expensive --basetemp=D:/tmp/final-collection/bt`
+  Cwd `C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/final-collection", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\domain-inventory-final\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/domain-inventory-final/wonderful-gould-1c576f"}`; exit0; elapsed14.822s. Summary: 12147/12729 tests collected (582 deselected) in 12.59s. Full node list in `final-collection.md`.
+
+- Command: `C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe -m pytest --collect-only -q -m not expensive --basetemp=D:/tmp/main-collection/bt`
+  Cwd `C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f`; env `{"TMPDIR": "D:/tmp/main-collection", "PYTHONPATH": "C:\\Users\\dev_kaeem\\.codex\\worktrees\\merge-main-control\\wonderful-gould-1c576f\\src;C:/Users/dev_kaeem/.codex/worktrees/merge-main-control/wonderful-gould-1c576f"}`; exit0; elapsed14.906s. Summary: 12114/12696 tests collected (582 deselected) in 12.60s. Full node list in `main-collection.md`.
+
+
+Exact selection comparison:12114 unchanged main nodes,33 added domain nodes,0 removed; shared-node digestda86790a515371f61a87e10946c74e54f5c29154a3b46103815aa8300b834120. Initial helper omitted flagships/providers; corrected parser included all12147/12114 nodes and asserted those totals before comparison.
+
+Exact failing/error node comparison: 0 new, 0 removed, 0 changed failure/error labels. Complete sorted sets and raw-log SHA256s in final-changed-gate-comparison.md. This is not a green gate: baseline failures/errors remain unresolved and are explicitly disclosed for owner review. No test/OD3 bypass or unsupported certification claim.
+
+Preservation classifier helper initially passed a list to its single-path API and raised AttributeError; corrected per-path invocation returned zero recertification paths. Earlier artifacts and scientific behavior unchanged. Final current task: full433-file origin audit completed, PR178 awaits owner review of the concrete change and the failing baseline; no merge performed.
+
+Final documentation check: C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe docs/ai/check_docs.py; cwd final domain worktree, TMPDIR=D:/tmp/domain-doc-check, PYTHONPATH=checkout/src;checkout. Exit0, AI_DOCS: PASS (7documents; metadata/local paths only),0.071s. git diff --check also exit0. Only Markdown documentation/receipts changed after measured0047321d; no source or test edits.
