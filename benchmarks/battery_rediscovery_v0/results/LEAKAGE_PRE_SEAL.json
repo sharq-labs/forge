@@ -1,0 +1,26 @@
+{
+ "files_scanned": 19,
+ "identity_tokens": 54,
+ "pack_schema": [],
+ "phase": "pre_seal",
+ "runtime": {
+  "engcore_files_opened": 181,
+  "forbidden_modules": [],
+  "paths_opened": 1101,
+  "paths_outside_roots": [],
+  "platform_identity_tokens": [],
+  "platform_verdict_vocabulary": [
+   {
+    "file": "D:\\forge-redisc\\src\\engcore\\inference\\calibration.py",
+    "tokens": [
+     "NOT_IDENTIFIABLE",
+     "WEAKLY_IDENTIFIABLE"
+    ]
+   }
+  ]
+ },
+ "schema": "forge.battery_rediscovery.leakage_audit/1",
+ "static": [],
+ "status": "PASS",
+ "value_patterns": 0
+}
