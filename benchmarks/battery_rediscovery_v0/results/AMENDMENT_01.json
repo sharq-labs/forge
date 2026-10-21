@@ -1,0 +1,37 @@
+{
+ "candidate_outputs_changed": false,
+ "changed": {
+  "evaluator.run_evaluation": "--amendment writes suffixed outputs and embeds this record",
+  "leakage.historical_value_tokens": "lookahead (?![\\d]) -> (?![\\d.])",
+  "tests": "the frozen-file test admits files listed here; a new test pins the amended pattern"
+ },
+ "date": "2026-10-21",
+ "files": {
+  "benchmarks/battery_rediscovery_v0/evaluator/run_evaluation.py": {
+   "amended_sha256": "1d367954f0a1ed0cf818929b2b16f7640b7feb1ece9358679ed026043710925d",
+   "plan_sha256": "9fd3b2732452c4be03b21e1a0f745184885d2a8d5e97bc67624309a8ea9bc8d2"
+  },
+  "benchmarks/battery_rediscovery_v0/leakage.py": {
+   "amended_sha256": "f6ddd25aad6eb3ab93a8bb3e25dd9574a69c95d479ac4ae4d1b8741d0f0bb2c1",
+   "plan_sha256": "4e8d829f7cbd974a97cdb820453f354046e8ffae82f12808a2b0f41a932bb9e6"
+  },
+  "benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py": {
+   "amended_sha256": "453608f101364d447e5d43a5c283aeeb310adc7bcd2e306648033dbd4fe3a5c3",
+   "plan_sha256": "6081ac6452db23b49a2993729e74a8fb2c1a9ed44f722d6c2e994c8f881259f8"
+  }
+ },
+ "id": "AMENDMENT_01",
+ "known_weakness": "the scan matches only the exact 3- and 4-significant-digit forms of each historical value, so a value written with more digits was never caught, before or after the amendment; the amendment additionally stops catching a form followed by a decimal point (e.g. 760.0)",
+ "not_changed": [
+  "every candidate output and trace",
+  "SEAL.json and the pre-seal audit",
+  "the truth mapping",
+  "the scoring and the conclusion rule",
+  "the preregistered EVALUATION.json/.md and LEAKAGE_POST_SEAL.json"
+ ],
+ "phase": "post_seal",
+ "reason": "audit false positive: the matched text is a raw timestamp copied from the pinned split file, not a historical estimate, and it belongs to another problem",
+ "requested_by": "owner, in session chat",
+ "schema": "forge.battery_rediscovery.amendment/1",
+ "summary": "AMENDMENT_01 (post-seal, disclosed): the post-seal numeric leakage pattern now also excludes a following decimal point. The frozen pattern (?<![\\d.])760(?![\\d]) for the historical C1 = 760 F matched the measured timestamp 760.006 s in P2's 1C record and made the preregistered conclusion LEAKAGE_INVALIDATED. The preregistered evaluation files are kept unchanged; this evaluation is the amended reading."
+}

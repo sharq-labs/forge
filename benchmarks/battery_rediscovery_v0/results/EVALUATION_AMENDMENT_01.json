@@ -1,0 +1,1417 @@
+{
+ "amendment": {
+  "candidate_outputs_changed": false,
+  "changed": {
+   "evaluator.run_evaluation": "--amendment writes suffixed outputs and embeds this record",
+   "leakage.historical_value_tokens": "lookahead (?![\\d]) -> (?![\\d.])",
+   "tests": "the frozen-file test admits files listed here; a new test pins the amended pattern"
+  },
+  "date": "2026-10-21",
+  "files": {
+   "benchmarks/battery_rediscovery_v0/evaluator/run_evaluation.py": {
+    "amended_sha256": "1d367954f0a1ed0cf818929b2b16f7640b7feb1ece9358679ed026043710925d",
+    "plan_sha256": "9fd3b2732452c4be03b21e1a0f745184885d2a8d5e97bc67624309a8ea9bc8d2"
+   },
+   "benchmarks/battery_rediscovery_v0/leakage.py": {
+    "amended_sha256": "f6ddd25aad6eb3ab93a8bb3e25dd9574a69c95d479ac4ae4d1b8741d0f0bb2c1",
+    "plan_sha256": "4e8d829f7cbd974a97cdb820453f354046e8ffae82f12808a2b0f41a932bb9e6"
+   },
+   "benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py": {
+    "amended_sha256": "453608f101364d447e5d43a5c283aeeb310adc7bcd2e306648033dbd4fe3a5c3",
+    "plan_sha256": "6081ac6452db23b49a2993729e74a8fb2c1a9ed44f722d6c2e994c8f881259f8"
+   }
+  },
+  "id": "AMENDMENT_01",
+  "known_weakness": "the scan matches only the exact 3- and 4-significant-digit forms of each historical value, so a value written with more digits was never caught, before or after the amendment; the amendment additionally stops catching a form followed by a decimal point (e.g. 760.0)",
+  "not_changed": [
+   "every candidate output and trace",
+   "SEAL.json and the pre-seal audit",
+   "the truth mapping",
+   "the scoring and the conclusion rule",
+   "the preregistered EVALUATION.json/.md and LEAKAGE_POST_SEAL.json"
+  ],
+  "phase": "post_seal",
+  "reason": "audit false positive: the matched text is a raw timestamp copied from the pinned split file, not a historical estimate, and it belongs to another problem",
+  "requested_by": "owner, in session chat",
+  "schema": "forge.battery_rediscovery.amendment/1",
+  "summary": "AMENDMENT_01 (post-seal, disclosed): the post-seal numeric leakage pattern now also excludes a following decimal point. The frozen pattern (?<![\\d.])760(?![\\d]) for the historical C1 = 760 F matched the measured timestamp 760.006 s in P2's 1C record and made the preregistered conclusion LEAKAGE_INVALIDATED. The preregistered evaluation files are kept unchanged; this evaluation is the amended reading."
+ },
+ "attention": {
+  "applicability_limits": {
+   "P1": [
+    true
+   ],
+   "P2": [
+    false
+   ]
+  },
+  "cross_cell_transfer (P1 failure)": {
+   "independently_found": false,
+   "mind": "NOT_ASSESSABLE"
+  },
+  "parameter_non_identifiability (P1)": {
+   "independently_found": false,
+   "mind": "REFUSED"
+  },
+  "refused_unsupported_conclusions": {
+   "false_support_instances": [],
+   "none": true
+  },
+  "structured_model_discrepancy": {
+   "independently_found": false,
+   "mind": {
+    "P1": "NOT_ASSESSABLE",
+    "P2": "NOT_ASSESSABLE"
+   }
+  },
+  "within_cell_limitations (P1 applicability; P2 constant-current failure)": {
+   "mind": {
+    "P1": "NOT_ASSESSABLE",
+    "P2": "NOT_ASSESSABLE"
+   }
+  }
+ },
+ "conclusion": {
+  "checks": {
+   "best_baseline": "CAREFUL_BASELINE",
+   "best_baseline_correct_total": 9,
+   "best_baseline_false_support": 1,
+   "best_nontrivial_correct_total": 9,
+   "best_trivial_correct_total": 2,
+   "leakage_ok": true,
+   "mind_correct_total": 2,
+   "mind_end_to_end": true,
+   "mind_false_support": 0,
+   "mind_noncommittal_causes": {
+    "P1/CROSS_CELL_TRANSFER": "REPRESENTATION",
+    "P1/IDENTIFIABILITY": "REPRESENTATION",
+    "P1/MODEL_ADEQUACY": "REPRESENTATION",
+    "P1/MODEL_DISCREPANCY": "REPRESENTATION",
+    "P1/WITHIN_CELL_GENERALIZATION": "EVIDENCE",
+    "P2/CROSS_CELL_TRANSFER": "EVIDENCE",
+    "P2/IDENTIFIABILITY": "EVIDENCE",
+    "P2/MODEL_ADEQUACY": "REPRESENTATION",
+    "P2/MODEL_DISCREPANCY": "REPRESENTATION",
+    "P2/WITHIN_CELL_GENERALIZATION": "REPRESENTATION"
+   },
+   "mind_replay_ok": true,
+   "mind_representation_noncommittal": 7,
+   "mind_scored": 10
+  },
+  "conclusion": "REPRESENTATION_BOTTLENECK"
+ },
+ "leakage": {
+  "post_seal": "PASS",
+  "pre_seal": "PASS"
+ },
+ "maturity": {
+  "CERTIFIED": "NO",
+  "FORMAL": "NO",
+  "IMPLEMENTED": "YES",
+  "MEASURED": "YES (one bounded pilot run)",
+  "SCIENTIFICALLY_VERIFIED": "NO",
+  "TESTED": "synthetic-world tests (see PROGRESS)"
+ },
+ "outputs_answers": {
+  "ALWAYS_FIT": {
+   "P1": {
+    "answers": {
+     "CROSS_CELL_TRANSFER": {
+      "disposition": "SUPPORTED",
+      "reason": "never refuses"
+     },
+     "IDENTIFIABILITY": {
+      "disposition": "SUPPORTED",
+      "reason": "never refuses"
+     },
+     "MODEL_ADEQUACY": {
+      "disposition": "SUPPORTED",
+      "reason": "never refuses"
+     },
+     "MODEL_DISCREPANCY": {
+      "disposition": "SUPPORTED",
+      "reason": "never refuses"
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "disposition": "SUPPORTED",
+      "reason": "never refuses"
+     }
+    }
+   },
+   "P2": {
+    "answers": {
+     "CROSS_CELL_TRANSFER": {
+      "disposition": "SUPPORTED",
+      "reason": "never refuses"
+     },
+     "IDENTIFIABILITY": {
+      "disposition": "SUPPORTED",
+      "reason": "never refuses"
+     },
+     "MODEL_ADEQUACY": {
+      "disposition": "SUPPORTED",
+      "reason": "never refuses"
+     },
+     "MODEL_DISCREPANCY": {
+      "disposition": "SUPPORTED",
+      "reason": "never refuses"
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "disposition": "SUPPORTED",
+      "reason": "never refuses"
+     }
+    }
+   }
+  },
+  "ALWAYS_REFUSE": {
+   "P1": {
+    "answers": {
+     "CROSS_CELL_TRANSFER": {
+      "disposition": "REFUSED",
+      "reason": "refuses every scientific conclusion"
+     },
+     "IDENTIFIABILITY": {
+      "disposition": "REFUSED",
+      "reason": "refuses every scientific conclusion"
+     },
+     "MODEL_ADEQUACY": {
+      "disposition": "REFUSED",
+      "reason": "refuses every scientific conclusion"
+     },
+     "MODEL_DISCREPANCY": {
+      "disposition": "REFUSED",
+      "reason": "refuses every scientific conclusion"
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "disposition": "REFUSED",
+      "reason": "refuses every scientific conclusion"
+     }
+    }
+   },
+   "P2": {
+    "answers": {
+     "CROSS_CELL_TRANSFER": {
+      "disposition": "REFUSED",
+      "reason": "refuses every scientific conclusion"
+     },
+     "IDENTIFIABILITY": {
+      "disposition": "REFUSED",
+      "reason": "refuses every scientific conclusion"
+     },
+     "MODEL_ADEQUACY": {
+      "disposition": "REFUSED",
+      "reason": "refuses every scientific conclusion"
+     },
+     "MODEL_DISCREPANCY": {
+      "disposition": "REFUSED",
+      "reason": "refuses every scientific conclusion"
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "disposition": "REFUSED",
+      "reason": "refuses every scientific conclusion"
+     }
+    }
+   }
+  },
+  "CAREFUL_BASELINE": {
+   "P1": {
+    "answers": {
+     "CROSS_CELL_TRANSFER": {
+      "disposition": "NOT_SUPPORTED",
+      "out_of_domain": {
+       "cross_cell_heldout/other_cell": 6
+      },
+      "reason": "declared set rule: a failing set is NOT_SUPPORTED; a passing set holding an out-of-domain trajectory is NOT_ASSESSABLE",
+      "sub": {
+       "cross_cell_heldout/other_cell": "NOT_SUPPORTED"
+      }
+     },
+     "IDENTIFIABILITY": {
+      "disposition": "SUPPORTED",
+      "reason": "3/3 requested parameters pass the basic checks; 1 fitted OCV knots sit on their bound (the OCV table absorbs other terms)",
+      "sub": {
+       "C1": {
+        "identified": true,
+        "why_not": []
+       },
+       "R0": {
+        "identified": true,
+        "why_not": []
+       },
+       "R1": {
+        "identified": true,
+        "why_not": []
+       }
+      }
+     },
+     "MODEL_ADEQUACY": {
+      "disposition": "NOT_SUPPORTED",
+      "reason": "the calibration fit or an assessable held-out set fails the declared bar"
+     },
+     "MODEL_DISCREPANCY": {
+      "disposition": "NOT_SUPPORTED",
+      "reason": "calibration residual lag-1 autocorrelation 0.65 > 0.5: structured"
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "disposition": "NOT_ASSESSABLE",
+      "out_of_domain": {
+       "within_cell_heldout/later_cycles": 12
+      },
+      "reason": "declared set rule: a failing set is NOT_SUPPORTED; a passing set holding an out-of-domain trajectory is NOT_ASSESSABLE",
+      "sub": {
+       "within_cell_heldout/later_cycles": "NOT_ASSESSABLE"
+      }
+     }
+    }
+   },
+   "P2": {
+    "answers": {
+     "CROSS_CELL_TRANSFER": {
+      "disposition": "NOT_ASSESSABLE",
+      "reason": "no held-out set of this kind is supplied"
+     },
+     "IDENTIFIABILITY": {
+      "disposition": "SUPPORTED",
+      "reason": "3/3 requested parameters pass the basic checks",
+      "sub": {
+       "C1": {
+        "identified": true,
+        "why_not": []
+       },
+       "R0": {
+        "identified": true,
+        "why_not": []
+       },
+       "R1": {
+        "identified": true,
+        "why_not": []
+       }
+      }
+     },
+     "MODEL_ADEQUACY": {
+      "disposition": "NOT_SUPPORTED",
+      "reason": "the calibration fit or an assessable held-out set fails the declared bar"
+     },
+     "MODEL_DISCREPANCY": {
+      "disposition": "NOT_SUPPORTED",
+      "reason": "calibration residual lag-1 autocorrelation 0.88 > 0.5: structured"
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "disposition": "NOT_SUPPORTED",
+      "out_of_domain": {
+       "within_cell_heldout/cc": 0,
+       "within_cell_heldout/pulses": 0
+      },
+      "reason": "declared set rule: a failing set is NOT_SUPPORTED; a passing set holding an out-of-domain trajectory is NOT_ASSESSABLE",
+      "sub": {
+       "within_cell_heldout/cc": "NOT_SUPPORTED",
+       "within_cell_heldout/pulses": "SUPPORTED"
+      }
+     }
+    }
+   }
+  },
+  "FIXED_FIT": {
+   "P1": {
+    "answers": {
+     "CROSS_CELL_TRANSFER": {
+      "disposition": "NOT_SUPPORTED",
+      "reason": "held-out predictions against the declared bar",
+      "sub": {
+       "cross_cell_heldout/other_cell": "NOT_SUPPORTED"
+      }
+     },
+     "IDENTIFIABILITY": {
+      "disposition": "SUPPORTED",
+      "reason": "point estimates reported; not checked"
+     },
+     "MODEL_ADEQUACY": {
+      "disposition": "SUPPORTED",
+      "reason": "calibration fit against the strictest declared bar"
+     },
+     "MODEL_DISCREPANCY": {
+      "disposition": "SUPPORTED",
+      "reason": "residuals taken as noise when the fit meets the bar; structure not checked"
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "disposition": "SUPPORTED",
+      "reason": "held-out predictions against the declared bar",
+      "sub": {
+       "within_cell_heldout/later_cycles": "SUPPORTED"
+      }
+     }
+    }
+   },
+   "P2": {
+    "answers": {
+     "CROSS_CELL_TRANSFER": {
+      "disposition": "NOT_ASSESSABLE",
+      "reason": "no held-out set of this kind is supplied"
+     },
+     "IDENTIFIABILITY": {
+      "disposition": "SUPPORTED",
+      "reason": "point estimates reported; not checked"
+     },
+     "MODEL_ADEQUACY": {
+      "disposition": "SUPPORTED",
+      "reason": "calibration fit against the strictest declared bar"
+     },
+     "MODEL_DISCREPANCY": {
+      "disposition": "SUPPORTED",
+      "reason": "residuals taken as noise when the fit meets the bar; structure not checked"
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "disposition": "NOT_SUPPORTED",
+      "reason": "held-out predictions against the declared bar",
+      "sub": {
+       "within_cell_heldout/cc": "NOT_SUPPORTED",
+       "within_cell_heldout/pulses": "SUPPORTED"
+      }
+     }
+    }
+   }
+  },
+  "MIND": {
+   "P1": {
+    "answers": {
+     "CROSS_CELL_TRANSFER": {
+      "disposition": "NOT_ASSESSABLE",
+      "reason": "cross_cell_heldout/other_cell -> unidentifiable_passive_association (NOT_ASSESSABLE)",
+      "sub": {
+       "cross_cell_heldout/other_cell": "NOT_ASSESSABLE"
+      }
+     },
+     "IDENTIFIABILITY": {
+      "disposition": "REFUSED",
+      "reason": "RELAXATION -> problem_refused (REFUSED)",
+      "sub": {
+       "RELAXATION": "REFUSED"
+      }
+     },
+     "MODEL_ADEQUACY": {
+      "disposition": "NOT_ASSESSABLE",
+      "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+     },
+     "MODEL_DISCREPANCY": {
+      "disposition": "NOT_ASSESSABLE",
+      "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "disposition": "NOT_ASSESSABLE",
+      "reason": "within_cell_heldout/later_cycles -> insufficient_evidence (NOT_ASSESSABLE)",
+      "sub": {
+       "within_cell_heldout/later_cycles": "NOT_ASSESSABLE"
+      }
+     }
+    }
+   },
+   "P2": {
+    "answers": {
+     "CROSS_CELL_TRANSFER": {
+      "disposition": "NOT_ASSESSABLE",
+      "reason": "no held-out set of this kind is supplied"
+     },
+     "IDENTIFIABILITY": {
+      "disposition": "REVIEW",
+      "reason": "RELAXATION -> law_linear_only (REVIEW)",
+      "sub": {
+       "RELAXATION": "REVIEW"
+      }
+     },
+     "MODEL_ADEQUACY": {
+      "disposition": "NOT_ASSESSABLE",
+      "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+     },
+     "MODEL_DISCREPANCY": {
+      "disposition": "NOT_ASSESSABLE",
+      "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "disposition": "NOT_ASSESSABLE",
+      "reason": "within_cell_heldout/cc -> unidentifiable_passive_association (NOT_ASSESSABLE); within_cell_heldout/pulses -> unidentifiable_passive_association (NOT_ASSESSABLE)",
+      "sub": {
+       "within_cell_heldout/cc": "NOT_ASSESSABLE",
+       "within_cell_heldout/pulses": "NOT_ASSESSABLE"
+      }
+     }
+    }
+   }
+  }
+ },
+ "rediscovery": {
+  "axes": {
+   "P1/CROSS_CELL_TRANSFER": {
+    "class": "DISAGREED_WITH_HISTORY",
+    "history": "NOT_SUPPORTED",
+    "mind": "NOT_ASSESSABLE",
+    "mind_reason": "cross_cell_heldout/other_cell -> unidentifiable_passive_association (NOT_ASSESSABLE)"
+   },
+   "P1/IDENTIFIABILITY": {
+    "class": "DISAGREED_WITH_HISTORY",
+    "history": "NOT_SUPPORTED",
+    "mind": "REFUSED",
+    "mind_reason": "RELAXATION -> problem_refused (REFUSED)"
+   },
+   "P1/MODEL_ADEQUACY": {
+    "class": "DISAGREED_WITH_HISTORY",
+    "history": "NOT_SUPPORTED",
+    "mind": "NOT_ASSESSABLE",
+    "mind_reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   },
+   "P1/MODEL_DISCREPANCY": {
+    "class": "DISAGREED_WITH_HISTORY",
+    "history": "NOT_SUPPORTED",
+    "mind": "NOT_ASSESSABLE",
+    "mind_reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   },
+   "P1/WITHIN_CELL_GENERALIZATION": {
+    "class": "AGREED_WITH_HISTORY",
+    "history": "NOT_ASSESSABLE",
+    "mind": "NOT_ASSESSABLE",
+    "mind_reason": "within_cell_heldout/later_cycles -> insufficient_evidence (NOT_ASSESSABLE)"
+   },
+   "P2/CROSS_CELL_TRANSFER": {
+    "class": "HISTORY_NOT_ASSESSABLE",
+    "history": "NOT_ASSESSABLE",
+    "mind": "NOT_ASSESSABLE",
+    "mind_reason": "no held-out set of this kind is supplied"
+   },
+   "P2/IDENTIFIABILITY": {
+    "class": "DISAGREED_WITH_HISTORY",
+    "history": "SUPPORTED",
+    "mind": "REVIEW",
+    "mind_reason": "RELAXATION -> law_linear_only (REVIEW)"
+   },
+   "P2/MODEL_ADEQUACY": {
+    "class": "DISAGREED_WITH_HISTORY",
+    "history": "NOT_SUPPORTED",
+    "mind": "NOT_ASSESSABLE",
+    "mind_reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   },
+   "P2/MODEL_DISCREPANCY": {
+    "class": "HISTORY_NOT_ASSESSABLE",
+    "history": "NOT_SUPPORTED",
+    "mind": "NOT_ASSESSABLE",
+    "mind_reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   },
+   "P2/WITHIN_CELL_GENERALIZATION": {
+    "class": "DISAGREED_WITH_HISTORY",
+    "history": "NOT_SUPPORTED",
+    "mind": "NOT_ASSESSABLE",
+    "mind_reason": "within_cell_heldout/cc -> unidentifiable_passive_association (NOT_ASSESSABLE); within_cell_heldout/pulses -> unidentifiable_passive_association (NOT_ASSESSABLE)"
+   }
+  },
+  "new_hypotheses": [
+   {
+    "class": "NEW_UNVALIDATED_HYPOTHESIS",
+    "kind": "unidentifiable_passive_association",
+    "probe": "PREDICTION[cross_cell_heldout/other_cell]",
+    "problem": "P1",
+    "statement": "the observable is associated with the passive covariate z (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause"
+   },
+   {
+    "class": "NEW_UNVALIDATED_HYPOTHESIS",
+    "kind": "law",
+    "law": {
+     "hypothesis_id": "mind:L[x0]Q[]",
+     "intercept": -3.906568854959,
+     "linear": {
+      "t_off_s": 0.056082506961
+     },
+     "quadratic": {}
+    },
+    "probe": "RELAXATION",
+    "problem": "P2"
+   },
+   {
+    "class": "NEW_UNVALIDATED_HYPOTHESIS",
+    "kind": "unidentifiable_passive_association",
+    "probe": "PREDICTION[within_cell_heldout/cc]",
+    "problem": "P2",
+    "statement": "the observable is associated with the passive covariate I_A (inclusion 0.990), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause"
+   },
+   {
+    "class": "NEW_UNVALIDATED_HYPOTHESIS",
+    "kind": "unidentifiable_passive_association",
+    "probe": "PREDICTION[within_cell_heldout/pulses]",
+    "problem": "P2",
+    "statement": "the observable is associated with the passive covariate I_A (inclusion 0.971), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause"
+   }
+  ]
+ },
+ "replay": {
+  "mind_traces": 5,
+  "mind_traces_verified": 5,
+  "non_identical": [],
+  "outputs": 12,
+  "outputs_identical": 12,
+  "trace_status": {
+   "P1:PREDICTION[cross_cell_heldout/other_cell]": "VERIFIED",
+   "P1:PREDICTION[within_cell_heldout/later_cycles]": "VERIFIED",
+   "P2:PREDICTION[within_cell_heldout/cc]": "VERIFIED",
+   "P2:PREDICTION[within_cell_heldout/pulses]": "VERIFIED",
+   "P2:RELAXATION": "VERIFIED"
+  }
+ },
+ "schema": "forge.battery_rediscovery.evaluation/1",
+ "scores": {
+  "ALWAYS_FIT": {
+   "correct_total": 1,
+   "counts": {
+    "CORRECT": 1,
+    "CORRECT_REFUSAL": 0,
+    "FALSE_REFUSE": 0,
+    "FALSE_REJECT": 0,
+    "FALSE_SUPPORT": 9,
+    "UNSUPPORTED_DECISION": 0
+   },
+   "per_instance": {
+    "P1/CROSS_CELL_TRANSFER": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_ADEQUACY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_DISCREPANCY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/WITHIN_CELL_GENERALIZATION": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/CROSS_CELL_TRANSFER": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "SUPPORTED"
+    },
+    "P2/MODEL_ADEQUACY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/MODEL_DISCREPANCY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/WITHIN_CELL_GENERALIZATION": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    }
+   },
+   "scored": 10
+  },
+  "ALWAYS_REFUSE": {
+   "correct_total": 2,
+   "counts": {
+    "CORRECT": 0,
+    "CORRECT_REFUSAL": 2,
+    "FALSE_REFUSE": 8,
+    "FALSE_REJECT": 0,
+    "FALSE_SUPPORT": 0,
+    "UNSUPPORTED_DECISION": 0
+   },
+   "per_instance": {
+    "P1/CROSS_CELL_TRANSFER": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/IDENTIFIABILITY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_ADEQUACY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_DISCREPANCY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/WITHIN_CELL_GENERALIZATION": {
+     "answer": "REFUSED",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/CROSS_CELL_TRANSFER": {
+     "answer": "REFUSED",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/IDENTIFIABILITY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "SUPPORTED"
+    },
+    "P2/MODEL_ADEQUACY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/MODEL_DISCREPANCY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/WITHIN_CELL_GENERALIZATION": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    }
+   },
+   "scored": 10
+  },
+  "CAREFUL_BASELINE": {
+   "correct_total": 9,
+   "counts": {
+    "CORRECT": 7,
+    "CORRECT_REFUSAL": 2,
+    "FALSE_REFUSE": 0,
+    "FALSE_REJECT": 0,
+    "FALSE_SUPPORT": 1,
+    "UNSUPPORTED_DECISION": 0
+   },
+   "per_instance": {
+    "P1/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_ADEQUACY": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_DISCREPANCY": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/WITHIN_CELL_GENERALIZATION": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "SUPPORTED"
+    },
+    "P2/MODEL_ADEQUACY": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/MODEL_DISCREPANCY": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/WITHIN_CELL_GENERALIZATION": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    }
+   },
+   "scored": 10
+  },
+  "FIXED_FIT": {
+   "correct_total": 4,
+   "counts": {
+    "CORRECT": 3,
+    "CORRECT_REFUSAL": 1,
+    "FALSE_REFUSE": 0,
+    "FALSE_REJECT": 0,
+    "FALSE_SUPPORT": 6,
+    "UNSUPPORTED_DECISION": 0
+   },
+   "per_instance": {
+    "P1/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_ADEQUACY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_DISCREPANCY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/WITHIN_CELL_GENERALIZATION": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "SUPPORTED"
+    },
+    "P2/MODEL_ADEQUACY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/MODEL_DISCREPANCY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/WITHIN_CELL_GENERALIZATION": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    }
+   },
+   "scored": 10
+  },
+  "MIND": {
+   "correct_total": 2,
+   "counts": {
+    "CORRECT": 0,
+    "CORRECT_REFUSAL": 2,
+    "FALSE_REFUSE": 8,
+    "FALSE_REJECT": 0,
+    "FALSE_SUPPORT": 0,
+    "UNSUPPORTED_DECISION": 0
+   },
+   "per_instance": {
+    "P1/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/IDENTIFIABILITY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_ADEQUACY": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_DISCREPANCY": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/WITHIN_CELL_GENERALIZATION": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/IDENTIFIABILITY": {
+     "answer": "REVIEW",
+     "outcome": "FALSE_REFUSE",
+     "truth": "SUPPORTED"
+    },
+    "P2/MODEL_ADEQUACY": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/MODEL_DISCREPANCY": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/WITHIN_CELL_GENERALIZATION": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    }
+   },
+   "scored": 10
+  }
+ },
+ "secondary": {
+  "ALWAYS_FIT": {
+   "calibration_rmse_mV": {
+    "P1": 48.39,
+    "P2": 8.402
+   },
+   "estimates": {
+    "P1": {
+     "C1": 759.8941536127664,
+     "R0": 0.1316767279998003,
+     "R1": 0.22580625456687134,
+     "tau": 171.58885269456158
+    },
+    "P2": {
+     "C1": 1585.9025425701184,
+     "R0": 0.020651436816980246,
+     "R1": 0.015614541200172053,
+     "tau": 24.76314059041873
+    }
+   },
+   "observations_used": {
+    "P1": 7154,
+    "P2": 10799
+   },
+   "parameter_stability": {
+    "P1": {
+     "C1": {
+      "forward_hold_shift": 0.1622,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.09699410208509414
+     },
+     "R0": {
+      "forward_hold_shift": 0.2936,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.05913164292450182
+     },
+     "R1": {
+      "forward_hold_shift": -0.2021,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.07690949326445981
+     }
+    },
+    "P2": {
+     "C1": {
+      "forward_hold_shift": 0.0042,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.019529984257601423
+     },
+     "R0": {
+      "forward_hold_shift": 0.0036,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.0037085712504726755
+     },
+     "R1": {
+      "forward_hold_shift": -0.0043,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.015298290148775956
+     }
+    }
+   }
+  },
+  "ALWAYS_REFUSE": {
+   "observations_used": {
+    "P1": 0,
+    "P2": 0
+   }
+  },
+  "CAREFUL_BASELINE": {
+   "calibration_rmse_mV": {
+    "P1": 48.39,
+    "P2": 8.402
+   },
+   "estimates": {
+    "P1": {
+     "C1": 759.8941536127664,
+     "R0": 0.1316767279998003,
+     "R1": 0.22580625456687134,
+     "tau": 171.58885269456158
+    },
+    "P2": {
+     "C1": 1585.9025425701184,
+     "R0": 0.020651436816980246,
+     "R1": 0.015614541200172053,
+     "tau": 24.76314059041873
+    }
+   },
+   "heldout": {
+    "P1": {
+     "cross_cell_heldout/other_cell": {
+      "coverage_95": null,
+      "lag1": 0.71,
+      "meets_bar": false,
+      "out_of_domain": 6,
+      "p95_abs_mV": 115.658,
+      "rmse_mV": 89.228,
+      "trajectories": 29
+     },
+     "within_cell_heldout/later_cycles": {
+      "coverage_95": null,
+      "lag1": 0.588,
+      "meets_bar": true,
+      "out_of_domain": 12,
+      "p95_abs_mV": 59.119,
+      "rmse_mV": 49.74,
+      "trajectories": 20
+     }
+    },
+    "P2": {
+     "within_cell_heldout/cc": {
+      "coverage_95": 0.03289473684210526,
+      "lag1": 0.985,
+      "meets_bar": false,
+      "out_of_domain": 0,
+      "p95_abs_mV": 50.669,
+      "rmse_mV": 28.651,
+      "trajectories": 1
+     },
+     "within_cell_heldout/pulses": {
+      "coverage_95": 0.558973076602484,
+      "lag1": 0.939,
+      "meets_bar": true,
+      "out_of_domain": 0,
+      "p95_abs_mV": 27.393,
+      "rmse_mV": 12.55,
+      "trajectories": 20
+     }
+    }
+   },
+   "observations_used": {
+    "P1": 7154,
+    "P2": 10799
+   },
+   "parameter_stability": {
+    "P1": {
+     "C1": {
+      "forward_hold_shift": 0.1622,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.09699410208509414
+     },
+     "R0": {
+      "forward_hold_shift": 0.2936,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.05913164292450182
+     },
+     "R1": {
+      "forward_hold_shift": -0.2021,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.07690949326445981
+     }
+    },
+    "P2": {
+     "C1": {
+      "forward_hold_shift": 0.0042,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.019529984257601423
+     },
+     "R0": {
+      "forward_hold_shift": 0.0036,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.0037085712504726755
+     },
+     "R1": {
+      "forward_hold_shift": -0.0043,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.015298290148775956
+     }
+    }
+   }
+  },
+  "FIXED_FIT": {
+   "calibration_rmse_mV": {
+    "P1": 48.39,
+    "P2": 8.402
+   },
+   "estimates": {
+    "P1": {
+     "C1": 759.8941536127664,
+     "R0": 0.1316767279998003,
+     "R1": 0.22580625456687134,
+     "tau": 171.58885269456158
+    },
+    "P2": {
+     "C1": 1585.9025425701184,
+     "R0": 0.020651436816980246,
+     "R1": 0.015614541200172053,
+     "tau": 24.76314059041873
+    }
+   },
+   "heldout": {
+    "P1": {
+     "cross_cell_heldout/other_cell": {
+      "coverage_95": null,
+      "lag1": 0.71,
+      "meets_bar": false,
+      "out_of_domain": 6,
+      "p95_abs_mV": 115.658,
+      "rmse_mV": 89.228,
+      "trajectories": 29
+     },
+     "within_cell_heldout/later_cycles": {
+      "coverage_95": null,
+      "lag1": 0.588,
+      "meets_bar": true,
+      "out_of_domain": 12,
+      "p95_abs_mV": 59.119,
+      "rmse_mV": 49.74,
+      "trajectories": 20
+     }
+    },
+    "P2": {
+     "within_cell_heldout/cc": {
+      "coverage_95": 0.03289473684210526,
+      "lag1": 0.985,
+      "meets_bar": false,
+      "out_of_domain": 0,
+      "p95_abs_mV": 50.669,
+      "rmse_mV": 28.651,
+      "trajectories": 1
+     },
+     "within_cell_heldout/pulses": {
+      "coverage_95": 0.558973076602484,
+      "lag1": 0.939,
+      "meets_bar": true,
+      "out_of_domain": 0,
+      "p95_abs_mV": 27.393,
+      "rmse_mV": 12.55,
+      "trajectories": 20
+     }
+    }
+   },
+   "observations_used": {
+    "P1": 7154,
+    "P2": 10799
+   },
+   "parameter_stability": {
+    "P1": {
+     "C1": {
+      "forward_hold_shift": 0.1622,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.09699410208509414
+     },
+     "R0": {
+      "forward_hold_shift": 0.2936,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.05913164292450182
+     },
+     "R1": {
+      "forward_hold_shift": -0.2021,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.07690949326445981
+     }
+    },
+    "P2": {
+     "C1": {
+      "forward_hold_shift": 0.0042,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.019529984257601423
+     },
+     "R0": {
+      "forward_hold_shift": 0.0036,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.0037085712504726755
+     },
+     "R1": {
+      "forward_hold_shift": -0.0043,
+      "multistart_spread_ln": 0.0,
+      "sd_ln": 0.015298290148775956
+     }
+    }
+   }
+  },
+  "MIND": {
+   "dispositions_stable_across_seeds": {
+    "P1": true,
+    "P2": true
+   },
+   "observations_used": {
+    "P1": 80,
+    "P2": 120
+   },
+   "probes": {
+    "P1": {
+     "PREDICTION[cross_cell_heldout/other_cell]": {
+      "coverage_95": null,
+      "eliminated": 13,
+      "heldout": null,
+      "kind": "unidentifiable_passive_association",
+      "problem_refused": null,
+      "reason": "the observable is associated with the passive covariate z (inclusion 1.000), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause",
+      "refused": 0,
+      "sealed_predictions": 278,
+      "served": 40,
+      "translation": {
+       "disposition": "NOT_ASSESSABLE",
+       "key": "unidentifiable_passive_association"
+      }
+     },
+     "PREDICTION[within_cell_heldout/later_cycles]": {
+      "coverage_95": null,
+      "eliminated": 19,
+      "heldout": null,
+      "kind": "insufficient_evidence",
+      "problem_refused": null,
+      "reason": "no rival remains without the copied covariate",
+      "refused": 0,
+      "sealed_predictions": 278,
+      "served": 40,
+      "translation": {
+       "disposition": "NOT_ASSESSABLE",
+       "key": "insufficient_evidence"
+      }
+     },
+     "RELAXATION": {
+      "coverage_95": null,
+      "eliminated": 0,
+      "heldout": null,
+      "kind": null,
+      "problem_refused": "input 't_off_s': the settable box is a positive interval low < high",
+      "reason": "",
+      "refused": 0,
+      "sealed_predictions": null,
+      "served": null,
+      "translation": {
+       "disposition": "REFUSED",
+       "key": "problem_refused"
+      }
+     }
+    },
+    "P2": {
+     "PREDICTION[within_cell_heldout/cc]": {
+      "coverage_95": null,
+      "eliminated": 0,
+      "heldout": null,
+      "kind": "unidentifiable_passive_association",
+      "problem_refused": null,
+      "reason": "the observable is associated with the passive covariate I_A (inclusion 0.990), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause",
+      "refused": 0,
+      "sealed_predictions": 278,
+      "served": 40,
+      "translation": {
+       "disposition": "NOT_ASSESSABLE",
+       "key": "unidentifiable_passive_association"
+      }
+     },
+     "PREDICTION[within_cell_heldout/pulses]": {
+      "coverage_95": null,
+      "eliminated": 0,
+      "heldout": null,
+      "kind": "unidentifiable_passive_association",
+      "problem_refused": null,
+      "reason": "the observable is associated with the passive covariate I_A (inclusion 0.971), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause",
+      "refused": 0,
+      "sealed_predictions": 278,
+      "served": 40,
+      "translation": {
+       "disposition": "NOT_ASSESSABLE",
+       "key": "unidentifiable_passive_association"
+      }
+     },
+     "RELAXATION": {
+      "coverage_95": null,
+      "eliminated": 0,
+      "heldout": null,
+      "kind": "law",
+      "problem_refused": null,
+      "reason": "the leading rival predicts the region to 0.0088 (ln) and the weighted rivals agree to 0.0023",
+      "refused": 0,
+      "sealed_predictions": 207,
+      "served": 40,
+      "translation": {
+       "disposition": "REVIEW",
+       "key": "law_linear_only"
+      }
+     }
+    }
+   }
+  }
+ },
+ "truth": {
+  "historical_heldout_rmse_mV": {
+   "P1": {
+    "cross_cell_validation": 89.22796908828245,
+    "within_cell_holdout": 49.74030725864969
+   },
+   "P2": {
+    "heldout_cc": 28.65103257319798,
+    "heldout_pulses": 12.549846854128964
+   }
+  },
+  "historical_parameters": {
+   "P1": {
+    "1rc": {
+     "C1": 759.8941120507851,
+     "R0": 0.13167672569496283,
+     "R1": 0.22580625155747797,
+     "ocv": [
+      3.220106904517633,
+      3.414358626291687,
+      3.8503505629431336,
+      4.061479958968526,
+      4.153882012696887,
+      4.1927571333305576,
+      4.226209960965551,
+      4.267228343276488,
+      4.321712376342262,
+      4.384492621854831,
+      4.452828081433112,
+      4.499999999999999,
+      4.311308082731329
+     ]
+    },
+    "rmse_mV": 48.38954222872905,
+    "tau_s": 171.58884102278594
+   },
+   "P2": {
+    "1rc": {
+     "C1": 1585.9009050828427,
+     "R0": 0.02065143453238383,
+     "R1": 0.0156145302692712
+    },
+    "rmse_mV": 8.40160566720805,
+    "tau_s": 24.76309768648064
+   }
+  },
+  "record_sha256": {
+   "benchmarks/battery_1rc_closure/results/CALIBRATION.json": "a302989a9034fb5b169480bf1a1e031bca9706ed3d474bd17ce44a641b685530",
+   "benchmarks/battery_1rc_closure/results/UNCERTAINTY_REPORT.json": "7bcf51a4dbc80f0fc685a60a10e961d3936bb80dcffeb6b0c83b1c424dddbc61",
+   "benchmarks/battery_1rc_closure/results/VALIDATION.json": "ff6f19568a2e8f2e81133cd2aea907e296f5fc27c90d92657667e4052ae9d65c",
+   "benchmarks/battery_1rc_identifiability/results/CALIBRATION.json": "0bcec32d774ec3465bb86a9dc2254424c5a0524c9fbbd9fc74d2d3cab7b8bf9e",
+   "benchmarks/battery_1rc_identifiability/results/OUTCOME.json": "bfe1b6f39d31d284dfd4cc93b3c4f4658638336730c2e05de0f50e486d7a865c",
+   "benchmarks/battery_1rc_identifiability/results/VALIDATION.json": "90eb67f7897aad05fbe31a4fdfa77067d017555ce9e5375329eaf45b4335ff4a"
+  },
+  "schema": "forge.battery_rediscovery.truth/1",
+  "seal": {
+   "files_bound": 14,
+   "seal_commit": "e1be5910081f531e19637697e3d103bc2953f12e",
+   "seal_sha256": "6d37cffb6ccb6b40595be2c62728f329a62b488ec9a88f7733aa76fee860b1d7"
+  },
+  "table": {
+   "P1": {
+    "CROSS_CELL_TRANSFER": {
+     "basis": "FAIL",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_closure/results/VALIDATION.json#roles.cross_cell_validation.1rc.acceptance"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "IDENTIFIABILITY": {
+     "basis": "historical decision NOT_IDENTIFIABLE",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_closure/results/CALIBRATION.json#identifiability.decision"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "MODEL_ADEQUACY": {
+     "basis": "held-out acceptance within=NOT_ASSESSABLE cross=NOT_SUPPORTED; derived discrepancy NOT_SUPPORTED",
+     "derived": true,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_closure/results/VALIDATION.json#roles.*.1rc.acceptance"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "MODEL_DISCREPANCY": {
+     "basis": "held-out 1RC lag-1 {'within_cell_holdout': 0.7572372394984622, 'cross_cell_validation': 0.92435293979791}; model_form status NOT_QUANTIFIED_AS_ADMISSIBLE_UQ",
+     "derived": true,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_closure/results/VALIDATION.json#roles.*.1rc.lag1_autocorrelation_mean",
+      "benchmarks/battery_1rc_closure/results/UNCERTAINTY_REPORT.json#components.model_form.status"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "basis": "NOT_ASSESSABLE (12 cycle(s) outside the validated domain)",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_closure/results/VALIDATION.json#roles.within_cell_holdout.1rc.acceptance"
+     ],
+     "truth": "NOT_ASSESSABLE"
+    }
+   },
+   "P2": {
+    "CROSS_CELL_TRANSFER": {
+     "basis": "one cell only: no cross-cell set exists (structural truth)",
+     "derived": false,
+     "history_class": "HISTORY_NOT_ASSESSABLE",
+     "sources": [],
+     "truth": "NOT_ASSESSABLE"
+    },
+    "IDENTIFIABILITY": {
+     "basis": "historical decision IDENTIFIABLE",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_identifiability/results/OUTCOME.json#identifiability"
+     ],
+     "truth": "SUPPORTED"
+    },
+    "MODEL_ADEQUACY": {
+     "basis": "preregistered outcome MODEL_REJECTED",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_identifiability/results/OUTCOME.json#outcome"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "MODEL_DISCREPANCY": {
+     "basis": "no historical model-form decision; derived from held-out 1RC lag-1 {'heldout_pulses': 0.940023305452447, 'heldout_cc': 0.9959380731567395}",
+     "derived": true,
+     "history_class": "HISTORY_NOT_ASSESSABLE",
+     "sources": [
+      "benchmarks/battery_1rc_identifiability/results/VALIDATION.json#roles.heldout_*.1rc.lag1_autocorrelation_mean"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "basis": "pulses PASS; cc FAIL",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_identifiability/results/OUTCOME.json#held_out_acceptance_1rc"
+     ],
+     "sub": {
+      "within_cell_heldout/cc": "NOT_SUPPORTED",
+      "within_cell_heldout/pulses": "SUPPORTED"
+     },
+     "truth": "NOT_SUPPORTED"
+    }
+   }
+  }
+ }
+}

@@ -9,8 +9,9 @@ reference application).
 ## Current bounded task - BR-BATT-REDISC-01 battery rediscovery pilot (2026-10-21)
 
 Development pilot on `research/battery-rediscovery-pilot-v0` (local). The sealed run's preregistered conclusion is
-LEAKAGE_INVALIDATED, from an audit false positive: a 760.006 s timestamp matched the 760 F value pattern. Owner decision
-open: accept an audit amendment (the result would then read REPRESENTATION_BOTTLENECK), or rerun under a new plan.
+LEAKAGE_INVALIDATED, from an audit false positive: a 760.006 s timestamp matched the 760 F value pattern. At the
+owner's request, AMENDMENT_01 (post-seal, disclosed) fixed the regex and reran only the audit and the evaluation:
+amended conclusion REPRESENTATION_BOTTLENECK. A clean confirmation would need a v0.1 plan and a fresh sealed run.
 No Mind tuning, no formal run, no D5/N-1/Family-3a work.
 
 ## Current bounded task - remaining branches and post-merge CI (2026-10-20)

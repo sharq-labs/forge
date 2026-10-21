@@ -117,11 +117,14 @@ def _markdown(ev: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def evaluate(results: pathlib.Path) -> dict[str, Any]:
+def evaluate(results: pathlib.Path, *, amendment: str = "") -> dict[str, Any]:
+    """``amendment`` (e.g. "AMENDMENT_01") writes every output under a suffixed name, leaving the preregistered
+    evaluation files untouched; the amendment is described in ``results/<amendment>.json``."""
+    sfx = f"_{amendment}" if amendment else ""
     t = truth.extract(results)                       # refuses unless the seal is verified
     cand = results / "candidate"
     post = leakage.audit(results / "ACCESS_LOG.json", cand, post_seal=True)
-    write_json(results / "LEAKAGE_POST_SEAL.json", post)
+    write_json(results / f"LEAKAGE_POST_SEAL{sfx}.json", post)
     pre = json.loads((results / "LEAKAGE_PRE_SEAL.json").read_bytes())
     outputs = _load_outputs(cand)
     scores = {arm: score.score_arm(outputs[arm], t) for arm in ARMS}
@@ -139,16 +142,23 @@ def evaluate(results: pathlib.Path) -> dict[str, Any]:
           "outputs_answers": {arm: {p: {"answers": outputs[arm][p]["answers"]} for p in PIDS} for arm in ARMS},
           "maturity": {"IMPLEMENTED": "YES", "TESTED": "synthetic-world tests (see PROGRESS)", "MEASURED": "YES (one bounded "
                        "pilot run)", "SCIENTIFICALLY_VERIFIED": "NO", "CERTIFIED": "NO", "FORMAL": "NO"}}
-    write_json(results / "EVALUATION.json", ev)
-    (results / "EVALUATION.md").write_bytes(_markdown(ev).encode())
+    if amendment:
+        ev["amendment"] = json.loads((results / f"{amendment}.json").read_bytes())
+    write_json(results / f"EVALUATION{sfx}.json", ev)
+    md = _markdown(ev)
+    if amendment:
+        md = md.replace("# BR-BATT-REDISC-01 evaluation", f"# BR-BATT-REDISC-01 evaluation ({amendment}, post-seal)\n\n"
+                        f"{ev['amendment']['summary']}", 1)
+    (results / f"EVALUATION{sfx}.md").write_bytes(md.encode())
     return ev
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--results", required=True, type=pathlib.Path)
+    ap.add_argument("--amendment", default="", help="write a disclosed post-seal amendment's outputs under this suffix")
     a = ap.parse_args(argv)
-    ev = evaluate(a.results)
+    ev = evaluate(a.results, amendment=a.amendment)
     print(ev["conclusion"]["conclusion"])
     return 0
 

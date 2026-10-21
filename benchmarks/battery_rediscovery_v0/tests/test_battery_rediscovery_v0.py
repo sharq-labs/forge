@@ -247,10 +247,29 @@ def test_candidate_code_imports_nothing_from_the_evaluator_or_history():
             assert f"import {bad}" not in text and f"from .{bad}" not in text and f".{bad} import" not in text, (p.name, bad)
 
 
-def test_plan_is_frozen_and_pins_every_file():
+def test_plan_is_frozen_and_pins_every_file_except_disclosed_post_seal_amendments():
     plan_raw = (HERE / "PLAN.json").read_bytes()
     assert hashlib.sha256(plan_raw).hexdigest() == (HERE / "PLAN.sha256").read_bytes().split()[0].decode()
     plan = json.loads(plan_raw)
     from benchmarks.battery_rediscovery_v0 import freeze
-    assert plan["frozen_files"] == freeze.frozen_digests()
+    now = freeze.frozen_digests()
+    amended = {}
+    for a in sorted((HERE / "results").glob("AMENDMENT_*.json")):
+        rec = json.loads(a.read_bytes())
+        assert rec["phase"] == "post_seal" and rec["candidate_outputs_changed"] is False
+        for path, d in rec["files"].items():
+            assert plan["frozen_files"][path] == d["plan_sha256"], path      # amends exactly the frozen bytes
+            amended[path] = d["amended_sha256"]
+    assert set(now) == set(plan["frozen_files"])
+    for path, sha in now.items():
+        assert sha == amended.get(path, plan["frozen_files"][path]), path
+    assert not any(p.startswith("benchmarks/battery_rediscovery_v0/candidate/") for p in amended)
     assert plan["mind"]["source_commit"] == MIND_COMMIT
+
+
+def test_amended_value_pattern_ignores_a_timestamp_but_still_catches_the_value():
+    pat = [p for p in leakage.historical_value_tokens() if "760" in p]
+    assert pat
+    import re
+    assert not any(re.search(p, "t_s: [750.0050000000001, 760.0060000000003]") for p in pat)
+    assert all(any(re.search(p, s) for p in pat) for s in ("C1 = 760 F", "[760]", "c1=760,"))

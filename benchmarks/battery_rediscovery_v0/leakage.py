@@ -170,7 +170,11 @@ def runtime_findings(log: dict[str, Any], out_dir: pathlib.Path) -> dict[str, An
 
 
 def historical_value_tokens(root: pathlib.Path = ROOT) -> list[str]:
-    """Regexes for the historical 1RC estimates and RMSEs (read ONLY after the seal), at 3 and 4 significant digits."""
+    """Regexes for the historical 1RC estimates and RMSEs (read ONLY after the seal), at 3 and 4 significant digits.
+
+    AMENDMENT-01 (post-seal, disclosed): a match may not be followed by a decimal point either.  The frozen pattern
+    excluded only a following digit, so "760" (a historical C1) matched the measured timestamp 760.006 s.
+    """
     pats = set()
     for rel in ("benchmarks/battery_1rc_closure/results/CALIBRATION.json",
                 "benchmarks/battery_1rc_identifiability/results/CALIBRATION.json"):
@@ -184,7 +188,7 @@ def historical_value_tokens(root: pathlib.Path = ROOT) -> list[str]:
                 s = f"{float(v):.{sig}g}"
                 if "e" in s:
                     continue
-                pats.add(r"(?<![\d.])" + re.escape(s) + r"(?![\d])")
+                pats.add(r"(?<![\d.])" + re.escape(s) + r"(?![\d.])")
     return sorted(pats)
 
 

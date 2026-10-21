@@ -50,8 +50,12 @@ REVIEW, NOT_ASSESSABLE or REFUSED, and the last three never count as support.
 
 ## 4. Results (sealed run `e1be5910`, evaluated after the seal)
 
-**Preregistered conclusion: LEAKAGE_INVALIDATED.** The trigger is an audit false positive, so no owner decision on
-amending the audit has been made yet.
+| Reading | Conclusion | Files |
+|---|---|---|
+| Preregistered (frozen audit) | **LEAKAGE_INVALIDATED** | `results/EVALUATION.{json,md}`, `results/LEAKAGE_POST_SEAL.json` (unchanged) |
+| AMENDMENT_01 (post-seal, owner-requested, disclosed) | **REPRESENTATION_BOTTLENECK** | `results/AMENDMENT_01.json`, `results/EVALUATION_AMENDMENT_01.{json,md}`, `results/LEAKAGE_POST_SEAL_AMENDMENT_01.json` |
+
+**Preregistered conclusion: LEAKAGE_INVALIDATED.** The trigger is an audit false positive.
 - The post-seal numeric scan of P1's historical C1 = 760 F used the pattern `(?<![\d.])760(?![\d])`.
 - In P2.json it matched one measured timestamp, `t = 760.006 s`, in the 1C discharge record (10 s sampling).
 - The pattern excluded a following digit but not a following decimal point.
@@ -64,8 +68,24 @@ amending the audit has been made yet.
     module, no identity token in the 181 platform files opened;
   - the 22 other value patterns.
 
-The evaluator then scored the arms. The numbers below are reported for the owner's decision; they are not a valid
-pilot result under the preregistered rule.
+**AMENDMENT_01.** At the owner's request, made after the seal and after the preregistered evaluation had been read:
+- What changed:
+  - `leakage.historical_value_tokens`: the lookahead is now `(?![\d.])`, so a match may not be followed by a decimal
+    point either.
+  - `run_evaluation --amendment` writes suffixed outputs.
+  - The frozen-file test now admits exactly the files listed in `AMENDMENT_01.json`, each moving from its PLAN digest
+    to its declared new digest. A new test pins that the amended pattern ignores `760.006` and still catches `760`.
+- Rerun: only the post-seal audit and the evaluation. The amended audit is PASS on all 23 value patterns, with no
+  static, schema or runtime finding.
+- Unchanged: every candidate output and trace, the seal, the pre-seal audit, the truth mapping, the scoring, the
+  conclusion rule, PLAN.json, and the three preregistered evaluation files (sha256 checked after the rerun).
+- Known weakness: the scan matches only the exact 3- and 4-significant-digit form of each value. It now also misses
+  such a form followed by a decimal point (e.g. `760.0`).
+- The amendment was made knowing the amended conclusion it would produce (it is stated below). That makes it weaker
+  evidence than a preregistered result. A clean confirmation needs a v0.1 plan frozen with the fixed audit and a fresh
+  sealed run.
+
+The scores below are identical in both readings. Only the conclusion differs.
 
 | Arm | CORRECT | CORRECT_REFUSAL | FALSE_SUPPORT | FALSE_REFUSE | scored |
 |---|---|---|---|---|---|
@@ -88,8 +108,7 @@ pilot result under the preregistered rule.
 - The P2 relaxation law came out linear in ln t, so the Mind answered REVIEW where history found the parameters
   identifiable.
 
-**Under an amended audit** (treating the timestamp as data), the preregistered rule would give
-**REPRESENTATION_BOTTLENECK**:
+**Amended conclusion (AMENDMENT_01): REPRESENTATION_BOTTLENECK**, by the unchanged preregistered rule:
 - the Mind's 2 correct answers are fewer than CAREFUL_BASELINE's 9;
 - the trivial arms' best (2) is below 9, so the benchmark discriminates;
 - 7 of the Mind's 10 scored answers are representation-caused, which is at least half.
@@ -106,4 +125,4 @@ pilot result under the preregistered rule.
 **Replay:** 12/12 sealed outputs re-execute byte-identically, and 5/5 Mind traces replay VERIFIED from their recorded
 observations.
 
-Full tables are in `results/EVALUATION.md` and `results/EVALUATION.json`.
+Full tables: `results/EVALUATION.md` (preregistered) and `results/EVALUATION_AMENDMENT_01.md` (amended).

@@ -8134,3 +8134,36 @@ Commands, all run with `PYTHONPATH="D:/forge-redisc/src;D:/forge-redisc"` and th
 6. `python -m benchmarks.battery_rediscovery_v0.evaluator.run_evaluation --results ...`: LEAKAGE_INVALIDATED.
 
 SCIENTIFIC, the regression pack and certification were NOT RUN.
+
+
+## 2026-10-21 — BR-BATT-REDISC-01 AMENDMENT_01 (post-seal, owner-requested, disclosed)
+
+The owner asked for the numeric leakage regex to be fixed and for only the post-seal audit and the evaluation to be
+rerun as a disclosed amendment. Branch `research/battery-rediscovery-pilot-v0`, local only.
+
+**What changed**
+- `leakage.historical_value_tokens`: the lookahead `(?![\d])` became `(?![\d.])`.
+- `evaluator/run_evaluation.py`: a new `--amendment` option writes suffixed outputs.
+- `tests/test_battery_rediscovery_v0.py`: the frozen-file test admits files declared in `results/AMENDMENT_01.json`
+  (PLAN digest -> amended digest). A new test pins that the amended pattern ignores `760.006` and still catches `760`.
+
+**What did not change:** candidate outputs, traces, SEAL.json, the pre-seal audit, the truth mapping, the scoring,
+the conclusion rule, PLAN.json, and the preregistered `EVALUATION.{json,md}` and `LEAKAGE_POST_SEAL.json`. The last
+three were sha256-checked after the rerun: OK.
+
+**Result**
+- Preregistered conclusion: LEAKAGE_INVALIDATED (unchanged).
+- Amended conclusion: REPRESENTATION_BOTTLENECK.
+- The amended post-seal audit is PASS: 23 value patterns, no static, schema or runtime finding.
+- The amendment was made with the amended outcome already known. It is weaker than a preregistered result; a clean
+  confirmation needs a v0.1 plan frozen with the fixed audit and a fresh sealed run.
+
+Commands, all run with `PYTHONPATH="D:/forge-redisc/src;D:/forge-redisc"` and the phyx `.venv` Python 3.14:
+1. `python -m benchmarks.battery_rediscovery_v0.evaluator.run_evaluation --results benchmarks/battery_rediscovery_v0/results
+   --amendment AMENDMENT_01`: exit 0, REPRESENTATION_BOTTLENECK.
+2. `python -m pytest benchmarks/battery_rediscovery_v0/tests tests/mind/test_minimal_mind.py -q -p no:cacheprovider
+   --basetemp D:/redisc-tmp/bt4`: 45 passed.
+3. `python -m benchmarks.battery_rediscovery_v0.freeze --check`: exit 1, listing exactly the three amended files
+   (expected: PLAN.json is the pre-run record and is not rewritten).
+
+FAST, SCIENTIFIC, the regression pack and certification were NOT RUN for this amendment.
