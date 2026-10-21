@@ -8261,3 +8261,79 @@ Addendum (2026-10-21), second review pass and re-pin:
   - malformed or UNKNOWN `host_devices` values;
   - a control with NSpid ≥ 2 but only 1 visible process.
 - NOT RUN: FAST, SCIENTIFIC, FULL, hardened recertification, the D7 rerun and any formal campaign.
+
+## 2026-10-21 — Prompt 3: D5-A1b STATELESS_DEVICE contract; D5 pin reverted after hostile review (BLOCKER 1)
+
+Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), local, unpushed. Started from `0805a861` (clean).
+
+- **Owner device policy (2026-10-21).** A shared writable character device may be admitted only on executed
+  evidence, per device, from {/dev/null 1:3, zero 1:5, full 1:7, random 1:8, urandom 1:9, tty 5:0}. It is recorded in
+  decision record §8 and in the D5 text of the preregistration.
+- **`2e2a9d1b` (kept).**
+  - `device_contract.py`: `stateless_device/1`, a per-device validator plus a static scientific-randomness screen.
+  - `container_probe.py`: the device observation.
+  - `container_evidence.py`: contract/3.
+  - `isolation.py`: selected-message trials, a shared-file channel control, a pty-allocated tty control and the
+    pinned kernel.
+  - The four saved items:
+    1. a missing `/proc` or `/sys` row is EVIDENCE_INCOMPLETE;
+    2. malformed or unknown operator device records block;
+    3. the host-procfs control needs both signals;
+    4. the O-1 keyed-stream test proves distinct streams and per-stream recomputation, with no p-difference
+       requirement.
+- **`f8bf7ed7` (kept).** `timing_pilot/2` refuses to time anything unless the pre-admission container check passes,
+  and records that check.
+- **D5 run (reverted).**
+  - From a clean bundle clone of `2e2a9d1b` on the formal machine:
+    `python -m benchmarks.genesis_lite.v0_3.isolation --out result.json --cards 2`, exit 0, 278.5 s.
+  - Result: `verified: true`, six devices ADMITTED, 12/12 channels REFUSED; sha256 `b3bc0b64…`. Pinned at `b1fbefbf`.
+- **D7 run (reverted).**
+  - From a clean clone of `f8bf7ed7`: `python -m benchmarks.genesis_lite.v0_3.timing_pilot --out result.json
+    --campaigns 10`, exit 0, 681.5 s.
+  - MEASURED 67.9 s per world set (±0.46). ESTIMATED 90.5 h with replay, 45.2 h for the operator's run.
+    sha256 `6f6b1418…`. Pinned at `99959b09`.
+- **Verification at `99959b09` (Linux, clean clones).**
+  - FAST `pytest -q -m "not expensive" -n 4`: 71 failed, 12064 passed, 217 skipped, 8 errors.
+  - The same command at `0805a861`: 71 failed, 11975 passed, 217 skipped, 8 errors. The failure sets are identical
+    (79 ids, all pre-existing, in phase1/phase2/phase35, core freeze/certificate, offline_revalidation and
+    domain_real_data).
+  - `tools/forge_check.py --regression --workers 4`: 279 passed.
+  - `python -m benchmarks.genesis_lite.v0_3.readiness`: READY_TO_FREEZE_PENDING_OWNER, 0 technical blockers,
+    agreement_cases 48. This verdict is now known to be wrong (see below).
+  - `pytest tests/genesis_lite -n 4`: Linux 481 passed; Windows 477 passed, 4 skipped.
+- **Hostile read-only review of `99959b09`: 1 BLOCKER, 2 MAJOR, 7 MINOR, 5 NOTE.**
+  - **BLOCKER 1, confirmed on the formal machine.** A formal card can change persistent metadata of the shared host
+    device nodes without opening them, and the change is visible to later cards. This is a cross-card state channel.
+    The STATELESS_DEVICE trials compared metadata only around write() and never tested it, so all six devices were
+    ADMITTED wrongly. The D5 PASS is therefore invalid. (The confirming test changed the six host nodes' timestamps
+    on the WSL machine; harmless, until restart.)
+  - **Failed approaches, do not repeat.**
+    - `--device /dev/null:/dev/null:r`: the mount stays rw, and the channel remains.
+    - `--mount type=bind,src=/dev/null,dst=/dev/null,ro`: Podman stacks its own rw bind on top, and the channel
+      remains.
+  - **Open.**
+    - MAJOR 1: the reachable-device walk only counts unreadable directories (3 per card) and ignores lstat errors.
+    - MAJOR 2: the formal attempt keeps only the pre-admission verdict, not its device evidence.
+    - The MINORs:
+      - the RNG counters have no power on 6.6 (fixed at 256);
+      - the tty control is weak, and its id is null;
+      - host-to-card observation is not tested;
+      - D7 binds only 7 files;
+      - the gate takes the bound-file list from the evidence;
+      - the admission-nonce allowlist text is wrong (the nonce also enters `master_for`);
+      - None seeds pass the screen.
+- **Reverted (owner, 2026-10-21).** `e0e73e81` reverts `99959b09`, and `3d62b494` reverts `b1fbefbf`.
+  - The pins are back to D5 `967f089e…` (12baeb04, BLOCKED) and D7 `3759ff33…` (2026-10-20).
+  - `readiness.deployment_status()` = NOT_PROVEN (schema /3 is not /4, REQUIRES_RERUN), and
+    `timing_pilot_status()` = NOT_PROVEN (REQUIRES_RERUN).
+  - The revert also drops two follow-ups those commits held. Re-apply both with the next D5 pin:
+    - the readiness "isolation boundary (D5)" row had no required tests;
+    - the escrow readiness test hard-codes BLOCKED.
+- **Tests at `3d62b494` (Windows).** `python -m pytest -q -p no:cacheprovider -n 4 tests/genesis_lite`: 476 passed,
+  4 skipped, 1 failed. The failure is `test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code`: the
+  pinned D5 evidence measured older code, which is the correct red until D5 is re-run.
+- **Status.** D5 = NOT_PROVEN, N-1 = OPEN, D7 = REQUIRES_RERUN. BLOCKED_WITH_PRECISE_EVIDENCE.
+- **Owner direction needed** before any further device work: how, or whether, the six device nodes can be made
+  non-state-carrying or inaccessible under rootless Podman. If not, D5 stays blocked on this runtime.
+- **NOT RUN.** SCIENTIFIC, FULL, hardened recertification (the classifier flags it as owner-run), OD-3, any formal
+  campaign, Budget × Noise.
