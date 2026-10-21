@@ -8235,3 +8235,29 @@ Addendum (2026-10-21), second review pass and re-pin:
   - Fix: the probe records PID-namespace evidence (`NSpid`, or what PID 1 is), or the operator compares the card's `/proc` and `/sys` devices with the host's own.
   - It needs a host-configuration mount that replaces Podman's own `/proc`, which the current launcher does not produce.
 - NOT RUN: FAST, SCIENTIFIC, FULL, hardened recertification, the D7 rerun and any formal campaign.
+- MINOR-A fixed (owner request, 2026-10-21; strict device rule kept), in 12baeb04: the evidence must now prove that the card's `/proc` and `/sys` are its own.
+  - **Probe** (`pid_namespace`): through its `/proc`, the card is PID 1 with NSpid exactly `["1"]`, in a PID namespace other than the operator's (PID_NAMESPACE_NOT_PRIVATE otherwise).
+  - **Operator** (`host_pseudo_devices`): the card's `/proc` and `/sys` are not on the operator's own procfs and sysfs devices (HOST_PSEUDO_FS_VISIBLE otherwise).
+  - **Positive control**: a container given the host procfs at `/hostproc` must show the host PID first (PID_NAMESPACE_CONTROL_FAILED otherwise).
+  - **Contract fixture**: extended with these fields only. Nothing was removed.
+- Lab on the formal machine (`exp4.sh` via `bash -s`):
+  - a card sees NSpid `["1"]` and 1 process; through the host procfs, NSpid `["22255","1"]` and 31 processes;
+  - card `/proc` 0:87 against host 0:59, and card `/sys` 0:88 against host 0:22.
+- Test change in `test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p`:
+  - **Failure:** after the regeneration, Windows `pytest` of that test failed 3 times out of 3 with `2 == 3`, meaning two of the three Monte-Carlo p values coincided.
+  - **Why:** the stream key includes the preregistration digest, so every regeneration re-rolls a coincidence of about 1 %, as 4296d535 noted for the nonce.
+  - **Fix:** the test now requires the three streams to be distinct and the p values not all equal. The direct assertion that each root's stream reaches `sign_flip_p` is kept.
+- Re-run on the formal machine from a clean clone of 12baeb04: `python -m benchmarks.genesis_lite.v0_3.isolation --out result.json --cards 2`, exit 1, wall time 277.4 s. Pinned at bb52c12f: `result.json` sha256 967f089e....
+  - Every card: PID 1, NSpid `["1"]`, 1 process, PID namespace not the operator's; `/proc` and `/sys` on devices other than 0:59 and 0:22.
+  - Control: NSpid `["22858","1"]`, 28 processes.
+  - Verdict unchanged: BLOCKED solely by the six host device nodes. 11 of 12 channels REFUSED.
+  - The tree was clean before and after, and no container was left. The ad55b7c5 run is kept under `superseded-ad55b7c5/`.
+- Tests:
+  - Windows at bb52c12f: `python -m pytest -q -p no:cacheprovider -n 4 -rfEs tests/genesis_lite` gave 389 passed, 3 skipped (Linux-only).
+  - Linux at bb52c12f (fresh clone): the same suite gave 392 passed, 0 skipped. `python -m benchmarks.genesis_lite.v0_3.readiness` gave BLOCKED_TECHNICAL on the three D5 rows and the D7 evidence row; 298 v0.3 tests passed, agreement 48/48.
+- Fifth read-only pass: 0 BLOCKER, 0 MAJOR, 1 MINOR (this PROGRESS record, done here). MINOR-A is closed. No review item remains open before a PASS pin; the strict device rule is what blocks.
+- Untested branches, recorded as NOTES:
+  - the "no /proc row" path;
+  - malformed or UNKNOWN `host_devices` values;
+  - a control with NSpid ≥ 2 but only 1 visible process.
+- NOT RUN: FAST, SCIENTIFIC, FULL, hardened recertification, the D7 rerun and any formal campaign.
