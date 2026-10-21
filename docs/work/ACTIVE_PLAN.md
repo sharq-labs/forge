@@ -6,6 +6,13 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task - BR-BATT-REDISC-01 battery rediscovery pilot (2026-10-21)
+
+Development pilot on `research/battery-rediscovery-pilot-v0` (local). The sealed run's preregistered conclusion is
+LEAKAGE_INVALIDATED, from an audit false positive: a 760.006 s timestamp matched the 760 F value pattern. Owner decision
+open: accept an audit amendment (the result would then read REPRESENTATION_BOTTLENECK), or rerun under a new plan.
+No Mind tuning, no formal run, no D5/N-1/Family-3a work.
+
 ## Current bounded task - remaining branches and post-merge CI (2026-10-20)
 
 Owner authorized continuing branch review and investigating Tests/Branch Policy without bypassing gates or OD3. PR180 merged with explicit archival-only approval at67585300. Twenty residual tips / fifteen maximal groups remain; nineteen tips trigger recertification. Prepare archive-only reconciliation of the seven ignored agent/configuration files from c4b9d950; do not activate their historical instructions. Review and run the changed-file gate before concrete PR approval. Investigate GitHub failure from actual job evidence: empty steps and missing log blobs currently leave root cause UNVERIFIED; obtain Annotations before prescribing a hosted-runner repair. Report: BRANCH_RECONCILIATION_CI_2026_10_20.md. No certification-sensitive implementation adoption, freeze or formal run.

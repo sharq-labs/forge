@@ -8093,3 +8093,44 @@ Environment: `{"TMPDIR": "D:/tmp/agent-archive-final", "PYTHONPATH": "C:\\Users\
 Result:94 passed; exit0; wall seconds 9.618442600010894. Output SHA256 `f75e069f24587ae62416522acbc9e5c5498e672480338a60c39a06ef6fa6e4c4`. No failures. Raw output and metadata: `docs/work/evidence/branch_ci_investigation_2026_10_20/agent-archive-final-gate.txt` and `.json`.
 
 Live GitHub Tests39488053735 and Branch Policy39488053796 failed with empty step metadata; dependent jobs reported skipped. Logs for branch-policy118853558670 and scope118853560388 returned404 BlobNotFound. Annotations unavailable through connector; browser signed out. Root cause UNVERIFIED pending owner-provided annotation. No billing diagnosis, workflow repair or hosted rerun claimed. Formal, full assurance and OD3 NOT RUN.
+
+
+## 2026-10-21 — BR-BATT-REDISC-01 battery historical-rediscovery development pilot (non-formal)
+
+Branch `research/battery-rediscovery-pilot-v0` (worktree `D:/forge-redisc`), base origin/main `12862b0b`, local only:
+nothing is pushed, merged, certified or frozen. Family-3a `a6200e5c` is untouched. The Minimal Mind was copied
+byte-exact from `e2b8037c`. Commits: `085d9a7c` pre-run freeze (PLAN.json `adc3a30f`), `e1be5910` sealed outputs,
+then the evaluation commit. Report: `benchmarks/battery_rediscovery_v0/README.md`.
+
+**Result:** the preregistered conclusion is **LEAKAGE_INVALIDATED**, and the trigger is an audit false positive. The
+post-seal value pattern for P1's historical C1 = 760 F was `(?<![\d.])760(?![\d])`. It matched one measured timestamp,
+`760.006 s`, in P2's 1C record, because it excluded a following digit but not a following `.`. Every other audit check
+passed.
+- Under an amended audit the rule would give REPRESENTATION_BOTTLENECK. The owner has not decided whether to amend.
+- The Mind answered 0 CORRECT, 2 CORRECT_REFUSAL, 0 FALSE_SUPPORT and 8 FALSE_REFUSE, against CAREFUL_BASELINE's 7, 2, 1
+  and 0.
+- Replay: 12/12 outputs identical, 5/5 traces VERIFIED.
+
+**Failed approaches, recorded so they are not repeated:**
+- The EXCITATION probe read "no dependence on I" as "R0 not identifiable", which is physically wrong.
+- The raw relaxation observable mixed two current levels into the replicate noise.
+- A pseudo-inverse covariance reported zero variance on null directions.
+- The numeric leakage regex did not exclude a following decimal point.
+
+Commands, all run with `PYTHONPATH="D:/forge-redisc/src;D:/forge-redisc"` and the phyx `.venv` Python 3.14:
+
+1. `python -m pytest benchmarks/battery_rediscovery_v0/tests tests/mind/test_minimal_mind.py -q -p no:cacheprovider
+   --basetemp D:/redisc-tmp/bt3`: 44 passed.
+2. `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rf --basetemp ...` (FAST):
+   - pilot tree, uncommitted: 199 failed/errors, 11752 passed, 235 skipped;
+   - pristine `12862b0b` worktree `D:/forge-redisc-base`: 197 failed/errors, 11713 passed.
+   - The only new nodes are `tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1` and
+     `tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`.
+     Both fail only on `tree.clean` (uncommitted pilot files). FAST was not rerun after the commit. Not green.
+3. `python -m benchmarks.battery_rediscovery_v0.sandbox_run results/ACCESS_LOG.json -- --out results/candidate`:
+   exit 0, 14 s.
+4. `python -m benchmarks.battery_rediscovery_v0.seal ...`: pre-seal audit PASS.
+5. `sandbox_run ... -- --replay results/candidate --out results/replay`: exit 0.
+6. `python -m benchmarks.battery_rediscovery_v0.evaluator.run_evaluation --results ...`: LEAKAGE_INVALIDATED.
+
+SCIENTIFIC, the regression pack and certification were NOT RUN.
