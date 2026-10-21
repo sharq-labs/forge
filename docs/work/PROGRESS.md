@@ -8509,3 +8509,16 @@ Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), local, unpushe
   declared and nothing is pinned.
 - **NOT RUN.** D5, D7, the D5 contract and attack channels, `tests/genesis_lite`, FAST, SCIENTIFIC, regression, the
   readiness CLI, freeze, certification, formal runs and Budget × Noise. No implementation, push or install.
+
+## 2026-10-21 — 3a launcher implementation: paused before any code change
+
+- The owner approved family 3a with a declared root launch. Implementation stopped before any code change, because a
+  safety classifier interrupted the work on the attack-suite and power-control part of the deployment verification.
+  Those parts need the owner, or a narrower scope. The tree is unchanged apart from this entry.
+- **Baseline test run (Windows, at `4c2bed58`):**
+  `PYTHONPATH="D:/forge-genesis-clean/src;D:/forge-genesis-clean" python -m pytest tests/genesis_lite -q -n 4 -p no:cacheprovider --basetemp D:/forge-d5-impl/bt/base0 -rs`
+  gave 2 failed, 478 passed, 4 skipped (Linux-only).
+  - Failed: `test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code` (the known red; schema /4
+    against the pinned /3).
+  - Failed: `test_d5_scientific_randomness_is_explicitly_seeded_and_the_screen_has_power`. Not investigated.
+- **NOT RUN.** The Linux suite, FAST, SCIENTIFIC, regression, D5 and D7.
