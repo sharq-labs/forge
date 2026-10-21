@@ -1,0 +1,425 @@
+"""Genesis-lite v0.3 D5, family 3a scaffold (BR-D5-RUNTIME-01, owner-approved 2026-10-21): failing-first tests.
+
+Every record here is synthetic. A passing test shows what the validator and the gates accept and refuse. It is not
+runtime proof: nothing here launches a card, measures the formal machine or closes BLOCKER 1. D5 stays NOT_PROVEN.
+"""
+
+from __future__ import annotations
+
+import copy
+import dataclasses
+import pathlib
+
+import pytest
+
+from benchmarks.genesis_lite.v0_3 import device_contract, family3a as f3a, readiness
+
+HOST_DEV = "0:5"                 # the host devtmpfs
+CARD_DEV = "0:120"               # every card's /dev tmpfs: sequential cards reuse it, as the spike measured
+T0 = 1_792_600_000_000_000_000
+SLOT = 50_000_000                # one card per 50 ms
+LIFE = 20_000_000                # each card's launch-to-cleanup window
+MS = 1_000_000
+HEX = "ab" * 32
+
+
+def pinned_config(**changes):
+    values = {k: HEX for k in ("runtime_sha256", "rootfs_tree_sha256", "seccomp_sha256", "helper_sha256")}
+    return dataclasses.replace(f3a.PINNED_CONFIG, **{**values, **changes})
+
+
+def identity_of(config):
+    return {k: getattr(config, k) for k in f3a.IDENTITY_KEYS}
+
+
+def node(name, stamp, dev=CARD_DEV):
+    rdev = device_contract.DEVICES["/dev/" + name][0]
+    return {"type": "chr", "rdev": rdev, "perm": 0o666, "dev": dev, "ino": 3, "mtime_ns": stamp, "ctime_ns": stamp}
+
+
+def card(slot, *, utimensat=None, stamps=None):
+    start = T0 + slot * SLOT
+    dev = {f3a.name_of(p): node(f3a.name_of(p), (stamps or {}).get(p, start + MS)) for p in f3a.ADMITTED}
+    dev["shm"] = {"type": "dir", "mnt": 3}
+    mounts = [
+        {"id": 1, "target": "/", "fstype": "ext4", "device": "8:32", "options": ["ro"], "optional": []},
+        {"id": 2, "target": "/dev", "fstype": "tmpfs", "device": CARD_DEV, "options": ["ro", "nosuid", "noexec"],
+         "optional": []},
+        {"id": 3, "target": "/dev/shm", "fstype": "tmpfs", "device": "0:121", "options": ["rw", "nosuid", "nodev"],
+         "optional": []},
+        {"id": 4, "target": "/tmp", "fstype": "tmpfs", "device": "0:122", "options": ["rw", "nosuid", "nodev"],
+         "optional": []},
+        {"id": 5, "target": "/proc", "fstype": "proc", "device": "0:123", "options": ["rw"], "optional": []},
+        {"id": 6, "target": "/proc/kcore", "fstype": "tmpfs", "device": CARD_DEV, "options": ["ro"], "optional": []},
+    ]
+    return {"window": {"start_ns": start, "end_ns": start + LIFE}, "host_devtmpfs": HOST_DEV, "mounts": mounts,
+            "dev": dev, "absent": {p: {"open": "ENOENT", "stat": "ENOENT"} for p in f3a.ABSENT},
+            "walk": {"entries": 40, "devices": []}, "utimensat": utimensat or {}, "cleanup": dict(f3a.CLEAN)}
+
+
+def touched():
+    return {**{p: "EROFS" for p in f3a.ADMITTED}, **{p: "ENOENT" for p in f3a.ABSENT}}
+
+
+def baseline(config=None, *, per_bit=f3a.MIN_TRIALS_PER_BIT, controls_per_bit=f3a.MIN_CONTROL_TRIALS_PER_BIT):
+    config = config or pinned_config()
+    cards, trials, slot = {}, [], 0
+    for n in range(2 * per_bit):
+        bit = n % 2
+        cards[f"e{n}"] = card(slot, utimensat=touched() if bit else {})
+        cards[f"d{n}"] = card(slot + 1)
+        trials.append({"bit": bit, "encoder": f"e{n}", "decoder": f"d{n}"})
+        slot += 2
+    controls = []
+    for n in range(2 * controls_per_bit):
+        bit = n % 2
+        enc = card(1000 + 2 * n, utimensat=touched() if bit else {})
+        start = enc["window"]["start_ns"]
+        seen = {p: (start + 2 * MS if bit else T0 - 10**9) for p in f3a.ADMITTED}
+        controls.append({"bit": bit, "encoder": enc, "decoder": card(1001 + 2 * n, stamps=seen)})
+    return {"schema": f3a.EVIDENCE_SCHEMA, "deployment": f3a.DEPLOYMENT, "device_contract": f3a.DEVICE_CONTRACT,
+            "detector": f3a.DETECTOR, "config_sha256": config.digest(), "identity": identity_of(config),
+            "cards": cards, "trials": trials, "controls": {f3a.POWER_CONTROL: controls}, "residue": dict(f3a.CLEAN)}
+
+
+def reasons(doc, config=None):
+    return set(f3a.validate_evidence(doc, config or pinned_config())["reasons"])
+
+
+class FakeHandle:
+    def __init__(self, result):
+        self.stdin = self.stdout = None
+        self.result = result
+
+    def wait(self, timeout):
+        return self.result
+
+
+class FakeHelper:
+    """A test-local helper: it records calls and runs nothing."""
+
+    def __init__(self, ident, result=None):
+        self.ident, self.result, self.started, self.asked = ident, result, [], 0
+
+    def identity(self):
+        self.asked += 1
+        return dict(self.ident)
+
+    def start(self, request):
+        self.started.append(request)
+        return FakeHandle(self.result if self.result is not None else {
+            "schema": f3a.HELPER_RESULT_SCHEMA, "card_id": request["card"]["card_id"], "mode": request["mode"],
+            "exit_code": 0, "window": {"start_ns": T0, "end_ns": T0 + LIFE}, "cleanup": dict(f3a.CLEAN)})
+
+
+def spec(**changes):
+    values = {"card_id": "gl3a-0001abcd", "entrypoint": "container_probe", "args": (), "env": (),
+              "timeout_s": 60.0}
+    return f3a.CardSpec(**{**values, **changes})
+
+
+# ---- the root helper and the launcher interface ----------------------------------------------------------------------
+def test_f3a_the_only_root_helper_in_the_tree_fails_closed_as_not_implemented():
+    helper = f3a.default_root_helper()
+    assert isinstance(helper, f3a.UnimplementedRootHelper)
+    for call in (helper.identity, lambda: helper.start({})):
+        with pytest.raises(f3a.RootHelperUnavailable) as exc:
+            call()
+        assert exc.value.reason == f3a.ROOT_HELPER_NOT_IMPLEMENTED
+    launcher = f3a.Family3aLauncher(pinned_config(), helper)
+    with pytest.raises(f3a.Family3aRefused) as refused:
+        launcher.start(spec())
+    assert f3a.ROOT_HELPER_NOT_IMPLEMENTED in refused.value.reasons
+    ready = f3a.execution_readiness(pinned_config(), helper)
+    assert ready["status"] == f3a.BLOCKED
+    assert f3a.ROOT_HELPER_NOT_IMPLEMENTED in ready["reasons"]
+    assert f3a.execution_readiness()["status"] == f3a.BLOCKED        # the tree's own config and helper
+
+
+def test_f3a_missing_identity_pins_are_never_defaulted_and_the_policy_cannot_be_widened():
+    unpinned = {r for r, _ in f3a.config_problems(f3a.PINNED_CONFIG)}
+    assert unpinned == {f3a.CONFIG_UNPINNED}
+    assert f3a.config_problems(pinned_config()) == []
+    for change in ({"runtime_version": "1.14.0"}, {"admitted": (*f3a.ADMITTED, *f3a.ABSENT[:1])},
+                   {"absent": f3a.ABSENT[1:]}, {"cgroup_allow": ("1:3", "1:5", "1:7", "1:8")},
+                   {"capabilities": ("CAP_SYS_ADMIN",)}, {"read_only_rootfs": False},
+                   {"rootfs_propagation": "rshared"}, {"root_launch": "sudo"}, {"runtime_sha256": "AB" * 32},
+                   {"masks_from_card_tmpfs": False}):
+        assert f3a.CONFIG_INVALID in {r for r, _ in f3a.config_problems(pinned_config(**change))}, change
+    doc = pinned_config().to_dict()
+    assert f3a.RuntimeConfig.from_mapping(doc) == pinned_config()
+    for broken in ({k: v for k, v in doc.items() if k != "seccomp_sha256"}, {**doc, "extra": 1}, [doc], None):
+        with pytest.raises(ValueError):
+            f3a.RuntimeConfig.from_mapping(broken)
+
+
+def test_f3a_a_helper_with_another_identity_is_refused_before_any_card_starts():
+    config = pinned_config()
+    for key in f3a.IDENTITY_KEYS:
+        helper = FakeHelper({**identity_of(config), key: "1.14.0" if key == "runtime_version" else "cd" * 32})
+        with pytest.raises(f3a.Family3aRefused) as refused:
+            f3a.Family3aLauncher(config, helper).start(spec())
+        assert f3a.HELPER_IDENTITY_MISMATCH in refused.value.reasons, key
+        assert helper.started == []
+        assert f3a.execution_readiness(config, helper)["status"] == f3a.BLOCKED
+    missing = FakeHelper({k: v for k, v in identity_of(config).items() if k != "kernel_release"})
+    assert f3a.HELPER_IDENTITY_MISMATCH in f3a.execution_readiness(config, missing)["reasons"]
+    unpinned = FakeHelper(identity_of(f3a.PINNED_CONFIG))       # UNPINNED on both sides never matches
+    result = f3a.execution_readiness(f3a.PINNED_CONFIG, unpinned)
+    assert {f3a.CONFIG_UNPINNED, f3a.HELPER_IDENTITY_MISMATCH} <= set(result["reasons"])
+    good = FakeHelper(identity_of(config))
+    assert f3a.execution_readiness(config, good)["status"] == f3a.READY
+    assert good.started == []                                    # readiness inspects; it never launches
+
+
+def test_f3a_the_helper_request_is_typed_and_carries_no_command():
+    config = pinned_config()
+    request = f3a.helper_request(config, spec())
+    assert set(request) == {"schema", "mode", "config_sha256", "card"}
+    assert f3a.helper_request_problems(request, config) == []
+    assert not {"argv", "command", "shell", "script"} & set(request["card"])
+    for bad in (spec(entrypoint="sh"), spec(args=("-c",)), spec(args=("/tmp/x;id",)), spec(args=("rel/path",)),
+                spec(env=(("LD_PRELOAD", "/x"),)), spec(env=(("PYTHONDONTWRITEBYTECODE", "0"),)),
+                spec(card_id="../x"), spec(timeout_s=0.0), spec(timeout_s=float("nan"))):
+        assert f3a.spec_problems(bad), bad
+        with pytest.raises(f3a.Family3aRefused):
+            f3a.Family3aLauncher(config, FakeHelper(identity_of(config))).start(bad)
+    assert f3a.spec_problems(spec(entrypoint="proposer_host", args=("/opt/forge", "/opt/forge/src"))) == []
+    for tamper in ({**request, "argv": ["sh"]}, {**request, "mode": "shell"},
+                   {**request, "card": {**request["card"], "command": "id"}}, {**request, "config_sha256": HEX}):
+        assert f3a.helper_request_problems(tamper, config), tamper
+    assert f3a.helper_request_problems(f3a.helper_request(config, spec(entrypoint="proposer_host"),
+                                                          mode=f3a.POWER_CONTROL), config)
+    helper = FakeHelper(identity_of(config))
+    session = f3a.Family3aLauncher(config, helper).start(spec())
+    assert helper.started == [request]
+    assert session.close(5.0)["cleanup"] == f3a.CLEAN
+
+
+# ---- Device Contract v2 and the evidence validator -------------------------------------------------------------------
+def test_f3a_the_baseline_evidence_rederives_every_node_and_closes_blocker_1_in_readiness_terms():
+    verdict = f3a.validate_evidence(baseline(), pinned_config())
+    assert verdict["status"] == f3a.PASS, verdict["findings"][:5]
+    section = verdict["boundary_findings"]["BLOCKER 1"]
+    assert section["evidence"] == readiness.MEASURED and section["detector"] == f3a.DETECTOR
+    assert set(section["nodes"]) == set(device_contract.DEVICES)
+    assert {section["nodes"][p] for p in f3a.ADMITTED} == {"PRIVATE_TO_CARD"}
+    assert {section["nodes"][p] for p in f3a.ABSENT} == {"ABSENT"}
+    finding = readiness.BOUNDARY_FINDINGS["BLOCKER 1"]
+    assert set(section["nodes"].values()) <= set(finding["closing_results"])
+    assert not readiness._closed("BLOCKER 1", finding, verdict)        # no detector is declared: still open
+    assert readiness._closed("BLOCKER 1", {**finding, "detectors": (f3a.DETECTOR,)}, verdict)
+    assert set(f3a.ADMITTED) | set(f3a.ABSENT) == set(device_contract.DEVICES)
+    assert not set(f3a.ADMITTED) & set(f3a.ABSENT)
+    assert f3a.CGROUP_ALLOW == ("1:3", "1:5", "1:7")
+
+
+def test_f3a_a_stale_schema_contract_or_detector_derives_nothing():
+    for key, value in (("schema", "forge.genesis_lite.v0_3/family3a_evidence/0"),
+                       ("schema", "forge.genesis_lite.v0_3/deployment_evidence/4"),
+                       ("device_contract", device_contract.CONTRACT), ("detector", "content_window/1"),
+                       ("deployment", "rootless_podman_per_card")):
+        doc = {**baseline(), key: value}
+        verdict = f3a.validate_evidence(doc, pinned_config())
+        assert verdict["status"] == f3a.CHECK_BLOCKED
+        assert f3a.EVIDENCE_SCHEMA_STALE in verdict["reasons"], key
+        section = verdict["boundary_findings"]["BLOCKER 1"]
+        assert section["evidence"] == f3a.NOT_MEASURED
+        assert set(section["nodes"].values()) == {f3a.NOT_CLOSED}
+
+
+def test_f3a_a_stored_pass_is_never_evidence():
+    for key, value in (("verified", True), ("status", "PASS"), ("verdict", {"status": "PASS"}),
+                       ("boundary_findings", {"BLOCKER 1": {"evidence": "MEASURED", "detector": f3a.DETECTOR,
+                                                            "nodes": {p: "ABSENT" for p in device_contract.DEVICES}}})):
+        assert f3a.STORED_VERDICT_NOT_EVIDENCE in reasons({**baseline(), key: value}), key
+    broken = baseline()                                         # a decoder sees the encoder's stamp: a recovered bit
+    one = next(t for t in broken["trials"] if t["bit"] == 1)
+    start = broken["cards"][one["encoder"]]["window"]["start_ns"]
+    broken["cards"][one["decoder"]]["dev"]["null"].update(mtime_ns=start + 2 * MS, ctime_ns=start + 2 * MS)
+    broken["verified"] = True
+    verdict = f3a.validate_evidence(broken, pinned_config())
+    assert verdict["status"] == f3a.CHECK_BLOCKED
+    assert {f3a.CHANNEL_RECOVERED, f3a.STORED_VERDICT_NOT_EVIDENCE} <= set(verdict["reasons"])
+    assert verdict["boundary_findings"]["BLOCKER 1"]["nodes"]["/dev/null"] == f3a.NOT_CLOSED
+    bare = {k: v for k, v in baseline().items() if k not in ("cards", "trials")}
+    bare["verified"] = True
+    assert f3a.validate_evidence(bare, pinned_config())["status"] == f3a.CHECK_BLOCKED
+
+
+def test_f3a_missing_or_dirty_cleanup_blocks_in_the_evidence_and_at_the_launcher():
+    doc = baseline()
+    del doc["cards"]["d3"]["cleanup"]
+    assert f3a.CLEANUP_EVIDENCE_MISSING in reasons(doc)
+    doc = baseline()
+    doc["cards"]["e0"]["cleanup"]["processes"] = 1
+    assert f3a.CLEANUP_RESIDUE in reasons(doc)
+    doc = baseline()
+    del doc["controls"][f3a.POWER_CONTROL][0]["decoder"]["cleanup"]
+    assert f3a.CLEANUP_EVIDENCE_MISSING in reasons(doc)
+    doc = baseline()
+    del doc["residue"]
+    assert f3a.CLEANUP_EVIDENCE_MISSING in reasons(doc)
+    doc = baseline()
+    doc["residue"]["mounts"] = 2
+    assert f3a.CLEANUP_RESIDUE in reasons(doc)
+    config = pinned_config()
+    for result in ({"schema": f3a.HELPER_RESULT_SCHEMA, "card_id": "gl3a-0001abcd", "mode": f3a.CARD, "exit_code": 0,
+                    "window": {"start_ns": T0, "end_ns": T0 + LIFE}},
+                   {"schema": f3a.HELPER_RESULT_SCHEMA, "card_id": "gl3a-0001abcd", "mode": f3a.CARD, "exit_code": 0,
+                    "window": {"start_ns": T0, "end_ns": T0 + LIFE}, "cleanup": {**f3a.CLEAN, "cgroups": 1}}):
+        session = f3a.Family3aLauncher(config, FakeHelper(identity_of(config), result)).start(spec())
+        with pytest.raises(f3a.Family3aRefused) as refused:
+            session.close(5.0)
+        assert refused.value.reasons & {f3a.CLEANUP_EVIDENCE_MISSING, f3a.CLEANUP_RESIDUE}
+
+
+def test_f3a_missing_or_powerless_positive_control_blocks_every_admitted_node():
+    doc = baseline()
+    doc["controls"] = {}
+    verdict = f3a.validate_evidence(doc, pinned_config())
+    assert f3a.POSITIVE_CONTROL_MISSING in verdict["reasons"]
+    assert set(verdict["boundary_findings"]["BLOCKER 1"]["nodes"].values()) == {f3a.NOT_CLOSED}
+    few = baseline(controls_per_bit=f3a.MIN_CONTROL_TRIALS_PER_BIT - 1)
+    assert f3a.POSITIVE_CONTROL_MISSING in reasons(few)
+    weak = baseline()
+    for c in weak["controls"][f3a.POWER_CONTROL]:
+        if c["bit"] == 1:
+            c["decoder"]["dev"]["zero"].update(mtime_ns=T0 - 10**9, ctime_ns=T0 - 10**9)
+    verdict = f3a.validate_evidence(weak, pinned_config())
+    assert f3a.POSITIVE_CONTROL_NO_POWER in verdict["reasons"]
+    assert verdict["status"] == f3a.CHECK_BLOCKED
+    lazy = baseline()                                         # an encoder that never touched the nodes has no power
+    lazy["controls"][f3a.POWER_CONTROL][1]["encoder"]["utimensat"] = {}
+    assert f3a.POSITIVE_CONTROL_NO_POWER in reasons(lazy)
+    few_trials = baseline(per_bit=f3a.MIN_TRIALS_PER_BIT - 1)
+    assert f3a.DEVICE_EVIDENCE_INCOMPLETE in reasons(few_trials)
+
+
+def test_f3a_an_identity_mismatch_in_the_evidence_blocks():
+    doc = baseline()
+    doc["identity"]["runtime_version"] = "1.14.0"
+    assert f3a.EVIDENCE_IDENTITY_MISMATCH in reasons(doc)
+    doc = baseline()
+    del doc["identity"]["seccomp_sha256"]
+    assert f3a.EVIDENCE_IDENTITY_MISMATCH in reasons(doc)
+    doc = baseline()
+    doc["config_sha256"] = "cd" * 32
+    assert f3a.EVIDENCE_IDENTITY_MISMATCH in reasons(doc)
+    other = pinned_config(seccomp_sha256="cd" * 32)               # evidence measured under another pinned config
+    assert f3a.EVIDENCE_IDENTITY_MISMATCH in reasons(baseline(), other)
+    assert f3a.validate_evidence(baseline(f3a.PINNED_CONFIG), f3a.PINNED_CONFIG)["status"] == f3a.CHECK_BLOCKED
+
+
+def test_f3a_device_contract_v2_rederives_privacy_without_inode_identity():
+    doc = baseline()                       # every card reuses one st_dev and one st_ino: privacy never rests on them
+    assert {n["dev"] for c in doc["cards"].values() for n in c["dev"].values() if n["type"] == "chr"} == {CARD_DEV}
+    assert {n["ino"] for c in doc["cards"].values() for n in c["dev"].values() if n["type"] == "chr"} == {3}
+    assert f3a.validate_evidence(doc, pinned_config())["status"] == f3a.PASS
+    cases = {
+        "a node on the host devtmpfs": (lambda d: d["cards"]["d0"]["dev"]["full"].update(dev=HOST_DEV),
+                                        f3a.DEVICE_NOT_CARD_PRIVATE, "/dev/full"),
+        "a node older than its card (reused)": (
+            lambda d: d["cards"]["d2"]["dev"]["null"].update(ctime_ns=d["cards"]["d1"]["window"]["end_ns"]),
+            f3a.DEVICE_NOT_CARD_PRIVATE, "/dev/null"),
+        "an mtime set from outside the card": (lambda d: d["cards"]["d3"]["dev"]["zero"].update(mtime_ns=T0 + 10**15),
+                                               f3a.DEVICE_NOT_CARD_PRIVATE, "/dev/zero"),
+        "a wrong major:minor": (lambda d: d["cards"]["e1"]["dev"]["zero"].update(rdev="1:8"),
+                                f3a.DEVICE_NOT_CARD_PRIVATE, "/dev/zero"),
+        "/dev on devtmpfs": (lambda d: d["cards"]["e2"]["mounts"][1].update(fstype="devtmpfs", device=HOST_DEV),
+                             f3a.HOST_DEVICE_REACHABLE, "/dev/null"),
+        "a mask bound from the host node": (
+            lambda d: d["cards"]["e2"]["mounts"][5].update(fstype="devtmpfs", device=HOST_DEV),
+            f3a.HOST_DEVICE_REACHABLE, "/dev/zero"),
+        "a row from the host devtmpfs under another fstype": (
+            lambda d: d["cards"]["e3"]["mounts"][5].update(device=HOST_DEV), f3a.HOST_DEVICE_REACHABLE, "/dev/full"),
+        "a shared mount": (lambda d: d["cards"]["d4"]["mounts"][2].update(optional=["shared:7"]),
+                           f3a.MOUNT_PROPAGATION_SHARED, "/dev/full"),
+        "a device node found by the walk": (lambda d: d["cards"]["d4"]["walk"].update(devices=["/opt/x"]),
+                                            f3a.HOST_DEVICE_REACHABLE, "/dev/null"),
+        "a blocked node present": (lambda d: d["cards"]["d5"]["dev"].update(
+            {f3a.name_of(f3a.ABSENT[0]): node("null", T0)}), f3a.DEVICE_PRESENT_NOT_ABSENT, f3a.ABSENT[0]),
+        "a blocked node that opens": (lambda d: d["cards"]["d5"]["absent"][f3a.ABSENT[1]].update(open="OPENED"),
+                                      f3a.DEVICE_PRESENT_NOT_ABSENT, f3a.ABSENT[1]),
+        "overlapping card windows": (lambda d: d["cards"]["d0"]["window"].update(
+            start_ns=d["cards"]["e0"]["window"]["end_ns"] - MS), f3a.DEVICE_EVIDENCE_INCOMPLETE, "/dev/null"),
+        "cards closer than the coarse clock": (lambda d: d["cards"]["d0"]["window"].update(
+            start_ns=d["cards"]["e0"]["window"]["end_ns"] + MS), f3a.DEVICE_EVIDENCE_INCOMPLETE, "/dev/zero"),
+        "an encoder that did nothing on bit 1": (lambda d: d["cards"]["e1"].update(utimensat={}),
+                                                 f3a.DEVICE_EVIDENCE_INCOMPLETE, "/dev/null"),
+        "a card used twice": (lambda d: d["trials"][1].update(decoder="d0"), f3a.DEVICE_EVIDENCE_INCOMPLETE,
+                              "/dev/null"),
+    }
+    for name, (mutate, reason, path) in cases.items():
+        doc = baseline()
+        mutate(doc)
+        verdict = f3a.validate_evidence(doc, pinned_config())
+        assert verdict["status"] == f3a.CHECK_BLOCKED, name
+        assert reason in verdict["reasons"], name
+        assert verdict["boundary_findings"]["BLOCKER 1"]["nodes"][path] == f3a.NOT_CLOSED, name
+
+
+def test_f3a_the_validator_never_raises_and_reports_every_node():
+    garbage = [None, [], "x", 3, {"schema": f3a.EVIDENCE_SCHEMA}, {**baseline(), "cards": []},
+               {**baseline(), "cards": {"e0": None}}, {**baseline(), "trials": [None, 3]},
+               {**baseline(), "controls": {f3a.POWER_CONTROL: [{"bit": 1}]}}, {**baseline(), "residue": "clean"}]
+    doc = baseline()
+    doc["cards"]["d0"]["dev"]["null"] = {"type": "chr"}
+    garbage.append(doc)
+    doc = copy.deepcopy(baseline())
+    doc["cards"]["d0"]["mounts"] = [{"target": "/dev"}]
+    garbage.append(doc)
+    for item in garbage:
+        verdict = f3a.validate_evidence(item, pinned_config())
+        assert verdict["status"] == f3a.CHECK_BLOCKED
+        assert set(verdict["boundary_findings"]["BLOCKER 1"]["nodes"]) == set(device_contract.DEVICES)
+
+
+# ---- pre-admission ordering and fail-closed readiness ----------------------------------------------------------------
+def test_f3a_pre_admission_runs_its_stages_in_order_and_stops_at_the_first_failure():
+    calls = []
+
+    def collect(launcher):
+        calls.append(launcher)
+        return baseline()
+
+    result = f3a.pre_admission(f3a.PINNED_CONFIG, FakeHelper(identity_of(pinned_config())), collect)
+    assert [s["stage"] for s in result["stages"]] == list(f3a.STAGES)
+    assert [s["status"] for s in result["stages"]] == ["BLOCKED"] + ["NOT_REACHED"] * 4
+    assert result["status"] == f3a.REFUSED and calls == []
+    result = f3a.pre_admission(pinned_config(), f3a.default_root_helper(), collect)
+    assert [s["status"] for s in result["stages"]][:3] == [f3a.PASS, "BLOCKED", "NOT_REACHED"]
+    assert f3a.ROOT_HELPER_NOT_IMPLEMENTED in result["reasons"] and calls == []
+    wrong = FakeHelper({**identity_of(pinned_config()), "kernel_release": "6.6.0"})
+    result = f3a.pre_admission(pinned_config(), wrong, collect)
+    assert f3a.HELPER_IDENTITY_MISMATCH in result["reasons"] and calls == [] and wrong.started == []
+    stored = FakeHelper(identity_of(pinned_config()))
+    result = f3a.pre_admission(pinned_config(), stored, lambda _l: {**baseline(), "verified": True})
+    assert result["status"] == f3a.REFUSED and f3a.STORED_VERDICT_NOT_EVIDENCE in result["reasons"]
+
+    def crash(_launcher):
+        raise OSError("helper died")
+
+    result = f3a.pre_admission(pinned_config(), FakeHelper(identity_of(pinned_config())), crash)
+    assert result["status"] == f3a.REFUSED and f3a.EVIDENCE_COLLECTION_FAILED in result["reasons"]
+    result = f3a.pre_admission(pinned_config(), FakeHelper(identity_of(pinned_config())), collect)
+    assert result["status"] == f3a.ADMISSIBLE and len(calls) == 1
+    assert "root" not in f3a.pre_admission.__code__.co_varnames        # it never sees a root or a registry
+
+
+def test_f3a_execution_readiness_in_this_tree_is_blocked_with_precise_evidence():
+    result = f3a.execution_readiness()
+    assert result["status"] == f3a.BLOCKED
+    assert set(result["reasons"]) == {f3a.CONFIG_UNPINNED, f3a.ROOT_HELPER_NOT_IMPLEMENTED}
+    unpinned = sorted(d.split(" ")[0] for r, d in result["problems"] if r == f3a.CONFIG_UNPINNED)
+    assert unpinned == ["helper_sha256", "rootfs_tree_sha256", "runtime_sha256", "seccomp_sha256"]
+    assert result["d5"] == "NOT_PROVEN"
+
+
+def test_f3a_the_scaffold_passes_the_randomness_screen_and_stays_off_the_pinned_identity():
+    root = pathlib.Path(f3a.__file__).resolve().parents[3]
+    screen = device_contract.scientific_randomness_problems(root)
+    assert "benchmarks/genesis_lite/v0_3/family3a.py" in screen["files"]
+    assert [p for p in screen["problems"] if "family3a" in p] == []
+    assert "family3a.py" not in readiness.v03p.V0_3_FILES            # scaffold: not yet on the formal path
+    assert "family3a.py" not in device_contract.DEVICE_PATH_FILES

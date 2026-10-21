@@ -8564,3 +8564,58 @@ Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), local, unpushe
     evidence. It is preserved unchanged.
 - **NOT RUN.** The Linux suite, FAST, SCIENTIFIC, regression, the readiness CLI, D5, D7, OD-3 and formal runs. Family 3a
   remains unimplemented: D5 NOT_PROVEN, N-1 OPEN, D7 REQUIRES_RERUN.
+
+## 2026-10-21 - Prompt 5A section 2: family-3a scaffold; BLOCKED_WITH_PRECISE_EVIDENCE
+
+- **Result: BLOCKED_WITH_PRECISE_EVIDENCE.** The scaffold is in `benchmarks/genesis_lite/v0_3/family3a.py`, with tests in
+  `tests/genesis_lite/test_genesis_lite_v0_3_family3a.py`. Execution readiness is blocked by two reasons, and nothing else:
+  - `ROOT_HELPER_NOT_IMPLEMENTED`: the only root helper in the tree is `UnimplementedRootHelper`. Every `identity()` and
+    `start()` call refuses, and nothing falls back to another runtime. The low-level helper (the spike section 6.1 steps,
+    run as root through `wsl.exe -u root`) was not written. It must be a separately reviewed program, pinned by
+    `helper_sha256`.
+  - `CONFIG_UNPINNED`: `runtime_sha256` (the crun binary), `rootfs_tree_sha256`, `seccomp_sha256` and `helper_sha256`
+    are not measured. They can only be measured as root on the formal machine. The spike's rootfs export (`7d1ab3c8...`)
+    is one instance, not a pin.
+- **What exists (synthetic tests only, not runtime proof).**
+  - `RuntimeConfig`: typed, frozen and without defaults. `UNPINNED` blocks and never matches. The policy fields (device
+    sets, cgroup allowlist, capabilities, propagation, ro rootfs, root launch) cannot be widened.
+  - `CardSpec` and `Family3aLauncher`: a card names `proposer_host` or `container_probe`, never a command line. The args
+    are absolute paths only, and the environment is `PYTHONDONTWRITEBYTECODE=1` only.
+  - The `RootHelper` protocol: the helper takes only a `helper_request` (schema, mode, config digest, card), which has no
+    argv, command, shell or script field. The power-control mode runs the probe only. A result without a complete
+    cleanup record, or with residue, is refused.
+  - Device Contract v2 (`stateless_device/2`) and evidence schema `family3a_evidence/1`, with a validator
+    (`validate_evidence`) that re-derives every node from raw records and never raises:
+    - null, zero and full are PRIVATE_TO_CARD only when each node is chr, has its exact rdev and mode 0666, sits on the
+      card's own `/dev` tmpfs and has ctime and mtime inside the card's window;
+    - cards are separated by at least 10 ms;
+    - the timestamp detector (`utimensat_timestamp_selected_bit/1`) recovers nothing in at least 12 trials per bit, and
+      the shared-tmpfs power control recovers every bit in at least 4 trials per bit;
+    - the other three nodes are ABSENT only when they are missing from `/dev` and give ENOENT;
+    - no devtmpfs row, no row from the host devtmpfs, no shared propagation and no walked device node anywhere;
+    - privacy never uses st_dev/st_ino equality (the baseline reuses one of each across every card);
+    - a stored verdict field is `STORED_VERDICT_NOT_EVIDENCE`, and the output's `boundary_findings["BLOCKER 1"]` has
+      readiness's `_closed` shape.
+  - `pre_admission`: config, then helper, then identity, then evidence, then validation. It stops at the first failure
+    and takes no root or registry. `execution_readiness` and the read-only CLI report
+    `READY_FOR_FAMILY_3A_EXECUTION` or `BLOCKED_WITH_PRECISE_EVIDENCE`.
+- **Deliberately not done.**
+  - No pinned file changed: the module is not in `V0_3_FILES`, `DEVICE_PATH_FILES` or `formal.deployment_problems`, and
+    no detector is declared in `readiness.BOUNDARY_FINDINGS`. Wiring it in is the next step, and that step regenerates the
+    DRAFT preregistration.
+  - The preregistration is unchanged (DRAFT, sha256 `e2ac2f7b...`).
+  - The stale D5 evidence test is untouched.
+- **Tests (Windows, this session):**
+  - `PYTHONPATH="D:/forge-genesis-clean/src;D:/forge-genesis-clean" .venv/Scripts/python.exe -m pytest tests/genesis_lite/test_genesis_lite_v0_3_family3a.py -q -p no:cacheprovider --basetemp D:/forge-d5-impl/bt/f3a5`
+    first failed at collection (ImportError, the failing-first state), then gave 15 passed.
+  - A targeted apply/revert mutation script (scratchpad, not committed) applied 10 guard mutants. Two survived the
+    first round (the host-devtmpfs device id and the coarse-clock gap) and got a dedicated case each. After that, all 10
+    were killed and the source was restored byte-identical.
+  - `PYTHONPATH=... python -m pytest tests/genesis_lite -q -n 4 -p no:cacheprovider --basetemp D:/forge-d5-impl/bt/f3a-full -rfs`
+    gave 1 failed, 495 passed, 4 skipped (Linux-only). The failure is
+    `test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code`, the preserved stale evidence red.
+  - `python -m benchmarks.genesis_lite.v0_3.family3a` returned exit 1 with `BLOCKED_WITH_PRECISE_EVIDENCE`
+    `['CONFIG_UNPINNED', 'ROOT_HELPER_NOT_IMPLEMENTED']`; the identity stage was NOT_REACHED.
+- **Status unchanged.** D5 = NOT_PROVEN, N-1 = OPEN, D7 = REQUIRES_RERUN, BLOCKER 1 open.
+- **NOT RUN.** The Linux suite, FAST, SCIENTIFIC, regression, the readiness CLI, D5, D7, any card launch, any root
+  command, freeze, certification, formal runs and Budget x Noise. Nothing was pushed.
