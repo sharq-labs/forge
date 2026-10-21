@@ -18,7 +18,7 @@ from typing import Any
 
 from .. import analysis as v02_analysis
 from .. import preregistration as v02
-from . import analysis, environment, evaluator, formal, isolation, registry
+from . import analysis, device_contract, environment, evaluator, formal, isolation, registry
 from . import arms as v03_arms
 
 PREREG_SCHEMA = "forge.genesis_lite.preregistration/1"
@@ -29,7 +29,7 @@ V0_2_PREREG_SHA256 = "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e
 V0_3_FILES = ("__init__.py", "analysis.py", "arms.py", "deployment_attacks.py", "environment.py", "evaluator.py",
               "formal.py", "harness.py", "preregistration.py", "readiness.py", "registry.py", "secret_scan.py",
               "selfcheck.py", "isolation.py", "timing_pilot.py", "container_evidence.py", "container_probe.py",
-              "container/Containerfile")
+              "device_contract.py", "container/Containerfile")
 #: the certified escrow half of FDA-05 (Batch A, OD-3); pinned by digest when it is in the tree
 ESCROW_HALF = "pair_bound.py"
 ODR = "OWNER_DECISION_REQUIRED"
@@ -83,7 +83,15 @@ OWNER_DECISIONS_TAKEN = {
                      "volume positive control; deployment verification before admission (isolation.py, "
                      "container_evidence.py, container_probe.py; formal.deployment_problems). Device nodes (owner, "
                      "2026-10-21): no exemption; a writable device or pseudo-file mount stays blocking. D5 stays "
-                     "NOT_PROVEN until complete evidence passes and is pinned",
+                     "NOT_PROVEN until complete evidence passes and is pinned. AMENDED by the owner in session on "
+                     "2026-10-21 (device policy, D5-A1b): a shared writable character device is not automatically a "
+                     "failure when executed evidence proves it a non-state-carrying operating-system endpoint under "
+                     "the D5 threat model. The admissible set is only /dev/null 1:3, /dev/zero 1:5, /dev/full 1:7, "
+                     "/dev/random 1:8, /dev/urandom 1:9 and /dev/tty 5:0; admission is per device, under the "
+                     "versioned STATELESS_DEVICE contract (device_contract.py), never by assumption or familiarity; "
+                     "a device that fails its contract is masked or made inaccessible where rootless Podman allows, "
+                     "else it stays blocking and D5 stays NOT_PROVEN. random and urandom are a shared kernel RNG "
+                     "service, not private per-card state; formal scientific randomness never comes from them",
     "D3b-1-cap-form": "decided by the owner in session on 2026-10-20 after the ODC-O1b study: option B, a cell-level "
                       "cap. A capped (kind, presentation) cell contributes min(0, its summed paired difference): no "
                       "gain, a net loss counts, in the effect size (recomputed per bootstrap resample) and the per-kind "
@@ -349,8 +357,15 @@ def build() -> dict[str, Any]:
                                           "A1_evidence_sha256": A1_DEPLOYMENT_EVIDENCE_SHA256},
                            "image": f"{isolation.IMAGE_REPOSITORY}@{isolation.IMAGE_DIGEST}",
                            "image_id": isolation.IMAGE_ID, "podman_version": isolation.PODMAN_VERSION,
-                           "private_tmpfs": list(isolation.PRIVATE_TMPFS), "device_nodes": "no exemption (owner, "
-                                                                                          "2026-10-21)",
+                           "private_tmpfs": list(isolation.PRIVATE_TMPFS),
+                           "device_nodes": {"contract": device_contract.CONTRACT,
+                                            "admissible": {path: rdev for path, (rdev, _gid, _kind)
+                                                           in device_contract.DEVICES.items()},
+                                            "rule": "per device: admitted only when its STATELESS_DEVICE evidence "
+                                                    "passes in every card, the selected-message trials and the "
+                                                    "positive controls; otherwise masked where possible, else "
+                                                    "blocking (owner, 2026-10-21; superseding 'no exemption')"},
+                           "kernel_release": isolation.KERNEL_RELEASE,
                            "evidence": DEPLOYMENT_EVIDENCE, "evidence_sha256": DEPLOYMENT_EVIDENCE_SHA256,
                            "rule": "every formal card through isolation.formal_launcher(): a brand-new rootless Podman "
                                    "container, refused where unavailable; before admission formal.deployment_problems() "

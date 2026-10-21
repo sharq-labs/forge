@@ -7,8 +7,9 @@ verified for N-1 only when per-card evidence shows, for three fresh cards A, B a
   runtime view the operator read from the host (``/proc/<container pid>/mountinfo``), all reconciled row for row;
 * every writable mount is a declared private tmpfs (``writable_targets``) and nothing else; the source tree and the
   Python environment are read-only binds; no writable mount is shared, host-backed, Windows-backed, stacked under
-  another mount or undeclared. A writable device or pseudo-file mount is blocking (owner, 2026-10-21: no device-node
-  exemption);
+  another mount or undeclared. A writable device or pseudo-file mount is blocking, except a device that its own
+  STATELESS_DEVICE contract (:mod:`.device_contract`, owner 2026-10-21) admitted on the executed evidence of every card,
+  the selected-message trials and the positive controls; each device is admitted or blocked on its own;
 * every READ-ONLY mount, whatever the operator's backing label, is on an allowlist (:func:`_read_only_admitted`):
   the image root; the read-only ``/dev`` (a fresh tmpfs); the card's own ``/proc``, ``/sys`` and cgroup (root "/")
   filesystems with Podman's masks over them (empty ``size=0k`` tmpfs on their own device, or /dev/null) and its
@@ -24,13 +25,16 @@ verified for N-1 only when per-card evidence shows, for three fresh cards A, B a
   network but loopback, was removed after the card and could not be restarted;
 * the card's /proc and /sys are its own (MINOR-A): through its /proc the card is PID 1 of a PID namespace that is
   not the operator's (NSpid exactly ["1"]), and its /proc and /sys mounts are not on the operator's procfs and sysfs
-  devices; a positive control shows that a host procfs bound into a container IS detected (more than one NSpid);
-* the card's recorded provenance equals the expected deployment: image, Podman version, rootless mode, launcher,
-  probe, Containerfile and source revision (a full commit id). What makes the expected launcher, probe and source the
+  devices; a card without a /proc or /sys row, or an operator record that is missing or malformed, is incomplete
+  evidence, never a pass; a positive control shows that a host procfs bound into a container IS detected, by BOTH
+  signals (the host PID before "1" in NSpid, and more than one process);
+* the card's recorded provenance equals the expected deployment: image, Podman version, kernel release, rootless
+  mode, launcher, probe, Containerfile and source revision (a full commit id). What makes the expected launcher, probe and source the
   preregistered ones is the identity check of the formal driver, not this validator.
 
-:func:`validate_container_evidence` returns ``{"status": "PASS", "reasons": []}`` or ``{"status": "BLOCKED",
-"reasons": [...], "details": [...]}``. It never raises on malformed evidence, and it is deterministic. It decides
+:func:`validate_container_evidence` returns ``{"status": "PASS", "reasons": [], "devices": {...}}`` or
+``{"status": "BLOCKED", "reasons": [...], "details": [...], "devices": {...}}``, ``devices`` holding one
+STATELESS_DEVICE verdict per admissible device. It never raises on malformed evidence, and it is deterministic. It decides
 nothing about the twelve attack channels (:mod:`.deployment_attacks`); a deployment needs both.
 """
 
@@ -40,7 +44,7 @@ import posixpath
 import re
 from typing import Any, Mapping
 
-SCHEMA = "checkpoint2.container_evidence.contract/2"
+SCHEMA = "checkpoint2.container_evidence.contract/3"
 PHASES = ("A", "B", "C")
 CAPABILITY_FIELDS = ("CapInh", "CapPrm", "CapEff", "CapBnd", "CapAmb")
 PATH_KEYS = ("HOME", "TMPDIR", "XDG_CACHE_HOME", "PYTHONPYCACHEPREFIX")
@@ -48,11 +52,12 @@ ROW_KEYS = ("id", "parent", "device", "root", "target", "options", "optional", "
 RUNTIME_KEYS = ROW_KEYS[:-1]
 CARD_KEYS = ("phase", "id", "provenance", "mounts", "mountinfo", "runtime_mounts", "argv", "paths", "status",
              "actual_image_digest", "actual_image_id", "ipc", "network", "writes", "canaries", "restart", "removed",
-             "pid_namespace", "host_devices")
+             "pid_namespace", "host_devices", "devices")
 DEVICE_ID = re.compile(r"[0-9]+:[0-9]+")
+PID_NS = re.compile(r"pid:\[[0-9]+\]")
 EXPECTED_KEYS = ("source_sha", "image_digest", "image_id", "podman_version", "containerfile_sha256",
                  "launcher_sha256", "probe_sha256", "writable_targets", "source_host", "venv_host", "source_path",
-                 "venv_path", "rootless")
+                 "venv_path", "rootless", "kernel_release")
 CONTROL_KEYS = ("a_write", "a_token", "b_read", "b_seen", "a_mount", "b_mount", "a_actual", "b_actual", "a_path",
                 "b_path", "a_image_digest", "b_image_digest")
 #: the exact options every card container is created with (D5-A1b); a missing one is a configuration mismatch
@@ -282,28 +287,36 @@ def _read_only_admitted(row: Mapping[str, Any], by_target: Mapping[str, list[dic
     return False
 
 
-def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings, phase: str,
-            bound: Mapping[str, str] | None) -> dict[str, str]:
-    """Reconcile the three inventories and classify every writable row; return {target: mount id} of the declared
-    private mounts (empty when the inventory itself cannot be trusted)."""
+def trusted_rows(card: Mapping[str, Any]) -> tuple[list[dict[str, Any]] | None, str]:
+    """The card's mount table when its raw, parsed and runtime inventories reconcile; (None, why) otherwise."""
     try:
-        parsed = parse_mountinfo(card["mountinfo"]) if isinstance(card["mountinfo"], str) else None
+        parsed = parse_mountinfo(card["mountinfo"]) if isinstance(card.get("mountinfo"), str) else None
     except ValueError as exc:
-        found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: raw inventory unreadable ({str(exc)[:80]})")
-        return {}
-    rows, runtime = card["mounts"], card["runtime_mounts"]
+        return None, f"raw inventory unreadable ({str(exc)[:80]})"
+    rows, runtime = card.get("mounts"), card.get("runtime_mounts")
     if parsed is None or not isinstance(rows, list) or not isinstance(runtime, list):
-        found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: inventory missing")
-        return {}
+        return None, "inventory missing"
     clean = [{k: r.get(k) for k in ROW_KEYS} if isinstance(r, Mapping) else None for r in rows]
     if clean != parsed:
-        found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: parsed rows differ from the raw inventory")
-        return {}
+        return None, "parsed rows differ from the raw inventory"
     if len(runtime) != len(parsed) or any(
             not isinstance(rt, Mapping) or any(rt.get(k) != row[k] for k in _reconciled(row))
             for rt, row in zip(runtime, parsed)):
-        found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: the runtime view differs from the card's inventory")
+        return None, "the runtime view differs from the card's inventory"
+    return parsed, ""
+
+
+def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings, phase: str,
+            bound: Mapping[str, str] | None, verdicts: Mapping[str, Mapping[str, Any]]) -> dict[str, str]:
+    """Reconcile the three inventories and classify every writable row; return {target: mount id} of the declared
+    private mounts (empty when the inventory itself cannot be trusted). ``verdicts``: the STATELESS_DEVICE verdicts."""
+    from . import device_contract  # noqa: PLC0415 - the probe loads this module by path, without its package
+
+    parsed, why = trusted_rows(card)
+    if parsed is None:
+        found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: {why}")
         return {}
+    runtime = card["runtime_mounts"]
     targets = list(expected["writable_targets"])
     by_target: dict[str, list[dict[str, Any]]] = {}
     devices: dict[str, int] = {}
@@ -324,8 +337,9 @@ def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findin
     for target, key in (("/proc", "proc"), ("/sys", "sys")):
         if any(r["device"] == host.get(key) for r in by_target.get(target, [])):
             found.add("HOST_PSEUDO_FS_VISIBLE", f"{phase}: {target} is on the operator's own {key} device")
-    if not by_target.get("/proc"):
-        found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: no /proc mount")
+    for target in ("/proc", "/sys"):              # their ownership cannot be shown without the row: never a pass
+        if not by_target.get(target):
+            found.add("EVIDENCE_INCOMPLETE", f"{phase}: no {target} mount")
     private: dict[str, str] = {}
     for row, rt in zip(parsed, runtime):
         if "rw" not in row["options"]:
@@ -341,8 +355,15 @@ def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findin
         backing = rt.get("backing")
         if row["fstype"] in WINDOWS_FSTYPES or backing == "windows" or re.match(r"^[A-Za-z]:", row["source"]):
             found.add("WINDOWS_WRITABLE_MOUNT", where + " is backed by Windows")
+        elif row["fstype"] == "devtmpfs" and row["target"] in device_contract.DEVICES:
+            if verdicts.get(row["target"], {}).get("status") == device_contract.ADMITTED:
+                continue                              # admitted by its own STATELESS_DEVICE evidence
+            found.add("DEVICE_NODE_WRITABLE_MOUNT", where + " is a writable device its STATELESS_DEVICE contract did "
+                                                            "not admit")
         elif row["fstype"] in DEVICE_FSTYPES:
             found.add("DEVICE_NODE_WRITABLE_MOUNT", where + " is a writable device or pseudo-file mount")
+            if row["fstype"] == "devtmpfs":
+                found.add("UNKNOWN_DEVICE_PATH", where + " is not an admissible device path")
         elif backing != "container" or row["fstype"] != "tmpfs" or row["root"] != "/":
             found.add("HOST_WRITABLE_MOUNT", where + " is not a fresh container tmpfs")
         if row["target"] not in targets:
@@ -426,9 +447,14 @@ def _controls(report: Mapping[str, Any], expected: Mapping[str, Any], found: _Fi
     hostproc = controls.get("host_procfs")
     if not isinstance(hostproc, Mapping):
         found.add("EVIDENCE_INCOMPLETE", "no host-procfs control")
-    elif (not isinstance(hostproc.get("nspid"), list) or len(hostproc["nspid"]) < 2
-          or not isinstance(hostproc.get("visible_processes"), int) or hostproc["visible_processes"] < 2):
-        found.add("PID_NAMESPACE_CONTROL_FAILED", "a host procfs bound into a container was not told apart")
+    else:
+        nspid, visible = hostproc.get("nspid"), hostproc.get("visible_processes")
+        host_pid = (isinstance(nspid, list) and len(nspid) >= 2 and all(isinstance(p, str) and p.isdigit() for p in nspid)
+                    and nspid[-1] == "1" and nspid[0] != "1")
+        many = isinstance(visible, int) and not isinstance(visible, bool) and visible >= 2
+        if not (host_pid and many):               # BOTH signals: neither one alone tells a host procfs apart
+            found.add("PID_NAMESPACE_CONTROL_FAILED", f"a host procfs bound into a container was not told apart "
+                                                      f"(NSpid {nspid!r}, {visible!r} processes)")
     shared = controls.get("shared_canary")
     if not isinstance(shared, Mapping):
         found.add("EVIDENCE_INCOMPLETE", "no shared-volume control")
@@ -452,7 +478,8 @@ def _controls(report: Mapping[str, Any], expected: Mapping[str, Any], found: _Fi
     return [i for i in ids if isinstance(i, str)]
 
 
-def _card(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings, phase: str) -> dict[str, str]:
+def _card(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings, phase: str,
+          verdicts: Mapping[str, Mapping[str, Any]]) -> dict[str, str]:
     provenance = card["provenance"]
     if not isinstance(provenance, Mapping) or set(provenance) != set(EXPECTED_KEYS) or any(
             provenance[k] != expected[k] for k in EXPECTED_KEYS):
@@ -487,11 +514,12 @@ def _card(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings
             found.add("PATH_OUTSIDE_PRIVATE_MOUNTS", f"{phase}: {key}={paths.get(key)!r}")
     pid = card["pid_namespace"] if isinstance(card["pid_namespace"], Mapping) else {}
     host = card["host_devices"] if isinstance(card["host_devices"], Mapping) else {}
-    if not all(isinstance(host.get(k), str) and DEVICE_ID.fullmatch(host[k]) for k in ("proc", "sys")) \
-            or not isinstance(host.get("pid_ns"), str) or not host["pid_ns"].startswith("pid:["):
-        found.add("EVIDENCE_INCOMPLETE", f"{phase}: the operator's procfs, sysfs and PID namespace are not recorded")
+    if not all(isinstance(host.get(k), str) and DEVICE_ID.fullmatch(host[k]) for k in ("proc", "sys", "devtmpfs")) \
+            or not isinstance(host.get("pid_ns"), str) or not PID_NS.fullmatch(host["pid_ns"]):
+        found.add("EVIDENCE_INCOMPLETE", f"{phase}: the operator's procfs, sysfs, devtmpfs and PID namespace are not "
+                                         f"recorded as device ids and a namespace ({str(dict(host))[:200]})")
     elif (pid.get("pid") != 1 or pid.get("nspid") != ["1"] or not isinstance(pid.get("ns"), str)
-          or not pid["ns"].startswith("pid:[") or pid["ns"] == host["pid_ns"]
+          or not PID_NS.fullmatch(pid["ns"]) or pid["ns"] == host["pid_ns"]
           or not isinstance(pid.get("visible_processes"), int) or pid["visible_processes"] < 1):
         found.add("PID_NAMESPACE_NOT_PRIVATE", f"{phase}: through its /proc the card is not PID 1 of its own PID "
                                                f"namespace ({dict(pid)})")
@@ -501,52 +529,133 @@ def _card(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings
     if card["removed"] is not True:
         found.add("CONTAINER_NOT_REMOVED", f"{phase}: the container outlived its card")
     bound = _argv(card, expected, found, phase)
-    return _mounts(card, expected, found, phase, bound)
+    return _mounts(card, expected, found, phase, bound, verdicts)
 
 
 def validate_container_evidence(report: Any, *, expected: Any) -> dict[str, Any]:
     """The D5-A1b verdict on one evidence report. Deterministic; never raises on malformed input."""
+    from . import device_contract  # noqa: PLC0415
+
     found = _Findings()
+    devices: dict[str, Any] = {}
     try:
-        _validate(report, expected, found)
+        devices = _validate(report, expected, found)
     except Exception as exc:  # noqa: BLE001 - malformed evidence is a blocked verdict, never a crash
         found.add("EVIDENCE_INCOMPLETE", f"unreadable evidence ({type(exc).__name__})")
+    for path in device_contract.DEVICES:
+        if not isinstance(devices.get(path), Mapping):
+            devices[path] = {"status": device_contract.BLOCKED, "contract": device_contract.CONTRACT,
+                             "reasons": ["NOT_ASSESSED"]}
     if not found.reasons:
-        return {"status": "PASS", "reasons": []}
-    return {"status": "BLOCKED", "reasons": sorted(found.reasons), "details": sorted(found.details)}
+        return {"status": "PASS", "reasons": [], "devices": devices}
+    return {"status": "BLOCKED", "reasons": sorted(found.reasons), "details": sorted(found.details),
+            "devices": devices}
 
 
-def _validate(report: Any, expected: Any, found: _Findings) -> None:
+def _trial_cards(report: Mapping[str, Any], found: _Findings) -> tuple[dict[str, Mapping[str, Any]], list[dict]]:
+    """The selected-message trial cards (each a complete card of its own) and the trials by card label."""
+    trials = report.get("device_trials")
+    if not isinstance(trials, list):
+        found.add("EVIDENCE_INCOMPLETE", "no selected-message device trials")
+        return {}, []
+    cards: dict[str, Mapping[str, Any]] = {}
+    out = []
+
+    def label(entry: Any) -> Any:
+        if isinstance(entry, str):
+            return entry                              # one of A, B, C
+        if not isinstance(entry, Mapping) or not isinstance(entry.get("phase"), str):
+            return None
+        name = entry["phase"]
+        if name in PHASES or name in cards:
+            found.add("CONTAINER_REUSED", f"trial card label {name!r} is used twice")
+            return None
+        cards[name] = entry
+        return name
+
+    for trial in trials:
+        if not isinstance(trial, Mapping):
+            out.append({})
+            continue
+        decoders = trial.get("decoders") if isinstance(trial.get("decoders"), list) else []
+        out.append({"bit": trial.get("bit"), "messages": trial.get("messages"), "encoder": label(trial.get("encoder")),
+                    "decoders": [label(d) for d in decoders]})
+    return cards, out
+
+
+def _randomness(report: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings) -> bool:
+    screen = report.get("randomness_policy")
+    if (not isinstance(screen, Mapping) or not isinstance(screen.get("files"), Mapping) or not screen["files"]
+            or not isinstance(screen.get("problems"), list) or screen.get("source_sha") != expected["source_sha"]):
+        found.add("RANDOMNESS_POLICY_VIOLATED", "no scientific-randomness screen of the expected source")
+        return False
+    if screen["problems"]:
+        found.add("RANDOMNESS_POLICY_VIOLATED", f"{len(screen['problems'])} problem(s): {screen['problems'][:3]}")
+        return False
+    return True
+
+
+def _validate(report: Any, expected: Any, found: _Findings) -> dict[str, Any]:
+    from . import device_contract  # noqa: PLC0415
+
     if not isinstance(expected, Mapping) or any(k not in expected for k in EXPECTED_KEYS):
         found.add("EVIDENCE_INCOMPLETE", "no complete expected deployment to compare with")
-        return
+        return {}
     if expected["rootless"] is not True:
         found.add("PROVENANCE_MISMATCH", "the expected deployment is not rootless")
     if not isinstance(expected["source_sha"], str) or not HEX40.fullmatch(expected["source_sha"]):
         found.add("PROVENANCE_MISMATCH", "the expected source revision is not a full commit id")
     if not isinstance(report, Mapping) or not report:
         found.add("EVIDENCE_INCOMPLETE", "empty report")
-        return
-    if report.get("schema") != SCHEMA:
+        return {}
+    if report.get("schema") != SCHEMA:              # an older contract is never upgraded in place
         found.add("SCHEMA_MISMATCH", f"schema {report.get('schema')!r}")
+    if report.get("device_contract") != device_contract.CONTRACT:
+        found.add("DEVICE_CONTRACT_MISMATCH", f"device contract {report.get('device_contract')!r}")
     cards = report.get("cards")
     if not isinstance(cards, list) or [c.get("phase") if isinstance(c, Mapping) else None for c in cards] != list(PHASES):
         found.add("EVIDENCE_INCOMPLETE", "the report does not hold exactly the cards A, B and C")
         cards = [c for c in cards if isinstance(c, Mapping)] if isinstance(cards, list) else []
+    trial_cards, trials = _trial_cards(report, found)
     complete: dict[str, Mapping[str, Any]] = {}
-    for card in cards:
+    for card in [*cards, *trial_cards.values()]:
         phase = str(card.get("phase"))
         missing = [k for k in CARD_KEYS if k not in card]
         if missing:
             found.add("EVIDENCE_INCOMPLETE", f"{phase}: missing {missing}")
             continue
         complete[phase] = card
-    private = {phase: _card(card, expected, found, phase) for phase, card in complete.items()}
-    if complete:
-        _canaries(complete, private, expected, found)
-    ids = [card.get("id") for card in cards]
+    host_records = {repr(sorted(c["host_devices"].items())) if isinstance(c["host_devices"], Mapping) else None
+                    for c in complete.values()}
+    if len(host_records) > 1:
+        found.add("EVIDENCE_INCOMPLETE", "the operator's device record differs between cards")
+    controls = report.get("positive_controls") if isinstance(report.get("positive_controls"), Mapping) else {}
+    rows = {phase: trusted_rows(card)[0] for phase, card in complete.items()}
+    devices = device_contract.assess(complete, rows, trials, controls, masked=MASKED_PATHS,
+                                     kernel=expected["kernel_release"], found=found)
+    if set(PHASES) - set(complete) or len(complete) != len(cards) + len(trial_cards):
+        for path in device_contract.DEVICES:      # a card whose evidence is incomplete admits no device
+            devices[path] = {"status": device_contract.BLOCKED, "contract": device_contract.CONTRACT,
+                             "reasons": sorted({*devices[path]["reasons"], "DEVICE_EVIDENCE_INCOMPLETE"})}
+    if not _randomness(report, expected, found):
+        for path in device_contract.RNG:
+            devices[path] = {"status": device_contract.BLOCKED, "contract": device_contract.CONTRACT,
+                             "reasons": sorted({*devices[path]["reasons"], "RANDOMNESS_POLICY_VIOLATED"})}
+    private = {phase: _card(card, expected, found, phase, devices) for phase, card in complete.items()}
+    abc = {phase: card for phase, card in complete.items() if phase in PHASES}
+    if abc:
+        _canaries(abc, {p: private[p] for p in abc}, expected, found)
+    ids = [card.get("id") for card in [*cards, *trial_cards.values()]]
     control_ids = _controls(report, expected, found)
-    if len(set(map(str, ids))) != len(ids) or set(map(str, ids)) & set(control_ids):
+    channel = controls.get("device_channel") if isinstance(controls.get("device_channel"), list) else []
+    control_ids += [c.get(k) for c in channel if isinstance(c, Mapping) for k in ("a_id", "b_id")
+                    if isinstance(c.get(k), str)]
+    tty = controls.get("tty") if isinstance(controls.get("tty"), Mapping) else {}
+    if isinstance(tty.get("id"), str):
+        control_ids.append(tty["id"])
+    if (len(set(map(str, ids))) != len(ids) or set(map(str, ids)) & set(control_ids)
+            or len(set(control_ids)) != len(control_ids)):
         found.add("CONTAINER_REUSED", "two cards (or a card and a control) share a container")
     if not all(isinstance(i, str) and i for i in ids):
         found.add("EVIDENCE_INCOMPLETE", "a card has no container id")
+    return devices

@@ -17,9 +17,13 @@ Podman provides the rootless Linux namespace boundary, and the scientific deploy
   :func:`.container_evidence.validate_container_evidence`; :func:`.formal.deployment_problems` runs it before every
   formal admission).
 
-The owner decided on 2026-10-21 that no device-node exemption applies: rootless Podman bind-mounts six host character
-devices (``/dev/null``, ``zero``, ``full``, ``random``, ``urandom``, ``tty``) read-write into every container, and
-these stay blocking. D5 stays NOT_PROVEN until complete evidence passes and is pinned.
+Rootless Podman bind-mounts six host character devices (``/dev/null``, ``zero``, ``full``, ``random``, ``urandom``,
+``tty``) read-write into every container. The owner first kept them blocking (2026-10-21, strict), then on the same day
+authorised a bounded per-device policy: each may be admitted only under the STATELESS_DEVICE contract
+(:mod:`.device_contract`), on executed evidence, device by device. The evidence therefore also holds, per card, the
+device observation of :mod:`.container_probe`; four more encoder/decoder pairs of fresh cards for the selected-message
+trials; a shared-file channel control that must carry the bit; and a container given a terminal that must be told
+apart. D5 stays NOT_PROVEN until complete evidence passes and is pinned.
 
 Residual, disclosed: the containers share the host kernel (and on WSL the utility VM); the tree and environment are
 readable (they must hold no secret; ``formal.main`` refuses operator files there); the certified escrow stays in the
@@ -45,8 +49,9 @@ import threading
 import time
 from typing import Any, Mapping, Sequence
 
-from .container_evidence import (DEV_READ_ONLY, SCHEMA as CONTAINER_SCHEMA, TMPFS_OPTIONS, parse_mountinfo,
-                                 validate_container_evidence)
+from . import container_probe, device_contract
+from .container_evidence import (DEV_READ_ONLY, MASKED_PATHS, SCHEMA as CONTAINER_SCHEMA, TMPFS_OPTIONS,
+                                 parse_mountinfo, validate_container_evidence)
 
 __all__ = ["DeploymentUnavailable", "NamespaceLauncher", "available", "collect_container_evidence",
            "expected_evidence", "formal_launcher", "kept_paths", "operator_path_problems",
@@ -54,7 +59,7 @@ __all__ = ["DeploymentUnavailable", "NamespaceLauncher", "available", "collect_c
 
 DECISION = "D5-A1b"
 DEPLOYMENT = "rootless_podman_per_card"
-EVIDENCE_SCHEMA = "forge.genesis_lite.v0_3/deployment_evidence/3"
+EVIDENCE_SCHEMA = "forge.genesis_lite.v0_3/deployment_evidence/4"
 HERE = pathlib.Path(__file__).resolve().parent
 PROBE = HERE / "container_probe.py"
 CONTAINERFILE = HERE / "container" / "Containerfile"
@@ -63,6 +68,8 @@ IMAGE_REPOSITORY = "localhost/forge-card"
 IMAGE_DIGEST = "sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261"
 IMAGE_ID = "2d2651e4d002c518bb669cb044209897ff02e33318a4b92ac185cf23be33f532"
 PODMAN_VERSION = "4.9.3"
+#: the formal machine's kernel (D7): the device semantics the STATELESS_DEVICE contract measures are the kernel's
+KERNEL_RELEASE = "6.6.87.2-microsoft-standard-WSL2"
 PRIVATE_TMPFS = ("/tmp", "/var/tmp", "/run", "/dev/shm")
 WORKDIR = "/tmp"
 CARD_PATHS = {"HOME": "/tmp/home", "TMPDIR": "/tmp", "XDG_CACHE_HOME": "/tmp/cache", "PYTHONPYCACHEPREFIX": "/tmp/pycache"}
@@ -80,6 +87,9 @@ MARKER = "gl-n1-canary"
 #: a TEST-NET-1 address (RFC 5737): never routed, so a card's connection attempt cannot leave the machine
 EXTERNAL_TARGET = ("192.0.2.1", 9)
 CONTROL_FSTYPES = ("tmpfs", "ext4", "xfs", "btrfs", "overlay")
+#: the selected bits of the encoder/decoder trials after card A's (which selects 1): both bits, more than once
+TRIAL_BITS = (0, 1, 0, 1)
+CONTROL_BITS = (0, 1)
 
 
 class DeploymentUnavailable(RuntimeError):
@@ -212,7 +222,7 @@ def expected_evidence(launcher: NamespaceLauncher) -> dict[str, Any]:
             "podman_version": PODMAN_VERSION, "containerfile_sha256": _sha_file(CONTAINERFILE),
             "launcher_sha256": _sha_file(pathlib.Path(__file__)), "probe_sha256": _sha_file(PROBE),
             "writable_targets": list(PRIVATE_TMPFS), "source_host": source, "venv_host": venv,
-            "source_path": source, "venv_path": venv, "rootless": True}
+            "source_path": source, "venv_path": venv, "rootless": True, "kernel_release": KERNEL_RELEASE}
 
 
 def measured_provenance(launcher: NamespaceLauncher) -> dict[str, Any]:
@@ -225,7 +235,8 @@ def measured_provenance(launcher: NamespaceLauncher) -> dict[str, Any]:
     return {"source_sha": _git_head(source), "image_digest": digest, "image_id": image_id, "podman_version": version,
             "containerfile_sha256": _sha_file(CONTAINERFILE), "launcher_sha256": _sha_file(pathlib.Path(__file__)),
             "probe_sha256": _sha_file(PROBE), "writable_targets": list(PRIVATE_TMPFS), "source_host": source,
-            "venv_host": venv, "source_path": source, "venv_path": venv, "rootless": rootless}
+            "venv_host": venv, "source_path": source, "venv_path": venv, "rootless": rootless,
+            "kernel_release": platform.release()}
 
 
 def _backing(row: Mapping[str, Any], keep: Sequence[str]) -> str:
@@ -307,35 +318,128 @@ def _observe(launcher: NamespaceLauncher, config: Mapping[str, Any], *,
             "exit_code": proc.returncode}
 
 
+def _device_config(channel: Mapping[str, Any] | None = None, *, walk: bool = True) -> dict[str, Any]:
+    """What the probe needs for the STATELESS_DEVICE observation (and one side of a trial)."""
+    return {"contract": device_contract.CONTRACT, "masked": list(MASKED_PATHS), "rng": list(device_contract.RNG),
+            "read_size": device_contract.READ_SIZE, "channel": dict(channel) if channel else None, "walk": walk}
+
+
+def _encoder(message: str) -> dict[str, Any]:
+    return {"role": "encode", "message": message, "paths": [*device_contract.SINKS, "/dev/tty"]}
+
+
+def _decoder(messages: list[str]) -> dict[str, Any]:
+    return {"role": "decode", "messages": list(messages), "paths": list(device_contract.SINKS)}
+
+
+def _card_record(phase: str, seen: Mapping[str, Any], provenance: Mapping[str, Any],
+                 host_devices: Mapping[str, Any]) -> dict[str, Any]:
+    obs = seen["observation"]
+    return {"phase": phase, "id": seen["id"], "provenance": dict(provenance), "mounts": obs["mounts"],
+            "mountinfo": obs["mountinfo"], "runtime_mounts": seen["runtime_mounts"],
+            "argv": seen["argv"], "paths": obs["paths"], "status": obs["status"],
+            "actual_image_digest": seen["actual_image_digest"], "actual_image_id": seen["actual_image_id"],
+            "ipc": seen["ipc"], "network": obs["network"], "writes": obs["writes"],
+            "canaries": obs["canaries"], "restart": seen["restart"], "removed": seen["removed"],
+            "pid_namespace": obs.get("pid_namespace"), "host_devices": dict(host_devices),
+            "devices": obs.get("devices"), "name": seen["name"], "containerenv": obs.get("containerenv"),
+            "uid": obs.get("uid"), "runtime_mountinfo": seen["runtime_mountinfo"], "exit_code": seen["exit_code"]}
+
+
+def _tty_control(launcher: NamespaceLauncher) -> dict[str, Any]:
+    """The tty positive control: the probe in a container GIVEN a terminal (``--tty``, Podman's default /dev, which a
+    terminal needs). Its device observation must fail the STATELESS_DEVICE tty rules."""
+    import pty  # noqa: PLC0415 - Linux only
+    import select  # noqa: PLC0415
+
+    name = new_card_name()
+    with tempfile.TemporaryDirectory(prefix="gl-tty-control-") as d:
+        cidfile = str(pathlib.Path(d) / "cid")
+        config = json.dumps({"devices": _device_config(walk=False), "devices_only": True})
+        argv = [_podman(), "run", "-t", *FINAL_FLAGS, "--cidfile", cidfile]
+        for path in launcher.keep:
+            argv += ["--volume", f"{path}:{path}:ro"]
+        argv += ["--name", name, "--label", f"{CARD_LABEL}={name}", f"{IMAGE_REPOSITORY}@{IMAGE_DIGEST}",
+                 sys.executable, "-I", str(PROBE), "--config", config]
+        master, slave = pty.openpty()
+        try:
+            proc = subprocess.Popen(argv, stdin=slave, stdout=slave, stderr=slave, start_new_session=True,
+                                    env={**os.environ, **launcher.client_env()})
+        finally:
+            os.close(slave)
+        out = b""
+        try:
+            deadline = time.monotonic() + 120
+            while time.monotonic() < deadline:
+                ready, _, _ = select.select([master], [], [], 5)
+                if not ready:
+                    if proc.poll() is not None:
+                        break
+                    continue
+                try:
+                    chunk = os.read(master, 65536)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                out += chunk
+            proc.wait(timeout=60)
+        finally:
+            os.close(master)
+            if proc.poll() is None:
+                proc.kill()
+                proc.wait(timeout=30)
+            launcher.remove(name)
+        cid = pathlib.Path(cidfile).read_text().strip() if pathlib.Path(cidfile).is_file() else None
+    devices = None
+    for line in out.decode(errors="replace").splitlines():
+        line = line.strip()
+        if line.startswith("{"):
+            try:
+                devices = json.loads(line).get("devices")
+            except ValueError:
+                continue
+    exists = _run([_podman(), "container", "exists", name])
+    return {"argv": argv, "name": name, "id": cid, "devices": devices, "exit_code": proc.returncode,
+            "removed": exists.returncode == 1}
+
+
 def collect_container_evidence(launcher: NamespaceLauncher | None = None) -> dict[str, Any]:
     """N-1 evidence on this machine: cards A, B and C in three fresh containers (A plants a token in every private
-    mount, B and C look for it), then the two positive controls. Plants nothing outside the containers except the
-    shared control directory, which is removed."""
+    mount and encodes a selected message into every admissible device, B and C look for both), four more fresh
+    encoder/decoder pairs, then the positive controls. Plants nothing outside the containers except the shared control
+    directories, which are removed."""
     launcher = launcher or formal_launcher()
     source, venv = launcher.keep[0], launcher.keep[-1]
     provenance = measured_provenance(launcher)
     host_devices = host_pseudo_devices()
     marker = f"{MARKER}-{secrets.token_hex(6)}"
+
+    def pair() -> list[str]:
+        return [secrets.token_hex(32), secrets.token_hex(32)]
+
     server, address = _listener()
     try:
         common = {"marker": marker, "targets": list(PRIVATE_TMPFS),
                   "read_only_files": {"source": str(PROBE), "venv": _venv_file(venv)},
                   "network_targets": {"host_listener": list(address), "external": list(EXTERNAL_TARGET)}}
-        cards, tokens = [], {}
+        cards, tokens, first = [], {}, pair()
         for phase in ("A", "B", "C"):
-            seen = _observe(launcher, {**common, "phase": phase, "tokens": tokens})
-            obs = seen["observation"]
+            channel = _encoder(first[1]) if phase == "A" else _decoder(first)
+            seen = _observe(launcher, {**common, "phase": phase, "tokens": tokens,
+                                       "devices": _device_config(channel)})
             if phase == "A":
-                tokens = {c["target"]: c.get("token") for c in obs["canaries"]}
-            cards.append({"phase": phase, "id": seen["id"], "provenance": dict(provenance), "mounts": obs["mounts"],
-                          "mountinfo": obs["mountinfo"], "runtime_mounts": seen["runtime_mounts"],
-                          "argv": seen["argv"], "paths": obs["paths"], "status": obs["status"],
-                          "actual_image_digest": seen["actual_image_digest"], "actual_image_id": seen["actual_image_id"],
-                          "ipc": seen["ipc"], "network": obs["network"], "writes": obs["writes"],
-                          "canaries": obs["canaries"], "restart": seen["restart"], "removed": seen["removed"],
-                          "pid_namespace": obs.get("pid_namespace"), "host_devices": dict(host_devices),
-                          "name": seen["name"], "containerenv": obs.get("containerenv"), "uid": obs.get("uid"),
-                          "runtime_mountinfo": seen["runtime_mountinfo"], "exit_code": seen["exit_code"]})
+                tokens = {c["target"]: c.get("token") for c in seen["observation"]["canaries"]}
+            cards.append(_card_record(phase, seen, provenance, host_devices))
+        trials: list[dict[str, Any]] = [{"bit": 1, "messages": first, "encoder": "A", "decoders": ["B", "C"]}]
+        for n, bit in enumerate(TRIAL_BITS, start=1):
+            messages = pair()
+            trial = {**common, "targets": [], "phase": "B"}
+            enc = _observe(launcher, {**trial, "devices": _device_config(_encoder(messages[bit]))})
+            dec = _observe(launcher, {**trial, "devices": _device_config(_decoder(messages))})
+            trials.append({"bit": bit, "messages": messages,
+                           "encoder": _card_record(f"T{n}E", enc, provenance, host_devices),
+                           "decoders": [_card_record(f"T{n}D", dec, provenance, host_devices)]})
         with socket.create_connection(address, timeout=3):
             host_listener = "REACHED"
     finally:
@@ -351,25 +455,58 @@ def collect_container_evidence(launcher: NamespaceLauncher | None = None) -> dic
         b_canary = b["observation"]["canaries"][0]
     finally:
         shutil.rmtree(shared_dir, ignore_errors=True)
+    device_channel = []
+    for bit in CONTROL_BITS:                  # the same encoder/decoder through a deliberately shared file
+        messages = pair()
+        channel_dir = tempfile.mkdtemp(prefix="gl-n1-channel-")
+        try:
+            pathlib.Path(channel_dir, "channel").write_bytes(b"")
+            volume = [f"{channel_dir}:/shared:rw"]
+            control = {"marker": marker, "targets": [], "phase": "B"}
+            enc = _observe(launcher, {**control, "devices": _device_config(
+                {"role": "encode", "message": messages[bit], "paths": ["/shared/channel"]}, walk=False)},
+                extra_volumes=volume)
+            dec = _observe(launcher, {**control, "devices": _device_config(
+                {"role": "decode", "messages": messages, "paths": ["/shared/channel"]}, walk=False)},
+                extra_volumes=volume)
+        finally:
+            shutil.rmtree(channel_dir, ignore_errors=True)
+        device_channel.append({"bit": bit, "messages": messages, "path": "/shared/channel",
+                               "encoder": (enc["observation"].get("devices") or {}).get("channel"),
+                               "decoder": (dec["observation"].get("devices") or {}).get("channel"),
+                               "a_id": enc["id"], "b_id": dec["id"]})
     hostproc = _observe(launcher, {"pid_probe_path": "/hostproc"}, extra_volumes=["/proc:/hostproc:ro"])
+    tty = _tty_control(launcher)
+    screen = device_contract.scientific_randomness_problems(pathlib.Path(source))
     shared = {"a_write": a_canary.get("write"), "a_token": a_canary.get("token"), "b_read": b_canary.get("read"),
               "b_seen": b_canary.get("seen"), "a_mount": a_canary.get("expected_mount"),
               "b_mount": b_canary.get("expected_mount"), "a_actual": a_canary.get("actual_mount"),
               "b_actual": b_canary.get("actual_mount"), "a_id": a["id"], "b_id": b["id"],
               "a_path": a_canary.get("path"), "b_path": b_canary.get("path"),
               "a_image_digest": a["actual_image_digest"], "b_image_digest": b["actual_image_digest"]}
-    return {"schema": CONTAINER_SCHEMA, "cards": cards,
+    return {"schema": CONTAINER_SCHEMA, "device_contract": device_contract.CONTRACT, "cards": cards,
+            "device_trials": trials,
             "positive_controls": {"host_listener": host_listener, "shared_canary": shared,
-                                  "host_procfs": {**hostproc["observation"]["pid_namespace"], "id": hostproc["id"]}}}
+                                  "host_procfs": {**hostproc["observation"]["pid_namespace"], "id": hostproc["id"]},
+                                  "device_channel": device_channel, "tty": tty},
+            "randomness_policy": {**screen, "source_sha": _git_head(source)}}
 
 
-def host_pseudo_devices() -> dict[str, str]:
-    """The operator's own procfs and sysfs devices and PID namespace: a card's /proc and /sys must be on other
-    devices, and the card's PID namespace must be another one (MINOR-A)."""
+def host_pseudo_devices() -> dict[str, Any]:
+    """The operator's own procfs, sysfs and devtmpfs devices, PID namespace, kernel and the six admissible device nodes:
+    a card's /proc and /sys must be on other devices, its PID namespace another one (MINOR-A), and each device bound
+    into it must be exactly this host node (STATELESS_DEVICE). A missing row is recorded as UNKNOWN, which blocks."""
     rows = parse_mountinfo(pathlib.Path("/proc/self/mountinfo").read_text())
     device = {t: next((r["device"] for r in rows if r["target"] == t and r["fstype"] == f), "UNKNOWN")
-              for t, f in (("/proc", "proc"), ("/sys", "sysfs"))}
-    return {"proc": device["/proc"], "sys": device["/sys"], "pid_ns": os.readlink("/proc/self/ns/pid")}
+              for t, f in (("/proc", "proc"), ("/sys", "sysfs"), ("/dev", "devtmpfs"))}
+    nodes = {}
+    for path in device_contract.DEVICES:
+        try:
+            nodes[path] = container_probe.node(path)
+        except OSError as exc:
+            nodes[path] = {"error": type(exc).__name__}
+    return {"proc": device["/proc"], "sys": device["/sys"], "devtmpfs": device["/dev"],
+            "pid_ns": os.readlink("/proc/self/ns/pid"), "kernel": platform.release(), "nodes": nodes}
 
 
 def _venv_file(venv: str) -> str:
@@ -395,7 +532,8 @@ def _provenance() -> dict[str, Any]:
             return "UNKNOWN"
 
     code = {n: _sha_file(HERE / n) for n in ("isolation.py", "container_evidence.py", "container_probe.py",
-                                             "deployment_attacks.py", "harness.py", "secret_scan.py")}
+                                             "device_contract.py", "deployment_attacks.py", "harness.py",
+                                             "secret_scan.py")}
     code["container/Containerfile"] = _sha_file(CONTAINERFILE)
     podman = _run([_podman(), "--version"]).stdout.strip() if available() else "UNAVAILABLE"
     return {"head": git("rev-parse", "HEAD"), "tree_clean": git("status", "--porcelain") == "", "code_sha256": code,

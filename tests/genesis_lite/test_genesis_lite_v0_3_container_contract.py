@@ -11,7 +11,10 @@ from pathlib import Path
 import subprocess
 import sys
 
+import hashlib
+
 import pytest
+from benchmarks.genesis_lite.v0_3 import device_contract as dc
 from benchmarks.genesis_lite.v0_3 import isolation
 
 spec=importlib.util.spec_from_file_location("cp2_probe",Path(__file__).with_name("container_isolation_probe.py"))
@@ -19,6 +22,71 @@ probe=importlib.util.module_from_spec(spec); spec.loader.exec_module(probe)
 PRIVATE=["/tmp","/var/tmp","/run","/dev/shm"]
 CAPS=["CapInh","CapPrm","CapEff","CapBnd","CapAmb"]
 IMAGE="sha256:89847920916e46363fe52f7cecc3a2b937d34d6b355dd3e8cc14527fe65a8261"
+# STATELESS_DEVICE (contract/3): the operator's devtmpfs, the kernel, one fixed timestamp, two trial messages
+DEVTMPFS="0:250"
+KERNEL="6.6.87.2-microsoft-standard-WSL2"
+T0=1792531694880621292
+M0,M1="1f"*32,"2e"*32
+INO={"/dev/null":4,"/dev/zero":5,"/dev/full":6,"/dev/random":7,"/dev/urandom":8,"/dev/tty":10}
+
+
+def dev_node(path,mnt,host=False):
+    rdev,gid,_kind=dc.DEVICES[path]
+    return dict(type="chr",perm=0o666,uid=0 if host else 65534,gid=gid if host else 65534,dev=DEVTMPFS,
+                ino=INO[path],nlink=1,size=0,atime_ns=T0,mtime_ns=T0,ctime_ns=T0,rdev=rdev,realpath=path,mnt=mnt)
+
+
+def host_devices():
+    return dict(proc="0:59",sys="0:22",devtmpfs=DEVTMPFS,pid_ns="pid:[4026532219]",kernel=KERNEL,
+                nodes={p:dev_node(p,"110",host=True) for p in dc.DEVICES})
+
+
+def encoder(message,rows):
+    out={}
+    for path in dc.SINKS:
+        node=dev_node(path,None)
+        entry=dict(before=node,write="ENOSPC" if path=="/dev/full" else 32,after=copy.deepcopy(node))
+        if path in dc.RNG: entry["ioctls"]={n:"EPERM" for n in dc.RNG_IOCTLS}
+        out[path]=entry
+    out["/dev/tty"]=dict(open="ENXIO")
+    return dict(role="encode",message=message,paths=out)
+
+
+def decoder(messages,rows):
+    out={}
+    for path in dc.SINKS:
+        kind=dc.DEVICES[path][2]
+        out[path]=dict(bytes=0 if kind=="null" else dc.READ_SIZE,all_zero=kind in ("zero","full"),
+                       found=[False,False],sha256="0"*64,node=dev_node(path,None))
+    return dict(role="decode",messages=list(messages),paths=out)
+
+
+def device_observation(rows,channel):
+    tree={p.rsplit("/",1)[1]:dev_node(p,rows[p]) for p in dc.DEVICES}
+    tree.update({n:dict(type="lnk",link=t,perm=0o777,uid=0,gid=0,dev="0:84",ino=20+i,nlink=1,size=len(t),
+                        atime_ns=T0,mtime_ns=T0,ctime_ns=T0) for i,(n,t) in enumerate(dc.DEV_LINKS.items())})
+    tree["shm"]=dict(type="dir",perm=0o1777,uid=0,gid=0,dev="0:81",ino=1,nlink=2,size=40,atime_ns=T0,mtime_ns=T0,
+                     ctime_ns=T0,realpath="/dev/shm",mnt=rows["/dev/shm"])
+    return dict(contract=dc.CONTRACT,fds={"0":"pipe:[1]","1":"pipe:[2]","2":"pipe:[3]","3":"/proc/1/fd"},tree=tree,
+                aliases={},walk=dict(entries=100,devices=[],device_links=[],unreadable=0),
+                tty=dict(open="ENXIO",isatty=[False,False,False],tty_nr=0,tpgid=-1,pid=1,sid=1,pts=False,ptmx="ENOENT"),
+                kernel=KERNEL,overflow=dict(uid=65534,gid=65534),rng=dict(entropy_avail=256,poolsize=256,getentcnt=256),
+                channel=channel)
+
+
+def regular(size,t):
+    return dict(type="reg",perm=0o644,uid=1000,gid=1000,dev="8:48",ino=77,nlink=1,size=size,atime_ns=t,mtime_ns=t,
+                ctime_ns=t,realpath="/shared/channel",mnt="950")
+
+
+def channel_control(bit,a_id,b_id):
+    messages=[M0.replace("1f","3d"),M1.replace("2e","4c")]
+    path="/shared/channel"
+    return dict(bit=bit,messages=messages,path=path,a_id=a_id,b_id=b_id,
+                encoder=dict(role="encode",message=messages[bit],paths={path:dict(before=regular(0,T0),write=32,
+                                                                                      after=regular(32,T0+1))}),
+                decoder=dict(role="decode",messages=messages,paths={path:dict(bytes=32,all_zero=False,
+                             found=[b==bit for b in (0,1)],sha256="0"*64,node=regular(32,T0+1))}))
 
 
 def escape(s):
@@ -44,9 +112,35 @@ def baseline():
                   podman_version="4.9.3",containerfile_sha256="3"*64,
                   launcher_sha256="4"*64,probe_sha256="5"*64,
                   writable_targets=PRIVATE,source_host="/repo",venv_host="/venv-host",
-                  source_path="/source",venv_path="/venv",rootless=True)
-    cards=[]
-    for n,phase in enumerate(["A","B","C"]):
+                  source_path="/source",venv_path="/venv",rootless=True,kernel_release=KERNEL)
+    cards=[make_card(phase,n,expected,encoder(M1,{}) if phase=="A" else decoder([M0,M1],{}))
+           for n,phase in enumerate(["A","B","C"])]
+    trials=[dict(bit=1,messages=[M0,M1],encoder="A",decoders=["B","C"])]
+    for t,bit in enumerate((0,1,0,1),start=1):
+        messages=[M0[:-2]+f"{t:02x}",M1[:-2]+f"{t:02x}"]
+        enc=make_card(f"T{t}E",2+2*t,expected,encoder(messages[bit],{}),with_canaries=False)
+        dec=make_card(f"T{t}D",3+2*t,expected,decoder(messages,{}),with_canaries=False)
+        trials.append(dict(bit=bit,messages=messages,encoder=enc,decoders=[dec]))
+    report=dict(schema="checkpoint2.container_evidence.contract/3",device_contract=dc.CONTRACT,cards=cards,
+                device_trials=trials,
+                positive_controls=dict(host_listener="REACHED",shared_canary=dict(
+                    a_write="WRITE_OK",a_token="e"*64,b_read="READ_OK",b_seen="e"*64,
+                    a_mount="900",b_mount="901",a_actual="900",b_actual="901",
+                    a_id="d"*64,b_id="e"*64,a_path="/shared/cp2-control",
+                    b_path="/shared/cp2-control",a_image_digest=IMAGE,b_image_digest=IMAGE),
+                host_procfs=dict(pid=1,nspid=["22255","1"],ns="pid:[4026532219]",visible_processes=31,id="f"*64),
+                device_channel=[channel_control(0,"7"*64,"8"*64),channel_control(1,"5"*64,"6"*64)],
+                tty=dict(argv=["podman","run","-t","--pull=never"],id="9"*64,name="gl-card-tty",
+                         devices=dict(tty=dict(open="OPENED",isatty=[True,True,True],tty_nr=34816,tpgid=1,pid=1,
+                                               sid=1,pts=True,ptmx="OPENED"),
+                                      fds={"0":"/dev/pts/0","1":"/dev/pts/0","2":"/dev/pts/0","3":"/proc/1/fd"}))),
+                randomness_policy=dict(files={"benchmarks/genesis_lite/arms.py":"0"*64},problems=[],
+                                       source_sha=expected["source_sha"]))
+    return report,expected
+
+
+def make_card(phase,n,expected,channel,with_canaries=True):
+    if True:
         offset=100*n
         targets=[("/","overlay","ro"),("/proc","proc","ro"),("/source","ext4","ro"),
                  ("/venv","ext4","ro"),*[(t,"tmpfs","rw") for t in PRIVATE]]
@@ -55,6 +149,20 @@ def baseline():
                    source=fs,super_options=["rw"]) for i,(t,fs,mode) in enumerate(targets)]
         # ro mount + rw superblock is a valid read-only view, including bind views.
         rows[2]["root"]="/repository"; rows[3]["root"]="/python-env"
+        # appended (contract/3), so the indices above stay: /sys, a read-only /dev, the six devtmpfs device binds
+        rows.append(dict(id=str(offset+9),parent=str(offset+1),device="0:88",root="/",target="/sys",
+                         options=["ro","nosuid","nodev","noexec"],optional=[],fstype="sysfs",source="sysfs",
+                         super_options=["rw"]))
+        rows.append(dict(id=str(offset+10),parent=str(offset+1),device="0:84",root="/",target="/dev",
+                         options=["ro","relatime"],optional=[],fstype="tmpfs",source="tmpfs",super_options=["rw"]))
+        for i,path in enumerate(dc.DEVICES):
+            rows.append(dict(id=str(offset+11+i),parent=str(offset+10),device=DEVTMPFS,root="/"+path.rsplit("/",1)[1],
+                             target=path,options=["rw","nosuid","noexec","relatime"],optional=[],fstype="devtmpfs",
+                             source="none",super_options=["rw","mode=755"]))
+        ids={r["target"]:r["id"] for r in rows}
+        for entry in channel["paths"].values():
+            for key in ("before","after","node"):
+                if key in entry: entry[key]["mnt"]=ids[entry[key]["realpath"]]
         argv=["podman","create","--pull=never","--rm","--read-only","--read-only-tmpfs=false",
               "--security-opt=proc-opts=ro,nosuid,nodev,noexec","--ipc=private","--network=none",
               "--cap-drop=ALL","--security-opt=no-new-privileges","--userns=keep-id"]
@@ -64,14 +172,15 @@ def baseline():
         for k,v in paths.items(): argv += ["--env",k+"="+v]
         argv += ["localhost/forge-card@"+IMAGE,"python3","probe.py"]
         canaries=[]
-        for i,t in enumerate(PRIVATE):
+        for i,t in enumerate(PRIVATE if with_canaries else ()):
             mid=rows[4+i]["id"]
             token=(str(i+6)*64)  # distinct fixed fixture tokens, actual runtime uses secrets
             canaries.append(dict(target=t,path=t+"/cp2-token",token=token,actual_mount=mid,
                                   expected_mount=mid,read="READ_ABSENT",write="WRITE_OK" if phase=="A" else "NOT_ATTEMPTED",
                                   readback=token if phase=="A" else None,write_mount=mid if phase=="A" else None,
                                   readback_mount=mid if phase=="A" else None))
-        card=dict(phase=phase,id=chr(97+n)*64,provenance=copy.deepcopy(expected),mounts=rows,
+        card=dict(phase=phase,id=chr(97+n)*64 if n<3 else hashlib.sha256(phase.encode()).hexdigest(),
+                  provenance=copy.deepcopy(expected),mounts=rows,
                   argv=argv,paths=paths|dict(workdir="/tmp"),status={k:"0" for k in CAPS}|dict(NoNewPrivs="1"),
                   actual_image_digest=IMAGE,actual_image_id=expected["image_id"],ipc="private",
                   network=dict(host_listener="REFUSED",external="REFUSED",interfaces=["lo"]),
@@ -79,16 +188,9 @@ def baseline():
                   restart=dict(attempted=True,refused=True,exit_code=125),removed=True,
                   # MINOR-A (D5-A1b): PID 1 of its own PID namespace through its own /proc; not the host's devices
                   pid_namespace=dict(pid=1,nspid=["1"],ns=f"pid:[{4026532300+n}]",visible_processes=1),
-                  host_devices=dict(proc="0:59",sys="0:22",pid_ns="pid:[4026532219]"))
-        synchronize(card); cards.append(card)
-    report=dict(schema="checkpoint2.container_evidence.contract/2",cards=cards,
-                positive_controls=dict(host_listener="REACHED",shared_canary=dict(
-                    a_write="WRITE_OK",a_token="e"*64,b_read="READ_OK",b_seen="e"*64,
-                    a_mount="900",b_mount="901",a_actual="900",b_actual="901",
-                    a_id="d"*64,b_id="e"*64,a_path="/shared/cp2-control",
-                    b_path="/shared/cp2-control",a_image_digest=IMAGE,b_image_digest=IMAGE),
-                host_procfs=dict(pid=1,nspid=["22255","1"],ns="pid:[4026532219]",visible_processes=31,id="f"*64)))
-    return report,expected
+                  host_devices=host_devices(),devices=device_observation(ids,channel))
+        synchronize(card)
+        return card
 
 
 def validator():
@@ -97,9 +199,15 @@ def validator():
     return fn
 
 
+def passed(result):
+    return {k:result[k] for k in ("status","reasons")}==dict(status="PASS",reasons=[])
+
+
 def test_complete_per_card_evidence_accepted():
     report,expected=baseline()
-    assert validator()(report,expected=expected)==dict(status="PASS",reasons=[])
+    result=validator()(report,expected=expected)
+    assert passed(result),result
+    assert result["devices"]=={p:dict(status="ADMITTED",contract=dc.CONTRACT,reasons=[]) for p in dc.DEVICES}
 
 
 def test_escaped_readonly_bind_alias_is_admissible():
@@ -114,7 +222,7 @@ def test_escaped_readonly_bind_alias_is_admissible():
         image_index = card["argv"].index("localhost/forge-card@" + IMAGE)
         card["argv"][image_index:image_index] = ["--volume", "/repo/sub dir:/read only\talias\\:ro"]
         assert probe.parse_mountinfo(card["mountinfo"]) == card["mounts"]
-    assert validator()(report, expected=expected) == dict(status="PASS", reasons=[])
+    assert passed(validator()(report, expected=expected))
 
 
 @pytest.mark.parametrize("raw", ["bad row\n", "1 0 0:1 / / ro - tmpfs\n",
@@ -263,7 +371,7 @@ def test_verifier_process_restart_consistency(name):
     assert outputs[0]==outputs[1]
     if name:
         assert outputs[0]["status"]=="BLOCKED" and dict(MUTATIONS)[name] in outputs[0]["reasons"]
-    else: assert outputs[0]==dict(status="PASS",reasons=[])
+    else: assert passed(outputs[0])
 
 
 def test_baseline_test_fixture_is_complete_and_reconciles():
@@ -271,7 +379,7 @@ def test_baseline_test_fixture_is_complete_and_reconciles():
     assert len(report["cards"])==3
     for c in report["cards"]:
         assert probe.parse_mountinfo(c["mountinfo"])==c["mounts"]
-        assert {r["target"] for r in c["mounts"] if "rw" in r["options"]}==set(PRIVATE)
+        assert {r["target"] for r in c["mounts"] if "rw" in r["options"]}==set(PRIVATE)|set(dc.DEVICES)
         assert len(c["runtime_mounts"])==len(c["mounts"])
         assert c["provenance"]==expected and len(c["canaries"])==4
         assert all(key in c["paths"] for key in ("HOME","TMPDIR","XDG_CACHE_HOME","PYTHONPYCACHEPREFIX","workdir"))

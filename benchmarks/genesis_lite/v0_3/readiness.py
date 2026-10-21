@@ -232,11 +232,25 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d5_a_card_container_is_removed_when_its_card_closes',
         'test_d5_the_container_probe_attributes_every_canary_to_its_mount',
         'test_d5_the_validator_reconciles_only_the_namespace_relative_cgroup_root',
-        'test_d5_writable_host_device_nodes_stay_blocking',
+        'test_d5_each_admissible_device_is_admitted_on_its_own_evidence',
+        'test_d5_a_device_with_a_wrong_identity_is_blocked',
+        'test_d5_unknown_device_paths_and_aliases_block',
+        'test_d5_the_selected_message_trials_decide_the_cross_card_channel',
+        'test_d5_the_device_positive_controls_must_show_power',
+        'test_d5_tty_is_admitted_only_without_any_terminal',
+        'test_d5_formal_cards_cannot_be_launched_with_a_terminal',
+        'test_d5_missing_old_or_unscreened_device_evidence_blocks',
+        'test_d5_the_validator_never_raises_and_reports_every_device',
+        'test_d5_scientific_randomness_is_explicitly_seeded_and_the_screen_has_power',
+        'test_d5_the_device_decoder_finds_any_window_of_a_message',
+        'test_d5_the_device_probe_reads_real_nodes_and_its_codec_has_power',
         'test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only',
         'test_d5_a_cross_card_probe_that_could_not_run_stays_untestable_even_with_passing_containers',
         'test_d5_a_production_run_never_takes_a_callers_deployment_check',
         'test_d5_the_card_proc_and_sys_are_its_own_and_a_host_procfs_is_detected',
+        'test_d5_a_missing_proc_or_sys_row_is_incomplete_evidence_and_never_passes',
+        'test_d5_malformed_or_unknown_host_device_values_block',
+        'test_d5_the_host_procfs_control_cannot_pass_on_one_signal',
         'test_d5_the_probe_reads_pid_namespace_evidence_from_the_procfs_it_is_given',
         'test_d5_a_formal_card_cannot_start_without_the_deployment',
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
@@ -250,11 +264,25 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d5_a_card_container_is_removed_when_its_card_closes',
         'test_d5_the_container_probe_attributes_every_canary_to_its_mount',
         'test_d5_the_validator_reconciles_only_the_namespace_relative_cgroup_root',
-        'test_d5_writable_host_device_nodes_stay_blocking',
+        'test_d5_each_admissible_device_is_admitted_on_its_own_evidence',
+        'test_d5_a_device_with_a_wrong_identity_is_blocked',
+        'test_d5_unknown_device_paths_and_aliases_block',
+        'test_d5_the_selected_message_trials_decide_the_cross_card_channel',
+        'test_d5_the_device_positive_controls_must_show_power',
+        'test_d5_tty_is_admitted_only_without_any_terminal',
+        'test_d5_formal_cards_cannot_be_launched_with_a_terminal',
+        'test_d5_missing_old_or_unscreened_device_evidence_blocks',
+        'test_d5_the_validator_never_raises_and_reports_every_device',
+        'test_d5_scientific_randomness_is_explicitly_seeded_and_the_screen_has_power',
+        'test_d5_the_device_decoder_finds_any_window_of_a_message',
+        'test_d5_the_device_probe_reads_real_nodes_and_its_codec_has_power',
         'test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only',
         'test_d5_a_cross_card_probe_that_could_not_run_stays_untestable_even_with_passing_containers',
         'test_d5_a_production_run_never_takes_a_callers_deployment_check',
         'test_d5_the_card_proc_and_sys_are_its_own_and_a_host_procfs_is_detected',
+        'test_d5_a_missing_proc_or_sys_row_is_incomplete_evidence_and_never_passes',
+        'test_d5_malformed_or_unknown_host_device_values_block',
+        'test_d5_the_host_procfs_control_cannot_pass_on_one_signal',
         'test_d5_the_probe_reads_pid_namespace_evidence_from_the_procfs_it_is_given',
         'test_d5_a_formal_card_cannot_start_without_the_deployment',
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
@@ -353,8 +381,8 @@ def deployment_status() -> tuple[str, str]:
     if doc is None:
         return NOT_PROVEN, "the pinned D5 deployment evidence is missing or not the pinned bytes"
     if doc.get("schema") != isolation.EVIDENCE_SCHEMA:
-        return NOT_PROVEN, ("the pinned D5 evidence is historical (A1, superseded 2026-10-21); D5-A1b evidence is "
-                            "required (N-1)")
+        return NOT_PROVEN, (f"the pinned D5 evidence has schema {doc.get('schema')!r}, not {isolation.EVIDENCE_SCHEMA!r} "
+                            "(A1, or D5-A1b before the STATELESS_DEVICE contract): historical, REQUIRES_RERUN")
     moved = sorted(n for n, digest in doc.get("provenance", {}).get("code_sha256", {}).items()
                    if not (v03p.HERE / n).is_file() or hashlib.sha256((v03p.HERE / n).read_bytes()).hexdigest() != digest)
     if moved:

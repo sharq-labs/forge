@@ -402,14 +402,20 @@ def test_o1_power_study_scores_with_the_real_rule_and_restores_it():
 
 def test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p(monkeypatch, tmp_path):
     """Review I-6: the committed root's stream must reach sign_flip_p. With the Monte-Carlo path forced, every p in the
-    family is computed on HMAC(root, identity); two roots give two pooled p values, and no root gives the public one."""
+    family is computed on HMAC(root, identity). Proven deterministically: the two roots' streams and the public stream
+    are three distinct byte strings; every call under a root used exactly that root's stream; and every p, the pooled
+    one included, equals a direct recomputation of sign_flip_p on its own differences and its own exact stream. Nothing
+    requires two p values to differ: two Monte-Carlo p values may coincide by chance."""
     from tests.genesis_lite import lift_records as lr
 
-    original, seen = v03a.sign_flip_p, []
+    original, seen, calls = v03a.sign_flip_p, [], []
 
     def forced(diffs, **kw):
         seen.append(kw.get("stream", v03a.SIGN_FLIP_STREAM))
-        return original(diffs, exact_work_limit=0, **{k: v for k, v in kw.items() if k != "exact_work_limit"})
+        out = original(diffs, exact_work_limit=0, **{k: v for k, v in kw.items() if k != "exact_work_limit"})
+        calls.append((list(diffs), seen[-1], {k: v for k, v in kw.items() if k not in ("exact_work_limit", "stream")},
+                      out["p"]))
+        return out
 
     monkeypatch.setattr(v03a, "sign_flip_p", forced)
 
@@ -418,26 +424,36 @@ def test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p(monkeypat
         return (1.0 if (i + s) % 3 == 0 else -1.0) if k == "discoverable" else lr.credit(lr.CAREFUL[k], i, s, k)
     rows = lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", None, credit_fn=mixed)
     identity = v03p.identity_problems()[1]
-    ps, streams = {}, {}
+    ps, streams, per_root = {}, {}, {}
     for tag in (b"root one", b"root two"):
         root = hashlib.sha256(tag).digest()
         admission = _admitted(tmp_path / tag.decode().replace(" ", "_"), root, identity)
         bound = [dict(r, attempt_sha256=admission["attempt_sha256"]) for r in rows]
         monkeypatch.setattr(v03a, "_formal_root_commitment", lambda r=root: hashlib.sha256(r).hexdigest())
         seen.clear()
+        calls.clear()
         out = v03a.lift_decision(bound, "mind", grid=lr.GRID, revealed_root=root, admission=admission,
                                  inbox=_INBOXES[admission["attempt_sha256"]])
         assert out["primary"]["pooled"]["p_method"] == "monte_carlo"
         assert seen and set(seen) == {v03a.sign_flip_stream(root, identity, admission)}
         ps[tag] = out["primary"]["pooled"]["p"]
         streams[tag] = v03a.sign_flip_stream(root, identity, admission)
+        per_root[tag] = list(calls)
     seen.clear()
+    calls.clear()
     public = v03a.lift_decision(rows, "mind", grid=lr.GRID)["primary"]["pooled"]["p"]
     assert set(seen) == {v03a.SIGN_FLIP_STREAM}
-    # each root's own stream reached sign_flip_p (asserted above); the three streams differ. Two Monte-Carlo p values
-    # may coincide by chance (about 1 %; the stream key includes the preregistration digest, so every regeneration
-    # re-rolls it), so only "not all three equal" is required of the p values themselves
-    assert len({*streams.values(), v03a.SIGN_FLIP_STREAM}) == 3 and len({*ps.values(), public}) >= 2
+    per_root[b"public"] = list(calls)
+    streams[b"public"] = v03a.SIGN_FLIP_STREAM
+    ps[b"public"] = public
+    # the stream identities (and their digests) are distinct
+    assert len(set(streams.values())) == 3
+    assert len({hashlib.sha256(x).hexdigest() for x in streams.values()}) == 3
+    for tag, recorded in per_root.items():
+        assert recorded and {stream for _d, stream, _kw, _p in recorded} == {streams[tag]}
+        for diffs, stream, kw, p in recorded:          # every p IS the direct recomputation on its own exact stream
+            assert v03a.sign_flip_p(diffs, exact_work_limit=0, stream=stream, **kw)["p"] == p
+        assert ps[tag] in {p for _d, _s, _kw, p in recorded}          # the pooled p is one of those computations
 
 
 def test_o1_a_revealed_root_that_is_not_bytes_is_refused():
@@ -845,26 +861,443 @@ def test_d5_the_validator_reconciles_only_the_namespace_relative_cgroup_root():
     assert "UNDECLARED_WRITABLE_MOUNT" in reasons and "HOST_WRITABLE_MOUNT" in reasons
 
 
-def test_d5_writable_host_device_nodes_stay_blocking():
-    """Owner decision 2026-10-21 (D5-A1b): no device-node exemption. Rootless Podman binds host character devices
-    read-write (devtmpfs), and the validator blocks them. Even the standard /dev/null cannot pass."""
-    import copy
-
+def _device_verdict(mutate):
+    """The validator's verdict on the contract fixture after ``mutate(report, expected, fx)``."""
     from benchmarks.genesis_lite.v0_3 import container_evidence
 
     fx = _contract_fixture()
     report, expected = fx.baseline()
-    for card in report["cards"]:
-        row = dict(copy.deepcopy(card["mounts"][1]), id=str(int(card["mounts"][-1]["id"]) + 1), root="/null",
-                   target="/dev/null", fstype="devtmpfs", source="none", options=["rw", "nosuid", "noexec"])
+    mutate(report, expected, fx)
+    return container_evidence.validate_container_evidence(report, expected=expected)
+
+
+def _row(card, target):
+    return next(r for r in card["mounts"] if r["target"] == target)
+
+
+def test_d5_each_admissible_device_is_admitted_on_its_own_evidence():
+    """Owner policy 2026-10-21 (D5-A1b): no device is admitted by familiarity or as a group. On complete evidence each
+    of the six is ADMITTED under STATELESS_DEVICE/1; breaking ONE device's evidence blocks that device alone (and
+    therefore N-1), while the other five stay ADMITTED."""
+    from benchmarks.genesis_lite.v0_3 import device_contract as dc
+
+    good = _device_verdict(lambda r, e, fx: None)
+    assert good["status"] == "PASS"
+    assert good["devices"] == {p: {"status": dc.ADMITTED, "contract": dc.CONTRACT, "reasons": []} for p in dc.DEVICES}
+    assert set(dc.DEVICES) == {"/dev/null", "/dev/zero", "/dev/full", "/dev/random", "/dev/urandom", "/dev/tty"}
+    assert {p: v[0] for p, v in dc.DEVICES.items()} == {"/dev/null": "1:3", "/dev/zero": "1:5", "/dev/full": "1:7",
+                                                         "/dev/random": "1:8", "/dev/urandom": "1:9", "/dev/tty": "5:0"}
+    for path in dc.DEVICES:
+        name = path.rsplit("/", 1)[1]
+
+        def wrong_rdev(r, e, fx, name=name):
+            r["cards"][1]["devices"]["tree"][name]["rdev"] = "1:4"
+        out = _device_verdict(wrong_rdev)
+        assert out["status"] == "BLOCKED" and "DEVICE_NODE_WRITABLE_MOUNT" in out["reasons"], path
+        assert out["devices"][path]["status"] == dc.BLOCKED
+        assert "DEVICE_IDENTITY_MISMATCH" in out["devices"][path]["reasons"]
+        assert all(out["devices"][q]["status"] == dc.ADMITTED for q in dc.DEVICES if q != path), path
+
+
+def _set(card_index, *keys, value):
+    def mutate(r, e, fx):
+        target = r["cards"][card_index]
+        for k in keys[:-1]:
+            target = target[k]
+        target[keys[-1]] = value
+    return mutate
+
+
+def _row_update(path, **update):
+    def mutate(r, e, fx):
+        card = r["cards"][0]
+        _row(card, path).update(update)
+        fx.synchronize(card)
+    return mutate
+
+
+def _stacked(path):
+    def mutate(r, e, fx):
+        card = r["cards"][0]
+        row = dict(_row(card, path), id="999", parent=_row(card, path)["id"])
         card["mounts"].append(row)
         fx.synchronize(card)
-        card["runtime_mounts"][-1]["backing"] = "host"
-    out = container_evidence.validate_container_evidence(report, expected=expected)
-    assert out["status"] == "BLOCKED"
-    assert {"DEVICE_NODE_WRITABLE_MOUNT", "UNDECLARED_WRITABLE_MOUNT"} <= set(out["reasons"])
-    assert not hasattr(container_evidence, "ADMITTED_DEVICE_NODES")
+    return mutate
 
+
+def _metadata_moved(r, e, fx):
+    r["cards"][2]["devices"]["tree"]["zero"]["mtime_ns"] += 1
+
+
+def _host_missing(r, e, fx):
+    for card in r["cards"]:
+        card["host_devices"]["nodes"].pop("/dev/full")
+
+
+@pytest.mark.parametrize("path,mutate,reason", [
+    ("/dev/null", _set(0, "devices", "tree", "null", "rdev", value="x"), "DEVICE_IDENTITY_MISMATCH"),     # malformed
+    ("/dev/null", _set(0, "devices", "tree", "null", "rdev", value="1:4"), "DEVICE_IDENTITY_MISMATCH"),   # unknown
+    ("/dev/zero", _set(1, "devices", "tree", "zero", "perm", value=0o644), "DEVICE_IDENTITY_MISMATCH"),
+    ("/dev/zero", _set(1, "devices", "tree", "zero", "uid", value=1000), "DEVICE_IDENTITY_MISMATCH"),
+    ("/dev/full", _set(2, "devices", "tree", "full", "type", value="lnk"), "DEVICE_IDENTITY_MISMATCH"),  # symlink
+    ("/dev/random", _set(0, "devices", "tree", "random", "realpath", value="/dev/urandom"), "DEVICE_ALIAS_MISMATCH"),
+    ("/dev/random", _set(0, "devices", "tree", "random", "ino", value=99), "DEVICE_ALIAS_MISMATCH"),   # not the host's
+    ("/dev/urandom", _set(0, "devices", "tree", "urandom", "mnt", value="1"), "DEVICE_ALIAS_MISMATCH"),
+    ("/dev/null", _row_update("/dev/null", root="/zero"), "DEVICE_IDENTITY_MISMATCH"),               # bind of another
+    ("/dev/zero", _row_update("/dev/zero", device="0:7"), "DEVICE_IDENTITY_MISMATCH"),         # not the host devtmpfs
+    ("/dev/zero", _row_update("/dev/zero", optional=["shared:3"]), "DEVICE_IDENTITY_MISMATCH"),
+    ("/dev/zero", _row_update("/dev/zero", options=["rw", "relatime"]), "DEVICE_IDENTITY_MISMATCH"),   # suid, exec
+    ("/dev/tty", _row_update("/dev/tty", parent="1"), "DEVICE_IDENTITY_MISMATCH"),             # not under the /dev
+    ("/dev/zero", _stacked("/dev/zero"), "DEVICE_IDENTITY_MISMATCH"),                         # a bind over the path
+    ("/dev/zero", _metadata_moved, "DEVICE_STATE_CHANGED"),
+    ("/dev/full", _host_missing, "DEVICE_EVIDENCE_INCOMPLETE"),
+    ("/dev/null", _set(0, "devices", "overflow", value={"uid": 0, "gid": 0}), "DEVICE_IDENTITY_MISMATCH"),
+    ("/dev/null", _set(0, "devices", "kernel", value="6.1.0"), "DEVICE_IDENTITY_MISMATCH"),
+])
+def test_d5_a_device_with_a_wrong_identity_is_blocked(path, mutate, reason):
+    """STATELESS_DEVICE identity: exact path, character device, major:minor, mode and owner, the host node's device
+    and inode, the mount id of a private nosuid,noexec devtmpfs bind of exactly ``/<name>`` under the card's /dev,
+    one mount per path, unchanged metadata, the pinned kernel. Each malformed, unknown or contradictory field blocks."""
+    out = _device_verdict(mutate)
+    assert out["status"] == "BLOCKED", out["devices"]
+    assert out["devices"][path]["status"] == "BLOCKED" and reason in out["devices"][path]["reasons"], out["devices"]
+
+
+def _seventh_device(r, e, fx):
+    for card in r["cards"]:
+        row = dict(_row(card, "/dev/null"), id=str(int(card["mounts"][-1]["id"]) + 1), root="/console",
+                   target="/dev/console")
+        card["mounts"].append(row)
+        fx.synchronize(card)
+
+
+def _unknown_dev_entry(r, e, fx):
+    r["cards"][0]["devices"]["tree"]["kmsg"] = dict(r["cards"][0]["devices"]["tree"]["null"], rdev="1:11")
+
+
+def _walk_device(r, e, fx):
+    r["cards"][1]["devices"]["walk"]["devices"] = ["/tmp/home/null2"]
+
+
+def _walk_link(r, e, fx):
+    r["cards"][1]["devices"]["walk"]["device_links"] = [["/venv/x", "/dev/console"]]
+
+
+def _link_retarget(r, e, fx):
+    r["cards"][0]["devices"]["tree"]["fd"]["link"] = "/proc/1/fd"
+
+
+def _missing_link(r, e, fx):
+    del r["cards"][0]["devices"]["tree"]["stdin"]
+
+
+def _bad_mask(r, e, fx):
+    for card in r["cards"]:
+        row = dict(_row(card, "/dev/null"), id=str(int(card["mounts"][-1]["id"]) + 1), root="/zero",
+                   target="/proc/kcore", options=["ro"])
+        card["mounts"].append(row)
+        fx.synchronize(card)
+        card["devices"]["aliases"]["/proc/kcore"] = dict(fx.dev_node("/dev/zero", row["id"]), realpath="/proc/kcore")
+
+
+@pytest.mark.parametrize("mutate,reason", [
+    (_seventh_device, "UNKNOWN_DEVICE_PATH"), (_unknown_dev_entry, "UNKNOWN_DEVICE_PATH"),
+    (_walk_device, "UNKNOWN_DEVICE_PATH"), (_walk_link, "UNKNOWN_DEVICE_PATH"), (_link_retarget, "UNKNOWN_DEVICE_PATH"),
+    (_missing_link, "UNKNOWN_DEVICE_PATH"), (_bad_mask, "DEVICE_ALIAS_MISMATCH")])
+def test_d5_unknown_device_paths_and_aliases_block(mutate, reason):
+    """No other writable device and no alias: a seventh writable devtmpfs bind, an unknown /dev entry, a device node
+    or a symlink to a non-canonical device anywhere the card can traverse, a retargeted Podman link, and a /proc mask
+    that is not /dev/null itself all block. A seventh writable device is also DEVICE_NODE_WRITABLE_MOUNT."""
+    out = _device_verdict(mutate)
+    assert out["status"] == "BLOCKED" and reason in out["reasons"], out["reasons"]
+    if mutate is _seventh_device:
+        assert "DEVICE_NODE_WRITABLE_MOUNT" in out["reasons"]
+
+
+def _trial_card(r, n, which):
+    trial = r["device_trials"][n]
+    return trial["encoder"] if which == "encoder" else trial["decoders"][0]
+
+
+def _decoder_finds(r, e, fx):
+    _trial_card(r, 2, "decoder")["devices"]["channel"]["paths"]["/dev/urandom"]["found"] = [False, True]
+
+
+def _abc_decoder_finds(r, e, fx):
+    r["cards"][2]["devices"]["channel"]["paths"]["/dev/null"]["found"] = [False, True]
+
+
+def _rng_counter_moves(r, e, fx):
+    _trial_card(r, 3, "decoder")["devices"]["rng"]["entropy_avail"] = 255
+
+
+def _ioctl_accepted(r, e, fx):
+    r["cards"][0]["devices"]["channel"]["paths"]["/dev/random"]["ioctls"]["RNDADDENTROPY"] = "OK"
+
+
+def _full_accepts(r, e, fx):
+    _trial_card(r, 1, "encoder")["devices"]["channel"]["paths"]["/dev/full"]["write"] = 32
+
+
+def _null_returns_data(r, e, fx):
+    r["cards"][1]["devices"]["channel"]["paths"]["/dev/null"]["bytes"] = 32
+
+
+def _zero_not_zero(r, e, fx):
+    r["cards"][1]["devices"]["channel"]["paths"]["/dev/zero"]["all_zero"] = False
+
+
+def _write_changes_node(r, e, fx):
+    r["cards"][0]["devices"]["channel"]["paths"]["/dev/null"]["after"]["mtime_ns"] += 1
+
+
+def _too_few_trials(r, e, fx):
+    del r["device_trials"][1:]
+
+
+def _one_bit(r, e, fx):
+    for trial in r["device_trials"]:
+        trial["bit"] = 1
+
+
+def _decoder_reused(r, e, fx):
+    r["device_trials"][1]["decoders"] = ["B"]
+
+
+def _wrong_message(r, e, fx):
+    _trial_card(r, 4, "encoder")["devices"]["channel"]["message"] = r["device_trials"][4]["messages"][0]
+
+
+def _no_trials(r, e, fx):
+    del r["device_trials"]
+
+
+@pytest.mark.parametrize("mutate,path,reason", [
+    (_decoder_finds, "/dev/urandom", "CROSS_CARD_DEVICE_CHANNEL"), (_abc_decoder_finds, "/dev/null",
+                                                                     "CROSS_CARD_DEVICE_CHANNEL"),
+    (_rng_counter_moves, "/dev/random", "CROSS_CARD_DEVICE_CHANNEL"),
+    (_ioctl_accepted, "/dev/random", "DEVICE_SEMANTICS_MISMATCH"), (_full_accepts, "/dev/full",
+                                                                     "DEVICE_SEMANTICS_MISMATCH"),
+    (_null_returns_data, "/dev/null", "DEVICE_SEMANTICS_MISMATCH"), (_zero_not_zero, "/dev/zero",
+                                                                      "DEVICE_SEMANTICS_MISMATCH"),
+    (_write_changes_node, "/dev/null", "DEVICE_SEMANTICS_MISMATCH"),
+    (_too_few_trials, "/dev/zero", "DEVICE_EVIDENCE_INCOMPLETE"), (_one_bit, "/dev/zero",
+                                                                    "DEVICE_EVIDENCE_INCOMPLETE"),
+    (_decoder_reused, "/dev/zero", "DEVICE_EVIDENCE_INCOMPLETE"), (_wrong_message, "/dev/zero",
+                                                                    "DEVICE_EVIDENCE_INCOMPLETE"),
+    (_no_trials, "/dev/zero", "DEVICE_EVIDENCE_INCOMPLETE")])
+def test_d5_the_selected_message_trials_decide_the_cross_card_channel(mutate, path, reason):
+    """Card A (and four more fresh encoders) write one of two operator-chosen messages to every device and try every
+    RNG ioctl; fresh decoders read every device. Any recovered message, any RNG counter that moves between cards, any
+    accepted state-setting ioctl, a device that does not behave as its kind, fewer than five trials, one bit only or a
+    reused card blocks the device concerned."""
+    out = _device_verdict(mutate)
+    assert out["status"] == "BLOCKED", out["devices"]
+    assert out["devices"][path]["status"] == "BLOCKED" and reason in out["devices"][path]["reasons"], out["devices"]
+
+
+def _control_blind(r, e, fx):
+    r["positive_controls"]["device_channel"][1]["decoder"]["paths"]["/shared/channel"]["found"] = [False, False]
+
+
+def _control_no_change(r, e, fx):
+    c = r["positive_controls"]["device_channel"][0]
+    c["decoder"]["paths"]["/shared/channel"]["node"] = dict(c["encoder"]["paths"]["/shared/channel"]["before"])
+
+
+def _control_one_bit(r, e, fx):
+    r["positive_controls"]["device_channel"].pop()
+
+
+def _control_reuses_card(r, e, fx):
+    r["positive_controls"]["device_channel"][0]["b_id"] = r["cards"][1]["id"]
+
+
+def _tty_control_blind(r, e, fx):
+    r["positive_controls"]["tty"]["devices"]["tty"].update(open="ENXIO", isatty=[False, False, False], tty_nr=0,
+                                                           tpgid=-1, pts=False, ptmx="ENOENT")
+    r["positive_controls"]["tty"]["devices"]["fds"] = {"0": "pipe:[1]", "1": "pipe:[2]", "2": "pipe:[3]",
+                                                       "3": "/proc/1/fd"}
+    r["positive_controls"]["tty"]["argv"] = ["podman", "run", "-i"]
+
+
+def _tty_control_missing(r, e, fx):
+    del r["positive_controls"]["tty"]
+
+
+@pytest.mark.parametrize("mutate,path,reason", [
+    (_control_blind, "/dev/zero", "DEVICE_CHANNEL_CONTROL_FAILED"),
+    (_control_no_change, "/dev/zero", "DEVICE_CHANNEL_CONTROL_FAILED"),
+    (_control_one_bit, "/dev/random", "DEVICE_CHANNEL_CONTROL_FAILED"),
+    (_control_reuses_card, "/dev/null", "DEVICE_CHANNEL_CONTROL_FAILED"),
+    (_tty_control_blind, "/dev/tty", "TTY_CONTROL_FAILED"), (_tty_control_missing, "/dev/tty", "TTY_CONTROL_FAILED")])
+def test_d5_the_device_positive_controls_must_show_power(mutate, path, reason):
+    """The same encoder/decoder code through a deliberately shared file must recover both bits and see the file
+    change; a container given a terminal must fail the tty rules. A control without power is no evidence."""
+    out = _device_verdict(mutate)
+    assert out["status"] == "BLOCKED"
+    assert out["devices"][path]["status"] == "BLOCKED" and reason in out["devices"][path]["reasons"], out["devices"]
+
+
+def _tty(**update):
+    def mutate(r, e, fx):
+        r["cards"][1]["devices"]["tty"].update(update)
+    return mutate
+
+
+def _fd(index, value):
+    def mutate(r, e, fx):
+        r["cards"][0]["devices"]["fds"][index] = value
+    return mutate
+
+
+def _tty_flag(flag):
+    def mutate(r, e, fx):
+        argv = r["cards"][0]["argv"]
+        argv.insert(2, flag)
+    return mutate
+
+
+@pytest.mark.parametrize("mutate", [
+    _tty(open="OPENED"), _tty(open="EACCES"), _tty(isatty=[True, False, False]), _tty(tty_nr=34816), _tty(tpgid=1),
+    _tty(sid=7), _tty(pts=True), _tty(ptmx="OPENED"), _fd("0", "/dev/pts/0"), _fd("2", "/dev/tty"),
+    _fd("5", "pipe:[9]"), _fd("3", "/proc/7/fd"), _tty_flag("-t"), _tty_flag("--tty"), _tty_flag("--tty=true")])
+def test_d5_tty_is_admitted_only_without_any_terminal(mutate):
+    """/dev/tty: the formal card was launched without --tty, has no controlling terminal (open gives ENXIO,
+    tty_nr 0, tpgid -1, its own session), no terminal on stdin, stdout or stderr, no /dev/pts, no usable /dev/ptmx and
+    no descriptor but its three pipes (the inventory's own listing aside). Anything else blocks /dev/tty."""
+    out = _device_verdict(mutate)
+    assert out["status"] == "BLOCKED"
+    assert "TTY_USABLE" in out["devices"]["/dev/tty"]["reasons"], out["devices"]["/dev/tty"]
+
+
+def test_d5_formal_cards_cannot_be_launched_with_a_terminal():
+    """The launcher never allocates a terminal, and the validator refuses one as a configuration change too."""
+    from benchmarks.genesis_lite.v0_3 import isolation
+
+    assert not {"-t", "--tty"} & set(isolation.FINAL_FLAGS)
+    out = _device_verdict(_tty_flag("-t"))
+    assert "RUNTIME_CONFIGURATION_MISMATCH" in out["reasons"]
+
+
+def _old_schema(r, e, fx):
+    r["schema"] = "checkpoint2.container_evidence.contract/2"
+
+
+def _no_device_contract(r, e, fx):
+    del r["device_contract"]
+
+
+def _card_contract(r, e, fx):
+    r["cards"][1]["devices"]["contract"] = "forge.genesis_lite.v0_3/stateless_device/0"
+
+
+def _no_devices(r, e, fx):
+    del r["cards"][2]["devices"]
+
+
+def _screen_problem(r, e, fx):
+    r["randomness_policy"]["problems"] = ["x.py:1 f: random.random uses an implicitly seeded global generator"]
+
+
+def _screen_other_source(r, e, fx):
+    r["randomness_policy"]["source_sha"] = "9" * 40
+
+
+def _no_screen(r, e, fx):
+    del r["randomness_policy"]
+
+
+@pytest.mark.parametrize("mutate,reason", [
+    (_old_schema, "SCHEMA_MISMATCH"), (_no_device_contract, "DEVICE_CONTRACT_MISMATCH"),
+    (_card_contract, "DEVICE_CONTRACT_MISMATCH"), (_no_devices, "EVIDENCE_INCOMPLETE"),
+    (_screen_problem, "RANDOMNESS_POLICY_VIOLATED"), (_screen_other_source, "RANDOMNESS_POLICY_VIOLATED"),
+    (_no_screen, "RANDOMNESS_POLICY_VIOLATED")])
+def test_d5_missing_old_or_unscreened_device_evidence_blocks(mutate, reason):
+    """Old evidence (contract/2) is refused, never upgraded in place; a card without its device observation, another
+    contract version, and a missing or failing scientific-randomness screen of the expected source all block. The
+    screen gates /dev/random and /dev/urandom."""
+    out = _device_verdict(mutate)
+    assert out["status"] == "BLOCKED" and reason in out["reasons"], out["reasons"]
+    if reason == "RANDOMNESS_POLICY_VIOLATED":
+        for path in ("/dev/random", "/dev/urandom"):
+            assert "RANDOMNESS_POLICY_VIOLATED" in out["devices"][path]["reasons"]
+    if mutate is _no_devices:
+        assert all(v["status"] == "BLOCKED" for v in out["devices"].values())
+
+
+def test_d5_the_validator_never_raises_and_reports_every_device(tmp_path):
+    """Malformed evidence yields BLOCKED with one verdict per admissible device, never an exception."""
+    from benchmarks.genesis_lite.v0_3 import container_evidence
+    from benchmarks.genesis_lite.v0_3 import device_contract as dc
+
+    for report in (None, {}, {"schema": container_evidence.SCHEMA}, {"cards": "x", "device_trials": [1, None]}):
+        out = container_evidence.validate_container_evidence(report, expected={})
+        assert out["status"] == "BLOCKED" and set(out["devices"]) == set(dc.DEVICES)
+        assert all(v["status"] == "BLOCKED" for v in out["devices"].values())
+
+
+def test_d5_scientific_randomness_is_explicitly_seeded_and_the_screen_has_power(tmp_path):
+    """random and urandom are a shared kernel RNG: formal scientific randomness must never come from them. The static
+    screen over the Genesis-lite and blindfold code finds nothing in this tree, and finds each planted violation:
+    an unseeded generator, the global generator, implicit entropy at an undeclared site, an import that hides the
+    names, and a device path."""
+    from benchmarks.genesis_lite.v0_3 import device_contract as dc
+
+    here = dc.scientific_randomness_problems(ROOT)
+    assert here["problems"] == [] and len(here["files"]) > 20
+    assert "benchmarks/genesis_lite/arms.py" in here["files"] and "src/engcore/blindfold/universe.py" in here["files"]
+    planted = {"random.Random()": "has no explicit seed", "np.random.default_rng()": "has no explicit seed",
+               "random.random()": "implicitly seeded global", "np.random.rand(3)": "implicitly seeded global",
+               "os.urandom(8)": "undeclared site", "secrets.token_hex(8)": "undeclared site",
+               "uuid.uuid4()": "undeclared site", "random.SystemRandom()": "undeclared site"}
+    for n, (call, why) in enumerate(planted.items()):
+        root = tmp_path / str(n)
+        (root / "benchmarks" / "genesis_lite").mkdir(parents=True)
+        (root / "benchmarks" / "genesis_lite" / "m.py").write_bytes(f"def f():\n    return {call}\n".encode())
+        problems = dc.scientific_randomness_problems(root)["problems"]
+        assert len(problems) == 1 and why in problems[0], (call, problems)
+    for n, text in enumerate(("from secrets import token_hex\n", "import random as r\n", "from os import urandom\n",
+                              "P = '/dev/urandom'\n")):
+        root = tmp_path / f"i{n}"
+        (root / "src" / "engcore" / "blindfold").mkdir(parents=True)
+        (root / "src" / "engcore" / "blindfold" / "m.py").write_bytes(text.encode())
+        assert len(dc.scientific_randomness_problems(root)["problems"]) == 1, text
+    assert dc.scientific_randomness_problems(tmp_path / "empty")["problems"]       # nothing to read is no pass
+
+
+def test_d5_the_device_decoder_finds_any_window_of_a_message():
+    """The decoder's test is the control's test: any 8-byte window of a message is found, a shorter one is not."""
+    from benchmarks.genesis_lite.v0_3 import container_probe as probe
+    from benchmarks.genesis_lite.v0_3 import device_contract as dc
+
+    message = bytes(range(1, 33))
+    for fn in (dc.window_found, probe._found):
+        assert fn(b"\0" * 100 + message[10:18] + b"\0" * 100, message)
+        assert not fn(b"\0" * 100 + message[10:17] + b"\0" * 100, message)
+        assert not fn(bytes(4096), message)
+    assert dc.metadata_changed({"size": 0, "nlink": 1, "atime_ns": 1, "mtime_ns": 1, "ctime_ns": 1, "ino": 2},
+                               {"size": 32, "nlink": 1, "atime_ns": 1, "mtime_ns": 2, "ctime_ns": 2, "ino": 2}) is True
+    assert dc.metadata_changed({}, {}) is None
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Linux device nodes")
+def test_d5_the_device_probe_reads_real_nodes_and_its_codec_has_power(tmp_path):
+    """On this Linux host: the probe's node() reads /dev/null as 1:3 with its mount id; the encoder/decoder pair
+    through an ordinary file recovers the selected message and the file's change, as the shared-file control must."""
+    from benchmarks.genesis_lite.v0_3 import container_probe as probe
+
+    null = probe.node("/dev/null")
+    assert null["type"] == "chr" and null["rdev"] == "1:3" and null["mnt"].isdigit()
+    channel = tmp_path / "channel"
+    channel.write_bytes(b"")
+    m0, m1 = "1f" * 32, "2e" * 32
+    enc = probe.encode([str(channel)], m1, [])
+    dec = probe.decode([str(channel)], [m0, m1], 1 << 20)
+    assert enc[str(channel)]["write"] == 32 and dec[str(channel)]["found"] == [False, True]
+    assert enc[str(channel)]["before"]["size"] == 0 and dec[str(channel)]["node"]["size"] == 32
+    zero = probe.decode(["/dev/zero", "/dev/null"], [m0, m1], 4096)
+    assert zero["/dev/zero"]["all_zero"] is True and zero["/dev/null"]["bytes"] == 0
 
 def test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only():
     """Review MAJOR-1 (two passes): a read-only view of the host is still a channel. Every read-only row is admitted
@@ -877,7 +1310,7 @@ def test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only():
 
     fx = _contract_fixture()
 
-    def add(row_update, volume=None, backing="host", base=2):
+    def add(row_update, volume=None, backing="host", base=2, alias=False):
         report, expected = fx.baseline()
         for card in report["cards"]:
             update = row_update(card) if callable(row_update) else row_update
@@ -885,6 +1318,9 @@ def test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only():
             card["mounts"].append(row)
             fx.synchronize(card)
             card["runtime_mounts"][-1]["backing"] = backing
+            if alias:                                 # the card's own stat of the mask: /dev/null itself
+                card["devices"]["aliases"][row["target"]] = dict(fx.dev_node("/dev/null", row["id"]),
+                                                                 realpath=row["target"])
             if volume:
                 image = card["argv"].index("localhost/forge-card@" + fx.IMAGE)
                 card["argv"][image:image] = ["--volume", volume]
@@ -910,8 +1346,9 @@ def test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only():
     other = {"root": "/containers/overlay-containers/" + "f" * 64 + "/userdata/hosts", "target": "/etc/hosts",
              "fstype": "tmpfs", "source": "tmpfs"}
     assert blocked in add(other)["reasons"]                                                       # another container's
-    mask = {"root": "/null", "target": "/proc/kcore", "fstype": "devtmpfs", "source": "none"}
-    assert add(mask)["status"] == "PASS"                                                          # a Podman mask
+    mask = {"root": "/null", "target": "/proc/kcore", "fstype": "devtmpfs", "source": "none", "device": fx.DEVTMPFS}
+    assert add(mask)["status"] == "BLOCKED"                          # a mask the alias inventory does not show
+    assert add(mask, alias=True)["status"] == "PASS"                                              # a Podman mask
     assert blocked in add({"root": "/null", "target": "/etc/shadow", "fstype": "devtmpfs", "source": "none"})[
         "reasons"]
     sub = {"root": "/sys", "target": "/proc/sys", "fstype": "proc", "source": "proc"}
@@ -922,9 +1359,12 @@ def test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only():
     assert add(acpi, backing="container", base=1)["status"] == "PASS"                 # an empty, fresh mask
     assert blocked in add(dict(acpi, super_options=["rw"]), backing="container", base=1)["reasons"]   # not empty
     assert blocked in add(dict(acpi, device="0:5"), backing="container", base=1)["reasons"]   # shares /tmp's device
-    dev = {"root": "/", "target": "/dev", "fstype": "tmpfs", "source": "tmpfs", "device": "0:98"}
-    assert add(dev, backing="container", base=1)["status"] == "PASS"                  # a fresh read-only /dev
-    assert blocked in add(dict(dev, device="0:6"), backing="container", base=1)["reasons"]    # someone else's tmpfs
+    report, expected = fx.baseline()                                                 # the fixture's /dev is fresh
+    assert container_evidence.validate_container_evidence(report, expected=expected)["status"] == "PASS"
+    for card in report["cards"]:                                                      # someone else's tmpfs
+        next(r for r in card["mounts"] if r["target"] == "/dev")["device"] = "0:6"
+        fx.synchronize(card)
+    assert blocked in container_evidence.validate_container_evidence(report, expected=expected)["reasons"]
     cgroup = {"root": "/", "target": "/sys/fs/cgroup", "fstype": "cgroup2", "source": "cgroup2"}
     assert add(cgroup, backing="kernel", base=1)["status"] == "PASS"
     assert blocked in add(dict(cgroup, root="/user.slice/host"), backing="kernel", base=1)["reasons"]
@@ -985,6 +1425,56 @@ def test_d5_the_card_proc_and_sys_are_its_own_and_a_host_procfs_is_detected():
     assert "PID_NAMESPACE_CONTROL_FAILED" in verdict(blind)["reasons"]                  # the detector has no power
     absent = lambda r: r["positive_controls"].pop("host_procfs")  # noqa: E731
     assert "EVIDENCE_INCOMPLETE" in verdict(absent)["reasons"]
+
+
+def test_d5_a_missing_proc_or_sys_row_is_incomplete_evidence_and_never_passes():
+    """Saved item 1: without the /proc (or /sys) row the card's ownership of it cannot be shown. That is
+    EVIDENCE_INCOMPLETE (this codebase's INCOMPLETE_EVIDENCE), never a pass, whatever else the card shows."""
+    from benchmarks.genesis_lite.v0_3 import container_evidence
+
+    fx = _contract_fixture()
+    for target in ("/proc", "/sys"):
+        report, expected = fx.baseline()
+        card = report["cards"][1]
+        card["mounts"] = [r for r in card["mounts"] if r["target"] != target]
+        fx.synchronize(card)
+        out = container_evidence.validate_container_evidence(report, expected=expected)
+        assert out["status"] == "BLOCKED" and "EVIDENCE_INCOMPLETE" in out["reasons"], target
+        assert any(f"no {target} mount" in d for d in out["details"])
+
+
+@pytest.mark.parametrize("key,value", [("proc", "UNKNOWN"), ("proc", ""), ("sys", "0:x"), ("sys", None),
+                                       ("devtmpfs", "UNKNOWN"), ("devtmpfs", "5"), ("pid_ns", "pid:[abc]"),
+                                       ("pid_ns", "pid:[1]x"), ("pid_ns", "UNKNOWN"), ("proc", 59)])
+def test_d5_malformed_or_unknown_host_device_values_block(key, value):
+    """Saved item 2: the operator's own procfs, sysfs, devtmpfs and PID-namespace record is evidence too. A missing,
+    UNKNOWN or malformed value blocks; it is never read as "different from the card's", which would pass."""
+    from benchmarks.genesis_lite.v0_3 import container_evidence
+
+    fx = _contract_fixture()
+    report, expected = fx.baseline()
+    for card in report["cards"]:
+        card["host_devices"][key] = value
+    out = container_evidence.validate_container_evidence(report, expected=expected)
+    assert out["status"] == "BLOCKED" and "EVIDENCE_INCOMPLETE" in out["reasons"]
+    report, expected = fx.baseline()
+    report["cards"][2]["host_devices"][key] = value                # one card's record disagrees with the others'
+    out = container_evidence.validate_container_evidence(report, expected=expected)
+    assert out["status"] == "BLOCKED" and "EVIDENCE_INCOMPLETE" in out["reasons"]
+
+
+@pytest.mark.parametrize("nspid,visible", [(["22255", "1"], 1), (["1"], 31), (["1", "1"], 31), (["22255", "7"], 31),
+                                           (["x", "1"], 31), (["22255", "1"], True), (["22255", "1"], None)])
+def test_d5_the_host_procfs_control_cannot_pass_on_one_signal(nspid, visible):
+    """Saved item 3: the host-procfs control proves the detector has power only with BOTH signals, the host PID
+    before "1" in NSpid AND more than one visible process. Two NSpid entries with one process do not pass."""
+    from benchmarks.genesis_lite.v0_3 import container_evidence
+
+    fx = _contract_fixture()
+    report, expected = fx.baseline()
+    report["positive_controls"]["host_procfs"].update(nspid=nspid, visible_processes=visible)
+    out = container_evidence.validate_container_evidence(report, expected=expected)
+    assert out["status"] == "BLOCKED" and "PID_NAMESPACE_CONTROL_FAILED" in out["reasons"]
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Linux procfs")

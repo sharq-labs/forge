@@ -10,17 +10,27 @@ path), every open attributed to its mount by ``/proc/self/fdinfo`` ``mnt_id``; c
 the source tree and the Python environment can be opened for writing (nothing is written); whether the network
 targets are reachable; the network interfaces; the path environment and working directory; ``/run/.containerenv``.
 Canaries go only into declared mounts of an allowed filesystem type, never into a device or pseudo-file.
+
+The device observation (STATELESS_DEVICE, :mod:`.device_contract`) is taken FIRST, before anything else is opened:
+the descriptor inventory, every entry of ``/dev`` (lstat, link targets, mount ids through ``O_PATH``), Podman's
+``/dev/null`` masks, a walk of everything the card can traverse outside ``/proc``, ``/sys`` and ``/dev`` for device
+nodes and symlinks to devices, the terminal state, the kernel RNG counters, and, when the operator asks, one side of a
+selected-message trial: an encoder writes the operator's message to every device and tries every RNG ioctl with it; a
+decoder reads from every device and looks for either message.
 """
 
 from __future__ import annotations
 
 import errno
+import hashlib
 import importlib.util
 import json
 import os
 import pathlib
 import secrets
 import socket
+import stat
+import struct
 import sys
 
 try:
@@ -130,9 +140,215 @@ def pid_namespace(proc: str = "/proc") -> dict:
             "visible_processes": sum(1 for e in os.listdir(proc) if e.isdigit())}
 
 
+#: the kernel RNG ioctls (linux/random.h): the read-only counter, and the ones that credit, set, clear or reseed
+RNDGETENTCNT = 0x80045200
+RNG_IOCTLS = {"RNDADDTOENTCNT": 0x40045201, "RNDADDENTROPY": 0x40085203, "RNDZAPENTCNT": 0x5204,
+              "RNDCLEARPOOL": 0x5206, "RNDRESEEDCRNG": 0x5207}
+WINDOW = 8
+
+
+def _errno(exc: OSError) -> str:
+    return errno.errorcode.get(exc.errno, str(exc.errno))
+
+
+def fd_inventory() -> dict:
+    """Every open descriptor and what it points at; the listing's own directory descriptor is one of them."""
+    out = {}
+    with os.scandir("/proc/self/fd") as entries:
+        for entry in entries:
+            try:
+                out[entry.name] = os.readlink(entry.path)
+            except OSError as exc:
+                out[entry.name] = "ERROR_" + _errno(exc)
+    return out
+
+
+def node(path: str) -> dict:
+    """lstat facts of one path; for anything but a symlink also the mount it is on (an O_PATH descriptor opens no
+    device)."""
+    s = os.lstat(path)
+    kind = ("chr" if stat.S_ISCHR(s.st_mode) else "blk" if stat.S_ISBLK(s.st_mode) else "lnk" if stat.S_ISLNK(s.st_mode)
+            else "dir" if stat.S_ISDIR(s.st_mode) else "reg" if stat.S_ISREG(s.st_mode) else "other")
+    out = {"type": kind, "perm": stat.S_IMODE(s.st_mode), "uid": s.st_uid, "gid": s.st_gid,
+           "dev": f"{os.major(s.st_dev)}:{os.minor(s.st_dev)}", "ino": s.st_ino, "nlink": s.st_nlink, "size": s.st_size,
+           "atime_ns": s.st_atime_ns, "mtime_ns": s.st_mtime_ns, "ctime_ns": s.st_ctime_ns}
+    if kind in ("chr", "blk"):
+        out["rdev"] = f"{os.major(s.st_rdev)}:{os.minor(s.st_rdev)}"
+    if kind == "lnk":
+        out["link"] = os.readlink(path)
+        return out
+    out["realpath"] = os.path.realpath(path)
+    fd = os.open(path, os.O_PATH | os.O_NOFOLLOW)
+    try:
+        out["mnt"] = fd_mount_id(fd)
+    finally:
+        os.close(fd)
+    return out
+
+
+def device_walk(top: str = "/", skip: tuple = ("/proc", "/sys", "/dev")) -> dict:
+    """Every device node and every symlink to a device the card can reach outside ``skip`` (a directory the card cannot
+    read is one it cannot traverse either: counted, not entered)."""
+    entries, devices, links, unreadable = 0, [], [], []
+    for root, dirs, files in os.walk(top, onerror=lambda exc: unreadable.append(exc.filename)):
+        if root == top:
+            dirs[:] = [d for d in dirs if os.path.join(root, d) not in skip]
+        for name in dirs + files:
+            path = os.path.join(root, name)
+            try:
+                s = os.lstat(path)
+            except OSError:
+                continue
+            entries += 1
+            if stat.S_ISCHR(s.st_mode) or stat.S_ISBLK(s.st_mode):
+                devices.append(path)
+            elif stat.S_ISLNK(s.st_mode):
+                try:
+                    target = os.stat(path)
+                except OSError:
+                    continue
+                if stat.S_ISCHR(target.st_mode) or stat.S_ISBLK(target.st_mode):
+                    links.append([path, os.path.realpath(path)])
+    return {"entries": entries, "devices": devices, "device_links": links, "unreadable": len(unreadable)}
+
+
+def tty_state() -> dict:
+    try:
+        fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+        os.close(fd)
+        opened = "OPENED"
+    except OSError as exc:
+        opened = _errno(exc)
+    try:
+        fd = os.open("/dev/ptmx", os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+        os.close(fd)
+        ptmx = "OPENED"
+    except OSError as exc:
+        ptmx = _errno(exc)
+    fields = pathlib.Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()
+    return {"open": opened, "isatty": [os.isatty(i) for i in (0, 1, 2)], "tty_nr": int(fields[4]),
+            "tpgid": int(fields[5]), "pid": os.getpid(), "sid": os.getsid(0), "pts": os.path.lexists("/dev/pts"),
+            "ptmx": ptmx}
+
+
+def rng_state() -> dict:
+    import fcntl  # noqa: PLC0415 - Linux only; the probe runs in a Linux card
+
+    out = {k: int(pathlib.Path(f"/proc/sys/kernel/random/{k}").read_text()) for k in ("entropy_avail", "poolsize")}
+    fd = os.open("/dev/urandom", os.O_RDONLY)
+    try:
+        out["getentcnt"] = struct.unpack("i", fcntl.ioctl(fd, RNDGETENTCNT, b"\0" * 4))[0]
+    finally:
+        os.close(fd)
+    return out
+
+
+def _found(data: bytes, message: bytes) -> bool:
+    return any(message[i:i + WINDOW] in data for i in range(len(message) - WINDOW + 1))
+
+
+def _ioctl(fd: int, request: int, arg) -> str:
+    import fcntl  # noqa: PLC0415 - Linux only; the probe runs in a Linux card
+
+    try:
+        fcntl.ioctl(fd, request, arg)
+        return "OK"
+    except OSError as exc:
+        return _errno(exc)
+
+
+def encode(paths: list, message_hex: str, rng: list) -> dict:
+    """One encoder: write the selected message to every path (and try every RNG ioctl with it); the node before and
+    after. A path that cannot be opened records its errno."""
+    message, out = bytes.fromhex(message_hex), {}
+    for path in paths:
+        try:
+            before = node(path)
+            fd = os.open(path, os.O_WRONLY | os.O_NOCTTY | os.O_NONBLOCK)
+        except OSError as exc:
+            out[path] = {"open": _errno(exc)}
+            continue
+        entry = {"before": before}
+        try:
+            try:
+                entry["write"] = os.write(fd, message)
+            except OSError as exc:
+                entry["write"] = _errno(exc)
+            if path in rng:
+                entry["ioctls"] = {name: _ioctl(fd, request, struct.pack("ii", len(message) * 8, len(message)) + message
+                                                if name == "RNDADDENTROPY" else struct.pack("i", len(message) * 8)
+                                                if name == "RNDADDTOENTCNT" else 0)
+                                   for name, request in RNG_IOCTLS.items()}
+        finally:
+            os.close(fd)
+        entry["after"] = node(path)
+        out[path] = entry
+    return out
+
+
+def decode(paths: list, messages_hex: list, read_size: int) -> dict:
+    """One decoder: read up to ``read_size`` bytes from every path and look for either message."""
+    messages, out = [bytes.fromhex(m) for m in messages_hex], {}
+    for path in paths:
+        try:
+            fd = os.open(path, os.O_RDONLY | os.O_NOCTTY | os.O_NONBLOCK)
+        except OSError as exc:
+            out[path] = {"open": _errno(exc)}
+            continue
+        chunks, total = [], 0
+        try:
+            while total < read_size:
+                chunk = os.read(fd, min(65536, read_size - total))
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                total += len(chunk)
+        finally:
+            os.close(fd)
+        data = b"".join(chunks)
+        out[path] = {"bytes": len(data), "all_zero": not data.strip(b"\0") and bool(data),
+                     "found": [_found(data, m) for m in messages], "sha256": hashlib.sha256(data).hexdigest(),
+                     "node": node(path)}
+    return out
+
+
+def device_observation(config: dict, fds: dict) -> dict:
+    """What the STATELESS_DEVICE contract reads (``config``: the operator's ``devices`` entry)."""
+    tree = {}
+    for name in sorted(os.listdir("/dev")):
+        tree[name] = node("/dev/" + name)
+    aliases = {}
+    for path in config.get("masked", ()):
+        try:
+            if stat.S_ISCHR(os.lstat(path).st_mode):
+                aliases[path] = node(path)
+        except OSError:
+            pass
+    out = {"contract": config.get("contract"), "fds": fds, "tree": tree, "aliases": aliases,
+           "walk": device_walk() if config.get("walk", True) else None, "tty": tty_state(),
+           "kernel": os.uname().release,
+           "overflow": {k: int(pathlib.Path(f"/proc/sys/kernel/overflow{k}").read_text()) for k in ("uid", "gid")}}
+    try:
+        out["rng"] = rng_state()
+    except OSError as exc:
+        out["rng"] = {"error": _errno(exc)}
+    channel = config.get("channel") or {}
+    if channel.get("role") == "encode":
+        out["channel"] = {"role": "encode", "message": channel["message"],
+                          "paths": encode(channel["paths"], channel["message"], config.get("rng", ()))}
+    elif channel.get("role") == "decode":
+        out["channel"] = {"role": "decode", "messages": channel["messages"],
+                          "paths": decode(channel["paths"], channel["messages"], int(config["read_size"]))}
+    return out
+
+
 def probe(config: dict) -> dict:
+    fds = fd_inventory()                              # before the probe opens anything of its own
     if config.get("pid_probe_path"):                  # the positive control: a host procfs the operator bound in
         return {"pid_namespace": pid_namespace(config["pid_probe_path"])}
+    devices = device_observation(config["devices"], fds) if config.get("devices") else None
+    if config.get("devices_only"):                    # the tty positive control
+        return {"devices": devices}
     raw = pathlib.Path("/proc/self/mountinfo").read_text()
     mounts = contract.parse_mountinfo(raw)
     allowed = tuple(config.get("write_fstypes", ("tmpfs",)))
@@ -160,10 +376,14 @@ def probe(config: dict) -> dict:
             "network": {**{label: _reach(address) for label, address in config.get("network_targets", {}).items()},
                         "interfaces": sorted(p.name for p in pathlib.Path("/sys/class/net").iterdir())},
             "paths": {**{k: os.environ.get(k) for k in contract.PATH_KEYS}, "workdir": os.getcwd()},
-            "containerenv": _containerenv(), "uid": os.getuid(), "pid_namespace": pid_namespace()}
+            "containerenv": _containerenv(), "uid": os.getuid(), "pid_namespace": pid_namespace(), "devices": devices}
 
 
 def main() -> int:
+    if sys.argv[1:2] == ["--config"]:         # the tty control: its stdin is a terminal, so the config is an argument
+        sys.stdout.write(json.dumps(probe(json.loads(sys.argv[2])), sort_keys=True) + "\n")
+        sys.stdout.flush()
+        return 0
     config = json.loads(sys.stdin.readline())
     sys.stdout.write(json.dumps(probe(config), sort_keys=True) + "\n")
     sys.stdout.flush()

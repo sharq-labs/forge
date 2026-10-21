@@ -203,3 +203,31 @@ bullet is now decided by D5-A1b. Nothing above is rewritten.
   detected. The verification was re-run from a clean clone of `12baeb04` (sha256 `967f089e…`, now the pinned file)
   with the same verdict: BLOCKED solely by the six host device nodes, under the unchanged strict rule. The `ad55b7c5`
   run is kept as superseded history.
+
+## 8. The device policy amendment: STATELESS_DEVICE (owner, 2026-10-21)
+
+This section records an owner decision taken after section 7. The strict device-node rule above stays as the
+historical decision; nothing above is rewritten.
+
+- **Decision (owner, in session, 2026-10-21).** A shared writable character device is not automatically a failure when
+  executed evidence proves it is a non-state-carrying operating-system endpoint under the D5 threat model. The
+  admissible set is only `/dev/null` 1:3, `/dev/zero` 1:5, `/dev/full` 1:7, `/dev/random` 1:8, `/dev/urandom` 1:9 and
+  `/dev/tty` 5:0. No other writable device is admitted, and admission is per device, never for the group.
+- **Contract.** `forge.genesis_lite.v0_3/stateless_device/1` (`benchmarks/genesis_lite/v0_3/device_contract.py`).
+  Every device must show its exact identity in every card (path, character device, major:minor, mode and owner, the
+  host node's device and inode, a private nosuid,noexec devtmpfs bind of exactly that node), no state (unchanged node
+  metadata), the semantics of its kind, no recoverable selected message in repeated encoder/decoder trials between
+  fresh cards, and no alias. The tty is admitted only without any terminal. Positive controls must show power: a
+  shared file must carry the selected bit, and a container given a terminal must be told apart. Any missing, malformed,
+  unknown or contradictory field blocks.
+- **Randomness.** `/dev/random` and `/dev/urandom` are a shared kernel RNG service, not private per-card state. The
+  cards are not claimed to receive independent entropy; the claim is only that a card can neither set nor read their
+  state through them. Formal scientific randomness never comes from them: a static screen requires every stochastic
+  generator in the Genesis-lite and blindfold code to take an explicit seed, and implicit entropy to appear only at
+  declared operational sites. It is a static screen, not a proof.
+- **Fallback (owner-ordered).** A device that cannot satisfy its contract is masked or made inaccessible where rootless
+  Podman allows; if that is impossible, it stays blocking and D5 stays NOT_PROVEN.
+- **Also closed in the same patch.** A missing `/proc` or `/sys` row is incomplete evidence. Malformed or unknown
+  operator device records block. The host-procfs control needs both of its signals. The O-1 keyed-stream test no
+  longer depends on two Monte-Carlo p values differing.
+- **Status.** D5 = NOT_PROVEN until evidence from a clean clone of the final commit passes and is pinned.
