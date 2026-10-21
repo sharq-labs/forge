@@ -63,7 +63,8 @@ def card(slot, *, utimensat=None, stamps=None):
     ]
     return {"window": {"start_ns": start, "end_ns": start + LIFE}, "host_devtmpfs": HOST_DEV, "mounts": mounts,
             "dev": dev, "absent": {p: {"open": "ENOENT", "stat": "ENOENT"} for p in f3a.ABSENT},
-            "walk": {"entries": 40, "devices": []}, "utimensat": utimensat or {}, "cleanup": dict(f3a.CLEAN)}
+            "walk": {"entries": 40, "devices": []}, "utimensat": utimensat or {}, "cleanup": dict(f3a.CLEAN),
+            "fds": {"0": "pipe:[10]", "1": "pipe:[11]", "2": "pipe:[12]", "3": "/proc/1/fd"}}
 
 
 def touched():
@@ -347,6 +348,13 @@ def test_f3a_device_contract_v2_rederives_privacy_without_inode_identity():
             lambda d: d["cards"]["e3"]["mounts"][5].update(device=HOST_DEV), f3a.HOST_DEVICE_REACHABLE, "/dev/full"),
         "a shared mount": (lambda d: d["cards"]["d4"]["mounts"][2].update(optional=["shared:7"]),
                            f3a.MOUNT_PROPAGATION_SHARED, "/dev/full"),
+        "an inherited host /dev/null descriptor (smoke card 1)": (
+            lambda d: d["cards"]["d6"]["fds"].update({"2": "/dev/null"}), f3a.HOST_DEVICE_REACHABLE, "/dev/zero"),
+        "a stdout that is not a pipe": (lambda d: d["cards"]["d6"]["fds"].update({"1": "/tmp/out"}),
+                                        f3a.DEVICE_EVIDENCE_INCOMPLETE, "/dev/null"),
+        "an extra descriptor": (lambda d: d["cards"]["e6"]["fds"].update({"7": "socket:[5]"}),
+                                f3a.DEVICE_EVIDENCE_INCOMPLETE, "/dev/full"),
+        "no descriptor inventory": (lambda d: d["cards"]["e6"].pop("fds"), f3a.DEVICE_EVIDENCE_INCOMPLETE, "/dev/null"),
         "a device node found by the walk": (lambda d: d["cards"]["d4"]["walk"].update(devices=["/opt/x"]),
                                             f3a.HOST_DEVICE_REACHABLE, "/dev/null"),
         "a blocked node present": (lambda d: d["cards"]["d5"]["dev"].update(
@@ -535,6 +543,9 @@ def test_f3a_the_helper_runs_only_its_fixed_programs_and_never_a_shell():
     spawned = [c for c in calls if ast.unparse(c.func) in ("subprocess.run", "subprocess.Popen")]
     assert sorted(ast.unparse(c.args[0]) for c in spawned) == sorted([
         "list(argv)", "[CRUN, '--root', CRUN_ROOT, 'run', '--bundle', f'{cdir}/bundle', cid]"])
+    popen = [c for c in spawned if ast.unparse(c.func) == "subprocess.Popen"]
+    assert {k.arg: ast.unparse(k.value) for k in popen[0].keywords}["stderr"] == "subprocess.PIPE"
+    assert "DEVNULL" not in source                  # a /dev/null descriptor is a host BLOCKER-1 node in the card
     with pytest.raises(helper_mod.Refused):
         helper_mod._sh("/usr/bin/env", "id")
     assert set(helper_mod.OPERATIONS) == {"identity", "install-rootfs", "configure-kept", "run", "residue",

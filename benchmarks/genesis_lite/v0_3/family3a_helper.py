@@ -15,7 +15,9 @@ It is not a command facility. Its operations are fixed (:data:`OPERATIONS`) and 
 * ``configure-kept <tree> [<venv>]``: records the WSL directories bound read-only at :data:`KEPT_TREE` and
   :data:`KEPT_VENV`;
 * ``run <request as hex>``: ONE card from a request that :func:`request_problems` accepts. The card's stdin and stdout
-  are the helper's own; its stderr is discarded; the helper's last stderr line is the result record;
+  are the helper's own; its stderr is a pipe the helper drains and discards (never ``/dev/null``: an open descriptor
+  on the host's devtmpfs node would hand the card a BLOCKER-1 node, as the first smoke card showed); the helper's
+  last stderr line is the result record;
 * ``residue``: the residue counts of every family-3a card;
 * ``control-teardown``: unmounts the power control's shared device tmpfs.
 
@@ -40,6 +42,7 @@ import stat
 import subprocess
 import sys
 import tarfile
+import threading
 import time
 
 BASE = "/var/lib/forge-f3a"
@@ -372,6 +375,12 @@ def residue(card_id: str | None = None) -> dict:
     return dict(zip(CLEAN_KEYS, counts))
 
 
+def _discard(stream) -> None:
+    """Drain the card's stderr pipe and keep nothing."""
+    while stream.read(1 << 16):
+        pass
+
+
 def run_card(request: dict) -> dict:
     manifest = _manifest()
     card, cid = request["card"], request["card"]["card_id"]
@@ -396,12 +405,16 @@ def run_card(request: dict) -> dict:
         with open(f"{cdir}/bundle/config.json", "wb") as f:
             f.write(canonical(build_spec(request, dev_dir, manifest, seccomp, mask_files)))
         proc = subprocess.Popen([CRUN, "--root", CRUN_ROOT, "run", "--bundle", f"{cdir}/bundle", cid],
-                                stdin=sys.stdin.fileno(), stdout=sys.stdout.fileno(), stderr=subprocess.DEVNULL)
+                                stdin=sys.stdin.fileno(), stdout=sys.stdout.fileno(), stderr=subprocess.PIPE)
+        drain = threading.Thread(target=_discard, args=(proc.stderr,), daemon=True)
+        drain.start()
         try:
             code = proc.wait(timeout=card["timeout_s"])
         except subprocess.TimeoutExpired:
             _sh(CRUN, "--root", CRUN_ROOT, "kill", cid, "KILL", check=False)
             code = proc.wait()
+        drain.join(timeout=5)
+        proc.stderr.close()
     except (OSError, subprocess.SubprocessError):
         code = -1
     finally:                                              # cleanup always runs, and its residue is always reported

@@ -8682,3 +8682,56 @@ Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), local, unpushe
   `formal.py` and the stale D5 test.
 - **NOT RUN.** D5, D7, any card, the Linux suite, FAST, SCIENTIFIC, regression, the readiness CLI of `readiness.py`,
   freeze, certification, formal runs and Budget x Noise. Nothing was pushed.
+
+## 2026-10-21 - Family-3a smoke card: one container_probe card through the helper; an fd-2 hole found and fixed
+
+- **Setup (formal machine, declared root launch).**
+  - A WSL-native clone of this branch, detached at `fd53934c5edf...` and clean, was made from a git bundle at
+    `/home/dev_kaeem/forge-f3a-fd53934c`.
+  - `helper.py configure-kept /home/dev_kaeem/forge-f3a-fd53934c` recorded no venv.
+  - The residue before any card: all zero.
+- **Smoke card 1 (helper `661d765c...`): defect found.** Exit 0, cleanup all zero, window 227 ms. The card's fd 2 was
+  **`/dev/null`, the host devtmpfs node**:
+  - the helper gave crun `stderr=DEVNULL`, so every card inherited an open descriptor on a BLOCKER-1 host node;
+  - that is spike stop condition S1;
+  - the descriptor plausibly allows `futimens`, which is BLOCKER 1's own timestamp mechanism. This was not tested.
+
+  Device Contract v2 did not check descriptors, so it would have passed such a card. The spike had used pipes.
+- **Fix.**
+  - The helper now gives the card a stderr pipe and drains and discards it. An AST test requires `stderr=subprocess.PIPE`
+    and no `DEVNULL` in the helper.
+  - Device Contract v2 now requires fds 0 to 2 to be pipes and the only other fd to be the inventory's
+    `/proc/<pid>/fd`. A `/dev/...` descriptor is `HOST_DEVICE_REACHABLE`.
+  - The validator test gained four cases: the smoke card's fd-2 shape, a non-pipe stdout, an extra fd and a missing
+    inventory.
+  - The helper was reinstalled, and `identity` was re-measured: only `helper_sha256` moved, to `e47f3f64...`, now
+    pinned. The crun, tree and seccomp digests are unchanged.
+  - The evidence schema stays `family3a_evidence/1`: no evidence of that schema exists yet.
+- **Smoke card 2 (helper `e47f3f64...`), MEASURED, smoke only.** Exit 0, window 225 ms.
+  - Cleanup: `{card_dirs 0, cgroups 0, containers 0, mounts 0, processes 0}`. The global residue afterwards is all
+    zero.
+  - `/dev` view: exactly `full`, `null`, `shm` and `zero`.
+    - `full` is chr 1:7, `null` chr 1:3 and `zero` chr 1:5, each mode 0666 on device 0:82. That is the card's own
+      `/dev` tmpfs (mount `ro,nosuid,noexec`, root `/dev`); the host devtmpfs is 0:5.
+    - Each node's ctime and mtime is +1.8 ms after the window start.
+    - `random`, `urandom` and `tty` are absent, and opening `/dev/tty` gives ENOENT.
+  - Mounts: no devtmpfs row, no row on host device 0:5 and no shared or slave propagation. The four /proc file masks
+    come from the card tmpfs (`0:82 /mask/empty`), and the probe found no aliases.
+  - The walk found no device node or device link in 11,728 entries (4 unreadable).
+  - Descriptors: fds 0, 1 and 2 are pipes and fd 3 is `/proc/1/fd`.
+  - Process: empty capability sets, NoNewPrivs 1, uid 1000, PID 1 alone in its pid namespace, only `lo`.
+  - The `/tmp` canary wrote and read back in the card's own mount.
+- **Records** (outside the repo, unpinned smoke, not D5 evidence): `D:\forge-f3a-smoke\` (`SHA256SUMS` sha256
+  `ba20ddde...`), holding both cards' raw observations and the driver script.
+- **Tests (Windows, this session).**
+  - `PYTHONPATH="D:/forge-genesis-clean/src;D:/forge-genesis-clean" .venv/Scripts/python.exe -m pytest tests/genesis_lite/test_genesis_lite_v0_3_family3a.py -q -p no:cacheprovider --basetemp D:/forge-d5-impl/bt/f3c1`
+    gave 22 passed. Before the re-pin, the helper-pin test failed as designed.
+  - `PYTHONPATH=... python -m pytest tests/genesis_lite -q -n 4 -p no:cacheprovider --basetemp D:/forge-d5-impl/bt/f3c-full -rf`
+    gave 1 failed, 502 passed, 4 skipped. The failure is the preserved stale D5 test.
+  - `python -m benchmarks.genesis_lite.v0_3.family3a` gave READY_FOR_FAMILY_3A_EXECUTION.
+- **Caveats.**
+  - The kept tree is still at `fd53934c`. Its container_probe is identical to HEAD's (`fe939b7c...`), but the tree
+    must be re-cloned at the commit that runs D5.
+  - One card is not evidence of privacy across cards. No trial, power control or proposer card was run.
+- **NOT RUN.** D5, D7, the selected-bit trials, the power control, the twelve attack channels, the Linux suite, FAST,
+  SCIENTIFIC, regression, freeze, certification and Budget x Noise. Nothing was pushed.

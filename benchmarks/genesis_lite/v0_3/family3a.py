@@ -29,7 +29,8 @@ Device Contract v2, per node of BLOCKER 1's scope:
   every bit. **Identity never uses st_dev/st_ino equality across cards:** sequential cards reuse them.
 * the other three: ABSENT when, in every card, they are missing from ``/dev`` and open and stat give ENOENT.
 * every card: no devtmpfs mount and no mount from the host devtmpfs (which also catches a mask bound from the host
-  ``/dev/null``), no shared or slave propagation, and a walk that finds no device node.
+  ``/dev/null``), no shared or slave propagation, a walk that finds no device node, and no inherited descriptor on a
+  ``/dev`` node: fds 0 to 2 are pipes and the only other is the inventory's own listing.
 
 What is NOT claimed: nothing here is D5 evidence. Synthetic records pass the validator; no card has run. D5 stays
 NOT_PROVEN, and BLOCKER 1 stays open until a declared detector and pinned MEASURED evidence close it in
@@ -122,6 +123,8 @@ CARD_ID = re.compile(r"gl3a-[0-9a-f]{8,32}")
 ABS_ARG = re.compile(r"/[A-Za-z0-9._/-]*")
 HEX64 = re.compile(r"[0-9a-f]{64}")
 DEVICE_ID = re.compile(r"[0-9]+:[0-9]+")
+PIPE = re.compile(r"pipe:\[[0-9]+\]")
+PROC_FD = re.compile(r"/proc/[0-9]+/fd")
 DOC_KEYS = ("schema", "deployment", "device_contract", "detector", "config_sha256", "identity", "cards", "trials",
             "controls", "residue")
 #: fields that would carry a verdict: a verdict is re-derived, never read
@@ -183,11 +186,12 @@ class RuntimeConfig:
 #: ``/usr/bin/crun`` 1.14.1; the rootfs tree (family3a_helper.tree_digest) extracted from ``podman export`` of the
 #: pinned image (export tar sha256 7d1ab3c8..., the spike's instance again) plus the two kept mount points; Podman's
 #: /usr/share/containers/seccomp.json reduced to OCI form for this kernel; family3a_helper.py itself. A change to any
-#: of them, the helper file included, needs a new measurement and a new pin
+#: of them, the helper file included, needs a new measurement and a new pin. The helper was re-measured the same day
+#: after its stderr fix (the first smoke card inherited the host /dev/null as fd 2); the other three did not move
 RUNTIME_SHA256 = "bd8ad7e7798edd5a857476c33bbef463b8b60ca2db43d7feb77698a703060c84"
 ROOTFS_TREE_SHA256 = "d1b07cbc8c0456c634b09cc254a570437c9eb76b543503ecf9056c8f37a7d900"
 SECCOMP_SHA256 = "0c424aa4fafb3002b7b3f3c8075e943aea48c81864ca60bfa267aab6164d8df0"
-HELPER_SHA256 = "661d765c0b2c787df84db69118b99bf397a34825a927dd5b70e26439f62a89b4"
+HELPER_SHA256 = "e47f3f64684dccf221cf4a83c349f90d32218d58c9d3021898a6fd22272c7525"
 PINNED_CONFIG = RuntimeConfig(
     runtime_name=RUNTIME_NAME, runtime_version=RUNTIME_VERSION, runtime_sha256=RUNTIME_SHA256,
     kernel_release=isolation.KERNEL_RELEASE, image_digest=isolation.IMAGE_DIGEST, rootfs_tree_sha256=ROOTFS_TREE_SHA256,
@@ -576,6 +580,17 @@ def _card(label: str, card: Any, found: _Found) -> tuple[int, int] | None:
         found.at(ADMITTED, DEVICE_NOT_CARD_PRIVATE, f"{label}: /dev is not one ro, nosuid, noexec tmpfs")
     else:
         dev_device = devs[0]["device"]
+    fds = card.get("fds")                          # an inherited host descriptor reaches a host node without any path
+    if not isinstance(fds, Mapping) or not {"0", "1", "2"} <= set(fds):
+        found.all(DEVICE_EVIDENCE_INCOMPLETE, f"{label}: no descriptor inventory")
+    else:
+        for fd, target in fds.items():
+            if isinstance(target, str) and target.startswith("/dev/"):
+                found.all(HOST_DEVICE_REACHABLE, f"{label}: fd {fd} is {target}, a node the card did not open")
+            elif fd in ("0", "1", "2") and not (isinstance(target, str) and PIPE.fullmatch(target)):
+                found.all(DEVICE_EVIDENCE_INCOMPLETE, f"{label}: fd {fd} is {target!r}, not a pipe")
+            elif fd not in ("0", "1", "2") and not (isinstance(target, str) and PROC_FD.fullmatch(target)):
+                found.all(DEVICE_EVIDENCE_INCOMPLETE, f"{label}: fd {fd} {target!r} is not the inventory's listing")
     walk = card.get("walk")
     if not isinstance(walk, Mapping) or not _int(walk.get("entries")) or walk["entries"] < 1 or not isinstance(
             walk.get("devices"), list):
