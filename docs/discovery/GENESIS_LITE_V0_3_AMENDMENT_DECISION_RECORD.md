@@ -192,3 +192,8 @@ bullet is now decided by D5-A1b. Nothing above is rewritten.
   ignores the operator's backing label. The verification was re-run from a clean clone of `d4ead0b2` (sha256
   `29c72411…`, now the pinned file) with the same verdict: BLOCKED solely by the six host device nodes. The `754f6cdb`
   run is kept as superseded history.
+- **Evidence re-pinned again (2026-10-21).** The third review pass's hardening MINORs were fixed: Podman's own
+  read-only mounts are tied to device, root and size, and each kept tree is bound exactly once. The verification was
+  re-run from a clean clone of `ad55b7c5` (sha256 `a9bc4c64…`, now the pinned file) with the same verdict: BLOCKED
+  solely by the six host device nodes, under the unchanged strict rule. The `d4ead0b2` run is kept as superseded
+  history.

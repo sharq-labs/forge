@@ -7,24 +7,24 @@ evidence. It is not a formal measurement, a validation result or a certification
 
 | File | What it records |
 |---|---|
-| `result.json` | The verification output (sha256 `29c7241125e6e19f7891d76b7e8f4b357dcc34f695b042f98ba3c48c43825fe4`, pinned in the preregistration as `DEPLOYMENT_EVIDENCE`). |
+| `result.json` | The verification output (sha256 `a9bc4c64d5beb9f4dcdeae968d7c7ebd870d285bff597274f181359ec1766689`, pinned in the preregistration as `DEPLOYMENT_EVIDENCE`). |
 | `command.json` | The exact argv, cwd, PYTHONPATH, exit code (1) and UTC start/end times. |
 | `run_checks.json` | The clean tree before and after (the run script refused a dirty tree before starting), and 0 leftover card containers (`podman ps -a --filter label=org.forge.genesis_lite.card`). |
 | `stdout.txt`, `stderr.txt` | The raw streams (stderr is empty). |
-| `superseded-c09b0ef5/`, `superseded-754f6cdb/` | Earlier D5-A1b runs at `c09b0ef5` (sha256 `5ccccd42…`) and `754f6cdb` (sha256 `590bfa4f…`), with the same verdict. They are kept as history. Each was superseded because a read-only review pass (MAJOR-1) changed the validator: read-only host paths are constrained, now by an allowlist that ignores the backing label. Evidence about other code is not evidence about this code. |
+| `superseded-c09b0ef5/`, `superseded-754f6cdb/`, `superseded-d4ead0b2/` | Earlier D5-A1b runs at `c09b0ef5` (sha256 `5ccccd42…`), `754f6cdb` (`590bfa4f…`) and `d4ead0b2` (`29c72411…`), with the same verdict. They are kept as history. Each was superseded because a read-only review pass changed the validator: first MAJOR-1 (read-only host paths, now an allowlist that ignores the backing label), then the third-pass MINORs (device, root and size ties for Podman's own mounts; one bind per kept target). Evidence about other code is not evidence about this code. |
 
 ## What ran
 
 - **Machine.** The D7 formal machine: the owner's hardened WSL Ubuntu-24.04, kernel 6.6.87.2, rootless Podman 4.9.3
   with crun and cgroup v2. These are recorded in `result.json` provenance and in the expected deployment.
-- **Source.** A fresh clone of `feat/genesis-lite-v03-clean-n1` at `d4ead0b2943232a1a2db8a017a9ca8d9d4353c89`, made
+- **Source.** A fresh clone of `feat/genesis-lite-v03-clean-n1` at `ad55b7c5e4dc9a56485c6c1e6650cae405b318ce`, made
   from a git bundle with no network. `result.json` provenance records `tree_clean: true` and the sha256 of every file
   that ran.
 - **Image.** `localhost/forge-card@sha256:89847920916e4636…`, id `2d2651e4d002…`. Its identity rests on that digest and
   id, which `result.json` checks against what Podman reports. The committed `container/Containerfile` is the build file
   found on the machine, byte for byte (sha256 `9aaf37bd…`). It is not a reproducible build recipe: the base image is
   pulled by tag and `apt-get update` is not pinned.
-- **Command.** `python -m benchmarks.genesis_lite.v0_3.isolation --out result.json --cards 2`, wall time 265.3 s.
+- **Command.** `python -m benchmarks.genesis_lite.v0_3.isolation --out result.json --cards 2`, wall time 275.3 s.
 
 ## Result
 
@@ -47,9 +47,11 @@ Within the validator's checks, nothing else blocked:
   tolerated field is the cgroup2 root, which is namespace-relative.
 - **Writable mounts.** Besides the devices, the only writable mounts are the four declared private tmpfs: `/tmp`,
   `/var/tmp`, `/run` and `/dev/shm`.
-- **Read-only mounts.** Every one is on the allowlist: the image root, the read-only `/dev`, the card's own
-  `/proc`, `/sys` and cgroup with Podman's default masks and read-only `/proc` re-binds, the declared source and venv
-  binds (same device, same root), and Podman's userdata files of that container.
+- **Read-only mounts.** Every one is on the allowlist, one row per target: the image root; the read-only `/dev` (a
+  tmpfs on its own device); the card's own `/proc`, `/sys` and cgroup (root `/`) with Podman's default masks (empty
+  `size=0k` tmpfs on their own device, or `/dev/null`) and read-only re-binds of the card's own procfs (same device);
+  the source and venv each bound exactly once from exactly their host path; and Podman's userdata files of that
+  container.
 - **Canaries.** Card A wrote and read back a fresh 256-bit token on each private mount, attributed to that mount by fd
   `mnt_id`. Fresh cards B and C found every token READ_ABSENT at the identical path.
 - **Positive controls.**
