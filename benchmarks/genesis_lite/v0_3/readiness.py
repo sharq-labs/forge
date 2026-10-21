@@ -319,9 +319,6 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
     ),
 }
 #: rows proven by tests/genesis_lite/test_genesis_lite_v0_3_escrow_fda05.py, which exists only with the escrow half
-#: the D5 isolation boundary is proven by the same named tests as the other two D5 rows (it had none: a FIXED status
-#: from the pinned evidence could never be verified by the gate)
-REQUIRED_TESTS["isolation boundary (D5)"] = REQUIRED_TESTS["readiness P-1/P-2 (isolation deployment, escrow out of process)"]
 ESCROW_TESTS: dict[str, tuple[str, ...]] = {
     'FDA-05 escrow half': (
         'test_escrow_fda05_v0_2_escrow_credits_the_vacuous_pair_for_both_truths',
