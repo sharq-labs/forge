@@ -1268,6 +1268,27 @@ def test_d5_scientific_randomness_is_explicitly_seeded_and_the_screen_has_power(
     assert dc.scientific_randomness_problems(tmp_path / "empty")["problems"]       # nothing to read is no pass
 
 
+def test_d5_the_boundary_scope_is_the_device_contract_and_passes_the_randomness_screen(tmp_path):
+    """BLOCKER 1's scope is the owner's six-device set read from its one authority (device_contract.DEVICES), not a
+    second copy that can drift. readiness is not a deployment-verification file, so it spells no RNG device path and
+    the screen finds nothing in it; the literal scope planted back into a copy of it is found."""
+    from benchmarks.genesis_lite.v0_3 import device_contract as dc
+    from benchmarks.genesis_lite.v0_3 import readiness
+
+    assert readiness.BOUNDARY_FINDINGS["BLOCKER 1"]["scope"] == tuple(dc.DEVICES) and len(dc.DEVICES) == 6
+    rel = "benchmarks/genesis_lite/v0_3/readiness.py"
+    assert rel not in dc.DEVICE_PATH_FILES
+    here = dc.scientific_randomness_problems(ROOT)
+    assert rel in here["files"] and not [p for p in here["problems"] if p.startswith(rel)]
+    text = (ROOT / rel).read_bytes()
+    planted = text.replace(b"tuple(device_contract.DEVICES)", repr(tuple(dc.DEVICES)).encode(), 1)
+    assert planted != text
+    (tmp_path / "benchmarks" / "genesis_lite" / "v0_3").mkdir(parents=True)
+    (tmp_path / rel).write_bytes(planted)
+    problems = dc.scientific_randomness_problems(tmp_path)["problems"]
+    assert len(problems) == 2 and all(p.startswith(rel) and "names an RNG device" in p for p in problems), problems
+
+
 def test_d5_the_device_decoder_finds_any_window_of_a_message():
     """The decoder's test is the control's test: any 8-byte window of a message is found, a shorter one is not."""
     from benchmarks.genesis_lite.v0_3 import container_probe as probe

@@ -37,6 +37,7 @@ import xml.etree.ElementTree as ET
 from typing import Any, Mapping
 
 from .. import preregistration as v02p
+from . import device_contract
 from . import evaluator as v03e
 from . import preregistration as v03p
 
@@ -244,6 +245,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d5_missing_old_or_unscreened_device_evidence_blocks',
         'test_d5_the_validator_never_raises_and_reports_every_device',
         'test_d5_scientific_randomness_is_explicitly_seeded_and_the_screen_has_power',
+        'test_d5_the_boundary_scope_is_the_device_contract_and_passes_the_randomness_screen',
         'test_d5_the_device_decoder_finds_any_window_of_a_message',
         'test_d5_the_device_probe_reads_real_nodes_and_its_codec_has_power',
         'test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only',
@@ -277,6 +279,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d5_missing_old_or_unscreened_device_evidence_blocks',
         'test_d5_the_validator_never_raises_and_reports_every_device',
         'test_d5_scientific_randomness_is_explicitly_seeded_and_the_screen_has_power',
+        'test_d5_the_boundary_scope_is_the_device_contract_and_passes_the_randomness_screen',
         'test_d5_the_device_decoder_finds_any_window_of_a_message',
         'test_d5_the_device_probe_reads_real_nodes_and_its_codec_has_power',
         'test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only',
@@ -388,7 +391,7 @@ BOUNDARY_FINDINGS: dict[str, dict[str, Any]] = {
                     FORMAL_MACHINE_CONFIRMATION: "the implementer, in session on the formal launcher, before the "
                                                  "reverts e0e73e81/3d62b494; unpinned, no artifact kept"},
         "classification": "BLOCKER",
-        "scope": ("/dev/null", "/dev/zero", "/dev/full", "/dev/random", "/dev/urandom", "/dev/tty"),
+        "scope": tuple(device_contract.DEVICES),      # the owner's six-device set, from its one authority
         "evidence": (STATIC_REVIEW, FORMAL_MACHINE_CONFIRMATION),
         "detector": NOT_MEASURED,
         "detectors": (),
