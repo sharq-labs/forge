@@ -8735,3 +8735,82 @@ Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), local, unpushe
   - One card is not evidence of privacy across cards. No trial, power control or proposer card was run.
 - **NOT RUN.** D5, D7, the selected-bit trials, the power control, the twelve attack channels, the Linux suite, FAST,
   SCIENTIFIC, regression, freeze, certification and Budget x Noise. Nothing was pushed.
+
+## 2026-10-21 - D5 family-3a formal evidence attempt at ec0e24a4: BLOCKED_WITH_PRECISE_EVIDENCE
+
+- **Result: BLOCKED_WITH_PRECISE_EVIDENCE.** Steps 1 to 3 (clean clone, baseline, Cards A/B/C) were executed. Steps
+  4 to 9 cannot be executed by the code at `ec0e24a4`, and the evidence must be bound to that SHA. Nothing was pinned.
+  D5 = NOT_PROVEN, N-1 = OPEN, D7 = REQUIRES_RERUN.
+- **Clean clone (MEASURED).** `/home/dev_kaeem/forge-f3a-ec0e24a4` is a fresh clone from a git bundle, detached at
+  `ec0e24a4b8a3...`.
+  - Zero dirty or untracked entries, before and after the run.
+  - Helper `e47f3f64...` (the installed copy is identical), preregistration `e2ac2f7b...` (and its `.sha256` file).
+  - `PINNED_CONFIG.digest()` is `97a7b6b7...` in WSL and on Windows, and `config_problems` is empty.
+  - The live identity matched every pin before and after the cards: crun `bd8ad7e7...`, tree `d1b07cbc...`, seccomp
+    `0c424aa4...`, kernel 6.6.87.2-microsoft-standard-WSL2, crun 1.14.1.
+  - `configure-kept` now points at this clone. The `forge-f3a-fd53934c` clone was not used.
+- **Baseline (MEASURED, before any card).**
+  - Residue all zero: 0 card dirs, cgroup children, `forge-f3a` mountinfo lines and helper or crun processes; no
+    process at uid 100000 or above; the shared tmpfs is not mounted.
+  - Podman: 0 volumes and 0 containers.
+  - `/run/forge-f3a/crun` holds only crun's own `.cache` directory.
+  - Host identities: /proc 0:59, /sys 0:22, /dev devtmpfs 0:5.
+    - null 1:3 ino 4, zero 1:5 ino 5, full 1:7 ino 6, random 1:8 ino 7, urandom 1:9 ino 8, tty 5:0 ino 10.
+    - Host namespaces: pid 4026532219, mnt 4026532217, net 4026531840, user 4026531837.
+  - The first capture was mangled in transit (`ps` printed a terminal-size warning, and lines were reordered and
+    truncated). It was re-captured into a file and read back; both captures are kept.
+- **Cards A, B, C (MEASURED by an out-of-tree driver, so NOT D5 evidence).** Three fresh cards ran through
+  `Family3aLauncher` + `WslRootHelper` with `container_probe`:
+  - card ids `gl3a-18e08d8d14d30720`, `...371985d4` and `...56682788`;
+  - windows of 224.6, 173.8 and 172.9 ms.
+
+  All 14 per-card checks passed in each card:
+  - exit 0;
+  - `/dev` exactly null, zero, full and shm, each node chr with its rdev and mode 0666 on the card's own `/dev` tmpfs,
+    with ctime and mtime inside the card window;
+  - random, urandom and tty absent; no controlling terminal;
+  - fds 0 to 2 are pipes and fd 3 is `/proc/1/fd`, with no `/dev` descriptor;
+  - no alias, devtmpfs row, row on host device 0:5 or walked device node;
+  - no shared or slave propagation;
+  - uid 1000, PID 1 alone, empty capability sets with NoNewPrivs, `lo` only;
+  - cleanup all zero.
+
+  A wrote a canary to `/tmp`, `/var/tmp`, `/run` and `/dev/shm`; B and C each read READ_ABSENT for A's token at every
+  path. All three cards report pid namespace inode 4026532234. The kernel reuses the number after each card's namespace
+  is destroyed, the same sequential reuse as st_dev and st_ino; the host's pid namespace is 4026532219. After the run:
+  residue zero, 0 Podman volumes and containers, the identity unchanged and the clone clean. The temporary
+  `/root/f3a-baseline` was removed.
+- **Why step 4 onward is blocked at `ec0e24a4` (checked in the code).**
+  1. **No BLOCKER-1 detector in the tree.** No probe performs the `utimensat(UTIME_NOW)` encoding or the matching
+     decoding: `grep utime` finds only `family3a.py`, which is the validator. The spike's `probe_card.py` is
+     out-of-tree. `readiness.BOUNDARY_FINDINGS["BLOCKER 1"]["detectors"]` is `()`. "Run the registered detector exactly
+     as declared" has no registered detector to run.
+  2. **No family-3a evidence collector.** Nothing in the tree produces a `family3a_evidence/1` document: no cards plus
+     balanced trials plus controls plus residue. `isolation.verify` and `collect_container_evidence` drive only
+     Podman's `NamespaceLauncher`.
+  3. **The twelve channels cannot run on 3a.**
+     - `deployment_attacks` runs through `harness.CardProposerHost(launcher=...)` with Podman's `argv` and
+       `client_env` interface. `Family3aLauncher` exposes neither.
+     - `CardSpec` admits only `PYTHONDONTWRITEBYTECODE`, but the suite needs `FORGE_ATTACK_*` variables.
+     - The proposer card needs `configure-kept` with a venv. `/home/dev_kaeem/venvs/forge312` exists but is not
+       configured.
+     - The operator's hello check compares this tree's path with the card's `/forge/tree` path.
+  4. **Most declared positive controls have no mechanism.**
+     - The helper has no terminal mode (`"terminal": False` is fixed), so there is no allocated-TTY control.
+     - It has no host-procfs bind and no inherited-fd control mode.
+     - The BLOCKER-1 shared-tmpfs control needs the missing encoder.
+     - The closed rootless-Podman reference needs the same encoder through Podman.
+  5. **D5 cannot be pinned for 3a by the gate.** `readiness._evidence_status` accepts only
+     `isolation.EVIDENCE_SCHEMA` (`deployment_evidence/4`), and `runtime_boundary_problems` requires
+     `deployment == isolation.DEPLOYMENT` (`rootless_podman_per_card`). The evidence pin lives in
+     `preregistration.py`.
+
+  Each of these is a code change, so evidence produced after it is bound to a later SHA, not `ec0e24a4`. Writing that
+  collector inside this evidence step would mean a different, unreviewed code identity measuring itself. It is a
+  separate implementation step.
+- **Records** (outside the repo, unpinned, not D5 evidence): `D:\forge-f3a-d5-attempt-ec0e24a4\` (`SHA256SUMS`
+  sha256 `8ed954ee...`). It holds the baseline captures, the Cards A/B/C raw observations with per-card observation
+  digests, the post-run residue and the driver scripts.
+- **NOT RUN.** The BLOCKER-1 detector trials, every positive control, the twelve channels, the evidence package, the
+  D5 pin, the Linux and Windows Genesis-lite suites (no code changed), the evaluator/escrow agreement, regression, the
+  readiness CLI, D7, FAST, SCIENTIFIC, OD-3, freeze, certification and Budget x Noise. Nothing was pushed.
