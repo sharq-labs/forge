@@ -231,3 +231,20 @@ historical decision; nothing above is rewritten.
   operator device records block. The host-procfs control needs both of its signals. The O-1 keyed-stream test no
   longer depends on two Monte-Carlo p values differing.
 - **Status.** D5 = NOT_PROVEN until evidence from a clean clone of the final commit passes and is pinned.
+
+## 9. ADMIT_ONLY_PROVEN_STATELESS_SUBSET (owner, 2026-10-21)
+
+The owner narrowed the section 8 policy. Section 8 is kept as history.
+
+- **Admitted only as exact STATELESS_DEVICE endpoints, and only if proven:** `/dev/null` 1:3, `/dev/zero` 1:5,
+  `/dev/full` 1:7.
+- **Required to be inaccessible in the formal card:** `/dev/random` 1:8 and `/dev/urandom` 1:9, because writes update
+  shared kernel RNG state and affect later output; and `/dev/tty` 5:0, to remove controlling-terminal and operator
+  interaction risk, including future argv drift.
+- **Every other writable device stays a blocker.**
+- **Status: NOT IMPLEMENTED; D5 = NOT_PROVEN.** The hostile review's BLOCKER 1 (PROGRESS, 2026-10-21) was confirmed on
+  the formal launcher for all six device nodes, including the three this policy would admit. Masking the other three
+  therefore cannot make the admitted subset meet the policy's own requirement that Card A cannot leave a value a fresh
+  Card B can recover. No launcher configuration that closes BLOCKER 1 for null, zero and full has been shown, so
+  admitting them would weaken the policy. The owner instruction for this case applies:
+  BLOCKED_WITH_PRECISE_EVIDENCE.

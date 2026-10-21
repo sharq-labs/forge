@@ -8337,3 +8337,27 @@ Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), local, unpushe
   non-state-carrying or inaccessible under rootless Podman. If not, D5 stays blocked on this runtime.
 - **NOT RUN.** SCIENTIFIC, FULL, hardened recertification (the classifier flags it as owner-run), OD-3, any formal
   campaign, Budget × Noise.
+
+### 2026-10-21 (later): owner decision ADMIT_ONLY_PROVEN_STATELESS_SUBSET — BLOCKED_WITH_PRECISE_EVIDENCE
+
+- **Decision received.**
+  - Admit only null 1:3, zero 1:5 and full 1:7, as proven STATELESS_DEVICE endpoints.
+  - Make random 1:8, urandom 1:9 and tty 5:0 inaccessible, with Podman's `--security-opt mask=`.
+  - Recorded in decision record §9.
+- **Blocked before implementation.** BLOCKER 1 was confirmed on the formal launcher (in this session, before the
+  revert) for all six nodes, null, zero and full included. Masking random, urandom and tty does not address it for
+  the admitted three. The decision's own requirement that a fresh Card B cannot recover a value left by Card A
+  therefore cannot be met with any configuration shown so far.
+- **Not done.** No masking flag was added and no D5 or D7 run was made, so there is no new evidence. The device work
+  is stopped pending a way to close BLOCKER 1 for null, zero and full, or an owner decision on it.
+- **Done.**
+  - `61150afd` re-applies the two lost fixes: the readiness "isolation boundary (D5)" row names exact tests, with a new
+    test that no D5 row verifies without them all passing; and the escrow readiness test derives its status.
+  - The saved edge cases were already closed in `2e2a9d1b`: `test_d5_a_missing_proc_or_sys_row_*`,
+    `test_d5_malformed_or_unknown_host_device_values_block`, `test_d5_the_host_procfs_control_cannot_pass_on_one_signal`
+    and the rewritten `test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p`.
+- **Tests (Windows, at `61150afd`).** `python -m pytest -q -p no:cacheprovider -n 4 tests/genesis_lite`: 477 passed,
+  4 skipped, 1 failed. The failure is `test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code`, a
+  correct red because the pinned D5 evidence measured older code.
+- **Status.** D5 = NOT_PROVEN, N-1 = OPEN, D7 = REQUIRES_RERUN.
+- **NOT RUN.** Linux suite at `61150afd`, FAST, SCIENTIFIC, regression, readiness CLI, D5, D7, review, OD-3.
