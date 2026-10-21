@@ -8522,3 +8522,45 @@ Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), local, unpushe
     against the pinned /3).
   - Failed: `test_d5_scientific_randomness_is_explicitly_seeded_and_the_screen_has_power`. Not investigated.
 - **NOT RUN.** The Linux suite, FAST, SCIENTIFIC, regression, D5 and D7.
+
+## 2026-10-21 — Prompt 5A (3a runtime abstraction): baseline classified, stopped again before any code change
+
+- **Baseline rerun (Windows, at `c3947b9c`):**
+  `PYTHONPATH="D:/forge-genesis-clean/src;D:/forge-genesis-clean" .venv/Scripts/python.exe -m pytest tests/genesis_lite -q -n 4 -p no:cacheprovider --basetemp D:/forge-d5-impl/bt/base1 -rs`
+  gave 2 failed, 478 passed, 4 skipped (Linux-only). The failures are the same two as above.
+- **`test_d5_scientific_randomness_is_explicitly_seeded_and_the_screen_has_power`: CURRENT_CODE_DEFECT.**
+  - The screen reports `benchmarks/genesis_lite/v0_3/readiness.py:391: names an RNG device`, twice.
+  - That line is `BOUNDARY_FINDINGS["BLOCKER 1"]["scope"]`. It spells `/dev/random` and `/dev/urandom` as literals.
+    It was added in 839af190, and the 61150afd readiness file had no such literal.
+  - `readiness.py` is not in `device_contract.DEVICE_PATH_FILES`. The screen is right and the test is right.
+  - Suggested fix, not applied: take the scope from `device_contract.DEVICES` rather than adding readiness to
+    `DEVICE_PATH_FILES`. It touches a preregistration-pinned file, so the DRAFT preregistration must be regenerated.
+- **`test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code`:** STALE_EVIDENCE_FAILURE. It is the
+  expected red until a family-3a D5 package is executed and pinned. Not touched.
+- **Stopped.** A safety classifier interrupted the session while it was planning the 3a launcher, root-helper and
+  evidence work. Following the prompt's rule, nothing blocked was retried or rephrased. No code, test or pin changed;
+  this entry is the only edit.
+- **NOT RUN.** Every 3a contract, device-contract V2, evidence-schema, pre-admission and readiness test (none exists),
+  the evaluator/escrow agreement, the Linux suite, FAST, SCIENTIFIC, regression, D5, D7, OD-3 and formal runs.
+
+## 2026-10-21 — Randomness-screen defect fixed (`93785e93`); family 3a still not implemented
+
+- **Fix.** The six-device scope in `readiness.BOUNDARY_FINDINGS["BLOCKER 1"]` is now `tuple(device_contract.DEVICES)`.
+  `DEVICE_PATH_FILES` is unchanged, and the selected runtime is unchanged.
+- **New regression test.** `test_d5_the_boundary_scope_is_the_device_contract_and_passes_the_randomness_screen`:
+  - the scope equals `device_contract.DEVICES`;
+  - readiness is not in `DEVICE_PATH_FILES`;
+  - the screen finds nothing in readiness;
+  - planting the literal scope back into a copy of readiness gives exactly the two original findings.
+
+  The test is added to the two D5 rows of `REQUIRED_TESTS` beside the screen test.
+- **DRAFT v0.3 preregistration regenerated** (readiness.py is identity-pinned): `992bf0eb…` → `e2ac2f7b…`. Still DRAFT.
+  Nothing else in the tree named the old digest.
+- **Tests (Windows, this session):**
+  - The targeted run (`-k` on the screen test, the new test and the two boundary-finding tests) gave 4 passed.
+  - `PYTHONPATH="D:/forge-genesis-clean/src;D:/forge-genesis-clean" .venv/Scripts/python.exe -m pytest tests/genesis_lite -q -n 4 -p no:cacheprovider --basetemp D:/forge-d5-impl/bt/fix3 -rf`
+    gave 1 failed, 480 passed, 4 skipped (Linux-only).
+  - The one failure is `test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code`, the stale D5
+    evidence. It is preserved unchanged.
+- **NOT RUN.** The Linux suite, FAST, SCIENTIFIC, regression, the readiness CLI, D5, D7, OD-3 and formal runs. Family 3a
+  remains unimplemented: D5 NOT_PROVEN, N-1 OPEN, D7 REQUIRES_RERUN.
