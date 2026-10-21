@@ -1,0 +1,556 @@
+{
+ "base_commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+ "mind_source_commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+ "rows": [
+  {
+   "blob": "4e82f64c96cb5441117cc6bb36b9a34a17c9361e",
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_closure/data/calibration.json",
+   "role": "NASA split: calibration (2 cells, ordinals 2-20)"
+  },
+  {
+   "blob": "a256f9fc8d3ef95e8090373f6b4d54261ac1baeb",
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json",
+   "role": "NASA split: within-cell held-out (ordinals 21-30)"
+  },
+  {
+   "blob": "9cf3cbb4539779d48a38b393059c8f8146428a41",
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json",
+   "role": "NASA split: cross-cell held-out (third cell)"
+  },
+  {
+   "blob": "b433a5f294392db2bff807b459e3cfd04ad4f01b",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_closure/PREREGISTRATION_v2.json",
+   "role": "NASA preregistration (declared sections transcribed; outcome-free)"
+  },
+  {
+   "blob": "621872ddc8ed96ad80a37824a9fa72dcb641024d",
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "role": "LG HG2 split: calibration pulses (3 A / 18 A)"
+  },
+  {
+   "blob": "065eca3f54ef2976d5c6d789872993743c315098",
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "role": "LG HG2 split: held-out pulses (6 A / 12 A)"
+  },
+  {
+   "blob": "43cc50272f6b0369c63791ce320fad95b2febe54",
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_identifiability/data/heldout_cc.json",
+   "role": "LG HG2 split: held-out 1C constant current"
+  },
+  {
+   "blob": "a972361a8763bcaf7ec8fa38310deb6b08e3500f",
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_identifiability/data/ocv.json",
+   "role": "LG HG2 measured OCV knots"
+  },
+  {
+   "blob": "8ff550c8f96fdea51ffec01252d546da257b823c",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_identifiability/PREREGISTRATION.json",
+   "role": "LG HG2 preregistration (declared sections transcribed)"
+  },
+  {
+   "blob": "a6e09064f348d5700b6d582007d99d7fb3292497",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_identifiability/MEASUREMENT_UNCERTAINTY_DECISION.json",
+   "role": "LG HG2 Type B uncertainty decision (components transcribed; its 'limits' field carries an outcome and is NOT copied)"
+  },
+  {
+   "blob": "e78e835c1c937ffa87e2668cca21ae0fb2e4cfa8",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_crosscell/README.md",
+   "role": "LG M50T (Kirkaldy 2024) cross-cell work; held-out cells no longer blind: not used"
+  },
+  {
+   "blob": "a7717a66d5c627cb260c4f1c4a260ff6d128c171",
+   "candidate_visible": "platform (not imported by any arm)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "src/engcore/domains/battery/thevenin_route.py",
+   "role": "FORGE Thevenin 1RC route (model, solver, replay)"
+  },
+  {
+   "blob": "29ccbebc699d45eb0c1dd0364985256b0b653260",
+   "candidate_visible": "platform (not imported)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "src/engcore/domains/battery/thevenin.py",
+   "role": "1RC parameter types"
+  },
+  {
+   "blob": "07817267a909b4ee945acf0c642a0cd30a11c3b7",
+   "candidate_visible": "platform (not imported)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "src/engcore/domains/battery/solver.py",
+   "role": "production Rint kernel"
+  },
+  {
+   "blob": "46af1d5fae0677ce7094402bcdd668b0d332b7e3",
+   "candidate_visible": "platform (not imported)",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "src/engcore/domains/battery/calibration.py",
+   "role": "battery calibration helpers"
+  },
+  {
+   "blob": "6a25a6ae87c8d4d935846f45245a639fda635f62",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "tools/nasa_battery_aging.py",
+   "role": "NASA .mat importer (canonical records)"
+  },
+  {
+   "blob": "dcfc32578e9f97d7e0dc013df86ff15e7d13585f",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_closure/fit.py",
+   "role": "historical calibration + identifiability tool"
+  },
+  {
+   "blob": "12a111128ab0463ab4f4d32a3d2eaecf7d940dd9",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_closure/evaluate.py",
+   "role": "historical validation tool"
+  },
+  {
+   "blob": "50e698f46b1e016f65cdbd862215a84200a1ad4c",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_closure/uq.py",
+   "role": "historical parameter-UQ tool"
+  },
+  {
+   "blob": "6399686eb61f9ac22a16a318742a3d01cdc619ce",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_closure/sensitivity.py",
+   "role": "historical hold/v_p0 sensitivity tool"
+  },
+  {
+   "blob": "efd420e3b1390c7a71351dc3e4cbc4978ab1ebe2",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_identifiability/fit.py",
+   "role": "historical LG HG2 calibration + identifiability tool"
+  },
+  {
+   "blob": "0a51c1d7d839b2a666d2c0764c97e606d2311b6a",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_identifiability/evaluate.py",
+   "role": "historical LG HG2 validation tool"
+  },
+  {
+   "blob": "b192fb844ac1689be724dfac1c31d53a0c1d4652",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "A",
+   "path": "benchmarks/battery_1rc_identifiability/outcome.py",
+   "role": "historical LG HG2 outcome mapping"
+  },
+  {
+   "blob": "3f91b04032f1ddc314f9525073c654bd00320a0d",
+   "candidate_visible": "YES",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "src/engcore/mind/minimal/structures.py",
+   "role": "Mind: hypothesis representation (log-linear structures, prior)"
+  },
+  {
+   "blob": "78b6efa3a2f8318e57f453fd0877360fd86fdbcc",
+   "candidate_visible": "YES",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "src/engcore/mind/minimal/outcome_model.py",
+   "role": "Mind: prediction path (hyper-g posterior predictive)"
+  },
+  {
+   "blob": "6ec106f0832ae664e65a5438989f85c8ae7504d2",
+   "candidate_visible": "YES",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "src/engcore/mind/minimal/competition.py",
+   "role": "Mind: belief update, sealing, evidence admission"
+  },
+  {
+   "blob": "cd4829560e5e3cd12fa5683966d15fcf032bcc52",
+   "candidate_visible": "YES",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "src/engcore/mind/minimal/experiments.py",
+   "role": "Mind: experiment/data selection (expected discrimination)"
+  },
+  {
+   "blob": "4e94e8eb4e5c4c35c0d5c7eee022ce883fcfb8f3",
+   "candidate_visible": "YES",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "src/engcore/mind/minimal/falsifier.py",
+   "role": "Mind: falsifier role (sealed decisive tests)"
+  },
+  {
+   "blob": "4cfa46e6f4444d873fff99525aa75a7a78cf4752",
+   "candidate_visible": "YES",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "src/engcore/mind/minimal/stopping.py",
+   "role": "Mind: stopping / refusal rule"
+  },
+  {
+   "blob": "e0158ae4d04cec259c1cdab10ef6c9f65a5a1dfd",
+   "candidate_visible": "YES",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "src/engcore/mind/minimal/runner.py",
+   "role": "Mind: closed loop, six conclusion kinds, replay"
+  },
+  {
+   "blob": "7595eff6d780a8d032e4368a76fb59b2ab945489",
+   "candidate_visible": "YES",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "src/engcore/mind/minimal/trace.py",
+   "role": "Mind: content-addressed step records, replay comparison"
+  },
+  {
+   "blob": "a195218efa25503a460ef9b5685ac788d1434442",
+   "candidate_visible": "YES",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "src/engcore/mind/minimal/problem.py",
+   "role": "Mind: experimental problem statement"
+  },
+  {
+   "blob": "c5e3db7247d4d7eb2d528db03912adcd5a8e5e4d",
+   "candidate_visible": "YES",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "src/engcore/mind/minimal/__init__.py",
+   "role": "Mind: package surface"
+  },
+  {
+   "blob": "cc051e072651a95ec34c1263ca930c0663d9d40c",
+   "candidate_visible": "NO",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "tests/mind/test_minimal_mind.py",
+   "role": "Mind: its own functional/adversarial tests (copied; 27 pass at base)"
+  },
+  {
+   "blob": "2ba347dc9f073e7392cc14115dc06499f27bd99b",
+   "candidate_visible": "NO",
+   "commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+   "evaluator_only": "YES",
+   "group": "B",
+   "path": "benchmarks/genesis_lite_mind/MIND_PILOT_PLAN.json",
+   "role": "BR-MIND-01 pilot plan (historical Mind evidence: NOT copied)"
+  },
+  {
+   "blob": "4eefded519b4cca5b11d5c0f5ce5930e1551cd2c",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "benchmarks/battery_1rc_closure/results/CALIBRATION.json",
+   "role": "historical NASA fitted parameters + identifiability decision"
+  },
+  {
+   "blob": "ee1315985e09f77f8f884053a3793ebddab5f0ad",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "benchmarks/battery_1rc_closure/results/VALIDATION.json",
+   "role": "historical NASA within/cross-cell acceptance, residuals"
+  },
+  {
+   "blob": "240ab34f9dbf9e1da5f7b7c0e6cda43eba80f7b2",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "benchmarks/battery_1rc_closure/results/UNCERTAINTY_REPORT.json",
+   "role": "historical NASA UQ / model-form / applicability"
+  },
+  {
+   "blob": "0759a11e572b210794d2fc9043aef00ea2c4c172",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "benchmarks/battery_1rc_closure/results/SENSITIVITY.json",
+   "role": "historical NASA sensitivity results"
+  },
+  {
+   "blob": "58cc5531dd40b73565823f21aa03adc583dfbb6a",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "benchmarks/battery_1rc_closure/README.md",
+   "role": "historical NASA conclusions (prose)"
+  },
+  {
+   "blob": "edf435f13e109920fb6644bdc1e740c110dcb63f",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "benchmarks/battery_1rc_identifiability/results/CALIBRATION.json",
+   "role": "historical LG HG2 fitted parameters + identifiability"
+  },
+  {
+   "blob": "b9bd7d30fe5579cb3bd1677f740e500bc41f452e",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "benchmarks/battery_1rc_identifiability/results/VALIDATION.json",
+   "role": "historical LG HG2 held-out results"
+  },
+  {
+   "blob": "ba6fc14de4b467db1e23ed555702de3b130f82a4",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "benchmarks/battery_1rc_identifiability/results/OUTCOME.json",
+   "role": "historical LG HG2 outcome (preregistered mapping)"
+  },
+  {
+   "blob": "84bdc699ebc30079f01303d3e8d78d69a8fc6b62",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "benchmarks/battery_1rc_identifiability/README.md",
+   "role": "historical LG HG2 conclusions (prose)"
+  },
+  {
+   "blob": "1f64ea0c5b74e7a401712d78f7430963c2e17e3e",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "benchmarks/battery_1rc_crosscell/results/OUTCOME.json",
+   "role": "historical LG M50T cross-cell outcome (not used)"
+  },
+  {
+   "blob": "7f029ac4bf876ca77f0ed04d9cbc55a02600a3a5",
+   "candidate_visible": "NO",
+   "commit": "12862b0b8821e2564d8c94853f31d44ced55eebf",
+   "evaluator_only": "YES",
+   "group": "C",
+   "path": "docs/work/PROGRESS.md",
+   "role": "session log naming every prior battery verdict"
+  },
+  {
+   "candidate_visible": "NO",
+   "commit": null,
+   "evaluator_only": "NO",
+   "external": {
+    "bytes": 209708670,
+    "present": true,
+    "sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e"
+   },
+   "group": "A",
+   "path": "D:/forge-data/nasa_pcoe_battery/5_Battery_Data_Set.zip",
+   "role": "NASA PCoE archive (owner-approved download)"
+  },
+  {
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": null,
+   "evaluator_only": "NO",
+   "external": {
+    "bytes": 15956874,
+    "present": true,
+    "sha256": "0eae4585baf3f200c09fe24c5ab884f1889679fc75206ca1aa19da704104f0b0"
+   },
+   "group": "A",
+   "path": "D:/forge-data/nasa_pcoe_battery/extracted/1. BatteryAgingARC-FY08Q4/B0005.mat",
+   "role": "NASA cell B0005 raw"
+  },
+  {
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": null,
+   "evaluator_only": "NO",
+   "external": {
+    "bytes": 16028159,
+    "present": true,
+    "sha256": "fa818ab4db5db8ab21e910b6dd6c3e20d3761bb9672089e1a4de8f96074616c5"
+   },
+   "group": "A",
+   "path": "D:/forge-data/nasa_pcoe_battery/extracted/1. BatteryAgingARC-FY08Q4/B0006.mat",
+   "role": "NASA cell B0006 raw"
+  },
+  {
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": null,
+   "evaluator_only": "NO",
+   "external": {
+    "bytes": 16049460,
+    "present": true,
+    "sha256": "d022afa086efaf54ab5b63f05220f5be178c8027e2fa8d68589db0e85a441a3b"
+   },
+   "group": "A",
+   "path": "D:/forge-data/nasa_pcoe_battery/extracted/1. BatteryAgingARC-FY08Q4/B0007.mat",
+   "role": "NASA cell B0007 raw"
+  },
+  {
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": null,
+   "evaluator_only": "NO",
+   "external": {
+    "bytes": 6033634,
+    "present": true,
+    "sha256": "70ffb357511dd77e7c6bc14c642a095ddd51d6918b547987247100a3bd2ea29d"
+   },
+   "group": "A",
+   "path": "D:/forge-data/lg_hg2/raw/549_HPPC.csv",
+   "role": "LG HG2 HPPC raw"
+  },
+  {
+   "candidate_visible": "NO (builder input: pseudonymised into the pack)",
+   "commit": null,
+   "evaluator_only": "NO",
+   "external": {
+    "bytes": 51428,
+    "present": true,
+    "sha256": "d9b9dd9b9b842ee6ba91f79a85512d2306527103d2f1cef5ecec4f962a75d83e"
+   },
+   "group": "A",
+   "path": "D:/forge-data/lg_hg2/raw/551_Cap_1C.csv",
+   "role": "LG HG2 1C capacity raw"
+  },
+  {
+   "candidate_visible": "NO",
+   "commit": null,
+   "evaluator_only": "NO",
+   "external": {
+    "bytes": 4476,
+    "present": true,
+    "sha256": "74519054896b31e935b05d63764ad6383eca4a856d825e0be74f3f5011a51aad"
+   },
+   "group": "A",
+   "path": "D:/forge-data/kirkaldy2024/bol25.sha256",
+   "role": "LG M50T (Kirkaldy 2024) BOL 25 C digest list (250 MB set; not used)"
+  },
+  {
+   "candidate_visible": "NO",
+   "commit": null,
+   "evaluator_only": "NO",
+   "external": {
+    "directory": true,
+    "present": true
+   },
+   "group": "A",
+   "path": "D:/forge-data/chen2020_lgm50",
+   "role": "LG M50 (Chen 2020) CSVs (not used)"
+  },
+  {
+   "candidate_visible": "NO",
+   "commit": "7e923e75f38644d567748d2a2ec223a80762d6dc",
+   "evaluator_only": "NO",
+   "group": "A",
+   "path": "refs/heads/feat/battery-real-data-identifiability",
+   "role": "Battery Practical Pass 1 (A123; WEAKLY_IDENTIFIABLE); historical, not used"
+  },
+  {
+   "candidate_visible": "NO",
+   "commit": "20069cc2e9aadea6c5662a872626c1b8ef3dadd0",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "refs/heads/feat/br-mind-01-minimal-mind",
+   "role": "BR-MIND-01 branch (head 20069cc2; Mind code frozen at e2b8037c); not merged"
+  },
+  {
+   "candidate_visible": "NO",
+   "commit": "5935958cd2ebcc415f7aa6b3a09d0880fa3c095b",
+   "evaluator_only": "NO",
+   "group": "B",
+   "path": "refs/heads/codex/mind-development-evidence-2026-10-20",
+   "role": "Mind preservation branch (blocked Genesis/Mind work); NOT merged into this branch"
+  },
+  {
+   "candidate_visible": "NO",
+   "commit": "a6200e5cb9d0a52d556aede24e7492261e674ec3",
+   "evaluator_only": "NO",
+   "group": "-",
+   "path": "refs/heads/feat/genesis-lite-v03-clean-n1",
+   "role": "sealed Family-3a stage a6200e5c; untouched by this task"
+  }
+ ],
+ "schema": "forge.battery_rediscovery.census/1"
+}
