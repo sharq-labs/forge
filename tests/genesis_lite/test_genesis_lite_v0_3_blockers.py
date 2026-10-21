@@ -943,3 +943,18 @@ def test_readiness_required_tests_match_the_test_files():
                 "test_harness_", "test_d3b_", "test_d2b_", "test_d5_", "test_d7_")
     assert required <= names
     assert {n for n in names if n.startswith(prefixes)} == required
+
+
+def test_readiness_every_d5_row_names_its_tests_and_needs_them_passed():
+    """Each D5 ledger row, the isolation boundary included, names exact required tests. Without executed evidence that
+    every one of them passed, the row cannot be verified, whatever status the pinned evidence gives it."""
+    for row in readiness.D5_ROWS:
+        names = readiness.REQUIRED_TESTS[row]
+        assert names, row
+        assert not readiness._row_verified(names, {})                                     # no evidence
+        passed = {f"tests/x.py::{n}": "passed" for n in names}
+        assert readiness._row_verified(names, passed)
+        failed = dict(passed, **{f"tests/x.py::{names[0]}": "failed"})
+        assert not readiness._row_verified(names, failed)                                  # one failure is enough
+        missing = {k: v for k, v in passed.items() if not k.endswith("::" + names[-1])}
+        assert not readiness._row_verified(names, missing)                                 # one missing is enough
