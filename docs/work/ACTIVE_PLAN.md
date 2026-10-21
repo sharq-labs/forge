@@ -14,6 +14,8 @@ owner's request, AMENDMENT_01 (post-seal, disclosed) fixed the regex and reran o
 amended conclusion REPRESENTATION_BOTTLENECK. A clean confirmation would need a v0.1 plan and a fresh sealed run.
 No Mind tuning, no formal run, no D5/N-1/Family-3a work.
 
+BR-BATT-REDISC-02 (battery_rediscovery_v1, clean re-execution with scanner v1 and a preregistered representability analysis): REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY. This is not an independent replication (same data and code). No Mind upgrade was made in this task.
+
 ## Current bounded task - remaining branches and post-merge CI (2026-10-20)
 
 Owner authorized continuing branch review and investigating Tests/Branch Policy without bypassing gates or OD3. PR180 merged with explicit archival-only approval at67585300. Twenty residual tips / fifteen maximal groups remain; nineteen tips trigger recertification. Prepare archive-only reconciliation of the seven ignored agent/configuration files from c4b9d950; do not activate their historical instructions. Review and run the changed-file gate before concrete PR approval. Investigate GitHub failure from actual job evidence: empty steps and missing log blobs currently leave root cause UNVERIFIED; obtain Annotations before prescribing a hosted-runner repair. Report: BRANCH_RECONCILIATION_CI_2026_10_20.md. No certification-sensitive implementation adoption, freeze or formal run.

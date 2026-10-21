@@ -8167,3 +8167,39 @@ Commands, all run with `PYTHONPATH="D:/forge-redisc/src;D:/forge-redisc"` and th
    (expected: PLAN.json is the pre-run record and is not rewritten).
 
 FAST, SCIENTIFIC, the regression pack and certification were NOT RUN for this amendment.
+
+
+## 2026-10-21 — BR-BATT-REDISC-02: battery_rediscovery_v1 clean confirmation (development)
+
+Experiment `benchmarks/battery_rediscovery_v1`, on branch `research/battery-rediscovery-pilot-v0`, local only.
+Commits: `53e6a6db` freeze (PLAN.json `3b7e6676`), `c0613435` seal, then the evaluation commit.
+
+- v0 is preserved as history in `V0_HISTORY.json`: PREREGISTERED_RESULT = LEAKAGE_INVALIDATED,
+  POST_SEAL_AMENDMENT_RESULT = REPRESENTATION_BOTTLENECK, CONFIRMED_RESULT = NONE. No v0 file was modified.
+- The candidate side is copied byte-exact from v0 (Mind arm, baselines, pack). The Mind was not upgraded.
+- **Leakage scanner v1:** complete numeric tokens are compared by value, measurement arrays are protected by
+  provenance, and a separate text scanner covers identities and verdicts. Mutation suite: 420/420 leaks caught and
+  0/219 benign triggered pre-run; 460/460 and 0/243 post-seal.
+- **Conclusion: REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY.** Mind failures 8, of which 5 are NOT_REPRESENTABLE
+  (share 0.625). Accuracy on representable instances: Mind 0.40, CAREFUL 1.00; the "not poor" gate fails at half of
+  CAREFUL.
+- Replay: 12/12 outputs identical, 5/5 traces VERIFIED. The outputs are byte-identical to v0's.
+- **Limits:** not an independent replication (same data, same deterministic code), and the developer was not blind
+  (the thresholds were written with v0's per-instance answers known). See the v1 README.
+
+**Failed approaches, recorded so they are not repeated:**
+- A scanner rule skipping tokens with fewer than 3 significant digits missed "8.4 mV" for 8.40. The mutation suite
+  caught it and it was removed pre-run.
+- A numeric scan of raw measurement arrays cannot be made safe: a 12.5 s timestamp equals a 3-digit historical RMSE.
+  Provenance replaces it for those arrays.
+
+Commands, all run with `PYTHONPATH="D:/forge-redisc/src;D:/forge-redisc"` and the phyx `.venv` Python 3.14:
+1. `python -m benchmarks.battery_rediscovery_v1.mutation --phase pre_run`: PASS 420/420, 0/219.
+2. `python -m pytest benchmarks/battery_rediscovery_v1/tests benchmarks/battery_rediscovery_v0/tests
+   tests/mind/test_minimal_mind.py -q -p no:cacheprovider --basetemp D:/redisc-tmp/bt6`: 82 passed.
+3. `python -m benchmarks.battery_rediscovery_v1.launch run`: exit 0.
+4. `python -m benchmarks.battery_rediscovery_v1.seal`: PASS.
+5. `python -m benchmarks.battery_rediscovery_v1.launch replay`: exit 0.
+6. `python -m benchmarks.battery_rediscovery_v1.evaluator.run_evaluation`: REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY.
+
+FAST, SCIENTIFIC, the regression pack and certification were NOT RUN for v1.
