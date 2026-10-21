@@ -864,7 +864,8 @@ def test_d5_writable_host_device_nodes_stay_blocking():
 def test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only():
     """Review MAJOR-1 (two passes): a read-only view of the host is still a channel. Every read-only row is admitted
     by target and filesystem, never by the operator's backing label. Binds are tied to their kept tree by device and
-    root, and userdata to THIS container."""
+    root, userdata to THIS container, Podman's masks to empty fresh tmpfs, /proc re-binds to the card's procfs, and
+    each kept tree to exactly one bind from exactly its host path (review MINORs, third pass)."""
     import copy
 
     from benchmarks.genesis_lite.v0_3 import container_evidence
@@ -909,7 +910,23 @@ def test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only():
     assert blocked in add({"root": "/null", "target": "/etc/shadow", "fstype": "devtmpfs", "source": "none"})[
         "reasons"]
     sub = {"root": "/sys", "target": "/proc/sys", "fstype": "proc", "source": "proc"}
-    assert add(sub, backing="kernel")["status"] == "PASS"                                         # read-only /proc/sys
+    assert add(sub, backing="kernel", base=1)["status"] == "PASS"                     # re-bind of the card's /proc
+    assert blocked in add(dict(sub, device="9:9"), backing="kernel", base=1)["reasons"]   # another procfs
+    acpi = {"root": "/", "target": "/proc/acpi", "fstype": "tmpfs", "source": "tmpfs", "device": "0:99",
+            "super_options": ["rw", "size=0k"]}
+    assert add(acpi, backing="container", base=1)["status"] == "PASS"                 # an empty, fresh mask
+    assert blocked in add(dict(acpi, super_options=["rw"]), backing="container", base=1)["reasons"]   # not empty
+    assert blocked in add(dict(acpi, device="0:5"), backing="container", base=1)["reasons"]   # shares /tmp's device
+    dev = {"root": "/", "target": "/dev", "fstype": "tmpfs", "source": "tmpfs", "device": "0:98"}
+    assert add(dev, backing="container", base=1)["status"] == "PASS"                  # a fresh read-only /dev
+    assert blocked in add(dict(dev, device="0:6"), backing="container", base=1)["reasons"]    # someone else's tmpfs
+    cgroup = {"root": "/", "target": "/sys/fs/cgroup", "fstype": "cgroup2", "source": "cgroup2"}
+    assert add(cgroup, backing="kernel", base=1)["status"] == "PASS"
+    assert blocked in add(dict(cgroup, root="/user.slice/host"), backing="kernel", base=1)["reasons"]
+    stacked = {"root": "/repository", "target": "/source"}                            # a second row at a kept target
+    assert blocked in add(stacked)["reasons"]
+    assert "RUNTIME_CONFIGURATION_MISMATCH" in add({"root": "/repository/sub", "target": "/b"},
+                                                   "/repo/sub:/source:ro")["reasons"]   # two binds at /source
     report, expected = fx.baseline()
     expected["source_sha"] = "UNKNOWN"
     for card in report["cards"]:

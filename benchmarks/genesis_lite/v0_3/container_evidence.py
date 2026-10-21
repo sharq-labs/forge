@@ -10,10 +10,11 @@ verified for N-1 only when per-card evidence shows, for three fresh cards A, B a
   another mount or undeclared. A writable device or pseudo-file mount is blocking (owner, 2026-10-21: no device-node
   exemption);
 * every READ-ONLY mount, whatever the operator's backing label, is on an allowlist (:func:`_read_only_admitted`):
-  the image root; the read-only ``/dev``; the card's own ``/proc``, ``/sys`` and cgroup filesystems with Podman's
-  masks over them; a declared ``--volume`` bind whose source is the source tree, the Python environment or a path
-  inside them, on the same device and below the same root as that tree's own mount; and Podman's userdata files of
-  THIS container. Any other path visible to a card, even read-only (``/``, a socket directory, the host's procfs, a
+  the image root; the read-only ``/dev`` (a fresh tmpfs); the card's own ``/proc``, ``/sys`` and cgroup (root "/")
+  filesystems with Podman's masks over them (empty ``size=0k`` tmpfs on their own device, or /dev/null) and its
+  read-only re-binds of the card's own procfs (same device); each kept tree bound exactly once from exactly its host
+  path; a declared ``--volume`` bind whose source is a path inside a kept tree, on the same device and below the same
+  root as that tree's own mount; and Podman's userdata files of THIS container. Every admitted target holds one row. Any other path visible to a card, even read-only (``/``, a socket directory, the host's procfs, a
   default volume from the operator's configuration), is blocking;
 * card A wrote a fresh token into each private mount (O_EXCL, fsync, readback, mount-attributed by the open file
   descriptor) and fresh cards B and C, at the identical path, found it ABSENT;
@@ -196,6 +197,9 @@ def _argv(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings
             found.add("UNDECLARED_HOST_MOUNT", f"{phase}: volume source {parts[0]!r} is not a normalised path "
                                                "inside the kept trees")
             continue
+        if parts[1] in bound:
+            found.add("RUNTIME_CONFIGURATION_MISMATCH", f"{phase}: two volumes bound at {parts[1]!r}")
+            continue
         bound[parts[1]] = parts[0]
     for n in ("--name", "--label"):
         if sum(1 for k, _v in valued if k == n) > 1:
@@ -223,24 +227,38 @@ def _argv(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings
 
 
 def _read_only_admitted(row: Mapping[str, Any], by_target: Mapping[str, list[dict[str, Any]]],
-                        bound: Mapping[str, str], expected: Mapping[str, Any], card_id: Any) -> bool:
-    """Whether a card may see this read-only row. The allowlist is by target and filesystem, never by the operator's
-    backing label (a bind of a whole host tmpfs or procfs looks like a fresh one)."""
-    target, fstype, root = row["target"], row["fstype"], row["root"]
+                        bound: Mapping[str, str], expected: Mapping[str, Any], card_id: Any,
+                        devices: Mapping[str, int]) -> bool:
+    """Whether a card may see this read-only row (the card's own view). The allowlist is by target, filesystem,
+    root and device, never by the operator's backing label: a bind of a whole host tmpfs or procfs looks like a fresh
+    one. Podman's own mounts are tied to what makes them Podman's: a fresh tmpfs has a device no other row of the
+    card uses, a mask tmpfs is empty (``size=0k``), a /proc re-bind sits on the card's own procfs, the card sees its
+    cgroup root as "/", and the kept trees are bound exactly once from exactly their host path."""
+    target, fstype, root, device = row["target"], row["fstype"], row["root"], row["device"]
+    single = len(by_target.get(target, [])) == 1
+
+    def own(path: str, kind: str) -> dict[str, Any] | None:
+        hits = by_target.get(path, [])
+        return hits[0] if len(hits) == 1 and hits[0]["fstype"] == kind else None
+
     if target == "/":
-        return fstype == "overlay"
+        return single and fstype == "overlay"
     if target == "/dev":
-        return fstype == "tmpfs" and root == "/"
+        return single and fstype == "tmpfs" and root == "/" and devices.get(device) == 1
     if target in ("/proc", "/sys"):
-        return fstype == ("proc" if target == "/proc" else "sysfs") and root == "/"
+        return single and fstype == ("proc" if target == "/proc" else "sysfs") and root == "/"
     if target == "/sys/fs/cgroup":
-        return fstype in CGROUP_FSTYPES                       # root: relative to the reader's cgroup namespace
+        return single and fstype in CGROUP_FSTYPES and root == "/"    # the card's view; the host's root differs
     if target in MASKED_PATHS:                                # Podman's masks: /dev/null over a file, empty tmpfs
-        return (fstype == "devtmpfs" and root == "/null") or (fstype == "tmpfs" and root == "/")
+        if fstype == "devtmpfs" and root == "/null":
+            return single
+        return (single and fstype == "tmpfs" and root == "/" and "size=0k" in row["super_options"]
+                and devices.get(device) == 1)
     if target in READ_ONLY_PROC_PATHS:                        # read-only re-binds of the card's own procfs
-        return fstype == "proc" and root == target[len("/proc"):]
+        proc = own("/proc", "proc")
+        return single and fstype == "proc" and root == target[len("/proc"):] and proc is not None             and device == proc["device"]
     if target in USERDATA_TARGETS:
-        return (fstype == "tmpfs" and isinstance(card_id, str) and HEX64.fullmatch(card_id) is not None
+        return (single and fstype == "tmpfs" and isinstance(card_id, str) and HEX64.fullmatch(card_id) is not None
                 and root == f"/containers/overlay-containers/{card_id}/userdata/{posixpath.basename(target)}")
     source = bound.get(target)
     if source is None:
@@ -248,13 +266,13 @@ def _read_only_admitted(row: Mapping[str, Any], by_target: Mapping[str, list[dic
     for host, path in ((expected["source_host"], expected["source_path"]),
                        (expected["venv_host"], expected["venv_path"])):
         if _within(source, [host]):
-            if target == path:
-                return True                                   # the kept tree's own bind is the reference
+            if target == path:                                # the kept tree's own bind: once, from exactly host
+                return single and source == host
             reference = by_target.get(path, [])
-            if len(reference) != 1:
+            if len(reference) != 1 or bound.get(path) != host:
                 return False
             ref = reference[0]
-            return (row["device"] == ref["device"] and fstype == ref["fstype"]
+            return (single and device == ref["device"] and fstype == ref["fstype"]
                     and root == posixpath.normpath(ref["root"].rstrip("/") + "/" + source[len(host):].lstrip("/")))
     return False
 
@@ -283,20 +301,24 @@ def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findin
         return {}
     targets = list(expected["writable_targets"])
     by_target: dict[str, list[dict[str, Any]]] = {}
+    devices: dict[str, int] = {}
     for row in parsed:
         by_target.setdefault(row["target"], []).append(row)
+        devices[row["device"]] = devices.get(row["device"], 0) + 1
     if "/" not in by_target:
         found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: no root mount")
     for path, label in ((expected["source_path"], "SOURCE"), (expected["venv_path"], "VENV")):
         hits = by_target.get(path, [])
         if not hits:
             found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: no mount for the {label.lower()} at {path}")
+        elif len(hits) != 1:
+            found.add("UNDECLARED_HOST_MOUNT", f"{phase}: {len(hits)} mounts at the {label.lower()} target {path}")
         elif any("rw" in r["options"] for r in hits):
             found.add(f"{label}_WRITABLE", f"{phase}: {path} is mounted read-write")
     private: dict[str, str] = {}
     for row, rt in zip(parsed, runtime):
         if "rw" not in row["options"]:
-            if not _read_only_admitted(row, by_target, bound or {}, expected, card.get("id")):
+            if not _read_only_admitted(row, by_target, bound or {}, expected, card.get("id"), devices):
                 found.add("UNDECLARED_HOST_MOUNT", f"{phase}: read-only mount {row['id']} {row['target']} "
                                                    f"({row['fstype']}, root {row['root']}) is not on the allowlist")
             continue
