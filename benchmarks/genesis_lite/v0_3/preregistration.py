@@ -132,9 +132,12 @@ A1_DEPLOYMENT_EVIDENCE_SHA256 = "519f3669b48b5bd08f79af172af51e590ce7e1432141e96
 #: under the STATELESS_DEVICE contract (owner device policy, 2026-10-21): verified, each of the six devices ADMITTED
 DEPLOYMENT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/result.json"
 DEPLOYMENT_EVIDENCE_SHA256 = "b3bc0b6447b1fe46d3cf613692eeea95f0a8b50678106b680a7a224f8fe5ac84"
-#: D7 (owner, 2026-10-20): the timing pilot on the formal machine, before the formal budget is approved
-TIMING_PILOT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json"
-TIMING_PILOT_EVIDENCE_SHA256 = "3759ff334f690f4d3601b588a4bfb6c9dd71f186975a45d024a8714cb85beb4f"
+#: D7 (owner, 2026-10-20): the timing pilot on the formal machine, before the formal budget is approved. Re-run on
+#: 2026-10-21 through the final D5-A1b launcher, after its pre-admission check passed (the 2026-10-20 pilot is history)
+TIMING_PILOT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_21/result.json"
+TIMING_PILOT_EVIDENCE_SHA256 = "6f6b1418dfd78cebe8795c4f6587204e5da823088dd7afe85107076d5e576092"
+HISTORICAL_TIMING_PILOT_EVIDENCE = "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json"
+HISTORICAL_TIMING_PILOT_EVIDENCE_SHA256 = "3759ff334f690f4d3601b588a4bfb6c9dd71f186975a45d024a8714cb85beb4f"
 #: fixed here, so that committing a later preregistration never changes what this identity rebuilds to
 RETIRED_PILOT_ROOT_COMMITMENTS = (
     "073814653d48e3879030270072f1912e0dc1bf10df161e4fdd18bbe225183686",   # v0
@@ -342,13 +345,18 @@ def build() -> dict[str, Any]:
                        "total_hours": TOTAL_BUDGET_HOURS,
                        "rule": "formal.run_formal checks the elapsed time before each world set and stops past "
                                "total_hours: BUDGET_EXCEEDED, INVALID, never partially claimed (Genesis section 10.6)",
-                       "scope": "the cap times the operator's run only (about half of the ESTIMATED 58 h, which counts "
-                                "the evaluator's replay as a second run); the evaluator's replay is budgeted separately; "
+                       "scope": "the cap times the operator's run only (ESTIMATED 45.2 h of the 90.5 h that count the "
+                                "evaluator's replay as a second run, from the 2026-10-21 pilot through the D5-A1b "
+                                "containers: MEASURED 67.9 s per world set; the 2026-10-20 pilot's 58 h is history); "
+                                "the evaluator's replay is budgeted separately; "
                                 "overshoot is bounded by the world set in progress (every arm's cards x the per-card "
                                 "timeout)"},
             "timing_pilot": {"evidence": TIMING_PILOT_EVIDENCE, "evidence_sha256": TIMING_PILOT_EVIDENCE_SHA256,
-                             "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are "
-                                       "ESTIMATED from it and exclude the candidate's own cost (D4)"},
+                             "labels": "MEASURED on the D7 machine through the D5-A1b containers, after the "
+                                       "pre-admission container check passed; the formal hours are ESTIMATED from it "
+                                       "and exclude the candidate's own cost (D4)",
+                             "historical": HISTORICAL_TIMING_PILOT_EVIDENCE,
+                             "historical_sha256": HISTORICAL_TIMING_PILOT_EVIDENCE_SHA256},
             "deployment": {"decided": "D5 option A1 (owner, 2026-10-20); amended to D5-A1b (owner, 2026-10-21)",
                            "kind": isolation.DEPLOYMENT,
                            "superseded": {"A1": "rootless_namespaces: superseded for the formal deployment by D5-A1b "
