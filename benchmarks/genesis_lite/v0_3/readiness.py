@@ -12,7 +12,9 @@ Statuses, in order of precedence:
 
 * ``BLOCKED_TECHNICAL``: something the code must still fix or prove. Examples: the preregistration does not rebuild;
   an earlier identity moved; the escrow half is missing; evaluator and escrow disagree; a technical row has no passing
-  evidence; the one-attempt registry fails its self-test; the evidence is not from a clean committed HEAD.
+  evidence; the one-attempt registry fails its self-test; the evidence is not from a clean committed HEAD; the
+  D5 evidence leaves a boundary finding open, or the D5/D7 evidence measured another runtime
+  (``D5_RUNTIME_BOUNDARY_NOT_PROVEN``).
 * ``READY_TO_FREEZE_PENDING_OWNER``: every technical condition holds, but owner decisions, an owner-set value (w, root
   commitment, environment manifest, candidate) or OD-3 are missing. Each reason is listed exactly.
 * ``PASS``: everything holds, every decision in :data:`REQUIRED_APPROVALS` is APPROVED for THIS preregistration digest
@@ -256,6 +258,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
         'test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code',
         'test_d5_a_failed_deployment_check_never_consumes_the_attempt',
+        'test_d5_the_selected_runtime_with_an_open_boundary_finding_never_verifies',
     ),
     'readiness P-1/P-2 (isolation deployment, escrow out of process)': (
         'test_d5_the_launcher_runs_every_card_in_a_new_read_only_container_keeping_only_the_tree',
@@ -288,6 +291,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
         'test_d5_the_new_probes_never_report_refused_without_a_mechanism',
         'test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code',
         'test_d5_a_failed_deployment_check_never_consumes_the_attempt',
+        'test_d5_the_selected_runtime_with_an_open_boundary_finding_never_verifies',
     ),
     'D7 timing pilot and budget': (
         'test_d7_a_formal_run_never_takes_a_callers_launcher_and_the_pilot_stays_off_the_formal_grid',
@@ -295,6 +299,7 @@ REQUIRED_TESTS: dict[str, tuple[str, ...]] = {
     ),
     'D7 timing pilot evidence': (
         'test_d7_timing_pilot_evidence_is_pinned_and_a_stale_pilot_is_a_blocker',
+        'test_d7_a_pilot_on_a_superseded_or_blocked_runtime_is_a_blocker',
     ),
     'power and null-calibration study (ODC-O1b)': (
         'test_o1_power_study_vectorised_bootstrap_is_the_same_estimator',
@@ -366,6 +371,60 @@ def agreement_cases() -> list[dict[str, Any]]:
 D5_ROWS = ("FDA-18 residual (same-account files, helper processes)", "isolation boundary (D5)",
            "readiness P-1/P-2 (isolation deployment, escrow out of process)")
 
+#: the gate's reason while a boundary finding is open or the evidence measured another runtime than the selected one
+D5_RUNTIME_BOUNDARY_NOT_PROVEN = "D5_RUNTIME_BOUNDARY_NOT_PROVEN"
+#: evidence types (decision record section 10); a finding only a review or an unpinned confirmation supports is open
+MEASURED, STATIC_REVIEW, FORMAL_MACHINE_CONFIRMATION = "MEASURED", "STATIC_REVIEW", "FORMAL_MACHINE_CONFIRMATION"
+NOT_MEASURED = "NOT_MEASURED_BY_CURRENT_DETECTOR"
+#: boundary findings, keyed by finding, never by runtime name: each is open for EVERY runtime, including a renamed or a
+#: replacement one, until the pinned D5 evidence holds ``boundary_findings[<id>]`` with ``evidence: MEASURED``, a
+#: ``detector`` from the finding's declared ``detectors``, and a closing result for every node in its ``scope``. No
+#: detector is declared yet, so nothing can close BLOCKER 1 (owner, CHANGE_RUNTIME_BOUNDARY, 2026-10-21). The gate
+#: checks only the closure's declared type; declaring a detector must also add a required test that re-derives every
+#: node's result from the raw records in the pinned evidence, as container_validation is re-derived today.
+BOUNDARY_FINDINGS: dict[str, dict[str, Any]] = {
+    "BLOCKER 1": {
+        "sources": {STATIC_REVIEW: "hostile read-only review of 99959b09, 2026-10-21 (PROGRESS, Prompt 3 entry)",
+                    FORMAL_MACHINE_CONFIRMATION: "the implementer, in session on the formal launcher, before the "
+                                                 "reverts e0e73e81/3d62b494; unpinned, no artifact kept"},
+        "classification": "BLOCKER",
+        "scope": ("/dev/null", "/dev/zero", "/dev/full", "/dev/random", "/dev/urandom", "/dev/tty"),
+        "evidence": (STATIC_REVIEW, FORMAL_MACHINE_CONFIRMATION),
+        "detector": NOT_MEASURED,
+        "detectors": (),
+        "closing_results": ("REFUSED_WITH_POWER", "ABSENT", "PRIVATE_TO_CARD"),
+        "runtime_status": {"rootless_podman_per_card": "BLOCKED_BY_D5_DEVICE_BOUNDARY"},
+    },
+}
+
+
+def _closed(fid: str, finding: Mapping[str, Any], doc: Any) -> bool:
+    section = doc.get("boundary_findings") if isinstance(doc, Mapping) else None
+    entry = section.get(fid) if isinstance(section, Mapping) else None
+    nodes = entry.get("nodes") if isinstance(entry, Mapping) else None
+    return (isinstance(nodes, Mapping) and entry.get("evidence") == MEASURED
+            and entry.get("detector") in finding["detectors"]
+            and all(nodes.get(node) in finding["closing_results"] for node in finding["scope"]))
+
+
+def runtime_boundary_problems(doc: Any, findings_doc: Any = None) -> list[str]:
+    """Why the selected runtime cannot rely on ``doc`` (pinned evidence, or None): every boundary finding that
+    ``findings_doc`` (default ``doc``; D7 passes the D5 evidence) does not close with MEASURED results, and evidence
+    that names another runtime, or none. Empty only when both hold."""
+    from . import isolation  # noqa: PLC0415
+
+    selected = isolation.DEPLOYMENT
+    findings_doc = doc if findings_doc is None else findings_doc
+    problems = [f"{fid} ({f['classification']}; {' + '.join(f['evidence'])}; {f['detector']}) is open for the selected "
+                f"runtime {selected!r}" + (f": {f['runtime_status'][selected]}" if selected in f["runtime_status"] else "")
+                for fid, f in sorted(BOUNDARY_FINDINGS.items()) if not _closed(fid, f, findings_doc)]
+    if doc is not None:
+        dep = doc.get("deployment") if isinstance(doc, Mapping) else None
+        measured = dep.get("deployment") if isinstance(dep, Mapping) else None
+        if not isinstance(measured, str) or measured != selected:
+            problems.append(f"the evidence measured runtime {measured!r}, not the selected {selected!r}")
+    return problems
+
 
 def _pinned(rel: str, sha: str) -> dict[str, Any] | None:
     try:
@@ -376,11 +435,20 @@ def _pinned(rel: str, sha: str) -> dict[str, Any] | None:
 
 
 def deployment_status() -> tuple[str, str]:
-    """(status, note) of D5 from the preregistration-pinned evidence: FIXED only for D5-A1b evidence that verified;
+    """(status, note) of D5 from the preregistration-pinned evidence and the selected runtime: FIXED only for D5-A1b
+    evidence that verified, on the selected runtime, with every boundary finding closed by MEASURED evidence (:data:`BOUNDARY_FINDINGS`);
     A1 evidence is historical; blocked evidence names its reasons."""
+    doc = _pinned(v03p.DEPLOYMENT_EVIDENCE, v03p.DEPLOYMENT_EVIDENCE_SHA256)
+    status, note = _evidence_status(doc)
+    boundary = runtime_boundary_problems(doc)
+    if boundary:
+        return NOT_PROVEN, f"{D5_RUNTIME_BOUNDARY_NOT_PROVEN}: {'; '.join(boundary)}. Evidence: {note}"
+    return status, note
+
+
+def _evidence_status(doc: Mapping[str, Any] | None) -> tuple[str, str]:
     from . import isolation  # noqa: PLC0415
 
-    doc = _pinned(v03p.DEPLOYMENT_EVIDENCE, v03p.DEPLOYMENT_EVIDENCE_SHA256)
     if doc is None:
         return NOT_PROVEN, "the pinned D5 deployment evidence is missing or not the pinned bytes"
     if doc.get("schema") != isolation.EVIDENCE_SCHEMA:
@@ -399,15 +467,19 @@ def deployment_status() -> tuple[str, str]:
 
 
 def timing_pilot_status() -> tuple[str, str]:
-    """(status, note) of the D7 timing evidence: FIXED only while it timed the code in this tree."""
+    """(status, note) of the D7 timing evidence: FIXED only while it timed the code in this tree, through the selected
+    runtime, and the pinned D5 evidence closes every boundary finding (a rerun waits for a replacement runtime)."""
     doc = _pinned(v03p.TIMING_PILOT_EVIDENCE, v03p.TIMING_PILOT_EVIDENCE_SHA256)
     if doc is None:
         return NOT_PROVEN, "the pinned D7 timing evidence is missing or not the pinned bytes"
     moved = sorted(n for n, digest in doc.get("provenance", {}).get("code_sha256", {}).items()
                    if not (v03p.HERE / n).is_file() or hashlib.sha256((v03p.HERE / n).read_bytes()).hexdigest() != digest)
-    if moved:
-        return NOT_PROVEN, (f"HISTORICAL_ONLY, REQUIRES_RERUN, REQUIRES_REPIN_AFTER_N1: the timed code changed {moved} "
-                            "(D5-A1b, 2026-10-21)")
+    boundary = runtime_boundary_problems(doc, _pinned(v03p.DEPLOYMENT_EVIDENCE, v03p.DEPLOYMENT_EVIDENCE_SHA256) or {})
+    if moved or boundary:
+        return NOT_PROVEN, ("HISTORICAL_ONLY, REQUIRES_RERUN, REQUIRES_REPIN_AFTER_N1"
+                            + (f": the timed code changed {moved} (D5-A1b, 2026-10-21)" if moved else "")
+                            + (f"; {D5_RUNTIME_BOUNDARY_NOT_PROVEN}: {'; '.join(boundary)} (a rerun waits for a "
+                               "replacement runtime)" if boundary else ""))
     return FIXED, "the pinned pilot timed the code in this tree"
 
 
@@ -562,7 +634,10 @@ def check(approvals_path: pathlib.Path | None = None, evidence: Mapping[str, Any
             owner.append(f"owner decision {decision} is not APPROVED for this preregistration ({prereg_sha[:12]}...) "
                          f"in {path.name}")
     status = BLOCKED if technical else PENDING_OWNER if owner else PASS
+    boundary = runtime_boundary_problems(_pinned(v03p.DEPLOYMENT_EVIDENCE, v03p.DEPLOYMENT_EVIDENCE_SHA256))
     return {"status": status, "technical_blockers": technical, "owner_and_certification": owner,
+            "d5_runtime_boundary": ({"reason": D5_RUNTIME_BOUNDARY_NOT_PROVEN, "problems": boundary} if boundary
+                                    else None),
             "agreement_cases": len(cases), "evidence_tests": len(tests), "head": head, "prereg_sha256": prereg_sha,
             "ledger": {k: [v[0], list(v[1]), v[2]] for k, v in sorted(rows.items())},
             "pair_bound": v03e.PAIR_BOUND if not isinstance(v03e.PAIR_BOUND, v03e.PairBound) else v03e.PAIR_BOUND.to_dict()}

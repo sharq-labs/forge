@@ -518,7 +518,7 @@
  },
  "open_items": {
   "FDA-19 / ODC-BL1": "closed on the benchmark side by v0_3/secret_scan.py (proposer-side scan of the root, masters, run log and registry); the certified isolation_probe rerun that covers this inventory is a start condition (OD-3), not optional",
-  "readiness P-1 / P-2": "the isolation deployment is D5-A1b (rootless Podman per card; A1 superseded 2026-10-21). The escrow stays in the operator process: the operator_process channel shows no card reaches another process. NOT_PROVEN until the per-card writable-mount evidence (N-1) passes and is pinned"
+  "readiness P-1 / P-2": "the isolation deployment is D5-A1b (rootless Podman per card; A1 superseded 2026-10-21). The escrow stays in the operator process: the operator_process channel shows no card reaches another process. NOT_PROVEN until the per-card writable-mount evidence (N-1) passes and is pinned. CHANGE_RUNTIME_BOUNDARY (owner, 2026-10-21): the rootless Podman runtime is BLOCKED_BY_D5_DEVICE_BOUNDARY (review BLOCKER 1, not measured by the current detector), so no evidence from it closes D5; a replacement runtime is not selected, and none closes D5 without MEASURED evidence that closes BLOCKER 1 (readiness.BOUNDARY_FINDINGS)"
  },
  "owner_decisions_open": {
   "D4-identity-freeze": "OD-19; candidate DEFERRED by the owner (2026-10-20) until the evaluator is named; freeze sequence (owner, 2026-10-20): (1) the evaluator is named (D6, by 2026-11-17); (2) the candidate is chosen AFTER that (deferred by the owner), its code brought into this tree and pinned by sha256 (or NONE), and a one-campaign candidate timing completes the D7 budget total; (3) OD-3 recertifies that final pre-freeze HEAD; (4) the operator generates a fresh formal root and commits its sha256; (5) the environment manifest is measured on the D7 machine; (6) the owner's approvals record binds every decision to the final preregistration digest; only then is the status set to FROZEN. Nothing is frozen or pushed before (6)",
@@ -583,8 +583,8 @@
   "formal.py": "58f03968c29819fb76e437ded321b51515c106866ee4258deb7b7784b11c9836",
   "harness.py": "63103416641a40594041105191e9241cb8757d01e76b4bc855ac939445fa29a7",
   "isolation.py": "29c1acc26cb89a711fd7fb7568272895d4ce90531a6ffe76357f30960e8886e0",
-  "preregistration.py": "66b245134d3e1e050e09556eae49c3cba1a02f960a7e06a783cc276c046f988d",
-  "readiness.py": "735c2f9a092823a402c33394990edba823db118064a20e6f41f38eb97e9eb17a",
+  "preregistration.py": "c737ede8e25dc58abcbd306ad3a84b95881a03bbeb179f59244163bb97479c90",
+  "readiness.py": "688f26a2b8530210c6764e09fcbb8462be23213192b9775c981754d124ddd87f",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",
   "selfcheck.py": "d21a082c8301276d6c8357ab734a41cd32a1aba60948ea3d966777b558dcf7a8",

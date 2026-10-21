@@ -84,3 +84,24 @@ Within the validator's checks, nothing else blocked:
   `BLOCKED_WITH_EVIDENCE_NOT_PROVEN`.
 - The historical A1 evidence (`../genesis_lite_v0_3_d5_deployment_2026_10_20`, sha256 `519f3669…`) is unchanged and
   is HISTORICAL_ONLY.
+
+## Correction (2026-10-21, CHANGE_RUNTIME_BOUNDARY)
+
+The text above is kept as written. Read it with these corrections (decision record section 10).
+
+- **Scope of this run.** It ran at `12baeb04`, before the STATELESS_DEVICE contract (`2e2a9d1b`). It holds no
+  selected-message device trials, so it says nothing, either way, about a cross-card channel through the six devices.
+  It is HISTORICAL ONLY.
+- **Superseded wording.** "Passing needs a runtime or launcher without them, or a later owner decision" is
+  superseded. The later owner decisions came (STATELESS_DEVICE, then ADMIT_ONLY_PROVEN_STATELESS_SUBSET), and D5 is
+  still not closeable on this runtime without further evidence: MEASURED evidence that closes BLOCKER 1's scope.
+- **The later run.** The STATELESS_DEVICE run at `2e2a9d1b` (sha256 `b3bc0b64…`, pinned at `b1fbefbf` and reverted;
+  git history only) is the MEASURED detector result. No selected message bytes were recovered in any recorded trial.
+  Its detector did not exercise the mechanism of review BLOCKER 1, so it neither proves nor disproves BLOCKER 1
+  (NOT_MEASURED_BY_CURRENT_DETECTOR).
+- **BLOCKER 1's support.** BLOCKER 1 rests on a STATIC_REVIEW and on an unpinned FORMAL_MACHINE_CONFIRMATION by the
+  implementer. Neither is a selected-message measurement. Device identity alone does not prove a channel.
+- **Status.** The rootless Podman runtime is **BLOCKED_BY_D5_DEVICE_BOUNDARY**. The readiness gate reports
+  `D5_RUNTIME_BOUNDARY_NOT_PROVEN` for it, and for any renamed or replacement runtime, until MEASURED evidence closes
+  BLOCKER 1 (`readiness.deployment_status`, `readiness.BOUNDARY_FINDINGS`). D5 = NOT_PROVEN and N-1 = OPEN. D7 = REQUIRES_RERUN, after a replacement
+  runtime is selected.

@@ -427,7 +427,10 @@ def build() -> dict[str, Any]:
             "readiness P-1 / P-2": "the isolation deployment is D5-A1b (rootless Podman per card; A1 superseded "
                                    "2026-10-21). The escrow stays in the operator process: the operator_process "
                                    "channel shows no card reaches another process. NOT_PROVEN until the per-card "
-                                   "writable-mount evidence (N-1) passes and is pinned",
+                                   "writable-mount evidence (N-1) passes and is pinned. CHANGE_RUNTIME_BOUNDARY (owner, "
+                                   "2026-10-21): the rootless Podman runtime is BLOCKED_BY_D5_DEVICE_BOUNDARY (review "
+                                   "BLOCKER 1, not measured by the current detector), so no evidence from it closes D5; "
+                                   "a replacement runtime is not selected, and none closes D5 without MEASURED evidence that closes BLOCKER 1 (readiness.BOUNDARY_FINDINGS)",
         },
         "owner_decisions_taken": dict(OWNER_DECISIONS_TAKEN),
         "owner_decisions_open": {

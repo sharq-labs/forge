@@ -13,6 +13,10 @@ supersedes: none
 > **Status correction 2026-10-21:** the status statements below predate the fifth review and are superseded by
 > §6. They are the READY_TO_FREEZE_PENDING_OWNER verdict, the FDA-18 residual "closed by D5", readiness P-1/P-2
 > "FIXED by D5", "D5 ... verified" and the source refs in §0. The D1-D7 decision text is unchanged.
+>
+> **Status correction 2026-10-21 (CHANGE_RUNTIME_BOUNDARY):** §10 closes the rootless Podman runtime as
+> BLOCKED_BY_D5_DEVICE_BOUNDARY, gives the evidence type of every BLOCKER 1 statement, and corrects §3, §7, §8 and §9
+> wording in 10.2. D5 = NOT_PROVEN, N-1 = OPEN, D7 = REQUIRES_RERUN.
 
 # Genesis-lite v0.3: freeze readiness and the owner's decisions
 
@@ -248,3 +252,134 @@ The owner narrowed the section 8 policy. Section 8 is kept as history.
   Card B can recover. No launcher configuration that closes BLOCKER 1 for null, zero and full has been shown, so
   admitting them would weaken the policy. The owner instruction for this case applies:
   BLOCKED_WITH_PRECISE_EVIDENCE.
+
+## 10. CHANGE_RUNTIME_BOUNDARY: the current runtime is closed as BLOCKED (owner, 2026-10-21)
+
+The owner decided **CHANGE_RUNTIME_BOUNDARY**. Nothing in sections 0 to 9 is rewritten. The dated corrections in
+10.2 say which earlier wording no longer stands.
+
+- The scientific device policy (sections 8 and 9) and every acceptance criterion are unchanged.
+- The rootless Podman formal-card runtime is closed as **BLOCKED_BY_D5_DEVICE_BOUNDARY**. Its implementation and
+  evidence are kept (10.4).
+- A replacement runtime is not selected. The owner-facing comparison is
+  [GENESIS_LITE_V0_3_D5_RUNTIME_BOUNDARY_HANDOFF.md](GENESIS_LITE_V0_3_D5_RUNTIME_BOUNDARY_HANDOFF.md).
+
+### 10.1 Evidence taxonomy
+
+| | Evidence type | What it is | What it supports |
+|---|---|---|---|
+| **A. Executed detector result** | MEASURED | Source: the D5 run at `2e2a9d1b`, pinned at `b1fbefbf` and reverted by `3d62b494`, so it exists only in git history (`result.json` sha256 `b3bc0b64…`). The device trials and the decoder compared message bytes and metadata. All 30 recorded decoder reads recovered no selected message: every `found` flag under `container_evidence.cards[*].devices` and `container_evidence.device_trials` is false. The reads were made by fresh decoder cards (B, C and the trial decoders) over null, zero, full, random and urandom. In `positive_controls.device_channel`, the shared-file control recovered it in both bit directions. To read the record: `git show b1fbefbf:docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/result.json`. | No selected message bytes were recovered in any recorded trial. **The detector did not exercise the mechanism identified by BLOCKER 1, so it neither proves nor disproves BLOCKER 1.** It is NOT_MEASURED_BY_CURRENT_DETECTOR. The pinned run `967f089e` at `12baeb04` predates the trials (`2e2a9d1b`) and holds none. |
+| **B. Static review finding** | STATIC_REVIEW | The independent hostile read-only review of `99959b09` (2026-10-21) returned 1 BLOCKER, 2 MAJOR, 7 MINOR and 5 NOTE. The reference is PROGRESS, entry "2026-10-21 — Prompt 3". | **BLOCKER 1**, classified BLOCKER. Its stated scope is all six writable device nodes: null 1:3, zero 1:5, full 1:7, random 1:8, urandom 1:9 and tty 5:0. Its mechanism is not reproduced or expanded here. |
+| **C. Formal-machine confirmation** | FORMAL_MACHINE_CONFIRMATION | The implementer separately confirmed the review finding on the formal launcher, in session and before the revert. It was an executed, ad-hoc check. No artifact was kept in the repository: no command record, output or digest. It is not reproducible from the tree. | That the reviewed finding was observed by the implementer on the formal launcher for the six nodes; unpinned. **It is not a selected-message detector measurement.** No trial recovered, or tried to recover, a selected message through BLOCKER 1's mechanism. |
+| **D. Current scientific status** | BLOCKED | Derived by the gate (10.3). | D5 = **NOT_PROVEN**. N-1 = **OPEN**. CURRENT_ROOTLESS_PODMAN_RUNTIME = **BLOCKED_BY_D5_DEVICE_BOUNDARY**. D7 = **REQUIRES_RERUN**, only after a replacement runtime is selected. No freeze, certification or formal campaign is permitted. |
+
+What this taxonomy rules out:
+
+- **Device identity.** Device identity alone (path, major:minor, a shared host node) does not prove a communication
+  channel.
+- **Recovery.** Recovery of a selected message through BLOCKER 1's scope was not experimentally demonstrated.
+- **Closure.** BLOCKER 1 is unresolved because only B and C support it. It is not resolved by A, which never tested
+  it.
+
+### 10.2 Dated corrections (2026-10-21) of earlier wording
+
+Each of these is kept above as written and is corrected here.
+
+- **Section 3, row D5-A1b.** "D5 stays NOT_PROVEN until D5-A1b evidence passes and is pinned." On this runtime,
+  passing and pinned evidence is no longer sufficient. BLOCKER 1 is open, so D5 is BLOCKED on this runtime whatever
+  that evidence says (10.3).
+- **Section 8, Status.** "D5 = NOT_PROVEN until evidence from a clean clone of the final commit passes and is
+  pinned." This is corrected in the same way. D5 is not closeable on the current runtime without further evidence:
+  MEASURED evidence that closes BLOCKER 1's mechanism over its scope, which the current detector does not
+  produce.
+- **Section 9.** "BLOCKER 1 ... was confirmed on the formal launcher for all six device nodes" is evidence type C
+  (FORMAL_MACHINE_CONFIRMATION), not a detector measurement.
+- **Section 9.** "cannot make the admitted subset meet the policy's own requirement that Card A cannot leave a value
+  a fresh Card B can recover" means the requirement cannot be **shown** met, so it stays BLOCKED. It does not mean
+  that a recovery by Card B was demonstrated. That recovery is NOT_MEASURED.
+- **Section 7.** "With this runtime, D5 and N-1 therefore cannot pass" was written under the strict no-exemption rule
+  and the `967f089e` evidence. It still holds today, because BLOCKER 1 is open (10.1 B and C) and no MEASURED evidence covers
+  its scope (10.1 A). It no longer rests on that rule, which section 8 replaced.
+- **PROGRESS (Prompt 3 entry).** It reads "This is a cross-card state channel", "all six devices were ADMITTED
+  wrongly" and "The D5 PASS is therefore invalid". The corrected reading is STATIC_REVIEW plus
+  FORMAL_MACHINE_CONFIRMATION. The admissions and the PASS do not stand, because their detector did not exercise
+  BLOCKER 1, not because a channel was measured. PROGRESS carries the same correction.
+
+### 10.3 The gate stays fail-closed (derived, not a hand-set status)
+
+`readiness.BOUNDARY_FINDINGS` records BLOCKER 1 **by finding and scope, not by runtime name**. It holds:
+
+- the evidence types `STATIC_REVIEW + FORMAL_MACHINE_CONFIRMATION`, with a source for each;
+- the detector status `NOT_MEASURED_BY_CURRENT_DETECTOR`;
+- the six-node scope;
+- an empty list of declared detectors;
+- the runtime status `BLOCKED_BY_D5_DEVICE_BOUNDARY` for `rootless_podman_per_card`.
+
+The finding is open for every runtime, the current one, a renamed one and any replacement alike. It closes only
+when the pinned D5 evidence holds `boundary_findings["BLOCKER 1"]` with all of these:
+
+- `evidence: MEASURED`;
+- a `detector` from the finding's declared list;
+- a closing result (`REFUSED_WITH_POWER`, `ABSENT` or `PRIVATE_TO_CARD`) for every node in scope.
+
+No detector is declared, so nothing can close it today. The gate checks the closure's declared type and
+coverage; it does not re-derive the node results. Declaring a detector is therefore a reviewed code change that
+must also add a required test re-deriving every node's result from the raw records in the pinned evidence, as
+`container_validation` is re-derived today. The evidence that uses it must still be measured and pinned. Removing the table entry is not a closure; it is a code change to a
+preregistration-pinned file.
+
+- `readiness.runtime_boundary_problems()` derives the result from three inputs: that closure, the selected runtime
+  (`isolation.DEPLOYMENT`) and the runtime the evidence names.
+- `deployment_status()` returns NOT_PROVEN with **`D5_RUNTIME_BOUNDARY_NOT_PROVEN`** in any of these cases:
+  - the finding is open, even when the D5 evidence says `verified: true` and even after the runtime is renamed;
+  - the D5 evidence measured another runtime;
+  - the D5 evidence names no runtime, or a malformed one (blocked, never raised).
+- `timing_pilot_status()` keeps D7 a technical blocker while the pilot ran through another runtime, or while the
+  pinned D5 evidence leaves the finding open.
+- `check()` therefore reports BLOCKED_TECHNICAL, never READY_TO_FREEZE_PENDING_OWNER or PASS. It also returns
+  `d5_runtime_boundary: {reason: D5_RUNTIME_BOUNDARY_NOT_PROVEN, problems: [...]}`. That field reflects the D5
+  evidence. A D7 runtime mismatch shows in the D7 evidence row.
+
+Tests:
+
+- `test_d5_the_selected_runtime_with_an_open_boundary_finding_never_verifies`;
+- `test_d7_a_pilot_on_a_superseded_or_blocked_runtime_is_a_blocker`.
+
+Both are now required tests of their ledger rows. They cover these cases:
+
+- the rename and replacement paths;
+- closing sections that are incomplete: an undeclared detector, a non-MEASURED type, a missing `evidence` key, a
+  missing node, a non-closing node value, `nodes` that is not a mapping, and a non-mapping section or entry;
+- a D7 pilot that carries its own closing section.
+
+They also show the status is derived: a closure declared MEASURED by a declared detector, covering every node, lets
+the same record verify.
+
+### 10.4 Preservation of completed work
+
+| Component | Where | Classification |
+|---|---|---|
+| STATELESS_DEVICE contract and per-device validator | `device_contract.py` (`stateless_device/1`) | REUSABLE with a replacement runtime. The expected node shape (a private devtmpfs bind of the host node) is RUNTIME-SPECIFIC and is re-derived for the replacement. |
+| Saved edge cases: a missing `/proc` or `/sys` row; a malformed or unknown device identity; the host-procfs control needing all signals; the O-1 stream without a p-difference assertion | `test_d5_a_missing_proc_or_sys_row_is_incomplete_evidence_and_never_passes`, `test_d5_malformed_or_unknown_host_device_values_block`, `test_d5_a_device_with_a_wrong_identity_is_blocked`, `test_d5_unknown_device_paths_and_aliases_block`, `test_d5_the_host_procfs_control_cannot_pass_on_one_signal`, `test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p` | REUSABLE. These are record-level tests, independent of the runtime. |
+| Positive controls: shared volume, host listener, shared-file device-channel control, terminal control, host procfs | `isolation.py`, `container_probe.py` | REUSABLE as requirements. Their launch arguments are RUNTIME-SPECIFIC. Their evidence REQUIRES RERUN. |
+| `/proc` and `/sys` namespace proofs | `container_probe.py`, `container_evidence.py` (PID-namespace and procfs/sysfs device checks) | REUSABLE probe and checks. Evidence REQUIRES RERUN. |
+| Card-A/Card-B (and C) canary infrastructure; selected-message encoder and decoder | `container_probe.py`, `isolation.py` | REUSABLE. It is not, by itself, a detector for BLOCKER 1's scope (10.1 A). |
+| Pre-admission verification | `formal.deployment_problems`, the `timing_pilot/2` pre-check (`f8bf7ed7`) | REUSABLE. |
+| Twelve attack channels; secret scan | `deployment_attacks.py`, `secret_scan.py` | REUSABLE. Evidence REQUIRES RERUN. |
+| Podman launcher, image pin, Containerfile, mount allowlist | `isolation.py` (`DEPLOYMENT`, `IMAGE_*`, `PODMAN_VERSION`, flags), `container/Containerfile`, the allowlist in `container_evidence.py` | RUNTIME-SPECIFIC. |
+| D5-A1b evidence `967f089e` (pinned) and `superseded-*/` | `docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/` | HISTORICAL ONLY |
+| D5 STATELESS_DEVICE run `b3bc0b64` (pinned at `b1fbefbf`, reverted) | git history | HISTORICAL ONLY. It is the MEASURED source of 10.1 A. |
+| A1 evidence `519f3669` | `docs/work/evidence/genesis_lite_v0_3_d5_deployment_2026_10_20/` | HISTORICAL ONLY |
+| D7 pilot `3759ff33` (pinned; A1 runtime) | `docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/`, tag `evidence/d7-timing-pilot-head-2026-10-20` | HISTORICAL ONLY. D7 REQUIRES RERUN on the replacement runtime. |
+| D7 pilot `6f6b1418` (pinned at `99959b09`, reverted) | git history | HISTORICAL ONLY |
+| Open findings of the Prompt 3 review (PROGRESS) | MAJOR 1 (the device walk), MAJOR 2 (the attempt keeps only the pre-admission verdict), and the seven MINORs | REUSABLE-OPEN, carried to any replacement: MAJOR 1, MAJOR 2, host-to-card observation untested, D7 binds only 7 files, the gate takes the bound-file list from the evidence, the admission-nonce allowlist text, None seeds pass the screen, and the RNG counters without power on kernel 6.6 (it carries over while the kernel stays). RUNTIME-SPECIFIC: the weak tty control with a null id. |
+
+### 10.5 Status
+
+| Item | Status |
+|---|---|
+| D5 | NOT_PROVEN |
+| N-1 | OPEN |
+| Current rootless Podman runtime | BLOCKED_BY_D5_DEVICE_BOUNDARY |
+| D7 | REQUIRES_RERUN, after a replacement runtime is selected |
+| Freeze, certification, formal campaign, Budget × Noise | not permitted |

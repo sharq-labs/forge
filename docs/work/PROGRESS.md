@@ -8361,3 +8361,112 @@ Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), local, unpushe
   correct red because the pinned D5 evidence measured older code.
 - **Status.** D5 = NOT_PROVEN, N-1 = OPEN, D7 = REQUIRES_RERUN.
 - **NOT RUN.** Linux suite at `61150afd`, FAST, SCIENTIFIC, regression, readiness CLI, D5, D7, review, OD-3.
+
+### 2026-10-21 (later): owner decision CHANGE_RUNTIME_BOUNDARY — current runtime closed as BLOCKED
+
+- **Branch.** `feat/genesis-lite-v03-clean-n1` from `d8e0eb29` (clean), local, unpushed.
+- **Not done.** No device experiment, no D5 or D7 run, no policy change.
+- **Decision.** The rootless Podman formal-card runtime is closed as **BLOCKED_BY_D5_DEVICE_BOUNDARY**. A replacement
+  runtime is not selected.
+- **Records.**
+  - Decision record §10: the evidence taxonomy, the dated corrections, the gate, the preservation table (with the
+    open Prompt 3 review findings classified) and the status.
+  - The owner-facing comparison: `docs/discovery/GENESIS_LITE_V0_3_D5_RUNTIME_BOUNDARY_HANDOFF.md`.
+  - A dated correction in the D5-A1b evidence README.
+- **Evidence taxonomy.**
+  - **MEASURED.** The `2e2a9d1b` run (`b3bc0b64…`, reverted; `git show b1fbefbf:docs/work/evidence/genesis_lite_v0_3_d5_a1b_deployment_2026_10_21/result.json`)
+    recovered no selected message. In all 30 decoder reads under `container_evidence.cards[*].devices` and
+    `device_trials`, each two-flag `found` list is all false. Its detector did not exercise BLOCKER 1, so it neither proves nor disproves it
+    (NOT_MEASURED_BY_CURRENT_DETECTOR).
+  - **STATIC_REVIEW.** BLOCKER 1, classified BLOCKER; its scope is all six writable device nodes.
+  - **FORMAL_MACHINE_CONFIRMATION.** The implementer's confirmation on the formal launcher was ad hoc and unpinned.
+    No artifact was kept, and it is not a selected-message measurement.
+- **Dated corrections (2026-10-21) of the Prompt 3 and subset entries above.** Their wording is kept as written.
+  - "This is a cross-card state channel" is a STATIC_REVIEW finding with a FORMAL_MACHINE_CONFIRMATION. No channel
+    was measured, and recovery of a selected message was not demonstrated.
+  - "all six devices were ADMITTED wrongly" and "The D5 PASS is therefore invalid" mean that the admissions and the
+    PASS do not stand, because their detector did not exercise BLOCKER 1. They do not mean that the detector measured
+    a channel.
+  - "and the channel remains", said twice under "Failed approaches", records the implementer's ad-hoc re-checks of
+    the finding (FORMAL_MACHINE_CONFIRMATION). Those re-checks are not detector results, and no channel was measured.
+  - "how, or whether, the six device nodes can be made non-state-carrying" presumes state that was not measured.
+    Read it as: closing BLOCKER 1's scope with MEASURED evidence.
+  - In the subset entry, "BLOCKER 1 was confirmed on the formal launcher ... for all six nodes" is a
+    FORMAL_MACHINE_CONFIRMATION, and "cannot be met" means cannot be shown met.
+  - Device identity alone proves no channel.
+- **Gate (`readiness.py`).** `BOUNDARY_FINDINGS` keys BLOCKER 1 by finding and scope. An earlier draft in this task
+  keyed it by runtime name, so renaming `isolation.DEPLOYMENT` would have cleared it (review MAJOR-1). That failed
+  approach is not to be repeated.
+  - The finding is open for every runtime until the pinned D5 evidence holds `boundary_findings["BLOCKER 1"]`. That
+    section must say MEASURED, name a declared detector (none is declared) and give a closing result for each of the
+    six nodes.
+  - `runtime_boundary_problems()` also requires the evidence to name the selected runtime. A missing or malformed
+    field blocks and never raises.
+  - D5 rows report NOT_PROVEN with `D5_RUNTIME_BOUNDARY_NOT_PROVEN`. The D7 evidence row stays a blocker while the D5
+    evidence leaves the finding open, or while the pilot names another runtime.
+  - `check()` adds `d5_runtime_boundary`, which reflects the D5 evidence only.
+  - Two new tests are required tests of their rows (D5 ×3, D7 evidence):
+    - `test_d5_the_selected_runtime_with_an_open_boundary_finding_never_verifies`;
+    - `test_d7_a_pilot_on_a_superseded_or_blocked_runtime_is_a_blocker`.
+  - Two existing tests now include the boundary:
+    - `test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code`;
+    - `test_d7_timing_pilot_evidence_is_pinned_and_a_stale_pilot_is_a_blocker`.
+  - `test_d5_the_selected_message_trials_decide_the_cross_card_channel` gets a dated docstring correction. Its name
+    is pinned.
+  - The preregistration "readiness P-1 / P-2" text records the decision. The preregistration was regenerated
+    (DRAFT, sha256 `992bf0eb…`).
+- **Gate output (first draft only).** The direct call
+  `python -c "from benchmarks.genesis_lite.v0_3 import readiness as r; o = r.check(); print(o['status'], o['d5_runtime_boundary'])"`
+  ran on the first draft of the gate. It reported BLOCKED_TECHNICAL with reason `D5_RUNTIME_BOUNDARY_NOT_PROVEN`. It
+  is a function call without test evidence, not the readiness CLI. The current gate's direct output: **NOT RUN**.
+- **Tests (Windows, narrow, uncommitted tree on `d8e0eb29`, after the review fixes).**
+  `PYTHONPATH="D:/forge-genesis-clean/src;D:/forge-genesis-clean" python -m pytest -p no:cacheprovider
+  --basetemp=D:/forge-genesis-tmp/bt7 -q -rA <15 node ids>` gave 64 passed and 1 failed (rerun after the round-2 fixes).
+  - **Node ids.** They cover:
+    - the 2 new tests and the 2 changed status tests;
+    - `test_d5_a_missing_proc_or_sys_row_is_incomplete_evidence_and_never_passes`;
+    - `test_d5_malformed_or_unknown_host_device_values_block`;
+    - `test_d5_a_device_with_a_wrong_identity_is_blocked`;
+    - `test_d5_unknown_device_paths_and_aliases_block`;
+    - `test_d5_the_host_procfs_control_cannot_pass_on_one_signal`;
+    - `test_d5_the_selected_message_trials_decide_the_cross_card_channel`;
+    - `test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p` (no p-difference assertion; checked by
+      reading the test);
+    - `test_v0_3_is_a_draft_identity_that_amends_v0_2`;
+    - `test_readiness_every_d5_row_names_its_tests_and_needs_them_passed`;
+    - `test_readiness_required_tests_match_the_test_files`;
+    - `test_readiness_with_the_escrow_half_has_no_technical_row_left`.
+  - **The failure.** `test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code` fails at its schema
+    assertion (the pinned evidence is `/3`, not `/4`). This is the known red since `3d62b494`, so that test's new
+    lines are not reached on this tree.
+- **Review round 1 (read-only agent, static).** 0 BLOCKER, 1 MAJOR, 7 MINOR, 8 NOTE.
+  - **Fixed.**
+    - MAJOR-1: findings keyed by scope.
+    - MINOR-1: the malformed runtime field.
+    - MINOR-2: the corrections above.
+    - MINOR-3 to MINOR-5: handoff family 4, the card-count label and the Podman reference point.
+    - MINOR-6: the open review findings classified.
+    - MINOR-7: the §7 correction cites 10.1 B and C.
+    - NOTEs 3 to 8: the record path, the sources for C, the test docstring, the replay-factor assumption, the field
+      scope and the wording alignment.
+  - **Left as noted.**
+    - NOTE-1: the edited D5 test is unreached while it is red.
+    - NOTE-2: `status == BLOCKED` alone does not discriminate. The row-level assertions do.
+- **Review round 2 (same agent, static).** 0 BLOCKER, 0 MAJOR, 3 MINOR, 7 NOTE. Every round-1 fix was confirmed.
+  - **Fixed.**
+    - MINOR-a: the gate checks the closure's declared type only. Declaring a detector must add a re-derivation test.
+    - MINOR-b: the `found` count wording.
+    - MINOR-c: the docstring says mechanism, not scope.
+    - NOTE-2: the incomplete-closure cases were added to the test.
+    - NOTE-3: the D7 own-closure case was added.
+    - NOTE-5: the tuple assertions.
+    - NOTE-6: the cross-pilot caveat and the unit.
+    - NOTE-7: this heading.
+  - **Left.**
+    - NOTE-1: the round-1 NOTE-1 and NOTE-2 stay accepted.
+    - NOTE-4: pre-existing crashes on a non-mapping top-level doc or `provenance`. The bytes are pinned, and the
+      failure is a crash, so it is fail-closed.
+- **Status.** D5 = NOT_PROVEN. N-1 = OPEN. CURRENT_ROOTLESS_PODMAN_RUNTIME = BLOCKED_BY_D5_DEVICE_BOUNDARY. D7 =
+  REQUIRES_RERUN after a replacement runtime is selected.
+- **NOT RUN.** The full `tests/genesis_lite`, the Linux suite, FAST, SCIENTIFIC, regression, the readiness CLI, D5,
+  D7, OD-3, any freeze, certification, formal campaign or Budget × Noise.

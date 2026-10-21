@@ -1090,7 +1090,9 @@ def test_d5_the_selected_message_trials_decide_the_cross_card_channel(mutate, pa
     """Card A (and four more fresh encoders) write one of two operator-chosen messages to every device and try every
     RNG ioctl; fresh decoders read every device. Any recovered message, any RNG counter that moves between cards, any
     accepted state-setting ioctl, a device that does not behave as its kind, fewer than five trials, one bit only or a
-    reused card blocks the device concerned."""
+    reused card blocks the device concerned.
+    Correction 2026-10-21 (CHANGE_RUNTIME_BOUNDARY): the name is pinned by readiness.REQUIRED_TESTS. The trials decide
+    the channel they encode; they do not exercise review BLOCKER 1's mechanism (decision record 10.1 A)."""
     out = _device_verdict(mutate)
     assert out["status"] == "BLOCKED", out["devices"]
     assert out["devices"][path]["status"] == "BLOCKED" and reason in out["devices"][path]["reasons"], out["devices"]
@@ -1587,8 +1589,11 @@ def test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code():
     verified = (doc["container_validation"]["status"] == "PASS" and all(power.values())
                 and doc["with_containers"] == {c: attacks.REFUSED for c in attacks.CHANNELS})
     assert doc["verified"] is verified
-    status, _ = readiness.deployment_status()
-    assert (status == readiness.FIXED) is verified
+    status, note = readiness.deployment_status()
+    # CHANGE_RUNTIME_BOUNDARY (owner, 2026-10-21): verified evidence is not enough while the runtime has an open finding
+    boundary = readiness.runtime_boundary_problems(doc)
+    assert (status == readiness.FIXED) is (verified and not boundary)
+    assert (readiness.D5_RUNTIME_BOUNDARY_NOT_PROVEN in note) is bool(boundary)
     assert all(readiness.blockers()[row][0] == status for row in readiness.D5_ROWS)
 
 
@@ -1623,7 +1628,7 @@ def test_d7_timing_pilot_evidence_is_pinned_and_a_stale_pilot_is_a_blocker():
     moved = sorted(n for n, digest in doc["provenance"]["code_sha256"].items()
                    if hashlib.sha256((v03p.HERE / n).read_bytes()).hexdigest() != digest)
     status, note = readiness.timing_pilot_status()
-    if moved:
+    if moved or readiness.runtime_boundary_problems(doc):
         assert status == readiness.NOT_PROVEN and "REQUIRES_RERUN" in note and all(n in note for n in moved)
     else:
         assert status == readiness.FIXED
@@ -1890,3 +1895,104 @@ def test_p5_the_manifest_names_the_interpreter_and_every_imported_distribution()
     changed["distributions"]["numpy"] = "0.0.0"
     assert environment.compare(m, changed) == ["distributions.numpy: " + m["distributions"]["numpy"] + " != 0.0.0"]
     assert environment.compare(m, m) == []
+
+
+# ---- CHANGE_RUNTIME_BOUNDARY (owner, 2026-10-21): the current runtime is closed as blocked -----------------------------
+def _verified_d5_doc(runtime):
+    from benchmarks.genesis_lite.v0_3 import isolation
+
+    return {"schema": isolation.EVIDENCE_SCHEMA, "verified": True, "provenance": {"code_sha256": {}},
+            "deployment": {"deployment": runtime}}
+
+
+def _closing(detector, nodes, evidence="MEASURED"):
+    return {"BLOCKER 1": {"evidence": evidence, "detector": detector, "nodes": {n: "REFUSED_WITH_POWER" for n in nodes}}}
+
+
+def test_d5_the_selected_runtime_with_an_open_boundary_finding_never_verifies(monkeypatch):
+    """BLOCKER 1 is a STATIC_REVIEW finding with a FORMAL_MACHINE_CONFIRMATION, NOT_MEASURED_BY_CURRENT_DETECTOR. It is
+    keyed by finding and scope, not by runtime name: evidence that says verified cannot make a D5 row FIXED on this
+    runtime, on a renamed runtime or on a replacement one, until MEASURED results from a declared detector close every
+    node in scope. The gate names D5_RUNTIME_BOUNDARY_NOT_PROVEN and is never READY or PASS. The status is derived: with
+    a declared detector and closing evidence the same record verifies; a malformed runtime field blocks, never raises."""
+    from benchmarks.genesis_lite.v0_3 import isolation, readiness
+
+    selected = isolation.DEPLOYMENT
+    finding = readiness.BOUNDARY_FINDINGS["BLOCKER 1"]
+    assert finding["evidence"] == (readiness.STATIC_REVIEW, readiness.FORMAL_MACHINE_CONFIRMATION)
+    assert set(finding["sources"]) == set(finding["evidence"])
+    assert readiness.MEASURED not in finding["evidence"] and finding["detector"] == readiness.NOT_MEASURED
+    assert finding["detectors"] == () and len(finding["scope"]) == 6
+    assert all(isinstance(finding[k], tuple) for k in ("detectors", "closing_results", "scope"))    # no substring match
+    assert finding["runtime_status"] == {"rootless_podman_per_card": "BLOCKED_BY_D5_DEVICE_BOUNDARY"}
+    doc = _verified_d5_doc(selected)
+    monkeypatch.setattr(readiness, "_pinned", lambda rel, sha: doc)
+    status, note = readiness.deployment_status()
+    assert status == readiness.NOT_PROVEN and note.startswith(readiness.D5_RUNTIME_BOUNDARY_NOT_PROVEN)
+    assert "BLOCKER 1" in note and "BLOCKED_BY_D5_DEVICE_BOUNDARY" in note
+    rows = readiness.blockers()
+    assert all(rows[row][0] == readiness.NOT_PROVEN for row in readiness.D5_ROWS)
+    required = {name for _s, names, _n in rows.values() for name in names}
+    evidence = {"head": readiness._head(), "clean": True, "tests": {name: "passed" for name in required}}
+    out = readiness.check(evidence=evidence)
+    assert out["status"] == readiness.BLOCKED
+    assert out["d5_runtime_boundary"]["reason"] == readiness.D5_RUNTIME_BOUNDARY_NOT_PROVEN
+    for row in readiness.D5_ROWS:
+        assert any(r.startswith(row) and readiness.D5_RUNTIME_BOUNDARY_NOT_PROVEN in r for r in out["technical_blockers"])
+    # renaming the runtime, or selecting a replacement, does not clear the finding
+    monkeypatch.setattr(isolation, "DEPLOYMENT", "renamed_or_replacement_runtime_for_test")
+    renamed = _verified_d5_doc("renamed_or_replacement_runtime_for_test")
+    monkeypatch.setattr(readiness, "_pinned", lambda rel, sha: renamed)
+    status, note = readiness.deployment_status()
+    assert status == readiness.NOT_PROVEN and readiness.D5_RUNTIME_BOUNDARY_NOT_PROVEN in note and "BLOCKER 1" in note
+    # a closing section with no declared detector, a non-MEASURED type or a node missing never closes it
+    for section in (_closing("undeclared", finding["scope"]), _closing("t", finding["scope"], evidence="STATIC_REVIEW"),
+                    _closing("t", finding["scope"][:-1]), {"BLOCKER 1": "CLOSED"}, "CLOSED",
+                    {"BLOCKER 1": {**_closing("t", finding["scope"])["BLOCKER 1"],
+                                   "nodes": {**{n: "REFUSED_WITH_POWER" for n in finding["scope"]}, "/dev/tty": "UNTESTABLE"}}},
+                    {"BLOCKER 1": {"evidence": "MEASURED", "detector": "t", "nodes": list(finding["scope"])}},
+                    {"BLOCKER 1": {k: v for k, v in _closing("t", finding["scope"])["BLOCKER 1"].items() if k != "evidence"}}):
+        monkeypatch.setitem(readiness.BOUNDARY_FINDINGS, "BLOCKER 1", {**finding, "detectors": ("t",)})
+        monkeypatch.setattr(readiness, "_pinned", lambda rel, sha, s=section: {**renamed, "boundary_findings": s})
+        assert readiness.deployment_status()[0] == readiness.NOT_PROVEN, section
+    # derived, not hard-coded: a declared detector's MEASURED closure of every node verifies the same record
+    closed = {**renamed, "boundary_findings": _closing("t", finding["scope"])}
+    monkeypatch.setattr(readiness, "_pinned", lambda rel, sha: closed)
+    assert readiness.deployment_status()[0] == readiness.FIXED
+    assert readiness.check(evidence=evidence)["d5_runtime_boundary"] is None
+    # evidence from another runtime, or naming none or a malformed one, blocks and never raises
+    for dep in ({"deployment": selected}, None, "rootless_podman_per_card", ["x"], {"deployment": ["x"]}):
+        broken = {**closed, "deployment": dep}
+        monkeypatch.setattr(readiness, "_pinned", lambda rel, sha, b=broken: b)
+        status, note = readiness.deployment_status()
+        assert status == readiness.NOT_PROVEN and readiness.D5_RUNTIME_BOUNDARY_NOT_PROVEN in note, dep
+    monkeypatch.setattr(readiness, "_pinned", lambda rel, sha: {k: v for k, v in closed.items() if k != "deployment"})
+    assert readiness.deployment_status()[0] == readiness.NOT_PROVEN
+
+
+def test_d7_a_pilot_on_a_superseded_or_blocked_runtime_is_a_blocker(monkeypatch):
+    """D7 = REQUIRES_RERUN only after a replacement runtime is selected: a pilot that timed the code in this tree is
+    still a technical blocker if it ran through another runtime, or while the pinned D5 evidence leaves a boundary
+    finding open."""
+    from benchmarks.genesis_lite.v0_3 import isolation, readiness
+    from benchmarks.genesis_lite.v0_3 import preregistration as prereg
+
+    finding = readiness.BOUNDARY_FINDINGS["BLOCKER 1"]
+    pilot = {"provenance": {"code_sha256": {}}, "deployment": {"deployment": "rootless_namespaces"}}
+    d5 = _verified_d5_doc(isolation.DEPLOYMENT)
+    monkeypatch.setattr(readiness, "_pinned", lambda rel, sha: d5 if rel == prereg.DEPLOYMENT_EVIDENCE else pilot)
+    status, note = readiness.timing_pilot_status()
+    assert status == readiness.NOT_PROVEN and "REQUIRES_RERUN" in note and "rootless_namespaces" in note
+    pilot["deployment"]["deployment"] = isolation.DEPLOYMENT
+    status, note = readiness.timing_pilot_status()                                     # selected runtime, D5 still open
+    assert status == readiness.NOT_PROVEN and readiness.D5_RUNTIME_BOUNDARY_NOT_PROVEN in note and "BLOCKER 1" in note
+    assert readiness.blockers()["D7 timing pilot evidence"][0] == readiness.NOT_PROVEN
+    monkeypatch.setitem(readiness.BOUNDARY_FINDINGS, "BLOCKER 1", {**finding, "detectors": ("t",)})
+    d5["boundary_findings"] = _closing("t", finding["scope"])
+    assert readiness.timing_pilot_status()[0] == readiness.FIXED                        # derived from both inputs
+    pilot["deployment"] = "malformed"
+    assert readiness.timing_pilot_status()[0] == readiness.NOT_PROVEN
+    # a pilot's own closing section is never read: without D5 evidence the finding stays open
+    pilot.update(deployment={"deployment": isolation.DEPLOYMENT}, boundary_findings=_closing("t", finding["scope"]))
+    monkeypatch.setattr(readiness, "_pinned", lambda rel, sha: None if rel == prereg.DEPLOYMENT_EVIDENCE else pilot)
+    assert readiness.timing_pilot_status()[0] == readiness.NOT_PROVEN
