@@ -197,3 +197,9 @@ bullet is now decided by D5-A1b. Nothing above is rewritten.
   re-run from a clean clone of `ad55b7c5` (sha256 `a9bc4c64…`, now the pinned file) with the same verdict: BLOCKED
   solely by the six host device nodes, under the unchanged strict rule. The `d4ead0b2` run is kept as superseded
   history.
+- **MINOR-A closed and evidence re-pinned (2026-10-21).** Every card now also shows that its `/proc` and `/sys` are
+  its own. Through its `/proc` it is PID 1 (NSpid `["1"]`) of a PID namespace that is not the operator's, and both
+  mounts are on devices other than the operator's procfs and sysfs. A positive control shows that a host procfs is
+  detected. The verification was re-run from a clean clone of `12baeb04` (sha256 `967f089e…`, now the pinned file)
+  with the same verdict: BLOCKED solely by the six host device nodes, under the unchanged strict rule. The `ad55b7c5`
+  run is kept as superseded history.

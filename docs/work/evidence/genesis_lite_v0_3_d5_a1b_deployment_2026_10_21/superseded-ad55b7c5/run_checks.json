@@ -1,0 +1,1 @@
+{"head": "ad55b7c5e4dc9a56485c6c1e6650cae405b318ce", "clean_before": true, "clean_after": true, "leftover_card_containers": 0, "check": "podman ps -a --filter label=org.forge.genesis_lite.card"}
