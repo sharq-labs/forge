@@ -8217,3 +8217,21 @@ Addendum (2026-10-21), second review pass and re-pin:
   2. Each kept tree needs exactly one row at its target, with `bound[path] == host`.
   Neither can be produced by the current launcher. The current evidence is BLOCKED by the device nodes regardless.
 - Linux at e7e35546 (fresh clone): `python -m pytest -q -p no:cacheprovider -n 4 tests/genesis_lite` gave 390 passed, 0 skipped. `python -m benchmarks.genesis_lite.v0_3.readiness` gave BLOCKED_TECHNICAL on the three D5 rows and the D7 evidence row; 296 v0.3 tests passed, agreement 48/48. The tree was clean afterwards and no container was left.
+- Hardening of the third-pass MINORs (owner request, 2026-10-21; strict device rule kept), in ad55b7c5:
+  - Podman's own read-only mounts are now tied to device, root and size:
+    - `/sys/fs/cgroup` needs card-view root `/`;
+    - the `/proc` re-binds must be on the device of the card's own `/proc`;
+    - masks must be empty `size=0k` tmpfs on a device no other row of the card uses;
+    - `/dev` must be a tmpfs on its own device;
+    - every allowlisted target holds exactly one row.
+  - Each kept tree has exactly one row, bound exactly once from exactly its host path. Two `--volume` entries at one target are refused.
+- Before the re-run, the then-pinned d4ead0b2 evidence was re-validated with the new validator on Windows, by running `validate_container_evidence(result["container_evidence"], expected=result["container_expected"])` in the shared venv. It gave BLOCKED with reasons exactly DEVICE_NODE_WRITABLE_MOUNT and UNDECLARED_WRITABLE_MOUNT: 36 details, none of any other kind.
+- Re-run on the formal machine from a clean clone of ad55b7c5: `python -m benchmarks.genesis_lite.v0_3.isolation --out result.json --cards 2`, exit 1, wall time 275.3 s. Pinned at 261b7703: `result.json` sha256 a9bc4c64.... It has the same verdict, BLOCKED solely by the six host device nodes, and every read-only row passes the tightened ties. The tree was clean before and after, and no container was left. The d4ead0b2 run is kept under `superseded-d4ead0b2/`.
+- Tests:
+  - Windows at 261b7703: `python -m pytest -q -p no:cacheprovider -n 4 -rfEs tests/genesis_lite` gave 388 passed, 2 skipped (Linux-only).
+  - Linux at 261b7703 (fresh clone): the same suite gave 390 passed, 0 skipped. `python -m benchmarks.genesis_lite.v0_3.readiness` gave BLOCKED_TECHNICAL on the three D5 rows and the D7 evidence row; 296 v0.3 tests passed, agreement 48/48.
+- Fourth read-only pass: 0 BLOCKER, 0 MAJOR, 2 MINOR. Both third-pass MINORs are closed, and the pinned evidence re-derives. MINOR-B (this PROGRESS record) is done here. One item stays OPEN and must be fixed (followed by a re-run and re-pin) before any D5-A1b evidence that PASSES is pinned:
+  - **MINOR-A.** A host procfs or sysfs mounted at `/proc` or `/sys` itself would pass, because every re-bind and mask tie is relative to that row.
+  - Fix: the probe records PID-namespace evidence (`NSpid`, or what PID 1 is), or the operator compares the card's `/proc` and `/sys` devices with the host's own.
+  - It needs a host-configuration mount that replaces Podman's own `/proc`, which the current launcher does not produce.
+- NOT RUN: FAST, SCIENTIFIC, FULL, hardened recertification, the D7 rerun and any formal campaign.
