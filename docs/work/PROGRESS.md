@@ -8619,3 +8619,66 @@ Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), local, unpushe
 - **Status unchanged.** D5 = NOT_PROVEN, N-1 = OPEN, D7 = REQUIRES_RERUN, BLOCKER 1 open.
 - **NOT RUN.** The Linux suite, FAST, SCIENTIFIC, regression, the readiness CLI, D5, D7, any card launch, any root
   command, freeze, certification, formal runs and Budget x Noise. Nothing was pushed.
+
+## 2026-10-21 - Family-3a root helper written, installed and measured; READY_FOR_FAMILY_3A_EXECUTION
+
+- **Result: READY_FOR_FAMILY_3A_EXECUTION.** `python -m benchmarks.genesis_lite.v0_3.family3a` measured the identity
+  through the real helper: config PASS, helper PASS, identity PASS, exit 0. Readiness to execute is not D5 evidence:
+  D5 = NOT_PROVEN, N-1 = OPEN, D7 = REQUIRES_RERUN, BLOCKER 1 open.
+- **The helper.** `benchmarks/genesis_lite/v0_3/family3a_helper.py` is one self-contained standard-library file, pinned
+  by its sha256.
+  - It runs as root only: a non-root launch was measured as `REFUSED`, exit 2.
+  - Its operations are fixed: `identity`, `install-rootfs`, `configure-kept`, `run`, `residue` and `control-teardown`.
+    None takes a command.
+  - It runs only `/usr/bin/crun`, `/usr/bin/mount` and `/usr/bin/umount`, never a shell. An AST test pins this.
+  - `run` takes one hex-encoded request and re-checks it with its own strict validator. A corpus test shows that this
+    validator refuses exactly what `family3a.helper_request_problems` refuses.
+  - One card follows the spike's 6.1 steps:
+    - a private tmpfs with mknod'd null, zero and full, an empty `shm` and an empty mask file;
+    - `/dev` bound ro, nosuid, noexec (rw only in the shared-tmpfs power control);
+    - /proc files masked from the tmpfs, never by crun's `maskedPaths`;
+    - rprivate propagation, a userns map to 100000, empty caps and no_new_privs;
+    - Podman's seccomp profile in OCI form, a device cgroup allowing only 1:3, 1:5 and 1:7, and a read-only rootfs;
+    - the kept tree and venv bound ro at `/forge/tree` and `/forge/venv`.
+
+    Cleanup always runs, in a `finally`, and its residue counts are reported.
+  - The client (`WslRootHelper`) calls `wsl.exe -d Ubuntu-24.04 -u root --exec /usr/bin/python3 -I
+    /var/lib/forge-f3a/helper.py <op>`. `--exec` skips the login shell, which fixes the `$VAR` re-parse failure recorded
+    earlier.
+  - Card arguments must now lie under `/forge/tree` or `/forge/venv` (`family3a.KEPT_ROOTS`).
+- **Operator actions on the formal machine (this session, the declared root launch).**
+  - The helper was installed at `/var/lib/forge-f3a/helper.py` (root:root 0644) with `--exec install`, `dd` and
+    `chmod`. Its installed sha256 equals the repository file: `661d765c...`.
+  - As dev_kaeem, `podman export` of `localhost/forge-card@sha256:89847920...` gave `/home/dev_kaeem/f3a-rootfs.tar`
+    (113,242,112 bytes, sha256 `7d1ab3c8...`, the spike's instance byte for byte). It is left in place as the install
+    source.
+  - As root, `helper.py install-rootfs` extracted it to `/var/lib/forge-f3a/rootfs`, then a second time from scratch.
+  - `configure-kept` was NOT run, so no kept tree is configured and `run` refuses until one is.
+- **The four pins (MEASURED, `family3a.PINNED_CONFIG`).** They were measured by `identity` twice, and again after the
+  re-extraction, with identical results:
+  - `runtime_sha256 = bd8ad7e7...` (`/usr/bin/crun` 1.14.1; also equals `sha256sum /usr/bin/crun`);
+  - `rootfs_tree_sha256 = d1b07cbc...` (`tree_digest`: path, mode, owner and content; no times or inodes);
+  - `seccomp_sha256 = 0c424aa4...` (the canonical JSON of the OCI-form profile for kernel 6.6.87.2);
+  - `helper_sha256 = 661d765c...`. A test pins it to the helper file, so a helper edit fails until it is re-measured
+    and re-pinned.
+- **Tests (Windows, this session).**
+  - `PYTHONPATH="D:/forge-genesis-clean/src;D:/forge-genesis-clean" .venv/Scripts/python.exe -m pytest tests/genesis_lite/test_genesis_lite_v0_3_family3a.py -q -p no:cacheprovider --basetemp D:/forge-d5-impl/bt/f3b2`
+    gave 22 passed.
+  - Mutation, helper: a targeted apply/revert script applied 10 mutants. The first round was invalid twice, and those
+    results are not counted:
+    - a path typo collected no tests;
+    - every mutant was killed only by the helper-digest pin test.
+
+    With the pin test deselected, 9 of 10 were killed. The tree digest's mode bits survived and got a chmod case; after
+    that, 10 of 10 were killed. The source was restored byte-identical.
+  - Mutation, client: the earlier 10 mutants of `family3a.py` were all still killed.
+  - `PYTHONPATH=... python -m pytest tests/genesis_lite -q -n 4 -p no:cacheprovider --basetemp D:/forge-d5-impl/bt/f3b-full -rfs`
+    gave 1 failed, 502 passed, 4 skipped (Linux-only). The failure is the preserved stale-evidence
+    `test_d5_deployment_evidence_is_pinned_rederived_and_measured_this_code`.
+- **Not exercised.** The helper's `run`, `residue` and `control-teardown` operations have never run on the formal
+  machine. No card was launched, so the 6.1 steps are reviewed and unit-tested but not executed. That is the next step,
+  after `configure-kept` with a WSL-native tree at this commit.
+- **Unchanged.** The DRAFT preregistration (`e2ac2f7b...`), `V0_3_FILES`, `DEVICE_PATH_FILES`, `readiness.py`,
+  `formal.py` and the stale D5 test.
+- **NOT RUN.** D5, D7, any card, the Linux suite, FAST, SCIENTIFIC, regression, the readiness CLI of `readiness.py`,
+  freeze, certification, formal runs and Budget x Noise. Nothing was pushed.

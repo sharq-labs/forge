@@ -1,18 +1,19 @@
 """Genesis-lite v0.3 D5, family 3a (BR-D5-RUNTIME-01; owner approval of 3a with a declared root launch, 2026-10-21):
-the scaffold of the rootful crun per-card runtime. It launches nothing.
+the client side of the rootful crun per-card runtime. It starts a card only through the root helper.
 
 The spike (``docs/discovery/GENESIS_LITE_V0_3_D5_RUNTIME_SELECTION_SPIKE.md``) selected one fresh rootful crun 1.14.1
 container per card, inside the formal WSL2 VM. The card's ``/dev`` is a private tmpfs built for that card, holding
 mknod'd ``null``, ``zero`` and ``full`` only; the other three nodes of :data:`.device_contract.DEVICES` are absent.
-This module holds the parts that can be written and tested without root:
+This module holds:
 
 * :class:`RuntimeConfig`: the typed runtime configuration. Identity values that have not been measured on the formal
   machine are :data:`UNPINNED` and block; nothing is defaulted. The policy fields cannot be widened.
 * :class:`Family3aLauncher` and :class:`CardSpec`: the launcher interface. A card names one of :data:`ENTRYPOINTS`,
   never a command line.
 * :class:`RootHelper`: the strict root-helper contract. Its only input is a validated helper request
-  (:func:`helper_request`); it has no argv, command, shell or script field. The only helper in this tree is
-  :class:`UnimplementedRootHelper`, which refuses every call as :data:`ROOT_HELPER_NOT_IMPLEMENTED`.
+  (:func:`helper_request`); it has no argv, command, shell or script field. :class:`WslRootHelper` reaches the
+  low-level helper (:mod:`.family3a_helper`, pinned by its sha256) through the declared root launch; where that launch
+  does not exist, :class:`UnimplementedRootHelper` refuses every call as :data:`ROOT_HELPER_NOT_IMPLEMENTED`.
 * Device Contract v2 and the versioned evidence schema (:data:`EVIDENCE_SCHEMA`), with a validator that re-derives
   every node's result from raw records (:func:`validate_evidence`) and never trusts a stored verdict.
 * :func:`pre_admission` (ordered, stops at the first failing stage, never sees a root or a registry) and
@@ -21,9 +22,9 @@ This module holds the parts that can be written and tested without root:
 Device Contract v2, per node of BLOCKER 1's scope:
 
 * ``null``, ``zero``, ``full``: PRIVATE_TO_CARD when, in every card, the node is a character device with its exact
-  major:minor and mode 0666 on that card's own ``/dev`` tmpfs (never the host devtmpfs), and its ctime falls inside
-  the card's own launch window. Cards are separated by at least :data:`COARSE_CLOCK_NS`, so a node left by an earlier
-  card cannot pass. In every selected-bit trial the decoder must not see the encoder's timestamp (the
+  major:minor and mode 0666 on that card's own ``/dev`` tmpfs (never the host devtmpfs), and its ctime and mtime fall
+  inside the card's own launch window. Cards are separated by at least :data:`COARSE_CLOCK_NS`, so a node left by an
+  earlier card cannot pass. In every selected-bit trial the decoder must not see the encoder's timestamp (the
   :data:`DETECTOR`). The same detector on the deliberately shared-tmpfs control (:data:`POWER_CONTROL`) must recover
   every bit. **Identity never uses st_dev/st_ino equality across cards:** sequential cards reuse them.
 * the other three: ABSENT when, in every card, they are missing from ``/dev`` and open and stat give ENOENT.
@@ -44,7 +45,10 @@ import dataclasses
 import hashlib
 import json
 import math
+import pathlib
 import re
+import shutil
+import subprocess
 import sys
 from typing import Any, Callable, Iterable, Mapping, Protocol
 
@@ -106,6 +110,8 @@ MODES = (CARD, POWER_CONTROL)
 ENTRYPOINTS = {"proposer_host": "benchmarks/genesis_lite/proposer_host.py",
                "container_probe": "benchmarks/genesis_lite/v0_3/container_probe.py"}
 CARD_ENV = {"PYTHONDONTWRITEBYTECODE": "1"}
+#: where the helper binds the kept FORGE tree and venv in every card; a card argument must lie under one of them
+KEPT_ROOTS = ("/forge/tree", "/forge/venv")
 MAX_ARGS, MAX_TIMEOUT_S = 16, 3600.0
 CLEAN = {"mounts": 0, "card_dirs": 0, "containers": 0, "cgroups": 0, "processes": 0}
 STAGES = ("config", "helper", "identity", "evidence", "validation")
@@ -172,12 +178,21 @@ class RuntimeConfig:
         return cls(**{n: tuple(doc[n]) if isinstance(doc[n], list) else doc[n] for n in names})
 
 
-#: the configuration this tree declares. The four digests are measured on the formal machine at implementation, as
-#: root; the spike's rootfs export (sha256 7d1ab3c8...) is one instance, not a pin (spike section 6.6)
+#: the four digests, MEASURED on the formal machine on 2026-10-21 by the installed helper's ``identity`` through the
+#: declared root launch (twice, and again after a fresh re-extraction of the rootfs; crun also by ``sha256sum``):
+#: ``/usr/bin/crun`` 1.14.1; the rootfs tree (family3a_helper.tree_digest) extracted from ``podman export`` of the
+#: pinned image (export tar sha256 7d1ab3c8..., the spike's instance again) plus the two kept mount points; Podman's
+#: /usr/share/containers/seccomp.json reduced to OCI form for this kernel; family3a_helper.py itself. A change to any
+#: of them, the helper file included, needs a new measurement and a new pin
+RUNTIME_SHA256 = "bd8ad7e7798edd5a857476c33bbef463b8b60ca2db43d7feb77698a703060c84"
+ROOTFS_TREE_SHA256 = "d1b07cbc8c0456c634b09cc254a570437c9eb76b543503ecf9056c8f37a7d900"
+SECCOMP_SHA256 = "0c424aa4fafb3002b7b3f3c8075e943aea48c81864ca60bfa267aab6164d8df0"
+HELPER_SHA256 = "661d765c0b2c787df84db69118b99bf397a34825a927dd5b70e26439f62a89b4"
 PINNED_CONFIG = RuntimeConfig(
-    runtime_name=RUNTIME_NAME, runtime_version=RUNTIME_VERSION, runtime_sha256=UNPINNED,
-    kernel_release=isolation.KERNEL_RELEASE, image_digest=isolation.IMAGE_DIGEST, rootfs_tree_sha256=UNPINNED,
-    seccomp_sha256=UNPINNED, helper_sha256=UNPINNED, root_launch=ROOT_LAUNCH, admitted=ADMITTED, absent=ABSENT,
+    runtime_name=RUNTIME_NAME, runtime_version=RUNTIME_VERSION, runtime_sha256=RUNTIME_SHA256,
+    kernel_release=isolation.KERNEL_RELEASE, image_digest=isolation.IMAGE_DIGEST, rootfs_tree_sha256=ROOTFS_TREE_SHA256,
+    seccomp_sha256=SECCOMP_SHA256, helper_sha256=HELPER_SHA256, root_launch=ROOT_LAUNCH, admitted=ADMITTED,
+    absent=ABSENT,
     cgroup_allow=CGROUP_ALLOW, dev_options=DEV_OPTIONS, rootfs_propagation=ROOTFS_PROPAGATION, capabilities=(),
     read_only_rootfs=True, no_new_privileges=True, user_namespace=True, masks_from_card_tmpfs=True)
 _POLICY = {"runtime_name": RUNTIME_NAME, "runtime_version": RUNTIME_VERSION, "kernel_release": isolation.KERNEL_RELEASE,
@@ -238,8 +253,9 @@ def spec_problems(spec: Any) -> list[Problem]:
     if args is None or len(args) > MAX_ARGS or (spec.entrypoint == "container_probe" and args):
         problems.append((SPEC_INVALID, f"arguments {spec.args!r}"))
     for arg in args or ():
-        if not isinstance(arg, str) or not ABS_ARG.fullmatch(arg) or ".." in arg.split("/"):
-            problems.append((SPEC_INVALID, f"argument {arg!r} is not an absolute path"))
+        if (not isinstance(arg, str) or not ABS_ARG.fullmatch(arg) or ".." in arg.split("/")
+                or not any(arg == root or arg.startswith(root + "/") for root in KEPT_ROOTS)):
+            problems.append((SPEC_INVALID, f"argument {arg!r} is not an absolute path under {KEPT_ROOTS}"))
     env = spec.env if isinstance(spec.env, tuple) else None
     if env is None or any(not isinstance(p, tuple) or len(p) != 2 or CARD_ENV.get(p[0]) != p[1] for p in env):
         problems.append((SPEC_INVALID, f"environment {spec.env!r} (only {CARD_ENV})"))
@@ -357,10 +373,11 @@ class RootHelper(Protocol):
 
 
 class UnimplementedRootHelper:
-    """The only root helper in this tree: every call fails closed as :data:`ROOT_HELPER_NOT_IMPLEMENTED`."""
+    """The helper wherever the declared root launch does not exist: every call fails closed as
+    :data:`ROOT_HELPER_NOT_IMPLEMENTED`."""
 
-    _why = ("no reviewed, digest-pinned family-3a root helper exists in this tree; a card never falls back to "
-            "another runtime")
+    _why = ("the declared root launch (wsl.exe -u root) is not available in this process; a card never falls back "
+            "to another runtime")
 
     def identity(self) -> Mapping[str, Any]:
         raise RootHelperUnavailable(ROOT_HELPER_NOT_IMPLEMENTED, self._why)
@@ -369,7 +386,81 @@ class UnimplementedRootHelper:
         raise RootHelperUnavailable(ROOT_HELPER_NOT_IMPLEMENTED, self._why)
 
 
+#: the formal WSL2 VM and the helper's installed copy (installed by the operator; see family3a_helper.py)
+WSL_DISTRO = "Ubuntu-24.04"
+HELPER_FILE = pathlib.Path(__file__).with_name("family3a_helper.py")
+HELPER_INSTALLED = "/var/lib/forge-f3a/helper.py"
+RESULT_PREFIX = "F3A-RESULT "
+IDENTITY_TIMEOUT_S = 900.0
+
+
+def wsl_argv(*operation: str) -> list[str]:
+    """The declared root launch (:data:`ROOT_LAUNCH`) of one fixed helper operation. ``--exec`` runs the helper
+    without the login shell, so nothing in the arguments is re-parsed."""
+    return ["wsl.exe", "-d", WSL_DISTRO, "-u", "root", "--exec", "/usr/bin/python3", "-I", HELPER_INSTALLED,
+            *operation]
+
+
+def parse_result(stderr: str) -> Mapping[str, Any] | None:
+    """The helper's result record: its last stderr line with :data:`RESULT_PREFIX` (None when there is none)."""
+    lines = [ln[len(RESULT_PREFIX):] for ln in stderr.splitlines() if ln.startswith(RESULT_PREFIX)]
+    try:
+        doc = json.loads(lines[-1]) if lines else None
+    except ValueError:
+        return None
+    return doc if isinstance(doc, Mapping) else None
+
+
+class WslCardHandle:
+    """One card running under the WSL root helper."""
+
+    def __init__(self, proc: subprocess.Popen) -> None:  # noqa: D107
+        self._proc = proc
+        self.stdin, self.stdout = proc.stdin, proc.stdout
+
+    def wait(self, timeout: float) -> Mapping[str, Any]:
+        try:
+            self._proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            self._proc.kill()
+            self._proc.wait()
+        stderr = self._proc.stderr.read().decode("utf-8", "replace") if self._proc.stderr else ""
+        return parse_result(stderr) or {}
+
+
+class WslRootHelper:
+    """The family-3a root helper reached by the declared root launch. Its identity is MEASURED by the installed
+    helper on every call; this class trusts nothing it is told, :func:`identity_problems` compares it to the pins."""
+
+    def identity(self) -> Mapping[str, Any]:
+        try:
+            done = subprocess.run(wsl_argv("identity"), capture_output=True, timeout=IDENTITY_TIMEOUT_S)
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise RootHelperUnavailable(ROOT_HELPER_FAILED, f"{type(exc).__name__}: {exc}") from exc
+        out, err = done.stdout.decode("utf-8", "replace"), done.stderr.decode("utf-8", "replace")
+        if done.returncode != 0:
+            raise RootHelperUnavailable(ROOT_HELPER_FAILED, f"exit {done.returncode}: {err.strip()[-300:]}")
+        try:
+            doc = json.loads(out.strip().splitlines()[-1])
+        except (ValueError, IndexError) as exc:
+            raise RootHelperUnavailable(ROOT_HELPER_FAILED, f"no identity record: {out[-300:]!r}") from exc
+        return doc
+
+    def start(self, request: Mapping[str, Any]) -> CardHandle:
+        hexed = json.dumps(request, sort_keys=True, separators=(",", ":")).encode().hex()
+        try:
+            proc = subprocess.Popen(wsl_argv("run", hexed), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE, bufsize=0)
+        except OSError as exc:
+            raise RootHelperUnavailable(ROOT_HELPER_FAILED, f"{type(exc).__name__}: {exc}") from exc
+        return WslCardHandle(proc)
+
+
 def default_root_helper() -> RootHelper:
+    """The WSL root helper where the declared root launch exists (Windows with ``wsl.exe``); otherwise the helper that
+    fails closed as :data:`ROOT_HELPER_NOT_IMPLEMENTED`."""
+    if sys.platform == "win32" and shutil.which("wsl.exe"):
+        return WslRootHelper()
     return UnimplementedRootHelper()
 
 

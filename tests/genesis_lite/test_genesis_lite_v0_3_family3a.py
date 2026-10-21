@@ -6,13 +6,18 @@ runtime proof: nothing here launches a card, measures the formal machine or clos
 
 from __future__ import annotations
 
+import ast
 import copy
 import dataclasses
+import hashlib
+import json
+import os
 import pathlib
 
 import pytest
 
-from benchmarks.genesis_lite.v0_3 import device_contract, family3a as f3a, readiness
+from benchmarks.genesis_lite.v0_3 import device_contract, family3a as f3a, family3a_helper as helper_mod
+from benchmarks.genesis_lite.v0_3 import readiness
 
 HOST_DEV = "0:5"                 # the host devtmpfs
 CARD_DEV = "0:120"               # every card's /dev tmpfs: sequential cards reuse it, as the spike measured
@@ -26,6 +31,10 @@ HEX = "ab" * 32
 def pinned_config(**changes):
     values = {k: HEX for k in ("runtime_sha256", "rootfs_tree_sha256", "seccomp_sha256", "helper_sha256")}
     return dataclasses.replace(f3a.PINNED_CONFIG, **{**values, **changes})
+
+
+#: the shipped config with one digest not yet measured: what a stale or partial pin looks like
+UNPINNED_CONFIG = dataclasses.replace(f3a.PINNED_CONFIG, runtime_sha256=f3a.UNPINNED)
 
 
 def identity_of(config):
@@ -119,7 +128,8 @@ def spec(**changes):
 
 
 # ---- the root helper and the launcher interface ----------------------------------------------------------------------
-def test_f3a_the_only_root_helper_in_the_tree_fails_closed_as_not_implemented():
+def test_f3a_without_the_declared_root_launch_the_helper_fails_closed_as_not_implemented(monkeypatch):
+    monkeypatch.setattr(f3a.sys, "platform", "linux")
     helper = f3a.default_root_helper()
     assert isinstance(helper, f3a.UnimplementedRootHelper)
     for call in (helper.identity, lambda: helper.start({})):
@@ -133,11 +143,11 @@ def test_f3a_the_only_root_helper_in_the_tree_fails_closed_as_not_implemented():
     ready = f3a.execution_readiness(pinned_config(), helper)
     assert ready["status"] == f3a.BLOCKED
     assert f3a.ROOT_HELPER_NOT_IMPLEMENTED in ready["reasons"]
-    assert f3a.execution_readiness()["status"] == f3a.BLOCKED        # the tree's own config and helper
+    assert f3a.execution_readiness(helper=helper)["status"] == f3a.BLOCKED   # the tree's own config
 
 
 def test_f3a_missing_identity_pins_are_never_defaulted_and_the_policy_cannot_be_widened():
-    unpinned = {r for r, _ in f3a.config_problems(f3a.PINNED_CONFIG)}
+    unpinned = {r for r, _ in f3a.config_problems(pinned_config(seccomp_sha256=f3a.UNPINNED))}
     assert unpinned == {f3a.CONFIG_UNPINNED}
     assert f3a.config_problems(pinned_config()) == []
     for change in ({"runtime_version": "1.14.0"}, {"admitted": (*f3a.ADMITTED, *f3a.ABSENT[:1])},
@@ -164,8 +174,8 @@ def test_f3a_a_helper_with_another_identity_is_refused_before_any_card_starts():
         assert f3a.execution_readiness(config, helper)["status"] == f3a.BLOCKED
     missing = FakeHelper({k: v for k, v in identity_of(config).items() if k != "kernel_release"})
     assert f3a.HELPER_IDENTITY_MISMATCH in f3a.execution_readiness(config, missing)["reasons"]
-    unpinned = FakeHelper(identity_of(f3a.PINNED_CONFIG))       # UNPINNED on both sides never matches
-    result = f3a.execution_readiness(f3a.PINNED_CONFIG, unpinned)
+    unpinned = FakeHelper(identity_of(UNPINNED_CONFIG))       # UNPINNED on both sides never matches
+    result = f3a.execution_readiness(UNPINNED_CONFIG, unpinned)
     assert {f3a.CONFIG_UNPINNED, f3a.HELPER_IDENTITY_MISMATCH} <= set(result["reasons"])
     good = FakeHelper(identity_of(config))
     assert f3a.execution_readiness(config, good)["status"] == f3a.READY
@@ -184,7 +194,9 @@ def test_f3a_the_helper_request_is_typed_and_carries_no_command():
         assert f3a.spec_problems(bad), bad
         with pytest.raises(f3a.Family3aRefused):
             f3a.Family3aLauncher(config, FakeHelper(identity_of(config))).start(bad)
-    assert f3a.spec_problems(spec(entrypoint="proposer_host", args=("/opt/forge", "/opt/forge/src"))) == []
+    assert f3a.spec_problems(spec(entrypoint="proposer_host", args=("/forge/tree", "/forge/tree/src"))) == []
+    for outside in ("/opt/forge", "/forge", "/forge/treehouse", "/forge/tree/../x"):
+        assert f3a.spec_problems(spec(entrypoint="proposer_host", args=(outside,))), outside
     for tamper in ({**request, "argv": ["sh"]}, {**request, "mode": "shell"},
                    {**request, "card": {**request["card"], "command": "id"}}, {**request, "config_sha256": HEX}):
         assert f3a.helper_request_problems(tamper, config), tamper
@@ -308,7 +320,7 @@ def test_f3a_an_identity_mismatch_in_the_evidence_blocks():
     assert f3a.EVIDENCE_IDENTITY_MISMATCH in reasons(doc)
     other = pinned_config(seccomp_sha256="cd" * 32)               # evidence measured under another pinned config
     assert f3a.EVIDENCE_IDENTITY_MISMATCH in reasons(baseline(), other)
-    assert f3a.validate_evidence(baseline(f3a.PINNED_CONFIG), f3a.PINNED_CONFIG)["status"] == f3a.CHECK_BLOCKED
+    assert f3a.validate_evidence(baseline(UNPINNED_CONFIG), UNPINNED_CONFIG)["status"] == f3a.CHECK_BLOCKED
 
 
 def test_f3a_device_contract_v2_rederives_privacy_without_inode_identity():
@@ -383,11 +395,11 @@ def test_f3a_pre_admission_runs_its_stages_in_order_and_stops_at_the_first_failu
         calls.append(launcher)
         return baseline()
 
-    result = f3a.pre_admission(f3a.PINNED_CONFIG, FakeHelper(identity_of(pinned_config())), collect)
+    result = f3a.pre_admission(UNPINNED_CONFIG, FakeHelper(identity_of(pinned_config())), collect)
     assert [s["stage"] for s in result["stages"]] == list(f3a.STAGES)
     assert [s["status"] for s in result["stages"]] == ["BLOCKED"] + ["NOT_REACHED"] * 4
     assert result["status"] == f3a.REFUSED and calls == []
-    result = f3a.pre_admission(pinned_config(), f3a.default_root_helper(), collect)
+    result = f3a.pre_admission(pinned_config(), f3a.UnimplementedRootHelper(), collect)
     assert [s["status"] for s in result["stages"]][:3] == [f3a.PASS, "BLOCKED", "NOT_REACHED"]
     assert f3a.ROOT_HELPER_NOT_IMPLEMENTED in result["reasons"] and calls == []
     wrong = FakeHelper({**identity_of(pinned_config()), "kernel_release": "6.6.0"})
@@ -407,13 +419,15 @@ def test_f3a_pre_admission_runs_its_stages_in_order_and_stops_at_the_first_failu
     assert "root" not in f3a.pre_admission.__code__.co_varnames        # it never sees a root or a registry
 
 
-def test_f3a_execution_readiness_in_this_tree_is_blocked_with_precise_evidence():
-    result = f3a.execution_readiness()
+def test_f3a_the_pinned_config_is_complete_and_names_the_helper_in_this_tree():
+    assert f3a.config_problems(f3a.PINNED_CONFIG) == []
+    assert f3a.PINNED_CONFIG.helper_sha256 == hashlib.sha256(f3a.HELPER_FILE.read_bytes()).hexdigest()
+    result = f3a.execution_readiness(helper=f3a.UnimplementedRootHelper())   # no root launch: still blocked
     assert result["status"] == f3a.BLOCKED
-    assert set(result["reasons"]) == {f3a.CONFIG_UNPINNED, f3a.ROOT_HELPER_NOT_IMPLEMENTED}
-    unpinned = sorted(d.split(" ")[0] for r, d in result["problems"] if r == f3a.CONFIG_UNPINNED)
-    assert unpinned == ["helper_sha256", "rootfs_tree_sha256", "runtime_sha256", "seccomp_sha256"]
-    assert result["d5"] == "NOT_PROVEN"
+    assert set(result["reasons"]) == {f3a.ROOT_HELPER_NOT_IMPLEMENTED}
+    measured = FakeHelper(identity_of(f3a.PINNED_CONFIG))
+    assert f3a.execution_readiness(helper=measured)["status"] == f3a.READY
+    assert f3a.execution_readiness(helper=measured)["d5"] == "NOT_PROVEN"
 
 
 def test_f3a_the_scaffold_passes_the_randomness_screen_and_stays_off_the_pinned_identity():
@@ -423,3 +437,160 @@ def test_f3a_the_scaffold_passes_the_randomness_screen_and_stays_off_the_pinned_
     assert [p for p in screen["problems"] if "family3a" in p] == []
     assert "family3a.py" not in readiness.v03p.V0_3_FILES            # scaffold: not yet on the formal path
     assert "family3a.py" not in device_contract.DEVICE_PATH_FILES
+
+
+# ---- the low-level root helper (family3a_helper.py) ------------------------------------------------------------------
+def canonical_hex(doc):
+    return helper_mod.canonical(doc).hex()
+
+
+def test_f3a_the_helper_and_the_client_share_every_contract_constant():
+    assert helper_mod.REQUEST_SCHEMA == f3a.HELPER_REQUEST_SCHEMA
+    assert helper_mod.RESULT_SCHEMA == f3a.HELPER_RESULT_SCHEMA
+    assert helper_mod.RESULT_PREFIX == f3a.RESULT_PREFIX
+    assert (helper_mod.CARD, helper_mod.POWER_CONTROL) == f3a.MODES
+    assert helper_mod.ENTRYPOINTS == f3a.ENTRYPOINTS and helper_mod.CARD_ENV == f3a.CARD_ENV
+    assert (helper_mod.KEPT_TREE, helper_mod.KEPT_VENV) == f3a.KEPT_ROOTS
+    assert helper_mod.ROOT_LAUNCH == f3a.ROOT_LAUNCH
+    assert f"{helper_mod.BASE}/helper.py" == f3a.HELPER_INSTALLED
+    assert tuple(f"{ma}:{mi}" for ma, mi in helper_mod.NODES.values()) == f3a.CGROUP_ALLOW
+    assert tuple("/dev/" + n for n in helper_mod.NODES) == f3a.ADMITTED
+    assert helper_mod.MAX_ARGS == f3a.MAX_ARGS and helper_mod.MAX_TIMEOUT_S == f3a.MAX_TIMEOUT_S
+    assert helper_mod.CARD_ID.pattern == f3a.CARD_ID.pattern
+    assert helper_mod.CLEAN_KEYS == tuple(f3a.CLEAN)
+
+
+def test_f3a_the_helper_refuses_exactly_what_the_client_refuses():
+    config = pinned_config()
+    good = f3a.helper_request(config, spec())
+    corpus = [good, f3a.helper_request(config, spec(entrypoint="proposer_host", args=("/forge/tree", "/forge/venv"))),
+              {**good, "argv": ["sh"]}, {**good, "mode": "shell"}, {**good, "schema": "x"},
+              {**good, "card": {**good["card"], "command": "id"}}, {**good, "card": None}, None, [], "run",
+              f3a.helper_request(config, spec(entrypoint="proposer_host", args=("/opt/forge",))),
+              f3a.helper_request(config, spec(entrypoint="proposer_host", args=("/forge/tree/../../etc",))),
+              f3a.helper_request(config, spec(env=(("LD_PRELOAD", "/x"),))),
+              f3a.helper_request(config, spec(timeout_s=0.0)), f3a.helper_request(config, spec(card_id="gl3a-x")),
+              f3a.helper_request(config, spec(entrypoint="proposer_host"), mode=f3a.POWER_CONTROL),
+              f3a.helper_request(config, spec(), mode=f3a.POWER_CONTROL),
+              {**good, "card": {**good["card"], "args": ["/forge/tree"]}}]
+    for request in corpus:
+        assert bool(helper_mod.request_problems(request)) == bool(f3a.helper_request_problems(request, config)), request
+    assert helper_mod.request_problems(good) == []
+    assert helper_mod.decode_request(canonical_hex(good)) == good
+    for bad in ("zz", canonical_hex({**good, "mode": "shell"}), "", b"{}".hex()):
+        with pytest.raises(helper_mod.Refused):
+            helper_mod.decode_request(bad)
+
+
+def test_f3a_the_helper_builds_only_the_spike_spec():
+    config = pinned_config()
+    dev_dir = "/run/forge-f3a/gl3a-0001abcd/t"
+    manifest = {"tree": "/home/u/forge-tree", "venv": None, "image_digest": "sha256:" + HEX}
+    card = helper_mod.build_spec(f3a.helper_request(config, spec()), dev_dir, manifest, {"defaultAction": "X"},
+                                 ["/proc/kcore", "/proc/keys"])
+    assert card["root"] == {"path": helper_mod.ROOTFS, "readonly": True}
+    proc = card["process"]
+    assert proc["terminal"] is False and proc["noNewPrivileges"] is True and proc["user"] == {"uid": 1000, "gid": 1000}
+    assert all(v == [] for v in proc["capabilities"].values()) and len(proc["capabilities"]) == 5
+    assert proc["args"] == ["/usr/bin/python3", "-I", "-X", "pycache_prefix=/tmp/pycache",
+                            "/forge/tree/benchmarks/genesis_lite/v0_3/container_probe.py"]
+    assert [e for e in proc["env"] if e.startswith("PYTHONDONTWRITEBYTECODE")] == []
+    mounts = {m["destination"]: m for m in card["mounts"]}
+    assert mounts["/dev"]["source"] == f"{dev_dir}/dev" and {"ro", "nosuid", "noexec"} <= set(mounts["/dev"]["options"])
+    for masked in ("/proc/kcore", "/proc/keys"):
+        assert mounts[masked]["source"] == f"{dev_dir}/mask/empty" and "ro" in mounts[masked]["options"]
+    assert not [m for m in card["mounts"] if m["source"].startswith("/dev")]          # nothing from the host /dev
+    assert mounts["/forge/tree"]["source"] == "/home/u/forge-tree" and "ro" in mounts["/forge/tree"]["options"]
+    assert "/forge/venv" not in mounts
+    linux = card["linux"]
+    assert linux["rootfsPropagation"] == "rprivate" and linux["devices"] == []
+    assert not set(linux["maskedPaths"]) & set(helper_mod.MASK_FILES)                # files are masked from the tmpfs
+    assert {n["type"] for n in linux["namespaces"]} == {"pid", "network", "ipc", "uts", "mount", "cgroup", "user"}
+    assert linux["uidMappings"] == linux["gidMappings"] == [{"containerID": 0, "hostID": 100000, "size": 65536}]
+    rules = linux["resources"]["devices"]
+    assert rules[0] == {"allow": False, "access": "rwm"}
+    assert tuple(f"{r['major']}:{r['minor']}" for r in rules[1:]) == f3a.CGROUP_ALLOW
+    assert linux["cgroupsPath"] == "/forge-f3a/gl3a-0001abcd" and linux["seccomp"] == {"defaultAction": "X"}
+    control = helper_mod.build_spec(f3a.helper_request(config, spec(), mode=f3a.POWER_CONTROL), helper_mod.SHARED,
+                                    {**manifest, "venv": "/home/u/venv"}, {}, [])
+    cm = {m["destination"]: m for m in control["mounts"]}
+    assert cm["/dev"]["source"] == f"{helper_mod.SHARED}/dev" and "rw" in cm["/dev"]["options"]
+    assert cm["/forge/venv"]["source"] == "/home/u/venv" and "ro" in cm["/forge/venv"]["options"]
+    proposer = helper_mod.build_spec(f3a.helper_request(config, spec(entrypoint="proposer_host", args=("/forge/tree",),
+                                                                     env=(("PYTHONDONTWRITEBYTECODE", "1"),))),
+                                     dev_dir, {**manifest, "venv": "/home/u/venv"}, {}, [])
+    assert proposer["process"]["args"][0] == "/forge/venv/bin/python3"
+    assert proposer["process"]["args"][-2:] == ["/forge/tree/benchmarks/genesis_lite/proposer_host.py", "/forge/tree"]
+    assert "PYTHONDONTWRITEBYTECODE=1" in proposer["process"]["env"]
+
+
+def test_f3a_the_helper_runs_only_its_fixed_programs_and_never_a_shell():
+    source = pathlib.Path(helper_mod.__file__).read_text(encoding="utf-8")
+    for banned in ("shell=True", "os.system", "os.exec", "os.popen", "/bin/sh", "bash", "eval(", "exec("):
+        assert banned not in source, banned
+    tree = ast.parse(source)
+    calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call)]
+    sh_first = {ast.unparse(c.args[0]) for c in calls if ast.unparse(c.func) == "_sh"}
+    assert sh_first == {"CRUN", "MOUNT", "UMOUNT"}
+    spawned = [c for c in calls if ast.unparse(c.func) in ("subprocess.run", "subprocess.Popen")]
+    assert sorted(ast.unparse(c.args[0]) for c in spawned) == sorted([
+        "list(argv)", "[CRUN, '--root', CRUN_ROOT, 'run', '--bundle', f'{cdir}/bundle', cid]"])
+    with pytest.raises(helper_mod.Refused):
+        helper_mod._sh("/usr/bin/env", "id")
+    assert set(helper_mod.OPERATIONS) == {"identity", "install-rootfs", "configure-kept", "run", "residue",
+                                          "control-teardown"}
+
+
+def test_f3a_the_helper_tree_digest_ignores_time_and_inode_but_not_content(tmp_path):
+    a = tmp_path / "a"
+    (a / "usr" / "bin").mkdir(parents=True)
+    (a / "usr" / "bin" / "python3").write_bytes(b"\x7fELF")
+    (a / "etc").mkdir()
+    (a / "etc" / "hostname").write_bytes(b"card\n")
+    first = helper_mod.tree_digest(str(a))
+    os.utime(a / "etc" / "hostname", (1, 1))
+    assert helper_mod.tree_digest(str(a)) == first
+    b = tmp_path / "b"
+    (b / "etc").mkdir(parents=True)
+    (b / "etc" / "hostname").write_bytes(b"card\n")
+    (b / "usr" / "bin").mkdir(parents=True)
+    (b / "usr" / "bin" / "python3").write_bytes(b"\x7fELF")
+    assert helper_mod.tree_digest(str(b)) == first                  # another copy, other inodes, other order
+    (b / "etc" / "hostname").write_bytes(b"cards\n")
+    assert helper_mod.tree_digest(str(b)) != first
+    (b / "etc" / "hostname").write_bytes(b"card\n")
+    assert helper_mod.tree_digest(str(b)) == first
+    os.chmod(b / "etc" / "hostname", 0o444)                          # permission bits are part of the identity
+    assert helper_mod.tree_digest(str(b)) != first
+    os.chmod(b / "etc" / "hostname", 0o666 if os.name == "nt" else 0o644)
+    assert helper_mod.tree_digest(str(b)) == first
+    (b / "forge").mkdir()
+    assert helper_mod.tree_digest(str(b)) != first
+
+
+def test_f3a_the_helper_derives_the_seccomp_profile_like_the_spike():
+    source = {"defaultAction": "SCMP_ACT_ERRNO", "defaultErrnoRet": 38, "syscalls": [
+        {"names": ["read"], "action": "SCMP_ACT_ALLOW"},
+        {"names": ["bpf"], "action": "SCMP_ACT_ALLOW", "includes": {"caps": ["CAP_SYS_ADMIN"]}},
+        {"names": ["arm_only"], "action": "SCMP_ACT_ALLOW", "includes": {"arches": ["arm64"]}},
+        {"names": ["not_amd64"], "action": "SCMP_ACT_ALLOW", "excludes": {"arches": ["amd64"]}},
+        {"names": ["future"], "action": "SCMP_ACT_ALLOW", "includes": {"minKernel": "6.9"}},
+        {"names": ["old"], "action": "SCMP_ACT_ALLOW", "includes": {"minKernel": "5.6"}},
+        {"names": ["personality"], "action": "SCMP_ACT_ALLOW", "args": [{"index": 0, "value": 0, "op": "SCMP_CMP_EQ"}]},
+        {"names": ["ptrace"], "action": "SCMP_ACT_ERRNO", "errnoRet": 1}]}
+    out = helper_mod.seccomp_profile(source, "6.6.87.2-microsoft-standard-WSL2")
+    assert [r["names"] for r in out["syscalls"]] == [["read"], ["old"], ["personality"], ["ptrace"]]
+    assert out["syscalls"][2]["args"] and out["syscalls"][3]["errnoRet"] == 1
+    assert out["defaultAction"] == "SCMP_ACT_ERRNO" and out["defaultErrnoRet"] == 38
+
+
+def test_f3a_the_wsl_client_uses_the_declared_root_launch_without_a_shell():
+    argv = f3a.wsl_argv("identity")
+    assert argv[:6] == ["wsl.exe", "-d", f3a.WSL_DISTRO, "-u", "root", "--exec"]
+    assert argv[6:] == ["/usr/bin/python3", "-I", f3a.HELPER_INSTALLED, "identity"]
+    assert " ".join(argv[:1] + argv[3:5]) == f3a.ROOT_LAUNCH
+    assert not {"bash", "sh", "-c", "--"} & set(argv)
+    record = {"schema": f3a.HELPER_RESULT_SCHEMA, "card_id": "gl3a-0001abcd"}
+    text = "warning\n" + f3a.RESULT_PREFIX + '{"old": 1}\n' + f3a.RESULT_PREFIX + json.dumps(record)
+    assert f3a.parse_result(text) == record
+    assert f3a.parse_result("nothing") is None and f3a.parse_result(f3a.RESULT_PREFIX + "{broken") is None
