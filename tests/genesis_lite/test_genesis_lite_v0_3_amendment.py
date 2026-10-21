@@ -418,7 +418,7 @@ def test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p(monkeypat
         return (1.0 if (i + s) % 3 == 0 else -1.0) if k == "discoverable" else lr.credit(lr.CAREFUL[k], i, s, k)
     rows = lr.field(careful=lr.records("careful", lr.CAREFUL)) + lr.records("mind", None, credit_fn=mixed)
     identity = v03p.identity_problems()[1]
-    ps = {}
+    ps, streams = {}, {}
     for tag in (b"root one", b"root two"):
         root = hashlib.sha256(tag).digest()
         admission = _admitted(tmp_path / tag.decode().replace(" ", "_"), root, identity)
@@ -430,9 +430,14 @@ def test_o1_lift_decision_passes_the_keyed_stream_to_the_monte_carlo_p(monkeypat
         assert out["primary"]["pooled"]["p_method"] == "monte_carlo"
         assert seen and set(seen) == {v03a.sign_flip_stream(root, identity, admission)}
         ps[tag] = out["primary"]["pooled"]["p"]
+        streams[tag] = v03a.sign_flip_stream(root, identity, admission)
     seen.clear()
     public = v03a.lift_decision(rows, "mind", grid=lr.GRID)["primary"]["pooled"]["p"]
-    assert set(seen) == {v03a.SIGN_FLIP_STREAM} and len({*ps.values(), public}) == 3
+    assert set(seen) == {v03a.SIGN_FLIP_STREAM}
+    # each root's own stream reached sign_flip_p (asserted above); the three streams differ. Two Monte-Carlo p values
+    # may coincide by chance (about 1 %; the stream key includes the preregistration digest, so every regeneration
+    # re-rolls it), so only "not all three equal" is required of the p values themselves
+    assert len({*streams.values(), v03a.SIGN_FLIP_STREAM}) == 3 and len({*ps.values(), public}) >= 2
 
 
 def test_o1_a_revealed_root_that_is_not_bytes_is_refused():
@@ -933,6 +938,65 @@ def test_d5_the_validator_refuses_any_undeclared_host_path_even_read_only():
         card["provenance"]["source_sha"] = "UNKNOWN"
     assert "PROVENANCE_MISMATCH" in container_evidence.validate_container_evidence(report, expected=expected)[
         "reasons"]                                                                                # UNKNOWN never matches
+
+
+def test_d5_the_card_proc_and_sys_are_its_own_and_a_host_procfs_is_detected():
+    """Review MINOR-A: every re-bind and mask tie is relative to the row at /proc, so /proc itself must be the card's.
+    Through its /proc the card is PID 1 of a PID namespace that is not the operator's (NSpid exactly ["1"]), and /proc
+    and /sys are not on the operator's procfs and sysfs devices. The positive control proves a host procfs is told
+    apart (it shows the host PID first)."""
+    import copy
+
+    from benchmarks.genesis_lite.v0_3 import container_evidence
+
+    fx = _contract_fixture()
+
+    def verdict(mutate):
+        report, expected = fx.baseline()
+        mutate(report)
+        return container_evidence.validate_container_evidence(report, expected=expected)
+
+    assert verdict(lambda r: None)["status"] == "PASS"
+    host_view = lambda r: r["cards"][1]["pid_namespace"].update(nspid=["22255", "1"], visible_processes=31)  # noqa: E731
+    assert "PID_NAMESPACE_NOT_PRIVATE" in verdict(host_view)["reasons"]                 # a host procfs at /proc
+    not_init = lambda r: r["cards"][0]["pid_namespace"].update(pid=7)  # noqa: E731
+    assert "PID_NAMESPACE_NOT_PRIVATE" in verdict(not_init)["reasons"]
+    shared_ns = lambda r: r["cards"][2]["pid_namespace"].update(ns="pid:[4026532219]")  # noqa: E731
+    assert "PID_NAMESPACE_NOT_PRIVATE" in verdict(shared_ns)["reasons"]                 # the operator's namespace
+
+    def host_proc_device(r):
+        card = r["cards"][0]
+        card["mounts"][1]["device"] = card["host_devices"]["proc"]
+        fx.synchronize(card)
+    assert "HOST_PSEUDO_FS_VISIBLE" in verdict(host_proc_device)["reasons"]
+
+    def host_sys_device(r):
+        for card in r["cards"]:
+            row = dict(copy.deepcopy(card["mounts"][1]), id=str(int(card["mounts"][-1]["id"]) + 1), target="/sys",
+                       fstype="sysfs", source="sysfs", device=card["host_devices"]["sys"])
+            card["mounts"].append(row)
+            fx.synchronize(card)
+    assert "HOST_PSEUDO_FS_VISIBLE" in verdict(host_sys_device)["reasons"]
+    unrecorded = lambda r: r["cards"][0]["host_devices"].pop("pid_ns")  # noqa: E731
+    assert "EVIDENCE_INCOMPLETE" in verdict(unrecorded)["reasons"]                       # never assumed
+    missing = lambda r: r["cards"][1].pop("pid_namespace")  # noqa: E731
+    assert "EVIDENCE_INCOMPLETE" in verdict(missing)["reasons"]
+    blind = lambda r: r["positive_controls"]["host_procfs"].update(nspid=["1"], visible_processes=1)  # noqa: E731
+    assert "PID_NAMESPACE_CONTROL_FAILED" in verdict(blind)["reasons"]                  # the detector has no power
+    absent = lambda r: r["positive_controls"].pop("host_procfs")  # noqa: E731
+    assert "EVIDENCE_INCOMPLETE" in verdict(absent)["reasons"]
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Linux procfs")
+def test_d5_the_probe_reads_pid_namespace_evidence_from_the_procfs_it_is_given():
+    """The probe's own reading on this host: not PID 1 here, NSpid from this procfs, the namespace link."""
+    import os
+
+    from benchmarks.genesis_lite.v0_3 import container_probe as probe
+
+    seen = probe.pid_namespace()
+    assert seen["pid"] == os.getpid() and seen["nspid"][-1] == str(os.getpid()) and seen["ns"].startswith("pid:[")
+    assert seen["visible_processes"] >= 1
 
 
 def test_d5_a_cross_card_probe_that_could_not_run_stays_untestable_even_with_passing_containers():

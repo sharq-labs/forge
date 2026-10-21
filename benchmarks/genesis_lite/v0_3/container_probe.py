@@ -120,7 +120,19 @@ def _containerenv() -> dict:
     return out
 
 
+def pid_namespace(proc: str = "/proc") -> dict:
+    """What a card sees of its PID namespace THROUGH ``proc``. NSpid lists one PID per namespace from the namespace of
+    that procfs mount down to the reader's; the card's own procfs shows exactly ["1"] for the card's PID 1, a host
+    procfs shows the host PID first."""
+    status = dict(line.split(":", 1) for line in pathlib.Path(proc, "self", "status").read_text().splitlines()
+                  if ":" in line)
+    return {"pid": os.getpid(), "nspid": status.get("NSpid", "").split(), "ns": os.readlink(f"{proc}/self/ns/pid"),
+            "visible_processes": sum(1 for e in os.listdir(proc) if e.isdigit())}
+
+
 def probe(config: dict) -> dict:
+    if config.get("pid_probe_path"):                  # the positive control: a host procfs the operator bound in
+        return {"pid_namespace": pid_namespace(config["pid_probe_path"])}
     raw = pathlib.Path("/proc/self/mountinfo").read_text()
     mounts = contract.parse_mountinfo(raw)
     allowed = tuple(config.get("write_fstypes", ("tmpfs",)))
@@ -148,7 +160,7 @@ def probe(config: dict) -> dict:
             "network": {**{label: _reach(address) for label, address in config.get("network_targets", {}).items()},
                         "interfaces": sorted(p.name for p in pathlib.Path("/sys/class/net").iterdir())},
             "paths": {**{k: os.environ.get(k) for k in contract.PATH_KEYS}, "workdir": os.getcwd()},
-            "containerenv": _containerenv(), "uid": os.getuid()}
+            "containerenv": _containerenv(), "uid": os.getuid(), "pid_namespace": pid_namespace()}
 
 
 def main() -> int:

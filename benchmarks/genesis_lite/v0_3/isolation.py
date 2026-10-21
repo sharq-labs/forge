@@ -314,6 +314,7 @@ def collect_container_evidence(launcher: NamespaceLauncher | None = None) -> dic
     launcher = launcher or formal_launcher()
     source, venv = launcher.keep[0], launcher.keep[-1]
     provenance = measured_provenance(launcher)
+    host_devices = host_pseudo_devices()
     marker = f"{MARKER}-{secrets.token_hex(6)}"
     server, address = _listener()
     try:
@@ -332,6 +333,7 @@ def collect_container_evidence(launcher: NamespaceLauncher | None = None) -> dic
                           "actual_image_digest": seen["actual_image_digest"], "actual_image_id": seen["actual_image_id"],
                           "ipc": seen["ipc"], "network": obs["network"], "writes": obs["writes"],
                           "canaries": obs["canaries"], "restart": seen["restart"], "removed": seen["removed"],
+                          "pid_namespace": obs.get("pid_namespace"), "host_devices": dict(host_devices),
                           "name": seen["name"], "containerenv": obs.get("containerenv"), "uid": obs.get("uid"),
                           "runtime_mountinfo": seen["runtime_mountinfo"], "exit_code": seen["exit_code"]})
         with socket.create_connection(address, timeout=3):
@@ -349,6 +351,7 @@ def collect_container_evidence(launcher: NamespaceLauncher | None = None) -> dic
         b_canary = b["observation"]["canaries"][0]
     finally:
         shutil.rmtree(shared_dir, ignore_errors=True)
+    hostproc = _observe(launcher, {"pid_probe_path": "/hostproc"}, extra_volumes=["/proc:/hostproc:ro"])
     shared = {"a_write": a_canary.get("write"), "a_token": a_canary.get("token"), "b_read": b_canary.get("read"),
               "b_seen": b_canary.get("seen"), "a_mount": a_canary.get("expected_mount"),
               "b_mount": b_canary.get("expected_mount"), "a_actual": a_canary.get("actual_mount"),
@@ -356,7 +359,17 @@ def collect_container_evidence(launcher: NamespaceLauncher | None = None) -> dic
               "a_path": a_canary.get("path"), "b_path": b_canary.get("path"),
               "a_image_digest": a["actual_image_digest"], "b_image_digest": b["actual_image_digest"]}
     return {"schema": CONTAINER_SCHEMA, "cards": cards,
-            "positive_controls": {"host_listener": host_listener, "shared_canary": shared}}
+            "positive_controls": {"host_listener": host_listener, "shared_canary": shared,
+                                  "host_procfs": {**hostproc["observation"]["pid_namespace"], "id": hostproc["id"]}}}
+
+
+def host_pseudo_devices() -> dict[str, str]:
+    """The operator's own procfs and sysfs devices and PID namespace: a card's /proc and /sys must be on other
+    devices, and the card's PID namespace must be another one (MINOR-A)."""
+    rows = parse_mountinfo(pathlib.Path("/proc/self/mountinfo").read_text())
+    device = {t: next((r["device"] for r in rows if r["target"] == t and r["fstype"] == f), "UNKNOWN")
+              for t, f in (("/proc", "proc"), ("/sys", "sysfs"))}
+    return {"proc": device["/proc"], "sys": device["/sys"], "pid_ns": os.readlink("/proc/self/ns/pid")}
 
 
 def _venv_file(venv: str) -> str:

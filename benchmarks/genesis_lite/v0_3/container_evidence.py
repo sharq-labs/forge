@@ -22,6 +22,9 @@ verified for N-1 only when per-card evidence shows, for three fresh cards A, B a
   cannot reach IS reachable from the host (the network probe has power);
 * the container was new (distinct ids), ran the pinned image, had no capabilities, no-new-privileges, private IPC, no
   network but loopback, was removed after the card and could not be restarted;
+* the card's /proc and /sys are its own (MINOR-A): through its /proc the card is PID 1 of a PID namespace that is
+  not the operator's (NSpid exactly ["1"]), and its /proc and /sys mounts are not on the operator's procfs and sysfs
+  devices; a positive control shows that a host procfs bound into a container IS detected (more than one NSpid);
 * the card's recorded provenance equals the expected deployment: image, Podman version, rootless mode, launcher,
   probe, Containerfile and source revision (a full commit id). What makes the expected launcher, probe and source the
   preregistered ones is the identity check of the formal driver, not this validator.
@@ -44,7 +47,9 @@ PATH_KEYS = ("HOME", "TMPDIR", "XDG_CACHE_HOME", "PYTHONPYCACHEPREFIX")
 ROW_KEYS = ("id", "parent", "device", "root", "target", "options", "optional", "fstype", "source", "super_options")
 RUNTIME_KEYS = ROW_KEYS[:-1]
 CARD_KEYS = ("phase", "id", "provenance", "mounts", "mountinfo", "runtime_mounts", "argv", "paths", "status",
-             "actual_image_digest", "actual_image_id", "ipc", "network", "writes", "canaries", "restart", "removed")
+             "actual_image_digest", "actual_image_id", "ipc", "network", "writes", "canaries", "restart", "removed",
+             "pid_namespace", "host_devices")
+DEVICE_ID = re.compile(r"[0-9]+:[0-9]+")
 EXPECTED_KEYS = ("source_sha", "image_digest", "image_id", "podman_version", "containerfile_sha256",
                  "launcher_sha256", "probe_sha256", "writable_targets", "source_host", "venv_host", "source_path",
                  "venv_path", "rootless")
@@ -315,6 +320,12 @@ def _mounts(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findin
             found.add("UNDECLARED_HOST_MOUNT", f"{phase}: {len(hits)} mounts at the {label.lower()} target {path}")
         elif any("rw" in r["options"] for r in hits):
             found.add(f"{label}_WRITABLE", f"{phase}: {path} is mounted read-write")
+    host = card.get("host_devices") if isinstance(card.get("host_devices"), Mapping) else {}
+    for target, key in (("/proc", "proc"), ("/sys", "sys")):
+        if any(r["device"] == host.get(key) for r in by_target.get(target, [])):
+            found.add("HOST_PSEUDO_FS_VISIBLE", f"{phase}: {target} is on the operator's own {key} device")
+    if not by_target.get("/proc"):
+        found.add("MOUNT_INVENTORY_MISMATCH", f"{phase}: no /proc mount")
     private: dict[str, str] = {}
     for row, rt in zip(parsed, runtime):
         if "rw" not in row["options"]:
@@ -412,6 +423,12 @@ def _controls(report: Mapping[str, Any], expected: Mapping[str, Any], found: _Fi
         return []
     if controls.get("host_listener") != "REACHED":
         found.add("NETWORK_CONTROL_FAILED", "the host listener was not reachable from the host")
+    hostproc = controls.get("host_procfs")
+    if not isinstance(hostproc, Mapping):
+        found.add("EVIDENCE_INCOMPLETE", "no host-procfs control")
+    elif (not isinstance(hostproc.get("nspid"), list) or len(hostproc["nspid"]) < 2
+          or not isinstance(hostproc.get("visible_processes"), int) or hostproc["visible_processes"] < 2):
+        found.add("PID_NAMESPACE_CONTROL_FAILED", "a host procfs bound into a container was not told apart")
     shared = controls.get("shared_canary")
     if not isinstance(shared, Mapping):
         found.add("EVIDENCE_INCOMPLETE", "no shared-volume control")
@@ -468,6 +485,16 @@ def _card(card: Mapping[str, Any], expected: Mapping[str, Any], found: _Findings
     for key in (*PATH_KEYS, "workdir"):
         if not _within(paths.get(key), targets):
             found.add("PATH_OUTSIDE_PRIVATE_MOUNTS", f"{phase}: {key}={paths.get(key)!r}")
+    pid = card["pid_namespace"] if isinstance(card["pid_namespace"], Mapping) else {}
+    host = card["host_devices"] if isinstance(card["host_devices"], Mapping) else {}
+    if not all(isinstance(host.get(k), str) and DEVICE_ID.fullmatch(host[k]) for k in ("proc", "sys")) \
+            or not isinstance(host.get("pid_ns"), str) or not host["pid_ns"].startswith("pid:["):
+        found.add("EVIDENCE_INCOMPLETE", f"{phase}: the operator's procfs, sysfs and PID namespace are not recorded")
+    elif (pid.get("pid") != 1 or pid.get("nspid") != ["1"] or not isinstance(pid.get("ns"), str)
+          or not pid["ns"].startswith("pid:[") or pid["ns"] == host["pid_ns"]
+          or not isinstance(pid.get("visible_processes"), int) or pid["visible_processes"] < 1):
+        found.add("PID_NAMESPACE_NOT_PRIVATE", f"{phase}: through its /proc the card is not PID 1 of its own PID "
+                                               f"namespace ({dict(pid)})")
     restart = card["restart"] if isinstance(card["restart"], Mapping) else {}
     if restart.get("attempted") is not True or restart.get("refused") is not True or restart.get("exit_code") in (0, None):
         found.add("RESTART_NOT_REFUSED", f"{phase}: restart {dict(restart)}")

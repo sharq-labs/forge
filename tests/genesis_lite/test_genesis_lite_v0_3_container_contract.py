@@ -76,14 +76,18 @@ def baseline():
                   actual_image_digest=IMAGE,actual_image_id=expected["image_id"],ipc="private",
                   network=dict(host_listener="REFUSED",external="REFUSED",interfaces=["lo"]),
                   writes=dict(source="READ_ONLY",venv="READ_ONLY"),canaries=canaries,
-                  restart=dict(attempted=True,refused=True,exit_code=125),removed=True)
+                  restart=dict(attempted=True,refused=True,exit_code=125),removed=True,
+                  # MINOR-A (D5-A1b): PID 1 of its own PID namespace through its own /proc; not the host's devices
+                  pid_namespace=dict(pid=1,nspid=["1"],ns=f"pid:[{4026532300+n}]",visible_processes=1),
+                  host_devices=dict(proc="0:59",sys="0:22",pid_ns="pid:[4026532219]"))
         synchronize(card); cards.append(card)
     report=dict(schema="checkpoint2.container_evidence.contract/2",cards=cards,
                 positive_controls=dict(host_listener="REACHED",shared_canary=dict(
                     a_write="WRITE_OK",a_token="e"*64,b_read="READ_OK",b_seen="e"*64,
                     a_mount="900",b_mount="901",a_actual="900",b_actual="901",
                     a_id="d"*64,b_id="e"*64,a_path="/shared/cp2-control",
-                    b_path="/shared/cp2-control",a_image_digest=IMAGE,b_image_digest=IMAGE)))
+                    b_path="/shared/cp2-control",a_image_digest=IMAGE,b_image_digest=IMAGE),
+                host_procfs=dict(pid=1,nspid=["22255","1"],ns="pid:[4026532219]",visible_processes=31,id="f"*64)))
     return report,expected
 
 
