@@ -1,5 +1,3 @@
-> **SUPERSEDED (2026-10-21), HISTORICAL_ONLY.** It timed the A1 namespace launcher. The current pilot is [`../genesis_lite_v0_3_d7_timing_pilot_2026_10_21/`](../genesis_lite_v0_3_d7_timing_pilot_2026_10_21/README.md), through the final D5-A1b containers. The D7 budget decision quoted below is unchanged.
-
 # Genesis-lite v0.3: D7 timing pilot, 2026-10-20
 
 **Status:** NON_FORMAL_TIMING_PILOT, development tier.

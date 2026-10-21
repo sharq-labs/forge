@@ -354,7 +354,7 @@
    "baseline_hours": 72.0,
    "candidate_hours": "OWNER_DECISION_REQUIRED",
    "rule": "formal.run_formal checks the elapsed time before each world set and stops past total_hours: BUDGET_EXCEEDED, INVALID, never partially claimed (Genesis section 10.6)",
-   "scope": "the cap times the operator's run only (ESTIMATED 45.2 h of the 90.5 h that count the evaluator's replay as a second run, from the 2026-10-21 pilot through the D5-A1b containers: MEASURED 67.9 s per world set; the 2026-10-20 pilot's 58 h is history); the evaluator's replay is budgeted separately; overshoot is bounded by the world set in progress (every arm's cards x the per-card timeout)",
+   "scope": "the cap times the operator's run only (about half of the ESTIMATED 58 h, which counts the evaluator's replay as a second run); the evaluator's replay is budgeted separately; overshoot is bounded by the world set in progress (every arm's cards x the per-card timeout)",
    "total_hours": "OWNER_DECISION_REQUIRED"
   },
   "candidate": "OWNER_DECISION_REQUIRED",
@@ -487,11 +487,9 @@
   "root_commitment_sha256": "OWNER_DECISION_REQUIRED",
   "start_condition": "G0 exit (OD-3), OD-20 deployment verified by an independent isolation-probe rerun that covers the Genesis-lite secret inventory (FDA-19 / ODC-BL1), OD-18 budget, OD-8 evaluator, this identity frozen and approved (OD-19)",
   "timing_pilot": {
-   "evidence": "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_21/result.json",
-   "evidence_sha256": "6f6b1418dfd78cebe8795c4f6587204e5da823088dd7afe85107076d5e576092",
-   "historical": "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json",
-   "historical_sha256": "3759ff334f690f4d3601b588a4bfb6c9dd71f186975a45d024a8714cb85beb4f",
-   "labels": "MEASURED on the D7 machine through the D5-A1b containers, after the pre-admission container check passed; the formal hours are ESTIMATED from it and exclude the candidate's own cost (D4)"
+   "evidence": "docs/work/evidence/genesis_lite_v0_3_d7_timing_pilot_2026_10_20/result.json",
+   "evidence_sha256": "3759ff334f690f4d3601b588a4bfb6c9dd71f186975a45d024a8714cb85beb4f",
+   "labels": "MEASURED on the D7 machine through the D5 namespaces; the formal hours are ESTIMATED from it and exclude the candidate's own cost (D4)"
   },
   "world_sets": 2400
  },
@@ -585,7 +583,7 @@
   "formal.py": "58f03968c29819fb76e437ded321b51515c106866ee4258deb7b7784b11c9836",
   "harness.py": "63103416641a40594041105191e9241cb8757d01e76b4bc855ac939445fa29a7",
   "isolation.py": "29c1acc26cb89a711fd7fb7568272895d4ce90531a6ffe76357f30960e8886e0",
-  "preregistration.py": "8f89e42f8824f3054a5093b3a9ea056e219d4ca6874fdbc94345b3275c6aedd7",
+  "preregistration.py": "194430d50dcae08b6a9d311ccd3615adefece5d7cbaa8cbf54fbc9ba1bf7e7d5",
   "readiness.py": "735c2f9a092823a402c33394990edba823db118064a20e6f41f38eb97e9eb17a",
   "registry.py": "d938ff3f323eaed9c19d9faf1f6ebc71b4a2c8382a314883d8f44b3d9ebfab10",
   "secret_scan.py": "da7eb1d833362153b7d669608408e1a7c4f528fc60ea8876613ed490b6612eab",

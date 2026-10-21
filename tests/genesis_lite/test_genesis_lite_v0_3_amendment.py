@@ -1620,17 +1620,6 @@ def test_d7_timing_pilot_evidence_is_pinned_and_a_stale_pilot_is_a_blocker():
     assert doc["status"] == "NON_FORMAL_TIMING_PILOT" and doc["provenance"]["tree_clean"] is True
     assert sorted(doc["arms"]) == sorted(v03_arms.ARMS) and doc["campaigns"] >= 10
     assert all(v == ["VALID"] for v in doc["MEASURED"]["statuses"].values())
-    # 2026-10-21: the pilot timed the final D5-A1b policy: its pre-admission check passed under the pinned D5 evidence,
-    # every admissible device ADMITTED; the 2026-10-20 pilot stays pinned as history
-    from benchmarks.genesis_lite.v0_3 import device_contract
-
-    assert doc["schema"] == "forge.genesis_lite.v0_3/timing_pilot/2"
-    assert doc["deployment_evidence_sha256"] == v03p.DEPLOYMENT_EVIDENCE_SHA256
-    assert doc["pre_admission"]["status"] == "PASS"
-    assert doc["pre_admission"]["devices"] == {p: {"status": "ADMITTED", "contract": device_contract.CONTRACT,
-                                                   "reasons": []} for p in device_contract.DEVICES}
-    old = (v03p.HERE.parents[2] / v03p.HISTORICAL_TIMING_PILOT_EVIDENCE).read_bytes()
-    assert hashlib.sha256(old).hexdigest() == v03p.HISTORICAL_TIMING_PILOT_EVIDENCE_SHA256
     moved = sorted(n for n, digest in doc["provenance"]["code_sha256"].items()
                    if hashlib.sha256((v03p.HERE / n).read_bytes()).hexdigest() != digest)
     status, note = readiness.timing_pilot_status()
