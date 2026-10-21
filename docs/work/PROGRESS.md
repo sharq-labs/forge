@@ -8470,3 +8470,42 @@ Branch `feat/genesis-lite-v03-clean-n1` (D:/forge-genesis-clean), local, unpushe
   REQUIRES_RERUN after a replacement runtime is selected.
 - **NOT RUN.** The full `tests/genesis_lite`, the Linux suite, FAST, SCIENTIFIC, regression, the readiness CLI, D5,
   D7, OD-3, any freeze, certification, formal campaign or Budget × Noise.
+
+## 2026-10-21 — BR-D5-RUNTIME-01: replacement runtime selection spike
+
+- **Result: SELECT_RUNTIME_FOR_D5_IMPLEMENTATION, status RUNTIME_SELECTED_FOR_IMPLEMENTATION.** The selected family is
+  3a: a rootful crun 1.14.1 container per card, run inside the formal WSL2 VM. The launcher builds each card's
+  private device tmpfs: mknod'd null, zero and full only; random, urandom and tty absent. The card gets a user
+  namespace, no capabilities, Podman's seccomp profile and a read-only rootfs from the pinned image.
+  - Report: `docs/discovery/GENESIS_LITE_V0_3_D5_RUNTIME_SELECTION_SPIKE.md`.
+  - Probe evidence is outside the repo in `D:\forge-d5-runtime-spike\` (`SHA256SUMS` sha256 `e92f0efa…`). It is
+    synthetic cards only and unpinned: spike evidence, not D5 evidence.
+- **MEASURED in the spike (executed this session on the formal machine).**
+  - The closed rootless Podman runtime leaks a selected bit through `utimensat(UTIME_NOW)` on all six host nodes,
+    24/24 trials.
+  - A misconfigured 3a launcher that shares one device tmpfs leaks 24/24 (the detector has power).
+  - The 3a candidate leaks nothing: the guess was 0 in all trials, ro and rw; random, urandom and tty are ENOENT.
+  - Per-card overhead for 3a: median 0.011 s, p95 0.012 s, worst 0.024 s (n=1000, `/bin/true`).
+  - Closed Podman: median 0.133 s, p95 0.155 s (n=200).
+  - Bare nested-KVM VM floor: 0.028 s / 0.040 s (n=1000).
+  - Cleanup failures and residue: 0 in 1,601 timed 3a cards.
+- **Found while probing (carry into the implementation).**
+  - crun's `maskedPaths` binds the HOST `/dev/null` over `/proc/kcore`, `/proc/keys`, `/proc/latency_stats` and
+    `/proc/timer_list`. That makes them read-only aliases of a BLOCKER-1 node, and the closed Podman runtime has the
+    same aliases.
+  - systemd's shared `/` propagates the card's `/dev/shm` mount back to the host unless the card tmpfs is made
+    private.
+  - Sequential cards reuse identical `st_dev`/`st_ino`, so the device contract must not prove privacy by inode
+    identity.
+- **Rejected.**
+  - Family 1 via Hyper-V: needs elevation, and the WSL launcher cannot drive it (interop disabled).
+  - Family 4 (Blindfold): `unshare` leaves the host `/dev`.
+  - Family 2 is the fallback if a root launcher is refused. It is not probed beyond the KVM floor, because it needs
+    downloads.
+- **Failed approach, do not repeat.** `wsl.exe -- bash -c '...$VAR...'` re-parses through the login shell: `$VAR`
+  expanded empty and a root command wrote `/rootfs`, `/scripts` and `/kvm_floor` at the WSL root (removed). Feed
+  scripts on stdin (`wsl.exe -u root -- bash -s < script.sh`). Automount is off, so `/mnt/d` is empty in WSL.
+- **Status unchanged.** D5 = NOT_PROVEN, N-1 = OPEN, D7 = REQUIRES_RERUN, and BLOCKER 1 is open: no detector is
+  declared and nothing is pinned.
+- **NOT RUN.** D5, D7, the D5 contract and attack channels, `tests/genesis_lite`, FAST, SCIENTIFIC, regression, the
+  readiness CLI, freeze, certification, formal runs and Budget × Noise. No implementation, push or install.
