@@ -768,6 +768,8 @@ class ScientificWorld:
         place (``object.__setattr__``) keeps its cached identity; decisions are therefore made on a world rebuilt from
         its payload, and verification refuses one that is not intact."""
         try:
+            if RoleTable(tuple(v.declaration for v in self.variables)).to_dict() != self._roles.to_dict():
+                return False                              # a role relabelled in place behind the cached role table
             content = digest(self._material())
             return content == self._content and self._revision == digest(
                 {"world_id": self.world_id, "content": content, **self.lineage.identity()})

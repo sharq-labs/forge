@@ -24,7 +24,10 @@ A proposal is never executable because it exists.  The only path to an executor 
    re-derives every authorization it is handed (:func:`verify_authorization`) before acting.  The Mind is handed only
    the desk's :class:`AdmissionGateway` (admit and dispatch, nothing else): it never holds the readers or the executor.
 
-What this does NOT do.  The desk is not an effect ledger: it records nothing about what was dispatched.  An admitted
+What this does NOT do.  The desk is not an effect ledger: it records nothing about what was dispatched, and it reserves
+no budget (``BUDGET_BASIS``: two admitted actions may each be affordable alone and not together; reservation needs an
+owner reservation API, which ``BudgetLedger`` does not expose).  "Synthetic" is what the declaration labels synthetic
+(``SYNTHETIC_BASIS``).  An admitted
 action whose execution moves none of the owners it is bound to re-admits as long as they state the same records, and
 is authorized again.  At-most-once execution, budget reservation, state mutation and provider invocation are the
 execution owner's (for example ``sria.campaign`` ``EffectLedger.once`` and ``BudgetLedger.settle``); after its executor
@@ -39,6 +42,7 @@ re-authorization), so an edited record never acts.  An admission is ``action_adm
 
 from __future__ import annotations
 
+import dataclasses
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
@@ -64,6 +68,13 @@ ADMITTED_SCHEMA = schema("admitted_action")
 AUTHORIZATION_SCHEMA = schema("dispatch_authorization")
 RECORD_SCHEMA = schema("admission_record")
 ADMISSION_CLASSIFICATION = "action_admission_not_scientific_support"
+#: What the budget decision of an admission rests on: the action's declared cost / duration estimate, decided by the
+#: budget owner's rule against its current account.  Not an owner's cost prediction (``sria.calibration.CostModel`` is
+#: not consulted), and nothing is reserved (reservation is the execution owner's).
+BUDGET_BASIS = "declared_estimate_against_the_owner_account_not_reserved"
+#: What "synthetic" means: some reference the DECLARATION itself labels a synthetic fixture.  Owners are not asked
+#: whether they are fixtures; a declaration that relabels its references is the declarer's responsibility.
+SYNTHETIC_BASIS = "labelled_synthetic_by_the_declaration"
 #: No canonical owner holds experiment protocols (allowed levels, action controls, guards): the declaration is
 #: caller-declared, held in force by the execution side and bound by identity, revision and digest.  It is reported
 #: as such, distinct from the owner-verified facts (state, models, providers, budgets, units).
@@ -130,6 +141,7 @@ class AdmittedAction:
                 "context": [detach(x) for x in self.context], "observe": list(self.observe),
                 "execution": self.execution.value, "providers": [detach(p) for p in self.providers],
                 "models": [detach(m) for m in self.models], "synthetic": self.synthetic,
+                "synthetic_basis": SYNTHETIC_BASIS, "budget_basis": BUDGET_BASIS,
                 "declaration_provenance": DECLARATION_PROVENANCE}
 
     @property
@@ -267,7 +279,12 @@ def admit(space: FeasibleActionSpace, proposal: ProposedAction, authorities: Aut
 # ---- dispatch ----------------------------------------------------------------------------------------------------------------
 @dataclass(frozen=True)
 class DispatchAuthorization:
-    """What an executor receives: one admitted action, re-admitted against the executor's own current authorities."""
+    """What an executor receives: one admitted action, re-admitted against the executor's own current authorities.
+
+    Minted from a fresh rebuild (it shares no object with the AdmittedAction the proposer holds), with the settings an
+    executor needs as plain values in each variable's declared unit, fixed at mint.  ``verify()`` is its self-check (its
+    payload is still what was minted): an executor that runs later than it is handed the authorization calls it at
+    execution time; :func:`verify_authorization` re-derives it against the owners as they are then."""
 
     admitted_digest: str
     admission_digest: str
@@ -282,7 +299,9 @@ class DispatchAuthorization:
     synthetic: bool
     declaration: Any                                   # the declaration in force it was admitted under (identity)
     owners: tuple[tuple[str, str], ...]                # the owner instances (kind, id) it was re-admitted against
+    settings: Any                                      # {variable: magnitude in its declared unit | typed value payload}
     admitted: AdmittedAction = field(repr=False, compare=False)
+    minted: str = field(default="", compare=False)     # the payload digest at mint (``verify``)
 
     def __post_init__(self) -> None:
         if not _MINTING.get():
@@ -297,11 +316,19 @@ class DispatchAuthorization:
                 "observe": list(self.observe), "execution": self.execution.value,
                 "providers": [detach(p) for p in self.providers], "synthetic": self.synthetic,
                 "declaration": detach(self.declaration), "declaration_provenance": DECLARATION_PROVENANCE,
-                "owners": [list(o) for o in self.owners]}
+                "owners": [list(o) for o in self.owners], "settings": detach(self.settings),
+                "budget_basis": BUDGET_BASIS, "synthetic_basis": SYNTHETIC_BASIS}
 
     @property
     def digest(self) -> str:
         return digest(self.to_dict())
+
+    def verify(self) -> "DispatchAuthorization":
+        """Refuse an authorization whose payload is no longer what was minted (edited in place after it was handed
+        over).  A self-check only: whether the owners still support it is :func:`verify_authorization`."""
+        if type(self) is not DispatchAuthorization or not self.minted or self.digest != self.minted:
+            raise DispatchRefused("the authorization is not what was minted (edited after it was handed over)")
+        return self
 
 
 def authorize_dispatch(admitted: Any, authorities: Authorities, *, accept_synthetic: bool = False
@@ -332,10 +359,13 @@ def authorize_dispatch(admitted: Any, authorities: Authorities, *, accept_synthe
                               "that accepts synthetic content")
     declaration = None if a.world.declaration is None else _frozen(a.world.declaration.identity())
     owners = tuple(sorted({(k.value, authorities.reader(k).owner_id) for r in authorities.readers for k in r.kinds}))
+    settings = _frozen({name: v if isinstance(v, (int, float)) else value_payload(v)
+                        for name, v in a.settings_in_declared_units().items()})
     with _minting():
-        return DispatchAuthorization(a.digest, result.digest, result.verification.digest, a.world_revision,
-                                     a.proposal_digest, a.proposal.action_id, a.configuration, a.observe, a.execution,
-                                     a.providers, a.synthetic, declaration, owners, a)
+        minted = DispatchAuthorization(a.digest, result.digest, result.verification.digest, a.world_revision,
+                                       a.proposal_digest, a.proposal.action_id, a.configuration, a.observe,
+                                       a.execution, a.providers, a.synthetic, declaration, owners, settings, a)
+        return dataclasses.replace(minted, minted=minted.digest)
 
 
 def verify_authorization(authorization: Any, authorities: Authorities, *, accept_synthetic: bool = False
@@ -344,6 +374,7 @@ def verify_authorization(authorization: Any, authorities: Authorities, *, accept
     the identical authorization (a hand-built or edited one, or one its owners no longer support, is refused)."""
     if type(authorization) is not DispatchAuthorization:
         raise DispatchRefused("not a DispatchAuthorization")
+    authorization.verify()
     again = authorize_dispatch(authorization.admitted, authorities, accept_synthetic=accept_synthetic)
     if again.digest != authorization.digest:
         raise DispatchRefused("the authorization is not what authorize_dispatch yields now (edited or forged)")

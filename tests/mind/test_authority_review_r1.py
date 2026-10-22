@@ -163,7 +163,7 @@ def test_the_executor_behind_a_desk_re_derives_every_authorization_however_it_is
     genuine = authorize_dispatch(a, o.authorities(), accept_synthetic=True)
     with adm._minting():                                              # an authorization minted by hand, edited
         forged = dataclasses.replace(genuine, configuration=(("I", ax.q(9, "A")),))
-    with pytest.raises(DispatchRefused, match="edited or forged"):
+    with pytest.raises(DispatchRefused, match="edited|forged|minted"):
         desk._executor(forged)                                        # reached past the desk's dispatch
     with pytest.raises(DispatchRefused):
         verify_authorization(forged, o.authorities(), accept_synthetic=True)
@@ -470,3 +470,47 @@ def test_the_owner_readers_call_no_owner_mutation_and_the_world_package_imports_
         text = path.read_text()
         assert not re.search(r"system_runtime\.executor|import SystemExecutor|execution\.orchestration\.runner", text), \
             path.name
+
+
+# ---- round-1 critic: CR-1 (role relabelled in place), CR-2 (a deferred executor), CR-5..CR-7 (labels) -----------------------
+def test_a_role_relabelled_in_place_is_not_intact_and_admission_decides_on_the_declared_roles():
+    o = ax.owned("battery")
+    w = ScientificWorld.from_dict(o.world.to_dict())                  # the proposer's own copy
+    soc = w.variable("SOC")
+    relabelled = copy.copy(soc.declaration)                           # a new declaration object, not the cached one
+    object.__setattr__(relabelled, "role", ax.R.CONTROLLED_INPUT)
+    object.__setattr__(soc, "declaration", relabelled)
+    assert w.role("SOC") is ax.R.CONTROLLED_INPUT and not w.intact()   # the cached role table no longer agrees
+    assert {c.subject for c in verify_world(w, o.authorities()).failures()} == {"identity"}
+    rebuilt = ScientificWorld.from_dict(w.to_dict())                  # what admission decides on
+    assert rebuilt.role("SOC") is ax.R.STATE_VARIABLE and rebuilt.revision_id == o.world.revision_id
+
+
+def test_an_authorization_shares_no_object_with_the_proposer_and_detects_an_edit_after_it_was_handed_over():
+    o = ax.owned("battery")
+    queue = []                                                        # a deferred executor: it runs later
+    gateway = ExecutionDesk(o.authorities(), queue.append, accept_synthetic=True).gateway()
+    port = MindWorldPort(_space(o.world))
+    admitted = port.request_admission(o.propose("simulate_pulse", *SIM), gateway).admitted
+    port.execute(admitted, gateway)
+    auth = queue[0]
+    assert auth.admitted is not admitted and auth.admitted.world is not admitted.world
+    assert auth.admitted.world is not port.world and admitted.world is not port.world
+    settings = dict(auth.verify().settings)
+    assert settings["I"] == 2.0 and settings["T_amb"] == 25.0         # plain values in declared units, fixed at mint
+    t_amb = next(f for f in admitted.world.action("simulate_pulse").controls if f.variable == "T_amb")
+    object.__setattr__(admitted.world.variable("I").declaration, "unit", "milliampere")   # the Mind edits its own
+    assert dict(auth.settings)["I"] == 2.0 and auth.verify()          # the authorization is untouched by that
+    object.__setattr__(auth, "configuration", (("I", ax.q(9, "A")),))  # an edit of the authorization itself
+    with pytest.raises(DispatchRefused, match="minted"):
+        auth.verify()
+    assert t_amb is not None
+
+
+def test_admitted_actions_and_authorizations_say_what_their_budget_and_synthetic_status_rest_on():
+    o = ax.owned("battery")
+    a = _admitted(o, "simulate_pulse", *SIM)
+    auth = authorize_dispatch(a, o.authorities(), accept_synthetic=True)
+    for payload in (a.to_dict(), auth.to_dict()):
+        assert payload["budget_basis"] == adm.BUDGET_BASIS and "not_reserved" in payload["budget_basis"]
+        assert payload["synthetic_basis"] == adm.SYNTHETIC_BASIS == "labelled_synthetic_by_the_declaration"

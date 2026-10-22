@@ -27,7 +27,7 @@ import pytest
 from benchmarks.mind_gen2_authority_v1 import fixtures as ax
 from engcore.mind.world import (
     AdmissionRecord, BindingStatus, DispatchRefused, ExecutionDesk, FeasibilityStatus as F, FeasibleActionSpace,
-    OwnerKind, ProposedAction, ScientificWorld, admit, authorize_dispatch, replay_admission, verify_world,
+    OwnerKind, ProposedAction, ScientificWorld, WorldRefused, admit, authorize_dispatch, replay_admission, verify_world,
 )
 from engcore.mind.world.admission import DECLARATION_PROVENANCE
 from engcore.sria.decision.replay import ReplayOutcome
@@ -169,16 +169,29 @@ def test_admission_identities_do_not_depend_on_the_hash_seed():
 
 
 def test_a_world_whose_value_was_edited_after_projection_is_not_admitted_in_any_domain():
+    """Round-1 critic CR-3: every world reaches admission.  A projected value edited in place (the frozen record
+    rewritten, its binding untouched) is refused before anything is decided: admission decides only on the world its
+    payload names, and this object is no longer that world."""
+    reached = 0
     for name in ("battery", "hvac_field", "drone", "motor"):
         o = owned(name)
-        w = o.world
-        v = next(x for x in w.variables if x.source is not None)
-        nudged = dataclasses.replace(v.source, projection=ax.sha(f"{name}: an invented projection"))
-        try:
-            forged = dataclasses.replace(w, variables=tuple(dataclasses.replace(x, source=nudged) if x is v else x
-                                                            for x in w.variables))
-        except Exception:  # noqa: BLE001 - refused at construction is the strongest outcome
-            continue
-        aid, (assignments, observe) = next(iter(ax.base(name).items()))
-        r = admit(FeasibleActionSpace.build(forged), o.propose(aid, assignments, observe, world=forged), o.authorities())
-        assert r.admitted is None and r.status is F.MISSING_INFORMATION
+        aid, (assignments, observe) = next((a, x) for a, x in ax.base(name).items()
+                                           if admit(FeasibleActionSpace.build(o.world),
+                                                    o.propose(a, *x), o.authorities()).admitted is not None)
+        edited = ScientificWorld.from_dict(o.world.to_dict())                 # the proposer's own copy
+        v = next(x for x in edited.variables if x.source is not None and isinstance(x.value, ax.Quantity))
+        object.__setattr__(v, "value", ax.q(v.value.magnitude * 3 + 1, v.value.units))
+        with pytest.raises(WorldRefused, match="identity names"):
+            admit(_space_over(edited, o.world), o.propose(aid, assignments, observe, world=o.world), o.authorities())
+        reached += 1
+    assert reached == 4
+
+
+def _space_over(world, honest):
+    """A space whose world is ``world`` (an edited object) but whose identity is the honest world's."""
+    space = object.__new__(FeasibleActionSpace)
+    built = FeasibleActionSpace.build(honest)
+    object.__setattr__(space, "world", world)
+    object.__setattr__(space, "entries", built.entries)
+    object.__setattr__(space, "space_id", built.space_id)
+    return space
