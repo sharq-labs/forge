@@ -391,7 +391,9 @@ def _comparison(body: dict, req: RunRequest, book: Ledger, started: bool) -> dic
     base = book.load_receipt(row["run_id"])
     if base is None or book.verify_receipt(base) != "VALID":
         return compare.no_baseline(policy, "baseline_receipt_unverifiable")
-    return compare.compare(body, base, policy)
+    history = book.exact_history(base, before_utc=body["timing"].get("started_utc"),
+                                 limit=compare.history_window(policy), exclude=body["run_id"])
+    return compare.compare(body, base, policy, history)
 
 
 def summary_text(rec: dict, receipt_path: Path) -> str:
@@ -413,6 +415,7 @@ def summary_text(rec: dict, receipt_path: Path) -> str:
         f"ENVIRONMENT_ID = {rec['environment'].get('environment_id')}",
         f"WALL_TIME = {'UNKNOWN' if wall is None else f'{wall:.3f} s'}",
         f"CPU_TIME = {metric('cpu_seconds')}", f"PEAK_RSS = {metric('peak_rss_bytes')}",
+        f"HOST_LOAD = {_load_text(rec.get('host_load') or {})}",
         f"COMPARABILITY = {comparison['comparability']}", f"BASELINE_RUN = {comparison.get('baseline_run_id')}",
     ]
     deltas = comparison.get("deltas") or {}
@@ -421,12 +424,26 @@ def summary_text(rec: dict, receipt_path: Path) -> str:
         if d and d.get("pct") is not None:
             lines.append(f"{name.upper()}_DELTA = {d['pct']:+.1f}% ({d['comparability']})")
     policy = comparison.get("policy") or {}
-    lines += [f"PERFORMANCE = {comparison['performance']} (policy {policy.get('policy_id')} v{policy.get('version')})",
-              f"RESULT_DELTA = {comparison.get('result_delta')}", f"FAILURE_SET = {comparison.get('failure_set')}",
+    lines.append(f"PERFORMANCE = {comparison['performance']} (policy {policy.get('policy_id')} v{policy.get('version')})")
+    noise = comparison.get("noise")
+    if noise and noise["runs"]:
+        lines.append(f"NOISE_BAND = {noise['runs']} earlier exact runs, {noise['min_seconds']:.3f}-"
+                     f"{noise['max_seconds']:.3f} s (spread {noise['spread_pct']:.1f}%), "
+                     f"within band: {str(noise['within_band']).lower()}")
+    elif noise:
+        lines.append(f"NOISE_BAND = no earlier exact runs (policy needs {noise['required']})")
+    lines += [f"RESULT_DELTA = {comparison.get('result_delta')}", f"FAILURE_SET = {comparison.get('failure_set')}",
               f"REPLAY = {rec['replay']['reading']}", f"PARTIAL = {str(rec['partial']).lower()}",
               f"RECEIPT = {receipt_path}", f"RECEIPT_SHA256 = {rec['integrity']['receipt_sha256']}",
               f"CLASSIFICATION = {rec['classification']}"]
     return "\n".join(lines) + "\n"
+
+
+def _load_text(load: dict) -> str:
+    if load.get("other_busy_cores") is None:
+        return "UNSUPPORTED (context only)"
+    return (f"{load['other_busy_cores']:.1f} of {load['logical_cores']} cores busy outside this run, "
+            f"machine {load['cpu_busy_fraction'] * 100:.0f}% busy (context only)")
 
 
 def _publish(store: RunStore, book: Ledger, rec: dict, warnings: list[str]) -> Path:
@@ -529,6 +546,7 @@ def _execute(req: RunRequest, *, clock, environ) -> RunOutcome:
 
     stopwatch = Stopwatch(clock)
     monitor = metrics.ProcessTreeMonitor(req.sample_interval)
+    host = metrics.HostLoad()
     pumps: list[_Pump] = []
     proc: subprocess.Popen | None = None
     rc: int | None = None
@@ -546,6 +564,7 @@ def _execute(req: RunRequest, *, clock, environ) -> RunOutcome:
             PHASE["value"] = "WAIT"
             stopwatch.start()
             monitor.before_start()
+            host.start()
             try:
                 proc = subprocess.Popen([*argv, *additions], cwd=cwd, env=child_env, stdin=None,
                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
@@ -578,6 +597,8 @@ def _execute(req: RunRequest, *, clock, environ) -> RunOutcome:
     for pump in pumps:
         pump.join(timeout=_STREAM_JOIN_SECONDS)
     resources = monitor.finish() if started else _never_started_resources("the child never started")
+    host_load = (host.finish(resources["cpu_seconds"]["value"]) if started
+                 else metrics.unsupported_host_load("the child never started"))
     timing["cpu_seconds"] = resources["cpu_seconds"]
 
     if started:
@@ -603,6 +624,7 @@ def _execute(req: RunRequest, *, clock, environ) -> RunOutcome:
     body["partial"] = interrupted or result["status"] == "RUN_INTERRUPTED"
     body["timing"] = timing
     body["resources"] = resources
+    body["host_load"] = host_load
     body["result"] = result
     body["counters"] = _counters([("DECLARED", req.counters or {}),
                                   ("CHILD_REPORTED", child_report.get("counters") or {}),
@@ -723,6 +745,7 @@ def recover(run_root: Path, *, force: bool = False) -> dict:
         body["timing"] = {"started_utc": pending.get("started_utc"), "ended_utc": None, "wall_seconds": None,
                           "monotonic_source": "time.perf_counter_ns", "note": note}
         body["resources"] = _never_started_resources(note)
+        body["host_load"] = metrics.unsupported_host_load(note)
         body["timing"]["cpu_seconds"] = body["resources"]["cpu_seconds"]
         body["result"] = {"status": "RUN_INTERRUPTED", "exit_code": None, "raw_returncode": None,
                           "terminated_by_signal": None, "adapter_outcomes": None, "started": bool(pending.get("child_pid")),

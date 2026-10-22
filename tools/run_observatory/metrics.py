@@ -314,6 +314,76 @@ class ProcessTreeMonitor:
         return "no accounting source available on this platform"
 
 
+# ---------------------------------------------------------------------------
+# Machine-wide load: context for reading a timing, never a metric of the run
+
+
+def _system_cpu_seconds() -> tuple[float, float, str] | None:
+    """(busy, total) CPU seconds summed over every logical core since boot, and the source."""
+    if psutil is not None:
+        times = psutil.cpu_times()
+        total = sum(times)
+        idle = times.idle + getattr(times, "iowait", 0.0)
+        return total - idle, total, "PSUTIL_CPU_TIMES"
+    if WINDOWS:
+        idle, kernel, user = (wintypes.FILETIME() for _ in range(3))
+        if not ctypes.WinDLL("kernel32").GetSystemTimes(ctypes.byref(idle), ctypes.byref(kernel), ctypes.byref(user)):
+            return None
+        as_s = [((t.dwHighDateTime << 32) | t.dwLowDateTime) / 1e7 for t in (idle, kernel, user)]
+        total = as_s[1] + as_s[2]  # kernel time includes idle time
+        return total - as_s[0], total, "WINDOWS_GET_SYSTEM_TIMES"
+    try:
+        with open("/proc/stat", encoding="ascii") as fh:
+            fields = [float(v) for v in fh.readline().split()[1:9]]
+        tick = os.sysconf("SC_CLK_TCK")
+        total = sum(fields) / tick
+        return total - (fields[3] + fields[4]) / tick, total, "PROC_STAT"
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _memory_available_fraction() -> float | None:
+    if psutil is None:
+        return None
+    memory = psutil.virtual_memory()
+    return memory.available / memory.total if memory.total else None
+
+
+class HostLoad:
+    """System CPU busy time across the run window, minus the run's own tree: how busy the rest of the
+    machine was. A timing on a loaded machine is a different draw; this says how loaded."""
+
+    _NOTE = ("machine-wide load during the run window; context for reading timings, never attributed to "
+             "this run and never used in a performance reading")
+
+    def start(self) -> None:
+        self._start = _system_cpu_seconds()
+        self._memory = _memory_available_fraction()
+
+    def finish(self, tree_cpu_seconds: float | None) -> dict:
+        end = _system_cpu_seconds()
+        cores = os.cpu_count()
+        base = {"scope": "SYSTEM", "context_only": True, "note": self._NOTE, "logical_cores": cores,
+                "memory_available_fraction_start": self._memory}
+        start = getattr(self, "_start", None)
+        if start is None or end is None or not cores or end[1] <= start[1]:
+            return {**base, "support": "UNSUPPORTED", "method": "NONE", "interval_seconds": None,
+                    "cpu_busy_fraction": None, "busy_cores": None, "other_busy_cores": None}
+        busy, total = end[0] - start[0], end[1] - start[1]
+        interval = total / cores
+        fraction = min(1.0, max(0.0, busy / total))
+        other = None if tree_cpu_seconds is None else max(0.0, (busy - tree_cpu_seconds) / interval)
+        return {**base, "support": "PARTIAL", "method": end[2], "interval_seconds": interval,
+                "cpu_busy_fraction": fraction, "busy_cores": fraction * cores,
+                "other_busy_cores": None if other is None else min(float(cores), other)}
+
+
+def unsupported_host_load(note: str) -> dict:
+    return {"scope": "SYSTEM", "context_only": True, "note": note, "logical_cores": os.cpu_count(),
+            "memory_available_fraction_start": None, "support": "UNSUPPORTED", "method": "NONE",
+            "interval_seconds": None, "cpu_busy_fraction": None, "busy_cores": None, "other_busy_cores": None}
+
+
 def pid_alive(pid: int) -> bool:
     """Whether a process with this id is still running (used to leave live runs' pending receipts alone).
 

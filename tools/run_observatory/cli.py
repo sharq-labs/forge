@@ -59,16 +59,27 @@ def _policy(args: argparse.Namespace) -> dict:
         if unknown:
             raise ValueError(f"unknown policy fields {sorted(unknown)}")
         base = {**compare.DEFAULT_POLICY, **loaded}
+    if getattr(args, "policy_version", None) == 1:
+        base = {**compare.POLICY_V1, **(base or {}), "version": 1}
+        for key in set(base) - set(compare.POLICY_V1):
+            del base[key]
     return compare.make_policy(base, regression_threshold_pct=args.regression_threshold_pct,
                                improvement_threshold_pct=args.improvement_threshold_pct,
-                               min_absolute_seconds=args.min_absolute_seconds)
+                               min_absolute_seconds=args.min_absolute_seconds,
+                               noise_min_history=args.noise_min_history, noise_history_window=args.noise_history_window,
+                               noise_margin_pct=args.noise_margin_pct)
 
 
 def _add_policy_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--policy", help="JSON performance policy (fields of the default policy)")
+    parser.add_argument("--policy-version", type=int, choices=(1, 2), default=None,
+                        help="2 (default): thresholds and the noise band of earlier exact runs; 1: thresholds only")
     parser.add_argument("--regression-threshold-pct", type=float)
     parser.add_argument("--improvement-threshold-pct", type=float)
     parser.add_argument("--min-absolute-seconds", type=float)
+    parser.add_argument("--noise-min-history", type=int, help="earlier exact runs needed before a reading (v2)")
+    parser.add_argument("--noise-history-window", type=int, help="how many earlier exact runs form the band (v2)")
+    parser.add_argument("--noise-margin-pct", type=float, help="how far outside the band a change must fall (v2)")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -281,7 +292,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             if rec is None or not receipt_mod.verify(rec):
                 print(f"receipt for {run_id} is missing or does not verify", file=sys.stderr)
                 return 1
-        result = compare.compare(candidate, baseline, _policy(args))
+        policy = _policy(args)
+        history = book.exact_history(baseline, before_utc=candidate["timing"].get("started_utc"),
+                                     limit=compare.history_window(policy), exclude=candidate["run_id"])
+        result = compare.compare(candidate, baseline, policy, history)
         if args.json:
             print(json.dumps(result, indent=2))
         else:

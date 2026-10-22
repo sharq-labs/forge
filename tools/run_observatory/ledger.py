@@ -259,6 +259,24 @@ class Ledger:
                            (ref["workload_id"], ref["environment_id"], ref["code_identity"], ref["status"]))
         return rows[0] if rows else None
 
+    def exact_history(self, baseline: dict, *, before_utc: str | None, limit: int,
+                      exclude: str | None = None) -> list[dict]:
+        """The latest completed runs exactly comparable to ``baseline`` (itself included) that started
+        before ``before_utc``, with the baseline's status: the noise band a reading is held against."""
+        workload = (baseline.get("workload") or {}).get("workload_id")
+        environment = (baseline.get("environment") or {}).get("environment_id")
+        code = (baseline.get("git") or {}).get("code_identity")
+        status = (baseline.get("result") or {}).get("status")
+        if limit <= 0 or not (workload and environment and code and status):
+            return []
+        sql = ("SELECT run_id, wall_seconds, started_utc FROM runs WHERE workload_id = ? AND environment_id = ? "
+               "AND code_identity = ? AND status = ? AND partial = 0 AND wall_seconds IS NOT NULL AND run_id != ?")
+        params: list = [workload, environment, code, status, exclude or ""]
+        if before_utc:
+            sql += " AND started_utc < ?"
+            params.append(before_utc)
+        return self._query(sql + self._ORDER + " LIMIT ?", (*params, limit))
+
     def find_baseline(self, rec: dict) -> dict | None:
         """The most informative earlier run to compare ``rec`` with.
 

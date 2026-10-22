@@ -462,11 +462,16 @@ def _synthetic(*, workload="w", command="c", inputs="i", config="k", declared="d
     }
 
 
+def _band(*walls: float) -> list[dict]:
+    """Earlier runs exactly comparable to the baseline: the noise band a reading is held against."""
+    return [{"run_id": f"h{i}", "wall_seconds": w} for i, w in enumerate(walls)]
+
+
 def test_n_exact_comparable_runs_produce_correct_deltas() -> None:
     base = _synthetic(run_id="base")
     cand = _synthetic(run_id="cand", wall=8.16, rss=888, cpu=6.0)
     policy = compare.make_policy(regression_threshold_pct=10.0, improvement_threshold_pct=10.0)
-    result = compare.compare(cand, base, policy)
+    result = compare.compare(cand, base, policy, history=_band(10.0, 9.9, 10.1))
     assert result["comparability"] == "EXACT_COMPARABLE" and result["benchmark_speedup"] is True
     assert result["baseline_run_id"] == "base"
     assert result["deltas"]["wall_seconds"]["delta"] == pytest.approx(-1.84)
@@ -475,28 +480,99 @@ def test_n_exact_comparable_runs_produce_correct_deltas() -> None:
     assert result["deltas"]["cpu_seconds"]["delta"] == pytest.approx(-2.0)
     assert result["performance"] == "PERFORMANCE_IMPROVED"
     assert result["result_delta"] == "UNCHANGED"
-    assert result["policy"]["policy_id"] == compare.DEFAULT_POLICY["policy_id"] and result["policy"]["version"] == 1
+    assert result["policy"]["policy_id"] == compare.DEFAULT_POLICY["policy_id"] and result["policy"]["version"] == 2
 
 
 def test_15_the_default_policy_is_explicit_and_not_aggressive() -> None:
     policy = compare.DEFAULT_POLICY
     assert policy["regression_threshold_pct"] >= 20.0 and policy["min_absolute_seconds"] > 0
+    assert policy["noise_min_history"] >= 3 and policy["noise_margin_pct"] > 0
     result = compare.compare(_synthetic(wall=8.16), _synthetic(), policy)
     assert result["performance"] == "UNCHANGED"  # -18.4 % sits inside measured whole-run noise
 
 
-def test_15_a_slowdown_past_the_declared_threshold_is_a_regression() -> None:
+def test_15_a_slowdown_past_the_thresholds_and_the_noise_band_is_a_regression() -> None:
     policy = compare.make_policy(regression_threshold_pct=10.0)
-    assert compare.compare(_synthetic(wall=13.0), _synthetic(), policy)["performance"] == "PERFORMANCE_REGRESSION"
-    tiny = compare.compare(_synthetic(wall=0.2), _synthetic(wall=0.1), policy)
+    result = compare.compare(_synthetic(wall=13.0), _synthetic(), policy, history=_band(10.0, 10.2, 9.8))
+    assert result["performance"] == "PERFORMANCE_REGRESSION"
+    assert result["noise"]["within_band"] is False
+    tiny = compare.compare(_synthetic(wall=0.2), _synthetic(wall=0.1), policy, history=_band(0.1, 0.1, 0.1))
     assert tiny["performance"] == "UNCHANGED"  # +100 % but below the absolute bar
+
+
+def test_15_a_slowdown_inside_the_spread_of_earlier_identical_runs_is_not_a_regression() -> None:
+    # The measured false positive: identical code, 7.531 s then 9.485 s on a loaded machine.
+    band = _band(9.492, 10.095, 8.347, 8.995, 7.531)
+    result = compare.compare(_synthetic(wall=9.485), _synthetic(wall=7.531), compare.DEFAULT_POLICY, history=band)
+    assert result["deltas"]["wall_seconds"]["pct"] == pytest.approx(25.95, abs=0.01)
+    assert result["performance"] == "UNCHANGED"
+    noise = result["noise"]
+    assert noise["runs"] == 5 and noise["within_band"] is True
+    assert noise["min_seconds"] == pytest.approx(7.531) and noise["max_seconds"] == pytest.approx(10.095)
+    assert noise["spread_pct"] == pytest.approx((10.095 - 7.531) / 8.995 * 100)
+    assert noise["vs_median_pct"] == pytest.approx((9.485 - 8.995) / 8.995 * 100)
+
+
+def test_15_too_few_earlier_runs_to_separate_a_change_from_noise() -> None:
+    result = compare.compare(_synthetic(wall=13.0), _synthetic(), compare.DEFAULT_POLICY, history=_band(10.0))
+    assert result["performance"] == "NOT_ENOUGH_REPEATS"
+    assert result["noise"]["runs"] == 1 and result["noise"]["required"] == compare.DEFAULT_POLICY["noise_min_history"]
+    assert compare.compare(_synthetic(wall=13.0), _synthetic(), compare.DEFAULT_POLICY)["performance"] == \
+        "NOT_ENOUGH_REPEATS"
+
+
+def test_15_an_improvement_must_clear_the_fastest_earlier_run() -> None:
+    policy = compare.DEFAULT_POLICY
+    assert compare.compare(_synthetic(wall=4.0), _synthetic(wall=9.0), policy,
+                           history=_band(9.0, 8.5, 9.5))["performance"] == "PERFORMANCE_IMPROVED"
+    assert compare.compare(_synthetic(wall=6.0), _synthetic(wall=9.0), policy,
+                           history=_band(9.0, 6.1, 9.5))["performance"] == "UNCHANGED"  # 6.0 is not 5 % below 6.1
+
+
+def test_15_policy_v1_is_still_available_and_reads_a_single_baseline() -> None:
+    v1 = compare.make_policy(compare.POLICY_V1, regression_threshold_pct=10.0)
+    result = compare.compare(_synthetic(wall=13.0), _synthetic(), v1)
+    assert result["policy"]["version"] == 1 and result["performance"] == "PERFORMANCE_REGRESSION"
+    assert result["noise"] is None
 
 
 def test_16_a_result_change_is_reported_separately_from_performance() -> None:
     policy = compare.make_policy(improvement_threshold_pct=10.0)
-    result = compare.compare(_synthetic(wall=5.0, status="RUN_FAIL"), _synthetic(), policy)
+    result = compare.compare(_synthetic(wall=5.0, status="RUN_FAIL"), _synthetic(), policy,
+                             history=_band(10.0, 10.1, 9.9))
     assert result["performance"] == "PERFORMANCE_IMPROVED"
     assert result["result_delta"] == "CHANGED"
+
+
+def test_15_the_ledger_supplies_the_noise_band_from_earlier_exact_runs(repo, run_root) -> None:
+    runs = [runner.execute(_request(run_root, repo, [PY, "-c", "pass"])) for _ in range(4)]
+    noise = runs[-1].receipt["comparison"]["noise"]
+    assert noise["runs"] == 3 and set(noise["run_ids"]) == {r.run_id for r in runs[:3]}
+    assert runs[1].receipt["comparison"]["noise"]["runs"] == 1
+
+
+def test_host_load_is_recorded_as_machine_wide_context_never_attributed(repo, run_root, monkeypatch) -> None:
+    burn = "import time\nt=time.process_time()\nwhile time.process_time()-t<0.4: pass\n"
+    out = runner.execute(_request(run_root, repo, [PY, "-c", burn]))
+    load = out.receipt["host_load"]
+    assert load["scope"] == "SYSTEM" and load["context_only"] is True
+    assert load["support"] in {"SUPPORTED", "PARTIAL"}, load
+    assert 0.0 <= load["cpu_busy_fraction"] <= 1.0 and load["other_busy_cores"] >= 0.0
+    assert load["logical_cores"] == os.cpu_count()
+    assert "HOST_LOAD" in out.receipt_path.parent.parent.joinpath(
+        "summaries", f"{out.run_id}.txt").read_text(encoding="utf-8")
+    monkeypatch.setattr(metrics, "psutil", None)
+    bare = runner.execute(_request(run_root, repo, [PY, "-c", "pass"])).receipt["host_load"]
+    assert bare["support"] in {"SUPPORTED", "PARTIAL", "UNSUPPORTED"}
+    if bare["support"] == "UNSUPPORTED":
+        assert bare["cpu_busy_fraction"] is None and bare["other_busy_cores"] is None
+
+
+def test_the_comparison_shows_both_runs_host_load_side_by_side(repo, run_root) -> None:
+    runner.execute(_request(run_root, repo, [PY, "-c", "pass"]))
+    second = runner.execute(_request(run_root, repo, [PY, "-c", "pass"]))
+    context = second.receipt["comparison"]["host_load"]
+    assert set(context) == {"baseline_other_busy_cores", "candidate_other_busy_cores"}
 
 
 @pytest.mark.parametrize("change, expected", [
@@ -653,6 +729,7 @@ def test_the_observatory_vocabulary_never_contains_a_scientific_verdict() -> Non
     for vocabulary in (obs.RUN_STATUSES, obs.COMPARABILITY_CLASSES, obs.PERFORMANCE_READINGS, obs.REPLAY_READINGS,
                        obs.FAILURE_SET_READINGS):
         assert not (set(vocabulary) & forbidden), vocabulary
+    assert "NOT_ENOUGH_REPEATS" in obs.PERFORMANCE_READINGS
     assert set(obs.RUN_KINDS) == {"TEST", "FAST", "SCIENTIFIC", "REPLAY", "BENCHMARK", "SOLVER", "PROVIDER",
                                   "DATA_PIPELINE", "CAMPAIGN", "FORMAL", "CERTIFICATION", "UTILITY"}
 
