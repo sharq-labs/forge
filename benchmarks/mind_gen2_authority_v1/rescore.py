@@ -14,7 +14,8 @@ changes three decision rules on purpose (README section 3):
 
 This module re-decides BR1's frozen cases on BR1's own synthetic worlds with the BR1.1 code and lists EVERY case whose
 status or reason codes differ from BR1's actual decision.  It refuses to write a re-score in which a case moves toward
-FEASIBLE or gains a code outside ``ALLOWED_NEW_CODES`` (the codes the rules above produce).
+FEASIBLE, moves to any status other than MISSING_INFORMATION, gains a code outside ``ALLOWED_NEW_CODES`` or loses one
+outside ``ALLOWED_LOST_CODES`` (the codes the rules above remove).
 
     python -m benchmarks.mind_gen2_authority_v1.rescore            # (re)write results/BR1_RESCORE.json
     python -m benchmarks.mind_gen2_authority_v1.rescore --check    # verify the committed file
@@ -41,6 +42,13 @@ ALLOWED_NEW_CODES = frozenset({
     "PRECONDITION_ENCLOSURE_REQUIRED", "PRECONDITION_UNCERTAINTY_UNKNOWN", "STATE_DOMAIN_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_UNDECIDABLE", "CONSTRAINT_ENCLOSURE_REQUIRED", "CONSTRAINT_UNDECIDABLE",
     "APPLICABILITY_INPUT_NOT_EXACT",
+})
+#: The only codes a case may lose: definite decisions BR1 took on a current value (an interval's edges deciding a
+#: precondition, the state domain or a model's validity domain), and decisions BR1 took on a value the proposer may
+#: not set (a constraint or an applicability input read from a non-control assignment; round 2, R2-A4).
+ALLOWED_LOST_CODES = frozenset({
+    "PRECONDITION_VIOLATED", "PRECONDITION_UNDECIDED", "STATE_OUTSIDE_DECLARED_DOMAIN", "STATE_DOMAIN_UNDECIDED",
+    "INTERVAL_OUTSIDE_VALIDATED_DOMAIN", "CONSTRAINT_VIOLATED", "OUTSIDE_VALIDATED_DOMAIN",
 })
 
 
@@ -72,8 +80,13 @@ def build() -> dict[str, Any]:
         lost_codes.update(lost)
     to_feasible = sum(v for k, v in moves.items() if k.endswith("->FEASIBLE") and not k.startswith("FEASIBLE->"))
     unexpected = sorted(set(new_codes) - ALLOWED_NEW_CODES)
-    if to_feasible or unexpected:
-        raise ValueError(f"re-score refused: {to_feasible} case(s) toward FEASIBLE, unexpected new codes {unexpected}")
+    unexpected_lost = sorted(set(lost_codes) - ALLOWED_LOST_CODES)
+    other_moves = sorted(k for k in moves if k.split("->")[0] != k.split("->")[1] and
+                         not k.endswith("->MISSING_INFORMATION"))
+    if to_feasible or unexpected or unexpected_lost or other_moves:
+        raise ValueError(f"re-score refused: {to_feasible} case(s) toward FEASIBLE, unexpected new codes {unexpected}, "
+                         f"unexpected lost codes {unexpected_lost}, status moves other than to MISSING_INFORMATION "
+                         f"{other_moves}")
     return {
         "schema": SCHEMA,
         "br1_inputs": {"CASES.json": _sha(BR1 / "CASES.json"), "BENCHMARK.json": _sha(BR1 / "BENCHMARK.json"),
@@ -88,6 +101,7 @@ def build() -> dict[str, Any]:
         "new_codes": dict(sorted(new_codes.items())),
         "lost_codes": dict(sorted(lost_codes.items())),
         "allowed_new_codes": sorted(ALLOWED_NEW_CODES),
+        "allowed_lost_codes": sorted(ALLOWED_LOST_CODES),
         "changes": changed,
         "statement": ("BR1's committed results are not rewritten.  Every case whose status or codes differ from BR1's "
                       "actual decision is listed: they decide differently under BR1.1 by design (no current value "

@@ -51,6 +51,7 @@ from typing import Any, Callable, Iterator, Mapping
 from engcore.mind.repsem import canonical_bytes
 from engcore.scientific import Quantity, ScientificCoreError
 from engcore.scientific.results.immutable import detach, freeze
+from engcore.scientific.units.quantity import registry_fingerprint
 from engcore.sria.decision.replay import ReplayMode, ReplayOutcome, ReplayResult
 
 from .actions import ExecutionKind, ProposedAction
@@ -537,6 +538,12 @@ def replay_admission(payload: Mapping[str, Any]) -> ReplayResult:
     except (WorldRefused, ScientificCoreError, KeyError, TypeError, ValueError) as exc:
         return ReplayResult(mode, ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE, record, mismatches=("inputs",),
                             detail=f"the recorded inputs do not rebuild: {exc}")
+    recorded_units = {item["record"]["record_digest"] for item in payload["snapshot"].get("records", ())
+                      if item.get("owner_kind") == "unit_registry"}
+    if recorded_units and recorded_units != {registry_fingerprint()}:
+        return ReplayResult(mode, ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE, record, mismatches=("unit_registry",),
+                            detail="the admission was recorded under another unit registry than this process's: its "
+                                   "conversions cannot be recomputed here")
     if record.get("world_revision") != world.revision_id or record.get("proposal_digest") != proposal.digest:
         return ReplayResult(mode, ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE, record,
                             mismatches=("world_revision", "proposal_digest"),

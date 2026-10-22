@@ -21,6 +21,7 @@ Nothing is ever clamped, rounded to a level or projected: a value is a member or
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Any, Mapping
 
@@ -130,15 +131,22 @@ def _shown(value: Any) -> Any:
     return value_payload(value) if type(value) in (Quantity, IntegerValue, BooleanValue, CategoricalValue) else repr(value)
 
 
+#: How far (in units in the last place of the level's magnitude) a value converted into a level's unit may sit from
+#: it and still BE that level: floating-point conversion noise (a conversion between offset units lands a few
+#: ulp off), never a tolerance a proposer could use (1.0000000000004 A is ~1800 ulp from 1 A and is not a level).
+LEVEL_ULP = 64
+
+
 def matched_level(domain: DiscreteLevels, value: Quantity) -> Quantity | None:
-    """The declared level ``value`` IS: stated in a level's own unit, exactly that magnitude; stated in another unit,
-    the same magnitude at conversion precision (12 significant digits after the unit owner's conversion, which is only
-    floating-point exact to that precision).  None otherwise: nothing is ever rounded to a nearby level."""
+    """The declared level ``value`` IS, by one rule in every spelling: the value converted into the level's own unit by
+    the unit owner equals the level's magnitude within ``LEVEL_ULP`` units in the last place.  None otherwise: nothing
+    is ever rounded to a nearby level."""
     for level in domain.levels:
-        if level.units == value.units:
-            if level.magnitude == value.magnitude:
-                return level
-        elif magnitude_key(level) == magnitude_key(value):
+        try:
+            converted = value.magnitude_in(level.units)
+        except ScientificCoreError:
+            continue
+        if abs(converted - level.magnitude) <= LEVEL_ULP * math.ulp(abs(level.magnitude) or 1.0):
             return level
     return None
 

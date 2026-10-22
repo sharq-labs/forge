@@ -182,7 +182,7 @@ class Owned:
             ModelRegistryReader(self.models if models is None else models, "fixture.models"),
             ProviderRegistryReader(self.providers if providers is None else providers, "fixture.providers",
                                    refresh=refresh),
-            BudgetReader(self.ledgers, self.experiments) if budget is None else budget,
+            BudgetReader.following(lambda: (self.ledgers, self.experiments)) if budget is None else budget,
             DeclarationReader.following(in_force),
             UnitRegistryReader(),
         )

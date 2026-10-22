@@ -212,3 +212,72 @@ def test_a_suggestions_only_port_refuses_a_bare_proposal():
     port = MindWorldPort(FeasibleActionSpace.build(o.world), suggestions_only=True)
     with pytest.raises(WorldRefused, match="certified ExternalSuggestion"):
         port.request_admission(o.propose("simulate_pulse", *SIM), gateway)
+
+
+# ---- lens D: D2-F1 (provider report), D2-F2 (head regression), D2-F3 (replaced accounts), D2-F5 (unit registry), D2-F6 --------
+def _record(o):
+    import json
+    from engcore.mind.world import AdmissionRecord
+    r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), o.authorities())
+    return json.loads(json.dumps(AdmissionRecord.of(r, o.authorities()).to_dict()))
+
+
+def test_a_recorded_provider_report_must_be_the_owners_assessment_of_its_status():
+    import copy
+    from engcore.mind.world import replay_admission
+    from engcore.sria.decision.replay import ReplayOutcome
+    record = _record(ax.owned("battery"))
+    assert replay_admission(record).outcome is ReplayOutcome.REPRODUCED
+    forged = copy.deepcopy(record)
+    item = next(i for i in forged["snapshot"]["records"] if i["owner_kind"] == "provider_status")
+    item["record"]["payload"]["report"]["health"] = "broken"           # the status (and its digest) untouched
+    out = replay_admission(forged)
+    assert out.outcome is ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE and "assessment" in out.detail
+
+
+def test_a_followed_run_head_never_goes_back():
+    from engcore.mind.world import BindingStatus, verify_world
+    o = ax.owned("battery")
+    authorities = o.authorities()
+    o.advance()
+    verify_world(o.world, authorities)                                 # the reader has now seen the later head
+    o.head = o.run.checkpoint                                          # the execution side states the earlier one
+    assert {c.status for c in verify_world(o.world, authorities).failures()} == {BindingStatus.OWNER_UNAVAILABLE}
+
+
+def test_a_following_budget_reader_sees_a_replaced_account_object():
+    from engcore.mind.world import BindingStatus, verify_world
+    o = ax.owned("battery")
+    authorities = o.authorities()
+    assert verify_world(o.world, authorities).ok
+    ref = "synthetic.battery.pulse-cell.solver"
+    restored = ax.BudgetLedger.from_dict(o.ledgers[ref].to_dict())    # the execution side restores its account...
+    restored.settle(charge_id="after-restore", action_id="x", iteration=1, family=ax.ActionFamily.EXPLORE, realized=1.0)
+    o.ledgers[ref] = restored                                          # ...and replaces the object
+    failures = verify_world(o.world, authorities).failures()
+    assert failures and {c.status for c in failures} == {BindingStatus.STALE}
+
+
+def test_a_replay_recorded_under_another_unit_registry_is_not_reproduced_here():
+    import copy
+    from engcore.mind.world import replay_admission
+    from engcore.sria.decision.replay import ReplayOutcome
+    record = _record(ax.owned("battery"))
+    forged = copy.deepcopy(record)
+    item = next(i for i in forged["snapshot"]["records"] if i["owner_kind"] == "unit_registry")
+    other = "f" * 64
+    item["record"]["record_digest"], item["record"]["revision"] = other, other[:16]
+    item["record"]["payload"]["fingerprint"] = other
+    out = replay_admission(forged)
+    assert out.outcome is ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE
+
+
+def test_a_level_is_matched_by_one_rule_in_every_spelling():
+    from engcore.mind.world.domains import DiscreteLevels, LEVEL_ULP, matched_level
+    amps = DiscreteLevels("ampere", (ax.q(1.0, "A"), ax.q(2.0, "A")))
+    assert matched_level(amps, ax.q(1000, "mA")) == ax.q(1.0, "A")
+    assert matched_level(amps, ax.q(1.0000000000004, "A")) is None        # ~1800 ulp: not a level, in any spelling
+    assert matched_level(amps, ax.q(1000.0000000004, "mA")) is None
+    temps = DiscreteLevels("degree_Celsius", (ax.q(25, "degC"),))
+    assert matched_level(temps, ax.q(298.15, "K")) == ax.q(25, "degC")    # conversion noise, within LEVEL_ULP
+    assert LEVEL_ULP <= 64

@@ -49,7 +49,9 @@ import hashlib
 import json
 from typing import Any, Callable, Iterable, Mapping
 
-from engcore.providers.catalog import ProviderRegistry, ProviderUnavailable
+from engcore.providers.catalog import (
+    Availability, ProviderCapability, ProviderRegistry, ProviderStatus, ProviderUnavailable,
+)
 from engcore.providers.health import assess_health
 from engcore.providers.identity import content_digest
 from engcore.scientific import ModelNotFoundError, ScientificCoreError, to_json
@@ -121,6 +123,7 @@ class RunStateReader(_Reader):
         self.owner_id, self._head, self._history = self._load(record)
         self._follow: Callable[[], Any] | None = None
         self._record = record                         # the record object loaded (a following reader reuses its load)
+        self._highest = (self._head.sequence, self._head.digest)     # following: the furthest head stated so far
 
     @classmethod
     def following(cls, head: Callable[[], Any]) -> "RunStateReader":
@@ -163,6 +166,11 @@ class RunStateReader(_Reader):
         if current.owner_id != self.owner_id:
             raise OwnerUnavailable("the followed head belongs to another run (its request digest changed); which run "
                                    "governs is a new statement, not a move of this one")
+        sequence, head = current._head.sequence, current._head.digest
+        if sequence < self._highest[0] or (sequence == self._highest[0] and head != self._highest[1]):
+            raise OwnerUnavailable(f"the followed head went back (sequence {sequence} after {self._highest[0]}) or "
+                                   "restated a sequence with another state: a run's head only moves forward")
+        self._highest = (sequence, head)
         self._record, self._head, self._history = current._record, current._head, current._history
         return current
 
@@ -254,12 +262,40 @@ class ProviderRegistryReader(_Reader):
 
 # ---- the budget owners ---------------------------------------------------------------------------------------------------------
 class BudgetReader(_Reader):
-    """Budget ledgers (``BudgetLedger``) and observation accounts (``ScientificExperiment``) by id."""
+    """Budget ledgers (``BudgetLedger``) and observation accounts (``ScientificExperiment``) by id.
+
+    ``BudgetReader(ledgers, experiments)`` reads the account OBJECTS handed over: live for their in-place changes
+    (settled charges, recorded evaluations), not for an execution side that replaces an account object (as
+    ``sria.campaign`` does on restore).  ``BudgetReader.following(accounts)`` asks the execution side's ``accounts()``
+    for the current ``(ledgers, experiments)`` at every verification."""
 
     kinds = frozenset({K.BUDGET_LEDGER, K.EXPERIMENT})
 
+    @classmethod
+    def following(cls, accounts: Callable[[], tuple[Mapping[str, Any], Mapping[str, Any]]],
+                  owner_id: str = "budget") -> "BudgetReader":
+        if not callable(accounts):
+            raise WorldRefused("followed accounts are a callable the execution side answers with (ledgers, experiments)")
+        reader = cls(*accounts(), owner_id=owner_id)
+        reader._follow = accounts
+        return reader
+
+    def pinned(self) -> "BudgetReader":
+        if self._follow is None:
+            return self
+        try:
+            return BudgetReader(*self._follow(), owner_id=self.owner_id)
+        except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
+            raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
+
+    def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if self._follow is not None:
+            return self.pinned().read(kind, record_id)
+        return self._read(kind, record_id)
+
     def __init__(self, ledgers: Mapping[str, BudgetLedger] | None = None,
                  experiments: Mapping[str, ScientificExperiment] | None = None, owner_id: str = "budget") -> None:
+        self._follow: Callable[[], Any] | None = None
         self._ledgers = dict(ledgers or {})
         self._experiments = dict(experiments or {})
         if any(type(x) is not BudgetLedger for x in self._ledgers.values()):
@@ -272,7 +308,7 @@ class BudgetReader(_Reader):
                                "could state two dimensions from one pool)")
         self.owner_id = text(owner_id, "budget owner id")
 
-    def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
         kind = OwnerKind(kind)
         if kind is K.BUDGET_LEDGER:
             ledger = self._ledgers.get(record_id)
@@ -427,9 +463,11 @@ def rederive(kind: OwnerKind, owner_id: str, record_id: str, payload: Mapping[st
             digest_ = content_digest({k: v for k, v in status.items() if k != "location"})
             if payload["report"].get("status_digest") != digest_:
                 raise WorldRefused("the recorded health report is for another status")
-            # The report's derivation (assess_health of the status) is not re-run here: the provider owner exposes no
-            # loader for a recorded status, and re-implementing one would be a second deserializer.  A replayed
-            # provider report is therefore attested only as belonging to its status digest.
+            rebuilt = _provider_status(status)       # the owner's constructors over the recorded fields...
+            if rebuilt.to_dict() != dict(status):     # ...which must give back exactly the recorded status
+                raise WorldRefused("the recorded provider status does not rebuild through the owner's constructors")
+            if assess_health(rebuilt).to_dict() != dict(payload["report"]):    # the owner's own rule
+                raise WorldRefused("the recorded health report is not what the owner's assessment gives")
             return status.get("version") or "-", digest_
         if kind is K.BUDGET_LEDGER:
             rebuilt = BudgetLedger.from_dict(payload["ledger"])             # a valid ledger record whose derived
@@ -445,6 +483,17 @@ def rederive(kind: OwnerKind, owner_id: str, record_id: str, payload: Mapping[st
     except (KeyError, TypeError, ValueError, AttributeError, ScientificCoreError) as exc:
         raise WorldRefused(f"a recorded {kind.value} payload cannot re-derive its owner identity: {exc}") from None
     raise WorldRefused(f"no identity rule for {kind.value}")
+
+
+def _provider_status(status: Mapping[str, Any]) -> ProviderStatus:
+    """A recorded ``ProviderStatus.to_dict()`` handed back to the provider owner's own constructors (the owner exposes
+    no loader; the caller checks that ``to_dict`` gives the recorded payload back exactly, so no field is reinterpreted)."""
+    cap = {k: v for k, v in dict(status["capability"]).items() if k != "classification"}
+    for name in ("physics", "dimensions", "time_modes", "output_ranks", "property_forms", "dependencies"):
+        cap[name] = tuple(cap.get(name, ()))
+    return ProviderStatus(ProviderCapability(**cap), Availability(status["availability"]), status["version"],
+                          status["digest"], status["location"], status["reason"],
+                          tuple(tuple(d) for d in status["dependencies"]), status["executable_digest"])
 
 
 def _as_float(node: Any) -> Any:
