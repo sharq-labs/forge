@@ -294,11 +294,13 @@ class BudgetReader(_Reader):
 class DeclarationReader(_Reader):
     """The problem / protocol declarations the execution side holds in force, by declaration id.
 
-    The reader holds DETACHED copies (rebuilt from each declaration's payload), so nothing that holds the execution
-    side's objects or a world projected from them can edit what is in force.  ``DeclarationReader(declarations)`` holds
-    the set as handed over (not live); ``DeclarationReader.following(in_force)`` asks the execution side's
-    ``in_force()`` at every verification (live), so a revised declaration makes every admission on the old one stale,
-    and a revision restated with other content is refused (a revision names one content)."""
+    The reader holds DETACHED copies (rebuilt from each declaration's payload), so no world projected from it shares an
+    object with what is in force.  ``DeclarationReader(declarations)`` holds the set as handed over (not live; edits to
+    the objects handed over do not reach it).  ``DeclarationReader.following(in_force)`` asks the execution side's
+    ``in_force()`` at every verification (live) and trusts what it returns NOW: a revised declaration makes every
+    admission on the old one stale, a revision restated with other content is refused (a revision names one content),
+    and a revision lower than one already seen is refused (revisions only move forward).  The execution side should
+    return payload-built copies, not objects it shares with others."""
 
     kinds = frozenset({K.DECLARATION})
 
@@ -307,6 +309,7 @@ class DeclarationReader(_Reader):
         self.owner_id = text(owner_id, "declaration owner id")
         self._follow: Callable[[], Iterable[Any]] | None = None
         self._seen: dict[tuple[str, int], str] = {(i, d.revision): d.digest for i, d in self._held.items()}
+        self._latest: dict[str, int] = {i: d.revision for i, d in self._held.items()}
 
     @classmethod
     def following(cls, in_force: Callable[[], Iterable[Any]], owner_id: str = "declarations") -> "DeclarationReader":
@@ -347,6 +350,10 @@ class DeclarationReader(_Reader):
             if self._seen.setdefault(key, d.digest) != d.digest:
                 raise OwnerUnavailable(f"declaration {key[0]!r} revision {key[1]} is restated with other content (a "
                                        "revision names one content; a change is a new revision)")
+            if d.revision < self._latest.setdefault(key[0], d.revision):
+                raise OwnerUnavailable(f"declaration {key[0]!r} went back from revision {self._latest[key[0]]} to "
+                                       f"{d.revision} (revisions only move forward)")
+            self._latest[key[0]] = max(self._latest[key[0]], d.revision)
         return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
@@ -420,10 +427,15 @@ def rederive(kind: OwnerKind, owner_id: str, record_id: str, payload: Mapping[st
             digest_ = content_digest({k: v for k, v in status.items() if k != "location"})
             if payload["report"].get("status_digest") != digest_:
                 raise WorldRefused("the recorded health report is for another status")
+            # The report's derivation (assess_health of the status) is not re-run here: the provider owner exposes no
+            # loader for a recorded status, and re-implementing one would be a second deserializer.  A replayed
+            # provider report is therefore attested only as belonging to its status digest.
             return status.get("version") or "-", digest_
         if kind is K.BUDGET_LEDGER:
-            BudgetLedger.from_dict(payload["ledger"])                       # a valid ledger record...
-            return str(len(payload["ledger"]["charges"])), canonical_digest(payload["ledger"])   # ...the owner's rule
+            rebuilt = BudgetLedger.from_dict(payload["ledger"])             # a valid ledger record whose derived
+            if _as_float(rebuilt.to_dict()) != _as_float(payload["ledger"]):   # totals are the owner's own
+                raise WorldRefused("the recorded ledger's derived totals are not what its charges give")
+            return str(len(payload["ledger"]["charges"])), canonical_digest(payload["ledger"])   # the owner's rule
         if kind is K.EXPERIMENT:
             exp = ScientificExperiment.from_dict(payload["experiment"])
             full = exp.to_dict()
@@ -433,6 +445,19 @@ def rederive(kind: OwnerKind, owner_id: str, record_id: str, payload: Mapping[st
     except (KeyError, TypeError, ValueError, AttributeError, ScientificCoreError) as exc:
         raise WorldRefused(f"a recorded {kind.value} payload cannot re-derive its owner identity: {exc}") from None
     raise WorldRefused(f"no identity rule for {kind.value}")
+
+
+def _as_float(node: Any) -> Any:
+    """Numbers compared as the owner's from_dict reads them (an int and the equal float are one amount)."""
+    if isinstance(node, bool) or node is None or isinstance(node, str):
+        return node
+    if isinstance(node, (int, float)):
+        return float(node)
+    if isinstance(node, Mapping):
+        return {k: _as_float(v) for k, v in node.items()}
+    if isinstance(node, (list, tuple)):
+        return [_as_float(v) for v in node]
+    return node
 
 
 class FrozenReader(_Reader):

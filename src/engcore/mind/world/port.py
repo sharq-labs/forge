@@ -14,7 +14,10 @@ nothing else; admission decides on its own rebuild of the world, so editing the 
 
 A language-model proposal is accepted only through :meth:`MindWorldPort.propose_suggestion` (a certified
 ``ExternalSuggestion``); :meth:`MindWorldPort.propose` refuses one that claims that provenance.  The rule does not
-depend on the port: a proposal carrying a suggestion is re-derived from it by the check itself.
+depend on the port: a proposal carrying a suggestion is re-derived from it by the check itself.  A proposer's kind is
+what the proposer says (``ProposalProvenance`` is caller-asserted): a deployment that hosts an external or
+language-model proposer builds the port with ``suggestions_only=True``, and then only proposals that carry their
+certified suggestion are requested for admission.
 """
 
 from __future__ import annotations
@@ -34,11 +37,14 @@ from .world import ScientificWorld
 class MindWorldPort:
     """What the Mind may do: READ the world, READ the action space, PROPOSE, REQUEST ADMISSION.  Never execute."""
 
-    __slots__ = ("_space", "_journal")
+    __slots__ = ("_space", "_journal", "_suggestions_only")
 
-    def __init__(self, space: FeasibleActionSpace) -> None:
+    def __init__(self, space: FeasibleActionSpace, *, suggestions_only: bool = False) -> None:
         if not isinstance(space, FeasibleActionSpace):
             raise WorldRefused("a Mind port reads one FeasibleActionSpace")
+        if type(suggestions_only) is not bool:
+            raise WorldRefused("suggestions_only is a bool")
+        self._suggestions_only = suggestions_only
         own = FeasibleActionSpace.build(ScientificWorld.from_dict(space.world.to_dict()))
         if own.space_id != space.space_id:
             raise WorldRefused("the action space does not rebuild from its world's payload")
@@ -82,6 +88,8 @@ class MindWorldPort:
         if type(gateway) is not AdmissionGateway:
             raise WorldRefused("admission is requested through the execution side's AdmissionGateway "
                                "(ExecutionDesk.gateway()); the Mind is never handed the desk")
+        if self._suggestions_only and (type(proposal) is not ProposedAction or proposal.source is None):
+            raise WorldRefused("this port admits only proposals that carry their certified ExternalSuggestion")
         result = gateway.admit(self._space, proposal)
         self._journal.append(("admission", proposal.digest, result.digest))
         return result

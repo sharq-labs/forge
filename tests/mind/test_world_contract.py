@@ -557,7 +557,7 @@ def test_the_port_reaches_no_executor():
         a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names}
     assert not any(m and ("gate" in m or "provider" in m or "execution" in m or "system_runtime" in m)
                    for m in imported)
-    assert set(MindWorldPort.__slots__) == {"_space", "_journal"}
+    assert set(MindWorldPort.__slots__) == {"_space", "_journal", "_suggestions_only"}   # a bool, no executor
 
 
 def test_the_port_holds_a_detached_copy(battery):
@@ -567,7 +567,7 @@ def test_the_port_holds_a_detached_copy(battery):
     assert port.action_space is not sp and port.action_space.space_id == sp.space_id
     d = port.propose(fx.propose(battery, "pulse", {"I": q(1.15, "A"), "t_pulse": q(60, "s")}))
     assert d.status is F.INFEASIBLE_PROTOCOL and len(port.journal) == 1
-    assert set(MindWorldPort.__slots__) == {"_space", "_journal"}
+    assert set(MindWorldPort.__slots__) == {"_space", "_journal", "_suggestions_only"}   # a bool, no executor
 
 
 # ---- external intake --------------------------------------------------------------------------------------------------------------

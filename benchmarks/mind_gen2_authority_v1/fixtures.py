@@ -172,16 +172,18 @@ class Owned:
     def authorities(self, *, state: Any = None, models: Any = None, providers: Any = None,
                     declarations: Any = None, budget: Any = None, refresh: bool = False) -> Authorities:
         """The execution side's LIVE readers over its own owners (the base view unless one is replaced): the state
-        reader follows ``self.head`` (or the record given), the declaration reader the declarations given."""
+        reader follows ``self.head`` and the declaration reader ``self.declaration`` (both read at every verification),
+        unless a record or declaration set is given (then that constant is what the execution side states)."""
         head = (lambda: self.head) if state is None else (lambda state=state: state)
-        in_force = (self.declaration,) if declarations is None else tuple(declarations)
+        given = None if declarations is None else tuple(declarations)
+        in_force = (lambda: (self.declaration,)) if given is None else (lambda given=given: given)
         return Authorities.of(
             *(() if self.run is None and state is None else (RunStateReader.following(head),)),
             ModelRegistryReader(self.models if models is None else models, "fixture.models"),
             ProviderRegistryReader(self.providers if providers is None else providers, "fixture.providers",
                                    refresh=refresh),
             BudgetReader(self.ledgers, self.experiments) if budget is None else budget,
-            DeclarationReader.following(lambda in_force=in_force: in_force),
+            DeclarationReader.following(in_force),
             UnitRegistryReader(),
         )
 

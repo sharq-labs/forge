@@ -176,3 +176,39 @@ def test_a_level_proposed_in_another_unit_reaches_the_executor_as_the_declared_l
     assert r.admitted.settings_in_declared_units()["I_A"] == 1.0                        # the declared level, exactly
     auth = authorize_dispatch(r.admitted, o.authorities(), accept_synthetic=True)
     assert dict(auth.settings)["I_A"] == 1.0
+
+
+# ---- lens C: C2-M2 (declaration revisions move forward), C2-M5 (ledger totals), C2-M6 (suggestions-only port) ---------------
+def test_a_followed_declaration_never_goes_back_a_revision():
+    from engcore.mind.world import Authorities, BindingStatus, DeclarationReader, verify_world
+    o = ax.owned("battery")
+    held = [dataclasses.replace(o.declaration, revision=3)]
+    reader = DeclarationReader.following(lambda: held)
+    authorities = Authorities.of(*(reader if type(r) is DeclarationReader else r for r in o.authorities().readers))
+    reader.pinned()
+    held[0] = o.declaration                                            # revision 1 again, after 3 was in force
+    assert {c.status for c in verify_world(o.world, authorities).failures()} == {BindingStatus.OWNER_UNAVAILABLE}
+
+
+def test_a_recorded_ledger_whose_derived_totals_lie_does_not_replay():
+    import copy
+    from engcore.mind.world import AdmissionRecord
+    from engcore.mind.world.owners import frozen_readers
+    o = ax.owned("battery")
+    r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), o.authorities())
+    snap = copy.deepcopy(AdmissionRecord.of(r, o.authorities()).to_dict()["snapshot"])
+    item = next(i for i in snap["records"] if i["owner_kind"] == "budget_ledger")
+    item["record"]["payload"]["ledger"]["remaining"] = 1e9
+    from engcore.sria.decision.replay import canonical_digest
+    item["record"]["record_digest"] = canonical_digest(item["record"]["payload"]["ledger"])
+    with pytest.raises(WorldRefused, match="derived totals"):
+        frozen_readers(snap)
+
+
+def test_a_suggestions_only_port_refuses_a_bare_proposal():
+    from engcore.mind.world import ExecutionDesk, MindWorldPort
+    o = ax.owned("battery")
+    gateway = ExecutionDesk(o.authorities(), lambda auth: auth, accept_synthetic=True).gateway()
+    port = MindWorldPort(FeasibleActionSpace.build(o.world), suggestions_only=True)
+    with pytest.raises(WorldRefused, match="certified ExternalSuggestion"):
+        port.request_admission(o.propose("simulate_pulse", *SIM), gateway)

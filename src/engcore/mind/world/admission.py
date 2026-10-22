@@ -468,8 +468,10 @@ class ExecutionDesk:
 
 
 class AdmissionGateway:
-    """The Mind's handle on the execution side: request admission, request dispatch of an admitted action.  It exposes
-    no reader, no executor and no setting, and is immutable."""
+    """The Mind's handle on the execution side: request admission, request dispatch of an admitted action.  Its public
+    interface exposes no reader, no executor and no setting, and it is immutable.  It is not an in-process isolation
+    boundary: its functions close over the desk's readers and guarded executor, which code that introspects closures
+    or tracebacks can reach (a process boundary is what isolates a proposer; see the module docstring)."""
 
     __slots__ = ("_admit", "_dispatch")
 
