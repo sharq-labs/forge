@@ -233,8 +233,8 @@ class Authorities:
                     raise WorldRefused(f"two readers claim the {kind.value} owner")
                 by_kind[OwnerKind(kind)] = reader
         object.__setattr__(self, "_by_kind", by_kind)
-        object.__setattr__(self, "live", bool(self.readers) and all(
-            is_live(r._reader if type(r) is _Memo else r) for r in self.readers))
+        # a memo holds one verification's reads: it never backs a later decision, so it is never live
+        object.__setattr__(self, "live", bool(self.readers) and all(is_live(r) for r in self.readers))
 
     @classmethod
     def of(cls, *readers: Any) -> "Authorities":
