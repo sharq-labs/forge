@@ -405,8 +405,16 @@ class ExecutionDesk:
         return self._executor(authorize_dispatch(admitted, self._authorities, accept_synthetic=self._accept_synthetic))
 
     def gateway(self) -> "AdmissionGateway":
-        """What the Mind is handed: admit and dispatch through this desk, and nothing else."""
-        return AdmissionGateway(self.admit, self.dispatch)
+        """What the Mind is handed: admit and dispatch through this desk's owners and executor, and nothing else (no
+        bound method, so the desk itself is not an attribute of anything the Mind holds)."""
+        authorities, executor, accept_synthetic = self._authorities, self._executor, self._accept_synthetic
+
+        def admit_(space: FeasibleActionSpace, proposal: ProposedAction) -> AdmissionResult:
+            return admit(space, proposal, authorities)
+
+        def dispatch_(admitted: Any) -> Any:
+            return executor(authorize_dispatch(admitted, authorities, accept_synthetic=accept_synthetic))
+        return AdmissionGateway(admit_, dispatch_)
 
 
 class AdmissionGateway:

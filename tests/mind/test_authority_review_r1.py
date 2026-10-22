@@ -144,6 +144,7 @@ def test_the_desk_is_immutable_and_the_mind_is_handed_only_its_gateway():
     gateway = desk.gateway()
     assert type(gateway) is AdmissionGateway
     assert {n for n in dir(gateway) if not n.startswith("__")} == {"_admit", "_dispatch", "admit", "dispatch"}
+    assert not any(getattr(getattr(gateway, n), "__self__", None) is desk for n in ("_admit", "_dispatch"))
     with pytest.raises(WorldRefused, match="immutable"):
         gateway._admit = None
     port = MindWorldPort(_space(o.world))
