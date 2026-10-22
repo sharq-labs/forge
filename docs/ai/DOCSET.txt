@@ -7,3 +7,4 @@ docs/work/PAUSE_RESUME_CHECKPOINT_2026_10_19.md
 docs/work/RESUME_DASHBOARD_2026_10_19.md
 docs/work/RESUME_DECISION_REGISTER_2026_10_19.md
 docs/work/BVB_RESUME_HANDOFF_2026_10_19.md
+docs/performance/run-observatory.md
