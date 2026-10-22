@@ -8547,7 +8547,10 @@ completeness critic):
 - round 4 at `d0a0408`: lenses 0 BLOCKER; MAJOR R4-A1 = R4-C-F1 (a fixed condition's own domain checked on its
   declared spelling, the converted value executed; repro skeptics confirmed, scope skeptics graded MINOR); the critic's
   MAJOR K4-F1 (the `d113d30` mint guard was circular); fixed in `26d7724`;
-- round 5: see the update below.
+- round 5 at `c52dcfd`: lenses 0 BLOCKER; MAJOR B5-F1 = R5-C-F1 = R5-D1 (the round-4 budget follower took a history
+  it had just refused as its baseline, so a rolled-back account was refused once, then re-authorized); fixed in
+  `2422014`;
+- round 6: see the update below.
 
 **Failed approaches, recorded so they are not repeated:**
 - **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
@@ -8568,6 +8571,10 @@ completeness critic):
 - **A forward-only rule on counts only** (followed budget accounts): a history rewritten at the same length, or a return
   to an earlier state after a later one was observed, passed. The reader now keeps the history it observed, in the
   owner's read-back form (so a restore of an unchanged integer-amount account is not a change).
+- **Taking a refused history as the new baseline** (round 4's fix for the rule above): the refusal lasted one
+  verification. A diverged account is now refused by that reader for good; a new timeline needs a new reader.
+- **A world-made level-separation threshold** (round 4): it refused level sets the unit owner distinguishes. Matching
+  now refuses a value that lies nearer another declared level instead.
 - **Renaming the `relied_on_bound_values` annotation**: it broke BR1's committed `GEN1_REPRODUCTION.json`; reverted.
 - **Pre-fix tests run through the editable install**: the venv's editable install points at `/home/user/forge/src`,
   so worktree runs need `PYTHONPATH=<worktree>/src:<worktree>` (and a test file copied into the worktree under test).
@@ -8626,6 +8633,16 @@ completeness critic):
     (`results/BR1_PERFORMANCE_THIS_HOST.json`, every run and the command); the ledger-size curve
     (`results/LEDGER_SIZE_CURVE.json`); a `cProfile` of 20 battery admissions (verified projection ~71 %,
     `verify_registry_unmutated` ~24 %). README §8.
+
+13. At `2422014`: the suite command of item 1, **511 passed**; `test_authority_review_r5.py` (11) copied into the
+    `c52dcfd` tree (`/home/user/forge-gate2`): 9 failed, 2 passed (controls for round-4 fixes); the two K4-F1
+    regression tests of `test_authority_review_r4.py` copied into the `d0a0408` tree: both fail at the mint assertion
+    (K4-F1 itself); `rescore --check`: MATCHES; `run_benchmark --check`: MATCHES; `gen1_reference --check`: INTACT.
+    `python -m benchmarks.mind_gen2_authority_v1.ledger_curve` and `run_benchmark` regenerated the curve and
+    `PERFORMANCE.json` (README §8).
+14. Gates at `c52dcfd` (`/home/user/forge-gate2`): FAST 94 failed, 5 errors, 12483 passed; failing ids identical to the
+    base's 99 (NEW 0, FIXED 0; the load-dependent timing test failed this time, as on the base). Regression pack: 279
+    passed. Guard suites: 1215 passed, the same 2 pre-existing failures. FAST is red on the base: NOT green.
 
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this

@@ -94,7 +94,8 @@ ExecutionDesk (immutable; live readers; the execution owner's executor behind a 
   payload only if it re-derives its revision and digest by the owner's own rule (state, model, provider and declaration
   records also under the identity they are filed under; a ledger or experiment account is filed under the reader's id;
   a provider report must be the owner's assessment of its status; a ledger's totals must be what its charges give), and
-  only under this process's unit registry (`replay_decision` too). A recorded run history and recorded refusals are
+  only under this process's unit registry (`replay_decision` too, for a world that binds the unit registry; a BR1-style
+  world binds none, and its decisions replay under this process's registry as BR1's did). A recorded run history and recorded refusals are
   replayed as recorded. BR1.1 is unmerged: records made at its intermediate development commits are not supported. REPRODUCED attests self-consistency under the owners' rules, not that the
   owners held those records; it never authorizes a dispatch.
 - **Threat model.** Every record crossing the boundary is re-derived. A Python process is one trust domain: code that
@@ -128,10 +129,15 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   the same). Every ledger and cost unit is ratio-scale (`is_ratio_scale`: on an offset scale a conversion moves an
   amount's zero). The decision is the declared estimate against the owner's current account, not an owner cost
   prediction, and nothing is reserved (`BUDGET_BASIS`); dimensions the declaration leaves unbounded are listed on every
-  admitted action and authorization; a refusal records the amount and the remainder in the ledger's unit, as the owner
-  compared them. A followed account only moves forward from the history the reader observed (in the owner's read-back
-  form: a restore of an unchanged account is the same account, a rewritten history or a return to an earlier one is
-  OWNER_UNAVAILABLE). Admission cost grows linearly with a bound ledger's settled charges (§8). The observation rule
+  admitted action and authorization; a refusal records the amount and the remainder the owner compared it with, in the
+  ledger's unit, and which remainder that was (`general_pool`, or `validation_pool+general_pool` for a VALIDATE
+  action; an experiment's `remaining_observations` or `attempt_cap`). A followed account a world binds only moves
+  forward from the history the reader accepted for it (in the owner's read-back form: a restore of an unchanged account
+  is the same account, a top-up with the history unchanged is a move of the owner); one that went back or rewrote its
+  history is OWNER_UNAVAILABLE to that reader from then on (round 5), and adopting a new timeline is the execution
+  side's statement, made with a new reader. A reader cannot refuse a state it never observed (a spend and a rollback
+  both between two verifications look like no change); at-most-once execution is the execution owner's. Admission
+  cost grows linearly with a bound ledger's settled charges (§8). The observation rule
   restates `ScientificExperiment.record`, pinned by a differential test.
 - **Synthetic** means labelled synthetic by the declaration (`SYNTHETIC_BASIS`).
 - **Lineage v2** records ancestors' statements; v1 (BR1) keeps its bytes and ids and verifies by walking the store. A
@@ -140,28 +146,36 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
 - **Discrete levels:** a value IS a level when the unit owner's one comparison rule says they are one value
   (`canonical_magnitude` in the base unit, 12 significant digits: the rule that keeps the declared levels distinct, and
   BR1's original rule); it is then decided and executed AS that level. Nothing else matches (no nearest level, no
-  interpolation): 1.15 A against levels 1 A / 2 A is INFEASIBLE_PROTOCOL with the declared alternatives. Declared levels
-  closer than 1e-9 relative are refused, so a value the owner calls one level is never nearer another. A value that IS
+  interpolation): 1.15 A against levels 1 A / 2 A is INFEASIBLE_PROTOCOL with the declared alternatives. A value the
+  owner calls one level but that lies nearer another declared level matches neither (no world-made separation
+  threshold: round 5 replaced the round-4 one). A value that IS
   a level is decided as the level even where its own spelling would decide otherwise at a bound (35.0000000001 degC is
   35 degC to the unit owner, and it is checked and executed as 35 degC). Round 2's 64-ulp rule was absolute at a zero
   level and was withdrawn (round 3, R3-A2).
 - **Integers** are compared as exact integers; an integer domain's bounds stay within ±2**53 (the owner stores a bound
   as a float).
+- **Declarations are checked as executed.** A fixed condition, and every level and range edge of an action's domain,
+  is checked against its variable's own domain in the variable's unit, by the owner's bound rule, at bind and (fixed
+  conditions) at every check. The cost: a domain stated in another unit than its variable can refuse its own edge by
+  conversion noise (a variable in mA with own domain [0, 0.7] A: 0.7 A executes as 700.0 mA, which the owner's rule
+  reads back as 0.7000000000000001 A, outside), so such a declaration fails closed; stating a domain in its variable's
+  own unit avoids it. A fixed condition for a dimensioned variable is a quantity the unit owner converts (an integer,
+  category or boolean is refused).
 - **Who may propose:** a proposer's kind is caller-asserted; a deployment hosting an external or language-model
   proposer builds its desk with `suggestions_only=True` (the execution side's policy).
 
 ## 5. Controls
 
-Executed at `26d7724` (command and environment in `docs/work/PROGRESS.md`): `tests/mind`,
+Executed at `2422014` (command and environment in `docs/work/PROGRESS.md`): `tests/mind`,
 `benchmarks/mind_gen2_authority_v1/tests`, `benchmarks/mind_gen2_world_v1/tests` and
-`tests/test_sria_budget_ledger_identity.py`, **500 passed** (including the expensive BR1-decision re-derivation).
+`tests/test_sria_budget_ledger_identity.py`, **511 passed** (including the expensive BR1-decision re-derivation).
 
 | Suite | Tests | What it pins |
 |---|---|---|
 | `test_authority_failing_first.py` | 29 | the brief's A–O, written failing first: no interval decides; lineage laundering; stale state/model/provider/budget/declaration; missing owner; unit spelling; protocol levels (no 1.15 A, nearest or interpolation); raw proposals never execute |
 | `test_authority_mutations.py` | 120 | every projected field and binding field edited, every admitted-action and authorization field edited, replay forgeries |
 | `test_authority_cross_domain.py` | 32 | battery, two HVAC worlds, drone, motor: the same guarantees in each |
-| `test_authority_review_r1.py` / `_r2.py` / `_r3.py` / `_r4.py` | 43 / 35 / 21 / 17 | one control per confirmed review finding; the round-3 and round-4 controls fail 20/21 and 16/17 on the trees before their fixes |
+| `test_authority_review_r1.py` … `_r5.py` | 43 / 35 / 21 / 17 / 11 | one control per confirmed review finding; the round-3, round-4 and round-5 controls fail 20/21, 16/17 and 9/11 on the trees before their fixes (the round-5 file's 2 others are controls for round-4 fixes) |
 | `test_sria_budget_ledger_identity.py` | 5 | the owner addition: read-only, wire shape unchanged, round-trip identity |
 | benchmark tests | 7 | committed matrix and re-score reproduce; the re-score guard; BR1's decisions re-derived from BR1's code (expensive) |
 | BR1 tests adapted (`test_world_contract.py`, `test_world_failing_first.py`, BR1 benchmark) and unchanged (`test_world_boundary.py`) | 67 / 31 / 8 / 5 | BR1's contract under §3; BR1's committed results byte-identical; the package boundary |
@@ -195,34 +209,39 @@ re-derives it). Against them, BR1.1 changes **259 cases: 53 in status, 206 in co
 the BR1.1 rules, and any lost code without its stated cause among the case's own BR1.1 codes (`CONDITIONAL_LOST_CODES`:
 the matching undecidable code, the value having been a current value of the world; or a role refusal, the value having
 been one the proposer may not set). The check is per case, not per subject: BR1's exported decisions carry codes, not
-subjects. The round-3 and round-4 changes left every case's status and codes unchanged; only the decisions digest moved.
+subjects. The round-3, round-4 and round-5 changes left every case's status and codes unchanged; only the decisions
+digest moved (rounds 3 and 4).
 
 ## 8. Performance (`results/PERFORMANCE.json`, `results/BR1_PERFORMANCE_THIS_HOST.json`, `results/LEDGER_SIZE_CURVE.json`)
 
 One idle host: 4 CPUs, Linux, Python 3.13.16. BR1's reported numbers were measured on another machine. For the delta,
-BR1's own harness ran on BR1's 515 cases alternately on BR1's code (`1202ea6c`) and on BR1.1's code, three times each;
-the medians are below (`BR1_PERFORMANCE_THIS_HOST.json`, with every run and the command). Run-to-run spread on this host
-is 10–20 %, so deltas inside that are noise. The owned-world metrics are `PERFORMANCE.json` at `26d7724` (25 repeats).
+BR1's own harness ran on BR1's 515 cases alternately on BR1's code (`1202ea6c`) and on BR1.1's code at `26d7724`, three
+times each; the medians are below (`BR1_PERFORMANCE_THIS_HOST.json`, with every run and the command). Single runs on
+this host differ by up to ~30 %, so deltas inside that are noise; `PERFORMANCE.json` also carries one single run of the
+same harness (`br1_cases_on_br1_1_code`), which agrees within that band. The owned-world metrics are `PERFORMANCE.json`
+regenerated at `2422014` (`python -m benchmarks.mind_gen2_authority_v1.run_benchmark`, 25 repeats).
 
 | Metric (ms) | BR1 reported | BR1 code, this host | BR1.1 code, this host | Delta (this host) |
 |---|---|---|---|---|
-| WORLD_BUILD (BR1 cases) | 0.856 | 1.480 | 1.651 | +12 % |
+| WORLD_BUILD (BR1 cases) | 0.856 | 1.480 | 1.651 | +12 % (noise band) |
 | ACTIONSPACE_BUILD | 0.256 | 0.457 | 0.386 | −16 % |
 | FEASIBILITY p50 | 0.140 | 0.244 | 0.233 | −4 % (noise) |
 | FEASIBILITY p95 | 0.263 | 0.479 | 0.415 | −13 % |
-| check on owned worlds p50 / p95 | — | — | 0.374 / 0.636 | new |
-| projection from owners (median by world) | — | — | 12.6 | new |
-| owner verification p50 / p95 | — | — | 14.7 / 21.4 | new |
-| admission (verify + rebuild + check + mint) p50 / p95 | — | — | 19.5 / 27.8 | new |
-| dispatch authorization (re-admission) p50 / p95 | — | — | 20.9 / 29.9 | new |
+| check on owned worlds p50 / p95 | — | — | 0.353 / 0.551 | new |
+| projection from owners (median by world) | — | — | 11.5 | new |
+| owner verification p50 / p95 | — | — | 13.8 / 18.1 | new |
+| admission (verify + rebuild + check + mint) p50 / p95 | — | — | 17.8 / 23.9 | new |
+| dispatch authorization (re-admission) p50 / p95 | — | — | 19.2 / 24.3 | new |
 | reference: one in-repo solver execution (median) | — | 163.4 | 161.9 | — |
 
 The check is as fast as BR1's within this host's noise. Admission costs ~50× the check and stays ~8× cheaper than one
-solver execution on these fixtures. Under `cProfile` (20 admissions, battery), the verified projection takes ~71 % of
-admission and the unit owner's `verify_registry_unmutated` alone ~24 %. Cost grows linearly with the bindings, the
-declarations in force and, measured, a bound ledger's settled charges: admission p50 21 / 25 / 40 / 207 ms and check p50
-0.44 / 0.50 / 1.4 / 8.6 ms at 0 / 10 / 100 / 1000 charges (`LEDGER_SIZE_CURVE.json`): the world carries every charge
-of a bound ledger. Nothing is cached across admissions (a cache would be a currency claim).
+solver execution on these fixtures. Under `cProfile` (20 admissions, battery, at `26d7724`), the verified projection
+takes ~71 % of admission and the unit owner's `verify_registry_unmutated` alone ~24 %. Cost grows linearly with the
+bindings, the declarations in force and, measured, a bound ledger's settled charges: admission p50 20 / 34 / 38 / 197 ms
+and check p50 0.40 / 0.54 / 1.2 / 8.4 ms at 0 / 10 / 100 / 1000 charges (`python -m
+benchmarks.mind_gen2_authority_v1.ledger_curve`, `LEDGER_SIZE_CURVE.json`): the world carries every charge of a bound
+ledger, so past ~1000 charges an admission costs about one solver execution. Nothing is cached across admissions (a
+cache would be a currency claim).
 
 ## 9. Review rounds
 
@@ -236,7 +255,8 @@ completeness critic. The builder did not overrule a finding: each was fixed or i
 | 2 | `bc6980c` | A, B, C, D, E forge-scientific-reviewer (static) | 0 / 3 / 41 | R2-A1 (cost amount unitless), R2-B-01 = C2-F1 (one ledger under two reader ids) confirmed but MINOR: 0 BLOCKER / 0 MAJOR from the lenses | **K-F1 BLOCKER** (a fixed condition restated at 12-digit equality was decided on the restated value and dispatched at the fixed value: a strict validity endpoint and a `T_out < 35 degC` constraint were admitted and dispatched at the refuted value), K-F2..K-F6 MINOR | `1514560`, `991a4d3`, `a0378d4`, `0a0890d`, `867a6a1`, `1a87f7c` |
 | 3 | `1a87f7c` | A, B, C, D, E | 6 / 0 / 23 | every BLOCKER confirmed by two skeptics (reproduce, scope): **R3-A1 = R3-B-01 = R3-C-01 = R3-D1 = E3-F1** (a level control was decided on the proposer's spelling and executed as the matched level: a strict validity endpoint or constraint at a level was admitted for one spelling and executed at the refuted level), **R3-A2** (the 64-ulp level rule was absolute at a zero level: a declared 1e-14 F level was executed as 0 F) | **K3-F1 BLOCKER** (an integer decided through a float, executed exact: int64 seeds past the bound admitted), K3-F2, K3-F3 MINOR | `d113d30` |
 | 4 | `d0a0408` | A, B, C, D, E | 0 / 2 / 29 | **R4-A1 = R4-C-F1** (a fixed condition's own domain checked on its declared spelling, the converted value executed: 101.52641641114641 psi inside 700 kPa as spelled, 7.000000000000001 bar outside as executed): reproduced by both repro skeptics; both scope skeptics graded it MINOR (declared by the execution side, unreachable by a proposer); treated as MAJOR and fixed | **K4-F1 MAJOR** (the `d113d30` mint guard re-derived with the function that built the configuration, so a regression of the K-F1 kind was not caught), K4-F2..K4-F4 MINOR | `26d7724` |
-| 5 | (this report's SHA) | A, B, C, D, E | see PROGRESS | | | |
+| 5 | `c52dcfd` | A, B, C, D, E | 0 / 3 / 23 | **B5-F1 = R5-C-F1 = R5-D1** (the round-4 budget follower took a history it had just refused as its baseline: a rolled-back account was refused once, then re-authorized): reproduced by every repro skeptic; B5-F1 confirmed MAJOR by both its skeptics | K5-F1..K5-F3 MINOR (follower tests never showed a refusal twice; two round-4 reader fixes had no control; gates last run before 26d7724) | `2422014` |
+| 6 | (this report's SHA) | A, B, C, D, E | see PROGRESS | | | |
 
 Rounds 2, 3 and 4 asked the same question three times: is the value a decision was made on the value an executor
 receives? `d113d30` answered it for controls (every family decides on the configuration as it will be executed);
@@ -250,6 +270,18 @@ that same resolution, which made the check circular (K4-F1). `26d7724` builds it
 with every exact value any family read in the check; tests that re-introduce the `bc6980c` read into the shared
 resolution, or a raw read into one family only, are refused at mint. A family that bypassed the shared reading path
 altogether would not be seen by this check; the per-value regression tests are the control for that.
+
+**MINOR dispositions.** Every MINOR of rounds 1–5 was fixed or is recorded as a documented residual; the builder did
+not drop any silently. Round 5's, in particular: fixed — A5-F2 / R5-C-M1 / E5-F2 (the compared remainder and its
+basis), A5-F3 / E5-F1 (refusals that last), A5-F4 (fixed-condition kind), A5-F5 (no separation threshold), A5-F6 /
+B5-M2 / E5-F5 (gating flag), A5-F7 / B5-M3 / E5-F4 (fixed-condition refusal labels), B5-M1 / R5-C-M2 / R5-D2 (only
+bound accounts are read), B5-M4 / K5-F1 / K5-F2 (tests that reproduce the defect they guard), R5-D4 / B5-M5 / E5-F6
+(performance provenance, §8); documented — A5-F1 (declarations checked as executed fail closed at a converted edge,
+§4), R5-D3 (`replay_decision`'s unit guard needs a world that binds the unit registry, §2), the case-level re-score
+guard (§7). The documented residuals of earlier rounds are those listed in §4 and §11 (no at-most-once execution or
+reservation; the declaration and synthetic labels are the declarer's; liveness is the reader's mode; the provider cache
+unless `refresh=True`; the in-process trust boundary; world-derived model and experiment digests; the provider rule
+restating `system_runtime` preflight; replay attests self-consistency, not provenance).
 
 ## 10. Q1–Q7
 
