@@ -96,10 +96,10 @@ def variant(world_name: str, spec: dict[str, Any]) -> ScientificWorld:
 def _restated_budget(b: Any, token: str, **changes: Any) -> Any:
     """A budget as a newer owner statement gives it: it cites that newer (synthetic) ledger record, since a world never
     edits an owner's budget statement in place.  A changed usage is restated with it."""
-    b = dataclasses.replace(b, authority=fx.synthetic(f"ledger/{token}"), **changes)
-    if b.compute_used is not None:
-        b = dataclasses.replace(b, compute_spent=(b.compute_used.wall_seconds, b.compute_used.function_evaluations))
-    return b
+    used = changes.get("compute_used")
+    if used is not None:
+        changes["compute_spent"] = (used.wall_seconds, used.function_evaluations)
+    return dataclasses.replace(b, authority=fx.synthetic(f"ledger/{token}"), **changes)
 
 
 def _restated(v: Any, token: str, **changes: Any) -> Any:
