@@ -16,6 +16,9 @@ the clearance IT derived -- never the caller's object.
 The dispatch ledger is shared by every gate for one world revision in this process.  It is a reservation, not the
 budget owner's ledger: the owner's next statement of spent amounts arrives as a new world revision.  It decides no
 science: a refusal here is an admissibility fact, never evidence.
+
+Research-only (GEN2-BR1): no execution owner in the repository constructs or calls this gate yet.  Wiring it beside
+the execution owner is a later, owner-reviewed step; until then it is the contract that step must meet.
 """
 
 from __future__ import annotations
