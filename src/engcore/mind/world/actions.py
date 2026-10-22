@@ -39,7 +39,9 @@ from enum import Enum
 from typing import Any, Mapping
 
 from engcore.mind.repsem.roles import RoleSource, VariableRole
-from engcore.scientific import ConstraintDefinition, Quantity, ScientificParameter, ScientificVariable, VariableKind
+from engcore.scientific import (
+    ConstraintDefinition, Quantity, ScientificParameter, ScientificVariable, VariableKind, dimensionality,
+)
 from engcore.scientific import VariableRole as StudyRole
 from engcore.scientific.ir.values import IntegerValue
 from engcore.sria.decision import ActionFamily
@@ -52,8 +54,8 @@ from .base import (
     require_value, schema, text, value_from, value_payload,
 )
 from .domains import (
-    DeclaredConstraint, DiscreteLevels, Guard, contained, declared_source, domain_from, domain_identity, domain_problem,
-    is_finite, membership,
+    DIMENSIONLESS, DeclaredConstraint, DiscreteLevels, Guard, contained, declared_source, domain_from, domain_identity,
+    domain_problem, is_finite, membership,
 )
 from .variables import TemporalSemantics
 
@@ -290,9 +292,10 @@ class ActionSpec:
             if problem:
                 raise WorldRefused(f"action {aid!r} control {c.variable!r}: {problem}")
             if var.domain is not None and not _contained_as_executed(c.domain, var.domain, var.unit):
-                raise WorldRefused(f"action {aid!r} control {c.variable!r}: the action domain is not inside the "
-                                   "variable's declared domain (an action restricts, never widens; its members are "
-                                   "checked as they are executed, in the variable's unit)")
+                raise WorldRefused(f"action {aid!r} control {c.variable!r}: a member or edge of the action domain, as "
+                                   "executed in the variable's unit, is outside the variable's declared domain by the "
+                                   "owner's bound rule (an action restricts, never widens; conversion noise at an edge "
+                                   "counts: state the domain in the variable's own unit to avoid it)")
             if c.active_when is not None:
                 if c.active_when.variable == c.variable:
                     raise WorldRefused(f"action {aid!r}: control {c.variable!r} cannot guard itself")
@@ -310,6 +313,10 @@ class ActionSpec:
             if isinstance(f.value, Quantity) and not converts(f.value, var.unit):
                 raise WorldRefused(f"action {aid!r}: the unit owner does not convert fixed {f.name!r} = {f.value} into "
                                    f"{var.unit!r}")
+            if not isinstance(f.value, Quantity) and dimensionality(var.unit) != DIMENSIONLESS:
+                raise WorldRefused(f"action {aid!r}: fixed {f.name!r} is a {type(f.value).__name__} but the variable is "
+                                   f"declared in {var.unit!r}: only a quantity the unit owner converts is executed in a "
+                                   "dimensioned unit")
             if var.domain is not None and membership(var.domain, as_unit(f.value, var.unit)) is not None:
                 raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value!r} is outside its declared domain "
                                    "(as executed, in the variable's unit)")

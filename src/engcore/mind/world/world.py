@@ -31,6 +31,7 @@ from engcore.scientific.ir.values import as_context_value
 from engcore.scientific.units.quantity import is_ratio_scale
 from engcore.sria.campaign.budget import BudgetLedger
 from engcore.scientific.results.immutable import detach, freeze
+from engcore.sria.decision import ActionFamily
 from engcore.sria.decision.recommendation import BudgetPlan
 
 from .actions import ActionSpec
@@ -311,12 +312,13 @@ class BudgetStatement:
             raise WorldRefused(f"budget {self.dimension!r}: malformed owner record: {exc}") from None
         object.__setattr__(self, "payload", freeze(payload))
 
-    def decide(self, requested: Any, family: Any) -> tuple[bool, Any, Any]:
-        """(affordable, remaining, the amount as decided) by the owner's rule; nothing is clamped.  Every amount is
-        converted into the ledger's own unit by the unit owner: a duration as stated, a count as a dimensionless
-        quantity, a cost (by the action's contract a plain number) in the unit the declaration states for cost; the
-        amount and the remaining account are returned in the ledger's unit, as the owner compared them.  An amount the
-        unit owner cannot convert is refused (``WorldRefused``), never compared raw."""
+    def decide(self, requested: Any, family: Any) -> tuple[bool, Any, Any, str]:
+        """(affordable, remaining, the amount as decided, what remaining is) by the owner's rule; nothing is clamped.
+        Every amount is converted into the ledger's own unit by the unit owner: a duration as stated, a count as a
+        dimensionless quantity, a cost (by the action's contract a plain number) in the unit the declaration states for
+        cost.  The amount and the remainder the owner compared it with are returned in the ledger's unit (a VALIDATE
+        action may draw on the validation reservation too; an experiment states which of its limits refused).  An amount
+        the unit owner cannot convert is refused (``WorldRefused``), never compared raw."""
         payload = detach(self.payload)
         if self.kind == "ledger":
             owner = BudgetLedger.from_dict(payload["ledger"])
@@ -329,13 +331,18 @@ class BudgetStatement:
                 raise WorldRefused(f"an amount in {amount.units!r} does not convert into the ledger's "
                                    f"{owner.cost_unit!r} (the unit owner's rule)")
             accounted = Quantity(amount.magnitude_in(owner.cost_unit), owner.cost_unit)
-            return (owner.affordable(accounted.magnitude, family=family), Quantity(owner.general_pool, owner.cost_unit),
-                    accounted)
+            validate = family is not None and ActionFamily(family) is ActionFamily.VALIDATE
+            pool, basis = ((owner.validation_pool + owner.general_pool, "validation_pool+general_pool") if validate
+                           else (owner.general_pool, "general_pool"))
+            return (owner.affordable(accounted.magnitude, family=family), Quantity(pool, owner.cost_unit), accounted,
+                    basis)
         budget = ExperimentBudget.from_dict(payload["budget"])
         acc = payload["accounting"]
         remaining = acc["remaining_observations"]
         attempts_ok = budget.max_attempts is None or acc["attempts"] + requested <= budget.max_attempts
-        return requested <= remaining and attempts_ok, remaining, requested
+        if not attempts_ok:
+            return False, budget.max_attempts - acc["attempts"], requested, "attempt_cap"
+        return requested <= remaining, remaining, requested, "remaining_observations"
 
     def identity(self) -> dict[str, Any]:
         return {"schema": STATEMENT_SCHEMA, "dimension": self.dimension, "kind": self.kind,

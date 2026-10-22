@@ -615,10 +615,11 @@ def _check_domains(world: ScientificWorld, spec: ActionSpec, proposal: ProposedA
         found = membership(var.domain, executed)
         if found is not None:
             code, message, detail = found
+            detail = {k: v for k, v in detail.items() if k != "proposed"}    # nobody proposed a fixed condition
             c.add(STATUS_BY_SOURCE[var.declaration.source], code, CheckFamily.DOMAIN, fixed.name,
                   f"the action's fixed condition, as executed in the variable's unit, is outside its declared domain: "
                   f"{message}", declared_by=var.declaration.source.value,
-                  **{**detail, "fixed_condition": value_payload(fixed.value)})
+                  **{**detail, "fixed_condition": value_payload(fixed.value), "as_executed": value_payload(executed)})
     c.ran(CheckFamily.DOMAIN, len(spec.controls) + len(spec.fixed_conditions))
 
 
@@ -891,7 +892,7 @@ def _check_budget(world: ScientificWorld, spec: ActionSpec, c: _Collector) -> No
         if statement is not None:                          # the owner record's own rule, in the owner's unit
             requested = amount if isinstance(amount, Quantity) else amount.value
             try:
-                ok, remaining, requested = statement.decide(requested, spec.family)   # as the owner accounted it
+                ok, remaining, requested, remaining_basis = statement.decide(requested, spec.family)   # as compared
             except WorldRefused as exc:
                 c.add(F.MISSING_INFORMATION, "BUDGET_UNIT_INCOMPATIBLE", CheckFamily.BUDGET, dim,
                       "the action's amount cannot be accounted in the budget owner's unit", why=str(exc))
@@ -915,7 +916,8 @@ def _check_budget(world: ScientificWorld, spec: ActionSpec, c: _Collector) -> No
                 ok = requested <= remaining
         if not ok:
             c.add(F.INFEASIBLE_BUDGET, "OVER_BUDGET", CheckFamily.BUDGET, dim,
-                  "the action needs more than the budget owner says remains", requested=requested, remaining=remaining)
+                  "the action needs more than the budget owner says remains", requested=requested, remaining=remaining,
+                  **({"remaining_basis": remaining_basis} if statement is not None else {}))
     c.ran(CheckFamily.BUDGET, len(BUDGET_DIMENSIONS))
 
 

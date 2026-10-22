@@ -33,6 +33,7 @@ from engcore.scientific import (
     dimensionality,
 )
 from engcore.scientific.ir.values import BooleanValue, CategoricalValue, IntegerValue
+from engcore.scientific.units.quantity import base_unit
 
 from .base import (
     WorldRefused, converts, expect_schema, magnitude_key, names, require_value, same_value, schema, text, unit,
@@ -45,9 +46,6 @@ CONSTRAINT_SCHEMA = schema("declared_constraint")
 DIMENSIONLESS = dimensionality("dimensionless")
 #: ``DeclaredConstraint.applies_to`` entry meaning every action of the world.
 ALL_ACTIONS = "*"
-#: How far apart (relative, in the base unit) two declared levels must be: far beyond the unit owner's 12-digit
-#: identity precision, so a value identity-equal to one level is never nearer another.
-LEVEL_SEPARATION = 1e-9
 
 
 @dataclass(frozen=True)
@@ -69,11 +67,6 @@ class DiscreteLevels:
         keys = [magnitude_key(level) for level in levels]
         if len(set(keys)) != len(keys):
             raise WorldRefused(f"discrete levels repeat a value: {keys}")
-        for a in keys:                     # identity matching (12 digits) is unambiguous only between separated levels
-            for b in keys:
-                if a < b and b - a <= LEVEL_SEPARATION * max(abs(a), abs(b)):
-                    raise WorldRefused(f"discrete levels {a} and {b} are closer than {LEVEL_SEPARATION:g} relative: a "
-                                       "value the unit owner calls one of them could lie nearer the other")
         object.__setattr__(self, "levels", levels)
 
     def keys(self) -> tuple[float, ...]:
@@ -151,9 +144,19 @@ def matched_level(domain: DiscreteLevels, value: Quantity) -> Quantity | None:
     """The declared level ``value`` IS, by the unit owner's one comparison rule (``canonical_magnitude`` in the base
     unit, the rule that also keeps the declared levels distinct: :func:`.base.same_value`), or None.  Relative at every
     scale, so a zero level is matched only by a value the owner calls zero.  A matched value is decided and executed
-    AS the declared level (``feasibility``); nothing else is matched: no nearest level, no interpolation."""
+    AS the declared level (``feasibility``); nothing else is matched: no nearest level, no interpolation.  A value the
+    owner calls one level but that lies nearer another declared level matches neither (the identity rule is not
+    allowed to pick a level the value is farther from)."""
     found = [level for level in domain.levels if same_value(value, level)]
-    return found[0] if len(found) == 1 else None
+    if len(found) != 1:
+        return None
+    level = found[0]
+    base = base_unit(value.units)
+    v = value.magnitude_in(base)
+    distance = abs(v - level.magnitude_in(base))
+    if any(abs(v - other.magnitude_in(base)) < distance for other in domain.levels if other is not level):
+        return None
+    return level
 
 
 def _is_level(domain: DiscreteLevels, value: Quantity) -> bool:

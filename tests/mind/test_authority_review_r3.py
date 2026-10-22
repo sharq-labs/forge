@@ -233,15 +233,19 @@ def test_a_followed_budget_account_never_goes_back_a_revision():
     before = ax.ledger(10.0, 0.0, o.ledgers[ref].cost_unit, ref)
     after = ax.ledger(10.0, 1.0, before.cost_unit, ref)                # one settled charge later
     assert after.revision == before.revision + 1
+    from engcore.mind.world import OwnerKind
     accounts = {"ledgers": {**o.ledgers, ref: before}}
     reader = BudgetReader.following(lambda: (accounts["ledgers"], o.experiments))
     authorities = Authorities.of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     assert authorities.live
+    assert reader.read(OwnerKind.BUDGET_LEDGER, ref) is not None       # the account as first read
     accounts["ledgers"] = {**o.ledgers, ref: after}
-    reader.pinned()                                                    # forward: fine
+    assert reader.read(OwnerKind.BUDGET_LEDGER, ref) is not None       # forward: fine
     accounts["ledgers"] = {**o.ledgers, ref: before}                   # restored to an earlier revision
     with pytest.raises(OwnerUnavailable, match="went back a revision"):
-        reader.pinned()
+        reader.read(OwnerKind.BUDGET_LEDGER, ref)
+    with pytest.raises(OwnerUnavailable, match="from then on"):        # and it stays refused (round 5)
+        reader.read(OwnerKind.BUDGET_LEDGER, ref)
 
 
 def test_the_desk_policy_admits_and_dispatches_only_certified_suggestions_whatever_the_port():

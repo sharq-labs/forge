@@ -200,8 +200,10 @@ def _mint(space: FeasibleActionSpace, proposal: ProposedAction, report: Authorit
         if name not in config or value_payload(value) != value_payload(config[name]):
             raise WorldRefused(f"{name!r}: a check decided on a value that is not the value to be executed")
     context = tuple(_frozen(_context_entry(world, n)) for n in sorted(context_reads(world, spec) - set(config)))
+    gating = spec.execution is ExecutionKind.MODEL_EXECUTION       # otherwise annotation only (never a gate)
     models = tuple(_frozen({"binding_id": a, "authority": None if world.applicability_binding(a).authority is None
-                            else world.applicability_binding(a).authority.identity()}) for a in spec.applicability)
+                            else world.applicability_binding(a).authority.identity(), "gating": gating})
+                   for a in spec.applicability)
     with _minting():
         admitted = AdmittedAction(proposal, world, space.space_id, world.revision_id, admission,
                               tuple(sorted({c.binding_digest for c in report.checks})), tuple(sorted(config.items())),
@@ -355,7 +357,7 @@ class DispatchAuthorization:
     observe: tuple[str, ...]
     execution: ExecutionKind
     providers: tuple[Any, ...]
-    models: tuple[Any, ...]                            # the applicability bindings (and model records) that gated it
+    models: tuple[Any, ...]                            # the action's applicability bindings, each saying if it gated
     synthetic: bool
     declaration: Any                                   # the declaration in force it was admitted under (identity)
     owners: tuple[tuple[str, str], ...]                # the owner instances (kind, id) it was re-admitted against

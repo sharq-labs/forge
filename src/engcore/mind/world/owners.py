@@ -274,12 +274,15 @@ class BudgetReader(_Reader):
     ``BudgetReader(ledgers, experiments)`` reads the account OBJECTS handed over: live for their in-place changes
     (settled charges, recorded evaluations), not for an execution side that replaces an account object (as
     ``sria.campaign`` does on restore).  ``BudgetReader.following(accounts)`` asks the execution side's ``accounts()``
-    for the current ``(ledgers, experiments)`` at every verification, and an account only moves forward: its history
-    (a ledger's settled charges, an experiment's recorded evaluations, each as the owner serializes it) must extend
-    the history this reader already saw (an account restored to an earlier revision, or one whose history was
-    rewritten at the same length, would re-authorize what it had moved past).  A change to an account's declaration
-    with its history unchanged (a budget top-up) is a move of the owner, not a step back.  A ledger is projected in the
-    form its owner reads it back (``BudgetLedger.from_dict``), the same form its digest is taken in."""
+    for the current ``(ledgers, experiments)`` at every verification, and every account it is asked for only moves
+    forward: its history (a ledger's settled charges, an experiment's recorded evaluations, in the form the owner reads
+    them back, so a restore of an unchanged account is the same history) must extend the history this reader accepted
+    for it.  An account that went back or rewrote its history is refused from then on by this reader, whatever it
+    states later (a return to an accepted state would re-authorize what the account had moved past); adopting a new
+    timeline is the execution side's statement, made with a new reader.  A change to an account's declaration with its
+    history unchanged (a budget top-up) is a move of the owner.  Only the accounts a world binds are read and checked.
+    A ledger is projected in the form its owner reads it back (``BudgetLedger.from_dict``), the form its digest is
+    taken in."""
 
     kinds = frozenset({K.BUDGET_LEDGER, K.EXPERIMENT})
 
@@ -290,37 +293,34 @@ class BudgetReader(_Reader):
             raise WorldRefused("followed accounts are a callable the execution side answers with (ledgers, experiments)")
         reader = cls(*accounts(), owner_id=owner_id)
         reader._follow = accounts
-        try:
-            reader._seen = reader._histories()
-        except (ValueError, TypeError, KeyError) as exc:
-            raise WorldRefused(f"a followed budget account is not one its owner reads back: {exc}") from None
         return reader
 
-    def _histories(self) -> dict[tuple[str, str], tuple[str, ...]]:
-        """Each account's append-only history in the form its owner reads it back (so a restore of an unchanged account
-        is the same history), one digest per item."""
-        def item(x: Any) -> str:
-            return hashlib.sha256(json.dumps(x.to_dict(), sort_keys=True, default=str).encode("utf-8")).hexdigest()
-        return {**{("ledger", i): tuple(item(c) for c in BudgetLedger.from_dict(x.to_dict()).charges)
-                   for i, x in self._ledgers.items()},
-                **{("experiment", i): tuple(item(e) for e in ScientificExperiment.from_dict(x.to_dict()).evaluations)
-                   for i, x in self._experiments.items()}}
+    @staticmethod
+    def _history(items: Iterable[Any]) -> tuple[str, ...]:
+        return tuple(hashlib.sha256(json.dumps(x.to_dict(), sort_keys=True, default=str).encode("utf-8")).hexdigest()
+                     for x in items)
+
+    def _advance(self, key: tuple[str, str], history: tuple[str, ...]) -> None:
+        """The following reader's forward-only rule for one account read in a verification (atomic)."""
+        with self._lock:
+            if key in self._diverged:
+                raise OwnerUnavailable(f"budget {key[0]} {key[1]!r} went back or rewrote its history earlier: this "
+                                       "reader refuses it from then on (a new timeline is stated with a new reader)")
+            seen = self._seen.get(key)
+            if seen is not None and history[:len(seen)] != seen:
+                self._diverged.add(key)
+                raise OwnerUnavailable(f"budget {key[0]} {key[1]!r} went back a revision or rewrote its history: an "
+                                       "account only moves forward from what this reader accepted")
+            self._seen[key] = history
 
     def pinned(self) -> "BudgetReader":
         if self._follow is None:
             return self
         try:
             current = BudgetReader(*self._follow(), owner_id=self.owner_id)
-            histories = current._histories()
         except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
             raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
-        with self._lock:                 # the latest history OBSERVED is what must be extended, accepted or not
-            went_back = sorted(f"{k[0]} {k[1]!r}" for k, h in histories.items()
-                               if h[:len(self._seen.get(k, ()))] != self._seen.get(k, ()))
-            self._seen = {**self._seen, **histories}
-        if went_back:
-            raise OwnerUnavailable(f"followed budget accounts went back a revision or rewrote their history "
-                                   f"({', '.join(went_back)}): an account only moves forward from what was observed")
+        current._follower = self          # each account the snapshot reads is checked against this reader's history
         return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
@@ -331,7 +331,9 @@ class BudgetReader(_Reader):
     def __init__(self, ledgers: Mapping[str, BudgetLedger] | None = None,
                  experiments: Mapping[str, ScientificExperiment] | None = None, owner_id: str = "budget") -> None:
         self._follow: Callable[[], Any] | None = None
+        self._follower: BudgetReader | None = None     # a pinned snapshot's following reader
         self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
+        self._diverged: set[tuple[str, str]] = set()
         self._lock = threading.Lock()
         self._ledgers = dict(ledgers or {})
         self._experiments = dict(experiments or {})
@@ -352,16 +354,26 @@ class BudgetReader(_Reader):
             if ledger is None:
                 return None
             try:                                     # the owner's read-back form: projection and digest, one rule
-                return OwnerRecord(kind, self.owner_id, record_id, str(ledger.revision), ledger.digest,
-                                   {"ledger": BudgetLedger.from_dict(ledger.to_dict()).to_dict()})
+                back = BudgetLedger.from_dict(ledger.to_dict())
+                record = OwnerRecord(kind, self.owner_id, record_id, str(ledger.revision), ledger.digest,
+                                     {"ledger": back.to_dict()})
             except (ValueError, TypeError, KeyError) as exc:
                 raise OwnerUnavailable(f"budget ledger {record_id!r} is not a ledger its owner reads back: {exc}") \
                     from None
+            if self._follower is not None:
+                self._follower._advance(("ledger", record_id), self._history(back.charges))
+            return record
         if kind is K.EXPERIMENT:
             exp = self._experiments.get(record_id)
             if exp is None:
                 return None
             payload = exp.to_dict()
+            if self._follower is not None:
+                try:
+                    back = ScientificExperiment.from_dict(payload)
+                except (ValueError, TypeError, KeyError, ScientificCoreError) as exc:
+                    raise OwnerUnavailable(f"experiment {record_id!r} is not one its owner reads back: {exc}") from None
+                self._follower._advance(("experiment", record_id), self._history(back.evaluations))
             return OwnerRecord(kind, self.owner_id, record_id, str(len(exp.evaluations)), _sha_json(exp),
                                {"budget": payload["budget"], "accounting": payload["accounting"], "experiment": payload})
         return None

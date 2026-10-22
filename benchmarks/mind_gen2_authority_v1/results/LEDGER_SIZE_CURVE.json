@@ -1,25 +1,30 @@
 {
- "schema": "forge.mind.gen2_authority.ledger_size_curve/1",
- "command": "inline: battery simulate_pulse admitted against its solver ledger with n extra settled charges, 15 repeats, median",
+ "command": "python -m benchmarks.mind_gen2_authority_v1.ledger_curve",
+ "host": {
+  "platform": "Linux-6.18.44-fc-v140-x86_64-with-glibc2.39",
+  "python": "3.13.16"
+ },
+ "repeats": 15,
+ "schema": "forge.mind.gen2_authority.ledger_size_curve/2",
  "settled_charges": {
   "0": {
-   "admission_p50_ms": 21.38,
-   "check_p50_ms": 0.442,
+   "admission_p50_ms": 19.75,
+   "check_p50_ms": 0.396,
    "status": "FEASIBLE"
   },
   "10": {
-   "admission_p50_ms": 24.95,
-   "check_p50_ms": 0.503,
+   "admission_p50_ms": 34.15,
+   "check_p50_ms": 0.542,
    "status": "FEASIBLE"
   },
   "100": {
-   "admission_p50_ms": 39.98,
-   "check_p50_ms": 1.423,
+   "admission_p50_ms": 38.46,
+   "check_p50_ms": 1.214,
    "status": "FEASIBLE"
   },
   "1000": {
-   "admission_p50_ms": 207.19,
-   "check_p50_ms": 8.614,
+   "admission_p50_ms": 196.83,
+   "check_p50_ms": 8.366,
    "status": "FEASIBLE"
   }
  }

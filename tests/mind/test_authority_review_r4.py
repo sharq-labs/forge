@@ -21,6 +21,7 @@ from engcore.mind.world import (
     FeasibleActionSpace, MindWorldPort, TemporalSemantics as TS, WorldRefused, admit, authorize_dispatch, project_world,
     proposed_action_from_suggestion,
 )
+from engcore.mind.world import OwnerKind
 from engcore.mind.world import actions as actions_mod
 from engcore.mind.world import feasibility as fz
 from engcore.mind.world.authority import OwnerUnavailable
@@ -73,7 +74,7 @@ def test_the_domain_family_checks_a_fixed_condition_as_executed_even_when_declar
 def test_an_action_level_that_executes_outside_the_variables_own_domain_is_refused_at_declaration():
     domain = ScientificVariable("I", "mA", VariableKind.CONTINUOUS, IR.CONTROL, Quantity(0.0, "mA"),
                                 Quantity(700.0, "mA"))
-    with pytest.raises(WorldRefused, match="as they are executed"):
+    with pytest.raises(WorldRefused, match="as executed in the variable's unit"):
         b.world("synthetic.edge_level", (
             b.var("I", R.CONTROLLED_INPUT, "A", TS.CONSTANT_PER_RUN, domain=domain),
             b.var("y", R.MEASUREMENT, "V", TS.TIME_SERIES)),
@@ -100,6 +101,23 @@ def _hvac_strict_endpoint():
     return r2._hvac_strict_endpoint()
 
 
+def _never_minted(space, proposal, authorities) -> bool:
+    """True when admission mints nothing for ``proposal`` (refused at mint or not admitted); the outcome, not a message."""
+    try:
+        return admit(space, proposal, authorities).admitted is None
+    except WorldRefused:
+        return True
+
+
+def _called_from(function: str) -> bool:
+    frame = sys._getframe(2)
+    while frame is not None:
+        if frame.f_code.co_name == function:
+            return True
+        frame = frame.f_back
+    return False
+
+
 def _restated_fixed(o):
     from engcore.mind.world import ScientificWorld  # noqa: F401
     assignments, observe = ax.base("hvac_chamber")["simulate_building"]
@@ -114,9 +132,11 @@ def test_a_resolution_that_reads_a_restated_fixed_condition_never_mints(monkeypa
     decide FEASIBLE on the restated value, and admission refuses to mint it."""
     original = fz._resolve
 
+    executed = getattr(fz, "as_executed", None) or getattr(fz, "_as_executed")      # (renamed in round 4)
+
     def bc6980c_read(world, spec, proposal, name, *, include_proposal=True):
         if include_proposal and proposal is not None and proposal.value(name) is not None:
-            v = proposal.value(name)
+            v = executed(world, spec, name, proposal.value(name))           # exactly the critic's K4-F1 regression
             return fz._Resolved(v, "proposal", (v,))
         return original(world, spec, proposal, name, include_proposal=include_proposal)
 
@@ -124,8 +144,7 @@ def test_a_resolution_that_reads_a_restated_fixed_condition_never_mints(monkeypa
     world, forged = _restated_fixed(o)
     monkeypatch.setattr(fz, "_resolve", bc6980c_read)
     assert FeasibleActionSpace.build(world).check(forged).feasible            # the regressed check is fooled ...
-    with pytest.raises(WorldRefused, match="not the value to be executed"):
-        admit(FeasibleActionSpace.build(world), forged, o.authorities())       # ... admission is not
+    assert _never_minted(FeasibleActionSpace.build(world), forged, o.authorities())   # ... admission is not
 
 
 def test_one_family_that_decides_on_another_value_never_mints(monkeypatch):
@@ -140,7 +159,7 @@ def test_one_family_that_decides_on_another_value_never_mints(monkeypatch):
     original = fz._resolve
 
     def protocol_reads_raw(world_, spec, proposal, name, **kw):
-        if sys._getframe(2).f_code.co_name == "_check_protocol" and proposal is not None and spec.control(name):
+        if _called_from("_check_protocol") and proposal is not None and spec.control(name):
             v = proposal.value(name)
             if v is not None:
                 return fz._Resolved(v, "proposal", (v,))
@@ -148,8 +167,7 @@ def test_one_family_that_decides_on_another_value_never_mints(monkeypatch):
 
     monkeypatch.setattr(fz, "_resolve", protocol_reads_raw)
     assert FeasibleActionSpace.build(world).check(p).feasible
-    with pytest.raises(WorldRefused, match="not the value to be executed"):
-        admit(FeasibleActionSpace.build(world), p, o.authorities())
+    assert _never_minted(FeasibleActionSpace.build(world), p, o.authorities())
 
 
 # ---- records state what was decided, in the unit decided ---------------------------------------------------------------------
@@ -182,11 +200,14 @@ def test_a_domain_refusal_keeps_the_proposers_spelling_and_states_the_value_deci
     assert reason.detail["as_executed"]["units"] == "ampere"
 
 
-def test_levels_closer_than_the_identity_rule_can_tell_apart_are_refused():
-    from engcore.mind.world.domains import DiscreteLevels
-    with pytest.raises(WorldRefused, match="closer than"):
-        DiscreteLevels("A", (Quantity(1.0, "A"), Quantity(1.0000000000051, "A")))
-    assert DiscreteLevels("A", (Quantity(1.0, "A"), Quantity(1.001, "A"))).levels
+def test_a_value_the_owner_calls_one_level_but_nearer_another_matches_neither():
+    """R4-A4, round 5 (A5-F5): no world-made separation threshold; a value is never matched to a level it is farther
+    from than another declared level."""
+    from engcore.mind.world.domains import DiscreteLevels, matched_level
+    close = DiscreteLevels("A", (Quantity(1.0, "A"), Quantity(1.0000000000051, "A")))     # distinct to the owner
+    assert matched_level(close, Quantity(1.0000000000049, "A")) is None   # identity-equal to 1 A, nearer the other
+    assert matched_level(close, Quantity(1.0, "A")) == Quantity(1.0, "A")
+    assert matched_level(close, Quantity(1.0000000000051, "A")) == Quantity(1.0000000000051, "A")
 
 
 def test_the_authorization_names_the_models_whose_applicability_gated_it():
@@ -244,17 +265,22 @@ def test_a_followed_account_whose_history_was_rewritten_at_the_same_length_is_re
     d2 = o.ledgers[lid].to_dict()
     accounts = {"ledgers": dict(o.ledgers)}
     reader = BudgetReader.following(lambda: (accounts["ledgers"], o.experiments))
+    assert reader.read(OwnerKind.BUDGET_LEDGER, lid) is not None       # D2 accepted
     restored = BudgetLedger.from_dict(d2)
     rewritten = BudgetLedger(total_budget=restored.total_budget, cost_unit=restored.cost_unit,
                              charges=restored.charges[:1])
     rewritten.settle(charge_id="run-b", action_id="other", iteration=1, family=ActionFamily.EXPLORE, realized=3.0)
     assert rewritten.revision == restored.revision                     # the same length, another history
     accounts["ledgers"] = {**o.ledgers, lid: rewritten}
-    with pytest.raises(OwnerUnavailable, match="rewrote their history"):
-        reader.pinned()
-    accounts["ledgers"] = {**o.ledgers, lid: BudgetLedger.from_dict(d2)}   # and back to what was seen before it
-    with pytest.raises(OwnerUnavailable):
-        reader.pinned()
+    with pytest.raises(OwnerUnavailable, match="rewrote its history"):
+        reader.read(OwnerKind.BUDGET_LEDGER, lid)
+    accounts["ledgers"] = {**o.ledgers, lid: BudgetLedger.from_dict(d2)}   # back to what was accepted before it
+    with pytest.raises(OwnerUnavailable, match="from then on"):
+        reader.read(OwnerKind.BUDGET_LEDGER, lid)
+    rewritten.settle(charge_id="run-c", action_id="other", iteration=2, family=ActionFamily.EXPLORE, realized=1.0)
+    accounts["ledgers"] = {**o.ledgers, lid: rewritten}                # forward from the rewrite (round 5, R5)
+    with pytest.raises(OwnerUnavailable, match="from then on"):
+        reader.read(OwnerKind.BUDGET_LEDGER, lid)
 
 
 def test_a_followed_account_restored_unchanged_or_topped_up_is_the_same_account():
@@ -271,8 +297,9 @@ def test_a_followed_account_restored_unchanged_or_topped_up_is_the_same_account(
     o.ledgers[lid] = BudgetLedger.from_dict(o.ledgers[lid].to_dict())   # a checkpoint restore, integer amounts
     gateway.dispatch(r.admitted)
     reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    assert reader.read(OwnerKind.BUDGET_LEDGER, lid) is not None
     o.ledgers[lid].total_budget = o.ledgers[lid].total_budget + 5.0     # a declaration top-up, history unchanged
-    reader.pinned()
+    assert reader.read(OwnerKind.BUDGET_LEDGER, lid) is not None
     assert len(gateway_calls) == 2
 
 
