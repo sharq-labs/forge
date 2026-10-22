@@ -1,0 +1,37 @@
+{
+ "access_log": {
+  "benchmarks/battery_rediscovery_v2/results/ACCESS_LOG.json": "3e8ea4218baf85149c5804c326047bd6b0aaf47b34f9a24adb9edc41c4d3fb88"
+ },
+ "code_commit": "f62299863cc75ac367861ed8f28b10cc6b292e81",
+ "experiment": "battery_rediscovery_v2",
+ "leakage_pre_seal": {
+  "benchmarks/battery_rediscovery_v2/results/LEAKAGE_PRE_SEAL.json": "dc461ecbea95beea3c1cab820e139bd0f9fa3c04a9dc4e41bb716c005bc4e98a"
+ },
+ "mutation_report_pre_run_sha256": "1b5b65fa7bc126045e24edf625e2d75f226a9f57d66584a2e62da826ef0feb53",
+ "note": "TIMINGS.json is excluded: wall-clock values are not scientific content",
+ "outputs": {
+  "benchmarks/battery_rediscovery_v2/results/candidate/ALWAYS_FIT__Q1.json": "5ad42da185f71ee34b89cf1879da381f20bcb9f7c1a0c44eb2f25baab27887b7",
+  "benchmarks/battery_rediscovery_v2/results/candidate/ALWAYS_FIT__Q2.json": "318622942a8a0ae9add2676df0e5639a057017c1b559ff3f7c175f956b7a7a4f",
+  "benchmarks/battery_rediscovery_v2/results/candidate/ALWAYS_REFUSE__Q1.json": "852053be5ec6db5f93ea440a97d4e4dc0577d7264b47916d109675d40f18ad83",
+  "benchmarks/battery_rediscovery_v2/results/candidate/ALWAYS_REFUSE__Q2.json": "cbec7f5339951a978cd0f714d4929a9c74280ed95da2a6670a292c60896e4076",
+  "benchmarks/battery_rediscovery_v2/results/candidate/CAREFUL_BASELINE__Q1.json": "f9a982fbb635a08ccb42091ff66670348e6c1900d551aa7ba5397fbace3ca0c8",
+  "benchmarks/battery_rediscovery_v2/results/candidate/CAREFUL_BASELINE__Q2.json": "662c254f292ae5453136670a7abecb11626f374437dc9b320dc9e17d6a86c3d8",
+  "benchmarks/battery_rediscovery_v2/results/candidate/FIXED_FIT__Q1.json": "321d904119d942c093431d51cb84bb749b72487eb9ebd77e00f74a1b633df827",
+  "benchmarks/battery_rediscovery_v2/results/candidate/FIXED_FIT__Q2.json": "81f68f4095e869b51e965aabf4ca507e0396fce1c21c12a57d8fa998c735b7f2",
+  "benchmarks/battery_rediscovery_v2/results/candidate/OLD_MIND_TRACES__Q1.json": "c56ebf67cae9e43e23285b74da75d9dd130712161b9a1c7de367d460e921bf30",
+  "benchmarks/battery_rediscovery_v2/results/candidate/OLD_MIND_TRACES__Q2.json": "3fbb84b744903cdde8edcfb28bbbe0c0b157e95d15e91ccad0efbe9feca76c23",
+  "benchmarks/battery_rediscovery_v2/results/candidate/OLD_MIND__Q1.json": "105092d71f1063afbf1e40a10cfb1fbf8db64aac7fa30559fbca8a404546f58c",
+  "benchmarks/battery_rediscovery_v2/results/candidate/OLD_MIND__Q2.json": "567c12fd8729de001b634413981905f220eb4d45ac5680767773114caf6a46c4",
+  "benchmarks/battery_rediscovery_v2/results/candidate/REPRESENTATION_ONLY__Q1.json": "b5d71d2ef248d945c80fabb60da2cca065c6f859f480814e3740c4313558d975",
+  "benchmarks/battery_rediscovery_v2/results/candidate/REPRESENTATION_ONLY__Q2.json": "f37fd214e14288924f778212c201706f9e9a7d46d602f62110bc23277f89c255",
+  "benchmarks/battery_rediscovery_v2/results/candidate/REPRESENTATION_PLUS_ROLES__Q1.json": "3b4c1f7ac7f073177c122d5ce89637acc5ffb4f84b46a79fe7de30062f44f050",
+  "benchmarks/battery_rediscovery_v2/results/candidate/REPRESENTATION_PLUS_ROLES__Q2.json": "4aecbe8406468184f735a25e051d3552a32d4eb777c6e4456d3b92a5cca64dbc",
+  "benchmarks/battery_rediscovery_v2/results/candidate/SEMANTIC_ROLES_ONLY__Q1.json": "14026a333dd2a37230adbd4b97ca8d71351e1cfc90579d81f2b860f3864c9040",
+  "benchmarks/battery_rediscovery_v2/results/candidate/SEMANTIC_ROLES_ONLY__Q2.json": "664842ec356cece933a75f04f7b580ba5cc4def1788acd0ac8c725b358888436"
+ },
+ "pack_manifest_sha256": "71c6bcafb7fea370bff3c32d9eefa250690bed24cb1316402c402b4f0853c23b",
+ "plan_sha256": "85f1b7f300b3cfab2f94c0cab9041798d8ff37c7bd2173913128d3b886db2566",
+ "scanner_sha256": "84ed2f4fda556d48e0b503ddaed834dea92e29a9517f81b6dd3914de930063bd",
+ "schema": "forge.battery_rediscovery_v2.seal/1",
+ "status": "PASS"
+}
