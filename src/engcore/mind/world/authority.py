@@ -223,6 +223,10 @@ class Authorities:
     def of(cls, *readers: Any) -> "Authorities":
         return cls(tuple(readers))
 
+    def memoized(self) -> "Authorities":
+        """The same readers, each record read once: one verification sees one consistent state of every owner."""
+        return Authorities(tuple(_Memo(r) for r in self.readers), live=self.live)
+
     def reader(self, kind: OwnerKind) -> Any | None:
         return self._by_kind.get(OwnerKind(kind))
 
@@ -309,6 +313,32 @@ class Authorities:
 
         expect_schema(payload.get("schema"), SNAPSHOT_SCHEMA)
         return cls(frozen_readers(payload), live=False)
+
+
+class _Memo:
+    """A reader that reads each record once (successful reads only; a refusal is re-raised every time)."""
+
+    def __init__(self, reader: Any) -> None:
+        self._reader = reader
+        self.kinds = reader.kinds
+        self.owner_id = reader.owner_id
+        self._reads: dict[tuple[OwnerKind, str], Any] = {}
+        self._history: dict[tuple[OwnerKind, str], Any] = {}
+
+    def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        key = (OwnerKind(kind), record_id)
+        if key not in self._reads:
+            self._reads[key] = self._reader.read(kind, record_id)
+        return self._reads[key]
+
+    def superseded(self, kind: OwnerKind, record_id: str) -> frozenset[str] | None:
+        key = (OwnerKind(kind), record_id)
+        if key not in self._history:
+            self._history[key] = self._reader.superseded(kind, record_id)
+        return self._history[key]
+
+    def project(self, record: OwnerRecord, fields: tuple[str, ...]) -> dict[str, Any]:
+        return self._reader.project(record, fields)
 
 
 __all__ = [

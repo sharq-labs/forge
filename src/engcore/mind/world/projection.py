@@ -97,6 +97,9 @@ def verify_world(world: ScientificWorld, authorities: Authorities) -> AuthorityR
     projection of the declaration in force.  ``ok`` only if all of it holds; nothing is repaired or re-bound."""
     if type(world) is not ScientificWorld:
         raise WorldRefused("only a ScientificWorld is verified")
+    if type(authorities) is not Authorities:
+        raise WorldRefused("a world is verified against the execution side's Authorities")
+    authorities = authorities.memoized()                     # one consistent read of every owner record
     checks: list[BindingCheck] = []
     for subject, binding, held in world.projected_facts():
         if binding is None:

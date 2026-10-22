@@ -1,0 +1,40 @@
+{
+ "ADMISSION_P50_MS": 11.699,
+ "ADMISSION_P95_MS": 17.4306,
+ "AUTHORITY_VERIFY_P50_MS": 10.0876,
+ "AUTHORITY_VERIFY_P95_MS": 15.3389,
+ "PROJECTION_BUILD_MS": 8.725,
+ "PROJECTION_BUILD_MS_median_by_world": {
+  "battery": 8.485,
+  "drone": 8.965,
+  "gen1_pool": 6.565,
+  "hvac_chamber": 8.145,
+  "hvac_field": 12.61,
+  "motor": 13.317
+ },
+ "SERIALIZED_OWNED_WORLD_BYTES": [
+  7390,
+  26501
+ ],
+ "br1_cases_on_br1_1_code": {
+  "ACTIONSPACE_BUILD_MS": 0.351,
+  "FEASIBILITY_P50_MS": 0.1934,
+  "FEASIBILITY_P95_MS": 0.3348,
+  "REFERENCE_SOLVER_MS": {
+   "median": 154.938,
+   "what": "one Gen1 repsem judgment (scipy least-squares model fit) on the synthetic mind_repsem_v1 IDENTIFIABLE fixture, seed 0: an in-repo solver execution"
+  },
+  "WORLD_BUILD_MS": 1.455
+ },
+ "host": {
+  "cpu_count": 4,
+  "platform": "Linux-6.18.44-fc-v140-x86_64-with-glibc2.39",
+  "python": "3.13.16"
+ },
+ "repeats": 25,
+ "samples": {
+  "admission": 525,
+  "verify": 150
+ },
+ "schema": "forge.mind.gen2_authority.performance/1"
+}

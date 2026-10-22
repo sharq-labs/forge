@@ -1,0 +1,953 @@
+{
+ "gen1_failure_class": {
+  "admitted": false,
+  "alternatives_I_A": [
+   {
+    "magnitude": 1.0,
+    "schema": "quantity/1",
+    "units": "ampere"
+   },
+   {
+    "magnitude": 2.0,
+    "schema": "quantity/1",
+    "units": "ampere"
+   }
+  ],
+  "codes": [
+   "LEVEL_NOT_DECLARED"
+  ],
+  "label": "admissible options under the declared world, not recommendations",
+  "proposal": "I_A = 1.15 A",
+  "status": "INFEASIBLE_PROTOCOL"
+ },
+ "schema": "forge.mind.gen2_authority.benchmark/1",
+ "summary": {
+  "base_admitted": 19,
+  "base_not_admitted": [
+   "drone/simulate_flight: MISSING_INFORMATION ['APPLICABILITY_INPUT_NOT_EXACT']",
+   "hvac_field/simulate_building: MISSING_INFORMATION ['APPLICABILITY_INPUT_NOT_EXACT']"
+  ],
+  "base_total": 21,
+  "mutations_admitted": 0,
+  "mutations_total": 101,
+  "owner_changes_admitted": 0,
+  "owner_changes_total": 27,
+  "replay_reproduced": 21,
+  "replay_total": 21
+ },
+ "worlds": {
+  "battery": {
+   "base": {
+    "observe_rest": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "precondition_to_soc": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "pulse": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "signed_pulse": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "simulate_pulse": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    }
+   },
+   "bindings": 8,
+   "mutations": {
+    "applicability_content": "refused at rebuild (WorldRefused)",
+    "applicability_identity": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "binding_replaced_by_a_copy": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_UNVERIFIABLE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "budget": "refused at rebuild (WorldRefused)",
+    "budget_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declared_unit": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "domain": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "owner_id": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "projected_value": "refused at rebuild (WorldRefused)",
+    "projected_value_and_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "protocol_level": "refused at rebuild (WorldRefused)",
+    "provider_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "provider_status": "refused at rebuild (WorldRefused)",
+    "record_digest": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "record_id": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "revision": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "unit": "refused at rebuild (WorldRefused)",
+    "unit_registry": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes": {
+    "budget_charged": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_revised": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "model_record_replaced": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "provider_down": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "state_advanced": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes_on": "observe_rest",
+   "replay": {
+    "observe_rest": "reproduced",
+    "precondition_to_soc": "reproduced",
+    "pulse": "reproduced",
+    "signed_pulse": "reproduced",
+    "simulate_pulse": "reproduced"
+   },
+   "verified": true,
+   "world_revision": "b081418cc2de52ab90c8e215ff29caab0508460d5c7b807c8f4395e5f4b205b6"
+  },
+  "drone": {
+   "base": {
+    "climb_test": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "hover_test": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "observe_wind": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "simulate_flight": {
+     "admitted": false,
+     "codes": [
+      "APPLICABILITY_INPUT_NOT_EXACT"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "bindings": 9,
+   "mutations": {
+    "applicability_content": "refused at rebuild (WorldRefused)",
+    "applicability_identity": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "binding_replaced_by_a_copy": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_UNVERIFIABLE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "budget": "refused at rebuild (WorldRefused)",
+    "budget_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declared_unit": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "domain": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "owner_id": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "projected_value": "refused at rebuild (WorldRefused)",
+    "projected_value_and_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "protocol_level": "refused at rebuild (WorldRefused)",
+    "provider_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "provider_status": "refused at rebuild (WorldRefused)",
+    "record_digest": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "record_id": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "revision": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "unit": "refused at rebuild (WorldRefused)",
+    "unit_registry": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes": {
+    "budget_charged": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_revised": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "model_record_replaced": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "provider_down": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "state_advanced": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes_on": "climb_test",
+   "replay": {
+    "climb_test": "reproduced",
+    "hover_test": "reproduced",
+    "observe_wind": "reproduced",
+    "simulate_flight": "reproduced"
+   },
+   "verified": true,
+   "world_revision": "921bc4ecb5f42d93c3684c7accf66e581e3c6ff06829fcd227fb7e3df07ec184"
+  },
+  "gen1_pool": {
+   "base": {
+    "pool_query": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    }
+   },
+   "bindings": 3,
+   "mutations": {
+    "applicability_content": "not applicable",
+    "applicability_identity": "not applicable",
+    "binding_replaced_by_a_copy": "not applicable",
+    "budget": "refused at rebuild (WorldRefused)",
+    "budget_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declared_unit": "not applicable",
+    "domain": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "owner_id": "not applicable",
+    "projected_value": "not applicable",
+    "projected_value_and_binding": "not applicable",
+    "protocol_level": "refused at rebuild (WorldRefused)",
+    "provider_binding": "not applicable",
+    "provider_status": "not applicable",
+    "record_digest": "not applicable",
+    "record_id": "not applicable",
+    "revision": "not applicable",
+    "unit": "not applicable",
+    "unit_registry": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes": {
+    "budget_charged": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_revised": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes_on": "pool_query",
+   "replay": {
+    "pool_query": "reproduced"
+   },
+   "verified": true,
+   "world_revision": "de1ebae2461d1b15d515966d6e9f9847ce051e4d4841a8a2c93bb5228eb26f57"
+  },
+  "hvac_chamber": {
+   "base": {
+    "mode_change": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "observe_room": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "simulate_building": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "step_speed": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    }
+   },
+   "bindings": 8,
+   "mutations": {
+    "applicability_content": "refused at rebuild (WorldRefused)",
+    "applicability_identity": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "binding_replaced_by_a_copy": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_UNVERIFIABLE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "budget": "refused at rebuild (WorldRefused)",
+    "budget_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declared_unit": "refused at rebuild (WorldRefused)",
+    "domain": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "owner_id": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "projected_value": "refused at rebuild (WorldRefused)",
+    "projected_value_and_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "protocol_level": "refused at rebuild (WorldRefused)",
+    "provider_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "provider_status": "refused at rebuild (WorldRefused)",
+    "record_digest": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "record_id": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "revision": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "unit": "refused at rebuild (UnitCompatibilityError)",
+    "unit_registry": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes": {
+    "budget_charged": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_revised": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "model_record_replaced": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "provider_down": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "state_advanced": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes_on": "mode_change",
+   "replay": {
+    "mode_change": "reproduced",
+    "observe_room": "reproduced",
+    "simulate_building": "reproduced",
+    "step_speed": "reproduced"
+   },
+   "verified": true,
+   "world_revision": "a6e49419e29112c5d2a45fcb068a7f8c586e6427461d9e7e5ddce42c566521fc"
+  },
+  "hvac_field": {
+   "base": {
+    "mode_change": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "observe_room": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "simulate_building": {
+     "admitted": false,
+     "codes": [
+      "APPLICABILITY_INPUT_NOT_EXACT"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "step_speed": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    }
+   },
+   "bindings": 9,
+   "mutations": {
+    "applicability_content": "refused at rebuild (WorldRefused)",
+    "applicability_identity": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "binding_replaced_by_a_copy": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_UNVERIFIABLE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "budget": "refused at rebuild (WorldRefused)",
+    "budget_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declared_unit": "refused at rebuild (WorldRefused)",
+    "domain": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "owner_id": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "projected_value": "refused at rebuild (WorldRefused)",
+    "projected_value_and_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "protocol_level": "refused at rebuild (WorldRefused)",
+    "provider_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "provider_status": "refused at rebuild (WorldRefused)",
+    "record_digest": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "record_id": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "revision": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "unit": "refused at rebuild (UnitCompatibilityError)",
+    "unit_registry": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes": {
+    "budget_charged": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_revised": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "model_record_replaced": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "provider_down": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "state_advanced": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes_on": "mode_change",
+   "replay": {
+    "mode_change": "reproduced",
+    "observe_room": "reproduced",
+    "simulate_building": "reproduced",
+    "step_speed": "reproduced"
+   },
+   "verified": true,
+   "world_revision": "26dbbc30e543ac0ce9999df2adc7028d4b4499f08e9196184d591cd9222b3b43"
+  },
+  "motor": {
+   "base": {
+    "load_step": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "observe_temperature": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    },
+    "simulate_thermal": {
+     "admitted": true,
+     "codes": [],
+     "status": "FEASIBLE"
+    }
+   },
+   "bindings": 9,
+   "mutations": {
+    "applicability_content": "refused at rebuild (WorldRefused)",
+    "applicability_identity": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "binding_replaced_by_a_copy": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_UNVERIFIABLE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "budget": "refused at rebuild (WorldRefused)",
+    "budget_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declared_unit": "refused at rebuild (WorldRefused)",
+    "domain": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "owner_id": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "projected_value": "refused at rebuild (WorldRefused)",
+    "projected_value_and_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "protocol_level": "refused at rebuild (WorldRefused)",
+    "provider_binding": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "provider_status": "refused at rebuild (WorldRefused)",
+    "record_digest": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISSING"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "record_id": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "revision": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_MISMATCH"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "unit": "refused at rebuild (UnitCompatibilityError)",
+    "unit_registry": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes": {
+    "budget_charged": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "declaration_revised": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "model_record_replaced": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "provider_down": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "state_advanced": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    }
+   },
+   "owner_changes_on": "load_step",
+   "replay": {
+    "load_step": "reproduced",
+    "observe_temperature": "reproduced",
+    "simulate_thermal": "reproduced"
+   },
+   "verified": true,
+   "world_revision": "73fbb0181c07b88080eeebf3e54d9db0984cf422da877839785f4ec92c4ade41"
+  }
+ }
+}
