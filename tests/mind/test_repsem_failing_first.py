@@ -24,7 +24,7 @@ import pytest
 
 from benchmarks.mind_repsem_v1 import fixtures as fx
 from engcore.mind.repsem import (
-    ClaimState, Disposition, RefusalReason, RoleRefused, RoleTable, ScopedClaim, ScopedClaimRefused, VariableRole,
+    ClaimState, Disposition, Refusal, RefusalReason, RoleRefused, RoleTable, ScopedClaim, ScopedClaimRefused, VariableRole,
     assess, legacy_role_table,
 )
 
@@ -56,7 +56,14 @@ def test_b_non_identifiability_is_explicit(runs):
 
 
 def test_b_claim_state_and_refusal_reason_are_different_things():
-    assert ClaimState.NOT_IDENTIFIABLE.value != RefusalReason.NOT_IDENTIFIABLE.value
+    # The brief names both NOT_IDENTIFIABLE: one is a decisive negative claim, the other a reason to refuse.
+    decided = ScopedClaim("IDENTIFIABILITY", Disposition.NOT_SUPPORTED, state=ClaimState.NOT_IDENTIFIABLE,
+                          evidence=("e",), reason="rank-deficient").to_dict()
+    refusal = ScopedClaim("WITHIN_CELL_GENERALIZATION", Disposition.REFUSED,
+                          refusal=Refusal(RefusalReason.NOT_IDENTIFIABLE, {"why": "x"}), reason="x").to_dict()
+    assert (decided["state"], decided["refusal"]) == ("NOT_IDENTIFIABLE", None)
+    assert (refusal["state"], refusal["refusal"]["reason"]) == (None, "NOT_IDENTIFIABLE")
+    assert type(ClaimState.NOT_IDENTIFIABLE) is not type(RefusalReason.NOT_IDENTIFIABLE)
 
 
 # ---- C. cross-cell transfer -------------------------------------------------------------------------------------
@@ -137,9 +144,14 @@ def test_g_latent_parameters_are_estimated_not_observed(runs):
 
 
 # ---- H. negative evidence ---------------------------------------------------------------------------------------
-def test_h_failed_bar_in_domain_is_not_supported_not_unassessable(runs):
-    c = runs["MODEL_INADEQUATE"].claims["WITHIN_CELL_GENERALIZATION"]
-    assert c.disposition is Disposition.NOT_SUPPORTED
+def test_h_negative_evidence_is_not_supported_not_unassessable(runs):
+    # v1 answered every one of these NOT_ASSESSABLE.  (Written first against MODEL_INADEQUATE's within-cell set, whose
+    # NOT label the construction audit later disproved: the interpolated level is predicted within the bar.)
+    r = runs["MODEL_INADEQUATE"]
+    for axis in ("MODEL_ADEQUACY", "MODEL_DISCREPANCY"):
+        assert r.claims[axis].disposition is Disposition.NOT_SUPPORTED
+    cross = runs["CROSS_DOMAIN_TRANSFER_FAIL"].claims["CROSS_CELL_TRANSFER"]
+    assert cross.disposition is Disposition.NOT_SUPPORTED and cross.evidence
 
 
 def test_h_structural_non_identifiability_is_decided_without_declared_noise():
@@ -180,6 +192,14 @@ def test_counter_out_of_domain_still_refuses(runs):
     c = runs["OUT_OF_DOMAIN"].claims["WITHIN_CELL_GENERALIZATION"]
     assert (c.disposition, c.refusal.reason) == (Disposition.REFUSED, RefusalReason.OUT_OF_DOMAIN)
     assert "heldout_stats" not in c.refusal.condition, "applicability precedes evidence-bearing execution"
+
+
+@pytest.mark.parametrize("var", ["R0", "voltage_V", "nonexistent"])
+def test_counter_an_unrepresentable_domain_refuses_transfer_without_crashing(var):
+    spec = fx.build("IDENTIFIABLE", SEED)
+    spec["applicability"]["variables"] = ["current_A", var]
+    c = assess(spec, fx.FAMILIES).claims["WITHIN_CELL_GENERALIZATION"]
+    assert (c.disposition, c.refusal.reason) == (Disposition.REFUSED, RefusalReason.REPRESENTATION_UNAVAILABLE)
 
 
 def test_counter_every_refusal_names_a_condition():

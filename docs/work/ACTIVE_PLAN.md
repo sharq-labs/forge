@@ -6,6 +6,19 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task - BR-MIND-REPSEM-01 representation + semantic roles repair (2026-10-22)
+
+Development-only repair on `research/mind-representation-semantics-v1` (worktree `D:/forge-repsem`, local, based on
+the v1 evaluation commit `d516e681`). It adds `engcore.mind.repsem` (declared variable roles, scoped claim states,
+named refusal conditions, a structured hypothesis record, role-typed binding of declared families, replayable
+judgments) and leaves `engcore.mind.minimal` and every battery v1 artifact unchanged. Synthetic fixtures only; no
+battery data was evaluated. Result: READY_FOR_BATTERY_V2 against the task's own criteria (see
+`benchmarks/mind_repsem_v1/README.md`).
+
+Next executable step: a battery v2 plan. It must freeze role declarations in the pack as protocol metadata, implement
+the fitted-OCV declared family (P1), and state up front that P1's UNKNOWN voltage uncertainty forces refusals by
+design. No push and no merge without the owner.
+
 ## Current bounded task - BR-BATT-REDISC-01 battery rediscovery pilot (2026-10-21)
 
 Development pilot on `research/battery-rediscovery-pilot-v0` (local). The sealed run's preregistered conclusion is

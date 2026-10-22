@@ -8203,3 +8203,77 @@ Commands, all run with `PYTHONPATH="D:/forge-redisc/src;D:/forge-redisc"` and th
 6. `python -m benchmarks.battery_rediscovery_v1.evaluator.run_evaluation`: REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY.
 
 FAST, SCIENTIFIC, the regression pack and certification were NOT RUN for v1.
+
+
+## 2026-10-22 — BR-MIND-REPSEM-01: minimal representation + scientific semantic roles repair (development)
+
+Branch `research/mind-representation-semantics-v1` (worktree `D:/forge-repsem`, local, based on `d516e681`).
+Commits: `db439744` (gap map and failing-first tests), then the implementation commit. Report:
+`benchmarks/mind_repsem_v1/README.md`. Development evidence only. No battery data was evaluated, battery v2 was not
+run, and nothing here is a battery improvement claim.
+
+- **Gap map** (from frozen candidate-side records and the outcome labels only; `truth` is never read): of the 8 v1 Mind
+  failures, REPRESENTATION_MISSING 5, SEMANTIC_ROLE_ERROR 2 (P1 cross-cell: SOC posed as a passive covariate; P2
+  within-cell: the protocol current level posed as a passive covariate), MULTIPLE_CAUSES 1 (P2 identifiability).
+- **New package `engcore.mind.repsem`.**
+  - Seven declared roles, accepted only from the specification or the protocol.
+  - Five dispositions, ten scoped claim states and six named refusal reasons. Each claim type records its meaning,
+    evidence, refusal condition and scope.
+  - `ScientificHypothesis` has no `law` field.
+  - Role-typed family binding; replayable judgments.
+  - Identifiability reuses the frozen V1 rule (`hybrid_uq.identifiability.classify`).
+  - `engcore.mind.minimal` and every v1 frozen file are unchanged (pinned by a test).
+- **Ablation** on 6 synthetic fixtures × 5 seeds × 2 protocols, 260 scored answers per arm. Correct / false support /
+  false refuse:
+
+  | Arm | Correct | False support | False refuse |
+  |---|---:|---:|---:|
+  | OLD_MIND | 66 | 10 | 184 |
+  | REPRESENTATION_ONLY | 60 | 0 | 200 |
+  | SEMANTIC_ROLES_ONLY | 60 | 0 | 200 |
+  | REPRESENTATION_PLUS_ROLES | 260 | 0 | 0 |
+
+  - Replay: 120/120 EXACT.
+  - The combined score is on fixtures generated around its own declared family with 2× truth margins. It shows
+    expressiveness and correct refusal logic, not real-data performance.
+- **Conclusion: READY_FOR_BATTERY_V2**, against the task's six success criteria. A v2 still needs:
+  - role declarations frozen in the pack;
+  - a fitted-OCV declared family for P1;
+  - acceptance that P1's UNKNOWN voltage uncertainty forces refusals by design.
+
+**Disclosed corrections and failed approaches, recorded so they are not repeated:**
+- **Slow-branch fixture absorbed by rc1.** The first MODEL_INADEQUATE fixture used a slow second RC branch. rc1 absorbs
+  it (3.1 mV rmse, under the 5 mV bar), so the "inadequate" label was false. It is now a charge-transfer overpotential
+  (asinh in I).
+- **Truth labels need an audit, not an argument.** Every label must now pass `construction_audit`: noise-free data, a
+  dense oracle fit and a 2× margin. The audit then showed that MODEL_INADEQUATE's within-cell label is SUPPORTED (an
+  inadequate family interpolates the 1.5 A level to 2.2 mV). It also showed that the cross-unit R0 of 0.022 Ω missed
+  the margin (raised to 0.026 Ω).
+- **v1's adapter cannot pose a 20 s pulse.** Its time box starts at median(dt)/0.05 = 20 s. A long-pulse protocol was
+  added so the Mind arms are tested where they can act. Labels the audit does not support there are unscored.
+- **Roles alone do not help the Minimal Mind.** Posing the protocol current as settable makes the Mind request levels a
+  recorded pool does not hold (first request 1.15 A; refused; no rival fitted). Its two-class problem form cannot carry
+  FIXED_PROTOCOL_CONDITION.
+- **Two failing-first expectations were wrong, and were corrected.**
+  - Test B expected the claim state and the refusal reason NOT_IDENTIFIABLE to differ as strings. The brief names both
+    identically; they differ by field and by disposition.
+  - Test H used the disproved MODEL_INADEQUATE within-cell label.
+- **The schema-check guard needs a schema-checking parent.** `RoleDeclaration` joined its nested-exemption list, which
+  required `RoleTable.from_spec` to check the problem schema itself.
+
+Commands, all run with `PYTHONPATH="D:/forge-repsem/src;D:/forge-repsem"` and the phyx `.venv` Python 3.14:
+1. Before implementation: `python -m pytest tests/mind/test_repsem_failing_first.py tests/mind/test_repsem_replay.py -q`
+   gave 2 collection errors (ImportError).
+2. `python -m benchmarks.mind_repsem_v1.run_ablation`: written to `results/ABLATION.json`, replay 120 EXACT / 0 OTHER.
+   Rerun after the `_domain` hardening: byte-identical.
+3. `python -m pytest tests/mind tests/test_core_semantic_invariants.py tests/test_core_api_layering.py
+   benchmarks/mind_repsem_v1/tests benchmarks/battery_rediscovery_v1/tests -q -p no:cacheprovider`: see the commit
+   message for the final count. The one failure, `test_every_reader_that_writes_a_schema_also_checks_one`, is
+   pre-existing: it fails identically on `d516e681` for 7 unrelated classes.
+4. FAST, `python -m pytest -q -m "not expensive" -n 4`:
+   - base `d516e681` (`D:/forge-redisc`): 197 failed, 22 errors, 11792 passed.
+   - this branch, uncommitted: 200 failed, 22 errors, 11837 passed.
+   - The 3 new failures were two Core-freeze manifest tests reporting `tree.clean` (uncommitted files) and the
+     nested-exemption read-site test (fixed). See the commit message for the clean-tree recheck.
+
+The regression pack, SCIENTIFIC and certification were NOT RUN.

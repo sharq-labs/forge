@@ -357,6 +357,8 @@ _NESTED_WITHOUT_SCHEMA_AT = frozenset({
     ("MindHypothesis", "src/engcore/mind/transition.py"),
     ("Dependency", "src/engcore/mind/transition.py"),
     ("CandidateAction", "src/engcore/mind/transition.py"),
+    # RoleTable.from_dict checks ROLE_TABLE_SCHEMA before it reads its declarations
+    ("RoleDeclaration", "src/engcore/mind/repsem/roles.py"),
     # Phase 3 BR15: read only through WindowErrorControl.from_dict, which
     # checks WINDOW_ERROR_CONTROL_SCHEMA before it reads its `outputs`
     ("MonitoredOutput", "src/engcore/scientific/multiphysics/plan.py"),
@@ -476,6 +478,8 @@ _NESTED_READ_ONLY_BY = {
     "MindHypothesis": {("src/engcore/mind/transition.py", "MindState.from_dict")},
     "Dependency": {("src/engcore/mind/transition.py", "MindState.from_dict")},
     "CandidateAction": {("src/engcore/mind/transition.py", "MindState.from_dict")},
+    "RoleDeclaration": {("src/engcore/mind/repsem/roles.py", "RoleTable.from_dict"),
+                        ("src/engcore/mind/repsem/roles.py", "RoleTable.from_spec")},
     "MonitoredOutput": {("src/engcore/scientific/multiphysics/plan.py", "WindowErrorControl.from_dict")},
 }
 
