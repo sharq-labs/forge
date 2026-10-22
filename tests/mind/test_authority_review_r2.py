@@ -326,3 +326,67 @@ def test_sria_verdicts_are_exported_only_from_an_admission_under_live_readers():
     assert not frozen.live and frozen.verification.ok and frozen.status is live.status
     assert frozen.feasibility_verdicts() == ()                         # a snapshot decides, but never exports
     assert frozen.digest == live.digest                                # liveness is not part of the identity
+
+
+# ---- round-2 critic K-F1 (BLOCKER at bc6980c): a restated fixed condition never moves the value decided on ---------------------
+def _hvac_strict_endpoint():
+    """hvac_chamber whose model is valid only for T_out < 35 degC (a strict endpoint at the protocol's fixed level)."""
+    from engcore.scientific import Quantity
+    o = ax.owned("hvac_chamber")
+    m = next(x for x in o.models.list() if x.validity.context_keys >= {"T_out"})
+    cond = next(c for c in m.validity.conditions if c.name == "T_out")
+    strict = dataclasses.replace(m, validity=dataclasses.replace(m.validity, conditions=tuple(
+        dataclasses.replace(c, maximum=Quantity(35.0, "degC"), maximum_inclusive=False) if c is cond else c
+        for c in m.validity.conditions)))
+    o.models = ax.ModelRegistry(tuple(strict if x is m else x for x in o.models.list()))
+    return o
+
+
+def _hvac_constraint(source):
+    """hvac_chamber with a declared constraint T_out < 35 degC (protocol metadata or problem specification)."""
+    from engcore.mind.repsem.roles import RoleSource
+    from engcore.mind.world.domains import DeclaredConstraint
+    from engcore.scientific import ConstraintDefinition, ConstraintOperator as Op, Quantity
+    o = ax.owned("hvac_chamber")
+    scope = ("simulate_building",) if source == "protocol" else ("*",)
+    c = DeclaredConstraint("t_out_below_35", ConstraintDefinition("t_out_below_35", "T_out", Op.LESS_THAN,
+                                                                  Quantity(35.0, "degC")), None, scope,
+                           RoleSource.PROTOCOL_METADATA if source == "protocol" else RoleSource.PROBLEM_SPECIFICATION,
+                           "synthetic: the chamber stays below 35 degC")
+    o.declaration = dataclasses.replace(o.declaration, constraints=o.declaration.constraints + (c,))
+    return o
+
+
+def _lm(world, assignments, observe):
+    from engcore.mind.world import proposed_action_from_suggestion
+    from engcore.sria.decision.external import ExternalSuggestion
+    from engcore.sria.decision.hypotheses import ProposerKind
+    point = {"assignments": [{"variable": k, "value": v.to_dict()} for k, v in assignments.items()],
+             "observe": list(observe)}
+    s = ExternalSuggestion(ProposerKind.LANGUAGE_MODEL, "llm", "1", world.action("simulate_building").family,
+                           "simulate_building", point, "restating the protocol temperature in kelvin",
+                           extra={"world_revision": world.revision_id})
+    return proposed_action_from_suggestion(s, world=world)
+
+
+@pytest.mark.parametrize("variant,expected", [("strict_endpoint", F.INFEASIBLE_APPLICABILITY),
+                                              ("protocol", F.INFEASIBLE_PROTOCOL),
+                                              ("specification", F.INFEASIBLE_DOMAIN)])
+@pytest.mark.parametrize("proposer", ["port", "language_model"])
+def test_a_restated_fixed_condition_is_decided_and_dispatched_at_the_fixed_value(variant, expected, proposer):
+    from engcore.mind.world import ExecutionDesk, IntakeRefusal, MindWorldPort, project_world
+    from engcore.scientific import Quantity
+    o = _hvac_strict_endpoint() if variant == "strict_endpoint" else _hvac_constraint(variant)
+    assignments, observe = ax.base("hvac_chamber")["simulate_building"]
+    calls = []
+    gateway = ExecutionDesk(o.authorities(), calls.append, accept_synthetic=True).gateway()
+    port = MindWorldPort(FeasibleActionSpace.build(project_world(o.declaration, o.authorities())))
+    fixed = port.world.action("simulate_building").fixed("T_out").value
+    restated = Quantity(fixed.to("kelvin").magnitude - 1e-10, "kelvin")    # the same value at 12 digits
+    make = (lambda a: o.propose("simulate_building", a, observe, world=port.world)) if proposer == "port" else (
+        lambda a: _lm(port.world, a, observe))
+    honest, forged = make(assignments), make({**assignments, "T_out": restated})
+    assert not isinstance(forged, IntakeRefusal), forged
+    h, r = port.request_admission(honest, gateway), port.request_admission(forged, gateway)
+    assert h.status is expected and r.status is expected, (h.codes(), r.codes())
+    assert r.admitted is None and not calls

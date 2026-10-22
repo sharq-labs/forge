@@ -475,6 +475,14 @@ def test_nothing_in_the_world_package_dispatches_or_holds_an_executor():
     assert len(calls_of_executor) == 2 and all(len(c.args) == 1 and isinstance(c.args[0], ast.Call)
                                                for c in calls_of_executor)
     assert {c.args[0].func.id for c in calls_of_executor} == {"authorize_dispatch", "verify_authorization"}
+    # every other read of the injected callable only checks it or hands it to the guard (round-2 critic K-F3)
+    uses = [n for n in ast.walk(tree) if isinstance(n, ast.Name) and n.id == "executor" and isinstance(n.ctx, ast.Load)]
+    parents = {id(child): node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+    outside = [parents[id(n)] for n in uses if parents[id(n)] not in calls_of_executor]
+    assert len(uses) == 4 and sorted(p.func.id for p in outside) == ["_GuardedExecutor", "callable"], ast.dump(
+        outside[0]) if outside else uses
+    assert not [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                and n.func.attr == "_executor"]                       # the desk never calls the raw callable
 
 
 # ---- owner records: a projected world (GEN2-BR1.1) ----------------------------------------------------------------------------------

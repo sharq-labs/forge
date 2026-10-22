@@ -234,17 +234,38 @@ def test_i_a_unit_spelling_never_changes_a_decision(ax):
 
 
 def test_i_copied_unit_text_cannot_change_the_projected_value(ax):
+    """0.8 dimensionless respelled 0.8 percent: refused when built (its binding projected other values); a forger who
+    also restates the binding's projection and the world's identity reaches admission, which refuses it against the
+    owner (round-2 critic K-F3: every layer is reached, none is skipped)."""
     o = ax.owned("battery")
     payload = copy.deepcopy(o.world.to_dict())
-    for v in payload["variables"]:
-        if v["name"] == "SOC":
-            v["value"]["units"] = "percent"                         # 0.8 dimensionless -> 0.8 percent
-    try:
-        tampered = type(o.world).from_dict(payload)
-    except (WorldRefused, ValueError, KeyError):
-        return
+    with pytest.raises(WorldRefused, match="differ from what their authority binding projected"):
+        type(o.world).from_dict(_respelled_soc(payload, rebind=False))
+    tampered = type(o.world).from_dict(_respelled_soc(payload, rebind=True))
+    assert tampered.variable("SOC").value.units == "percent" and tampered.revision_id != o.world.revision_id
     r = _admit(tampered, o.propose("pulse", PULSE, world=tampered), o.authorities())
     assert r.admitted is None and r.status is F.MISSING_INFORMATION
+    assert not r.verification.ok and any(c.startswith("AUTHORITY_") for c in _codes(r))
+
+
+def _respelled_soc(payload, *, rebind: bool):
+    """SOC's value and uncertainty respelled in percent; with ``rebind`` the binding's projection digest and the world
+    identity are restated to match (a self-consistent forgery)."""
+    from engcore.mind.world.authority import projection_digest
+    from engcore.mind.world.variables import value_projection
+    from engcore.scientific import Quantity, Uncertainty
+    payload = copy.deepcopy(payload)
+    for v in payload["variables"]:
+        if v["name"] == "SOC":
+            v["value"]["units"] = "percent"
+            for edge in ("lower", "upper"):
+                v["uncertainty"][edge]["units"] = "percent"
+            if rebind:
+                v["source"]["projection"] = projection_digest(value_projection(
+                    Quantity.from_dict(v["value"]), Uncertainty.from_dict(v["uncertainty"])))
+    if rebind:
+        payload = {k: x for k, x in payload.items() if k not in ("content_digest", "revision_id")}
+    return payload
 
 
 def test_i_the_world_binds_the_unit_registry_it_was_projected_under(ax):

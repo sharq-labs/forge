@@ -679,6 +679,13 @@ def _used_reads(world: ScientificWorld, spec: ActionSpec, proposal: ProposedActi
     return {n for n in names if world.declares(n)}
 
 
+def decided_value(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction, name: str) -> Any:
+    """The exact value every family decided ``name`` on for this proposal (its assignment for a control, the action's
+    fixed condition), or None if the decision read no exact value for it.  Admission mints exactly these values."""
+    r = _resolve(world, spec, proposal, name)
+    return None if r is None or r.edges is None else r.value
+
+
 def context_reads(world: ScientificWorld, spec: ActionSpec) -> set[str]:
     """Every variable a decision on this action may read besides its configuration: preconditions, every in-scope
     constraint's metric and guard, every applicability input, every control guard."""

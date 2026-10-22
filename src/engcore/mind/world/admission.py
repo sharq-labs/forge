@@ -60,7 +60,7 @@ from .base import StaleProposal, WorldRefused, digest, schema, value_payload
 from .domains import DiscreteLevels, matched_level
 from .feasibility import (
     CheckFamily, FeasibilityDecision, FeasibilityReason, FeasibilityStatus, FeasibleActionSpace, canonical,
-    context_reads,
+    context_reads, decided_value,
 )
 from .projection import verified_projection
 from .world import ScientificWorld
@@ -189,6 +189,9 @@ def _mint(space: FeasibleActionSpace, proposal: ProposedAction, report: Authorit
     config = {f.name: f.value for f in spec.fixed_conditions}
     for name, value in proposal.assignments:
         config.setdefault(name, value)
+    for name, value in config.items():              # dispatch exactly what was decided (round-2 critic K-F1)
+        if decided_value(world, spec, proposal, name) is not value:
+            raise WorldRefused(f"{name!r}: the configuration to mint is not the value the decision was made on")
     context = tuple(_frozen(_context_entry(world, n)) for n in sorted(context_reads(world, spec) - set(config)))
     models = tuple(_frozen({"binding_id": a, "authority": None if world.applicability_binding(a).authority is None
                             else world.applicability_binding(a).authority.identity()}) for a in spec.applicability)
