@@ -1,15 +1,15 @@
 {
  "cases": 515,
- "cases_sha256": "8cae3c830f8ed317b618e42e524a2fc38922689c8504b6373daf379c7ae37df6",
+ "cases_sha256": "0e4d23ca6851bc96aac088d2410c06894593506bc15778e1c064de2108946d51",
  "cross_process": {
   "by_hash_seed": {
-   "0": "c06e8c0e1792c72e02e0d82fa2054ed68632addd93203e505945c9269495ff3c",
-   "4242": "c06e8c0e1792c72e02e0d82fa2054ed68632addd93203e505945c9269495ff3c"
+   "0": "d33a9c2d2f6079334bc499cf8e59be41e68b7f64534b35b35dfba1cc010a356b",
+   "4242": "d33a9c2d2f6079334bc499cf8e59be41e68b7f64534b35b35dfba1cc010a356b"
   },
   "identical": true,
-  "in_process": "c06e8c0e1792c72e02e0d82fa2054ed68632addd93203e505945c9269495ff3c"
+  "in_process": "d33a9c2d2f6079334bc499cf8e59be41e68b7f64534b35b35dfba1cc010a356b"
  },
- "decisions_digest": "c06e8c0e1792c72e02e0d82fa2054ed68632addd93203e505945c9269495ff3c",
+ "decisions_digest": "d33a9c2d2f6079334bc499cf8e59be41e68b7f64534b35b35dfba1cc010a356b",
  "replay_and_serialization": {
   "outcomes": {
    "reproduced": 515
@@ -23,9 +23,10 @@
  "scores": {
   "GEN1_ROLE_ONLY": {
    "cases": 515,
-   "false_admissions": 52,
-   "false_admissions_by_mutation": {
-    "APPLICABILITY_OUTSIDE": 2,
+   "false_feasible": 52,
+   "false_feasible_by_mutation": {
+    "APPLICABILITY_OUTSIDE": 1,
+    "APPLICABILITY_OUTSIDE_INTERVAL": 1,
     "BUDGET_EXHAUSTED": 6,
     "BUDGET_UNDECLARED": 5,
     "OBSERVE_DERIVED": 5,
@@ -40,13 +41,13 @@
     "WRONG_KIND": 2,
     "WRONG_UNIT": 7
    },
-   "false_rejections": 7,
-   "false_rejections_by_case_kind": {
+   "false_not_feasible": 7,
+   "false_not_feasible_by_case_kind": {
     "VALID_FIXED_RESTATE": 3,
     "VALID_RESPELL": 4
    },
    "invalid": 117,
-   "invalid_rejected": 65,
+   "invalid_found_not_feasible": 65,
    "not_posable_by_world": {
     "battery": 109,
     "drone": 99,
@@ -56,7 +57,7 @@
    },
    "status_accuracy": "N/A (Gen1 returns a bool and one reason string, no typed status)",
    "valid": 22,
-   "valid_admitted": 15,
+   "valid_found_feasible": 15,
    "verdict_FEASIBLE": 67,
    "verdict_NOT_FEASIBLE": 72,
    "verdict_NOT_POSABLE": 376
@@ -64,23 +65,23 @@
   "GEN2_WORLD_ACTIONSPACE": {
    "cases": 515,
    "codes_correct": 515,
-   "false_admissions": 0,
-   "false_rejections": 0,
-   "feasible_admission_accuracy": 1.0,
+   "false_feasible": 0,
+   "false_not_feasible": 0,
    "invalid": 437,
-   "invalid_rejected": 437,
-   "invalid_rejection_accuracy": 1.0,
+   "invalid_found_not_feasible": 437,
+   "invalid_found_not_feasible_rate": 1.0,
    "misses": [],
    "reason_code_accuracy": 1.0,
    "status_accuracy": 1.0,
    "status_correct": 515,
    "valid": 78,
-   "valid_admitted": 78
+   "valid_found_feasible": 78,
+   "valid_found_feasible_rate": 1.0
   },
   "cross_domain": {
-   "kinds_correct_in_every_world": 37,
-   "kinds_with_one_status_across_worlds": 33,
-   "mutation_kinds_in_two_or_more_worlds": 37,
+   "kinds_correct_in_every_world": 38,
+   "kinds_with_one_status_across_worlds": 34,
+   "mutation_kinds_in_two_or_more_worlds": 38,
    "per_kind": {
     "ABOVE_RANGE": {
      "statuses": [
@@ -94,8 +95,15 @@
      "statuses": [
       "INFEASIBLE_APPLICABILITY"
      ],
-     "worlds": 5,
-     "worlds_correct": 5
+     "worlds": 3,
+     "worlds_correct": 3
+    },
+    "APPLICABILITY_OUTSIDE_INTERVAL": {
+     "statuses": [
+      "INFEASIBLE_APPLICABILITY"
+     ],
+     "worlds": 2,
+     "worlds_correct": 2
     },
     "BASE": {
      "statuses": [
@@ -383,23 +391,23 @@
   },
   "head_to_head_on_gen1_posable_cases": {
    "cases": 139,
-   "gen1_false_admissions": 52,
-   "gen1_false_rejections": 7,
-   "gen1_invalid_rejected": 65,
-   "gen1_valid_admitted": 15,
-   "gen2_false_admissions": 0,
-   "gen2_false_rejections": 0,
-   "gen2_invalid_rejected": 117,
-   "gen2_valid_admitted": 22,
+   "gen1_false_feasible": 52,
+   "gen1_false_not_feasible": 7,
+   "gen1_invalid_found_not_feasible": 65,
+   "gen1_valid_found_feasible": 15,
+   "gen2_false_feasible": 0,
+   "gen2_false_not_feasible": 0,
+   "gen2_invalid_found_not_feasible": 117,
+   "gen2_valid_found_feasible": 22,
    "invalid": 117,
    "valid": 22
   },
   "unit_errors": {
    "cases": 30,
-   "gen1_admitted": 7,
+   "gen1_found_feasible": 7,
    "gen1_posable": 9,
-   "gen2_rejected_with_UNIT_INCOMPATIBLE": 30
+   "gen2_not_feasible_with_UNIT_INCOMPATIBLE": 30
   }
  },
- "terminology": "A per-case verdict is FEASIBLE or NOT_FEASIBLE under the action-feasibility check (Gen1: its own validity check; NOT_POSABLE when Gen1 cannot state the proposal).  The counters keep the brief's section 24 names: 'admitted' means found FEASIBLE and 'rejected' means found NOT_FEASIBLE; neither is evidence admission (sria.admission) or any scientific verdict."
+ "terminology": "A per-case verdict is FEASIBLE or NOT_FEASIBLE under the action-feasibility check (Gen1: its own validity check; NOT_POSABLE when Gen1 cannot state the proposal).  The brief's section 24 names map to these counters: VALID_ACTIONS_ADMITTED = valid_found_feasible, INVALID_ACTIONS_REJECTED = invalid_found_not_feasible, FALSE_ADMISSIONS = false_feasible, FALSE_REJECTIONS = false_not_feasible.  None of them is evidence admission (sria.admission) or any scientific verdict."
 }
