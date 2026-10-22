@@ -281,3 +281,48 @@ def test_a_level_is_matched_by_one_rule_in_every_spelling():
     temps = DiscreteLevels("degree_Celsius", (ax.q(25, "degC"),))
     assert matched_level(temps, ax.q(298.15, "K")) == ax.q(25, "degC")    # conversion noise, within LEVEL_ULP
     assert LEVEL_ULP <= 64
+
+
+# ---- R2-F4: the standing never closes an action on a value its proposals set ---------------------------------------------
+@pytest.mark.parametrize("name", sorted(ax.WORLDS))
+def test_every_action_a_base_proposal_admits_is_open_in_the_standing(name):
+    o = ax.WORLDS[name]()
+    space = FeasibleActionSpace.build(o.world)
+    admitted = [aid for aid, (assignments, observe) in ax.base(name).items()
+                if admit(space, o.propose(aid, assignments, observe), o.authorities()).feasible]
+    assert admitted                                                    # the control is not vacuous
+    assert set(admitted) <= set(space.open_actions()), (admitted, space.open_actions())
+    for entry in space.entries:                                        # no standing reason on a control or fixed value
+        spec = o.world.action(entry.action_id)
+        assert not [r for r in entry.standing if r.family.value == "state"
+                    and (spec.control(r.subject) is not None or spec.fixed(r.subject) is not None)]
+
+
+# ---- R2-F6 / R2-F10: an admitted action says what its configuration and its waived budget rest on -----------------------------
+def test_admitted_actions_and_authorizations_state_the_requested_configuration_and_declared_unbounded_budget():
+    from engcore.mind.world import admission as adm
+    from engcore.mind.world import authorize_dispatch
+    o = ax.owned("battery")
+    r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), o.authorities())
+    auth = authorize_dispatch(r.admitted, o.authorities(), accept_synthetic=True)
+    waived = sorted([list(p) for p in o.world.budget.unbounded])
+    assert waived                                                      # battery waives cost by declaration
+    for payload in (r.admitted.to_dict(), auth.to_dict()):
+        assert payload["configuration_basis"] == adm.CONFIGURATION_BASIS
+        assert "realization_uncertainty_not_assessed" in payload["configuration_basis"]
+        assert sorted(payload["budget_unbounded_by_declaration"]) == waived
+
+
+# ---- R2-F9: SRIA verdicts leave only a decision made under live owner readers ------------------------------------------------
+def test_sria_verdicts_are_exported_only_from_an_admission_under_live_readers():
+    from engcore.mind.world import Authorities
+    o = ax.gen1_pool()
+    off = {"I_A": ax.q(1.15, "A"), "t_on_s": ax.q(60, "s")}
+    space = FeasibleActionSpace.build(o.world)
+    live = admit(space, o.propose("pool_query", off), o.authorities())
+    assert live.live and live.verification.ok and live.feasibility_verdicts()
+    snapshot = o.authorities().snapshot(o.world.authority_bindings())
+    frozen = admit(space, o.propose("pool_query", off), Authorities.from_snapshot(snapshot))
+    assert not frozen.live and frozen.verification.ok and frozen.status is live.status
+    assert frozen.feasibility_verdicts() == ()                         # a snapshot decides, but never exports
+    assert frozen.digest == live.digest                                # liveness is not part of the identity

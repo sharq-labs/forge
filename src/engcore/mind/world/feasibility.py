@@ -30,7 +30,9 @@ domain, a model's validity domain) only if it is EXACT, and no current value in 
 record has no hard-enclosure form (UNKNOWN states nothing, STANDARD a spread, an INTERVAL a coverage strictly below 1
 or none), and no owner states a decision-coverage policy.  Such a decision is MISSING_INFORMATION whatever the
 uncertainty's kind, level or source; a probabilistic interval is never turned into a deterministic admission.  Exact
-values are the proposal's own assignments and the action's declared fixed conditions.
+values are the proposal's own assignments and the action's declared fixed conditions.  They are exact as REQUESTED: a
+constraint or a validity domain is decided on the requested configuration, and whether the execution realizes it
+within any tolerance is not assessed here (``CONFIGURATION_BASIS`` on every admitted action says so).
 
 A check alone admits nothing: only :func:`~.admission.admit`, on a world verified against its owners, mints an
 admitted action.  Nothing here dispatches, reserves budget or invokes a provider; that is the execution owner's.
@@ -636,8 +638,9 @@ def _check_state(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAct
         var = world.variable(name)
         if var.value is None or var.domain is None:
             continue    # an absent value is reported by the family that uses it; no declared domain states no range
-        if proposal is not None and (proposal.value(name) is not None or spec.fixed(name) is not None):
-            continue
+        if spec.fixed(name) is not None or (spec.control(name) is not None
+                                             and (proposal is None or proposal.value(name) is not None)):
+            continue    # exact as requested (as ``_resolve`` reads it); a control is proposal-dependent, not standing
         r = _world_basis(world, name)
         n += 1
         _note_bound(world, c, name, "state domain")

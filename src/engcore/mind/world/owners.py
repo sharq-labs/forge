@@ -14,7 +14,11 @@ and a set of declarations are values: ``RunStateReader(record)`` and ``Declarati
 execution side handed over at one moment (enough to project and to replay) and are NOT live;
 ``RunStateReader.following(head)`` and ``DeclarationReader.following(in_force)`` ask the execution side again at every
 read and are.  Frozen snapshot readers are never live.  Liveness is derived from the reader's type and mode, never
-asserted by a caller; only live readers back a dispatch.
+asserted by a caller; only live readers back a dispatch.  Liveness is the reader's MODE, not a proof of currency: a
+following reader is as current as the callable the execution side hands it (a callable that returns a fixed record
+is live by mode), a ``BudgetReader`` built over a mapping holds that mapping's id -> account objects (``following``
+re-reads the mapping), and a ``ProviderRegistryReader`` reads the provider owner's cached status unless the execution
+side chooses ``refresh=True``.  Which currency the execution side needs is its own policy; nothing here decides it.
 
 =================  ======================================================================================================
 owner kind         owner, identity and current read

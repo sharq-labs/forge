@@ -77,6 +77,10 @@ BUDGET_BASIS = "declared_estimate_against_the_owner_account_not_reserved"
 #: What "synthetic" means: some reference the DECLARATION itself labels a synthetic fixture.  Owners are not asked
 #: whether they are fixtures; a declaration that relabels its references is the declarer's responsibility.
 SYNTHETIC_BASIS = "labelled_synthetic_by_the_declaration"
+#: What the configuration of an admitted action means: constraints and validity domains were decided on the REQUESTED
+#: values (the proposal's assignments and the action's fixed conditions).  Whether the execution realizes them within
+#: any tolerance is not assessed: no owner states a realization uncertainty for a requested set point.
+CONFIGURATION_BASIS = "requested_configuration_realization_uncertainty_not_assessed"
 #: No canonical owner holds experiment protocols (allowed levels, action controls, guards): the declaration is
 #: caller-declared, held in force by the execution side and bound by identity, revision and digest.  It is reported
 #: as such, distinct from the owner-verified facts (state, models, providers, budgets, units).
@@ -144,7 +148,8 @@ class AdmittedAction:
                 "execution": self.execution.value, "providers": [detach(p) for p in self.providers],
                 "models": [detach(m) for m in self.models], "synthetic": self.synthetic,
                 "synthetic_basis": SYNTHETIC_BASIS, "budget_basis": BUDGET_BASIS,
-                "declaration_provenance": DECLARATION_PROVENANCE}
+                "budget_unbounded_by_declaration": [list(p) for p in self.world.budget.unbounded],
+                "configuration_basis": CONFIGURATION_BASIS, "declaration_provenance": DECLARATION_PROVENANCE}
 
     @property
     def digest(self) -> str:
@@ -205,6 +210,10 @@ class AdmissionResult:
     proposal: ProposedAction = field(repr=False)
     world: ScientificWorld = field(repr=False)
     space_id: str = ""
+    #: Whether every owner reader it was decided under consults its owner now (``owners.is_live``).  Not part of the
+    #: identity: a replay on the recorded owner payloads reproduces the same decision.  Liveness says the readers
+    #: follow their owners; it does not say whose owners they are (the execution side's, behind its gateway).
+    live: bool = field(default=False, compare=False)
 
     @property
     def feasible(self) -> bool:
@@ -215,8 +224,10 @@ class AdmissionResult:
 
     def feasibility_verdicts(self) -> tuple[Any, ...]:
         """Definite infeasibilities as SRIA ``FeasibilityVerdict`` records, only from a decision made on a world
-        verified against its owners (an unverified copy's refusals are never exported)."""
-        if not self.verification.ok or self.decision is None:
+        verified against LIVE owner readers (an unverified copy's refusals, and a decision on a snapshot, a memo or a
+        replay, are never exported).  A consumer takes verdicts from the execution side's ``AdmissionGateway``: readers
+        a caller built over owners of its own are live too, and nothing in-process tells them apart."""
+        if not self.live or not self.verification.ok or self.decision is None:
             return ()
         return self.decision.feasibility_verdicts()
 
@@ -275,6 +286,7 @@ def admit(space: FeasibleActionSpace, proposal: ProposedAction, authorities: Aut
     if rebuilt.space_id != space.space_id:
         raise WorldRefused("the action space is not the one its world builds")
     space = rebuilt
+    live = authorities.live
     report, fresh = verified_projection(world, authorities)
     if fresh is not None:                                 # decide on what the owners project, not on the caller's copy
         world, space = fresh, FeasibleActionSpace.build(fresh)
@@ -284,14 +296,15 @@ def admit(space: FeasibleActionSpace, proposal: ProposedAction, authorities: Aut
         if proposal.world_revision != world.revision_id:
             raise StaleProposal("the proposal was made for another world revision")
         return AdmissionResult(F.MISSING_INFORMATION, _authority_reasons(report), report, None, None, proposal, world,
-                               space.space_id)
+                               space.space_id, live)
     decision = space.check(proposal)
-    result = AdmissionResult(decision.status, decision.reasons, report, decision, None, proposal, world, space.space_id)
+    result = AdmissionResult(decision.status, decision.reasons, report, decision, None, proposal, world, space.space_id,
+                             live)
     if not decision.feasible:
         return result
     admitted = _mint(space, proposal, report, result.basis_digest)
     return AdmissionResult(decision.status, decision.reasons, report, decision, admitted, proposal, world,
-                           space.space_id)
+                           space.space_id, live)
 
 
 # ---- dispatch ----------------------------------------------------------------------------------------------------------------
@@ -318,6 +331,7 @@ class DispatchAuthorization:
     declaration: Any                                   # the declaration in force it was admitted under (identity)
     owners: tuple[tuple[str, str], ...]                # the owner instances (kind, id) it was re-admitted against
     settings: Any                                      # {variable: magnitude in its declared unit | typed value payload}
+    budget_unbounded: Any                              # ((dimension, basis), ...) waived by the declaration, no owner
     admitted: AdmittedAction = field(repr=False, compare=False)
     minted: str = field(default="", compare=False)     # the payload digest at mint (``verify``)
 
@@ -335,7 +349,8 @@ class DispatchAuthorization:
                 "providers": [detach(p) for p in self.providers], "synthetic": self.synthetic,
                 "declaration": detach(self.declaration), "declaration_provenance": DECLARATION_PROVENANCE,
                 "owners": [list(o) for o in self.owners], "settings": detach(self.settings),
-                "budget_basis": BUDGET_BASIS, "synthetic_basis": SYNTHETIC_BASIS}
+                "budget_basis": BUDGET_BASIS, "budget_unbounded_by_declaration": detach(self.budget_unbounded),
+                "configuration_basis": CONFIGURATION_BASIS, "synthetic_basis": SYNTHETIC_BASIS}
 
     @property
     def digest(self) -> str:
@@ -382,7 +397,8 @@ def authorize_dispatch(admitted: Any, authorities: Authorities, *, accept_synthe
     with _minting():
         minted = DispatchAuthorization(a.digest, result.digest, result.verification.digest, a.world_revision,
                                        a.proposal_digest, a.proposal.action_id, a.configuration, a.observe,
-                                       a.execution, a.providers, a.synthetic, declaration, owners, settings, a)
+                                       a.execution, a.providers, a.synthetic, declaration, owners, settings,
+                                       freeze(detach([list(p) for p in a.world.budget.unbounded])), a)
         return dataclasses.replace(minted, minted=minted.digest)
 
 

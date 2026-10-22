@@ -7,9 +7,12 @@ its current owners.
 The Mind holds a :class:`MindWorldPort`.  The port holds its own detached copy of the world and its action space
 (rebuilt from the payload, so it shares no object with anyone else's) and a journal; it holds no executor, no
 provider and no owner reader.  Admission and dispatch go through the :class:`~.admission.AdmissionGateway` the
-execution side hands in (``ExecutionDesk.gateway()``): it exposes admit and dispatch and nothing else, so the Mind
-neither chooses the owners an admission is verified against nor reaches the executor.  The desk itself is refused
-here.  The only execution path, :meth:`MindWorldPort.execute`, accepts an :class:`~.admission.AdmittedAction` and
+execution side hands in (``ExecutionDesk.gateway()``): its interface is admit and dispatch and nothing else, so a
+Mind that uses the interface neither chooses the owners an admission is verified against nor reaches the executor.
+The desk itself is refused here.  This is an interface boundary, not isolation: the gateway's closures hold the
+desk's owner readers and its guarded executor, and code that introspects closures is inside the execution side's
+trust domain (isolating a proposer from it is a process boundary).  That is why the executor re-derives every
+authorization it is handed (``verify_authorization``) instead of trusting the call path.  The only execution path, :meth:`MindWorldPort.execute`, accepts an :class:`~.admission.AdmittedAction` and
 nothing else; admission decides on its own rebuild of the world, so editing the port's copy changes nothing.
 
 A language-model proposal is accepted only through :meth:`MindWorldPort.propose_suggestion` (a certified

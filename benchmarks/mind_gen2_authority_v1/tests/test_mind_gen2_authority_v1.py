@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import json
 import pathlib
+import subprocess
+
+import pytest
 
 from benchmarks.mind_gen2_authority_v1 import rescore
 from benchmarks.mind_gen2_authority_v1 import run_benchmark as rb
@@ -48,3 +51,26 @@ def test_every_world_is_verified_and_bound():
     worlds = json.loads(rb.AUTHORITY_PATH.read_bytes())["worlds"]
     assert set(worlds) == set(rb.NAMES)
     assert all(w["verified"] and w["bindings"] >= 2 for w in worlds.values())
+
+
+# ---- R2-F7: the exported BR1 decisions are re-derived from BR1's own code, not only matched by digest ------------------
+@pytest.mark.expensive
+def test_br1_decisions_are_rederived_from_the_br1_commit(tmp_path):
+    """``BR1_DECISIONS.json`` carries BR1's ``decisions_digest`` (over the full records), which its status/codes map
+    cannot be re-hashed to.  So the map itself is re-derived: BR1's code at the BR1 commit, on its frozen cases."""
+    from benchmarks.mind_gen2_authority_v1 import br1_decisions
+    root = pathlib.Path(__file__).resolve().parents[3]
+    probe = subprocess.run(["git", "-C", str(root), "cat-file", "-e", f"{br1_decisions.BR1_COMMIT}^{{commit}}"],
+                           capture_output=True)
+    if probe.returncode != 0:
+        pytest.skip("the BR1 commit is not in this clone")
+    checkout = tmp_path / "br1"
+    subprocess.run(["git", "-C", str(root), "worktree", "add", "--detach", str(checkout), br1_decisions.BR1_COMMIT],
+                   capture_output=True, check=True)
+    try:
+        exported = br1_decisions.export(checkout)
+    finally:
+        subprocess.run(["git", "-C", str(root), "worktree", "remove", "--force", str(checkout)], capture_output=True)
+    committed = json.loads(br1_decisions.PATH.read_bytes())
+    assert exported["decisions_digest"] == committed["decisions_digest"]
+    assert exported["decisions"] == committed["decisions"]
