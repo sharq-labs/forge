@@ -64,13 +64,12 @@ def test_br1_decisions_are_rederived_from_the_br1_commit(tmp_path):
                            capture_output=True)
     if probe.returncode != 0:
         pytest.skip("the BR1 commit is not in this clone")
-    checkout = tmp_path / "br1"
-    subprocess.run(["git", "-C", str(root), "worktree", "add", "--detach", str(checkout), br1_decisions.BR1_COMMIT],
+    checkout = tmp_path / "br1"            # a throwaway clone: the repository under test is only read, never changed
+    subprocess.run(["git", "clone", "--quiet", "--shared", "--no-checkout", str(root), str(checkout)],
                    capture_output=True, check=True)
-    try:
-        exported = br1_decisions.export(checkout)
-    finally:
-        subprocess.run(["git", "-C", str(root), "worktree", "remove", "--force", str(checkout)], capture_output=True)
+    subprocess.run(["git", "-C", str(checkout), "checkout", "--quiet", "--detach", br1_decisions.BR1_COMMIT],
+                   capture_output=True, check=True)
+    exported = br1_decisions.export(checkout)
     committed = json.loads(br1_decisions.PATH.read_bytes())
     assert exported["decisions_digest"] == committed["decisions_digest"]
     assert exported["decisions"] == committed["decisions"]

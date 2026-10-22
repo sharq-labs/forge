@@ -184,6 +184,14 @@ def converts(value: Any, target: str) -> bool:
         return False
 
 
+def as_unit(value: Any, unit_: str) -> Any:
+    """``value`` as an executor receives it in ``unit_``: a quantity converted by the unit owner (unchanged when it is
+    already in that unit), any other typed value as it is.  Applied only after :func:`converts` accepted the pair."""
+    if not isinstance(value, Quantity) or value.units == unit_:
+        return value
+    return Quantity(value.magnitude_in(unit_), unit_)
+
+
 def magnitude_key(value: Quantity) -> float:
     """A canonical magnitude in the base (ratio-scale) unit of the dimension, at 12 significant digits.
 
@@ -219,6 +227,7 @@ def same_value(a: Any, b: Any) -> bool:
 
 __all__ = [
     "HEX64", "ProposalRefused", "RecordKind", "exact_text", "RecordRef", "SCHEMA_PREFIX", "SOFTWARE_VERSION", "StaleProposal",
+    "as_unit",
     "WorldRefused", "converts", "digest", "expect_schema", "is_value", "magnitude_key", "names", "require_plain_value",
     "require_value", "same_value", "schema", "text", "unit", "value_from", "value_key", "value_payload",
 ]

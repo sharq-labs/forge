@@ -51,6 +51,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 from typing import Any, Callable, Iterable, Mapping
 
 from engcore.providers.catalog import (
@@ -128,6 +129,7 @@ class RunStateReader(_Reader):
         self._follow: Callable[[], Any] | None = None
         self._record = record                         # the record object loaded (a following reader reuses its load)
         self._highest = (self._head.sequence, self._head.digest)     # following: the furthest head stated so far
+        self._lock = threading.Lock()                 # one desk serves concurrent admissions: check-and-advance is atomic
 
     @classmethod
     def following(cls, head: Callable[[], Any]) -> "RunStateReader":
@@ -171,11 +173,12 @@ class RunStateReader(_Reader):
             raise OwnerUnavailable("the followed head belongs to another run (its request digest changed); which run "
                                    "governs is a new statement, not a move of this one")
         sequence, head = current._head.sequence, current._head.digest
-        if sequence < self._highest[0] or (sequence == self._highest[0] and head != self._highest[1]):
-            raise OwnerUnavailable(f"the followed head went back (sequence {sequence} after {self._highest[0]}) or "
-                                   "restated a sequence with another state: a run's head only moves forward")
-        self._highest = (sequence, head)
-        self._record, self._head, self._history = current._record, current._head, current._history
+        with self._lock:
+            if sequence < self._highest[0] or (sequence == self._highest[0] and head != self._highest[1]):
+                raise OwnerUnavailable(f"the followed head went back (sequence {sequence} after {self._highest[0]}) or "
+                                       "restated a sequence with another state: a run's head only moves forward")
+            self._highest = (sequence, head)
+            self._record, self._head, self._history = current._record, current._head, current._history
         return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
@@ -271,9 +274,12 @@ class BudgetReader(_Reader):
     ``BudgetReader(ledgers, experiments)`` reads the account OBJECTS handed over: live for their in-place changes
     (settled charges, recorded evaluations), not for an execution side that replaces an account object (as
     ``sria.campaign`` does on restore).  ``BudgetReader.following(accounts)`` asks the execution side's ``accounts()``
-    for the current ``(ledgers, experiments)`` at every verification, and an account only moves forward: a ledger
-    whose settled charges, or an experiment whose recorded evaluations, are fewer than this reader already saw is
-    refused (an account restored to an earlier revision would re-authorize what it had moved past)."""
+    for the current ``(ledgers, experiments)`` at every verification, and an account only moves forward: its history
+    (a ledger's settled charges, an experiment's recorded evaluations, each as the owner serializes it) must extend
+    the history this reader already saw (an account restored to an earlier revision, or one whose history was
+    rewritten at the same length, would re-authorize what it had moved past).  A change to an account's declaration
+    with its history unchanged (a budget top-up) is a move of the owner, not a step back.  A ledger is projected in the
+    form its owner reads it back (``BudgetLedger.from_dict``), the same form its digest is taken in."""
 
     kinds = frozenset({K.BUDGET_LEDGER, K.EXPERIMENT})
 
@@ -284,26 +290,37 @@ class BudgetReader(_Reader):
             raise WorldRefused("followed accounts are a callable the execution side answers with (ledgers, experiments)")
         reader = cls(*accounts(), owner_id=owner_id)
         reader._follow = accounts
-        reader._highest = reader._revisions()
+        try:
+            reader._seen = reader._histories()
+        except (ValueError, TypeError, KeyError) as exc:
+            raise WorldRefused(f"a followed budget account is not one its owner reads back: {exc}") from None
         return reader
 
-    def _revisions(self) -> dict[tuple[str, str], int]:
-        return {**{("ledger", i): x.revision for i, x in self._ledgers.items()},
-                **{("experiment", i): len(x.evaluations) for i, x in self._experiments.items()}}
+    def _histories(self) -> dict[tuple[str, str], tuple[str, ...]]:
+        """Each account's append-only history in the form its owner reads it back (so a restore of an unchanged account
+        is the same history), one digest per item."""
+        def item(x: Any) -> str:
+            return hashlib.sha256(json.dumps(x.to_dict(), sort_keys=True, default=str).encode("utf-8")).hexdigest()
+        return {**{("ledger", i): tuple(item(c) for c in BudgetLedger.from_dict(x.to_dict()).charges)
+                   for i, x in self._ledgers.items()},
+                **{("experiment", i): tuple(item(e) for e in ScientificExperiment.from_dict(x.to_dict()).evaluations)
+                   for i, x in self._experiments.items()}}
 
     def pinned(self) -> "BudgetReader":
         if self._follow is None:
             return self
         try:
             current = BudgetReader(*self._follow(), owner_id=self.owner_id)
+            histories = current._histories()
         except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
             raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
-        revisions = current._revisions()
-        went_back = sorted(f"{k[0]} {k[1]!r}" for k, r in revisions.items() if r < self._highest.get(k, 0))
+        with self._lock:                 # the latest history OBSERVED is what must be extended, accepted or not
+            went_back = sorted(f"{k[0]} {k[1]!r}" for k, h in histories.items()
+                               if h[:len(self._seen.get(k, ()))] != self._seen.get(k, ()))
+            self._seen = {**self._seen, **histories}
         if went_back:
-            raise OwnerUnavailable(f"followed budget accounts went back a revision ({', '.join(went_back)}): an "
-                                   "account only moves forward")
-        self._highest = {**self._highest, **revisions}
+            raise OwnerUnavailable(f"followed budget accounts went back a revision or rewrote their history "
+                                   f"({', '.join(went_back)}): an account only moves forward from what was observed")
         return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
@@ -314,7 +331,8 @@ class BudgetReader(_Reader):
     def __init__(self, ledgers: Mapping[str, BudgetLedger] | None = None,
                  experiments: Mapping[str, ScientificExperiment] | None = None, owner_id: str = "budget") -> None:
         self._follow: Callable[[], Any] | None = None
-        self._highest: dict[tuple[str, str], int] = {}
+        self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
+        self._lock = threading.Lock()
         self._ledgers = dict(ledgers or {})
         self._experiments = dict(experiments or {})
         if any(type(x) is not BudgetLedger for x in self._ledgers.values()):
@@ -333,8 +351,12 @@ class BudgetReader(_Reader):
             ledger = self._ledgers.get(record_id)
             if ledger is None:
                 return None
-            return OwnerRecord(kind, self.owner_id, record_id, str(ledger.revision), ledger.digest,
-                               {"ledger": ledger.to_dict()})
+            try:                                     # the owner's read-back form: projection and digest, one rule
+                return OwnerRecord(kind, self.owner_id, record_id, str(ledger.revision), ledger.digest,
+                                   {"ledger": BudgetLedger.from_dict(ledger.to_dict()).to_dict()})
+            except (ValueError, TypeError, KeyError) as exc:
+                raise OwnerUnavailable(f"budget ledger {record_id!r} is not a ledger its owner reads back: {exc}") \
+                    from None
         if kind is K.EXPERIMENT:
             exp = self._experiments.get(record_id)
             if exp is None:
@@ -365,6 +387,7 @@ class DeclarationReader(_Reader):
         self._follow: Callable[[], Iterable[Any]] | None = None
         self._seen: dict[tuple[str, int], str] = {(i, d.revision): d.digest for i, d in self._held.items()}
         self._latest: dict[str, int] = {i: d.revision for i, d in self._held.items()}
+        self._lock = threading.Lock()
 
     @classmethod
     def following(cls, in_force: Callable[[], Iterable[Any]], owner_id: str = "declarations") -> "DeclarationReader":
@@ -401,14 +424,18 @@ class DeclarationReader(_Reader):
             current = DeclarationReader(self._follow(), self.owner_id)
         except Exception as exc:  # noqa: BLE001 - an owner that cannot state what is in force is unavailable
             raise OwnerUnavailable(f"the execution side could not state the declarations in force: {exc}") from None
-        for key, d in ((k, current._held[k[0]]) for k in current._seen):
-            if self._seen.setdefault(key, d.digest) != d.digest:
-                raise OwnerUnavailable(f"declaration {key[0]!r} revision {key[1]} is restated with other content (a "
-                                       "revision names one content; a change is a new revision)")
-            if d.revision < self._latest.setdefault(key[0], d.revision):
-                raise OwnerUnavailable(f"declaration {key[0]!r} went back from revision {self._latest[key[0]]} to "
-                                       f"{d.revision} (revisions only move forward)")
-            self._latest[key[0]] = max(self._latest[key[0]], d.revision)
+        held = [(k, current._held[k[0]]) for k in current._seen]
+        with self._lock:                             # check everything, then advance: atomic per verification
+            for key, d in held:
+                if self._seen.get(key, d.digest) != d.digest:
+                    raise OwnerUnavailable(f"declaration {key[0]!r} revision {key[1]} is restated with other content "
+                                           "(a revision names one content; a change is a new revision)")
+                if d.revision < self._latest.get(key[0], d.revision):
+                    raise OwnerUnavailable(f"declaration {key[0]!r} went back from revision {self._latest[key[0]]} "
+                                           f"to {d.revision} (revisions only move forward)")
+            for key, d in held:
+                self._seen.setdefault(key, d.digest)
+                self._latest[key[0]] = max(self._latest.get(key[0], d.revision), d.revision)
         return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:

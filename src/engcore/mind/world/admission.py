@@ -59,7 +59,7 @@ from .authority import Authorities, AuthorityReport
 from .base import StaleProposal, WorldRefused, digest, schema, value_payload
 from .feasibility import (
     CheckFamily, FeasibilityDecision, FeasibilityReason, FeasibilityStatus, FeasibleActionSpace, canonical,
-    context_reads, decided_value,
+    as_executed, context_reads, decided_value,
 )
 from .projection import verified_projection
 from .world import ScientificWorld
@@ -76,9 +76,11 @@ BUDGET_BASIS = "declared_estimate_against_the_owner_account_not_reserved"
 #: What "synthetic" means: some reference the DECLARATION itself labels a synthetic fixture.  Owners are not asked
 #: whether they are fixtures; a declaration that relabels its references is the declarer's responsibility.
 SYNTHETIC_BASIS = "labelled_synthetic_by_the_declaration"
-#: What the configuration of an admitted action means: constraints and validity domains were decided on the REQUESTED
-#: values (the proposal's assignments and the action's fixed conditions).  Whether the execution realizes them within
-#: any tolerance is not assessed: no owner states a realization uncertainty for a requested set point.
+#: What the configuration of an admitted action means: every check was decided on the configuration AS MINTED (the
+#: proposal's control assignments and the action's fixed conditions in their variables' declared units, a matched
+#: declared level as that level; the proposal keeps its spelling), which is exactly what an executor is handed.  It is
+#: exact as REQUESTED: whether the execution realizes it within any tolerance is not assessed (no owner states a
+#: realization uncertainty for a requested set point).
 CONFIGURATION_BASIS = "requested_configuration_realization_uncertainty_not_assessed"
 #: No canonical owner holds experiment protocols (allowed levels, action controls, guards): the declaration is
 #: caller-declared, held in force by the execution side and bound by identity, revision and digest.  It is reported
@@ -181,16 +183,22 @@ def _context_entry(world: ScientificWorld, name: str) -> dict[str, Any]:
             "binding": binding, "basis": var.value_basis, "uncertainty": var.uncertainty.to_dict()}
 
 
-def _mint(space: FeasibleActionSpace, proposal: ProposedAction, report: AuthorityReport, admission: str
-          ) -> AdmittedAction:
+def _mint(space: FeasibleActionSpace, proposal: ProposedAction, report: AuthorityReport, admission: str,
+          decision: FeasibilityDecision) -> AdmittedAction:
     world = space.world
     spec = world.action(proposal.action_id)
-    config = {f.name: decided_value(world, spec, proposal, f.name) for f in spec.fixed_conditions}
-    for name, _ in proposal.assignments:
+    # The configuration from its SOURCES (the action's fixed conditions and the proposal's control assignments, as
+    # executed), NOT through the families' resolution: the guard below compares the two, so a resolution that reads
+    # anything else (a restated fixed condition, a value the proposer may not set) refuses to mint (K-F1, K4-F1).
+    config = {f.name: as_executed(world, spec, f.name, f.value) for f in spec.fixed_conditions}
+    for name, value in proposal.assignments:
         if spec.control(name) is not None:
-            config[name] = decided_value(world, spec, proposal, name)
-    if any(v is None for v in config.values()) or {n for n, _ in proposal.assignments} - set(config):
-        raise WorldRefused("only the action's controls and fixed conditions, as decided, are minted")
+            config[name] = as_executed(world, spec, name, value)
+    if {n for n, _ in proposal.assignments} - set(config):
+        raise WorldRefused("only the action's controls and fixed conditions are minted")
+    for name, value in decision.decided:             # every value ANY family decided on is the value minted
+        if name not in config or value_payload(value) != value_payload(config[name]):
+            raise WorldRefused(f"{name!r}: a check decided on a value that is not the value to be executed")
     context = tuple(_frozen(_context_entry(world, n)) for n in sorted(context_reads(world, spec) - set(config)))
     models = tuple(_frozen({"binding_id": a, "authority": None if world.applicability_binding(a).authority is None
                             else world.applicability_binding(a).authority.identity()}) for a in spec.applicability)
@@ -200,8 +208,10 @@ def _mint(space: FeasibleActionSpace, proposal: ProposedAction, report: Authorit
                               context, tuple(proposal.observe or spec.expected_observables), spec.execution,
                               tuple(_frozen(r.to_dict()) for r in spec.provider_requirements), models, world.synthetic)
     settings = admitted.settings_in_declared_units()
-    for name in config:                              # what an executor receives IS what was decided (K-F1, R3)
+    for name in config:                              # what an executor receives IS what every family decided on
         decided = decided_value(world, spec, proposal, name)
+        if decided is None:
+            raise WorldRefused(f"{name!r}: the decision read no exact value for a value to be executed")
         received = settings[name]
         exact = decided.magnitude if isinstance(decided, Quantity) else decided
         if type(received) is not type(exact) or received != exact or value_payload(decided) != value_payload(
@@ -316,7 +326,7 @@ def admit(space: FeasibleActionSpace, proposal: ProposedAction, authorities: Aut
     result = _result(decision.status, decision.reasons, report, decision, None, proposal, world, space.space_id, live)
     if not decision.feasible:
         return result
-    admitted = _mint(space, proposal, report, result.basis_digest)
+    admitted = _mint(space, proposal, report, result.basis_digest, decision)
     return _result(decision.status, decision.reasons, report, decision, admitted, proposal, world, space.space_id, live)
 
 
@@ -345,6 +355,7 @@ class DispatchAuthorization:
     observe: tuple[str, ...]
     execution: ExecutionKind
     providers: tuple[Any, ...]
+    models: tuple[Any, ...]                            # the applicability bindings (and model records) that gated it
     synthetic: bool
     declaration: Any                                   # the declaration in force it was admitted under (identity)
     owners: tuple[tuple[str, str], ...]                # the owner instances (kind, id) it was re-admitted against
@@ -364,8 +375,8 @@ class DispatchAuthorization:
                 "proposal_digest": self.proposal_digest, "action_id": self.action_id,
                 "configuration": [{"variable": n, "value": value_payload(v)} for n, v in self.configuration],
                 "observe": list(self.observe), "execution": self.execution.value,
-                "providers": [detach(p) for p in self.providers], "synthetic": self.synthetic,
-                "declaration": detach(self.declaration), "declaration_provenance": DECLARATION_PROVENANCE,
+                "providers": [detach(p) for p in self.providers], "models": [detach(m) for m in self.models],
+                "synthetic": self.synthetic, "declaration": detach(self.declaration), "declaration_provenance": DECLARATION_PROVENANCE,
                 "owners": [list(o) for o in self.owners], "settings": detach(self.settings),
                 "budget_basis": BUDGET_BASIS, "budget_unbounded_by_declaration": detach(self.budget_unbounded),
                 "configuration_basis": CONFIGURATION_BASIS, "synthetic_basis": SYNTHETIC_BASIS}
@@ -382,15 +393,18 @@ class DispatchAuthorization:
         return self
 
 
-def authorize_dispatch(admitted: Any, authorities: Authorities, *, accept_synthetic: bool = False
-                       ) -> DispatchAuthorization:
+def authorize_dispatch(admitted: Any, authorities: Authorities, *, accept_synthetic: bool = False,
+                       suggestions_only: bool = False) -> DispatchAuthorization:
     """Re-admit ``admitted`` from its own proposal and world against ``authorities`` NOW; refuse anything else.
 
     ``authorities`` must be live (never readers rebuilt from a snapshot), and a world citing synthetic contract
-    fixtures is dispatched only to an executor that says it accepts synthetic content (a test executor)."""
+    fixtures is dispatched only to an executor that says it accepts synthetic content (a test executor).  With
+    ``suggestions_only`` (the execution side's proposer policy) only a proposal that carries its certified
+    ``ExternalSuggestion`` is dispatched."""
     if type(admitted) is not AdmittedAction:
         raise DispatchRefused(f"only an AdmittedAction minted by admission is dispatchable, not "
                               f"{type(admitted).__name__} (a raw proposal never executes)")
+    _require_suggestion(admitted.proposal, suggestions_only, DispatchRefused)
     if type(authorities) is not Authorities or not authorities.live:
         raise DispatchRefused("dispatch is authorized only against live owner readers (each read consults the owner "
                               "now); a fixed run record, a fixed declaration set, a snapshot or a look-alike reader "
@@ -415,19 +429,20 @@ def authorize_dispatch(admitted: Any, authorities: Authorities, *, accept_synthe
     with _minting():
         minted = DispatchAuthorization(a.digest, result.digest, result.verification.digest, a.world_revision,
                                        a.proposal_digest, a.proposal.action_id, a.configuration, a.observe,
-                                       a.execution, a.providers, a.synthetic, declaration, owners, settings,
+                                       a.execution, a.providers, a.models, a.synthetic, declaration, owners, settings,
                                        freeze(detach([list(p) for p in a.world.budget.unbounded])), a)
         return dataclasses.replace(minted, minted=minted.digest)
 
 
-def verify_authorization(authorization: Any, authorities: Authorities, *, accept_synthetic: bool = False
-                         ) -> DispatchAuthorization:
+def verify_authorization(authorization: Any, authorities: Authorities, *, accept_synthetic: bool = False,
+                         suggestions_only: bool = False) -> DispatchAuthorization:
     """For an executor: re-derive ``authorization`` from its admitted action against ``authorities`` now, and require
     the identical authorization (a hand-built or edited one, or one its owners no longer support, is refused)."""
     if type(authorization) is not DispatchAuthorization:
         raise DispatchRefused("not a DispatchAuthorization")
     authorization.verify()
-    again = authorize_dispatch(authorization.admitted, authorities, accept_synthetic=accept_synthetic)
+    again = authorize_dispatch(authorization.admitted, authorities, accept_synthetic=accept_synthetic,
+                               suggestions_only=suggestions_only)
     if again.digest != authorization.digest:
         raise DispatchRefused("the authorization is not what authorize_dispatch yields now (edited or forged)")
     return again
@@ -440,12 +455,14 @@ class _GuardedExecutor:
     __slots__ = ("_call", "_dispatch")
 
     def __init__(self, executor: Callable[[DispatchAuthorization], Any], authorities: Authorities,
-                 accept_synthetic: bool) -> None:
+                 accept_synthetic: bool, suggestions_only: bool) -> None:
         def call(authorization: Any) -> Any:
-            return executor(verify_authorization(authorization, authorities, accept_synthetic=accept_synthetic))
+            return executor(verify_authorization(authorization, authorities, accept_synthetic=accept_synthetic,
+                                                 suggestions_only=suggestions_only))
 
         def dispatch(admitted: Any) -> Any:
-            return executor(authorize_dispatch(admitted, authorities, accept_synthetic=accept_synthetic))
+            return executor(authorize_dispatch(admitted, authorities, accept_synthetic=accept_synthetic,
+                                               suggestions_only=suggestions_only))
         object.__setattr__(self, "_call", call)
         object.__setattr__(self, "_dispatch", dispatch)
 
@@ -482,7 +499,8 @@ class ExecutionDesk:
         if type(accept_synthetic) is not bool or type(suggestions_only) is not bool:
             raise WorldRefused("accept_synthetic and suggestions_only are bools")
         object.__setattr__(self, "_authorities", authorities)
-        object.__setattr__(self, "_executor", _GuardedExecutor(executor, authorities, accept_synthetic))
+        object.__setattr__(self, "_executor", _GuardedExecutor(executor, authorities, accept_synthetic,
+                                                               suggestions_only))
         object.__setattr__(self, "_accept_synthetic", accept_synthetic)
         object.__setattr__(self, "_suggestions_only", suggestions_only)
 
@@ -497,9 +515,7 @@ class ExecutionDesk:
         return admit(space, proposal, self._authorities)
 
     def dispatch(self, admitted: Any) -> Any:
-        if type(admitted) is AdmittedAction:
-            _require_suggestion(admitted.proposal, self._suggestions_only, DispatchRefused)
-        return self._executor._dispatch(admitted)
+        return self._executor._dispatch(admitted)          # the guard applies the proposer policy
 
     def gateway(self) -> "AdmissionGateway":
         """What the Mind is handed: admit and dispatch through this desk's owners, policy and executor, and nothing else
@@ -509,12 +525,7 @@ class ExecutionDesk:
         def admit_(space: FeasibleActionSpace, proposal: ProposedAction) -> AdmissionResult:
             _require_suggestion(proposal, only, WorldRefused)
             return admit(space, proposal, authorities)
-
-        def dispatch_checked(admitted: Any) -> Any:
-            if type(admitted) is AdmittedAction:
-                _require_suggestion(admitted.proposal, only, DispatchRefused)
-            return dispatch_(admitted)
-        return AdmissionGateway(admit_, dispatch_checked)
+        return AdmissionGateway(admit_, dispatch_)
 
 
 def _require_suggestion(proposal: Any, required: bool, refusal: type[Exception]) -> None:

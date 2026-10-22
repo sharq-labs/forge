@@ -39,7 +39,7 @@ from enum import Enum
 from typing import Any, Mapping
 
 from engcore.mind.repsem.roles import RoleSource, VariableRole
-from engcore.scientific import ConstraintDefinition, Quantity, ScientificParameter, ScientificVariable
+from engcore.scientific import ConstraintDefinition, Quantity, ScientificParameter, ScientificVariable, VariableKind
 from engcore.scientific import VariableRole as StudyRole
 from engcore.scientific.ir.values import IntegerValue
 from engcore.sria.decision import ActionFamily
@@ -48,8 +48,8 @@ from engcore.sria.decision.hypotheses import ProposalProvenance, ProposerKind
 from engcore.system_runtime.request import ProviderBinding
 
 from .base import (
-    HEX64, WorldRefused, converts, digest, exact_text, expect_schema, names, require_plain_value, require_value,
-    schema, text, value_from, value_payload,
+    HEX64, WorldRefused, as_unit, converts, digest, exact_text, expect_schema, names, require_plain_value,
+    require_value, schema, text, value_from, value_payload,
 )
 from .domains import (
     DeclaredConstraint, DiscreteLevels, Guard, contained, declared_source, domain_from, domain_identity, domain_problem,
@@ -169,6 +169,19 @@ def _costs(value: Any, action_id: str) -> tuple[tuple[str, Any], ...]:
     return tuple(out)
 
 
+def _contained_as_executed(inner: Any, outer: Any, unit_: str) -> bool:
+    """Whether every member of an action's domain, AS EXECUTED (in the variable's unit by the unit owner), is a member
+    of the variable's own domain: a declared level or bound is never checked in a spelling no executor receives."""
+    if isinstance(inner, DiscreteLevels):
+        return all(membership(outer, as_unit(level, unit_)) is None for level in inner.levels)
+    if isinstance(inner, ScientificVariable) and inner.kind is VariableKind.CONTINUOUS and inner.lower is not None \
+            and inner.upper is not None and converts(inner.lower, unit_):
+        if not contained(inner, outer):
+            return False
+        return all(membership(outer, as_unit(edge, unit_)) is None for edge in (inner.lower, inner.upper))
+    return contained(inner, outer)
+
+
 @dataclass(frozen=True)
 class ActionSpec:
     action_id: str
@@ -276,9 +289,10 @@ class ActionSpec:
             problem = domain_problem(c.domain, c.variable, var.unit)
             if problem:
                 raise WorldRefused(f"action {aid!r} control {c.variable!r}: {problem}")
-            if var.domain is not None and not contained(c.domain, var.domain):
+            if var.domain is not None and not _contained_as_executed(c.domain, var.domain, var.unit):
                 raise WorldRefused(f"action {aid!r} control {c.variable!r}: the action domain is not inside the "
-                                   "variable's declared domain (an action restricts, never widens)")
+                                   "variable's declared domain (an action restricts, never widens; its members are "
+                                   "checked as they are executed, in the variable's unit)")
             if c.active_when is not None:
                 if c.active_when.variable == c.variable:
                     raise WorldRefused(f"action {aid!r}: control {c.variable!r} cannot guard itself")
@@ -290,11 +304,15 @@ class ActionSpec:
             if var.role not in (VariableRole.FIXED_PROTOCOL_CONDITION, VariableRole.CONTROLLED_INPUT):
                 raise WorldRefused(f"action {aid!r}: {f.name!r} is a {var.role.value}; only a protocol condition or a "
                                    "controlled input is held fixed by an action")
+            if var.temporal is TemporalSemantics.TIME_SERIES:
+                raise WorldRefused(f"action {aid!r}: {f.name!r} is a TIME_SERIES input; a scalar fixed condition would "
+                                   "silently mean a constant profile (time-series conditions are an open decision)")
             if isinstance(f.value, Quantity) and not converts(f.value, var.unit):
                 raise WorldRefused(f"action {aid!r}: the unit owner does not convert fixed {f.name!r} = {f.value} into "
                                    f"{var.unit!r}")
-            if var.domain is not None and membership(var.domain, f.value) is not None:
-                raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value!r} is outside its declared domain")
+            if var.domain is not None and membership(var.domain, as_unit(f.value, var.unit)) is not None:
+                raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value!r} is outside its declared domain "
+                                   "(as executed, in the variable's unit)")
         for name in self.expected_observables:
             if not world.declares(name):
                 raise WorldRefused(f"action {aid!r}: observable {name!r} is not a declared variable")

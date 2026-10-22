@@ -45,6 +45,9 @@ CONSTRAINT_SCHEMA = schema("declared_constraint")
 DIMENSIONLESS = dimensionality("dimensionless")
 #: ``DeclaredConstraint.applies_to`` entry meaning every action of the world.
 ALL_ACTIONS = "*"
+#: How far apart (relative, in the base unit) two declared levels must be: far beyond the unit owner's 12-digit
+#: identity precision, so a value identity-equal to one level is never nearer another.
+LEVEL_SEPARATION = 1e-9
 
 
 @dataclass(frozen=True)
@@ -66,6 +69,11 @@ class DiscreteLevels:
         keys = [magnitude_key(level) for level in levels]
         if len(set(keys)) != len(keys):
             raise WorldRefused(f"discrete levels repeat a value: {keys}")
+        for a in keys:                     # identity matching (12 digits) is unambiguous only between separated levels
+            for b in keys:
+                if a < b and b - a <= LEVEL_SEPARATION * max(abs(a), abs(b)):
+                    raise WorldRefused(f"discrete levels {a} and {b} are closer than {LEVEL_SEPARATION:g} relative: a "
+                                       "value the unit owner calls one of them could lie nearer the other")
         object.__setattr__(self, "levels", levels)
 
     def keys(self) -> tuple[float, ...]:

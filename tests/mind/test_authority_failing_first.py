@@ -291,7 +291,7 @@ def test_r5_the_variables_own_domain_is_checked_pointwise_at_every_check(monkeyp
     wide = dataclasses.replace(w.action("pulse"), controls=tuple(
         dataclasses.replace(c, domain=br1.crange("t_pulse", "s", 10, 7200)) if c.variable == "t_pulse" else c
         for c in w.action("pulse").controls))
-    monkeypatch.setattr(actions_mod, "contained", lambda inner, outer: True)       # a containment rule that errs
+    monkeypatch.setattr(actions_mod, "_contained_as_executed", lambda inner, outer, unit: True)   # a rule that errs
     widened = w.derive(reason="an action domain wider than its variable's", actions=tuple(
         wide if a.action_id == "pulse" else a for a in w.actions))
     d = FeasibleActionSpace.build(widened).check(br1.propose(widened, "pulse", {"I": br1.q(1, "A"),

@@ -50,13 +50,21 @@ ALLOWED_LOST_CODES = frozenset({
     "PRECONDITION_VIOLATED", "PRECONDITION_UNDECIDED", "STATE_OUTSIDE_DECLARED_DOMAIN", "STATE_DOMAIN_UNDECIDED",
     "INTERVAL_OUTSIDE_VALIDATED_DOMAIN", "CONSTRAINT_VIOLATED", "OUTSIDE_VALIDATED_DOMAIN",
 })
-#: A definite constraint or validity verdict may be lost only for one of the two BR1.1 causes, stated by the case's
-#: own BR1.1 codes: the value it rested on was one the proposer may not set (a role refusal), or a current value of
-#: the world (the matching undecidable code).
+#: Every lost code needs one of the two BR1.1 causes, stated by the case's own BR1.1 codes: the value it rested on was
+#: a current value of the world (the matching undecidable code), or one the proposer may not set (a role refusal).
+#: Case-level: BR1's exported decisions carry codes, not subjects, so a cause is matched within the case.
 CONDITIONAL_LOST_CODES = {
+    "PRECONDITION_VIOLATED": frozenset({"PRECONDITION_ENCLOSURE_REQUIRED", "PRECONDITION_UNCERTAINTY_UNKNOWN",
+                                        "PRECONDITION_UNRESOLVED"}),
+    "PRECONDITION_UNDECIDED": frozenset({"PRECONDITION_ENCLOSURE_REQUIRED", "PRECONDITION_UNCERTAINTY_UNKNOWN",
+                                         "PRECONDITION_UNRESOLVED"}),
+    "STATE_OUTSIDE_DECLARED_DOMAIN": frozenset({"STATE_DOMAIN_ENCLOSURE_REQUIRED", "STATE_DOMAIN_UNDECIDABLE"}),
+    "STATE_DOMAIN_UNDECIDED": frozenset({"STATE_DOMAIN_ENCLOSURE_REQUIRED", "STATE_DOMAIN_UNDECIDABLE"}),
+    "INTERVAL_OUTSIDE_VALIDATED_DOMAIN": frozenset({"APPLICABILITY_INPUT_NOT_EXACT"}),
     "CONSTRAINT_VIOLATED": frozenset({"CONSTRAINT_ENCLOSURE_REQUIRED", "CONSTRAINT_UNDECIDABLE"}),
     "OUTSIDE_VALIDATED_DOMAIN": frozenset({"APPLICABILITY_INPUT_NOT_EXACT"}),
 }
+assert set(CONDITIONAL_LOST_CODES) == ALLOWED_LOST_CODES
 ROLE_REFUSALS = frozenset({"FIXED_CONDITION_CHANGED", "STATE_NOT_DIRECTLY_SETTABLE", "PROTOCOL_CONDITION_NOT_SELECTABLE",
                            "CONTROL_NOT_OFFERED_BY_ACTION", "ROLE_NOT_CONTROLLABLE"})
 

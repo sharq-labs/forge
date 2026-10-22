@@ -311,11 +311,12 @@ class BudgetStatement:
             raise WorldRefused(f"budget {self.dimension!r}: malformed owner record: {exc}") from None
         object.__setattr__(self, "payload", freeze(payload))
 
-    def decide(self, requested: Any, family: Any) -> tuple[bool, Any]:
-        """(affordable, remaining) by the owner's rule; nothing is clamped.  Every amount is converted into the ledger's
-        own unit by the unit owner: a duration as stated, a count as a dimensionless quantity, a cost (by the action's
-        contract a plain number) in the unit the declaration states for cost.  An amount the unit owner cannot convert is
-        refused (``WorldRefused``), never compared raw."""
+    def decide(self, requested: Any, family: Any) -> tuple[bool, Any, Any]:
+        """(affordable, remaining, the amount as decided) by the owner's rule; nothing is clamped.  Every amount is
+        converted into the ledger's own unit by the unit owner: a duration as stated, a count as a dimensionless
+        quantity, a cost (by the action's contract a plain number) in the unit the declaration states for cost; the
+        amount and the remaining account are returned in the ledger's unit, as the owner compared them.  An amount the
+        unit owner cannot convert is refused (``WorldRefused``), never compared raw."""
         payload = detach(self.payload)
         if self.kind == "ledger":
             owner = BudgetLedger.from_dict(payload["ledger"])
@@ -327,12 +328,14 @@ class BudgetStatement:
             if not converts(amount, owner.cost_unit):
                 raise WorldRefused(f"an amount in {amount.units!r} does not convert into the ledger's "
                                    f"{owner.cost_unit!r} (the unit owner's rule)")
-            return owner.affordable(amount.magnitude_in(owner.cost_unit), family=family), owner.general_pool
+            accounted = Quantity(amount.magnitude_in(owner.cost_unit), owner.cost_unit)
+            return (owner.affordable(accounted.magnitude, family=family), Quantity(owner.general_pool, owner.cost_unit),
+                    accounted)
         budget = ExperimentBudget.from_dict(payload["budget"])
         acc = payload["accounting"]
         remaining = acc["remaining_observations"]
         attempts_ok = budget.max_attempts is None or acc["attempts"] + requested <= budget.max_attempts
-        return requested <= remaining and attempts_ok, remaining
+        return requested <= remaining and attempts_ok, remaining, requested
 
     def identity(self) -> dict[str, Any]:
         return {"schema": STATEMENT_SCHEMA, "dimension": self.dimension, "kind": self.kind,

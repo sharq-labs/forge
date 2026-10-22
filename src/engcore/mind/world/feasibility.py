@@ -43,7 +43,8 @@ admitted action.  Nothing here dispatches, reserves budget or invokes a provider
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from contextvars import ContextVar
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
 
@@ -54,12 +55,15 @@ from engcore.mind.repsem import canonical_bytes
 from engcore.scientific import Quantity, ScientificCoreError, ValidityStatus
 from engcore.scientific.models.definition import UnknownReason
 from engcore.scientific.results.immutable import detach, freeze
+from engcore.scientific.units.quantity import registry_fingerprint
 from engcore.sria.actions import FeasibilityVerdict
+from engcore.sria.decision.hypotheses import ProposalProvenance, ProposerKind
 from engcore.sria.decision.replay import ReplayMode, ReplayOutcome, ReplayResult
 
 from .actions import ActionMode, ActionSpec, ExecutionKind, ProposedAction, proposed_action_from_suggestion
 from .base import (
-    ProposalRefused, StaleProposal, WorldRefused, converts, digest, expect_schema, same_value, schema, value_payload,
+    ProposalRefused, StaleProposal, WorldRefused, as_unit, converts, digest, expect_schema, same_value, schema,
+    value_payload,
 )
 from .domains import DiscreteLevels, check_at_edges, finite_members, is_finite, matched_level, membership
 from .variables import ValueOrigin
@@ -207,6 +211,9 @@ class FeasibilityDecision:
     space_id: str
     proposal_digest: str
     annotations: Any = ()
+    #: Every exact value a family decided on in this check, as (variable, value), in the order read.  Not identity (a
+    #: decision rebuilt from its record has none): admission mints only if each equals the value it mints (K4-F1).
+    decided: Any = field(default=(), compare=False, repr=False)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "status", FeasibilityStatus(self.status))
@@ -255,13 +262,31 @@ class FeasibilityDecision:
     def feasibility_verdicts(self) -> tuple[FeasibilityVerdict, ...]:
         """Definite infeasibilities only, as SRIA ``FeasibilityVerdict`` records for reporting into its hard gate.
 
-        MISSING_INFORMATION is never exported as a negative verdict and nothing is ever exported as a positive one.
+        MISSING_INFORMATION is never exported as a negative verdict and nothing is ever exported as a positive one, so an
+        empty tuple says nothing about feasibility: a consumer reads the decision's status, never the absence of
+        verdicts.
         This is the decision's own view, on whatever world it was checked on: a consumer reporting into the SRIA hard
         gate takes verdicts from ``AdmissionResult.feasibility_verdicts()``, which exports only decisions made on a
         world verified against its owners."""
         return tuple(FeasibilityVerdict(f"forge.mind.world:{r.family.value}:{r.code}:{r.subject}", False,
                                         f"{r.status.value}: {r.message}")
                      for r in self.reasons if r.status is not F.MISSING_INFORMATION)
+
+
+_DECIDED: ContextVar[list[tuple[str, Any]] | None] = ContextVar("engcore_mind_world_decided_values", default=None)
+
+
+def _decided_on(name: str, value: Any) -> Any:
+    """Record that a family decided on ``value`` for ``name`` (inside a check; a no-op elsewhere)."""
+    record = _DECIDED.get()
+    if record is not None:
+        record.append((name, value))
+    return value
+
+
+#: Who proposes an ``alternatives`` trial: the world's enumeration of declared members (a trial is reasoning only,
+#: never admitted, and never carries the original proposer's certified suggestion, which it no longer matches).
+ALTERNATIVES_PROPOSER = "forge.mind.world.alternatives"
 
 
 # ---- value resolution ---------------------------------------------------------------------------------------------------------
@@ -295,10 +320,11 @@ def _world_basis(world: ScientificWorld, name: str) -> _Resolved | None:
                      basis)
 
 
-def _as_executed(world: ScientificWorld, spec: ActionSpec, name: str, value: Any) -> Any:
+def as_executed(world: ScientificWorld, spec: ActionSpec, name: str, value: Any) -> Any:
     """``value`` (assigned to, or fixed for, ``name``) as an executor will receive it: a quantity in the variable's
-    declared unit by the unit owner's conversion, a declared discrete level of the control AS that declared level (the
-    unit owner's identity rule, :func:`~.domains.matched_level`); any other typed value as it is.  A quantity the unit
+    declared unit by the unit owner's conversion, a declared discrete level (of the action's control domain, else of
+    the variable's own domain) AS that declared level (the unit owner's identity rule, :func:`~.domains.matched_level`);
+    any other typed value as it is.  A quantity the unit
     owner does not convert stays as proposed: the domain family refuses it, so it is never executed."""
     if not isinstance(value, Quantity) or not world.declares(name):
         return value
@@ -306,26 +332,28 @@ def _as_executed(world: ScientificWorld, spec: ActionSpec, name: str, value: Any
     if not converts(value, unit):
         return value
     control = spec.control(name)
-    if control is not None and isinstance(control.domain, DiscreteLevels):
-        level = matched_level(control.domain, value)
-        if level is not None:
-            value = level
-    return value if value.units == unit else Quantity(value.magnitude_in(unit), unit)
+    for levels in (None if control is None else control.domain, world.variable(name).domain):
+        if isinstance(levels, DiscreteLevels):          # the action's levels first, then the variable's own
+            level = matched_level(levels, value)
+            if level is not None:
+                value = level
+                break
+    return as_unit(value, unit)
 
 
 def _resolve(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None, name: str,
              *, include_proposal: bool = True) -> _Resolved | None:
     """Precedence: the proposal's assignment (only for a control of the action: a value the proposer may not set is
     refused by the role family and never read), then the action's fixed condition, then the world's current value.
-    An assignment or a fixed condition is resolved AS IT WILL BE EXECUTED (:func:`_as_executed`)."""
+    An assignment or a fixed condition is resolved AS IT WILL BE EXECUTED (:func:`as_executed`)."""
     if include_proposal and proposal is not None and spec.control(name) is not None:
         v = proposal.value(name)
         if v is not None:
-            v = _as_executed(world, spec, name, v)
+            v = as_executed(world, spec, name, v)
             return _Resolved(v, "proposal", (v,))
     f = spec.fixed(name)
     if f is not None:
-        v = _as_executed(world, spec, name, f.value)
+        v = as_executed(world, spec, name, f.value)
         return _Resolved(v, "fixed_condition", (v,))
     return _world_basis(world, name)
 
@@ -426,22 +454,26 @@ class FeasibleActionSpace:
             if canonical_bytes(again.to_dict()) != canonical_bytes(proposal.to_dict()):
                 raise ProposalRefused("the proposal is not what its source suggestion yields in this world")
         c = _Collector()
-        spec = world.action(proposal.action_id)
-        if spec is None:
-            c.add(F.MISSING_INFORMATION, "UNDECLARED_ACTION", CheckFamily.ACTION, proposal.action_id,
-                  "the world declares no such action (never inferred from a name)")
+        token = _DECIDED.set([])                       # every exact value the families decide on (K4-F1)
+        try:
+            spec = world.action(proposal.action_id)
+            if spec is None:
+                c.add(F.MISSING_INFORMATION, "UNDECLARED_ACTION", CheckFamily.ACTION, proposal.action_id,
+                      "the world declares no such action (never inferred from a name)")
+                c.ran(CheckFamily.ACTION, 1)
+                return self._decision(proposal, c)
             c.ran(CheckFamily.ACTION, 1)
+            _check_roles(world, spec, proposal, c)
+            _check_domains(world, spec, proposal, c)
+            _check_observe(world, spec, proposal, c)
+            _check_protocol(world, spec, proposal, c)
+            _check_state(world, spec, proposal, c)
+            _check_applicability(world, spec, proposal, c)
+            _check_provider(world, spec, c)
+            _check_budget(world, spec, c)
             return self._decision(proposal, c)
-        c.ran(CheckFamily.ACTION, 1)
-        _check_roles(world, spec, proposal, c)
-        _check_domains(world, spec, proposal, c)
-        _check_observe(world, spec, proposal, c)
-        _check_protocol(world, spec, proposal, c)
-        _check_state(world, spec, proposal, c)
-        _check_applicability(world, spec, proposal, c)
-        _check_provider(world, spec, c)
-        _check_budget(world, spec, c)
-        return self._decision(proposal, c)
+        finally:
+            _DECIDED.reset(token)
 
     def _decision(self, proposal: ProposedAction, c: _Collector) -> FeasibilityDecision:
         reasons = tuple(c.reasons)
@@ -449,7 +481,7 @@ class FeasibleActionSpace:
                                               for n, k, r, u in sorted(c.bound)]}]
         return FeasibilityDecision(_derive_status(reasons), reasons, tuple(c.checked), proposal.action_id,
                                    self.world.revision_id, self.space_id, proposal.digest,
-                                   tuple(c.annotations) + tuple(relied))
+                                   tuple(c.annotations) + tuple(relied), tuple(_DECIDED.get() or ()))
 
     def alternatives(self, proposal: ProposedAction, variable: str) -> dict[str, Any]:
         """The declared values of one control that would make this proposal FEASIBLE, the rest held as proposed.
@@ -469,10 +501,12 @@ class FeasibleActionSpace:
                              "the whole proposal with it",
                     "range": [control.domain.lower.to_dict(), control.domain.upper.to_dict()]}
         options = []
-        for member in finite_members(control.domain):
+        enumerator = ProposalProvenance(ProposerKind.ALGORITHM, ALTERNATIVES_PROPOSER,
+                                        note=f"a declared member substituted into proposal {proposal.digest}")
+        for member in finite_members(control.domain):         # the world's enumeration, not the proposer's proposal
             trial = ProposedAction(proposal.action_id, proposal.world_revision,
                                    {**dict(proposal.assignments), variable: member}, proposal.observe,
-                                   proposal.proposer, proposal.rationale)
+                                   enumerator, proposal.rationale)
             if self.check(trial).feasible:
                 options.append(member)
         return {"variable": variable, "kind": "declared_members", "label": label, "options": options}
@@ -510,9 +544,19 @@ def _check_roles(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAct
     c.ran(CheckFamily.ROLE, len(proposal.assignments))
 
 
+def _read(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None, name: str) -> _Resolved | None:
+    """What a family reads for ``name`` (the resolution), recorded as decided on when it is a value of the
+    configuration: whatever a family uses is what admission must mint (K4-F1)."""
+    r = _resolve(world, spec, proposal, name)
+    if r is not None and r.source in ("proposal", "fixed_condition"):
+        for used in (r.value, *(r.edges or ())):
+            _decided_on(name, used)
+    return r
+
+
 def _guard_value(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None, name: str
                  ) -> _Resolved | None:
-    r = _resolve(world, spec, proposal, name)
+    r = _read(world, spec, proposal, name)
     if r is None or r.source == "world_bound" or r.edges is None or len(r.edges) != 1:
         return None   # a guard decides on a stated value, never on a reading known only within its uncertainty
     return r
@@ -548,7 +592,7 @@ def _check_domains(world: ScientificWorld, spec: ActionSpec, proposal: ProposedA
                   f"the unit owner does not convert {assigned} into the variable's declared unit {var.unit!r}",
                   declared_by=control.declared_by.value, proposed=value_payload(assigned), expected_unit=var.unit)
             continue
-        executed = _as_executed(world, spec, name, assigned)   # the value decided on and executed (module docstring)
+        executed = _decided_on(name, as_executed(world, spec, name, assigned))   # decided on and executed
         found = membership(control.domain, executed)
         if found is None and var.domain is not None:
             found = membership(var.domain, executed)
@@ -559,8 +603,23 @@ def _check_domains(world: ScientificWorld, spec: ActionSpec, proposal: ProposedA
             code, message, detail = found
             status = F.INFEASIBLE_DOMAIN if code in ("VALUE_KIND_MISMATCH", "UNIT_INCOMPATIBLE") else \
                 STATUS_BY_SOURCE[source]
+            detail = {**detail, "proposed": value_payload(assigned)}          # the proposer's own spelling ...
+            if executed is not assigned:
+                detail["as_executed"] = value_payload(executed)               # ... and the value decided on
             c.add(status, code, CheckFamily.DOMAIN, name, message, declared_by=source.value, **detail)
-    c.ran(CheckFamily.DOMAIN, len(spec.controls))
+    for fixed in spec.fixed_conditions:                # a fixed condition is decided as executed too (round 4, R4-A1)
+        var = world.variable(fixed.name)
+        if var.domain is None:
+            continue
+        executed = _decided_on(fixed.name, as_executed(world, spec, fixed.name, fixed.value))
+        found = membership(var.domain, executed)
+        if found is not None:
+            code, message, detail = found
+            c.add(STATUS_BY_SOURCE[var.declaration.source], code, CheckFamily.DOMAIN, fixed.name,
+                  f"the action's fixed condition, as executed in the variable's unit, is outside its declared domain: "
+                  f"{message}", declared_by=var.declaration.source.value,
+                  **{**detail, "fixed_condition": value_payload(fixed.value)})
+    c.ran(CheckFamily.DOMAIN, len(spec.controls) + len(spec.fixed_conditions))
 
 
 def _check_observe(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction, c: _Collector) -> None:
@@ -619,7 +678,7 @@ def _check_protocol(world: ScientificWorld, spec: ActionSpec, proposal: Proposed
             if not constraint.guard.holds(g.value):
                 continue
         metric = constraint.consequence.metric
-        r = _resolve(world, spec, proposal, metric)
+        r = _read(world, spec, proposal, metric)
         if r is None:
             c.add(F.MISSING_INFORMATION, "CONSTRAINT_UNRESOLVED", CheckFamily.PROTOCOL, cid,
                   "the constrained value is not stated", metric=metric)
@@ -743,7 +802,7 @@ def _check_applicability(world: ScientificWorld, spec: ActionSpec, proposal: Pro
             if world.role(name) not in APPLICABILITY_CONTEXT_ROLES:
                 withheld.append(name)
                 continue
-            r = _resolve(world, spec, proposal, name)
+            r = _read(world, spec, proposal, name)
             if r is None:
                 continue
             if r.source == "world_bound":
@@ -832,13 +891,12 @@ def _check_budget(world: ScientificWorld, spec: ActionSpec, c: _Collector) -> No
         if statement is not None:                          # the owner record's own rule, in the owner's unit
             requested = amount if isinstance(amount, Quantity) else amount.value
             try:
-                ok, remaining = statement.decide(requested, spec.family)
+                ok, remaining, requested = statement.decide(requested, spec.family)   # as the owner accounted it
             except WorldRefused as exc:
                 c.add(F.MISSING_INFORMATION, "BUDGET_UNIT_INCOMPATIBLE", CheckFamily.BUDGET, dim,
                       "the action's amount cannot be accounted in the budget owner's unit", why=str(exc))
                 continue
-            if isinstance(requested, Quantity):
-                requested = value_payload(requested)
+            requested, remaining = (value_payload(x) if isinstance(x, Quantity) else x for x in (requested, remaining))
         else:
             remaining = budget.remaining(dim)
             if dim == "cost":                                   # the plan's own rule, on the raw amount
@@ -887,6 +945,10 @@ def replay_decision(record: Mapping[str, Any], world_payload: Mapping[str, Any],
     if mismatches:
         return ReplayResult(mode, ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE, dict(record), mismatches=tuple(mismatches),
                             detail="the stored inputs are not the ones this decision was made for")
+    if world.unit_registry is not None and world.unit_registry.record_digest != registry_fingerprint():
+        return ReplayResult(mode, ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE, dict(record), mismatches=("unit_registry",),
+                            detail="the decision was made under another unit registry than this process's: its "
+                                   "conversions cannot be recomputed here")
     try:
         recomputed = FeasibleActionSpace.build(world).check(proposal).to_dict()
     except WorldRefused as exc:
