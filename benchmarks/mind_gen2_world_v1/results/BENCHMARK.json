@@ -1,15 +1,15 @@
 {
  "cases": 515,
- "cases_sha256": "f123f748c503e5c7364aa2eb82a008cd0796906c23955c5485870d4a63212184",
+ "cases_sha256": "8cae3c830f8ed317b618e42e524a2fc38922689c8504b6373daf379c7ae37df6",
  "cross_process": {
   "by_hash_seed": {
-   "0": "e9775ad7ad0e2eb43257a7dd456937d2cd5cd1e0f8837c52e2e9fc52182e7ed3",
-   "4242": "e9775ad7ad0e2eb43257a7dd456937d2cd5cd1e0f8837c52e2e9fc52182e7ed3"
+   "0": "c06e8c0e1792c72e02e0d82fa2054ed68632addd93203e505945c9269495ff3c",
+   "4242": "c06e8c0e1792c72e02e0d82fa2054ed68632addd93203e505945c9269495ff3c"
   },
   "identical": true,
-  "in_process": "e9775ad7ad0e2eb43257a7dd456937d2cd5cd1e0f8837c52e2e9fc52182e7ed3"
+  "in_process": "c06e8c0e1792c72e02e0d82fa2054ed68632addd93203e505945c9269495ff3c"
  },
- "decisions_digest": "e9775ad7ad0e2eb43257a7dd456937d2cd5cd1e0f8837c52e2e9fc52182e7ed3",
+ "decisions_digest": "c06e8c0e1792c72e02e0d82fa2054ed68632addd93203e505945c9269495ff3c",
  "replay_and_serialization": {
   "outcomes": {
    "reproduced": 515
@@ -57,9 +57,9 @@
    "status_accuracy": "N/A (Gen1 returns a bool and one reason string, no typed status)",
    "valid": 22,
    "valid_admitted": 15,
-   "verdict_ADMIT": 67,
-   "verdict_NOT_POSABLE": 376,
-   "verdict_REJECT": 72
+   "verdict_FEASIBLE": 67,
+   "verdict_NOT_FEASIBLE": 72,
+   "verdict_NOT_POSABLE": 376
   },
   "GEN2_WORLD_ACTIONSPACE": {
    "cases": 515,
@@ -400,5 +400,6 @@
    "gen1_posable": 9,
    "gen2_rejected_with_UNIT_INCOMPATIBLE": 30
   }
- }
+ },
+ "terminology": "A per-case verdict is FEASIBLE or NOT_FEASIBLE under the action-feasibility check (Gen1: its own validity check; NOT_POSABLE when Gen1 cannot state the proposal).  The counters keep the brief's section 24 names: 'admitted' means found FEASIBLE and 'rejected' means found NOT_FEASIBLE; neither is evidence admission (sria.admission) or any scientific verdict."
 }

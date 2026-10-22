@@ -1,18 +1,18 @@
 {
- "ACTIONSPACE_BUILD_MS": 0.243,
+ "ACTIONSPACE_BUILD_MS": 0.401,
  "ACTIONSPACE_BUILD_MS_median_by_world": {
-  "battery": 0.39,
-  "drone": 0.243,
-  "hvac_chamber": 0.289,
-  "hvac_field": 0.235,
-  "motor": 0.188
+  "battery": 0.679,
+  "drone": 0.262,
+  "hvac_chamber": 0.491,
+  "hvac_field": 0.401,
+  "motor": 0.322
  },
- "FEASIBILITY_MAX_MS": 0.7991,
- "FEASIBILITY_P50_MS": 0.1047,
- "FEASIBILITY_P95_MS": 0.217,
+ "FEASIBILITY_MAX_MS": 1.0635,
+ "FEASIBILITY_P50_MS": 0.1419,
+ "FEASIBILITY_P95_MS": 0.3723,
  "FEASIBILITY_samples": 2575,
  "REFERENCE_SOLVER_MS": {
-  "median": 87.793,
+  "median": 133.473,
   "what": "one Gen1 repsem judgment (scipy least-squares model fit) on the synthetic mind_repsem_v1 IDENTIFIABLE fixture, seed 0: an in-repo solver execution"
  },
  "SERIALIZED_WORLD_BYTES_by_world": {
@@ -23,20 +23,20 @@
   "motor": 17559
  },
  "SERIALIZED_WORLD_BYTES_max": 22647,
- "WORLD_BUILD_MS": 1.035,
+ "WORLD_BUILD_MS": 1.573,
  "WORLD_BUILD_MS_median_by_world": {
-  "battery": 1.453,
-  "drone": 0.923,
-  "hvac_chamber": 1.256,
-  "hvac_field": 1.011,
-  "motor": 1.035
+  "battery": 1.573,
+  "drone": 0.952,
+  "hvac_chamber": 1.176,
+  "hvac_field": 1.583,
+  "motor": 1.724
  },
  "WORLD_FROM_DICT_MS_median_by_world": {
-  "battery": 1.693,
-  "drone": 1.004,
-  "hvac_chamber": 1.294,
-  "hvac_field": 1.13,
-  "motor": 1.087
+  "battery": 1.966,
+  "drone": 1.1,
+  "hvac_chamber": 1.764,
+  "hvac_field": 1.607,
+  "motor": 1.817
  },
  "host": {
   "bytecode_writing_disabled": true,
