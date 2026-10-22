@@ -21,6 +21,7 @@ from typing import Any, Callable, Mapping
 from engcore.mind.repsem.roles import RoleSource
 from engcore.scientific import ConstraintDefinition, Quantity, ScientificCoreError, ScientificVariable, VariableKind
 from engcore.scientific.ir.values import BooleanValue, CategoricalValue, IntegerValue
+from engcore.scientific.units.quantity import base_unit
 
 from .base import (
     WorldRefused, expect_schema, magnitude_key, names, require_value, same_value, schema, text, unit, value_from,
@@ -196,8 +197,8 @@ def finite_members(domain: Domain, limit: int = 1000) -> tuple[Any, ...]:
 def domain_identity(domain: Domain) -> dict[str, Any]:
     """Identity payload of a domain (canonical base-unit magnitudes; the study-axis role is not identity)."""
     if isinstance(domain, DiscreteLevels):
-        return {"kind": "discrete", "dimension_unit": domain.unit, "levels": list(domain.keys())}
-    return {"kind": domain.kind.value, "unit": domain.unit, "categories": sorted(domain.categories),
+        return {"kind": "discrete", "base_unit": base_unit(domain.unit), "levels": list(domain.keys())}
+    return {"kind": domain.kind.value, "base_unit": base_unit(domain.unit), "categories": sorted(domain.categories),
             "lower": None if domain.lower is None else magnitude_key(domain.lower),
             "upper": None if domain.upper is None else magnitude_key(domain.upper)}
 
