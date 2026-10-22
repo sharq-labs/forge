@@ -1,0 +1,43 @@
+"""GEN2-BR1: ScientificWorld + FeasibleActionSpace v1, the first Generation-2 Mind capability (research layer).
+
+A :class:`ScientificWorld` is a read-only, content-addressed reasoning VIEW over declared and authoritative records:
+variables (each with its reused Gen1 role declaration), the protocol's actions, constraints and channels, the model
+records whose applicability gates model execution, verbatim provider status, the budget as its owner records state
+it, and typed references to what it summarizes.  A :class:`FeasibleActionSpace` checks whether a
+:class:`ProposedAction` may be executed as declared, with a structured :class:`FeasibilityDecision`.
+
+Neither issues SUPPORTED, REFUSED, a scientific truth, a hypothesis status or an evidence admission; a feasibility
+decision is pre-execution admissibility only (``action_feasibility_not_scientific_support``).  The Mind reads and
+proposes through a :class:`MindWorldPort`, which reaches no executor; an :class:`ExecutionGate`, held by the execution
+owner, dispatches only cleared actions to the existing executor.
+
+Imported by its own path, ``engcore.mind.world``: it is not re-exported from ``engcore.mind`` or from the Gen1
+packages (both byte-pinned by the sealed Gen1 reference), and nothing certified imports it.
+"""
+
+from .actions import (
+    ActionMode, ActionSpec, ControlSpec, ExecutionKind, FORBIDDEN_PROPOSAL_KEYS, IntakeCode, IntakeRefusal,
+    ProposedAction, proposal_from_suggestion,
+)
+from .base import ProposalRefused, RecordKind, RecordRef, SOFTWARE_VERSION, StaleProposal, WorldRefused
+from .domains import ALL_ACTIONS, DeclaredConstraint, DiscreteLevels, Guard
+from .feasibility import (
+    CLASSIFICATION, CheckFamily, FeasibilityDecision, FeasibilityReason, FeasibilityStatus, FeasibleActionSpace,
+    replay_decision,
+)
+from .gate import ClearedAction, ExecutionGate, GateRefused
+from .port import MindWorldPort
+from .variables import (
+    Controllability, Entity, Observability, ObservationChannel, TemporalSemantics, ValueOrigin, WorldVariable,
+)
+from .world import ApplicabilityBinding, Lineage, ProviderSnapshot, ScientificWorld, WorldBudget, verify_lineage
+
+__all__ = [
+    "ALL_ACTIONS", "ActionMode", "ActionSpec", "ApplicabilityBinding", "CLASSIFICATION", "CheckFamily", "ClearedAction",
+    "ControlSpec", "Controllability", "DeclaredConstraint", "DiscreteLevels", "Entity", "ExecutionGate",
+    "ExecutionKind", "FORBIDDEN_PROPOSAL_KEYS", "FeasibilityDecision", "FeasibilityReason", "FeasibilityStatus",
+    "FeasibleActionSpace", "GateRefused", "Guard", "IntakeCode", "IntakeRefusal", "Lineage", "MindWorldPort",
+    "Observability", "ObservationChannel", "ProposalRefused", "ProposedAction", "ProviderSnapshot", "RecordKind",
+    "RecordRef", "SOFTWARE_VERSION", "ScientificWorld", "StaleProposal", "TemporalSemantics", "ValueOrigin",
+    "WorldBudget", "WorldRefused", "WorldVariable", "proposal_from_suggestion", "replay_decision", "verify_lineage",
+]
