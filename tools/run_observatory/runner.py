@@ -148,6 +148,8 @@ class RunRequest:
     policy: dict | None = None
     sample_interval: float = 0.1
     persist_logs: bool = True
+    env_cache: bool = True
+    refresh_env_cache: bool = False
     quiet: bool = False
     grace_seconds: float = 10.0
 
@@ -513,8 +515,11 @@ def _execute(req: RunRequest, *, clock, environ) -> RunOutcome:
             argv=argv, cwd=cwd, repo_root=repo_root, run_root=run_root, adapter=adapter.name,
             inputs=[resolve(p) for p in req.inputs], configs=[resolve(p) for p in req.configs], seeds=req.seeds,
             declared=req.declared, workload_env=req.workload_env, environ=environ, redactor=redactor)
-        facts = identity.environment_facts(salt=store.salt, child_executable=exe)
-        body["environment"] = {"environment_id": identity.environment_identity(facts), "facts": facts}
+        facts, source = identity.cached_environment_facts(
+            salt=store.salt, child_executable=exe, cache_dir=store.root / "cache" if req.env_cache else None,
+            refresh=req.refresh_env_cache)
+        body["environment"] = {"environment_id": identity.environment_identity(facts), "facts": facts,
+                               "facts_source": source}
     except ValueError as exc:
         if "refusing to bind secret" in str(exc):
             raise

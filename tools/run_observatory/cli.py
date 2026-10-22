@@ -107,6 +107,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--sample-interval", type=float, default=0.1)
     run.add_argument("--grace-seconds", type=float, default=10.0)
     run.add_argument("--no-logs", action="store_true", help="do not store (redacted) stdout/stderr")
+    run.add_argument("--no-env-cache", action="store_true", help="probe the environment instead of using the cache")
+    run.add_argument("--refresh-env-cache", action="store_true", help="probe the environment and rewrite its cache")
     run.add_argument("--quiet", action="store_true", help="do not pass the child's output through")
 
     show = sub.add_parser("show")
@@ -180,7 +182,8 @@ def _cmd_run(args: argparse.Namespace, child: list[str], run_root: Path) -> int:
         seeds=args.seed, declared=dict(args.declare), workload_env=args.workload_env, counters=dict(args.counter),
         artifacts=args.artifact, output_identity=args.output_identity, trace_identity=args.trace_identity,
         replay_of=args.replay_of, cost=cost, baseline=args.baseline, policy=_policy(args),
-        sample_interval=args.sample_interval, persist_logs=not args.no_logs, quiet=args.quiet,
+        sample_interval=args.sample_interval, persist_logs=not args.no_logs, env_cache=not args.no_env_cache,
+        refresh_env_cache=args.refresh_env_cache, quiet=args.quiet,
         grace_seconds=args.grace_seconds)
     previous = _install_signal_handlers()
     try:

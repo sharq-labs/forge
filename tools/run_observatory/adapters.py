@@ -17,7 +17,6 @@ from pathlib import Path
 import signal
 import sys
 from typing import Sequence
-import xml.etree.ElementTree as ET
 
 #: Windows' exit status for a process ended by a console control event (Ctrl+C / Ctrl+Break).
 STATUS_CONTROL_C_EXIT = 0xC000013A
@@ -87,6 +86,8 @@ class Pytest(GenericCommand):
 
     @staticmethod
     def _outcomes(context: dict) -> dict | None:
+        import xml.etree.ElementTree as ET  # only pytest runs pay for it
+
         try:
             root = ET.parse(context["junit"]).getroot()
         except (OSError, ET.ParseError, KeyError):

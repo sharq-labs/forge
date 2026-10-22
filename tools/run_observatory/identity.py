@@ -7,17 +7,18 @@ from a timestamp, a path that moves with the checkout, or a value a caller merel
 from __future__ import annotations
 
 import hashlib
-from importlib import metadata
 import json
 import os
 from pathlib import Path
 import platform
 import re
 import shutil
+import site
 import socket
 import struct
 import subprocess
 import sys
+import time
 from typing import Iterable, Mapping, Sequence
 
 from tools.run_observatory import ENVIRONMENT_SCHEMA, WORKLOAD_SCHEMA
@@ -31,6 +32,12 @@ RELEVANT_ENV = ("PYTHONHASHSEED", "PYTHONOPTIMIZE", "OMP_NUM_THREADS", "MKL_NUM_
 #: Untracked files above this size are bound by (size, mtime) instead of content.
 _LARGE_UNTRACKED_BYTES = 64 * 1024 * 1024
 _GIT_TIMEOUT = 120
+
+#: Environment-facts cache. An entry is reused only while every input its key binds is unchanged,
+#: and never longer than the TTL, which bounds what the key cannot see (a GPU driver updated
+#: without a reboot).
+ENV_CACHE_VERSION = 1
+ENV_CACHE_TTL_SECONDS = 24 * 3600
 
 
 def canonical_json(obj: object) -> bytes:
@@ -74,18 +81,19 @@ def capture_git(path: Path | str) -> dict:
     if shutil.which("git") is None:
         return _unknown_git("GIT_UNAVAILABLE")
     try:
-        top = _git(path, "rev-parse", "--show-toplevel")
+        # One call for root, HEAD, its tree and the symbolic ref; it fails as a whole outside a
+        # repository or before the first commit, and the slow path below says which.
+        fast = _git(path, "rev-parse", "--show-toplevel", "HEAD", "HEAD^{tree}", "--symbolic-full-name", "HEAD")
     except OSError as exc:
         return _unknown_git("UNAVAILABLE", str(exc))
-    if top.returncode != 0:
-        return _unknown_git("NOT_A_REPOSITORY")
-    root = Path(top.stdout.decode().strip())
-    head = _git(root, "rev-parse", "--verify", "-q", "HEAD")
-    if head.returncode != 0:
-        return {**_unknown_git("NO_COMMITS"), "repository_root": str(root)}
-    head_sha = head.stdout.decode().strip()
-    tree_id = _git(root, "rev-parse", "HEAD^{tree}").stdout.decode().strip()
-    branch = _git(root, "symbolic-ref", "--short", "-q", "HEAD")
+    lines = fast.stdout.decode().splitlines()
+    if fast.returncode != 0 or len(lines) != 4:
+        top = _git(path, "rev-parse", "--show-toplevel")
+        if top.returncode != 0:
+            return _unknown_git("NOT_A_REPOSITORY")
+        return {**_unknown_git("NO_COMMITS"), "repository_root": top.stdout.decode().strip()}
+    root, head_sha, tree_id, ref = (Path(lines[0].strip()), *(line.strip() for line in lines[1:]))
+    branch = ref[len("refs/heads/"):] if ref.startswith("refs/heads/") else None
     status = _git(root, "status", "--porcelain=v1", "-z", "--untracked-files=all")
     entries = [e for e in status.stdout.split(b"\0") if e]
     clean = not entries
@@ -98,8 +106,7 @@ def capture_git(path: Path | str) -> dict:
                      "dirty:" + sha256_json({"tree": tree_id, "diff": diff_digest, "untracked": untracked_digest}))
     return {
         "status": "OK", "detail": "", "repository_root": str(root),
-        "branch": branch.stdout.decode().strip() or None if branch.returncode == 0 else None,
-        "detached": branch.returncode != 0, "head_sha": head_sha, "tree_id": tree_id,
+        "branch": branch, "detached": branch is None, "head_sha": head_sha, "tree_id": tree_id,
         "tree_clean": clean, "TREE_CLEAN": clean, "uncommitted_diff_sha256": diff_digest,
         "untracked_sha256": untracked_digest, "changed_paths": len(entries), "code_identity": code_identity,
     }
@@ -213,6 +220,8 @@ def workload_identity(*, argv: Sequence[str], cwd: Path | str, repo_root: Path |
 
 
 def _packages() -> dict:
+    from importlib import metadata  # ~40 ms of imports, paid only when the environment is probed
+
     names = set()
     for dist in metadata.distributions():
         name = dist.metadata["Name"] if dist.metadata else None
@@ -335,3 +344,89 @@ def environment_facts(*, salt: bytes, child_executable: Path | str | None = None
 
 def environment_identity(facts: Mapping[str, object]) -> str:
     return sha256_json(dict(facts))
+
+
+# ---------------------------------------------------------------------------
+# Environment-facts cache
+
+
+def _boot_marker() -> int | None:
+    """Boot time to the minute: a reboot (OS update, hardware change) invalidates every cached entry."""
+    from tools.run_observatory import metrics
+
+    try:
+        if metrics.psutil is not None:
+            return int(metrics.psutil.boot_time() // 60)
+        if os.name == "nt":
+            import ctypes
+
+            uptime = ctypes.WinDLL("kernel32").GetTickCount64
+            uptime.restype = ctypes.c_ulonglong
+            return int((time.time() - uptime() / 1000) // 60)
+        for line in Path("/proc/stat").read_text(encoding="utf-8").splitlines():
+            if line.startswith("btime "):
+                return int(line.split()[1]) // 60
+    except (OSError, ValueError, AttributeError):
+        pass
+    return None
+
+
+def _site_stamp() -> list[list]:
+    """Every site-packages directory and its mtime: installing or removing a distribution changes it."""
+    dirs = list(site.getsitepackages()) if hasattr(site, "getsitepackages") else []
+    user = site.getusersitepackages() if hasattr(site, "getusersitepackages") else None
+    out = []
+    for folder in sorted(set(dirs + ([user] if user else []))):
+        try:
+            out.append([folder, os.stat(folder).st_mtime_ns])
+        except OSError:
+            out.append([folder, None])
+    return out
+
+
+def _cache_key(salt: bytes, child_executable: Path | str | None) -> str:
+    from tools.run_observatory import metrics
+
+    child = None
+    if child_executable is not None:
+        try:
+            stat = os.stat(child_executable)
+            child = [str(child_executable), stat.st_size, stat.st_mtime_ns]
+        except OSError:
+            child = [str(child_executable), None, None]
+    return sha256_json({"version": ENV_CACHE_VERSION, "schema": ENVIRONMENT_SCHEMA, "salt": salt.hex(),
+                        "python": [sys.executable, sys.version, sys.prefix], "site": _site_stamp(),
+                        "boot": _boot_marker(), "host": socket.gethostname(), "child": child,
+                        "psutil": metrics.psutil is not None})
+
+
+def cached_environment_facts(*, salt: bytes, child_executable: Path | str | None = None,
+                             cache_dir: Path | None = None, refresh: bool = False) -> tuple[dict, str]:
+    """Environment facts and where they came from: ``CACHE`` or ``PROBED``.
+
+    Probing costs ~0.3 s (distribution list, WMI, ``nvidia-smi``); none of it changes without a
+    reboot, a package (un)install, a new interpreter or a new child executable, and the key binds
+    all of those. The facts are returned byte-identical either way, so the ENVIRONMENT_ID never
+    depends on the cache.
+    """
+    if cache_dir is None:
+        return environment_facts(salt=salt, child_executable=child_executable), "PROBED"
+    key = _cache_key(salt, child_executable)
+    entry = Path(cache_dir) / f"env-{key[:32]}.json"
+    if not refresh:
+        try:
+            cached = json.loads(entry.read_text(encoding="utf-8"))
+            fresh = 0 <= time.time() - cached["created_unix"] <= ENV_CACHE_TTL_SECONDS
+            if fresh and cached["key"] == key and cached["facts"]["schema"] == ENVIRONMENT_SCHEMA:
+                return cached["facts"], "CACHE"
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
+    facts = environment_facts(salt=salt, child_executable=child_executable)
+    try:
+        Path(cache_dir).mkdir(parents=True, exist_ok=True)
+        tmp = entry.with_name(f".{entry.name}.{os.getpid()}.tmp")
+        tmp.write_text(json.dumps({"key": key, "created_unix": time.time(), "facts": facts}), encoding="utf-8")
+        os.replace(tmp, entry)
+    except OSError:
+        pass  # a cache that cannot be written only costs the next run a probe
+    return facts, "PROBED"

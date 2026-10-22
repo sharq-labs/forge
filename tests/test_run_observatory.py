@@ -284,6 +284,63 @@ def test_g_environment_facts_hold_a_pseudonymous_host_id_and_no_environment_valu
         assert key in facts
 
 
+def test_g_cached_environment_facts_are_identical_to_probed_ones(tmp_path) -> None:
+    probed = identity.environment_facts(salt=b"salt", child_executable=PY)
+    first, source_1 = identity.cached_environment_facts(salt=b"salt", child_executable=PY, cache_dir=tmp_path)
+    again, source_2 = identity.cached_environment_facts(salt=b"salt", child_executable=PY, cache_dir=tmp_path)
+    assert (source_1, source_2) == ("PROBED", "CACHE")
+    assert identity.environment_identity(first) == identity.environment_identity(again) == \
+        identity.environment_identity(probed)
+
+
+def test_g_the_environment_cache_is_invalidated_when_its_key_changes(tmp_path, monkeypatch) -> None:
+    identity.cached_environment_facts(salt=b"salt", cache_dir=tmp_path)
+    monkeypatch.setattr(identity, "_boot_marker", lambda: -1)  # a reboot
+    assert identity.cached_environment_facts(salt=b"salt", cache_dir=tmp_path)[1] == "PROBED"
+    monkeypatch.setattr(identity, "_site_stamp", lambda: [["site-packages", -1]])  # a package (un)installed
+    assert identity.cached_environment_facts(salt=b"salt", cache_dir=tmp_path)[1] == "PROBED"
+    assert identity.cached_environment_facts(salt=b"salt", cache_dir=tmp_path)[1] == "CACHE"
+    assert identity.cached_environment_facts(salt=b"salt", cache_dir=tmp_path, refresh=True)[1] == "PROBED"
+
+
+def test_g_an_expired_or_corrupted_cache_entry_is_probed_again(tmp_path, monkeypatch) -> None:
+    identity.cached_environment_facts(salt=b"salt", cache_dir=tmp_path)
+    [entry] = list(tmp_path.glob("*.json"))
+    entry.write_text("{not json", encoding="utf-8")
+    assert identity.cached_environment_facts(salt=b"salt", cache_dir=tmp_path)[1] == "PROBED"
+    clock = identity.time.time() + identity.ENV_CACHE_TTL_SECONDS + 1
+    monkeypatch.setattr(identity.time, "time", lambda: clock)
+    assert identity.cached_environment_facts(salt=b"salt", cache_dir=tmp_path)[1] == "PROBED"
+
+
+def test_g_a_cached_run_stays_exact_comparable_with_a_probed_one(repo, run_root) -> None:
+    first = runner.execute(_request(run_root, repo, [PY, "-c", "pass"]))
+    second = runner.execute(_request(run_root, repo, [PY, "-c", "pass"]))
+    uncached = runner.execute(_request(run_root, repo, [PY, "-c", "pass"], env_cache=False))
+    assert first.receipt["environment"]["facts_source"] == "PROBED"
+    assert second.receipt["environment"]["facts_source"] == "CACHE"
+    assert uncached.receipt["environment"]["facts_source"] == "PROBED"
+    ids = {r.receipt["environment"]["environment_id"] for r in (first, second, uncached)}
+    assert len(ids) == 1
+    assert second.receipt["comparison"]["comparability"] == "EXACT_COMPARABLE"
+
+
+def test_c_detached_head_and_branch_names_with_slashes_are_reported(repo) -> None:
+    _git(repo, "checkout", "-q", "-b", "feat/x")
+    assert identity.capture_git(repo)["branch"] == "feat/x"
+    _git(repo, "checkout", "-q", "--detach")
+    git = identity.capture_git(repo)
+    assert git["detached"] is True and git["branch"] is None and git["head_sha"] == _git(repo, "rev-parse", "HEAD")
+
+
+def test_c_a_repository_without_commits_has_no_code_identity(tmp_path) -> None:
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    _git(empty, "init", "-q")
+    git = identity.capture_git(empty)
+    assert git["status"] == "NO_COMMITS" and git["code_identity"] is None
+
+
 # --------------------------------------------------------------------------------------------
 # I. unsupported metrics
 
