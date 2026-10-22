@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from engcore.mind.repsem.roles import RoleRefused, RoleSource, RoleTable
+from engcore.scientific import Quantity, ScientificCoreError
 
 from .actions import ActionSpec
 from .base import RecordRef, WorldRefused, digest, expect_schema, schema, text
@@ -78,11 +79,17 @@ class ValueSource:
 @dataclass(frozen=True)
 class BudgetSource:
     """One budget dimension: stated by an owner record (``ledger`` / ``experiment`` id), or declared unbounded with
-    a basis.  A dimension the declaration names neither way is undeclared, never unlimited."""
+    a basis.  A dimension the declaration names neither way is undeclared, never unlimited.
+
+    A ``cost`` ledger states the UNIT the declaration's cost amounts are in (``unit``, a unit the unit owner knows): an
+    action's cost is a plain number in that unit, and the unit owner converts it into the ledger's own unit, so an
+    equal budget spelled in another unit decides the same way and an amount is never read in whatever unit the ledger
+    happens to use.  Solver calls (a count) and wall time (a duration) carry their own units."""
 
     dimension: str
     kind: str
     ref: str
+    unit: str = ""
 
     def __post_init__(self) -> None:
         if self.dimension not in BUDGET_DIMENSIONS:
@@ -92,10 +99,20 @@ class BudgetSource:
         if self.kind != "unbounded" and self.kind not in BUDGET_OWNERS[self.dimension]:
             raise WorldRefused(f"{self.dimension!r} is stated by {BUDGET_OWNERS[self.dimension]}, not {self.kind!r}")
         text(self.ref, f"budget source {self.dimension!r} {'basis' if self.kind == 'unbounded' else 'owner record'}")
+        if type(self.unit) is not str:
+            raise WorldRefused("a budget source's unit is text")
+        if (self.dimension, self.kind) == ("cost", "ledger"):
+            text(self.unit, "the unit a cost ledger's amounts are declared in")
+            try:
+                Quantity(1.0, self.unit)
+            except ScientificCoreError:
+                raise WorldRefused(f"cost unit {self.unit!r} is not a unit the unit owner knows") from None
+        elif self.unit:
+            raise WorldRefused(f"only a cost ledger states a declared unit; {self.dimension!r} amounts carry their own")
 
     @classmethod
-    def ledger(cls, dimension: str, ledger_id: str) -> "BudgetSource":
-        return cls(dimension, "ledger", ledger_id)
+    def ledger(cls, dimension: str, ledger_id: str, unit: str = "") -> "BudgetSource":
+        return cls(dimension, "ledger", ledger_id, unit)
 
     @classmethod
     def experiment(cls, dimension: str, experiment_id: str) -> "BudgetSource":
@@ -106,12 +123,13 @@ class BudgetSource:
         return cls(dimension, "unbounded", basis)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": BUDGET_SOURCE_SCHEMA, "dimension": self.dimension, "kind": self.kind, "ref": self.ref}
+        return {"schema": BUDGET_SOURCE_SCHEMA, "dimension": self.dimension, "kind": self.kind, "ref": self.ref,
+                **({"unit": self.unit} if self.unit else {})}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "BudgetSource":
         expect_schema(payload.get("schema"), BUDGET_SOURCE_SCHEMA)
-        return cls(payload["dimension"], payload["kind"], payload["ref"])
+        return cls(payload["dimension"], payload["kind"], payload["ref"], payload.get("unit", ""))
 
 
 def _unique(items: Any, kind: type, key: Any, what: str) -> tuple[Any, ...]:

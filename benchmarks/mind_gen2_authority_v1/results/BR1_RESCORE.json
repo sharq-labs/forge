@@ -14,7 +14,7 @@
   "CASES.json": "0e4d23ca6851bc96aac088d2410c06894593506bc15778e1c064de2108946d51"
  },
  "cases": 515,
- "changed": 255,
+ "changed": 259,
  "changes": [
   {
    "br1": {
@@ -561,7 +561,6 @@
    },
    "br1_1": {
     "codes": [
-     "CONSTRAINT_VIOLATED",
      "FIXED_CONDITION_CHANGED",
      "PRECONDITION_ENCLOSURE_REQUIRED",
      "STATE_DOMAIN_ENCLOSURE_REQUIRED"
@@ -569,7 +568,9 @@
     "status": "INFEASIBLE_PROTOCOL"
    },
    "case_id": "battery/base/pulse/CHANGE_FIXED:mode",
-   "lost_codes": [],
+   "lost_codes": [
+    "CONSTRAINT_VIOLATED"
+   ],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
@@ -1690,6 +1691,32 @@
   },
   {
    "br1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "battery/base/simulate_pulse/CHANGE_FIXED:mode",
+   "lost_codes": [
+    "CONSTRAINT_VIOLATED"
+   ],
+   "new_codes": [],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
     "codes": [],
     "status": "FEASIBLE"
    },
@@ -2165,14 +2192,15 @@
    },
    "br1_1": {
     "codes": [
-     "CONSTRAINT_VIOLATED",
      "FIXED_CONDITION_CHANGED",
      "PRECONDITION_ENCLOSURE_REQUIRED"
     ],
     "status": "INFEASIBLE_PROTOCOL"
    },
    "case_id": "drone/base/hover_test/CHANGE_FIXED:flight_mode",
-   "lost_codes": [],
+   "lost_codes": [
+    "CONSTRAINT_VIOLATED"
+   ],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
    ],
@@ -3439,6 +3467,32 @@
     ],
     "status": "INFEASIBLE_DOMAIN"
    },
+   "case_id": "drone/base/simulate_flight/SET_NUISANCE:wind",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
    "case_id": "drone/base/simulate_flight/SET_DERIVED:shaft_power",
    "lost_codes": [],
    "new_codes": [
@@ -3462,13 +3516,14 @@
    "br1_1": {
     "codes": [
      "APPLICABILITY_INPUT_NOT_EXACT",
-     "CONSTRAINT_VIOLATED",
      "FIXED_CONDITION_CHANGED"
     ],
     "status": "INFEASIBLE_PROTOCOL"
    },
    "case_id": "drone/base/simulate_flight/CHANGE_FIXED:flight_mode",
-   "lost_codes": [],
+   "lost_codes": [
+    "CONSTRAINT_VIOLATED"
+   ],
    "new_codes": [
     "APPLICABILITY_INPUT_NOT_EXACT"
    ],
@@ -4522,6 +4577,32 @@
   },
   {
    "br1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED",
+     "OUTSIDE_VALIDATED_DOMAIN"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "hvac_chamber/base/simulate_building/CHANGE_FIXED:T_out",
+   "lost_codes": [
+    "OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "new_codes": [],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
     "codes": [],
     "status": "FEASIBLE"
    },
@@ -5440,6 +5521,32 @@
     "status": "INFEASIBLE_DOMAIN"
    },
    "case_id": "hvac_field/base/simulate_building/SET_LATENT:UA",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/SET_NUISANCE:T_out",
    "lost_codes": [],
    "new_codes": [
     "APPLICABILITY_INPUT_NOT_EXACT"
@@ -6604,10 +6711,12 @@
    }
   }
  ],
- "codes_only_changed": 202,
- "decisions_digest": "b976de7085bda30ce5cdd381e7da0a484f9043dc5b85539a5150b5ab05372448",
+ "codes_only_changed": 206,
+ "decisions_digest": "24894be31d77d1b5465be28630536c63bac0c6ce259ff53ee25c347fa397eab2",
  "lost_codes": {
+  "CONSTRAINT_VIOLATED": 4,
   "INTERVAL_OUTSIDE_VALIDATED_DOMAIN": 2,
+  "OUTSIDE_VALIDATED_DOMAIN": 1,
   "PRECONDITION_VIOLATED": 7,
   "STATE_DOMAIN_UNDECIDED": 2
  },
@@ -6616,15 +6725,15 @@
   "FEASIBLE->MISSING_INFORMATION": 44,
   "INFEASIBLE_APPLICABILITY->MISSING_INFORMATION": 2,
   "INFEASIBLE_BUDGET->INFEASIBLE_BUDGET": 12,
-  "INFEASIBLE_DOMAIN->INFEASIBLE_DOMAIN": 117,
-  "INFEASIBLE_PROTOCOL->INFEASIBLE_PROTOCOL": 21,
+  "INFEASIBLE_DOMAIN->INFEASIBLE_DOMAIN": 119,
+  "INFEASIBLE_PROTOCOL->INFEASIBLE_PROTOCOL": 23,
   "INFEASIBLE_PROVIDER->INFEASIBLE_PROVIDER": 4,
   "INFEASIBLE_STATE->INFEASIBLE_STATE": 9,
   "INFEASIBLE_STATE->MISSING_INFORMATION": 7,
   "MISSING_INFORMATION->MISSING_INFORMATION": 39
  },
  "new_codes": {
-  "APPLICABILITY_INPUT_NOT_EXACT": 48,
+  "APPLICABILITY_INPUT_NOT_EXACT": 50,
   "PRECONDITION_ENCLOSURE_REQUIRED": 207,
   "STATE_DOMAIN_ENCLOSURE_REQUIRED": 58,
   "STATE_DOMAIN_UNDECIDABLE": 1

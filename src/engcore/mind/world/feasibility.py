@@ -56,7 +56,7 @@ from .actions import ActionMode, ActionSpec, ExecutionKind, ProposedAction, prop
 from .base import (
     ProposalRefused, StaleProposal, WorldRefused, converts, digest, expect_schema, same_value, schema, value_payload,
 )
-from .domains import check_at_edges, edges_in_domain, finite_members, is_finite, membership
+from .domains import check_at_edges, finite_members, is_finite, membership
 from .variables import ValueOrigin
 from .world import APPLICABILITY_CONTEXT_ROLES, BUDGET_DIMENSIONS, ScientificWorld
 
@@ -126,9 +126,7 @@ REASON_CODES: Mapping[CheckFamily, frozenset[str]] = {
                                      "CONSTRAINT_VIOLATED", "CONSTRAINT_UNDECIDED", "CONSTRAINT_UNRESOLVABLE",
                                      *(f"CONSTRAINT_{w}" for w in UNDECIDABLE_WHY)}),
     CheckFamily.STATE: frozenset({"PRECONDITION_UNRESOLVED", "PRECONDITION_UNCERTAINTY_UNKNOWN",
-                                  "PRECONDITION_VIOLATED", "PRECONDITION_UNDECIDED", "PRECONDITION_UNRESOLVABLE",
-                                  "STATE_DOMAIN_UNDECIDABLE", "STATE_OUTSIDE_DECLARED_DOMAIN",
-                                  "STATE_DOMAIN_UNDECIDED", *(f"PRECONDITION_{w}" for w in UNDECIDABLE_WHY),
+                                  "STATE_DOMAIN_UNDECIDABLE", *(f"PRECONDITION_{w}" for w in UNDECIDABLE_WHY),
                                   *(f"STATE_DOMAIN_{w}" for w in UNDECIDABLE_WHY)}),
     CheckFamily.APPLICABILITY: frozenset({"OUTSIDE_VALIDATED_DOMAIN", "APPLICABILITY_INPUT_NOT_EXACT",
                                           "APPLICABILITY_NOT_SUPPLIED", "APPLICABILITY_UNKNOWN",
@@ -140,6 +138,9 @@ REASON_CODES: Mapping[CheckFamily, frozenset[str]] = {
                                       "AUTHORITY_UNVERIFIABLE", "AUTHORITY_OWNER_UNAVAILABLE"}),
 }
 #: Every annotation key a decision may carry.  ``core_status`` is the core's status as it is (exact inputs only).
+#: ``relied_on_bound_values`` lists the owner-bound current values the decision READ (for a precondition, a constraint,
+#: a state-domain check or an applicability input); since BR1.1 none of them decides a containment.  The BR1 key is
+#: kept so BR1's recorded decisions keep their bytes.
 ANNOTATION_KEYS = frozenset({"binding_id", "gating", "withheld", "not_exact_inputs", "assessments",
                              "assessment_digests", "error", "core_status", "relied_on_bound_values", "model_digest"})
 
@@ -291,8 +292,9 @@ def _world_basis(world: ScientificWorld, name: str) -> _Resolved | None:
 
 def _resolve(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None, name: str,
              *, include_proposal: bool = True) -> _Resolved | None:
-    """Precedence: the proposal's assignment, then the action's fixed condition, then the world's current value."""
-    if include_proposal and proposal is not None:
+    """Precedence: the proposal's assignment (only for a control of the action: a value the proposer may not set is
+    refused by the role family and never read), then the action's fixed condition, then the world's current value."""
+    if include_proposal and proposal is not None and spec.control(name) is not None:
         v = proposal.value(name)
         if v is not None:
             return _Resolved(v, "proposal", (v,))
@@ -427,7 +429,8 @@ class FeasibleActionSpace:
         """The declared values of one control that would make this proposal FEASIBLE, the rest held as proposed.
 
         Admissible options, not recommendations: order is the declared order, never a distance to what was asked,
-        and nothing is projected.  A continuous control is reported as its declared range, never sampled."""
+        and nothing is projected.  A continuous control is reported as its declared range, never sampled, and labelled
+        unchecked (no point of it is called admissible)."""
         proposal = canonical(proposal)
         spec = self.world.action(proposal.action_id)
         control = None if spec is None else spec.control(variable)
@@ -435,7 +438,9 @@ class FeasibleActionSpace:
             raise WorldRefused(f"{variable!r} is not a control of action {proposal.action_id!r}")
         label = "admissible options under the declared world, not recommendations"
         if not is_finite(control.domain):
-            return {"variable": variable, "kind": "declared_range", "label": label,
+            return {"variable": variable, "kind": "declared_range",
+                    "label": "the declared range, NOT checked: a value inside it is admissible only if the check admits "
+                             "the whole proposal with it",
                     "range": [control.domain.lower.to_dict(), control.domain.upper.to_dict()]}
         options = []
         for member in finite_members(control.domain):
@@ -611,6 +616,9 @@ def _check_protocol(world: ScientificWorld, spec: ActionSpec, proposal: Proposed
 
 
 def _check_state(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None, c: _Collector) -> None:
+    """Preconditions and the state-domain check read the CURRENT state, and no current value of a world decides a
+    containment (module docstring): each is MISSING_INFORMATION with the reason it cannot be decided, never a definite
+    INFEASIBLE_STATE or a pass.  (A state the proposal tries to set is refused by the role family.)"""
     n = 0
     for pre in spec.preconditions:
         n += 1
@@ -620,21 +628,10 @@ def _check_state(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAct
                   "the state this precondition reads has no current value", metric=pre.metric)
             continue
         _note_bound(world, c, pre.metric, f"precondition {pre.name}")
-        if r.edges is None or not all(isinstance(e, Quantity) for e in r.edges):
-            c.add(F.MISSING_INFORMATION, _undecidable("PRECONDITION", r) if r.edges is None
-                  else "PRECONDITION_UNCERTAINTY_UNKNOWN", CheckFamily.STATE, pre.name,
-                  "the current value is not exact: no current value proves a precondition (a point value is never "
-                  "treated as exact, and no core uncertainty record is an enclosure)", metric=pre.metric,
-                  uncertainty=world.variable(pre.metric).uncertainty.kind.value, why=r.why or "not a quantity",
-                  basis=r.basis)
-            continue
-        outcome, detail = check_at_edges(pre, r.edges)
-        if outcome is ConstraintStatus.VIOLATED:
-            c.add(F.INFEASIBLE_STATE, "PRECONDITION_VIOLATED", CheckFamily.STATE, pre.name,
-                  "the current state does not meet the action's precondition", metric=pre.metric, **detail)
-        elif outcome is ConstraintStatus.UNKNOWN:
-            c.add(F.MISSING_INFORMATION, f"PRECONDITION_{detail['why'].upper()}", CheckFamily.STATE, pre.name,
-                  "the precondition cannot be decided on the current value", metric=pre.metric, **detail)
+        c.add(F.MISSING_INFORMATION, _undecidable("PRECONDITION", r), CheckFamily.STATE, pre.name,
+              "the current value is not exact: no current value proves a precondition (a point value is never "
+              "treated as exact, and no core uncertainty record is an enclosure)", metric=pre.metric,
+              uncertainty=world.variable(pre.metric).uncertainty.kind.value, why=r.why, basis=r.basis)
     for name in sorted(_used_reads(world, spec, proposal)):
         var = world.variable(name)
         if var.value is None or var.domain is None:
@@ -643,23 +640,11 @@ def _check_state(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAct
             continue
         r = _world_basis(world, name)
         n += 1
-        if r is None or r.edges is None:
-            c.add(F.MISSING_INFORMATION, "STATE_DOMAIN_UNDECIDABLE" if r is None else _undecidable("STATE_DOMAIN", r),
-                  CheckFamily.STATE, name, "whether the current value lies in its declared domain cannot be decided: "
-                  "it is not exact, and no core uncertainty record is an enclosure", uncertainty=var.uncertainty.kind.value,
-                  why="" if r is None else r.why, basis=None if r is None else r.basis)
-            continue
-        where = edges_in_domain(var.domain, r.edges)
-        if where == "outside":
-            c.add(F.INFEASIBLE_STATE, "STATE_OUTSIDE_DECLARED_DOMAIN", CheckFamily.STATE, name,
-                  "the system's current value lies outside the variable's declared domain",
-                  edges=[value_payload(e) for e in r.edges])
-        elif where == "undecided":
-            c.add(F.MISSING_INFORMATION, "STATE_DOMAIN_UNDECIDED", CheckFamily.STATE, name,
-                  "whether the current value lies in its declared domain cannot be decided",
-                  edges=[value_payload(e) for e in r.edges])
-        else:
-            _note_bound(world, c, name, "state domain")
+        _note_bound(world, c, name, "state domain")
+        c.add(F.MISSING_INFORMATION, "STATE_DOMAIN_UNDECIDABLE" if r is None else _undecidable("STATE_DOMAIN", r),
+              CheckFamily.STATE, name, "whether the current value lies in its declared domain cannot be decided: "
+              "it is not exact, and no core uncertainty record is an enclosure", uncertainty=var.uncertainty.kind.value,
+              why="" if r is None else r.why, basis=None if r is None else r.basis)
     c.ran(CheckFamily.STATE, n)
 
 

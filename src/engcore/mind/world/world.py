@@ -232,8 +232,8 @@ class ProviderSnapshot:
 # ---- budget: owner records, every dimension declared ---------------------------------------------------------------------------
 STATEMENT_SCHEMA = schema("budget_statement")
 #: The unit a ledger stating a dimension must account in (convertible by the unit owner): a duration for wall time, a
-#: count (dimensionless) for solver calls.  ``cost`` takes any unit the unit owner knows; the action's cost amount
-#: must convert into it.
+#: count (dimensionless) for solver calls.  A cost ledger accounts in any unit the unit owner knows into which the
+#: declaration's stated cost unit (``BudgetSource.unit``) converts; cost amounts are converted, never read raw.
 LEDGER_UNIT_FITS = {"wall_time": "second", "solver_calls": "dimensionless"}
 #: Which owner states which budget dimension, and the fields each projection carries.
 STATEMENT_OWNERS = {"ledger": (OwnerKind.BUDGET_LEDGER, ("ledger",)),
@@ -254,6 +254,7 @@ class BudgetStatement:
     kind: str
     payload: Mapping[str, Any]
     authority: AuthorityBinding
+    unit: str = ""                     # cost: the unit the declaration states its cost amounts in (declared content)
 
     def __post_init__(self) -> None:
         if self.dimension not in BUDGET_DIMENSIONS:
@@ -279,6 +280,17 @@ class BudgetStatement:
                 if fits is not None and not converts(unit_, fits):
                     raise WorldRefused(f"budget {self.dimension!r}: a ledger stating it accounts in a unit convertible "
                                        f"to {fits!r} (the unit owner's rule), not {owner.cost_unit!r}")
+                if self.dimension == "cost":
+                    if type(self.unit) is not str or not self.unit:
+                        raise WorldRefused("a cost ledger statement carries the unit the declaration states its cost "
+                                           "amounts in (an amount is never read in whatever unit the ledger uses)")
+                    if not converts(Quantity(1.0, self.unit), owner.cost_unit):
+                        raise WorldRefused(f"budget 'cost': the declared cost unit {self.unit!r} does not convert into "
+                                           f"the ledger's {owner.cost_unit!r} (the unit owner's rule)")
+                elif self.unit:
+                    raise WorldRefused(f"budget {self.dimension!r}: only a cost statement carries a declared unit")
+            elif self.unit:
+                raise WorldRefused("an experiment's observations are counts; no declared unit")
             else:
                 ExperimentBudget.from_dict(payload["budget"])
                 acc = payload["accounting"]
@@ -289,17 +301,18 @@ class BudgetStatement:
         object.__setattr__(self, "payload", freeze(payload))
 
     def decide(self, requested: Any, family: Any) -> tuple[bool, Any]:
-        """(affordable, remaining) by the owner's rule; nothing is clamped.  A duration or a count is converted into the
-        ledger's own unit by the unit owner (a count is a dimensionless quantity), and one the unit owner cannot convert
-        is refused (``WorldRefused``), never compared raw.  A cost is, by the action's contract, a plain number in the
-        budget's cost units and is passed as stated (which unit that is, is the declaration's designation)."""
+        """(affordable, remaining) by the owner's rule; nothing is clamped.  Every amount is converted into the ledger's
+        own unit by the unit owner: a duration as stated, a count as a dimensionless quantity, a cost (by the action's
+        contract a plain number) in the unit the declaration states for cost.  An amount the unit owner cannot convert is
+        refused (``WorldRefused``), never compared raw."""
         payload = detach(self.payload)
         if self.kind == "ledger":
             owner = BudgetLedger.from_dict(payload["ledger"])
-            if self.dimension == "cost":                   # the action states its cost as a plain number in the
-                amount_ = requested.magnitude if isinstance(requested, Quantity) else float(requested)   # budget's
-                return owner.affordable(amount_, family=family), owner.general_pool                       # cost units
-            amount = requested if isinstance(requested, Quantity) else Quantity(float(requested), "dimensionless")
+            if self.dimension == "cost":                   # a plain number in the DECLARED cost unit
+                magnitude = requested.magnitude if isinstance(requested, Quantity) else float(requested)
+                amount = Quantity(magnitude, self.unit)
+            else:
+                amount = requested if isinstance(requested, Quantity) else Quantity(float(requested), "dimensionless")
             if not converts(amount, owner.cost_unit):
                 raise WorldRefused(f"an amount in {amount.units!r} does not convert into the ledger's "
                                    f"{owner.cost_unit!r} (the unit owner's rule)")
@@ -312,17 +325,19 @@ class BudgetStatement:
 
     def identity(self) -> dict[str, Any]:
         return {"schema": STATEMENT_SCHEMA, "dimension": self.dimension, "kind": self.kind,
-                "payload": detach(self.payload), "authority": _binding_identity(self.authority)}
+                "payload": detach(self.payload), "authority": _binding_identity(self.authority),
+                **({"unit": self.unit} if self.unit else {})}
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": STATEMENT_SCHEMA, "dimension": self.dimension, "kind": self.kind,
-                "payload": detach(self.payload), "authority": self.authority.to_dict()}
+                "payload": detach(self.payload), "authority": self.authority.to_dict(),
+                **({"unit": self.unit} if self.unit else {})}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "BudgetStatement":
         expect_schema(payload.get("schema"), STATEMENT_SCHEMA)
         return cls(payload["dimension"], payload["kind"], payload["payload"], AuthorityBinding.from_dict(
-            payload["authority"]))
+            payload["authority"]), payload.get("unit", ""))
 def _count(value: Any, field_name: str, *, minimum: int) -> int:
     if type(value) is not int or value < minimum:
         raise WorldRefused(f"{field_name} must be an int >= {minimum} (no bool, no float, no coercion), got {value!r}")

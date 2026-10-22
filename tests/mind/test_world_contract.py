@@ -470,10 +470,11 @@ def test_nothing_in_the_world_package_dispatches_or_holds_an_executor():
         if path.name not in ("admission.py", "port.py"):
             assert not {i for i in identifiers if "dispatch" in i.lower() or "executor" in i.lower()}, path.name
     tree = ast.parse((pathlib.Path(world_pkg.__file__).parent / "admission.py").read_bytes().decode("utf-8"))
-    calls_of_executor = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
-                         and n.func.attr == "_executor"]
-    assert len(calls_of_executor) == 1 and isinstance(calls_of_executor[0].args[0], ast.Call)
-    assert calls_of_executor[0].args[0].func.id == "authorize_dispatch"
+    calls_of_executor = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                         and n.func.id == "executor"]          # the execution owner's injected callable, in the guard
+    assert len(calls_of_executor) == 2 and all(len(c.args) == 1 and isinstance(c.args[0], ast.Call)
+                                               for c in calls_of_executor)
+    assert {c.args[0].func.id for c in calls_of_executor} == {"authorize_dispatch", "verify_authorization"}
 
 
 # ---- owner records: a projected world (GEN2-BR1.1) ----------------------------------------------------------------------------------

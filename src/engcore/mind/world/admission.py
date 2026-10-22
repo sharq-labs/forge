@@ -56,11 +56,12 @@ from engcore.sria.decision.replay import ReplayMode, ReplayOutcome, ReplayResult
 from .actions import ExecutionKind, ProposedAction
 from .authority import Authorities, AuthorityReport
 from .base import StaleProposal, WorldRefused, digest, schema, value_payload
+from .domains import DiscreteLevels, matched_level
 from .feasibility import (
     CheckFamily, FeasibilityDecision, FeasibilityReason, FeasibilityStatus, FeasibleActionSpace, canonical,
     context_reads,
 )
-from .projection import verify_world
+from .projection import verified_projection
 from .world import ScientificWorld
 
 ADMISSION_SCHEMA = schema("admission_result")
@@ -150,9 +151,20 @@ class AdmittedAction:
 
     def settings_in_declared_units(self) -> dict[str, Any]:
         """Quantities as magnitudes in each variable's declared unit (the unit owner's conversion, ``magnitude_in``),
-        other typed values unchanged: the sanctioned exit from the unit-aware world for an executor."""
-        return {name: value.magnitude_in(self.world.variable(name).unit) if isinstance(value, Quantity) else value
-                for name, value in self.configuration}
+        other typed values unchanged: the sanctioned exit from the unit-aware world for an executor.  A value that IS a
+        declared discrete level (``domains.matched_level``) is given as that declared level, so a level proposed in
+        another unit never reaches an executor off the level by conversion noise."""
+        spec = self.world.action(self.proposal.action_id)
+        out: dict[str, Any] = {}
+        for name, value in self.configuration:
+            if not isinstance(value, Quantity):
+                out[name] = value
+                continue
+            control = None if spec is None else spec.control(name)
+            level = matched_level(control.domain, value) if control is not None and isinstance(
+                control.domain, DiscreteLevels) else None
+            out[name] = (value if level is None else level).magnitude_in(self.world.variable(name).unit)
+        return out
 
 
 def _context_entry(world: ScientificWorld, name: str) -> dict[str, Any]:
@@ -249,8 +261,9 @@ def _detached(world: Any) -> ScientificWorld:
 def admit(space: FeasibleActionSpace, proposal: ProposedAction, authorities: Authorities) -> AdmissionResult:
     """Admission of ``proposal`` on ``space``'s world under ``authorities`` (the execution side's owner readers).
 
-    Decided on a detached rebuild of the world, its action space and the proposal (never on the caller's objects); the
-    admitted action carries that rebuild."""
+    Verified on a detached rebuild of the world (never the caller's object); decided on, and minted with, the owners'
+    own fresh projection that the rebuild was verified to be (so no caller-written text, even non-material, reaches
+    an executor)."""
     if type(space) is not FeasibleActionSpace:
         raise WorldRefused("admission reads exactly a FeasibleActionSpace")
     if type(authorities) is not Authorities:
@@ -261,7 +274,11 @@ def admit(space: FeasibleActionSpace, proposal: ProposedAction, authorities: Aut
     if rebuilt.space_id != space.space_id:
         raise WorldRefused("the action space is not the one its world builds")
     space = rebuilt
-    report = verify_world(world, authorities)
+    report, fresh = verified_projection(world, authorities)
+    if fresh is not None:                                 # decide on what the owners project, not on the caller's copy
+        world, space = fresh, FeasibleActionSpace.build(fresh)
+        if space.space_id != rebuilt.space_id:
+            raise WorldRefused("the owners' projection does not build the verified action space")
     if not report.ok:
         if proposal.world_revision != world.revision_id:
             raise StaleProposal("the proposal was made for another world revision")
@@ -382,15 +399,20 @@ def verify_authorization(authorization: Any, authorities: Authorities, *, accept
 
 
 class _GuardedExecutor:
-    """The execution owner's executor behind a re-derivation of every authorization it is handed."""
+    """The execution owner's executor behind a re-derivation of every authorization it is handed (``__call__``); the
+    desk's own dispatch authorizes once and hands the fresh authorization straight on (``_dispatch``)."""
 
-    __slots__ = ("_call",)
+    __slots__ = ("_call", "_dispatch")
 
     def __init__(self, executor: Callable[[DispatchAuthorization], Any], authorities: Authorities,
                  accept_synthetic: bool) -> None:
         def call(authorization: Any) -> Any:
             return executor(verify_authorization(authorization, authorities, accept_synthetic=accept_synthetic))
+
+        def dispatch(admitted: Any) -> Any:
+            return executor(authorize_dispatch(admitted, authorities, accept_synthetic=accept_synthetic))
         object.__setattr__(self, "_call", call)
+        object.__setattr__(self, "_dispatch", dispatch)
 
     def __setattr__(self, name: str, value: Any) -> None:
         raise WorldRefused("an executor guard is immutable")
@@ -433,18 +455,15 @@ class ExecutionDesk:
         return admit(space, proposal, self._authorities)
 
     def dispatch(self, admitted: Any) -> Any:
-        return self._executor(authorize_dispatch(admitted, self._authorities, accept_synthetic=self._accept_synthetic))
+        return self._executor._dispatch(admitted)
 
     def gateway(self) -> "AdmissionGateway":
         """What the Mind is handed: admit and dispatch through this desk's owners and executor, and nothing else (no
         bound method, so the desk itself is not an attribute of anything the Mind holds)."""
-        authorities, executor, accept_synthetic = self._authorities, self._executor, self._accept_synthetic
+        authorities, dispatch_ = self._authorities, self._executor._dispatch
 
         def admit_(space: FeasibleActionSpace, proposal: ProposedAction) -> AdmissionResult:
             return admit(space, proposal, authorities)
-
-        def dispatch_(admitted: Any) -> Any:
-            return executor(authorize_dispatch(admitted, authorities, accept_synthetic=accept_synthetic))
         return AdmissionGateway(admit_, dispatch_)
 
 

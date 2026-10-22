@@ -49,7 +49,7 @@ import hashlib
 import json
 from typing import Any, Callable, Iterable, Mapping
 
-from engcore.providers.catalog import ProviderRegistry
+from engcore.providers.catalog import ProviderRegistry, ProviderUnavailable
 from engcore.providers.health import assess_health
 from engcore.providers.identity import content_digest
 from engcore.scientific import ModelNotFoundError, ScientificCoreError, to_json
@@ -120,6 +120,7 @@ class RunStateReader(_Reader):
     def __init__(self, record: Any) -> None:
         self.owner_id, self._head, self._history = self._load(record)
         self._follow: Callable[[], Any] | None = None
+        self._record = record                         # the record object loaded (a following reader reuses its load)
 
     @classmethod
     def following(cls, head: Callable[[], Any]) -> "RunStateReader":
@@ -151,12 +152,18 @@ class RunStateReader(_Reader):
             return self
         try:
             record = self._follow()
-            current = RunStateReader(record)
+            if record is self._record and type(record) in (SystemRunResult, SystemCheckpoint):
+                current = RunStateReader.__new__(RunStateReader)      # the same frozen record: its load is reused
+                current.owner_id, current._head, current._history = self.owner_id, self._head, self._history
+                current._follow, current._record = None, record
+            else:
+                current = RunStateReader(record)
         except Exception as exc:  # noqa: BLE001 - an owner that cannot state its head is unavailable, never guessed
             raise OwnerUnavailable(f"the execution side could not state the run's current head: {exc}") from None
         if current.owner_id != self.owner_id:
             raise OwnerUnavailable("the followed head belongs to another run (its request digest changed); which run "
                                    "governs is a new statement, not a move of this one")
+        self._record, self._head, self._history = current._record, current._head, current._history
         return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
@@ -215,7 +222,8 @@ class ProviderRegistryReader(_Reader):
 
     ``ProviderRegistry.status`` answers from the registry's own cache once a provider was probed (the owner's
     semantics, the same ``system_runtime.preflight`` relies on).  With ``refresh=True`` every read re-probes through the
-    owner's ``status(refresh=True)``: the execution side chooses its currency policy; nothing here decides it."""
+    owner's ``status(refresh=True)``: the execution side chooses its currency policy; nothing here decides it.  (The
+    owner's refresh also clears its process-wide distribution caches: re-probing is a deliberate execution-side cost.)"""
 
     kinds = frozenset({K.PROVIDER_STATUS})
 
@@ -233,8 +241,10 @@ class ProviderRegistryReader(_Reader):
             return None
         try:
             status = self._registry.status(record_id, refresh=self._refresh)
-        except Exception:  # noqa: BLE001 - an unregistered or unprobeable provider is absent, never guessed
+        except ProviderUnavailable:                   # the registry holds no such provider
             return None
+        except Exception as exc:  # noqa: BLE001 - a probe that fails is an owner that cannot answer, never a guess
+            raise OwnerUnavailable(f"the provider registry could not probe {record_id!r}: {exc}") from None
         report = assess_health(status)
         payload = status.to_dict()
         return OwnerRecord(K.PROVIDER_STATUS, self.owner_id, record_id, status.version or "-",
@@ -256,6 +266,10 @@ class BudgetReader(_Reader):
             raise WorldRefused("a budget ledger is exactly a BudgetLedger")
         if any(type(x) is not ScientificExperiment for x in self._experiments.values()):
             raise WorldRefused("an observation account is exactly a ScientificExperiment")
+        accounts = [*self._ledgers.values(), *self._experiments.values()]
+        if len({id(x) for x in accounts}) != len(accounts):
+            raise WorldRefused("one budget account object is registered under one id (an account registered twice "
+                               "could state two dimensions from one pool)")
         self.owner_id = text(owner_id, "budget owner id")
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
@@ -366,21 +380,28 @@ class UnitRegistryReader(_Reader):
 
 
 # ---- frozen readers (replay) -----------------------------------------------------------------------------------------------------
-def rederive(kind: OwnerKind, record_id: str, payload: Mapping[str, Any]) -> tuple[str, str]:
+def rederive(kind: OwnerKind, owner_id: str, record_id: str, payload: Mapping[str, Any]) -> tuple[str, str]:
     """(revision, digest) of a recorded owner payload, by the owner's own identity rule; refused when the payload does
-    not carry what the rule needs or is not self-consistent.  Used for snapshot records, never for live reads."""
+    not carry what the rule needs, is not self-consistent, or is not the record it is filed under (the run, model,
+    provider or declaration it names).  Used for snapshot records, never for live reads."""
+    from engcore.sria.decision.replay import canonical_digest
+
     from .declaration import ProtocolDeclaration
 
     kind = OwnerKind(kind)
     try:
         if kind is K.DECLARATION:
             d = ProtocolDeclaration.from_dict(payload["declaration"])
+            if d.declaration_id != record_id:
+                raise WorldRefused("the recorded declaration is not the one it is filed under")
             return str(d.revision), d.digest
         if kind is K.UNIT_REGISTRY:
             fingerprint = payload["fingerprint"]
             return fingerprint[:16], fingerprint
         if kind is K.SYSTEM_STATE:
             state = SystemState.from_dict(payload["state"])
+            if state.request_digest != owner_id:
+                raise WorldRefused("the recorded state is another run's than the owner it is filed under")
             owner, variable = record_parts(record_id, 2) or ("", "")
             found = [v for v in state.owner(owner).values if v.variable_id == variable]
             if len(found) != 1 or found[0].value.to_dict() != payload["value"] or \
@@ -389,16 +410,20 @@ def rederive(kind: OwnerKind, record_id: str, payload: Mapping[str, Any]) -> tup
             return str(state.sequence), state.digest
         if kind is K.MODEL_RECORD:
             model = ScientificModelDefinition.from_dict(payload["model"])
+            if (model.model_id, model.version) != record_parts(record_id, 2):
+                raise WorldRefused("the recorded model is not the (model, version) it is filed under")
             return model.version, _sha_json(model)
         if kind is K.PROVIDER_STATUS:
             status = payload["status"]
+            if status["capability"]["provider_id"] != record_id:
+                raise WorldRefused("the recorded status is another provider's")
             digest_ = content_digest({k: v for k, v in status.items() if k != "location"})
             if payload["report"].get("status_digest") != digest_:
                 raise WorldRefused("the recorded health report is for another status")
             return status.get("version") or "-", digest_
         if kind is K.BUDGET_LEDGER:
-            ledger = BudgetLedger.from_dict(payload["ledger"])
-            return str(ledger.revision), ledger.digest
+            BudgetLedger.from_dict(payload["ledger"])                       # a valid ledger record...
+            return str(len(payload["ledger"]["charges"])), canonical_digest(payload["ledger"])   # ...the owner's rule
         if kind is K.EXPERIMENT:
             exp = ScientificExperiment.from_dict(payload["experiment"])
             full = exp.to_dict()
@@ -417,14 +442,16 @@ class FrozenReader(_Reader):
     live = False
 
     def __init__(self, kind: OwnerKind, owner_id: str, records: Mapping[str, tuple[OwnerRecord, frozenset[str] | None]],
-                 unavailable: str = "") -> None:
+                 unavailable: str = "", refused: Mapping[str, tuple[str, str]] | None = None) -> None:
         self.kinds = frozenset({OwnerKind(kind)})
         self.owner_id = owner_id
         self._unavailable = unavailable
+        self._refused = dict(refused or {})
         for record_id, (record, _) in records.items():
             if record.owner_kind is not OwnerKind(kind) or record.owner_id != owner_id or record.record_id != record_id:
                 raise WorldRefused(f"snapshot record {record_id!r} is not a {OwnerKind(kind).value} record of {owner_id!r}")
-            if rederive(record.owner_kind, record_id, record.payload) != (record.revision, record.record_digest):
+            if rederive(record.owner_kind, record.owner_id, record_id, record.payload) != (record.revision,
+                                                                                          record.record_digest):
                 raise WorldRefused(f"snapshot record {record_id!r}: its payload does not re-derive the recorded "
                                    f"{record.owner_kind.value} revision and digest (the owner's rule refutes it)")
         self._records = dict(records)
@@ -432,6 +459,9 @@ class FrozenReader(_Reader):
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
         if self._unavailable:
             raise OwnerUnavailable(self._unavailable)
+        if record_id in self._refused:                   # a read the owner refused then is refused again
+            cls, why = self._refused[record_id]
+            raise (OwnerUnavailable if cls == "OwnerUnavailable" else WorldRefused)(why)
         found = self._records.get(record_id)
         return None if found is None or OwnerKind(kind) not in self.kinds else found[0]
 
@@ -444,13 +474,16 @@ def frozen_readers(snapshot: Mapping[str, Any]) -> tuple[FrozenReader, ...]:
     by_kind: dict[OwnerKind, dict[str, tuple[OwnerRecord, frozenset[str] | None]]] = {}
     owners = {OwnerKind(k): o for k, o in snapshot["owners"]}
     unavailable = {OwnerKind(k): why for k, why in snapshot.get("unavailable", ())}
+    refused: dict[OwnerKind, dict[str, tuple[str, str]]] = {}
+    for k, record_id, cls, why in snapshot.get("refused", ()):
+        refused.setdefault(OwnerKind(k), {})[record_id] = (cls, why)
     for item in snapshot["records"]:
         r = item["record"]
         record = OwnerRecord(OwnerKind(r["owner_kind"]), r["owner_id"], r["record_id"], r["revision"],
                              r["record_digest"], r["payload"])
         history = None if item["superseded"] is None else frozenset(item["superseded"])
         by_kind.setdefault(record.owner_kind, {})[record.record_id] = (record, history)
-    return tuple(FrozenReader(kind, owner_id, by_kind.get(kind, {}), unavailable.get(kind, ""))
+    return tuple(FrozenReader(kind, owner_id, by_kind.get(kind, {}), unavailable.get(kind, ""), refused.get(kind))
                  for kind, owner_id in sorted(owners.items(), key=lambda kv: kv[0].value))
 
 

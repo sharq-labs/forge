@@ -214,18 +214,16 @@ class AuthorityReport:
 class Authorities:
     """The execution side's owner readers, one per owner kind.  Read-only; held by the admitting party only.
 
-    ``live`` is DERIVED, never asserted: True only when every reader is one of the shipped owner readers in a mode that
-    consults its owner at every read (``owners.is_live``).  Readers rebuilt from a snapshot, a fixed run record, a fixed
+    ``live`` is DERIVED, never asserted, at every call: True only when every reader is one of the shipped owner readers
+    in a mode that consults its owner at every read (``owners.is_live``).  It certifies the MODE: a following reader
+    asks the execution side again at every read, and which record is current is the execution side's statement.  Readers rebuilt from a snapshot, a fixed run record, a fixed
     declaration set or any look-alike reader state what an owner said THEN: projection, verification and replay may use
     them; a dispatch never may (a stale admission would otherwise stay dispatchable)."""
 
     readers: tuple[Any, ...]
-    live: bool = field(init=False, default=False)
     _by_kind: Mapping[OwnerKind, Any] = field(init=False, repr=False, compare=False, default=None)  # type: ignore
 
     def __post_init__(self) -> None:
-        from .owners import is_live
-
         by_kind: dict[OwnerKind, Any] = {}
         for reader in self.readers:
             for kind in reader.kinds:
@@ -233,8 +231,13 @@ class Authorities:
                     raise WorldRefused(f"two readers claim the {kind.value} owner")
                 by_kind[OwnerKind(kind)] = reader
         object.__setattr__(self, "_by_kind", by_kind)
-        # a memo holds one verification's reads: it never backs a later decision, so it is never live
-        object.__setattr__(self, "live", bool(self.readers) and all(is_live(r) for r in self.readers))
+
+    @property
+    def live(self) -> bool:
+        """Derived now (a memo holds one verification's reads and is never live)."""
+        from .owners import is_live
+
+        return bool(self.readers) and all(is_live(r) for r in self.readers)
 
     @classmethod
     def of(cls, *readers: Any) -> "Authorities":
@@ -329,9 +332,12 @@ class Authorities:
             raise WorldRefused("only a memoized set of readers knows what it served")
         records: list[dict[str, Any]] = []
         unavailable: list[list[str]] = []
+        refused: list[list[str]] = []
         for memo in sorted(self.readers, key=lambda m: sorted(k.value for k in m.kinds)):
             if memo._failure is not None:
                 unavailable.extend([k.value, str(memo._failure)] for k in sorted(memo.kinds, key=lambda k: k.value))
+            for (kind, record_id), exc in sorted(memo._refused.items(), key=lambda kv: (kv[0][0].value, kv[0][1])):
+                refused.append([kind.value, record_id, type(exc).__name__, str(exc)])
             for (kind, record_id), record in sorted(memo._reads.items(), key=lambda kv: (kv[0][0].value, kv[0][1])):
                 if record is None:
                     continue
@@ -340,7 +346,7 @@ class Authorities:
                                 "superseded": None if history is None else sorted(history)})
         owners = sorted({(k.value, r.owner_id) for k, r in self._by_kind.items()})
         return {"schema": SNAPSHOT_SCHEMA, "owners": [list(o) for o in owners], "records": records,
-                "unavailable": unavailable}
+                "unavailable": unavailable, "refused": refused}
 
     @classmethod
     def from_snapshot(cls, payload: Mapping[str, Any]) -> "Authorities":
@@ -362,6 +368,7 @@ class _Memo:
         self.owner_id = reader.owner_id
         self._reads: dict[tuple[OwnerKind, str], Any] = {}
         self._history: dict[tuple[OwnerKind, str], Any] = {}
+        self._refused: dict[tuple[OwnerKind, str], WorldRefused] = {}
 
     def _current(self) -> Any:
         if self._failure is not None:
@@ -377,8 +384,15 @@ class _Memo:
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
         key = (OwnerKind(kind), record_id)
+        if key in self._refused:
+            raise self._refused[key]
         if key not in self._reads:
-            self._reads[key] = self._current().read(kind, record_id)
+            try:
+                self._reads[key] = self._current().read(kind, record_id)
+            except WorldRefused as exc:
+                if self._failure is None:              # a pin failure is recorded for the whole owner, not per read
+                    self._refused[key] = exc
+                raise
         return self._reads[key]
 
     def superseded(self, kind: OwnerKind, record_id: str) -> frozenset[str] | None:

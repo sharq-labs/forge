@@ -90,7 +90,8 @@ def project_world(declaration: ProtocolDeclaration, authorities: Authorities, *,
         kind, fields_ = (K.BUDGET_LEDGER, ("ledger",)) if b.kind == "ledger" else (K.EXPERIMENT, ("accounting", "budget"))
         reader, record = authorities.require(kind, b.ref)
         projected = reader.project(record, fields_)
-        statements.append(BudgetStatement(b.dimension, b.kind, projected, record.binding(fields_, projected, bound_at)))
+        statements.append(BudgetStatement(b.dimension, b.kind, projected, record.binding(fields_, projected, bound_at),
+                                          b.unit))
 
     return ScientificWorld(
         declaration.world_id, tuple(variables), declaration.entities, declaration.constraints, declaration.actions,
@@ -103,16 +104,24 @@ def project_world(declaration: ProtocolDeclaration, authorities: Authorities, *,
 def verify_world(world: ScientificWorld, authorities: Authorities) -> AuthorityReport:
     """Every projected fact of ``world`` checked against its owner now, and the world checked to be exactly the
     projection of the declaration in force.  ``ok`` only if all of it holds; nothing is repaired or re-bound."""
+    return verified_projection(world, authorities)[0]
+
+
+def verified_projection(world: ScientificWorld, authorities: Authorities
+                        ) -> tuple[AuthorityReport, ScientificWorld | None]:
+    """:func:`verify_world`'s report, and, when it is ok, the owners' own fresh projection that ``world`` was found
+    to be (same revision; it carries the owners' text, never the caller's non-material fields)."""
     if type(world) is not ScientificWorld:
         raise WorldRefused("only a ScientificWorld is verified")
     if type(authorities) is not Authorities:
         raise WorldRefused("a world is verified against the execution side's Authorities")
     authorities = authorities.memoized()                     # one consistent read of every owner record
     checks: list[BindingCheck] = []
+    fresh: ScientificWorld | None = None
     if not world.intact():
         return AuthorityReport(world.revision_id, (BindingCheck(
             BindingStatus.MISMATCH, K.DECLARATION, "-", "identity", "0" * 64,
-            {"why": "the world's content is not the content its identity names (edited after it was built)"}),))
+            {"why": "the world's content is not the content its identity names (edited after it was built)"}),)), None
     for subject, binding, held in world.projected_facts():
         if binding is None:
             if subject in ("declaration", "unit_registry") or held is not None or subject.startswith("budget:"):
@@ -126,6 +135,7 @@ def verify_world(world: ScientificWorld, authorities: Authorities) -> AuthorityR
         try:
             fresh = project_world(ProtocolDeclaration.from_dict(held.payload["declaration"]), authorities)
         except (WorldRefused, KeyError, AttributeError) as exc:
+            fresh = None
             checks.append(BindingCheck(BindingStatus.MISMATCH, K.DECLARATION, world.declaration.record_id,
                                        "projection", world.declaration.digest, {"why": f"no projection: {exc}"}))
         else:
@@ -139,7 +149,8 @@ def verify_world(world: ScientificWorld, authorities: Authorities) -> AuthorityR
             else:
                 checks.append(BindingCheck(BindingStatus.VERIFIED, K.DECLARATION, world.declaration.record_id,
                                            "projection", world.declaration.digest))
-    return AuthorityReport(world.revision_id, tuple(checks))
+    report = AuthorityReport(world.revision_id, tuple(checks))
+    return report, (fresh if report.ok else None)
 
 
 def _kind_of(subject: str) -> OwnerKind:
@@ -148,4 +159,4 @@ def _kind_of(subject: str) -> OwnerKind:
             "model": K.MODEL_RECORD, "provider": K.PROVIDER_STATUS, "budget": K.BUDGET_LEDGER}[head]
 
 
-__all__ = ["project_world", "verify_world"]
+__all__ = ["project_world", "verified_projection", "verify_world"]

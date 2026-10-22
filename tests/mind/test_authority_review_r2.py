@@ -1,0 +1,178 @@
+"""GEN2-BR1.1 review round 2: one control per confirmed finding (benchmarks/mind_gen2_authority_v1/README.md)."""
+
+from __future__ import annotations
+
+import dataclasses
+
+import pytest
+
+from benchmarks.mind_gen2_authority_v1 import fixtures as ax
+from engcore.mind.world import (
+    BudgetReader, BudgetSource, FeasibilityStatus as F, FeasibleActionSpace, WorldRefused, admit,
+)
+
+SIM = ax.br1.base("battery")["simulate_pulse"]
+
+
+def _with_cost(o, ledger_unit: str, total: float, declared_unit: str, amount: float):
+    """The battery's simulate_pulse priced at ``amount`` (in the declared cost unit) against a cost ledger."""
+    ref = "battery.cost"
+    o.ledgers[ref] = ax.ledger(total, 0.0, ledger_unit, ref)
+    actions = tuple(dataclasses.replace(a, estimated_cost={**dict(a.estimated_cost), "cost": ax.q(amount, "dimensionless")},
+                                        cost_basis="synthetic price") if a.action_id == "simulate_pulse" else a
+                    for a in o.declaration.actions)
+    o.declaration = dataclasses.replace(o.declaration, actions=actions, budget=tuple(
+        b for b in o.declaration.budget if b.dimension != "cost") + (BudgetSource.ledger("cost", ref, declared_unit),))
+    return admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), o.authorities())
+
+
+# ---- R2-A1 (A-F4 residual): a cost amount is converted from the declared cost unit, never read in the ledger's -------------
+@pytest.mark.parametrize("declared,amount,expected", [("hour", 3.0, F.INFEASIBLE_BUDGET), ("hour", 1.5, F.FEASIBLE),
+                                                      ("minute", 150.0, F.INFEASIBLE_BUDGET),
+                                                      ("minute", 90.0, F.FEASIBLE)])
+def test_an_equal_budget_spelled_in_another_unit_decides_the_same(declared, amount, expected):
+    in_hours = _with_cost(ax.owned("battery"), "hour", 2.0, declared, amount)
+    in_minutes = _with_cost(ax.owned("battery"), "minute", 120.0, declared, amount)
+    assert in_hours.status is in_minutes.status is expected, (in_hours.codes(), in_minutes.codes())
+
+
+def test_a_cost_ledger_states_its_declared_unit_and_it_must_convert_into_the_ledgers():
+    with pytest.raises(WorldRefused, match="unit"):
+        BudgetSource.ledger("cost", "battery.cost")                    # no declared cost unit
+    with pytest.raises(WorldRefused, match="only a cost ledger"):
+        BudgetSource.ledger("solver_calls", "battery.solver", "hour")
+    with pytest.raises(WorldRefused, match="does not convert"):
+        _with_cost(ax.owned("battery"), "meter", 2.0, "hour", 1.0)
+
+
+# ---- R2-B-01 / R2-A2: one owner account object is one account, whatever the reader calls it -----------------------------
+def test_one_ledger_object_registered_under_two_ids_is_refused():
+    led = ax.ledger(100.0, 0.0, "second", "acct")
+    with pytest.raises(WorldRefused, match="one id"):
+        BudgetReader({"acct_a": led, "acct_b": led})
+
+
+# ---- R2-B-02: the admitted world is the owners' projection, carrying none of the caller's text -----------------------------
+def test_caller_written_non_material_text_never_reaches_the_executor():
+    from engcore.mind.world import ExecutionDesk, MindWorldPort, ScientificWorld
+    o = ax.owned("battery")
+    copy_ = ScientificWorld.from_dict({**o.world.to_dict(), "description": "the Mind's own words"})
+    assert copy_.revision_id == o.world.revision_id                    # non-material: the same world
+    queue = []
+    gateway = ExecutionDesk(o.authorities(), queue.append, accept_synthetic=True).gateway()
+    admitted = MindWorldPort(FeasibleActionSpace.build(copy_)).request_admission(
+        o.propose("simulate_pulse", *SIM), gateway).admitted
+    assert admitted.world.description == o.declaration.description != "the Mind's own words"
+
+
+# ---- R2-B-05: a read the owner refused is recorded and refused again on replay ------------------------------------------------
+def test_an_admission_refused_by_an_owner_read_replays_reproduced():
+    import json
+    from engcore.mind.world import AdmissionRecord, replay_admission
+    from engcore.scientific.models.definition import ScientificModelDefinition
+    from engcore.sria.decision.replay import ReplayOutcome
+
+    class Sly(ScientificModelDefinition):
+        pass
+    o = ax.owned("battery")
+    m = o.models.list()[0]
+    sly = Sly(**{f: getattr(m, f) for f in m.__dataclass_fields__})
+    authorities = o.authorities(models=ax.ModelRegistry((sly,)))
+    r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities)
+    assert r.admitted is None and "AUTHORITY_MISMATCH" in r.codes()
+    record = json.loads(json.dumps(AdmissionRecord.of(r, authorities).to_dict()))
+    assert record["snapshot"]["refused"] and replay_admission(record).outcome is ReplayOutcome.REPRODUCED
+
+
+# ---- R2-B-06 / R2-B-07: re-derivation applies the owner's own rule to the payload, under the identity it is filed ---------
+def test_a_ledger_charged_with_integer_amounts_replays_and_records_are_checked_against_their_filing():
+    import copy
+    import json
+    from engcore.mind.world import AdmissionRecord, replay_admission
+    from engcore.mind.world.owners import frozen_readers
+    from engcore.sria.decision.replay import ReplayOutcome
+    o = ax.owned("battery")
+    led = o.ledgers["synthetic.battery.pulse-cell.solver"]
+    led.settle(charge_id="int", action_id="x", iteration=3, family=ax.ActionFamily.EXPLORE, realized=1)   # an int
+    o._world = None
+    r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), o.authorities())
+    record = json.loads(json.dumps(AdmissionRecord.of(r, o.authorities()).to_dict()))
+    assert replay_admission(record).outcome is ReplayOutcome.REPRODUCED
+    other = ax.run_state("battery.someone-else", {"cell": ("component", {
+        "SOC": (ax.q(0.8, "dimensionless"), ax.covered(ax.q(0.75, "dimensionless"), ax.q(0.85, "dimensionless"))),
+        "R0": (ax.q(0.012, "ohm"), ax.Uncertainty.unknown("not quantified"))})})
+    forged = copy.deepcopy(record["snapshot"])
+    item = next(i for i in forged["records"] if i["owner_kind"] == "system_state")
+    item["record"]["payload"]["state"] = other.checkpoint.state.to_dict()  # another run's state, self-consistent
+    item["record"]["record_digest"] = other.checkpoint.state.digest
+    with pytest.raises(WorldRefused, match="another run"):
+        frozen_readers(forged)
+    forged = copy.deepcopy(record["snapshot"])
+    item = next(i for i in forged["records"] if i["owner_kind"] == "model_record")
+    item["record"]["record_id"] = '["some.other.model","9"]'
+    with pytest.raises(WorldRefused, match="filed under"):
+        frozen_readers(forged)
+
+
+# ---- R2-B-10: a probe that fails is an owner that cannot answer, not a missing record -------------------------------------
+def test_a_failing_provider_probe_is_owner_unavailable():
+    from engcore.mind.world import BindingStatus, verify_world
+    o = ax.owned("battery")
+    pid = o.world.providers[0].provider_id
+
+    def broken():
+        raise RuntimeError("the probe crashed")
+    entry = o.providers._entries[pid]
+    o.providers._entries[pid] = (entry[0], broken)
+    failures = verify_world(o.world, o.authorities(refresh=True)).failures()
+    assert {c.status for c in failures} == {BindingStatus.OWNER_UNAVAILABLE}
+
+
+# ---- R2-A3 / R2-A4 / R2-A6 / R2-A7 ---------------------------------------------------------------------------------------------
+def test_a_continuous_range_is_never_called_admissible():
+    o = ax.owned("battery")
+    space = FeasibleActionSpace.build(o.world)
+    alt = space.alternatives(o.propose("simulate_pulse", *SIM), "t_pulse")
+    assert alt["kind"] == "declared_range" and "NOT checked" in alt["label"]
+
+
+def test_a_value_the_proposer_may_not_set_is_never_read():
+    """R2-A4: the model reads the ambient temperature, which this action does not offer as a control.  A proposer that
+    assigns it anyway is refused by the role family, and its value never reaches the core's applicability assessment
+    (the input stays the world's current value, which is not exact)."""
+    import dataclasses as dc
+    w = ax.br1.battery_world()
+    spec = w.action("simulate_pulse")
+    fixed_ambient = dc.replace(spec, controls=tuple(c for c in spec.controls if c.variable != "T_amb"))
+    w = w.derive(reason="the ambient is not offered", actions=tuple(fixed_ambient if a is spec else a for a in w.actions))
+    proposal = {"I": ax.q(2.0, "A"), "t_pulse": ax.q(60, "s"), "T_amb": ax.q(25, "degC")}
+    d = FeasibleActionSpace.build(w).check(ax.br1.propose(w, "simulate_pulse", proposal))
+    assert "CONTROL_NOT_OFFERED_BY_ACTION" in {r.code for r in d.reasons}
+    a = next(x for x in d.annotations if "assessments" in x)
+    assert a["not_exact_inputs"] == ["T_amb"] and a["core_status"] is None and a["assessments"] == []
+
+
+def test_the_state_family_has_no_definite_verdict_left_and_a_record_carrying_one_is_refused():
+    from engcore.mind.world.feasibility import REASON_CODES, CheckFamily, FeasibilityDecision
+    gone = {"PRECONDITION_VIOLATED", "STATE_OUTSIDE_DECLARED_DOMAIN", "STATE_DOMAIN_UNDECIDED", "PRECONDITION_UNDECIDED"}
+    assert not gone & REASON_CODES[CheckFamily.STATE]
+    w = ax.br1.battery_world()
+    d = FeasibleActionSpace.build(w).check(ax.br1.propose(w, "pulse", {"I": ax.q(1.0, "A"), "t_pulse": ax.q(60, "s")}))
+    payload = d.to_dict()
+    reason = next(r for r in payload["reasons"] if r["family"] == "state")
+    reason["code"], reason["status"] = "PRECONDITION_VIOLATED", "INFEASIBLE_STATE"
+    payload["status"] = "INFEASIBLE_STATE"
+    with pytest.raises(WorldRefused):
+        FeasibilityDecision.from_dict(payload)
+
+
+def test_a_level_proposed_in_another_unit_reaches_the_executor_as_the_declared_level():
+    from engcore.mind.world import authorize_dispatch
+    o = ax.gen1_pool()
+    r = admit(FeasibleActionSpace.build(o.world), o.propose("pool_query", {"I_A": ax.q(1000.0000000000004, "mA"),
+                                                                           "t_on_s": ax.q(60, "s")}), o.authorities())
+    assert r.admitted is not None
+    assert dict(r.admitted.configuration)["I_A"] == ax.q(1000.0000000000004, "mA")      # as proposed
+    assert r.admitted.settings_in_declared_units()["I_A"] == 1.0                        # the declared level, exactly
+    auth = authorize_dispatch(r.admitted, o.authorities(), accept_synthetic=True)
+    assert dict(auth.settings)["I_A"] == 1.0

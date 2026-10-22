@@ -266,12 +266,13 @@ def test_one_budget_account_never_states_two_dimensions():
     solver = next(b for b in o.declaration.budget if b.dimension == "solver_calls")
     with pytest.raises(WorldRefused, match="one budget account states one dimension"):
         dataclasses.replace(o.declaration, budget=tuple(b for b in o.declaration.budget if b.dimension != "cost") +
-                            (BudgetSource.ledger("cost", solver.ref),))
+                            (BudgetSource.ledger("cost", solver.ref, unit="dimensionless"),))
     statements = o.world.budget.statements
     s = next(x for x in statements if x.dimension == "solver_calls")
     with pytest.raises(WorldRefused, match="one budget account states one dimension"):
         WorldBudget(unbounded=tuple(x for x in o.world.budget.unbounded if x[0] != "cost"),
-                    statements=statements + (dataclasses.replace(s, dimension="cost"),), projected=True)
+                    statements=statements + (dataclasses.replace(s, dimension="cost", unit="dimensionless"),),
+                    projected=True)
 
 
 @pytest.mark.parametrize("dimension,unit,ok", [("solver_calls", "hour", False), ("solver_calls", "second", False),
