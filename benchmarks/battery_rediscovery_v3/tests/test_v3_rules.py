@@ -131,7 +131,9 @@ def _all(comb, old=NA, repr_=NA, roles=NA, careful=None):
     return {OLD: old, REPR: repr_, ROLES: roles, COMB: comb, CAREFUL: comb if careful is None else careful}
 
 
-def _strong(n_cal=14, n_ho=14):
+def _strong(n_cal=24, n_ho=24):
+    # > 20 held-out decided instances, so that one adversarially flipped truth (one extra false support) stays below the
+    # 5 % materiality rate; with fewer, a single flip is material and the robustness check correctly fails
     out = [_inst(f"P{k:02d}/MODEL_ADEQUACY", S if k % 2 else NS, False, _all(S if k % 2 else NS)) for k in range(n_cal)]
     out += [_inst(f"H{k:02d}/WITHIN_CELL_GENERALIZATION", S if k % 3 else NS, True, _all(S if k % 3 else NS))
             for k in range(n_ho)]
@@ -150,11 +152,12 @@ def test_strong_robust_advantage_confirms():
 
 
 def test_a_thin_advantage_that_one_instance_reverses_is_underpowered():
-    inst = _strong(n_cal=3, n_ho=10)
-    # make the paired comparison rest on few discordant pairs: OLD correct on most decided instances
+    inst = _strong(n_cal=12, n_ho=10)
+    # the paired comparison rests on 6 discordant pairs (p = 2/64): OLD is correct everywhere except 3 calibration and 3
+    # held-out instances, so removing any one of them drops C1 (p = 2/32) or H3 (held-out N 9 < 10)
     for x in inst[:-6]:
         x["answers"][OLD] = x["truth"]
-    for x in inst[3:9]:
+    for x in inst[0:3] + inst[12:15]:
         x["answers"][OLD] = NA
     c = cr.conclude(instances=inst, **GATES)
     assert c["criteria"]["C1_primary_comparison"]["holds"] is True
