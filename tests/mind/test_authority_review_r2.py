@@ -166,14 +166,17 @@ def test_the_state_family_has_no_definite_verdict_left_and_a_record_carrying_one
         FeasibilityDecision.from_dict(payload)
 
 
-def test_a_level_proposed_in_another_unit_reaches_the_executor_as_the_declared_level():
+def test_a_level_spelled_otherwise_is_decided_and_executed_as_the_declared_level():
+    """Round 3 (R3-A1): the configuration is the declared level, decided on AND executed; the spelling stays on the
+    proposal.  (Round 2 decided on the spelling and executed the level: the two could disagree at a strict bound.)"""
     from engcore.mind.world import authorize_dispatch
     o = ax.gen1_pool()
-    r = admit(FeasibleActionSpace.build(o.world), o.propose("pool_query", {"I_A": ax.q(1000.0000000000004, "mA"),
-                                                                           "t_on_s": ax.q(60, "s")}), o.authorities())
-    assert r.admitted is not None
-    assert dict(r.admitted.configuration)["I_A"] == ax.q(1000.0000000000004, "mA")      # as proposed
-    assert r.admitted.settings_in_declared_units()["I_A"] == 1.0                        # the declared level, exactly
+    spelled = ax.q(1000.0000000000004, "mA")
+    r = admit(FeasibleActionSpace.build(o.world), o.propose("pool_query", {"I_A": spelled, "t_on_s": ax.q(60, "s")}),
+              o.authorities())
+    assert r.admitted is not None and r.admitted.proposal.value("I_A") == spelled
+    assert dict(r.admitted.configuration)["I_A"] == ax.q(1.0, "A")                      # the declared level, decided
+    assert r.admitted.settings_in_declared_units()["I_A"] == 1.0                        # and executed, exactly
     auth = authorize_dispatch(r.admitted, o.authorities(), accept_synthetic=True)
     assert dict(auth.settings)["I_A"] == 1.0
 
@@ -272,15 +275,26 @@ def test_a_replay_recorded_under_another_unit_registry_is_not_reproduced_here():
     assert out.outcome is ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE
 
 
-def test_a_level_is_matched_by_one_rule_in_every_spelling():
-    from engcore.mind.world.domains import DiscreteLevels, LEVEL_ULP, matched_level
+def test_a_level_is_matched_by_the_unit_owners_one_comparison_rule_in_every_spelling_and_scale():
+    """Round 3 (R3-A2): the unit owner's identity rule (canonical_magnitude, base unit, 12 significant digits), the
+    same rule that keeps the levels distinct: relative at every scale, so a zero level is matched only by zero."""
+    from engcore.mind.world.domains import DiscreteLevels, matched_level
     amps = DiscreteLevels("ampere", (ax.q(1.0, "A"), ax.q(2.0, "A")))
     assert matched_level(amps, ax.q(1000, "mA")) == ax.q(1.0, "A")
-    assert matched_level(amps, ax.q(1.0000000000004, "A")) is None        # ~1800 ulp: not a level, in any spelling
-    assert matched_level(amps, ax.q(1000.0000000004, "mA")) is None
-    temps = DiscreteLevels("degree_Celsius", (ax.q(25, "degC"),))
-    assert matched_level(temps, ax.q(298.15, "K")) == ax.q(25, "degC")    # conversion noise, within LEVEL_ULP
-    assert LEVEL_ULP <= 64
+    assert matched_level(amps, ax.q(1.0000000000004, "A")) == ax.q(1.0, "A")   # one value by the owner's identity
+    assert matched_level(amps, ax.q(1000.0000000004, "mA")) == ax.q(1.0, "A")
+    assert matched_level(amps, ax.q(1.000000001, "A")) is None                 # another value: never the nearest
+    assert matched_level(amps, ax.q(1.5, "A")) is None
+    temps = DiscreteLevels("degree_Celsius", (ax.q(0, "degC"), ax.q(25, "degC")))
+    for spelled in (ax.q(298.15, "K"), ax.q(77, "degF")):
+        assert matched_level(temps, spelled) == ax.q(25, "degC")
+    for spelled in (ax.q(273.15, "K"), ax.q(32, "degF"), ax.q(491.67, "degR")):  # each exactly 0 degC
+        assert matched_level(temps, spelled) == ax.q(0, "degC")
+    farads = DiscreteLevels("farad", (ax.q(0, "F"), ax.q(1e-14, "F")))
+    assert matched_level(farads, ax.q(1e-14, "F")) == ax.q(1e-14, "F")        # a small level is never zero
+    assert matched_level(farads, ax.q(10, "fF")) == ax.q(1e-14, "F")
+    assert matched_level(farads, ax.q(5e-15, "F")) is None                     # between two levels: neither
+    assert matched_level(farads, ax.q(0, "F")) == ax.q(0, "F")
 
 
 # ---- R2-F4: the standing never closes an action on a value its proposals set ---------------------------------------------

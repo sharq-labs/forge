@@ -57,7 +57,6 @@ from engcore.sria.decision.replay import ReplayMode, ReplayOutcome, ReplayResult
 from .actions import ExecutionKind, ProposedAction
 from .authority import Authorities, AuthorityReport
 from .base import StaleProposal, WorldRefused, digest, schema, value_payload
-from .domains import DiscreteLevels, matched_level
 from .feasibility import (
     CheckFamily, FeasibilityDecision, FeasibilityReason, FeasibilityStatus, FeasibleActionSpace, canonical,
     context_reads, decided_value,
@@ -111,9 +110,12 @@ def _frozen(payload: Mapping[str, Any]) -> Any:
 @dataclass(frozen=True)
 class AdmittedAction:
     """A FEASIBLE proposal on a verified world, as admission minted it.  Authorization metadata for the execution
-    owner, never a dispatch.  ``configuration`` is exactly what was proposed plus the action's fixed conditions (no
-    value is rewritten); ``context`` is every other value a decision on this action may read, with the authority
-    binding or declared basis it came from and its uncertainty."""
+    owner, never a dispatch.  ``configuration`` is exactly the configuration every family decided on: the proposal's
+    assignments to the action's controls and the action's fixed conditions, each AS IT WILL BE EXECUTED (in its
+    variable's declared unit by the unit owner's conversion; a declared discrete level as that declared level; an
+    integer as the exact integer; ``feasibility.decided_value``).  ``proposal`` keeps the proposer's own spelling.
+    ``context`` is every other value a decision on this action may read, with the authority binding or declared basis
+    it came from and its uncertainty."""
 
     proposal: ProposedAction
     world: ScientificWorld = field(repr=False)
@@ -156,20 +158,17 @@ class AdmittedAction:
         return digest(self.to_dict())
 
     def settings_in_declared_units(self) -> dict[str, Any]:
-        """Quantities as magnitudes in each variable's declared unit (the unit owner's conversion, ``magnitude_in``),
-        other typed values unchanged: the sanctioned exit from the unit-aware world for an executor.  A value that IS a
-        declared discrete level (``domains.matched_level``) is given as that declared level, so a level proposed in
-        another unit never reaches an executor off the level by conversion noise."""
-        spec = self.world.action(self.proposal.action_id)
+        """The configuration as an executor receives it: each quantity's magnitude in its variable's declared unit
+        (the configuration is already in that unit, so nothing is converted, rounded or matched here), other typed
+        values unchanged.  The sanctioned exit from the unit-aware world for an executor."""
         out: dict[str, Any] = {}
         for name, value in self.configuration:
             if not isinstance(value, Quantity):
                 out[name] = value
                 continue
-            control = None if spec is None else spec.control(name)
-            level = matched_level(control.domain, value) if control is not None and isinstance(
-                control.domain, DiscreteLevels) else None
-            out[name] = (value if level is None else level).magnitude_in(self.world.variable(name).unit)
+            if value.units != self.world.variable(name).unit:
+                raise WorldRefused(f"{name!r}: a minted configuration is in its variable's declared unit")
+            out[name] = value.magnitude
         return out
 
 
@@ -186,20 +185,29 @@ def _mint(space: FeasibleActionSpace, proposal: ProposedAction, report: Authorit
           ) -> AdmittedAction:
     world = space.world
     spec = world.action(proposal.action_id)
-    config = {f.name: f.value for f in spec.fixed_conditions}
-    for name, value in proposal.assignments:
-        config.setdefault(name, value)
-    for name, value in config.items():              # dispatch exactly what was decided (round-2 critic K-F1)
-        if decided_value(world, spec, proposal, name) is not value:
-            raise WorldRefused(f"{name!r}: the configuration to mint is not the value the decision was made on")
+    config = {f.name: decided_value(world, spec, proposal, f.name) for f in spec.fixed_conditions}
+    for name, _ in proposal.assignments:
+        if spec.control(name) is not None:
+            config[name] = decided_value(world, spec, proposal, name)
+    if any(v is None for v in config.values()) or {n for n, _ in proposal.assignments} - set(config):
+        raise WorldRefused("only the action's controls and fixed conditions, as decided, are minted")
     context = tuple(_frozen(_context_entry(world, n)) for n in sorted(context_reads(world, spec) - set(config)))
     models = tuple(_frozen({"binding_id": a, "authority": None if world.applicability_binding(a).authority is None
                             else world.applicability_binding(a).authority.identity()}) for a in spec.applicability)
     with _minting():
-        return AdmittedAction(proposal, world, space.space_id, world.revision_id, admission,
+        admitted = AdmittedAction(proposal, world, space.space_id, world.revision_id, admission,
                               tuple(sorted({c.binding_digest for c in report.checks})), tuple(sorted(config.items())),
                               context, tuple(proposal.observe or spec.expected_observables), spec.execution,
                               tuple(_frozen(r.to_dict()) for r in spec.provider_requirements), models, world.synthetic)
+    settings = admitted.settings_in_declared_units()
+    for name in config:                              # what an executor receives IS what was decided (K-F1, R3)
+        decided = decided_value(world, spec, proposal, name)
+        received = settings[name]
+        exact = decided.magnitude if isinstance(decided, Quantity) else decided
+        if type(received) is not type(exact) or received != exact or value_payload(decided) != value_payload(
+                dict(admitted.configuration)[name]):
+            raise WorldRefused(f"{name!r}: what an executor would receive is not the value the decision was made on")
+    return admitted
 
 
 # ---- the admission result --------------------------------------------------------------------------------------------
@@ -217,6 +225,10 @@ class AdmissionResult:
     #: identity: a replay on the recorded owner payloads reproduces the same decision.  Liveness says the readers
     #: follow their owners; it does not say whose owners they are (the execution side's, behind its gateway).
     live: bool = field(default=False, compare=False)
+
+    def __post_init__(self) -> None:
+        if self.live and not _MINTING.get():
+            raise WorldRefused("only admission states that a result was decided under live owner readers")
 
     @property
     def feasible(self) -> bool:
@@ -298,16 +310,19 @@ def admit(space: FeasibleActionSpace, proposal: ProposedAction, authorities: Aut
     if not report.ok:
         if proposal.world_revision != world.revision_id:
             raise StaleProposal("the proposal was made for another world revision")
-        return AdmissionResult(F.MISSING_INFORMATION, _authority_reasons(report), report, None, None, proposal, world,
-                               space.space_id, live)
+        return _result(F.MISSING_INFORMATION, _authority_reasons(report), report, None, None, proposal, world,
+                       space.space_id, live)
     decision = space.check(proposal)
-    result = AdmissionResult(decision.status, decision.reasons, report, decision, None, proposal, world, space.space_id,
-                             live)
+    result = _result(decision.status, decision.reasons, report, decision, None, proposal, world, space.space_id, live)
     if not decision.feasible:
         return result
     admitted = _mint(space, proposal, report, result.basis_digest)
-    return AdmissionResult(decision.status, decision.reasons, report, decision, admitted, proposal, world,
-                           space.space_id, live)
+    return _result(decision.status, decision.reasons, report, decision, admitted, proposal, world, space.space_id, live)
+
+
+def _result(*fields: Any) -> AdmissionResult:
+    with _minting():
+        return AdmissionResult(*fields)
 
 
 # ---- dispatch ----------------------------------------------------------------------------------------------------------------
@@ -450,20 +465,26 @@ class ExecutionDesk:
     authorization it receives, however it is reached.  The desk is immutable.  It records no effects (see the module
     docstring): at-most-once execution, budget reservation, state mutation and provider invocation stay with the
     executor; once it moves an owner the action is bound to, the same admitted action no longer re-admits.  The Mind is
-    given :meth:`gateway`, never the desk."""
+    given :meth:`gateway`, never the desk.
 
-    __slots__ = ("_authorities", "_executor", "_accept_synthetic")
+    ``suggestions_only`` is the execution side's proposer policy: a proposer's kind is what the proposer says
+    (``ProposalProvenance`` is caller-asserted), so a deployment that hosts an external or language-model proposer builds
+    its desk with ``suggestions_only=True``; then only proposals that carry their certified ``ExternalSuggestion`` are
+    admitted or dispatched, whatever the Mind's own port does."""
+
+    __slots__ = ("_authorities", "_executor", "_accept_synthetic", "_suggestions_only")
 
     def __init__(self, authorities: Authorities, executor: Callable[[DispatchAuthorization], Any], *,
-                 accept_synthetic: bool = False) -> None:
+                 accept_synthetic: bool = False, suggestions_only: bool = False) -> None:
         if type(authorities) is not Authorities or not authorities.live or not callable(executor):
             raise WorldRefused("an execution desk holds the execution side's live Authorities (every reader consults "
                                "its owner at every read) and an executor callable")
-        if type(accept_synthetic) is not bool:
-            raise WorldRefused("accept_synthetic is a bool")
+        if type(accept_synthetic) is not bool or type(suggestions_only) is not bool:
+            raise WorldRefused("accept_synthetic and suggestions_only are bools")
         object.__setattr__(self, "_authorities", authorities)
         object.__setattr__(self, "_executor", _GuardedExecutor(executor, authorities, accept_synthetic))
         object.__setattr__(self, "_accept_synthetic", accept_synthetic)
+        object.__setattr__(self, "_suggestions_only", suggestions_only)
 
     def __setattr__(self, name: str, value: Any) -> None:
         raise WorldRefused("an execution desk is immutable: its owners and executor are fixed when it is built")
@@ -472,19 +493,34 @@ class ExecutionDesk:
         raise WorldRefused("an execution desk is immutable")
 
     def admit(self, space: FeasibleActionSpace, proposal: ProposedAction) -> AdmissionResult:
+        _require_suggestion(proposal, self._suggestions_only, WorldRefused)
         return admit(space, proposal, self._authorities)
 
     def dispatch(self, admitted: Any) -> Any:
+        if type(admitted) is AdmittedAction:
+            _require_suggestion(admitted.proposal, self._suggestions_only, DispatchRefused)
         return self._executor._dispatch(admitted)
 
     def gateway(self) -> "AdmissionGateway":
-        """What the Mind is handed: admit and dispatch through this desk's owners and executor, and nothing else (no
-        bound method, so the desk itself is not an attribute of anything the Mind holds)."""
-        authorities, dispatch_ = self._authorities, self._executor._dispatch
+        """What the Mind is handed: admit and dispatch through this desk's owners, policy and executor, and nothing else
+        (no bound method, so the desk itself is not an attribute of anything the Mind holds)."""
+        authorities, dispatch_, only = self._authorities, self._executor._dispatch, self._suggestions_only
 
         def admit_(space: FeasibleActionSpace, proposal: ProposedAction) -> AdmissionResult:
+            _require_suggestion(proposal, only, WorldRefused)
             return admit(space, proposal, authorities)
-        return AdmissionGateway(admit_, dispatch_)
+
+        def dispatch_checked(admitted: Any) -> Any:
+            if type(admitted) is AdmittedAction:
+                _require_suggestion(admitted.proposal, only, DispatchRefused)
+            return dispatch_(admitted)
+        return AdmissionGateway(admit_, dispatch_checked)
+
+
+def _require_suggestion(proposal: Any, required: bool, refusal: type[Exception]) -> None:
+    if required and (type(proposal) is not ProposedAction or proposal.source is None):
+        raise refusal("this execution side admits and dispatches only proposals that carry their certified "
+                      "ExternalSuggestion (suggestions_only)")
 
 
 class AdmissionGateway:
@@ -543,8 +579,10 @@ def replay_admission(payload: Mapping[str, Any]) -> ReplayResult:
     Every recorded owner payload must first re-derive its recorded revision and digest by the owner's own identity rule
     (``owners.rederive``); a record its payload refutes is REPLAY_DEPENDENCY_UNAVAILABLE.  REPRODUCED then attests that
     the record is self-consistent under the owners' rules and that admission decides on it exactly as recorded.  It does
-    not attest that the owners held those records (provenance is the owner's own anchor, e.g. the run's state chain),
-    and it never authorizes anything: a replayed admitted action is not dispatchable unless :func:`authorize_dispatch`
+    not attest that the owners held those records (provenance is the owner's own anchor, e.g. the run's state chain).
+    A recorded run history (the superseded state digests that tell STALE from MISSING) and a recorded refusal are
+    replayed as recorded, not re-derived.  The unit registry is this process's or the replay is unavailable.  It never
+    authorizes anything: a replayed admitted action is not dispatchable unless :func:`authorize_dispatch`
     re-admits it against the owners as they are now."""
     mode = ReplayMode.EXECUTABLE_REPLAY
     record = dict(payload.get("result", {}))
@@ -558,7 +596,9 @@ def replay_admission(payload: Mapping[str, Any]) -> ReplayResult:
         return ReplayResult(mode, ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE, record, mismatches=("inputs",),
                             detail=f"the recorded inputs do not rebuild: {exc}")
     recorded_units = {item["record"]["record_digest"] for item in payload["snapshot"].get("records", ())
-                      if item.get("owner_kind") == "unit_registry"}
+                      if item["record"].get("owner_kind") == "unit_registry"}     # as the frozen readers file it
+    if world.unit_registry is not None:
+        recorded_units.add(world.unit_registry.record_digest)
     if recorded_units and recorded_units != {registry_fingerprint()}:
         return ReplayResult(mode, ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE, record, mismatches=("unit_registry",),
                             detail="the admission was recorded under another unit registry than this process's: its "

@@ -28,6 +28,7 @@ from engcore.providers.health import HEALTH_SCHEMA, ProviderHealth, ProviderHeal
 from engcore.providers.identity import content_digest
 from engcore.scientific import ExperimentBudget, Quantity, ScientificCoreError, ScientificModelDefinition
 from engcore.scientific.ir.values import as_context_value
+from engcore.scientific.units.quantity import is_ratio_scale
 from engcore.sria.campaign.budget import BudgetLedger
 from engcore.scientific.results.immutable import detach, freeze
 from engcore.sria.decision.recommendation import BudgetPlan
@@ -232,8 +233,10 @@ class ProviderSnapshot:
 # ---- budget: owner records, every dimension declared ---------------------------------------------------------------------------
 STATEMENT_SCHEMA = schema("budget_statement")
 #: The unit a ledger stating a dimension must account in (convertible by the unit owner): a duration for wall time, a
-#: count (dimensionless) for solver calls.  A cost ledger accounts in any unit the unit owner knows into which the
-#: declaration's stated cost unit (``BudgetSource.unit``) converts; cost amounts are converted, never read raw.
+#: count (exactly dimensionless: a count is never rescaled, so not percent) for solver calls.  A cost ledger accounts
+#: in any unit the unit owner knows into which the declaration's stated cost unit (``BudgetSource.unit``) converts;
+#: cost amounts are converted, never read raw.  An amount is a quantity whose zero means none of it, so every ledger
+#: and declared cost unit is ratio-scale (``is_ratio_scale``): on an offset scale a conversion moves an amount's zero.
 LEDGER_UNIT_FITS = {"wall_time": "second", "solver_calls": "dimensionless"}
 #: Which owner states which budget dimension, and the fields each projection carries.
 STATEMENT_OWNERS = {"ledger": (OwnerKind.BUDGET_LEDGER, ("ledger",)),
@@ -280,10 +283,18 @@ class BudgetStatement:
                 if fits is not None and not converts(unit_, fits):
                     raise WorldRefused(f"budget {self.dimension!r}: a ledger stating it accounts in a unit convertible "
                                        f"to {fits!r} (the unit owner's rule), not {owner.cost_unit!r}")
+                if not is_ratio_scale(unit_.units):
+                    raise WorldRefused(f"budget {self.dimension!r}: the ledger accounts in {owner.cost_unit!r}, an "
+                                       "offset scale on which an amount's zero is a convention (not an amount unit)")
+                if self.dimension == "solver_calls" and unit_.units != "dimensionless":
+                    raise WorldRefused(f"budget 'solver_calls': a count is accounted exactly in 'dimensionless', not "
+                                       f"{owner.cost_unit!r} (a count is never rescaled)")
                 if self.dimension == "cost":
                     if type(self.unit) is not str or not self.unit:
                         raise WorldRefused("a cost ledger statement carries the unit the declaration states its cost "
                                            "amounts in (an amount is never read in whatever unit the ledger uses)")
+                    if not is_ratio_scale(Quantity(1.0, self.unit).units):
+                        raise WorldRefused(f"budget 'cost': the declared cost unit {self.unit!r} is an offset scale")
                     if not converts(Quantity(1.0, self.unit), owner.cost_unit):
                         raise WorldRefused(f"budget 'cost': the declared cost unit {self.unit!r} does not convert into "
                                            f"the ledger's {owner.cost_unit!r} (the unit owner's rule)")

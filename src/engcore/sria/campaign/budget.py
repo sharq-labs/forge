@@ -258,7 +258,9 @@ class BudgetLedger:
     @property
     def digest(self) -> str:
         """The ledger as it stands now: the canonical digest of :meth:`to_dict`
-        (every declaration, every charge, and the derived totals they imply).
+        (every declaration, every charge, and the derived totals they imply),
+        taken in the form :meth:`from_dict` reads it back, so a ledger and its
+        own round trip (a checkpoint restore) are one identity.
 
         A read, never a write. Any settled charge, and any change to the
         declared budget, reservation, unit or cap, gives another digest, so a
@@ -266,7 +268,7 @@ class BudgetLedger:
         of trusted."""
         from ..decision.replay import canonical_digest
 
-        return canonical_digest(self.to_dict())
+        return canonical_digest(BudgetLedger.from_dict(self.to_dict()).to_dict())
 
     def settle(
         self,

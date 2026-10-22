@@ -21,6 +21,7 @@ from typing import Any, Mapping
 
 from engcore.mind.repsem.roles import RoleRefused, RoleSource, RoleTable
 from engcore.scientific import Quantity, ScientificCoreError
+from engcore.scientific.units.quantity import is_ratio_scale
 
 from .actions import ActionSpec
 from .base import RecordRef, WorldRefused, digest, expect_schema, schema, text
@@ -104,9 +105,12 @@ class BudgetSource:
         if (self.dimension, self.kind) == ("cost", "ledger"):
             text(self.unit, "the unit a cost ledger's amounts are declared in")
             try:
-                Quantity(1.0, self.unit)
+                ratio = is_ratio_scale(Quantity(1.0, self.unit).units)
             except ScientificCoreError:
                 raise WorldRefused(f"cost unit {self.unit!r} is not a unit the unit owner knows") from None
+            if not ratio:
+                raise WorldRefused(f"cost unit {self.unit!r} is an offset scale: a cost amount's zero is never a "
+                                   "convention (the unit owner's is_ratio_scale)")
         elif self.unit:
             raise WorldRefused(f"only a cost ledger states a declared unit; {self.dimension!r} amounts carry their own")
 

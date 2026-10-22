@@ -19,8 +19,9 @@ A language-model proposal is accepted only through :meth:`MindWorldPort.propose_
 ``ExternalSuggestion``); :meth:`MindWorldPort.propose` refuses one that claims that provenance.  The rule does not
 depend on the port: a proposal carrying a suggestion is re-derived from it by the check itself.  A proposer's kind is
 what the proposer says (``ProposalProvenance`` is caller-asserted): a deployment that hosts an external or
-language-model proposer builds the port with ``suggestions_only=True``, and then only proposals that carry their
-certified suggestion are requested for admission.
+language-model proposer builds its ``ExecutionDesk`` with ``suggestions_only=True`` (the execution side's policy,
+enforced at admission and at dispatch whatever the Mind holds).  The port's own ``suggestions_only`` is the same rule
+on the Mind's side: it neither requests admission for nor executes a proposal without its certified suggestion.
 """
 
 from __future__ import annotations
@@ -103,6 +104,9 @@ class MindWorldPort:
             raise WorldRefused("execution goes through the execution side's AdmissionGateway (ExecutionDesk.gateway())")
         if type(admitted) is not AdmittedAction:
             raise DispatchRefused(f"only an AdmittedAction is executable, not {type(admitted).__name__}")
+        if self._suggestions_only and admitted.proposal.source is None:
+            raise DispatchRefused("this port executes only actions whose proposal carries its certified "
+                                  "ExternalSuggestion")
         outcome = gateway.dispatch(admitted)
         self._journal.append(("dispatch", admitted.digest, "dispatched"))
         return outcome

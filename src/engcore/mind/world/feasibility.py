@@ -30,9 +30,12 @@ domain, a model's validity domain) only if it is EXACT, and no current value in 
 record has no hard-enclosure form (UNKNOWN states nothing, STANDARD a spread, an INTERVAL a coverage strictly below 1
 or none), and no owner states a decision-coverage policy.  Such a decision is MISSING_INFORMATION whatever the
 uncertainty's kind, level or source; a probabilistic interval is never turned into a deterministic admission.  Exact
-values are the proposal's own assignments and the action's declared fixed conditions.  They are exact as REQUESTED: a
-constraint or a validity domain is decided on the requested configuration, and whether the execution realizes it
-within any tolerance is not assessed here (``CONFIGURATION_BASIS`` on every admitted action says so).
+values are the proposal's own assignments to the action's controls and the action's declared fixed conditions, each
+taken AS IT WILL BE EXECUTED (:func:`decided_value`): a quantity in its variable's declared unit by the unit owner's
+conversion, a declared discrete level as that declared level, an integer as the exact integer.  Every family decides
+on exactly those values and admission mints exactly those values, so what is decided is what an executor receives.
+They are exact as REQUESTED: whether the execution realizes them within any tolerance is not assessed here
+(``CONFIGURATION_BASIS`` on every admitted action says so).
 
 A check alone admits nothing: only :func:`~.admission.admit`, on a world verified against its owners, mints an
 admitted action.  Nothing here dispatches, reserves budget or invokes a provider; that is the execution owner's.
@@ -58,7 +61,7 @@ from .actions import ActionMode, ActionSpec, ExecutionKind, ProposedAction, prop
 from .base import (
     ProposalRefused, StaleProposal, WorldRefused, converts, digest, expect_schema, same_value, schema, value_payload,
 )
-from .domains import check_at_edges, finite_members, is_finite, membership
+from .domains import DiscreteLevels, check_at_edges, finite_members, is_finite, matched_level, membership
 from .variables import ValueOrigin
 from .world import APPLICABILITY_CONTEXT_ROLES, BUDGET_DIMENSIONS, ScientificWorld
 
@@ -292,17 +295,38 @@ def _world_basis(world: ScientificWorld, name: str) -> _Resolved | None:
                      basis)
 
 
+def _as_executed(world: ScientificWorld, spec: ActionSpec, name: str, value: Any) -> Any:
+    """``value`` (assigned to, or fixed for, ``name``) as an executor will receive it: a quantity in the variable's
+    declared unit by the unit owner's conversion, a declared discrete level of the control AS that declared level (the
+    unit owner's identity rule, :func:`~.domains.matched_level`); any other typed value as it is.  A quantity the unit
+    owner does not convert stays as proposed: the domain family refuses it, so it is never executed."""
+    if not isinstance(value, Quantity) or not world.declares(name):
+        return value
+    unit = world.variable(name).unit
+    if not converts(value, unit):
+        return value
+    control = spec.control(name)
+    if control is not None and isinstance(control.domain, DiscreteLevels):
+        level = matched_level(control.domain, value)
+        if level is not None:
+            value = level
+    return value if value.units == unit else Quantity(value.magnitude_in(unit), unit)
+
+
 def _resolve(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None, name: str,
              *, include_proposal: bool = True) -> _Resolved | None:
     """Precedence: the proposal's assignment (only for a control of the action: a value the proposer may not set is
-    refused by the role family and never read), then the action's fixed condition, then the world's current value."""
+    refused by the role family and never read), then the action's fixed condition, then the world's current value.
+    An assignment or a fixed condition is resolved AS IT WILL BE EXECUTED (:func:`_as_executed`)."""
     if include_proposal and proposal is not None and spec.control(name) is not None:
         v = proposal.value(name)
         if v is not None:
+            v = _as_executed(world, spec, name, v)
             return _Resolved(v, "proposal", (v,))
     f = spec.fixed(name)
     if f is not None:
-        return _Resolved(f.value, "fixed_condition", (f.value,))
+        v = _as_executed(world, spec, name, f.value)
+        return _Resolved(v, "fixed_condition", (v,))
     return _world_basis(world, name)
 
 
@@ -524,9 +548,10 @@ def _check_domains(world: ScientificWorld, spec: ActionSpec, proposal: ProposedA
                   f"the unit owner does not convert {assigned} into the variable's declared unit {var.unit!r}",
                   declared_by=control.declared_by.value, proposed=value_payload(assigned), expected_unit=var.unit)
             continue
-        found = membership(control.domain, assigned)
+        executed = _as_executed(world, spec, name, assigned)   # the value decided on and executed (module docstring)
+        found = membership(control.domain, executed)
         if found is None and var.domain is not None:
-            found = membership(var.domain, assigned)
+            found = membership(var.domain, executed)
             source = var.declaration.source
         else:
             source = control.declared_by
@@ -680,10 +705,11 @@ def _used_reads(world: ScientificWorld, spec: ActionSpec, proposal: ProposedActi
 
 
 def decided_value(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction, name: str) -> Any:
-    """The exact value every family decided ``name`` on for this proposal (its assignment for a control, the action's
-    fixed condition), or None if the decision read no exact value for it.  Admission mints exactly these values."""
+    """The exact value every family decided ``name`` on for this proposal (its assignment to a control, or the action's
+    fixed condition, as it will be executed), or None if the decision read no exact value for it.  Admission mints
+    exactly these values and nothing else."""
     r = _resolve(world, spec, proposal, name)
-    return None if r is None or r.edges is None else r.value
+    return None if r is None or r.edges is None or r.source not in ("proposal", "fixed_condition") else r.value
 
 
 def context_reads(world: ScientificWorld, spec: ActionSpec) -> set[str]:

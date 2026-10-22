@@ -387,10 +387,14 @@ def _admitted(o, aid: str, assignments, observe=(), world=None):
 
 def test_admission_yields_a_closed_record_of_the_canonical_proposal():
     from engcore.mind.world import AdmittedAction, admit
+    from engcore.mind.world.base import same_value
     o = _owned()
     a = _admitted(o, "simulate_pulse", {"I": q(1000, "mA"), "T_amb": q(77, "degF"), "t_pulse": q(60, "s")}, ("V",))
     config = dict(a.configuration)
-    assert config["I"] == q(1000, "mA") and config["T_amb"] == q(77, "degF")    # as proposed, never rewritten
+    assert config["I"] == q(1.0, "A")                                            # the declared level (as BR1)
+    assert config["T_amb"].units == "degree_Celsius" and same_value(config["T_amb"], q(25, "degC"))  # declared unit
+    assert a.proposal.value("I") == q(1000, "mA") and a.proposal.value("T_amb") == q(77, "degF")  # the spelling kept
+    assert a.settings_in_declared_units()["I"] == 1.0                            # exactly what was decided
     assert config["mode"] == cat("charge")                                       # the declared fixed condition
     assert a.proposal_digest == a.proposal.digest and a.world_revision == o.world.revision_id
     assert a.to_dict()["classification"] == "action_admission_not_scientific_support"
@@ -823,8 +827,9 @@ def test_offset_units_compare_in_their_ratio_base(battery):
     hvac = fx.hvac_world("chamber")
     assert admissible_but_for_current_values(check(hvac, "step_speed", {
         "speed": q(3000, "rpm"), "fan_stage": IntegerValue(3), "T_out": q(95, "degF")}))  # 95 degF: the fixed 35 degC
-    # a level stated in its own unit is that exact magnitude; across a conversion, equal at conversion precision
-    assert not check(w, "pool_query", {"I_A": q(1.0000000000004, "A"), "t_on_s": q(30, "s")}).feasible
+    # a value IS a level when the unit owner's identity rule (12 significant digits, base unit) says so (as BR1); it is
+    # then decided and executed AS that level (round 3: what is decided is what is executed)
+    assert check(w, "pool_query", {"I_A": q(1.0000000000004, "A"), "t_on_s": q(30, "s")}).feasible
     assert not check(w, "pool_query", {"I_A": q(1.000000001, "A"), "t_on_s": q(30, "s")}).feasible
     assert check(w, "pool_query", {"I_A": q(1000.0000000000004, "mA"), "t_on_s": q(30, "s")}).feasible
 

@@ -50,6 +50,15 @@ ALLOWED_LOST_CODES = frozenset({
     "PRECONDITION_VIOLATED", "PRECONDITION_UNDECIDED", "STATE_OUTSIDE_DECLARED_DOMAIN", "STATE_DOMAIN_UNDECIDED",
     "INTERVAL_OUTSIDE_VALIDATED_DOMAIN", "CONSTRAINT_VIOLATED", "OUTSIDE_VALIDATED_DOMAIN",
 })
+#: A definite constraint or validity verdict may be lost only for one of the two BR1.1 causes, stated by the case's
+#: own BR1.1 codes: the value it rested on was one the proposer may not set (a role refusal), or a current value of
+#: the world (the matching undecidable code).
+CONDITIONAL_LOST_CODES = {
+    "CONSTRAINT_VIOLATED": frozenset({"CONSTRAINT_ENCLOSURE_REQUIRED", "CONSTRAINT_UNDECIDABLE"}),
+    "OUTSIDE_VALIDATED_DOMAIN": frozenset({"APPLICABILITY_INPUT_NOT_EXACT"}),
+}
+ROLE_REFUSALS = frozenset({"FIXED_CONDITION_CHANGED", "STATE_NOT_DIRECTLY_SETTABLE", "PROTOCOL_CONDITION_NOT_SELECTABLE",
+                           "CONTROL_NOT_OFFERED_BY_ACTION", "ROLE_NOT_CONTROLLABLE"})
 
 
 def _sha(path: pathlib.Path) -> str:
@@ -80,7 +89,9 @@ def build() -> dict[str, Any]:
         lost_codes.update(lost)
     to_feasible = sum(v for k, v in moves.items() if k.endswith("->FEASIBLE") and not k.startswith("FEASIBLE->"))
     unexpected = sorted(set(new_codes) - ALLOWED_NEW_CODES)
-    unexpected_lost = sorted(set(lost_codes) - ALLOWED_LOST_CODES)
+    unexpected_lost = sorted(set(lost_codes) - ALLOWED_LOST_CODES) + sorted(
+        f"{c['case_id']}:{code}" for c in changed for code in c["lost_codes"] if code in CONDITIONAL_LOST_CODES
+        and not set(c["br1_1"]["codes"]) & (ROLE_REFUSALS | CONDITIONAL_LOST_CODES[code]))
     other_moves = sorted(k for k in moves if k.split("->")[0] != k.split("->")[1] and
                          not k.endswith("->MISSING_INFORMATION"))
     if to_feasible or unexpected or unexpected_lost or other_moves:
@@ -102,6 +113,7 @@ def build() -> dict[str, Any]:
         "lost_codes": dict(sorted(lost_codes.items())),
         "allowed_new_codes": sorted(ALLOWED_NEW_CODES),
         "allowed_lost_codes": sorted(ALLOWED_LOST_CODES),
+        "conditional_lost_codes": {k: sorted(v | ROLE_REFUSALS) for k, v in sorted(CONDITIONAL_LOST_CODES.items())},
         "changes": changed,
         "statement": ("BR1's committed results are not rewritten.  Every case whose status or codes differ from BR1's "
                       "actual decision is listed: they decide differently under BR1.1 by design (no current value "

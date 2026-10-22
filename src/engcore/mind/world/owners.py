@@ -271,7 +271,9 @@ class BudgetReader(_Reader):
     ``BudgetReader(ledgers, experiments)`` reads the account OBJECTS handed over: live for their in-place changes
     (settled charges, recorded evaluations), not for an execution side that replaces an account object (as
     ``sria.campaign`` does on restore).  ``BudgetReader.following(accounts)`` asks the execution side's ``accounts()``
-    for the current ``(ledgers, experiments)`` at every verification."""
+    for the current ``(ledgers, experiments)`` at every verification, and an account only moves forward: a ledger
+    whose settled charges, or an experiment whose recorded evaluations, are fewer than this reader already saw is
+    refused (an account restored to an earlier revision would re-authorize what it had moved past)."""
 
     kinds = frozenset({K.BUDGET_LEDGER, K.EXPERIMENT})
 
@@ -282,15 +284,27 @@ class BudgetReader(_Reader):
             raise WorldRefused("followed accounts are a callable the execution side answers with (ledgers, experiments)")
         reader = cls(*accounts(), owner_id=owner_id)
         reader._follow = accounts
+        reader._highest = reader._revisions()
         return reader
+
+    def _revisions(self) -> dict[tuple[str, str], int]:
+        return {**{("ledger", i): x.revision for i, x in self._ledgers.items()},
+                **{("experiment", i): len(x.evaluations) for i, x in self._experiments.items()}}
 
     def pinned(self) -> "BudgetReader":
         if self._follow is None:
             return self
         try:
-            return BudgetReader(*self._follow(), owner_id=self.owner_id)
+            current = BudgetReader(*self._follow(), owner_id=self.owner_id)
         except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
             raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
+        revisions = current._revisions()
+        went_back = sorted(f"{k[0]} {k[1]!r}" for k, r in revisions.items() if r < self._highest.get(k, 0))
+        if went_back:
+            raise OwnerUnavailable(f"followed budget accounts went back a revision ({', '.join(went_back)}): an "
+                                   "account only moves forward")
+        self._highest = {**self._highest, **revisions}
+        return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
         if self._follow is not None:
@@ -300,6 +314,7 @@ class BudgetReader(_Reader):
     def __init__(self, ledgers: Mapping[str, BudgetLedger] | None = None,
                  experiments: Mapping[str, ScientificExperiment] | None = None, owner_id: str = "budget") -> None:
         self._follow: Callable[[], Any] | None = None
+        self._highest: dict[tuple[str, str], int] = {}
         self._ledgers = dict(ledgers or {})
         self._experiments = dict(experiments or {})
         if any(type(x) is not BudgetLedger for x in self._ledgers.values()):
@@ -477,7 +492,7 @@ def rederive(kind: OwnerKind, owner_id: str, record_id: str, payload: Mapping[st
             rebuilt = BudgetLedger.from_dict(payload["ledger"])             # a valid ledger record whose derived
             if _as_float(rebuilt.to_dict()) != _as_float(payload["ledger"]):   # totals are the owner's own
                 raise WorldRefused("the recorded ledger's derived totals are not what its charges give")
-            return str(len(payload["ledger"]["charges"])), canonical_digest(payload["ledger"])   # the owner's rule
+            return str(len(payload["ledger"]["charges"])), canonical_digest(rebuilt.to_dict())   # the owner's rule
         if kind is K.EXPERIMENT:
             exp = ScientificExperiment.from_dict(payload["experiment"])
             full = exp.to_dict()

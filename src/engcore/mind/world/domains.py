@@ -11,17 +11,18 @@ rules the owner leaves to its consumers (an integer is an ``IntegerValue``, a ca
 categories, a boolean has no bounds; ``tests/test_core_semantic_invariants.py`` records that a second consumer
 inherits no refusal) are applied here, with the design layer's dimensionless test (``dimensionality``).  An integer,
 categorical or boolean domain is stated in its variable's own unit, so an integer means the same count to the check
-and to whoever executes it.  Only :class:`DiscreteLevels`, which has no owner, compares at comparison precision in the
-base unit (see :mod:`.base`), so a spelling of a level matches that level.  Compatibility is always the unit owner's
+and to whoever executes it; an integer is compared as an exact integer, never through a float.  Only
+:class:`DiscreteLevels`, which has no owner, compares by the unit owner's identity rule (``canonical_magnitude`` in the
+base unit, see :func:`.base.same_value`): a value IS a declared level when the unit owner says they are one value, and
+it is then decided and executed AS that level (:func:`matched_level`).  Compatibility is always the unit owner's
 conversion (:func:`.base.converts`), never a shared dimension: a temperature difference is not a temperature.
 
 Identity is the raw owner payload (``to_dict``): two domains that any check could tell apart are two identities.
-Nothing is ever clamped, rounded to a level or projected: a value is a member or it is refused with the reason.
+Nothing is ever clamped, rounded to a NEARBY level or projected: a value is a member or it is refused with the reason.
 """
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from typing import Any, Mapping
 
@@ -124,6 +125,9 @@ def domain_problem(domain: Any, name: str, declared_unit: str) -> str | None:
             return "an integer domain is dimensionless (a count)"
         if not (float(domain.lower.magnitude).is_integer() and float(domain.upper.magnitude).is_integer()):
             return f"an integer domain has integer-valued bounds, not [{domain.lower.magnitude}, {domain.upper.magnitude}]"
+        if max(abs(domain.lower.magnitude), abs(domain.upper.magnitude)) > EXACT_INTEGER_LIMIT:
+            return (f"an integer domain's bounds lie within +/-2**53: the owner stores a bound as a float, and beyond "
+                    f"that a float is not the integer declared ([{domain.lower.magnitude}, {domain.upper.magnitude}])")
     return None
 
 
@@ -131,24 +135,17 @@ def _shown(value: Any) -> Any:
     return value_payload(value) if type(value) in (Quantity, IntegerValue, BooleanValue, CategoricalValue) else repr(value)
 
 
-#: How far (in units in the last place of the level's magnitude) a value converted into a level's unit may sit from
-#: it and still BE that level: floating-point conversion noise (a conversion between offset units lands a few
-#: ulp off), never a tolerance a proposer could use (1.0000000000004 A is ~1800 ulp from 1 A and is not a level).
-LEVEL_ULP = 64
+#: The largest integer magnitude a float holds exactly (an integer domain's bounds stay within it).
+EXACT_INTEGER_LIMIT = 2 ** 53
 
 
 def matched_level(domain: DiscreteLevels, value: Quantity) -> Quantity | None:
-    """The declared level ``value`` IS, by one rule in every spelling: the value converted into the level's own unit by
-    the unit owner equals the level's magnitude within ``LEVEL_ULP`` units in the last place.  None otherwise: nothing
-    is ever rounded to a nearby level."""
-    for level in domain.levels:
-        try:
-            converted = value.magnitude_in(level.units)
-        except ScientificCoreError:
-            continue
-        if abs(converted - level.magnitude) <= LEVEL_ULP * math.ulp(abs(level.magnitude) or 1.0):
-            return level
-    return None
+    """The declared level ``value`` IS, by the unit owner's one comparison rule (``canonical_magnitude`` in the base
+    unit, the rule that also keeps the declared levels distinct: :func:`.base.same_value`), or None.  Relative at every
+    scale, so a zero level is matched only by a value the owner calls zero.  A matched value is decided and executed
+    AS the declared level (``feasibility``); nothing else is matched: no nearest level, no interpolation."""
+    found = [level for level in domain.levels if same_value(value, level)]
+    return found[0] if len(found) == 1 else None
 
 
 def _is_level(domain: DiscreteLevels, value: Quantity) -> bool:
@@ -179,6 +176,10 @@ def membership(domain: Domain, value: Any) -> tuple[str, str, dict[str, Any]] | 
     if kind is VariableKind.INTEGER:
         if type(value) is not IntegerValue:
             return "VALUE_KIND_MISMATCH", "expected an IntegerValue", {"proposed": shown}
+        lower, upper = int(domain.lower.magnitude), int(domain.upper.magnitude)   # exact (integer-valued, <= 2**53)
+        if not lower <= value.value <= upper:              # exact integers: never decided through a float rounding
+            return ("OUTSIDE_RANGE", f"{value.value} is outside the declared integer range [{lower}, {upper}]",
+                    {"proposed": shown, "lower": domain.lower.to_dict(), "upper": domain.upper.to_dict()})
         try:
             wrapped = Quantity(value.value, domain.unit)   # as DesignSpace wraps an integer, in the variable's unit
         except (OverflowError, ScientificCoreError) as exc:
@@ -246,25 +247,6 @@ def domain_identity(domain: Domain) -> dict[str, Any]:
     """Identity payload of a domain: the owner record's own payload, raw (declared unit, raw magnitudes, declared
     order).  The owner decides membership on raw values, so identity must distinguish whatever it can."""
     return domain.to_dict()
-
-
-def edges_in_domain(domain: Domain, edges: tuple[Any, ...]) -> str:
-    """'inside', 'outside' or 'undecided' for a value known only by its edges (one edge: an exact value).
-
-    Sound for every domain kind: a range is decided side by side (an interval wholly beyond one bound is outside;
-    edges on both sides, or one inside, are undecided); a finite domain is never shown to contain a value known only
-    as an interval, because points between its members are not members."""
-    verdicts = [membership(domain, e) is None for e in edges]
-    if len(edges) == 1:
-        return "inside" if verdicts[0] else "outside"
-    if isinstance(domain, ScientificVariable) and domain.kind is VariableKind.CONTINUOUS:
-        if all(verdicts):
-            return "inside"                                 # an interval of a convex set lies in it
-        if any(verdicts) or not all(converts(e, domain.unit) for e in edges):
-            return "undecided"
-        below = [e.magnitude_in(domain.unit) < domain.lower.magnitude_in(domain.unit) for e in edges]
-        return "outside" if all(below) or not any(below) else "undecided"
-    return "undecided"
 
 
 def domain_payload(domain: Domain) -> dict[str, Any]:
@@ -404,6 +386,6 @@ def check_at_edges(constraint: ConstraintDefinition, edges: tuple[Quantity, ...]
 
 __all__ = [
     "ALL_ACTIONS", "DeclaredConstraint", "DiscreteLevels", "Domain", "Guard", "check_at_edges", "contained",
-    "declared_source", "domain_identity", "domain_kind", "domain_problem", "edges_in_domain", "finite_members",
+    "declared_source", "domain_identity", "domain_kind", "domain_problem", "finite_members",
     "is_finite", "membership",
 ]
