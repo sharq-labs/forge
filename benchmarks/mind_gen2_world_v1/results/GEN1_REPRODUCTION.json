@@ -4,7 +4,7 @@
   2.0
  ],
  "gen1_initial_design": {
-  "gen1_role_only_admitted": 10,
+  "gen1_role_only_found_feasible": 10,
   "gen2_infeasible_protocol": 10,
   "gen2_statuses": [
    "INFEASIBLE_PROTOCOL"
@@ -25,7 +25,7 @@
       "units": "ampere"
      }
     ],
-    "decision_digest": "84a03f75bda5584a109da57f4897717aba9a5d54d888dfb3b6612bd06451df1c",
+    "decision_digest": "4f7d58590db5953b59148d3c4cb364d38771414c3f2d1c131b3d2fd59064d4ec",
     "gen1_request": {
      "I_A": 1.6092477375115743,
      "t_on_s": 50.63284984775847
@@ -50,7 +50,7 @@
       "units": "ampere"
      }
     ],
-    "decision_digest": "4d366125382096cd82bb69b2fbb53c5c24f10ea0d759fba60ca4958f44f6c387",
+    "decision_digest": "92f8c4d859fece03f21a31b441e371725821991a81b69f6003fe91d28a735d97",
     "gen1_request": {
      "I_A": 1.216821717027902,
      "t_on_s": 146.8190025058106
@@ -75,7 +75,7 @@
       "units": "ampere"
      }
     ],
-    "decision_digest": "ed763bb341af7a662f4b192db7fbdadc8fdf156bc9f8dd97a9549e1562f7f9db",
+    "decision_digest": "979fb8818d3e66a5581e316cda26b9ac569b5b37010acce77d1e15e3fa760989",
     "gen1_request": {
      "I_A": 1.097288525641392,
      "t_on_s": 42.33243695144946
@@ -100,7 +100,7 @@
       "units": "ampere"
      }
     ],
-    "decision_digest": "e5e33ca2c91bbb73bbdcc5f74e79bce0a4788019b36dd1504a2fa7ad69bb1275",
+    "decision_digest": "996e17875d4947bf99aebc179372fe7178470d0840f00cd0348b19dbd0b5044b",
     "gen1_request": {
      "I_A": 1.3209224430424609,
      "t_on_s": 90.41846562451461
@@ -125,7 +125,7 @@
       "units": "ampere"
      }
     ],
-    "decision_digest": "7a62ce018bcd1571a1468953a7fec01840e941f55a452991bc7801e996963244",
+    "decision_digest": "dd790b4948091f4757f00bd85452f74321a72259a2f44387d64c702bb0c7c654",
     "gen1_request": {
      "I_A": 1.5739706513434506,
      "t_on_s": 92.88696452547993
@@ -150,7 +150,7 @@
       "units": "ampere"
      }
     ],
-    "decision_digest": "e3972e6d5b554f1754ca1d4f693cb0f1dd0ff3c090ffa3087280bf2a54e19308",
+    "decision_digest": "c6993cc32c34fa2bcf7b663e382777e6ac9bee0ce61f4ecd12905add93687a16",
     "gen1_request": {
      "I_A": 1.9486013506143132,
      "t_on_s": 26.77736398962403
@@ -175,7 +175,7 @@
       "units": "ampere"
      }
     ],
-    "decision_digest": "84a03f75bda5584a109da57f4897717aba9a5d54d888dfb3b6612bd06451df1c",
+    "decision_digest": "4f7d58590db5953b59148d3c4cb364d38771414c3f2d1c131b3d2fd59064d4ec",
     "gen1_request": {
      "I_A": 1.6092477375115743,
      "t_on_s": 50.63284984775847
@@ -200,7 +200,7 @@
       "units": "ampere"
      }
     ],
-    "decision_digest": "4d366125382096cd82bb69b2fbb53c5c24f10ea0d759fba60ca4958f44f6c387",
+    "decision_digest": "92f8c4d859fece03f21a31b441e371725821991a81b69f6003fe91d28a735d97",
     "gen1_request": {
      "I_A": 1.216821717027902,
      "t_on_s": 146.8190025058106
@@ -225,7 +225,7 @@
       "units": "ampere"
      }
     ],
-    "decision_digest": "ed763bb341af7a662f4b192db7fbdadc8fdf156bc9f8dd97a9549e1562f7f9db",
+    "decision_digest": "979fb8818d3e66a5581e316cda26b9ac569b5b37010acce77d1e15e3fa760989",
     "gen1_request": {
      "I_A": 1.097288525641392,
      "t_on_s": 42.33243695144946
@@ -250,7 +250,7 @@
       "units": "ampere"
      }
     ],
-    "decision_digest": "e5e33ca2c91bbb73bbdcc5f74e79bce0a4788019b36dd1504a2fa7ad69bb1275",
+    "decision_digest": "996e17875d4947bf99aebc179372fe7178470d0840f00cd0348b19dbd0b5044b",
     "gen1_request": {
      "I_A": 1.3209224430424609,
      "t_on_s": 90.41846562451461
@@ -318,6 +318,6 @@
  },
  "schema": "forge.mind.gen2_world.gen1_reproduction/1",
  "seed": 0,
- "space_id": "b2b52e18c7cd6f12b40bd42189cc2eb8a26aa759bcc489d71cfbdd1cabb8427f",
- "world_revision": "233fab04639cda38542b6473641342edc427b3b029b429428a6a1aacde142095"
+ "space_id": "e6f18a65690ce5f564891a17c533913a85bcac412e1757d3531751ec31b78acf",
+ "world_revision": "0975a1ff0f9f4194ead237c528b5735efc09f3cb2bb5c885b3348a874e425803"
 }
