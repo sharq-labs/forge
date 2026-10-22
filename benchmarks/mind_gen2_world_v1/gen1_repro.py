@@ -73,7 +73,7 @@ def run() -> dict[str, Any]:
                          "feasible_alternatives_I_A": [o.to_dict() for o in lit_alt["options"]],
                          "alternatives_label": lit_alt["label"]},
         "gen1_initial_design": {"requests": len(rows),
-                                "gen1_role_only_admitted": sum(r["gen1_role_only"] == "FEASIBLE" for r in rows),
+                                "gen1_role_only_found_feasible": sum(r["gen1_role_only"] == "FEASIBLE" for r in rows),
                                 "gen2_statuses": statuses,
                                 "gen2_infeasible_protocol": sum(r["gen2_status"] == "INFEASIBLE_PROTOCOL" for r in rows),
                                 "requests_on_a_declared_level": sum(r["gen1_request"]["I_A"] in (1.0, 2.0) for r in rows),
@@ -90,7 +90,7 @@ def main(argv: list[str]) -> int:
     stream = payload["gen1_initial_design"]
     print(f"literal 1.15 A: GEN1_ROLE_ONLY={lit['GEN1_ROLE_ONLY']} GEN2={lit['GEN2_WORLD_ACTIONSPACE']} "
           f"alternatives={[a['magnitude'] for a in lit['feasible_alternatives_I_A']]} A")
-    print(f"Gen1 initial design: {stream['requests']} requests, Gen1 admitted {stream['gen1_role_only_admitted']}, "
+    print(f"Gen1 initial design: {stream['requests']} requests, Gen1 found FEASIBLE {stream['gen1_role_only_found_feasible']}, "
           f"Gen2 INFEASIBLE_PROTOCOL {stream['gen2_infeasible_protocol']}")
     return 0
 

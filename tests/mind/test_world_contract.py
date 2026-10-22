@@ -2,17 +2,20 @@
 
 Each block pins one property of ``engcore.mind.world`` that the failing-first file does not:
 
-* removing information (a value, an uncertainty, a provider, a budget declaration, a cost, a fixed condition, a
-  control's value) never turns a non-FEASIBLE decision FEASIBLE;
-* model applicability gates model execution only, through the core assessment, with its status verbatim, and holds
-  at both edges of an interval;
-* an undeclared budget dimension or cost is MISSING_INFORMATION, never unlimited or zero;
-* the execution gate holds its own world, dispatches only what it re-derives, shares one ledger per world revision,
-  reads provider builds live, refuses synthetic worlds unless allowed and verifies bound values against their owner
-  records and models against the registry;
-* the Mind port holds a detached copy and reaches no executor; external proposals enter only as ExternalSuggestion
-  records bound to the port's revision;
-* replay verifies its inputs before recomputing; revisions verify as a chain; identity is unit-canonical.
+* removing information about the system (a value, an uncertainty, a provider, a budget statement, a cost, a fixed
+  condition, a control's value) never turns a non-FEASIBLE decision FEASIBLE;
+* model applicability gates model execution only, through the core assessment, with its status verbatim; the world's
+  own interval rule is sound, never applied to a screen or a condition with prerequisites, and carries its own code;
+* an undeclared budget dimension or cost is MISSING_INFORMATION, never unlimited or zero; budgets are decided by the
+  owners' rules on raw amounts, and a budget statement changes only with its owner record;
+* a FEASIBLE decision yields a closed admitted-action record built from the canonical proposal, carrying every value
+  the decision read; nothing in the package dispatches;
+* bound values verify against exactly-typed owner records (supersession, measured quantity), and change only with
+  their record, in derive and in lineage verification;
+* the Mind port holds a detached copy and reaches no executor; an external proposal is re-derived from its certified
+  suggestion by the check itself (revision, family, provenance);
+* units are the owner's conversions (a temperature difference is not a temperature); identity is the raw owner payload;
+* reason codes and annotation keys are closed; replay verifies its inputs before recomputing.
 """
 
 from __future__ import annotations
@@ -21,25 +24,31 @@ import ast
 import dataclasses
 import hashlib
 import pathlib
+import types
 
 import pytest
 
 import engcore.mind.world as world_pkg
 from benchmarks.mind_gen2_world_v1 import fixtures as fx
+from engcore.execution.orchestration.resources import ResourceBudget, ResourceUsage
 from engcore.mind.repsem import canonical_bytes
 from engcore.mind.repsem.roles import RoleSource, VariableRole as R
 from engcore.mind.world import (
-    ActionMode, CheckFamily, ClearedAction, ExecutionGate, FeasibilityDecision, FeasibilityStatus as F,
-    FeasibleActionSpace, FORBIDDEN_PROPOSAL_KEYS, GateRefused, IntakeCode, IntakeRefusal, MindWorldPort,
-    ObservationChannel, ProposedAction, RecordKind, RecordRef, ScientificWorld, TemporalSemantics as TS, ValueOrigin,
-    WorldBudget, WorldRefused, binders, replay_decision, verify_lineage,
+    ActionMode, CheckFamily, ClearedAction, FeasibilityDecision, FeasibilityStatus as F, FeasibleActionSpace,
+    FORBIDDEN_PROPOSAL_KEYS, IntakeCode, IntakeRefusal, Lineage, MindWorldPort, ObservationChannel, ProposalRefused,
+    ProposedAction, RecordKind, RecordRef, ScientificWorld, StaleProposal, TemporalSemantics as TS, ValueOrigin,
+    WorldBudget, WorldRefused, binders, proposed_action_from_suggestion, replay_decision, verify_lineage,
 )
-from engcore.mind.world.domains import domain_problem, membership
+from engcore.mind.world.domains import DiscreteLevels, domain_problem, membership
 from engcore.mind.world.feasibility import STATUS_BY_SOURCE, FeasibilityReason
-from engcore.mind.world.world import ProviderSnapshot
+from engcore.mind.world.world import ApplicabilityBinding, ProviderSnapshot
 from engcore.providers.health import ProviderHealth, ProviderHealthReport, assess_health
-from engcore.scientific import ScientificVariable, Uncertainty, VariableKind, VariableRole as IR
+from engcore.scientific import (
+    ConstraintDefinition, ConstraintOperator as Op, RangeCondition, ScientificModelDefinition, ScientificVariable,
+    Uncertainty, ValidityDomain, VariableKind, VariableRole as IR,
+)
 from engcore.scientific.ir.values import CategoricalValue, IntegerValue
+from engcore.scientific.models.definition import InputSourceKind, ModelInputSpec
 from engcore.scientific.multiphysics.state import InitialStateValue
 from engcore.sria.decision import ActionFamily
 from engcore.sria.decision.external import AUTHORITY_KEYS, ExternalSuggestion
@@ -79,6 +88,11 @@ def with_action(w: ScientificWorld, action_id: str, reason: str, **changes) -> S
                                                  for a in w.actions))
 
 
+def restated_budget(b: WorldBudget, token: str, **changes) -> WorldBudget:
+    """A budget as the owner's newer statement gives it (a new ledger record)."""
+    return dataclasses.replace(b, authority=fx.synthetic(f"ledger/{token}"), **changes)
+
+
 def _hex(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
@@ -86,6 +100,9 @@ def _hex(token: str) -> str:
 @pytest.fixture(scope="module")
 def battery():
     return fx.battery_world()
+
+
+PULSE_OK = {"I": q(1.0, "A"), "t_pulse": q(60, "s")}
 
 
 # ---- removal never improves an answer ---------------------------------------------------------------------------------------
@@ -100,7 +117,7 @@ def _proposals(name: str, w: ScientificWorld):
 
 
 def _reductions(w: ScientificWorld):
-    """World-side information removals: every one must leave a non-FEASIBLE decision non-FEASIBLE."""
+    """Removals of information about the system: every one must leave a non-FEASIBLE decision non-FEASIBLE."""
     for v in w.variables:
         if v.value is not None:
             yield f"withdraw value {v.name}", lambda w=w, n=v.name: with_variable(
@@ -113,8 +130,8 @@ def _reductions(w: ScientificWorld):
         yield f"drop provider {p.provider_id}", lambda w=w, pid=p.provider_id: w.derive(
             reason="provider snapshot dropped", providers=tuple(x for x in w.providers if x.provider_id != pid))
     for dim, _ in w.budget.unbounded:
-        yield f"undeclare {dim}", lambda w=w, d=dim: w.derive(reason="declaration dropped", budget=dataclasses.replace(
-            w.budget, unbounded=tuple(x for x in w.budget.unbounded if x[0] != d)))
+        yield f"undeclare {dim}", lambda w=w, d=dim: w.derive(reason="declaration dropped", budget=restated_budget(
+            w.budget, f"undeclared-{d}", unbounded=tuple(x for x in w.budget.unbounded if x[0] != d)))
     for a in w.actions:
         for dim, _ in a.estimated_cost:
             yield f"drop cost {a.action_id}.{dim}", lambda w=w, a=a, d=dim: with_action(
@@ -145,12 +162,42 @@ def test_removing_information_never_turns_a_refusal_into_feasible(name):
     assert stated, f"{name}: no reduction could be stated, so nothing was exercised"
 
 
+def _hvac_with_guarded_room_constraint():
+    """T_room declared [10, 40] degC and read only by a constraint in force when hvac_mode is heat."""
+    hvac = fx.hvac_world("chamber")
+    hvac = with_variable(hvac, "T_room", "a declared range", domain=fx.crange("T_room", "degC", 10, 40, IR.OBSERVABLE))
+    room = fx.DeclaredConstraint("heat_room_cap", fx.at_most("heat_room_cap", "T_room", q(30, "degC")),
+                                 fx.when("hvac_mode", "heat"), ("mode_change",), fx.P, "synthetic: heating stops at 30")
+    return hvac.derive(reason="a guarded room limit", constraints=hvac.constraints + (room,))
+
+
+def test_a_value_read_only_by_a_constraint_not_in_force_is_not_used():
+    hvac = _hvac_with_guarded_room_constraint()
+    cool = {"hvac_mode": cat("cool"), "speed": q(3000, "rpm")}
+    heat = {"hvac_mode": cat("heat"), "speed": q(3500, "rpm")}
+    blurred = rebound(hvac, "T_room", "uncertainty lost", uncertainty=Uncertainty.unknown("lost"))
+    withdrawn = with_variable(hvac, "T_room", "withdrawn", value=None, origin=None, source=None,
+                              uncertainty=Uncertainty.unknown("withdrawn"))
+    for w in (hvac, blurred, withdrawn):
+        assert check(w, "mode_change", cool).feasible                   # the constraint is not in force
+    assert check(hvac, "mode_change", heat).feasible
+    assert check(blurred, "mode_change", heat).status is F.MISSING_INFORMATION
+    assert "CONSTRAINT_UNRESOLVED" in codes(check(withdrawn, "mode_change", heat))
+    hot = rebound(hvac, "T_room", "too hot", value=q(45, "degC"), uncertainty=fx.interval(45, 0.2, "degC"))
+    d = check(hot, "mode_change", heat)                     # outside its range, and above the 30 degC limit
+    assert d.status is F.INFEASIBLE_PROTOCOL and {"STATE_OUTSIDE_DECLARED_DOMAIN", "CONSTRAINT_VIOLATED"} <= codes(d)
+    gone = with_variable(hot, "T_room", "withdrawn", value=None, origin=None, source=None,
+                         uncertainty=Uncertainty.unknown("withdrawn"))
+    assert check(gone, "mode_change", heat).status is F.MISSING_INFORMATION   # withdrawing never helps
+
+
 # ---- applicability gates model execution only ---------------------------------------------------------------------------------
 def test_s9_outside_the_route_models_domain_is_infeasible_applicability_with_the_core_status(battery):
     d = check(battery, "simulate_pulse", {"I": q(2, "A"), "T_amb": q(80, "degC"), "t_pulse": q(60, "s")})
     assert d.status is F.INFEASIBLE_APPLICABILITY
     r = next(r for r in d.reasons if r.code == "OUTSIDE_VALIDATED_DOMAIN")
     assert r.detail["validity_status"] == "outside_validated_domain" and list(r.detail["violated"]) == ["T_amb"]
+    assert d.annotations[0]["core_status"] == "outside_validated_domain" and d.annotations[0]["interval_rule"] is None
     payload = d.to_dict()
     assert payload["classification"] == "action_feasibility_not_scientific_support"
     assert not {"hypothesis", "claim", "verdict", "supported", "refused"} & set(payload)
@@ -183,7 +230,9 @@ def test_unknown_and_undecided_applicability_are_missing_information():
     straddle = rebound(drone, "wind", "gusty", value=q(11.8, "m/s"), uncertainty=fx.interval(11.8, 0.5, "m/s"))
     assert "APPLICABILITY_UNDECIDED" in codes(check(straddle, "simulate_flight", {"thrust_cmd": q(12, "N")}))
     windy = rebound(drone, "wind", "storm", value=q(15, "m/s"), uncertainty=fx.interval(15, 0.5, "m/s"))
-    assert check(windy, "simulate_flight", {"thrust_cmd": q(12, "N")}).status is F.INFEASIBLE_APPLICABILITY
+    d = check(windy, "simulate_flight", {"thrust_cmd": q(12, "N")})
+    assert d.status is F.INFEASIBLE_APPLICABILITY and codes(d) == {"INTERVAL_OUTSIDE_VALIDATED_DOMAIN"}
+    assert d.annotations[0]["interval_rule"] == "outside_whole_interval" and d.annotations[0]["core_status"] is None
 
 
 def test_applicability_holds_at_both_edges_of_an_interval():
@@ -197,15 +246,40 @@ def test_applicability_holds_at_both_edges_of_an_interval():
     assert check(calm, "simulate_flight", {"thrust_cmd": q(12, "N")}).feasible
 
 
-# ---- budget: undeclared is never unlimited, missing cost is never zero ----------------------------------------------------------
+def _route(*conditions, inputs=("wind",), units=("m/s",)) -> ApplicabilityBinding:
+    return ApplicabilityBinding(ScientificModelDefinition(
+        "synthetic.6dof", "0.9",
+        inputs=tuple(ModelInputSpec(n, InputSourceKind.VARIABLE, unit_exemplar=u) for n, u in zip(inputs, units)),
+        exclusions=(), excludes_nothing_because="a synthetic contract fixture model excludes nothing it declares",
+        validity=ValidityDomain(tuple(conditions))))
+
+
+def test_a_screen_or_a_prerequisite_is_never_turned_into_a_definite_outside():
+    """Outside a conservative screen is an evidence gap (the core says UNKNOWN), and a condition with prerequisites is
+    the core's to combine: the world's interval rule never applies to either."""
+    drone = fx.drone_world()
+    windy = lambda w: rebound(w, "wind", "storm", value=q(15, "m/s"), uncertainty=fx.interval(15, 0.5, "m/s"))
+    screened = windy(drone.derive(reason="a screen", applicability=(
+        _route(RangeCondition("wind", minimum=q(0, "m/s"), maximum=q(12, "m/s"), conservative_screen=True)),)))
+    d = check(screened, "simulate_flight", {"thrust_cmd": q(12, "N")})
+    assert d.status is F.MISSING_INFORMATION and "APPLICABILITY_UNKNOWN" in codes(d)
+    dependent = windy(drone.derive(reason="a prerequisite", applicability=(_route(
+        RangeCondition("wind", minimum=q(0, "m/s"), maximum=q(12, "m/s"), requires=("altitude",)),
+        RangeCondition("altitude", minimum=q(0, "m"), maximum=q(100, "m")),
+        inputs=("wind", "altitude"), units=("m/s", "m")),)))
+    d = check(dependent, "simulate_flight", {"thrust_cmd": q(12, "N")})
+    assert d.status is F.MISSING_INFORMATION and "INTERVAL_OUTSIDE_VALIDATED_DOMAIN" not in codes(d)
+
+
+# ---- budget: undeclared is never unlimited, missing cost is never zero, raw amounts, owner statements -------------------------
 def test_undeclared_budget_dimension_and_cost_are_missing_information(battery):
     b = battery.budget
-    w = battery.derive(reason="cost declaration dropped",
-                       budget=dataclasses.replace(b, unbounded=tuple(x for x in b.unbounded if x[0] != "cost")))
-    d = check(w, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")})
+    w = battery.derive(reason="cost declaration dropped", budget=restated_budget(
+        b, "battery/no-cost", unbounded=tuple(x for x in b.unbounded if x[0] != "cost")))
+    d = check(w, "pulse", PULSE_OK)
     assert d.status is F.MISSING_INFORMATION and "BUDGET_DIMENSION_UNDECLARED" in codes(d)
     nocost = with_action(battery, "pulse", "cost dropped", estimated_cost=())
-    assert "COST_NOT_DECLARED" in codes(check(nocost, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")}))
+    assert "COST_NOT_DECLARED" in codes(check(nocost, "pulse", PULSE_OK))
 
 
 def test_wall_time_budget_is_checked_against_the_declared_duration():
@@ -216,6 +290,21 @@ def test_wall_time_budget_is_checked_against_the_declared_duration():
     assert reason.subject == "wall_time" and reason.detail["remaining"] == 6 * 3600.0
 
 
+def test_budgets_are_decided_by_the_owners_rules_on_raw_amounts(battery):
+    hvac = fx.hvac_world("chamber")                          # 6 h of wall time remain
+    exact = with_action(hvac, "mode_change", "exactly what remains", estimated_duration=q(21600, "s"))
+    over = with_action(hvac, "mode_change", "a hair more", estimated_duration=q(21600.0000000004, "s"))
+    heat = {"hvac_mode": cat("heat"), "speed": q(3500, "rpm")}
+    assert check(exact, "mode_change", heat).feasible
+    assert "OVER_BUDGET" in codes(check(over, "mode_change", heat))
+    priced = battery.derive(reason="a cost budget", budget=restated_budget(
+        battery.budget, "battery/priced", cost=BudgetPlan(100.0), cost_spent=(0.0, 0.0), cost_unit="credit",
+        unbounded=tuple(x for x in battery.budget.unbounded if x[0] != "cost")))
+    for amount, ok in ((100.0, True), (100.0000000004, False)):
+        w = with_action(priced, "pulse", "priced", estimated_cost={**fx.cost(1, 0), "cost": q(amount, D)})
+        assert check(w, "pulse", PULSE_OK).feasible is ok
+
+
 def test_negative_untyped_or_unitful_costs_are_refused():
     for bad in ({"experiments": IntegerValue(-1)}, {"cost": q(-5, D)}, {"cost": q(5, "percent")},
                 {"solver_calls": q(2, "s")}):
@@ -223,7 +312,7 @@ def test_negative_untyped_or_unitful_costs_are_refused():
             fx.action("x", ActionFamily.EXPLORE, ActionMode.OBSERVE, expected_observables=("V",), estimated_cost=bad)
 
 
-def test_budget_counts_are_ints_and_a_cost_plan_restates_its_spend():
+def test_budget_statements_are_explicit_typed_and_cited():
     ref = fx.synthetic("ledger/x")
     for bad in (5.0, 2.7, True):
         with pytest.raises(WorldRefused, match="int"):
@@ -240,139 +329,93 @@ def test_budget_counts_are_ints_and_a_cost_plan_restates_its_spend():
     del payload["cost"]["spent_general"]
     with pytest.raises(WorldRefused, match="never zero"):
         WorldBudget.from_dict(payload)
+    solver = ResourceBudget(max_function_evaluations=10)
+    with pytest.raises(WorldRefused, match="restates its usage"):
+        WorldBudget(compute=solver, compute_used=ResourceUsage(function_evaluations=4), authority=ref)
+    assert WorldBudget(compute=solver, compute_used=ResourceUsage(function_evaluations=4), compute_spent=(0.0, 4),
+                       authority=ref).remaining("solver_calls") == 6
+    with pytest.raises(WorldRefused, match="cites the owner record"):
+        WorldBudget(unbounded={"cost": "no monetary budget"})                 # a declaration is the owner's too
 
 
-# ---- the gate ------------------------------------------------------------------------------------------------------------------------
-def gate(w: ScientificWorld, executor, **kw) -> ExecutionGate:
-    """A gate over a synthetic fixture world (explicitly allowed) reading live provider builds and the model registry."""
-    kw.setdefault("provider_status", lambda pid: fx.live_status(pid, w.provider(pid).version))
-    kw.setdefault("model_registry", fx.model_registry(w) if w.applicability else None)
-    return ExecutionGate(space(w), executor, allow_synthetic=True, **kw)
+def test_a_budget_statement_changes_only_with_its_owner_record(battery):
+    with pytest.raises(WorldRefused, match="owner's statement"):
+        battery.derive(reason="spent", budget=fx.budget(20, 4, solver=(10, 4), ledger="battery"))
+    child = battery.derive(reason="spent", budget=fx.budget(20, 4, solver=(10, 4), ledger="battery/2"))
+    assert child.budget.remaining("experiments") == 16
+    forged = dataclasses.replace(child, budget=fx.budget(20, 0, solver=(10, 4), ledger="battery/2"))
+    with pytest.raises(WorldRefused, match="owner's statement"):
+        verify_lineage(dataclasses.replace(forged, lineage=Lineage(2, child.revision_id, "edited", ("budget",))),
+                       {w.revision_id: w for w in (battery, child)})
 
 
+# ---- the admitted-action record -------------------------------------------------------------------------------------------------
 def _cleared(w: ScientificWorld, aid: str, assignments, observe=()):
     decision, cleared = space(w).clear(fx.propose(w, aid, assignments, observe))
-    assert decision.feasible and cleared is not None
+    assert decision.feasible and type(cleared) is ClearedAction
     return cleared
 
 
-def test_the_gate_dispatches_once_with_the_configuration_it_derives(battery):
-    w = fx.fresh(battery, "dispatch-once")
-    calls = []
-    g = gate(w, calls.append)
-    cleared = _cleared(w, "pulse", {"I": q(1000, "mA"), "t_pulse": q(60, "s"), "T_amb": q(77, "degF")}, ("V",))
-    g.dispatch(cleared)
-    assert len(calls) == 1 and type(calls[0]) is ClearedAction and calls[0] is not cleared
-    config = dict(calls[0].configuration)
-    assert config["T_amb"] == q(25, "degC") and config["I"] == q(1.0, "A")    # the declared value and declared level
-    with pytest.raises(GateRefused, match="DUPLICATE_DISPATCH"):
-        g.dispatch(cleared)
-    with pytest.raises(GateRefused, match="DUPLICATE_DISPATCH"):
-        gate(w, calls.append).dispatch(cleared)                              # one ledger per world revision
-    assert len(calls) == 1
+def test_clearing_yields_a_closed_record_of_the_canonical_proposal(battery):
+    cleared = _cleared(battery, "pulse", {"I": q(1000, "mA"), "t_pulse": q(60, "s"), "T_amb": q(77, "degF")}, ("V",))
+    config = dict(cleared.configuration)
+    assert config["I"] == q(1.0, "A") and config["T_amb"] == q(25, "degC")     # declared level, declared value
+    assert cleared.decision.proposal_digest == cleared.proposal.digest and cleared.world_revision == battery.revision_id
+    context = {c["variable"]: c for c in cleared.context}
+    assert context["SOC"]["source"]["ref"] == "synthetic:coulomb-count/run-0" and "mode" in config
+    assert cleared.to_dict()["classification"] == "action_feasibility_not_scientific_support"
+    d, none = space(battery).clear(fx.propose(battery, "pulse", {"I": q(1.15, "A"), "t_pulse": q(60, "s")}))
+    assert none is None and not d.feasible
+    with pytest.raises(WorldRefused, match="clears"):
+        ClearedAction.of(space(battery), cleared.proposal, d)
 
 
-def test_the_executor_never_receives_the_callers_objects(battery):
-    w = fx.fresh(battery, "callers-objects")
-    calls = []
-    g = gate(w, calls.append)
-    cleared = _cleared(w, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")}, ("V",))
+def test_a_record_is_never_built_from_a_view_the_check_did_not_see(battery):
+    class Loud(ProposedAction):
+        pass
+
+    honest = fx.propose(battery, "pulse", PULSE_OK)
+    loud = object.__new__(Loud)
+    for f in dataclasses.fields(ProposedAction):
+        object.__setattr__(loud, f.name, getattr(honest, f.name))
+    with pytest.raises(WorldRefused, match="exact ProposedAction"):
+        space(battery).clear(loud)
 
     class Shifty(tuple):
-        """Serializes as the cleared configuration once, then yields another current."""
+        """Reads as the honest assignments once, then as an off-protocol current."""
         reads = 0
 
         def __iter__(self):
             Shifty.reads += 1
-            return super().__iter__() if Shifty.reads == 1 else iter((("I", q(5, "A")),))
+            return super().__iter__() if Shifty.reads == 1 else iter((("I", q(5, "A")), ("t_pulse", q(9999, "s"))))
 
-    g.dispatch(dataclasses.replace(cleared, configuration=Shifty(cleared.configuration)))
-    assert type(calls[0].configuration) is tuple and dict(calls[0].configuration)["I"] == q(1.0, "A")
-
-    class Lenient(ClearedAction):
-        pass
-
-    sub = Lenient(*(getattr(cleared, f.name) for f in dataclasses.fields(ClearedAction)))
-    with pytest.raises(GateRefused, match="NOT_CLEARED"):
-        g.dispatch(sub)
-
-    class Loud(ProposedAction):
-        pass
-
-    loud = object.__new__(Loud)
-    for f in dataclasses.fields(ProposedAction):
-        object.__setattr__(loud, f.name, getattr(cleared.proposal, f.name))
-    with pytest.raises(GateRefused, match="NOT_CLEARED"):
-        g.dispatch(dataclasses.replace(cleared, proposal=loud))    # refused before the ledger is read
-    assert len(calls) == 1
+    shifty = fx.propose(battery, "pulse", PULSE_OK)
+    object.__setattr__(shifty, "assignments", Shifty(shifty.assignments))
+    decision, cleared = space(battery).clear(shifty)
+    assert decision.feasible and dict(cleared.configuration)["t_pulse"] == q(60, "s")
+    assert cleared.proposal.digest == decision.proposal_digest
 
 
-def test_the_gate_reserves_budget_across_gates_on_one_revision():
-    w = fx.fresh(fx.gen1_pool_world().derive(reason="23 of 24 experiments spent",
-                                             budget=fx.budget(24, 23, ledger="gen1-pool")), "reserve")
-    a = _cleared(w, "pool_query", {"I_A": q(1.0, "A"), "t_on_s": q(30, "s")})
-    b = _cleared(w, "pool_query", {"I_A": q(2.0, "A"), "t_on_s": q(30, "s")})
-    assert gate(w, lambda c: "ran").dispatch(a) == "ran"
-    with pytest.raises(GateRefused, match="OVER_BUDGET_RESERVED"):
-        gate(w, lambda c: "ran").dispatch(b)                                 # a second gate sees the reservation
-    assert gate(w, lambda c: "ran").reserved() == {"experiments": 1.0}
+def test_two_worlds_that_differ_in_a_model_input_give_different_records():
+    """The drone's model reads the measured wind, which no control sets: the record carries it, bound to its record."""
+    calm = fx.drone_world()
+    breezy = rebound(calm, "wind", "breezier", value=q(6, "m/s"), uncertainty=fx.interval(6, 0.5, "m/s"))
+    a = _cleared(calm, "simulate_flight", {"thrust_cmd": q(12, "N")}, ("altitude",))
+    b = _cleared(breezy, "simulate_flight", {"thrust_cmd": q(12, "N")}, ("altitude",))
+    assert a.configuration == b.configuration and a.digest != b.digest
+    wind = {c["variable"]: c for c in b.context}["wind"]
+    assert wind["value"]["magnitude"] == 6.0 and wind["source"]["ref"].startswith("synthetic:rebound/wind")
 
 
-def test_the_gate_reads_the_live_provider_build(battery):
-    w = fx.fresh(battery, "provider")
-    cleared = _cleared(w, "simulate_pulse", *fx.base("battery")["simulate_pulse"])
-    with pytest.raises(GateRefused, match="PROVIDER_STATUS_UNAVAILABLE"):
-        gate(w, lambda c: None, provider_status=None).dispatch(cleared)
-    for live in (fx.live_status("sim.ecm", "1.1"), fx.live_status("sim.ecm", "1.0", available=False),
-                 dataclasses.replace(fx.live_status("sim.ecm", "1.0"), digest="0" * 64)):
-        with pytest.raises(GateRefused, match="PROVIDER_BUILD_MISMATCH"):
-            gate(w, lambda c: None, provider_status=lambda pid, live=live: live).dispatch(cleared)
-    assert gate(w, lambda c: "ran").dispatch(cleared) == "ran"              # refusals reserved nothing
-
-
-def test_a_forged_clearance_is_refused(battery):
-    w = fx.fresh(battery, "forged")
-    bad = fx.propose(w, "pulse", {"I": q(1.15, "A"), "t_pulse": q(60, "s")})
-    good = _cleared(w, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")})
-    g = gate(w, lambda c: None)
-    with pytest.raises(GateRefused, match="NOT_REPRODUCED"):
-        g.dispatch(dataclasses.replace(good, proposal=bad))
-    tampered = dataclasses.replace(good, configuration=good.configuration + (("SOC", q(0.5, D)),))
-    with pytest.raises(GateRefused, match="CONFIGURATION_TAMPERED"):
-        g.dispatch(tampered)
-    with pytest.raises(GateRefused, match="NOT_CLEARED"):
-        g.dispatch(good.proposal)  # type: ignore[arg-type]
-    other = w.derive(reason="spent", budget=fx.budget(20, 4, solver=(10, 4), ledger="battery"))
-    with pytest.raises(GateRefused, match="OTHER_SPACE"):
-        gate(other, lambda c: None).dispatch(good)
-
-
-def test_the_gate_holds_its_own_world_and_detects_tampering(battery):
-    w = fx.fresh(battery, "detached")
-    cleared = _cleared(w, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")})
-    g = gate(w, lambda c: "ran")
-    port = MindWorldPort(space(w))
-    object.__setattr__(w, "basis", "edited by the caller after the gate was built")
-    object.__setattr__(port.world, "basis", "edited through the Mind's port")
-    assert g.dispatch(cleared) == "ran"                                      # neither edit reaches the gate's copy
-    w2 = fx.fresh(battery, "tampered")
-    cleared2 = _cleared(w2, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")})
-    g2 = gate(w2, lambda c: "ran")
-    object.__setattr__(g2._world, "basis", "edited inside the gate")
-    with pytest.raises(GateRefused, match="WORLD_TAMPERED"):
-        g2.dispatch(cleared2)
-
-
-def test_the_gate_refuses_synthetic_worlds_and_unverified_models(battery):
-    w = fx.fresh(battery, "refusals")
-    with pytest.raises(GateRefused, match="SYNTHETIC_WORLD"):
-        ExecutionGate(space(w), lambda c: None, model_registry=fx.model_registry(w))
-    with pytest.raises(GateRefused, match="MODELS_UNVERIFIED"):
-        gate(w, lambda c: None, model_registry=None)
-    with pytest.raises(WorldRefused, match="registered"):
-        gate(w, lambda c: None, model_registry=fx.model_registry(fx.hvac_world()))
-    with pytest.raises(WorldRefused, match="synthetic fixture"):
-        w.verify_bindings({})
+def test_nothing_in_the_world_package_dispatches_or_holds_an_executor():
+    assert not (pathlib.Path(world_pkg.__file__).parent / "gate.py").exists()
+    for path in pathlib.Path(world_pkg.__file__).parent.glob("*.py"):
+        tree = ast.parse(path.read_bytes().decode("utf-8"))
+        identifiers = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)} | {
+            n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)} | {
+            n.name for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.ClassDef))} | {
+            a.arg for n in ast.walk(tree) if isinstance(n, ast.arguments) for a in n.args + n.kwonlyargs}
+        assert not {i for i in identifiers if "dispatch" in i.lower() or "executor" in i.lower()}, path.name
 
 
 # ---- owner records: a recorded (non-synthetic) world ------------------------------------------------------------------------------
@@ -383,7 +426,12 @@ def _state(soc: float) -> SystemState:
                                environment_digest="")
 
 
-def _measurement(volts: float):
+def _next_state(state: SystemState, soc: float) -> SystemState:
+    return state.advance(time=q(60, "s"), produced_by="step", updates=(OwnerState("cell", "component", (
+        InitialStateValue("SOC", q(soc, D), fx.interval(soc, 0.02, D)),)),))
+
+
+def _measurement(volts: float, quantity: str = "V"):
     from engcore.scientific.measurements.calibration import CalibrationCertificate
     from engcore.scientific.measurements.context import ExperimentContext
     from engcore.scientific.measurements.instrument import InstrumentIdentity
@@ -402,11 +450,11 @@ def _measurement(volts: float):
         TraceabilityReference("cert-1", TraceabilityKind.CERTIFICATE, "synthetic lab", _hex("certificate")),
         TraceabilityReference("std-1", TraceabilityKind.REFERENCE_STANDARD, "synthetic lab", _hex("standard"))),
         (("cert-1", "std-1"),))
-    calibration = CalibrationCertificate("cal-1", meter, "synthetic lab", _hex("calibration"), "V", q(1, "V"),
+    calibration = CalibrationCertificate("cal-1", meter, "synthetic lab", _hex("calibration"), quantity, q(1, "V"),
                                          u(1, 0.001), "2026-01-01T00:00:00+00:00", "2027-01-01T00:00:00+00:00", chain)
     context = ExperimentContext("ctx-1", _hex("protocol"), _hex("specimen"), {})
-    return CalibratedMeasurementObservation("obs-1", "V", q(volts, "V"), u(volts, 0.01), meter, calibration, context,
-                                            _hex("raw"), "2026-06-01T00:00:00+00:00", "group-1")
+    return CalibratedMeasurementObservation("obs-1", quantity, q(volts, "V"), u(volts, 0.01), meter, calibration,
+                                            context, _hex("raw"), "2026-06-01T00:00:00+00:00", "group-1")
 
 
 def _recorded_world(soc_fields, v_fields, token: str = "recorded") -> ScientificWorld:
@@ -430,41 +478,81 @@ def _recorded_world(soc_fields, v_fields, token: str = "recorded") -> Scientific
         references=(RecordRef(RecordKind.PROBLEM_SPECIFICATION, _hex("specification")),))
 
 
-def test_a_recorded_world_executes_only_when_its_bound_values_match_their_owner_records():
+def test_bound_values_verify_against_exactly_typed_owner_records():
     state, obs = _state(0.8), _measurement(3.7)
     soc_fields = binders.from_system_state(state, "SOC", origin=ValueOrigin.ESTIMATED)
-    w = _recorded_world(soc_fields, binders.from_measurement(obs))
+    w = _recorded_world(soc_fields, binders.from_measurement(obs, "V"))
     records = {state.digest: state, obs.digest: obs}
     assert not w.synthetic and set(w.verify_bindings(records)) == {"SOC", "V"}
     with pytest.raises(WorldRefused, match="not supplied"):
-        ExecutionGate(space(w), lambda c: None, records={state.digest: state})
+        w.verify_bindings({state.digest: state})
     with pytest.raises(WorldRefused, match="own digest"):
-        ExecutionGate(space(w), lambda c: None, records={state.digest: _state(0.7), obs.digest: obs})
-    edited = _recorded_world({**soc_fields, "uncertainty": fx.interval(0.8, 0.05, D)}, binders.from_measurement(obs),
-                             "edited")
+        w.verify_bindings({state.digest: _state(0.7), obs.digest: obs})
+    lookalike = types.SimpleNamespace(digest=state.digest, owners=state.owners, previous_digest="")
+    with pytest.raises(WorldRefused, match="reads exactly a SystemState"):
+        w.verify_bindings({state.digest: lookalike, obs.digest: obs})
+    edited = _recorded_world({**soc_fields, "uncertainty": fx.interval(0.8, 0.05, D)},
+                             binders.from_measurement(obs, "V"), "edited")
     with pytest.raises(WorldRefused, match="differs from what its owner record states"):
-        ExecutionGate(space(edited), lambda c: None, records=records)
-    calls = []
-    ExecutionGate(space(w), calls.append, records=records).dispatch(_cleared(w, "pulse", {"I": q(1.0, "A")}, ("V",)))
-    assert len(calls) == 1
+        edited.verify_bindings(records)
+    with pytest.raises(WorldRefused, match="synthetic fixture"):
+        fx.battery_world().verify_bindings({})
 
 
-def test_a_bound_value_changes_only_with_its_owner_record():
+def test_a_superseded_state_or_another_quantity_never_verifies():
     state, obs = _state(0.8), _measurement(3.7)
     w = _recorded_world(binders.from_system_state(state, "SOC", origin=ValueOrigin.ESTIMATED),
-                        binders.from_measurement(obs))
+                        binders.from_measurement(obs, "V"))
+    later = _next_state(state, 0.05)
+    with pytest.raises(WorldRefused, match="superseded"):
+        w.verify_bindings({state.digest: state, later.digest: later, obs.digest: obs})
+    humidity = _measurement(3.7, quantity="relative_humidity")
+    with pytest.raises(WorldRefused, match="measured 'relative_humidity'"):
+        binders.from_measurement(humidity, "V")
+    forged = _recorded_world(binders.from_system_state(state, "SOC", origin=ValueOrigin.ESTIMATED),
+                             {**binders.from_measurement(obs, "V"),
+                              "source": RecordRef(RecordKind.MEASUREMENT_OBSERVATION, humidity.digest)}, "forged")
+    with pytest.raises(WorldRefused, match="measured 'relative_humidity'"):
+        forged.verify_bindings({state.digest: state, humidity.digest: humidity})
+
+
+def test_a_bound_value_changes_only_with_its_owner_record_in_derive_and_in_lineage():
+    state, obs = _state(0.8), _measurement(3.7)
+    w = _recorded_world(binders.from_system_state(state, "SOC", origin=ValueOrigin.ESTIMATED),
+                        binders.from_measurement(obs, "V"))
     with pytest.raises(WorldRefused, match="owner record"):
         with_variable(w, "SOC", "hand edit", value=q(0.81, D))
-    later = _state(0.7)
+    later = _next_state(state, 0.7)
     moved = with_variable(w, "SOC", "the next committed state",
                           **binders.from_system_state(later, "SOC", origin=ValueOrigin.ESTIMATED))
     assert moved.variable("SOC").value == q(0.7, D)
     assert set(moved.verify_bindings({later.digest: later, obs.digest: obs})) == {"SOC", "V"}
+    declared_range = with_variable(w, "SOC", "a narrower declared range", domain=fx.crange("SOC", D, 0.05, 0.95, IR.STATE))
+    assert declared_range.lineage.changed_fields == ("variables",)               # a declaration may change
+    hand = dataclasses.replace(w, variables=tuple(dataclasses.replace(v, value=q(0.81, D)) if v.name == "SOC" else v
+                                                 for v in w.variables),
+                               lineage=Lineage(1, w.revision_id, "hand-built", ("variables",)))
+    with pytest.raises(WorldRefused, match="owner record"):
+        verify_lineage(hand, {w.revision_id: w})
     with pytest.raises(WorldRefused, match="cannot be"):
         fx.var("SOC", R.STATE_VARIABLE, D, TS.STATE_EVOLVING, driven_by=("I",),
                **fx.declared(q(0.5, D)))                    # a state's value is never declared
     with pytest.raises(WorldRefused, match="binder is not implemented"):
         binders.read_bound(RecordKind.BELIEF_SNAPSHOT, state, "SOC")
+
+
+def test_a_declared_value_is_exact_only_for_a_set_point(battery):
+    """A DECLARED latent value (not a set point) decides nothing a bound value with unknown uncertainty could not."""
+    chem = fx.var("chem", R.LATENT_PARAMETER, D, TS.TIME_INVARIANT, domain=fx.cats("chem", "lfp", "nmc"),
+                  **fx.declared(cat("lfp")))
+    w = battery.derive(reason="a declared chemistry", variables=battery.variables + (chem,))
+    pulse = w.action("pulse")
+    guarded = dataclasses.replace(pulse, controls=tuple(
+        dataclasses.replace(c, active_when=fx.Guard("chem", (cat("lfp"),))) if c.variable == "t_pulse" else c
+        for c in pulse.controls))
+    w = w.derive(reason="t_pulse only for one chemistry", actions=tuple(guarded if a is pulse else a for a in w.actions))
+    d = check(w, "pulse", PULSE_OK)
+    assert d.status is F.MISSING_INFORMATION and "GUARD_UNRESOLVED" in codes(d)
 
 
 # ---- the Mind port -------------------------------------------------------------------------------------------------------------------
@@ -479,16 +567,13 @@ def test_the_port_reaches_no_executor():
     assert not {i for i in identifiers if "gate" in i.lower() or "execut" in i.lower() or "dispatch" in i.lower()}
 
 
-def test_reading_and_proposing_through_the_port_never_executes(battery):
-    w = fx.fresh(battery, "port")
-    calls = []
-    sp = space(w)
-    gate(w, calls.append)                                   # an executor exists, held by its owner only
+def test_the_port_holds_a_detached_copy(battery):
+    sp = space(battery)
     port = MindWorldPort(sp)
-    assert port.world is not w and port.world.revision_id == w.revision_id
+    assert port.world is not battery and port.world.revision_id == battery.revision_id
     assert port.action_space is not sp and port.action_space.space_id == sp.space_id
-    d = port.propose(fx.propose(w, "pulse", {"I": q(1.15, "A"), "t_pulse": q(60, "s")}))
-    assert d.status is F.INFEASIBLE_PROTOCOL and calls == [] and len(port.journal) == 1
+    d = port.propose(fx.propose(battery, "pulse", {"I": q(1.15, "A"), "t_pulse": q(60, "s")}))
+    assert d.status is F.INFEASIBLE_PROTOCOL and len(port.journal) == 1
     assert set(MindWorldPort.__slots__) == {"_space", "_journal"}
 
 
@@ -509,11 +594,35 @@ def test_a_language_model_proposal_enters_only_as_a_suggestion_and_meets_the_sam
     assert isinstance(d, FeasibilityDecision) and d.status is F.INFEASIBLE_PROTOCOL
     with pytest.raises(WorldRefused, match="ExternalSuggestion"):
         ProposedAction("pulse", battery.revision_id, {"I": q(1.0, "A")}, (),
-                       ProposalProvenance(ProposerKind.LANGUAGE_MODEL, "llm"))
-    claimed = ProposedAction("pulse", battery.revision_id, {"I": q(1.0, "A"), "t_pulse": q(60, "s")}, (),
-                             ProposalProvenance(ProposerKind.LANGUAGE_MODEL, "llm", proposal_digest=_hex("claimed")))
+                       ProposalProvenance(ProposerKind.LANGUAGE_MODEL, "llm", proposal_digest=_hex("claimed")))
+
+
+def test_the_check_rederives_a_sourced_proposal_from_its_suggestion(battery):
+    """Provenance, revision and family are verified by the check itself, so no route around the port helps."""
+    sug = _suggestion(battery, {"assignments": _assign(I=q(1.15, "A"), t_pulse=q(60, "s"))})
+    honest = proposed_action_from_suggestion(sug, world=battery)
+    assert isinstance(honest, ProposedAction) and honest.source == sug
+    assert ProposedAction.from_dict(honest.to_dict()) == honest
+    swapped = dataclasses.replace(honest, assignments=(("I", q(1.0, "A")), ("t_pulse", q(60, "s"))))
+    with pytest.raises(ProposalRefused, match="not what its source suggestion yields"):
+        space(battery).check(swapped)
+    with pytest.raises(ProposalRefused):
+        space(battery).clear(swapped)
     with pytest.raises(WorldRefused, match="propose_suggestion"):
-        port.propose(claimed)                               # the port binds an LLM's provenance itself
+        MindWorldPort(space(battery)).propose(swapped)
+    explore = _suggestion(battery, {"assignments": _assign(I=q(1.0, "A"), t_pulse=q(60, "s"))},
+                          family=ActionFamily.EXPLORE)
+    mislabelled = ProposedAction("pulse", battery.revision_id, {"I": q(1.0, "A"), "t_pulse": q(60, "s")}, (),
+                                 ProposalProvenance(ProposerKind.LANGUAGE_MODEL, "llm@1", proposal_digest=explore.digest),
+                                 "because", explore)
+    with pytest.raises(ProposalRefused, match="FAMILY_MISMATCH"):
+        space(battery).check(mislabelled)
+    with pytest.raises(WorldRefused, match="provenance"):
+        dataclasses.replace(honest, proposer=ProposalProvenance(ProposerKind.HUMAN, "llm@1",
+                                                                proposal_digest=sug.digest))
+    p = honest
+    d = space(battery).check(p).to_dict()
+    assert replay_decision(d, battery.to_dict(), p.to_dict()).outcome is ReplayOutcome.REPRODUCED
 
 
 def test_a_categorical_suggestion_is_accepted_and_checked(battery):
@@ -531,8 +640,11 @@ def test_a_categorical_suggestion_is_accepted_and_checked(battery):
      IntakeCode.MALFORMED),                                 # a proposer cannot attach a vocabulary (a domain claim)
     ({"assignments": _assign(I=q(1.0, "A"))}, {}, IntakeCode.MALFORMED),
     ({"assignments": _assign(I=q(1.0, "A"))}, {"world_revision": "0" * 64}, IntakeCode.STALE_REVISION),
+    ({"assignments": _assign(I=q(1.0, "A"))}, {"world_revision": "WORLD", "approved": True}, IntakeCode.UNKNOWN_KEY),
 ])
 def test_intake_refusals_are_structured(battery, point, extra, code):
+    if extra is not None and extra.get("world_revision") == "WORLD":
+        extra = {**extra, "world_revision": battery.revision_id}
     port = MindWorldPort(space(battery))
     result = port.propose_suggestion(_suggestion(battery, point, extra=extra))
     assert isinstance(result, IntakeRefusal) and result.code is code
@@ -548,16 +660,15 @@ def test_a_suggestion_labelled_with_another_family_is_refused(battery):
 
 
 def test_a_suggestion_is_bound_to_the_ports_own_revision_and_a_stale_proposal_is_refused(battery):
-    child = battery.derive(reason="spent", budget=fx.budget(20, 4, solver=(10, 4), ledger="battery"))
+    child = battery.derive(reason="spent", budget=fx.budget(20, 4, solver=(10, 4), ledger="battery/2"))
     port = MindWorldPort(space(child))
     point = {"assignments": _assign(I=q(1.0, "A"), t_pulse=q(60, "s"))}
     result = port.propose_suggestion(_suggestion(child, point))
     assert isinstance(result, FeasibilityDecision) and result.world_revision == child.revision_id
     stale = port.propose_suggestion(_suggestion(battery, point))
     assert isinstance(stale, IntakeRefusal) and stale.code is IntakeCode.STALE_REVISION
-    from engcore.mind.world import StaleProposal
     with pytest.raises(StaleProposal):
-        port.propose(fx.propose(battery, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")}))
+        port.propose(fx.propose(battery, "pulse", PULSE_OK))
 
 
 def test_forbidden_keys_cover_the_certified_and_gen1_lists():
@@ -578,7 +689,21 @@ def test_a_variable_named_like_a_forbidden_key_still_works_through_intake():
     assert isinstance(d, FeasibilityDecision) and d.feasible
 
 
-# ---- replay and identity --------------------------------------------------------------------------------------------------------------
+# ---- closed vocabulary, replay and identity -------------------------------------------------------------------------------------
+def test_reason_codes_and_annotation_keys_are_closed(battery):
+    with pytest.raises(WorldRefused, match="closed"):
+        FeasibilityReason(F.INFEASIBLE_DOMAIN, "REFUTED", CheckFamily.DOMAIN, "I", "hypothesis refuted")
+    d = check(battery, "pulse", PULSE_OK).to_dict()
+    with pytest.raises(WorldRefused, match="closed set"):
+        FeasibilityDecision.from_dict({**d, "annotations": d["annotations"] + [{"verdict": "SUPPORTED"}]})
+    words = {"verdict", "supported", "refused", "admission", "admitted", "truth", "hypothesis", "outcome"}
+    for name in fx.WORLDS:
+        w = fx.WORLDS[name]()
+        for aid, (a, o) in fx.base(name).items():
+            for item in check(w, aid, a, o).to_dict()["annotations"]:
+                assert not words & set(item), (name, aid, item)
+
+
 def test_replay_verifies_its_inputs_before_recomputing(battery):
     p = fx.propose(battery, "pulse", {"I": q(1.15, "A"), "t_pulse": q(60, "s")})
     d = space(battery).check(p).to_dict()
@@ -604,7 +729,8 @@ def test_every_fixture_world_round_trips_byte_identically(name):
         assert FeasibilityDecision.from_dict(d.to_dict()).to_dict() == d.to_dict()
 
 
-def test_labels_are_not_identity_and_unit_spellings_are_one_value(battery):
+def test_identity_is_the_raw_owner_payload(battery):
+    """Labels are not identity.  Anything a check or an execution can see is: a 13th-digit bound, a respelled level."""
     v = battery.variable("I")
     relabelled = dataclasses.replace(battery, variables=tuple(dataclasses.replace(x, label="renamed for humans")
                                                               if x is v else x for x in battery.variables),
@@ -612,28 +738,20 @@ def test_labels_are_not_identity_and_unit_spellings_are_one_value(battery):
     assert relabelled.content_digest == battery.content_digest
     with pytest.raises(WorldRefused, match="no material change"):
         battery.derive(reason="only a label", variables=relabelled.variables)
+    signed = battery.action("signed_pulse")
+    nudged = dataclasses.replace(signed, controls=tuple(
+        dataclasses.replace(c, domain=fx.crange("I", "A", -5, 4.9999999999996)) if c.variable == "I" else c
+        for c in signed.controls))
+    near = battery.derive(reason="a 13th-digit bound", actions=tuple(nudged if a is signed else a for a in battery.actions))
+    assert near.revision_id != battery.revision_id
+    probe = {"mode": cat("charge"), "I": q(4.9999999999998, "A"), "t_pulse": q(30, "s")}
+    assert check(battery, "signed_pulse", probe).feasible and not check(near, "signed_pulse", probe).feasible
     pulse = battery.action("pulse")
     in_mA = dataclasses.replace(pulse, controls=tuple(
         dataclasses.replace(c, domain=fx.levels("mA", 1000, 2000)) if c.variable == "I" else c for c in pulse.controls))
-    assert in_mA.digest == pulse.digest                       # 1000 mA and 1 A are one level
-    with pytest.raises(WorldRefused, match="no material change"):
-        battery.derive(reason="levels respelled", actions=tuple(in_mA if a is pulse else a for a in battery.actions))
-    widened = dataclasses.replace(pulse, controls=tuple(
-        dataclasses.replace(c, domain=fx.levels("A", 1.0, 2.0, 4.0)) if c.variable == "I" else c for c in pulse.controls))
-    moved = battery.derive(reason="a third level", actions=tuple(widened if a is pulse else a for a in battery.actions))
-    assert moved.revision_id != battery.revision_id and moved.lineage.changed_fields == ("actions",)
-
-
-def test_lineage_verifies_as_a_chain_and_refuses_forgery(battery):
-    a = battery.derive(reason="spent one", budget=fx.budget(20, 4, solver=(10, 4), ledger="battery"))
-    b = a.derive(reason="provider down", providers=(fx.provider("sim.ecm", "1.0", available=False),))
-    store = {w.revision_id: w for w in (battery, a, b)}
-    assert verify_lineage(b, store) == (battery.revision_id, a.revision_id, b.revision_id)
-    forged = dataclasses.replace(b, lineage=dataclasses.replace(b.lineage, changed_fields=("budget",)))
-    with pytest.raises(WorldRefused, match="changed fields"):
-        verify_lineage(forged, store)
-    with pytest.raises(WorldRefused, match="parent"):
-        verify_lineage(b, {b.revision_id: b})
+    respelled = battery.derive(reason="levels respelled", actions=tuple(in_mA if a is pulse else a for a in battery.actions))
+    assert respelled.revision_id != battery.revision_id and respelled.lineage.changed_fields == ("actions",)
+    assert dict(_cleared(respelled, "pulse", PULSE_OK).configuration)["I"] == q(1000, "mA")   # the declared level
 
 
 def test_provider_snapshots_are_the_owner_records_and_bind_together():
@@ -650,6 +768,12 @@ def test_provider_snapshots_are_the_owner_records_and_bind_together():
             assert ProviderSnapshot.from_status(status, report).executable is (available and report.executable)
 
 
+def test_models_verify_against_the_registry(battery):
+    assert battery.verify_models(fx.model_registry(battery)) == (battery.applicability[0].binding_id,)
+    with pytest.raises(WorldRefused, match="registered"):
+        battery.verify_models(fx.model_registry(fx.hvac_world()))
+
+
 def test_the_status_by_source_table_is_exhaustive_over_declarable_sources():
     assert set(STATUS_BY_SOURCE) == set(RoleSource) - {RoleSource.LEGACY_ADAPTER_DEFAULT}
     with pytest.raises(WorldRefused, match="legacy"):
@@ -657,11 +781,11 @@ def test_the_status_by_source_table_is_exhaustive_over_declarable_sources():
 
 
 def test_a_decision_cannot_be_feasible_without_every_family_or_disagree_with_its_reasons(battery):
-    d = check(battery, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")})
+    d = check(battery, "pulse", PULSE_OK)
     assert d.feasible and {c.family for c in d.checked} == set(CheckFamily)
     with pytest.raises(WorldRefused, match="every check family"):
         dataclasses.replace(d, checked=d.checked[:-1])
-    reason = FeasibilityReason(F.MISSING_INFORMATION, "X", CheckFamily.STATE, "s", "m")
+    reason = FeasibilityReason(F.MISSING_INFORMATION, "PRECONDITION_UNRESOLVED", CheckFamily.STATE, "s", "m")
     with pytest.raises(WorldRefused, match="disagrees"):
         dataclasses.replace(d, reasons=(reason,))
     bad = check(battery, "pulse", {"I": q(1.15, "A")})
@@ -671,7 +795,7 @@ def test_a_decision_cannot_be_feasible_without_every_family_or_disagree_with_its
 
 
 def test_a_feasible_decision_names_the_bound_values_it_relied_on(battery):
-    d = check(battery, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")})
+    d = check(battery, "pulse", PULSE_OK)
     relied = [a for a in d.annotations if "relied_on_bound_values" in a]
     assert relied and "SOC" in {entry["variable"] for entry in relied[0]["relied_on_bound_values"]}
 
@@ -691,28 +815,47 @@ def test_offset_units_compare_in_their_ratio_base(battery):
     hvac = fx.hvac_world("chamber")
     assert check(hvac, "step_speed", {"speed": q(3000, "rpm"), "fan_stage": IntegerValue(3),
                                       "T_out": q(95, "degF")}).feasible        # 95 degF is the fixed 35 degC
-    # identity precision is 12 significant digits: a value equal to a level at that precision IS that level
+    # level matching is at 12 significant digits: a value equal to a level at that precision IS that level
     assert check(w, "pool_query", {"I_A": q(1.0000000000004, "A"), "t_on_s": q(30, "s")}).feasible
     assert not check(w, "pool_query", {"I_A": q(1.000000001, "A"), "t_on_s": q(30, "s")}).feasible
 
 
+def test_a_temperature_difference_is_never_a_temperature(battery):
+    restated = check(battery, "pulse", {**PULSE_OK, "T_amb": q(298.15, "delta_degC")})
+    assert restated.status is F.INFEASIBLE_PROTOCOL and "FIXED_CONDITION_CHANGED" in codes(restated)
+    d = check(battery, "simulate_pulse", {"I": q(2, "A"), "T_amb": q(298.15, "delta_degC"), "t_pulse": q(60, "s")})
+    assert d.status is F.INFEASIBLE_DOMAIN and "UNIT_INCOMPATIBLE" in codes(d)
+    with pytest.raises(WorldRefused, match="convert"):
+        DiscreteLevels("degC", (q(298.15, "delta_degC"),))
+    pulse = battery.action("pulse")
+    delta_fixed = dataclasses.replace(pulse, fixed_conditions=tuple(
+        fx.fixed("T_amb", q(298.15, "delta_degC")) if f.name == "T_amb" else f for f in pulse.fixed_conditions))
+    with pytest.raises(WorldRefused, match="convert"):
+        battery.derive(reason="a delta set point", actions=tuple(delta_fixed if a is pulse else a for a in battery.actions))
+
+
 def test_continuous_bounds_are_the_owners_exact_check(battery):
-    """Level identity rounds to 12 digits; a range bound does not: the owner's require_within_bounds decides."""
+    """Level matching rounds to 12 digits; a range bound does not: the owner's require_within_bounds decides."""
     assert check(battery, "signed_pulse", {"mode": cat("charge"), "I": q(5, "A"), "t_pulse": q(30, "s")}).feasible
     d = check(battery, "signed_pulse", {"mode": cat("charge"), "I": q(5.0000000000004, "A"), "t_pulse": q(30, "s")})
     assert "OUTSIDE_RANGE" in codes(d) and not d.feasible
 
 
-def test_an_integer_domain_in_a_dimensionless_unit_is_searchable():
+def test_an_integer_domain_is_stated_in_its_variables_own_unit():
     percent = ScientificVariable("duty", "percent", VariableKind.INTEGER, IR.CONTROL, q(0, "percent"),
                                  q(100, "percent"))
     assert domain_problem(percent, "duty", "percent") is None
+    assert "own unit" in domain_problem(percent, "duty", "dimensionless")
     assert membership(percent, IntegerValue(50)) is None and membership(percent, IntegerValue(101)) is not None
+    found = membership(percent, IntegerValue(10 ** 400))
+    assert found is not None and found[0] == "OUTSIDE_RANGE"                      # a structured refusal, no crash
 
 
 def test_integer_and_categorical_kinds_are_checked_by_kind():
     hvac = fx.hvac_world("chamber")
     assert "OUTSIDE_RANGE" in codes(check(hvac, "step_speed", {"speed": q(3000, "rpm"), "fan_stage": IntegerValue(6)}))
+    assert "OUTSIDE_RANGE" in codes(check(hvac, "step_speed", {"speed": q(3000, "rpm"),
+                                                               "fan_stage": IntegerValue(10 ** 400)}))
     assert "VALUE_KIND_MISMATCH" in codes(check(hvac, "step_speed", {"speed": q(3000, "rpm"),
                                                                      "fan_stage": q(2.5, D)}))
     d = check(hvac, "mode_change", {"hvac_mode": cat("defrost"), "speed": q(3000, "rpm")})
@@ -744,18 +887,29 @@ def test_constraint_scope_is_declared_and_names_resolve_exactly(battery):
 def test_preconditions_hold_at_the_edges_of_the_current_value(battery):
     point = rebound(battery, "SOC", "a point estimate", uncertainty=Uncertainty(
         kind="standard", standard_uncertainty=q(0.02, D), method="declared"))
-    assert "PRECONDITION_UNCERTAINTY_UNKNOWN" in codes(check(point, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")}))
+    assert "PRECONDITION_UNCERTAINTY_UNKNOWN" in codes(check(point, "pulse", PULSE_OK))
     straddle = rebound(battery, "SOC", "near the floor", value=q(0.11, D), uncertainty=fx.interval(0.11, 0.02, D))
-    assert "PRECONDITION_UNDECIDED" in codes(check(straddle, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")}))
+    assert "PRECONDITION_UNDECIDED" in codes(check(straddle, "pulse", PULSE_OK))
     low = rebound(battery, "SOC", "empty", value=q(0.05, D), uncertainty=fx.interval(0.05, 0.01, D))
-    assert check(low, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")}).status is F.INFEASIBLE_STATE
+    assert check(low, "pulse", PULSE_OK).status is F.INFEASIBLE_STATE
 
 
-def test_a_state_straddling_its_declared_domain_is_undecided(battery):
-    """SOC 0.999 +- 0.01 may already be outside its declared [0, 1]: undecided, never assumed inside."""
-    edge = rebound(battery, "SOC", "near full", value=q(0.999, D), uncertainty=fx.interval(0.999, 0.01, D))
-    d = check(edge, "pulse", {"I": q(1.0, "A"), "t_pulse": q(60, "s")})
+def test_interval_rules_are_sound_for_two_sided_sets(battery):
+    """An interval straddling both ends of a range, or both sides of an EQUAL band, is undecided, never outside."""
+    wide = rebound(battery, "SOC", "very uncertain", value=q(0.5, D), uncertainty=fx.interval(0.5, 0.6, D))
+    d = check(wide, "pulse", PULSE_OK)
     assert d.status is F.MISSING_INFORMATION and "STATE_DOMAIN_UNDECIDED" in codes(d)
+    edge = rebound(battery, "SOC", "near full", value=q(0.999, D), uncertainty=fx.interval(0.999, 0.01, D))
+    assert "STATE_DOMAIN_UNDECIDED" in codes(check(edge, "pulse", PULSE_OK))
+    over = rebound(battery, "SOC", "over full", value=q(1.05, D), uncertainty=fx.interval(1.05, 0.01, D))
+    assert "STATE_OUTSIDE_DECLARED_DOMAIN" in codes(check(over, "pulse", PULSE_OK))
+    band = ConstraintDefinition("soc_mid", "SOC", Op.EQUAL, q(0.5, D), tolerance=q(0.05, D))
+    banded = with_action(battery, "pulse", "a band precondition", preconditions=(band,))
+    for half, expected in ((0.01, F.FEASIBLE), (0.2, F.MISSING_INFORMATION)):
+        w = rebound(banded, "SOC", f"mid {half}", value=q(0.5, D), uncertainty=fx.interval(0.5, half, D))
+        assert check(w, "pulse", PULSE_OK).status is expected
+    above = rebound(banded, "SOC", "above the band", value=q(0.9, D), uncertainty=fx.interval(0.9, 0.01, D))
+    assert "PRECONDITION_VIOLATED" in codes(check(above, "pulse", PULSE_OK))
 
 
 def test_alternatives_are_declared_options_never_projections():

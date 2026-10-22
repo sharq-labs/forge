@@ -204,12 +204,14 @@ class WorldBudget:
     * experiments: a raw observation count, type-checked here and then held as an ``ExperimentBudget`` (which would
       silently coerce 2.7 to 2 or True to 1); attempt caps are not tracked in BR1; with the observations already spent;
     * solver_calls and wall_time: an execution ``ResourceBudget`` (``max_function_evaluations`` is the solver-call
-      limit, ``max_wall_seconds`` the wall-time limit) with its ``ResourceUsage``;
+      limit, ``max_wall_seconds`` the wall-time limit) with its ``ResourceUsage``, whose amounts are restated in
+      ``compute_spent`` (a usage record's fields default to 0, so an unstated usage would read as nothing used);
     * cost: a ``BudgetPlan`` (its validation-pool fence is called, never copied) in a stated cost unit, whose spent
       amounts are restated in ``cost_spent`` (a plan's spent fields default to 0.0, so an unstated spend would read as
       nothing spent).
 
-    The spent amounts are the owner records' statements (``authority``); the Mind never counts them."""
+    The spent amounts, and every LIMITED or UNBOUNDED declaration, are the owner's statement cited by ``authority``;
+    the Mind never counts them, and a revision changes them only by citing the owner's newer statement."""
 
     experiments: int | None = None
     observations_spent: int | None = None
@@ -220,6 +222,7 @@ class WorldBudget:
     cost_unit: str = ""
     unbounded: Any = ()
     authority: RecordRef | None = None
+    compute_spent: tuple[float, int] | None = None
 
     def __post_init__(self) -> None:
         if self.experiments is not None:
@@ -240,7 +243,14 @@ class WorldBudget:
                 _seconds(self.compute_used.wall_seconds, "wall_seconds used")
             if self.compute.max_function_evaluations is None and self.compute.max_wall_seconds is None:
                 raise WorldRefused("a compute budget limits solver calls or wall time")
-        elif self.compute_used is not None:
+            spent = self.compute_spent
+            if (not isinstance(spent, tuple) or len(spent) != 2 or type(spent[0]) not in (int, float)
+                    or type(spent[1]) is not int
+                    or (float(spent[0]), spent[1]) != (self.compute_used.wall_seconds,
+                                                       self.compute_used.function_evaluations)):
+                raise WorldRefused("a compute budget restates its usage (compute_spent = (wall_seconds, "
+                                   "function_evaluations)); an unstated usage would read as zero")
+        elif self.compute_used is not None or self.compute_spent is not None:
             raise WorldRefused("compute usage without a compute budget")
         if self.cost is not None:
             if not isinstance(self.cost, BudgetPlan):
@@ -263,8 +273,9 @@ class WorldBudget:
         both = set(self._limited()) & {d for d, _ in pairs}
         if both:
             raise WorldRefused(f"dimensions {sorted(both)} are both limited and unbounded")
-        if self._limited() and not isinstance(self.authority, RecordRef):
-            raise WorldRefused("a limited budget cites the record that states what was spent (authority RecordRef)")
+        if (self._limited() or pairs) and not isinstance(self.authority, RecordRef):
+            raise WorldRefused("a declared budget (limited or unbounded) cites the owner record that states it "
+                               "(authority RecordRef)")
 
     @property
     def experiment_budget(self) -> ExperimentBudget | None:
@@ -335,7 +346,8 @@ class WorldBudget:
                                                            function_evaluations=used["function_evaluations"]),
                    plan, None if plan is None else (cost["spent_general"], cost["spent_validation"]),
                    payload.get("cost_unit", ""), tuple((d, b) for d, b in payload.get("unbounded", ())),
-                   None if payload.get("authority") is None else RecordRef.from_dict(payload["authority"]))
+                   None if payload.get("authority") is None else RecordRef.from_dict(payload["authority"]),
+                   None if used is None else (used["wall_seconds"], used["function_evaluations"]))
 
 
 # ---- lineage --------------------------------------------------------------------------------------------------------------------
@@ -549,24 +561,22 @@ class ScientificWorld:
         if unknown:
             raise WorldRefused(f"a revision changes material fields only; not {sorted(unknown)}")
         text(reason, "a revision states its reason")
+        if digest(self._material()) != self._content:
+            raise WorldRefused("this world no longer matches its content digest; it is not derived from")
         candidate = dataclasses.replace(self, **changes)
         changed = candidate.changed_from(self)
         if not changed:
             raise WorldRefused("no material change: a revision must change what the world states")
-        before = {v.name: v for v in self.variables}
-        for v in candidate.variables:
-            old = before.get(v.name)
-            if (old is not None and v.source is not None and v.source == old.source
-                    and (digest(v.identity()) != digest(old.identity()))):
-                raise WorldRefused(f"{v.name!r}: a bound value changes only with its owner record (re-bind it to the "
-                                   "newer record); the world never edits an owner's value")
+        problem = restatement_problem(self, candidate)
+        if problem:
+            raise WorldRefused(problem)
         return dataclasses.replace(candidate, lineage=Lineage(self.lineage.revision + 1, self.revision_id, reason, changed))
 
     # ---- owner-record verification --------------------------------------------------------------------------------------
     @property
     def synthetic(self) -> bool:
-        """True when any reference is a synthetic contract fixture: such a world is never dispatched for execution
-        unless the execution owner explicitly allows it (tests and development benchmarks)."""
+        """True when any reference is a synthetic contract fixture: such a world is development evidence only, and
+        its synthetic bindings can never be verified (:meth:`verify_bindings` refuses them)."""
         refs = [v.source for v in self.variables if v.source is not None] + [c.reference for c in self.channels]
         refs += [e.reference for e in self.entities if e.reference is not None] + list(self.references)
         if self.budget.authority is not None:
@@ -579,9 +589,11 @@ class ScientificWorld:
     def verify_bindings(self, records: Mapping[str, Any]) -> tuple[str, ...]:
         """Check every bound value against its owner record (digest -> record), as the owner states it.
 
-        Returns the names verified.  Refuses a missing record, a record whose own digest differs from the reference,
-        a value or uncertainty that differs from the owner's, and a record kind BR1 cannot read.  A synthetic fixture
-        reference is never verifiable (it is not a record)."""
+        Returns the names verified.  Refuses a missing record, a record that is not exactly the owner's record type,
+        a record whose own digest differs from the reference, a committed state that another supplied state supersedes,
+        an observation of another quantity, a value or uncertainty that differs from the owner's, and a record kind BR1
+        cannot read.  A synthetic fixture reference is never verifiable (it is not a record).  Which state is current
+        is the state owner's statement: the caller supplies the owner's records, including any successor states."""
         from .binders import read_bound
 
         out = []
@@ -591,9 +603,9 @@ class ScientificWorld:
             record = records.get(ref.ref)
             if record is None:
                 raise WorldRefused(f"{name!r}: the owner record {ref.kind.value}:{ref.ref[:12]} was not supplied")
-            if getattr(record, "digest", None) != ref.ref:
+            value, uncertainty = read_bound(ref.kind, record, name, records.values())
+            if record.digest != ref.ref:
                 raise WorldRefused(f"{name!r}: the supplied record's own digest is not {ref.ref[:12]}")
-            value, uncertainty = read_bound(ref.kind, record, name)
             var = self.variable(name)
             if digest(value.to_dict()) != digest(var.value.to_dict()) or \
                     digest(uncertainty.to_dict()) != digest(var.uncertainty.to_dict()):
@@ -737,6 +749,30 @@ class ScientificWorld:
         return world
 
 
+def _bound_statement(v: WorldVariable) -> Any:
+    return digest({"value": None if v.value is None else v.value.to_dict(), "origin": None if v.origin is None else
+                   v.origin.value, "uncertainty": v.uncertainty.to_dict()})
+
+
+def restatement_problem(parent: "ScientificWorld", child: "ScientificWorld") -> str | None:
+    """Why ``child`` restates an owner's statement without citing a newer one, or None.
+
+    A bound value (value, origin, uncertainty) changes only with its owner record, and a budget statement changes only
+    with its authority record: the world never edits what an owner stated.  Declarations (domains, constraints,
+    actions) are the world's own and may change freely in a revision."""
+    before = {v.name: v for v in parent.variables}
+    for v in child.variables:
+        old = before.get(v.name)
+        if (old is not None and v.source is not None and v.source == old.source
+                and _bound_statement(v) != _bound_statement(old)):
+            return (f"{v.name!r}: a bound value changes only with its owner record (re-bind it to the newer record); "
+                    "the world never edits an owner's value")
+    pb, cb = parent.budget, child.budget
+    if cb.authority is not None and cb.authority == pb.authority and digest(cb.identity()) != digest(pb.identity()):
+        return "the budget changes only with its owner's statement (cite the newer ledger record)"
+    return None
+
+
 def verify_lineage(world: ScientificWorld, store: Mapping[str, ScientificWorld]) -> tuple[str, ...]:
     """Walk parents from ``store`` (revision id -> world) to the root; refuse a missing, tampered or forged link."""
     chain = [world]
@@ -753,6 +789,9 @@ def verify_lineage(world: ScientificWorld, store: Mapping[str, ScientificWorld])
         changed = child.changed_from(parent)
         if changed != child.lineage.changed_fields:
             raise WorldRefused(f"stated changed fields {child.lineage.changed_fields} differ from the real change {changed}")
+        problem = restatement_problem(parent, child)
+        if problem:
+            raise WorldRefused(f"revision {child.revision_id[:12]}: {problem}")
         seen.add(parent.revision_id)
         chain.append(parent)
     return tuple(w.revision_id for w in reversed(chain))
@@ -760,5 +799,5 @@ def verify_lineage(world: ScientificWorld, store: Mapping[str, ScientificWorld])
 
 __all__ = [
     "APPLICABILITY_CONTEXT_ROLES", "ApplicabilityBinding", "BUDGET_DIMENSIONS", "Lineage",
-    "MATERIAL_FIELDS", "ProviderSnapshot", "ScientificWorld", "WorldBudget", "verify_lineage",
+    "MATERIAL_FIELDS", "ProviderSnapshot", "ScientificWorld", "WorldBudget", "restatement_problem", "verify_lineage",
 ]

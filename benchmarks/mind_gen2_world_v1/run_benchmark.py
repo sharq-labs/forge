@@ -35,9 +35,10 @@ from . import fixtures as fx
 HERE = pathlib.Path(__file__).resolve().parent
 OUT = HERE / "results" / "BENCHMARK.json"
 TERMINOLOGY = ("A per-case verdict is FEASIBLE or NOT_FEASIBLE under the action-feasibility check (Gen1: its own "
-               "validity check; NOT_POSABLE when Gen1 cannot state the proposal).  The counters keep the brief's section "
-               "24 names: 'admitted' means found FEASIBLE and 'rejected' means found NOT_FEASIBLE; neither is evidence "
-               "admission (sria.admission) or any scientific verdict.")
+               "validity check; NOT_POSABLE when Gen1 cannot state the proposal).  The brief's section 24 names map to "
+               "these counters: VALID_ACTIONS_ADMITTED = valid_found_feasible, INVALID_ACTIONS_REJECTED = "
+               "invalid_found_not_feasible, FALSE_ADMISSIONS = false_feasible, FALSE_REJECTIONS = false_not_feasible.  "
+               "None of them is evidence admission (sria.admission) or any scientific verdict.")
 PERF = HERE / "results" / "PERFORMANCE.json"
 SCHEMA = "forge.mind.gen2_world.benchmark/1"
 PERF_SCHEMA = "forge.mind.gen2_world.performance/1"
@@ -96,7 +97,7 @@ def score(rows: list[dict[str, Any]]) -> dict[str, Any]:
         exp = r["case"]["expected"]
         truth_ok = exp["status"] == "FEASIBLE"
         g = r["gen2"]
-        admit = g["verdict"] == "FEASIBLE"
+        found = g["verdict"] == "FEASIBLE"
         status_ok = g["status"] == exp["status"]
         codes_ok = set(exp["codes"]) <= set(g["codes"])
         gen2["cases"] += 1
@@ -104,12 +105,12 @@ def score(rows: list[dict[str, Any]]) -> dict[str, Any]:
         gen2["codes_correct"] += codes_ok
         if truth_ok:
             gen2["valid"] += 1
-            gen2["valid_admitted"] += admit
-            gen2["false_rejections"] += not admit
+            gen2["valid_found_feasible"] += found
+            gen2["false_not_feasible"] += not found
         else:
             gen2["invalid"] += 1
-            gen2["invalid_rejected"] += not admit
-            gen2["false_admissions"] += admit
+            gen2["invalid_found_not_feasible"] += not found
+            gen2["false_feasible"] += found
         if not (status_ok and codes_ok):
             misses.append({"case_id": r["case"]["case_id"], "expected": exp, "status": g["status"], "codes": g["codes"]})
         w = r["case"]["world"]
@@ -128,29 +129,29 @@ def score(rows: list[dict[str, Any]]) -> dict[str, Any]:
             a1 = v1 == "FEASIBLE"
             if truth_ok:
                 gen1["valid"] += 1
-                gen1["valid_admitted"] += a1
-                gen1["false_rejections"] += not a1
+                gen1["valid_found_feasible"] += a1
+                gen1["false_not_feasible"] += not a1
             else:
                 gen1["invalid"] += 1
-                gen1["invalid_rejected"] += not a1
-                gen1["false_admissions"] += a1
+                gen1["invalid_found_not_feasible"] += not a1
+                gen1["false_feasible"] += a1
     head = Counter()
     for r in posable_rows:
         truth_ok = r["case"]["expected"]["status"] == "FEASIBLE"
         for arm, verdict in (("gen2", r["gen2"]["verdict"]), ("gen1", r["gen1"]["verdict"])):
-            admit = verdict == "FEASIBLE"
-            head[f"{arm}_valid_admitted"] += truth_ok and admit
-            head[f"{arm}_false_rejections"] += truth_ok and not admit
-            head[f"{arm}_invalid_rejected"] += (not truth_ok) and not admit
-            head[f"{arm}_false_admissions"] += (not truth_ok) and admit
+            found = verdict == "FEASIBLE"
+            head[f"{arm}_valid_found_feasible"] += truth_ok and found
+            head[f"{arm}_false_not_feasible"] += truth_ok and not found
+            head[f"{arm}_invalid_found_not_feasible"] += (not truth_ok) and not found
+            head[f"{arm}_false_feasible"] += (not truth_ok) and found
         head["valid"] += truth_ok
         head["invalid"] += not truth_ok
     unit = [r for r in rows if any(m["kind"] == "WRONG_UNIT" for m in r["case"]["mutations"])]
     unit_posable = [r for r in unit if r["gen1"]["verdict"] != "NOT_POSABLE"]
-    gen1_false_admission_kinds = Counter(m["kind"] for r in posable_rows if r["gen1"]["verdict"] == "FEASIBLE"
+    gen1_false_feasible_kinds = Counter(m["kind"] for r in posable_rows if r["gen1"]["verdict"] == "FEASIBLE"
                                          and r["case"]["expected"]["status"] != "FEASIBLE"
                                          for m in r["case"]["mutations"] if not m["kind"].startswith("VALID"))
-    gen1_false_rejection_kinds = Counter(([m["kind"] for m in r["case"]["mutations"]] or ["BASE"])[0]
+    gen1_false_not_feasible_kinds = Counter(([m["kind"] for m in r["case"]["mutations"]] or ["BASE"])[0]
                                          for r in posable_rows if r["gen1"]["verdict"] == "NOT_FEASIBLE"
                                          and r["case"]["expected"]["status"] == "FEASIBLE")
     not_posable = Counter(r["case"]["world"] for r in rows if r["gen1"]["verdict"] == "NOT_POSABLE")
@@ -158,8 +159,8 @@ def score(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "GEN2_WORLD_ACTIONSPACE": {
             **dict(gen2),
-            "feasible_admission_accuracy": _rate(gen2["valid_admitted"], gen2["valid"]),
-            "invalid_rejection_accuracy": _rate(gen2["invalid_rejected"], gen2["invalid"]),
+            "valid_found_feasible_rate": _rate(gen2["valid_found_feasible"], gen2["valid"]),
+            "invalid_found_not_feasible_rate": _rate(gen2["invalid_found_not_feasible"], gen2["invalid"]),
             "status_accuracy": _rate(gen2["status_correct"], gen2["cases"]),
             "reason_code_accuracy": _rate(gen2["codes_correct"], gen2["cases"]),
             "misses": misses,
@@ -168,16 +169,16 @@ def score(rows: list[dict[str, Any]]) -> dict[str, Any]:
             **dict(gen1),
             "status_accuracy": "N/A (Gen1 returns a bool and one reason string, no typed status)",
             "not_posable_by_world": dict(sorted(not_posable.items())),
-            "false_admissions_by_mutation": dict(sorted(gen1_false_admission_kinds.items())),
-            "false_rejections_by_case_kind": dict(sorted(gen1_false_rejection_kinds.items())),
+            "false_feasible_by_mutation": dict(sorted(gen1_false_feasible_kinds.items())),
+            "false_not_feasible_by_case_kind": dict(sorted(gen1_false_not_feasible_kinds.items())),
         },
         "head_to_head_on_gen1_posable_cases": {"cases": len(posable_rows), **dict(sorted(head.items()))},
         "unit_errors": {
             "cases": len(unit),
-            "gen2_rejected_with_UNIT_INCOMPATIBLE": sum(r["gen2"]["verdict"] == "NOT_FEASIBLE"
+            "gen2_not_feasible_with_UNIT_INCOMPATIBLE": sum(r["gen2"]["verdict"] == "NOT_FEASIBLE"
                                                         and "UNIT_INCOMPATIBLE" in r["gen2"]["codes"] for r in unit),
             "gen1_posable": len(unit_posable),
-            "gen1_admitted": sum(r["gen1"]["verdict"] == "FEASIBLE" for r in unit_posable),
+            "gen1_found_feasible": sum(r["gen1"]["verdict"] == "FEASIBLE" for r in unit_posable),
         },
         "cross_domain": {
             "worlds": {w: {"cases": c["cases"], "correct": c["correct"], "pass_rate": _rate(c["correct"], c["cases"])}
@@ -303,12 +304,14 @@ def main(argv: list[str]) -> int:
     PERF.write_bytes(_dump(performance(cases)))
     s = result["scores"]
     g2, g1 = s["GEN2_WORLD_ACTIONSPACE"], s["GEN1_ROLE_ONLY"]
-    print(f"GEN2: valid admitted {g2['valid_admitted']}/{g2['valid']}, invalid rejected {g2['invalid_rejected']}/"
-          f"{g2['invalid']}, false admissions {g2['false_admissions']}, false rejections {g2['false_rejections']}, "
+    print(f"GEN2: valid found FEASIBLE {g2['valid_found_feasible']}/{g2['valid']}, invalid found NOT_FEASIBLE "
+          f"{g2['invalid_found_not_feasible']}/{g2['invalid']}, false FEASIBLE {g2['false_feasible']}, false "
+          f"NOT_FEASIBLE {g2['false_not_feasible']}, "
           f"status {g2['status_correct']}/{g2['cases']}, codes {g2['codes_correct']}/{g2['cases']}")
-    print(f"GEN1: not posable {g1.get('verdict_NOT_POSABLE', 0)}, valid admitted {g1.get('valid_admitted', 0)}/"
-          f"{g1.get('valid', 0)}, invalid rejected {g1.get('invalid_rejected', 0)}/{g1.get('invalid', 0)}, false "
-          f"admissions {g1.get('false_admissions', 0)}, false rejections {g1.get('false_rejections', 0)}")
+    print(f"GEN1: not posable {g1.get('verdict_NOT_POSABLE', 0)}, valid found FEASIBLE "
+          f"{g1.get('valid_found_feasible', 0)}/{g1.get('valid', 0)}, invalid found NOT_FEASIBLE "
+          f"{g1.get('invalid_found_not_feasible', 0)}/{g1.get('invalid', 0)}, false FEASIBLE "
+          f"{g1.get('false_feasible', 0)}, false NOT_FEASIBLE {g1.get('false_not_feasible', 0)}")
     rs = result["replay_and_serialization"]
     print(f"replay {rs['outcomes']}, round trips {rs['world_round_trips_byte_identical']}/{rs['world_variants']}, "
           f"cross-process identical {result['cross_process']['identical']}")

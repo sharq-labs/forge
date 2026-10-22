@@ -15,11 +15,23 @@ MISSING_INFORMATION (something needed to decide is absent or undecidable: never 
 
 Every check family runs on every proposal and records itself; reasons are collected, not short-circuited; the status
 is the first by a fixed precedence (a definite infeasibility outranks missing information).  A decision cannot be
-FEASIBLE unless all nine families ran and none left a reason.  No clock, randomness or environment is read.
+FEASIBLE unless all nine families ran and none left a reason.  Reason codes and annotation keys are a closed set
+(:data:`REASON_CODES`, :data:`ANNOTATION_KEYS`): a record cannot carry a verdict word the check never produces.  No
+clock, randomness or environment is read.
+
+Monotonicity.  Removing information about the system (a value, an uncertainty, a provider or budget statement)
+never turns a refusal FEASIBLE: every family that needs a value reports its absence.  A declaration is the question
+itself, not information about the system: withdrawing a declared domain, constraint or precondition changes what is
+asked.  The state-domain check therefore reads only what the decision uses (precondition metrics, the metrics of
+constraints in force, gating applicability inputs), where an absent value is already MISSING_INFORMATION.
+
+A FEASIBLE decision produces a :class:`ClearedAction`: an admitted-action record for the existing execution system.
+Nothing here dispatches, reserves budget or invokes a provider; that is the execution owner's (see the BR1 README).
 """
 
 from __future__ import annotations
 
+import dataclasses
 import itertools
 from dataclasses import dataclass
 from enum import Enum
@@ -27,22 +39,26 @@ from typing import Any, Mapping
 
 from engcore.mind.repsem.roles import RoleSource, VariableRole
 from engcore.design.grammar import ConstraintStatus
+from engcore.execution.orchestration.resources import ResourceUsage
+from engcore.mind.repsem import canonical_bytes
 from engcore.scientific import Quantity, RangeCondition, ScientificCoreError, ValidityStatus
 from engcore.scientific.models.definition import UnknownReason
 from engcore.scientific.results.immutable import detach, freeze
 from engcore.sria.actions import FeasibilityVerdict
 from engcore.sria.decision.replay import ReplayMode, ReplayOutcome, ReplayResult
 
-from .actions import ActionMode, ActionSpec, ExecutionKind, ProposedAction
+from .actions import ActionMode, ActionSpec, ExecutionKind, ProposedAction, proposed_action_from_suggestion
 from .base import (
-    StaleProposal, WorldRefused, digest, expect_schema, magnitude_key, same_value, schema, value_payload,
+    ProposalRefused, StaleProposal, WorldRefused, digest, expect_schema, magnitude_key, same_value, schema,
+    value_payload,
 )
-from .domains import check_at_edges, finite_members, is_finite, membership
-from .variables import ValueOrigin
+from .domains import DiscreteLevels, check_at_edges, edges_in_domain, finite_members, is_finite, membership
+from .variables import SET_BY_DECLARATION, ValueOrigin
 from .world import APPLICABILITY_CONTEXT_ROLES, BUDGET_DIMENSIONS, ScientificWorld
 
 DECISION_SCHEMA = schema("feasibility_decision")
 SPACE_SCHEMA = schema("feasible_action_space")
+CLEARED_SCHEMA = schema("cleared_action")
 CLASSIFICATION = "action_feasibility_not_scientific_support"
 MAX_UNCERTAIN_CORNERS = 256
 
@@ -83,6 +99,37 @@ class CheckFamily(str, Enum):
     BUDGET = "budget"
 
 
+_MEMBERSHIP_CODES = ("VALUE_KIND_MISMATCH", "UNIT_INCOMPATIBLE", "LEVEL_NOT_DECLARED", "OUTSIDE_RANGE",
+                     "CATEGORY_NOT_DECLARED")
+#: Every reason code a family emits.  Closed: a record with any other code is refused.
+REASON_CODES: Mapping[CheckFamily, frozenset[str]] = {
+    CheckFamily.ACTION: frozenset({"UNDECLARED_ACTION"}),
+    CheckFamily.ROLE: frozenset({"UNDECLARED_VARIABLE", "FIXED_CONDITION_CHANGED", "STATE_NOT_DIRECTLY_SETTABLE",
+                                 "PROTOCOL_CONDITION_NOT_SELECTABLE", "CONTROL_NOT_OFFERED_BY_ACTION",
+                                 "ROLE_NOT_CONTROLLABLE"}),
+    CheckFamily.DOMAIN: frozenset({"GUARD_UNRESOLVED", "CONTROL_INACTIVE", "CONTROL_NOT_SUPPLIED",
+                                   *_MEMBERSHIP_CODES}),
+    CheckFamily.OBSERVE: frozenset({"OBSERVE_TARGETS_NOT_SUPPLIED", "UNDECLARED_VARIABLE", "LATENT_NOT_OBSERVABLE",
+                                    "DERIVED_NOT_OBSERVABLE", "NO_OBSERVATION_CHANNEL",
+                                    "OBSERVABLE_NOT_OFFERED_BY_ACTION"}),
+    CheckFamily.PROTOCOL: frozenset({"GUARD_UNRESOLVED", "CONSTRAINT_UNRESOLVED", "CONSTRAINT_UNDECIDABLE",
+                                     "CONSTRAINT_VIOLATED", "CONSTRAINT_UNDECIDED", "CONSTRAINT_UNRESOLVABLE"}),
+    CheckFamily.STATE: frozenset({"PRECONDITION_UNRESOLVED", "PRECONDITION_UNCERTAINTY_UNKNOWN",
+                                  "PRECONDITION_VIOLATED", "PRECONDITION_UNDECIDED", "PRECONDITION_UNRESOLVABLE",
+                                  "STATE_DOMAIN_UNDECIDABLE", "STATE_OUTSIDE_DECLARED_DOMAIN",
+                                  "STATE_DOMAIN_UNDECIDED"}),
+    CheckFamily.APPLICABILITY: frozenset({"OUTSIDE_VALIDATED_DOMAIN", "INTERVAL_OUTSIDE_VALIDATED_DOMAIN",
+                                          "APPLICABILITY_NOT_SUPPLIED", "APPLICABILITY_UNKNOWN",
+                                          "APPLICABILITY_UNDECIDED", "APPLICABILITY_NOT_ASSESSABLE"}),
+    CheckFamily.PROVIDER: frozenset({"PROVIDER_UNAVAILABLE", "PROVIDER_VERSION_MISMATCH", "PROVIDER_DIGEST_MISMATCH"}),
+    CheckFamily.BUDGET: frozenset({"BUDGET_DIMENSION_UNDECLARED", "COST_NOT_DECLARED", "OVER_BUDGET"}),
+}
+#: Every annotation key a decision may carry.  ``core_status`` is the core's status as it is (exact inputs);
+#: ``interval_rule`` is the world's own sound rule over core judgments at interval edges, labelled as the world's.
+ANNOTATION_KEYS = frozenset({"binding_id", "gating", "withheld", "uncertain_inputs", "core_statuses", "assessments",
+                             "assessment_digests", "error", "core_status", "interval_rule", "relied_on_bound_values"})
+
+
 def _frozen(detail: Mapping[str, Any]) -> Any:
     return freeze(detach(dict(detail)))
 
@@ -101,6 +148,8 @@ class FeasibilityReason:
         object.__setattr__(self, "family", CheckFamily(self.family))
         if self.status is F.FEASIBLE:
             raise WorldRefused("a reason explains a non-FEASIBLE outcome")
+        if self.code not in REASON_CODES[self.family]:
+            raise WorldRefused(f"{self.code!r} is not a {self.family.value} reason code (the set is closed)")
         object.__setattr__(self, "detail", _frozen(self.detail or {}))
 
     def to_dict(self) -> dict[str, Any]:
@@ -149,6 +198,9 @@ class FeasibilityDecision:
             raise WorldRefused(f"a decision's status {self.status.value} disagrees with its reasons")
         if self.status is F.FEASIBLE and {c.family for c in self.checked} != set(CheckFamily):
             raise WorldRefused("FEASIBLE needs every check family to have run (an unchecked family is not a pass)")
+        for item in self.annotations:
+            if not isinstance(item, Mapping) or set(item) - ANNOTATION_KEYS:
+                raise WorldRefused(f"annotation keys are a closed set {sorted(ANNOTATION_KEYS)}")
         object.__setattr__(self, "annotations", _frozen({"items": list(self.annotations)})["items"])
 
     @property
@@ -212,9 +264,9 @@ def _resolve(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction,
     var = world.variable(name)
     if var.value is None:
         return None
-    if var.origin is ValueOrigin.DECLARED:
-        return _Resolved(var.value, "world_declared", (var.value,))
-    return _Resolved(var.value, "world_bound", var.edges())
+    if var.origin is ValueOrigin.DECLARED and var.role in SET_BY_DECLARATION:
+        return _Resolved(var.value, "world_declared", (var.value,))   # a set point is exact by declaration
+    return _Resolved(var.value, "world_bound", var.edges())           # anything else holds within its uncertainty
 
 
 class _Collector:
@@ -305,6 +357,13 @@ class FeasibleActionSpace:
         if proposal.world_revision != world.revision_id:
             raise StaleProposal(f"the proposal was made for world revision {proposal.world_revision[:12]}, not "
                                 f"{world.revision_id[:12]}; a decision stays bound to the world it was made in")
+        if proposal.source is not None:
+            again = proposed_action_from_suggestion(proposal.source, world=world)
+            if not isinstance(again, ProposedAction):
+                raise ProposalRefused(f"the proposal's source suggestion is refused at intake here: {again.code.value} "
+                                      f"({again.message})")
+            if canonical_bytes(again.to_dict()) != canonical_bytes(proposal.to_dict()):
+                raise ProposalRefused("the proposal is not what its source suggestion yields in this world")
         c = _Collector()
         spec = world.action(proposal.action_id)
         if spec is None:
@@ -331,10 +390,10 @@ class FeasibleActionSpace:
                                    self.world.revision_id, self.space_id, proposal.digest,
                                    tuple(c.annotations) + tuple(relied))
 
-    def clear(self, proposal: ProposedAction):
-        """(decision, ClearedAction or None).  Only a FEASIBLE decision clears."""
-        from .gate import ClearedAction
-
+    def clear(self, proposal: ProposedAction) -> tuple[FeasibilityDecision, "ClearedAction | None"]:
+        """(decision, ClearedAction or None).  Only a FEASIBLE decision clears, and the record is built from the same
+        canonical proposal the decision was computed from."""
+        proposal = canonical(proposal)
         decision = self.check(proposal)
         if not decision.feasible:
             return decision, None
@@ -531,10 +590,12 @@ def _check_state(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAct
         elif outcome is ConstraintStatus.UNKNOWN:
             c.add(F.MISSING_INFORMATION, f"PRECONDITION_{detail['why'].upper()}", CheckFamily.STATE, pre.name,
                   "the precondition cannot be decided on the current value", metric=pre.metric, **detail)
-    for name in sorted(_reads(world, spec)):
+    for name in sorted(_used_reads(world, spec, proposal)):
         var = world.variable(name)
-        if var.value is None or var.domain is None or var.edges() == (var.value,) and var.source is None:
-            continue
+        if var.value is None or var.domain is None:
+            continue    # an absent value is reported by the family that uses it; no declared domain states no range
+        if var.origin is ValueOrigin.DECLARED and var.role in SET_BY_DECLARATION:
+            continue    # an exact set point, checked against its own domain when the world was built
         if proposal is not None and (proposal.value(name) is not None or spec.fixed(name) is not None):
             continue
         n += 1
@@ -544,38 +605,80 @@ def _check_state(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAct
                   "whether the current value lies in its declared domain depends on an uncertainty that is not an "
                   "interval", uncertainty=var.uncertainty.kind.value)
             continue
-        outside = [membership(var.domain, e) is not None for e in edges]
-        if all(outside):
+        where = edges_in_domain(var.domain, edges)
+        if where == "outside":
             c.add(F.INFEASIBLE_STATE, "STATE_OUTSIDE_DECLARED_DOMAIN", CheckFamily.STATE, name,
-                  "the system's current value lies outside the variable's declared domain at every edge of its "
-                  "uncertainty", edges=[value_payload(e) for e in edges])
-        elif any(outside):
+                  "the system's current value lies outside the variable's declared domain (a range: wholly beyond one "
+                  "bound at every edge of its uncertainty)", edges=[value_payload(e) for e in edges])
+        elif where == "undecided":
             c.add(F.MISSING_INFORMATION, "STATE_DOMAIN_UNDECIDED", CheckFamily.STATE, name,
-                  "the current value's uncertainty straddles its declared domain", edges=[value_payload(e) for e in edges])
+                  "whether the current value lies in its declared domain cannot be decided at its uncertainty",
+                  edges=[value_payload(e) for e in edges])
     c.ran(CheckFamily.STATE, n)
 
 
-def _reads(world: ScientificWorld, spec: ActionSpec) -> set[str]:
+def _in_force(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None) -> list[Any]:
+    """The constraints in force for this proposal: in scope, and with a guard that holds on a stated value.  Without a
+    proposal (the space's standing) only unguarded constraints are in force."""
+    out = []
+    for constraint in world.constraints:
+        if not constraint.applies(spec.action_id):
+            continue
+        if constraint.guard is not None:
+            if proposal is None:
+                continue
+            g = _guard_value(world, spec, proposal, constraint.guard.variable)
+            if g is None or not constraint.guard.holds(g.value):
+                continue
+        out.append(constraint)
+    return out
+
+
+def _used_reads(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None) -> set[str]:
+    """The current values this decision uses: precondition metrics, metrics of the constraints in force, and the
+    inputs of applicability that gates (model execution)."""
+    names = {p.metric for p in spec.preconditions}
+    names |= {constraint.consequence.metric for constraint in _in_force(world, spec, proposal)}
+    if spec.execution is ExecutionKind.MODEL_EXECUTION:
+        for binding_id in spec.applicability:
+            names |= set(world.applicability_binding(binding_id).reads)
+    return {n for n in names if world.declares(n)}
+
+
+def _context_reads(world: ScientificWorld, spec: ActionSpec) -> set[str]:
+    """Every variable a decision on this action may read besides its configuration: preconditions, every in-scope
+    constraint's metric and guard, every applicability input, every control guard."""
     names = {p.metric for p in spec.preconditions}
     for constraint in world.constraints:
         if constraint.applies(spec.action_id):
             names |= set(constraint.reads)
     for binding_id in spec.applicability:
         names |= set(world.applicability_binding(binding_id).reads)
+    names |= {c.active_when.variable for c in spec.controls if c.active_when is not None}
     return {n for n in names if world.declares(n)}
 
 
+def _plain_range(condition: Any) -> bool:
+    """A range condition the core judges on its own value alone: not a conservative screen (whose outside is an
+    evidence gap, UNKNOWN) and without prerequisites (whose status depends on another condition)."""
+    return (isinstance(condition, RangeCondition) and len(condition.context_keys) == 1
+            and not condition.conservative_screen and not condition.requires)
+
+
 def _one_sided(condition: RangeCondition, side: str) -> RangeCondition:
-    """The lower or upper half of a range condition, as a core record (so the core evaluates it)."""
+    """The lower or upper half of a range condition: the core record itself with the other bound removed, so every
+    other field (screen, prerequisites, inclusivity) is the owner's."""
     if side == "lower":
-        return RangeCondition(condition.name, minimum=condition.minimum,
-                              minimum_inclusive=condition.minimum_inclusive)
-    return RangeCondition(condition.name, maximum=condition.maximum, maximum_inclusive=condition.maximum_inclusive)
+        return dataclasses.replace(condition, maximum=None)
+    return dataclasses.replace(condition, minimum=None)
 
 
 def _interval_violates(condition: RangeCondition, edges: tuple[Any, ...]) -> bool:
-    """Every point of [a, b] violates a range condition iff both edges violate the SAME side of it.  Each side is a
-    half-line (convex), and both judgments are the core evaluator's."""
+    """Every point of [a, b] violates a plain range condition iff both edges violate the SAME side of it.  Each side
+    is a half-line (convex), and both judgments are the core evaluator's.  Never applied to a screen or a condition
+    with prerequisites (see :func:`_plain_range`)."""
+    if not _plain_range(condition):
+        return False
     for side, bound in (("lower", condition.minimum), ("upper", condition.maximum)):
         if bound is None:
             continue
@@ -632,45 +735,50 @@ def _check_applicability(world: ScientificWorld, spec: ActionSpec, proposal: Pro
         statuses = [a.status for a in assessments]
         recorded = [a.to_dict() for a in assessments]
         annotation.update({"core_statuses": [st.value for st in statuses], "assessments": recorded,
-                           "assessment_digests": [digest(x) for x in recorded], "error": error})
+                           "assessment_digests": [digest(x) for x in recorded], "error": error,
+                           "core_status": None, "interval_rule": None})
+        core_status = None
+        rule = None
         if error:
-            outcome = "not_assessable"
+            rule = "not_assessable"
         elif not uncertain:
-            outcome = statuses[0].value                      # one exact assessment: the core status as it is
+            core_status = statuses[0]                        # one exact assessment: the core status as it is
+            annotation["core_status"] = core_status.value
         else:
             readers = [cond for cond in binding.model.validity.conditions
                        if set(getattr(cond, "context_keys", ()) or ()) & set(uncertain)]
             ranges_only = all(isinstance(cond, RangeCondition) and len(cond.context_keys) == 1 for cond in readers)
-            whole_out = any(isinstance(cond, RangeCondition) and _interval_violates(cond, uncertain[cond.name])
+            whole_out = any(_interval_violates(cond, uncertain[cond.name])
                             for cond in readers if cond.name in uncertain)
             exact_only = {cond.name for cond in binding.model.validity.conditions
-                          if not set(getattr(cond, "context_keys", ()) or ()) & set(uncertain)}
+                          if not set(getattr(cond, "context_keys", ()) or ()) & set(uncertain) and _plain_range(cond)}
             exact_violated = set.intersection(*(set(a.violated) for a in assessments)) & exact_only
             if ValidityStatus.UNKNOWN in statuses:
-                outcome = "unknown"
+                rule = "unknown_at_some_edge"
             elif whole_out or exact_violated:
-                outcome = "outside_whole_interval"
+                rule = "outside_whole_interval"
             elif ranges_only and set(statuses) == {ValidityStatus.IN_DOMAIN}:
-                outcome = "in_domain_whole_interval"
+                rule = "in_domain_whole_interval"
             else:
-                outcome = "undecided"
-        annotation["outcome"] = outcome
+                rule = "undecided"
+            annotation["interval_rule"] = rule
         c.annotations.append(annotation)
         if not gating:
             continue
-        if outcome == ValidityStatus.OUTSIDE_VALIDATED_DOMAIN.value:
+        if core_status is ValidityStatus.OUTSIDE_VALIDATED_DOMAIN:
             c.add(F.INFEASIBLE_APPLICABILITY, "OUTSIDE_VALIDATED_DOMAIN", CheckFamily.APPLICABILITY, binding_id,
                   "the model this action executes is not applicable at this point (the core's status as it is)",
-                  validity_status=outcome, violated=sorted(assessments[0].violated),
+                  validity_status=core_status.value, violated=sorted(assessments[0].violated),
                   assessment_digests=annotation["assessment_digests"])
-        elif outcome == "outside_whole_interval":
-            c.add(F.INFEASIBLE_APPLICABILITY, "OUTSIDE_VALIDATED_DOMAIN", CheckFamily.APPLICABILITY, binding_id,
-                  "every point of the stated input interval is outside the model's validity domain (each edge judged "
-                  "by the core; the interval rule is the world's, stated in its basis)",
-                  basis="a range condition is violated on the same side at both edges of its input, or a condition "
-                        "over exact inputs is violated at every corner",
+        elif rule == "outside_whole_interval":
+            c.add(F.INFEASIBLE_APPLICABILITY, "INTERVAL_OUTSIDE_VALIDATED_DOMAIN", CheckFamily.APPLICABILITY,
+                  binding_id,
+                  "every point of the stated input interval is outside the model's validity domain: the world's rule "
+                  "over the core's judgments at each edge (not a core status)",
+                  basis="a plain range condition is violated on the same side at both edges of its input, or a plain "
+                        "condition over exact inputs is violated at every edge",
                   core_statuses=annotation["core_statuses"], assessment_digests=annotation["assessment_digests"])
-        elif outcome == ValidityStatus.UNKNOWN.value or outcome == "unknown":
+        elif core_status is ValidityStatus.UNKNOWN or rule == "unknown_at_some_edge":
             unknown = [a for a in assessments if a.status is ValidityStatus.UNKNOWN][0]
             reasons = sorted({u.reason.value for u in unknown.unknown_reasons})
             not_supplied = reasons == [UnknownReason.NOT_SUPPLIED.value]
@@ -679,8 +787,8 @@ def _check_applicability(world: ScientificWorld, spec: ActionSpec, proposal: Pro
                   "model applicability is UNKNOWN here; model execution is not admitted on an unknown applicability",
                   validity_status=ValidityStatus.UNKNOWN.value, unknown_reasons=reasons, unknown=sorted(unknown.unknown),
                   withheld=withheld)
-        elif outcome not in (ValidityStatus.IN_DOMAIN.value, "in_domain_whole_interval"):
-            c.add(F.MISSING_INFORMATION, f"APPLICABILITY_{outcome.upper()}", CheckFamily.APPLICABILITY, binding_id,
+        elif core_status is not ValidityStatus.IN_DOMAIN and rule != "in_domain_whole_interval":
+            c.add(F.MISSING_INFORMATION, f"APPLICABILITY_{rule.upper()}", CheckFamily.APPLICABILITY, binding_id,
                   "model applicability cannot be decided on the stated values", uncertain_inputs=sorted(uncertain),
                   error=error)
     c.ran(CheckFamily.APPLICABILITY, len(spec.applicability),
@@ -723,12 +831,17 @@ def _check_budget(world: ScientificWorld, spec: ActionSpec, c: _Collector) -> No
                   "the budget is limited and the action does not declare what it consumes (never assumed zero)")
             continue
         remaining = budget.remaining(dim)
-        if dim == "cost":
-            requested = magnitude_key(amount)
+        if dim == "cost":                                   # the plan's own rule, on the raw amount
+            requested = amount.magnitude
             ok = budget.cost.affordable(requested, family=spec.family)
-        elif dim == "wall_time":
-            requested = magnitude_key(amount)
-            ok = requested <= remaining
+        elif dim == "wall_time":                            # the execution owner's rule (ResourceUsage.exceeded)
+            requested = amount.magnitude_in("second")
+            ok = "wall_seconds" not in budget.compute_used.plus(ResourceUsage(wall_seconds=requested)).exceeded(
+                budget.compute)
+        elif dim == "solver_calls":
+            requested = amount.value
+            ok = "function_evaluations" not in budget.compute_used.plus(
+                ResourceUsage(function_evaluations=requested)).exceeded(budget.compute)
         else:
             requested = amount.value
             ok = requested <= remaining
@@ -764,9 +877,11 @@ def replay_decision(record: Mapping[str, Any], world_payload: Mapping[str, Any],
     if mismatches:
         return ReplayResult(mode, ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE, dict(record), mismatches=tuple(mismatches),
                             detail="the stored inputs are not the ones this decision was made for")
-    recomputed = FeasibleActionSpace.build(world).check(proposal).to_dict()
-    from engcore.mind.repsem import canonical_bytes
-
+    try:
+        recomputed = FeasibleActionSpace.build(world).check(proposal).to_dict()
+    except WorldRefused as exc:
+        return ReplayResult(mode, ReplayOutcome.REPLAY_DEPENDENCY_UNAVAILABLE, dict(record), mismatches=("proposal",),
+                            detail=f"the stored proposal is refused by the check: {exc}")
     if canonical_bytes(recomputed) == canonical_bytes(dict(record)):
         return ReplayResult(mode, ReplayOutcome.REPRODUCED, dict(record), recomputed)
     diff = tuple(sorted(k for k in set(recomputed) | set(record) if recomputed.get(k) != record.get(k)))
@@ -774,7 +889,73 @@ def replay_decision(record: Mapping[str, Any], world_payload: Mapping[str, Any],
                         "the recomputed decision differs from the stored one")
 
 
+# ---- the admitted-action record ----------------------------------------------------------------------------------------------
+def _context_entry(world: ScientificWorld, name: str) -> dict[str, Any]:
+    var = world.variable(name)
+    return {"variable": name, "value": None if var.value is None else value_payload(var.value),
+            "origin": None if var.origin is None else var.origin.value,
+            "source": None if var.source is None else var.source.to_dict(), "basis": var.value_basis,
+            "uncertainty": var.uncertainty.to_dict()}
+
+
+@dataclass(frozen=True)
+class ClearedAction:
+    """An admitted action: a FEASIBLE proposal with everything its execution needs, bound to one action space.
+
+    A record, never a dispatch: nothing in BR1 executes it.  ``configuration`` is closed (every assigned control and
+    every fixed condition as a typed value; a fixed condition carries the action's DECLARED value, a discrete control
+    the DECLARED level it matched).  ``context`` is every other value a decision on this action may read (preconditions,
+    in-scope constraints and their guards, applicability inputs, control guards) with the owner record or declared
+    basis it came from and its uncertainty, so whoever executes it never fills a boundary condition itself, and two
+    worlds that differ in such a value give two different records.  Built only by :meth:`FeasibleActionSpace.clear`."""
+
+    proposal: ProposedAction
+    decision: FeasibilityDecision
+    configuration: tuple[tuple[str, Any], ...]
+    context: tuple[Any, ...]
+    observe: tuple[str, ...]
+    space_id: str
+    world_revision: str
+
+    @classmethod
+    def of(cls, space: FeasibleActionSpace, proposal: ProposedAction, decision: FeasibilityDecision) -> "ClearedAction":
+        if not decision.feasible or decision.proposal_digest != proposal.digest or decision.space_id != space.space_id:
+            raise WorldRefused("only the FEASIBLE decision on this proposal in this space clears it")
+        world = space.world
+        spec = world.action(proposal.action_id)
+        config = {f.name: f.value for f in spec.fixed_conditions}
+        for name, value in proposal.assignments:
+            if name in config:
+                continue
+            control = spec.control(name)
+            if control is not None and isinstance(control.domain, DiscreteLevels) and isinstance(value, Quantity):
+                value = next(lv for lv in control.domain.levels if magnitude_key(lv) == magnitude_key(value))
+            config[name] = value
+        context = tuple(_frozen(_context_entry(world, n)) for n in sorted(_context_reads(world, spec) - set(config)))
+        observe = proposal.observe or spec.expected_observables
+        return cls(proposal, decision, tuple(sorted(config.items())), context, tuple(observe), space.space_id,
+                   world.revision_id)
+
+    def settings_in_declared_units(self, world: ScientificWorld) -> dict[str, Any]:
+        """Quantities as magnitudes in each variable's declared unit (the sanctioned exit from the unit-aware world,
+        ``Quantity.magnitude_in``), other typed values unchanged (an integer domain is in its variable's own unit)."""
+        return {name: value.magnitude_in(world.variable(name).unit) if isinstance(value, Quantity) else value
+                for name, value in self.configuration}
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema": CLEARED_SCHEMA, "classification": CLASSIFICATION, "proposal": self.proposal.to_dict(),
+                "decision": self.decision.to_dict(),
+                "configuration": [{"variable": n, "value": value_payload(v)} for n, v in self.configuration],
+                "context": [detach(x) for x in self.context], "observe": list(self.observe),
+                "space_id": self.space_id, "world_revision": self.world_revision}
+
+    @property
+    def digest(self) -> str:
+        return digest(self.to_dict())
+
+
 __all__ = [
-    "CLASSIFICATION", "CheckFamily", "FamilyRecord", "FeasibilityDecision", "FeasibilityReason", "FeasibilityStatus",
-    "FeasibleActionSpace", "PRECEDENCE", "STATUS_BY_SOURCE", "SpaceEntry", "replay_decision",
+    "ANNOTATION_KEYS", "CLASSIFICATION", "CheckFamily", "ClearedAction", "FamilyRecord", "FeasibilityDecision",
+    "FeasibilityReason", "FeasibilityStatus", "FeasibleActionSpace", "PRECEDENCE", "REASON_CODES", "STATUS_BY_SOURCE",
+    "SpaceEntry", "replay_decision",
 ]

@@ -77,7 +77,7 @@ def test_the_committed_scores_reproduce():
     assert rb.decisions_digest(rows) == stored["decisions_digest"]
     assert json.loads(json.dumps(rb.score(rows))) == stored["scores"]
     g2 = stored["scores"]["GEN2_WORLD_ACTIONSPACE"]
-    assert g2["false_admissions"] == 0 and g2["false_rejections"] == 0 and not g2["misses"]
+    assert g2["false_feasible"] == 0 and g2["false_not_feasible"] == 0 and not g2["misses"]
 
 
 def test_the_gen1_reproduction_reproduces():

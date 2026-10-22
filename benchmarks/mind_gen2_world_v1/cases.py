@@ -58,21 +58,22 @@ def variant(world_name: str, spec: dict[str, Any]) -> ScientificWorld:
             fx.provider(p.provider_id, spec["version"]) if p.provider_id == spec["provider"] else p for p in w.providers))
     if kind == "budget_exhausted":
         b = w.budget
+        token = f"{world_name}/exhausted-{spec['dimension']}"
         if spec["dimension"] == "experiments":
-            b = dataclasses.replace(b, observations_spent=b.experiments - spec["remaining"])
-        elif spec["dimension"] == "solver_calls":
-            b = dataclasses.replace(b, compute_used=ResourceUsage(
-                wall_seconds=b.compute_used.wall_seconds,
-                function_evaluations=b.compute.max_function_evaluations - spec["remaining"]))
+            return w.derive(reason="budget consumed", budget=_restated_budget(
+                b, token, observations_spent=b.experiments - spec["remaining"]))
+        if spec["dimension"] == "solver_calls":
+            used = ResourceUsage(wall_seconds=b.compute_used.wall_seconds,
+                                 function_evaluations=b.compute.max_function_evaluations - spec["remaining"])
         else:
-            b = dataclasses.replace(b, compute_used=ResourceUsage(
-                wall_seconds=float(b.compute.max_wall_seconds) - spec["remaining"],
-                function_evaluations=b.compute_used.function_evaluations))
-        return w.derive(reason="budget consumed", budget=b)
+            used = ResourceUsage(wall_seconds=float(b.compute.max_wall_seconds) - spec["remaining"],
+                                 function_evaluations=b.compute_used.function_evaluations)
+        return w.derive(reason="budget consumed", budget=_restated_budget(b, token, compute_used=used))
     if kind == "budget_undeclared":
         b = w.budget
-        return w.derive(reason="a budget declaration withdrawn", budget=dataclasses.replace(
-            b, unbounded=tuple(x for x in b.unbounded if x[0] != spec["dimension"])))
+        return w.derive(reason="a budget declaration withdrawn", budget=_restated_budget(
+            b, f"{world_name}/withdrawn-{spec['dimension']}",
+            unbounded=tuple(x for x in b.unbounded if x[0] != spec["dimension"])))
     if kind == "value":
         value = decode_value(spec["value"])
         unc = fx.interval(value.magnitude, spec["half"], value.units)
@@ -90,6 +91,15 @@ def variant(world_name: str, spec: dict[str, Any]) -> ScientificWorld:
                                                           else f for f in a.fixed_conditions))
             if a.action_id == spec["action"] else a for a in w.actions))
     raise ValueError(f"unknown variant {kind!r}")
+
+
+def _restated_budget(b: Any, token: str, **changes: Any) -> Any:
+    """A budget as a newer owner statement gives it: it cites that newer (synthetic) ledger record, since a world never
+    edits an owner's budget statement in place.  A changed usage is restated with it."""
+    b = dataclasses.replace(b, authority=fx.synthetic(f"ledger/{token}"), **changes)
+    if b.compute_used is not None:
+        b = dataclasses.replace(b, compute_spent=(b.compute_used.wall_seconds, b.compute_used.function_evaluations))
+    return b
 
 
 def _restated(v: Any, token: str, **changes: Any) -> Any:
@@ -360,7 +370,8 @@ def _applicability_cases(world_name, w, spec, assign, observe):
                 value = hi + 0.1 * (hi - lo) + 1.0
                 yield _case(world_name, {"kind": "value", "variable": name, "value": _enc(Quantity(value, unit)),
                                          "half": 0.5}, spec.action_id, assign, observe,
-                            [_m("APPLICABILITY_OUTSIDE", name, {"model_lower": lo, "model_upper": hi, "value": value})])
+                            [_m("APPLICABILITY_OUTSIDE_INTERVAL", name, {"model_lower": lo, "model_upper": hi,
+                                                                          "value": value, "half": 0.5})])
 
 
 def _precondition_cases(world_name, w, spec, assign, observe):

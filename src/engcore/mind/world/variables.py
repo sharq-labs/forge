@@ -29,7 +29,7 @@ from engcore.scientific.results.uncertainty import UncertaintyKind
 from engcore.scientific.semantics import QuantitySemantics
 
 from .base import (
-    RecordKind, RecordRef, WorldRefused, expect_schema, is_value, names, schema, text, unit, value_from, value_key,
+    RecordKind, RecordRef, WorldRefused, converts, expect_schema, is_value, names, schema, text, unit, value_from,
     value_payload,
 )
 from .domains import DiscreteLevels, domain_from, domain_identity, domain_problem, membership
@@ -170,7 +170,7 @@ class WorldVariable:
         if self.quantity is not None:
             if not isinstance(self.quantity, QuantitySemantics):
                 raise WorldRefused(f"{d.name!r}: quantity must be a QuantitySemantics declaration or None")
-            if not Quantity(1.0, self.quantity.unit).is_compatible_with(u):
+            if not converts(Quantity(1.0, self.quantity.unit), u):
                 raise WorldRefused(f"{d.name!r}: declared quantity {self.quantity.meaning_id!r} is in "
                                    f"{self.quantity.unit!r}, not compatible with {u!r}")
         if self.domain is not None:
@@ -187,8 +187,8 @@ class WorldVariable:
             return
         if not is_value(self.value):
             raise WorldRefused(f"{d.name!r}: a value is a typed scientific value, not {type(self.value).__name__}")
-        if isinstance(self.value, Quantity) and not self.value.is_compatible_with(u):
-            raise WorldRefused(f"{d.name!r}: value {self.value} is not compatible with {u!r}")
+        if isinstance(self.value, Quantity) and not converts(self.value, u):
+            raise WorldRefused(f"{d.name!r}: the unit owner does not convert value {self.value} into {u!r}")
         try:
             object.__setattr__(self, "origin", ValueOrigin(self.origin))
         except ValueError:
@@ -223,15 +223,17 @@ class WorldVariable:
             raise WorldRefused(f"{d.name!r}: a quantified uncertainty needs a quantity value; an absent or "
                                "non-quantity value has UNKNOWN uncertainty")
         try:
-            for part in (self.uncertainty.standard_uncertainty, self.uncertainty.lower, self.uncertainty.upper):
-                if part is not None and not part.is_compatible_with(u):
-                    raise WorldRefused(f"{d.name!r}: uncertainty {part} is not compatible with {u!r}")
+            spread = self.uncertainty.standard_uncertainty            # a spread: a difference, never a point
+            if spread is not None and not spread.is_compatible_with(u):
+                raise WorldRefused(f"{d.name!r}: uncertainty {spread} is not compatible with {u!r}")
+            for edge in (self.uncertainty.lower, self.uncertainty.upper):   # interval edges are points of the value
+                if edge is not None and not converts(edge, u):
+                    raise WorldRefused(f"{d.name!r}: the unit owner does not convert interval edge {edge} into {u!r}")
         except ScientificCoreError as exc:
             raise WorldRefused(f"{d.name!r}: {exc}") from None
         if self.uncertainty.kind is UncertaintyKind.INTERVAL:
-            from .base import magnitude_key
-            if not (magnitude_key(self.uncertainty.lower) <= magnitude_key(self.value)
-                    <= magnitude_key(self.uncertainty.upper)):
+            lo, x, hi = (q.magnitude_in(u) for q in (self.uncertainty.lower, self.value, self.uncertainty.upper))
+            if not lo <= x <= hi:
                 raise WorldRefused(f"{d.name!r}: the uncertainty interval does not contain its value")
 
     # ---- views ------------------------------------------------------------------------------------------------------
@@ -267,11 +269,12 @@ class WorldVariable:
 
     # ---- serialization ------------------------------------------------------------------------------------------------
     def identity(self) -> dict[str, Any]:
-        """Identity payload: everything but the human label; magnitudes canonical in base units."""
+        """Identity payload: everything but the human label, as the raw owner payloads (a value in another
+        spelling is another identity: identity must distinguish whatever a check or an execution can see)."""
         return {"name": self.name, "unit": self.unit, "temporal": self.temporal.value,
                 "quantity": None if self.quantity is None else self.quantity.to_dict(),
                 "domain": None if self.domain is None else domain_identity(self.domain),
-                "value": None if self.value is None else value_key(self.value),
+                "value": None if self.value is None else value_payload(self.value),
                 "origin": None if self.origin is None else self.origin.value,
                 "source": None if self.source is None else self.source.to_dict(), "value_basis": self.value_basis,
                 "uncertainty": self.uncertainty.to_dict()}

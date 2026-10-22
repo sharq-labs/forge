@@ -1,4 +1,4 @@
-"""The independent truth oracle for the feasibility benchmark (never imports ``engcore.mind.world``).
+"""The expected-outcome oracle for the feasibility benchmark (never imports ``engcore.mind.world``).
 
 A case is a declared mutation of a FEASIBLE-by-construction base proposal.  Its expected outcome is derived here
 from the mutation kind and the recorded construction facts, by the rules the GEN2-BR1 brief states:
@@ -14,6 +14,9 @@ from the mutation kind and the recorded construction facts, by the rules the GEN
   INFEASIBLE_BUDGET (13 I), a model execution outside its model's validity domain is INFEASIBLE_APPLICABILITY
   (section 9), a violated state precondition is INFEASIBLE_STATE, a violated protocol constraint INFEASIBLE_PROTOCOL
   (13 J);
+* a model input known only as an interval lying wholly outside the model's validity range is
+  INFEASIBLE_APPLICABILITY under the world's own interval code (each edge is judged by the core; the interval rule
+  is the world's, so it never carries the core's status code) -- amendment of round 2, disclosed in the README;
 * anything absent or undecidable (an undeclared name or action, a control without a value, an observation list never
   given, a budget dimension never declared, a precondition whose uncertainty is unknown) is MISSING_INFORMATION.
 
@@ -62,6 +65,7 @@ RULES: Mapping[str, tuple[str | None, str]] = {
     "BUDGET_EXHAUSTED": ("INFEASIBLE_BUDGET", "OVER_BUDGET"),
     "BUDGET_UNDECLARED": ("MISSING_INFORMATION", "BUDGET_DIMENSION_UNDECLARED"),
     "APPLICABILITY_OUTSIDE": ("INFEASIBLE_APPLICABILITY", "OUTSIDE_VALIDATED_DOMAIN"),
+    "APPLICABILITY_OUTSIDE_INTERVAL": ("INFEASIBLE_APPLICABILITY", "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"),
     "PRECONDITION_VIOLATED": ("INFEASIBLE_STATE", "PRECONDITION_VIOLATED"),
     "PRECONDITION_UNCERTAIN": ("MISSING_INFORMATION", "PRECONDITION_UNCERTAINTY_UNKNOWN"),
     "CONSTRAINT_VIOLATED": (None, "CONSTRAINT_VIOLATED"),
@@ -128,6 +132,10 @@ def audit(mutation: Mapping[str, Any]) -> list[str]:
             problems.append("the value is inside the model's validity range")
         if "control_lower" in f and not f["control_lower"] <= f["value"] <= f["control_upper"]:
             problems.append("the value is outside the control's own domain (that would be a domain case)")
+    elif kind == "APPLICABILITY_OUTSIDE_INTERVAL":
+        lower_edge, upper_edge = f["value"] - f["half"], f["value"] + f["half"]
+        if not (lower_edge > f["model_upper"] or upper_edge < f["model_lower"]):
+            problems.append("the input interval is not wholly outside the model's validity range")
     elif kind == "PRECONDITION_VIOLATED":
         if f["operator"] == "<=" and not f["lower_edge"] > f["bound"]:
             problems.append("the state interval does not lie wholly above the ceiling")

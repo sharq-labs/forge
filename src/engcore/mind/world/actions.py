@@ -25,8 +25,10 @@ LATENT / DERIVED           never an expected observable either
 
 A :class:`ProposedAction` is the brief's "ActionProposal" (renamed: ``sria.decision.ActionProposal`` already exists
 and means something else).  It is bound to one world revision, sets typed scientific values only, and names its
-proposer.  Every proposer meets the same check; a language-model proposal enters only as a certified
-``ExternalSuggestion`` (:func:`proposed_action_from_suggestion`).
+proposer.  Every proposer meets the same check.  A language-model proposal enters only as a certified
+``ExternalSuggestion`` (:func:`proposed_action_from_suggestion`) and carries that suggestion as its ``source``; the
+check re-derives the proposal from the source against its own world, so its provenance, revision and family are
+verified, never taken from the proposal.
 """
 
 from __future__ import annotations
@@ -40,13 +42,13 @@ from engcore.scientific import ConstraintDefinition, Quantity, ScientificParamet
 from engcore.scientific import VariableRole as StudyRole
 from engcore.scientific.ir.values import IntegerValue
 from engcore.sria.decision import ActionFamily
-from engcore.sria.decision.external import AUTHORITY_KEYS, ExternalSuggestion
+from engcore.sria.decision.external import AUTHORITY_KEYS, EXTERNAL_SUGGESTION_SCHEMA, ExternalSuggestion
 from engcore.sria.decision.hypotheses import ProposalProvenance, ProposerKind
 from engcore.system_runtime.request import ProviderBinding
 
 from .base import (
-    HEX64, WorldRefused, digest, expect_schema, magnitude_key, names, require_plain_value, require_value, schema, text,
-    value_from, value_key, value_payload,
+    HEX64, WorldRefused, converts, digest, expect_schema, names, require_plain_value, require_value, schema, text,
+    value_from, value_payload,
 )
 from .domains import (
     DeclaredConstraint, DiscreteLevels, Guard, contained, declared_source, domain_from, domain_identity, domain_problem,
@@ -155,7 +157,7 @@ def _costs(value: Any, action_id: str) -> tuple[tuple[str, Any], ...]:
         if dim in ("experiments", "solver_calls"):
             if type(amount) is not IntegerValue or amount.value < 0:
                 raise WorldRefused(f"action {action_id!r}: a {dim} cost is a non-negative IntegerValue")
-        elif not (isinstance(amount, Quantity) and amount.units == "dimensionless" and magnitude_key(amount) >= 0):
+        elif not (isinstance(amount, Quantity) and amount.units == "dimensionless" and amount.magnitude >= 0):
             raise WorldRefused(f"action {action_id!r}: a cost is a non-negative plain dimensionless quantity in the "
                                "budget's cost units (no percent or other scaled spelling)")
         out.append((dim, amount))
@@ -226,8 +228,7 @@ class ActionSpec:
         if self.estimated_cost and not str(self.cost_basis).strip():
             raise WorldRefused(f"action {aid!r}: a declared cost cites its basis")
         if self.estimated_duration is not None and not (
-                isinstance(self.estimated_duration, Quantity) and self.estimated_duration.is_compatible_with("second")
-                and magnitude_key(self.estimated_duration) >= 0):
+                converts(self.estimated_duration, "second") and self.estimated_duration.magnitude_in("second") >= 0):
             raise WorldRefused(f"action {aid!r}: estimated_duration is a non-negative time quantity")
         object.__setattr__(self, "applicability", names(self.applicability, f"action {aid!r} applicability"))
         if self.execution is ExecutionKind.MODEL_EXECUTION and not (reqs and self.applicability):
@@ -284,8 +285,9 @@ class ActionSpec:
             if var.role not in (VariableRole.FIXED_PROTOCOL_CONDITION, VariableRole.CONTROLLED_INPUT):
                 raise WorldRefused(f"action {aid!r}: {f.name!r} is a {var.role.value}; only a protocol condition or a "
                                    "controlled input is held fixed by an action")
-            if isinstance(f.value, Quantity) and not f.value.is_compatible_with(var.unit):
-                raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value} is not compatible with {var.unit!r}")
+            if isinstance(f.value, Quantity) and not converts(f.value, var.unit):
+                raise WorldRefused(f"action {aid!r}: the unit owner does not convert fixed {f.name!r} = {f.value} into "
+                                   f"{var.unit!r}")
             if var.domain is not None and membership(var.domain, f.value) is not None:
                 raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value!r} is outside its declared domain")
         for name in self.expected_observables:
@@ -299,8 +301,9 @@ class ActionSpec:
         for p in self.preconditions:
             if not world.declares(p.metric):
                 raise WorldRefused(f"action {aid!r}: precondition {p.name!r} reads undeclared {p.metric!r}")
-            if not p.bound.is_compatible_with(world.variable(p.metric).unit):
-                raise WorldRefused(f"action {aid!r}: precondition {p.name!r} bound is not compatible with {p.metric!r}")
+            if not converts(p.bound, world.variable(p.metric).unit):
+                raise WorldRefused(f"action {aid!r}: the unit owner does not convert precondition {p.name!r}'s bound "
+                                   f"into {p.metric!r}'s unit")
         for binding_id in self.applicability:
             if world.applicability_binding(binding_id) is None:
                 raise WorldRefused(f"action {aid!r}: applicability binding {binding_id!r} is not declared")
@@ -330,11 +333,11 @@ class ActionSpec:
         return {"action_id": self.action_id, "family": self.family.value, "mode": self.mode.value,
                 "execution": self.execution.value, "controls": [c.identity() for c in self.controls],
                 "preconditions": [p.to_dict() for p in self.preconditions],
-                "fixed_conditions": [[f.name, value_key(f.value)] for f in self.fixed_conditions],
+                "fixed_conditions": [[f.name, value_payload(f.value)] for f in self.fixed_conditions],
                 "expected_observables": list(self.expected_observables),
                 "provider_requirements": [r.to_dict() for r in self.provider_requirements],
-                "estimated_cost": [[d, value_key(a)] for d, a in self.estimated_cost],
-                "estimated_duration": None if self.estimated_duration is None else magnitude_key(self.estimated_duration),
+                "estimated_cost": [[d, value_payload(a)] for d, a in self.estimated_cost],
+                "estimated_duration": None if self.estimated_duration is None else self.estimated_duration.to_dict(),
                 "cost_basis": self.cost_basis, "applicability": list(self.applicability),
                 "declared_by": self.declared_by.value, "basis": self.basis}
 
@@ -381,6 +384,7 @@ class ProposedAction:
     observe: tuple[str, ...] = ()
     proposer: ProposalProvenance | None = None
     rationale: str = ""                                    # recorded for audit, never parsed, not identity
+    source: ExternalSuggestion | None = None               # the certified suggestion an external proposal came from
 
     def __post_init__(self) -> None:
         text(self.action_id, "proposal action_id")
@@ -395,9 +399,18 @@ class ProposedAction:
         object.__setattr__(self, "observe", names(self.observe, "observe targets"))
         if not isinstance(self.proposer, ProposalProvenance):
             raise WorldRefused("a proposal names its proposer (ProposalProvenance)")
-        if self.proposer.proposer_kind is ProposerKind.LANGUAGE_MODEL and not HEX64.match(self.proposer.proposal_digest):
-            raise WorldRefused("a language-model proposal enters only as an ExternalSuggestion; its provenance cites "
-                               "the suggestion digest")
+        if self.source is None:
+            if self.proposer.proposer_kind is ProposerKind.LANGUAGE_MODEL:
+                raise WorldRefused("a language-model proposal enters only as an ExternalSuggestion, which it carries as "
+                                   "its source")
+        else:
+            src = self.source
+            if type(src) is not ExternalSuggestion:
+                raise WorldRefused("a proposal's source is exactly a certified ExternalSuggestion")
+            if (self.proposer.proposer_kind is not src.engine_kind or self.proposer.proposal_digest != src.digest
+                    or self.proposer.proposer_id != f"{src.engine_id}@{src.engine_version}"
+                    or self.action_id != src.target_ref):
+                raise WorldRefused("a proposal's provenance and action are its source suggestion's, exactly")
         if not isinstance(self.rationale, str):
             raise WorldRefused("rationale is text")
 
@@ -421,7 +434,8 @@ class ProposedAction:
     def to_dict(self) -> dict[str, Any]:
         return {"schema": PROPOSAL_SCHEMA, "action_id": self.action_id, "world_revision": self.world_revision,
                 "assignments": [{"variable": n, "value": value_payload(v)} for n, v in self.assignments],
-                "observe": list(self.observe), "proposer": self.proposer.to_dict(), "rationale": self.rationale}
+                "observe": list(self.observe), "proposer": self.proposer.to_dict(), "rationale": self.rationale,
+                "source": None if self.source is None else self.source.to_dict()}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ProposedAction":
@@ -429,7 +443,17 @@ class ProposedAction:
         return cls(payload["action_id"], payload["world_revision"],
                    tuple((a["variable"], value_from(a["value"])) for a in payload["assignments"]),
                    tuple(payload["observe"]), ProposalProvenance.from_dict(payload["proposer"]),
-                   payload.get("rationale", ""))
+                   payload.get("rationale", ""),
+                   None if payload.get("source") is None else suggestion_from_dict(payload["source"]))
+
+
+def suggestion_from_dict(payload: Mapping[str, Any]) -> ExternalSuggestion:
+    """Rebuild a stored certified ``ExternalSuggestion`` (its own constructor re-applies the authority-key refusal)."""
+    if payload.get("schema") != EXTERNAL_SUGGESTION_SCHEMA:
+        raise WorldRefused(f"not an external suggestion record: {payload.get('schema')!r}")
+    return ExternalSuggestion(ProposerKind(payload["engine_kind"]), payload["engine_id"], payload["engine_version"],
+                              ActionFamily(payload["family"]), payload["target_ref"], payload["point"],
+                              payload["rationale"], payload.get("acquisition_value"), payload.get("extra", {}))
 
 
 # ---- external intake ------------------------------------------------------------------------------------------------------
@@ -481,19 +505,21 @@ def _forbidden_key(node: Any, path: str) -> str | None:
     return None
 
 
-def proposed_action_from_suggestion(suggestion: ExternalSuggestion, *,
-                                    world_revision: str) -> ProposedAction | IntakeRefusal:
+def proposed_action_from_suggestion(suggestion: ExternalSuggestion, *, world: Any) -> ProposedAction | IntakeRefusal:
     """The one intake for external proposers (a language model, a search engine): a certified ExternalSuggestion.
 
     The suggestion already refused the certified authority keys at any depth.  Here its ``point`` must be exactly
-    ``{"assignments": [{"variable": name, "value": <schema-tagged typed value>}, ...], "observe": [names]}`` and its
-    ``extra`` must name the world revision it was made for (``{"world_revision": <64-hex>}``); a bare number, an untyped
-    string, an unknown key, a feasibility/budget/domain/belief assertion or another revision is refused with a
-    structured code.  Its acquisition value is never read.  ``target_ref`` names the action.  (Not the certified
-    ``sria.decision.external.proposal_from_suggestion``, which builds an ``ActionProposal``.)"""
+    ``{"assignments": [{"variable": name, "value": <schema-tagged typed value>}, ...], "observe": [names]}``, its
+    ``extra`` exactly ``{"world_revision": <64-hex>}`` naming the revision of ``world`` it was made for, and its family
+    the declared action's family.  A bare number, an untyped string, an unknown key, a feasibility/budget/domain/belief
+    assertion, another revision or another family is refused with a structured code.  Its acquisition value is never
+    read.  ``target_ref`` names the action.  The proposal carries the suggestion as its ``source``, and the check
+    re-runs this intake against its own world.  (Not the certified ``sria.decision.external.proposal_from_suggestion``,
+    which builds an ``ActionProposal``.)"""
     if not isinstance(suggestion, ExternalSuggestion):
         raise TypeError("only an ExternalSuggestion is an external proposal")
     sdig = suggestion.digest
+    world_revision = world.revision_id
 
     def refuse(code: IntakeCode, subject: str, message: str) -> IntakeRefusal:
         return IntakeRefusal(code, subject, message, sdig)
@@ -502,6 +528,10 @@ def proposed_action_from_suggestion(suggestion: ExternalSuggestion, *,
         found = _forbidden_key(node, where)
         if found:
             return refuse(IntakeCode.AUTHORITY_KEY, found, "a proposer has no authority over this key")
+    unknown_extra = sorted(set(suggestion.extra) - {"world_revision"})
+    if unknown_extra:
+        return refuse(IntakeCode.UNKNOWN_KEY, ",".join(f"extra.{k}" for k in unknown_extra),
+                      "a suggestion's extra is exactly {world_revision}; nothing else in it is read")
     made_for = dict(suggestion.extra).get("world_revision")
     if not isinstance(made_for, str) or not HEX64.match(made_for):
         return refuse(IntakeCode.MALFORMED, "extra.world_revision", "a suggestion names the world revision it was made for")
@@ -528,11 +558,15 @@ def proposed_action_from_suggestion(suggestion: ExternalSuggestion, *,
             pairs.append((item["variable"], value_from(encoded)))
         except Exception as exc:  # noqa: BLE001 - any decode failure is a refusal, never a guess
             return refuse(IntakeCode.NOT_A_TYPED_VALUE, str(item["variable"]), str(exc))
+    spec = world.action(suggestion.target_ref)
+    if spec is not None and spec.family is not suggestion.family:
+        return refuse(IntakeCode.FAMILY_MISMATCH, suggestion.target_ref,
+                      f"the suggestion is labelled {suggestion.family.value}, the declared action is {spec.family.value}")
     provenance = ProposalProvenance(suggestion.engine_kind, f"{suggestion.engine_id}@{suggestion.engine_version}",
                                     proposal_digest=sdig)
     try:
         return ProposedAction(suggestion.target_ref, world_revision, tuple(pairs), tuple(point.get("observe", ())),
-                              provenance, suggestion.rationale)
+                              provenance, suggestion.rationale, suggestion)
     except WorldRefused as exc:
         return refuse(IntakeCode.MALFORMED, "proposal", str(exc))
 
@@ -540,5 +574,5 @@ def proposed_action_from_suggestion(suggestion: ExternalSuggestion, *,
 __all__ = [
     "ActionMode", "ActionSpec", "COST_DIMENSIONS", "ControlSpec", "ExecutionKind", "FORBIDDEN_PROPOSAL_KEYS",
     "GEN1_FORBIDDEN_KEYS", "IntakeCode", "IntakeRefusal", "ProposedAction", "SUGGESTION_POINT_KEYS",
-    "proposed_action_from_suggestion",
+    "proposed_action_from_suggestion", "suggestion_from_dict",
 ]

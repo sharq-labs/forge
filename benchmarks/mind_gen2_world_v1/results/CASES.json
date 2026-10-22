@@ -10308,21 +10308,22 @@
     }
    ],
    "audit": [],
-   "case_id": "drone/value:wind/simulate_flight/APPLICABILITY_OUTSIDE:wind=14.2",
+   "case_id": "drone/value:wind/simulate_flight/APPLICABILITY_OUTSIDE_INTERVAL:wind=14.2",
    "expected": {
     "codes": [
-     "OUTSIDE_VALIDATED_DOMAIN"
+     "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"
     ],
     "status": "INFEASIBLE_APPLICABILITY"
    },
    "mutations": [
     {
      "facts": {
+      "half": 0.5,
       "model_lower": 0.0,
       "model_upper": 12.0,
       "value": 14.2
      },
-     "kind": "APPLICABILITY_OUTSIDE",
+     "kind": "APPLICABILITY_OUTSIDE_INTERVAL",
      "subject": "wind"
     }
    ],
@@ -18788,21 +18789,22 @@
     }
    ],
    "audit": [],
-   "case_id": "hvac_field/value:T_out/simulate_building/APPLICABILITY_OUTSIDE:T_out=46.0",
+   "case_id": "hvac_field/value:T_out/simulate_building/APPLICABILITY_OUTSIDE_INTERVAL:T_out=46.0",
    "expected": {
     "codes": [
-     "OUTSIDE_VALIDATED_DOMAIN"
+     "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"
     ],
     "status": "INFEASIBLE_APPLICABILITY"
    },
    "mutations": [
     {
      "facts": {
+      "half": 0.5,
       "model_lower": -10.0,
       "model_upper": 40.0,
       "value": 46.0
      },
-     "kind": "APPLICABILITY_OUTSIDE",
+     "kind": "APPLICABILITY_OUTSIDE_INTERVAL",
      "subject": "T_out"
     }
    ],
@@ -23037,8 +23039,8 @@
  "count": 515,
  "schema": "forge.mind.gen2_world.cases/1",
  "sources": {
-  "cases.py": "fa509a3c1ae9016195828bf2dc6c40703a2b7d960af9bd1d05a6f5fc0792396e",
-  "fixtures.py": "575c95d194c8a4a6c60acd8cd556013e3df1afd92c55acbddbd25fb7ff017f37",
-  "oracle.py": "90ea41a91fb8d6371aff43f4ec951ba38cc65ad4c04fafdb67e1cd3b37d48fee"
+  "cases.py": "d8badffd6df743910fbb52ce35dbd83d51cf9274543f022710fa8dfaefcc3496",
+  "fixtures.py": "eed547e97c55bc1c47290654c4d641cba1df603683fd9a03e6d1cd8f6d47f01e",
+  "oracle.py": "8d6417eae95e20fe485079aceabc7460453ce04317ec209b17a7ddaf301a09ce"
  }
 }

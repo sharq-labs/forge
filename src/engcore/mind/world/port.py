@@ -1,13 +1,15 @@
 """The Mind-facing port: READ the world, READ the action space, PROPOSE.  Nothing here executes anything.
 
-Flow: Mind -> ProposedAction -> FeasibleActionSpace.check -> ClearedAction -> ExecutionGate -> existing executor.
+Flow: Mind -> ProposedAction -> FeasibleActionSpace.check -> ClearedAction (an admitted-action record) -> the
+existing execution system, which BR1 does not wire (that step, and every authority it needs, is the execution owner's).
 
 The Mind holds a :class:`MindWorldPort`.  The port holds its own detached copy of the world and its action space
-(rebuilt from the payload, so it shares no object with an execution gate) and a journal; it holds no executor, no
-provider, no gate and imports none, so it cannot reach one.  The gate (:mod:`.gate`) is held by the execution owner.
+(rebuilt from the payload, so it shares no object with anyone else's) and a journal; it holds no executor and no
+provider and imports none, so it cannot reach one.
 
 A language-model proposal is accepted only through :meth:`MindWorldPort.propose_suggestion` (a certified
-``ExternalSuggestion``); :meth:`MindWorldPort.propose` refuses one that claims that provenance.
+``ExternalSuggestion``); :meth:`MindWorldPort.propose` refuses one that claims that provenance.  The rule does not
+depend on the port: a proposal carrying a suggestion is re-derived from it by the check itself.
 """
 
 from __future__ import annotations
@@ -15,7 +17,7 @@ from __future__ import annotations
 from engcore.sria.decision.external import ExternalSuggestion
 from engcore.sria.decision.hypotheses import ProposerKind
 
-from .actions import IntakeCode, IntakeRefusal, ProposedAction, proposed_action_from_suggestion
+from .actions import IntakeRefusal, ProposedAction, proposed_action_from_suggestion
 from .base import WorldRefused
 from .feasibility import FeasibilityDecision, FeasibleActionSpace
 from .world import ScientificWorld
@@ -58,13 +60,7 @@ class MindWorldPort:
 
     def propose_suggestion(self, suggestion: ExternalSuggestion) -> FeasibilityDecision | IntakeRefusal:
         """An external proposer's suggestion: refused with a structured code at intake, or checked like any other."""
-        result = proposed_action_from_suggestion(suggestion, world_revision=self._space.world.revision_id)
-        if not isinstance(result, IntakeRefusal):
-            spec = self._space.world.action(result.action_id)
-            if spec is not None and spec.family is not suggestion.family:
-                result = IntakeRefusal(IntakeCode.FAMILY_MISMATCH, result.action_id,
-                                       f"the suggestion is labelled {suggestion.family.value}, the declared action is "
-                                       f"{spec.family.value}", suggestion.digest)
+        result = proposed_action_from_suggestion(suggestion, world=self._space.world)
         if isinstance(result, IntakeRefusal):
             self._journal.append(("suggestion", suggestion.digest, result.code.value))
             return result

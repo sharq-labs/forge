@@ -9,10 +9,14 @@ Membership is decided per kind.  A range (continuous, or integer wrapped as a qu
 decided by its owner, ``ScientificVariable.require_within_bounds``: inclusive, unit-converted, never clamped.  The kind
 rules the owner leaves to its consumers (an integer is an ``IntegerValue``, a category is one of the declared
 categories, a boolean has no bounds; ``tests/test_core_semantic_invariants.py`` records that a second consumer
-inherits no refusal) are applied here, with the design layer's dimensionless test (``dimensionality``).  Only
-:class:`DiscreteLevels`, which has no owner, uses identity precision in the base unit (see :mod:`.base`), so a
-spelling of a level is that level.  Nothing is ever clamped, rounded to a level or projected: a value is a member or
-it is refused with the reason.
+inherits no refusal) are applied here, with the design layer's dimensionless test (``dimensionality``).  An integer,
+categorical or boolean domain is stated in its variable's own unit, so an integer means the same count to the check
+and to whoever executes it.  Only :class:`DiscreteLevels`, which has no owner, compares at comparison precision in the
+base unit (see :mod:`.base`), so a spelling of a level matches that level.  Compatibility is always the unit owner's
+conversion (:func:`.base.converts`), never a shared dimension: a temperature difference is not a temperature.
+
+Identity is the raw owner payload (``to_dict``): two domains that any check could tell apart are two identities.
+Nothing is ever clamped, rounded to a level or projected: a value is a member or it is refused with the reason.
 """
 
 from __future__ import annotations
@@ -23,14 +27,14 @@ from typing import Any, Mapping
 from engcore.design.grammar import ConstraintStatus
 from engcore.mind.repsem.roles import RoleSource
 from engcore.scientific import (
-    ConstraintDefinition, Quantity, ScientificCoreError, ScientificVariable, VariableKind, dimensionality,
+    ConstraintDefinition, ConstraintOperator, Quantity, ScientificCoreError, ScientificVariable, VariableKind,
+    dimensionality,
 )
 from engcore.scientific.ir.values import BooleanValue, CategoricalValue, IntegerValue
-from engcore.scientific.units.quantity import base_unit
 
 from .base import (
-    WorldRefused, expect_schema, magnitude_key, names, require_value, same_value, schema, text, unit, value_from,
-    value_key, value_payload,
+    WorldRefused, converts, expect_schema, magnitude_key, names, require_value, same_value, schema, text, unit,
+    value_from, value_key, value_payload,
 )
 
 LEVELS_SCHEMA = schema("discrete_levels")
@@ -55,8 +59,8 @@ class DiscreteLevels:
         if not levels:
             raise WorldRefused("a discrete domain declares at least one level")
         for level in levels:
-            if not isinstance(level, Quantity) or not level.is_compatible_with(u):
-                raise WorldRefused(f"level {level!r} is not a quantity in a unit compatible with {u!r}")
+            if not converts(level, u):
+                raise WorldRefused(f"level {level!r} is not a quantity the unit owner converts into {u!r}")
         keys = [magnitude_key(level) for level in levels]
         if len(set(keys)) != len(keys):
             raise WorldRefused(f"discrete levels repeat a value: {keys}")
@@ -91,18 +95,23 @@ def domain_problem(domain: Any, name: str, declared_unit: str) -> str | None:
     """Why ``domain`` cannot serve variable ``name`` declared in ``declared_unit``, or None.
 
     Applies the design-layer searchability rules (a range states both bounds; an integer range is dimensionless with
-    integer-valued bounds; a category or a boolean is dimensionless and unbounded)."""
+    integer-valued bounds; a category or a boolean is dimensionless and unbounded).  A range or level set must be
+    convertible into the variable's unit by the unit owner; an integer, categorical or boolean domain is stated in
+    exactly the variable's unit (a count in percent and the same count in dimensionless are different numbers)."""
     if isinstance(domain, DiscreteLevels):
-        if not Quantity(1.0, domain.unit).is_compatible_with(declared_unit):
-            return f"discrete levels in {domain.unit!r} are not compatible with the variable unit {declared_unit!r}"
+        if not converts(Quantity(1.0, domain.unit), declared_unit):
+            return f"discrete levels in {domain.unit!r} do not convert into the variable unit {declared_unit!r}"
         return None
     if not isinstance(domain, ScientificVariable):
         return f"a domain is a ScientificVariable or DiscreteLevels, not {type(domain).__name__}"
     if domain.name != name:
         return f"the domain is declared for {domain.name!r}, not {name!r}"
-    if not Quantity(1.0, domain.unit).is_compatible_with(declared_unit):
-        return f"domain unit {domain.unit!r} is not compatible with the variable unit {declared_unit!r}"
+    if not converts(Quantity(1.0, domain.unit), declared_unit):
+        return f"domain unit {domain.unit!r} does not convert into the variable unit {declared_unit!r}"
     kind = domain.kind
+    if kind is not VariableKind.CONTINUOUS and unit(domain.unit, "domain unit") != unit(declared_unit, "variable unit"):
+        return (f"a {kind.value} domain is stated in its variable's own unit {declared_unit!r}, not {domain.unit!r} "
+                "(its values are not converted)")
     if kind in (VariableKind.CATEGORICAL, VariableKind.BOOLEAN):
         if dimensionality(domain.unit) != DIMENSIONLESS or domain.lower is not None or domain.upper is not None:
             return f"a {kind.value} domain is dimensionless and unbounded"
@@ -127,8 +136,8 @@ def membership(domain: Domain, value: Any) -> tuple[str, str, dict[str, Any]] | 
     if isinstance(domain, DiscreteLevels):
         if not isinstance(value, Quantity):
             return "VALUE_KIND_MISMATCH", f"expected a quantity in {domain.unit!r}", {"proposed": shown}
-        if not value.is_compatible_with(domain.unit):
-            return ("UNIT_INCOMPATIBLE", f"{value} is not compatible with {domain.unit!r}",
+        if not converts(value, domain.unit):
+            return ("UNIT_INCOMPATIBLE", f"the unit owner does not convert {value} into {domain.unit!r}",
                     {"proposed": shown, "expected_unit": domain.unit})
         key = magnitude_key(value)
         if key in domain.keys():
@@ -139,14 +148,18 @@ def membership(domain: Domain, value: Any) -> tuple[str, str, dict[str, Any]] | 
     if kind is VariableKind.CONTINUOUS:
         if not isinstance(value, Quantity):
             return "VALUE_KIND_MISMATCH", f"expected a quantity in {domain.unit!r}", {"proposed": shown}
-        if not value.is_compatible_with(domain.unit):
-            return ("UNIT_INCOMPATIBLE", f"{value} is not compatible with {domain.unit!r}",
+        if not converts(value, domain.unit):
+            return ("UNIT_INCOMPATIBLE", f"the unit owner does not convert {value} into {domain.unit!r}",
                     {"proposed": shown, "expected_unit": domain.unit})
         return _owner_bounds(domain, value, shown)
     if kind is VariableKind.INTEGER:
         if type(value) is not IntegerValue:
             return "VALUE_KIND_MISMATCH", "expected an IntegerValue", {"proposed": shown}
-        return _owner_bounds(domain, Quantity(value.value, domain.unit), shown)   # as DesignSpace wraps an integer
+        try:
+            wrapped = Quantity(value.value, domain.unit)   # as DesignSpace wraps an integer, in the variable's unit
+        except (OverflowError, ScientificCoreError) as exc:
+            return "OUTSIDE_RANGE", f"{value.value} is not representable as a magnitude: {exc}", {"proposed": shown}
+        return _owner_bounds(domain, wrapped, shown)
     if kind is VariableKind.CATEGORICAL:
         if type(value) is not CategoricalValue:
             return "VALUE_KIND_MISMATCH", "expected a CategoricalValue", {"proposed": shown}
@@ -177,6 +190,8 @@ def contained(inner: Domain, outer: Domain) -> bool:
         return all(membership(outer, level) is None for level in inner.levels)
     if isinstance(outer, DiscreteLevels) or inner.kind is not outer.kind:
         return False
+    if inner.kind is not VariableKind.CONTINUOUS and unit(inner.unit, "inner unit") != unit(outer.unit, "outer unit"):
+        return False                               # an integer is never reinterpreted across units
     if inner.kind is VariableKind.CONTINUOUS:
         return membership(outer, inner.lower) is None and membership(outer, inner.upper) is None
     if inner.kind is VariableKind.INTEGER:
@@ -204,12 +219,28 @@ def finite_members(domain: Domain, limit: int = 1000) -> tuple[Any, ...]:
 
 
 def domain_identity(domain: Domain) -> dict[str, Any]:
-    """Identity payload of a domain (canonical base-unit magnitudes; the study-axis role is not identity)."""
-    if isinstance(domain, DiscreteLevels):
-        return {"kind": "discrete", "base_unit": base_unit(domain.unit), "levels": list(domain.keys())}
-    return {"kind": domain.kind.value, "base_unit": base_unit(domain.unit), "categories": sorted(domain.categories),
-            "lower": None if domain.lower is None else magnitude_key(domain.lower),
-            "upper": None if domain.upper is None else magnitude_key(domain.upper)}
+    """Identity payload of a domain: the owner record's own payload, raw (declared unit, raw magnitudes, declared
+    order).  The owner decides membership on raw values, so identity must distinguish whatever it can."""
+    return domain.to_dict()
+
+
+def edges_in_domain(domain: Domain, edges: tuple[Any, ...]) -> str:
+    """'inside', 'outside' or 'undecided' for a value known only by its edges (one edge: an exact value).
+
+    Sound for every domain kind: a range is decided side by side (an interval wholly beyond one bound is outside;
+    edges on both sides, or one inside, are undecided); a finite domain is never shown to contain a value known only
+    as an interval, because points between its members are not members."""
+    verdicts = [membership(domain, e) is None for e in edges]
+    if len(edges) == 1:
+        return "inside" if verdicts[0] else "outside"
+    if isinstance(domain, ScientificVariable) and domain.kind is VariableKind.CONTINUOUS:
+        if all(verdicts):
+            return "inside"                                 # an interval of a convex set lies in it
+        if any(verdicts) or not all(converts(e, domain.unit) for e in edges):
+            return "undecided"
+        below = [e.magnitude_in(domain.unit) < domain.lower.magnitude_in(domain.unit) for e in edges]
+        return "outside" if all(below) or not any(below) else "undecided"
+    return "undecided"
 
 
 def domain_payload(domain: Domain) -> dict[str, Any]:
@@ -328,24 +359,27 @@ class DeclaredConstraint:
 def check_at_edges(constraint: ConstraintDefinition, edges: tuple[Quantity, ...]) -> tuple[ConstraintStatus, dict[str, Any]]:
     """Evaluate a constraint at every edge of a value, in the design layer's three-valued vocabulary.
 
-    SATISFIED only if every edge satisfies it, VIOLATED only if every edge violates it; otherwise UNKNOWN, with
-    ``why`` 'undecided' (the edges disagree) or 'unresolvable' (a dimension error).  An exact value has one edge.
-    Uncertainty can only make an answer less decided, never more."""
+    SATISFIED only if every edge satisfies it; VIOLATED only if every edge violates it on the same side (for a one-sided
+    operator every violation is on its one side; an EQUAL band can be missed above and below while an interior point
+    meets it); otherwise UNKNOWN, with ``why`` 'undecided' (the edges disagree) or 'unresolvable' (a dimension or
+    conversion error).  An exact value has one edge.  Uncertainty can only make an answer less decided, never more."""
     results = []
     try:
         for edge in edges:
             results.append(constraint.check(edge))
+        sides = {edge.to(constraint.bound.units).magnitude > constraint.bound.magnitude for edge in edges}
     except ScientificCoreError as exc:
         return ConstraintStatus.UNKNOWN, {"why": "unresolvable", "error": str(exc)}
     detail: dict[str, Any] = {"checks": [r.to_dict() for r in results]}
     if all(r.satisfied for r in results):
         return ConstraintStatus.SATISFIED, detail
-    if not any(r.satisfied for r in results):
+    if not any(r.satisfied for r in results) and (constraint.operator is not ConstraintOperator.EQUAL or len(sides) == 1):
         return ConstraintStatus.VIOLATED, detail
     return ConstraintStatus.UNKNOWN, {**detail, "why": "undecided"}
 
 
 __all__ = [
     "ALL_ACTIONS", "DeclaredConstraint", "DiscreteLevels", "Domain", "Guard", "check_at_edges", "contained",
-    "declared_source", "domain_identity", "domain_kind", "domain_problem", "finite_members", "is_finite", "membership",
+    "declared_source", "domain_identity", "domain_kind", "domain_problem", "edges_in_domain", "finite_members",
+    "is_finite", "membership",
 ]

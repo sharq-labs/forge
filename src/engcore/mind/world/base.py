@@ -160,13 +160,29 @@ def value_from(payload: Any) -> Any:
     return decode_value(payload)
 
 
+def converts(value: Any, target: str) -> bool:
+    """Whether the unit owner converts ``value`` into ``target`` (``Quantity.magnitude_in``).  Sharing a dimension is
+    not enough: a temperature difference and a temperature point are never interchangeable, in either direction."""
+    if not isinstance(value, Quantity):
+        return False
+    try:
+        value.magnitude_in(target)
+    except ScientificCoreError:
+        return False
+    return True
+
+
 def magnitude_key(value: Quantity) -> float:
-    """The identity magnitude of a quantity: canonical, in the base (ratio-scale) unit of its dimension."""
+    """A canonical magnitude in the base (ratio-scale) unit of the dimension, at 12 significant digits.
+
+    A comparison key for declared discrete levels and fixed-condition restatements only, applied after
+    :func:`converts` accepted the pair.  It is never identity: identity is the raw owner payload
+    (:func:`value_payload`), so two worlds that differ anywhere a decision or an execution can see differ in id."""
     return canonical_magnitude(value, base_unit(value.units))
 
 
 def value_key(value: Any) -> Any:
-    """The identity of a typed value: a canonical base-unit magnitude for a quantity, the token otherwise."""
+    """A comparison key of a typed value (see :func:`magnitude_key`), the token for a non-quantity.  Not identity."""
     if isinstance(value, Quantity):
         return {"magnitude": magnitude_key(value), "units": base_unit(value.units)}
     if isinstance(value, IntegerValue):
@@ -179,16 +195,17 @@ def value_key(value: Any) -> Any:
 
 
 def same_value(a: Any, b: Any) -> bool:
-    """Equality at identity precision; dimensionally incompatible quantities are simply not equal."""
+    """Equality at comparison precision.  Quantities the unit owner will not convert into each other (another
+    dimension, or a difference against a point) are simply not equal."""
     if type(a) is not type(b):
         return False
-    if isinstance(a, Quantity) and not a.is_compatible_with(b.units):
+    if isinstance(a, Quantity) and not converts(a, b.units):
         return False
     return value_key(a) == value_key(b)
 
 
 __all__ = [
     "HEX64", "ProposalRefused", "RecordKind", "RecordRef", "SCHEMA_PREFIX", "SOFTWARE_VERSION", "StaleProposal",
-    "WorldRefused", "digest", "expect_schema", "is_value", "magnitude_key", "names", "require_plain_value",
+    "WorldRefused", "converts", "digest", "expect_schema", "is_value", "magnitude_key", "names", "require_plain_value",
     "require_value", "same_value", "schema", "text", "unit", "value_from", "value_key", "value_payload",
 ]

@@ -170,7 +170,7 @@ def test_j_a_current_valid_in_charge_mode_is_invalid_in_discharge_mode(battery):
 # ---- K. revisions ---------------------------------------------------------------------------------------------------------------
 def test_k_changed_budget_makes_a_new_revision_and_the_old_one_is_untouched(battery):
     before = canonical_bytes(battery.to_dict())
-    spent = fx.budget(20, 4, solver=(10, 4), ledger="battery")
+    spent = fx.budget(20, 4, solver=(10, 4), ledger="battery/2")
     child = battery.derive(reason="one experiment consumed", budget=spent)
     assert child.revision_id != battery.revision_id
     assert (child.lineage.parent, child.lineage.revision, child.lineage.changed_fields) == (battery.revision_id, 1, ("budget",))
@@ -291,7 +291,7 @@ def test_missing_information_is_never_feasible(battery):
 
 
 def test_a_proposal_for_another_revision_is_refused(battery):
-    child = battery.derive(reason="one experiment consumed", budget=fx.budget(20, 4, solver=(10, 4), ledger="battery"))
+    child = battery.derive(reason="one experiment consumed", budget=fx.budget(20, 4, solver=(10, 4), ledger="battery/2"))
     with pytest.raises(StaleProposal):
         FeasibleActionSpace.build(child).check(fx.propose(battery, "pulse", PULSE_OK))
 

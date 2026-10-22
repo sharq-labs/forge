@@ -158,7 +158,7 @@ def model_registry(w: ScientificWorld) -> ModelRegistry:
 
 
 def fresh(w: ScientificWorld, token: str) -> ScientificWorld:
-    """The same world under its own revision (one more synthetic reference), so a test owns its dispatch ledger."""
+    """The same world under its own revision (one more synthetic reference)."""
     return w.derive(reason=f"isolated for {token}", references=w.references + (synthetic(f"test/{token}"),))
 
 
@@ -191,7 +191,8 @@ def budget(experiments: int, spent: int, *, solver: tuple[int, int] | None = Non
     used = None if compute is None else ResourceUsage(wall_seconds=0.0 if wall is None else wall[1],
                                                       function_evaluations=0 if solver is None else solver[1])
     return WorldBudget(experiments=experiments, observations_spent=spent, compute=compute,
-                       compute_used=used, unbounded=unbounded, authority=synthetic(f"ledger/{ledger}"))
+                       compute_used=used, unbounded=unbounded, authority=synthetic(f"ledger/{ledger}"),
+                       compute_spent=None if used is None else (used.wall_seconds, used.function_evaluations))
 
 
 def world(world_id: str, variables: tuple[WorldVariable, ...], **kw: Any) -> ScientificWorld:
