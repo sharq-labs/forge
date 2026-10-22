@@ -6,6 +6,31 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task - GEN2-BR1.1 authority-bound ScientificWorld + non-bypassable admission (2026-10-22)
+
+Development repair of GEN2-BR1's AUTHORITY_DUPLICATION_BLOCKER on `research/mind-gen2-authority-binding-v1` (cloud
+worktree `/home/user/forge`, base `1202ea6c`, BR1's report commit). Local only: not pushed, not merged, not certified.
+Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`: INTACT). Report:
+`benchmarks/mind_gen2_authority_v1/README.md`; conclusion in its §12 and in `docs/work/PROGRESS.md`.
+
+The world is now a projection of FORGE's owners, verified against them at every admission and dispatch; admission
+decides on exactly what is executed. Independent review rounds run until 0 BLOCKER / 0 MAJOR; after BR1.1 closes or is
+precisely blocked: STOP.
+
+OWNER_DECISION_REQUIRED (BR1.1 does not decide these):
+- `src/engcore/sria/campaign/budget.py` gained read-only `BudgetLedger.digest` / `.revision` (CORE_CERTIFIED,
+  `assurance_admission`): hardened recertification is required before merge and was NOT RUN (OD-3 boundary).
+- A hard-enclosure uncertainty form or a core decision-coverage policy: without it no current value decides a
+  containment, so 9 of 21 BR1 base proposals are MISSING_INFORMATION (failed closed, nothing worked around).
+- A canonical protocol owner: protocol declarations stay caller-declared, held in force by the execution side.
+- Budget reservation and at-most-once execution at the execution owner (the desk reserves nothing).
+- A provider status loader (`ProviderStatus.from_dict`) on the providers owner.
+- Merge requires the changed-file gate's SCIENTIFIC tier for `src/engcore/mind/world` (classification
+  `scientific_shared`) and the FAST differential at the merge SHA.
+
+Do not start the Hypothesis Portfolio, the Search Tree, Attempt Memory, the Model Critic or causal reasoning. Do not
+install Ax, BoTorch, PySINDy or PySR, and do not run Battery v4. No push, merge or certification without the owner.
+
 ## Current bounded task - GEN2-BR1 ScientificWorld + Feasible ActionSpace v1 (2026-10-22)
 
 Development research on `research/mind-gen2-scientific-world-v1` (worktree `D:/forge-gen2-world`, local, base
@@ -19,8 +44,11 @@ STOPPED by the pre-committed stopping rule. The next step needs owner decisions,
 - a core coverage policy for interval uncertainty;
 - where admission verification lives.
 
-README section 6 lists the eight requirements. Do not start the Hypothesis Portfolio, the Search Tree or Attempt
-Memory. Do not install Ax, BoTorch, PySINDy or PySR, and do not run Battery v4. No push, merge or certification
+README section 6 lists the eight requirements. GEN2-BR1.1 (above) answers two of the four in code: the ledger digest
+(an additive read-only owner change, recertification pending) and the head-state view (the run record's own head,
+read through `RunStateReader`); admission verification lives in `engcore.mind.world.admission` behind the execution
+side's `ExecutionDesk`. The coverage policy stays an owner decision. Do not start the Hypothesis Portfolio, the Search
+Tree or Attempt Memory. Do not install Ax, BoTorch, PySINDy or PySR, and do not run Battery v4. No push, merge or certification
 without the owner.
 
 ## Current bounded task - BR-MIND-REPSEM-01 representation + semantic roles repair (2026-10-22)

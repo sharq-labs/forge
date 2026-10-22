@@ -8520,3 +8520,76 @@ TMPDIR on D:.
      passes are exactly the new tests. FAST is red on the base, so it is NOT green.
 
 The regression pack, SCIENTIFIC, `forge_check --changed` and certification were NOT RUN.
+
+## 2026-10-22 — GEN2-BR1.1: authority-bound ScientificWorld + non-bypassable admission (review loop)
+
+Branch `research/mind-gen2-authority-binding-v1` (cloud worktree `/home/user/forge`, base `1202ea6c`, BR1's report
+commit; review-fix worktrees `/home/user/forge-fix`, `/home/user/forge-fix2`, pristine base `/home/user/forge-base`).
+Local only: not pushed, not merged, not certified. Report: `benchmarks/mind_gen2_authority_v1/README.md`. Conclusion:
+README §12 (written when the review loop closes; this entry is updated then).
+
+**What changed.** `engcore.mind.world` became a verified projection of FORGE's owners (`authority.py`, `owners.py`,
+`declaration.py`, `projection.py`, `admission.py`), with non-bypassable admission and dispatch (`ExecutionDesk`,
+`AdmissionGateway`, `DispatchAuthorization`). One owner file changed: read-only `BudgetLedger.digest` / `.revision`
+(`src/engcore/sria/campaign/budget.py`, CORE_CERTIFIED: recertification NOT RUN, owner decision in the active plan).
+
+**Review rounds** (independent read-only lenses A scientific authority, B architecture, C adversarial bypass, D replay
+and stale state, E `forge-scientific-reviewer` from round 2; skeptic verification of every BLOCKER/MAJOR; a
+completeness critic):
+- round 1 at `5ee16c5`: BLOCKER C-F1/D-F1 (an in-place edited world admitted), MAJOR A-F1/A-F3, A-F2, A-F4/B2;
+  fixed in `36e4ac5`, `be781d5`, `5adf3e7`, `bc6980c`, `31cfa03`;
+- round 2 at `bc6980c`: lenses 0 BLOCKER / 0 MAJOR after skeptics; the critic's BLOCKER K-F1 (a restated fixed
+  condition decided on the restatement, dispatched at the fixed value); fixed in `1514560`, `991a4d3`, `a0378d4`,
+  `0a0890d`, `867a6a1`, `1a87f7c`;
+- round 3 at `1a87f7c`: BLOCKERs R3-A1 (= R3-B-01, R3-C-01, R3-D1, E3-F1: a level control decided on its spelling,
+  executed as the level), R3-A2 (absolute level tolerance at zero), K3-F1 (integers decided through floats); fixed in
+  `d113d30` (decide on exactly what is executed);
+- round 4: see the update below.
+
+**Failed approaches, recorded so they are not repeated:**
+- **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
+  containment). It is a world-made coverage policy at a caller-chosen level; a 1 %-coverage interval decided
+  FEASIBLE. Removed in round 1. Without an owner enclosure form or coverage policy, no current value decides.
+- **Trusting a world's cached content digest** in verification: an object edited in place kept its digest. Admission
+  now decides only on a rebuild from the payload and on the owners' fresh projection.
+- **A caller-asserted `live` flag** on readers: liveness is now derived from reader type and mode.
+- **Deciding on the proposal's spelling and executing something else** (twice: fixed conditions in round 2, level
+  controls and integers in round 3). Every family now decides on each value as it will be executed, and admission
+  mints exactly that.
+- **A 64-ulp level rule** (round 2): absolute at a zero level and a second comparison rule beside the unit owner's.
+  Levels use the unit owner's `canonical_magnitude` identity rule (BR1's original rule).
+- **Renaming the `relied_on_bound_values` annotation**: it broke BR1's committed `GEN1_REPRODUCTION.json`; reverted.
+- **Pre-fix tests run through the editable install**: the venv's editable install points at `/home/user/forge/src`,
+  so worktree runs need `PYTHONPATH=<worktree>/src:<worktree>` (and a test file copied into the worktree under test).
+
+**Commands** (venv `/home/user/.forge-venv`, Python 3.13.16, `PYTHONPATH=<checkout>/src:<checkout>`):
+1. `python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests
+   tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4` at `d113d30`: **483 passed** (includes the
+   expensive BR1-decision re-derivation, which also passed alone with `-m expensive` at `0a0890d`: 1 passed).
+2. Round-3 regression tests against the pre-fix tree `1a87f7c` (`/home/user/forge-fix2`, test file copied in): 20 of 21
+   failed, as intended.
+3. `python -m benchmarks.mind_gen2_authority_v1.rescore --check`: BR1_RESCORE MATCHES;
+   `python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`: AUTHORITY MATCHES (at `d113d30`).
+4. `python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`: GEN1_REFERENCE INTACT (at `d113d30`).
+5. FAST: `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rfE`.
+   - Pristine base `1202ea6c` (`/home/user/forge-base`): 94 failed, 5 errors, 12175 passed.
+   - `5ee16c5`: 93 failed, 5 errors, 12366 passed. `bc6980c`: 93 failed, 5 errors, 12407 passed. `1a87f7c`: 93 failed,
+     5 errors, 12445 passed.
+   - Failing ids compared with `comm` against the base: NEW 0 at every SHA; FIXED 1 at `5ee16c5` and `1a87f7c`
+     (`tests/foundations/test_discovery_deadline.py::test_timeout_covers_handshake_output_and_inherited_pipes[...]`, a
+     timing test, not touched by BR1.1). FAST is red on the base, so it is NOT green.
+6. Regression pack (the test list `python tools/forge_check.py --regression --dry-run` prints, run with pytest) at
+   `5ee16c5`: 279 passed.
+7. Guard suites `python -m pytest tests/mind tests/test_blind_challenge_guards.py tests/test_core_api_layering.py
+   tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_repository_architecture.py
+   tests/test_trust_boundary_*.py tests/test_sria_m5_campaign.py tests/test_sria_campaign_persistence_v03_adversarial.py
+   -q -n 4` at `bc6980c`: 1099 passed, 2 failed, both pre-existing on the base (`test_core_semantic_invariants::
+   test_every_reader_that_writes_a_schema_also_checks_one`, 7 unrelated classes; `test_core_guards::
+   test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against`, conduction1d_transient_fv).
+8. `python tools/forge_check.py --changed --base 1202ea6c... --dry-run` at `bc6980c`: narrowing refused (unclassified
+   benchmark files) → whole FAST + regression pack; `src/engcore/mind/world` is `scientific_shared` (SCIENTIFIC before
+   merge); `budget.py` and `tests/**` need recertification.
+9. Performance (`run_benchmark`, uncontended, at `d113d30` plus the harness's dispatch timing): README §8.
+
+SCIENTIFIC tier, hardened recertification and certification: NOT RUN. Run Observatory: not present in this tree (no
+observatory code on any local branch, no run ledger in this cloud session); not used, and nothing was merged for it.

@@ -30,7 +30,8 @@ from typing import Any
 from benchmarks.mind_gen2_world_v1 import cases as C, run_benchmark as br1_rb
 from engcore.mind.repsem import canonical_bytes
 from engcore.mind.world import (
-    AdmissionRecord, FeasibleActionSpace, ScientificWorld, WorldRefused, admit, replay_admission, verify_world,
+    AdmissionRecord, FeasibleActionSpace, ScientificWorld, WorldRefused, admit, authorize_dispatch, replay_admission,
+    verify_world,
 )
 from engcore.scientific import ScientificCoreError
 from engcore.sria.decision import ActionFamily
@@ -182,7 +183,7 @@ def _pct(samples: list[float], x: float) -> float:
 
 def performance(repeats: int = 25) -> dict[str, Any]:
     br1 = br1_rb.performance(C.load()["cases"], repeats=repeats)
-    projection, verify, admission, sizes = {}, [], [], {}
+    projection, verify, admission, sizes, check, dispatch = {}, [], [], {}, [], []
     for name in NAMES:
         o = owned(name)
         authorities = o.authorities()
@@ -201,8 +202,15 @@ def performance(repeats: int = 25) -> dict[str, Any]:
             verify.append((time.perf_counter() - t0) * 1e3)
             for p in prepared:
                 t0 = time.perf_counter()
-                admit(space, p, authorities)
+                space.check(p)
+                check.append((time.perf_counter() - t0) * 1e3)
+                t0 = time.perf_counter()
+                result = admit(space, p, authorities)
                 admission.append((time.perf_counter() - t0) * 1e3)
+                if result.admitted is not None:
+                    t0 = time.perf_counter()
+                    authorize_dispatch(result.admitted, authorities, accept_synthetic=True)
+                    dispatch.append((time.perf_counter() - t0) * 1e3)
     return {
         "schema": "forge.mind.gen2_authority.performance/1",
         "host": {"platform": platform.platform(), "python": platform.python_version(), "cpu_count": os.cpu_count()},
@@ -213,9 +221,11 @@ def performance(repeats: int = 25) -> dict[str, Any]:
         "PROJECTION_BUILD_MS_median_by_world": projection,
         "PROJECTION_BUILD_MS": round(statistics.median(projection.values()), 3),
         "AUTHORITY_VERIFY_P50_MS": _pct(verify, 0.5), "AUTHORITY_VERIFY_P95_MS": _pct(verify, 0.95),
+        "CHECK_ON_OWNED_WORLDS_P50_MS": _pct(check, 0.5), "CHECK_ON_OWNED_WORLDS_P95_MS": _pct(check, 0.95),
         "ADMISSION_P50_MS": _pct(admission, 0.5), "ADMISSION_P95_MS": _pct(admission, 0.95),
+        "DISPATCH_AUTHORIZATION_P50_MS": _pct(dispatch, 0.5), "DISPATCH_AUTHORIZATION_P95_MS": _pct(dispatch, 0.95),
         "SERIALIZED_OWNED_WORLD_BYTES": [min(sizes.values()), max(sizes.values())],
-        "samples": {"verify": len(verify), "admission": len(admission)},
+        "samples": {"verify": len(verify), "check": len(check), "admission": len(admission), "dispatch": len(dispatch)},
     }
 
 
