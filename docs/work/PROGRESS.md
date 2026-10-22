@@ -8277,3 +8277,7 @@ Commands, all run with `PYTHONPATH="D:/forge-repsem/src;D:/forge-repsem"` and th
      nested-exemption read-site test (fixed). See the commit message for the clean-tree recheck.
 
 The regression pack, SCIENTIFIC and certification were NOT RUN.
+
+Clean-tree recheck after commit cac1c584: test_the_tree_is_core_freeze_v1 and
+test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks: 2 passed. So FAST on this branch differs from
+base d516e681 only by tests added here (no new failure).
