@@ -1,0 +1,193 @@
+{
+ "answers": {
+  "CROSS_CELL_TRANSFER": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "IDENTIFIABILITY": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "MODEL_ADEQUACY": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "MODEL_DISCREPANCY": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "WITHIN_CELL_GENERALIZATION": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  }
+ },
+ "arm": "ALWAYS_FIT",
+ "problem_id": "P09",
+ "schema": "forge.battery_rediscovery_v2.arm_output/1",
+ "v1_record": {
+  "answers": {
+   "CROSS_CELL_TRANSFER": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "IDENTIFIABILITY": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "MODEL_ADEQUACY": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "MODEL_DISCREPANCY": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   }
+  },
+  "applicability": {
+   "checked": false
+  },
+  "arm": "ALWAYS_FIT",
+  "eliminated": [],
+  "fit": {
+   "calibration": {
+    "bias_mV": 40.03195590955827,
+    "lag1": 0.9832210038422208,
+    "mae_mV": 46.214478288053634,
+    "max_abs_mV": 121.8993841810927,
+    "p95_abs_mV": 94.29404195932366,
+    "rmse_mV": 59.24376202384337,
+    "samples": 2632
+   },
+   "converged_starts": 8,
+   "forward_hold_sse_ratio": 1.0002872753995262,
+   "ocv_knots_on_bound": 0,
+   "parameters": {
+    "C1": 1294.5480936635327,
+    "R0": 0.006800206149169096,
+    "R1": 0.03421458330757263,
+    "tau": 44.29242359631027
+   },
+   "per_parameter": {
+    "C1": {
+     "estimate": 1294.5480936635327,
+     "forward_hold_shift": 0.0005442265875188479,
+     "max_abs_corr": 0.7097866047169893,
+     "multistart_spread_ln": 3.7525772480506703e-06,
+     "on_bound": false,
+     "sd_ln": 1.6888461099466827
+    },
+    "R0": {
+     "estimate": 0.006800206149169096,
+     "forward_hold_shift": 0.0015771168162259652,
+     "max_abs_corr": 0.8405448510157555,
+     "multistart_spread_ln": 2.9999580917206004e-06,
+     "on_bound": false,
+     "sd_ln": 2.701544385227344
+    },
+    "R1": {
+     "estimate": 0.03421458330757263,
+     "forward_hold_shift": -0.0003631831426691434,
+     "max_abs_corr": 0.8405448510157555,
+     "multistart_spread_ln": 1.479919191638146e-07,
+     "on_bound": false,
+     "sd_ln": 0.5702055209068555
+    }
+   },
+   "rint_rmse_mV": 63.2542601569074,
+   "starts": [
+    {
+     "sse": 9.23785502755788,
+     "start": 0,
+     "status": 2,
+     "theta": [
+      -4.990802279201717,
+      -3.375103316851681,
+      7.165917040876454
+     ]
+    },
+    {
+     "sse": 9.237855027558108,
+     "start": 1,
+     "status": 2,
+     "theta": [
+      -4.990801882913966,
+      -3.375103336402607,
+      7.165917536574629
+     ]
+    },
+    {
+     "sse": 9.237855027558451,
+     "start": 2,
+     "status": 2,
+     "theta": [
+      -4.990801477027972,
+      -3.3751033564276223,
+      7.165918044275376
+     ]
+    },
+    {
+     "sse": 9.237855027558512,
+     "start": 3,
+     "status": 2,
+     "theta": [
+      -4.990804476986064,
+      -3.375103208435703,
+      7.165914291698128
+     ]
+    },
+    {
+     "sse": 9.237855027557847,
+     "start": 4,
+     "status": 2,
+     "theta": [
+      -4.9908023512053195,
+      -3.375103313299429,
+      7.165916950810101
+     ]
+    },
+    {
+     "sse": 9.237855027558268,
+     "start": 5,
+     "status": 2,
+     "theta": [
+      -4.9908016772317385,
+      -3.3751033465501887,
+      7.1659177938518
+     ]
+    },
+    {
+     "sse": 9.237855027557933,
+     "start": 6,
+     "status": 2,
+     "theta": [
+      -4.99080372995963,
+      -3.3751032452834844,
+      7.1659152261589325
+     ]
+    },
+    {
+     "sse": 9.237855027557918,
+     "start": 7,
+     "status": 2,
+     "theta": [
+      -4.990802191125405,
+      -3.3751033211968955,
+      7.165917151047363
+     ]
+    }
+   ],
+   "theta_digest": "4864b5b69f6a1c61470b03aa4dd1e5db4af8cd9612b2b32a9e4bc52abfc17a43"
+  },
+  "hypotheses": [
+   "thevenin_1rc"
+  ],
+  "observations_used": 2632,
+  "problem_id": "P09",
+  "refusal_reasons": [],
+  "schema": "forge.battery_rediscovery.arm_output/1"
+ }
+}

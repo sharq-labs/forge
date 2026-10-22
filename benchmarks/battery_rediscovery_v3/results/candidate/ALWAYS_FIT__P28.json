@@ -1,0 +1,249 @@
+{
+ "answers": {
+  "CROSS_CELL_TRANSFER": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "IDENTIFIABILITY": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "MODEL_ADEQUACY": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "MODEL_DISCREPANCY": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "WITHIN_CELL_GENERALIZATION": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  }
+ },
+ "arm": "ALWAYS_FIT",
+ "problem_id": "P28",
+ "schema": "forge.battery_rediscovery_v2.arm_output/1",
+ "v1_record": {
+  "answers": {
+   "CROSS_CELL_TRANSFER": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "IDENTIFIABILITY": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "MODEL_ADEQUACY": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "MODEL_DISCREPANCY": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   }
+  },
+  "applicability": {
+   "checked": false
+  },
+  "arm": "ALWAYS_FIT",
+  "eliminated": [],
+  "fit": {
+   "calibration": {
+    "bias_mV": 0.4396764284532509,
+    "lag1": 0.7593247059935164,
+    "mae_mV": 35.85504052943616,
+    "max_abs_mV": 819.3977663519656,
+    "p95_abs_mV": 165.52692735885475,
+    "rmse_mV": 99.61056321137325,
+    "samples": 717
+   },
+   "converged_starts": 2,
+   "forward_hold_sse_ratio": 1.0135188119174263,
+   "ocv_knots_on_bound": 1,
+   "parameters": {
+    "C1": 5054.232696866853,
+    "R0": 0.06425402508710981,
+    "R1": 1.0,
+    "tau": 5054.232696866853
+   },
+   "per_parameter": {
+    "C1": {
+     "estimate": 5054.232696866853,
+     "forward_hold_shift": 0.011707848794877185,
+     "max_abs_corr": 0.9759697550166795,
+     "multistart_spread_ln": 6.632916438320535e-11,
+     "on_bound": false,
+     "sd_ln": 1.593927403682122
+    },
+    "R0": {
+     "estimate": 0.06425402508710981,
+     "forward_hold_shift": 0.03256642774509899,
+     "max_abs_corr": 0.88882341619732,
+     "multistart_spread_ln": 1.8098722520676347e-10,
+     "on_bound": false,
+     "sd_ln": 0.3553729189064076
+    },
+    "R1": {
+     "estimate": 1.0,
+     "forward_hold_shift": 0.0,
+     "max_abs_corr": 0.9118903810237349,
+     "multistart_spread_ln": 5.904877882732303e-19,
+     "on_bound": true,
+     "sd_ln": 4.981224258145962
+    }
+   },
+   "rint_rmse_mV": 106.9500600932827,
+   "starts": [
+    {
+     "sse": 8.086015634112984,
+     "start": 0,
+     "status": 2,
+     "theta": [
+      -3.4997304664552424,
+      -2.844823280611478,
+      5.86869813039411,
+      2.938192151942395,
+      3.272851229156193,
+      3.6217918825875954,
+      3.674896095562137,
+      3.752156624642669,
+      3.900733410145636,
+      4.164475858638432
+     ]
+    },
+    {
+     "sse": 8.086015634112737,
+     "start": 1,
+     "status": 2,
+     "theta": [
+      -3.4997311155633573,
+      -2.844822981823358,
+      5.868697291360174,
+      2.9381921432913707,
+      3.2728512201655415,
+      3.621791873657492,
+      3.6748960863859956,
+      3.752156616275709,
+      3.9007333990787947,
+      4.164475860077762
+     ]
+    },
+    {
+     "sse": 7.114263505456788,
+     "start": 2,
+     "status": 1,
+     "theta": [
+      -2.7449109100798617,
+      -5.06641561865998e-23,
+      8.527981328940395,
+      3.9524885610681717,
+      4.259816475980481,
+      4.499999999999999,
+      4.406925416632441,
+      4.26910731248881,
+      4.11527109683405,
+      4.104116345388528
+     ]
+    },
+    {
+     "sse": 8.086015634111988,
+     "start": 3,
+     "status": 2,
+     "theta": [
+      -3.499733106690084,
+      -2.8448220652980587,
+      5.868694717645244,
+      2.938192116754566,
+      3.2728511925869457,
+      3.6217918462646255,
+      3.6748960582384154,
+      3.7521565906102694,
+      3.9007333651315426,
+      4.164475864492833
+     ]
+    },
+    {
+     "sse": 8.201272108787013,
+     "start": 4,
+     "status": 2,
+     "theta": [
+      -4.38240777013936,
+      -2.8980057233771648,
+      0.4494852132075319,
+      2.847150732264963,
+      3.18898181932859,
+      3.538740253084549,
+      3.59075858256563,
+      3.671212945845684,
+      3.8092297474480046,
+      4.11458654575851
+     ]
+    },
+    {
+     "sse": 8.086015634111948,
+     "start": 5,
+     "status": 2,
+     "theta": [
+      -3.4997332145377382,
+      -2.8448220156553257,
+      5.8686945782424464,
+      2.9381921153172255,
+      3.2728511910931775,
+      3.6217918447809168,
+      3.6748960567138287,
+      3.7521565892201254,
+      3.9007333632928223,
+      4.16447586473197
+     ]
+    },
+    {
+     "sse": 7.11426350545677,
+     "start": 6,
+     "status": 2,
+     "theta": [
+      -2.7449109098988744,
+      -5.905384524294169e-19,
+      8.527981329006725,
+      3.952488561041868,
+      4.259816475962278,
+      4.499999999999999,
+      4.406925416628188,
+      4.269107312498414,
+      4.115271096861162,
+      4.104116345431526
+     ]
+    },
+    {
+     "sse": 8.086015634115325,
+     "start": 7,
+     "status": 2,
+     "theta": [
+      -3.499724744813267,
+      -2.8448259143261794,
+      5.868705526199191,
+      2.9381922281982233,
+      3.272851308405753,
+      3.621791961303449,
+      3.674896176446731,
+      3.7521566983945918,
+      3.9007335076961493,
+      4.164475845950971
+     ]
+    }
+   ],
+   "theta_digest": "492799f2bd98c040fb8174cfa060de10952f201418abff18415a138053f3ff83"
+  },
+  "hypotheses": [
+   "thevenin_1rc"
+  ],
+  "observations_used": 717,
+  "problem_id": "P28",
+  "refusal_reasons": [],
+  "schema": "forge.battery_rediscovery.arm_output/1"
+ }
+}
