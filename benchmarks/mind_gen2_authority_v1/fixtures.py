@@ -13,10 +13,13 @@ projected from.  Nothing here writes a value into a world:
 * the declaration (roles, domains, actions, constraints, channels, value sources, model references, budget sources) is
   held in force by a ``DeclarationReader``, as the execution side would hold it.
 
+The execution side's readers are LIVE: the state reader follows the run head the fixture holds (``Owned.head``; the
+run's settle checkpoint until ``advance()``), and the declaration reader follows the declarations in force.
+
 Every number is invented to exercise the contract (development evidence only, never a scientific claim).  Interval
-uncertainties are stated at 95 % coverage, and each declaration demands, through the core's own
-``UncertaintySpecification`` (QUANTIFIED at 0.95), the coverage its decisions on those values are taken at: a
-declared probabilistic acceptance rule, never a guarantee.  All domain vocabulary lives here.
+uncertainties are stated at 95 % coverage; under BR1.1 no current value decides a containment (no core uncertainty
+record is an enclosure), so an action whose precondition or model input reads such a value is MISSING_INFORMATION.
+All domain vocabulary lives here.
 """
 
 from __future__ import annotations
@@ -37,7 +40,7 @@ from engcore.mind.world.owners import (
 from engcore.mind.world.projection import project_world
 from engcore.providers.catalog import ProviderRegistry
 from engcore.scenarios import ScenarioSegment, ScenarioSpecification, TimeBasis, Timeline
-from engcore.scientific import Quantity, Uncertainty, UncertaintyRequirement, UncertaintySpecification
+from engcore.scientific import Quantity, Uncertainty
 from engcore.scientific.experiments.evaluation import EvaluationStatus, ScientificEvaluation
 from engcore.scientific.experiments.experiment import ExperimentBudget, ScientificExperiment
 from engcore.scientific.ir.problem import ScientificProblem
@@ -155,18 +158,30 @@ class Owned:
     experiments: dict[str, ScientificExperiment]
     base_world: ScientificWorld = field(repr=False)           # the BR1 synthetic world the declaration restates
     _world: ScientificWorld | None = field(default=None, repr=False)
+    head: Any = field(default=None, repr=False)               # the run record the execution side states is current
+    probes: dict[str, bool] = field(default_factory=dict, repr=False)   # what each provider's probe finds now
+
+    def advance(self) -> None:
+        """The execution side's run moves on: its head is now the run's later record (same run)."""
+        self.head = self.run.result
+
+    def take_down(self, provider_id: str) -> None:
+        """The provider's own probe now finds it unavailable (the same registry; seen by a reader that re-probes)."""
+        self.probes[provider_id] = False
 
     def authorities(self, *, state: Any = None, models: Any = None, providers: Any = None,
-                    declarations: Any = None, budget: Any = None) -> Authorities:
-        """The execution side's readers over its own owners (the base view unless one is replaced)."""
-        if state is None and self.run is not None:
-            state = self.run.checkpoint
+                    declarations: Any = None, budget: Any = None, refresh: bool = False) -> Authorities:
+        """The execution side's LIVE readers over its own owners (the base view unless one is replaced): the state
+        reader follows ``self.head`` (or the record given), the declaration reader the declarations given."""
+        head = (lambda: self.head) if state is None else (lambda state=state: state)
+        in_force = (self.declaration,) if declarations is None else tuple(declarations)
         return Authorities.of(
-            *(() if state is None else (RunStateReader(state),)),
+            *(() if self.run is None and state is None else (RunStateReader.following(head),)),
             ModelRegistryReader(self.models if models is None else models, "fixture.models"),
-            ProviderRegistryReader(self.providers if providers is None else providers, "fixture.providers"),
+            ProviderRegistryReader(self.providers if providers is None else providers, "fixture.providers",
+                                   refresh=refresh),
             BudgetReader(self.ledgers, self.experiments) if budget is None else budget,
-            DeclarationReader((self.declaration,) if declarations is None else tuple(declarations)),
+            DeclarationReader.following(lambda in_force=in_force: in_force),
             UnitRegistryReader(),
         )
 
@@ -189,11 +204,18 @@ def _owner_id(world: ScientificWorld, name: str) -> str:
     return "system"
 
 
-def _provider_registry(statuses: Mapping[str, tuple[str, bool]]) -> ProviderRegistry:
+def _provider_registry(statuses: Mapping[str, tuple[str, bool]], probes: dict[str, bool] | None = None
+                       ) -> ProviderRegistry:
+    """A registry whose probes report each provider's status; with ``probes``, availability is read at each probe."""
     registry = ProviderRegistry()
     for pid, (version, available) in sorted(statuses.items()):
         status = br1.live_status(pid, version, available=available)
-        registry.register(status.capability, lambda status=status: status)
+        if probes is None:
+            registry.register(status.capability, lambda status=status: status)
+        else:
+            probes.setdefault(pid, available)
+            registry.register(status.capability, lambda pid=pid, version=version: br1.live_status(
+                pid, version, available=probes[pid]))
     return registry
 
 
@@ -229,7 +251,7 @@ def owned(name: str, base: ScientificWorld | None = None) -> Owned:
     """Re-express a BR1 synthetic world as a declaration plus the owner records it is projected from."""
     w = br1.WORLDS[name]() if base is None else base
     owners: dict[str, tuple[str, dict[str, tuple[Quantity, Uncertainty]]]] = {}
-    sources, variables, demanded = [], [], []
+    sources, variables = [], []
     for v in w.variables:
         bound = v.value is not None and v.origin is not ValueOrigin.DECLARED
         if not bound:
@@ -243,13 +265,12 @@ def owned(name: str, base: ScientificWorld | None = None) -> Owned:
         role = "scenario" if v.role is R.NUISANCE_VARIABLE else "component"
         owners.setdefault(owner, (role, {}))[1][v.name] = (v.value, _restated(v.uncertainty))
         sources.append(ValueSource(v.name, owner, v.origin))
-        if v.uncertainty.kind is UncertaintyKind.INTERVAL:
-            demanded.append(v.name)
         variables.append(dataclasses.replace(v, value=None, origin=None, source=None,
                                              uncertainty=Uncertainty.unknown("not declared")))
     run = run_state(f"{w.world_id}.run", owners) if owners else None
     models = ModelRegistry(tuple(a.model for a in w.applicability))
-    providers = _provider_registry({p.provider_id: (p.version, True) for p in w.providers})
+    probes: dict[str, bool] = {}
+    providers = _provider_registry({p.provider_id: (p.version, True) for p in w.providers}, probes)
     b = w.budget
     ledgers: dict[str, BudgetLedger] = {}
     experiments: dict[str, ScientificExperiment] = {}
@@ -260,7 +281,7 @@ def owned(name: str, base: ScientificWorld | None = None) -> Owned:
         budget.append(BudgetSource.experiment("experiments", f"{w.world_id}.experiment"))
     if b.compute is not None and b.compute.max_function_evaluations is not None:
         ledgers[f"{w.world_id}.solver"] = ledger(b.compute.max_function_evaluations,
-                                                 b.compute_used.function_evaluations, "solver_call",
+                                                 b.compute_used.function_evaluations, D,
                                                  f"{w.world_id}.solver")
         budget.append(BudgetSource.ledger("solver_calls", f"{w.world_id}.solver"))
     if b.compute is not None and b.compute.max_wall_seconds is not None:
@@ -274,11 +295,9 @@ def owned(name: str, base: ScientificWorld | None = None) -> Owned:
         variables=tuple(variables), entities=w.entities, constraints=w.constraints, actions=w.actions,
         channels=w.channels, references=w.references, values=tuple(sources),
         models=tuple((a.model.model_id, a.model.version) for a in w.applicability),
-        providers=tuple(p.provider_id for p in w.providers), budget=tuple(budget),
-        uncertainty=None if not demanded else UncertaintySpecification(
-            UncertaintyRequirement.QUANTIFIED, tuple(sorted(demanded)), COVERAGE,
-            "synthetic protocol takes state decisions at the stated 95 % coverage (probabilistic, not a guarantee)"))
-    return Owned(name, declaration, run, models, providers, ledgers, experiments, w)
+        providers=tuple(p.provider_id for p in w.providers), budget=tuple(budget))
+    return Owned(name, declaration, run, models, providers, ledgers, experiments, w,
+                 head=None if run is None else run.checkpoint, probes=probes)
 
 
 def gen1_pool() -> Owned:

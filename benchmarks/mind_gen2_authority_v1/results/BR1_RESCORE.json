@@ -1,11 +1,21 @@
 {
+ "allowed_new_codes": [
+  "APPLICABILITY_INPUT_NOT_EXACT",
+  "CONSTRAINT_ENCLOSURE_REQUIRED",
+  "CONSTRAINT_UNDECIDABLE",
+  "PRECONDITION_ENCLOSURE_REQUIRED",
+  "PRECONDITION_UNCERTAINTY_UNKNOWN",
+  "STATE_DOMAIN_ENCLOSURE_REQUIRED",
+  "STATE_DOMAIN_UNDECIDABLE"
+ ],
  "br1_inputs": {
   "BENCHMARK.json": "e200c1e62b9c6558151c52ae234bdd634831da9e9d21c9423eabe56e0bc8646c",
+  "BR1_DECISIONS.json": "a4b36cc016caf140ed5e362e675e222affc6e9604ef90cf31974d66f3bed7e68",
   "CASES.json": "0e4d23ca6851bc96aac088d2410c06894593506bc15778e1c064de2108946d51"
  },
  "cases": 515,
- "decisions_digest": "f71e9b069d5dca9af0c76f3d68d8e41f31647f1bf44b600696052c89bb5333ad",
- "drift": [
+ "changed": 255,
+ "changes": [
   {
    "br1": {
     "codes": [],
@@ -19,10 +29,15 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/pulse/BASE",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -37,10 +52,15 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/pulse/VALID_BOUNDARY:t_pulse=10.0",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -55,10 +75,15 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/pulse/VALID_BOUNDARY:t_pulse=600.0",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -73,10 +98,15 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/pulse/VALID_FIXED_RESTATE:T_amb",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -91,10 +121,15 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/pulse/VALID_OBSERVE_SUBSET:I",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -109,15 +144,616 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/pulse/VALID_OBSERVE_SUBSET:T_surf",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
     "codes": [
-     "PRECONDITION_VIOLATED"
+     "LEVEL_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "LEVEL_NOT_DECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "battery/base/pulse/OFF_LEVEL:I=1.5",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVABLE",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/WRONG_UNIT:I",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVED",
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVED",
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/pulse/MISSING_CONTROL:I",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/ABOVE_RANGE:t_pulse=659.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/BELOW_RANGE:t_pulse=-49.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/WRONG_UNIT:t_pulse",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/pulse/MISSING_CONTROL:t_pulse",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LEVEL_NOT_DECLARED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "LEVEL_NOT_DECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/OFF_LEVEL:I=1.5+WRONG_UNIT:t_pulse",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LEVEL_NOT_DECLARED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "case_id": "battery/base/pulse/SET_STATE:SOC",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/SET_MEASUREMENT:V",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/SET_LATENT:C1",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/SET_NUISANCE:T_surf",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/SET_DERIVED:P_el",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "battery/base/pulse/CHANGE_FIXED:T_amb",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "FIXED_CONDITION_CHANGED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "battery/base/pulse/CHANGE_FIXED:mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED",
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/pulse/UNDECLARED_VARIABLE:undeclared_variable",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/OBSERVE_LATENT:C1",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/OBSERVE_DERIVED:P_el",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/pulse/OBSERVE_NO_CHANNEL:SOC",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "OVER_BUDGET",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "battery/budget_exhausted:experiments:0/pulse/BUDGET_EXHAUSTED:experiments",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/budget_undeclared:cost/pulse/BUDGET_UNDECLARED:cost",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_VIOLATED",
+     "STATE_DOMAIN_UNDECIDED"
     ],
     "status": "INFEASIBLE_STATE"
    },
@@ -129,10 +765,20 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/value:SOC/pulse/PRECONDITION_VIOLATED:soc_floor",
+   "lost_codes": [
+    "PRECONDITION_VIOLATED",
+    "STATE_DOMAIN_UNDECIDED"
+   ],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
   },
   {
    "br1": {
@@ -147,10 +793,15 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/signed_pulse/BASE",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -165,10 +816,15 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/signed_pulse/VALID_BOUNDARY:t_pulse=10.0",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -183,10 +839,15 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/signed_pulse/VALID_BOUNDARY:t_pulse=600.0",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -201,10 +862,15 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/signed_pulse/VALID_FIXED_RESTATE:T_amb",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -219,15 +885,699 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/base/signed_pulse/VALID_OBSERVE_SUBSET:I",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
     "codes": [
-     "PRECONDITION_VIOLATED"
+     "CONSTRAINT_VIOLATED",
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/ABOVE_RANGE:I=6.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/BELOW_RANGE:I=-6.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVABLE",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/WRONG_UNIT:I",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVED",
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVED",
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/signed_pulse/MISSING_CONTROL:I",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "battery/base/signed_pulse/UNDECLARED_CATEGORY:mode=undeclared_category",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED",
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/WRONG_KIND:mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "GUARD_UNRESOLVED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "GUARD_UNRESOLVED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/signed_pulse/MISSING_CONTROL:mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/ABOVE_RANGE:t_pulse=659.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/BELOW_RANGE:t_pulse=-49.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/WRONG_UNIT:t_pulse",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/signed_pulse/MISSING_CONTROL:t_pulse",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "case_id": "battery/base/signed_pulse/SET_STATE:SOC",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/SET_MEASUREMENT:V",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/SET_LATENT:C1",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/SET_NUISANCE:T_surf",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/SET_DERIVED:P_el",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "battery/base/signed_pulse/CHANGE_FIXED:T_amb",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED",
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/signed_pulse/UNDECLARED_VARIABLE:undeclared_variable",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/OBSERVE_LATENT:C1",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/OBSERVE_DERIVED:P_el",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/OBSERVE_NO_CHANNEL:SOC",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "battery/base/signed_pulse/OBSERVE_UNOFFERED:T_surf",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "OVER_BUDGET",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "battery/budget_exhausted:experiments:0/signed_pulse/BUDGET_EXHAUSTED:experiments",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/budget_undeclared:cost/signed_pulse/BUDGET_UNDECLARED:cost",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_VIOLATED",
+     "STATE_DOMAIN_UNDECIDED"
     ],
     "status": "INFEASIBLE_STATE"
    },
@@ -239,10 +1589,104 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "battery/value:SOC/signed_pulse/PRECONDITION_VIOLATED:soc_ceiling",
+   "lost_codes": [
+    "PRECONDITION_VIOLATED",
+    "STATE_DOMAIN_UNDECIDED"
+   ],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED",
     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "battery/base/signed_pulse/CONSTRAINT_VIOLATED:charge_positive=-2.5",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONSTRAINT_VIOLATED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "battery/base/signed_pulse/CONSTRAINT_VIOLATED:discharge_negative=2.5",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONSTRAINT_VIOLATED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "CONTROL_NOT_SUPPLIED",
+     "STATE_DOMAIN_UNDECIDABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/simulate_pulse/MISSING_CONTROL:T_amb",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT",
+    "STATE_DOMAIN_UNDECIDABLE"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
   },
   {
    "br1": {
@@ -256,9 +1700,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/hover_test/BASE",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -272,9 +1721,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/hover_test/VALID_LEVEL:payload=0.0",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -288,9 +1742,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/hover_test/VALID_LEVEL:payload=1.0",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -304,9 +1763,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/hover_test/VALID_RESPELL:thrust_cmd",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -320,9 +1784,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/hover_test/VALID_OBSERVE_SUBSET:battery_V",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -336,9 +1805,565 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/hover_test/VALID_OBSERVE_SUBSET:velocity",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "LEVEL_NOT_DECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "drone/base/hover_test/OFF_LEVEL:payload=0.25",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/WRONG_UNIT:payload",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/hover_test/MISSING_CONTROL:payload",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/ABOVE_RANGE:thrust_cmd=44.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/BELOW_RANGE:thrust_cmd=-4.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/WRONG_UNIT:thrust_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/hover_test/MISSING_CONTROL:thrust_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LEVEL_NOT_DECLARED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "LEVEL_NOT_DECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/OFF_LEVEL:payload=0.25+WRONG_UNIT:thrust_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LEVEL_NOT_DECLARED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "case_id": "drone/base/hover_test/SET_STATE:altitude",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/SET_MEASUREMENT:battery_V",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/SET_LATENT:drag_coeff",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/SET_NUISANCE:wind",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/SET_DERIVED:shaft_power",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "FIXED_CONDITION_CHANGED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "drone/base/hover_test/CHANGE_FIXED:flight_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/hover_test/UNDECLARED_VARIABLE:undeclared_variable",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/OBSERVE_LATENT:drag_coeff",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/OBSERVE_DERIVED:shaft_power",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/OBSERVE_NO_CHANNEL:flight_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/hover_test/OBSERVE_UNOFFERED:wind",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "OVER_BUDGET",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "drone/budget_exhausted:experiments:0/hover_test/BUDGET_EXHAUSTED:experiments",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/budget_undeclared:cost/hover_test/BUDGET_UNDECLARED:cost",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
   },
   {
    "br1": {
@@ -354,9 +2379,44 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/value:altitude/hover_test/PRECONDITION_VIOLATED:near_ground",
+   "lost_codes": [
+    "PRECONDITION_VIOLATED"
+   ],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_UNCERTAINTY_UNKNOWN"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "PRECONDITION_UNCERTAINTY_UNKNOWN"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/uncertainty_unknown:altitude/hover_test/PRECONDITION_UNCERTAIN:near_ground",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PRECONDITION_UNCERTAINTY_UNKNOWN"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
   },
   {
    "br1": {
@@ -370,9 +2430,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/climb_test/BASE",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -386,9 +2451,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/climb_test/VALID_RESPELL:thrust_cmd",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -402,9 +2472,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/climb_test/VALID_FIXED_RESTATE:payload",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -418,9 +2493,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/climb_test/VALID_OBSERVE_SUBSET:battery_V",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -434,9 +2514,571 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/climb_test/VALID_OBSERVE_SUBSET:velocity",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "drone/base/climb_test/UNDECLARED_CATEGORY:flight_mode=undeclared_category",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/WRONG_KIND:flight_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "GUARD_UNRESOLVED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "GUARD_UNRESOLVED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/climb_test/MISSING_CONTROL:flight_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/ABOVE_RANGE:thrust_cmd=44.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/BELOW_RANGE:thrust_cmd=-4.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVABLE",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/WRONG_UNIT:thrust_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVED",
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_UNRESOLVED",
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/climb_test/MISSING_CONTROL:thrust_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/UNDECLARED_CATEGORY:flight_mode=undeclared_category+WRONG_UNIT:thrust_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "case_id": "drone/base/climb_test/SET_STATE:altitude",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/SET_MEASUREMENT:battery_V",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/SET_LATENT:drag_coeff",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/SET_NUISANCE:wind",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/SET_DERIVED:shaft_power",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "drone/base/climb_test/CHANGE_FIXED:payload",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/climb_test/UNDECLARED_VARIABLE:undeclared_variable",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/OBSERVE_LATENT:drag_coeff",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/OBSERVE_DERIVED:shaft_power",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/OBSERVE_NO_CHANNEL:flight_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/climb_test/OBSERVE_UNOFFERED:wind",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "OVER_BUDGET",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "drone/budget_exhausted:experiments:0/climb_test/BUDGET_EXHAUSTED:experiments",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/budget_undeclared:cost/climb_test/BUDGET_UNDECLARED:cost",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
   },
   {
    "br1": {
@@ -452,9 +3094,70 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/value:altitude/climb_test/PRECONDITION_VIOLATED:near_ground",
+   "lost_codes": [
+    "PRECONDITION_VIOLATED"
+   ],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_UNCERTAINTY_UNKNOWN"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "PRECONDITION_UNCERTAINTY_UNKNOWN"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/uncertainty_unknown:altitude/climb_test/PRECONDITION_UNCERTAIN:near_ground",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PRECONDITION_UNCERTAINTY_UNKNOWN"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "drone/base/climb_test/CONSTRAINT_VIOLATED:climb_thrust=10.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONSTRAINT_VIOLATED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
   },
   {
    "br1": {
@@ -468,9 +3171,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/simulate_flight/BASE",
+   "lost_codes": [],
    "new_codes": [
     "APPLICABILITY_INPUT_NOT_EXACT"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -484,9 +3192,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/simulate_flight/VALID_RESPELL:thrust_cmd",
+   "lost_codes": [],
    "new_codes": [
     "APPLICABILITY_INPUT_NOT_EXACT"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -500,9 +3213,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/simulate_flight/VALID_FIXED_RESTATE:payload",
+   "lost_codes": [],
    "new_codes": [
     "APPLICABILITY_INPUT_NOT_EXACT"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -516,9 +3234,510 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/base/simulate_flight/VALID_OBSERVE_SUBSET:velocity",
+   "lost_codes": [],
    "new_codes": [
     "APPLICABILITY_INPUT_NOT_EXACT"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/simulate_flight/ABOVE_RANGE:thrust_cmd=44.0",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/simulate_flight/BELOW_RANGE:thrust_cmd=-4.0",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/simulate_flight/WRONG_UNIT:thrust_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/simulate_flight/MISSING_CONTROL:thrust_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "case_id": "drone/base/simulate_flight/SET_STATE:altitude",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/simulate_flight/SET_MEASUREMENT:battery_V",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/simulate_flight/SET_LATENT:drag_coeff",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/simulate_flight/SET_DERIVED:shaft_power",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "CONSTRAINT_VIOLATED",
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "drone/base/simulate_flight/CHANGE_FIXED:flight_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "drone/base/simulate_flight/CHANGE_FIXED:payload",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/simulate_flight/UNDECLARED_VARIABLE:undeclared_variable",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/simulate_flight/OBSERVE_LATENT:drag_coeff",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/simulate_flight/OBSERVE_DERIVED:shaft_power",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/simulate_flight/OBSERVE_NO_CHANNEL:flight_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "drone/base/simulate_flight/OBSERVE_UNOFFERED:battery_V",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "PROVIDER_UNAVAILABLE"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "PROVIDER_UNAVAILABLE"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   },
+   "case_id": "drone/provider_down:sim.6dof/simulate_flight/PROVIDER_DOWN:sim.6dof",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PROVIDER_UNAVAILABLE"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "PROVIDER_VERSION_MISMATCH"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "PROVIDER_VERSION_MISMATCH"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   },
+   "case_id": "drone/provider_other_version:sim.6dof:0.9.1/simulate_flight/PROVIDER_OTHER_VERSION:sim.6dof",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PROVIDER_VERSION_MISMATCH"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "drone/budget_exhausted:solver_calls:2/simulate_flight/BUDGET_EXHAUSTED:solver_calls",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/budget_undeclared:cost/simulate_flight/BUDGET_UNDECLARED:cost",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
   },
   {
    "br1": {
@@ -534,9 +3753,18 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "drone/value:wind/simulate_flight/APPLICABILITY_OUTSIDE_INTERVAL:wind=14.2",
+   "lost_codes": [
+    "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"
+   ],
    "new_codes": [
     "APPLICABILITY_INPUT_NOT_EXACT"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [
+     "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"
+    ],
+    "status": "INFEASIBLE_APPLICABILITY"
+   }
   },
   {
    "br1": {
@@ -550,9 +3778,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_chamber/base/step_speed/BASE",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -566,9 +3799,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_chamber/base/step_speed/VALID_INTEGER_BOUND:fan_stage=1",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -582,9 +3820,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_chamber/base/step_speed/VALID_INTEGER_BOUND:fan_stage=5",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -598,9 +3841,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_chamber/base/step_speed/VALID_RESPELL:speed",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -614,9 +3862,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_chamber/base/step_speed/VALID_FIXED_RESTATE:T_out",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -630,9 +3883,615 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_chamber/base/step_speed/VALID_OBSERVE_SUBSET:T_room",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/INTEGER_ABOVE_RANGE:fan_stage=6",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/WRONG_KIND:fan_stage",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/base/step_speed/MISSING_CONTROL:fan_stage",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/ABOVE_RANGE:speed=6450.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/BELOW_RANGE:speed=1050.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/WRONG_UNIT:speed",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/base/step_speed/MISSING_CONTROL:speed",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/INTEGER_ABOVE_RANGE:fan_stage=6+WRONG_UNIT:speed",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "case_id": "hvac_chamber/base/step_speed/SET_STATE:T_room",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/SET_MEASUREMENT:P_el",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/SET_LATENT:UA",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/SET_NUISANCE:occupancy",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/SET_DERIVED:COP",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "hvac_chamber/base/step_speed/CHANGE_FIXED:T_out",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "hvac_chamber/base/step_speed/CHANGE_FIXED:hvac_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/base/step_speed/UNDECLARED_VARIABLE:undeclared_variable",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/OBSERVE_LATENT:UA",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/OBSERVE_DERIVED:COP",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/OBSERVE_NO_CHANNEL:T_out",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_chamber/base/step_speed/OBSERVE_UNOFFERED:occupancy",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "OVER_BUDGET",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "hvac_chamber/budget_exhausted:experiments:0/step_speed/BUDGET_EXHAUSTED:experiments",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "OVER_BUDGET",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "hvac_chamber/budget_exhausted:wall_time:1799.0/step_speed/BUDGET_EXHAUSTED:wall_time",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/budget_undeclared:cost/step_speed/BUDGET_UNDECLARED:cost",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
   },
   {
    "br1": {
@@ -648,9 +4507,18 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_chamber/value:T_room/step_speed/PRECONDITION_VIOLATED:room_not_hot",
+   "lost_codes": [
+    "PRECONDITION_VIOLATED"
+   ],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
   },
   {
    "br1": {
@@ -664,9 +4532,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_field/base/step_speed/BASE",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -680,9 +4553,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_field/base/step_speed/VALID_INTEGER_BOUND:fan_stage=1",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -696,9 +4574,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_field/base/step_speed/VALID_INTEGER_BOUND:fan_stage=5",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -712,9 +4595,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_field/base/step_speed/VALID_RESPELL:speed",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -728,9 +4616,589 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_field/base/step_speed/VALID_OBSERVE_SUBSET:T_room",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/INTEGER_ABOVE_RANGE:fan_stage=6",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/WRONG_KIND:fan_stage",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/step_speed/MISSING_CONTROL:fan_stage",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/ABOVE_RANGE:speed=6450.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/BELOW_RANGE:speed=1050.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/WRONG_UNIT:speed",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/step_speed/MISSING_CONTROL:speed",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/INTEGER_ABOVE_RANGE:fan_stage=6+WRONG_UNIT:speed",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "case_id": "hvac_field/base/step_speed/SET_STATE:T_room",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/SET_MEASUREMENT:P_el",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/SET_LATENT:UA",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/SET_NUISANCE:T_out",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/SET_DERIVED:COP",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "hvac_field/base/step_speed/CHANGE_FIXED:hvac_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/step_speed/UNDECLARED_VARIABLE:undeclared_variable",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/OBSERVE_LATENT:UA",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/OBSERVE_DERIVED:COP",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/OBSERVE_NO_CHANNEL:fan_stage",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/step_speed/OBSERVE_UNOFFERED:T_out",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "OVER_BUDGET",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "hvac_field/budget_exhausted:experiments:0/step_speed/BUDGET_EXHAUSTED:experiments",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "OVER_BUDGET",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "hvac_field/budget_exhausted:wall_time:1799.0/step_speed/BUDGET_EXHAUSTED:wall_time",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/budget_undeclared:cost/step_speed/BUDGET_UNDECLARED:cost",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
   },
   {
    "br1": {
@@ -746,9 +5214,18 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_field/value:T_room/step_speed/PRECONDITION_VIOLATED:room_not_hot",
+   "lost_codes": [
+    "PRECONDITION_VIOLATED"
+   ],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
   },
   {
    "br1": {
@@ -762,9 +5239,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_field/base/simulate_building/BASE",
+   "lost_codes": [],
    "new_codes": [
     "APPLICABILITY_INPUT_NOT_EXACT"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -778,9 +5260,534 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_field/base/simulate_building/VALID_RESPELL:speed",
+   "lost_codes": [],
    "new_codes": [
     "APPLICABILITY_INPUT_NOT_EXACT"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/ABOVE_RANGE:speed=6500.0",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/BELOW_RANGE:speed=500.0",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/WRONG_UNIT:speed",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/simulate_building/MISSING_CONTROL:speed",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "case_id": "hvac_field/base/simulate_building/SET_STATE:T_room",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/SET_MEASUREMENT:P_el",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/SET_LATENT:UA",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/SET_DERIVED:COP",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "CONTROL_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/SET_UNOFFERED_INPUT:fan_stage",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "hvac_field/base/simulate_building/CHANGE_FIXED:hvac_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "FIXED_CONDITION_CHANGED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/simulate_building/UNDECLARED_VARIABLE:undeclared_variable",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/OBSERVE_LATENT:UA",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/OBSERVE_DERIVED:COP",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/OBSERVE_NO_CHANNEL:fan_stage",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "hvac_field/base/simulate_building/OBSERVE_UNOFFERED:P_el",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "PROVIDER_UNAVAILABLE"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "PROVIDER_UNAVAILABLE"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   },
+   "case_id": "hvac_field/provider_down:sim.rc-building/simulate_building/PROVIDER_DOWN:sim.rc-building",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PROVIDER_UNAVAILABLE"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "PROVIDER_VERSION_MISMATCH"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "PROVIDER_VERSION_MISMATCH"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   },
+   "case_id": "hvac_field/provider_other_version:sim.rc-building:2.1.1/simulate_building/PROVIDER_OTHER_VERSION:sim.rc-building",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PROVIDER_VERSION_MISMATCH"
+    ],
+    "status": "INFEASIBLE_PROVIDER"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "hvac_field/budget_exhausted:solver_calls:0/simulate_building/BUDGET_EXHAUSTED:solver_calls",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "hvac_field/budget_exhausted:wall_time:59.0/simulate_building/BUDGET_EXHAUSTED:wall_time",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT",
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/budget_undeclared:cost/simulate_building/BUDGET_UNDECLARED:cost",
+   "lost_codes": [],
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
   },
   {
    "br1": {
@@ -796,9 +5803,18 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "hvac_field/value:T_out/simulate_building/APPLICABILITY_OUTSIDE_INTERVAL:T_out=46.0",
+   "lost_codes": [
+    "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"
+   ],
    "new_codes": [
     "APPLICABILITY_INPUT_NOT_EXACT"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [
+     "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"
+    ],
+    "status": "INFEASIBLE_APPLICABILITY"
+   }
   },
   {
    "br1": {
@@ -812,9 +5828,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "motor/base/load_step/BASE",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -828,9 +5849,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "motor/base/load_step/VALID_RESPELL:V_supply",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -844,9 +5870,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "motor/base/load_step/VALID_LEVEL:V_supply=24.0",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -860,9 +5891,14 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "motor/base/load_step/VALID_OBSERVE_SUBSET:T_wind",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
   },
   {
    "br1": {
@@ -876,9 +5912,643 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "motor/base/load_step/VALID_OBSERVE_SUBSET:omega",
+   "lost_codes": [],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [],
+    "status": "FEASIBLE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/ABOVE_RANGE:I_cmd=33.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/BELOW_RANGE:I_cmd=-3.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/WRONG_UNIT:I_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/base/load_step/MISSING_CONTROL:I_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "LEVEL_NOT_DECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "motor/base/load_step/OFF_LEVEL:V_supply=36.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/WRONG_UNIT:V_supply",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/base/load_step/MISSING_CONTROL:V_supply",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "motor/base/load_step/UNDECLARED_CATEGORY:ctrl_mode=undeclared_category",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CATEGORY_NOT_DECLARED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/WRONG_KIND:ctrl_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "VALUE_KIND_MISMATCH"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "GUARD_UNRESOLVED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED",
+     "GUARD_UNRESOLVED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/base/load_step/MISSING_CONTROL:ctrl_mode",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_SUPPLIED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/ABOVE_RANGE:I_cmd=33.0+WRONG_UNIT:V_supply",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OUTSIDE_RANGE",
+     "UNIT_INCOMPATIBLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "case_id": "motor/base/load_step/SET_STATE:T_wind",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "STATE_NOT_DIRECTLY_SETTABLE"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/SET_MEASUREMENT:torque",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/SET_LATENT:R_wind",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/SET_NUISANCE:T_ambient",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/SET_DERIVED:efficiency",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "ROLE_NOT_CONTROLLABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONTROL_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "CONTROL_NOT_OFFERED_BY_ACTION",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/SET_UNOFFERED_INPUT:solver_iterations",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONTROL_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/base/load_step/UNDECLARED_VARIABLE:undeclared_variable",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "UNDECLARED_VARIABLE"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/OBSERVE_LATENT:R_wind",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "LATENT_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/OBSERVE_DERIVED:efficiency",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "DERIVED_NOT_OBSERVABLE"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/OBSERVE_NO_CHANNEL:I_cmd",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "NO_OBSERVATION_CHANNEL"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "br1_1": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   },
+   "case_id": "motor/base/load_step/OBSERVE_UNOFFERED:T_ambient",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+    ],
+    "status": "INFEASIBLE_DOMAIN"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "br1_1": {
+    "codes": [
+     "OVER_BUDGET",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   },
+   "case_id": "motor/budget_exhausted:experiments:0/load_step/BUDGET_EXHAUSTED:experiments",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "OVER_BUDGET"
+    ],
+    "status": "INFEASIBLE_BUDGET"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "br1_1": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/budget_undeclared:cost/load_step/BUDGET_UNDECLARED:cost",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "BUDGET_DIMENSION_UNDECLARED"
+    ],
+    "status": "MISSING_INFORMATION"
+   }
   },
   {
    "br1": {
@@ -894,23 +6564,72 @@
     "status": "MISSING_INFORMATION"
    },
    "case_id": "motor/value:T_wind/load_step/PRECONDITION_VIOLATED:winding_cool",
+   "lost_codes": [
+    "PRECONDITION_VIOLATED"
+   ],
    "new_codes": [
     "PRECONDITION_ENCLOSURE_REQUIRED"
-   ]
+   ],
+   "oracle_expected": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   }
+  },
+  {
+   "br1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "br1_1": {
+    "codes": [
+     "CONSTRAINT_VIOLATED",
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   },
+   "case_id": "motor/base/load_step/CONSTRAINT_VIOLATED:speed_mode_cap=25.0",
+   "lost_codes": [],
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ],
+   "oracle_expected": {
+    "codes": [
+     "CONSTRAINT_VIOLATED"
+    ],
+    "status": "INFEASIBLE_PROTOCOL"
+   }
   }
  ],
- "moved": 53,
+ "codes_only_changed": 202,
+ "decisions_digest": "b976de7085bda30ce5cdd381e7da0a484f9043dc5b85539a5150b5ab05372448",
+ "lost_codes": {
+  "INTERVAL_OUTSIDE_VALIDATED_DOMAIN": 2,
+  "PRECONDITION_VIOLATED": 7,
+  "STATE_DOMAIN_UNDECIDED": 2
+ },
  "moved_to_feasible": 0,
  "moves": {
   "FEASIBLE->MISSING_INFORMATION": 44,
   "INFEASIBLE_APPLICABILITY->MISSING_INFORMATION": 2,
-  "INFEASIBLE_STATE->MISSING_INFORMATION": 7
+  "INFEASIBLE_BUDGET->INFEASIBLE_BUDGET": 12,
+  "INFEASIBLE_DOMAIN->INFEASIBLE_DOMAIN": 117,
+  "INFEASIBLE_PROTOCOL->INFEASIBLE_PROTOCOL": 21,
+  "INFEASIBLE_PROVIDER->INFEASIBLE_PROVIDER": 4,
+  "INFEASIBLE_STATE->INFEASIBLE_STATE": 9,
+  "INFEASIBLE_STATE->MISSING_INFORMATION": 7,
+  "MISSING_INFORMATION->MISSING_INFORMATION": 39
  },
  "new_codes": {
-  "APPLICABILITY_INPUT_NOT_EXACT": 8,
-  "PRECONDITION_ENCLOSURE_REQUIRED": 45,
-  "STATE_DOMAIN_ENCLOSURE_REQUIRED": 13
+  "APPLICABILITY_INPUT_NOT_EXACT": 48,
+  "PRECONDITION_ENCLOSURE_REQUIRED": 207,
+  "STATE_DOMAIN_ENCLOSURE_REQUIRED": 58,
+  "STATE_DOMAIN_UNDECIDABLE": 1
  },
- "schema": "forge.mind.gen2_authority.br1_rescore/1",
- "statement": "BR1's committed results are not rewritten.  These cases decide differently under BR1.1 by design (coverage is never an enclosure; applicability at exact points only); none moves toward FEASIBLE.  BR1's synthetic worlds state no coverage and demand none, so the corrected rule makes them MISSING_INFORMATION."
+ "schema": "forge.mind.gen2_authority.br1_rescore/2",
+ "statement": "BR1's committed results are not rewritten.  Every case whose status or codes differ from BR1's actual decision is listed: they decide differently under BR1.1 by design (no current value decides a containment; applicability at exact points only); none moves toward FEASIBLE and no case gains a code outside the allowed set.",
+ "status_changed": 53
 }

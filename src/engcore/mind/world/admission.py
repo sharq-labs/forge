@@ -2,8 +2,11 @@
 
 A proposal is never executable because it exists.  The only path to an executor is:
 
-1. :func:`admit` (the execution side's call, with ITS :class:`~.authority.Authorities`): the world is verified against
-   its owners first (:func:`~.projection.verify_world`); a world any of whose projected facts is stale, missing,
+1. :func:`admit` (the execution side's call, with ITS :class:`~.authority.Authorities`): admission never decides on
+   the caller's object; it rebuilds the world from its own payload (an object edited after it was built does not
+   rebuild) and the action space from that world, and the proposal from its payload.  The world is then verified against
+   its owners (:func:`~.projection.verify_world`: exactly the projection of the declaration in force, revision
+   included); a world any of whose projected facts is stale, missing,
    mismatched or unbound is MISSING_INFORMATION with one AUTHORITY reason per failed binding, and no check is run on
    the unverified copy.  Only on a verified world is the feasibility check run, and only a FEASIBLE decision mints an
    :class:`AdmittedAction`.
@@ -11,14 +14,27 @@ A proposal is never executable because it exists.  The only path to an executor 
    proposal, the world revision, the action space, every authority binding verified, and the admission's identity,
    and carries the execution kind, the provider requirements, the gating models and the world's synthetic status.
 3. :func:`authorize_dispatch` (the execution owner's call, at dispatch time, with its CURRENT authorities) re-runs
-   admission from the admitted action's own proposal and world and requires the identical admitted action.  Any
-   owner that moved on (a state advanced, a provider went down, a ledger was charged, a declaration revised), any
-   forged or edited admitted action, and any raw proposal is refused (:class:`DispatchRefused`).
-4. :class:`ExecutionDesk` is that boundary as an object: an executor callable supplied by the execution owner is
-   handed a :class:`DispatchAuthorization`, never a proposal.
+   admission from the admitted action's own proposal and world and requires the identical admitted action.  The
+   authorities must be LIVE (derived: every reader consults its owner at every read; a fixed run record, a fixed
+   declaration set or a snapshot never backs a dispatch).  Any bound owner that moved on (the followed run head
+   advanced, a provider's status changed, a ledger was charged, an observation recorded, the declaration in force
+   revised), any forged or edited admitted action, and any raw proposal is refused (:class:`DispatchRefused`).
+4. :class:`ExecutionDesk` is that boundary as an object, held by the execution side: an executor callable supplied by
+   the execution owner is handed a :class:`DispatchAuthorization`, never a proposal, and the desk wraps it so that it
+   re-derives every authorization it is handed (:func:`verify_authorization`) before acting.  The Mind is handed only
+   the desk's :class:`AdmissionGateway` (admit and dispatch, nothing else): it never holds the readers or the executor.
 
-Nothing here dispatches by itself, reserves or settles a budget, mutates state or selects a provider: those stay
-with the execution owner and its executor.  An admission is ``action_admission_not_scientific_support``.
+What this does NOT do.  The desk is not an effect ledger: it records nothing about what was dispatched.  An admitted
+action whose execution moves none of the owners it is bound to re-admits as long as they state the same records, and
+is authorized again.  At-most-once execution, budget reservation, state mutation and provider invocation are the
+execution owner's (for example ``sria.campaign`` ``EffectLedger.once`` and ``BudgetLedger.settle``); after its executor
+moves a bound owner, the same admitted action no longer re-admits.  Nothing here dispatches by itself or selects a
+provider.  The guarantees hold against code that uses the public interface: in-process code that reaches private
+members (the desk's executor, the minting context) or rewrites frozen objects with ``object.__setattr__`` is inside
+the execution side's trust boundary: a Python process is one trust domain, and isolating a proposer from it is a
+process boundary, not this module.  What holds against such code is that every record crossing the boundary is
+re-derived (a world from its payload and its owners, an admitted action by re-admission, an authorization by
+re-authorization), so an edited record never acts.  An admission is ``action_admission_not_scientific_support``.
 """
 
 from __future__ import annotations
@@ -132,8 +148,8 @@ def _context_entry(world: ScientificWorld, name: str) -> dict[str, Any]:
     source = var.source
     binding = None if source is None else (source.to_dict() if hasattr(source, "ref") else source.identity())
     return {"variable": name, "value": None if var.value is None else value_payload(var.value),
-            "origin": None if var.origin is None else var.origin.value, "binding": binding,
-            "basis": var.value_basis, "uncertainty": var.uncertainty.to_dict()}
+            "origin": None if var.origin is None else var.origin.value, "origin_stated_by": "declaration",
+            "binding": binding, "basis": var.value_basis, "uncertainty": var.uncertainty.to_dict()}
 
 
 def _mint(space: FeasibleActionSpace, proposal: ProposedAction, report: AuthorityReport, admission: str
@@ -172,6 +188,13 @@ class AdmissionResult:
     def codes(self) -> tuple[str, ...]:
         return tuple(sorted({r.code for r in self.reasons}))
 
+    def feasibility_verdicts(self) -> tuple[Any, ...]:
+        """Definite infeasibilities as SRIA ``FeasibilityVerdict`` records, only from a decision made on a world
+        verified against its owners (an unverified copy's refusals are never exported)."""
+        if not self.verification.ok or self.decision is None:
+            return ()
+        return self.decision.feasibility_verdicts()
+
     def _basis(self) -> dict[str, Any]:
         return {"schema": ADMISSION_SCHEMA, "classification": ADMISSION_CLASSIFICATION, "status": self.status.value,
                 "reasons": [r.to_dict() for r in self.reasons], "verification": self.verification.to_dict(),
@@ -200,16 +223,32 @@ def _authority_reasons(report: AuthorityReport) -> tuple[FeasibilityReason, ...]
         for c in report.failures())
 
 
+def _detached(world: Any) -> ScientificWorld:
+    """The world its payload names, as a new object nobody else holds (``ScientificWorld.from_dict`` recomputes and
+    compares both identities, so an object edited in place after it was built is refused)."""
+    if type(world) is not ScientificWorld:
+        raise WorldRefused("admission reads exactly a ScientificWorld")
+    try:
+        return ScientificWorld.from_dict(world.to_dict())
+    except (WorldRefused, ScientificCoreError, AttributeError, KeyError, TypeError, ValueError) as exc:
+        raise WorldRefused(f"the world is not the world its identity names (edited after it was built?): {exc}") from None
+
+
 def admit(space: FeasibleActionSpace, proposal: ProposedAction, authorities: Authorities) -> AdmissionResult:
-    """Admission of ``proposal`` on ``space``'s world under ``authorities`` (the execution side's owner readers)."""
+    """Admission of ``proposal`` on ``space``'s world under ``authorities`` (the execution side's owner readers).
+
+    Decided on a detached rebuild of the world, its action space and the proposal (never on the caller's objects); the
+    admitted action carries that rebuild."""
     if type(space) is not FeasibleActionSpace:
         raise WorldRefused("admission reads exactly a FeasibleActionSpace")
     if type(authorities) is not Authorities:
         raise WorldRefused("admission verifies against the execution side's Authorities")
     proposal = canonical(proposal)
-    world = space.world
-    if FeasibleActionSpace.build(world).space_id != space.space_id:
+    world = _detached(space.world)
+    rebuilt = FeasibleActionSpace.build(world)
+    if rebuilt.space_id != space.space_id:
         raise WorldRefused("the action space is not the one its world builds")
+    space = rebuilt
     report = verify_world(world, authorities)
     if not report.ok:
         if proposal.world_revision != world.revision_id:
@@ -241,6 +280,8 @@ class DispatchAuthorization:
     execution: ExecutionKind
     providers: tuple[Any, ...]
     synthetic: bool
+    declaration: Any                                   # the declaration in force it was admitted under (identity)
+    owners: tuple[tuple[str, str], ...]                # the owner instances (kind, id) it was re-admitted against
     admitted: AdmittedAction = field(repr=False, compare=False)
 
     def __post_init__(self) -> None:
@@ -254,7 +295,13 @@ class DispatchAuthorization:
                 "proposal_digest": self.proposal_digest, "action_id": self.action_id,
                 "configuration": [{"variable": n, "value": value_payload(v)} for n, v in self.configuration],
                 "observe": list(self.observe), "execution": self.execution.value,
-                "providers": [detach(p) for p in self.providers], "synthetic": self.synthetic}
+                "providers": [detach(p) for p in self.providers], "synthetic": self.synthetic,
+                "declaration": detach(self.declaration), "declaration_provenance": DECLARATION_PROVENANCE,
+                "owners": [list(o) for o in self.owners]}
+
+    @property
+    def digest(self) -> str:
+        return digest(self.to_dict())
 
 
 def authorize_dispatch(admitted: Any, authorities: Authorities, *, accept_synthetic: bool = False
@@ -267,8 +314,9 @@ def authorize_dispatch(admitted: Any, authorities: Authorities, *, accept_synthe
         raise DispatchRefused(f"only an AdmittedAction minted by admission is dispatchable, not "
                               f"{type(admitted).__name__} (a raw proposal never executes)")
     if type(authorities) is not Authorities or not authorities.live:
-        raise DispatchRefused("dispatch is authorized only against the execution side's live owners, never against "
-                              "a snapshot of what they said before")
+        raise DispatchRefused("dispatch is authorized only against live owner readers (each read consults the owner "
+                              "now); a fixed run record, a fixed declaration set, a snapshot or a look-alike reader "
+                              "states what an owner said before")
     try:
         world, proposal, claimed = admitted.world, admitted.proposal, admitted.digest
         result = admit(FeasibleActionSpace.build(world), proposal, authorities)
@@ -282,37 +330,103 @@ def authorize_dispatch(admitted: Any, authorities: Authorities, *, accept_synthe
     if a.synthetic and not accept_synthetic:
         raise DispatchRefused("the world cites synthetic contract fixtures; it is dispatched only to an executor "
                               "that accepts synthetic content")
+    declaration = None if a.world.declaration is None else _frozen(a.world.declaration.identity())
+    owners = tuple(sorted({(k.value, authorities.reader(k).owner_id) for r in authorities.readers for k in r.kinds}))
     with _minting():
         return DispatchAuthorization(a.digest, result.digest, result.verification.digest, a.world_revision,
                                      a.proposal_digest, a.proposal.action_id, a.configuration, a.observe, a.execution,
-                                     a.providers, a.synthetic, a)
+                                     a.providers, a.synthetic, declaration, owners, a)
+
+
+def verify_authorization(authorization: Any, authorities: Authorities, *, accept_synthetic: bool = False
+                         ) -> DispatchAuthorization:
+    """For an executor: re-derive ``authorization`` from its admitted action against ``authorities`` now, and require
+    the identical authorization (a hand-built or edited one, or one its owners no longer support, is refused)."""
+    if type(authorization) is not DispatchAuthorization:
+        raise DispatchRefused("not a DispatchAuthorization")
+    again = authorize_dispatch(authorization.admitted, authorities, accept_synthetic=accept_synthetic)
+    if again.digest != authorization.digest:
+        raise DispatchRefused("the authorization is not what authorize_dispatch yields now (edited or forged)")
+    return again
+
+
+class _GuardedExecutor:
+    """The execution owner's executor behind a re-derivation of every authorization it is handed."""
+
+    __slots__ = ("_call",)
+
+    def __init__(self, executor: Callable[[DispatchAuthorization], Any], authorities: Authorities,
+                 accept_synthetic: bool) -> None:
+        def call(authorization: Any) -> Any:
+            return executor(verify_authorization(authorization, authorities, accept_synthetic=accept_synthetic))
+        object.__setattr__(self, "_call", call)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        raise WorldRefused("an executor guard is immutable")
+
+    def __call__(self, authorization: Any) -> Any:
+        return self._call(authorization)
 
 
 class ExecutionDesk:
     """The execution side's boundary: it holds the owner readers and the executor; a proposer holds neither.
 
     ``dispatch`` hands the executor a :class:`DispatchAuthorization` for a currently admissible
-    :class:`AdmittedAction` and refuses anything else.  Budget reservation, state mutation and provider invocation
-    stay with the executor (the execution owner); after it runs, its owners move on and the same admitted action
-    no longer re-admits."""
+    :class:`AdmittedAction` and refuses anything else.  The authorities must be live (derived), so a dispatch is
+    always decided on what the owners state at that moment; the executor is wrapped so that it re-derives every
+    authorization it receives, however it is reached.  The desk is immutable.  It records no effects (see the module
+    docstring): at-most-once execution, budget reservation, state mutation and provider invocation stay with the
+    executor; once it moves an owner the action is bound to, the same admitted action no longer re-admits.  The Mind is
+    given :meth:`gateway`, never the desk."""
 
     __slots__ = ("_authorities", "_executor", "_accept_synthetic")
 
     def __init__(self, authorities: Authorities, executor: Callable[[DispatchAuthorization], Any], *,
                  accept_synthetic: bool = False) -> None:
         if type(authorities) is not Authorities or not authorities.live or not callable(executor):
-            raise WorldRefused("an execution desk holds the execution side's live Authorities and an executor callable")
+            raise WorldRefused("an execution desk holds the execution side's live Authorities (every reader consults "
+                               "its owner at every read) and an executor callable")
         if type(accept_synthetic) is not bool:
             raise WorldRefused("accept_synthetic is a bool")
-        self._authorities = authorities
-        self._executor = executor
-        self._accept_synthetic = accept_synthetic
+        object.__setattr__(self, "_authorities", authorities)
+        object.__setattr__(self, "_executor", _GuardedExecutor(executor, authorities, accept_synthetic))
+        object.__setattr__(self, "_accept_synthetic", accept_synthetic)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        raise WorldRefused("an execution desk is immutable: its owners and executor are fixed when it is built")
+
+    def __delattr__(self, name: str) -> None:
+        raise WorldRefused("an execution desk is immutable")
 
     def admit(self, space: FeasibleActionSpace, proposal: ProposedAction) -> AdmissionResult:
         return admit(space, proposal, self._authorities)
 
     def dispatch(self, admitted: Any) -> Any:
         return self._executor(authorize_dispatch(admitted, self._authorities, accept_synthetic=self._accept_synthetic))
+
+    def gateway(self) -> "AdmissionGateway":
+        """What the Mind is handed: admit and dispatch through this desk, and nothing else."""
+        return AdmissionGateway(self.admit, self.dispatch)
+
+
+class AdmissionGateway:
+    """The Mind's handle on the execution side: request admission, request dispatch of an admitted action.  It exposes
+    no reader, no executor and no setting, and is immutable."""
+
+    __slots__ = ("_admit", "_dispatch")
+
+    def __init__(self, admit_: Callable[..., AdmissionResult], dispatch: Callable[[Any], Any]) -> None:
+        object.__setattr__(self, "_admit", admit_)
+        object.__setattr__(self, "_dispatch", dispatch)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        raise WorldRefused("an admission gateway is immutable")
+
+    def admit(self, space: FeasibleActionSpace, proposal: ProposedAction) -> AdmissionResult:
+        return self._admit(space, proposal)
+
+    def dispatch(self, admitted: Any) -> Any:
+        return self._dispatch(admitted)
 
 
 # ---- replay -----------------------------------------------------------------------------------------------------------------------
@@ -327,12 +441,16 @@ class AdmissionRecord:
 
     @classmethod
     def of(cls, result: AdmissionResult, authorities: Authorities) -> "AdmissionRecord":
-        """Record ``result`` with the owner records ``authorities`` serve now; refused if they no longer give it."""
-        again = admit(FeasibleActionSpace.build(result.world), result.proposal, authorities)
+        """Record ``result`` when it is made: re-admitted against the LIVE owners, with exactly the owner records that
+        re-admission read (one consistent read of each owner); refused if the owners no longer give it."""
+        if type(authorities) is not Authorities or not authorities.live:
+            raise WorldRefused("an admission is recorded against the live owners it was made under, never a snapshot")
+        served = authorities.memoized()
+        again = admit(FeasibleActionSpace.build(result.world), result.proposal, served)
         if again.digest != result.digest:
             raise WorldRefused("the owners no longer give this admission; record it when it is made")
-        return cls(_frozen(result.world.to_dict()), _frozen(result.proposal.to_dict()),
-                   _frozen(authorities.snapshot(result.world.authority_bindings())), _frozen(result.to_dict()))
+        return cls(_frozen(result.world.to_dict()), _frozen(result.proposal.to_dict()), _frozen(served.served()),
+                   _frozen(result.to_dict()))
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": RECORD_SCHEMA, "world": detach(self.world), "proposal": detach(self.proposal),
@@ -342,9 +460,12 @@ class AdmissionRecord:
 def replay_admission(payload: Mapping[str, Any]) -> ReplayResult:
     """Re-run a recorded admission against the owner records it read (``sria.decision.replay`` vocabulary).
 
-    Exact replay proves what the world contained and what admission decided then.  It never authorizes anything: a
-    replayed admitted action is not dispatchable unless :func:`authorize_dispatch` re-admits it against the owners as
-    they are now."""
+    Every recorded owner payload must first re-derive its recorded revision and digest by the owner's own identity rule
+    (``owners.rederive``); a record its payload refutes is REPLAY_DEPENDENCY_UNAVAILABLE.  REPRODUCED then attests that
+    the record is self-consistent under the owners' rules and that admission decides on it exactly as recorded.  It does
+    not attest that the owners held those records (provenance is the owner's own anchor, e.g. the run's state chain),
+    and it never authorizes anything: a replayed admitted action is not dispatchable unless :func:`authorize_dispatch`
+    re-admits it against the owners as they are now."""
     mode = ReplayMode.EXECUTABLE_REPLAY
     record = dict(payload.get("result", {}))
     try:
@@ -373,6 +494,7 @@ def replay_admission(payload: Mapping[str, Any]) -> ReplayResult:
 
 
 __all__ = [
-    "ADMISSION_CLASSIFICATION", "AdmissionRecord", "AdmissionResult", "AdmittedAction", "DispatchAuthorization",
-    "DispatchRefused", "ExecutionDesk", "admit", "authorize_dispatch", "replay_admission",
+    "ADMISSION_CLASSIFICATION", "AdmissionGateway", "AdmissionRecord", "AdmissionResult", "AdmittedAction",
+    "DispatchAuthorization",
+    "DispatchRefused", "ExecutionDesk", "admit", "authorize_dispatch", "replay_admission", "verify_authorization",
 ]

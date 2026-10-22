@@ -1,9 +1,20 @@
 """Read-only adapters over the canonical owners a world is projected from.
 
-Each reader READS one owner through that owner's own API, states the owner's identity for a record (the owner's own
-digest rule, never one this package invents), and projects the allowed fields.  It never writes, converts, decides
-applicability, availability or affordability, and never issues a verdict.  Exact owner types are required: a
-look-alike or a subclass is not the owner.
+Each reader READS one owner through that owner's own API, states the identity of a record, and projects the allowed
+fields.  It never writes, converts, decides applicability, availability or affordability, and never issues a
+verdict.  Exact owner types are required: a look-alike or a subclass is not the owner.  Where the owner defines a
+digest (``SystemState.digest``, ``BudgetLedger.digest``, the provider health report's status digest, the unit
+registry fingerprint) that digest is the identity.  ``ScientificModelDefinition`` and ``ScientificExperiment`` define
+none: their identity here is sha256 of the core's own frozen deterministic serialization (``engcore.scientific.
+to_json``), a change detector over the owner's whole record, labelled world-derived (no owner digest exists).
+
+LIVENESS.  A reader is ``live`` when every read consults the owner as it is at that moment.  Readers over mutable
+owner objects (the model and provider registries, ledgers, experiments, the unit registry) are live.  A run record
+and a set of declarations are values: ``RunStateReader(record)`` and ``DeclarationReader(declarations)`` state what the
+execution side handed over at one moment (enough to project and to replay) and are NOT live;
+``RunStateReader.following(head)`` and ``DeclarationReader.following(in_force)`` ask the execution side again at every
+read and are.  Frozen snapshot readers are never live.  Liveness is derived from the reader's type and mode, never
+asserted by a caller; only live readers back a dispatch.
 
 =================  ======================================================================================================
 owner kind         owner, identity and current read
@@ -26,14 +37,17 @@ UNIT_REGISTRY      ``scientific.units``: ``registry_fingerprint()`` after ``veri
 =================  ======================================================================================================
 
 A reader built from a snapshot (:func:`frozen_readers`) answers exactly the reads a historical projection and its
-verification made: replay proves what a world contained, never that its owners still state it.
+verification made, and only after each recorded payload re-derives the owner's own identity for the record (the
+owner's digest rule applied to the payload, :func:`rederive`): a snapshot record whose payload its digest refutes is
+refused.  Replay therefore proves that a record is self-consistent under the owners' rules and what admission decided
+on it, never that the owners held it then or still state it now (provenance needs the owner's own anchor).
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 from engcore.providers.catalog import ProviderRegistry
 from engcore.providers.health import assess_health
@@ -45,8 +59,9 @@ from engcore.scientific.models.registry import ModelRegistry
 from engcore.scientific.units.quantity import registry_fingerprint, verify_registry_unmutated
 from engcore.sria.campaign.budget import BudgetLedger
 from engcore.system_runtime.result import SystemCheckpoint, SystemRunResult
+from engcore.system_runtime.state import SystemState
 
-from .authority import OwnerKind, OwnerRecord
+from .authority import OwnerKind, OwnerRecord, OwnerUnavailable
 from .base import WorldRefused, text
 
 K = OwnerKind
@@ -74,6 +89,11 @@ def _sha_json(record: Any) -> str:
 class _Reader:
     kinds: frozenset[OwnerKind] = frozenset()
     owner_id: str = ""
+    live: bool = True                                 # see LIVENESS above; a reader over a mutable owner object
+
+    def pinned(self) -> "_Reader":
+        """This reader with the owner's current state held fixed for one verification (one consistent read)."""
+        return self
 
     def superseded(self, kind: OwnerKind, record_id: str) -> frozenset[str] | None:
         return None                                   # most owners replace in place and keep no history
@@ -88,25 +108,60 @@ class _Reader:
 
 # ---- the state owner -------------------------------------------------------------------------------------------------------
 class RunStateReader(_Reader):
-    """The head state of the run record the execution side says governs (exactly a run result or checkpoint)."""
+    """The head state of the run the execution side says governs (exactly a run result or checkpoint).
+
+    ``RunStateReader(record)`` reads the record as handed over: it cannot know whether the run moved on since, so it
+    is not live.  ``RunStateReader.following(head)`` calls the execution side's ``head()`` at every verification and
+    reads the record it returns now, which must be the same run (its request digest is the owner instance): live.
+    Which record is the head of the run is the execution side's statement; nothing here infers it."""
 
     kinds = frozenset({K.SYSTEM_STATE})
 
     def __init__(self, record: Any) -> None:
+        self.owner_id, self._head, self._history = self._load(record)
+        self._follow: Callable[[], Any] | None = None
+
+    @classmethod
+    def following(cls, head: Callable[[], Any]) -> "RunStateReader":
+        if not callable(head):
+            raise WorldRefused("a followed run head is a callable the execution side answers with its current record")
+        reader = cls(head())
+        reader._follow = head
+        return reader
+
+    @property
+    def live(self) -> bool:                          # derived from the mode, never set
+        return self._follow is not None
+
+    @staticmethod
+    def _load(record: Any) -> tuple[str, Any, frozenset[str]]:
         if type(record) is SystemRunResult:
-            head, self.final = record.final_state, True
+            head = record.final_state
         elif type(record) is SystemCheckpoint:
-            head, self.final = record.state, False
+            head = record.state
         else:
             raise WorldRefused("the state owner is exactly a SystemRunResult or SystemCheckpoint (its constructors "
                                f"bind the head to the last committed state), not {type(record).__name__}")
         if head is None:
             raise WorldRefused("the run committed no state; there is no head to read")
-        self.owner_id = record.request_digest
-        self._head = head
-        self._history = frozenset(s.digest for s in record.state_history) - {head.digest}
+        return record.request_digest, head, frozenset(s.digest for s in record.state_history) - {head.digest}
+
+    def pinned(self) -> "RunStateReader":
+        if self._follow is None:
+            return self
+        try:
+            record = self._follow()
+            current = RunStateReader(record)
+        except Exception as exc:  # noqa: BLE001 - an owner that cannot state its head is unavailable, never guessed
+            raise OwnerUnavailable(f"the execution side could not state the run's current head: {exc}") from None
+        if current.owner_id != self.owner_id:
+            raise OwnerUnavailable("the followed head belongs to another run (its request digest changed); which run "
+                                   "governs is a new statement, not a move of this one")
+        return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if self._follow is not None:
+            return self.pinned().read(kind, record_id)
         parts = record_parts(record_id, 2)
         if OwnerKind(kind) is not K.SYSTEM_STATE or parts is None:
             return None
@@ -120,9 +175,12 @@ class RunStateReader(_Reader):
             return None
         v = found[0]
         return OwnerRecord(K.SYSTEM_STATE, self.owner_id, record_id, str(self._head.sequence), self._head.digest,
-                           {"value": v.value.to_dict(), "uncertainty": v.uncertainty.to_dict()})
+                           {"value": v.value.to_dict(), "uncertainty": v.uncertainty.to_dict(),
+                            "state": self._head.to_dict()})
 
     def superseded(self, kind: OwnerKind, record_id: str) -> frozenset[str] | None:
+        if self._follow is not None:
+            return self.pinned().superseded(kind, record_id)
         return self._history
 
 
@@ -153,19 +211,28 @@ class ModelRegistryReader(_Reader):
 
 # ---- the provider authority --------------------------------------------------------------------------------------------------
 class ProviderRegistryReader(_Reader):
+    """The provider registry's status of a provider, and the owner's health assessment of that status.
+
+    ``ProviderRegistry.status`` answers from the registry's own cache once a provider was probed (the owner's
+    semantics, the same ``system_runtime.preflight`` relies on).  With ``refresh=True`` every read re-probes through the
+    owner's ``status(refresh=True)``: the execution side chooses its currency policy; nothing here decides it."""
+
     kinds = frozenset({K.PROVIDER_STATUS})
 
-    def __init__(self, registry: ProviderRegistry, owner_id: str) -> None:
+    def __init__(self, registry: ProviderRegistry, owner_id: str, *, refresh: bool = False) -> None:
         if type(registry) is not ProviderRegistry:
             raise WorldRefused("the provider owner is exactly a ProviderRegistry")
+        if type(refresh) is not bool:
+            raise WorldRefused("refresh is a bool")
         self._registry = registry
+        self._refresh = refresh
         self.owner_id = text(owner_id, "provider registry id")
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
         if OwnerKind(kind) is not K.PROVIDER_STATUS:
             return None
         try:
-            status = self._registry.status(record_id)
+            status = self._registry.status(record_id, refresh=self._refresh)
         except Exception:  # noqa: BLE001 - an unregistered or unprobeable provider is absent, never guessed
             return None
         report = assess_health(status)
@@ -205,17 +272,42 @@ class BudgetReader(_Reader):
                 return None
             payload = exp.to_dict()
             return OwnerRecord(kind, self.owner_id, record_id, str(len(exp.evaluations)), _sha_json(exp),
-                               {"budget": payload["budget"], "accounting": payload["accounting"]})
+                               {"budget": payload["budget"], "accounting": payload["accounting"], "experiment": payload})
         return None
 
 
 # ---- the declaration in force ----------------------------------------------------------------------------------------------------
 class DeclarationReader(_Reader):
-    """The problem / protocol declarations the execution side holds in force, by declaration id."""
+    """The problem / protocol declarations the execution side holds in force, by declaration id.
+
+    The reader holds DETACHED copies (rebuilt from each declaration's payload), so nothing that holds the execution
+    side's objects or a world projected from them can edit what is in force.  ``DeclarationReader(declarations)`` holds
+    the set as handed over (not live); ``DeclarationReader.following(in_force)`` asks the execution side's
+    ``in_force()`` at every verification (live), so a revised declaration makes every admission on the old one stale,
+    and a revision restated with other content is refused (a revision names one content)."""
 
     kinds = frozenset({K.DECLARATION})
 
     def __init__(self, in_force: Iterable[Any], owner_id: str = "declarations") -> None:
+        self._held = self._load(in_force)
+        self.owner_id = text(owner_id, "declaration owner id")
+        self._follow: Callable[[], Iterable[Any]] | None = None
+        self._seen: dict[tuple[str, int], str] = {(i, d.revision): d.digest for i, d in self._held.items()}
+
+    @classmethod
+    def following(cls, in_force: Callable[[], Iterable[Any]], owner_id: str = "declarations") -> "DeclarationReader":
+        if not callable(in_force):
+            raise WorldRefused("followed declarations are a callable the execution side answers with those in force")
+        reader = cls(in_force(), owner_id)
+        reader._follow = in_force
+        return reader
+
+    @property
+    def live(self) -> bool:                          # derived from the mode, never set
+        return self._follow is not None
+
+    @staticmethod
+    def _load(in_force: Iterable[Any]) -> dict[str, Any]:
         from .declaration import ProtocolDeclaration
 
         held: dict[str, Any] = {}
@@ -224,11 +316,28 @@ class DeclarationReader(_Reader):
                 raise WorldRefused("a declaration in force is exactly a ProtocolDeclaration")
             if d.declaration_id in held:
                 raise WorldRefused(f"two declarations in force for {d.declaration_id!r}")
-            held[d.declaration_id] = d
-        self._held = held
-        self.owner_id = text(owner_id, "declaration owner id")
+            detached = ProtocolDeclaration.from_dict(d.to_dict())
+            if detached.digest != d.digest:
+                raise WorldRefused(f"declaration {d.declaration_id!r} does not rebuild from its own payload")
+            held[d.declaration_id] = detached
+        return held
+
+    def pinned(self) -> "DeclarationReader":
+        if self._follow is None:
+            return self
+        try:
+            current = DeclarationReader(self._follow(), self.owner_id)
+        except Exception as exc:  # noqa: BLE001 - an owner that cannot state what is in force is unavailable
+            raise OwnerUnavailable(f"the execution side could not state the declarations in force: {exc}") from None
+        for key, d in ((k, current._held[k[0]]) for k in current._seen):
+            if self._seen.setdefault(key, d.digest) != d.digest:
+                raise OwnerUnavailable(f"declaration {key[0]!r} revision {key[1]} is restated with other content (a "
+                                       "revision names one content; a change is a new revision)")
+        return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if self._follow is not None:
+            return self.pinned().read(kind, record_id)
         d = self._held.get(record_id) if OwnerKind(kind) is K.DECLARATION else None
         if d is None:
             return None
@@ -257,16 +366,72 @@ class UnitRegistryReader(_Reader):
 
 
 # ---- frozen readers (replay) -----------------------------------------------------------------------------------------------------
-class FrozenReader(_Reader):
-    """Answers exactly the reads recorded in a snapshot: what the owners stated then, not what they state now."""
+def rederive(kind: OwnerKind, record_id: str, payload: Mapping[str, Any]) -> tuple[str, str]:
+    """(revision, digest) of a recorded owner payload, by the owner's own identity rule; refused when the payload does
+    not carry what the rule needs or is not self-consistent.  Used for snapshot records, never for live reads."""
+    from .declaration import ProtocolDeclaration
 
-    def __init__(self, kind: OwnerKind, owner_id: str, records: Mapping[str, tuple[OwnerRecord, frozenset[str] | None]]
-                 ) -> None:
+    kind = OwnerKind(kind)
+    try:
+        if kind is K.DECLARATION:
+            d = ProtocolDeclaration.from_dict(payload["declaration"])
+            return str(d.revision), d.digest
+        if kind is K.UNIT_REGISTRY:
+            fingerprint = payload["fingerprint"]
+            return fingerprint[:16], fingerprint
+        if kind is K.SYSTEM_STATE:
+            state = SystemState.from_dict(payload["state"])
+            owner, variable = record_parts(record_id, 2) or ("", "")
+            found = [v for v in state.owner(owner).values if v.variable_id == variable]
+            if len(found) != 1 or found[0].value.to_dict() != payload["value"] or \
+                    found[0].uncertainty.to_dict() != payload["uncertainty"]:
+                raise WorldRefused("the recorded value is not the recorded state's")
+            return str(state.sequence), state.digest
+        if kind is K.MODEL_RECORD:
+            model = ScientificModelDefinition.from_dict(payload["model"])
+            return model.version, _sha_json(model)
+        if kind is K.PROVIDER_STATUS:
+            status = payload["status"]
+            digest_ = content_digest({k: v for k, v in status.items() if k != "location"})
+            if payload["report"].get("status_digest") != digest_:
+                raise WorldRefused("the recorded health report is for another status")
+            return status.get("version") or "-", digest_
+        if kind is K.BUDGET_LEDGER:
+            ledger = BudgetLedger.from_dict(payload["ledger"])
+            return str(ledger.revision), ledger.digest
+        if kind is K.EXPERIMENT:
+            exp = ScientificExperiment.from_dict(payload["experiment"])
+            full = exp.to_dict()
+            if full["budget"] != payload["budget"] or full["accounting"] != payload["accounting"]:
+                raise WorldRefused("the recorded accounting is not the recorded experiment's")
+            return str(len(exp.evaluations)), _sha_json(exp)
+    except (KeyError, TypeError, ValueError, AttributeError, ScientificCoreError) as exc:
+        raise WorldRefused(f"a recorded {kind.value} payload cannot re-derive its owner identity: {exc}") from None
+    raise WorldRefused(f"no identity rule for {kind.value}")
+
+
+class FrozenReader(_Reader):
+    """Answers exactly the reads recorded in a snapshot: what the owners stated then, not what they state now.  Each
+    record is accepted only if its payload re-derives the recorded revision and digest by the owner's rule."""
+
+    live = False
+
+    def __init__(self, kind: OwnerKind, owner_id: str, records: Mapping[str, tuple[OwnerRecord, frozenset[str] | None]],
+                 unavailable: str = "") -> None:
         self.kinds = frozenset({OwnerKind(kind)})
         self.owner_id = owner_id
+        self._unavailable = unavailable
+        for record_id, (record, _) in records.items():
+            if record.owner_kind is not OwnerKind(kind) or record.owner_id != owner_id or record.record_id != record_id:
+                raise WorldRefused(f"snapshot record {record_id!r} is not a {OwnerKind(kind).value} record of {owner_id!r}")
+            if rederive(record.owner_kind, record_id, record.payload) != (record.revision, record.record_digest):
+                raise WorldRefused(f"snapshot record {record_id!r}: its payload does not re-derive the recorded "
+                                   f"{record.owner_kind.value} revision and digest (the owner's rule refutes it)")
         self._records = dict(records)
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if self._unavailable:
+            raise OwnerUnavailable(self._unavailable)
         found = self._records.get(record_id)
         return None if found is None or OwnerKind(kind) not in self.kinds else found[0]
 
@@ -278,17 +443,30 @@ class FrozenReader(_Reader):
 def frozen_readers(snapshot: Mapping[str, Any]) -> tuple[FrozenReader, ...]:
     by_kind: dict[OwnerKind, dict[str, tuple[OwnerRecord, frozenset[str] | None]]] = {}
     owners = {OwnerKind(k): o for k, o in snapshot["owners"]}
+    unavailable = {OwnerKind(k): why for k, why in snapshot.get("unavailable", ())}
     for item in snapshot["records"]:
         r = item["record"]
         record = OwnerRecord(OwnerKind(r["owner_kind"]), r["owner_id"], r["record_id"], r["revision"],
                              r["record_digest"], r["payload"])
         history = None if item["superseded"] is None else frozenset(item["superseded"])
         by_kind.setdefault(record.owner_kind, {})[record.record_id] = (record, history)
-    return tuple(FrozenReader(kind, owner_id, by_kind.get(kind, {})) for kind, owner_id in sorted(
-        owners.items(), key=lambda kv: kv[0].value))
+    return tuple(FrozenReader(kind, owner_id, by_kind.get(kind, {}), unavailable.get(kind, ""))
+                 for kind, owner_id in sorted(owners.items(), key=lambda kv: kv[0].value))
+
+
+#: The readers whose liveness is derived from their own type and mode (``Authorities.live``); any other object is not
+#: a live owner reader, whatever it says about itself.
+LIVE_READER_TYPES = (RunStateReader, ModelRegistryReader, ProviderRegistryReader, BudgetReader, DeclarationReader,
+                     UnitRegistryReader)
+
+
+def is_live(reader: Any) -> bool:
+    """Whether ``reader`` reads its owner as it is now (derived; see LIVENESS)."""
+    return type(reader) in LIVE_READER_TYPES and reader.live is True
 
 
 __all__ = [
-    "BudgetReader", "DeclarationReader", "FrozenReader", "ModelRegistryReader", "ProviderRegistryReader",
-    "RunStateReader", "UNIT_RECORD", "UnitRegistryReader", "frozen_readers", "record_key", "record_parts",
+    "BudgetReader", "DeclarationReader", "FrozenReader", "LIVE_READER_TYPES", "ModelRegistryReader",
+    "ProviderRegistryReader", "RunStateReader", "UNIT_RECORD", "UnitRegistryReader", "frozen_readers", "is_live",
+    "record_key", "record_parts", "rederive",
 ]

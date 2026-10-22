@@ -130,6 +130,19 @@ def _shown(value: Any) -> Any:
     return value_payload(value) if type(value) in (Quantity, IntegerValue, BooleanValue, CategoricalValue) else repr(value)
 
 
+def _is_level(domain: DiscreteLevels, value: Quantity) -> bool:
+    """A declared level: stated in a level's own unit, exactly that magnitude; stated in another unit, the same
+    magnitude at conversion precision (12 significant digits after the unit owner's conversion, which is only
+    floating-point exact to that precision).  Nothing is rounded to a level otherwise."""
+    for level in domain.levels:
+        if level.units == value.units:
+            if level.magnitude == value.magnitude:
+                return True
+        elif magnitude_key(level) == magnitude_key(value):
+            return True
+    return False
+
+
 def membership(domain: Domain, value: Any) -> tuple[str, str, dict[str, Any]] | None:
     """None when ``value`` is a member; otherwise (code, message, detail).  Never clamps, never rounds to a level."""
     shown = _shown(value)
@@ -139,8 +152,7 @@ def membership(domain: Domain, value: Any) -> tuple[str, str, dict[str, Any]] | 
         if not converts(value, domain.unit):
             return ("UNIT_INCOMPATIBLE", f"the unit owner does not convert {value} into {domain.unit!r}",
                     {"proposed": shown, "expected_unit": domain.unit})
-        key = magnitude_key(value)
-        if key in domain.keys():
+        if _is_level(domain, value):
             return None
         return ("LEVEL_NOT_DECLARED", f"{value} is not one of the declared levels",
                 {"proposed": shown, "declared_levels": [lv.to_dict() for lv in domain.levels]})

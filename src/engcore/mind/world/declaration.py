@@ -4,8 +4,9 @@ A :class:`ProtocolDeclaration` is what the problem specification and the protoco
 reused repsem role declaration, unit, time semantics, domain and any DECLARED set point; the declared actions,
 constraints, observation channels and entities; WHERE every other current value comes from (:class:`ValueSource`,
 a state owner and variable of the governing run); which model records gate model execution, which providers the
-actions need, which owner states each budget dimension (:class:`BudgetSource`); and, as the core's own
-``UncertaintySpecification``, which uncertainty its decisions demand.
+actions need, and which owner account states each budget dimension (:class:`BudgetSource`; one account states one
+dimension).  It states no uncertainty policy: no FORGE owner states a decision-coverage policy, so a current value
+never decides a containment (``feasibility``).
 
 It is content-addressed (``digest``) and revisioned like a protocol document cited by ``protocol_digest`` elsewhere in
 FORGE.  The world never authors it and never edits it: the execution side holds the declaration in force
@@ -19,7 +20,6 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from engcore.mind.repsem.roles import RoleRefused, RoleSource, RoleTable
-from engcore.scientific import UncertaintyRequirement, UncertaintySpecification
 
 from .actions import ActionSpec
 from .base import RecordRef, WorldRefused, digest, expect_schema, schema, text
@@ -141,7 +141,6 @@ class ProtocolDeclaration:
     models: tuple[tuple[str, str], ...] = ()
     providers: tuple[str, ...] = ()
     budget: tuple[BudgetSource, ...] = ()
-    uncertainty: UncertaintySpecification | None = None
     description: str = ""                                                  # non-material
 
     def __post_init__(self) -> None:
@@ -193,12 +192,10 @@ class ProtocolDeclaration:
             raise WorldRefused("declared providers are distinct provider ids")
         object.__setattr__(self, "providers", tuple(sorted(providers)))
         object.__setattr__(self, "budget", _unique(self.budget, BudgetSource, lambda b: b.dimension, "budget sources"))
-        if self.uncertainty is not None:
-            if type(self.uncertainty) is not UncertaintySpecification:
-                raise WorldRefused("the declared uncertainty demand is the core's UncertaintySpecification")
-            unknown = set(self.uncertainty.metrics) - set(by_name)
-            if unknown:
-                raise WorldRefused(f"the uncertainty demand names undeclared variables {sorted(unknown)}")
+        accounts = [(b.kind, b.ref) for b in self.budget if b.kind != "unbounded"]
+        if len(set(accounts)) != len(accounts):
+            raise WorldRefused("one budget account states one dimension (its owner decides on one pool; two dimensions "
+                               "drawn from it would each be checked against the whole of it)")
         if type(self.description) is not str:
             raise WorldRefused("description is text")
 
@@ -213,8 +210,7 @@ class ProtocolDeclaration:
                 "actions": [a.to_dict() for a in self.actions], "channels": [c.to_dict() for c in self.channels],
                 "references": [r.to_dict() for r in self.references], "values": [s.to_dict() for s in self.values],
                 "models": [list(m) for m in self.models], "providers": list(self.providers),
-                "budget": [b.to_dict() for b in self.budget],
-                "uncertainty": None if self.uncertainty is None else self.uncertainty.to_dict()}
+                "budget": [b.to_dict() for b in self.budget]}
 
     @property
     def digest(self) -> str:
@@ -247,19 +243,7 @@ class ProtocolDeclaration:
                    tuple(RecordRef.from_dict(r) for r in payload["references"]),
                    tuple(ValueSource.from_dict(s) for s in payload["values"]),
                    tuple(tuple(m) for m in payload["models"]), tuple(payload["providers"]),
-                   tuple(BudgetSource.from_dict(b) for b in payload["budget"]),
-                   None if payload.get("uncertainty") is None else UncertaintySpecification.from_dict(
-                       payload["uncertainty"]), payload.get("description", ""))
+                   tuple(BudgetSource.from_dict(b) for b in payload["budget"]), payload.get("description", ""))
 
 
-def coverage_demand(spec: UncertaintySpecification | None, name: str) -> float | None:
-    """The coverage the declaration demands of ``name``'s uncertainty, or None when it demands none.
-
-    Only a QUANTIFIED demand with a stated confidence level names one; whether a record meets it is the core rule
-    (``scientific.results.requirements.unmet_uncertainty_requirements``), never decided here."""
-    if spec is None or spec.requirement is not UncertaintyRequirement.QUANTIFIED or spec.confidence_level is None:
-        return None
-    return spec.confidence_level if name in spec.metrics else None
-
-
-__all__ = ["BUDGET_DIMENSIONS", "BudgetSource", "ProtocolDeclaration", "ValueSource", "coverage_demand"]
+__all__ = ["BUDGET_DIMENSIONS", "BudgetSource", "ProtocolDeclaration", "ValueSource"]

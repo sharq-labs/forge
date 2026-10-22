@@ -69,29 +69,36 @@ def test_the_fixtures_cover_every_role_domain_kind_and_status_in_at_least_two_wo
     assert all(len(v) >= 2 for v in statuses.values())
 
 
-#: GEN2-BR1.1 re-decides these frozen cases under corrected rules (coverage is never an enclosure; applicability at
-#: exact points only).  BR1's committed results stay byte-identical as historical evidence about BR1's code; the live
-#: decisions are pinned by the BR1.1 re-score, which lists every moved case (none toward FEASIBLE).
+#: GEN2-BR1.1 re-decides these frozen cases under corrected rules (no current value decides a containment;
+#: applicability at exact points only).  BR1's committed results stay byte-identical as historical evidence about BR1's
+#: code; the live decisions are pinned by the BR1.1 re-score, which lists every case whose status or codes differ from
+#: BR1's actual decisions (none toward FEASIBLE).
 RESCORE = HERE.parent / "mind_gen2_authority_v1" / "results" / "BR1_RESCORE.json"
+BR1_DECISIONS = HERE.parent / "mind_gen2_authority_v1" / "results" / "BR1_DECISIONS.json"
 
 
-def test_the_committed_scores_reproduce():
-    """BR1's committed results are intact; the live decisions are BR1.1's re-score, moved cases exactly as listed."""
+def test_br1_results_are_intact_and_the_live_decisions_are_the_br1_1_rescore():
+    """BR1's committed results are intact (and its scores as recorded); the live decisions are BR1.1's re-score: every
+    case that differs from BR1's actual decision is listed, exactly."""
     stored = json.loads((HERE / "results" / "BENCHMARK.json").read_bytes())
     rescore = json.loads(RESCORE.read_bytes())
     import hashlib
     for name, sha in rescore["br1_inputs"].items():
-        assert hashlib.sha256((HERE / "results" / name).read_bytes()).hexdigest() == sha, name
+        path = (HERE / "results" / name) if name != "BR1_DECISIONS.json" else BR1_DECISIONS
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == sha, name
     g2 = stored["scores"]["GEN2_WORLD_ACTIONSPACE"]
     assert g2["false_feasible"] == 0 and g2["false_not_feasible"] == 0 and not g2["misses"]   # BR1, as recorded
+    br1 = json.loads(BR1_DECISIONS.read_bytes())
+    assert br1["decisions_digest"] == stored["decisions_digest"]       # BR1's own decisions, exported from BR1's code
     cases = C.load()["cases"]
     rows = rb.decisions(cases, rb._worlds(cases))
     assert rb.decisions_digest(rows) == rescore["decisions_digest"]
-    moved = {r["case"]["case_id"]: r["gen2"] for r in rows
-             if r["gen2"]["status"] != r["case"]["expected"]["status"]
-             or not set(r["case"]["expected"]["codes"]) <= set(r["gen2"]["codes"])}
-    assert sorted(moved) == sorted(d["case_id"] for d in rescore["drift"]) and rescore["moved_to_feasible"] == 0
-    assert all(g["status"] == "MISSING_INFORMATION" for g in moved.values())
+    changed = {r["case"]["case_id"] for r in rows
+               if br1["decisions"][r["case"]["case_id"]] != {"status": r["gen2"]["status"],
+                                                             "codes": sorted(r["gen2"]["codes"])}}
+    assert changed == {c["case_id"] for c in rescore["changes"]} and rescore["moved_to_feasible"] == 0
+    assert all(c["br1_1"]["status"] == "MISSING_INFORMATION" for c in rescore["changes"]
+               if c["br1"]["status"] != c["br1_1"]["status"])
 
 
 def test_the_gen1_reproduction_reproduces():

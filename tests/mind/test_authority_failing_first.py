@@ -5,7 +5,8 @@ README.md`` section 6) or one BR1.1 brief control (section 21, A-O).  The author
 (``benchmarks/mind_gen2_authority_v1/fixtures.py``) read every projected fact from a real owner record; they are
 imported per test so that this module collects on the unrepaired tree and every control fails on its own.
 
-A. a 10 %-coverage interval cannot prove hard-domain containment
+A. a 10 %-coverage interval cannot prove hard-domain containment (BR1.1 round 1: no interval at any coverage or
+   source proves one, and a declared set point is never exact by default)
 B. one owner record cannot be re-bound to a different value (lineage laundering)
 C. a non-existent owner record cannot support admission
 D. a stale state binding refuses
@@ -16,9 +17,10 @@ H. a stale budget binding refuses, and the budget owner states a verifiable iden
 I. copied unit display text cannot change unit authority
 J. a raw proposal cannot execute
 K. an external proposer cannot mint an admitted action
-L. an admitted action becomes unusable when material authority changes before dispatch
+L. an admitted action becomes unusable when material authority changes before dispatch (BR1.1 round 1: against
+   live readers only; the desk is not an effect ledger)
 M. replay of a historical admission is exact even after the owners moved on; dispatching it now is refused
-N. the exact current verified world still admits every valid BR1 control
+N. the exact current verified world still admits every valid BR1 control that reads no current value
 O. an invalid 1.15 A proposal stays refused with alternatives 1.0 A and 2.0 A
 """
 
@@ -36,6 +38,7 @@ from engcore.scientific import Uncertainty
 
 D = "dimensionless"
 PULSE = {"I": br1.q(1.0, "A"), "t_pulse": br1.q(60, "s")}
+SIM = br1.base("battery")["simulate_pulse"]                  # admissible: it reads no current value of the world
 
 
 @pytest.fixture(scope="module")
@@ -73,26 +76,55 @@ def test_a_a_10_percent_coverage_interval_never_proves_hard_containment():
     assert d.status is F.MISSING_INFORMATION
 
 
-def test_a_without_a_declared_coverage_demand_a_95_percent_interval_proves_nothing(ax):
+def test_a_no_interval_at_any_coverage_or_from_any_source_proves_containment(ax):
+    """Brief section 9; round-1 MAJORs A-F1 and A-F3: the state owner commits SOC [0.105, 0.115] (and [0.7, 0.9],
+    wholly above the 0.1 floor) at 10 %, 95 % or 99.9999 % coverage, from a NUMERICAL, MEASUREMENT or COMBINED source:
+    admission is MISSING_INFORMATION every time and no admitted action is minted.  No core uncertainty record is an
+    enclosure and no owner states a decision-coverage policy, so no world or caller rule turns a band into a decision."""
+    from engcore.scientific.results.uncertainty import UncertaintySource as S
     o = ax.owned("battery")
-    assert _admit(o.world, o.propose("pulse", PULSE), o.authorities()).status is F.FEASIBLE   # 0.95 demanded
-    hard = ax.owned("battery")
-    hard.declaration = dataclasses.replace(hard.declaration, uncertainty=None)
-    r = _admit(hard.world, hard.propose("pulse", PULSE), hard.authorities())
-    assert r.status is F.MISSING_INFORMATION and r.admitted is None
+    for lo, hi in ((0.105, 0.115), (0.7, 0.9)):
+        for level in (0.10, 0.95, 0.999999):
+            for source in (S.NUMERICAL, S.MEASUREMENT, S.COMBINED, S.UNSPECIFIED):
+                u = Uncertainty(kind="interval", lower=br1.q(lo, D), upper=br1.q(hi, D), confidence_level=level,
+                                method="stated", source_kind=source)
+                vals = {"cell": ("component", {"SOC": (br1.q((lo + hi) / 2, D), u),
+                                               "R0": (br1.q(0.012, "ohm"), Uncertainty.unknown("not quantified"))})}
+                authorities = o.authorities(state=ax.run_state(f"battery.{lo}.{level}.{source.value}", vals).checkpoint)
+                world = _api("projection").project_world(o.declaration, authorities)
+                r = _admit(world, o.propose("pulse", PULSE, world=world), authorities)
+                assert r.verification.ok and r.admitted is None and r.status is F.MISSING_INFORMATION, (lo, level, source)
+                assert "PRECONDITION_ENCLOSURE_REQUIRED" in _codes(r) and not r.feasibility_verdicts()
 
 
-def test_a_coverage_below_the_guard_band_is_missing_information(ax):
-    o = ax.owned("battery")
-    vals = {"cell": ("component", {"SOC": (br1.q(0.11, D), Uncertainty(
-        kind="interval", lower=br1.q(0.105, D), upper=br1.q(0.115, D), confidence_level=0.10, method="10 %")),
-        "R0": (br1.q(0.012, "ohm"), Uncertainty.unknown("not quantified"))})}
-    run = ax.run_state("battery.low-coverage", vals)
-    authorities = o.authorities(state=run.checkpoint)
-    world = _api("projection").project_world(o.declaration, authorities)
-    r = _admit(world, o.propose("pulse", PULSE, world=world), authorities)
-    assert r.status is F.MISSING_INFORMATION and r.admitted is None
-    assert any("COVERAGE" in c or "GUARD_BAND" in c for c in _codes(r))
+def test_a_a_declared_set_point_is_never_exact_by_default_so_unknown_never_improves_the_answer():
+    """Round-1 MAJOR A-F2: with the model reading the DECLARED ambient set point (25 degC), UNKNOWN realization
+    uncertainty gave FEASIBLE while a stated 0.2 K uncertainty refused.  Now UNKNOWN, STANDARD and an interval at any
+    coverage all give the same MISSING_INFORMATION; the protocol level decides exactly only when the action declares it
+    as its fixed condition."""
+    w = br1.battery_world()
+    spec = w.action("simulate_pulse")
+    reads_declared = dataclasses.replace(spec, controls=tuple(c for c in spec.controls if c.variable != "T_amb"))
+    base = w.derive(reason="the model reads the declared ambient", actions=tuple(
+        reads_declared if a is spec else a for a in w.actions))
+    proposal = {"I": br1.q(2.0, "A"), "t_pulse": br1.q(60, "s")}
+    outcomes = set()
+    for u in (Uncertainty.unknown("chamber realization not characterized"),
+              Uncertainty(kind="standard", standard_uncertainty=br1.q(0.2, "delta_degC"), method="stated"),
+              Uncertainty(kind="interval", lower=br1.q(24.5, "degC"), upper=br1.q(25.5, "degC"),
+                          confidence_level=0.95, method="stated")):
+        world = base.derive(reason=f"ambient realization {u.kind.value}", variables=tuple(
+            dataclasses.replace(v, uncertainty=u) if v.name == "T_amb" else v for v in base.variables))
+        d = FeasibleActionSpace.build(world).check(br1.propose(world, "simulate_pulse", proposal))
+        assert d.status is F.MISSING_INFORMATION and "APPLICABILITY_INPUT_NOT_EXACT" in _codes(d), u.kind
+        assert not d.feasibility_verdicts() and all(r.status is F.MISSING_INFORMATION for r in d.reasons)
+        outcomes.add(d.status)
+    assert outcomes == {F.MISSING_INFORMATION}                      # monotone: stating an uncertainty changes nothing
+    fixed = dataclasses.replace(reads_declared, fixed_conditions=reads_declared.fixed_conditions + (
+        br1.fixed("T_amb", br1.q(25, "degC")),))
+    exact = base.derive(reason="the protocol fixes the ambient for this action", actions=tuple(
+        fixed if a.action_id == "simulate_pulse" else a for a in base.actions))
+    assert FeasibleActionSpace.build(exact).check(br1.propose(exact, "simulate_pulse", proposal)).status is F.FEASIBLE
 
 
 # ---- B. lineage laundering ---------------------------------------------------------------------------------------------
@@ -279,7 +311,7 @@ def test_j_a_raw_proposal_never_reaches_an_executor(ax):
 def test_k_a_proposer_cannot_mint_an_admitted_action(ax):
     admission = _api("admission")
     o = ax.owned("battery")
-    good = _admit(o.world, o.propose("pulse", PULSE), o.authorities())
+    good = _admit(o.world, o.propose("simulate_pulse", *SIM), o.authorities())
     assert good.admitted is not None
     with pytest.raises((WorldRefused, TypeError)):
         admission.AdmittedAction(**{f.name: getattr(good.admitted, f.name) for f in dataclasses.fields(good.admitted)})
@@ -319,28 +351,47 @@ def test_l_an_admitted_action_is_refused_at_dispatch_once_its_authority_moved(ax
     admission = _api("admission")
     o = ax.owned("battery")
     calls = []
-    desk = admission.ExecutionDesk(o.authorities(), calls.append)
-    result = desk.admit(FeasibleActionSpace.build(o.world), o.propose("pulse", PULSE))
+    desk = admission.ExecutionDesk(o.authorities(), calls.append, accept_synthetic=True)
+    result = desk.admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM))
     assert result.admitted is not None
     o.ledgers["synthetic.battery.pulse-cell.solver"].settle(charge_id="elsewhere", action_id="other", iteration=1,
                                                              family=ax.ActionFamily.EXPLORE, realized=1.0)
-    with pytest.raises(admission.DispatchRefused):
+    with pytest.raises(admission.DispatchRefused, match="AUTHORITY_STALE"):
         desk.dispatch(result.admitted)
-    moved = admission.ExecutionDesk(o.authorities(state=o.run.result), calls.append)
-    with pytest.raises(admission.DispatchRefused):
-        moved.dispatch(result.admitted)
+    fresh = ax.owned("battery")
+    again = _admit(fresh.world, fresh.propose("simulate_pulse", *SIM), fresh.authorities())
+    moved = admission.ExecutionDesk(fresh.authorities(state=fresh.run.result), calls.append, accept_synthetic=True)
+    with pytest.raises(admission.DispatchRefused, match="AUTHORITY_STALE"):
+        moved.dispatch(again.admitted)
     assert calls == []
 
 
-def test_l_a_current_admitted_action_reaches_the_executor_exactly_once_per_authority_state(ax):
+def test_l_the_desk_is_not_an_effect_ledger_and_a_moved_run_head_refuses_the_next_dispatch(ax):
+    """Round-1 MAJOR B1: the desk's state reader follows the execution side's run head.  While no bound owner moves,
+    the same admitted action is authorized again (the desk records no effects: at-most-once execution is the execution
+    owner's); once the executor advances the run, the same admitted action no longer re-admits."""
     admission = _api("admission")
     o = ax.owned("battery")
     calls = []
     desk = admission.ExecutionDesk(o.authorities(), calls.append, accept_synthetic=True)   # a synthetic test executor
-    result = desk.admit(FeasibleActionSpace.build(o.world), o.propose("pulse", PULSE))
+    result = desk.admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM))
     desk.dispatch(result.admitted)
-    assert len(calls) == 1 and isinstance(calls[0], admission.DispatchAuthorization)
-    assert calls[0].admitted_digest == result.admitted.digest
+    desk.dispatch(result.admitted)
+    assert len(calls) == 2 and all(isinstance(c, admission.DispatchAuthorization) for c in calls)
+    assert {c.admitted_digest for c in calls} == {result.admitted.digest}
+    o.advance()                                                      # the run moved on: the same run, a later head
+    with pytest.raises(admission.DispatchRefused, match="AUTHORITY_STALE"):
+        desk.dispatch(result.admitted)
+    assert len(calls) == 2
+    p = ax.owned("battery")                                          # an executor that moves the head itself
+    seen = []
+    moving = admission.ExecutionDesk(p.authorities(), lambda auth: (seen.append(auth), p.advance()),
+                                     accept_synthetic=True)
+    admitted = moving.admit(FeasibleActionSpace.build(p.world), p.propose("simulate_pulse", *SIM)).admitted
+    moving.dispatch(admitted)
+    with pytest.raises(admission.DispatchRefused):
+        moving.dispatch(admitted)
+    assert len(seen) == 1
 
 
 # ---- M. replay -----------------------------------------------------------------------------------------------------------------
@@ -348,31 +399,50 @@ def test_m_historical_replay_is_exact_and_stale_dispatch_is_refused(ax):
     admission = _api("admission")
     from engcore.sria.decision.replay import ReplayOutcome
     o = ax.owned("battery")
-    result = _admit(o.world, o.propose("pulse", PULSE), o.authorities())
+    result = _admit(o.world, o.propose("simulate_pulse", *SIM), o.authorities())
+    assert result.admitted is not None
     record = admission.AdmissionRecord.of(result, o.authorities())
     o.ledgers["synthetic.battery.pulse-cell.solver"].settle(charge_id="moved", action_id="other", iteration=2,
                                                              family=ax.ActionFamily.EXPLORE, realized=1.0)
     replayed = admission.replay_admission(record.to_dict())
     assert replayed.outcome is ReplayOutcome.REPRODUCED
-    with pytest.raises(admission.DispatchRefused):
-        admission.authorize_dispatch(result.admitted, o.authorities())
+    with pytest.raises(admission.DispatchRefused, match="AUTHORITY_STALE"):
+        admission.authorize_dispatch(result.admitted, o.authorities(), accept_synthetic=True)
 
 
 # ---- N-O. BR1 behaviour survives ----------------------------------------------------------------------------------------------
-#: Actions whose model applicability reads a value known only within an interval: the core assesses points only, so
-#: admission fails closed (brief section 10).  Every other BR1 base proposal must still be admitted.
-NOT_EXACT = {("hvac_field", "simulate_building"), ("drone", "simulate_flight")}
+#: BR1 base proposals that read a current value of the world for a containment: a state precondition (the battery
+#: pulses read SOC, the HVAC speed step the room temperature, the drone tests the velocity, the motor load step the
+#: winding temperature) or a model input (brief section 10).  No current value is exact (no core uncertainty record is
+#: an enclosure), so these are MISSING_INFORMATION with exactly those reasons; every other BR1 base proposal is admitted.
+READS_CURRENT_VALUE = {
+    ("battery", "pulse"): {"PRECONDITION_ENCLOSURE_REQUIRED", "STATE_DOMAIN_ENCLOSURE_REQUIRED"},
+    ("battery", "signed_pulse"): {"PRECONDITION_ENCLOSURE_REQUIRED", "STATE_DOMAIN_ENCLOSURE_REQUIRED"},
+    ("hvac_chamber", "step_speed"): {"PRECONDITION_ENCLOSURE_REQUIRED"},
+    ("hvac_field", "step_speed"): {"PRECONDITION_ENCLOSURE_REQUIRED"},
+    ("hvac_field", "simulate_building"): {"APPLICABILITY_INPUT_NOT_EXACT"},
+    ("drone", "hover_test"): {"PRECONDITION_ENCLOSURE_REQUIRED"},
+    ("drone", "climb_test"): {"PRECONDITION_ENCLOSURE_REQUIRED"},
+    ("drone", "simulate_flight"): {"APPLICABILITY_INPUT_NOT_EXACT"},
+    ("motor", "load_step"): {"PRECONDITION_ENCLOSURE_REQUIRED"},
+}
 
 
 @pytest.mark.parametrize("name", ["battery", "hvac_chamber", "hvac_field", "drone", "motor"])
 def test_n_the_exact_current_world_admits_every_valid_br1_control(ax, name):
     o = ax.WORLDS[name]()
+    admitted = 0
     for action_id, (assignments, observe) in ax.base(name).items():
         r = _admit(o.world, o.propose(action_id, assignments, observe), o.authorities())
-        if (name, action_id) in NOT_EXACT:
-            assert r.status is F.MISSING_INFORMATION and "APPLICABILITY_INPUT_NOT_EXACT" in _codes(r), action_id
+        assert r.verification.ok, action_id
+        expected = READS_CURRENT_VALUE.get((name, action_id))
+        if expected is not None:
+            assert r.status is F.MISSING_INFORMATION and r.admitted is None and _codes(r) == expected, \
+                (action_id, sorted(_codes(r)))
         else:
             assert r.status is F.FEASIBLE and r.admitted is not None, (action_id, sorted(_codes(r)))
+            admitted += 1
+    assert admitted >= 1
 
 
 def test_o_an_off_level_current_stays_refused_with_the_declared_alternatives(ax):

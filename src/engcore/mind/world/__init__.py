@@ -26,15 +26,15 @@ from .actions import (
     ProposedAction, proposed_action_from_suggestion, suggestion_from_dict,
 )
 from .admission import (
-    AdmissionRecord, AdmissionResult, AdmittedAction, DispatchAuthorization, DispatchRefused, ExecutionDesk, admit,
-    authorize_dispatch, replay_admission,
+    AdmissionGateway, AdmissionRecord, AdmissionResult, AdmittedAction, DispatchAuthorization, DispatchRefused, ExecutionDesk, admit,
+    authorize_dispatch, replay_admission, verify_authorization,
 )
 from .authority import Authorities, AuthorityBinding, AuthorityReport, BindingCheck, BindingStatus, OwnerKind
 from .base import ProposalRefused, RecordKind, RecordRef, SOFTWARE_VERSION, StaleProposal, WorldRefused
 from .declaration import BudgetSource, ProtocolDeclaration, ValueSource
 from .domains import ALL_ACTIONS, DeclaredConstraint, DiscreteLevels, Guard
 from .feasibility import (
-    ANNOTATION_KEYS, CLASSIFICATION, COVERAGE_BAND, REASON_CODES, CheckFamily, FeasibilityDecision, FeasibilityReason,
+    ANNOTATION_KEYS, CLASSIFICATION, REASON_CODES, CheckFamily, FeasibilityDecision, FeasibilityReason,
     FeasibilityStatus, FeasibleActionSpace, replay_decision,
 )
 from .owners import (
@@ -51,10 +51,10 @@ from .world import (
 )
 
 __all__ = [
-    "ALL_ACTIONS", "ANNOTATION_KEYS", "ActionMode", "ActionSpec", "AdmissionRecord", "AdmissionResult",
+    "ALL_ACTIONS", "ANNOTATION_KEYS", "ActionMode", "ActionSpec", "AdmissionGateway", "AdmissionRecord",
+    "AdmissionResult",
     "AdmittedAction", "ApplicabilityBinding", "Authorities", "AuthorityBinding", "AuthorityReport", "BindingCheck",
-    "BindingStatus", "BudgetReader", "BudgetSource", "BudgetStatement", "CLASSIFICATION", "COVERAGE_BAND",
-    "CheckFamily", "ControlSpec", "Controllability", "DeclarationReader", "DeclaredConstraint", "DiscreteLevels",
+    "BindingStatus", "BudgetReader", "BudgetSource", "BudgetStatement", "CLASSIFICATION", "CheckFamily", "ControlSpec", "Controllability", "DeclarationReader", "DeclaredConstraint", "DiscreteLevels",
     "DispatchAuthorization", "DispatchRefused", "Entity", "ExecutionDesk", "ExecutionKind", "FORBIDDEN_PROPOSAL_KEYS",
     "FeasibilityDecision", "FeasibilityReason", "FeasibilityStatus", "FeasibleActionSpace", "Guard", "IntakeCode",
     "IntakeRefusal", "Lineage", "MindWorldPort", "ModelRegistryReader", "Observability", "ObservationChannel",
@@ -63,5 +63,5 @@ __all__ = [
     "ScientificWorld", "StaleProposal", "TemporalSemantics", "UnitRegistryReader", "ValueOrigin", "ValueSource",
     "WorldBudget", "WorldRefused", "WorldVariable", "admit", "authorize_dispatch", "project_world",
     "proposed_action_from_suggestion", "replay_admission", "replay_decision", "restatement_problem",
-    "suggestion_from_dict", "verify_lineage", "verify_world",
+    "suggestion_from_dict", "verify_authorization", "verify_lineage", "verify_world",
 ]

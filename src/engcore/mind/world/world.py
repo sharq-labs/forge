@@ -26,8 +26,7 @@ from engcore.mind.repsem.roles import RoleRefused, RoleSource, RoleTable, Variab
 from engcore.providers.catalog import Availability
 from engcore.providers.health import HEALTH_SCHEMA, ProviderHealth, ProviderHealthReport
 from engcore.providers.identity import content_digest
-from engcore.scientific import ExperimentBudget, Quantity, ScientificModelDefinition, UncertaintySpecification
-from engcore.scientific.experiments.experiment import ScientificExperiment
+from engcore.scientific import ExperimentBudget, Quantity, ScientificCoreError, ScientificModelDefinition
 from engcore.scientific.ir.values import as_context_value
 from engcore.sria.campaign.budget import BudgetLedger
 from engcore.scientific.results.immutable import detach, freeze
@@ -49,12 +48,16 @@ APPLICABILITY_SCHEMA = schema("applicability_binding")
 PROVIDER_SCHEMA = schema("provider_snapshot")
 BUDGET_SCHEMA = schema("budget")
 LINEAGE_SCHEMA = schema("lineage")
+#: GEN2-BR1.1 (version decision): a lineage that records what its ancestors bound (``Lineage.bound``) is written as
+#: version 2; one that records none is written, and reads, exactly as version 1 (BR1's records keep their bytes and
+#: their revision ids).  ``verify_lineage`` checks a version-1 link by walking the store instead of the record.
+LINEAGE_SCHEMA_V2 = schema("lineage", 2)
 
 #: The fields a revision may change; each is material.  ``world_id`` names the world and never changes.
 MATERIAL_FIELDS = ("actions", "applicability", "basis", "budget", "channels", "constraints", "declaration",
-                   "declared_by", "entities", "providers", "references", "uncertainty", "unit_registry", "variables")
+                   "declared_by", "entities", "providers", "references", "unit_registry", "variables")
 #: Material fields that enter identity only when set, so a world that states none of them keeps its BR1 identity.
-OPTIONAL_FIELDS = ("declaration", "uncertainty", "unit_registry")
+OPTIONAL_FIELDS = ("declaration", "unit_registry")
 
 
 def _binding_identity(binding: AuthorityBinding | None) -> Any:
@@ -228,6 +231,10 @@ class ProviderSnapshot:
 
 # ---- budget: owner records, every dimension declared ---------------------------------------------------------------------------
 STATEMENT_SCHEMA = schema("budget_statement")
+#: The unit a ledger stating a dimension must account in (convertible by the unit owner): a duration for wall time, a
+#: count (dimensionless) for solver calls.  ``cost`` takes any unit the unit owner knows; the action's cost amount
+#: must convert into it.
+LEDGER_UNIT_FITS = {"wall_time": "second", "solver_calls": "dimensionless"}
 #: Which owner states which budget dimension, and the fields each projection carries.
 STATEMENT_OWNERS = {"ledger": (OwnerKind.BUDGET_LEDGER, ("ledger",)),
                     "experiment": (OwnerKind.EXPERIMENT, ("accounting", "budget"))}
@@ -235,9 +242,13 @@ STATEMENT_OWNERS = {"ledger": (OwnerKind.BUDGET_LEDGER, ("ledger",)),
 
 @dataclass(frozen=True)
 class BudgetStatement:
-    """One budget dimension exactly as its owner record states it now: a projection bound to that record, decided
-    only by the owner's own rule (``BudgetLedger.affordable``; the experiment's own observation accounting).  The
-    world never restates, counts or settles a budget."""
+    """One budget dimension exactly as its owner record states it now: a projection bound to that record.
+
+    A ledger dimension is decided by the owner's own rule (``BudgetLedger.affordable``) on the amount converted into
+    the ledger's unit by the unit owner; one ledger states one dimension.  The observation dimension is decided on the
+    experiment's projected accounting by the rule ``ScientificExperiment.record`` enforces (remaining observations and
+    the attempt cap): the experiment owner exposes no affordability query, so the rule is restated here and pinned to
+    the owner by a differential test.  The world never counts or settles a budget."""
 
     dimension: str
     kind: str
@@ -259,8 +270,15 @@ class BudgetStatement:
         try:
             if self.kind == "ledger":
                 owner = BudgetLedger.from_dict(payload["ledger"])
-                if self.dimension == "wall_time" and not converts(Quantity(1.0, owner.cost_unit), "second"):
-                    raise WorldRefused(f"a wall-time ledger accounts in a time unit, not {owner.cost_unit!r}")
+                try:
+                    unit_ = Quantity(1.0, owner.cost_unit)
+                except ScientificCoreError:
+                    raise WorldRefused(f"budget {self.dimension!r}: the ledger accounts in {owner.cost_unit!r}, which "
+                                       "the unit owner does not know (an amount in it cannot be converted)") from None
+                fits = LEDGER_UNIT_FITS.get(self.dimension)
+                if fits is not None and not converts(unit_, fits):
+                    raise WorldRefused(f"budget {self.dimension!r}: a ledger stating it accounts in a unit convertible "
+                                       f"to {fits!r} (the unit owner's rule), not {owner.cost_unit!r}")
             else:
                 ExperimentBudget.from_dict(payload["budget"])
                 acc = payload["accounting"]
@@ -271,13 +289,21 @@ class BudgetStatement:
         object.__setattr__(self, "payload", freeze(payload))
 
     def decide(self, requested: Any, family: Any) -> tuple[bool, Any]:
-        """(affordable, remaining) by the owner's rule on the raw requested amount; nothing is clamped."""
+        """(affordable, remaining) by the owner's rule; nothing is clamped.  A duration or a count is converted into the
+        ledger's own unit by the unit owner (a count is a dimensionless quantity), and one the unit owner cannot convert
+        is refused (``WorldRefused``), never compared raw.  A cost is, by the action's contract, a plain number in the
+        budget's cost units and is passed as stated (which unit that is, is the declaration's designation)."""
         payload = detach(self.payload)
         if self.kind == "ledger":
             owner = BudgetLedger.from_dict(payload["ledger"])
-            if isinstance(requested, Quantity):            # a duration, converted by the unit owner
-                requested = requested.magnitude_in(owner.cost_unit)
-            return owner.affordable(requested, family=family), owner.general_pool
+            if self.dimension == "cost":                   # the action states its cost as a plain number in the
+                amount_ = requested.magnitude if isinstance(requested, Quantity) else float(requested)   # budget's
+                return owner.affordable(amount_, family=family), owner.general_pool                       # cost units
+            amount = requested if isinstance(requested, Quantity) else Quantity(float(requested), "dimensionless")
+            if not converts(amount, owner.cost_unit):
+                raise WorldRefused(f"an amount in {amount.units!r} does not convert into the ledger's "
+                                   f"{owner.cost_unit!r} (the unit owner's rule)")
+            return owner.affordable(amount.magnitude_in(owner.cost_unit), family=family), owner.general_pool
         budget = ExperimentBudget.from_dict(payload["budget"])
         acc = payload["accounting"]
         remaining = acc["remaining_observations"]
@@ -350,6 +376,10 @@ class WorldBudget:
         dims = [x.dimension for x in statements]
         if len(set(dims)) != len(dims):
             raise WorldRefused("a budget dimension is stated once")
+        accounts = [(x.authority.owner_kind, x.authority.owner_id, x.authority.record_id) for x in statements]
+        if len(set(accounts)) != len(accounts):
+            raise WorldRefused("one budget account states one dimension: its owner decides on one pool, so two "
+                               "dimensions drawn from it would each be checked against the whole of it")
         object.__setattr__(self, "statements", tuple(sorted(statements, key=lambda x: x.dimension)))
         if type(self.projected) is not bool:
             raise WorldRefused("projected is a bool")
@@ -544,11 +574,17 @@ class Lineage:
         return out
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": LINEAGE_SCHEMA, **self.identity(), "reason": self.reason}
+        return {"schema": LINEAGE_SCHEMA_V2 if self.bound else LINEAGE_SCHEMA, **self.identity(), "reason": self.reason}
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "Lineage":
-        expect_schema(payload.get("schema"), LINEAGE_SCHEMA)
+        found = payload.get("schema")
+        if found == LINEAGE_SCHEMA and "bound" in payload:
+            raise WorldRefused(f"a {LINEAGE_SCHEMA} record carries no bound statements (introduced with version 2)")
+        if found == LINEAGE_SCHEMA_V2 and not payload.get("bound"):
+            raise WorldRefused(f"a {LINEAGE_SCHEMA_V2} record states its ancestors' bound statements")
+        if found not in (LINEAGE_SCHEMA, LINEAGE_SCHEMA_V2):
+            expect_schema(found, LINEAGE_SCHEMA_V2)
         return cls(payload["revision"], payload["parent"], payload.get("reason", ""), tuple(payload["changed_fields"]),
                    tuple(tuple(p) for p in payload.get("bound", ())))
 
@@ -584,7 +620,6 @@ class ScientificWorld:
     description: str = ""                                   # non-material
     declaration: AuthorityBinding | None = None             # the declaration in force this world is a projection of
     unit_registry: AuthorityBinding | None = None           # the sealed unit registry its quantities were read under
-    uncertainty: UncertaintySpecification | None = None     # the declared uncertainty demand (core record)
     _roles: Any = field(init=False, repr=False, compare=False, default=None)
     _content: str = field(init=False, repr=False, compare=False, default="")
     _revision: str = field(init=False, repr=False, compare=False, default="")
@@ -653,12 +688,6 @@ class ScientificWorld:
             b = getattr(self, name)
             if b is not None and (type(b) is not AuthorityBinding or b.owner_kind is not kind):
                 raise WorldRefused(f"the world's {name} binding is an AuthorityBinding to the {kind.value} owner")
-        if self.uncertainty is not None:
-            if type(self.uncertainty) is not UncertaintySpecification:
-                raise WorldRefused("the declared uncertainty demand is the core's UncertaintySpecification")
-            unknown = set(self.uncertainty.metrics) - declared
-            if unknown:
-                raise WorldRefused(f"the uncertainty demand names undeclared variables {sorted(unknown)}")
 
         object.__setattr__(self, "actions", _sorted_unique(self.actions, "action_id", "actions", ActionSpec))
         for a in self.actions:
@@ -717,7 +746,6 @@ class ScientificWorld:
             "basis": self.basis,
             **({"declaration": _binding_identity(self.declaration)} if self.declaration is not None else {}),
             **({"unit_registry": _binding_identity(self.unit_registry)} if self.unit_registry is not None else {}),
-            **({"uncertainty": self.uncertainty.to_dict()} if self.uncertainty is not None else {}),
         }
 
     def _material(self) -> dict[str, Any]:
@@ -734,6 +762,17 @@ class ScientificWorld:
     @property
     def revision(self) -> int:
         return self.lineage.revision
+
+    def intact(self) -> bool:
+        """Whether this object still holds the content and revision its identity names.  A frozen record edited in
+        place (``object.__setattr__``) keeps its cached identity; decisions are therefore made on a world rebuilt from
+        its payload, and verification refuses one that is not intact."""
+        try:
+            content = digest(self._material())
+            return content == self._content and self._revision == digest(
+                {"world_id": self.world_id, "content": content, **self.lineage.identity()})
+        except Exception:  # noqa: BLE001 - an object that cannot even be serialized is not intact
+            return False
 
     def changed_from(self, other: "ScientificWorld") -> tuple[str, ...]:
         before, after = other._sections(), self._sections()
@@ -888,7 +927,6 @@ class ScientificWorld:
                 "references": [r.to_dict() for r in self.references], "lineage": self.lineage.to_dict(),
                 **({"declaration": self.declaration.to_dict()} if self.declaration is not None else {}),
                 **({"unit_registry": self.unit_registry.to_dict()} if self.unit_registry is not None else {}),
-                **({"uncertainty": self.uncertainty.to_dict()} if self.uncertainty is not None else {}),
                 "content_digest": self.content_digest, "revision_id": self.revision_id}
 
     @classmethod
@@ -917,9 +955,7 @@ class ScientificWorld:
                     tuple(RecordRef.from_dict(r) for r in payload.get("references", ())),
                     RoleSource(payload["declared_by"]), payload["basis"],
                     Lineage.from_dict(payload["lineage"]), payload.get("description", ""),
-                    _binding_from(payload.get("declaration")), _binding_from(payload.get("unit_registry")),
-                    None if payload.get("uncertainty") is None else UncertaintySpecification.from_dict(
-                        payload["uncertainty"]))
+                    _binding_from(payload.get("declaration")), _binding_from(payload.get("unit_registry")))
         for key, value in (("content_digest", world.content_digest), ("revision_id", world.revision_id)):
             if key in payload and payload[key] != value:
                 raise WorldRefused(f"stored {key} {payload[key]!r} does not match the recomputed {value!r}")
@@ -969,7 +1005,12 @@ def restatement_problem(parent: "ScientificWorld", child: "ScientificWorld") -> 
 
 
 def verify_lineage(world: ScientificWorld, store: Mapping[str, ScientificWorld]) -> tuple[str, ...]:
-    """Walk parents from ``store`` (revision id -> world) to the root; refuse a missing, tampered or forged link."""
+    """Walk parents from ``store`` (revision id -> world) to the root; refuse a missing, tampered or forged link.
+
+    The restatement rule is checked over the WHOLE chain from the store (an owner statement carries one value from the
+    root to ``world``, across any revision that unbound it), and a link that records its ancestors' statements
+    (lineage version 2) must record exactly what they bound.  A version-1 link (BR1, written before the record existed)
+    records none and is checked by the walk alone."""
     chain = [world]
     seen = {world.revision_id}
     while chain[-1].lineage.revision > 0:
@@ -987,10 +1028,16 @@ def verify_lineage(world: ScientificWorld, store: Mapping[str, ScientificWorld])
         problem = restatement_problem(parent, child)
         if problem:
             raise WorldRefused(f"revision {child.revision_id[:12]}: {problem}")
-        if dict(child.lineage.bound) != _inherited(parent):
+        if child.lineage.bound and dict(child.lineage.bound) != _inherited(parent):
             raise WorldRefused("the lineage's record of what its ancestors bound is not what they bound")
         seen.add(parent.revision_id)
         chain.append(parent)
+    ledger: dict[str, str] = {}
+    for w in reversed(chain):                                 # root first: one statement per owner key, chain-wide
+        for key, statement in _statements(w).items():
+            if ledger.setdefault(key, statement) != statement:
+                raise WorldRefused(f"revision {w.revision_id[:12]}: an owner record (or binding) already carried "
+                                   "another value in this lineage")
     return tuple(w.revision_id for w in reversed(chain))
 
 

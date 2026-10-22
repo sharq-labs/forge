@@ -5,11 +5,14 @@ record the declaration points at, through the execution side's :class:`~.authori
 projected fact to its record.  It never fills a gap: a value source, model, provider or budget record the owner does
 not hold refuses the projection.
 
-:func:`verify_world` answers whether a world may support a decision NOW.  Every binding is checked against its owner
+:func:`verify_world` answers whether a world may support a decision NOW.  The world's content must be the content its
+identity names (an object edited after it was built is a MISMATCH), every binding is checked against its owner
 (VERIFIED / STALE / MISSING / MISMATCH / ...), every projected fact must carry a binding, and the world must be
-exactly the projection of the declaration in force under the owners as they are (a copy edited without an owner
-change is a MISMATCH, never a new legitimate world).  Replay integrity is a different question: a historical world
-rebuilds byte for byte (``ScientificWorld.from_dict``) whatever its owners say today.
+EXACTLY the projection of the declaration in force under the owners as they are, revision included (a copy edited
+without an owner change, or one carrying a history no owner made, is a MISMATCH, never a new legitimate world).  A
+projection is a root world: its owners are its provenance, and it carries no history they cannot verify.  Replay
+integrity is a different question: a historical world rebuilds byte for byte (``ScientificWorld.from_dict``) whatever
+its owners say today.
 """
 
 from __future__ import annotations
@@ -29,20 +32,26 @@ from .world import ApplicabilityBinding, BudgetStatement, Lineage, ProviderSnaps
 K = OwnerKind
 
 
-def project_world(declaration: ProtocolDeclaration, authorities: Authorities, *, bound_at: str = "",
-                  lineage: Lineage | None = None) -> ScientificWorld:
-    """The world ``declaration`` projects under ``authorities``: every fact read from its owner, every fact bound."""
+def project_world(declaration: ProtocolDeclaration, authorities: Authorities, *, bound_at: str = "") -> ScientificWorld:
+    """The world ``declaration`` projects under ``authorities``: every fact read from its owner, every fact bound.
+
+    The world is built from the declaration AS THE OWNER READER HOLDS IT (rebuilt from the record's payload), never
+    from the caller's objects, so the world and the declaration in force share no object."""
     import dataclasses
 
     if type(declaration) is not ProtocolDeclaration:
         raise WorldRefused("a world is projected from exactly a ProtocolDeclaration")
     if type(authorities) is not Authorities:
         raise WorldRefused("a world is projected through the execution side's Authorities")
+    authorities = authorities.memoized()                     # one consistent read of every owner record
     reader, held = authorities.require(K.DECLARATION, declaration.declaration_id)
     if held.record_digest != declaration.digest:
         raise WorldRefused(f"declaration {declaration.declaration_id!r} revision {declaration.revision} is not the one "
                            f"in force (revision {held.revision})")
     decl_binding = held.binding(("declaration",), reader.project(held, ("declaration",)), bound_at)
+    declaration = ProtocolDeclaration.from_dict(held.payload["declaration"])      # the owner's copy, detached
+    if declaration.digest != held.record_digest:
+        raise WorldRefused("the declaration in force does not rebuild from its own record")
     reader, units = authorities.require(K.UNIT_REGISTRY, UNIT_RECORD)
     units_binding = units.binding(("fingerprint",), reader.project(units, ("fingerprint",)), bound_at)
 
@@ -88,8 +97,7 @@ def project_world(declaration: ProtocolDeclaration, authorities: Authorities, *,
         declaration.channels, tuple(applicability), tuple(providers),
         WorldBudget(unbounded=tuple(unbounded), statements=tuple(statements), projected=True),
         declaration.references, declaration.declared_by, declaration.basis,
-        Lineage() if lineage is None else lineage, declaration.description, decl_binding, units_binding,
-        declaration.uncertainty)
+        Lineage(), declaration.description, decl_binding, units_binding)
 
 
 def verify_world(world: ScientificWorld, authorities: Authorities) -> AuthorityReport:
@@ -101,6 +109,10 @@ def verify_world(world: ScientificWorld, authorities: Authorities) -> AuthorityR
         raise WorldRefused("a world is verified against the execution side's Authorities")
     authorities = authorities.memoized()                     # one consistent read of every owner record
     checks: list[BindingCheck] = []
+    if not world.intact():
+        return AuthorityReport(world.revision_id, (BindingCheck(
+            BindingStatus.MISMATCH, K.DECLARATION, "-", "identity", "0" * 64,
+            {"why": "the world's content is not the content its identity names (edited after it was built)"}),))
     for subject, binding, held in world.projected_facts():
         if binding is None:
             if subject in ("declaration", "unit_registry") or held is not None or subject.startswith("budget:"):
@@ -117,12 +129,13 @@ def verify_world(world: ScientificWorld, authorities: Authorities) -> AuthorityR
             checks.append(BindingCheck(BindingStatus.MISMATCH, K.DECLARATION, world.declaration.record_id,
                                        "projection", world.declaration.digest, {"why": f"no projection: {exc}"}))
         else:
-            if fresh.content_digest != world.content_digest:
+            if fresh.revision_id != world.revision_id:
                 checks.append(BindingCheck(
                     BindingStatus.MISMATCH, K.DECLARATION, world.declaration.record_id, "projection",
                     world.declaration.digest,
-                    {"why": "the world is not the projection of its declaration under its owners (a field was "
-                            "edited without an owner change)", "changed": list(world.changed_from(fresh))}))
+                    {"why": "the world is not exactly the projection of its declaration under its owners (a field "
+                            "edited without an owner change, or a history no owner made)",
+                     "changed": list(world.changed_from(fresh)), "lineage": world.lineage.revision != 0}))
             else:
                 checks.append(BindingCheck(BindingStatus.VERIFIED, K.DECLARATION, world.declaration.record_id,
                                            "projection", world.declaration.digest))

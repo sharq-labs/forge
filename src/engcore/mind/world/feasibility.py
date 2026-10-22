@@ -25,8 +25,15 @@ itself, not information about the system: withdrawing a declared domain, constra
 asked.  The state-domain check therefore reads only what the decision uses (precondition metrics, the metrics of
 constraints in force, gating applicability inputs), where an absent value is already MISSING_INFORMATION.
 
-A FEASIBLE decision produces a :class:`ClearedAction`: an admitted-action record for the existing execution system.
-Nothing here dispatches, reserves budget or invokes a provider; that is the execution owner's (see the BR1 README).
+Interval semantics (BR1.1).  A current value decides a containment (a precondition, a constraint, its own declared
+domain, a model's validity domain) only if it is EXACT, and no current value in a world is: FORGE's core uncertainty
+record has no hard-enclosure form (UNKNOWN states nothing, STANDARD a spread, an INTERVAL a coverage strictly below 1
+or none), and no owner states a decision-coverage policy.  Such a decision is MISSING_INFORMATION whatever the
+uncertainty's kind, level or source; a probabilistic interval is never turned into a deterministic admission.  Exact
+values are the proposal's own assignments and the action's declared fixed conditions.
+
+A check alone admits nothing: only :func:`~.admission.admit`, on a world verified against its owners, mints an
+admitted action.  Nothing here dispatches, reserves budget or invokes a provider; that is the execution owner's.
 """
 
 from __future__ import annotations
@@ -39,10 +46,8 @@ from engcore.mind.repsem.roles import RoleSource, VariableRole
 from engcore.design.grammar import ConstraintStatus
 from engcore.execution.orchestration.resources import ResourceUsage
 from engcore.mind.repsem import canonical_bytes
-from engcore.scientific import Quantity, ScientificCoreError, ScientificProblem, ValidityStatus
+from engcore.scientific import Quantity, ScientificCoreError, ValidityStatus
 from engcore.scientific.models.definition import UnknownReason
-from engcore.scientific.results.requirements import unmet_uncertainty_requirements
-from engcore.scientific.results.uncertainty import UncertaintyKind
 from engcore.scientific.results.immutable import detach, freeze
 from engcore.sria.actions import FeasibilityVerdict
 from engcore.sria.decision.replay import ReplayMode, ReplayOutcome, ReplayResult
@@ -51,17 +56,13 @@ from .actions import ActionMode, ActionSpec, ExecutionKind, ProposedAction, prop
 from .base import (
     ProposalRefused, StaleProposal, WorldRefused, converts, digest, expect_schema, same_value, schema, value_payload,
 )
-from .declaration import coverage_demand
 from .domains import check_at_edges, edges_in_domain, finite_members, is_finite, membership
-from .variables import SET_BY_DECLARATION, ValueOrigin
+from .variables import ValueOrigin
 from .world import APPLICABILITY_CONTEXT_ROLES, BUDGET_DIMENSIONS, ScientificWorld
 
 DECISION_SCHEMA = schema("feasibility_decision")
 SPACE_SCHEMA = schema("feasible_action_space")
 CLASSIFICATION = "action_feasibility_not_scientific_support"
-#: The decision rule a value known only within a stated interval is decided under, when the declaration's core
-#: uncertainty demand names it and the record meets that demand.  Probabilistic, never a guarantee.
-COVERAGE_BAND = "coverage_band_at_declared_level_not_a_guarantee"
 
 
 class FeasibilityStatus(str, Enum):
@@ -103,9 +104,9 @@ class CheckFamily(str, Enum):
 
 #: The families a check runs; AUTHORITY is verified by admission against the owners, before any check.
 CHECKED_FAMILIES = tuple(f for f in CheckFamily if f is not CheckFamily.AUTHORITY)
-#: Why a value known only within its uncertainty cannot decide: no declared coverage demand names it (a coverage
-#: below 1 is never an enclosure), the record does not meet the core demand, or it states no interval.
-UNDECIDABLE_WHY = ("ENCLOSURE_REQUIRED", "COVERAGE_REQUIREMENT_UNMET", "COVERAGE_BAND_NOT_STATED")
+#: Why a quantified current value cannot decide a containment: it is not an enclosure (no core uncertainty record is
+#: one).  An UNKNOWN uncertainty has its own codes (``*_UNCERTAINTY_UNKNOWN`` / ``*_UNDECIDABLE``).
+UNDECIDABLE_WHY = ("ENCLOSURE_REQUIRED",)
 
 
 _MEMBERSHIP_CODES = ("VALUE_KIND_MISMATCH", "UNIT_INCOMPATIBLE", "LEVEL_NOT_DECLARED", "OUTSIDE_RANGE",
@@ -133,16 +134,14 @@ REASON_CODES: Mapping[CheckFamily, frozenset[str]] = {
                                           "APPLICABILITY_NOT_SUPPLIED", "APPLICABILITY_UNKNOWN",
                                           "APPLICABILITY_NOT_ASSESSABLE"}),
     CheckFamily.PROVIDER: frozenset({"PROVIDER_UNAVAILABLE", "PROVIDER_VERSION_MISMATCH", "PROVIDER_DIGEST_MISMATCH"}),
-    CheckFamily.BUDGET: frozenset({"BUDGET_DIMENSION_UNDECLARED", "COST_NOT_DECLARED", "OVER_BUDGET"}),
+    CheckFamily.BUDGET: frozenset({"BUDGET_DIMENSION_UNDECLARED", "COST_NOT_DECLARED", "OVER_BUDGET",
+                                   "BUDGET_UNIT_INCOMPATIBLE"}),
     CheckFamily.AUTHORITY: frozenset({"AUTHORITY_STALE", "AUTHORITY_MISSING", "AUTHORITY_MISMATCH",
                                       "AUTHORITY_UNVERIFIABLE", "AUTHORITY_OWNER_UNAVAILABLE"}),
 }
-#: Every annotation key a decision may carry.  ``core_status`` is the core's status as it is (exact inputs only);
-#: ``decided_under_coverage`` names every value decided under a declared coverage band (probabilistic, never a
-#: guarantee).
+#: Every annotation key a decision may carry.  ``core_status`` is the core's status as it is (exact inputs only).
 ANNOTATION_KEYS = frozenset({"binding_id", "gating", "withheld", "not_exact_inputs", "assessments",
-                             "assessment_digests", "error", "core_status", "relied_on_bound_values",
-                             "decided_under_coverage", "model_digest"})
+                             "assessment_digests", "error", "core_status", "relied_on_bound_values", "model_digest"})
 
 
 def _frozen(detail: Mapping[str, Any]) -> Any:
@@ -250,12 +249,13 @@ class FeasibilityDecision:
     def feasibility_verdicts(self) -> tuple[FeasibilityVerdict, ...]:
         """Definite infeasibilities only, as SRIA ``FeasibilityVerdict`` records for reporting into its hard gate.
 
-        MISSING_INFORMATION is never exported as a negative verdict, nothing is ever exported as a positive one, and a
-        refusal decided under a declared coverage band is a probabilistic refusal, not a definite one: not exported."""
+        MISSING_INFORMATION is never exported as a negative verdict and nothing is ever exported as a positive one.
+        This is the decision's own view, on whatever world it was checked on: a consumer reporting into the SRIA hard
+        gate takes verdicts from ``AdmissionResult.feasibility_verdicts()``, which exports only decisions made on a
+        world verified against its owners."""
         return tuple(FeasibilityVerdict(f"forge.mind.world:{r.family.value}:{r.code}:{r.subject}", False,
                                         f"{r.status.value}: {r.message}")
-                     for r in self.reasons if r.status is not F.MISSING_INFORMATION
-                     and r.detail.get("decision_rule") != COVERAGE_BAND)
+                     for r in self.reasons if r.status is not F.MISSING_INFORMATION)
 
 
 # ---- value resolution ---------------------------------------------------------------------------------------------------------
@@ -263,42 +263,30 @@ class FeasibilityDecision:
 class _Resolved:
     value: Any
     source: str                    # proposal | fixed_condition | world_declared | world_bound
-    edges: tuple[Any, ...] | None  # None: present but undecidable (``why`` says why)
-    rule: str = "exact"            # exact | coverage band (COVERAGE_BAND) | undecidable
+    edges: tuple[Any, ...] | None  # (value,) when exact; None: present but undecidable (``why`` says why)
     why: str = ""                  # UNCERTAINTY_UNKNOWN or one of UNDECIDABLE_WHY
-    coverage: float | None = None
+    basis: Any = None              # the uncertainty the refusal rests on (core vocabulary, as recorded)
 
 
 def _world_basis(world: ScientificWorld, name: str) -> _Resolved | None:
-    """What the world's current value of ``name`` can decide, never more than its uncertainty states.
+    """What the world's current value of ``name`` can decide: never a containment.
 
-    * A DECLARED set point (a controlled input or protocol condition) that states no quantified uncertainty is the
-      declaration itself: exact as declared.  One that states an uncertainty is decided like any other value.
-    * Any other value holds only within its uncertainty.  UNKNOWN decides nothing.  A probabilistic interval
-      (every core INTERVAL: its coverage is below 1 or unstated) is never an enclosure; it decides only when the
-      declaration's core ``UncertaintySpecification`` demands this variable QUANTIFIED at a confidence level and the
-      record meets that demand by the core rule (``unmet_uncertainty_requirements``), and then only as a coverage
-      band at that declared level, labelled as such.  Everything else is undecidable, never a default."""
+    No core uncertainty record is a hard enclosure and no owner states a decision-coverage policy, so a current
+    value, whatever its uncertainty's kind, coverage or source, never proves that it lies inside (or outside) a bound:
+    the decision is MISSING_INFORMATION.  A DECLARED set point (a controlled input or protocol condition held at a
+    declared level) is a current value of the world like any other: its realization is what its uncertainty states,
+    and an UNKNOWN uncertainty never makes it exact (``UNKNOWN never improves an answer``).  A protocol level that must
+    decide exactly is declared as the action's fixed condition."""
     if not world.declares(name):
         return None
     var = world.variable(name)
     if var.value is None:
         return None
     u = var.uncertainty
-    if var.origin is ValueOrigin.DECLARED and var.role in SET_BY_DECLARATION and not u.is_quantified:
-        return _Resolved(var.value, "world_declared", (var.value,))
     source = "world_declared" if var.origin is ValueOrigin.DECLARED else "world_bound"
-    if not u.is_quantified:
-        return _Resolved(var.value, source, None, "undecidable", "UNCERTAINTY_UNKNOWN")
-    demand = coverage_demand(world.uncertainty, name)
-    if demand is None:
-        return _Resolved(var.value, source, None, "undecidable", "ENCLOSURE_REQUIRED")
-    problem = ScientificProblem(f"{world.world_id}.uncertainty-demand", uncertainty=world.uncertainty)
-    if name in unmet_uncertainty_requirements(problem, {name: u}):
-        return _Resolved(var.value, source, None, "undecidable", "COVERAGE_REQUIREMENT_UNMET", demand)
-    if u.kind is not UncertaintyKind.INTERVAL:
-        return _Resolved(var.value, source, None, "undecidable", "COVERAGE_BAND_NOT_STATED", demand)
-    return _Resolved(var.value, source, (u.lower, u.upper), COVERAGE_BAND, "", demand)
+    basis = {"uncertainty": u.kind.value, "confidence_level": u.confidence_level, "source_kind": u.source_kind.value}
+    return _Resolved(var.value, source, None, "ENCLOSURE_REQUIRED" if u.is_quantified else "UNCERTAINTY_UNKNOWN",
+                     basis)
 
 
 def _resolve(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None, name: str,
@@ -314,17 +302,12 @@ def _resolve(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction 
     return _world_basis(world, name)
 
 
-def _rule_detail(r: _Resolved) -> dict[str, Any]:
-    return {"decision_rule": COVERAGE_BAND, "coverage": r.coverage} if r.rule == COVERAGE_BAND else {}
-
-
 class _Collector:
     def __init__(self) -> None:
         self.reasons: list[FeasibilityReason] = []
         self.checked: list[FamilyRecord] = []
         self.annotations: list[dict[str, Any]] = []
         self.bound: set[tuple[str, str, str, str]] = set()
-        self.coverage: set[tuple[str, float]] = set()
 
     def add(self, status: FeasibilityStatus, code: str, family: CheckFamily, subject: str, message: str,
             **detail: Any) -> None:
@@ -436,9 +419,6 @@ class FeasibleActionSpace:
         reasons = tuple(c.reasons)
         relied = [{"relied_on_bound_values": [{"variable": n, "kind": k, "ref": r, "used_for": u}
                                               for n, k, r, u in sorted(c.bound)]}]
-        if c.coverage:
-            relied.append({"decided_under_coverage": [{"variable": n, "coverage": cov, "rule": COVERAGE_BAND}
-                                                      for n, cov in sorted(c.coverage)]})
         return FeasibilityDecision(_derive_status(reasons), reasons, tuple(c.checked), proposal.action_id,
                                    self.world.revision_id, self.space_id, proposal.digest,
                                    tuple(c.annotations) + tuple(relied))
@@ -576,14 +556,12 @@ def _check_observe(world: ScientificWorld, spec: ActionSpec, proposal: ProposedA
     c.ran(CheckFamily.OBSERVE, len(proposal.observe))
 
 
-def _note_bound(world: ScientificWorld, c: _Collector, name: str, used_for: str, r: _Resolved | None = None) -> None:
+def _note_bound(world: ScientificWorld, c: _Collector, name: str, used_for: str) -> None:
     var = world.variable(name)
     if var.source is not None:
         kind = getattr(var.source, "kind", None) or var.source.owner_kind
         ref = getattr(var.source, "ref", None) or var.source.record_digest
         c.bound.add((name, kind.value, ref, used_for))
-    if r is not None and r.rule == COVERAGE_BAND:
-        c.coverage.add((name, r.coverage))
 
 
 def _undecidable(prefix: str, r: _Resolved) -> str:
@@ -615,20 +593,20 @@ def _check_protocol(world: ScientificWorld, spec: ActionSpec, proposal: Proposed
                   "the constrained value is not stated", metric=metric)
             continue
         if r.source == "world_bound":
-            _note_bound(world, c, metric, f"constraint {cid}", r)
+            _note_bound(world, c, metric, f"constraint {cid}")
         if r.edges is None or not all(isinstance(e, Quantity) for e in r.edges):
             c.add(F.MISSING_INFORMATION, _undecidable("CONSTRAINT", r) if r.edges is None else "CONSTRAINT_UNDECIDABLE",
-                  CheckFamily.PROTOCOL, cid, "the constrained value's uncertainty does not allow a decision",
-                  metric=metric, source=r.source, why=r.why or "not a quantity")
+                  CheckFamily.PROTOCOL, cid, "the constrained value is not exact: no current value proves a bound (no "
+                  "core uncertainty record is an enclosure)", metric=metric, source=r.source,
+                  why=r.why or "not a quantity", basis=r.basis)
             continue
         outcome, detail = check_at_edges(constraint.consequence, r.edges)
         if outcome is ConstraintStatus.VIOLATED:
             c.add(status, "CONSTRAINT_VIOLATED", CheckFamily.PROTOCOL, cid, f"violates {constraint.basis}",
-                  metric=metric, source=r.source, **detail, **_rule_detail(r))
+                  metric=metric, source=r.source, **detail)
         elif outcome is ConstraintStatus.UNKNOWN:
             c.add(F.MISSING_INFORMATION, f"CONSTRAINT_{detail['why'].upper()}", CheckFamily.PROTOCOL, cid,
-                  "the constraint cannot be decided on the stated value", metric=metric, source=r.source, **detail,
-                  **_rule_detail(r))
+                  "the constraint cannot be decided on the stated value", metric=metric, source=r.source, **detail)
     c.ran(CheckFamily.PROTOCOL, n)
 
 
@@ -641,23 +619,22 @@ def _check_state(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAct
             c.add(F.MISSING_INFORMATION, "PRECONDITION_UNRESOLVED", CheckFamily.STATE, pre.name,
                   "the state this precondition reads has no current value", metric=pre.metric)
             continue
-        _note_bound(world, c, pre.metric, f"precondition {pre.name}", r)
+        _note_bound(world, c, pre.metric, f"precondition {pre.name}")
         if r.edges is None or not all(isinstance(e, Quantity) for e in r.edges):
             c.add(F.MISSING_INFORMATION, _undecidable("PRECONDITION", r) if r.edges is None
                   else "PRECONDITION_UNCERTAINTY_UNKNOWN", CheckFamily.STATE, pre.name,
-                  "the current value's uncertainty does not allow a decision (a point value is never treated as "
-                  "exact, and a coverage interval is never an enclosure)", metric=pre.metric,
-                  uncertainty=world.variable(pre.metric).uncertainty.kind.value, why=r.why or "not a quantity")
+                  "the current value is not exact: no current value proves a precondition (a point value is never "
+                  "treated as exact, and no core uncertainty record is an enclosure)", metric=pre.metric,
+                  uncertainty=world.variable(pre.metric).uncertainty.kind.value, why=r.why or "not a quantity",
+                  basis=r.basis)
             continue
         outcome, detail = check_at_edges(pre, r.edges)
         if outcome is ConstraintStatus.VIOLATED:
             c.add(F.INFEASIBLE_STATE, "PRECONDITION_VIOLATED", CheckFamily.STATE, pre.name,
-                  "the current state does not meet the action's precondition", metric=pre.metric, **detail,
-                  **_rule_detail(r))
+                  "the current state does not meet the action's precondition", metric=pre.metric, **detail)
         elif outcome is ConstraintStatus.UNKNOWN:
             c.add(F.MISSING_INFORMATION, f"PRECONDITION_{detail['why'].upper()}", CheckFamily.STATE, pre.name,
-                  "the precondition cannot be decided on the current value", metric=pre.metric, **detail,
-                  **_rule_detail(r))
+                  "the precondition cannot be decided on the current value", metric=pre.metric, **detail)
     for name in sorted(_used_reads(world, spec, proposal)):
         var = world.variable(name)
         if var.value is None or var.domain is None:
@@ -665,27 +642,24 @@ def _check_state(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAct
         if proposal is not None and (proposal.value(name) is not None or spec.fixed(name) is not None):
             continue
         r = _world_basis(world, name)
-        if r is not None and r.source == "world_declared" and r.edges is not None and len(r.edges) == 1:
-            continue    # an exact set point, checked against its own domain when the world was built
         n += 1
         if r is None or r.edges is None:
             c.add(F.MISSING_INFORMATION, "STATE_DOMAIN_UNDECIDABLE" if r is None else _undecidable("STATE_DOMAIN", r),
-                  CheckFamily.STATE, name, "whether the current value lies in its declared domain cannot be decided "
-                  "at its stated uncertainty", uncertainty=var.uncertainty.kind.value,
-                  why="" if r is None else r.why)
+                  CheckFamily.STATE, name, "whether the current value lies in its declared domain cannot be decided: "
+                  "it is not exact, and no core uncertainty record is an enclosure", uncertainty=var.uncertainty.kind.value,
+                  why="" if r is None else r.why, basis=None if r is None else r.basis)
             continue
         where = edges_in_domain(var.domain, r.edges)
         if where == "outside":
             c.add(F.INFEASIBLE_STATE, "STATE_OUTSIDE_DECLARED_DOMAIN", CheckFamily.STATE, name,
-                  "the system's current value lies outside the variable's declared domain (a range: wholly beyond one "
-                  "bound at every edge of its stated band)", edges=[value_payload(e) for e in r.edges],
-                  **_rule_detail(r))
+                  "the system's current value lies outside the variable's declared domain",
+                  edges=[value_payload(e) for e in r.edges])
         elif where == "undecided":
             c.add(F.MISSING_INFORMATION, "STATE_DOMAIN_UNDECIDED", CheckFamily.STATE, name,
-                  "whether the current value lies in its declared domain cannot be decided at its uncertainty",
-                  edges=[value_payload(e) for e in r.edges], **_rule_detail(r))
+                  "whether the current value lies in its declared domain cannot be decided",
+                  edges=[value_payload(e) for e in r.edges])
         else:
-            _note_bound(world, c, name, "state domain", r)
+            _note_bound(world, c, name, "state domain")
     c.ran(CheckFamily.STATE, n)
 
 
@@ -733,10 +707,11 @@ def context_reads(world: ScientificWorld, spec: ActionSpec) -> set[str]:
 def _check_applicability(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction, c: _Collector) -> None:
     """Model applicability, decided by the core (``ScientificModelDefinition.assess_validity``) at an exact point only.
 
-    The core assesses points; it has no interval form, and an interval is never an enclosure.  So every input the
-    model reads must be exact (a proposed or fixed value, or a declared set point with no stated uncertainty); if any
-    is not, a gating applicability is MISSING_INFORMATION (``APPLICABILITY_INPUT_NOT_EXACT``) and no world rule
-    stands in.  With exact inputs the core status is used as it is."""
+    The core assesses points; it has no interval form, and no uncertainty record is an enclosure.  So every input the
+    model reads must be exact (a proposed value or the action's fixed condition; never a current value of the world,
+    a declared set point included); if any is not, a gating applicability is MISSING_INFORMATION
+    (``APPLICABILITY_INPUT_NOT_EXACT``) and no world rule stands in.  With exact inputs the core status is used as
+    it is."""
     gating = spec.execution is ExecutionKind.MODEL_EXECUTION
     for binding_id in spec.applicability:
         binding = world.applicability_binding(binding_id)
@@ -752,7 +727,7 @@ def _check_applicability(world: ScientificWorld, spec: ActionSpec, proposal: Pro
                 continue
             if r.source == "world_bound":
                 _note_bound(world, c, name, f"applicability {binding_id}")
-            if r.edges is not None and len(r.edges) == 1 and r.rule == "exact":
+            if r.edges is not None and len(r.edges) == 1:
                 exact[name] = r.edges[0]
             else:
                 not_exact.append(name)
@@ -833,11 +808,16 @@ def _check_budget(world: ScientificWorld, spec: ActionSpec, c: _Collector) -> No
                   "the budget is limited and the action does not declare what it consumes (never assumed zero)")
             continue
         statement = budget.statement(dim)
-        if statement is not None:                          # the owner record's own rule, on the raw amount
-            requested = amount if dim == "wall_time" else (amount.magnitude if dim == "cost" else amount.value)
-            ok, remaining = statement.decide(requested, spec.family)
+        if statement is not None:                          # the owner record's own rule, in the owner's unit
+            requested = amount if isinstance(amount, Quantity) else amount.value
+            try:
+                ok, remaining = statement.decide(requested, spec.family)
+            except WorldRefused as exc:
+                c.add(F.MISSING_INFORMATION, "BUDGET_UNIT_INCOMPATIBLE", CheckFamily.BUDGET, dim,
+                      "the action's amount cannot be accounted in the budget owner's unit", why=str(exc))
+                continue
             if isinstance(requested, Quantity):
-                requested = requested.magnitude_in("second")
+                requested = value_payload(requested)
         else:
             remaining = budget.remaining(dim)
             if dim == "cost":                                   # the plan's own rule, on the raw amount
@@ -899,7 +879,7 @@ def replay_decision(record: Mapping[str, Any], world_payload: Mapping[str, Any],
 
 
 __all__ = [
-    "ANNOTATION_KEYS", "CHECKED_FAMILIES", "CLASSIFICATION", "COVERAGE_BAND", "CheckFamily", "FamilyRecord",
+    "ANNOTATION_KEYS", "CHECKED_FAMILIES", "CLASSIFICATION", "CheckFamily", "FamilyRecord",
     "FeasibilityDecision", "FeasibilityReason", "FeasibilityStatus", "FeasibleActionSpace", "PRECEDENCE",
     "REASON_CODES", "STATUS_BY_SOURCE", "SpaceEntry", "canonical", "context_reads", "replay_decision",
 ]

@@ -141,7 +141,7 @@ def test_replay_identity_is_exact_for_every_record_kind():
     assert again.revision_id == w.revision_id and again.content_digest == w.content_digest
     assert [b.digest for b in again.authority_bindings()] == [b.digest for b in w.authority_bindings()]
     assert FeasibleActionSpace.build(again).space_id == FeasibleActionSpace.build(w).space_id
-    p = o.propose("pulse", ax.base("battery")["pulse"][0])
+    p = o.propose("simulate_pulse", *ax.base("battery")["simulate_pulse"])
     assert ProposedAction.from_dict(json.loads(json.dumps(p.to_dict()))).digest == p.digest
     r1 = admit(FeasibleActionSpace.build(w), p, o.authorities())
     r2 = admit(FeasibleActionSpace.build(again), p, o.authorities())

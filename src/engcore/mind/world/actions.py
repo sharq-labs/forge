@@ -33,6 +33,7 @@ verified, never taken from the proposal.
 
 from __future__ import annotations
 
+import unicodedata
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
@@ -499,10 +500,18 @@ class IntakeRefusal:
         return cls(IntakeCode(payload["code"]), payload["subject"], payload["message"], payload["suggestion_digest"])
 
 
+def _key_form(key: Any) -> str:
+    """A key as a forbidden-key test reads it: NFKC-normalized, casefolded, with format characters (zero-width and
+    similar, Unicode category Cf) removed and surrounding whitespace stripped, so a look-alike spelling is the key."""
+    text_ = unicodedata.normalize("NFKC", str(key))
+    text_ = "".join(ch for ch in text_ if unicodedata.category(ch) != "Cf")
+    return text_.casefold().strip()
+
+
 def _forbidden_key(node: Any, path: str) -> str | None:
     if isinstance(node, Mapping):
         for k, v in node.items():
-            if str(k).lower() in FORBIDDEN_PROPOSAL_KEYS:
+            if _key_form(k) in FORBIDDEN_PROPOSAL_KEYS:
                 return f"{path}.{k}"
             found = _forbidden_key(v, f"{path}.{k}")
             if found:
@@ -565,9 +574,15 @@ def proposed_action_from_suggestion(suggestion: ExternalSuggestion, *, world: An
             return refuse(IntakeCode.NOT_A_TYPED_VALUE, str(item["variable"]),
                           "a value is a schema-tagged typed value; a bare number or string is never interpreted")
         try:
-            pairs.append((item["variable"], value_from(encoded)))
+            value = value_from(encoded)
+            canonical_payload = value_payload(value)
         except Exception as exc:  # noqa: BLE001 - any decode failure is a refusal, never a guess
             return refuse(IntakeCode.NOT_A_TYPED_VALUE, str(item["variable"]), str(exc))
+        if dict(encoded) != canonical_payload:
+            return refuse(IntakeCode.NOT_A_TYPED_VALUE, str(item["variable"]),
+                          "a value payload is exactly its typed value's own encoding (no extra or altered key is "
+                          "carried along)")
+        pairs.append((item["variable"], value))
     spec = world.action(suggestion.target_ref)
     if spec is not None and spec.family is not suggestion.family:
         return refuse(IntakeCode.FAMILY_MISMATCH, suggestion.target_ref,

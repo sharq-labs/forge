@@ -22,16 +22,23 @@
  },
  "schema": "forge.mind.gen2_authority.benchmark/1",
  "summary": {
-  "base_admitted": 19,
+  "base_admitted": 12,
   "base_not_admitted": [
+   "battery/pulse: MISSING_INFORMATION ['PRECONDITION_ENCLOSURE_REQUIRED', 'STATE_DOMAIN_ENCLOSURE_REQUIRED']",
+   "battery/signed_pulse: MISSING_INFORMATION ['PRECONDITION_ENCLOSURE_REQUIRED', 'STATE_DOMAIN_ENCLOSURE_REQUIRED']",
+   "drone/climb_test: MISSING_INFORMATION ['PRECONDITION_ENCLOSURE_REQUIRED']",
+   "drone/hover_test: MISSING_INFORMATION ['PRECONDITION_ENCLOSURE_REQUIRED']",
    "drone/simulate_flight: MISSING_INFORMATION ['APPLICABILITY_INPUT_NOT_EXACT']",
-   "hvac_field/simulate_building: MISSING_INFORMATION ['APPLICABILITY_INPUT_NOT_EXACT']"
+   "hvac_chamber/step_speed: MISSING_INFORMATION ['PRECONDITION_ENCLOSURE_REQUIRED']",
+   "hvac_field/simulate_building: MISSING_INFORMATION ['APPLICABILITY_INPUT_NOT_EXACT']",
+   "hvac_field/step_speed: MISSING_INFORMATION ['PRECONDITION_ENCLOSURE_REQUIRED']",
+   "motor/load_step: MISSING_INFORMATION ['PRECONDITION_ENCLOSURE_REQUIRED']"
   ],
   "base_total": 21,
   "mutations_admitted": 0,
   "mutations_total": 101,
   "owner_changes_admitted": 0,
-  "owner_changes_total": 27,
+  "owner_changes_total": 37,
   "replay_reproduced": 21,
   "replay_total": 21
  },
@@ -49,14 +56,20 @@
      "status": "FEASIBLE"
     },
     "pulse": {
-     "admitted": true,
-     "codes": [],
-     "status": "FEASIBLE"
+     "admitted": false,
+     "codes": [
+      "PRECONDITION_ENCLOSURE_REQUIRED",
+      "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+     ],
+     "status": "MISSING_INFORMATION"
     },
     "signed_pulse": {
-     "admitted": true,
-     "codes": [],
-     "status": "FEASIBLE"
+     "admitted": false,
+     "codes": [
+      "PRECONDITION_ENCLOSURE_REQUIRED",
+      "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+     ],
+     "status": "MISSING_INFORMATION"
     },
     "simulate_pulse": {
      "admitted": true,
@@ -193,6 +206,20 @@
      ],
      "status": "MISSING_INFORMATION"
     },
+    "provider_down_in_place_reprobed": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "run_head_advanced_in_place": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
     "state_advanced": {
      "admitted": false,
      "codes": [
@@ -210,19 +237,23 @@
     "simulate_pulse": "reproduced"
    },
    "verified": true,
-   "world_revision": "b081418cc2de52ab90c8e215ff29caab0508460d5c7b807c8f4395e5f4b205b6"
+   "world_revision": "a5ebc04e65dcbee2df93ec3e90d68ce5965d5c9c42c666e52e50af610f5a8403"
   },
   "drone": {
    "base": {
     "climb_test": {
-     "admitted": true,
-     "codes": [],
-     "status": "FEASIBLE"
+     "admitted": false,
+     "codes": [
+      "PRECONDITION_ENCLOSURE_REQUIRED"
+     ],
+     "status": "MISSING_INFORMATION"
     },
     "hover_test": {
-     "admitted": true,
-     "codes": [],
-     "status": "FEASIBLE"
+     "admitted": false,
+     "codes": [
+      "PRECONDITION_ENCLOSURE_REQUIRED"
+     ],
+     "status": "MISSING_INFORMATION"
     },
     "observe_wind": {
      "admitted": true,
@@ -366,6 +397,20 @@
      ],
      "status": "MISSING_INFORMATION"
     },
+    "provider_down_in_place_reprobed": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "run_head_advanced_in_place": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
     "state_advanced": {
      "admitted": false,
      "codes": [
@@ -374,7 +419,7 @@
      "status": "MISSING_INFORMATION"
     }
    },
-   "owner_changes_on": "climb_test",
+   "owner_changes_on": "observe_wind",
    "replay": {
     "climb_test": "reproduced",
     "hover_test": "reproduced",
@@ -382,7 +427,7 @@
     "simulate_flight": "reproduced"
    },
    "verified": true,
-   "world_revision": "921bc4ecb5f42d93c3684c7accf66e581e3c6ff06829fcd227fb7e3df07ec184"
+   "world_revision": "0f750ec69d1b5d41ec6f863692be78692482642926bf8458ddc99787d8f1be37"
   },
   "gen1_pool": {
    "base": {
@@ -459,7 +504,7 @@
     "pool_query": "reproduced"
    },
    "verified": true,
-   "world_revision": "de1ebae2461d1b15d515966d6e9f9847ce051e4d4841a8a2c93bb5228eb26f57"
+   "world_revision": "b604c207814fb37dc507a6feffa8fdd734ffae377ca333bb5a46ed890b9c5f83"
   },
   "hvac_chamber": {
    "base": {
@@ -479,9 +524,11 @@
      "status": "FEASIBLE"
     },
     "step_speed": {
-     "admitted": true,
-     "codes": [],
-     "status": "FEASIBLE"
+     "admitted": false,
+     "codes": [
+      "PRECONDITION_ENCLOSURE_REQUIRED"
+     ],
+     "status": "MISSING_INFORMATION"
     }
    },
    "bindings": 8,
@@ -607,6 +654,20 @@
      ],
      "status": "MISSING_INFORMATION"
     },
+    "provider_down_in_place_reprobed": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "run_head_advanced_in_place": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
     "state_advanced": {
      "admitted": false,
      "codes": [
@@ -623,7 +684,7 @@
     "step_speed": "reproduced"
    },
    "verified": true,
-   "world_revision": "a6e49419e29112c5d2a45fcb068a7f8c586e6427461d9e7e5ddce42c566521fc"
+   "world_revision": "44bfd851f9ae83e7e6b42a75a4c1d1167e4893a779e8a2248a3cbbe654fac1e5"
   },
   "hvac_field": {
    "base": {
@@ -645,9 +706,11 @@
      "status": "MISSING_INFORMATION"
     },
     "step_speed": {
-     "admitted": true,
-     "codes": [],
-     "status": "FEASIBLE"
+     "admitted": false,
+     "codes": [
+      "PRECONDITION_ENCLOSURE_REQUIRED"
+     ],
+     "status": "MISSING_INFORMATION"
     }
    },
    "bindings": 9,
@@ -773,6 +836,20 @@
      ],
      "status": "MISSING_INFORMATION"
     },
+    "provider_down_in_place_reprobed": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "run_head_advanced_in_place": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
     "state_advanced": {
      "admitted": false,
      "codes": [
@@ -789,14 +866,16 @@
     "step_speed": "reproduced"
    },
    "verified": true,
-   "world_revision": "26dbbc30e543ac0ce9999df2adc7028d4b4499f08e9196184d591cd9222b3b43"
+   "world_revision": "894e4c87e63e92a136a872c790b986d1dfd0b55e492ff108f8fd89ee069e69b5"
   },
   "motor": {
    "base": {
     "load_step": {
-     "admitted": true,
-     "codes": [],
-     "status": "FEASIBLE"
+     "admitted": false,
+     "codes": [
+      "PRECONDITION_ENCLOSURE_REQUIRED"
+     ],
+     "status": "MISSING_INFORMATION"
     },
     "observe_temperature": {
      "admitted": true,
@@ -932,6 +1011,20 @@
      ],
      "status": "MISSING_INFORMATION"
     },
+    "provider_down_in_place_reprobed": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
+    "run_head_advanced_in_place": {
+     "admitted": false,
+     "codes": [
+      "AUTHORITY_STALE"
+     ],
+     "status": "MISSING_INFORMATION"
+    },
     "state_advanced": {
      "admitted": false,
      "codes": [
@@ -940,14 +1033,14 @@
      "status": "MISSING_INFORMATION"
     }
    },
-   "owner_changes_on": "load_step",
+   "owner_changes_on": "observe_temperature",
    "replay": {
     "load_step": "reproduced",
     "observe_temperature": "reproduced",
     "simulate_thermal": "reproduced"
    },
    "verified": true,
-   "world_revision": "73fbb0181c07b88080eeebf3e54d9db0984cf422da877839785f4ec92c4ade41"
+   "world_revision": "33e798c982f35793a5410ed8ba3818abdd1971e2c2732599beddafe23a0c8683"
   }
  }
 }

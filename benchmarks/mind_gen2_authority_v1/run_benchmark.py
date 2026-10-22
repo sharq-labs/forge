@@ -64,9 +64,22 @@ def _owner_changes(o: ax.Owned) -> dict[str, Any]:
     changes: dict[str, Any] = {}
     if o.run is not None:
         changes["state_advanced"] = lambda: o.authorities(state=o.run.result)
+
+        def head_moved():                          # the same live reader, following the execution side's head
+            fresh = owned(o.name)
+            fresh.advance()
+            return fresh.authorities()
+        changes["run_head_advanced_in_place"] = head_moved
     if o.base_world.providers:
         changes["provider_down"] = lambda: o.authorities(providers=ax.provider_registry(
             o, down=tuple(p.provider_id for p in o.base_world.providers)))
+
+        def down_in_place():                       # the same registry; the execution side re-probes
+            fresh = owned(o.name)
+            for p in o.base_world.providers:
+                fresh.take_down(p.provider_id)
+            return fresh.authorities(refresh=True)
+        changes["provider_down_in_place_reprobed"] = down_in_place
     if o.base_world.applicability:
         def replaced():
             m = o.models.list()[0]

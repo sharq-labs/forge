@@ -17,6 +17,11 @@ J. a control valid in one protocol mode is invalid in another
 K. a changed budget produces a different WORLD_REVISION
 L. identical world + proposal give a byte-identical decision, and replay reproduces it
 M. no role / domain / protocol information is guessed from a name
+
+GEN2-BR1.1 (README section 3, interval semantics): no current value of a world decides a containment (no core
+uncertainty record is an enclosure).  The battery ``pulse`` reads the current SOC through its precondition, so where BR1
+asserted it FEASIBLE these tests now assert that everything the check CAN decide admits it and that the only reasons
+left are the current-value containments, MISSING_INFORMATION (``admissible_but_for_current_values``).
 """
 
 from __future__ import annotations
@@ -25,7 +30,7 @@ import dataclasses
 
 import pytest
 
-from benchmarks.mind_gen2_authority_v1 import synthetic as fx
+from benchmarks.mind_gen2_world_v1 import fixtures as fx
 from engcore.mind.repsem import canonical_bytes
 from engcore.mind.repsem.roles import RoleDeclaration, RoleSource, VariableRole as R, legacy_role_table
 from engcore.mind.world import (
@@ -43,6 +48,20 @@ def check(world: ScientificWorld, action_id: str, assignments, observe=()):
 
 def codes(decision) -> set[str]:
     return {r.code for r in decision.reasons}
+
+
+#: The reasons a decision carries when it reads a current value of the world for a containment (BR1.1).
+CURRENT_VALUE_UNDECIDED = frozenset({
+    "PRECONDITION_ENCLOSURE_REQUIRED", "PRECONDITION_UNCERTAINTY_UNKNOWN", "STATE_DOMAIN_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_UNDECIDABLE", "CONSTRAINT_ENCLOSURE_REQUIRED", "CONSTRAINT_UNDECIDABLE",
+    "APPLICABILITY_INPUT_NOT_EXACT",
+})
+
+
+def admissible_but_for_current_values(decision) -> bool:
+    """Every family ran; nothing it can decide refuses; what it reads from the current world is MISSING_INFORMATION."""
+    return decision.reasons != () and decision.status is F.MISSING_INFORMATION and len(decision.checked) == 9 and \
+        all(r.status is F.MISSING_INFORMATION and r.code in CURRENT_VALUE_UNDECIDED for r in decision.reasons)
 
 
 PULSE_OK = {"I": fx.q(1.0, "A"), "t_pulse": fx.q(60, "s")}
@@ -65,8 +84,8 @@ def test_a_off_level_current_is_infeasible_protocol_and_not_clamped(battery):
 
 
 def test_a_declared_levels_are_feasible_in_any_unit_spelling(battery):
-    assert check(battery, "pulse", PULSE_OK).status is F.FEASIBLE
-    assert check(battery, "pulse", {"I": fx.q(2000, "mA"), "t_pulse": fx.q(1, "min")}).status is F.FEASIBLE
+    assert admissible_but_for_current_values(check(battery, "pulse", PULSE_OK))
+    assert admissible_but_for_current_values(check(battery, "pulse", {"I": fx.q(2000, "mA"), "t_pulse": fx.q(1, "min")}))
 
 
 # ---- B. fixed protocol condition ----------------------------------------------------------------------------------------
@@ -76,8 +95,8 @@ def test_b_changing_a_fixed_condition_is_infeasible_protocol(battery):
 
 
 def test_b_restating_a_fixed_condition_in_another_unit_is_not_a_change(battery):
-    assert check(battery, "pulse", {**PULSE_OK, "T_amb": fx.q(298.15, "K")}).status is F.FEASIBLE
-    assert check(battery, "pulse", {**PULSE_OK, "T_amb": fx.q(77, "degF")}).status is F.FEASIBLE
+    assert admissible_but_for_current_values(check(battery, "pulse", {**PULSE_OK, "T_amb": fx.q(298.15, "K")}))
+    assert admissible_but_for_current_values(check(battery, "pulse", {**PULSE_OK, "T_amb": fx.q(77, "degF")}))
 
 
 # ---- C. state vs control ------------------------------------------------------------------------------------------------
@@ -135,7 +154,8 @@ def test_f_a_bare_number_is_never_a_proposal_value(battery):
 def test_g_continuous_value_outside_its_range_is_rejected(battery):
     d = check(battery, "pulse", {"I": fx.q(1.0, "A"), "t_pulse": fx.q(900, "s")})
     assert d.status is F.INFEASIBLE_DOMAIN and "OUTSIDE_RANGE" in codes(d)
-    assert check(battery, "pulse", {"I": fx.q(1.0, "A"), "t_pulse": fx.q(10, "min")}).status is F.FEASIBLE  # = bound
+    assert admissible_but_for_current_values(check(battery, "pulse", {"I": fx.q(1.0, "A"),
+                                                                      "t_pulse": fx.q(10, "min")}))  # = bound
 
 
 # ---- H. provider ---------------------------------------------------------------------------------------------------------------
@@ -163,7 +183,7 @@ def test_i_two_solver_calls_with_one_remaining_is_rejected(battery):
 def test_j_a_current_valid_in_charge_mode_is_invalid_in_discharge_mode(battery):
     ok = check(battery, "signed_pulse", {"mode": fx.cat("charge"), "I": fx.q(2, "A"), "t_pulse": fx.q(30, "s")})
     bad = check(battery, "signed_pulse", {"mode": fx.cat("discharge"), "I": fx.q(2, "A"), "t_pulse": fx.q(30, "s")})
-    assert ok.status is F.FEASIBLE
+    assert admissible_but_for_current_values(ok)
     assert bad.status is F.INFEASIBLE_PROTOCOL and "CONSTRAINT_VIOLATED" in codes(bad)
 
 

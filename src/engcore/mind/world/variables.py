@@ -145,8 +145,9 @@ CONTROLLABILITY_BY_ROLE: Mapping[VariableRole, Controllability] = {
     R.NUISANCE_VARIABLE: Controllability.NOT_CONTROLLABLE,
 }
 
-#: Roles whose DECLARED value is exact by declaration: a set point the problem or protocol imposes.  Any other value,
-#: even a declared one (a nominal latent parameter), is only as exact as its uncertainty says.
+#: Roles whose value is a set point the problem or protocol imposes (a controlled input, a protocol condition).  Since
+#: BR1.1 a DECLARED set point is a current value of the world like any other for a decision: its realization is what
+#: its uncertainty states, and it is never exact by default (an exact protocol level is an action's fixed condition).
 SET_BY_DECLARATION = frozenset({R.CONTROLLED_INPUT, R.FIXED_PROTOCOL_CONDITION})
 
 #: Roles a declared observation channel may record.  Never a latent parameter (estimated) or a derived quantity
@@ -297,20 +298,6 @@ class WorldVariable:
     @property
     def controllability(self) -> Controllability:
         return CONTROLLABILITY_BY_ROLE[self.role]
-
-    def edges(self) -> tuple[Any, ...] | None:
-        """The values a check must hold at for this current value, or None when that cannot be decided.
-
-        A DECLARED set point (a controlled input or protocol condition) is exact by declaration.  Every other value is
-        exact only within its uncertainty: an INTERVAL gives its two edges; an UNKNOWN or a STANDARD uncertainty (no
-        coverage is assumed) gives None, so missing uncertainty never becomes zero."""
-        if self.value is None:
-            return None
-        if self.origin is ValueOrigin.DECLARED and self.role in SET_BY_DECLARATION:
-            return (self.value,)
-        if self.uncertainty.kind is UncertaintyKind.INTERVAL:
-            return (self.uncertainty.lower, self.uncertainty.upper)
-        return None
 
     # ---- serialization ------------------------------------------------------------------------------------------------
     def identity(self) -> dict[str, Any]:

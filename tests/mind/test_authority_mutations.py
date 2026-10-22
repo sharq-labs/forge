@@ -126,19 +126,22 @@ def test_a_forged_parent_never_verifies_and_never_carries_a_proposal_over(name):
                                         "configuration", "context", "observe", "execution", "synthetic"])
 def test_a_mutated_admitted_action_is_refused_at_dispatch(field_name):
     o = owned("battery")
-    result = admit(FeasibleActionSpace.build(o.world), o.propose("pulse", ax.br1.base("battery")["pulse"][0]),
-                   o.authorities())
+    sim = ax.br1.base("battery")["simulate_pulse"]
+    result = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *sim), o.authorities())
     a = result.admitted
+    assert a is not None
     forged = object.__new__(AdmittedAction)
     for f in dataclasses.fields(a):
         object.__setattr__(forged, f.name, getattr(a, f.name))
     replacement = {
-        "proposal": o.propose("pulse", {"I": ax.q(2.0, "A"), "t_pulse": ax.q(60, "s")}),
+        "proposal": o.propose("simulate_pulse", {**sim[0], "I": ax.q(1.0, "A")}, sim[1]),
         "world_revision": _hex("another world"), "space_id": _hex("another space"),
         "admission": _hex("another admission"), "bindings": (), "configuration": (("I", ax.q(99, "A")),),
-        "context": (), "observe": ("T_surf",), "execution": type(a.execution)("model_execution"),
+        "context": a.context + ({"variable": "SOC", "value": None, "binding": None},), "observe": ("T_surf",),
+        "execution": next(k for k in type(a.execution) if k is not a.execution),
         "synthetic": not a.synthetic,
     }[field_name]
+    assert replacement != getattr(a, field_name)                      # an actual mutation
     object.__setattr__(forged, field_name, replacement)
     calls: list[Any] = []
     with pytest.raises(DispatchRefused):

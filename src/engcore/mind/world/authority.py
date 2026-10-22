@@ -40,11 +40,23 @@ class OwnerKind(str, Enum):
 
 class BindingStatus(str, Enum):
     VERIFIED = "verified"                      # the owner states exactly what was projected, now
-    STALE = "stale"                            # the record exists but its owner has moved on
+    #: The owner now states another record under this record identity.  An owner that keeps a history (the run's
+    #: committed states) tells superseded (STALE) from never held (MISSING); one that keeps none cannot, and a digest
+    #: it never held is also reported STALE: either way the owner does not state it now.
+    STALE = "stale"
     MISSING = "missing"                        # no such record (or owner instance) exists
     MISMATCH = "mismatch"                      # the owner states something other than what the world holds
     UNVERIFIABLE = "unverifiable"              # nothing an owner could verify (an unbound or synthetic fact)
     OWNER_UNAVAILABLE = "owner_unavailable"    # the execution side supplied no reader for this owner kind
+
+
+#: What a VERIFIED declaration binding means: the world is the projection of the declaration the execution side holds
+#: in force.  No canonical FORGE owner states experiment protocols, so this is a caller declaration, not an owner fact.
+DECLARATION_HELD = "caller_declared_held_in_force_by_the_execution_side"
+
+
+class OwnerUnavailable(WorldRefused):
+    """An owner reader could not consult its owner (the execution side could not state the current record)."""
 
 
 def projection_digest(payload: Mapping[str, Any]) -> str:
@@ -200,17 +212,20 @@ class AuthorityReport:
 # ---- the execution side's readers --------------------------------------------------------------------------------------
 @dataclass(frozen=True)
 class Authorities:
-    """The execution side's owner readers, one per owner kind.  Read-only; held by the admitting party only."""
+    """The execution side's owner readers, one per owner kind.  Read-only; held by the admitting party only.
+
+    ``live`` is DERIVED, never asserted: True only when every reader is one of the shipped owner readers in a mode that
+    consults its owner at every read (``owners.is_live``).  Readers rebuilt from a snapshot, a fixed run record, a fixed
+    declaration set or any look-alike reader state what an owner said THEN: projection, verification and replay may use
+    them; a dispatch never may (a stale admission would otherwise stay dispatchable)."""
 
     readers: tuple[Any, ...]
-    #: False for readers rebuilt from a snapshot: they state what the owners said THEN.  Replay may use them; a
-    #: dispatch never may (a stale admission would otherwise stay dispatchable forever).
-    live: bool = True
+    live: bool = field(init=False, default=False)
     _by_kind: Mapping[OwnerKind, Any] = field(init=False, repr=False, compare=False, default=None)  # type: ignore
 
     def __post_init__(self) -> None:
-        if type(self.live) is not bool:
-            raise WorldRefused("live is a bool")
+        from .owners import is_live
+
         by_kind: dict[OwnerKind, Any] = {}
         for reader in self.readers:
             for kind in reader.kinds:
@@ -218,14 +233,19 @@ class Authorities:
                     raise WorldRefused(f"two readers claim the {kind.value} owner")
                 by_kind[OwnerKind(kind)] = reader
         object.__setattr__(self, "_by_kind", by_kind)
+        object.__setattr__(self, "live", bool(self.readers) and all(
+            is_live(r._reader if type(r) is _Memo else r) for r in self.readers))
 
     @classmethod
     def of(cls, *readers: Any) -> "Authorities":
         return cls(tuple(readers))
 
     def memoized(self) -> "Authorities":
-        """The same readers, each record read once: one verification sees one consistent state of every owner."""
-        return Authorities(tuple(_Memo(r) for r in self.readers), live=self.live)
+        """The same readers, each owner pinned once and each record read once: one verification sees one consistent
+        state of every owner (a followed run head or declaration set is asked once, not once per binding)."""
+        if all(type(r) is _Memo for r in self.readers):
+            return self
+        return Authorities(tuple(r if type(r) is _Memo else _Memo(r) for r in self.readers))
 
     def reader(self, kind: OwnerKind) -> Any | None:
         return self._by_kind.get(OwnerKind(kind))
@@ -261,6 +281,8 @@ class Authorities:
                           bound_owner=binding.owner_id, current_owner=reader.owner_id)
         try:
             record = reader.read(binding.owner_kind, binding.record_id)
+        except OwnerUnavailable as exc:
+            return result(BindingStatus.OWNER_UNAVAILABLE, why=str(exc))
         except WorldRefused as exc:
             return result(BindingStatus.MISMATCH, why=str(exc))
         if record is None:
@@ -268,10 +290,10 @@ class Authorities:
         if record.record_digest != binding.record_digest:
             history = reader.superseded(binding.owner_kind, binding.record_id)
             if history is None:
-                return result(BindingStatus.STALE, why="the owner now states another record under this identity "
-                              "(it keeps no history, so a superseded record and an invented one look alike: "
-                              "either way the owner no longer states it)",
-                              bound=binding.record_digest, current=record.record_digest)
+                return result(BindingStatus.STALE, why="the owner now states another record under this identity; "
+                              "it keeps no history, so whether the bound record was superseded or never held cannot "
+                              "be told (either way the owner does not state it now)",
+                              bound=binding.record_digest, current=record.record_digest, history="none kept")
             if binding.record_digest in history:
                 return result(BindingStatus.STALE, why="the owner has moved on from the bound revision",
                               bound=binding.record_digest, current=record.record_digest)
@@ -283,58 +305,86 @@ class Authorities:
         projected_now = reader.project(record, binding.fields)
         if projection_digest(projected_now) != binding.projection:
             return result(BindingStatus.MISMATCH, why="the owner projects other values under this very record")
+        if binding.owner_kind is OwnerKind.DECLARATION:      # held in force by the execution side, not an owner fact
+            return result(BindingStatus.VERIFIED, provenance=DECLARATION_HELD)
         return result(BindingStatus.VERIFIED)
 
     def snapshot(self, bindings: Iterable[AuthorityBinding]) -> dict[str, Any]:
-        """The records these bindings resolve to now, and what each owner states superseded: enough for a frozen
-        reader to answer every read a projection and a verification of them make, and nothing else."""
-        records: list[dict[str, Any]] = []
-        seen = set()
-        for b in sorted(bindings, key=lambda x: x.digest):
-            key = (b.owner_kind, b.record_id)
-            if key in seen:
-                continue
-            seen.add(key)
-            reader = self.reader(b.owner_kind)
+        """The records these bindings resolve to now (one consistent read of each owner), as a frozen reader needs."""
+        pinned = self.memoized()
+        for b in bindings:
+            reader = pinned.reader(b.owner_kind)
             if reader is None:
                 continue
-            record = reader.read(b.owner_kind, b.record_id)
-            if record is None:
+            try:
+                reader.read(b.owner_kind, b.record_id)
+            except WorldRefused:
                 continue
-            history = reader.superseded(b.owner_kind, b.record_id)
-            records.append({"record": record.to_dict(), "owner_kind": b.owner_kind.value,
-                            "superseded": None if history is None else sorted(history)})
+        return pinned.served()
+
+    def served(self) -> dict[str, Any]:
+        """Every record this memoized set of readers served (and every owner it found unavailable): exactly what a
+        frozen reader needs to answer the same reads, in the same order of outcomes, on replay."""
+        if not all(type(r) is _Memo for r in self.readers):
+            raise WorldRefused("only a memoized set of readers knows what it served")
+        records: list[dict[str, Any]] = []
+        unavailable: list[list[str]] = []
+        for memo in sorted(self.readers, key=lambda m: sorted(k.value for k in m.kinds)):
+            if memo._failure is not None:
+                unavailable.extend([k.value, str(memo._failure)] for k in sorted(memo.kinds, key=lambda k: k.value))
+            for (kind, record_id), record in sorted(memo._reads.items(), key=lambda kv: (kv[0][0].value, kv[0][1])):
+                if record is None:
+                    continue
+                history = memo._history.get((kind, record_id))
+                records.append({"record": record.to_dict(), "owner_kind": kind.value,
+                                "superseded": None if history is None else sorted(history)})
         owners = sorted({(k.value, r.owner_id) for k, r in self._by_kind.items()})
-        return {"schema": SNAPSHOT_SCHEMA, "owners": [list(o) for o in owners], "records": records}
+        return {"schema": SNAPSHOT_SCHEMA, "owners": [list(o) for o in owners], "records": records,
+                "unavailable": unavailable}
 
     @classmethod
     def from_snapshot(cls, payload: Mapping[str, Any]) -> "Authorities":
         from .owners import frozen_readers
 
         expect_schema(payload.get("schema"), SNAPSHOT_SCHEMA)
-        return cls(frozen_readers(payload), live=False)
+        return cls(frozen_readers(payload))
 
 
 class _Memo:
-    """A reader that reads each record once (successful reads only; a refusal is re-raised every time)."""
+    """A reader pinned once (``pinned()``: a followed owner is asked for its current record once) and reading each
+    record once (successful reads only; a refusal is re-raised every time)."""
 
     def __init__(self, reader: Any) -> None:
         self._reader = reader
+        self._pinned: Any = None
+        self._failure: OwnerUnavailable | None = None
         self.kinds = reader.kinds
         self.owner_id = reader.owner_id
         self._reads: dict[tuple[OwnerKind, str], Any] = {}
         self._history: dict[tuple[OwnerKind, str], Any] = {}
 
+    def _current(self) -> Any:
+        if self._failure is not None:
+            raise self._failure
+        if self._pinned is None:
+            pin = getattr(self._reader, "pinned", None)
+            try:
+                self._pinned = self._reader if pin is None else pin()
+            except OwnerUnavailable as exc:
+                self._failure = exc
+                raise
+        return self._pinned
+
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
         key = (OwnerKind(kind), record_id)
         if key not in self._reads:
-            self._reads[key] = self._reader.read(kind, record_id)
+            self._reads[key] = self._current().read(kind, record_id)
         return self._reads[key]
 
     def superseded(self, kind: OwnerKind, record_id: str) -> frozenset[str] | None:
         key = (OwnerKind(kind), record_id)
         if key not in self._history:
-            self._history[key] = self._reader.superseded(kind, record_id)
+            self._history[key] = self._current().superseded(kind, record_id)
         return self._history[key]
 
     def project(self, record: OwnerRecord, fields: tuple[str, ...]) -> dict[str, Any]:
@@ -342,6 +392,6 @@ class _Memo:
 
 
 __all__ = [
-    "Authorities", "AuthorityBinding", "AuthorityReport", "BindingCheck", "BindingStatus", "OwnerKind", "OwnerReader",
-    "OwnerRecord", "projection_digest",
+    "Authorities", "AuthorityBinding", "AuthorityReport", "BindingCheck", "BindingStatus", "DECLARATION_HELD",
+    "OwnerKind", "OwnerReader", "OwnerRecord", "OwnerUnavailable", "projection_digest",
 ]
