@@ -8322,3 +8322,7 @@ Commands, all with `PYTHONPATH="D:/forge-redisc-v2/src;D:/forge-redisc-v2"` and 
      See the commit for the clean-tree recheck.
 
 The regression pack, SCIENTIFIC and certification were NOT RUN.
+
+Clean-tree recheck after the report commit: `test_the_tree_is_core_freeze_v1` and
+`test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`: 2 passed. So FAST on this branch differs
+from base 86034639 only by the tests added here (no new failure). `freeze --check` still exits 0.
