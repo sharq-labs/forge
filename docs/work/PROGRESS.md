@@ -8326,3 +8326,74 @@ The regression pack, SCIENTIFIC and certification were NOT RUN.
 Clean-tree recheck after the report commit: `test_the_tree_is_core_freeze_v1` and
 `test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`: 2 passed. So FAST on this branch differs
 from base 86034639 only by the tests added here (no new failure). `freeze --check` still exits 0.
+
+## 2026-10-22 — BR-BATT-REDISC-04: GEN1 reference sealed; battery_rediscovery_v3 strong real-data baseline
+
+Branch `research/battery-rediscovery-v3-gen1-baseline` (worktree `D:/forge-redisc-v3`, base v2 head `b8160e21`),
+local only. Report: `benchmarks/battery_rediscovery_v3/README.md`.
+
+**Part A, GEN1 reference.** `docs/discovery/MIND_GEN1_REFERENCE.md` and `mind_gen1_reference.json` (commit
+`8bd0d499`) bind, by git blob id and sha256 at `b8160e21`:
+- the Minimal Mind and repsem sources;
+- the v1/v2 adapters and baselines;
+- the firewall and the v2 reference protocol;
+- the v0/v1/v2 PLAN/SEAL/TRUTH/EVALUATION records.
+v2 is recorded as REAL_DATA_IMPROVEMENT_CONFIRMED_BY_PREREGISTERED_V2_RULE with EVIDENCE_STRENGTH LIMITED_SMALL_N.
+SCIENTIFICALLY_VERIFIED, CERTIFIED and FORMAL are all NO. `gen1_reference --check` passed before the freeze, the run,
+the replay and after the evaluation.
+
+**Part B, v3.** Commits: `5023fe92` census and bundle, `82917615` failing-first rule tests, `07a7604f` freeze (PLAN
+`2b549035`), `9e018614` seal (SEAL `033cae41`), `16dfe967` replay, `c40bf360` evaluation.
+
+**Preregistered conclusion: GEN1_REAL_DATA_ADVANTAGE_CONFIRMED.**
+- 31 primary problems on 19 independent cells from Kirkaldy 2024, Chen 2020 and NASA, under 5 operating conditions:
+  155 instances, 73 decided, 49 of them held out.
+- Combined arm: 73/73 decided correct, 0 false support, 0 false refusal.
+- OLD_MIND and both single-layer arms: 0/73.
+- CAREFUL: 72/73 decided, with 52 unsupported decisions.
+- Robust to all 146 single-instance removals and flips. Reference A/B disagreement 0. Replay exact. Leakage PASS.
+
+**What it shows.** The combined arm decides correctly on unused real cells, and it refuses when the noise is UNKNOWN.
+
+**What it does not show.** It is not better judgment than a careful analyst on decided questions: 1 win, 0 losses and
+72 ties against CAREFUL. It is not physics either:
+- Every primary dataset has UNKNOWN noise, so identifiability and discrepancy are refusal tests only.
+- 58 of the 73 decided truths are 1RC failures against bars inherited from v1/v2.
+- The 43 C NASA problems reproduce v2's degenerate fit (R1 on its bound, τ longer than the run). The diagnostics flag
+  it, and no SUPPORTED answer rests on it.
+
+**Failed approaches and design corrections, recorded so they are not repeated:**
+- **v2 protected values too generic to protect.**
+  - v2 Q1's R1 = 1.0 is a bound, so protecting it matches every "1". Bound-valued estimates are not protected.
+  - The memory value "25 mV" (two significant digits) collides with "25 C". Memory values need ≥ 3 significant digits.
+- **Firewall tokens.**
+  - The harness docstrings named the vault and truth directories. They were reworded.
+  - engcore claims modules name `model_measurement_validation` in their text. That token is platform-exempt; reads of
+    the directory stay refused.
+- **Chen 2020 exports.** A logger marker record ("SBr") shares a timestamp with the next record. The reader drops
+    non-R/C/D modes and keeps the first of equal timestamps.
+- **Kirkaldy Expt 4 GITT files** start 20 s before the first pulse. That pulse fails the 600 s pre-rest rule, which is
+  expected.
+- **The 4 C NASA groups** never taper to the protocol's 20 mA. They fail the charge-termination screen (> 30 mA
+  median), except B0051 at exactly 30.0 mA.
+- **The robustness rule** with a 5 % false-support materiality needs more than 20 held-out decided instances to
+  absorb one flipped truth. The test fixture was enlarged; the rule was not changed.
+
+Commands, all with `PYTHONPATH="D:/forge-redisc-v3/src;D:/forge-redisc-v3"`, the phyx `.venv` Python 3.14, and
+`TMPDIR=D:/ftmp`:
+1. `python -m pytest benchmarks/battery_rediscovery_v3/tests -q -p no:cacheprovider --basetemp=D:/fbt3`: 32 passed
+   before the freeze. This includes the synthetic end-to-end and replay dry runs through the real sandbox.
+2. `mutation --phase pre_run`: PASS, 1361/1361 caught, 0/706 benign, 9/9 runtime controls (one is a real subprocess).
+   `--phase post_seal`: the same. `freeze --pre-run-audit`: PASS.
+3. `launch run`: exit 0. `seal`: PASS. `launch replay`: 264/264 identical. `evaluator.run_evaluation`: the verdict
+   above; post-seal audit PASS.
+4. After the evaluation:
+   - `freeze --check` exit 0; v2 `freeze --check` exit 0; `gen1_reference --check` INTACT.
+   - `python -m pytest benchmarks/battery_rediscovery_v3/tests tests/mind benchmarks/mind_repsem_v1/tests
+     benchmarks/battery_rediscovery_v2/tests benchmarks/battery_rediscovery_v1/tests -q -n 4`: 211 passed.
+5. FAST, `python -m pytest -m "not expensive" -q -n 4 -p no:cacheprovider -rfE`:
+   - pristine base `b8160e21` (`D:/forge-redisc-v3-base`): 186 failed, 22 errors, 11899 passed.
+   - this branch at `c40bf360`, clean tree: 186 failed, 22 errors, 11926 passed.
+   The failure sets are identical: no new failure. The base is red, so FAST is NOT green.
+
+The regression pack, SCIENTIFIC and certification were NOT RUN.
