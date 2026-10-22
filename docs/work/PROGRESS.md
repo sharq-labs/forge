@@ -8281,3 +8281,44 @@ The regression pack, SCIENTIFIC and certification were NOT RUN.
 Clean-tree recheck after commit cac1c584: test_the_tree_is_core_freeze_v1 and
 test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks: 2 passed. So FAST on this branch differs from
 base d516e681 only by tests added here (no new failure).
+
+## 2026-10-22 — BR-BATT-REDISC-03: battery_rediscovery_v2, fresh real-data confirmation of the repsem repair
+
+Branch `research/battery-rediscovery-v2` (worktree `D:/forge-redisc-v2`, base `86034639`), local only. Report:
+`benchmarks/battery_rediscovery_v2/README.md`. Commits: `f6229986` freeze (PLAN `85f1b7f3`), `ee3a6946` seal
+(SEAL `843c6e14`), `6a75d816` replay + post-seal mutation, `625f5fea` evaluation.
+
+**Preregistered conclusion: REAL_DATA_IMPROVEMENT_CONFIRMED** — on thin evidence:
+- combined arm 8/8 scored correct, 0 false support, 0 false refusal; OLD_MIND 5 false refusals, 0 false support;
+  representation-only and roles-only 5 false refusals each; CAREFUL 1 false refusal, 1 unsupported decision.
+- only 5 decided-truth instances (2 held out); Q1 adequacy and Q1 within-cell unscored (inside the 1.10 margin band).
+- The single-layer zeros are structural, and the combined arm reached the same optimum as the independent reference,
+  so this shows correct implementation of the declared judgments on real data, not that the 1RC physics is right
+  (Q1's fit puts R1 on its 1 ohm bound, tau ~5200 s).
+- Q2 is v1 P2's pulse windows re-split by SOC set point, not new data; Q1 (aging-archive cells 38/39/40 at 44 C) is.
+
+**Failed approaches / design corrections, recorded so they are not repeated:**
+- A 24 C, 4 A problem was dropped before any fit: runs stop at the cutoff early, so the causal capacity basis is
+  0.56 Ah in one cell and 1.24 Ah in another.
+- The runtime audit first flagged every output path: the scratch path used an 8.3 short name and the roots were
+  resolved to long names. Roots now match both forms. It also flagged `__pycache__` bytecode of allowed sources,
+  which is now allowed exactly when the source file is allowed.
+- Firewall identity tokens `battery_rediscovery_v0` and `GAP_MAP(.json)` were too broad: they hit docstrings of frozen
+  code. Reads of those files stay forbidden by the runtime audit.
+- Repsem's 2^p + 1 starts make a 13-knot fitted OCV infeasible (65 537 starts). v2 declares 7 knots (1025 starts,
+  ~5 min on Q1).
+
+Commands, all with `PYTHONPATH="D:/forge-redisc-v2/src;D:/forge-redisc-v2"` and the phyx `.venv` Python 3.14:
+1. `python -m pytest benchmarks/battery_rediscovery_v2/tests -q -p no:cacheprovider`: 45 passed, before the freeze.
+2. `python -m benchmarks.battery_rediscovery_v2.mutation --phase pre_run`: PASS, 434/434 caught, 0/219 benign.
+   `--phase post_seal`: the same.
+3. `launch run` exit 0; `seal` PASS; `launch replay`: 16/16 identical; `evaluator.run_evaluation`: verdict above, post-seal
+   audit PASS.
+4. FAST, `python -m pytest -m "not expensive" -q -n 4 -p no:cacheprovider`:
+   - this branch: 199 failed, 22 errors, 11886 passed;
+   - pristine base `86034639` (`D:/forge-repsem`): 197 failed, 22 errors, 11843 passed.
+   - The only failures not on the base are `test_the_tree_is_core_freeze_v1` and
+     `test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks` (an uncommitted README at run time).
+     See the commit for the clean-tree recheck.
+
+The regression pack, SCIENTIFIC and certification were NOT RUN.
