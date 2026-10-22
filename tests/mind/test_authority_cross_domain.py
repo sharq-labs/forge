@@ -16,7 +16,6 @@ No domain-specific logic is involved: the same generic code runs every world.
 
 from __future__ import annotations
 
-import dataclasses
 import json
 import os
 import subprocess
@@ -26,7 +25,7 @@ import pytest
 
 from benchmarks.mind_gen2_authority_v1 import fixtures as ax
 from engcore.mind.world import (
-    AdmissionRecord, BindingStatus, DispatchRefused, ExecutionDesk, FeasibilityStatus as F, FeasibleActionSpace,
+    AdmissionRecord, BindingStatus, DispatchRefused, ExecutionDesk, FeasibleActionSpace,
     OwnerKind, ProposedAction, ScientificWorld, WorldRefused, admit, authorize_dispatch, replay_admission, verify_world,
 )
 from engcore.mind.world.admission import DECLARATION_PROVENANCE

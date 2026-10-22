@@ -31,7 +31,7 @@ from typing import Any, Callable, Mapping
 
 from benchmarks.mind_gen2_world_v1 import fixtures as br1
 from engcore.mind.repsem.roles import VariableRole as R
-from engcore.mind.world import ProposedAction, ScientificWorld, ValueOrigin, WorldVariable
+from engcore.mind.world import ProposedAction, ScientificWorld, ValueOrigin
 from engcore.mind.world.authority import Authorities
 from engcore.mind.world.declaration import BudgetSource, ProtocolDeclaration, ValueSource
 from engcore.mind.world.owners import (

@@ -11,7 +11,7 @@ from __future__ import annotations
 import copy
 import dataclasses
 import hashlib
-from typing import Any, Callable
+from typing import Any
 
 import pytest
 

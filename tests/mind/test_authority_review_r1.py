@@ -20,7 +20,7 @@ from benchmarks.mind_gen2_authority_v1 import fixtures as ax
 from engcore.mind.world import (
     AdmissionGateway, AdmissionRecord, Authorities, BindingStatus, BudgetSource, DispatchAuthorization,
     DispatchRefused, ExecutionDesk, FeasibilityStatus as F, FeasibleActionSpace, Lineage, MindWorldPort,
-    OwnerKind, ProtocolDeclaration, ScientificWorld, WorldBudget, WorldRefused, admit, authorize_dispatch,
+    OwnerKind, ScientificWorld, WorldBudget, WorldRefused, admit, authorize_dispatch,
     replay_admission, verify_authorization, verify_lineage, verify_world,
 )
 from engcore.mind.world import admission as adm
@@ -28,7 +28,7 @@ from engcore.mind.world.admission import DECLARATION_PROVENANCE
 from engcore.mind.world.authority import DECLARATION_HELD
 from engcore.mind.world.base import digest
 from engcore.mind.world.owners import (
-    BudgetReader, DeclarationReader, FrozenReader, RunStateReader, frozen_readers, is_live,
+    BudgetReader, DeclarationReader, RunStateReader, frozen_readers, is_live,
 )
 from engcore.scientific.experiments.evaluation import EvaluationStatus, ScientificEvaluation
 from engcore.sria.decision.replay import ReplayOutcome
