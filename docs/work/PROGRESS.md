@@ -8397,3 +8397,41 @@ Commands, all with `PYTHONPATH="D:/forge-redisc-v3/src;D:/forge-redisc-v3"`, the
    The failure sets are identical: no new failure. The base is red, so FAST is NOT green.
 
 The regression pack, SCIENTIFIC and certification were NOT RUN.
+
+## 2026-10-22 — GEN2-BR1 (in progress): round-1 authority fixes did not close the review; stopping rule
+
+Branch `research/mind-gen2-scientific-world-v1` (worktree `D:/forge-gen2-world`, base `da932552`), local only.
+
+The read-only authority review (brief §22) answered YES on Q1, Q2, Q4 and Q7. Fix batch `5b27dbad` addressed every
+finding it named. An adversarial re-verification at `282b4d58` (8 skeptics, one per question, plus a critic, each
+re-running the old probes and writing new ones; probes and outputs kept in the session scratchpad) still answered
+YES on Q1, Q2, Q3, Q4, Q5 and Q7, PARTIAL on Q6 and NO on layering. It reported 1 BLOCKER, 16 MAJOR and 20 MINOR
+findings.
+
+**Failed approach, recorded so it is not repeated: a research execution gate inside the Mind package.** The gate was
+meant to stop unadmitted actions reaching an executor. To do that it had to re-implement owner functions: a dispatch
+and budget ledger (held in process memory, keyed by world revision, not atomic), the budget statement it reserved
+against (the world's unverified copy, the BLOCKER), state currency after a dispatch, provider-build checks against
+duck-typed objects, and executor routing by a world-declared execution kind. Each of these is a second authority.
+The brief (§16) asks only for the smallest Mind-facing interface. Round 2 removes the gate. BR1 ends the flow at a
+self-describing admitted-action record, and the gate findings are recorded as requirements for the execution-owner
+wiring step.
+
+**Round-2 core fixes**, all findings against the world and the action space:
+- identity over raw owner payloads, so one revision decides one way;
+- integer and categorical domains in the variable's own unit;
+- owner unit conversion before any comparison (temperature differences vs points);
+- budget comparisons on raw magnitudes through the owner rules;
+- the state-domain check only on reads the decision uses, and sound for two-sided sets;
+- applicability halves that keep `conservative_screen` and `requires`, with a distinct code for the world's interval
+  rule;
+- DECLARED exact only for set points;
+- owner-typed record verification (superseded states, the measured quantity);
+- the bound-value rule in lineage verification;
+- language-model provenance verified by re-deriving the proposal from its suggestion;
+- closed reason codes.
+
+**Stopping rule, fixed before round 2 is written.** After round 2, run one more adversarial re-verification with the
+same seven questions, layering, and a critic. If any question is still YES with a BLOCKER or MAJOR finding, BR1
+concludes AUTHORITY_DUPLICATION_BLOCKER with that evidence. There is no third fix round inside BR1. A question left
+PARTIAL with only MINOR findings may stand if every MINOR is disclosed.
