@@ -112,6 +112,15 @@ virtualenv flags, and the SHA-256 of the child's resolved executable. The hostna
 `sha256(salt + hostname)[:16]` with a random salt kept in the run root: pseudonymous, not anonymous. No
 environment variable value, path list or credential is part of it.
 
+Probing these facts costs ~0.3 s (distribution list, WMI on Windows, `nvidia-smi`), so they are cached
+in `<run-root>/cache/`. An entry is reused only while its key is unchanged — interpreter path, version and
+prefix, every site-packages directory's mtime (a package installed or removed), boot time to the minute
+(a reboot, so an OS or hardware change), host, salt, the child executable's path/size/mtime and whether
+`psutil` is available — and never after 24 h, which bounds what the key cannot see (a GPU driver updated
+without a reboot). Cached and probed facts are byte-identical, so the `ENVIRONMENT_ID` does not depend
+on the cache; each receipt says which it used (`environment.facts_source`: `CACHE` / `PROBED`).
+`--refresh-env-cache` probes and rewrites the entry; `--no-env-cache` probes without it.
+
 ## 7. Comparability, deltas and the performance policy
 
 | Class | When | Deltas | Performance reading |
@@ -201,6 +210,7 @@ registered in `ADAPTERS`. It may never alter what the command computes.
 <run-root>/            --run-root, else $FORGE_RUN_ROOT, else ~/.forge-run-ledger
     ledger.sqlite      index (WAL); rebuildable from receipts/ with `reindex`
     host_salt          random salt for the host id
+    cache/             environment-facts cache (§6); safe to delete
     receipts/          <run_id>.json sealed, read-only; <run_id>.pending.json while running
     receipts/quarantine/   unreadable pending files
     logs/              <run_id>.stdout.log / .stderr.log, redacted
@@ -246,9 +256,15 @@ python -m tools.run_observatory recover
 python -m tools.run_observatory reindex
 ```
 
-Overhead: identity capture (git status and diff, distribution list, `nvidia-smi`) costs a fixed amount
-per run, so a sub-second workload is visibly slower when observed. The measured number is recorded in
-`docs/work/PROGRESS.md` (BR-RUN-OBS-01).
+Overhead: each observed run pays a fixed cost outside the measured window — interpreter start-up and
+imports (~0.1 s), git identity (two `git` calls on a clean tree, four on a dirty one) and sealing; the
+environment probe only on a cache miss. Measured on one loaded Windows machine: ~0.27 s per run with a
+warm cache (0.54 s before the cache). A sub-second workload is visibly slower to run observed; its
+recorded duration is not. Numbers and commands: `docs/work/PROGRESS.md` (BR-RUN-OBS-01).
+
+A busy machine can still push identical runs past the default policy: during one measurement, two
+consecutive runs of the same code on an already-loaded machine took 7.53 s and 9.49 s (+25.9 %, +1.95 s) and read
+`PERFORMANCE_REGRESSION`. Read a single reading on a shared machine as a prompt to repeat, not a finding.
 
 ## 13. Roadmap (descriptive only — not an execution queue)
 
