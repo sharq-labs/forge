@@ -40,7 +40,7 @@ The observatory may say only these things:
 | Axis | Readings |
 |---|---|
 | run result | `RUN_PASS`, `RUN_FAIL`, `RUN_ERROR`, `RUN_INTERRUPTED` |
-| performance | `PERFORMANCE_IMPROVED`, `UNCHANGED`, `PERFORMANCE_REGRESSION`, `NOT_COMPARABLE` |
+| performance | `PERFORMANCE_IMPROVED`, `UNCHANGED`, `PERFORMANCE_REGRESSION`, `NOT_ENOUGH_REPEATS`, `NOT_COMPARABLE` |
 | replay | `REPLAY_EXACT`, `REPLAY_MISMATCH`, `NOT_CHECKED` |
 | failure set | `NO_NEW_FAILURES`, `NEW_FAILURES`, `NOT_CHECKED` |
 | comparability | `EXACT_COMPARABLE`, `CONFIG_VARIANT`, `CODE_VARIANT`, `ENVIRONMENT_VARIANT`, `WORKLOAD_VARIANT`, `NOT_COMPARABLE` |
@@ -77,7 +77,8 @@ querying. Recording a `CERTIFICATION` run certifies nothing.
 | `counters` | declared / child-reported / adapter counters, derived rates, rejected names, conflicts (§9) |
 | `outputs` | stdout/stderr raw SHA-256 and size, stored redacted log path and SHA-256, redaction count; declared artifacts by SHA-256 |
 | `result` | status, exit code, raw return code, `terminated_by_signal`, adapter outcomes, notes |
-| `comparison` | baseline, class, differing axes, deltas, performance reading, policy, result delta, failure set (§7) |
+| `comparison` | baseline, class, differing axes, deltas, performance reading, noise band, both runs' host load, policy, result delta, failure set (§7) |
+| `host_load` | machine-wide CPU busy fraction, cores busy outside the run, available memory: context only (§7) |
 | `replay` | declared and expected output/trace identities, `EXACT` / `MISMATCH` / `NOT_CHECKED` |
 | `cost` | `NOT_AVAILABLE` by default; caller-declared amounts are always `ESTIMATED` (no billing source exists in v1) |
 | `partial` | true for interrupted and recovered runs |
@@ -138,11 +139,34 @@ earlier run with the same workload, environment and code; else same workload and
 workload; else the same `--group` (or `--name`), so a changed workload is reported as a variant instead
 of having no baseline. `--baseline none|RUN_ID` overrides.
 
-Policy `forge.run_observatory.performance_policy` v1 (explicit, configurable with `--policy FILE`,
-`--regression-threshold-pct`, `--improvement-threshold-pct`, `--min-absolute-seconds`; overrides are
-recorded in the receipt): wall time must move by at least 25 % **and** 1.0 s. The default sits above
-the measured whole-run noise of identical warm FAST runs (up to x1.25, `docs/TESTING.md`). Result
-changes (status, exit code, outcome counts) are reported separately as `result_delta`.
+Policy `forge.run_observatory.performance_policy` is versioned and recorded in every reading, with
+any overrides (`--policy FILE`, `--policy-version`, `--regression-threshold-pct`,
+`--improvement-threshold-pct`, `--min-absolute-seconds`, `--noise-min-history`,
+`--noise-history-window`, `--noise-margin-pct`).
+
+- **v1:** wall time must move by at least 25 % **and** 1.0 s against the single baseline run. The bars
+  sit above the measured whole-run noise of identical warm FAST runs (up to x1.25, `docs/TESTING.md`).
+- **v2 (default):** the v1 bars, **and** the candidate must leave the *noise band*: the last 10
+  completed runs exactly comparable to the baseline (same workload, environment and code, same status,
+  started before the candidate; the baseline included). A regression must be slower than the slowest
+  of them by 5 %, an improvement faster than the fastest by 5 %; inside the band the reading is
+  `UNCHANGED`. With fewer than 3 such runs there is no band, and a change that clears the bars reads
+  `NOT_ENOUGH_REPEATS`: repeat the baseline before reading the delta. The receipt's
+  `comparison.noise` holds the band (runs, min/max/median, spread, candidate vs median, `within_band`).
+
+Why v2: on a loaded machine, two consecutive runs of identical code took 7.53 s and 9.49 s
+(+25.9 %, +1.95 s) and v1 read `PERFORMANCE_REGRESSION`. Under v2 the same pair reads `UNCHANGED`:
+9.49 s lies inside the band of five earlier identical runs (7.53–10.10 s). A real change on that
+machine (−55.4 %, below the whole band) still reads `PERFORMANCE_IMPROVED`.
+
+Result changes (status, exit code, outcome counts) are reported separately as `result_delta`.
+
+**Machine load is context, never a reading.** Each receipt has `host_load`: system-wide CPU busy
+time across the run window minus the run's own process tree (`other_busy_cores`), the machine's busy
+fraction, and available memory at start (`psutil`, `GetSystemTimes` on Windows or `/proc/stat`;
+`PARTIAL`, because it is two snapshots of machine-wide counters). It explains a slow run; it is never
+attributed to the run and never changes a reading. `comparison.host_load` puts both runs' values side
+by side.
 
 ## 8. Metrics and their limits
 
@@ -261,10 +285,6 @@ imports (~0.1 s), git identity (two `git` calls on a clean tree, four on a dirty
 environment probe only on a cache miss. Measured on one loaded Windows machine: ~0.27 s per run with a
 warm cache (0.54 s before the cache). A sub-second workload is visibly slower to run observed; its
 recorded duration is not. Numbers and commands: `docs/work/PROGRESS.md` (BR-RUN-OBS-01).
-
-A busy machine can still push identical runs past the default policy: during one measurement, two
-consecutive runs of the same code on an already-loaded machine took 7.53 s and 9.49 s (+25.9 %, +1.95 s) and read
-`PERFORMANCE_REGRESSION`. Read a single reading on a shared machine as a prompt to repeat, not a finding.
 
 ## 13. Roadmap (descriptive only — not an execution queue)
 
