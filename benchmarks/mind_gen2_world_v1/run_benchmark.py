@@ -34,6 +34,10 @@ from . import fixtures as fx
 
 HERE = pathlib.Path(__file__).resolve().parent
 OUT = HERE / "results" / "BENCHMARK.json"
+TERMINOLOGY = ("A per-case verdict is FEASIBLE or NOT_FEASIBLE under the action-feasibility check (Gen1: its own "
+               "validity check; NOT_POSABLE when Gen1 cannot state the proposal).  The counters keep the brief's section "
+               "24 names: 'admitted' means found FEASIBLE and 'rejected' means found NOT_FEASIBLE; neither is evidence "
+               "admission (sria.admission) or any scientific verdict.")
 PERF = HERE / "results" / "PERFORMANCE.json"
 SCHEMA = "forge.mind.gen2_world.benchmark/1"
 PERF_SCHEMA = "forge.mind.gen2_world.performance/1"
@@ -92,7 +96,7 @@ def score(rows: list[dict[str, Any]]) -> dict[str, Any]:
         exp = r["case"]["expected"]
         truth_ok = exp["status"] == "FEASIBLE"
         g = r["gen2"]
-        admit = g["verdict"] == "ADMIT"
+        admit = g["verdict"] == "FEASIBLE"
         status_ok = g["status"] == exp["status"]
         codes_ok = set(exp["codes"]) <= set(g["codes"])
         gen2["cases"] += 1
@@ -121,7 +125,7 @@ def score(rows: list[dict[str, Any]]) -> dict[str, Any]:
         gen1["cases"] += 1
         gen1[f"verdict_{v1}"] += 1
         if v1 != "NOT_POSABLE":
-            a1 = v1 == "ADMIT"
+            a1 = v1 == "FEASIBLE"
             if truth_ok:
                 gen1["valid"] += 1
                 gen1["valid_admitted"] += a1
@@ -134,7 +138,7 @@ def score(rows: list[dict[str, Any]]) -> dict[str, Any]:
     for r in posable_rows:
         truth_ok = r["case"]["expected"]["status"] == "FEASIBLE"
         for arm, verdict in (("gen2", r["gen2"]["verdict"]), ("gen1", r["gen1"]["verdict"])):
-            admit = verdict == "ADMIT"
+            admit = verdict == "FEASIBLE"
             head[f"{arm}_valid_admitted"] += truth_ok and admit
             head[f"{arm}_false_rejections"] += truth_ok and not admit
             head[f"{arm}_invalid_rejected"] += (not truth_ok) and not admit
@@ -143,11 +147,11 @@ def score(rows: list[dict[str, Any]]) -> dict[str, Any]:
         head["invalid"] += not truth_ok
     unit = [r for r in rows if any(m["kind"] == "WRONG_UNIT" for m in r["case"]["mutations"])]
     unit_posable = [r for r in unit if r["gen1"]["verdict"] != "NOT_POSABLE"]
-    gen1_false_admission_kinds = Counter(m["kind"] for r in posable_rows if r["gen1"]["verdict"] == "ADMIT"
+    gen1_false_admission_kinds = Counter(m["kind"] for r in posable_rows if r["gen1"]["verdict"] == "FEASIBLE"
                                          and r["case"]["expected"]["status"] != "FEASIBLE"
                                          for m in r["case"]["mutations"] if not m["kind"].startswith("VALID"))
     gen1_false_rejection_kinds = Counter(([m["kind"] for m in r["case"]["mutations"]] or ["BASE"])[0]
-                                         for r in posable_rows if r["gen1"]["verdict"] == "REJECT"
+                                         for r in posable_rows if r["gen1"]["verdict"] == "NOT_FEASIBLE"
                                          and r["case"]["expected"]["status"] == "FEASIBLE")
     not_posable = Counter(r["case"]["world"] for r in rows if r["gen1"]["verdict"] == "NOT_POSABLE")
     multi_world = {k: v for k, v in by_kind.items() if len(v["worlds"]) >= 2}
@@ -170,10 +174,10 @@ def score(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "head_to_head_on_gen1_posable_cases": {"cases": len(posable_rows), **dict(sorted(head.items()))},
         "unit_errors": {
             "cases": len(unit),
-            "gen2_rejected_with_UNIT_INCOMPATIBLE": sum(r["gen2"]["verdict"] == "REJECT"
+            "gen2_rejected_with_UNIT_INCOMPATIBLE": sum(r["gen2"]["verdict"] == "NOT_FEASIBLE"
                                                         and "UNIT_INCOMPATIBLE" in r["gen2"]["codes"] for r in unit),
             "gen1_posable": len(unit_posable),
-            "gen1_admitted": sum(r["gen1"]["verdict"] == "ADMIT" for r in unit_posable),
+            "gen1_admitted": sum(r["gen1"]["verdict"] == "FEASIBLE" for r in unit_posable),
         },
         "cross_domain": {
             "worlds": {w: {"cases": c["cases"], "correct": c["correct"], "pass_rate": _rate(c["correct"], c["cases"])}
@@ -293,7 +297,7 @@ def main(argv: list[str]) -> int:
         print(digest)
         return 0
     result = {"schema": SCHEMA, "cases_sha256": hashlib.sha256(C.CASES_PATH.read_bytes()).hexdigest(),
-              "cases": len(cases), "decisions_digest": digest, "scores": score(rows),
+              "cases": len(cases), "decisions_digest": digest, "terminology": TERMINOLOGY, "scores": score(rows),
               "replay_and_serialization": replay_and_serialization(rows, worlds), "cross_process": cross_process(digest)}
     OUT.write_bytes(_dump(result))
     PERF.write_bytes(_dump(performance(cases)))

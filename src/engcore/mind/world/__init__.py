@@ -17,7 +17,7 @@ packages (both byte-pinned by the sealed Gen1 reference), and nothing certified 
 
 from .actions import (
     ActionMode, ActionSpec, ControlSpec, ExecutionKind, FORBIDDEN_PROPOSAL_KEYS, IntakeCode, IntakeRefusal,
-    ProposedAction, proposal_from_suggestion,
+    ProposedAction, proposed_action_from_suggestion,
 )
 from .base import ProposalRefused, RecordKind, RecordRef, SOFTWARE_VERSION, StaleProposal, WorldRefused
 from .domains import ALL_ACTIONS, DeclaredConstraint, DiscreteLevels, Guard
@@ -39,5 +39,5 @@ __all__ = [
     "FeasibleActionSpace", "GateRefused", "Guard", "IntakeCode", "IntakeRefusal", "Lineage", "MindWorldPort",
     "Observability", "ObservationChannel", "ProposalRefused", "ProposedAction", "ProviderSnapshot", "RecordKind",
     "RecordRef", "SOFTWARE_VERSION", "ScientificWorld", "StaleProposal", "TemporalSemantics", "ValueOrigin",
-    "WorldBudget", "WorldRefused", "WorldVariable", "proposal_from_suggestion", "replay_decision", "verify_lineage",
+    "WorldBudget", "WorldRefused", "WorldVariable", "proposed_action_from_suggestion", "replay_decision", "verify_lineage",
 ]

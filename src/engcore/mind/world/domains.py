@@ -5,21 +5,26 @@ categories), reused unchanged.  The one missing form is :class:`DiscreteLevels`:
 such as the current levels a protocol offers.  ``VariableKind`` is frozen, so it is not extended; the new form lives
 here.
 
-Membership is decided per kind, at identity precision in the base unit (see :mod:`.base`): a spelling of a level or
-a bound is that level or bound.  ``ScientificVariable.require_within_bounds`` is not called: it handles quantities
-only, and the kind rules (an integer is an ``IntegerValue``, a category is one of the declared categories, a boolean
-has no bounds) are exactly what ``tests/test_core_semantic_invariants.py`` records a second consumer must apply
-itself.  Nothing is ever clamped, rounded to a level or projected: a value is a member or it is refused with the
-reason.
+Membership is decided per kind.  A range (continuous, or integer wrapped as a quantity as ``DesignSpace`` does) is
+decided by its owner, ``ScientificVariable.require_within_bounds``: inclusive, unit-converted, never clamped.  The kind
+rules the owner leaves to its consumers (an integer is an ``IntegerValue``, a category is one of the declared
+categories, a boolean has no bounds; ``tests/test_core_semantic_invariants.py`` records that a second consumer
+inherits no refusal) are applied here, with the design layer's dimensionless test (``dimensionality``).  Only
+:class:`DiscreteLevels`, which has no owner, uses identity precision in the base unit (see :mod:`.base`), so a
+spelling of a level is that level.  Nothing is ever clamped, rounded to a level or projected: a value is a member or
+it is refused with the reason.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping
+from typing import Any, Mapping
 
+from engcore.design.grammar import ConstraintStatus
 from engcore.mind.repsem.roles import RoleSource
-from engcore.scientific import ConstraintDefinition, Quantity, ScientificCoreError, ScientificVariable, VariableKind
+from engcore.scientific import (
+    ConstraintDefinition, Quantity, ScientificCoreError, ScientificVariable, VariableKind, dimensionality,
+)
 from engcore.scientific.ir.values import BooleanValue, CategoricalValue, IntegerValue
 from engcore.scientific.units.quantity import base_unit
 
@@ -31,7 +36,7 @@ from .base import (
 LEVELS_SCHEMA = schema("discrete_levels")
 GUARD_SCHEMA = schema("guard")
 CONSTRAINT_SCHEMA = schema("declared_constraint")
-DIMENSIONLESS = "dimensionless"
+DIMENSIONLESS = dimensionality("dimensionless")
 #: ``DeclaredConstraint.applies_to`` entry meaning every action of the world.
 ALL_ACTIONS = "*"
 
@@ -99,13 +104,13 @@ def domain_problem(domain: Any, name: str, declared_unit: str) -> str | None:
         return f"domain unit {domain.unit!r} is not compatible with the variable unit {declared_unit!r}"
     kind = domain.kind
     if kind in (VariableKind.CATEGORICAL, VariableKind.BOOLEAN):
-        if domain.unit != DIMENSIONLESS or domain.lower is not None or domain.upper is not None:
+        if dimensionality(domain.unit) != DIMENSIONLESS or domain.lower is not None or domain.upper is not None:
             return f"a {kind.value} domain is dimensionless and unbounded"
         return None
     if domain.lower is None or domain.upper is None:
         return f"a {kind.value} domain states both bounds (an unbounded range is not a declared domain)"
     if kind is VariableKind.INTEGER:
-        if domain.unit != DIMENSIONLESS:
+        if dimensionality(domain.unit) != DIMENSIONLESS:
             return "an integer domain is dimensionless (a count)"
         if not (float(domain.lower.magnitude).is_integer() and float(domain.upper.magnitude).is_integer()):
             return f"an integer domain has integer-valued bounds, not [{domain.lower.magnitude}, {domain.upper.magnitude}]"
@@ -137,17 +142,11 @@ def membership(domain: Domain, value: Any) -> tuple[str, str, dict[str, Any]] | 
         if not value.is_compatible_with(domain.unit):
             return ("UNIT_INCOMPATIBLE", f"{value} is not compatible with {domain.unit!r}",
                     {"proposed": shown, "expected_unit": domain.unit})
-        if magnitude_key(domain.lower) <= magnitude_key(value) <= magnitude_key(domain.upper):
-            return None
-        return ("OUTSIDE_RANGE", f"{value} is outside [{domain.lower}, {domain.upper}]",
-                {"proposed": shown, "lower": domain.lower.to_dict(), "upper": domain.upper.to_dict()})
+        return _owner_bounds(domain, value, shown)
     if kind is VariableKind.INTEGER:
         if type(value) is not IntegerValue:
             return "VALUE_KIND_MISMATCH", "expected an IntegerValue", {"proposed": shown}
-        lo, hi = int(domain.lower.magnitude), int(domain.upper.magnitude)
-        if lo <= value.value <= hi:
-            return None
-        return "OUTSIDE_RANGE", f"{value.value} is outside [{lo}, {hi}]", {"proposed": shown, "lower": lo, "upper": hi}
+        return _owner_bounds(domain, Quantity(value.value, domain.unit), shown)   # as DesignSpace wraps an integer
     if kind is VariableKind.CATEGORICAL:
         if type(value) is not CategoricalValue:
             return "VALUE_KIND_MISMATCH", "expected a CategoricalValue", {"proposed": shown}
@@ -160,6 +159,16 @@ def membership(domain: Domain, value: Any) -> tuple[str, str, dict[str, Any]] | 
             return "VALUE_KIND_MISMATCH", "expected a BooleanValue", {"proposed": shown}
         return None
     return "VALUE_KIND_MISMATCH", f"unsupported domain kind {kind!r}", {"proposed": shown}
+
+
+def _owner_bounds(domain: ScientificVariable, value: Quantity, shown: Any) -> tuple[str, str, dict[str, Any]] | None:
+    """The owner's inclusive bound rule, ``ScientificVariable.require_within_bounds`` (rejects, never clamps)."""
+    try:
+        domain.require_within_bounds(value)
+    except ScientificCoreError as exc:
+        return ("OUTSIDE_RANGE", str(exc),
+                {"proposed": shown, "lower": domain.lower.to_dict(), "upper": domain.upper.to_dict()})
+    return None
 
 
 def contained(inner: Domain, outer: Domain) -> bool:
@@ -316,22 +325,24 @@ class DeclaredConstraint:
                    tuple(payload["applies_to"]), RoleSource(payload["declared_by"]), payload["basis"])
 
 
-def check_at_edges(constraint: ConstraintDefinition, edges: tuple[Quantity, ...]) -> tuple[str, dict[str, Any]]:
-    """Evaluate a constraint at every edge of a value: 'satisfied' only if every edge satisfies it, 'violated' only
-    if every edge violates it, otherwise 'undecided'.  An exact value has one edge.  A dimension error is
-    'unresolvable'.  Uncertainty can only make an answer less decided, never more."""
+def check_at_edges(constraint: ConstraintDefinition, edges: tuple[Quantity, ...]) -> tuple[ConstraintStatus, dict[str, Any]]:
+    """Evaluate a constraint at every edge of a value, in the design layer's three-valued vocabulary.
+
+    SATISFIED only if every edge satisfies it, VIOLATED only if every edge violates it; otherwise UNKNOWN, with
+    ``why`` 'undecided' (the edges disagree) or 'unresolvable' (a dimension error).  An exact value has one edge.
+    Uncertainty can only make an answer less decided, never more."""
     results = []
     try:
         for edge in edges:
             results.append(constraint.check(edge))
     except ScientificCoreError as exc:
-        return "unresolvable", {"why": str(exc)}
-    detail = {"checks": [r.to_dict() for r in results]}
+        return ConstraintStatus.UNKNOWN, {"why": "unresolvable", "error": str(exc)}
+    detail: dict[str, Any] = {"checks": [r.to_dict() for r in results]}
     if all(r.satisfied for r in results):
-        return "satisfied", detail
+        return ConstraintStatus.SATISFIED, detail
     if not any(r.satisfied for r in results):
-        return "violated", detail
-    return "undecided", detail
+        return ConstraintStatus.VIOLATED, detail
+    return ConstraintStatus.UNKNOWN, {**detail, "why": "undecided"}
 
 
 __all__ = [

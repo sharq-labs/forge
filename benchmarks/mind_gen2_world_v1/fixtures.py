@@ -31,11 +31,12 @@ from engcore.mind.world import (
 from engcore.providers.catalog import Availability, ProviderCapability, ProviderMode, ProviderStatus
 from engcore.providers.health import assess_health
 from engcore.scientific import (
-    ConstraintDefinition, ConstraintOperator as Op, ExperimentBudget, Quantity, RangeCondition, ScientificModelDefinition,
+    ConstraintDefinition, ConstraintOperator as Op, Quantity, RangeCondition, ScientificModelDefinition,
     ScientificParameter, ScientificVariable, Uncertainty, ValidityDomain, VariableKind, VariableRole as IR,
 )
 from engcore.scientific.ir.values import CategoricalValue, IntegerValue
 from engcore.scientific.models.definition import InputSourceKind, ModelInputSpec
+from engcore.scientific.models.registry import ModelRegistry
 from engcore.sria.decision import ActionFamily
 from engcore.sria.decision.hypotheses import ProposalProvenance, ProposerKind
 from engcore.system_runtime.request import ProviderBinding
@@ -143,6 +144,24 @@ def build_digest(pid: str, version: str) -> str:
     return hashlib.sha256(f"{pid}@{version}".encode()).hexdigest()
 
 
+def live_status(pid: str, version: str, *, available: bool = True) -> ProviderStatus:
+    """The provider authority's live status for a synthetic provider (what ``ProviderRegistry.status`` returns)."""
+    capability = ProviderCapability(pid, "synthetic", ProviderMode.LIBRARY, "synthetic-fixture", ("synthetic",))
+    return ProviderStatus(capability, Availability.AVAILABLE if available else Availability.UNAVAILABLE,
+                          version=version, digest=build_digest(pid, version),
+                          reason="" if available else "synthetic: not installed here")
+
+
+def model_registry(w: ScientificWorld) -> ModelRegistry:
+    """A model registry holding the world's applicability models (the registry a gate verifies bindings against)."""
+    return ModelRegistry(tuple(a.model for a in w.applicability))
+
+
+def fresh(w: ScientificWorld, token: str) -> ScientificWorld:
+    """The same world under its own revision (one more synthetic reference), so a test owns its dispatch ledger."""
+    return w.derive(reason=f"isolated for {token}", references=w.references + (synthetic(f"test/{token}"),))
+
+
 def binding(pid: str, version: str) -> ProviderBinding:
     return ProviderBinding("use-" + hashlib.sha256(pid.encode()).hexdigest()[:12], pid, version)
 
@@ -171,7 +190,7 @@ def budget(experiments: int, spent: int, *, solver: tuple[int, int] | None = Non
         max_wall_seconds=None if wall is None else wall[0], max_function_evaluations=None if solver is None else solver[0])
     used = None if compute is None else ResourceUsage(wall_seconds=0.0 if wall is None else wall[1],
                                                       function_evaluations=0 if solver is None else solver[1])
-    return WorldBudget(experiments=ExperimentBudget(experiments), observations_spent=spent, compute=compute,
+    return WorldBudget(experiments=experiments, observations_spent=spent, compute=compute,
                        compute_used=used, unbounded=unbounded, authority=synthetic(f"ledger/{ledger}"))
 
 

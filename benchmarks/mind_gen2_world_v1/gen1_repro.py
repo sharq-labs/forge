@@ -73,7 +73,7 @@ def run() -> dict[str, Any]:
                          "feasible_alternatives_I_A": [o.to_dict() for o in lit_alt["options"]],
                          "alternatives_label": lit_alt["label"]},
         "gen1_initial_design": {"requests": len(rows),
-                                "gen1_role_only_admitted": sum(r["gen1_role_only"] == "ADMIT" for r in rows),
+                                "gen1_role_only_admitted": sum(r["gen1_role_only"] == "FEASIBLE" for r in rows),
                                 "gen2_statuses": statuses,
                                 "gen2_infeasible_protocol": sum(r["gen2_status"] == "INFEASIBLE_PROTOCOL" for r in rows),
                                 "requests_on_a_declared_level": sum(r["gen1_request"]["I_A"] in (1.0, 2.0) for r in rows),

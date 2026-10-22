@@ -95,12 +95,12 @@ TEMPORAL_BY_ROLE: Mapping[VariableRole, frozenset[TemporalSemantics]] = {
 }
 
 #: Which value origins each role admits.  A latent parameter is never observed; a derived quantity is only computed;
-#: a measurement or a nuisance is only observed.
+#: a measurement or a nuisance is only observed; a state is never merely declared (it comes from its owner record:
+#: a system state, an observation, an estimate) -- the world must not become a second state authority.
 ORIGIN_BY_ROLE: Mapping[VariableRole, frozenset[ValueOrigin]] = {
     R.CONTROLLED_INPUT: frozenset({ValueOrigin.DECLARED, ValueOrigin.OBSERVED}),
     R.FIXED_PROTOCOL_CONDITION: frozenset({ValueOrigin.DECLARED, ValueOrigin.OBSERVED}),
-    R.STATE_VARIABLE: frozenset({ValueOrigin.DECLARED, ValueOrigin.OBSERVED, ValueOrigin.ESTIMATED,
-                                 ValueOrigin.COMPUTED}),
+    R.STATE_VARIABLE: frozenset({ValueOrigin.OBSERVED, ValueOrigin.ESTIMATED, ValueOrigin.COMPUTED}),
     R.MEASUREMENT: frozenset({ValueOrigin.OBSERVED}),
     R.DERIVED_QUANTITY: frozenset({ValueOrigin.COMPUTED}),
     R.LATENT_PARAMETER: frozenset({ValueOrigin.DECLARED, ValueOrigin.ESTIMATED}),
@@ -126,6 +126,10 @@ CONTROLLABILITY_BY_ROLE: Mapping[VariableRole, Controllability] = {
     R.LATENT_PARAMETER: Controllability.NOT_CONTROLLABLE,
     R.NUISANCE_VARIABLE: Controllability.NOT_CONTROLLABLE,
 }
+
+#: Roles whose DECLARED value is exact by declaration: a set point the problem or protocol imposes.  Any other value,
+#: even a declared one (a nominal latent parameter), is only as exact as its uncertainty says.
+SET_BY_DECLARATION = frozenset({R.CONTROLLED_INPUT, R.FIXED_PROTOCOL_CONDITION})
 
 #: Roles a declared observation channel may record.  Never a latent parameter (estimated) or a derived quantity
 #: (computed: it is never independent evidence).
@@ -250,11 +254,12 @@ class WorldVariable:
     def edges(self) -> tuple[Any, ...] | None:
         """The values a check must hold at for this current value, or None when that cannot be decided.
 
-        A DECLARED value is exact by declaration.  A bound value is exact only within its uncertainty: an INTERVAL
-        gives its two edges; an UNKNOWN or a STANDARD uncertainty (no coverage is assumed) gives None."""
+        A DECLARED set point (a controlled input or protocol condition) is exact by declaration.  Every other value is
+        exact only within its uncertainty: an INTERVAL gives its two edges; an UNKNOWN or a STANDARD uncertainty (no
+        coverage is assumed) gives None, so missing uncertainty never becomes zero."""
         if self.value is None:
             return None
-        if self.origin is ValueOrigin.DECLARED:
+        if self.origin is ValueOrigin.DECLARED and self.role in SET_BY_DECLARATION:
             return (self.value,)
         if self.uncertainty.kind is UncertaintyKind.INTERVAL:
             return (self.uncertainty.lower, self.uncertainty.upper)
@@ -346,5 +351,5 @@ class Entity:
 
 __all__ = [
     "CHANNEL_ROLES", "CONTROLLABILITY_BY_ROLE", "Controllability", "Entity", "ORIGIN_BY_ROLE", "Observability",
-    "ObservationChannel", "RECORDS_BY_ORIGIN", "TEMPORAL_BY_ROLE", "TemporalSemantics", "ValueOrigin", "WorldVariable",
+    "ObservationChannel", "RECORDS_BY_ORIGIN", "SET_BY_DECLARATION", "TEMPORAL_BY_ROLE", "TemporalSemantics", "ValueOrigin", "WorldVariable",
 ]

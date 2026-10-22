@@ -26,7 +26,7 @@ LATENT / DERIVED           never an expected observable either
 A :class:`ProposedAction` is the brief's "ActionProposal" (renamed: ``sria.decision.ActionProposal`` already exists
 and means something else).  It is bound to one world revision, sets typed scientific values only, and names its
 proposer.  Every proposer meets the same check; a language-model proposal enters only as a certified
-``ExternalSuggestion`` (:func:`proposal_from_suggestion`).
+``ExternalSuggestion`` (:func:`proposed_action_from_suggestion`).
 """
 
 from __future__ import annotations
@@ -73,7 +73,7 @@ GEN1_FORBIDDEN_KEYS = frozenset({"weight", "prior", "posterior", "probability", 
 FORBIDDEN_PROPOSAL_KEYS = frozenset(AUTHORITY_KEYS) | GEN1_FORBIDDEN_KEYS | frozenset({
     "admissible", "allowed_values", "bounds", "budget", "clamp", "constraint", "constraints", "cost", "default",
     "domain", "feasibility", "feasible", "infeasible", "levels", "nearest", "override", "precondition",
-    "preconditions", "remaining", "verified", "vocabulary",
+    "preconditions", "remaining", "verified",
 })
 
 #: The only keys a suggestion's ``point`` may carry: assignments are a list of {variable, value} pairs, so a variable's
@@ -155,9 +155,9 @@ def _costs(value: Any, action_id: str) -> tuple[tuple[str, Any], ...]:
         if dim in ("experiments", "solver_calls"):
             if type(amount) is not IntegerValue or amount.value < 0:
                 raise WorldRefused(f"action {action_id!r}: a {dim} cost is a non-negative IntegerValue")
-        elif not (isinstance(amount, Quantity) and amount.is_compatible_with("dimensionless")
-                  and magnitude_key(amount) >= 0):
-            raise WorldRefused(f"action {action_id!r}: a cost is a non-negative dimensionless quantity in cost units")
+        elif not (isinstance(amount, Quantity) and amount.units == "dimensionless" and magnitude_key(amount) >= 0):
+            raise WorldRefused(f"action {action_id!r}: a cost is a non-negative plain dimensionless quantity in the "
+                               "budget's cost units (no percent or other scaled spelling)")
         out.append((dim, amount))
     return tuple(out)
 
@@ -233,6 +233,9 @@ class ActionSpec:
         if self.execution is ExecutionKind.MODEL_EXECUTION and not (reqs and self.applicability):
             raise WorldRefused(f"action {aid!r}: a MODEL_EXECUTION names its provider and the model(s) whose "
                                "applicability gates it (model applicability precedes evidence-bearing execution)")
+        if self.execution is ExecutionKind.SYSTEM_QUERY and reqs:
+            raise WorldRefused(f"action {aid!r}: an action that runs a provider is a MODEL_EXECUTION; a SYSTEM_QUERY "
+                               "cannot carry provider requirements (the applicability gate is not optional)")
         object.__setattr__(self, "declared_by", declared_source(self.declared_by, f"action {aid!r}"))
         text(self.basis, f"action {aid!r} basis")
         if not isinstance(self.description, str):
@@ -436,6 +439,8 @@ class IntakeCode(str, Enum):
     NOT_A_TYPED_VALUE = "NOT_A_TYPED_VALUE"
     MALFORMED = "MALFORMED"
     STALE_REVISION = "STALE_REVISION"
+    FAMILY_MISMATCH = "FAMILY_MISMATCH"
+    NOT_THROUGH_INTAKE = "NOT_THROUGH_INTAKE"
 
 
 @dataclass(frozen=True)
@@ -476,13 +481,16 @@ def _forbidden_key(node: Any, path: str) -> str | None:
     return None
 
 
-def proposal_from_suggestion(suggestion: ExternalSuggestion, *, world_revision: str) -> ProposedAction | IntakeRefusal:
+def proposed_action_from_suggestion(suggestion: ExternalSuggestion, *,
+                                    world_revision: str) -> ProposedAction | IntakeRefusal:
     """The one intake for external proposers (a language model, a search engine): a certified ExternalSuggestion.
 
     The suggestion already refused the certified authority keys at any depth.  Here its ``point`` must be exactly
-    ``{"assignments": [{"variable": name, "value": <schema-tagged typed value>}, ...], "observe": [names]}``; a bare
-    number, an untyped string, an unknown key or a feasibility/budget/domain/belief assertion is refused with a
-    structured code.  Its acquisition value is never read.  ``target_ref`` names the action."""
+    ``{"assignments": [{"variable": name, "value": <schema-tagged typed value>}, ...], "observe": [names]}`` and its
+    ``extra`` must name the world revision it was made for (``{"world_revision": <64-hex>}``); a bare number, an untyped
+    string, an unknown key, a feasibility/budget/domain/belief assertion or another revision is refused with a
+    structured code.  Its acquisition value is never read.  ``target_ref`` names the action.  (Not the certified
+    ``sria.decision.external.proposal_from_suggestion``, which builds an ``ActionProposal``.)"""
     if not isinstance(suggestion, ExternalSuggestion):
         raise TypeError("only an ExternalSuggestion is an external proposal")
     sdig = suggestion.digest
@@ -494,6 +502,12 @@ def proposal_from_suggestion(suggestion: ExternalSuggestion, *, world_revision: 
         found = _forbidden_key(node, where)
         if found:
             return refuse(IntakeCode.AUTHORITY_KEY, found, "a proposer has no authority over this key")
+    made_for = dict(suggestion.extra).get("world_revision")
+    if not isinstance(made_for, str) or not HEX64.match(made_for):
+        return refuse(IntakeCode.MALFORMED, "extra.world_revision", "a suggestion names the world revision it was made for")
+    if made_for != world_revision:
+        return refuse(IntakeCode.STALE_REVISION, "extra.world_revision",
+                      f"made for world revision {made_for[:12]}, not {world_revision[:12]}")
     point = dict(suggestion.point)
     extra_keys = set(point) - SUGGESTION_POINT_KEYS
     if extra_keys or "assignments" not in point:
@@ -526,5 +540,5 @@ def proposal_from_suggestion(suggestion: ExternalSuggestion, *, world_revision: 
 __all__ = [
     "ActionMode", "ActionSpec", "COST_DIMENSIONS", "ControlSpec", "ExecutionKind", "FORBIDDEN_PROPOSAL_KEYS",
     "GEN1_FORBIDDEN_KEYS", "IntakeCode", "IntakeRefusal", "ProposedAction", "SUGGESTION_POINT_KEYS",
-    "proposal_from_suggestion",
+    "proposed_action_from_suggestion",
 ]

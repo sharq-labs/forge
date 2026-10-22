@@ -84,7 +84,7 @@ def test_the_gen1_reproduction_reproduces():
     stored = json.loads((HERE / "results" / "GEN1_REPRODUCTION.json").read_bytes())
     assert json.loads(json.dumps(gen1_repro.run())) == stored
     lit = stored["literal_case"]
-    assert (lit["GEN1_ROLE_ONLY"], lit["GEN2_WORLD_ACTIONSPACE"]) == ("ADMIT", "INFEASIBLE_PROTOCOL")
+    assert (lit["GEN1_ROLE_ONLY"], lit["GEN2_WORLD_ACTIONSPACE"]) == ("FEASIBLE", "INFEASIBLE_PROTOCOL")
     assert [a["magnitude"] for a in lit["feasible_alternatives_I_A"]] == [1.0, 2.0]
 
 

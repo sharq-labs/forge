@@ -24,7 +24,7 @@ from typing import Any, Iterable, Mapping
 from engcore.execution.orchestration.resources import ResourceBudget, ResourceUsage
 from engcore.mind.repsem.roles import RoleRefused, RoleSource, RoleTable, VariableRole
 from engcore.providers.catalog import Availability
-from engcore.providers.health import ProviderHealth
+from engcore.providers.health import ProviderHealth, ProviderHealthReport
 from engcore.providers.identity import content_digest
 from engcore.scientific import ExperimentBudget, Quantity, ScientificModelDefinition
 from engcore.scientific.ir.values import as_context_value
@@ -33,7 +33,7 @@ from engcore.sria.decision.recommendation import BudgetPlan
 
 from .actions import ActionSpec
 from .base import (
-    HEX64, SOFTWARE_VERSION, RecordRef, WorldRefused, digest, expect_schema, schema, text,
+    HEX64, SOFTWARE_VERSION, RecordKind, RecordRef, WorldRefused, digest, expect_schema, schema, text,
 )
 from .domains import ALL_ACTIONS, DeclaredConstraint, declared_source, membership
 from .variables import (
@@ -52,9 +52,6 @@ HEALTH_SCHEMA = "engcore.providers.health/1"
 MATERIAL_FIELDS = ("actions", "applicability", "basis", "budget", "channels", "constraints", "declared_by", "entities",
                    "providers", "references", "variables")
 
-#: ``ProviderHealthReport.executable``: AVAILABLE, UNQUALIFIED and QUALIFIED may run ("running is not trusting").
-#: A report dict cannot call the property, so the set is restated here and pinned equal to the property by test.
-EXECUTABLE_HEALTH = frozenset({ProviderHealth.AVAILABLE, ProviderHealth.UNQUALIFIED, ProviderHealth.QUALIFIED})
 
 #: Roles whose current value may enter a model-applicability context.  A latent parameter, a measurement or a derived
 #: quantity is never a caller-declared fact about where a model is applied (Gen1 repsem refuses the same roles).
@@ -166,7 +163,12 @@ class ProviderSnapshot:
 
     @property
     def executable(self) -> bool:
-        return self.availability is Availability.AVAILABLE and self.health in EXECUTABLE_HEALTH
+        """The owner's rule, read from the owner's record rebuilt from its embedded payload."""
+        r = self.report
+        report = ProviderHealthReport(r["provider_id"], ProviderHealth(r["health"]), r.get("reason", ""),
+                                      r["status_digest"], tuple(r.get("requested_scope", ())),
+                                      r.get("qualification_digest", ""), r.get("probe_digest", ""))
+        return self.availability is Availability.AVAILABLE and report.executable
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": PROVIDER_SCHEMA, "status": detach(self.status), "report": detach(self.report)}
@@ -199,30 +201,29 @@ class WorldBudget:
     """The budget as its owner records state it.  Every dimension is LIMITED by a record or declared UNBOUNDED with a
     basis; a dimension that is neither is undeclared, and an action then cannot be shown affordable.
 
-    * experiments: an ``ExperimentBudget`` (observations; its silent coercion is pre-checked, attempt caps are not
-      tracked in BR1 and are refused) with the observations already spent;
+    * experiments: a raw observation count, type-checked here and then held as an ``ExperimentBudget`` (which would
+      silently coerce 2.7 to 2 or True to 1); attempt caps are not tracked in BR1; with the observations already spent;
     * solver_calls and wall_time: an execution ``ResourceBudget`` (``max_function_evaluations`` is the solver-call
       limit, ``max_wall_seconds`` the wall-time limit) with its ``ResourceUsage``;
-    * cost: a ``BudgetPlan`` (its validation-pool fence is called, never copied) in a stated cost unit.
+    * cost: a ``BudgetPlan`` (its validation-pool fence is called, never copied) in a stated cost unit, whose spent
+      amounts are restated in ``cost_spent`` (a plan's spent fields default to 0.0, so an unstated spend would read as
+      nothing spent).
 
     The spent amounts are the owner records' statements (``authority``); the Mind never counts them."""
 
-    experiments: ExperimentBudget | None = None
+    experiments: int | None = None
     observations_spent: int | None = None
     compute: ResourceBudget | None = None
     compute_used: ResourceUsage | None = None
     cost: BudgetPlan | None = None
+    cost_spent: tuple[float, float] | None = None
     cost_unit: str = ""
     unbounded: Any = ()
     authority: RecordRef | None = None
 
     def __post_init__(self) -> None:
         if self.experiments is not None:
-            if not isinstance(self.experiments, ExperimentBudget):
-                raise WorldRefused("experiments must be an ExperimentBudget")
-            _count(self.experiments.max_observations, "max_observations", minimum=1)
-            if self.experiments.max_attempts is not None:
-                raise WorldRefused("an attempt cap is not tracked in BR1; declare observations only")
+            _count(self.experiments, "experiments (an observation count)", minimum=1)
             _count(self.observations_spent, "observations_spent", minimum=0)
         elif self.observations_spent is not None:
             raise WorldRefused("observations_spent without an experiment budget")
@@ -245,8 +246,13 @@ class WorldBudget:
             if not isinstance(self.cost, BudgetPlan):
                 raise WorldRefused("cost must be a BudgetPlan")
             text(self.cost_unit, "cost_unit (the cost budget states its unit)")
-        elif self.cost_unit:
-            raise WorldRefused("cost_unit without a cost budget")
+            spent = self.cost_spent
+            if (not isinstance(spent, tuple) or len(spent) != 2
+                    or tuple(float(x) for x in spent) != (self.cost.spent_general, self.cost.spent_validation)):
+                raise WorldRefused("a cost budget restates its spent amounts (cost_spent = (general, validation)); "
+                                   "an unstated spend would read as zero")
+        elif self.cost_unit or self.cost_spent is not None:
+            raise WorldRefused("cost_unit or cost_spent without a cost budget")
         pairs = tuple(sorted(dict(self.unbounded).items())) if not isinstance(self.unbounded, tuple) else tuple(
             sorted(self.unbounded))
         for dim, basis in pairs:
@@ -259,6 +265,10 @@ class WorldBudget:
             raise WorldRefused(f"dimensions {sorted(both)} are both limited and unbounded")
         if self._limited() and not isinstance(self.authority, RecordRef):
             raise WorldRefused("a limited budget cites the record that states what was spent (authority RecordRef)")
+
+    @property
+    def experiment_budget(self) -> ExperimentBudget | None:
+        return None if self.experiments is None else ExperimentBudget(self.experiments)
 
     def _limited(self) -> tuple[str, ...]:
         out = []
@@ -285,7 +295,7 @@ class WorldBudget:
         if self.status(dimension) != "limited":
             return None
         if dimension == "experiments":
-            return self.experiments.max_observations - self.observations_spent
+            return self.experiment_budget.max_observations - self.observations_spent
         if dimension == "solver_calls":
             return self.compute.max_function_evaluations - self.compute_used.function_evaluations
         if dimension == "wall_time":
@@ -297,7 +307,7 @@ class WorldBudget:
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": BUDGET_SCHEMA,
-                "experiments": None if self.experiments is None else self.experiments.to_dict(),
+                "experiments": None if self.experiments is None else self.experiment_budget.to_dict(),
                 "observations_spent": self.observations_spent,
                 "compute": None if self.compute is None else _resource_payload(self.compute),
                 "compute_used": None if self.compute_used is None else {
@@ -313,15 +323,18 @@ class WorldBudget:
         cost = payload.get("cost")
         if cost is not None and not {"spent_general", "spent_validation"} <= set(cost):
             raise WorldRefused("a cost budget states what was spent; a missing spent amount is never zero")
+        experiments = payload.get("experiments")
+        if experiments is not None and experiments.get("max_attempts") is not None:
+            raise WorldRefused("an attempt cap is not tracked in BR1")
         compute = payload.get("compute")
         used = payload.get("compute_used")
-        return cls(None if payload.get("experiments") is None else ExperimentBudget.from_dict(payload["experiments"]),
-                   payload.get("observations_spent"),
+        plan = None if cost is None else BudgetPlan.from_dict(cost)
+        return cls(None if experiments is None else experiments["max_observations"], payload.get("observations_spent"),
                    None if compute is None else ResourceBudget(**compute),
                    None if used is None else ResourceUsage(wall_seconds=used["wall_seconds"],
                                                            function_evaluations=used["function_evaluations"]),
-                   None if cost is None else BudgetPlan.from_dict(cost), payload.get("cost_unit", ""),
-                   tuple((d, b) for d, b in payload.get("unbounded", ())),
+                   plan, None if plan is None else (cost["spent_general"], cost["spent_validation"]),
+                   payload.get("cost_unit", ""), tuple((d, b) for d, b in payload.get("unbounded", ())),
                    None if payload.get("authority") is None else RecordRef.from_dict(payload["authority"]))
 
 
@@ -540,7 +553,66 @@ class ScientificWorld:
         changed = candidate.changed_from(self)
         if not changed:
             raise WorldRefused("no material change: a revision must change what the world states")
+        before = {v.name: v for v in self.variables}
+        for v in candidate.variables:
+            old = before.get(v.name)
+            if (old is not None and v.source is not None and v.source == old.source
+                    and (digest(v.identity()) != digest(old.identity()))):
+                raise WorldRefused(f"{v.name!r}: a bound value changes only with its owner record (re-bind it to the "
+                                   "newer record); the world never edits an owner's value")
         return dataclasses.replace(candidate, lineage=Lineage(self.lineage.revision + 1, self.revision_id, reason, changed))
+
+    # ---- owner-record verification --------------------------------------------------------------------------------------
+    @property
+    def synthetic(self) -> bool:
+        """True when any reference is a synthetic contract fixture: such a world is never dispatched for execution
+        unless the execution owner explicitly allows it (tests and development benchmarks)."""
+        refs = [v.source for v in self.variables if v.source is not None] + [c.reference for c in self.channels]
+        refs += [e.reference for e in self.entities if e.reference is not None] + list(self.references)
+        if self.budget.authority is not None:
+            refs.append(self.budget.authority)
+        return any(r.kind is RecordKind.SYNTHETIC_FIXTURE for r in refs)
+
+    def bound_values(self) -> tuple[tuple[str, RecordRef], ...]:
+        return tuple((v.name, v.source) for v in self.variables if v.source is not None)
+
+    def verify_bindings(self, records: Mapping[str, Any]) -> tuple[str, ...]:
+        """Check every bound value against its owner record (digest -> record), as the owner states it.
+
+        Returns the names verified.  Refuses a missing record, a record whose own digest differs from the reference,
+        a value or uncertainty that differs from the owner's, and a record kind BR1 cannot read.  A synthetic fixture
+        reference is never verifiable (it is not a record)."""
+        from .binders import read_bound
+
+        out = []
+        for name, ref in self.bound_values():
+            if ref.kind is RecordKind.SYNTHETIC_FIXTURE:
+                raise WorldRefused(f"{name!r} is bound to a synthetic fixture, which no owner record can verify")
+            record = records.get(ref.ref)
+            if record is None:
+                raise WorldRefused(f"{name!r}: the owner record {ref.kind.value}:{ref.ref[:12]} was not supplied")
+            if getattr(record, "digest", None) != ref.ref:
+                raise WorldRefused(f"{name!r}: the supplied record's own digest is not {ref.ref[:12]}")
+            value, uncertainty = read_bound(ref.kind, record, name)
+            var = self.variable(name)
+            if digest(value.to_dict()) != digest(var.value.to_dict()) or \
+                    digest(uncertainty.to_dict()) != digest(var.uncertainty.to_dict()):
+                raise WorldRefused(f"{name!r}: the world's copy differs from what its owner record states")
+            out.append(name)
+        return tuple(out)
+
+    def verify_models(self, registry: Any) -> tuple[str, ...]:
+        """Check every applicability binding against a ``ModelRegistry``: the registered record, byte for byte."""
+        out = []
+        for a in self.applicability:
+            try:
+                registered = registry.get(a.model.model_id, a.model.version)
+            except Exception as exc:  # noqa: BLE001 - an unregistered model is refused, whatever the registry raises
+                raise WorldRefused(f"applicability {a.binding_id!r} is not a registered model: {exc}") from None
+            if digest(registered.to_dict()) != digest(a.model.to_dict()):
+                raise WorldRefused(f"applicability {a.binding_id!r} differs from the registered model record")
+            out.append(a.binding_id)
+        return tuple(out)
 
     # ---- read-only views ------------------------------------------------------------------------------------------------------
     @property
@@ -687,6 +759,6 @@ def verify_lineage(world: ScientificWorld, store: Mapping[str, ScientificWorld])
 
 
 __all__ = [
-    "APPLICABILITY_CONTEXT_ROLES", "ApplicabilityBinding", "BUDGET_DIMENSIONS", "EXECUTABLE_HEALTH", "Lineage",
+    "APPLICABILITY_CONTEXT_ROLES", "ApplicabilityBinding", "BUDGET_DIMENSIONS", "Lineage",
     "MATERIAL_FIELDS", "ProviderSnapshot", "ScientificWorld", "WorldBudget", "verify_lineage",
 ]

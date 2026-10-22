@@ -38,7 +38,7 @@ ARMS = ("GEN2_WORLD_ACTIONSPACE", "GEN1_ROLE_ONLY")
 
 def gen2(space: FeasibleActionSpace, proposal: ProposedAction) -> dict[str, Any]:
     decision = space.check(proposal)
-    return {"verdict": "ADMIT" if decision.feasible else "REJECT", "status": decision.status.value,
+    return {"verdict": "FEASIBLE" if decision.feasible else "NOT_FEASIBLE", "status": decision.status.value,
             "codes": list(decision.codes()), "decision": decision}
 
 
@@ -104,7 +104,7 @@ def gen1_role_only(world: ScientificWorld, proposal: ProposedAction) -> dict[str
     remaining = world.budget.remaining("experiments")
     if ok and remaining is not None and remaining < 1:
         ok, reason = False, "the query budget is spent (Gen1 run loop stops)"
-    return {"verdict": "ADMIT" if ok else "REJECT", "reason": reason}
+    return {"verdict": "FEASIBLE" if ok else "NOT_FEASIBLE", "reason": reason}
 
 
 __all__ = ["ARMS", "gen1_problem", "gen1_role_only", "gen2"]

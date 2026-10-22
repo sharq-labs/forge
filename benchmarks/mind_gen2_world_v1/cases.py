@@ -59,7 +59,7 @@ def variant(world_name: str, spec: dict[str, Any]) -> ScientificWorld:
     if kind == "budget_exhausted":
         b = w.budget
         if spec["dimension"] == "experiments":
-            b = dataclasses.replace(b, observations_spent=b.experiments.max_observations - spec["remaining"])
+            b = dataclasses.replace(b, observations_spent=b.experiments - spec["remaining"])
         elif spec["dimension"] == "solver_calls":
             b = dataclasses.replace(b, compute_used=ResourceUsage(
                 wall_seconds=b.compute_used.wall_seconds,
@@ -77,12 +77,12 @@ def variant(world_name: str, spec: dict[str, Any]) -> ScientificWorld:
         value = decode_value(spec["value"])
         unc = fx.interval(value.magnitude, spec["half"], value.units)
         return w.derive(reason="a new reading", variables=tuple(
-            dataclasses.replace(v, value=value, uncertainty=unc) if v.name == spec["variable"] else v
+            _restated(v, "new-reading", value=value, uncertainty=unc) if v.name == spec["variable"] else v
             for v in w.variables))
     if kind == "uncertainty_unknown":
         return w.derive(reason="uncertainty withdrawn", variables=tuple(
-            dataclasses.replace(v, uncertainty=Uncertainty.unknown("withdrawn")) if v.name == spec["variable"] else v
-            for v in w.variables))
+            _restated(v, "uncertainty-withdrawn", uncertainty=Uncertainty.unknown("withdrawn"))
+            if v.name == spec["variable"] else v for v in w.variables))
     if kind == "fixed_condition":
         value = decode_value(spec["value"])
         return w.derive(reason="another protocol set point", actions=tuple(
@@ -90,6 +90,14 @@ def variant(world_name: str, spec: dict[str, Any]) -> ScientificWorld:
                                                           else f for f in a.fixed_conditions))
             if a.action_id == spec["action"] else a for a in w.actions))
     raise ValueError(f"unknown variant {kind!r}")
+
+
+def _restated(v: Any, token: str, **changes: Any) -> Any:
+    """A variable's value as a newer owner record states it: a bound value cites that newer (synthetic) record, since
+    a world never edits an owner's value in place."""
+    if v.source is not None:
+        changes["source"] = fx.synthetic(f"variant/{v.name}/{token}")
+    return dataclasses.replace(v, **changes)
 
 
 def proposal(case: dict[str, Any], world: ScientificWorld) -> ProposedAction:

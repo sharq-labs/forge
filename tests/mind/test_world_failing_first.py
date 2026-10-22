@@ -299,11 +299,13 @@ def test_a_proposal_for_another_revision_is_refused(battery):
 def test_budget_counts_are_explicit_and_not_coerced():
     ref = fx.synthetic("ledger/x")
     with pytest.raises(WorldRefused):
-        WorldBudget(experiments=ExperimentBudget(5), observations_spent=True, authority=ref)  # type: ignore[arg-type]
+        WorldBudget(experiments=5, observations_spent=True, authority=ref)  # type: ignore[arg-type]
     with pytest.raises(WorldRefused):
-        WorldBudget(experiments=ExperimentBudget(5), observations_spent=None, authority=ref)
+        WorldBudget(experiments=5, observations_spent=None, authority=ref)
+    payload = WorldBudget(experiments=5, observations_spent=0, authority=ref).to_dict()
+    payload["experiments"] = ExperimentBudget(5, 7).to_dict()
     with pytest.raises(WorldRefused, match="attempt"):
-        WorldBudget(experiments=ExperimentBudget(5, 7), observations_spent=0, authority=ref)
+        WorldBudget.from_dict(payload)
 
 
 def test_proposed_action_is_bound_to_one_world_revision(battery):
