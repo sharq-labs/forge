@@ -24,21 +24,24 @@ from typing import Any, Iterable, Mapping
 from engcore.execution.orchestration.resources import ResourceBudget, ResourceUsage
 from engcore.mind.repsem.roles import RoleRefused, RoleSource, RoleTable, VariableRole
 from engcore.providers.catalog import Availability
-from engcore.providers.health import ProviderHealth, ProviderHealthReport
+from engcore.providers.health import HEALTH_SCHEMA, ProviderHealth, ProviderHealthReport
 from engcore.providers.identity import content_digest
-from engcore.scientific import ExperimentBudget, Quantity, ScientificModelDefinition
+from engcore.scientific import ExperimentBudget, Quantity, ScientificModelDefinition, UncertaintySpecification
+from engcore.scientific.experiments.experiment import ScientificExperiment
 from engcore.scientific.ir.values import as_context_value
+from engcore.sria.campaign.budget import BudgetLedger
 from engcore.scientific.results.immutable import detach, freeze
 from engcore.sria.decision.recommendation import BudgetPlan
 
 from .actions import ActionSpec
+from .authority import BINDING_SCHEMA, AuthorityBinding, OwnerKind, projection_digest
 from .base import (
-    HEX64, SOFTWARE_VERSION, RecordKind, RecordRef, WorldRefused, digest, expect_schema, schema, text,
+    HEX64, SOFTWARE_VERSION, RecordKind, RecordRef, WorldRefused, converts, digest, expect_schema, schema, text,
 )
 from .domains import ALL_ACTIONS, DeclaredConstraint, declared_source, membership
 from .variables import (
     CHANNEL_ROLES, CONTROLLABILITY_BY_ROLE, Controllability, Entity, Observability, ObservationChannel, ValueOrigin,
-    WorldVariable,
+    WorldVariable, value_projection,
 )
 
 WORLD_SCHEMA = schema("scientific_world")
@@ -46,11 +49,31 @@ APPLICABILITY_SCHEMA = schema("applicability_binding")
 PROVIDER_SCHEMA = schema("provider_snapshot")
 BUDGET_SCHEMA = schema("budget")
 LINEAGE_SCHEMA = schema("lineage")
-HEALTH_SCHEMA = "engcore.providers.health/1"
 
 #: The fields a revision may change; each is material.  ``world_id`` names the world and never changes.
-MATERIAL_FIELDS = ("actions", "applicability", "basis", "budget", "channels", "constraints", "declared_by", "entities",
-                   "providers", "references", "variables")
+MATERIAL_FIELDS = ("actions", "applicability", "basis", "budget", "channels", "constraints", "declaration",
+                   "declared_by", "entities", "providers", "references", "uncertainty", "unit_registry", "variables")
+#: Material fields that enter identity only when set, so a world that states none of them keeps its BR1 identity.
+OPTIONAL_FIELDS = ("declaration", "uncertainty", "unit_registry")
+
+
+def _binding_identity(binding: AuthorityBinding | None) -> Any:
+    return None if binding is None else {"schema": BINDING_SCHEMA, **binding.identity()}
+
+
+def _binding_from(payload: Any) -> AuthorityBinding | None:
+    return None if payload is None else AuthorityBinding.from_dict(payload)
+
+
+def _require_binding(binding: Any, kind: OwnerKind, fields: tuple[str, ...], projected: Mapping[str, Any],
+                     what: str) -> None:
+    """A projected record's binding: the right owner, exactly these fields, and exactly this projection."""
+    if binding is None:
+        return
+    if type(binding) is not AuthorityBinding or binding.owner_kind is not kind or binding.fields != fields:
+        raise WorldRefused(f"{what}: bound to a {kind.value} owner record projecting exactly {fields}")
+    if projection_digest(projected) != binding.projection:
+        raise WorldRefused(f"{what}: the held record differs from what its authority binding projected")
 
 
 #: Roles whose current value may enter a model-applicability context.  A latent parameter, a measurement or a derived
@@ -73,10 +96,14 @@ class ApplicabilityBinding:
     handed.  It gates MODEL_EXECUTION actions; for a SYSTEM_QUERY it is an annotation only."""
 
     model: ScientificModelDefinition
+    authority: AuthorityBinding | None = None          # the model registry record it is a projection of
 
     def __post_init__(self) -> None:
-        if not isinstance(self.model, ScientificModelDefinition):
-            raise WorldRefused("an applicability binding carries the ScientificModelDefinition that owns the domain")
+        if type(self.model) is not ScientificModelDefinition:
+            raise WorldRefused("an applicability binding carries exactly the ScientificModelDefinition that owns the "
+                               "domain (a subclass could assess differently)")
+        _require_binding(self.authority, OwnerKind.MODEL_RECORD, ("model",), {"model": self.model.to_dict()},
+                         f"applicability {self.binding_id!r}")
 
     @property
     def binding_id(self) -> str:
@@ -92,15 +119,21 @@ class ApplicabilityBinding:
         return self.model.assess_validity(declared=values, record_values=True)
 
     def identity(self) -> dict[str, Any]:
-        return {"binding_id": self.binding_id, "model_digest": digest(self.model.to_dict())}
+        out = {"binding_id": self.binding_id, "model_digest": digest(self.model.to_dict())}
+        if self.authority is not None:
+            out["authority"] = _binding_identity(self.authority)
+        return out
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": APPLICABILITY_SCHEMA, "model": self.model.to_dict()}
+        out = {"schema": APPLICABILITY_SCHEMA, "model": self.model.to_dict()}
+        if self.authority is not None:
+            out["authority"] = self.authority.to_dict()
+        return out
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ApplicabilityBinding":
         expect_schema(payload.get("schema"), APPLICABILITY_SCHEMA)
-        return cls(ScientificModelDefinition.from_dict(payload["model"]))
+        return cls(ScientificModelDefinition.from_dict(payload["model"]), _binding_from(payload.get("authority")))
 
 
 # ---- provider snapshots: the providers' own records, verbatim ---------------------------------------------------------------
@@ -113,6 +146,7 @@ class ProviderSnapshot:
 
     status: Mapping[str, Any]
     report: Mapping[str, Any]
+    authority: AuthorityBinding | None = None          # the provider registry status it is a projection of
 
     def __post_init__(self) -> None:
         if not isinstance(self.status, Mapping) or not isinstance(self.report, Mapping):
@@ -130,6 +164,10 @@ class ProviderSnapshot:
         expected = content_digest({k: v for k, v in detach(self.status).items() if k != "location"})
         if self.report.get("status_digest") != expected:
             raise WorldRefused(f"provider {pid!r}: the report's status digest does not match this status")
+        _require_binding(self.authority, OwnerKind.PROVIDER_STATUS, ("report", "status"),
+                         {"status": detach(self.status), "report": detach(self.report)}, f"provider {pid!r}")
+        if self.authority is not None and self.authority.record_id != pid:
+            raise WorldRefused(f"provider {pid!r}: bound to the status of {self.authority.record_id!r}")
         object.__setattr__(self, "status", freeze(detach(self.status)))
         object.__setattr__(self, "report", freeze(detach(self.report)))
 
@@ -170,16 +208,95 @@ class ProviderSnapshot:
                                       r.get("qualification_digest", ""), r.get("probe_digest", ""))
         return self.availability is Availability.AVAILABLE and report.executable
 
+    def identity(self) -> dict[str, Any]:
+        out = {"schema": PROVIDER_SCHEMA, "status": detach(self.status), "report": detach(self.report)}
+        if self.authority is not None:
+            out["authority"] = _binding_identity(self.authority)
+        return out
+
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": PROVIDER_SCHEMA, "status": detach(self.status), "report": detach(self.report)}
+        out = {"schema": PROVIDER_SCHEMA, "status": detach(self.status), "report": detach(self.report)}
+        if self.authority is not None:
+            out["authority"] = self.authority.to_dict()
+        return out
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "ProviderSnapshot":
         expect_schema(payload.get("schema"), PROVIDER_SCHEMA)
-        return cls(payload["status"], payload["report"])
+        return cls(payload["status"], payload["report"], _binding_from(payload.get("authority")))
 
 
 # ---- budget: owner records, every dimension declared ---------------------------------------------------------------------------
+STATEMENT_SCHEMA = schema("budget_statement")
+#: Which owner states which budget dimension, and the fields each projection carries.
+STATEMENT_OWNERS = {"ledger": (OwnerKind.BUDGET_LEDGER, ("ledger",)),
+                    "experiment": (OwnerKind.EXPERIMENT, ("accounting", "budget"))}
+
+
+@dataclass(frozen=True)
+class BudgetStatement:
+    """One budget dimension exactly as its owner record states it now: a projection bound to that record, decided
+    only by the owner's own rule (``BudgetLedger.affordable``; the experiment's own observation accounting).  The
+    world never restates, counts or settles a budget."""
+
+    dimension: str
+    kind: str
+    payload: Mapping[str, Any]
+    authority: AuthorityBinding
+
+    def __post_init__(self) -> None:
+        if self.dimension not in BUDGET_DIMENSIONS:
+            raise WorldRefused(f"{self.dimension!r} is not a budget dimension {BUDGET_DIMENSIONS}")
+        if self.kind not in STATEMENT_OWNERS or (self.kind == "experiment") != (self.dimension == "experiments"):
+            raise WorldRefused(f"{self.dimension!r} is not stated by a {self.kind!r} owner")
+        if not isinstance(self.payload, Mapping):
+            raise WorldRefused("a budget statement carries its owner record's payload")
+        kind, fields_ = STATEMENT_OWNERS[self.kind]
+        payload = detach(dict(self.payload))
+        if type(self.authority) is not AuthorityBinding:
+            raise WorldRefused(f"budget {self.dimension!r}: a statement is bound to its owner record")
+        _require_binding(self.authority, kind, fields_, payload, f"budget {self.dimension!r}")
+        try:
+            if self.kind == "ledger":
+                owner = BudgetLedger.from_dict(payload["ledger"])
+                if self.dimension == "wall_time" and not converts(Quantity(1.0, owner.cost_unit), "second"):
+                    raise WorldRefused(f"a wall-time ledger accounts in a time unit, not {owner.cost_unit!r}")
+            else:
+                ExperimentBudget.from_dict(payload["budget"])
+                acc = payload["accounting"]
+                for key in ("attempts", "observations", "failures", "remaining_observations"):
+                    _count(acc[key], f"experiment accounting {key}", minimum=0)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise WorldRefused(f"budget {self.dimension!r}: malformed owner record: {exc}") from None
+        object.__setattr__(self, "payload", freeze(payload))
+
+    def decide(self, requested: Any, family: Any) -> tuple[bool, Any]:
+        """(affordable, remaining) by the owner's rule on the raw requested amount; nothing is clamped."""
+        payload = detach(self.payload)
+        if self.kind == "ledger":
+            owner = BudgetLedger.from_dict(payload["ledger"])
+            if isinstance(requested, Quantity):            # a duration, converted by the unit owner
+                requested = requested.magnitude_in(owner.cost_unit)
+            return owner.affordable(requested, family=family), owner.general_pool
+        budget = ExperimentBudget.from_dict(payload["budget"])
+        acc = payload["accounting"]
+        remaining = acc["remaining_observations"]
+        attempts_ok = budget.max_attempts is None or acc["attempts"] + requested <= budget.max_attempts
+        return requested <= remaining and attempts_ok, remaining
+
+    def identity(self) -> dict[str, Any]:
+        return {"schema": STATEMENT_SCHEMA, "dimension": self.dimension, "kind": self.kind,
+                "payload": detach(self.payload), "authority": _binding_identity(self.authority)}
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"schema": STATEMENT_SCHEMA, "dimension": self.dimension, "kind": self.kind,
+                "payload": detach(self.payload), "authority": self.authority.to_dict()}
+
+    @classmethod
+    def from_dict(cls, payload: Mapping[str, Any]) -> "BudgetStatement":
+        expect_schema(payload.get("schema"), STATEMENT_SCHEMA)
+        return cls(payload["dimension"], payload["kind"], payload["payload"], AuthorityBinding.from_dict(
+            payload["authority"]))
 def _count(value: Any, field_name: str, *, minimum: int) -> int:
     if type(value) is not int or value < minimum:
         raise WorldRefused(f"{field_name} must be an int >= {minimum} (no bool, no float, no coercion), got {value!r}")
@@ -223,8 +340,24 @@ class WorldBudget:
     unbounded: Any = ()
     authority: RecordRef | None = None
     compute_spent: tuple[float, int] | None = None
+    statements: tuple[BudgetStatement, ...] = ()        # projected: each dimension bound to its owner record
+    projected: bool = False                             # a projection of a declaration (unbounded is declared there)
 
     def __post_init__(self) -> None:
+        statements = tuple(self.statements)
+        if any(type(x) is not BudgetStatement for x in statements):
+            raise WorldRefused("budget statements are BudgetStatement records")
+        dims = [x.dimension for x in statements]
+        if len(set(dims)) != len(dims):
+            raise WorldRefused("a budget dimension is stated once")
+        object.__setattr__(self, "statements", tuple(sorted(statements, key=lambda x: x.dimension)))
+        if type(self.projected) is not bool:
+            raise WorldRefused("projected is a bool")
+        if self.projected and (self.experiments is not None or self.compute is not None or self.cost is not None
+                               or self.authority is not None):
+            raise WorldRefused("a projected budget is stated only by its owner records (no restated copies)")
+        if statements and not self.projected:
+            raise WorldRefused("owner budget statements belong to a projected budget")
         if self.experiments is not None:
             _count(self.experiments, "experiments (an observation count)", minimum=1)
             _count(self.observations_spent, "observations_spent", minimum=0)
@@ -273,7 +406,7 @@ class WorldBudget:
         both = set(self._limited()) & {d for d, _ in pairs}
         if both:
             raise WorldRefused(f"dimensions {sorted(both)} are both limited and unbounded")
-        if (self._limited() or pairs) and not isinstance(self.authority, RecordRef):
+        if not self.projected and (self._limited() or pairs) and not isinstance(self.authority, RecordRef):
             raise WorldRefused("a declared budget (limited or unbounded) cites the owner record that states it "
                                "(authority RecordRef)")
 
@@ -291,7 +424,14 @@ class WorldBudget:
             out.append("wall_time")
         if self.cost is not None:
             out.append("cost")
+        out += [x.dimension for x in self.statements]
         return tuple(sorted(out))
+
+    def statement(self, dimension: str) -> BudgetStatement | None:
+        for x in self.statements:
+            if x.dimension == dimension:
+                return x
+        return None
 
     def status(self, dimension: str) -> str:
         """'limited', 'unbounded' (declared, with a basis) or 'undeclared'."""
@@ -305,6 +445,8 @@ class WorldBudget:
         """Signed remaining amount of a limited dimension (an overrun stays negative; nothing is clamped)."""
         if self.status(dimension) != "limited":
             return None
+        if self.statement(dimension) is not None:
+            return None                                   # the owner's rule states what remains (decide)
         if dimension == "experiments":
             return self.experiment_budget.max_observations - self.observations_spent
         if dimension == "solver_calls":
@@ -314,10 +456,20 @@ class WorldBudget:
         return self.cost.general_pool
 
     def identity(self) -> dict[str, Any]:
-        return self.to_dict()
+        out = self._payload()
+        if self.statements:
+            out["statements"] = [x.identity() for x in self.statements]
+        return out
 
     def to_dict(self) -> dict[str, Any]:
-        return {"schema": BUDGET_SCHEMA,
+        out = self._payload()
+        if self.statements:
+            out["statements"] = [x.to_dict() for x in self.statements]
+        return out
+
+    def _payload(self) -> dict[str, Any]:
+        extra = {"projected": True} if self.projected else {}
+        return {"schema": BUDGET_SCHEMA, **extra,
                 "experiments": None if self.experiments is None else self.experiment_budget.to_dict(),
                 "observations_spent": self.observations_spent,
                 "compute": None if self.compute is None else _resource_payload(self.compute),
@@ -347,7 +499,9 @@ class WorldBudget:
                    plan, None if plan is None else (cost["spent_general"], cost["spent_validation"]),
                    payload.get("cost_unit", ""), tuple((d, b) for d, b in payload.get("unbounded", ())),
                    None if payload.get("authority") is None else RecordRef.from_dict(payload["authority"]),
-                   None if used is None else (used["wall_seconds"], used["function_evaluations"]))
+                   None if used is None else (used["wall_seconds"], used["function_evaluations"]),
+                   tuple(BudgetStatement.from_dict(x) for x in payload.get("statements", ())),
+                   payload.get("projected", False))
 
 
 # ---- lineage --------------------------------------------------------------------------------------------------------------------
@@ -357,10 +511,20 @@ class Lineage:
     parent: str = ""
     reason: str = ""
     changed_fields: tuple[str, ...] = ()
+    #: Every (owner-statement key, statement digest) an ANCESTOR bound: an owner reference never carries two values
+    #: anywhere in a lineage, even across a revision that unbound it (README section 6, requirement 3).
+    bound: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         _count(self.revision, "revision", minimum=0)
         object.__setattr__(self, "changed_fields", tuple(sorted(self.changed_fields)))
+        bound = tuple(tuple(p) for p in self.bound)
+        if any(len(p) != 2 or any(type(x) is not str or not HEX64.match(x) for x in p) for p in bound) or \
+                len({k for k, _ in bound}) != len(bound):
+            raise WorldRefused("lineage bound statements are distinct (key, statement) 64-hex pairs")
+        object.__setattr__(self, "bound", tuple(sorted(bound)))
+        if self.revision == 0 and bound:
+            raise WorldRefused("a root world has no ancestors and so no ancestor statements")
         if not isinstance(self.reason, str):
             raise WorldRefused("reason is text")
         if self.revision == 0:
@@ -374,7 +538,10 @@ class Lineage:
                 raise WorldRefused(f"changed_fields must be a non-empty subset of {MATERIAL_FIELDS}")
 
     def identity(self) -> dict[str, Any]:
-        return {"revision": self.revision, "parent": self.parent, "changed_fields": list(self.changed_fields)}
+        out = {"revision": self.revision, "parent": self.parent, "changed_fields": list(self.changed_fields)}
+        if self.bound:
+            out["bound"] = [list(p) for p in self.bound]
+        return out
 
     def to_dict(self) -> dict[str, Any]:
         return {"schema": LINEAGE_SCHEMA, **self.identity(), "reason": self.reason}
@@ -382,7 +549,8 @@ class Lineage:
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "Lineage":
         expect_schema(payload.get("schema"), LINEAGE_SCHEMA)
-        return cls(payload["revision"], payload["parent"], payload.get("reason", ""), tuple(payload["changed_fields"]))
+        return cls(payload["revision"], payload["parent"], payload.get("reason", ""), tuple(payload["changed_fields"]),
+                   tuple(tuple(p) for p in payload.get("bound", ())))
 
 
 def _sorted_unique(items: Iterable[Any], key: Any, what: str, kind: type) -> tuple[Any, ...]:
@@ -414,6 +582,9 @@ class ScientificWorld:
     basis: str = ""
     lineage: Lineage = field(default_factory=Lineage)
     description: str = ""                                   # non-material
+    declaration: AuthorityBinding | None = None             # the declaration in force this world is a projection of
+    unit_registry: AuthorityBinding | None = None           # the sealed unit registry its quantities were read under
+    uncertainty: UncertaintySpecification | None = None     # the declared uncertainty demand (core record)
     _roles: Any = field(init=False, repr=False, compare=False, default=None)
     _content: str = field(init=False, repr=False, compare=False, default="")
     _revision: str = field(init=False, repr=False, compare=False, default="")
@@ -462,7 +633,7 @@ class ScientificWorld:
                 spec = next((i for i in a.model.inputs if i.name == name), None)
                 exemplar = getattr(spec, "unit_exemplar", None)
                 var = self.variable(name)
-                if exemplar and not Quantity(1.0, exemplar).is_compatible_with(var.unit):
+                if exemplar and not converts(Quantity(1.0, exemplar), var.unit):
                     raise WorldRefused(f"applicability {a.binding_id!r}: input {name!r} is in {exemplar!r}, the world "
                                        f"declares {var.unit!r}")
 
@@ -478,6 +649,16 @@ class ScientificWorld:
             raise WorldRefused("lineage must be a Lineage record")
         if not isinstance(self.description, str):
             raise WorldRefused("description is text")
+        for name, kind in (("declaration", OwnerKind.DECLARATION), ("unit_registry", OwnerKind.UNIT_REGISTRY)):
+            b = getattr(self, name)
+            if b is not None and (type(b) is not AuthorityBinding or b.owner_kind is not kind):
+                raise WorldRefused(f"the world's {name} binding is an AuthorityBinding to the {kind.value} owner")
+        if self.uncertainty is not None:
+            if type(self.uncertainty) is not UncertaintySpecification:
+                raise WorldRefused("the declared uncertainty demand is the core's UncertaintySpecification")
+            unknown = set(self.uncertainty.metrics) - declared
+            if unknown:
+                raise WorldRefused(f"the uncertainty demand names undeclared variables {sorted(unknown)}")
 
         object.__setattr__(self, "actions", _sorted_unique(self.actions, "action_id", "actions", ActionSpec))
         for a in self.actions:
@@ -504,7 +685,7 @@ class ScientificWorld:
                 raise WorldRefused(f"constraint {c.constraint_id!r} reads {name!r}, a {self.role(name).value}: a "
                                    "constraint limits what is set, held, or the state and environment it acts in")
         metric = self.variable(c.consequence.metric)
-        if not c.consequence.bound.is_compatible_with(metric.unit):
+        if not converts(c.consequence.bound, metric.unit):
             raise WorldRefused(f"constraint {c.constraint_id!r}: bound {c.consequence.bound} is not compatible with "
                                f"{metric.name!r} in {metric.unit!r}")
         if c.guard is not None:
@@ -529,11 +710,14 @@ class ScientificWorld:
             "actions": [a.identity() for a in self.actions],
             "channels": [c.to_dict() for c in self.channels],
             "applicability": [a.identity() for a in self.applicability],
-            "providers": [p.to_dict() for p in self.providers],
+            "providers": [p.identity() for p in self.providers],
             "budget": self.budget.identity(),
             "references": [r.to_dict() for r in self.references],
             "declared_by": self.declared_by.value,
             "basis": self.basis,
+            **({"declaration": _binding_identity(self.declaration)} if self.declaration is not None else {}),
+            **({"unit_registry": _binding_identity(self.unit_registry)} if self.unit_registry is not None else {}),
+            **({"uncertainty": self.uncertainty.to_dict()} if self.uncertainty is not None else {}),
         }
 
     def _material(self) -> dict[str, Any]:
@@ -553,7 +737,7 @@ class ScientificWorld:
 
     def changed_from(self, other: "ScientificWorld") -> tuple[str, ...]:
         before, after = other._sections(), self._sections()
-        return tuple(sorted(k for k in MATERIAL_FIELDS if digest(before[k]) != digest(after[k])))
+        return tuple(sorted(k for k in MATERIAL_FIELDS if digest(before.get(k)) != digest(after.get(k))))
 
     def derive(self, *, reason: str, **changes: Any) -> "ScientificWorld":
         """A new revision with these material changes.  The parent is this world; the changed fields are computed."""
@@ -570,60 +754,47 @@ class ScientificWorld:
         problem = restatement_problem(self, candidate)
         if problem:
             raise WorldRefused(problem)
-        return dataclasses.replace(candidate, lineage=Lineage(self.lineage.revision + 1, self.revision_id, reason, changed))
+        return dataclasses.replace(candidate, lineage=Lineage(self.lineage.revision + 1, self.revision_id, reason, changed,
+                                                              tuple(sorted(_inherited(self).items()))))
 
     # ---- owner-record verification --------------------------------------------------------------------------------------
     @property
     def synthetic(self) -> bool:
-        """True when any reference is a synthetic contract fixture: such a world is development evidence only, and
-        its synthetic bindings can never be verified (:meth:`verify_bindings` refuses them)."""
-        refs = [v.source for v in self.variables if v.source is not None] + [c.reference for c in self.channels]
+        """True when any reference is a synthetic contract fixture: such a world is development evidence only.  A
+        synthetic value reference is a copy no owner can verify, so it never supports admission; a synthetic channel,
+        entity or protocol reference is declared content, carried to the executor in the admitted action."""
+        refs = [v.source for v in self.variables if type(v.source) is RecordRef] + [c.reference for c in self.channels]
         refs += [e.reference for e in self.entities if e.reference is not None] + list(self.references)
         if self.budget.authority is not None:
             refs.append(self.budget.authority)
         return any(r.kind is RecordKind.SYNTHETIC_FIXTURE for r in refs)
 
-    def bound_values(self) -> tuple[tuple[str, RecordRef], ...]:
+    def bound_values(self) -> tuple[tuple[str, Any], ...]:
         return tuple((v.name, v.source) for v in self.variables if v.source is not None)
 
-    def verify_bindings(self, records: Mapping[str, Any]) -> tuple[str, ...]:
-        """Check every bound value against its owner record (digest -> record), as the owner states it.
+    def authority_bindings(self) -> tuple[AuthorityBinding, ...]:
+        return tuple(b for _, b, _ in self.projected_facts() if b is not None)
 
-        Returns the names verified.  Refuses a missing record, a record that is not exactly the owner's record type,
-        a record whose own digest differs from the reference, a committed state that another supplied state supersedes,
-        an observation of another quantity, a value or uncertainty that differs from the owner's, and a record kind BR1
-        cannot read.  A synthetic fixture reference is never verifiable (it is not a record).  Which state is current
-        is the state owner's statement: the caller supplies the owner's records, including any successor states."""
-        from .binders import read_bound
+    def projected_facts(self) -> tuple[tuple[str, Any, Any], ...]:
+        """(subject, binding or None, what the world holds under it) for every fact read from an owner.
 
-        out = []
-        for name, ref in self.bound_values():
-            if ref.kind is RecordKind.SYNTHETIC_FIXTURE:
-                raise WorldRefused(f"{name!r} is bound to a synthetic fixture, which no owner record can verify")
-            record = records.get(ref.ref)
-            if record is None:
-                raise WorldRefused(f"{name!r}: the owner record {ref.kind.value}:{ref.ref[:12]} was not supplied")
-            value, uncertainty = read_bound(ref.kind, record, name, records.values())
-            if record.digest != ref.ref:
-                raise WorldRefused(f"{name!r}: the supplied record's own digest is not {ref.ref[:12]}")
-            var = self.variable(name)
-            if digest(value.to_dict()) != digest(var.value.to_dict()) or \
-                    digest(uncertainty.to_dict()) != digest(var.uncertainty.to_dict()):
-                raise WorldRefused(f"{name!r}: the world's copy differs from what its owner record states")
-            out.append(name)
-        return tuple(out)
-
-    def verify_models(self, registry: Any) -> tuple[str, ...]:
-        """Check every applicability binding against a ``ModelRegistry``: the registered record, byte for byte."""
-        out = []
+        A subject whose binding is None, or a RecordRef, is a copy nothing can verify: it never supports admission."""
+        out: list[tuple[str, Any, Any]] = [("declaration", self.declaration, None),
+                                           ("unit_registry", self.unit_registry, None)]
+        for v in self.variables:
+            if v.value is not None and v.origin is not ValueOrigin.DECLARED:
+                held = value_projection(v.value, v.uncertainty)
+                out.append((f"variable:{v.name}", v.source if type(v.source) is AuthorityBinding else None, held))
         for a in self.applicability:
-            try:
-                registered = registry.get(a.model.model_id, a.model.version)
-            except Exception as exc:  # noqa: BLE001 - an unregistered model is refused, whatever the registry raises
-                raise WorldRefused(f"applicability {a.binding_id!r} is not a registered model: {exc}") from None
-            if digest(registered.to_dict()) != digest(a.model.to_dict()):
-                raise WorldRefused(f"applicability {a.binding_id!r} differs from the registered model record")
-            out.append(a.binding_id)
+            out.append((f"model:{a.binding_id}", a.authority, {"model": a.model.to_dict()}))
+        for p in self.providers:
+            out.append((f"provider:{p.provider_id}", p.authority,
+                        {"status": detach(p.status), "report": detach(p.report)}))
+        for x in self.budget.statements:
+            out.append((f"budget:{x.dimension}", x.authority, detach(x.payload)))
+        for dim in BUDGET_DIMENSIONS:
+            if self.budget.status(dim) == "limited" and self.budget.statement(dim) is None:
+                out.append((f"budget:{dim}", None, None))
         return tuple(out)
 
     # ---- read-only views ------------------------------------------------------------------------------------------------------
@@ -715,6 +886,9 @@ class ScientificWorld:
                 "applicability": [a.to_dict() for a in self.applicability],
                 "providers": [p.to_dict() for p in self.providers], "budget": self.budget.to_dict(),
                 "references": [r.to_dict() for r in self.references], "lineage": self.lineage.to_dict(),
+                **({"declaration": self.declaration.to_dict()} if self.declaration is not None else {}),
+                **({"unit_registry": self.unit_registry.to_dict()} if self.unit_registry is not None else {}),
+                **({"uncertainty": self.uncertainty.to_dict()} if self.uncertainty is not None else {}),
                 "content_digest": self.content_digest, "revision_id": self.revision_id}
 
     @classmethod
@@ -742,34 +916,55 @@ class ScientificWorld:
                     WorldBudget.from_dict(payload["budget"]),
                     tuple(RecordRef.from_dict(r) for r in payload.get("references", ())),
                     RoleSource(payload["declared_by"]), payload["basis"],
-                    Lineage.from_dict(payload["lineage"]), payload.get("description", ""))
+                    Lineage.from_dict(payload["lineage"]), payload.get("description", ""),
+                    _binding_from(payload.get("declaration")), _binding_from(payload.get("unit_registry")),
+                    None if payload.get("uncertainty") is None else UncertaintySpecification.from_dict(
+                        payload["uncertainty"]))
         for key, value in (("content_digest", world.content_digest), ("revision_id", world.revision_id)):
             if key in payload and payload[key] != value:
                 raise WorldRefused(f"stored {key} {payload[key]!r} does not match the recomputed {value!r}")
         return world
 
 
-def _bound_statement(v: WorldVariable) -> Any:
-    return digest({"value": None if v.value is None else v.value.to_dict(), "origin": None if v.origin is None else
-                   v.origin.value, "uncertainty": v.uncertainty.to_dict()})
+def _statements(world: "ScientificWorld") -> dict[str, str]:
+    """(owner-statement key -> statement digest) for everything this world states on an owner's behalf."""
+    out: dict[str, str] = {}
+    for v in world.variables:
+        if v.source is None:
+            continue
+        if type(v.source) is AuthorityBinding:
+            out[digest(["binding", *v.source.key])] = v.source.projection
+        else:
+            out[digest(["ref", v.source.kind.value, v.source.ref, v.name])] = digest(
+                {"value": None if v.value is None else v.value.to_dict(),
+                 "origin": None if v.origin is None else v.origin.value, "uncertainty": v.uncertainty.to_dict()})
+    for _, b, _ in world.projected_facts():
+        if b is not None and b.owner_kind is not OwnerKind.SYSTEM_STATE:
+            out[digest(["binding", *b.key])] = b.projection
+    if world.budget.authority is not None:
+        out[digest(["budget", world.budget.authority.kind.value, world.budget.authority.ref])] = digest(
+            world.budget.identity())
+    return out
+
+
+def _inherited(world: "ScientificWorld") -> dict[str, str]:
+    """Every statement this world's lineage has made, ancestors and itself."""
+    return {**dict(world.lineage.bound), **_statements(world)}
 
 
 def restatement_problem(parent: "ScientificWorld", child: "ScientificWorld") -> str | None:
-    """Why ``child`` restates an owner's statement without citing a newer one, or None.
+    """Why ``child`` restates an owner's statement that its lineage already bound with another value, or None.
 
-    A bound value (value, origin, uncertainty) changes only with its owner record, and a budget statement changes only
-    with its authority record: the world never edits what an owner stated.  Declarations (domains, constraints,
-    actions) are the world's own and may change freely in a revision."""
-    before = {v.name: v for v in parent.variables}
-    for v in child.variables:
-        old = before.get(v.name)
-        if (old is not None and v.source is not None and v.source == old.source
-                and _bound_statement(v) != _bound_statement(old)):
-            return (f"{v.name!r}: a bound value changes only with its owner record (re-bind it to the newer record); "
-                    "the world never edits an owner's value")
-    pb, cb = parent.budget, child.budget
-    if cb.authority is not None and cb.authority == pb.authority and digest(cb.identity()) != digest(pb.identity()):
-        return "the budget changes only with its owner's statement (cite the newer ledger record)"
+    A bound value, a projected record or a budget statement changes only with its owner record: under one owner
+    reference (or one authority binding key) the lineage carries exactly one statement, even across a revision that
+    unbound it.  Declarations (domains, constraints, actions) are the declarer's and may change in a revision.  The
+    message names the owner's statement, so a reader sees which rule refused."""
+    seen = _inherited(parent)
+    for key, statement in _statements(child).items():
+        if key in seen and seen[key] != statement:
+            return ("an owner record (or binding) already carried another value in this lineage; a bound value or "
+                    "budget changes only with its owner record (cite the newer record): the world never edits an "
+                    "owner's statement")
     return None
 
 
@@ -792,12 +987,14 @@ def verify_lineage(world: ScientificWorld, store: Mapping[str, ScientificWorld])
         problem = restatement_problem(parent, child)
         if problem:
             raise WorldRefused(f"revision {child.revision_id[:12]}: {problem}")
+        if dict(child.lineage.bound) != _inherited(parent):
+            raise WorldRefused("the lineage's record of what its ancestors bound is not what they bound")
         seen.add(parent.revision_id)
         chain.append(parent)
     return tuple(w.revision_id for w in reversed(chain))
 
 
 __all__ = [
-    "APPLICABILITY_CONTEXT_ROLES", "ApplicabilityBinding", "BUDGET_DIMENSIONS", "Lineage",
+    "APPLICABILITY_CONTEXT_ROLES", "ApplicabilityBinding", "BUDGET_DIMENSIONS", "BudgetStatement", "Lineage",
     "MATERIAL_FIELDS", "ProviderSnapshot", "ScientificWorld", "WorldBudget", "restatement_problem", "verify_lineage",
 ]

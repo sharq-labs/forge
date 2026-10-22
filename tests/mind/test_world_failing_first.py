@@ -25,7 +25,7 @@ import dataclasses
 
 import pytest
 
-from benchmarks.mind_gen2_world_v1 import fixtures as fx
+from benchmarks.mind_gen2_authority_v1 import synthetic as fx
 from engcore.mind.repsem import canonical_bytes
 from engcore.mind.repsem.roles import RoleDeclaration, RoleSource, VariableRole as R, legacy_role_table
 from engcore.mind.world import (

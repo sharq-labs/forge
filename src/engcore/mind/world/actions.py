@@ -47,8 +47,8 @@ from engcore.sria.decision.hypotheses import ProposalProvenance, ProposerKind
 from engcore.system_runtime.request import ProviderBinding
 
 from .base import (
-    HEX64, WorldRefused, converts, digest, expect_schema, names, require_plain_value, require_value, schema, text,
-    value_from, value_payload,
+    HEX64, WorldRefused, converts, digest, exact_text, expect_schema, names, require_plain_value, require_value,
+    schema, text, value_from, value_payload,
 )
 from .domains import (
     DeclaredConstraint, DiscreteLevels, Guard, contained, declared_source, domain_from, domain_identity, domain_problem,
@@ -76,6 +76,10 @@ FORBIDDEN_PROPOSAL_KEYS = frozenset(AUTHORITY_KEYS) | GEN1_FORBIDDEN_KEYS | froz
     "admissible", "allowed_values", "bounds", "budget", "clamp", "constraint", "constraints", "cost", "default",
     "domain", "feasibility", "feasible", "infeasible", "levels", "nearest", "override", "precondition",
     "preconditions", "remaining", "verified",
+    # GEN2-BR1.1: admission and authority-binding fields; a proposer never states them
+    "admission", "admitted", "admitted_action", "authority", "authorities", "authority_binding", "authorization",
+    "authorized", "binding", "bindings", "capability", "declaration", "dispatch", "owner", "projection",
+    "record_digest", "revision", "verification", "world",
 })
 
 #: The only keys a suggestion's ``point`` may carry: assignments are a list of {variable, value} pairs, so a variable's
@@ -387,15 +391,21 @@ class ProposedAction:
     source: ExternalSuggestion | None = None               # the certified suggestion an external proposal came from
 
     def __post_init__(self) -> None:
-        text(self.action_id, "proposal action_id")
-        if not isinstance(self.world_revision, str) or not HEX64.match(self.world_revision):
+        exact_text(self.action_id, "proposal action_id")
+        if type(self.world_revision) is not str or not HEX64.match(self.world_revision):
             raise WorldRefused("a proposal names the 64-hex world revision it was made for")
-        pairs = sorted(self.assignments.items()) if isinstance(self.assignments, Mapping) else sorted(
-            (tuple(p) for p in self.assignments), key=lambda p: p[0])
-        out = [(text(n, "assigned variable"), require_plain_value(v, f"proposed {n!r}")) for n, v in pairs]
+        raw = list(self.assignments.items()) if isinstance(self.assignments, Mapping) else [
+            tuple(p) for p in self.assignments]
+        for pair in raw:
+            if len(pair) != 2:
+                raise WorldRefused("an assignment is a (variable, value) pair")
+            exact_text(pair[0], "assigned variable")
+        out = [(n, require_plain_value(v, f"proposed {n!r}")) for n, v in sorted(raw, key=lambda p: p[0])]
         if len({n for n, _ in out}) != len(out):
             raise WorldRefused("a proposal assigns each variable once")
         object.__setattr__(self, "assignments", tuple(out))
+        for o in (() if isinstance(self.observe, (str, bytes)) else tuple(self.observe)):
+            exact_text(o, "observe target")
         object.__setattr__(self, "observe", names(self.observe, "observe targets"))
         if not isinstance(self.proposer, ProposalProvenance):
             raise WorldRefused("a proposal names its proposer (ProposalProvenance)")

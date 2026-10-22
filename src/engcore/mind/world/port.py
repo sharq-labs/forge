@@ -1,11 +1,13 @@
-"""The Mind-facing port: READ the world, READ the action space, PROPOSE.  Nothing here executes anything.
+"""The Mind-facing port: READ the world, READ the action space, PROPOSE, REQUEST ADMISSION.  Nothing here executes.
 
-Flow: Mind -> ProposedAction -> FeasibleActionSpace.check -> ClearedAction (an admitted-action record) -> the
-existing execution system, which BR1 does not wire (that step, and every authority it needs, is the execution owner's).
+Flow: Mind -> ProposedAction -> (the execution side's) ExecutionDesk.admit -> AdmittedAction -> ExecutionDesk.dispatch
+-> the execution owner's executor, which receives a DispatchAuthorization re-admitted against its current owners.
 
 The Mind holds a :class:`MindWorldPort`.  The port holds its own detached copy of the world and its action space
-(rebuilt from the payload, so it shares no object with anyone else's) and a journal; it holds no executor and no
-provider and imports none, so it cannot reach one.
+(rebuilt from the payload, so it shares no object with anyone else's) and a journal; it holds no executor, no
+provider and no owner reader, and imports none, so it can neither admit against owners it chose nor reach an
+executor.  Admission and dispatch go through an :class:`~.admission.ExecutionDesk` the execution side hands in; the
+only execution path, :meth:`MindWorldPort.execute`, accepts an :class:`~.admission.AdmittedAction` and nothing else.
 
 A language-model proposal is accepted only through :meth:`MindWorldPort.propose_suggestion` (a certified
 ``ExternalSuggestion``); :meth:`MindWorldPort.propose` refuses one that claims that provenance.  The rule does not
@@ -14,17 +16,20 @@ depend on the port: a proposal carrying a suggestion is re-derived from it by th
 
 from __future__ import annotations
 
+from typing import Any
+
 from engcore.sria.decision.external import ExternalSuggestion
 from engcore.sria.decision.hypotheses import ProposerKind
 
 from .actions import IntakeRefusal, ProposedAction, proposed_action_from_suggestion
+from .admission import AdmissionResult, AdmittedAction, DispatchRefused, ExecutionDesk
 from .base import WorldRefused
 from .feasibility import FeasibilityDecision, FeasibleActionSpace
 from .world import ScientificWorld
 
 
 class MindWorldPort:
-    """What the Mind may do: READ the world, READ the action space, PROPOSE.  Nothing here executes anything."""
+    """What the Mind may do: READ the world, READ the action space, PROPOSE, REQUEST ADMISSION.  Never execute."""
 
     __slots__ = ("_space", "_journal")
 
@@ -51,6 +56,7 @@ class MindWorldPort:
         return tuple(self._journal)
 
     def propose(self, proposal: ProposedAction) -> FeasibilityDecision:
+        """A feasibility check on this (possibly stale) view: reasoning only, never an admission."""
         if isinstance(proposal, ProposedAction) and proposal.proposer.proposer_kind is ProposerKind.LANGUAGE_MODEL:
             raise WorldRefused("a language-model proposal enters through propose_suggestion (an ExternalSuggestion), "
                                "where the port itself binds its provenance")
@@ -67,6 +73,24 @@ class MindWorldPort:
         decision = self._space.check(result)
         self._journal.append(("suggestion", suggestion.digest, decision.digest))
         return decision
+
+    def request_admission(self, proposal: ProposedAction, desk: ExecutionDesk) -> AdmissionResult:
+        """Ask the execution side to admit ``proposal``: it verifies this world against ITS owners first."""
+        if type(desk) is not ExecutionDesk:
+            raise WorldRefused("admission is requested from the execution side's ExecutionDesk")
+        result = desk.admit(self._space, proposal)
+        self._journal.append(("admission", proposal.digest, result.digest))
+        return result
+
+    def execute(self, admitted: Any, desk: ExecutionDesk) -> Any:
+        """The Mind's only execution path: an AdmittedAction, re-admitted by the desk against its current owners."""
+        if type(desk) is not ExecutionDesk:
+            raise WorldRefused("execution goes through the execution side's ExecutionDesk")
+        if type(admitted) is not AdmittedAction:
+            raise DispatchRefused(f"only an AdmittedAction is executable, not {type(admitted).__name__}")
+        outcome = desk.dispatch(admitted)
+        self._journal.append(("dispatch", admitted.digest, "dispatched"))
+        return outcome
 
 
 __all__ = ["MindWorldPort"]

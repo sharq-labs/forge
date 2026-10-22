@@ -14,8 +14,9 @@ projected from.  Nothing here writes a value into a world:
   held in force by a ``DeclarationReader``, as the execution side would hold it.
 
 Every number is invented to exercise the contract (development evidence only, never a scientific claim).  Interval
-uncertainties are stated at 95 % coverage and every bound variable declares the guard band the protocol accepts
-decisions at; that is a declared acceptance rule, not a guarantee.  All domain vocabulary lives here.
+uncertainties are stated at 95 % coverage, and each declaration demands, through the core's own
+``UncertaintySpecification`` (QUANTIFIED at 0.95), the coverage its decisions on those values are taken at: a
+declared probabilistic acceptance rule, never a guarantee.  All domain vocabulary lives here.
 """
 
 from __future__ import annotations
@@ -29,14 +30,14 @@ from benchmarks.mind_gen2_world_v1 import fixtures as br1
 from engcore.mind.repsem.roles import VariableRole as R
 from engcore.mind.world import ProposedAction, ScientificWorld, ValueOrigin, WorldVariable
 from engcore.mind.world.authority import Authorities
-from engcore.mind.world.declaration import BudgetSource, GuardBand, ProtocolDeclaration, ValueSource
+from engcore.mind.world.declaration import BudgetSource, ProtocolDeclaration, ValueSource
 from engcore.mind.world.owners import (
     BudgetReader, DeclarationReader, ModelRegistryReader, ProviderRegistryReader, RunStateReader, UnitRegistryReader,
 )
 from engcore.mind.world.projection import project_world
 from engcore.providers.catalog import ProviderRegistry
 from engcore.scenarios import ScenarioSegment, ScenarioSpecification, TimeBasis, Timeline
-from engcore.scientific import Quantity, Uncertainty
+from engcore.scientific import Quantity, Uncertainty, UncertaintyRequirement, UncertaintySpecification
 from engcore.scientific.experiments.evaluation import EvaluationStatus, ScientificEvaluation
 from engcore.scientific.experiments.experiment import ExperimentBudget, ScientificExperiment
 from engcore.scientific.ir.problem import ScientificProblem
@@ -56,7 +57,6 @@ from engcore.system_runtime import (
 from engcore.system_runtime.executor import SystemExecutor
 
 COVERAGE = 0.95
-GUARD = GuardBand(COVERAGE, "synthetic protocol accepts state decisions at the stated 95 % coverage (not a guarantee)")
 D = "dimensionless"
 HUMAN = ProposalProvenance(ProposerKind.HUMAN, "fixture")
 q = br1.q
@@ -124,6 +124,8 @@ def run_state(run_id: str, owners: Mapping[str, tuple[str, Mapping[str, tuple[Qu
 
     a = CallbackAuthority(f"{run_id}.settle", settle, config={"step": "settle"}, deterministic=True)
     b = CallbackAuthority(f"{run_id}.advance", advance, config={"step": "advance"}, deterministic=True)
+    for authority in (a, b):           # a synthetic estimator stating its own uncertainty (fixture declaration)
+        authority.accounts_for_input_uncertainty = True
     out = (NodeOutputSpec("marker", D),)
     nodes = (NodeSpec("settle", NodeKind.NUMERICAL_EXECUTION, a.ref, out, commits_state=True, writes_owners=tuple(owner_ids),
                       applicability_checks=("state_in_declared_range",), checkpointable=True),
@@ -146,7 +148,7 @@ def run_state(run_id: str, owners: Mapping[str, tuple[str, Mapping[str, tuple[Qu
 class Owned:
     name: str
     declaration: ProtocolDeclaration
-    run: Run
+    run: Run | None                                           # None: the declaration reads no state value
     models: ModelRegistry
     providers: ProviderRegistry
     ledgers: dict[str, BudgetLedger]
@@ -157,8 +159,10 @@ class Owned:
     def authorities(self, *, state: Any = None, models: Any = None, providers: Any = None,
                     declarations: Any = None, budget: Any = None) -> Authorities:
         """The execution side's readers over its own owners (the base view unless one is replaced)."""
+        if state is None and self.run is not None:
+            state = self.run.checkpoint
         return Authorities.of(
-            RunStateReader(self.run.checkpoint if state is None else state),
+            *(() if state is None else (RunStateReader(state),)),
             ModelRegistryReader(self.models if models is None else models, "fixture.models"),
             ProviderRegistryReader(self.providers if providers is None else providers, "fixture.providers"),
             BudgetReader(self.ledgers, self.experiments) if budget is None else budget,
@@ -225,7 +229,7 @@ def owned(name: str, base: ScientificWorld | None = None) -> Owned:
     """Re-express a BR1 synthetic world as a declaration plus the owner records it is projected from."""
     w = br1.WORLDS[name]() if base is None else base
     owners: dict[str, tuple[str, dict[str, tuple[Quantity, Uncertainty]]]] = {}
-    sources, variables = [], []
+    sources, variables, demanded = [], [], []
     for v in w.variables:
         bound = v.value is not None and v.origin is not ValueOrigin.DECLARED
         if not bound:
@@ -239,10 +243,11 @@ def owned(name: str, base: ScientificWorld | None = None) -> Owned:
         role = "scenario" if v.role is R.NUISANCE_VARIABLE else "component"
         owners.setdefault(owner, (role, {}))[1][v.name] = (v.value, _restated(v.uncertainty))
         sources.append(ValueSource(v.name, owner, v.origin))
-        guard = GUARD if v.uncertainty.kind is UncertaintyKind.INTERVAL else None
+        if v.uncertainty.kind is UncertaintyKind.INTERVAL:
+            demanded.append(v.name)
         variables.append(dataclasses.replace(v, value=None, origin=None, source=None,
-                                             uncertainty=Uncertainty.unknown("not declared"), guard_band=guard))
-    run = run_state(f"{w.world_id}.run", owners)
+                                             uncertainty=Uncertainty.unknown("not declared")))
+    run = run_state(f"{w.world_id}.run", owners) if owners else None
     models = ModelRegistry(tuple(a.model for a in w.applicability))
     providers = _provider_registry({p.provider_id: (p.version, True) for p in w.providers})
     b = w.budget
@@ -269,7 +274,10 @@ def owned(name: str, base: ScientificWorld | None = None) -> Owned:
         variables=tuple(variables), entities=w.entities, constraints=w.constraints, actions=w.actions,
         channels=w.channels, references=w.references, values=tuple(sources),
         models=tuple((a.model.model_id, a.model.version) for a in w.applicability),
-        providers=tuple(p.provider_id for p in w.providers), budget=tuple(budget))
+        providers=tuple(p.provider_id for p in w.providers), budget=tuple(budget),
+        uncertainty=None if not demanded else UncertaintySpecification(
+            UncertaintyRequirement.QUANTIFIED, tuple(sorted(demanded)), COVERAGE,
+            "synthetic protocol takes state decisions at the stated 95 % coverage (probabilistic, not a guarantee)"))
     return Owned(name, declaration, run, models, providers, ledgers, experiments, w)
 
 

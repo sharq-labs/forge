@@ -9,9 +9,11 @@ this module adds is what a reasoning view needs around that declaration, each pi
 * an optional admissible domain (a ``ScientificVariable`` or :class:`~.domains.DiscreteLevels`; ``None`` is UNKNOWN,
   never unbounded);
 * an optional current value.  The world never produces a value: a value is either DECLARED by the problem or the
-  protocol (with its basis), or a copy BOUND to the owner record it came from (:class:`~.base.RecordRef`: a
-  measurement observation, a system state, a belief snapshot, a provider record...).  Its ``Uncertainty`` defaults to
-  UNKNOWN and is never zero;
+  protocol (with its basis), or a PROJECTION of the owner record it came from.  A projection carries an
+  :class:`~.authority.AuthorityBinding` (owner, record identity, revision, the owner's own digest, and the digest of
+  exactly the value and uncertainty projected), so the copy can never differ from its binding and a binding can be
+  re-checked against its owner; a contract fixture may still cite a :class:`~.base.RecordRef`, which no owner can
+  verify and which therefore never supports admission.  Its ``Uncertainty`` defaults to UNKNOWN and is never zero;
 * a declared :class:`TemporalSemantics` tag, checked against the role.
 
 Observability and controllability are derived views, never stored flags that could disagree with the role.
@@ -28,6 +30,7 @@ from engcore.scientific import Quantity, ScientificCoreError, ScientificVariable
 from engcore.scientific.results.uncertainty import UncertaintyKind
 from engcore.scientific.semantics import QuantitySemantics
 
+from .authority import BINDING_SCHEMA, AuthorityBinding, OwnerKind, projection_digest
 from .base import (
     RecordKind, RecordRef, WorldRefused, converts, expect_schema, is_value, names, schema, text, unit, value_from,
     value_payload,
@@ -117,6 +120,21 @@ RECORDS_BY_ORIGIN: Mapping[ValueOrigin, frozenset[RecordKind]] = {
                                      RecordKind.SYNTHETIC_FIXTURE}),
 }
 
+#: The one owner a projected current value is read from today: the governing run's committed head state.
+OWNERS_BY_ORIGIN: Mapping[ValueOrigin, frozenset[OwnerKind]] = {
+    ValueOrigin.OBSERVED: frozenset({OwnerKind.SYSTEM_STATE}),
+    ValueOrigin.ESTIMATED: frozenset({OwnerKind.SYSTEM_STATE}),
+    ValueOrigin.COMPUTED: frozenset({OwnerKind.SYSTEM_STATE}),
+}
+#: The fields a value projection carries.
+VALUE_FIELDS = ("uncertainty", "value")
+
+
+def value_projection(value: Any, uncertainty: Uncertainty) -> dict[str, Any]:
+    """What a value binding projects: the value and its uncertainty, as their owner records serialize them."""
+    return {"value": value_payload(value), "uncertainty": uncertainty.to_dict()}
+
+
 CONTROLLABILITY_BY_ROLE: Mapping[VariableRole, Controllability] = {
     R.CONTROLLED_INPUT: Controllability.INTERVENABLE,
     R.FIXED_PROTOCOL_CONDITION: Controllability.PROTOCOL_SELECTABLE,
@@ -137,6 +155,22 @@ CHANNEL_ROLES = frozenset({R.CONTROLLED_INPUT, R.FIXED_PROTOCOL_CONDITION, R.STA
                            R.NUISANCE_VARIABLE})
 
 
+def _source_identity(source: Any) -> Any:
+    if source is None:
+        return None
+    if type(source) is AuthorityBinding:
+        return {"schema": BINDING_SCHEMA, **source.identity()}     # bound_at is metadata, not identity
+    return source.to_dict()
+
+
+def _source_from(payload: Any) -> Any:
+    if payload is None:
+        return None
+    if payload.get("schema") == BINDING_SCHEMA:
+        return AuthorityBinding.from_dict(payload)
+    return RecordRef.from_dict(payload)
+
+
 @dataclass(frozen=True)
 class WorldVariable:
     declaration: RoleDeclaration
@@ -146,7 +180,7 @@ class WorldVariable:
     domain: ScientificVariable | DiscreteLevels | None = None
     value: Any = None
     origin: ValueOrigin | None = None
-    source: RecordRef | None = None                   # the owner record a non-declared value is bound to
+    source: RecordRef | AuthorityBinding | None = None  # the owner record a non-declared value is bound to
     value_basis: str = ""                             # the basis of a DECLARED value
     uncertainty: Uncertainty = field(default_factory=lambda: Uncertainty.unknown("not declared"))
 
@@ -179,6 +213,10 @@ class WorldVariable:
                 raise WorldRefused(f"{d.name!r}: {problem}")
         self._check_value(d, u)
         self._check_uncertainty(d, u)
+        if type(self.source) is AuthorityBinding and \
+                projection_digest(value_projection(self.value, self.uncertainty)) != self.source.projection:
+            raise WorldRefused(f"{d.name!r}: the value and uncertainty differ from what their authority binding "
+                               "projected; a projected value changes only with a new owner record and binding")
 
     def _check_value(self, d: RoleDeclaration, u: str) -> None:
         if self.value is None:
@@ -205,12 +243,19 @@ class WorldVariable:
                 if found is not None:
                     raise WorldRefused(f"{d.name!r}: declared value is outside its own declared domain: {found[1]}")
         else:
-            if not isinstance(self.source, RecordRef):
+            if type(self.source) is AuthorityBinding:
+                if self.source.owner_kind not in OWNERS_BY_ORIGIN[self.origin]:
+                    raise WorldRefused(f"{d.name!r}: a {self.source.owner_kind.value} owner cannot carry an "
+                                       f"{self.origin.value} value")
+                if self.source.fields != VALUE_FIELDS:
+                    raise WorldRefused(f"{d.name!r}: a value binding projects exactly {VALUE_FIELDS}")
+            elif type(self.source) is RecordRef:
+                if self.source.kind not in RECORDS_BY_ORIGIN[self.origin]:
+                    raise WorldRefused(f"{d.name!r}: a {self.source.kind.value} record cannot carry an "
+                                       f"{self.origin.value} value")
+            else:
                 raise WorldRefused(f"{d.name!r}: an {self.origin.value} value is bound to the owner record it came "
-                                   "from (RecordRef)")
-            if self.source.kind not in RECORDS_BY_ORIGIN[self.origin]:
-                raise WorldRefused(f"{d.name!r}: a {self.source.kind.value} record cannot carry an "
-                                   f"{self.origin.value} value")
+                                   "from (an AuthorityBinding, or a RecordRef no owner verifies)")
             if self.value_basis:
                 raise WorldRefused(f"{d.name!r}: a bound value's basis is its record, not free text")
 
@@ -276,7 +321,7 @@ class WorldVariable:
                 "domain": None if self.domain is None else domain_identity(self.domain),
                 "value": None if self.value is None else value_payload(self.value),
                 "origin": None if self.origin is None else self.origin.value,
-                "source": None if self.source is None else self.source.to_dict(), "value_basis": self.value_basis,
+                "source": _source_identity(self.source), "value_basis": self.value_basis,
                 "uncertainty": self.uncertainty.to_dict()}
 
     def to_dict(self) -> dict[str, Any]:
@@ -299,8 +344,8 @@ class WorldVariable:
                    None if payload.get("domain") is None else domain_from(payload["domain"]),
                    None if payload.get("value") is None else value_from(payload["value"]),
                    None if payload.get("origin") is None else ValueOrigin(payload["origin"]),
-                   None if payload.get("source") is None else RecordRef.from_dict(payload["source"]),
-                   payload.get("value_basis", ""), Uncertainty.from_dict(payload["uncertainty"]))
+                   _source_from(payload.get("source")), payload.get("value_basis", ""),
+                   Uncertainty.from_dict(payload["uncertainty"]))
 
 
 @dataclass(frozen=True)
@@ -353,6 +398,6 @@ class Entity:
 
 
 __all__ = [
-    "CHANNEL_ROLES", "CONTROLLABILITY_BY_ROLE", "Controllability", "Entity", "ORIGIN_BY_ROLE", "Observability",
+    "OWNERS_BY_ORIGIN", "VALUE_FIELDS", "value_projection", "CHANNEL_ROLES", "CONTROLLABILITY_BY_ROLE", "Controllability", "Entity", "ORIGIN_BY_ROLE", "Observability",
     "ObservationChannel", "RECORDS_BY_ORIGIN", "SET_BY_DECLARATION", "TEMPORAL_BY_ROLE", "TemporalSemantics", "ValueOrigin", "WorldVariable",
 ]

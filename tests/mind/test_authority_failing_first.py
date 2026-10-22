@@ -73,12 +73,11 @@ def test_a_a_10_percent_coverage_interval_never_proves_hard_containment():
     assert d.status is F.MISSING_INFORMATION
 
 
-def test_a_without_a_declared_guard_band_a_95_percent_interval_proves_nothing(ax):
+def test_a_without_a_declared_coverage_demand_a_95_percent_interval_proves_nothing(ax):
     o = ax.owned("battery")
-    assert _admit(o.world, o.propose("pulse", PULSE), o.authorities()).status is F.FEASIBLE   # guard band 0.95 declared
+    assert _admit(o.world, o.propose("pulse", PULSE), o.authorities()).status is F.FEASIBLE   # 0.95 demanded
     hard = ax.owned("battery")
-    hard.declaration = dataclasses.replace(hard.declaration, variables=tuple(
-        dataclasses.replace(v, guard_band=None) if v.name == "SOC" else v for v in hard.declaration.variables))
+    hard.declaration = dataclasses.replace(hard.declaration, uncertainty=None)
     r = _admit(hard.world, hard.propose("pulse", PULSE), hard.authorities())
     assert r.status is F.MISSING_INFORMATION and r.admitted is None
 
@@ -115,9 +114,18 @@ def test_b_an_owner_record_never_carries_two_values(ax):
     soc = w.variable("SOC")
     with pytest.raises(WorldRefused):
         w.derive(reason="hand edit", variables=_soc(w, value=br1.q(0.05, D)))
-    forged = dataclasses.replace(w, variables=_soc(w, value=br1.q(0.05, D)))      # bypassing derive entirely
+    # a forger who also restates the binding's projection: same owner record, another value
+    low = ax.covered(br1.q(0.04, D), br1.q(0.06, D))
+    rebound = dataclasses.replace(soc.source, projection=_api("authority").projection_digest(
+        _api("variables").value_projection(br1.q(0.05, D), low)))
+    with pytest.raises(WorldRefused):
+        w.derive(reason="re-bound", variables=_soc(w, value=br1.q(0.05, D), uncertainty=low, source=rebound))
+    forged = dataclasses.replace(w, variables=_soc(w, value=br1.q(0.05, D), uncertainty=low, source=rebound))
     r = _admit(forged, o.propose("pulse", PULSE, world=forged), o.authorities())
-    assert r.admitted is None and r.status is F.MISSING_INFORMATION
+    assert r.admitted is None and r.status is F.MISSING_INFORMATION and "AUTHORITY_MISMATCH" in _codes(r)
+    with pytest.raises(WorldRefused):
+        verify_lineage(dataclasses.replace(forged, lineage=type(w.lineage)(1, w.revision_id, "re-bound", ("variables",))),
+                       {w.revision_id: w})
     assert soc.source is not None and soc.source.record_digest == o.run.checkpoint.state.digest
 
 
@@ -182,6 +190,8 @@ def test_i_a_unit_spelling_never_changes_a_decision(ax):
     def spelled(unit):
         base = br1.battery_world()
         v = base.variable("I")
+        if v.declaration.unit == unit:
+            return ax.owned("battery", base)
         decl = dataclasses.replace(v.declaration, unit=unit)
         return ax.owned("battery", base.derive(reason="respelled", variables=tuple(
             dataclasses.replace(x, declaration=decl) if x.name == "I" else x for x in base.variables)))
@@ -292,10 +302,17 @@ def test_k_a_suggestion_cannot_carry_admission_or_binding_authority(ax):
     from engcore.sria.decision.hypotheses import ProposerKind
     o = ax.owned("battery")
     point = {"assignments": [{"variable": k, "value": encode_value(v)} for k, v in PULSE.items()]}
-    for extra_key in ("admitted", "authority_binding", "bindings", "admission"):
-        s = ExternalSuggestion(ProposerKind.LANGUAGE_MODEL, "llm", "1", ax.ActionFamily.CHARACTERIZE, "pulse",
-                               {**point, extra_key: True}, "r", None, {"world_revision": o.world.revision_id})
-        assert isinstance(proposed_action_from_suggestion(s, world=o.world), IntakeRefusal), extra_key
+    from engcore.sria.decision.external import SuggestionRefused
+    for extra_key in ("admitted", "authority_binding", "bindings", "admission", "feasible", "record_digest"):
+        for where in ("point", "extra"):
+            try:
+                s = ExternalSuggestion(ProposerKind.LANGUAGE_MODEL, "llm", "1", ax.ActionFamily.CHARACTERIZE, "pulse",
+                                       {**point, extra_key: True} if where == "point" else point, "r", None,
+                                       {"world_revision": o.world.revision_id,
+                                        **({extra_key: True} if where == "extra" else {})})
+            except SuggestionRefused:
+                continue                                   # refused at the certified suggestion boundary itself
+            assert isinstance(proposed_action_from_suggestion(s, world=o.world), IntakeRefusal), (extra_key, where)
 
 
 def test_l_an_admitted_action_is_refused_at_dispatch_once_its_authority_moved(ax):
@@ -319,7 +336,7 @@ def test_l_a_current_admitted_action_reaches_the_executor_exactly_once_per_autho
     admission = _api("admission")
     o = ax.owned("battery")
     calls = []
-    desk = admission.ExecutionDesk(o.authorities(), calls.append)
+    desk = admission.ExecutionDesk(o.authorities(), calls.append, accept_synthetic=True)   # a synthetic test executor
     result = desk.admit(FeasibleActionSpace.build(o.world), o.propose("pulse", PULSE))
     desk.dispatch(result.admitted)
     assert len(calls) == 1 and isinstance(calls[0], admission.DispatchAuthorization)

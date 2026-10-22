@@ -22,7 +22,7 @@ from typing import Any, Iterable, Mapping
 from engcore.mind.repsem import canonical_bytes
 from engcore.scientific import Quantity, ScientificCoreError
 from engcore.scientific.ir.values import BooleanValue, CategoricalValue, IntegerValue, decode_value, encode_value
-from engcore.scientific.units.quantity import base_unit, canonical_magnitude, normalize_unit
+from engcore.scientific.units.quantity import base_unit, canonical_magnitude, is_delta_unit, normalize_unit
 
 SCHEMA_PREFIX = "forge.mind.world."
 SOFTWARE_VERSION = "engcore.mind.world/1.0.0"
@@ -52,6 +52,13 @@ def digest(payload: Any) -> str:
 def expect_schema(found: Any, expected: str) -> None:
     if found != expected:
         raise WorldRefused(f"not a {expected} record: {found!r}")
+
+
+def exact_text(value: Any, field: str) -> str:
+    """Exactly a builtin ``str`` (a subclass could compare or hash differently per call), non-empty and stripped."""
+    if type(value) is not str:
+        raise WorldRefused(f"{field} must be exactly a str, not {type(value).__name__}")
+    return text(value, field)
 
 
 def text(value: Any, field: str) -> str:
@@ -161,15 +168,20 @@ def value_from(payload: Any) -> Any:
 
 
 def converts(value: Any, target: str) -> bool:
-    """Whether the unit owner converts ``value`` into ``target`` (``Quantity.magnitude_in``).  Sharing a dimension is
-    not enough: a temperature difference and a temperature point are never interchangeable, in either direction."""
+    """Whether the unit owner converts ``value`` into ``target``: its conversion (``Quantity.magnitude_in``) succeeds
+    AND both units read the same way under the owner's point/difference flag (``is_delta_unit``).
+
+    Sharing a dimension is not enough, and neither is a pairwise conversion: the backend converts ``kelvin`` to and
+    from ``delta_degC``, so a pairwise rule lets a temperature difference reach a temperature point through kelvin.
+    The flag makes the rule an equivalence (the combination ``product``, ``claims`` and ``providers`` already apply);
+    a kelvin span must be declared as a ``delta_`` unit.  Over-refusal, never a wrong admission."""
     if not isinstance(value, Quantity):
         return False
     try:
         value.magnitude_in(target)
+        return is_delta_unit(value.units) == is_delta_unit(target)
     except ScientificCoreError:
         return False
-    return True
 
 
 def magnitude_key(value: Quantity) -> float:
@@ -184,7 +196,8 @@ def magnitude_key(value: Quantity) -> float:
 def value_key(value: Any) -> Any:
     """A comparison key of a typed value (see :func:`magnitude_key`), the token for a non-quantity.  Not identity."""
     if isinstance(value, Quantity):
-        return {"magnitude": magnitude_key(value), "units": base_unit(value.units)}
+        return {"magnitude": magnitude_key(value), "units": base_unit(value.units),
+                "difference": bool(is_delta_unit(value.units))}
     if isinstance(value, IntegerValue):
         return {"integer": value.value}
     if isinstance(value, BooleanValue):
@@ -205,7 +218,7 @@ def same_value(a: Any, b: Any) -> bool:
 
 
 __all__ = [
-    "HEX64", "ProposalRefused", "RecordKind", "RecordRef", "SCHEMA_PREFIX", "SOFTWARE_VERSION", "StaleProposal",
+    "HEX64", "ProposalRefused", "RecordKind", "exact_text", "RecordRef", "SCHEMA_PREFIX", "SOFTWARE_VERSION", "StaleProposal",
     "WorldRefused", "converts", "digest", "expect_schema", "is_value", "magnitude_key", "names", "require_plain_value",
     "require_value", "same_value", "schema", "text", "unit", "value_from", "value_key", "value_payload",
 ]

@@ -4,14 +4,16 @@ Each block pins one property of ``engcore.mind.world`` that the failing-first fi
 
 * removing information about the system (a value, an uncertainty, a provider, a budget statement, a cost, a fixed
   condition, a control's value) never turns a non-FEASIBLE decision FEASIBLE;
-* model applicability gates model execution only, through the core assessment, with its status verbatim; the world's
-  own interval rule is sound, never applied to a screen or a condition with prerequisites, and carries its own code;
+* model applicability gates model execution only, through the core assessment at an exact point, with its status
+  verbatim; an input known only within its uncertainty is APPLICABILITY_INPUT_NOT_EXACT (GEN2-BR1.1: the BR1 world
+  interval rule was a second applicability authority and is gone);
 * an undeclared budget dimension or cost is MISSING_INFORMATION, never unlimited or zero; budgets are decided by the
   owners' rules on raw amounts, and a budget statement changes only with its owner record;
-* a FEASIBLE decision yields a closed admitted-action record built from the canonical proposal, carrying every value
-  the decision read; nothing in the package dispatches;
-* bound values verify against exactly-typed owner records (supersession, measured quantity), and change only with
-  their record, in derive and in lineage verification;
+* (GEN2-BR1.1) only admission, on a world verified against its owners, mints a closed admitted-action record built
+  from the canonical proposal, carrying every value the decision read; the package invokes no provider, mutates no
+  budget or state, and hands an executor only a re-admitted dispatch authorization;
+* (GEN2-BR1.1) projected values are owner-bound: owner readers accept exactly-typed owner records, and a bound value
+  changes only with its record, in derive and in lineage verification;
 * the Mind port holds a detached copy and reaches no executor; an external proposal is re-derived from its certified
   suggestion by the check itself (revision, family, provenance);
 * units are the owner's conversions (a temperature difference is not a temperature); identity is the raw owner payload;
@@ -29,15 +31,15 @@ import types
 import pytest
 
 import engcore.mind.world as world_pkg
-from benchmarks.mind_gen2_world_v1 import fixtures as fx
+from benchmarks.mind_gen2_authority_v1 import synthetic as fx
 from engcore.execution.orchestration.resources import ResourceBudget, ResourceUsage
 from engcore.mind.repsem import canonical_bytes
 from engcore.mind.repsem.roles import RoleSource, VariableRole as R
 from engcore.mind.world import (
-    ActionMode, CheckFamily, ClearedAction, FeasibilityDecision, FeasibilityStatus as F, FeasibleActionSpace,
+    ActionMode, CheckFamily, FeasibilityDecision, FeasibilityStatus as F, FeasibleActionSpace,
     FORBIDDEN_PROPOSAL_KEYS, IntakeCode, IntakeRefusal, Lineage, MindWorldPort, ObservationChannel, ProposalRefused,
     ProposedAction, RecordKind, RecordRef, ScientificWorld, StaleProposal, TemporalSemantics as TS, ValueOrigin,
-    WorldBudget, WorldRefused, binders, proposed_action_from_suggestion, replay_decision, verify_lineage,
+    WorldBudget, WorldRefused, proposed_action_from_suggestion, replay_decision, verify_lineage,
 )
 from engcore.mind.world.domains import DiscreteLevels, domain_problem, membership
 from engcore.mind.world.feasibility import STATUS_BY_SOURCE, FeasibilityReason
@@ -197,7 +199,7 @@ def test_s9_outside_the_route_models_domain_is_infeasible_applicability_with_the
     assert d.status is F.INFEASIBLE_APPLICABILITY
     r = next(r for r in d.reasons if r.code == "OUTSIDE_VALIDATED_DOMAIN")
     assert r.detail["validity_status"] == "outside_validated_domain" and list(r.detail["violated"]) == ["T_amb"]
-    assert d.annotations[0]["core_status"] == "outside_validated_domain" and d.annotations[0]["interval_rule"] is None
+    assert d.annotations[0]["core_status"] == "outside_validated_domain" and d.annotations[0]["not_exact_inputs"] == []
     payload = d.to_dict()
     assert payload["classification"] == "action_feasibility_not_scientific_support"
     assert not {"hypothesis", "claim", "verdict", "supported", "refused"} & set(payload)
@@ -222,28 +224,29 @@ def test_applicability_is_an_annotation_for_a_system_query(battery):
 
 
 def test_unknown_and_undecided_applicability_are_missing_information():
+    """GEN2-BR1.1: the core assesses exact points only.  A model input known only within an interval is never given a
+    world-made applicability verdict, in either direction: it is MISSING_INFORMATION, never INFEASIBLE or FEASIBLE."""
     drone = fx.drone_world()
     blind = with_variable(drone, "wind", "anemometer reading withdrawn", value=None, origin=None, source=None,
                           uncertainty=Uncertainty.unknown("withdrawn"))
     d = check(blind, "simulate_flight", {"thrust_cmd": q(12, "N")})
     assert d.status is F.MISSING_INFORMATION and "APPLICABILITY_NOT_SUPPLIED" in codes(d)
-    straddle = rebound(drone, "wind", "gusty", value=q(11.8, "m/s"), uncertainty=fx.interval(11.8, 0.5, "m/s"))
-    assert "APPLICABILITY_UNDECIDED" in codes(check(straddle, "simulate_flight", {"thrust_cmd": q(12, "N")}))
-    windy = rebound(drone, "wind", "storm", value=q(15, "m/s"), uncertainty=fx.interval(15, 0.5, "m/s"))
-    d = check(windy, "simulate_flight", {"thrust_cmd": q(12, "N")})
-    assert d.status is F.INFEASIBLE_APPLICABILITY and codes(d) == {"INTERVAL_OUTSIDE_VALIDATED_DOMAIN"}
-    assert d.annotations[0]["interval_rule"] == "outside_whole_interval" and d.annotations[0]["core_status"] is None
+    for token, wind in (("gusty", 11.8), ("storm", 15), ("calm", 4)):
+        w = rebound(drone, "wind", token, value=q(wind, "m/s"), uncertainty=fx.interval(wind, 0.5, "m/s"))
+        d = check(w, "simulate_flight", {"thrust_cmd": q(12, "N")})
+        assert d.status is F.MISSING_INFORMATION and codes(d) == {"APPLICABILITY_INPUT_NOT_EXACT"}, token
+        assert d.annotations[0]["core_status"] is None and d.annotations[0]["not_exact_inputs"] == ["wind"]
 
 
-def test_applicability_holds_at_both_edges_of_an_interval():
-    """An interval wider than the route on BOTH sides is undecided, not outside: each side is decided on its own."""
+def test_an_interval_inside_the_route_is_still_not_an_exact_input():
+    """GEN2-BR1.1 (README section 6, Q2): BR1 found a narrow interval inside the route FEASIBLE by a world rule over
+    corner assessments.  The core has no interval form, so that is refused now, however narrow the interval."""
     narrow = fx.drone_world().derive(reason="a narrower route", applicability=(
         fx.route_model("synthetic.6dof", "0.9", "wind", "m/s", 4, 6),))
-    wide = rebound(narrow, "wind", "gusty", value=q(5, "m/s"), uncertainty=fx.interval(5, 1.5, "m/s"))
-    d = check(wide, "simulate_flight", {"thrust_cmd": q(12, "N")})
-    assert d.status is F.MISSING_INFORMATION and "APPLICABILITY_UNDECIDED" in codes(d)
-    calm = rebound(narrow, "wind", "steady", value=q(5, "m/s"), uncertainty=fx.interval(5, 0.5, "m/s"))
-    assert check(calm, "simulate_flight", {"thrust_cmd": q(12, "N")}).feasible
+    for token, half in (("gusty", 1.5), ("steady", 0.5)):
+        w = rebound(narrow, "wind", token, value=q(5, "m/s"), uncertainty=fx.interval(5, half, "m/s"))
+        d = check(w, "simulate_flight", {"thrust_cmd": q(12, "N")})
+        assert d.status is F.MISSING_INFORMATION and "APPLICABILITY_INPUT_NOT_EXACT" in codes(d)
 
 
 def _route(*conditions, inputs=("wind",), units=("m/s",)) -> ApplicabilityBinding:
@@ -256,19 +259,19 @@ def _route(*conditions, inputs=("wind",), units=("m/s",)) -> ApplicabilityBindin
 
 def test_a_screen_or_a_prerequisite_is_never_turned_into_a_definite_outside():
     """Outside a conservative screen is an evidence gap (the core says UNKNOWN), and a condition with prerequisites is
-    the core's to combine: the world's interval rule never applies to either."""
+    the core's to combine: with an interval input no definite outside is ever issued."""
     drone = fx.drone_world()
     windy = lambda w: rebound(w, "wind", "storm", value=q(15, "m/s"), uncertainty=fx.interval(15, 0.5, "m/s"))
     screened = windy(drone.derive(reason="a screen", applicability=(
         _route(RangeCondition("wind", minimum=q(0, "m/s"), maximum=q(12, "m/s"), conservative_screen=True)),)))
     d = check(screened, "simulate_flight", {"thrust_cmd": q(12, "N")})
-    assert d.status is F.MISSING_INFORMATION and "APPLICABILITY_UNKNOWN" in codes(d)
+    assert d.status is F.MISSING_INFORMATION and "INFEASIBLE_APPLICABILITY" not in {r.status.value for r in d.reasons}
     dependent = windy(drone.derive(reason="a prerequisite", applicability=(_route(
         RangeCondition("wind", minimum=q(0, "m/s"), maximum=q(12, "m/s"), requires=("altitude",)),
         RangeCondition("altitude", minimum=q(0, "m"), maximum=q(100, "m")),
         inputs=("wind", "altitude"), units=("m/s", "m")),)))
     d = check(dependent, "simulate_flight", {"thrust_cmd": q(12, "N")})
-    assert d.status is F.MISSING_INFORMATION and "INTERVAL_OUTSIDE_VALIDATED_DOMAIN" not in codes(d)
+    assert d.status is F.MISSING_INFORMATION and "OUTSIDE_VALIDATED_DOMAIN" not in codes(d)
 
 
 # ---- budget: undeclared is never unlimited, missing cost is never zero, raw amounts, owner statements -------------------------
@@ -349,37 +352,50 @@ def test_a_budget_statement_changes_only_with_its_owner_record(battery):
                        {w.revision_id: w for w in (battery, child)})
 
 
-# ---- the admitted-action record -------------------------------------------------------------------------------------------------
-def _cleared(w: ScientificWorld, aid: str, assignments, observe=()):
-    decision, cleared = space(w).clear(fx.propose(w, aid, assignments, observe))
-    assert decision.feasible and type(cleared) is ClearedAction
-    return cleared
+# ---- the admitted-action record (GEN2-BR1.1: minted by admission on a verified world only) --------------------------------------
+def _owned(name: str = "battery"):
+    from benchmarks.mind_gen2_authority_v1 import fixtures as ax
+    return ax.owned(name)
 
 
-def test_clearing_yields_a_closed_record_of_the_canonical_proposal(battery):
-    cleared = _cleared(battery, "pulse", {"I": q(1000, "mA"), "t_pulse": q(60, "s"), "T_amb": q(77, "degF")}, ("V",))
-    config = dict(cleared.configuration)
-    assert config["I"] == q(1.0, "A") and config["T_amb"] == q(25, "degC")     # declared level, declared value
-    assert cleared.decision.proposal_digest == cleared.proposal.digest and cleared.world_revision == battery.revision_id
-    context = {c["variable"]: c for c in cleared.context}
-    assert context["SOC"]["source"]["ref"] == "synthetic:coulomb-count/run-0" and "mode" in config
-    assert cleared.to_dict()["classification"] == "action_feasibility_not_scientific_support"
-    d, none = space(battery).clear(fx.propose(battery, "pulse", {"I": q(1.15, "A"), "t_pulse": q(60, "s")}))
-    assert none is None and not d.feasible
-    with pytest.raises(WorldRefused, match="clears"):
-        ClearedAction.of(space(battery), cleared.proposal, d)
+def _admitted(o, aid: str, assignments, observe=(), world=None):
+    from engcore.mind.world import admit
+    w = o.world if world is None else world
+    result = admit(space(w), o.propose(aid, assignments, observe, world=w), o.authorities())
+    assert result.feasible, result.codes()
+    return result.admitted
 
 
-def test_a_record_is_never_built_from_a_view_the_check_did_not_see(battery):
+def test_admission_yields_a_closed_record_of_the_canonical_proposal():
+    from engcore.mind.world import AdmittedAction, admit
+    o = _owned()
+    a = _admitted(o, "pulse", {"I": q(1000, "mA"), "t_pulse": q(60, "s"), "T_amb": q(77, "degF")}, ("V",))
+    config = dict(a.configuration)
+    assert config["I"] == q(1000, "mA") and config["T_amb"] == q(25, "degC")   # as proposed; the declared fixed value
+    assert a.proposal_digest == a.proposal.digest and a.world_revision == o.world.revision_id and "mode" in config
+    context = {c["variable"]: c for c in a.context}
+    assert context["SOC"]["binding"]["record_digest"] == o.run.checkpoint.state.digest
+    assert a.to_dict()["classification"] == "action_admission_not_scientific_support"
+    refused = admit(space(o.world), o.propose("pulse", {"I": q(1.15, "A"), "t_pulse": q(60, "s")}), o.authorities())
+    assert refused.admitted is None and not refused.feasible
+    with pytest.raises(WorldRefused, match="minted only by admission"):
+        dataclasses.replace(a, configuration=())
+    assert type(a) is AdmittedAction
+
+
+def test_a_record_is_never_built_from_a_view_the_check_did_not_see():
+    from engcore.mind.world import admit
+    o = _owned()
+
     class Loud(ProposedAction):
         pass
 
-    honest = fx.propose(battery, "pulse", PULSE_OK)
+    honest = o.propose("pulse", PULSE_OK)
     loud = object.__new__(Loud)
     for f in dataclasses.fields(ProposedAction):
         object.__setattr__(loud, f.name, getattr(honest, f.name))
     with pytest.raises(WorldRefused, match="exact ProposedAction"):
-        space(battery).clear(loud)
+        admit(space(o.world), loud, o.authorities())
 
     class Shifty(tuple):
         """Reads as the honest assignments once, then as an off-protocol current."""
@@ -389,156 +405,102 @@ def test_a_record_is_never_built_from_a_view_the_check_did_not_see(battery):
             Shifty.reads += 1
             return super().__iter__() if Shifty.reads == 1 else iter((("I", q(5, "A")), ("t_pulse", q(9999, "s"))))
 
-    shifty = fx.propose(battery, "pulse", PULSE_OK)
+    shifty = o.propose("pulse", PULSE_OK)
     object.__setattr__(shifty, "assignments", Shifty(shifty.assignments))
-    decision, cleared = space(battery).clear(shifty)
-    assert decision.feasible and dict(cleared.configuration)["t_pulse"] == q(60, "s")
-    assert cleared.proposal.digest == decision.proposal_digest
+    result = admit(space(o.world), shifty, o.authorities())
+    assert result.feasible and dict(result.admitted.configuration)["t_pulse"] == q(60, "s")
+    assert result.admitted.proposal.digest == result.decision.proposal_digest
 
 
-def test_two_worlds_that_differ_in_a_model_input_give_different_records():
-    """The drone's model reads the measured wind, which no control sets: the record carries it, bound to its record."""
-    calm = fx.drone_world()
-    breezy = rebound(calm, "wind", "breezier", value=q(6, "m/s"), uncertainty=fx.interval(6, 0.5, "m/s"))
-    a = _cleared(calm, "simulate_flight", {"thrust_cmd": q(12, "N")}, ("altitude",))
-    b = _cleared(breezy, "simulate_flight", {"thrust_cmd": q(12, "N")}, ("altitude",))
+def test_two_worlds_that_differ_in_a_read_state_give_different_records():
+    """The pulse reads the state of charge through its precondition: the record carries it, bound to its owner record."""
+    from benchmarks.mind_gen2_authority_v1 import fixtures as ax
+    o = _owned()
+    a = _admitted(o, "pulse", PULSE_OK, ("V",))
+    lower = {"cell": ("component", {"SOC": (q(0.6, D), ax.covered(q(0.58, D), q(0.62, D))),
+                                    "R0": (q(0.012, "ohm"), Uncertainty.unknown("not quantified"))})}
+    authorities = o.authorities(state=ax.run_state("battery.lower-soc", lower).checkpoint)
+    w = ax.project_world(o.declaration, authorities)
+    from engcore.mind.world import admit
+    b = admit(space(w), o.propose("pulse", PULSE_OK, ("V",), world=w), authorities).admitted
     assert a.configuration == b.configuration and a.digest != b.digest
-    wind = {c["variable"]: c for c in b.context}["wind"]
-    assert wind["value"]["magnitude"] == 6.0 and wind["source"]["ref"].startswith("synthetic:rebound/wind")
+    soc = {c["variable"]: c for c in b.context}["SOC"]
+    assert soc["value"]["magnitude"] == 0.6 and soc["binding"]["owner_kind"] == "system_state"
 
 
 def test_nothing_in_the_world_package_dispatches_or_holds_an_executor():
+    """GEN2-BR1.1: the package invokes no provider, mutates no budget or state and owns no executor.  The one place
+    that names an executor is the admission desk, which calls the execution owner's injected callable with a
+    re-admitted dispatch authorization and nothing else."""
     assert not (pathlib.Path(world_pkg.__file__).parent / "gate.py").exists()
+    forbidden_calls = {"settle", "reserve", "charge", "advance", "commit", "run", "execute_node", "invoke", "launch",
+                       "register", "unregister", "record"}
     for path in pathlib.Path(world_pkg.__file__).parent.glob("*.py"):
         tree = ast.parse(path.read_bytes().decode("utf-8"))
         identifiers = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)} | {
             n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)} | {
             n.name for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.ClassDef))} | {
             a.arg for n in ast.walk(tree) if isinstance(n, ast.arguments) for a in n.args + n.kwonlyargs}
-        assert not {i for i in identifiers if "dispatch" in i.lower() or "executor" in i.lower()}, path.name
+        called = {n.func.attr for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)}
+        assert not called & forbidden_calls, (path.name, called & forbidden_calls)
+        if path.name not in ("admission.py", "port.py"):
+            assert not {i for i in identifiers if "dispatch" in i.lower() or "executor" in i.lower()}, path.name
+    tree = ast.parse((pathlib.Path(world_pkg.__file__).parent / "admission.py").read_bytes().decode("utf-8"))
+    calls_of_executor = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                         and n.func.attr == "_executor"]
+    assert len(calls_of_executor) == 1 and isinstance(calls_of_executor[0].args[0], ast.Call)
+    assert calls_of_executor[0].args[0].func.id == "authorize_dispatch"
 
 
-# ---- owner records: a recorded (non-synthetic) world ------------------------------------------------------------------------------
-def _state(soc: float) -> SystemState:
-    spec = InitialStateSpec(q(0, "s"), (OwnerState("cell", "component", (
-        InitialStateValue("SOC", q(soc, D), fx.interval(soc, 0.02, D)),)),))
-    return SystemState.initial(spec, request_digest=_hex("request"), system_digest=_hex("system"),
-                               environment_digest="")
+# ---- owner records: a projected world (GEN2-BR1.1) ----------------------------------------------------------------------------------
+def test_owner_readers_accept_exactly_the_owner_types():
+    from engcore.mind.world.owners import BudgetReader, ModelRegistryReader, ProviderRegistryReader, RunStateReader
+    o = _owned()
+    lookalike = types.SimpleNamespace(final_state=o.run.result.final_state, state_history=o.run.result.state_history,
+                                      request_digest=o.run.result.request_digest)
+    for build in (lambda: RunStateReader(lookalike), lambda: RunStateReader(o.run.result.final_state),
+                  lambda: ModelRegistryReader(types.SimpleNamespace(get=o.models.get), "m"),
+                  lambda: ProviderRegistryReader(types.SimpleNamespace(status=o.providers.status), "p"),
+                  lambda: BudgetReader({"x": types.SimpleNamespace(digest="0" * 64)})):
+        with pytest.raises(WorldRefused, match="exactly"):
+            build()
 
 
-def _next_state(state: SystemState, soc: float) -> SystemState:
-    return state.advance(time=q(60, "s"), produced_by="step", updates=(OwnerState("cell", "component", (
-        InitialStateValue("SOC", q(soc, D), fx.interval(soc, 0.02, D)),)),))
-
-
-def _measurement(volts: float, quantity: str = "V"):
-    from engcore.scientific.measurements.calibration import CalibrationCertificate
-    from engcore.scientific.measurements.context import ExperimentContext
-    from engcore.scientific.measurements.instrument import InstrumentIdentity
-    from engcore.scientific.measurements.observation import CalibratedMeasurementObservation
-    from engcore.scientific.measurements.traceability import (
-        MeasurementTraceabilityChain, TraceabilityKind, TraceabilityReference,
-    )
-    from engcore.scientific.results.uncertainty import UncertaintySource
-
-    def u(v: float, h: float) -> Uncertainty:
-        return Uncertainty(kind="interval", lower=q(v - h, "V"), upper=q(v + h, "V"), method="calibrated meter",
-                           source_kind=UncertaintySource.MEASUREMENT)
-
-    meter = InstrumentIdentity("dmm-1", "synthetic", "meter", "sn-1")
-    chain = MeasurementTraceabilityChain("chain-1", (
-        TraceabilityReference("cert-1", TraceabilityKind.CERTIFICATE, "synthetic lab", _hex("certificate")),
-        TraceabilityReference("std-1", TraceabilityKind.REFERENCE_STANDARD, "synthetic lab", _hex("standard"))),
-        (("cert-1", "std-1"),))
-    calibration = CalibrationCertificate("cal-1", meter, "synthetic lab", _hex("calibration"), quantity, q(1, "V"),
-                                         u(1, 0.001), "2026-01-01T00:00:00+00:00", "2027-01-01T00:00:00+00:00", chain)
-    context = ExperimentContext("ctx-1", _hex("protocol"), _hex("specimen"), {})
-    return CalibratedMeasurementObservation("obs-1", quantity, q(volts, "V"), u(volts, 0.01), meter, calibration,
-                                            context, _hex("raw"), "2026-06-01T00:00:00+00:00", "group-1")
-
-
-def _recorded_world(soc_fields, v_fields, token: str = "recorded") -> ScientificWorld:
-    variables = (
-        fx.var("I", R.CONTROLLED_INPUT, "A", TS.PER_SEGMENT, domain=fx.crange("I", "A", -5, 5)),
-        fx.var("SOC", R.STATE_VARIABLE, D, TS.STATE_EVOLVING, driven_by=("I",),
-               domain=fx.crange("SOC", D, 0, 1, IR.STATE), **soc_fields),
-        fx.var("V", R.MEASUREMENT, "V", TS.TIME_SERIES, **v_fields),
-    )
-    return fx.world(
-        f"recorded.cell.{token}", variables,
-        actions=(fx.action("pulse", ActionFamily.CHARACTERIZE, ActionMode.INTERVENE,
-                           controls=(fx.ctrl("I", fx.levels("A", 1.0, 2.0)),),
-                           preconditions=(fx.at_least("soc_floor", "SOC", q(0.1, D)),),
-                           expected_observables=("V",), estimated_cost={"experiments": IntegerValue(1)}),),
-        channels=(ObservationChannel("V", RecordRef(RecordKind.INSTRUMENT, _hex("voltmeter"))),),
-        budget=WorldBudget(experiments=5, observations_spent=0,
-                           unbounded={"cost": "no monetary budget", "solver_calls": "no solver is used",
-                                      "wall_time": "no wall-time limit"},
-                           authority=RecordRef(RecordKind.BUDGET_LEDGER, _hex("ledger"))),
-        references=(RecordRef(RecordKind.PROBLEM_SPECIFICATION, _hex("specification")),))
-
-
-def test_bound_values_verify_against_exactly_typed_owner_records():
-    state, obs = _state(0.8), _measurement(3.7)
-    soc_fields = binders.from_system_state(state, "SOC", origin=ValueOrigin.ESTIMATED)
-    w = _recorded_world(soc_fields, binders.from_measurement(obs, "V"))
-    records = {state.digest: state, obs.digest: obs}
-    assert not w.synthetic and set(w.verify_bindings(records)) == {"SOC", "V"}
-    with pytest.raises(WorldRefused, match="not supplied"):
-        w.verify_bindings({state.digest: state})
-    with pytest.raises(WorldRefused, match="own digest"):
-        w.verify_bindings({state.digest: _state(0.7), obs.digest: obs})
-    lookalike = types.SimpleNamespace(digest=state.digest, owners=state.owners, previous_digest="")
-    with pytest.raises(WorldRefused, match="reads exactly a SystemState"):
-        w.verify_bindings({state.digest: lookalike, obs.digest: obs})
-    edited = _recorded_world({**soc_fields, "uncertainty": fx.interval(0.8, 0.05, D)},
-                             binders.from_measurement(obs, "V"), "edited")
-    with pytest.raises(WorldRefused, match="differs from what its owner record states"):
-        edited.verify_bindings(records)
-    with pytest.raises(WorldRefused, match="synthetic fixture"):
-        fx.battery_world().verify_bindings({})
-
-
-def test_a_superseded_state_or_another_quantity_never_verifies():
-    state, obs = _state(0.8), _measurement(3.7)
-    w = _recorded_world(binders.from_system_state(state, "SOC", origin=ValueOrigin.ESTIMATED),
-                        binders.from_measurement(obs, "V"))
-    later = _next_state(state, 0.05)
-    with pytest.raises(WorldRefused, match="superseded"):
-        w.verify_bindings({state.digest: state, later.digest: later, obs.digest: obs})
-    humidity = _measurement(3.7, quantity="relative_humidity")
-    with pytest.raises(WorldRefused, match="measured 'relative_humidity'"):
-        binders.from_measurement(humidity, "V")
-    forged = _recorded_world(binders.from_system_state(state, "SOC", origin=ValueOrigin.ESTIMATED),
-                             {**binders.from_measurement(obs, "V"),
-                              "source": RecordRef(RecordKind.MEASUREMENT_OBSERVATION, humidity.digest)}, "forged")
-    with pytest.raises(WorldRefused, match="measured 'relative_humidity'"):
-        forged.verify_bindings({state.digest: state, humidity.digest: humidity})
+def test_projected_values_verify_and_a_superseded_or_retargeted_record_never_does():
+    from benchmarks.mind_gen2_authority_v1 import fixtures as ax
+    from engcore.mind.world import BindingStatus, verify_world
+    o = _owned()
+    assert verify_world(o.world, o.authorities()).ok
+    moved = verify_world(o.world, o.authorities(state=o.run.result))
+    assert not moved.ok and {c.status for c in moved.failures()} == {BindingStatus.STALE}
+    soc = o.world.variable("SOC")
+    r0 = o.world.variable("R0").source
+    retargeted = dataclasses.replace(o.world, variables=tuple(
+        dataclasses.replace(v, source=dataclasses.replace(r0, projection=soc.source.projection)) if v.name == "SOC"
+        else v for v in o.world.variables))
+    report = verify_world(retargeted, o.authorities())
+    assert not report.ok and BindingStatus.MISMATCH in {c.status for c in report.failures()}
+    with pytest.raises(WorldRefused):
+        ax.project_world(o.declaration, o.authorities(state=ax.run_state("battery.no-soc", {"cell": ("component", {
+            "R0": (q(0.012, "ohm"), Uncertainty.unknown("not quantified"))})}).checkpoint))
 
 
 def test_a_bound_value_changes_only_with_its_owner_record_in_derive_and_in_lineage():
-    state, obs = _state(0.8), _measurement(3.7)
-    w = _recorded_world(binders.from_system_state(state, "SOC", origin=ValueOrigin.ESTIMATED),
-                        binders.from_measurement(obs, "V"))
-    with pytest.raises(WorldRefused, match="owner record"):
+    from benchmarks.mind_gen2_authority_v1 import fixtures as ax
+    o = _owned()
+    w = o.world
+    with pytest.raises(WorldRefused, match="authority binding"):
         with_variable(w, "SOC", "hand edit", value=q(0.81, D))
-    later = _next_state(state, 0.7)
-    moved = with_variable(w, "SOC", "the next committed state",
-                          **binders.from_system_state(later, "SOC", origin=ValueOrigin.ESTIMATED))
-    assert moved.variable("SOC").value == q(0.7, D)
-    assert set(moved.verify_bindings({later.digest: later, obs.digest: obs})) == {"SOC", "V"}
-    declared_range = with_variable(w, "SOC", "a narrower declared range", domain=fx.crange("SOC", D, 0.05, 0.95, IR.STATE))
-    assert declared_range.lineage.changed_fields == ("variables",)               # a declaration may change
-    hand = dataclasses.replace(w, variables=tuple(dataclasses.replace(v, value=q(0.81, D)) if v.name == "SOC" else v
-                                                 for v in w.variables),
-                               lineage=Lineage(1, w.revision_id, "hand-built", ("variables",)))
-    with pytest.raises(WorldRefused, match="owner record"):
-        verify_lineage(hand, {w.revision_id: w})
-    with pytest.raises(WorldRefused, match="cannot be"):
+    moved = ax.project_world(o.declaration, o.authorities(state=o.run.result), lineage=Lineage(
+        1, w.revision_id, "the run moved on", ("variables",), tuple(sorted(world_pkg.world._inherited(w).items()))))
+    assert moved.variable("SOC").value != w.variable("SOC").value
+    assert verify_lineage(moved, {w.revision_id: w}) == (w.revision_id, moved.revision_id)
+    declared_range = with_variable(w, "SOC", "a narrower declared range",
+                                   domain=fx.crange("SOC", D, 0.05, 0.95, IR.STATE))
+    assert declared_range.lineage.changed_fields == ("variables",)      # a declaration may change (a new declaration
+    with pytest.raises(WorldRefused, match="cannot be"):                # revision; admission refuses the edit itself)
         fx.var("SOC", R.STATE_VARIABLE, D, TS.STATE_EVOLVING, driven_by=("I",),
                **fx.declared(q(0.5, D)))                    # a state's value is never declared
-    with pytest.raises(WorldRefused, match="binder is not implemented"):
-        binders.read_bound(RecordKind.BELIEF_SNAPSHOT, state, "SOC")
 
 
 def test_a_declared_value_is_exact_only_for_a_set_point(battery):
@@ -557,14 +519,14 @@ def test_a_declared_value_is_exact_only_for_a_set_point(battery):
 
 # ---- the Mind port -------------------------------------------------------------------------------------------------------------------
 def test_the_port_reaches_no_executor():
+    """The port imports no executor, provider or runtime and holds none: it hands an admitted action to the execution
+    side's desk, and only an admitted action."""
     tree = ast.parse(pathlib.Path(world_pkg.__file__).with_name("port.py").read_bytes().decode("utf-8"))
     imported = {n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)} | {
         a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names}
-    assert not any(m and ("gate" in m or "provider" in m or "execution" in m) for m in imported)
-    identifiers = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)} | {
-        n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)} | {
-        a.asname or a.name for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) for a in n.names}
-    assert not {i for i in identifiers if "gate" in i.lower() or "execut" in i.lower() or "dispatch" in i.lower()}
+    assert not any(m and ("gate" in m or "provider" in m or "execution" in m or "system_runtime" in m)
+                   for m in imported)
+    assert set(MindWorldPort.__slots__) == {"_space", "_journal"}
 
 
 def test_the_port_holds_a_detached_copy(battery):
@@ -606,8 +568,6 @@ def test_the_check_rederives_a_sourced_proposal_from_its_suggestion(battery):
     swapped = dataclasses.replace(honest, assignments=(("I", q(1.0, "A")), ("t_pulse", q(60, "s"))))
     with pytest.raises(ProposalRefused, match="not what its source suggestion yields"):
         space(battery).check(swapped)
-    with pytest.raises(ProposalRefused):
-        space(battery).clear(swapped)
     with pytest.raises(WorldRefused, match="propose_suggestion"):
         MindWorldPort(space(battery)).propose(swapped)
     explore = _suggestion(battery, {"assignments": _assign(I=q(1.0, "A"), t_pulse=q(60, "s"))},
@@ -751,7 +711,7 @@ def test_identity_is_the_raw_owner_payload(battery):
         dataclasses.replace(c, domain=fx.levels("mA", 1000, 2000)) if c.variable == "I" else c for c in pulse.controls))
     respelled = battery.derive(reason="levels respelled", actions=tuple(in_mA if a is pulse else a for a in battery.actions))
     assert respelled.revision_id != battery.revision_id and respelled.lineage.changed_fields == ("actions",)
-    assert dict(_cleared(respelled, "pulse", PULSE_OK).configuration)["I"] == q(1000, "mA")   # the declared level
+    assert check(respelled, "pulse", PULSE_OK).feasible       # 1 A is the declared 1000 mA level
 
 
 def test_provider_snapshots_are_the_owner_records_and_bind_together():
@@ -768,10 +728,15 @@ def test_provider_snapshots_are_the_owner_records_and_bind_together():
             assert ProviderSnapshot.from_status(status, report).executable is (available and report.executable)
 
 
-def test_models_verify_against_the_registry(battery):
-    assert battery.verify_models(fx.model_registry(battery)) == (battery.applicability[0].binding_id,)
-    with pytest.raises(WorldRefused, match="registered"):
-        battery.verify_models(fx.model_registry(fx.hvac_world()))
+def test_models_verify_against_the_registry():
+    """GEN2-BR1.1: a model record is a projection of the ModelRegistry; verification asks the registry, never a
+    registry built from the world's own copies."""
+    from engcore.mind.world import BindingStatus, verify_world
+    o = _owned()
+    assert verify_world(o.world, o.authorities()).ok
+    other = _owned("hvac_chamber")
+    report = verify_world(o.world, o.authorities(models=other.models))
+    assert not report.ok and BindingStatus.MISSING in {c.status for c in report.failures()}
 
 
 def test_the_status_by_source_table_is_exhaustive_over_declarable_sources():
@@ -781,8 +746,10 @@ def test_the_status_by_source_table_is_exhaustive_over_declarable_sources():
 
 
 def test_a_decision_cannot_be_feasible_without_every_family_or_disagree_with_its_reasons(battery):
+    from engcore.mind.world.feasibility import CHECKED_FAMILIES
     d = check(battery, "pulse", PULSE_OK)
-    assert d.feasible and {c.family for c in d.checked} == set(CheckFamily)
+    assert d.feasible and {c.family for c in d.checked} == set(CHECKED_FAMILIES)
+    assert CheckFamily.AUTHORITY not in CHECKED_FAMILIES             # verified by admission, never by the check
     with pytest.raises(WorldRefused, match="every check family"):
         dataclasses.replace(d, checked=d.checked[:-1])
     reason = FeasibilityReason(F.MISSING_INFORMATION, "PRECONDITION_UNRESOLVED", CheckFamily.STATE, "s", "m")
@@ -887,7 +854,9 @@ def test_constraint_scope_is_declared_and_names_resolve_exactly(battery):
 def test_preconditions_hold_at_the_edges_of_the_current_value(battery):
     point = rebound(battery, "SOC", "a point estimate", uncertainty=Uncertainty(
         kind="standard", standard_uncertainty=q(0.02, D), method="declared"))
-    assert "PRECONDITION_UNCERTAINTY_UNKNOWN" in codes(check(point, "pulse", PULSE_OK))
+    assert "PRECONDITION_COVERAGE_REQUIREMENT_UNMET" in codes(check(point, "pulse", PULSE_OK))   # no stated level
+    unknown = rebound(battery, "SOC", "not quantified", uncertainty=Uncertainty.unknown("not quantified"))
+    assert "PRECONDITION_UNCERTAINTY_UNKNOWN" in codes(check(unknown, "pulse", PULSE_OK))
     straddle = rebound(battery, "SOC", "near the floor", value=q(0.11, D), uncertainty=fx.interval(0.11, 0.02, D))
     assert "PRECONDITION_UNDECIDED" in codes(check(straddle, "pulse", PULSE_OK))
     low = rebound(battery, "SOC", "empty", value=q(0.05, D), uncertainty=fx.interval(0.05, 0.01, D))

@@ -1,0 +1,916 @@
+{
+ "br1_inputs": {
+  "BENCHMARK.json": "e200c1e62b9c6558151c52ae234bdd634831da9e9d21c9423eabe56e0bc8646c",
+  "CASES.json": "0e4d23ca6851bc96aac088d2410c06894593506bc15778e1c064de2108946d51"
+ },
+ "cases": 515,
+ "decisions_digest": "f71e9b069d5dca9af0c76f3d68d8e41f31647f1bf44b600696052c89bb5333ad",
+ "drift": [
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/pulse/BASE",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/pulse/VALID_BOUNDARY:t_pulse=10.0",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/pulse/VALID_BOUNDARY:t_pulse=600.0",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/pulse/VALID_FIXED_RESTATE:T_amb",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/pulse/VALID_OBSERVE_SUBSET:I",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/pulse/VALID_OBSERVE_SUBSET:T_surf",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/value:SOC/pulse/PRECONDITION_VIOLATED:soc_floor",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/signed_pulse/BASE",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/signed_pulse/VALID_BOUNDARY:t_pulse=10.0",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/signed_pulse/VALID_BOUNDARY:t_pulse=600.0",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/signed_pulse/VALID_FIXED_RESTATE:T_amb",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/base/signed_pulse/VALID_OBSERVE_SUBSET:I",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED",
+     "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "battery/value:SOC/signed_pulse/PRECONDITION_VIOLATED:soc_ceiling",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED",
+    "STATE_DOMAIN_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/hover_test/BASE",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/hover_test/VALID_LEVEL:payload=0.0",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/hover_test/VALID_LEVEL:payload=1.0",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/hover_test/VALID_RESPELL:thrust_cmd",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/hover_test/VALID_OBSERVE_SUBSET:battery_V",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/hover_test/VALID_OBSERVE_SUBSET:velocity",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/value:altitude/hover_test/PRECONDITION_VIOLATED:near_ground",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/climb_test/BASE",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/climb_test/VALID_RESPELL:thrust_cmd",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/climb_test/VALID_FIXED_RESTATE:payload",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/climb_test/VALID_OBSERVE_SUBSET:battery_V",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/climb_test/VALID_OBSERVE_SUBSET:velocity",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/value:altitude/climb_test/PRECONDITION_VIOLATED:near_ground",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/simulate_flight/BASE",
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/simulate_flight/VALID_RESPELL:thrust_cmd",
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/simulate_flight/VALID_FIXED_RESTATE:payload",
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/base/simulate_flight/VALID_OBSERVE_SUBSET:velocity",
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [
+     "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"
+    ],
+    "status": "INFEASIBLE_APPLICABILITY"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "drone/value:wind/simulate_flight/APPLICABILITY_OUTSIDE_INTERVAL:wind=14.2",
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/base/step_speed/BASE",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/base/step_speed/VALID_INTEGER_BOUND:fan_stage=1",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/base/step_speed/VALID_INTEGER_BOUND:fan_stage=5",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/base/step_speed/VALID_RESPELL:speed",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/base/step_speed/VALID_FIXED_RESTATE:T_out",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/base/step_speed/VALID_OBSERVE_SUBSET:T_room",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_chamber/value:T_room/step_speed/PRECONDITION_VIOLATED:room_not_hot",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/step_speed/BASE",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/step_speed/VALID_INTEGER_BOUND:fan_stage=1",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/step_speed/VALID_INTEGER_BOUND:fan_stage=5",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/step_speed/VALID_RESPELL:speed",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/step_speed/VALID_OBSERVE_SUBSET:T_room",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/value:T_room/step_speed/PRECONDITION_VIOLATED:room_not_hot",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/simulate_building/BASE",
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/base/simulate_building/VALID_RESPELL:speed",
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [
+     "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"
+    ],
+    "status": "INFEASIBLE_APPLICABILITY"
+   },
+   "br1_1": {
+    "codes": [
+     "APPLICABILITY_INPUT_NOT_EXACT"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "hvac_field/value:T_out/simulate_building/APPLICABILITY_OUTSIDE_INTERVAL:T_out=46.0",
+   "new_codes": [
+    "APPLICABILITY_INPUT_NOT_EXACT"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/base/load_step/BASE",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/base/load_step/VALID_RESPELL:V_supply",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/base/load_step/VALID_LEVEL:V_supply=24.0",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/base/load_step/VALID_OBSERVE_SUBSET:T_wind",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [],
+    "status": "FEASIBLE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/base/load_step/VALID_OBSERVE_SUBSET:omega",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  },
+  {
+   "br1": {
+    "codes": [
+     "PRECONDITION_VIOLATED"
+    ],
+    "status": "INFEASIBLE_STATE"
+   },
+   "br1_1": {
+    "codes": [
+     "PRECONDITION_ENCLOSURE_REQUIRED"
+    ],
+    "status": "MISSING_INFORMATION"
+   },
+   "case_id": "motor/value:T_wind/load_step/PRECONDITION_VIOLATED:winding_cool",
+   "new_codes": [
+    "PRECONDITION_ENCLOSURE_REQUIRED"
+   ]
+  }
+ ],
+ "moved": 53,
+ "moved_to_feasible": 0,
+ "moves": {
+  "FEASIBLE->MISSING_INFORMATION": 44,
+  "INFEASIBLE_APPLICABILITY->MISSING_INFORMATION": 2,
+  "INFEASIBLE_STATE->MISSING_INFORMATION": 7
+ },
+ "new_codes": {
+  "APPLICABILITY_INPUT_NOT_EXACT": 8,
+  "PRECONDITION_ENCLOSURE_REQUIRED": 45,
+  "STATE_DOMAIN_ENCLOSURE_REQUIRED": 13
+ },
+ "schema": "forge.mind.gen2_authority.br1_rescore/1",
+ "statement": "BR1's committed results are not rewritten.  These cases decide differently under BR1.1 by design (coverage is never an enclosure; applicability at exact points only); none moves toward FEASIBLE.  BR1's synthetic worlds state no coverage and demand none, so the corrected rule makes them MISSING_INFORMATION."
+}

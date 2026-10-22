@@ -69,15 +69,29 @@ def test_the_fixtures_cover_every_role_domain_kind_and_status_in_at_least_two_wo
     assert all(len(v) >= 2 for v in statuses.values())
 
 
+#: GEN2-BR1.1 re-decides these frozen cases under corrected rules (coverage is never an enclosure; applicability at
+#: exact points only).  BR1's committed results stay byte-identical as historical evidence about BR1's code; the live
+#: decisions are pinned by the BR1.1 re-score, which lists every moved case (none toward FEASIBLE).
+RESCORE = HERE.parent / "mind_gen2_authority_v1" / "results" / "BR1_RESCORE.json"
+
+
 def test_the_committed_scores_reproduce():
+    """BR1's committed results are intact; the live decisions are BR1.1's re-score, moved cases exactly as listed."""
     stored = json.loads((HERE / "results" / "BENCHMARK.json").read_bytes())
-    cases = C.load()["cases"]
-    worlds = rb._worlds(cases)
-    rows = rb.decisions(cases, worlds)
-    assert rb.decisions_digest(rows) == stored["decisions_digest"]
-    assert json.loads(json.dumps(rb.score(rows))) == stored["scores"]
+    rescore = json.loads(RESCORE.read_bytes())
+    import hashlib
+    for name, sha in rescore["br1_inputs"].items():
+        assert hashlib.sha256((HERE / "results" / name).read_bytes()).hexdigest() == sha, name
     g2 = stored["scores"]["GEN2_WORLD_ACTIONSPACE"]
-    assert g2["false_feasible"] == 0 and g2["false_not_feasible"] == 0 and not g2["misses"]
+    assert g2["false_feasible"] == 0 and g2["false_not_feasible"] == 0 and not g2["misses"]   # BR1, as recorded
+    cases = C.load()["cases"]
+    rows = rb.decisions(cases, rb._worlds(cases))
+    assert rb.decisions_digest(rows) == rescore["decisions_digest"]
+    moved = {r["case"]["case_id"]: r["gen2"] for r in rows
+             if r["gen2"]["status"] != r["case"]["expected"]["status"]
+             or not set(r["case"]["expected"]["codes"]) <= set(r["gen2"]["codes"])}
+    assert sorted(moved) == sorted(d["case_id"] for d in rescore["drift"]) and rescore["moved_to_feasible"] == 0
+    assert all(g["status"] == "MISSING_INFORMATION" for g in moved.values())
 
 
 def test_the_gen1_reproduction_reproduces():
@@ -90,7 +104,7 @@ def test_the_gen1_reproduction_reproduces():
 
 @pytest.mark.parametrize("seed", rb.HASH_SEEDS)
 def test_decisions_do_not_depend_on_the_hash_seed(seed):
-    stored = json.loads((HERE / "results" / "BENCHMARK.json").read_bytes())
+    stored = json.loads(RESCORE.read_bytes())                     # the live (BR1.1) decisions digest
     env = dict(os.environ, PYTHONHASHSEED=seed)
     out = subprocess.run([sys.executable, "-m", "benchmarks.mind_gen2_world_v1.run_benchmark", "--decisions-digest"],
                          capture_output=True, text=True, env=env, check=True, cwd=str(HERE.parents[1]))
