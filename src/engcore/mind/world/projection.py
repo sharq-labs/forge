@@ -17,8 +17,6 @@ its owners say today.
 
 from __future__ import annotations
 
-from typing import Any
-
 from engcore.scientific import ScientificModelDefinition, Uncertainty
 from engcore.scientific.ir.values import decode_value
 
