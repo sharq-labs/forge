@@ -8544,7 +8544,10 @@ completeness critic):
 - round 3 at `1a87f7c`: BLOCKERs R3-A1 (= R3-B-01, R3-C-01, R3-D1, E3-F1: a level control decided on its spelling,
   executed as the level), R3-A2 (absolute level tolerance at zero), K3-F1 (integers decided through floats); fixed in
   `d113d30` (decide on exactly what is executed);
-- round 4: see the update below.
+- round 4 at `d0a0408`: lenses 0 BLOCKER; MAJOR R4-A1 = R4-C-F1 (a fixed condition's own domain checked on its
+  declared spelling, the converted value executed; repro skeptics confirmed, scope skeptics graded MINOR); the critic's
+  MAJOR K4-F1 (the `d113d30` mint guard was circular); fixed in `26d7724`;
+- round 5: see the update below.
 
 **Failed approaches, recorded so they are not repeated:**
 - **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
@@ -8558,6 +8561,13 @@ completeness critic):
   mints exactly that.
 - **A 64-ulp level rule** (round 2): absolute at a zero level and a second comparison rule beside the unit owner's.
   Levels use the unit owner's `canonical_magnitude` identity rule (BR1's original rule).
+- **A mint guard that re-derives with the function that built what it checks** (`d113d30`): it cannot fail. The
+  configuration is now built from its sources and compared with every value the families read.
+- **Checking a declared value once, at bind, in its declared spelling** (fixed conditions, action levels): the value
+  executed is the converted one. Bind and every check now decide on the value as executed.
+- **A forward-only rule on counts only** (followed budget accounts): a history rewritten at the same length, or a return
+  to an earlier state after a later one was observed, passed. The reader now keeps the history it observed, in the
+  owner's read-back form (so a restore of an unchanged integer-amount account is not a change).
 - **Renaming the `relied_on_bound_values` annotation**: it broke BR1's committed `GEN1_REPRODUCTION.json`; reverted.
 - **Pre-fix tests run through the editable install**: the venv's editable install points at `/home/user/forge/src`,
   so worktree runs need `PYTHONPATH=<worktree>/src:<worktree>` (and a test file copied into the worktree under test).
@@ -8589,7 +8599,34 @@ completeness critic):
 8. `python tools/forge_check.py --changed --base 1202ea6c... --dry-run` at `bc6980c`: narrowing refused (unclassified
    benchmark files) → whole FAST + regression pack; `src/engcore/mind/world` is `scientific_shared` (SCIENTIFIC before
    merge); `budget.py` and `tests/**` need recertification.
-9. Performance (`run_benchmark`, uncontended, at `d113d30` plus the harness's dispatch timing): README §8.
+9. Performance (`run_benchmark`, uncontended, at `d113d30` plus the harness's dispatch timing): superseded by item 12.
+10. Gates at `d0a0408` (detached worktree `/home/user/forge-gate`; base `/home/user/forge-base` at `1202ea6c`):
+    - FAST `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rfE`: 93 failed,
+      5 errors, 12467 passed. Against the base's 99 failing ids: NEW 0, FIXED 1, the same timing test
+      (`tests/foundations/test_discovery_deadline.py::test_timeout_covers_handshake_output_and_inherited_pipes[...]`).
+      It passes 3/3 when run alone on the base (`python -m pytest tests/foundations/test_discovery_deadline.py`:
+      11 passed each time), so it is load-dependent, not a BR1.1 effect. FAST is red on the base: NOT green.
+    - Regression pack (the command `python tools/forge_check.py --regression --dry-run` prints): 279 passed.
+    - Guard suites (command 7 plus `tests/test_sria_budget_ledger_identity.py`): 1198 passed, 2 failed, the same two
+      pre-existing failures with byte-identical messages as on the base.
+    - `python tools/forge_check.py --changed --base 1202ea6c... --dry-run`: narrowing refused (unclassified benchmark
+      files and `src/engcore/mind/world`) → whole FAST + regression pack (run above); 365 affected expensive tests.
+    - The affected expensive tests minus the 3 campaign tests
+      (`python -m pytest <the 14 paths the gate lists> -m "expensive and not campaign" -q -n 3 --dist loadfile`), on
+      branch and base: 13 failed, 14 errors, 335 passed on BOTH, the same 27 failing ids (NEW 0, FIXED 0):
+      `tests/test_heterogeneous_ngspice.py` (the ngspice provider) and
+      `benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates`.
+      This is the gate's affected subset, not the SCIENTIFIC tier.
+11. At `26d7724`: the suite command of item 1, **500 passed**; `test_authority_review_r4.py` (17) copied into the
+    `d0a0408` tree: 16 failed, 1 passed (the matched-level replay control), as intended; `rescore --check`: MATCHES;
+    `run_benchmark --check`: MATCHES; `gen1_reference --check`: INTACT. Every BR1 case keeps its BR1.1 status and
+    codes (259 changed cases, identical sets); the decisions digest moved.
+12. Performance at `26d7724` on an idle host: `python -m benchmarks.mind_gen2_authority_v1.run_benchmark`
+    (`results/PERFORMANCE.json`); BR1's harness alternately on `1202ea6c` and on this branch, three times each
+    (`results/BR1_PERFORMANCE_THIS_HOST.json`, every run and the command); the ledger-size curve
+    (`results/LEDGER_SIZE_CURVE.json`); a `cProfile` of 20 battery admissions (verified projection ~71 %,
+    `verify_registry_unmutated` ~24 %). README §8.
 
-SCIENTIFIC tier, hardened recertification and certification: NOT RUN. Run Observatory: not present in this tree (no
-observatory code on any local branch, no run ledger in this cloud session); not used, and nothing was merged for it.
+SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
+NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
+cloud session); not used, and nothing was merged for it.

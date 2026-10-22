@@ -1,0 +1,75 @@
+{
+ "br1_commit": "1202ea6c3d96f5c31d0b142a32438da75e020cae",
+ "command": "for i in 1 2 3: for each checkout (1202ea6c, then this branch): cd <checkout> && PYTHONPATH=<checkout>/src:<checkout> PYTHONHASHSEED=0 python -c 'from benchmarks.mind_gen2_world_v1 import cases as C, run_benchmark as rb; r=rb.performance(C.load()[\"cases\"], repeats=25); print(r[...])'",
+ "host": {
+  "cpu_count": 4,
+  "platform": "Linux-6.18.44-fc-v140-x86_64-with-glibc2.39",
+  "python": "3.13.16"
+ },
+ "medians": {
+  "br1_1_code": {
+   "ACTIONSPACE_BUILD_MS": 0.386,
+   "FEASIBILITY_P50_MS": 0.233,
+   "FEASIBILITY_P95_MS": 0.4152,
+   "SOLVER": 161.94,
+   "WORLD_BUILD_MS": 1.651
+  },
+  "br1_code_1202ea6c": {
+   "ACTIONSPACE_BUILD_MS": 0.457,
+   "FEASIBILITY_P50_MS": 0.2438,
+   "FEASIBILITY_P95_MS": 0.4787,
+   "SOLVER": 163.434,
+   "WORLD_BUILD_MS": 1.48
+  }
+ },
+ "runs": {
+  "br1_1_code": [
+   {
+    "ACTIONSPACE_BUILD_MS": 0.386,
+    "FEASIBILITY_P50_MS": 0.233,
+    "FEASIBILITY_P95_MS": 0.414,
+    "SOLVER": 164.089,
+    "WORLD_BUILD_MS": 1.651
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.375,
+    "FEASIBILITY_P50_MS": 0.2319,
+    "FEASIBILITY_P95_MS": 0.4152,
+    "SOLVER": 161.94,
+    "WORLD_BUILD_MS": 1.564
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.394,
+    "FEASIBILITY_P50_MS": 0.2756,
+    "FEASIBILITY_P95_MS": 0.6281,
+    "SOLVER": 150.443,
+    "WORLD_BUILD_MS": 2.024
+   }
+  ],
+  "br1_code_1202ea6c": [
+   {
+    "ACTIONSPACE_BUILD_MS": 0.457,
+    "FEASIBILITY_P50_MS": 0.2286,
+    "FEASIBILITY_P95_MS": 0.4006,
+    "SOLVER": 159.412,
+    "WORLD_BUILD_MS": 1.488
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.443,
+    "FEASIBILITY_P50_MS": 0.2438,
+    "FEASIBILITY_P95_MS": 0.4787,
+    "SOLVER": 163.434,
+    "WORLD_BUILD_MS": 1.48
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.491,
+    "FEASIBILITY_P50_MS": 0.2542,
+    "FEASIBILITY_P95_MS": 0.5169,
+    "SOLVER": 173.072,
+    "WORLD_BUILD_MS": 1.392
+   }
+  ]
+ },
+ "schema": "forge.mind.gen2_authority.br1_performance_this_host/2",
+ "statement": "BR1's own harness on BR1's 515 frozen cases, run alternately on BR1's code and on BR1.1's code, three times each on one idle host; medians reported. Timings are host-dependent and vary run to run by 10-20 %; SOLVER is one in-repo solver execution (a Gen1 repsem judgment), the scale reference."
+}

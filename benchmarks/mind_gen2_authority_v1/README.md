@@ -12,10 +12,10 @@ no scientific claim, nothing certified or formal. Generation 1 stays sealed and 
 - **Branch:** `research/mind-gen2-authority-binding-v1`, from `1202ea6c3d96f5c31d0b142a32438da75e020cae` (BR1's
   report commit). Local only: not pushed, not merged, not certified.
 - **Code:** `src/engcore/mind/world/` (new: `authority.py`, `owners.py`, `declaration.py`, `projection.py`,
-  `admission.py`; changed: `world.py`, `feasibility.py`, `variables.py`, `base.py`, `actions.py`, `domains.py`,
-  `port.py`; removed: `binders.py`). One owner file outside the package: `src/engcore/sria/campaign/budget.py`
+  `admission.py`; changed: `__init__.py`, `world.py`, `feasibility.py`, `variables.py`, `base.py`, `actions.py`,
+  `domains.py`, `port.py`; removed: `binders.py`). One owner file outside the package: `src/engcore/sria/campaign/budget.py`
   (read-only `BudgetLedger.digest` / `revision`).
-- **Tests:** `tests/mind/test_authority_{failing_first,mutations,cross_domain,review_r1,review_r2}.py`,
+- **Tests:** `tests/mind/test_authority_{failing_first,mutations,cross_domain,review_r1,review_r2,review_r3,review_r4}.py`,
   `tests/test_sria_budget_ledger_identity.py`; BR1's tests adapted where §3's interval rule requires
   (`tests/mind/test_world_{failing_first,contract}.py`, `benchmarks/mind_gen2_world_v1/tests`).
 - **Benchmark:** this directory (`fixtures.py`, `mutations.py`, `run_benchmark.py`, `rescore.py`,
@@ -76,18 +76,26 @@ ExecutionDesk (immutable; live readers; the execution owner's executor behind a 
 - **Admission** never decides on the caller's object (a frozen record edited in place is not the world its identity
   names, and the rebuild refuses it) and mints on the owners' fresh projection (no caller-written text reaches an
   executor).
-- **Decided = executed.** Every family decides on each control assignment and fixed condition AS IT WILL BE EXECUTED
-  (in its variable's declared unit by the unit owner's conversion; a declared discrete level as that level; an integer
-  as the exact integer), admission mints exactly those values, and the executor's settings are their magnitudes. The
-  proposal keeps the proposer's spelling. (Rounds 2 and 3 each found a BLOCKER where the two differed.)
+- **Decided = executed** (as requested; realization uncertainty is not assessed, `CONFIGURATION_BASIS`). Every family
+  decides on each control assignment and fixed condition AS IT WILL BE EXECUTED (in its variable's declared unit by the
+  unit owner's conversion; a declared discrete level of the action's or the variable's own domain as that level; an
+  integer as the exact integer), and a fixed condition is checked against its variable's own domain as executed, at
+  bind and at every check. Admission builds the configuration it mints from its sources by a separate path, and refuses
+  to mint unless every exact value any family read in the check (recorded in the decision, outside its identity) equals
+  the value minted; the executor's settings are their magnitudes. The proposal keeps the proposer's spelling; refusal
+  records carry both. (Rounds 2, 3 and 4 found a BLOCKER or MAJOR where the two differed.)
 - **Dispatch.** The desk is immutable; it re-admits once; its executor is wrapped so that any authorization handed to it
-  is re-derived. Authorizations are minted from a fresh rebuild and have `verify()` for deferred execution. A desk built
-  with `suggestions_only=True` admits and dispatches only proposals that carry their certified `ExternalSuggestion`.
+  is re-derived, and authorizations name the providers and the models whose applicability gated them. Authorizations
+  are minted from a fresh rebuild and have `verify()` for deferred execution. A desk built with `suggestions_only=True`
+  admits and dispatches only proposals that carry their certified `ExternalSuggestion`; the executor guard applies the
+  same policy.
 - **Replay vs currentness.** `AdmissionRecord.of` (live owners only) records world, proposal, exactly the owner records
   the re-admission read (and every read an owner refused), and the result. `replay_admission` accepts a recorded owner
-  payload only if it re-derives its revision and digest by the owner's own rule under the identity it is filed under
-  (a provider report must be the owner's assessment of its status; a ledger's totals must be what its charges give), and
-  only under this process's unit registry. REPRODUCED attests self-consistency under the owners' rules, not that the
+  payload only if it re-derives its revision and digest by the owner's own rule (state, model, provider and declaration
+  records also under the identity they are filed under; a ledger or experiment account is filed under the reader's id;
+  a provider report must be the owner's assessment of its status; a ledger's totals must be what its charges give), and
+  only under this process's unit registry (`replay_decision` too). A recorded run history and recorded refusals are
+  replayed as recorded. BR1.1 is unmerged: records made at its intermediate development commits are not supported. REPRODUCED attests self-consistency under the owners' rules, not that the
   owners held those records; it never authorizes a dispatch.
 - **Threat model.** Every record crossing the boundary is re-derived. A Python process is one trust domain: code that
   introspects private members, closures or tracebacks of execution-side objects is inside the execution side's trust
@@ -120,8 +128,11 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   the same). Every ledger and cost unit is ratio-scale (`is_ratio_scale`: on an offset scale a conversion moves an
   amount's zero). The decision is the declared estimate against the owner's current account, not an owner cost
   prediction, and nothing is reserved (`BUDGET_BASIS`); dimensions the declaration leaves unbounded are listed on every
-  admitted action and authorization. The observation rule restates `ScientificExperiment.record`, pinned by a
-  differential test.
+  admitted action and authorization; a refusal records the amount and the remainder in the ledger's unit, as the owner
+  compared them. A followed account only moves forward from the history the reader observed (in the owner's read-back
+  form: a restore of an unchanged account is the same account, a rewritten history or a return to an earlier one is
+  OWNER_UNAVAILABLE). Admission cost grows linearly with a bound ledger's settled charges (§8). The observation rule
+  restates `ScientificExperiment.record`, pinned by a differential test.
 - **Synthetic** means labelled synthetic by the declaration (`SYNTHETIC_BASIS`).
 - **Lineage v2** records ancestors' statements; v1 (BR1) keeps its bytes and ids and verifies by walking the store. A
   projection is a root world; admission refuses a history no owner made.
@@ -129,8 +140,11 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
 - **Discrete levels:** a value IS a level when the unit owner's one comparison rule says they are one value
   (`canonical_magnitude` in the base unit, 12 significant digits: the rule that keeps the declared levels distinct, and
   BR1's original rule); it is then decided and executed AS that level. Nothing else matches (no nearest level, no
-  interpolation): 1.15 A against levels 1 A / 2 A is INFEASIBLE_PROTOCOL with the declared alternatives. Round 2's
-  64-ulp rule was absolute at a zero level and was withdrawn (round 3, R3-A2).
+  interpolation): 1.15 A against levels 1 A / 2 A is INFEASIBLE_PROTOCOL with the declared alternatives. Declared levels
+  closer than 1e-9 relative are refused, so a value the owner calls one level is never nearer another. A value that IS
+  a level is decided as the level even where its own spelling would decide otherwise at a bound (35.0000000001 degC is
+  35 degC to the unit owner, and it is checked and executed as 35 degC). Round 2's 64-ulp rule was absolute at a zero
+  level and was withdrawn (round 3, R3-A2).
 - **Integers** are compared as exact integers; an integer domain's bounds stay within ±2**53 (the owner stores a bound
   as a float).
 - **Who may propose:** a proposer's kind is caller-asserted; a deployment hosting an external or language-model
@@ -138,19 +152,19 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
 
 ## 5. Controls
 
-Executed at `d113d30` (command and environment in `docs/work/PROGRESS.md`): `tests/mind`,
+Executed at `26d7724` (command and environment in `docs/work/PROGRESS.md`): `tests/mind`,
 `benchmarks/mind_gen2_authority_v1/tests`, `benchmarks/mind_gen2_world_v1/tests` and
-`tests/test_sria_budget_ledger_identity.py`, **483 passed** (including the expensive BR1-decision re-derivation).
+`tests/test_sria_budget_ledger_identity.py`, **500 passed** (including the expensive BR1-decision re-derivation).
 
 | Suite | Tests | What it pins |
 |---|---|---|
 | `test_authority_failing_first.py` | 29 | the brief's A–O, written failing first: no interval decides; lineage laundering; stale state/model/provider/budget/declaration; missing owner; unit spelling; protocol levels (no 1.15 A, nearest or interpolation); raw proposals never execute |
 | `test_authority_mutations.py` | 120 | every projected field and binding field edited, every admitted-action and authorization field edited, replay forgeries |
 | `test_authority_cross_domain.py` | 32 | battery, two HVAC worlds, drone, motor: the same guarantees in each |
-| `test_authority_review_r1.py` / `_r2.py` / `_r3.py` | 43 / 35 / 21 | one control per confirmed review finding |
+| `test_authority_review_r1.py` / `_r2.py` / `_r3.py` / `_r4.py` | 43 / 35 / 21 / 17 | one control per confirmed review finding; the round-3 and round-4 controls fail 20/21 and 16/17 on the trees before their fixes |
 | `test_sria_budget_ledger_identity.py` | 5 | the owner addition: read-only, wire shape unchanged, round-trip identity |
 | benchmark tests | 7 | committed matrix and re-score reproduce; the re-score guard; BR1's decisions re-derived from BR1's code (expensive) |
-| BR1 tests adapted (`test_world_contract.py`, `test_world_failing_first.py`, `test_world_boundary.py`, BR1 benchmark) | 67 / 31 / 5 / 8 | BR1's contract under §3; BR1's committed results byte-identical |
+| BR1 tests adapted (`test_world_contract.py`, `test_world_failing_first.py`, BR1 benchmark) and unchanged (`test_world_boundary.py`) | 67 / 31 / 8 / 5 | BR1's contract under §3; BR1's committed results byte-identical; the package boundary |
 
 ## 6. Owned fixtures and the authority matrix (`results/AUTHORITY.json`)
 
@@ -178,32 +192,37 @@ re-derives it). Against them, BR1.1 changes **259 cases: 53 in status, 206 in co
 | FEASIBLE → MISSING_INFORMATION 44, INFEASIBLE_STATE → MISSING_INFORMATION 7, INFEASIBLE_APPLICABILITY → MISSING_INFORMATION 2 | PRECONDITION_ENCLOSURE_REQUIRED 207, STATE_DOMAIN_ENCLOSURE_REQUIRED 60, APPLICABILITY_INPUT_NOT_EXACT 50, STATE_DOMAIN_UNDECIDABLE 1 | PRECONDITION_VIOLATED 7, CONSTRAINT_VIOLATED 4, INTERVAL_OUTSIDE_VALIDATED_DOMAIN 2, STATE_DOMAIN_UNDECIDED 2, OUTSIDE_VALIDATED_DOMAIN 1 |
 
 `rescore.py` refuses any move toward FEASIBLE, any status move other than to MISSING_INFORMATION, any new code outside
-the BR1.1 rules, and any lost definite constraint or validity verdict without its stated cause in the case's own codes
-(a role refusal: the value was one the proposer may not set; or the matching undecidable code). The round-3 change
-(decide as executed) left every case's status and codes unchanged; only the decisions digest moved.
+the BR1.1 rules, and any lost code without its stated cause among the case's own BR1.1 codes (`CONDITIONAL_LOST_CODES`:
+the matching undecidable code, the value having been a current value of the world; or a role refusal, the value having
+been one the proposer may not set). The check is per case, not per subject: BR1's exported decisions carry codes, not
+subjects. The round-3 and round-4 changes left every case's status and codes unchanged; only the decisions digest moved.
 
-## 8. Performance (`results/PERFORMANCE.json`)
+## 8. Performance (`results/PERFORMANCE.json`, `results/BR1_PERFORMANCE_THIS_HOST.json`, `results/LEDGER_SIZE_CURVE.json`)
 
-Host: 4 CPUs, Linux, Python 3.13.16; nothing else running; 25 repeats. BR1's reported numbers were measured on another
-machine; BR1's code was also measured on this host for the delta.
+One idle host: 4 CPUs, Linux, Python 3.13.16. BR1's reported numbers were measured on another machine. For the delta,
+BR1's own harness ran on BR1's 515 cases alternately on BR1's code (`1202ea6c`) and on BR1.1's code, three times each;
+the medians are below (`BR1_PERFORMANCE_THIS_HOST.json`, with every run and the command). Run-to-run spread on this host
+is 10–20 %, so deltas inside that are noise. The owned-world metrics are `PERFORMANCE.json` at `26d7724` (25 repeats).
 
 | Metric (ms) | BR1 reported | BR1 code, this host | BR1.1 code, this host | Delta (this host) |
 |---|---|---|---|---|
-| WORLD_BUILD (BR1 cases) | 0.856 | 1.647 | 1.560 | −5 % |
-| ACTIONSPACE_BUILD | 0.256 | 0.478 | 0.416 | −13 % |
-| FEASIBILITY p50 | 0.140 | 0.226 | 0.216 | −5 % |
-| FEASIBILITY p95 | 0.263 | 0.376 | 0.359 | −5 % |
-| check on owned worlds p50 / p95 | — | — | 0.319 / 0.530 | new |
-| projection from owners (median by world) | — | — | 11.6 | new |
-| owner verification p50 / p95 | — | — | 13.5 / 18.6 | new |
-| admission (verify + rebuild + check + mint) p50 / p95 | — | — | 17.6 / 27.3 | new |
-| dispatch authorization (re-admission) p50 / p95 | — | — | 18.9 / 30.0 | new |
-| reference: one in-repo solver execution (median) | — | 159.1 | 150.3 | — |
+| WORLD_BUILD (BR1 cases) | 0.856 | 1.480 | 1.651 | +12 % |
+| ACTIONSPACE_BUILD | 0.256 | 0.457 | 0.386 | −16 % |
+| FEASIBILITY p50 | 0.140 | 0.244 | 0.233 | −4 % (noise) |
+| FEASIBILITY p95 | 0.263 | 0.479 | 0.415 | −13 % |
+| check on owned worlds p50 / p95 | — | — | 0.374 / 0.636 | new |
+| projection from owners (median by world) | — | — | 12.6 | new |
+| owner verification p50 / p95 | — | — | 14.7 / 21.4 | new |
+| admission (verify + rebuild + check + mint) p50 / p95 | — | — | 19.5 / 27.8 | new |
+| dispatch authorization (re-admission) p50 / p95 | — | — | 20.9 / 29.9 | new |
+| reference: one in-repo solver execution (median) | — | 163.4 | 161.9 | — |
 
-The check itself did not get slower. Admission costs ~55× the check, dominated by owner verification (in particular
-the unit owner's `verify_registry_unmutated`), and stays ~8× cheaper than one solver execution. Verification grows
-linearly with the bindings and the declarations in force; nothing is cached across admissions (a cache would be a
-currency claim).
+The check is as fast as BR1's within this host's noise. Admission costs ~50× the check and stays ~8× cheaper than one
+solver execution on these fixtures. Under `cProfile` (20 admissions, battery), the verified projection takes ~71 % of
+admission and the unit owner's `verify_registry_unmutated` alone ~24 %. Cost grows linearly with the bindings, the
+declarations in force and, measured, a bound ledger's settled charges: admission p50 21 / 25 / 40 / 207 ms and check p50
+0.44 / 0.50 / 1.4 / 8.6 ms at 0 / 10 / 100 / 1000 charges (`LEDGER_SIZE_CURVE.json`): the world carries every charge
+of a bound ledger. Nothing is cached across admissions (a cache would be a currency claim).
 
 ## 9. Review rounds
 
@@ -216,17 +235,21 @@ completeness critic. The builder did not overrule a finding: each was fixed or i
 | 1 | `5ee16c5` | A scientific authority, B architecture, C adversarial bypass, D replay/stale | 2 / 8 / 31 | BLOCKER C-F1 = D-F1 (a world edited in place after it was built was verified on its cached digest, admitted and dispatched); MAJOR A-F1, A-F3 (a declared coverage band decided containment on a probabilistic interval at a caller-chosen level), A-F2 (an UNKNOWN set point was exact), A-F4 = B2 (one ledger stated several budget dimensions); B1, C-F2, D-F2 downgraded to MINOR | CR-1, CR-2 filed MAJOR (role table cached outside identity; authorizations not self-verifying), fixed; CR-3..CR-7 MINOR | `36e4ac5`, `be781d5`, `5adf3e7`, `bc6980c`, `31cfa03` |
 | 2 | `bc6980c` | A, B, C, D, E forge-scientific-reviewer (static) | 0 / 3 / 41 | R2-A1 (cost amount unitless), R2-B-01 = C2-F1 (one ledger under two reader ids) confirmed but MINOR: 0 BLOCKER / 0 MAJOR from the lenses | **K-F1 BLOCKER** (a fixed condition restated at 12-digit equality was decided on the restated value and dispatched at the fixed value: a strict validity endpoint and a `T_out < 35 degC` constraint were admitted and dispatched at the refuted value), K-F2..K-F6 MINOR | `1514560`, `991a4d3`, `a0378d4`, `0a0890d`, `867a6a1`, `1a87f7c` |
 | 3 | `1a87f7c` | A, B, C, D, E | 6 / 0 / 23 | every BLOCKER confirmed by two skeptics (reproduce, scope): **R3-A1 = R3-B-01 = R3-C-01 = R3-D1 = E3-F1** (a level control was decided on the proposer's spelling and executed as the matched level: a strict validity endpoint or constraint at a level was admitted for one spelling and executed at the refuted level), **R3-A2** (the 64-ulp level rule was absolute at a zero level: a declared 1e-14 F level was executed as 0 F) | **K3-F1 BLOCKER** (an integer decided through a float, executed exact: int64 seeds past the bound admitted), K3-F2, K3-F3 MINOR | `d113d30` |
-| 4 | (this report's SHA) | A, B, C, D, E | see PROGRESS | | | |
+| 4 | `d0a0408` | A, B, C, D, E | 0 / 2 / 29 | **R4-A1 = R4-C-F1** (a fixed condition's own domain checked on its declared spelling, the converted value executed: 101.52641641114641 psi inside 700 kPa as spelled, 7.000000000000001 bar outside as executed): reproduced by both repro skeptics; both scope skeptics graded it MINOR (declared by the execution side, unreachable by a proposer); treated as MAJOR and fixed | **K4-F1 MAJOR** (the `d113d30` mint guard re-derived with the function that built the configuration, so a regression of the K-F1 kind was not caught), K4-F2..K4-F4 MINOR | `26d7724` |
+| 5 | (this report's SHA) | A, B, C, D, E | see PROGRESS | | | |
 
-Rounds 2 and 3 found the same BLOCKER question twice: is the value a decision was made on the value an executor
-receives? `d113d30` answers it structurally: every family decides on the configuration as it will be executed, and
-admission mints exactly that (§2). Its regression tests (`test_authority_review_r3.py`, 21) fail 20/21 on `1a87f7c`.
+Rounds 2, 3 and 4 asked the same question three times: is the value a decision was made on the value an executor
+receives? `d113d30` answered it for controls (every family decides on the configuration as it will be executed);
+`26d7724` extended it to fixed conditions and restored an independent mint check. Their regression tests fail 20/21
+(`test_authority_review_r3.py` on `1a87f7c`) and 16/17 (`test_authority_review_r4.py` on `d0a0408`).
 
-K-F1 had already been closed structurally by `1514560` (a proposal's value is read only for a control of the action,
-and controls and fixed conditions are disjoint by construction); `1a87f7c` adds a second, independent guard (admission
-refuses to mint any value that is not exactly the value every family decided on, `feasibility.decided_value`) and six
-regression tests through the port and the language-model intake. Re-introducing the `bc6980c` read fails all six and
-trips the guard.
+The mint check's history, stated exactly: K-F1 was closed structurally by `1514560` (a proposal's value is read only
+for a control, and controls and fixed conditions are disjoint by construction). `1a87f7c` added an independent check
+(configuration from the sources, compared with the families' resolution). `d113d30` built the configuration through
+that same resolution, which made the check circular (K4-F1). `26d7724` builds it from the sources again and compares it
+with every exact value any family read in the check; tests that re-introduce the `bc6980c` read into the shared
+resolution, or a raw read into one family only, are refused at mint. A family that bypassed the shared reading path
+altogether would not be seen by this check; the per-value regression tests are the control for that.
 
 ## 10. Q1–Q7
 
@@ -246,7 +269,10 @@ authority review.
 
 The one owner change BR1.1 makes is additive and read-only: `BudgetLedger.digest` and `.revision`
 (`src/engcore/sria/campaign/budget.py`, no field, schema or wire change). The file is CORE_CERTIFIED
-(`assurance_admission`); hardened recertification is required before merge and was NOT RUN (owner decision).
+(`assurance_admission`); hardened recertification is required before merge and was NOT RUN (owner decision). The
+changed-file gate also marks the certified harness tests BR1.1 adds or changes (`tests/mind/test_authority_*.py`,
+`tests/mind/test_world_contract.py`, `tests/mind/test_world_failing_first.py`, `tests/test_sria_budget_ledger_identity.py`)
+as needing recertification.
 
 ## 12. Final table and conclusion
 

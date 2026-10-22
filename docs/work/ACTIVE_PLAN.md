@@ -14,12 +14,17 @@ Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`:
 `benchmarks/mind_gen2_authority_v1/README.md`; conclusion in its §12 and in `docs/work/PROGRESS.md`.
 
 The world is now a projection of FORGE's owners, verified against them at every admission and dispatch; admission
-decides on exactly what is executed. Independent review rounds run until 0 BLOCKER / 0 MAJOR; after BR1.1 closes or is
+decides on exactly the setting an executor receives (as requested: realization uncertainty is not assessed). Independent review rounds run until 0 BLOCKER / 0 MAJOR; after BR1.1 closes or is
 precisely blocked: STOP.
 
 OWNER_DECISION_REQUIRED (BR1.1 does not decide these):
 - `src/engcore/sria/campaign/budget.py` gained read-only `BudgetLedger.digest` / `.revision` (CORE_CERTIFIED,
-  `assurance_admission`): hardened recertification is required before merge and was NOT RUN (OD-3 boundary).
+  `assurance_admission`), and the changed-file gate marks the certified harness tests BR1.1 adds or changes
+  (`tests/mind/test_authority_*.py`, `tests/mind/test_world_contract.py`, `tests/mind/test_world_failing_first.py`,
+  `tests/test_sria_budget_ledger_identity.py`): hardened recertification is required before merge and was NOT RUN
+  (OD-3 boundary).
+- Confirm where admission verification lives: BR1.1 puts it in `engcore.mind.world.admission`, behind the execution
+  side's `ExecutionDesk` (BR1 left this as an owner question).
 - A hard-enclosure uncertainty form or a core decision-coverage policy: without it no current value decides a
   containment, so 9 of 21 BR1 base proposals are MISSING_INFORMATION (failed closed, nothing worked around).
 - A canonical protocol owner: protocol declarations stay caller-declared, held in force by the execution side.
@@ -44,10 +49,11 @@ STOPPED by the pre-committed stopping rule. The next step needs owner decisions,
 - a core coverage policy for interval uncertainty;
 - where admission verification lives.
 
-README section 6 lists the eight requirements. GEN2-BR1.1 (above) answers two of the four in code: the ledger digest
-(an additive read-only owner change, recertification pending) and the head-state view (the run record's own head,
-read through `RunStateReader`); admission verification lives in `engcore.mind.world.admission` behind the execution
-side's `ExecutionDesk`. The coverage policy stays an owner decision. Do not start the Hypothesis Portfolio, the Search
+README section 6 lists the eight requirements. GEN2-BR1.1 (above) proposes answers in code to three of the four, each
+for the owner to confirm: the ledger digest (an additive read-only owner change, recertification pending), the
+head-state view (the run record's own head, read through `RunStateReader`), and where admission verification lives
+(`engcore.mind.world.admission`, behind the execution side's `ExecutionDesk`). The coverage policy stays an owner
+decision. Do not start the Hypothesis Portfolio, the Search
 Tree or Attempt Memory. Do not install Ax, BoTorch, PySINDy or PySR, and do not run Battery v4. No push, merge or certification
 without the owner.
 
