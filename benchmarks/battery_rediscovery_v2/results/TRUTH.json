@@ -1,0 +1,407 @@
+{
+ "reference_sha256": "fab4761b8d1a5db1a724dea49f8c82d9d5c4fad8488342a7240767001ae22863",
+ "schema": "forge.battery_rediscovery_v2.truth/1",
+ "seal": {
+  "files_bound": 20,
+  "seal_commit": "ee3a6946e302c0fa56d55a1b3314e99f70aff65d",
+  "seal_sha256": "843c6e142eb5cb45c9751baedd4655c5df2b8337f8c52761f750a8d3e9d09f4e"
+ },
+ "table": {
+  "Q1": {
+   "CROSS_CELL_TRANSFER": {
+    "basis": "an in-domain subset fails its acceptance bar beyond the margin",
+    "subsets": {
+     "other_cell": {
+      "in_domain": true,
+      "label": "NOT_SUPPORTED"
+     }
+    },
+    "truth": "NOT_SUPPORTED"
+   },
+   "IDENTIFIABILITY": {
+    "ambiguity_rule": "relative cost difference <= 1e-06",
+    "ambiguous": false,
+    "basis": "measurement sigma is UNKNOWN, so no interval can be stated; neither near-structural nor ambiguous",
+    "max_ln_deviation_within_tolerance": {
+     "C1": 3.3900063201e-08,
+     "R0": 2.72534697032e-08,
+     "R1": 1.58902270531e-17
+    },
+    "near_structural": false,
+    "on_bound": [
+     "R1"
+    ],
+    "orthogonal_norms": {
+     "C1": 0.0216655701067,
+     "R0": 0.213911068008,
+     "R1": 0.0153267129432
+    },
+    "requested_parameters": [
+     "R0",
+     "R1",
+     "C1"
+    ],
+    "sigma": null,
+    "starts_within_tolerance": 24,
+    "truth": "NOT_ASSESSABLE"
+   },
+   "MODEL_ADEQUACY": {
+    "basis": "unscored: within the margin band of the adequacy bar",
+    "p95_abs": 0.066548778046,
+    "p95_abs_max": 0.09,
+    "rmse": 0.0462483979798,
+    "rmse_max": 0.05,
+    "truth": null
+   },
+   "MODEL_DISCREPANCY": {
+    "basis": "the measurement uncertainty is UNKNOWN; the plan defines no discrepancy bound",
+    "half_width": null,
+    "p95_abs": 0.066548778046,
+    "rmse": 0.0462483979798,
+    "sigma": null,
+    "truth": "NOT_ASSESSABLE"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "basis": "unscored: a subset is marginal or out of domain without a clean pass",
+    "subsets": {
+     "later_cycles": {
+      "in_domain": true,
+      "label": "MARGINAL"
+     }
+    },
+    "truth": null
+   },
+   "diagnostics": {
+    "calibration": {
+     "bias": 3.44923658136e-17,
+     "max_abs": 0.53772283257,
+     "n": 3708,
+     "p95_abs": 0.066548778046,
+     "rmse": 0.0462483979798
+    },
+    "calibration_units": [
+     "A",
+     "B"
+    ],
+    "cost": 3.9655471413,
+    "domain": {
+     "level_A": {
+      "hi": 2.05,
+      "lo": 0.95,
+      "max": 2.0,
+      "min": 1.0,
+      "widen": 0.05
+     },
+     "soc": {
+      "hi": 1.02000143621,
+      "lo": -0.0212062574025,
+      "max": 1.00000143621,
+      "min": -0.00120625740252,
+      "widen": 0.02
+     },
+     "temperature_C": {
+      "hi": 55.616024127,
+      "lo": 44.1508448817,
+      "max": 54.616024127,
+      "min": 45.1508448817,
+      "widen": 1.0
+     }
+    },
+    "family_id": "rc1_fitted_ocv/1",
+    "margin": 1.1,
+    "noise_status": "UNKNOWN",
+    "parameters": {
+     "C1": 5164.9694859,
+     "R0": 0.135092795225,
+     "R1": 1.0,
+     "ocv_k0": 3.4311005708,
+     "ocv_k1": 4.12811888824,
+     "ocv_k2": 4.32361014691,
+     "ocv_k3": 4.29448753681,
+     "ocv_k4": 4.23822649727,
+     "ocv_k5": 4.18401833422,
+     "ocv_k6": 4.16374401583
+    },
+    "schema": "forge.battery_rediscovery_v2.reference_truth/1",
+    "starts": {
+     "best": 5,
+     "cost_max": 6.26657093827,
+     "cost_min": 3.9655471413,
+     "count": 27,
+     "hit_max_nfev": 0
+    },
+    "subsets": {
+     "cross_unit_heldout": {
+      "other_cell": {
+       "bias": -0.00727699409636,
+       "in_domain": true,
+       "label": "NOT_SUPPORTED",
+       "max_abs": 0.235653154035,
+       "n_scored": 1854,
+       "outside": {},
+       "p95_abs": 0.163193374423,
+       "p95_abs_max": 0.09,
+       "rmse": 0.0571202203065,
+       "rmse_max": 0.05,
+       "trajectories": [
+        "Q1-x01",
+        "Q1-x02",
+        "Q1-x03",
+        "Q1-x04"
+       ],
+       "unit_relation": "cross",
+       "unit_relation_holds": true,
+       "units": [
+        "C"
+       ]
+      }
+     },
+     "within_unit_heldout": {
+      "later_cycles": {
+       "bias": 0.0162201197703,
+       "in_domain": true,
+       "label": "MARGINAL",
+       "max_abs": 0.619731628117,
+       "n_scored": 3418,
+       "outside": {},
+       "p95_abs": 0.0653928774116,
+       "p95_abs_max": 0.09,
+       "rmse": 0.0542503642111,
+       "rmse_max": 0.05,
+       "trajectories": [
+        "Q1-w01",
+        "Q1-w02",
+        "Q1-w03",
+        "Q1-w04",
+        "Q1-w05",
+        "Q1-w06",
+        "Q1-w07",
+        "Q1-w08"
+       ],
+       "unit_relation": "within",
+       "unit_relation_holds": true,
+       "units": [
+        "A",
+        "B"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "Q2": {
+   "CROSS_CELL_TRANSFER": {
+    "basis": "no set supplied",
+    "subsets": {},
+    "truth": "NOT_ASSESSABLE"
+   },
+   "IDENTIFIABILITY": {
+    "ambiguity_rule": "delta cost <= 3.84 sigma^2 / 2 = 1.6e-05",
+    "ambiguous": false,
+    "basis": "declared and inflated classifications are both IDENTIFIABLE, no parameter on a bound, not near-structural, not ambiguous",
+    "declared": {
+     "condition_number": 4.59701324869,
+     "interval_95": {
+      "C1": [
+       1459.36787441,
+       1468.60367028
+      ],
+      "R0": [
+       0.0210041793863,
+       0.0210312869577
+      ],
+      "R1": [
+       0.0173614632712,
+       0.0174491181573
+      ]
+     },
+     "max_abs_correlation": 0.602149131437,
+     "relative_widths": {
+      "C1": 0.00630866505021,
+      "R0": 0.00128974762244,
+      "R1": 0.00503610583226
+     },
+     "sd": {
+      "C1": 2.35611367067,
+      "R0": 6.91532385325e-06,
+      "R1": 2.23613512212e-05
+     },
+     "status": "PARAMETERS_IDENTIFIABLE",
+     "why": "every parameter's 95% interval is small relative to its own value (widest 0.00631, threshold 1), and neither the correlation (0.6021) nor the conditioning (4.6) reaches its threshold. Relative widths are measured against each parameter's declared zero; a parameterization with another origin can reach another verdict"
+    },
+    "inflated": {
+     "condition_number": 4.59701324869,
+     "interval_95": {
+      "C1": [
+       1444.63652949,
+       1483.3350152
+      ],
+      "R0": [
+       0.0209609420747,
+       0.0210745242692
+      ],
+      "R1": [
+       0.0172216513506,
+       0.017588930078
+      ]
+     },
+     "max_abs_correlation": 0.602149131437,
+     "relative_widths": {
+      "C1": 0.0264336487647,
+      "R0": 0.0054041124985,
+      "R1": 0.0211015566134
+     },
+     "sd": {
+      "C1": 9.87224408408,
+      "R0": 2.89755820568e-05,
+      "R1": 9.36952745757e-05
+     },
+     "status": "PARAMETERS_IDENTIFIABLE",
+     "why": "every parameter's 95% interval is small relative to its own value (widest 0.0264, threshold 1), and neither the correlation (0.6021) nor the conditioning (4.6) reaches its threshold. Relative widths are measured against each parameter's declared zero; a parameterization with another origin can reach another verdict"
+    },
+    "max_ln_deviation_within_tolerance": {
+     "C1": 1.08450664449e-07,
+     "R0": 1.24159278414e-08,
+     "R1": 7.6236844393e-08
+    },
+    "near_structural": false,
+    "on_bound": [],
+    "orthogonal_norms": {
+     "C1": 0.768435852375,
+     "R0": 0.795556676496,
+     "R1": 0.957432910478
+    },
+    "requested_parameters": [
+     "R0",
+     "R1",
+     "C1"
+    ],
+    "sigma": 0.00288675134595,
+    "sigma_inflated": 0.0120956447271,
+    "singular": false,
+    "starts_within_tolerance": 125,
+    "truth": "SUPPORTED"
+   },
+   "MODEL_ADEQUACY": {
+    "basis": "calibration rmse and p95 within the adequacy bar divided by the margin",
+    "p95_abs": 0.024973827629,
+    "p95_abs_max": 0.03,
+    "rmse": 0.0120956447271,
+    "rmse_max": 0.015,
+    "truth": "SUPPORTED"
+   },
+   "MODEL_DISCREPANCY": {
+    "basis": "rmse 0.0120956 > M * bound 0.00590121",
+    "bound": 0.00536473886047,
+    "half_width": 0.005,
+    "p95_abs": 0.024973827629,
+    "rmse": 0.0120956447271,
+    "sd_pred": 0.000182369430237,
+    "sigma": 0.00288675134595,
+    "truth": "NOT_SUPPORTED"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "basis": "every subset is in domain and passes its acceptance bar with margin",
+    "subsets": {
+     "pulses_alternate_soc": {
+      "in_domain": true,
+      "label": "SUPPORTED"
+     }
+    },
+    "truth": "SUPPORTED"
+   },
+   "diagnostics": {
+    "calibration": {
+     "bias": 0.00210181036847,
+     "max_abs": 0.0923755840158,
+     "n": 13197,
+     "p95_abs": 0.024973827629,
+     "rmse": 0.0120956447271
+    },
+    "calibration_units": [
+     "A"
+    ],
+    "cost": 0.965391044079,
+    "domain": {
+     "level_A": {
+      "hi": 18.075,
+      "lo": 2.925,
+      "max": 18.0,
+      "min": 3.0,
+      "widen": 0.075
+     },
+     "soc": {
+      "hi": 1.01771438221,
+      "lo": 0.0985894830235,
+      "max": 0.997714382206,
+      "min": 0.118589483023,
+      "widen": 0.02
+     },
+     "temperature_C": {
+      "hi": 25.6071,
+      "lo": 22.55551,
+      "max": 24.6071,
+      "min": 23.55551,
+      "widen": 1.0
+     }
+    },
+    "family_id": "rc1_measured_ocv/1",
+    "margin": 1.1,
+    "noise_status": "DECLARED_TYPE_B",
+    "parameters": {
+     "C1": 1463.98577235,
+     "R0": 0.021017733172,
+     "R1": 0.0174052907143
+    },
+    "schema": "forge.battery_rediscovery_v2.reference_truth/1",
+    "starts": {
+     "best": 22,
+     "cost_max": 0.965391044079,
+     "cost_min": 0.965391044079,
+     "count": 125,
+     "hit_max_nfev": 0
+    },
+    "subsets": {
+     "cross_unit_heldout": {},
+     "within_unit_heldout": {
+      "pulses_alternate_soc": {
+       "bias": -0.000727087935232,
+       "in_domain": true,
+       "label": "SUPPORTED",
+       "max_abs": 0.0564645448232,
+       "n_scored": 9599,
+       "outside": {},
+       "p95_abs": 0.0173226469083,
+       "p95_abs_max": 0.03,
+       "rmse": 0.00793580864083,
+       "rmse_max": 0.015,
+       "trajectories": [
+        "Q2-w01",
+        "Q2-w02",
+        "Q2-w03",
+        "Q2-w04",
+        "Q2-w05",
+        "Q2-w06",
+        "Q2-w07",
+        "Q2-w08",
+        "Q2-w09",
+        "Q2-w10",
+        "Q2-w11",
+        "Q2-w12",
+        "Q2-w13",
+        "Q2-w14",
+        "Q2-w15",
+        "Q2-w16"
+       ],
+       "unit_relation": "within",
+       "unit_relation_holds": true,
+       "units": [
+        "A"
+       ]
+      }
+     }
+    }
+   }
+  }
+ }
+}
