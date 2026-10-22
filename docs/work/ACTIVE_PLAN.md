@@ -6,6 +6,23 @@ as open, or list EXC-1 as an open exception are superseded by that decision on m
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task - GEN2-BR1 ScientificWorld + Feasible ActionSpace v1 (2026-10-22)
+
+Development research on `research/mind-gen2-scientific-world-v1` (worktree `D:/forge-gen2-world`, local, base
+`da932552`, the sealed Gen1 head). It adds `engcore.mind.world`, imported by its own path. Gen1 is byte-identical.
+Synthetic fixtures only. The result is AUTHORITY_DUPLICATION_BLOCKER (see `benchmarks/mind_gen2_world_v1/README.md`):
+the check works, but admission is decided on world copies of owner records that nothing verifies with their owners.
+
+STOPPED by the pre-committed stopping rule. The next step needs owner decisions, not more Mind-side rules:
+- a verifiable budget ledger (`BudgetLedger` digest);
+- a head-state view;
+- a core coverage policy for interval uncertainty;
+- where admission verification lives.
+
+README section 6 lists the eight requirements. Do not start the Hypothesis Portfolio, the Search Tree or Attempt
+Memory. Do not install Ax, BoTorch, PySINDy or PySR, and do not run Battery v4. No push, merge or certification
+without the owner.
+
 ## Current bounded task - BR-MIND-REPSEM-01 representation + semantic roles repair (2026-10-22)
 
 Development-only repair on `research/mind-representation-semantics-v1` (worktree `D:/forge-repsem`, local, based on

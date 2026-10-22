@@ -8435,3 +8435,88 @@ wiring step.
 same seven questions, layering, and a critic. If any question is still YES with a BLOCKER or MAJOR finding, BR1
 concludes AUTHORITY_DUPLICATION_BLOCKER with that evidence. There is no third fix round inside BR1. A question left
 PARTIAL with only MINOR findings may stand if every MINOR is disclosed.
+
+## 2026-10-22 — GEN2-BR1: ScientificWorld + Feasible ActionSpace v1 — AUTHORITY_DUPLICATION_BLOCKER
+
+Branch `research/mind-gen2-scientific-world-v1` (worktree `D:/forge-gen2-world`, base `da932552`, the sealed Gen1
+head). Local only: not pushed, not merged, not certified. Report: `benchmarks/mind_gen2_world_v1/README.md`.
+
+**Conclusion: AUTHORITY_DUPLICATION_BLOCKER.** The round-2 read-only authority review answered YES on Q1–Q6 (15 MAJOR,
+24 MINOR, 0 BLOCKER) and PARTIAL on Q7; layering was NO. The stopping rule committed in `575faaa3` before round 2 was
+written applies, so there is no third fix round.
+
+**What it shows.**
+- `engcore.mind.world` gives the Mind a grounded world view and a typed action-feasibility check.
+- On 515 frozen synthetic cases:
+  - 78/78 valid actions found FEASIBLE and 437/437 invalid found NOT_FEASIBLE, with status and codes 515/515;
+  - replay 515/515, and decisions independent of the hash seed.
+- Gen1's own design on a two-level protocol requests 10/10 off-level currents. Gen1 finds all 10 FEASIBLE; Gen2 finds
+  them INFEASIBLE_PROTOCOL, with declared alternatives 1.0 A and 2.0 A.
+- A check takes 0.14 ms at p50, roughly 600 times cheaper than an in-repo model fit.
+
+**What it does not show.**
+- The scores do not test trust in owner copies; every fixture binds trusted synthetic records.
+- The same author wrote the oracle and the checker.
+- Admission is decided on world copies that nothing verifies with their owners.
+- There is no real data and no scientific claim.
+
+**Failed approaches, recorded so they are not repeated:**
+- **An execution gate inside the Mind package** (round 0 → round 1). To stop unadmitted dispatch it had to re-implement
+  owner functions: a dispatch and budget ledger in process memory, reservation against the world's own budget copy,
+  state currency, duck-typed provider and registry objects, and routing by a world label. Each one was a second
+  authority.
+- **No gate, an admitted-action record only** (round 2). Removing the gate also removed the only caller of
+  `verify_bindings` and the only synthetic-world refusal, so admission now trusts copies.
+- **Shared cause.** A view over owner records admits soundly only if admission verifies those records with their
+  owners. Two owners expose nothing verifiable today: `BudgetLedger` has no digest, and there is no head-state view.
+  Fixing this inside the Mind package keeps adding world-made rules (currency, coverage, containment, lineage), and
+  each becomes a second authority. The README §6 lists eight requirements for the owner-reviewed next step.
+- **Smaller traps found on the way:**
+  - 12-digit base-unit identity made one revision decide two ways. Identity is now the raw owner payload.
+  - `is_compatible_with` treats a temperature difference as a temperature. Use the owner's conversion.
+  - An integer domain in `percent` on a dimensionless variable silently rescales by 100. State it in the variable's
+    own unit.
+  - The all-edges rule is unsound for two-sided sets (ranges, EQUAL bands). Decide side by side.
+  - `dataclasses.replace` on a frozen record with a two-field invariant must set both fields in one call. The case
+    generator broke on this in run `…aae3ce78` (RUN_FAIL), fixed in `08602f75`.
+
+**Commits:**
+- tests and implementation: `9d71df1c`, `6007e7aa`, `a2d5d94e`;
+- frozen cases: `4998dc2e`;
+- arms and results: `93368e06`, `193abd84`;
+- round-0 fixes: `5b27dbad`;
+- round-0 results: `8bdda7c1`, `1209de17`, `282b4d58`;
+- stopping rule: `575faaa3`;
+- round 2: `cc3a3d60`, `08602f75`, `67cfcf37`, `3cbe0a8c`;
+- report: this commit.
+
+**Run Observatory** (ledger `D:/forge-run-ledger`):
+- Gen1 reproduction, RUN_PASS: `20261022T114747Z-b0031e2f00a94ea5`, `20261022T122439Z-b9f04e8811e94995`,
+  `20261022T132120Z-b3cc1f0dd5664d80`.
+- Benchmark, RUN_PASS: `20261022T114757Z-da10950bd4e64e9a`, `20261022T122525Z-99f5fc35579046f8`,
+  `20261022T132208Z-86d9280a10f14b0c` (reported).
+- Superseded: `20261022T122455Z-cb5111ea69a640b4` (dirty tree).
+- RUN_FAIL: `20261022T132132Z-aae3ce78b0be4d68`.
+
+**Commands.** All use the phyx `.venv` Python 3.14, `PYTHONPATH="D:/forge-gen2-world/src;D:/forge-gen2-world"` and
+TMPDIR on D:.
+1. `python -m pytest tests/mind/test_world_failing_first.py tests/mind/test_world_contract.py
+   tests/mind/test_world_boundary.py -q -p no:cacheprovider`: 103 passed (at `cc3a3d60`).
+2. `python -m pytest benchmarks/mind_gen2_world_v1/tests -q`: 8 passed (at `3cbe0a8c`).
+3. Guard and Mind suites: `python -m pytest tests/mind tests/test_blind_challenge_guards.py
+   tests/test_core_api_layering.py tests/test_core_guards.py tests/test_core_semantic_invariants.py
+   tests/test_repository_architecture.py tests/test_trust_boundary_*.py -q -n 4`. Result: 868 passed, 2 failed. The
+   two failures are byte-identical on the pristine base `da932552`:
+   - `test_core_guards::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against`, on
+     conduction1d_transient_fv;
+   - `test_core_semantic_invariants::test_every_reader_that_writes_a_schema_also_checks_one`, on 7 unrelated classes.
+4. `python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`: GEN1_REFERENCE INTACT, before and after
+   round 2.
+5. FAST: `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rfE`.
+   - Pristine base `da932552` (`D:/forge-gen2-base`): 186 failed, 22 errors, 11926 passed.
+   - Branch at `282b4d58`: 186 failed, 22 errors, 12030 passed.
+   - Branch at `3cbe0a8c`: 186 failed, 22 errors, 12037 passed.
+   - All three have the same 208 failing node ids (`comm` over sorted id lists): **NO_NEW_FAILURES**. The extra
+     passes are exactly the new tests. FAST is red on the base, so it is NOT green.
+
+The regression pack, SCIENTIFIC, `forge_check --changed` and certification were NOT RUN.
