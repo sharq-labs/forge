@@ -1,0 +1,262 @@
+{
+ "archives": {
+  "4": {
+   "bytes": 11376117549,
+   "file": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "md5": "99083707bc7a24e72d9865abac19ce50",
+   "md5_matches_zenodo": true,
+   "zenodo_md5": "99083707bc7a24e72d9865abac19ce50"
+  },
+  "5": {
+   "bytes": 10443549687,
+   "file": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "md5": "298aa767e4e14acdb348f5832e0cbae9",
+   "md5_matches_zenodo": true,
+   "zenodo_md5": "298aa767e4e14acdb348f5832e0cbae9"
+  }
+ },
+ "members": {
+  "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 11186423,
+   "cell": "A",
+   "crc32": "98371f3f",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell A/Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "e5fe1cf6e0e2afa56d35f0edd0937e231312800aa71e5ace8755cbb89a471367"
+  },
+  "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 10744187,
+   "cell": "A",
+   "crc32": "f14ab3e5",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell A/Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 8,
+   "sha256": "aaede6c61c41dcd5fd17affd706aee99e23f7f6b51cb02bb27939c82ef284f14"
+  },
+  "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 11128287,
+   "cell": "B",
+   "crc32": "84eb1826",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell B/Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "a31a282dbed7c31d84ac843b1962a67d8f9a5db2917781f642f2ba7c996b7603"
+  },
+  "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 10037527,
+   "cell": "B",
+   "crc32": "fb93c4ca",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell B/Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 8,
+   "sha256": "5a9f0d2c69f33286cb1b7512e1805083933491c64732ed0ae590e6a1360e6a6d"
+  },
+  "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 11162178,
+   "cell": "C",
+   "crc32": "f9992936",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell C/Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "ac07430eaf0753ae1a3256a2400b0079ad36dfd473bfd7ea66d20e2221e9eacc"
+  },
+  "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 9906592,
+   "cell": "C",
+   "crc32": "59ce65e6",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell C/Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 8,
+   "sha256": "9a3eaa2585ba7d82afd347e7e679e2183a2f801cd5fa1bdb41e226f0ce3fbf00"
+  },
+  "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 11180488,
+   "cell": "F",
+   "crc32": "729d5370",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell F/Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "85f0eac9f6662f5cd93e75ca60c659bbf20dc4c050bda39f65f56f4740a8dcc1"
+  },
+  "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 10404635,
+   "cell": "F",
+   "crc32": "9c03d0bd",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell F/Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 8,
+   "sha256": "d8cd4b54d1e7b003a1e556e803595e18a213fbcff913bfdc61fa1df3399cc0f1"
+  },
+  "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 11178808,
+   "cell": "G",
+   "crc32": "30aa122f",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell G/Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "26b9198747deb7dcc56cd4b6cd19c95213c55df68f45f03b928530c5a988fe71"
+  },
+  "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 10476530,
+   "cell": "G",
+   "crc32": "569964e8",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell G/Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 8,
+   "sha256": "f5568471e5e05075375975376be84f1e1fd1a6dee4163dd3f521ee22453551a8"
+  },
+  "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 11186414,
+   "cell": "H",
+   "crc32": "a23bfa48",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell H/Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "4aa20de2d13c4714cc192b757a7138ae44a603196efd17d0b41892ee152f584b"
+  },
+  "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+   "bytes": 10491396,
+   "cell": "H",
+   "crc32": "ee04cb0f",
+   "expt": 4,
+   "member": "Expt 4 - Drive Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/cell H/Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 8,
+   "sha256": "988d75d4008ac16b8093ac0436eeb6e9e7fb4f98426b4127ed87d3880f8a0d3d"
+  },
+  "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 12489242,
+   "cell": "A",
+   "crc32": "0d026505",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell A/Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "8aa8bdd1af2aa68e56243db3738e56590858393861acf276d1a4a9cc36816825"
+  },
+  "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 11750431,
+   "cell": "A",
+   "crc32": "9b11353a",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell A/Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 14,
+   "sha256": "8f2f65f7d5c101bcb5ec0331be25de56c588cf1a97251da004863048f9ccffed"
+  },
+  "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 12534593,
+   "cell": "B",
+   "crc32": "95021318",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell B/Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "09abd771d44fca5ad9b186b93ebba8e789bc62e541210da361a96f36a21cd238"
+  },
+  "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 11909102,
+   "cell": "B",
+   "crc32": "ed2060c3",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell B/Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 14,
+   "sha256": "340132eee83a5a26b17843bbf697c28f6226c9a3759cc005f9552e36646d4c72"
+  },
+  "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 12607397,
+   "cell": "C",
+   "crc32": "24f83f3a",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell C/Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "1ea9a6ae7a8255967a5f766f702a4b5bd72b11204c875c13ffe4756ea284637b"
+  },
+  "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 11783009,
+   "cell": "C",
+   "crc32": "547b1e38",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell C/Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 14,
+   "sha256": "d0a65c5ab60afda16797f5c39d520463eabde2d3c904f8a06c58f445779a354e"
+  },
+  "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 12400661,
+   "cell": "F",
+   "crc32": "27cded93",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell F/Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "1965b729b4c7fb31d169268d17ce984ba43b84b3c2f70637cc1354cc19903e47"
+  },
+  "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 11958342,
+   "cell": "F",
+   "crc32": "b1e7388a",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell F/Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 14,
+   "sha256": "237af38d95633f9fb2f1939300f7047368aeefa0c216f096735fa203c0bf3692"
+  },
+  "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 12352699,
+   "cell": "G",
+   "crc32": "81dd5d47",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell G/Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "d8d9f984764896b9efe2cd35c1e3b28a7ebcf164c87c4e33885a01349e4aa8e6"
+  },
+  "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 12124709,
+   "cell": "G",
+   "crc32": "0ad0965e",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell G/Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 14,
+   "sha256": "f031393b508a8d166e131b6f58f07881d4cdde0d7390ee46ee35dd84d744c129"
+  },
+  "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 12234961,
+   "cell": "H",
+   "crc32": "8344418f",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell H/Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 0,
+   "sha256": "69a877d790142461e148eddf97adfac480ac6c1385828e8b1ff2464949b379ae"
+  },
+  "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv": {
+   "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+   "bytes": 11980171,
+   "cell": "H",
+   "crc32": "0c7be238",
+   "expt": 5,
+   "member": "Expt 5 - Standard Cycle Aging (Control)/Processed Timeseries Data/GITT Voltage Curves/Cell H/Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv",
+   "rpt": 14,
+   "sha256": "cabd8505157b0b9c314f1a7dc039601a9e00db5da160d2ec7420dfebe1dbefb2"
+  }
+ },
+ "schema": "forge.battery_rediscovery_v3.extract_manifest/1",
+ "zenodo_record": "10637534"
+}

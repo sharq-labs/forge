@@ -1,0 +1,137 @@
+{
+ "problems": {
+  "P01": {
+   "file": "P01.json",
+   "sha256": "2b916d6169b388cc0f03e1c66bd71101901a654e5c80a246830762a31e5980b8"
+  },
+  "P02": {
+   "file": "P02.json",
+   "sha256": "77fac7a38a743e2621968e5d282e934374716aa5d51c0f98439aaf02e081d9f9"
+  },
+  "P03": {
+   "file": "P03.json",
+   "sha256": "b2590f1750cd9f713e864296a02d324c3992247ec1eefc4529c9b8fbe3c6ffc5"
+  },
+  "P04": {
+   "file": "P04.json",
+   "sha256": "98da5e7529ebabe9987d1cbc73e2c54b4c4b567e9b99132a6f035d7fa74cb07a"
+  },
+  "P05": {
+   "file": "P05.json",
+   "sha256": "0479fc0bc13a8fc32ab39237ffda90be67d73ed44eb258ffeb799b71ec3c895c"
+  },
+  "P06": {
+   "file": "P06.json",
+   "sha256": "8252f69bc5731c5383a30fd98240b4df5b5e7af54c3e11f2de8a9f8db06c2f75"
+  },
+  "P07": {
+   "file": "P07.json",
+   "sha256": "735a967790d9e2b9742ce876a69fb4ed37a646177d3b207acfce47bf801d8032"
+  },
+  "P08": {
+   "file": "P08.json",
+   "sha256": "b9c98b2e23f6f13c5d7835d13a04b003d322d32f7520815df449c335c0507a92"
+  },
+  "P09": {
+   "file": "P09.json",
+   "sha256": "55659cea28cd574bc367fa2520affa9c982a45f613efa5b2017d3f484853fbe4"
+  },
+  "P10": {
+   "file": "P10.json",
+   "sha256": "1938bbf6b4a2489a232b1ef1e2c8f5b421d06a6438a61559fc98dd1c59d12c21"
+  },
+  "P11": {
+   "file": "P11.json",
+   "sha256": "f2e8b9aa1b1a7ff1b1ed2dd90598e8e5592116f58518d8ff0eb605b34a46a60f"
+  },
+  "P12": {
+   "file": "P12.json",
+   "sha256": "38f159ea0f3e971b4cdf5323485bc42a9ce9dc257fd37e13ccf00c168fb681e2"
+  },
+  "P13": {
+   "file": "P13.json",
+   "sha256": "1a01e246504abd5b7f6345c640fde76fec5ca342434d302ed1ba06c067671523"
+  },
+  "P14": {
+   "file": "P14.json",
+   "sha256": "d549c9f669584263e510be9684e5b29460c0f5fc68d517746cbbc5e9bfb00ccd"
+  },
+  "P15": {
+   "file": "P15.json",
+   "sha256": "5b4879b3209baf0d56111bf9efe8d420d7fa6deba0985fbba9eb079c0323247e"
+  },
+  "P16": {
+   "file": "P16.json",
+   "sha256": "8c82366dbc77d4ae78d1116ee65971917cb1e876b777c2dab9b41256fc96fd31"
+  },
+  "P17": {
+   "file": "P17.json",
+   "sha256": "89540e1837b034945d4f370f94576c56705baeac3468e0c0bb92b2b4fa606bd0"
+  },
+  "P18": {
+   "file": "P18.json",
+   "sha256": "72fd641fbe824590b7e1f3abacbeeb574bd17f3d892a4bfe28475db8345f4d36"
+  },
+  "P19": {
+   "file": "P19.json",
+   "sha256": "42903f0a2f49ac1acc56d06045f01decf2793d7abdba263823f22a11d4d56b99"
+  },
+  "P20": {
+   "file": "P20.json",
+   "sha256": "9e6704ebcb5465e1284f2dfd5ddd2fd416492764f3f722fb67f171e4cd2bf3b1"
+  },
+  "P21": {
+   "file": "P21.json",
+   "sha256": "a571accdf6b2ad38ca3cfe2afdfdb8147dae683121ac700319aaaff2ee133dd8"
+  },
+  "P22": {
+   "file": "P22.json",
+   "sha256": "468feb4e2604051c8b7b77532499cb60448b629c1e919e144de50819e1e691e3"
+  },
+  "P23": {
+   "file": "P23.json",
+   "sha256": "05109dea914477f67da01faf2b4db584a73ef2174ffb25b631ef3dfae37a467c"
+  },
+  "P24": {
+   "file": "P24.json",
+   "sha256": "d8cdaf616347139c1d772c7379a35176daac38d691663b01662686f280b4c34f"
+  },
+  "P25": {
+   "file": "P25.json",
+   "sha256": "ec9b97284d575aab6f94e642f3948c71b644e4530c4adbf04d387bb5f8e67bc2"
+  },
+  "P26": {
+   "file": "P26.json",
+   "sha256": "355abcb5780de46605e020e35c10e19cf4c448bfea104be2b34fbd0ba31313f7"
+  },
+  "P27": {
+   "file": "P27.json",
+   "sha256": "3099b4439213904fa9ce7375546144759199f7d69f076100f6571e9658cc3c92"
+  },
+  "P28": {
+   "file": "P28.json",
+   "sha256": "c01554495911eb4e973ca42f5047a54245ede33d6314e16ba89867d992d4090a"
+  },
+  "P29": {
+   "file": "P29.json",
+   "sha256": "fbef4629e01a20ffc003d680967c33a6c2187b6a830e426ed08204b625fbcea6"
+  },
+  "P31": {
+   "file": "P31.json",
+   "sha256": "0dde22055d817c7bc017b12164b9e7fde4246ff36835ea01a50f255c696a1476"
+  },
+  "P32": {
+   "file": "P32.json",
+   "sha256": "59e135cc8148a14c8791e63c81113f7022031658ce31fed441246bd209fbc6bd"
+  },
+  "Q1": {
+   "file": "Q1.json",
+   "sha256": "dc8f7f3ea7e5cfb590d1fde34600872d99e3de0627cd7ce53f399f524e005d2f"
+  },
+  "Q2": {
+   "file": "Q2.json",
+   "sha256": "1a03ba0587f97f7c4e57b6c60e264179963e63c18e30e6ab3a4732cee236a022"
+  }
+ },
+ "schema": "forge.battery_rediscovery_v2.pack_manifest/1"
+}
