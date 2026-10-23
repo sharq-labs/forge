@@ -8562,7 +8562,11 @@ completeness critic):
   lens F and the critic held Q4 PARTIAL on two MINORs (the fixed-condition half of the exact-level guard had no control;
   round 7's unlocked read-back let a rollback land between a verification's read-back and its comparison); fixed in
   `03f3aab`, `2f7281f` (README §9);
-- round 9: see the update below.
+- round 9 at `ceaf8cd` (six lenses): 0 BLOCKER / 0 MAJOR, 38 MINOR (critic K9-F1..F3 MINOR); Q1-Q7 NO from every lens
+  and the critic: the completion gate's review criteria held. The brief says not to loop on cosmetic MINORs; the
+  non-cosmetic ones (some introduced by round 8) and the records were fixed in `17a1c31`, `e573096` (README §9), and
+  round 10 reviews that change once;
+- round 10: see the update below.
 
 **Failed approaches, recorded so they are not repeated:**
 - **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
@@ -8610,6 +8614,11 @@ completeness critic):
   the read-back and the comparison are one locked step again (round 8).
 - **Serving an experiment's raw serialization while checking its read-back** (round 7): live digests could differ from
   replay's. An experiment is served in its owner's read-back form (round 8).
+- **Putting the read-back back under the follower's lock** (round 8, for B8-m1): the account objects' serialization (and
+  any hook the execution side put in their metadata) then ran under the lock, reopening round 7's deadlock class, and a
+  verification handed a spend but not yet read back still did not protect it. Round 9: tickets taken when a
+  verification starts, the read-back unlocked, and a verification that started while an earlier one is in flight
+  decides on nothing (no waiting); experiments read back only from plain JSON data.
 - **A mutation run under the repository's pytest config with only `PYTHONPATH` pointed at a mutant `src`**:
   `pyproject.toml`'s `pythonpath` puts the checkout's own `src` first, so the mutant was never imported. Mutants need a
   full tree copy run from its own root.
@@ -8731,7 +8740,11 @@ completeness critic):
     round-8 findings re-run on the fix tree gives the correct outcome (a803/a808/a809: the fixed-condition branch, its
     stated reason, subnormal and signed zeros; p01: the cache stays at one entry per account; p04: a torn experiment is
     refused; p05: an unread owner's pin refusal changes nothing; p07: no provider outside the declaration is probed);
-    the restated round-6 stress test passed 6/6; `rescore --check`: MATCHES; `run_benchmark --check`: MATCHES;
+    the restated round-6 stress test passed 6/6 (corrected in round 9, K9-F1: "every reviewer probe" overstated it:
+    the probes re-run were a803/a808/a809, B's p01/p04/p05/p07 and the r7 offset-unit probes; B's p03, run unmodified
+    at `ceaf8cd`, still re-dispatched, because it pauses a verification before its locked read-back, a window round 9
+    closed with the ticket rule; and only two of the declaration-mode mutants, "no declaration" and "not in force",
+    were run); `rescore --check`: MATCHES; `run_benchmark --check`: MATCHES;
     `gen1_reference --check`: INTACT. The disk allowance filled once during the round (the BR1 re-derivation test
     failed while it was full and passed after scratch tree copies were removed). Performance at `adffac7`/`2f7281f`:
     `run_benchmark`, `ledger_curve` (three curves) and BR1's harness alternately on `1202ea6c`, `27b9f71` and
@@ -8745,6 +8758,14 @@ completeness critic):
     item 10). Regression pack: 279 passed. Guard suites (item 10's set): 1287 passed, 2 failed, the same two
     pre-existing failures with messages identical to the base's. The affected expensive tests minus the campaign tests:
     13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base. FAST is red on the base: NOT green.
+
+21. Round 9 at `f5d8dc0` (fixes `17a1c31`, `e573096`; results `f5d8dc0`): the suite command of item 1, **583
+    passed** (the round-6 stress test and the round-9 controls also passed 5/5 repeated); `test_authority_review_r9.py`
+    (10) copied into a `ceaf8cd` archive: 9 failed, 1 passed (the in-place detachment control); `rescore --check`:
+    MATCHES; `run_benchmark --check`: MATCHES; `gen1_reference --check`: INTACT. Performance regenerated at `e573096`:
+    `run_benchmark`, `ledger_curve` (three curves) and BR1's harness alternately on `1202ea6c`, `27b9f71` and
+    `e573096`, five rounds each (README §8, with paired comparisons). Scratch tree copies are deleted after use (the disk
+    allowance filled once in round 8).
 
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
