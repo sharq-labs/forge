@@ -1,4 +1,5 @@
 {
+ "br1_1_commit": "26d772421445cddf77c185803f1c98024cdb7e49",
  "br1_commit": "1202ea6c3d96f5c31d0b142a32438da75e020cae",
  "command": "for i in 1 2 3: for each checkout (1202ea6c, then this branch): cd <checkout> && PYTHONPATH=<checkout>/src:<checkout> PYTHONHASHSEED=0 python -c 'from benchmarks.mind_gen2_world_v1 import cases as C, run_benchmark as rb; r=rb.performance(C.load()[\"cases\"], repeats=25); print(r[...])'",
  "host": {
@@ -71,5 +72,5 @@
   ]
  },
  "schema": "forge.mind.gen2_authority.br1_performance_this_host/2",
- "statement": "BR1's own harness on BR1's 515 frozen cases, run alternately on BR1's code and on BR1.1's code, three times each on one idle host; medians reported. Timings are host-dependent and vary run to run by 10-20 %; SOLVER is one in-repo solver execution (a Gen1 repsem judgment), the scale reference."
+ "statement": "BR1's own harness on BR1's 515 frozen cases, run alternately on BR1's code (br1_commit) and on BR1.1's code (br1_1_commit), three times each on one idle host; medians reported. Timings are host-dependent; single runs differ by up to ~50 % (FEASIBILITY_P95_MS on BR1.1's code: 0.414 to 0.628 ms) and by up to ~30 % on the other metrics, so a delta of the medians inside that band is noise. SOLVER is one in-repo solver execution (a Gen1 repsem judgment), the scale reference."
 }

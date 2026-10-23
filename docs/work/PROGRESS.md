@@ -8550,7 +8550,10 @@ completeness critic):
 - round 5 at `c52dcfd`: lenses 0 BLOCKER; MAJOR B5-F1 = R5-C-F1 = R5-D1 (the round-4 budget follower took a history
   it had just refused as its baseline, so a rolled-back account was refused once, then re-authorized); fixed in
   `2422014`;
-- round 6: see the update below.
+- round 6 at `ceac320`: lenses 0 BLOCKER / 0 MAJOR (27 MINOR), critic K6-F1, K6-F2 MINOR; Q1, Q5, Q6 NO from every
+  lens, Q2, Q3, Q4, Q7 PARTIAL from at least one lens on MINOR findings only. The brief does not close on PARTIAL, so
+  every finding behind a PARTIAL was fixed or documented in `0453a95`, `a058cf2` (README §9);
+- round 7: see the update below.
 
 **Failed approaches, recorded so they are not repeated:**
 - **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
@@ -8575,6 +8578,17 @@ completeness critic):
   verification. A diverged account is now refused by that reader for good; a new timeline needs a new reader.
 - **A world-made level-separation threshold** (round 4): it refused level sets the unit owner distinguishes. Matching
   now refuses a value that lies nearer another declared level instead.
+- **Matching a level in one level set, then falling back to another** (round 5): a value nearer a level of the
+  variable's own domain was matched to a farther action level. One set decides, and the nearer-level rule also looks
+  at the variable's own levels.
+- **Observing only the accounts a verification reads** (round 5's answer to "unbound accounts are read"): a rollback of
+  an account no later verification of its world read (a desk verifying other worlds, a reader built after a spend) was
+  accepted; a submitted world chose which accounts were tracked; reading outside the lock let an older snapshot be
+  taken for a divergence. Every handed account is now observed at construction and at every verification, under one
+  lock, and an account no verification reads refuses nothing.
+- **A mutation run under the repository's pytest config with only `PYTHONPATH` pointed at a mutant `src`**:
+  `pyproject.toml`'s `pythonpath` puts the checkout's own `src` first, so the mutant was never imported. Mutants need a
+  full tree copy run from its own root.
 - **Renaming the `relied_on_bound_values` annotation**: it broke BR1's committed `GEN1_REPRODUCTION.json`; reverted.
 - **Pre-fix tests run through the editable install**: the venv's editable install points at `/home/user/forge/src`,
   so worktree runs need `PYTHONPATH=<worktree>/src:<worktree>` (and a test file copied into the worktree under test).
@@ -8635,7 +8649,9 @@ completeness critic):
     `verify_registry_unmutated` ~24 %). README §8.
 
 13. At `2422014`: the suite command of item 1, **511 passed**; `test_authority_review_r5.py` (11) copied into the
-    `c52dcfd` tree (`/home/user/forge-gate2`): 9 failed, 2 passed (controls for round-4 fixes); the two K4-F1
+    `c52dcfd` tree (`/home/user/forge-gate2`): 9 failed, 2 passed (corrected in round 6, E6-F1: the two that pass are
+    a round-4 reader-fix control and E5-F3's control, a path that already held; the K5-F2 ledger control fails there at
+    the round-4 follower's construction read); the two K4-F1
     regression tests of `test_authority_review_r4.py` copied into the `d0a0408` tree: both fail at the mint assertion
     (K4-F1 itself); `rescore --check`: MATCHES; `run_benchmark --check`: MATCHES; `gen1_reference --check`: INTACT.
     `python -m benchmarks.mind_gen2_authority_v1.ledger_curve` and `run_benchmark` regenerated the curve and

@@ -15,11 +15,11 @@ no scientific claim, nothing certified or formal. Generation 1 stays sealed and 
   `admission.py`; changed: `__init__.py`, `world.py`, `feasibility.py`, `variables.py`, `base.py`, `actions.py`,
   `domains.py`, `port.py`; removed: `binders.py`). One owner file outside the package: `src/engcore/sria/campaign/budget.py`
   (read-only `BudgetLedger.digest` / `revision`).
-- **Tests:** `tests/mind/test_authority_{failing_first,mutations,cross_domain,review_r1,review_r2,review_r3,review_r4}.py`,
+- **Tests:** `tests/mind/test_authority_{failing_first,mutations,cross_domain,review_r1,...,review_r6}.py`,
   `tests/test_sria_budget_ledger_identity.py`; BR1's tests adapted where §3's interval rule requires
   (`tests/mind/test_world_{failing_first,contract}.py`, `benchmarks/mind_gen2_world_v1/tests`).
 - **Benchmark:** this directory (`fixtures.py`, `mutations.py`, `run_benchmark.py`, `rescore.py`,
-  `br1_decisions.py`, `results/`).
+  `br1_decisions.py`, `ledger_curve.py`, `results/`).
 
 ## 1. The eight BR1 requirements (repair matrix)
 
@@ -78,14 +78,15 @@ ExecutionDesk (immutable; live readers; the execution owner's executor behind a 
   executor).
 - **Decided = executed** (as requested; realization uncertainty is not assessed, `CONFIGURATION_BASIS`). Every family
   decides on each control assignment and fixed condition AS IT WILL BE EXECUTED (in its variable's declared unit by the
-  unit owner's conversion; a declared discrete level of the action's or the variable's own domain as that level; an
-  integer as the exact integer), and a fixed condition is checked against its variable's own domain as executed, at
+  unit owner's conversion; a declared discrete level of the action's control domain when it declares levels, else of
+  the variable's own domain, as that level; an integer as the exact integer), and a fixed condition is checked against its variable's own domain as executed, at
   bind and at every check. Admission builds the configuration it mints from its sources by a separate path, and refuses
   to mint unless every exact value any family read in the check (recorded in the decision, outside its identity) equals
   the value minted; the executor's settings are their magnitudes. The proposal keeps the proposer's spelling; refusal
   records carry both. (Rounds 2, 3 and 4 found a BLOCKER or MAJOR where the two differed.)
 - **Dispatch.** The desk is immutable; it re-admits once; its executor is wrapped so that any authorization handed to it
-  is re-derived, and authorizations name the providers and the models whose applicability gated them. Authorizations
+  is re-derived, and authorizations name the providers and every applicability binding of the action, each flagged
+  `gating` (true only for a MODEL_EXECUTION action, whose execution the model's validity gates) or annotation-only. Authorizations
   are minted from a fresh rebuild and have `verify()` for deferred execution. A desk built with `suggestions_only=True`
   admits and dispatches only proposals that carry their certified `ExternalSuggestion`; the executor guard applies the
   same policy.
@@ -115,7 +116,7 @@ will be executed (§2), and they are exact as REQUESTED: realization uncertainty
 Round 1 showed the first BR1.1 design, a declared-coverage band, to be a world-made policy at a caller-chosen level (a
 1 %-coverage interval decided FEASIBLE; NUMERICAL-source intervals counted); it was removed. The cost is real: on the
 owned fixtures 12 of 21 BR1 base proposals are admitted; the other 9 read a current value (a SOC, room-temperature,
-velocity or winding-temperature precondition, or a model input) and are MISSING_INFORMATION with exactly those reasons.
+altitude, velocity or winding-temperature precondition, or a model input) and are MISSING_INFORMATION with exactly those reasons.
 Deciding state preconditions needs an owner capability FORGE lacks (§11).
 
 ## 4. Decisions recorded, not defaulted
@@ -131,14 +132,24 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   prediction, and nothing is reserved (`BUDGET_BASIS`); dimensions the declaration leaves unbounded are listed on every
   admitted action and authorization; a refusal records the amount and the remainder the owner compared it with, in the
   ledger's unit, and which remainder that was (`general_pool`, or `validation_pool+general_pool` for a VALIDATE
-  action; an experiment's `remaining_observations` or `attempt_cap`). A followed account a world binds only moves
-  forward from the history the reader accepted for it (in the owner's read-back form: a restore of an unchanged account
-  is the same account, a top-up with the history unchanged is a move of the owner); one that went back or rewrote its
-  history is OWNER_UNAVAILABLE to that reader from then on (round 5), and adopting a new timeline is the execution
-  side's statement, made with a new reader. A reader cannot refuse a state it never observed (a spend and a rollback
-  both between two verifications look like no change); at-most-once execution is the execution owner's. Admission
-  cost grows linearly with a bound ledger's settled charges (§8). The observation rule
-  restates `ScientificExperiment.record`, pinned by a differential test.
+  action; an experiment's `remaining_observations` or `attempt_cap`). A BR1-style world (no owner statement, never
+  admitted) keeps BR1's plan rule and record: its OVER_BUDGET states the plan's general remainder and no basis.
+- **Followed budget accounts.** A following budget reader observes every account the execution side hands over, at
+  its construction and at every verification (each verification's snapshot is taken and observed under one lock, in
+  order), whichever world is verified: a submitted world never chooses what is observed. A verification decides on
+  exactly the records its snapshot observed. An account only moves forward from the history the reader accepted for it
+  (in the owner's read-back form: a restore of an unchanged account is the same account, a top-up with the history
+  unchanged is a move of the owner); one that went back or rewrote its history is OWNER_UNAVAILABLE to every later
+  verification that reads it, with one message from the first refusal on (so the refusal is recordable and replays),
+  and adopting a new timeline is the execution side's statement, made with a new reader (rounds 5 and 6). Concurrent
+  verifications never refuse an account that only moved forward. An account no verification reads (unreadable or
+  diverged) refuses nothing; the constructor still refuses, for the whole reader, an account set that is not exactly
+  typed or that registers one object under two ids. A world bound to an account or a provider the declaration in force
+  does not name is AUTHORITY_MISMATCH without that record being read. A reader cannot refuse a state it never observed
+  (a spend and a rollback both between two verifications look like no change); at-most-once execution is the execution
+  owner's. Each verification reads every handed account back (a ledger's charges, an experiment's evaluations one at a
+  time), so admission cost grows with the accounts' histories (§8). The observation rule restates
+  `ScientificExperiment.record`, pinned by a differential test.
 - **Synthetic** means labelled synthetic by the declaration (`SYNTHETIC_BASIS`).
 - **Lineage v2** records ancestors' statements; v1 (BR1) keeps its bytes and ids and verifies by walking the store. A
   projection is a root world; admission refuses a history no owner made.
@@ -146,9 +157,14 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
 - **Discrete levels:** a value IS a level when the unit owner's one comparison rule says they are one value
   (`canonical_magnitude` in the base unit, 12 significant digits: the rule that keeps the declared levels distinct, and
   BR1's original rule); it is then decided and executed AS that level. Nothing else matches (no nearest level, no
-  interpolation): 1.15 A against levels 1 A / 2 A is INFEASIBLE_PROTOCOL with the declared alternatives. A value the
-  owner calls one level but that lies nearer another declared level matches neither (no world-made separation
-  threshold: round 5 replaced the round-4 one). A value that IS
+  interpolation): 1.15 A against levels 1 A / 2 A is INFEASIBLE_PROTOCOL with the declared alternatives. One level set
+  decides: the action's control domain when it declares levels, else the variable's own (never one after the other).
+  A value the owner calls one level but that lies nearer another declared level, of that set or of the variable's own
+  domain, matches neither (no world-made separation threshold: round 5 replaced the round-4 one; round 6 added the
+  variable's own levels). The cost of the owner's rule: a level whose base-unit magnitude has 13 or more significant
+  digits can be refused in an honest other-unit spelling at the rule's rounding edge (3224.762319965 A is FEASIBLE,
+  3.224762319965 kA is LEVEL_NOT_DECLARED; offset conversions such as degC to K add digits). It fails closed; spelling
+  such a level in its declared unit avoids it. A value that IS
   a level is decided as the level even where its own spelling would decide otherwise at a bound (35.0000000001 degC is
   35 degC to the unit owner, and it is checked and executed as 35 degC). Round 2's 64-ulp rule was absolute at a zero
   level and was withdrawn (round 3, R3-A2).
@@ -159,26 +175,38 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   conditions) at every check. The cost: a domain stated in another unit than its variable can refuse its own edge by
   conversion noise (a variable in mA with own domain [0, 0.7] A: 0.7 A executes as 700.0 mA, which the owner's rule
   reads back as 0.7000000000000001 A, outside), so such a declaration fails closed; stating a domain in its variable's
-  own unit avoids it. A fixed condition for a dimensioned variable is a quantity the unit owner converts (an integer,
-  category or boolean is refused).
+  own unit avoids it. A typed (integer, category or boolean) fixed condition is accepted only for a variable declared
+  in exactly `dimensionless` or with a declared domain of that kind; for any other unit (also units pint treats as
+  dimensionless, such as degree, percent or ppm) a fixed condition is a quantity the unit owner converts.
 - **Who may propose:** a proposer's kind is caller-asserted; a deployment hosting an external or language-model
   proposer builds its desk with `suggestions_only=True` (the execution side's policy).
 
 ## 5. Controls
 
-Executed at `2422014` (command and environment in `docs/work/PROGRESS.md`): `tests/mind`,
+Executed at `a058cf2` (command and environment in `docs/work/PROGRESS.md`): `tests/mind`,
 `benchmarks/mind_gen2_authority_v1/tests`, `benchmarks/mind_gen2_world_v1/tests` and
-`tests/test_sria_budget_ledger_identity.py`, **511 passed** (including the expensive BR1-decision re-derivation).
+`tests/test_sria_budget_ledger_identity.py`, **531 passed** (including the expensive BR1-decision re-derivation).
 
 | Suite | Tests | What it pins |
 |---|---|---|
 | `test_authority_failing_first.py` | 29 | the brief's A–O, written failing first: no interval decides; lineage laundering; stale state/model/provider/budget/declaration; missing owner; unit spelling; protocol levels (no 1.15 A, nearest or interpolation); raw proposals never execute |
 | `test_authority_mutations.py` | 120 | every projected field and binding field edited, every admitted-action and authorization field edited, replay forgeries |
 | `test_authority_cross_domain.py` | 32 | battery, two HVAC worlds, drone, motor: the same guarantees in each |
-| `test_authority_review_r1.py` … `_r5.py` | 43 / 35 / 21 / 17 / 11 | one control per confirmed review finding; the round-3, round-4 and round-5 controls fail 20/21, 16/17 and 9/11 on the trees before their fixes (the round-5 file's 2 others are controls for round-4 fixes) |
+| `test_authority_review_r1.py` … `_r6.py` | 43 / 35 / 21 / 17 / 17 / 14 | one control per confirmed review finding (round 6: per finding behind a PARTIAL verdict); see below |
 | `test_sria_budget_ledger_identity.py` | 5 | the owner addition: read-only, wire shape unchanged, round-trip identity |
 | benchmark tests | 7 | committed matrix and re-score reproduce; the re-score guard; BR1's decisions re-derived from BR1's code (expensive) |
 | BR1 tests adapted (`test_world_contract.py`, `test_world_failing_first.py`, BR1 benchmark) and unchanged (`test_world_boundary.py`) | 67 / 31 / 8 / 5 | BR1's contract under §3; BR1's committed results byte-identical; the package boundary |
+
+On the trees before their fixes (each file copied into a checkout of that SHA): the round-3 controls fail 20/21 on
+`1a87f7c`, the round-4 controls 16/17 on `d0a0408`, the round-5 controls (the file as committed at `2422014`, 11
+tests) 9/11 on `c52dcfd`, and the round-6 controls 9/14 on `ceac320`. On `c52dcfd` the two round-5 tests that pass are a
+control for a round-4 reader fix (`test_a_refused_declaration_read_advances_nothing`) and E5-F3's control
+(`test_a_fixed_condition_at_its_variables_own_level_is_refused_where_the_level_is`: that path already held); one of the
+nine that fail there, the K5-F2 ledger control, fails at the round-4 follower's construction read rather than at the
+mapping it guards (reverting the mapping on a later tree makes it fail). On `ceac320` the five round-6 tests that pass
+guard paths that already held: the two experiment-follower controls (both fail on a mutant that drops the experiment
+history check), the gating-False and remainder-basis controls, and a thread stress test (it failed there in 1 of 3
+runs: the race is real but not deterministic). Round 6 also ran the round-5 fixed-kind test over three units (11 → 17).
 
 ## 6. Owned fixtures and the authority matrix (`results/AUTHORITY.json`)
 
@@ -209,8 +237,8 @@ re-derives it). Against them, BR1.1 changes **259 cases: 53 in status, 206 in co
 the BR1.1 rules, and any lost code without its stated cause among the case's own BR1.1 codes (`CONDITIONAL_LOST_CODES`:
 the matching undecidable code, the value having been a current value of the world; or a role refusal, the value having
 been one the proposer may not set). The check is per case, not per subject: BR1's exported decisions carry codes, not
-subjects. The round-3, round-4 and round-5 changes left every case's status and codes unchanged; only the decisions
-digest moved (rounds 3 and 4).
+subjects. The changes of rounds 3 to 6 left every case's status and codes unchanged; only the decisions digest moved
+(rounds 3, 4 and 6).
 
 ## 8. Performance (`results/PERFORMANCE.json`, `results/BR1_PERFORMANCE_THIS_HOST.json`, `results/LEDGER_SIZE_CURVE.json`)
 
@@ -256,7 +284,8 @@ completeness critic. The builder did not overrule a finding: each was fixed or i
 | 3 | `1a87f7c` | A, B, C, D, E | 6 / 0 / 23 | every BLOCKER confirmed by two skeptics (reproduce, scope): **R3-A1 = R3-B-01 = R3-C-01 = R3-D1 = E3-F1** (a level control was decided on the proposer's spelling and executed as the matched level: a strict validity endpoint or constraint at a level was admitted for one spelling and executed at the refuted level), **R3-A2** (the 64-ulp level rule was absolute at a zero level: a declared 1e-14 F level was executed as 0 F) | **K3-F1 BLOCKER** (an integer decided through a float, executed exact: int64 seeds past the bound admitted), K3-F2, K3-F3 MINOR | `d113d30` |
 | 4 | `d0a0408` | A, B, C, D, E | 0 / 2 / 29 | **R4-A1 = R4-C-F1** (a fixed condition's own domain checked on its declared spelling, the converted value executed: 101.52641641114641 psi inside 700 kPa as spelled, 7.000000000000001 bar outside as executed): reproduced by both repro skeptics; both scope skeptics graded it MINOR (declared by the execution side, unreachable by a proposer); treated as MAJOR and fixed | **K4-F1 MAJOR** (the `d113d30` mint guard re-derived with the function that built the configuration, so a regression of the K-F1 kind was not caught), K4-F2..K4-F4 MINOR | `26d7724` |
 | 5 | `c52dcfd` | A, B, C, D, E | 0 / 3 / 23 | **B5-F1 = R5-C-F1 = R5-D1** (the round-4 budget follower took a history it had just refused as its baseline: a rolled-back account was refused once, then re-authorized): reproduced by every repro skeptic; B5-F1 confirmed MAJOR by both its skeptics | K5-F1..K5-F3 MINOR (follower tests never showed a refusal twice; two round-4 reader fixes had no control; gates last run before 26d7724) | `2422014` |
-| 6 | (this report's SHA) | A, B, C, D, E | see PROGRESS | | | |
+| 6 | `ceac320` | A, B, C, D, E | 0 / 0 / 27 | none to verify; Q1, Q5, Q6 NO from every lens; Q2, Q3, Q4, Q7 PARTIAL from at least one lens, on MINOR findings only (the brief does not close on PARTIAL) | K6-F1 (the experiment half of the follower had no control), K6-F2 (a submitted world chose which accounts the follower read) MINOR | `0453a95`, `a058cf2` |
+| 7 | (this report's SHA) | A, B, C, D, E | | | | |
 
 Rounds 2, 3 and 4 asked the same question three times: is the value a decision was made on the value an executor
 receives? `d113d30` answered it for controls (every family decides on the configuration as it will be executed);
@@ -271,22 +300,36 @@ with every exact value any family read in the check; tests that re-introduce the
 resolution, or a raw read into one family only, are refused at mint. A family that bypassed the shared reading path
 altogether would not be seen by this check; the per-value regression tests are the control for that.
 
-**MINOR dispositions.** Every MINOR of rounds 1–5 was fixed or is recorded as a documented residual; the builder did
-not drop any silently. Round 5's, in particular: fixed — A5-F2 / R5-C-M1 / E5-F2 (the compared remainder and its
-basis), A5-F3 / E5-F1 (refusals that last), A5-F4 (fixed-condition kind), A5-F5 (no separation threshold), A5-F6 /
-B5-M2 / E5-F5 (gating flag), A5-F7 / B5-M3 / E5-F4 (fixed-condition refusal labels), B5-M1 / R5-C-M2 / R5-D2 (only
-bound accounts are read), B5-M4 / K5-F1 / K5-F2 (tests that reproduce the defect they guard), R5-D4 / B5-M5 / E5-F6
-(performance provenance, §8); documented — A5-F1 (declarations checked as executed fail closed at a converted edge,
-§4), R5-D3 (`replay_decision`'s unit guard needs a world that binds the unit registry, §2), the case-level re-score
-guard (§7). The documented residuals of earlier rounds are those listed in §4 and §11 (no at-most-once execution or
+**MINOR dispositions.** Every MINOR of rounds 1–6 was fixed or is recorded as a documented residual; the builder did
+not drop any silently. Round 5's: fixed — A5-F2 / R5-C-M1 / E5-F2 (the compared remainder and its basis), A5-F3 /
+E5-F1 (refusals that last), A5-F4 (fixed-condition kind), A5-F5 (no separation threshold), A5-F6 / B5-M2 / E5-F5
+(gating flag), A5-F7 / B5-M3 / E5-F4 (fixed-condition refusal labels), B5-M1 / R5-C-M2 (an account no world reads
+refuses nothing), R5-D2 (unbound accounts cost nothing in round 5; the quadratic experiment read-back it also named
+was fixed in round 6, R6-D3), B5-M4 / K5-F1 / K5-F2 (tests that reproduce the defect they guard), R5-D4 / B5-M5 /
+E5-F6 (performance provenance, §8; the re-score guard raises explicitly since round 6), E5-F3 (a control for a path
+that already held, §5); K5-F3 (gates last run before the round's code) recurred as B6-M7 and is closed by the gates at
+`a058cf2` (PROGRESS); documented — A5-F1 (declarations checked as executed fail closed at a converted edge, §4),
+R5-D3 (`replay_decision`'s unit guard needs a world that binds the unit registry, §2), the case-level re-score guard
+(§7). Round 6's: fixed — A6-F1 (one level set; a value nearer a level of the variable's own domain matches neither),
+A6-F2 (the typed fixed-condition rule, §4), A6-F3 / B6-M2 / E6-F2 / E6-F3 (controls for gating False and the recorded
+remainder basis), A6-F4 (a BR1-style OVER_BUDGET states the remainder the plan compared, and its basis), B6-M1 /
+R6-C-M2 / R6-D2 (concurrent verifications: snapshots are observed in order under one lock and serve what they
+observed), B6-M3 / R6-D4 (one refusal message from the first refusal on: recordable), B6-M4 / R6-C-M1 / R6-D1 / E6-F4
+(every handed account observed at construction and at every verification, §4), R6-D3 (experiments read back one
+evaluation at a time), K6-F1 (experiment follower controls), K6-F2 (a world bound to an account or provider the
+declaration in force does not name is AUTHORITY_MISMATCH without that record being read; a submitted world never
+chooses what is observed), A6-F6 / B6-M6 / R6-C-M3 / R6-D5 / E6-F1 / E6-F5 / E6-F6 (report precision: header lists,
+gating wording, the bind message, performance files name their code revision, the noise band, the curve regenerated
+with 41 repeats, the re-score guard raises, §5 attributions, §10), B6-M7 (gates re-run at `a058cf2`); documented —
+A6-F5 (the identity rule's rounding edge refuses some honest other-unit spellings, §4), B6-M5 (the constructor refuses
+a malformed account set for the whole reader, §4). The documented residuals of earlier rounds are those listed in §4 and §11 (no at-most-once execution or
 reservation; the declaration and synthetic labels are the declarer's; liveness is the reader's mode; the provider cache
 unless `refresh=True`; the in-process trust boundary; world-derived model and experiment digests; the provider rule
 restating `system_runtime` preflight; replay attests self-consistency, not provenance).
 
 ## 10. Q1–Q7
 
-Filled when the review loop closes (round 4 verdicts; see `docs/work/PROGRESS.md`). Before = GEN2-BR1's round-2
-authority review.
+Filled when the review loop closes. Before = GEN2-BR1's round-2 authority review.
 
 ## 11. Owner capabilities missing (failed closed, nothing worked around)
 

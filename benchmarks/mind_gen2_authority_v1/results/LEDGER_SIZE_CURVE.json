@@ -1,30 +1,63 @@
 {
+ "code_revision": "0fc399b6f633f1c7d6e6e23e54e68f6fcf216d7e",
  "command": "python -m benchmarks.mind_gen2_authority_v1.ledger_curve",
  "host": {
   "platform": "Linux-6.18.44-fc-v140-x86_64-with-glibc2.39",
   "python": "3.13.16"
  },
- "repeats": 15,
- "schema": "forge.mind.gen2_authority.ledger_size_curve/2",
+ "repeats": 41,
+ "schema": "forge.mind.gen2_authority.ledger_size_curve/3",
  "settled_charges": {
   "0": {
-   "admission_p50_ms": 19.75,
-   "check_p50_ms": 0.396,
+   "admission_min_max_ms": [
+    21.18,
+    34.19
+   ],
+   "admission_p50_ms": 22.52,
+   "check_min_max_ms": [
+    0.386,
+    0.572
+   ],
+   "check_p50_ms": 0.446,
    "status": "FEASIBLE"
   },
   "10": {
-   "admission_p50_ms": 34.15,
-   "check_p50_ms": 0.542,
+   "admission_min_max_ms": [
+    22.76,
+    30.78
+   ],
+   "admission_p50_ms": 24.18,
+   "check_min_max_ms": [
+    0.462,
+    0.637
+   ],
+   "check_p50_ms": 0.506,
    "status": "FEASIBLE"
   },
   "100": {
-   "admission_p50_ms": 38.46,
-   "check_p50_ms": 1.214,
+   "admission_min_max_ms": [
+    37.59,
+    69.34
+   ],
+   "admission_p50_ms": 40.46,
+   "check_min_max_ms": [
+    1.189,
+    2.68
+   ],
+   "check_p50_ms": 1.268,
    "status": "FEASIBLE"
   },
   "1000": {
-   "admission_p50_ms": 196.83,
-   "check_p50_ms": 8.366,
+   "admission_min_max_ms": [
+    187.49,
+    261.36
+   ],
+   "admission_p50_ms": 198.99,
+   "check_min_max_ms": [
+    7.99,
+    12.969
+   ],
+   "check_p50_ms": 8.46,
    "status": "FEASIBLE"
   }
  }
