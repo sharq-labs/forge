@@ -311,3 +311,45 @@ def test_the_refusal_of_an_account_behind_can_be_recorded_and_replays():
     assert "AUTHORITY_OWNER_UNAVAILABLE" in r.codes()
     record = json.loads(json.dumps(AdmissionRecord.of(r, authorities).to_dict()))
     assert replay_admission(record).outcome is ReplayOutcome.REPRODUCED
+
+
+# ---- E7-F3: the provider half of K6-F2 ---------------------------------------------------------------------------------------------
+def test_a_world_bound_to_a_provider_the_declaration_does_not_name_is_refused_without_probing_it(monkeypatch):
+    """A world projected from another declaration (one that lists sim.secret) submitted where the declaration in
+    force lists only sim.ecm: the sim.secret binding is not read, so the registry is never asked to probe it."""
+    from engcore.providers.catalog import ProviderRegistry
+    base = b.battery_world()
+    w2 = b.world(base.world_id, base.variables, entities=base.entities, constraints=base.constraints,
+                 channels=base.channels, applicability=base.applicability,
+                 providers=base.providers + (b.provider("sim.secret", "1.0"),), budget=base.budget,
+                 references=base.references, actions=base.actions)
+    o2 = ax.owned("battery", w2)
+    in_force = ax.owned("battery").declaration
+    assert in_force.declaration_id == o2.declaration.declaration_id and "sim.secret" not in in_force.providers
+    authorities = o2.authorities(declarations=(in_force,), refresh=True)
+    world = o2.world                                                     # projected under o2's own declaration
+    probed = []
+    real = ProviderRegistry.status
+    monkeypatch.setattr(ProviderRegistry, "status",
+                        lambda self, pid, **kw: (probed.append(pid), real(self, pid, **kw))[1])
+    r = admit(FeasibleActionSpace.build(world), o2.propose("simulate_pulse", *SIM, world=world), authorities)
+    assert r.admitted is None and "AUTHORITY_MISMATCH" in r.codes()
+    why = [c.detail.get("why", "") for c in r.verification.checks if c.record_id == "sim.secret"]
+    assert why and "not read" in why[0] and "sim.secret" not in probed and "sim.ecm" in probed
+
+
+# ---- E7-F5: the remaining_observations basis of a projected experiment ------------------------------------------------------------
+def test_an_over_budget_experiment_with_attempts_left_records_remaining_observations():
+    from engcore.scientific.experiments import EvaluationStatus, ScientificEvaluation
+    p = ax.gen1_pool()
+    eid = next(iter(p.experiments))
+    exp = ScientificExperiment(eid, ScientificProblem(f"{eid}.problem"), ExperimentBudget(2, max_attempts=5))
+    for i in range(2):
+        exp.record(ScientificEvaluation(f"{eid}.{i}", {}, status=EvaluationStatus.NOT_CONVERGED, detail="synthetic"))
+    p.experiments[eid] = exp
+    p._world = None
+    r = admit(FeasibleActionSpace.build(p.world), p.propose("pool_query", {"I_A": Quantity(1, "A"),
+                                                                           "t_on_s": Quantity(60, "s")}), p.authorities())
+    over = {x.subject: x.detail for x in r.reasons if x.code == "OVER_BUDGET"}
+    assert over["experiments"]["remaining_basis"] == "remaining_observations"
+    assert over["experiments"]["remaining"] == exp.remaining_observations == 0
