@@ -1,0 +1,2 @@
+FAILED tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against
+FAILED tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one

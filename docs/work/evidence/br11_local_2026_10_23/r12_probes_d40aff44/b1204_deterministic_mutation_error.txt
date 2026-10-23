@@ -1,0 +1,2 @@
+[interpreter mutation error, every time] verifications handed the spend: ['this verification only', 'this verification only', 'this verification only']; after the restore: DISPATCHED AGAIN; executor ran 2
+[control: other RuntimeError] verifications handed the spend: ['FOR GOOD', 'FOR GOOD', 'FOR GOOD']; after the restore: refused; executor ran 1

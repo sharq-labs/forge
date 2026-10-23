@@ -1,0 +1,26 @@
+E       tests.mind.test_authority_review_r12._Unprintable: <exception str() failed>
+E       RuntimeError: <exception str() failed>
+E       tests.mind.test_authority_review_r12._Unprintable: <exception str() failed>
+E       RuntimeError: <exception str() failed>
+E         Actual message: "budget experiment 'synthetic.battery.pulse-cell.experiment' moved while it was serialized (3 read-backs failed differently): RuntimeError: dictionary changed size during iteration"
+>       assert not t.is_alive(), "the verification never returned"
+E       AssertionError: the verification never returned
+E           engcore.mind.world.authority.OwnerUnavailable: budget experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner writes down and reads back (3 read-backs failed alike): ValueError: unparsable unit 'megafarad': maximum recursion depth exceeded; the account was handed over in that state, which cannot be ordered against the history this reader observed (it may hold a spend): refused by this reader from then on (a new timeline is stated with a new reader)
+PASSED tests/mind/test_authority_review_r12.py::test_a_str_subclass_id_is_read_under_its_spelling_and_runs_no_code
+PASSED tests/mind/test_authority_review_r12.py::test_three_read_backs_torn_by_honest_records_refuse_once_then_read
+PASSED tests/mind/test_authority_review_r12.py::test_a_read_through_from_the_fresh_thread_read_back_is_refused_at_once
+PASSED tests/mind/test_authority_review_r12.py::test_a_spend_handed_under_two_ids_is_recorded_and_its_rollback_never_redispatches
+FAILED tests/mind/test_authority_review_r12.py::test_a_spend_whose_failure_cannot_be_rendered_is_refused_and_never_redispatched[exception]
+FAILED tests/mind/test_authority_review_r12.py::test_a_spend_whose_failure_cannot_be_rendered_is_refused_and_never_redispatched[argument]
+FAILED tests/mind/test_authority_review_r12.py::test_an_unrenderable_account_no_world_reads_refuses_no_admission[exception]
+FAILED tests/mind/test_authority_review_r12.py::test_an_unrenderable_account_no_world_reads_refuses_no_admission[argument]
+FAILED tests/mind/test_authority_review_r12.py::test_two_entries_spelling_one_id_never_hide_a_spend[True]
+FAILED tests/mind/test_authority_review_r12.py::test_two_entries_spelling_one_id_never_hide_a_spend[False]
+FAILED tests/mind/test_authority_review_r12.py::test_the_strict_constructor_refuses_two_ids_spelling_one
+FAILED tests/mind/test_authority_review_r12.py::test_a_spend_whose_read_back_always_looks_moving_is_never_redispatched[mutation_text]
+FAILED tests/mind/test_authority_review_r12.py::test_a_spend_whose_read_back_always_looks_moving_is_never_redispatched[varying_message]
+FAILED tests/mind/test_authority_review_r12.py::test_a_state_not_read_back_whose_length_cannot_be_read_refuses_its_account_for_good
+FAILED tests/mind/test_authority_review_r12.py::test_a_fresh_thread_read_back_blocked_by_the_verifiers_own_lock_is_refused_within_the_wait
+FAILED tests/mind/test_authority_review_r12.py::test_a_torn_fresh_thread_read_back_is_retried_not_refused_for_good
+FAILED tests/mind/test_authority_review_r12.py::test_a_recursion_failure_an_owner_wraps_is_retried_on_a_fresh_thread
+13 failed, 4 passed in 12.30s

@@ -8889,6 +8889,58 @@ completeness critic):
     `test_multiphysics_window_control` x1) and failing identically at `ec2c000` without the handoff; the four
     inventory tests' messages are identical with and without the evidence directory.
 
+28. Local resume and round-12 lead triage, 2026-10-23 (WSL2 Ubuntu 24.04, native clone
+    `~/forge-gen2-authority-v1` built from a full-history bundle of `origin/research/mind-gen2-authority-binding-v1` at
+    `d40aff44`; CPython 3.12.3, `.venv` with `-e ".[dev,mcp,oracles]"`; no GitHub access from WSL; logs under
+    `~/br11-logs/`, the ones cited here copied to `docs/work/evidence/br11_local_2026_10_23/`).
+    - Baseline at `d40aff44`: `PYTHONPATH=src:. python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests
+      benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4
+      --dist loadfile`: exit 0, 649 passed (20 s), as at the handoff; `rescore --check` BR1_RESCORE MATCHES;
+      `run_benchmark --check` AUTHORITY MATCHES; `gen1_reference --check` GEN1_REFERENCE INTACT.
+    - Every preserved round-12 probe re-run unchanged at `d40aff44` (`PYTHONPATH=src:. python <probe>`; a1207 re-run with
+      `PYTHONUNBUFFERED=1` because it ends in `os._exit`; b1209 needs arguments and was run in the A/B below): b1201,
+      b1202, b1204-b1208, b1210, b1211 output identical to the cloud's; b1203 differs only in the headroom (10 frames
+      here, 11 on 3.13: PLATFORM_DIFFERENCE, documented residual); a1202, a1205, a1205b, a1206, a1207 reproduce their
+      leads. Dispositions: README §9 "Round-12 lead triage" (R12-1..R12-6 CONFIRMED; b1203, a1208, b1209-b1211 not
+      new defects).
+    - Fix `33258438` (`owners.BudgetReader`): R12-1 failures described without running code of them that can raise;
+      R12-2 two entries spelling one id refused for good, constructor refuses; R12-3 a state not read back observes its
+      history length (shorter later states behind; unreadable length refused for good); R12-4 fresh-thread wait bounded
+      by `WAIT_S`, private cache; R12-5 fresh thread runs the same classified attempts, recursion read through the
+      exception chain.
+    - Controls `tests/mind/test_authority_review_r12.py` (18): on a tree whose `owners.py` is `d40aff44`'s, 14 failed,
+      4 passed (the controls for the five round-11 mutants that survived round 12). One control first failed for a
+      wrong reason (its deep-stack simulation did not apply on a non-main thread); it was rewritten before any fix and
+      then failed for the lead's reason (the verification never returned).
+    - Mutation (`mutate_r12_local.py` + `run_mutants_local.sh`, each mutant on a full tree copy, the whole BR1.1 suite):
+      18 mutants, 17 caught (each failing at least one round-12 control; README §5); `shared_cache` survives (666
+      passed, 1 skipped): race-only, no deterministic schedule exists, recorded as uncontrolled.
+    - At `33258438`: BR1.1 suite 667 passed (18 s); rescore MATCHES; run_benchmark MATCHES; Gen1 INTACT.
+    - Gates at `33258438` against a pristine base worktree `~/forge-gen2-base-1202` (`1202ea6c`), both in this
+      environment, run concurrently (`gates.sh`: item 5's FAST command, `python tools/forge_check.py --regression`, item
+      10's guard set, item 10's affected expensive tests minus campaign):
+      FAST branch 67 failed, 12678 passed, 190 skipped; base 67 failed, 12203 passed, 190 skipped; failing ids compared
+      with `comm`: NEW 0, FIXED 0 (this environment's base failing set is 67, not the cloud's 99: an environment
+      difference; only the same-environment comparison is used). FAST: NO NEW FAILURES VS BASE (red on both: NOT
+      green). Regression pack: 279 passed on both. Guard suites: branch 1382 passed, 2 failed; base (without the
+      BR1.1-only `tests/test_sria_budget_ledger_identity.py`) 913 passed, 2 failed; the same two pre-existing failures
+      (`test_core_guards::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against`,
+      `test_core_semantic_invariants::test_every_reader_that_writes_a_schema_also_checks_one`) with identical messages.
+      Affected expensive minus campaign: 13 failed, 14 errors, 335 passed on both, the same 27 failing ids. Neither tree
+      was dirtied by the gates.
+    - Performance A/B (`ab_r12.py pre=<d40aff44 tree> post=<33258438 tree>`, interleaved, 5 rounds, nothing else
+      running): admission p50 12.30 ms (12.28-12.69) before, 12.36 ms (12.28-12.52) after; budget pin p50 0.17 / 0.17
+      ms: NO SPEED DIFFERENCE ESTABLISHED. Desk at 1000 evaluations 48/48 in all runs; at 2500 (overloaded) 48, 48,
+      14, 48, 48 before and 31, 47, 48, 45, 48 after, every refusal "in flight", none "behind": no availability
+      difference established (README §8).
+
+**Failed approach (round 12, recorded so it is not retried).** Classifying a read-back failure as "moving" or "the
+state" by what the failure looks like (its type, its message, its written text) cannot be made safe: an execution-side
+value chooses all three (b1204, b1208). Deciding the class by observing the account (its history length from the
+owner's container, read without running account code) is what closed it. Refusing every state not read back for good
+was considered and not adopted (not run): in the local re-run of a1203 an honest stress run had 8 verifications whose
+three read-backs all failed, and each would then have retired an honest account.
+
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
 cloud session); not used, and nothing was merged for it.

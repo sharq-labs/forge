@@ -1,0 +1,34 @@
+# GEN2-BR1.1 local-session evidence, 2026-10-23
+
+**UNCERTIFIED. Developer triage, test and measurement evidence for an IN-PROGRESS repair: not a review result, a
+validation, a certification or a closure result.** Context: `docs/work/PROGRESS.md` GEN2-BR1.1 item 28 and README §5,
+§8, §9 of `benchmarks/mind_gen2_authority_v1/`.
+
+## Provenance
+
+| Item | Value |
+|---|---|
+| Environment | WSL2 Ubuntu 24.04 (kernel 6.6.87.2-microsoft-standard-WSL2), 20 CPUs, CPython 3.12.3 |
+| Checkout | native clone `~/forge-gen2-authority-v1` from a full-history bundle of `origin/research/mind-gen2-authority-binding-v1` at `d40aff44`; `.venv` with `pip install -e ".[dev,mcp,oracles]"` |
+| Base | worktree `~/forge-gen2-base-1202` at `1202ea6c` (BR1's report commit), run with the same interpreter |
+| Copied from | `~/br11-logs/` (the session's log directory); file contents are byte-identical copies |
+
+## Layout
+
+| Path | Content |
+|---|---|
+| `baseline/` | the BR1.1 suite and the three checks at `d40aff44` before any change (`summary.txt`, `env.txt`) |
+| `r12_probes_d40aff44/` | every preserved round-12 probe re-run unchanged at `d40aff44` (one output per probe; `_summary.txt`) |
+| `controls/` | the round-12 controls on the tree before the fix (`r12_controls_prefix_d40aff44.txt`) |
+| `mutation/` | `mutate_r12_local.py`, `run_mutants_local.sh`, `summary.txt` (base + 18 mutants) |
+| `checks_33258438/` | the BR1.1 suite and the three checks at the fix commit |
+| `gates/` | `gates.sh`; per tree (`base_1202ea6c`, `branch_33258438`): `summary.txt`, `fast_failing_ids.txt`, `guards_failing.txt`, `expensive_failing_ids.txt`, `env.txt` |
+| `performance/` | `ab_r12.py`, `b1209_p24_instrumented.py` (the preserved probe with a signature-agnostic counter), `ab_r12.jsonl` |
+| `EVIDENCE_MANIFEST.sha256` | SHA-256 of every other file here |
+
+The base's guard-suite run in `gates/base_1202ea6c/summary.txt` collected no tests (it named the BR1.1-only
+`tests/test_sria_budget_ledger_identity.py`); it was re-run without that file (`guards_failing.txt` is that re-run's).
+
+## Verify
+
+From this directory: `sha256sum -c EVIDENCE_MANIFEST.sha256`.

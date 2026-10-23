@@ -1,0 +1,3 @@
+read under the id it spells: True
+read under the id its __str__ names: False
+id code ran: []

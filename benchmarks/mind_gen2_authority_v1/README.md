@@ -155,8 +155,10 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   reader when a verification starts): a submitted world never chooses what is observed. What one `accounts()` call
   hands over is read entry by entry, so one malformed entry never hides another account (round 11, F11-2): an account
   is named by its str id (a str subclass, such as `numpy.str_` or a `StrEnum` member, is read as the plain str it
-  spells, and no code of the id runs); an entry under a key that is not a str is no account a world can bind and is
-  not read (handing an account under another name is the execution side's statement of another account); an account
+  spells, and no code of the id runs); two entries whose keys spell one id (keys that differ only as objects, such as
+  a str subclass hashing by identity) refuse that id by that reader for good (round 12); an entry under a key that is
+  not a str is no account a world can bind and is not read (handing an account under another name is the execution
+  side's statement of another account); an account
   that is not exactly its owner's type (`BudgetLedger`, `ScientificExperiment`) is refused by that reader for good;
   one object handed under two ids is observed under both and refused to that verification. Each account is read back
   by its owner from the text its owner writes it down as, and by no other rule: a ledger by `BudgetLedger.from_dict`
@@ -176,10 +178,20 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   cannot write down and read back, and refuse the account by that reader from then on (that state cannot be ordered
   against what was observed, and it may hold a spend); failures that differ, or the interpreter's own "changed during
   iteration" error, are an account moving while it was serialized (an honest top-up read half-way included), refused
-  to that verification only. When every attempt hits the interpreter's recursion limit, the read-back is tried once
-  more on a fresh thread (a shallow stack), so a verification's own deep call stack never refuses an honest account
-  for good. An `accounts()` or read-back that reads through the reader it feeds on the same thread is refused at once;
-  from inside the read-back that refusal repeats at every attempt, so the account is refused for good.
+  to that verification only. Either way, a state handed and not read back still observes how far its account had
+  moved (round 12): its history's length, read from the owner's own container (a ledger's charges tuple, an
+  experiment's evaluations list) with no code of the account run; the account is then decided on only at or beyond
+  that length (shorter is behind), whatever its failures looked like, and an account whose length cannot be read that
+  way is refused by that reader for good. A failure is described without running any code of it that could raise (a
+  message that cannot be rendered is described by the exception's type), so no read-back failure leaves the
+  classification (round 12). When every attempt hits the interpreter's recursion limit (its own `RecursionError`, or
+  one an owner wrapped, as the unit owner does), the same three attempts run once more on a fresh thread (a shallow
+  stack), classified by the same rule and waited for at most `WAIT_S`, so a verification's own deep call stack never
+  refuses an honest account for good; a fresh thread still running after `WAIT_S` (it may wait on a lock the
+  verifying caller holds) leaves the account not read back to that verification, and what it does later reaches
+  nothing the reader holds (round 12). An `accounts()` or read-back that reads through the reader it feeds on the same
+  thread, or from the fresh thread, is refused at once; from inside the read-back that refusal repeats at every
+  attempt, so the account is refused for good.
   Each verification is in flight from its start, through `accounts()` and the read-back (both with no lock held: no
   execution-side code runs under the reader's lock), to its comparison with the history this reader observed, which
   holds the lock. Every observation that extends the history is recorded, and a verification decides on an account
@@ -193,8 +205,8 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   re-authorizes what such a state had moved past. The cost: a verification whose `accounts()` or read-back does not
   complete within `WAIT_S` (a slow execution side, or a large experiment whose whole read-back is quadratic) makes
   every verification that compares meanwhile wait `WAIT_S` and be refused, until it completes; an execution side that
-  verifies while holding a lock its `accounts()` takes is refused after `WAIT_S` in the same way, with no deadlock; the
-  contention measured is in §8. An account only moves forward (in the owner's read-back form: a restore of an
+  verifies while holding a lock its `accounts()` or its accounts' serialization takes is refused after `WAIT_S` in the
+  same way, with no deadlock (the fresh-thread wait is bounded too since round 12); the contention measured is in §8. An account only moves forward (in the owner's read-back form: a restore of an
   unchanged account is the same account, a top-up with the history unchanged is a move of the owner). An account
   BEHIND the longest history observed (it went back, or a verification's account mapping is older than one already
   observed) is OWNER_UNAVAILABLE to a verification that reads it, for as long as it is behind; a return to the state
@@ -204,8 +216,8 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   Concurrent verifications never refuse for good an account that only moved forward and that its owner reads back. A
   refusal says the same thing at every read, so it is recordable and replays. An account no verification reads
   (unreadable, behind or rewritten) refuses nothing; the constructor of a reader the execution side builds still
-  refuses, for the whole reader, an account set that is not exactly typed, names an account by anything but a str, or
-  registers one object under two ids. A world's binding to an account or a provider the declaration in force does not
+  refuses, for the whole reader, an account set that is not exactly typed, names an account by anything but a str,
+  names two accounts by ids that spell one id (round 12), or registers one object under two ids. A world's binding to an account or a provider the declaration in force does not
   name (named as `project_world` binds them: the declaration's budget references and `providers`) is never checked
   against its owner (no provider is probed for it): AUTHORITY_STALE when the world's declaration states a numerically
   older revision (ASCII decimal numerals, compared as numerals; the declaration owner keeps no history, so a superseded
@@ -213,7 +225,10 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   that world's account or provider bindings is checked (OWNER_UNAVAILABLE if the declaration owner is unavailable). The
   follower itself still reads every handed account at every pin. What a reader never observes, and so cannot refuse: a
   state no verification was handed and read back (a spend and its rollback both between two verifications look like
-  no change), a state that kept moving through three read-backs, an account handed under a key that is not a str, the
+  no change), the entries of a state handed and not read back (only their number is observed, so a later state at
+  least that long that differs in them is not detected as a rewrite; a re-dispatch of what such a state recorded is
+  refused, since returning to the state it was admitted on is going behind that length), an account handed under a
+  key that is not a str, the
   state of a verification whose `accounts()` raises or hands no pair of mappings, and that of one interrupted (a
   `BaseException`, or the caller's own stack exhausted inside the reader) between being handed accounts and comparing
   them, which only the verifications then waiting for it refuse; at-most-once execution is the execution owner's.
@@ -268,16 +283,18 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
 
 ## 5. Controls
 
-Executed at the round-11 records commit (`d5ef1e3`'s code; command and environment in `docs/work/PROGRESS.md`):
-`tests/mind`, `benchmarks/mind_gen2_authority_v1/tests`, `benchmarks/mind_gen2_world_v1/tests` and
-`tests/test_sria_budget_ledger_identity.py`, **649 passed** (including the expensive BR1-decision re-derivation).
+Executed at the round-12 fix commit (`33258438`, local WSL2, CPython 3.12.3; command and environment in
+`docs/work/PROGRESS.md` item 28): `tests/mind`, `benchmarks/mind_gen2_authority_v1/tests`,
+`benchmarks/mind_gen2_world_v1/tests` and `tests/test_sria_budget_ledger_identity.py`, **667 passed** (including the
+expensive BR1-decision re-derivation; 649 at the round-11 records commit `ec2c000` in the cloud, CPython 3.13.16, and
+649 again locally at `d40aff44` before the round-12 fix).
 
 | Suite | Tests | What it pins |
 |---|---|---|
 | `test_authority_failing_first.py` | 29 | the brief's A–O, written failing first: no interval decides; lineage laundering; stale state/model/provider/budget/declaration; missing owner; unit spelling; protocol levels (no 1.15 A, nearest or interpolation); raw proposals never execute |
 | `test_authority_mutations.py` | 120 | every projected field and binding field edited, every admitted-action and authorization field edited, replay forgeries |
 | `test_authority_cross_domain.py` | 32 | battery, two HVAC worlds, drone, motor: the same guarantees in each |
-| `test_authority_review_r1.py` … `_r11.py` | 43 / 35 / 21 / 17 / 17 / 14 / 26 / 16 / 9 / 30 / 37 | one control per confirmed review finding (round 6: per finding behind a PARTIAL verdict); see below |
+| `test_authority_review_r1.py` … `_r12.py` | 43 / 35 / 21 / 17 / 17 / 14 / 26 / 16 / 9 / 30 / 37 / 18 | one control per confirmed review finding (round 6: per finding behind a PARTIAL verdict; round 12: per confirmed lead of the interrupted round); see below |
 | `test_sria_budget_ledger_identity.py` | 5 | the owner addition: read-only, wire shape unchanged, round-trip identity |
 | benchmark tests | 7 | committed matrix and re-score reproduce; the re-score guard; BR1's decisions re-derived from BR1's code (expensive) |
 | BR1 tests adapted (`test_world_contract.py`, `test_world_failing_first.py`, BR1 benchmark) and unchanged (`test_world_boundary.py`) | 67 / 31 / 8 / 5 | BR1's contract under §3; BR1's committed results byte-identical; the package boundary |
@@ -323,7 +340,18 @@ numeral comparison of revisions in nine cases and a multi-digit STALE), each of 
 guard. Thirteen mutants of the round-11 code (one attempt, alike failures taken as moving, no fresh-thread retry,
 never moving, a strict snapshot, no abandonment, no alias refusal, a shared served record, the flag reset after the
 leave, no re-check of accounts refused for good while waiting, a lexical revision comparison, accounts refused for good
-read again, no torn check) each fail at least one round-10 or round-11 control. Round 9 split the declaration modes into an older revision
+read again, no torn check) each fail at least one round-10 or round-11 control. The 18 round-12 controls on `d40aff44`
+(the file copied into a tree whose `owners.py` is `d40aff44`'s): 14 fail; the 4 that pass are the controls for
+mutants of the round-11 code that survived the interrupted round's lenses (a str subclass id rendered by its own
+`__str__`, differing failures or failures differing only in their written text taken as alike, the fresh thread
+without the read-through flag, an aliased spend not recorded), each of which fails on its mutant. Eighteen mutants of
+the round-12 code (the failure rendered by its own code twice, no check for two entries spelling one id in the
+snapshot and in the constructor, the length of an unread state not recorded / not compared / not re-checked after the
+wait / taken as 0 when unreadable, an unbounded fresh-thread join, a fresh-thread timeout refused for good, a single
+fresh-thread attempt, only a direct `RecursionError` seen, and the five survivors above): 17 fail at least one
+control; `shared_cache` (the fresh thread writing the snapshot's cache instead of a private copy) passes every test: it
+matters only if an abandoned fresh thread writes while the comparison copies that cache, which no deterministic test
+schedules (recorded, not claimed as controlled). Round 9 split the declaration modes into an older revision
 (STALE) and a same-revision declaration with other content (MISMATCH) (15 → 16 in r8). Round 6 ran the round-5 fixed-kind test over three units
 (11 → 17); round 8 ran the round-7 offset-unit level test over four bound operators with each decision pinned (22 → 26)
 and restated the round-6 thread stress test for the round-7 rule (refusals of an account behind are allowed, a refusal
@@ -424,6 +452,15 @@ scheduling under overload, fail-closed, and is not attributed further; at 1000 e
 wait: while one verification's `accounts()` or read-back does not complete, every admission that compares meanwhile
 takes `WAIT_S` (1 s) and is refused (5 of 5 in the reviewers' p12 probe).
 
+Round-12 fix (`33258438`) against the tree before it (`d40aff44`), interleaved, 5 rounds each, one other host (WSL2,
+20 CPUs, CPython 3.12.3; `docs/work/evidence/br11_local_2026_10_23/performance/`): 200 admissions through a following
+budget reader on the battery fixture, admission p50 12.30 ms (12.28-12.69) before and 12.36 ms (12.28-12.52) after,
+the budget pin p50 0.17 ms in both: NO SPEED DIFFERENCE ESTABLISHED (overlapping ranges). The large-account desk (8 ×
+6 admissions): at 1000 evaluations 48 of 48 in all 10 runs; at 2500, overloaded, 14 to 48 of 48 before (median 48) and
+31 to 48 after (median 47), every refusal "in flight" (fail-closed), none "behind": no availability difference is
+established, and the length rule refused no honest account in these runs (the instrumented read-back counted 0 to 4
+torn experiment read-backs per run in both trees). The new paths run only after a read-back has failed.
+
 Nothing is cached across admissions except, per account handed over now, the last content its owner read back (a
 function of the content, not a currency claim).
 
@@ -446,6 +483,44 @@ completeness critic. The builder did not overrule a finding: each was fixed or i
 | 9 | `ceaf8cd` | A, B, C, D, E, F (a deep attack on the round-8 rewrites) | 0 / 0 / 38 | none to verify; Q1-Q7 NO from every lens and the critic | K9-F1..K9-F3 MINOR | `17a1c31`, `e573096` |
 | 10 | `c69e579` | A, B, C, D, E, F (a deep attack on the round-9 rewrites) | 0 / 2 / 36 | **R10-C-F1** (repro skeptic MAJOR, scope skeptic MINOR): round 9's exact-type plain-data rule refused ordinary owner content (an evaluation's frozen nested metadata, numpy and enum values), so a spend recorded with it was never observed and a restore re-dispatched the executed action, sequentially; **R10-C-F2** (both skeptics MINOR): the ticket rule protected a handed spend only when its verification had STARTED first; both treated as MAJOR and fixed. Q4: YES from C, PARTIAL from B and F, NO from A, D, E | K10-F1 (rules both MINOR: the guarantee was stated for handed states but held for observed ones), K10-F2 MINOR | `d89dd3b` |
 | 11 | `aad2f69` | A, B, C, D, E, F (a deep attack on the round-10 rewrites) | 0 / 3 / 22 | **R11-C-F1** (both skeptics MAJOR) = **F11-1** (repro MAJOR, scope MINOR): round 10 moved the experiment read-back's `deepcopy` outside the try that classifies read-back failures, so owner-valid content nested ~500 levels deep raised out of every verification, a handed spend was never observed and a restore re-dispatched the executed action (and an unbound such account made every admission raise); **F11-2** (repro MAJOR, scope MINOR): a handed mapping the constructor refused (an id that is a `numpy.str_` since round 10's exact-str rule, or one object under two ids) hid a spend on another, well-formed account; all treated as MAJOR and fixed. Q4: YES from C, F and the critic, PARTIAL from A, B, D (read-back failures classified by exception type: a torn top-up refused for good, a deterministic `RuntimeError` hiding a spend), NO from E | K11-F1 (the whole read-back after the write must be classified), K11-F2 (served experiment records not controlled as detached) MINOR | `d5ef1e3` |
+| 12 | `a96baa6` | A, B started; C-F, skeptics and critic never ran | none returned | **INTERRUPTED / INCOMPLETE: no verdict** (the cloud session was stopped on the owner's instruction); the two lenses' probes are preserved as unverified leads and were triaged locally (below) | — | `33258438` |
+
+**Round-12 lead triage (local, not a review result).** Every preserved probe
+(`docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/`) was re-run unchanged at `d40aff44` on WSL2 Ubuntu
+24.04, CPython 3.12.3 (outputs under the local log directory named in PROGRESS item 28); a cloud output alone was not
+taken as a finding. Confirmed, with a failing-first control in `test_authority_review_r12.py` and a mutant each
+control catches (§5):
+- R12-1 (b1201, b1202): an exception whose own `__str__` raises, or an exact `RuntimeError` whose argument cannot
+  render, made `_read_once`'s classifying handler raise; the error left `pinned()`, admissions raised, a world that
+  never reads the account raised, and after a restore the executed action was dispatched again (executor ran 2).
+  Authority impact: unobserved spend, duplicate dispatch, fail-open of the forward-only rule. Fixed by describing
+  failures without running code of them that can raise (also at the five other owner-boundary handlers of `owners.py`).
+- R12-2 (b1205, a1205, a1205b): two keys spelling one id (a str subclass hashing by identity) collapsed silently to
+  one account: a stale entry hid the spend (dispatched again) and the strict constructor accepted the set and dropped
+  an account. Impact: owner-identity confusion, unobserved spend, duplicate dispatch. Fixed: the id is refused for good;
+  the constructor refuses.
+- R12-3 (b1204, b1208): a spent state whose serialization raises the interpreter's own mutation text every time, or a
+  fresh message per attempt, was classified moving (refused per verification, never observed) and a restore
+  re-dispatched. Impact: unobserved spend, duplicate dispatch. Root cause: a state not read back left no trace. Fixed
+  generically: any state not read back observes its account's length; shorter later states are behind.
+- R12-4 (b1207, a1207): `_at_baseline_depth` joined its fresh thread with no timeout: a verification holding a lock its
+  account's serialization takes blocked for good, kept its ticket in flight, and every other verification was refused
+  (a1207: the other verification blocked too). Impact: deadlock / unbounded wait, denial of service against valid
+  authority (availability, fail-closed). Fixed: the wait is bounded by `WAIT_S`; the fresh thread fills a private
+  cache.
+- R12-5 (b1206, a1202): the fresh-thread retry was one attempt, so a single torn read there refused an honest account
+  for good; and a recursion failure the unit owner wraps (`UnitCompatibilityError` from `RecursionError`) was not seen
+  as recursion, refusing an honest account for good at 12 of 58 caller depths. Impact: denial of service against
+  valid authority (availability, fail-closed). Fixed: the fresh thread runs the same classified attempts; recursion is
+  read through the exception chain.
+- R12-6: of the five mutants of the round-11 code that passed the whole suite in the interrupted round (lens A:
+  `id_str_call`, `differ_not_moving`, `why_only`; lens B: `fresh_thread_no_flag`, `alias_not_recorded2`), each now
+  fails a round-12 control.
+Not a new defect: b1203 (a `RecursionError` escapes at 10 frames of caller headroom here, 11 in the cloud on
+3.13: a platform difference; the documented residual "the caller's own stack exhausted inside the reader"), a1208
+(within one verification the served experiment record is one object parsed at the pin; wording, §4), b1209 (large-
+account contention, §8), b1210 and b1211 (alias spend recorded; fresh-thread read-through bounded: consistent with
+the round-11 claims). Round 12 itself stays without a result; a fresh review round reviews the fixed tree.
 
 Rounds 2, 3, 4 and 7 asked the same question: is the value a decision was made on the value an executor receives (and,
 from round 7, is it exactly a declared level when the variable is a level set)? `d113d30` answered it for controls (every family decides on the configuration as it will be executed);

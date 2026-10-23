@@ -1,0 +1,10 @@
+np.float64   READ served 0.5 (float)
+np.float32   REFUSED budget experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner writes down and rea
+np.int64     REFUSED budget experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner writes down and rea
+np.bool_     REFUSED budget experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner writes down and rea
+str Enum     READ served 'a' (str)
+IntEnum      READ served 1 (int)
+Decimal      REFUSED budget experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner writes down and rea
+tuple        READ served [1, 2] (list)
+nested list  READ served [[1, 2]] (list)
+bool         READ served True (bool)

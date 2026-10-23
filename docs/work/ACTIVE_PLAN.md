@@ -14,11 +14,15 @@ merged, not certified. **Status: IN_PROGRESS** (not closed): review round 11 fou
 (at `a96baa6`) was INTERRUPTED with no result, and its two started lenses left unverified MAJOR-class leads in
 `owners.BudgetReader`. Resume index: `docs/work/BR11_LOCAL_RESUME_CHECKPOINT_2026_10_23.md`.
 
-**Next bounded task (R12-T1):** reproduce each round-12 lead at HEAD from its preserved probe
-(`docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/ROUND12_STATUS.md`); fix each confirmed bypass in
-`owners.BudgetReader` with a failing-first control and a mutant it catches; classify the rest as fixed or documented;
-then run one complete fresh review round (six lenses, skeptics, critic). No other scope; no Portfolio, OD-3,
-certification or merge before BR1.1 closes.
+R12-T1 done locally (2026-10-23, WSL2, CPython 3.12.3; PROGRESS item 28): every round-12 lead reproduced at
+`d40aff44`; R12-1..R12-6 confirmed and fixed in `33258438` with failing-first controls
+(`tests/mind/test_authority_review_r12.py`) and mutants (17 of 18 caught; the race-only `shared_cache` recorded as
+uncontrolled); dispositions in README §9. Local commits are not pushed (WSL has no GitHub access; a bundle is handed to
+the Windows side).
+
+**Next bounded task (R13):** one complete fresh review round (six lenses, two skeptics per BLOCKER/MAJOR, a
+completeness critic) at the committed local SHA; round 12 is not resumed. No other scope; no Portfolio, Scientific
+Contract Kernel, OD-3, certification or merge before BR1.1 closes.
 Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`: INTACT). Report:
 `benchmarks/mind_gen2_authority_v1/README.md`; conclusion in its §12 and in `docs/work/PROGRESS.md`.
 

@@ -1,0 +1,3 @@
+verification under the execution side's lock returned within 5 s: False None
+another verification (no lock held) returned within 10 s: False None
+threads named budget-read-back alive: ['budget-read-back']

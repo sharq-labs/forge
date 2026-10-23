@@ -1,0 +1,2 @@
+twin_last: live ledger revision 3; second dispatch: DISPATCHED AGAIN; executor calls 2; reader observed revision 1
+twin_first: live ledger revision 2; second dispatch: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_STALE)); executor calls 1; reader observed revision 2

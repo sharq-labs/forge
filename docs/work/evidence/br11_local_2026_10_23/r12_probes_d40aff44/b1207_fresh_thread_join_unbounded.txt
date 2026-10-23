@@ -1,0 +1,3 @@
+deep-stack verification under the re-entrant lock, after 5 s: STILL BLOCKED
+another verification meanwhile (1.00 s): refused: another verification of this budget reader was still in flight 1.0 s after this one compar
+tickets in flight: [2]
