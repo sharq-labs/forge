@@ -25,7 +25,7 @@
       "question": "Q4",
       "title": "Interrupted native retention leaves a live mapping pending; later recovery observes a replacement checkpoint and permits duplicate execution",
       "source": "A/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "OPEN_NATIVE_CAPTURE_REQUIRES_HANDOFF_DECISION",
       "skeptics": [
         "S1/result.json",
         "S2/result.json"
@@ -39,7 +39,7 @@
       "question": "Q4",
       "title": "A returned account handing interrupted before buffer registration is forgotten, allowing a second simulated execution after restore",
       "source": "B/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "LOCAL_ONE_SHOT_REGISTRATION_REPAIR_TESTED_PENDING_FRESH_REVIEW",
       "skeptics": [
         "S1/result.json",
         "S2/result.json"
@@ -53,7 +53,7 @@
       "question": "Q4",
       "title": "Twice-interrupted native capture retains a mutable mapping rather than the handed spend, so later recovery accepts the restored account",
       "source": "B/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "OPEN_NATIVE_CAPTURE_REQUIRES_HANDOFF_DECISION",
       "skeptics": [
         "S1/result.json",
         "S2/result.json"
@@ -67,7 +67,7 @@
       "question": "Q4",
       "title": "Interruption before native entry capture leaves a live mapping in the recovery buffer, allowing observed simulated spend to disappear on restoration and dispatch to repeat",
       "source": "C/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "OPEN_NATIVE_CAPTURE_REQUIRES_HANDOFF_DECISION",
       "skeptics": [
         "S1/result.json",
         "S2/result.json"
@@ -81,7 +81,7 @@
       "question": "Q4",
       "title": "Two independent interrupted handings permanently retire an unchanged honest detached account because recovery compares identities before canonical reconciliation",
       "source": "C/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "LOCAL_REPAIR_TESTED_PENDING_FRESH_REVIEW",
       "skeptics": [],
       "critic": "CRITIC/result.json"
     },
@@ -92,7 +92,7 @@
       "question": "Q4",
       "title": "An interrupt after accounts returns but before pending registration loses the handed spend and permits duplicate dispatch",
       "source": "D/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "LOCAL_ONE_SHOT_REGISTRATION_REPAIR_TESTED_PENDING_FRESH_REVIEW",
       "skeptics": [
         "S1/result.json",
         "S2/result.json"
@@ -106,7 +106,7 @@
       "question": "Q4",
       "title": "Repeated interruption of native capture leaves a live mapping pending; checkpoint replacement erases its spend",
       "source": "D/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "OPEN_NATIVE_CAPTURE_REQUIRES_HANDOFF_DECISION",
       "skeptics": [
         "S1/result.json",
         "S2/result.json"
@@ -120,7 +120,7 @@
       "question": "Q4",
       "title": "Retained raw entry hashing bypasses owner normalization and permanently rejects an unchanged honest checkpoint",
       "source": "D/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "LOCAL_REPAIR_TESTED_PENDING_FRESH_REVIEW",
       "skeptics": [],
       "critic": "CRITIC/result.json"
     },
@@ -131,7 +131,7 @@
       "question": "Q4",
       "title": "Two interrupted detached handings permanently retire identical honest history before canonical reconciliation can run",
       "source": "D/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "LOCAL_REPAIR_TESTED_PENDING_FRESH_REVIEW",
       "skeptics": [],
       "critic": "CRITIC/result.json"
     },
@@ -142,7 +142,7 @@
       "question": "Q4",
       "title": "Interrupted native capture leaves a live mapping in the unfinished buffer; checkpoint replacement erases a handed spend and permits redispatch",
       "source": "E/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "OPEN_NATIVE_CAPTURE_REQUIRES_HANDOFF_DECISION",
       "skeptics": [
         "S1/result.json",
         "S2/result.json"
@@ -156,7 +156,7 @@
       "question": "Q4",
       "title": "Retained raw charge history is compared with normalized owner history and permanently rejects an honest detached checkpoint",
       "source": "E/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "LOCAL_REPAIR_TESTED_PENDING_FRESH_REVIEW",
       "skeptics": [],
       "critic": "CRITIC/result.json"
     },
@@ -167,7 +167,7 @@
       "question": "Q4",
       "title": "Retained history hashes raw entries instead of canonical owner-normalized entries",
       "source": "F/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "LOCAL_REPAIR_TESTED_PENDING_FRESH_REVIEW",
       "skeptics": [],
       "critic": "CRITIC/result.json"
     },
@@ -178,7 +178,7 @@
       "question": "Q4",
       "title": "Interruption before native retention loses handed spend and permits later restored acceptance",
       "source": "F/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "PARTIAL_LOCAL_REGISTRATION_REPAIR; NATIVE_CAPTURE_OPEN; LINE975_DUPLICATE_VARIANT_NOT_REPRODUCED",
       "skeptics": [
         "S1/result.json",
         "S2/result.json"
@@ -192,11 +192,13 @@
       "question": "Q4",
       "title": "Separate interrupted detached handings falsely establish rewritten history",
       "source": "F/result.json",
-      "disposition": "OPEN_CONFIRMED",
+      "disposition": "LOCAL_REPAIR_TESTED_PENDING_FRESH_REVIEW",
       "skeptics": [],
       "critic": "CRITIC/result.json"
     }
   ],
   "closure": "NOT CLOSED",
-  "architecture_completion_blocker": "Uncaptured returned mutable account history cannot be recovered after replacement without a selected owner handoff/lifetime contract. Separable local fixes proceeding."
+  "architecture_completion_blocker": "Uncaptured returned mutable account history cannot be recovered after replacement without a selected owner handoff/lifetime contract. Separable local fixes proceeding.",
+  "local_gate_source": "68db8819d433d1819968e44312c44f1da4996dda",
+  "local_source_sha256": "636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb"
 }

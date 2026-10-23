@@ -870,7 +870,7 @@ Failing-first: 6 failed / 4 passed on reviewed source; final R16 controls: 16 pa
 L2 final: 797 passed; regression: 279 passed. Guards and affected expensive tests have no new failure IDs versus
 recorded base. Rescore/benchmark MATCHES; Gen1 INTACT. Five paired affected-path measurements have overlapping
 ranges on all six paths: NO SPEED DIFFERENCE ESTABLISHED. These are synthetic software measurements only.
-FAST and fresh Round17 are pending for this repair batch. The separate pre-capture challenge still FAILS; no xfail
+Clean-source FAST: 12808 passed / 67 base failures / 190 skipped; exact failure-ID comparator reports NO NEW FAILURES VS BASE. Fresh Round17 is next for this repair batch. The separate pre-capture challenge still FAILS; no xfail
 hides it in the normal suite. BR1.1 NOT CLOSED.
 
 ## 10. Q1–Q7

@@ -1,0 +1,3 @@
+guards_local 2 failed, 1511 passed in 29.96s NEW 0 FIXED 0
+expensive_local 13 failed, 335 passed, 14 errors in 30.90s NEW 0 FIXED 0
+fast_clean 67 failed, 12808 passed, 190 skipped, 2 warnings in 308.27s (0:05:08) NEW 0 FIXED 0
