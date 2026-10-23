@@ -9649,3 +9649,48 @@ Round20 D_E independently executed `.venv/bin/python -m pytest -q -p no:cachepro
 
 ### BR1.1 Round20 closure
 Independent A/F87pass,B/C129pass,D/E57pass (overlappingpacks;26freshprobes), scoped scientific-review PASS, completeness PASS atb4bbee0f. Q1–Q7 allNO,0BLOCKER/0MAJOR/0substantiveMINOR. CleanFAST67failed12896passed190skipped: no new failure IDs;66/67 extractedreasonsmatch. Exception unknownprovenance count1202vsbase456 explicitly disclosed; scanner/test bytes unchanged, evidence inventory debt expanded, not repaired. Sourcehash efad8b56 stable. Exactreports/commands under round20 and lifetime_closure. Closure evidence commit documentation-only, no source/test edits after immutable reviewedimplementation. Scientific Contract Kernel v0 next; notstarted. No push/PR/merge/certification.
+
+## 2026-10-23 -- Docs-only quick wins from the repository-health audit
+
+Branch `docs/audit-quick-wins-2026-10-23` (worktree `D:/forge-docs-quickwins`), from `origin/main` `12862b0b`.
+Every changed path classifies `ordinary` under `python -m tools.certification.recertification_scope explain`; no
+certified, SHA-pinned or provenance-bound file was edited. No code or test changed.
+
+- Gate recipe unified in CLAUDE.md, README.md, docs/TESTING.md and docs/reproduce.md: CI install set
+  `.[dev,mcp,oracles]`; `forge_check --changed --base origin/main --workers 4` (the pinned substring
+  `python tools/forge_check.py --changed` is kept); FAST and SCIENTIFIC with `-n 4 --dist loadfile`; README no longer
+  recommends `-n auto`.
+- New `docs/work/FAILURE_BASELINE_2026-10-20.md`: the recorded Linux 3.12 FAST set (64 nodes: 8 OD-3 drift,
+  2 stale certified mutant N60d, 3 guard-vs-code, 49 behaviour-vs-test, 2 unresolved) and the 143 Windows-only nodes.
+  It is a comparison aid only; no registry state is assigned and nothing may read it to skip or deselect.
+- ACTIVE_PLAN: OD-6 marked merged (PR #157 `0284ae16`; line 3 keeps the pinned `Active epic:` prefix); OD-15 trigger
+  half marked stale (`324d1a7e`); OD-25 refreshed (0 of 2,499 jobs ran a step 2026-10-15..10-20; last executed job
+  2026-10-14 on `e193e573`); OD-31 pin marked applied in `abed661f` (OD-3 still open); the older duplicate OD-28 row
+  removed and the remaining row marked merged via PR #167 `337519d1`.
+- README: V&V layer location corrected to `credibility/`; CRAFTY_ARCHITECTURE_CONTEXT marked historical; SRIA.md
+  description no longer says nothing imports it; hold-out figures dated as historical.
+- "~6,600 lines" corrected in CLAUDE.md, docs/ai/CONTEXT_MAP.md and docs/ai/PROGRESS_INDEX.md (8,095 at `12862b0b`).
+
+Tests (Windows 11, CPython 3.14.2, shared venv; `PYTHONPATH` set to the worktree with `;`; temp redirected to `D:/tmp/qw`):
+
+- `python tools/forge_check.py --changed --base origin/main --workers 4` (worktree): FAIL, exit 1, 8 failed,
+  524 passed, 4 skipped in 25.50 s. All 8 are in the recorded Windows-only set: 7
+  `tests/test_local_assurance.py` (`test_source_gate_orchestration_preserves_checkout[*]` x6,
+  `test_child_exit_during_forced_kill_preserves_stream_error`) and
+  `tests/test_change_impact.py::test_f7_a_tree_with_a_refused_entry_narrows_nothing` (`WinError 1314`, symlink privilege).
+- Control: `python -m pytest -q -n 4 --dist loadfile -p no:cacheprovider --basetemp=... -m "not expensive"` over the
+  gate's 15 modules plus `tests/domains/kinetics/test_cstr_domain.py` and `benchmarks/domain_real_data/tests`, run on
+  pristine `12862b0b` (`D:/forge-redisc-base`) and on this branch: both FAIL, exit 1, 10 failed, 555 passed, 4 skipped;
+  identical failure sets. The 2 extra failures are
+  `benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance`
+  and `::test_synthetic_data_is_never_called_measured`: 6 files under
+  `docs/work/evidence/branch_ci_investigation_2026_10_20/` have no reviewed provenance row on `main`. Neither new file of
+  this branch is flagged.
+- `python docs/ai/check_docs.py`: AI_DOCS: PASS (7 documents; metadata and local paths only).
+- FAST, SCIENTIFIC, formal, full assurance and OD-3: NOT RUN.
+
+## 2026-10-24 — R21 integration gate recovery: initial reproduction and main reconciliation
+
+Authorized source c6f33f3942235dff4f8c7df0918daeb9bb7ff54f was clean on the continuing branch; fetched main5ac5267781b9310fa205e9f2c1d12b34aa86e235. Merged main documentation changes; the sole PROGRESS conflict retained both complete appended histories. Source and tests unchanged by reconciliation. BR1.1 remains locally CLOSED, integration not complete.
+Executed `.venv/bin/python -m pytest -q -p no:cacheprovider benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance`:2failed in1.32s. Both expected unknown-provenance assertions reproduce; current c6f33f39 count1211, historical b4bbee0f count1202, base1202ea6c count456. Exact log /home/dev_kaeem/br11-r21/provenance-red.log. No scanner/test edits.
+Governance read checks still403 for private-repository protection; only sharq-labs collaborator returned. No purchase, visibility/rules change or self-approval. Full assurance authorization and independent reviewer/protection owner actions requested while bounded provenance repair proceeds. No receipt fabricated or certificate issued.

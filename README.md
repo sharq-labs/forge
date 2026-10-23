@@ -25,7 +25,7 @@ Every result a domain produces is a `ScientificResult` that carries:
 
 Three rules make this honest: a validation level is *derived* from a passing check that declares it, never asserted; a model with no declared validity conditions is `unknown`, not valid; and a model that went unassessed is *said* to have gone unassessed, with a reason, rather than being left to be inferred from an empty field. The third one is a rule of the core rather than a convention of the domains — a result that is silent about a model it declares raises at construction, so a domain cannot omit the answer and a reader never has to guess whether an empty mapping means "nobody asked" or "asked and found nothing".
 
-The verification and validation (V&V) layer in `src/engcore/mcp/` collects those judgements into a **credibility evidence report** — credibility in the sense ASME V&V 10/20/40 and NASA-STD-7009 use the word — and derives one advisory verdict from them. It is input to an engineer of record, not a decision, and the project claims no certification or standards conformance. See [docs/mcp/README.md](docs/mcp/README.md).
+The verification and validation (V&V) layer in `src/engcore/credibility/` (the old `src/engcore/mcp/` paths are compatibility shims) collects those judgements into a **credibility evidence report** — credibility in the sense ASME V&V 10/20/40 and NASA-STD-7009 use the word — and derives one advisory verdict from them. It is input to an engineer of record, not a decision, and the project claims no certification or standards conformance. See [docs/mcp/README.md](docs/mcp/README.md).
 
 ## Layout
 
@@ -49,12 +49,13 @@ src/engcore/
 tests/           the suite, tiered (see docs/TESTING.md)
 experiments/     frozen, SHA-pinned experiments — inputs to the evidence docs
 docs/
-  CRAFTY_ARCHITECTURE_CONTEXT.md   architecture, science and product context
+  architecture/README.md           current layer map (start here)
+  CRAFTY_ARCHITECTURE_CONTEXT.md   historical context from 2026-09-06; superseded
+                                   by architecture/README.md and project/
   TESTING.md                       how to run the suite
   mcp/README.md                    what the credibility evidence report claims,
                                    and what it does not
-  SRIA.md                          what src/engcore/sria/ is, and why nothing
-                                   else imports it
+  SRIA.md                          what src/engcore/sria/ is
   milestones/                      one prereg + freeze/evidence pair per milestone
   architecture-study/              MOOSE, PETSc, OpenFOAM, preCICE, FEniCSx, OpenMDAO studies
 ```
@@ -68,6 +69,9 @@ A repository invariant now enforces that **`claims` never imports `mcp`**. MCP c
 See [docs/architecture/README.md](docs/architecture/README.md) for the current layer map and [docs/SRIA.md](docs/SRIA.md) for the assurance layer.
 
 ## Where this stands
+
+*Historical figures, recorded 2026-09-08 and not re-measured on current `main`.
+Later closed challenges live in `benchmarks/blind/` and `benchmarks/blind_v2/`.*
 
 Measured on the adversarial benchmark in `benchmarks/hard/` — 2000 cases,
 split 1400 development / 600 sealed hold-out. **The hold-out was opened once,
@@ -118,11 +122,19 @@ that reproduce it.
 ## Running
 
 ```bash
-pip install -e ".[dev]"
-python -m pytest -m "not expensive" -q -n auto   # FAST       — every edit
-python -m pytest -m "not campaign"  -q -n auto   # SCIENTIFIC — after core changes
-python -m pytest -q                              # FULL       — before a freeze
+pip install -e ".[dev,mcp,oracles]"                                  # the gate set CI installs
+python tools/forge_check.py --changed --base origin/main --workers 4  # CHANGED    — every edit
+python -m pytest -m "not expensive" -q -n 4 --dist loadfile           # FAST       — before push
+python -m pytest -m "not campaign"  -q -n 4 --dist loadfile           # SCIENTIFIC — after core changes (+ CI deselects)
+python -m pytest -q -n 4 --dist loadfile                              # FULL       — before a freeze
 ```
+
+`.[dev]` alone is the bare install, but it lacks `mpmath` (`[oracles]`), which
+`benchmarks/scientific_truth` imports unconditionally. `--dist loadfile` is
+required and `-n auto` is not memory-safe; the SCIENTIFIC deselects and the
+reasons are in [docs/TESTING.md](docs/TESTING.md). The FAST tier on `main` is
+currently red; the classified failure set is in
+[docs/work/FAILURE_BASELINE_2026-10-20.md](docs/work/FAILURE_BASELINE_2026-10-20.md).
 
 ## Natural-language vertical slice
 
