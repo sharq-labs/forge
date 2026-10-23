@@ -1,117 +1,151 @@
 {
- "code_revision": "b572bfcd05573a2f8f24d63ce26c2826a7a2ced9",
+ "code_revision": "adffac78c977ffaf5b510bb1598ac83a3f9d2ff2",
  "command": "python -m benchmarks.mind_gen2_authority_v1.ledger_curve",
  "host": {
   "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
   "python": "3.13.16"
  },
  "repeats": 41,
- "schema": "forge.mind.gen2_authority.ledger_size_curve/4",
+ "schema": "forge.mind.gen2_authority.ledger_size_curve/5",
  "settled_charges": {
   "0": {
    "admission_min_max_ms": [
-    20.41,
-    41.38
+    18.14,
+    23.06
    ],
-   "admission_p50_ms": 22.04,
+   "admission_p50_ms": 19.35,
    "check_min_max_ms": [
-    0.38,
-    0.634
+    0.298,
+    0.459
    ],
-   "check_p50_ms": 0.447,
+   "check_p50_ms": 0.332,
    "status": "FEASIBLE"
   },
   "10": {
    "admission_min_max_ms": [
-    21.88,
-    35.76
+    15.34,
+    22.35
    ],
-   "admission_p50_ms": 22.94,
+   "admission_p50_ms": 18.89,
    "check_min_max_ms": [
-    0.471,
-    1.07
+    0.301,
+    0.417
    ],
-   "check_p50_ms": 0.54,
+   "check_p50_ms": 0.325,
    "status": "FEASIBLE"
   },
   "100": {
    "admission_min_max_ms": [
-    37.35,
-    62.88
+    26.28,
+    43.34
    ],
-   "admission_p50_ms": 41.08,
+   "admission_p50_ms": 30.44,
    "check_min_max_ms": [
-    1.148,
-    1.845
+    0.774,
+    1.812
    ],
-   "check_p50_ms": 1.232,
+   "check_p50_ms": 0.905,
    "status": "FEASIBLE"
   },
   "1000": {
    "admission_min_max_ms": [
-    184.3,
-    288.37
+    126.09,
+    219.52
    ],
-   "admission_p50_ms": 189.99,
+   "admission_p50_ms": 164.69,
    "check_min_max_ms": [
-    8.112,
-    13.982
+    7.008,
+    13.842
    ],
-   "check_p50_ms": 8.579,
+   "check_p50_ms": 7.305,
+   "status": "FEASIBLE"
+  }
+ },
+ "unbound_experiment_new_evaluation": {
+  "0": {
+   "admission_min_max_ms": [
+    14.89,
+    26.92
+   ],
+   "admission_p50_ms": 16.88,
+   "status": "FEASIBLE"
+  },
+  "100": {
+   "admission_min_max_ms": [
+    18.59,
+    37.52
+   ],
+   "admission_p50_ms": 25.0,
+   "status": "FEASIBLE"
+  },
+  "1000": {
+   "admission_min_max_ms": [
+    87.86,
+    174.82
+   ],
+   "admission_p50_ms": 115.78,
+   "status": "FEASIBLE"
+  },
+  "300": {
+   "admission_min_max_ms": [
+    26.23,
+    93.03
+   ],
+   "admission_p50_ms": 36.7,
    "status": "FEASIBLE"
   }
  },
  "unbound_ledger_charges": {
   "0": {
    "admission_min_max_ms": [
-    20.41,
-    31.25
+    18.05,
+    34.2
    ],
-   "admission_p50_ms": 21.49,
+   "admission_p50_ms": 19.37,
    "check_min_max_ms": [
-    0.356,
-    0.796
+    0.312,
+    1.352
    ],
-   "check_p50_ms": 0.4,
+   "check_p50_ms": 0.512,
    "status": "FEASIBLE"
   },
   "10": {
    "admission_min_max_ms": [
-    20.64,
-    22.17
+    18.29,
+    29.54
    ],
-   "admission_p50_ms": 21.36,
+   "admission_p50_ms": 20.24,
    "check_min_max_ms": [
-    0.374,
-    0.522
+    0.31,
+    0.504
    ],
-   "check_p50_ms": 0.411,
+   "check_p50_ms": 0.355,
    "status": "FEASIBLE"
   },
   "100": {
    "admission_min_max_ms": [
-    21.92,
-    33.47
+    19.74,
+    33.25
    ],
-   "admission_p50_ms": 23.57,
+   "admission_p50_ms": 25.22,
    "check_min_max_ms": [
-    0.52,
-    0.635
+    0.309,
+    0.43
    ],
-   "check_p50_ms": 0.566,
+   "check_p50_ms": 0.333,
    "status": "FEASIBLE"
   },
   "1000": {
    "admission_min_max_ms": [
-    36.43,
-    82.41
+    32.9,
+    91.63
    ],
-   "admission_p50_ms": 37.61,
+   "admission_p50_ms": 36.87,
    "check_min_max_ms": [
-    0.363,
-    0.543
+    0.3,
+    0.476
    ],
-   "check_p50_ms": 0.396,
+   "check_p50_ms": 0.326,
    "status": "FEASIBLE"
   }
  }

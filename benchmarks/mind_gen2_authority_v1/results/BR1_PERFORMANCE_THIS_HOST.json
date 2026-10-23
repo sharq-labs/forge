@@ -1,7 +1,8 @@
 {
- "br1_1_commit": "b572bfcd05573a2f8f24d63ce26c2826a7a2ced9",
+ "br1_1_commit": "2f7281f590fdec6f9d45b1157c5e0740e7cc2693",
+ "br1_1_round7_commit": "27b9f71fc0eaa49c6611690cd2502ea7eccf2005",
  "br1_commit": "1202ea6c3d96f5c31d0b142a32438da75e020cae",
- "command": "for i in 1 2 3: for each checkout (1202ea6c, then this branch): cd <checkout> && PYTHONPATH=<checkout>/src:<checkout> PYTHONHASHSEED=0 python -c 'from benchmarks.mind_gen2_world_v1 import cases as C, run_benchmark as rb; r=rb.performance(C.load()[\"cases\"], repeats=25); print(r[...])'",
+ "command": "python <scratchpad>/perf_r7/br1_alternating5.py br1_code_1202ea6c=<1202ea6c checkout> br1_1_code_27b9f71=<27b9f71 archive> br1_1_code=<this branch>: five rounds, each running BR1's harness (benchmarks.mind_gen2_world_v1.run_benchmark.performance(C.load()['cases'], repeats=25)) once per checkout in that order, PYTHONPATH=<checkout>/src:<checkout> PYTHONHASHSEED=0",
  "host": {
   "cpu_count": 4,
   "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
@@ -9,84 +10,208 @@
  },
  "medians": {
   "br1_1_code": {
-   "ACTIONSPACE_BUILD_MS": 0.372,
-   "FEASIBILITY_P50_MS": 0.2562,
-   "FEASIBILITY_P95_MS": 0.4955,
-   "SOLVER": 171.458,
-   "WORLD_BUILD_MS": 1.582
+   "ACTIONSPACE_BUILD_MS": 0.309,
+   "FEASIBILITY_P50_MS": 0.1991,
+   "FEASIBILITY_P95_MS": 0.4282,
+   "SOLVER": 145.961,
+   "WORLD_BUILD_MS": 1.354
+  },
+  "br1_1_code_27b9f71": {
+   "ACTIONSPACE_BUILD_MS": 0.305,
+   "FEASIBILITY_P50_MS": 0.1922,
+   "FEASIBILITY_P95_MS": 0.3241,
+   "SOLVER": 142.828,
+   "WORLD_BUILD_MS": 1.262
   },
   "br1_code_1202ea6c": {
-   "ACTIONSPACE_BUILD_MS": 0.453,
-   "FEASIBILITY_P50_MS": 0.2239,
-   "FEASIBILITY_P95_MS": 0.3715,
-   "SOLVER": 154.12,
-   "WORLD_BUILD_MS": 1.392
+   "ACTIONSPACE_BUILD_MS": 0.361,
+   "FEASIBILITY_P50_MS": 0.181,
+   "FEASIBILITY_P95_MS": 0.3052,
+   "SOLVER": 141.939,
+   "WORLD_BUILD_MS": 1.156
+  }
+ },
+ "ranges": {
+  "br1_1_code": {
+   "ACTIONSPACE_BUILD_MS": [
+    0.264,
+    0.347
+   ],
+   "FEASIBILITY_P50_MS": [
+    0.194,
+    0.2175
+   ],
+   "FEASIBILITY_P95_MS": [
+    0.3763,
+    0.4644
+   ],
+   "SOLVER": [
+    123.131,
+    171.404
+   ],
+   "WORLD_BUILD_MS": [
+    1.019,
+    1.43
+   ]
+  },
+  "br1_1_code_27b9f71": {
+   "ACTIONSPACE_BUILD_MS": [
+    0.302,
+    0.346
+   ],
+   "FEASIBILITY_P50_MS": [
+    0.1757,
+    0.1956
+   ],
+   "FEASIBILITY_P95_MS": [
+    0.3142,
+    0.3632
+   ],
+   "SOLVER": [
+    130.176,
+    155.586
+   ],
+   "WORLD_BUILD_MS": [
+    1.228,
+    1.41
+   ]
+  },
+  "br1_code_1202ea6c": {
+   "ACTIONSPACE_BUILD_MS": [
+    0.289,
+    0.431
+   ],
+   "FEASIBILITY_P50_MS": [
+    0.157,
+    0.2076
+   ],
+   "FEASIBILITY_P95_MS": [
+    0.2629,
+    0.4615
+   ],
+   "SOLVER": [
+    131.607,
+    142.685
+   ],
+   "WORLD_BUILD_MS": [
+    0.965,
+    1.223
+   ]
   }
  },
  "runs": {
   "br1_1_code": [
    {
-    "ACTIONSPACE_BUILD_MS": 0.343,
-    "FEASIBILITY_P50_MS": 0.2562,
-    "FEASIBILITY_P95_MS": 0.4955,
-    "SOLVER": 182.804,
-    "WORLD_BUILD_MS": 1.582
+    "ACTIONSPACE_BUILD_MS": 0.289,
+    "FEASIBILITY_P50_MS": 0.1992,
+    "FEASIBILITY_P95_MS": 0.4644,
+    "SOLVER": 171.404,
+    "WORLD_BUILD_MS": 1.409
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.372,
-    "FEASIBILITY_P50_MS": 0.2639,
-    "FEASIBILITY_P95_MS": 0.5515,
-    "SOLVER": 161.637,
-    "WORLD_BUILD_MS": 1.566
+    "ACTIONSPACE_BUILD_MS": 0.347,
+    "FEASIBILITY_P50_MS": 0.2175,
+    "FEASIBILITY_P95_MS": 0.3763,
+    "SOLVER": 133.08,
+    "WORLD_BUILD_MS": 1.43
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.423,
-    "FEASIBILITY_P50_MS": 0.2549,
-    "FEASIBILITY_P95_MS": 0.4262,
-    "SOLVER": 171.458,
-    "WORLD_BUILD_MS": 1.684
+    "ACTIONSPACE_BUILD_MS": 0.312,
+    "FEASIBILITY_P50_MS": 0.1973,
+    "FEASIBILITY_P95_MS": 0.4282,
+    "SOLVER": 149.497,
+    "WORLD_BUILD_MS": 1.339
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.309,
+    "FEASIBILITY_P50_MS": 0.1991,
+    "FEASIBILITY_P95_MS": 0.393,
+    "SOLVER": 145.961,
+    "WORLD_BUILD_MS": 1.354
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.264,
+    "FEASIBILITY_P50_MS": 0.194,
+    "FEASIBILITY_P95_MS": 0.4463,
+    "SOLVER": 123.131,
+    "WORLD_BUILD_MS": 1.019
+   }
+  ],
+  "br1_1_code_27b9f71": [
+   {
+    "ACTIONSPACE_BUILD_MS": 0.304,
+    "FEASIBILITY_P50_MS": 0.1776,
+    "FEASIBILITY_P95_MS": 0.3191,
+    "SOLVER": 155.586,
+    "WORLD_BUILD_MS": 1.262
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.305,
+    "FEASIBILITY_P50_MS": 0.1951,
+    "FEASIBILITY_P95_MS": 0.3142,
+    "SOLVER": 142.828,
+    "WORLD_BUILD_MS": 1.263
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.346,
+    "FEASIBILITY_P50_MS": 0.1757,
+    "FEASIBILITY_P95_MS": 0.3241,
+    "SOLVER": 130.176,
+    "WORLD_BUILD_MS": 1.41
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.302,
+    "FEASIBILITY_P50_MS": 0.1956,
+    "FEASIBILITY_P95_MS": 0.3632,
+    "SOLVER": 145.058,
+    "WORLD_BUILD_MS": 1.228
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.309,
+    "FEASIBILITY_P50_MS": 0.1922,
+    "FEASIBILITY_P95_MS": 0.328,
+    "SOLVER": 136.98,
+    "WORLD_BUILD_MS": 1.244
    }
   ],
   "br1_code_1202ea6c": [
    {
-    "ACTIONSPACE_BUILD_MS": 0.442,
-    "FEASIBILITY_P50_MS": 0.2239,
-    "FEASIBILITY_P95_MS": 0.3592,
-    "SOLVER": 154.12,
-    "WORLD_BUILD_MS": 1.392
+    "ACTIONSPACE_BUILD_MS": 0.289,
+    "FEASIBILITY_P50_MS": 0.2076,
+    "FEASIBILITY_P95_MS": 0.4615,
+    "SOLVER": 142.685,
+    "WORLD_BUILD_MS": 0.965
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.464,
-    "FEASIBILITY_P50_MS": 0.2325,
-    "FEASIBILITY_P95_MS": 0.4194,
-    "SOLVER": 172.626,
-    "WORLD_BUILD_MS": 1.454
+    "ACTIONSPACE_BUILD_MS": 0.37,
+    "FEASIBILITY_P50_MS": 0.157,
+    "FEASIBILITY_P95_MS": 0.2749,
+    "SOLVER": 142.509,
+    "WORLD_BUILD_MS": 1.223
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.453,
-    "FEASIBILITY_P50_MS": 0.2217,
-    "FEASIBILITY_P95_MS": 0.3715,
-    "SOLVER": 154.082,
-    "WORLD_BUILD_MS": 1.384
+    "ACTIONSPACE_BUILD_MS": 0.361,
+    "FEASIBILITY_P50_MS": 0.1838,
+    "FEASIBILITY_P95_MS": 0.3052,
+    "SOLVER": 131.607,
+    "WORLD_BUILD_MS": 1.129
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.348,
+    "FEASIBILITY_P50_MS": 0.181,
+    "FEASIBILITY_P95_MS": 0.3929,
+    "SOLVER": 141.939,
+    "WORLD_BUILD_MS": 1.156
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.431,
+    "FEASIBILITY_P50_MS": 0.1595,
+    "FEASIBILITY_P95_MS": 0.2629,
+    "SOLVER": 140.135,
+    "WORLD_BUILD_MS": 1.158
    }
   ]
  },
  "schema": "forge.mind.gen2_authority.br1_performance_this_host/2",
- "spread_percent": {
-  "br1_1_code": {
-   "ACTIONSPACE_BUILD_MS": 23,
-   "FEASIBILITY_P50_MS": 4,
-   "FEASIBILITY_P95_MS": 29,
-   "SOLVER": 13,
-   "WORLD_BUILD_MS": 8
-  },
-  "br1_code_1202ea6c": {
-   "ACTIONSPACE_BUILD_MS": 5,
-   "FEASIBILITY_P50_MS": 5,
-   "FEASIBILITY_P95_MS": 17,
-   "SOLVER": 12,
-   "WORLD_BUILD_MS": 5
-  }
- },
- "statement": "BR1's own harness on BR1's 515 frozen cases, run alternately on BR1's code (br1_commit) and on BR1.1's code (br1_1_commit), three times each on one idle host; medians reported. Timings are host-dependent. In these runs single runs differ by up to 29 % (BR1.1) and 17 % (BR1) per metric; earlier runs on this host differed by up to ~50 % on FEASIBILITY_P95_MS, so a p95 delta inside that band is noise. SOLVER is one in-repo solver execution (a Gen1 repsem judgment), the scale reference."
+ "statement": "BR1's own harness on BR1's 515 frozen cases, run alternately on BR1's code (br1_commit), on the round-7 review commit (br1_1_round7_commit) and on BR1.1's code (br1_1_commit), five times each on one idle host; medians and min-max ranges reported. Timings are host-dependent (the host's speed changed between container restarts). On this run every metric's BR1.1 range overlaps BR1's, so no difference is established on this host; the medians are reported as measured."
 }
