@@ -929,4 +929,8 @@ as needing recertification.
 
 ## 12. Final table and conclusion
 
-NOT CLOSED: exact owner-publication lifetime decision required; all separable confirmed local corrections completed and freshly reviewed.
+**BR1.1 CLOSED within its development contract (2026-10-24).** The owner approved stable publication lifetime; implementation0b605b4 and Round19 correctionsb4bbee0f preserve canonical histories across restore/interruptions and reconcile late generations before final observation. Fresh Round20 sixperspective review, scientific-review skill and completeness critic: Q1–Q7 allNO;0BLOCKER/0MAJOR/0substantiveMINOR.
+
+Evidence and exact results: `docs/work/evidence/br11_local_2026_10_23/round20/README.md`. Targeted885pass; regression279pass; guards1600pass/2basefail; affectedexpensive335pass/13basefail/14baseerrors; cleanFAST12896pass/67basefailureIDs/190skip. Existing unknownprovenance diagnostic increases456to1202 from data-bearing inventory changes; do not call all reasons identical or gates clean. Gen1 INTACT; benchmark/rescore MATCHES.
+
+Explicit AccountPublication callback migration is required for live replacement-following. Published generations retained through source lifetime, terminalclose plus quiescence required for retirement. Final check is an observation boundary, not executor reservation. Persistence, unbounded retention cost and hostile interruption remain limits. No physical validation, certification or formal proof. No push/PR/merge/OD3. Scientific Contract Kernel v0 is next authorized Big Rock and is not started here.

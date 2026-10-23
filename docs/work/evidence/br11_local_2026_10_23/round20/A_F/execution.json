@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-m",
+    "pytest",
+    "/home/dev_kaeem/br11-review/r20/A_F/test_probes.py",
+    "tests/mind/test_authority_review_r3.py",
+    "tests/mind/test_authority_cross_domain.py",
+    "tests/mind/test_authority_lifetime.py",
+    "tests/mind/test_world_boundary.py",
+    "-q",
+    "-p",
+    "no:cacheprovider"
+  ],
+  "exit": 0,
+  "output": "........................................................................ [ 82%]\n...............                                                          [100%]\n87 passed in 11.39s\n",
+  "sha": "b4bbee0f6df40b7dd0de9b0739beef392dab6be5",
+  "owners_sha256": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3"
+}

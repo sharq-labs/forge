@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "/home/dev_kaeem/br11-review/r20/B_C/test_independent.py",
+    "tests/mind/test_authority_lifetime.py",
+    "tests/mind/test_authority_lifetime_state_machine.py",
+    "tests/mind/test_authority_review_r19.py",
+    "tests/mind/test_authority_publication_currency_r19.py",
+    "tests/mind/test_authority_review_r6.py",
+    "tests/mind/test_authority_review_r16.py",
+    "tests/mind/test_authority_review_r17.py"
+  ],
+  "exit_code": 0,
+  "duration_s": 9.955061674118042,
+  "sha": "b4bbee0f6df40b7dd0de9b0739beef392dab6be5",
+  "owners_before": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3",
+  "owners_after": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3",
+  "output": "........................................................................ [ 55%]\n.........................................................                [100%]\n129 passed in 9.57s\n"
+}

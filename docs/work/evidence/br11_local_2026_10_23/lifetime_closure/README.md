@@ -1,6 +1,6 @@
 # BR1.1 owner-publication lifetime closure evidence
 
-Status: Round19 found two substantive corrective families; repaired source under full-gate rerun and fresh Round20 required. NOT CLOSED.
+Status: CLOSED within the authorized development contract after corrective commit b4bbee0f and independent Round20. See ../round20/README.md for current gate comparison, diagnostic exception, review and residual scope.
 Initial clean SHA: `a57f1fdd393d1c98f603f6eb1a4ed99fb708f149`; identical source/tests to Round18 `cc7ef06b0d08398173d9448ff47d8abb7e375d44`.
 Authorized primary: `/home/dev_kaeem/forge-gen2-authority-v1`, branch `research/mind-gen2-authority-binding-v1`, existing WSL Ubuntu24.04 CPython3.12.3 venv. No new implementation worktree/branch.
 
@@ -47,3 +47,6 @@ See ../round19/README.md for complete disputed-finding disposition and failed-fi
 
 ## Corrected-source evidence before final FAST
 At source hash efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3: targeted885passed, regression279passed, guards1600passed/2failed, affected expensive335passed/13failed/14errors. Rescore MATCHES, authority benchmark MATCHES, Gen1 INTACT. Ten isolated semantic mutants killed, zero survived/invalid/unexecuted;72positive controls passed before and after. Prior eight-mutant report remains historical; new two mutants specifically omit final generation check or restore identity-as-divergence. Native depth/control sweep rerun34cases,0duplicate dispatches. First rerun stopped on stale harness HEAD assertion before any scenario; only expected HEAD was updated, then all34cases executed.
+
+## Final closure reference
+Clean-commit FAST12896passed/67failed/190skipped, no new failure IDs. Existing provenance diagnostic1202vsbase456 is explicitly different; see gate_comparison_round20_clean.json. Round20 sixperspective review, extra static scientific review and completeness critic report0BLOCKER/0MAJOR/0substantiveMINOR. Q1–Q7 allNO. Source/tests unchanged by final evidence curation.

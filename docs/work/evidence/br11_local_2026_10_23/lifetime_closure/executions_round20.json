@@ -228,5 +228,28 @@
     "source_before": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3",
     "source_after": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3",
     "summary": "69 failed, 12894 passed, 190 skipped, 2 warnings in 348.15s (0:05:48)"
+  },
+  {
+    "label": "r20-clean-fast",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-n",
+      "4",
+      "--dist",
+      "loadfile",
+      "-m",
+      "not expensive",
+      "-p",
+      "no:cacheprovider",
+      "-rfE"
+    ],
+    "exit": 1,
+    "seconds": 323.9961235523224,
+    "source_before": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3",
+    "source_after": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3",
+    "summary": "67 failed, 12896 passed, 190 skipped, 2 warnings in 309.15s (0:05:09)"
   }
 ]
