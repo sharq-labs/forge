@@ -30,6 +30,10 @@ OWNER_DECISION_REQUIRED (BR1.1 does not decide these):
 - A canonical protocol owner: protocol declarations stay caller-declared, held in force by the execution side.
 - Budget reservation and at-most-once execution at the execution owner (the desk reserves nothing).
 - A provider status loader (`ProviderStatus.from_dict`) on the providers owner.
+- Protocol level semantics across units: an action level declared in another unit executes as its conversion, an ulp
+  either side of the variable's own spelling, so a bound placed at that level decides on the converted value and can go
+  either way (README §4). Should bind refuse an action level whose conversion is not bit-equal to the variable's own
+  spelling of the level (fail closed at bind), or keep deciding on the level as executed (BR1.1 does the latter)?
 - Merge requires the changed-file gate's SCIENTIFIC tier for `src/engcore/mind/world` (classification
   `scientific_shared`) and the FAST differential at the merge SHA.
 

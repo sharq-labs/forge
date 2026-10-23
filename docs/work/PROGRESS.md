@@ -8558,7 +8558,11 @@ completeness critic):
   another level: a spelling of a refuted level was admitted and dispatched an ulp off it, also in offset temperature
   units and on a fixed protocol condition); MAJOR B7-M1 = R7-D1 = F7-F1 (a pinned budget snapshot derived live;
   scope skeptics graded it MINOR, treated as MAJOR); 30 MINOR; fixed in `9a61a01`, `14caa58`, `b572bfc` (README §9);
-- round 8: see the update below.
+- round 8 at `15725ec` (six lenses): 0 BLOCKER / 0 MAJOR, 36 MINOR (critic K8-F1..F3 MINOR); Q1-Q7 NO from lenses A-E;
+  lens F and the critic held Q4 PARTIAL on two MINORs (the fixed-condition half of the exact-level guard had no control;
+  round 7's unlocked read-back let a rollback land between a verification's read-back and its comparison); fixed in
+  `03f3aab`, `2f7281f` (README §9);
+- round 9: see the update below.
 
 **Failed approaches, recorded so they are not repeated:**
 - **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
@@ -8589,8 +8593,9 @@ completeness critic):
 - **Observing only the accounts a verification reads** (round 5's answer to "unbound accounts are read"): a rollback of
   an account no later verification of its world read (a desk verifying other worlds, a reader built after a spend) was
   accepted; a submitted world chose which accounts were tracked; reading outside the lock let an older snapshot be
-  taken for a divergence. Every handed account is now observed at construction and at every verification, under one
-  lock, and an account no verification reads refuses nothing.
+  taken for a divergence. Every handed account is now observed at construction and at every verification (round 6
+  put the whole pin under one lock; round 7 took the execution side's callback out of it; round 8 keeps the read-back
+  and the comparison locked), and an account no verification reads refuses nothing.
 - **Excluding "the matched level" from the nearer-level rule by object identity** (round 6): another spelling of the
   same level (the variable's 0.7 A beside the action's 700 mA) then counted as a nearer level, the value fell through
   unmatched, and two rules (membership and as_executed) disagreed. Same-level spellings are excluded by the owner's
@@ -8600,6 +8605,11 @@ completeness critic):
   observed nothing), and **holding the follower's lock across the execution side's callback** (lock-order deadlock).
   Every reader is pinned when a verification starts; only the comparison is locked, so a concurrent older snapshot is
   "behind" (refused while behind), not a permanent divergence.
+- **Reading accounts back with no lock held** (round 7, to keep the execution side's callback outside the lock): a
+  rollback could land between one verification's read-back of a spend and its comparison. The callback stays unlocked;
+  the read-back and the comparison are one locked step again (round 8).
+- **Serving an experiment's raw serialization while checking its read-back** (round 7): live digests could differ from
+  replay's. An experiment is served in its owner's read-back form (round 8).
 - **A mutation run under the repository's pytest config with only `PYTHONPATH` pointed at a mutant `src`**:
   `pyproject.toml`'s `pythonpath` puts the checkout's own `src` first, so the mutant was never imported. Mutants need a
   full tree copy run from its own root.
@@ -8713,6 +8723,22 @@ completeness critic):
     1202ea6c... --dry-run`: narrowing refused (unclassified files) → whole FAST + regression pack, run above; it marks
     `budget.py` and the certified harness tests as needing hardened recertification (NOT RUN). FAST is red on the
     base: NOT green.
+
+19. Round 8 at `1c9303e` (fixes `03f3aab`, `2f7281f`; curve `adffac7`; results `1c9303e`): the suite command of item
+    1, **572 passed**; `test_authority_review_r8.py` (15) copied into a `15725ec` archive: 10 failed, 5 passed (paths
+    round 7 had fixed without a control); the declaration-mode controls fail on full-tree mutants that read the
+    unnamed bindings of a world naming no declaration or one not in force (1 failed each); every reviewer probe of the
+    round-8 findings re-run on the fix tree gives the correct outcome (a803/a808/a809: the fixed-condition branch, its
+    stated reason, subnormal and signed zeros; p01: the cache stays at one entry per account; p04: a torn experiment is
+    refused; p05: an unread owner's pin refusal changes nothing; p07: no provider outside the declaration is probed);
+    the restated round-6 stress test passed 6/6; `rescore --check`: MATCHES; `run_benchmark --check`: MATCHES;
+    `gen1_reference --check`: INTACT. The disk allowance filled once during the round (the BR1 re-derivation test
+    failed while it was full and passed after scratch tree copies were removed). Performance at `adffac7`/`2f7281f`:
+    `run_benchmark`, `ledger_curve` (three curves) and BR1's harness alternately on `1202ea6c`, `27b9f71` and
+    `2f7281f`, five runs each (`BR1_PERFORMANCE_THIS_HOST.json`; the script is
+    `/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/perf_r7/br1_alternating5.py`).
+    Item 17's provider mutant ran on the 18-test r7 file of `14caa58` (1 failed, 31 passed over r6+r7); item 15's
+    experiment mutant on the 13-test r6 file of `0453a95`.
 
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
