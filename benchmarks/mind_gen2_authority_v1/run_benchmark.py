@@ -183,12 +183,13 @@ def _pct(samples: list[float], x: float) -> float:
 
 
 def code_revision() -> str:
-    """The commit the measured code is at (``+dirty`` when ``src`` or ``benchmarks`` differ from it), else UNKNOWN."""
+    """The commit the measured code is at (``+dirty`` when a Python file under ``src`` or ``benchmarks`` differs from
+    it; results and reports are not code), else UNKNOWN."""
     root = pathlib.Path(__file__).resolve().parents[2]
     try:
         sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True,
                              check=True).stdout.strip()
-        dirty = subprocess.run(["git", "status", "--porcelain", "--", "src", "benchmarks"], cwd=root,
+        dirty = subprocess.run(["git", "status", "--porcelain", "--", "src/*.py", "benchmarks/*.py"], cwd=root,
                                capture_output=True, text=True, check=True).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
         return "UNKNOWN"
