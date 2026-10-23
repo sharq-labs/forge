@@ -1,5 +1,5 @@
 {
- "br1_1_commit": "2f7281f590fdec6f9d45b1157c5e0740e7cc2693",
+ "br1_1_commit": "e573096001cc27cbb2af16c27c04748ec0777e27",
  "br1_1_round7_commit": "27b9f71fc0eaa49c6611690cd2502ea7eccf2005",
  "br1_commit": "1202ea6c3d96f5c31d0b142a32438da75e020cae",
  "command": "python <scratchpad>/perf_r7/br1_alternating5.py br1_code_1202ea6c=<1202ea6c checkout> br1_1_code_27b9f71=<27b9f71 archive> br1_1_code=<this branch>: five rounds, each running BR1's harness (benchmarks.mind_gen2_world_v1.run_benchmark.performance(C.load()['cases'], repeats=25)) once per checkout in that order, PYTHONPATH=<checkout>/src:<checkout> PYTHONHASHSEED=0",
@@ -10,208 +10,208 @@
  },
  "medians": {
   "br1_1_code": {
-   "ACTIONSPACE_BUILD_MS": 0.309,
-   "FEASIBILITY_P50_MS": 0.1991,
-   "FEASIBILITY_P95_MS": 0.4282,
-   "SOLVER": 145.961,
-   "WORLD_BUILD_MS": 1.354
+   "ACTIONSPACE_BUILD_MS": 0.326,
+   "FEASIBILITY_P50_MS": 0.2045,
+   "FEASIBILITY_P95_MS": 0.4324,
+   "SOLVER": 154.365,
+   "WORLD_BUILD_MS": 1.398
   },
   "br1_1_code_27b9f71": {
-   "ACTIONSPACE_BUILD_MS": 0.305,
-   "FEASIBILITY_P50_MS": 0.1922,
-   "FEASIBILITY_P95_MS": 0.3241,
-   "SOLVER": 142.828,
-   "WORLD_BUILD_MS": 1.262
+   "ACTIONSPACE_BUILD_MS": 0.312,
+   "FEASIBILITY_P50_MS": 0.1998,
+   "FEASIBILITY_P95_MS": 0.4129,
+   "SOLVER": 161.212,
+   "WORLD_BUILD_MS": 1.31
   },
   "br1_code_1202ea6c": {
-   "ACTIONSPACE_BUILD_MS": 0.361,
-   "FEASIBILITY_P50_MS": 0.181,
-   "FEASIBILITY_P95_MS": 0.3052,
-   "SOLVER": 141.939,
-   "WORLD_BUILD_MS": 1.156
+   "ACTIONSPACE_BUILD_MS": 0.347,
+   "FEASIBILITY_P50_MS": 0.1786,
+   "FEASIBILITY_P95_MS": 0.3347,
+   "SOLVER": 162.513,
+   "WORLD_BUILD_MS": 1.237
   }
  },
  "ranges": {
   "br1_1_code": {
    "ACTIONSPACE_BUILD_MS": [
-    0.264,
-    0.347
+    0.246,
+    0.374
    ],
    "FEASIBILITY_P50_MS": [
-    0.194,
-    0.2175
+    0.1828,
+    0.2339
    ],
    "FEASIBILITY_P95_MS": [
-    0.3763,
-    0.4644
+    0.367,
+    0.5096
    ],
    "SOLVER": [
-    123.131,
-    171.404
+    114.275,
+    160.94
    ],
    "WORLD_BUILD_MS": [
-    1.019,
+    1.183,
     1.43
    ]
   },
   "br1_1_code_27b9f71": {
    "ACTIONSPACE_BUILD_MS": [
-    0.302,
-    0.346
+    0.293,
+    0.415
    ],
    "FEASIBILITY_P50_MS": [
-    0.1757,
-    0.1956
+    0.162,
+    0.2229
    ],
    "FEASIBILITY_P95_MS": [
-    0.3142,
-    0.3632
+    0.3715,
+    0.4797
    ],
    "SOLVER": [
-    130.176,
-    155.586
+    157.239,
+    174.139
    ],
    "WORLD_BUILD_MS": [
-    1.228,
-    1.41
+    1.077,
+    1.491
    ]
   },
   "br1_code_1202ea6c": {
    "ACTIONSPACE_BUILD_MS": [
-    0.289,
-    0.431
+    0.298,
+    0.459
    ],
    "FEASIBILITY_P50_MS": [
-    0.157,
-    0.2076
+    0.1667,
+    0.2095
    ],
    "FEASIBILITY_P95_MS": [
-    0.2629,
-    0.4615
+    0.3086,
+    0.5269
    ],
    "SOLVER": [
-    131.607,
-    142.685
+    122.744,
+    182.301
    ],
    "WORLD_BUILD_MS": [
-    0.965,
-    1.223
+    0.961,
+    1.65
    ]
   }
  },
  "runs": {
   "br1_1_code": [
    {
-    "ACTIONSPACE_BUILD_MS": 0.289,
-    "FEASIBILITY_P50_MS": 0.1992,
-    "FEASIBILITY_P95_MS": 0.4644,
-    "SOLVER": 171.404,
-    "WORLD_BUILD_MS": 1.409
+    "ACTIONSPACE_BUILD_MS": 0.374,
+    "FEASIBILITY_P50_MS": 0.2045,
+    "FEASIBILITY_P95_MS": 0.4623,
+    "SOLVER": 114.275,
+    "WORLD_BUILD_MS": 1.401
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.347,
-    "FEASIBILITY_P50_MS": 0.2175,
-    "FEASIBILITY_P95_MS": 0.3763,
-    "SOLVER": 133.08,
+    "ACTIONSPACE_BUILD_MS": 0.325,
+    "FEASIBILITY_P50_MS": 0.2009,
+    "FEASIBILITY_P95_MS": 0.367,
+    "SOLVER": 158.991,
+    "WORLD_BUILD_MS": 1.398
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.341,
+    "FEASIBILITY_P50_MS": 0.2054,
+    "FEASIBILITY_P95_MS": 0.4324,
+    "SOLVER": 154.365,
+    "WORLD_BUILD_MS": 1.359
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.246,
+    "FEASIBILITY_P50_MS": 0.1828,
+    "FEASIBILITY_P95_MS": 0.4139,
+    "SOLVER": 160.94,
+    "WORLD_BUILD_MS": 1.183
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.326,
+    "FEASIBILITY_P50_MS": 0.2339,
+    "FEASIBILITY_P95_MS": 0.5096,
+    "SOLVER": 130.485,
     "WORLD_BUILD_MS": 1.43
-   },
-   {
-    "ACTIONSPACE_BUILD_MS": 0.312,
-    "FEASIBILITY_P50_MS": 0.1973,
-    "FEASIBILITY_P95_MS": 0.4282,
-    "SOLVER": 149.497,
-    "WORLD_BUILD_MS": 1.339
-   },
-   {
-    "ACTIONSPACE_BUILD_MS": 0.309,
-    "FEASIBILITY_P50_MS": 0.1991,
-    "FEASIBILITY_P95_MS": 0.393,
-    "SOLVER": 145.961,
-    "WORLD_BUILD_MS": 1.354
-   },
-   {
-    "ACTIONSPACE_BUILD_MS": 0.264,
-    "FEASIBILITY_P50_MS": 0.194,
-    "FEASIBILITY_P95_MS": 0.4463,
-    "SOLVER": 123.131,
-    "WORLD_BUILD_MS": 1.019
    }
   ],
   "br1_1_code_27b9f71": [
    {
-    "ACTIONSPACE_BUILD_MS": 0.304,
-    "FEASIBILITY_P50_MS": 0.1776,
-    "FEASIBILITY_P95_MS": 0.3191,
-    "SOLVER": 155.586,
-    "WORLD_BUILD_MS": 1.262
+    "ACTIONSPACE_BUILD_MS": 0.415,
+    "FEASIBILITY_P50_MS": 0.1944,
+    "FEASIBILITY_P95_MS": 0.3715,
+    "SOLVER": 172.759,
+    "WORLD_BUILD_MS": 1.31
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.305,
-    "FEASIBILITY_P50_MS": 0.1951,
-    "FEASIBILITY_P95_MS": 0.3142,
-    "SOLVER": 142.828,
-    "WORLD_BUILD_MS": 1.263
+    "ACTIONSPACE_BUILD_MS": 0.314,
+    "FEASIBILITY_P50_MS": 0.1998,
+    "FEASIBILITY_P95_MS": 0.4252,
+    "SOLVER": 161.212,
+    "WORLD_BUILD_MS": 1.389
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.346,
-    "FEASIBILITY_P50_MS": 0.1757,
-    "FEASIBILITY_P95_MS": 0.3241,
-    "SOLVER": 130.176,
-    "WORLD_BUILD_MS": 1.41
+    "ACTIONSPACE_BUILD_MS": 0.293,
+    "FEASIBILITY_P50_MS": 0.162,
+    "FEASIBILITY_P95_MS": 0.4129,
+    "SOLVER": 174.139,
+    "WORLD_BUILD_MS": 1.077
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.302,
-    "FEASIBILITY_P50_MS": 0.1956,
-    "FEASIBILITY_P95_MS": 0.3632,
-    "SOLVER": 145.058,
-    "WORLD_BUILD_MS": 1.228
+    "ACTIONSPACE_BUILD_MS": 0.301,
+    "FEASIBILITY_P50_MS": 0.2229,
+    "FEASIBILITY_P95_MS": 0.4797,
+    "SOLVER": 157.239,
+    "WORLD_BUILD_MS": 1.26
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.309,
-    "FEASIBILITY_P50_MS": 0.1922,
-    "FEASIBILITY_P95_MS": 0.328,
-    "SOLVER": 136.98,
-    "WORLD_BUILD_MS": 1.244
+    "ACTIONSPACE_BUILD_MS": 0.312,
+    "FEASIBILITY_P50_MS": 0.2112,
+    "FEASIBILITY_P95_MS": 0.3983,
+    "SOLVER": 160.422,
+    "WORLD_BUILD_MS": 1.491
    }
   ],
   "br1_code_1202ea6c": [
    {
-    "ACTIONSPACE_BUILD_MS": 0.289,
-    "FEASIBILITY_P50_MS": 0.2076,
-    "FEASIBILITY_P95_MS": 0.4615,
-    "SOLVER": 142.685,
-    "WORLD_BUILD_MS": 0.965
+    "ACTIONSPACE_BUILD_MS": 0.459,
+    "FEASIBILITY_P50_MS": 0.1916,
+    "FEASIBILITY_P95_MS": 0.3347,
+    "SOLVER": 162.513,
+    "WORLD_BUILD_MS": 1.65
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.37,
-    "FEASIBILITY_P50_MS": 0.157,
-    "FEASIBILITY_P95_MS": 0.2749,
-    "SOLVER": 142.509,
-    "WORLD_BUILD_MS": 1.223
+    "ACTIONSPACE_BUILD_MS": 0.439,
+    "FEASIBILITY_P50_MS": 0.2095,
+    "FEASIBILITY_P95_MS": 0.5269,
+    "SOLVER": 182.301,
+    "WORLD_BUILD_MS": 1.545
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.361,
-    "FEASIBILITY_P50_MS": 0.1838,
-    "FEASIBILITY_P95_MS": 0.3052,
-    "SOLVER": 131.607,
-    "WORLD_BUILD_MS": 1.129
+    "ACTIONSPACE_BUILD_MS": 0.347,
+    "FEASIBILITY_P50_MS": 0.1667,
+    "FEASIBILITY_P95_MS": 0.3428,
+    "SOLVER": 167.55,
+    "WORLD_BUILD_MS": 1.125
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.348,
-    "FEASIBILITY_P50_MS": 0.181,
-    "FEASIBILITY_P95_MS": 0.3929,
-    "SOLVER": 141.939,
-    "WORLD_BUILD_MS": 1.156
+    "ACTIONSPACE_BUILD_MS": 0.298,
+    "FEASIBILITY_P50_MS": 0.1786,
+    "FEASIBILITY_P95_MS": 0.3182,
+    "SOLVER": 122.744,
+    "WORLD_BUILD_MS": 0.961
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.431,
-    "FEASIBILITY_P50_MS": 0.1595,
-    "FEASIBILITY_P95_MS": 0.2629,
-    "SOLVER": 140.135,
-    "WORLD_BUILD_MS": 1.158
+    "ACTIONSPACE_BUILD_MS": 0.344,
+    "FEASIBILITY_P50_MS": 0.1733,
+    "FEASIBILITY_P95_MS": 0.3086,
+    "SOLVER": 143.269,
+    "WORLD_BUILD_MS": 1.237
    }
   ]
  },
  "schema": "forge.mind.gen2_authority.br1_performance_this_host/2",
- "statement": "BR1's own harness on BR1's 515 frozen cases, run alternately on BR1's code (br1_commit), on the round-7 review commit (br1_1_round7_commit) and on BR1.1's code (br1_1_commit), five times each on one idle host; medians and min-max ranges reported. Timings are host-dependent (the host's speed changed between container restarts). On this run every metric's BR1.1 range overlaps BR1's, so no difference is established on this host; the medians are reported as measured."
+ "statement": "BR1's own harness on BR1's 515 frozen cases, run alternately on BR1's code (br1_commit), on the round-7 review commit (br1_1_round7_commit) and on BR1.1's code (br1_1_commit), five times each on one idle host; medians and min-max ranges reported, and paired (same round) comparisons in the report. Timings are host-dependent (the host's speed changed between container restarts)."
 }
