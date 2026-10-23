@@ -20,7 +20,7 @@ from __future__ import annotations
 from engcore.scientific import ScientificModelDefinition, Uncertainty
 from engcore.scientific.ir.values import decode_value
 
-from .authority import Authorities, AuthorityReport, BindingCheck, BindingStatus, OwnerKind
+from .authority import Authorities, AuthorityReport, BindingCheck, BindingStatus, OwnerKind, OwnerUnavailable
 from .base import WorldRefused
 from .declaration import ProtocolDeclaration
 from .owners import UNIT_RECORD, record_key
@@ -120,7 +120,7 @@ def verified_projection(world: ScientificWorld, authorities: Authorities
         return AuthorityReport(world.revision_id, (BindingCheck(
             BindingStatus.MISMATCH, K.DECLARATION, "-", "identity", "0" * 64,
             {"why": "the world's content is not the content its identity names (edited after it was built)"}),)), None
-    named = _named_records(world, authorities)
+    named, unread = _named_records(world, authorities)
     for subject, binding, held in world.projected_facts():
         if binding is None:
             if subject in ("declaration", "unit_registry") or held is not None or subject.startswith("budget:"):
@@ -128,12 +128,10 @@ def verified_projection(world: ScientificWorld, authorities: Authorities
                                            {"why": "this fact carries no authority binding (a copy no owner can "
                                                    "verify, such as a synthetic fixture reference)"}))
             continue
-        if named is not None and binding.owner_kind in named and binding.record_id not in named[binding.owner_kind]:
-            checks.append(BindingCheck(BindingStatus.MISMATCH, binding.owner_kind, binding.record_id, subject,
-                                       binding.digest,
-                                       {"why": "the declaration in force names no such account or provider; it is not "
-                                               "read (a world never chooses which accounts or providers the execution "
-                                               "side reads)"}))
+        if binding.owner_kind in named and binding.record_id not in named[binding.owner_kind]:
+            checks.append(BindingCheck(unread[0], binding.owner_kind, binding.record_id, subject, binding.digest,
+                                       {"why": f"{unread[1]}; it is not read (a world never chooses which accounts or "
+                                               "providers the execution side reads)"}))
             continue
         checks.append(authorities.check(binding, subject, held))
     if all(c.ok for c in checks) and world.declaration is not None:
@@ -159,23 +157,30 @@ def verified_projection(world: ScientificWorld, authorities: Authorities
     return report, (fresh if report.ok else None)
 
 
-def _named_records(world: ScientificWorld, authorities: Authorities) -> dict[OwnerKind, set[str]] | None:
-    """The budget accounts and providers the declaration in force names, from the declaration alone (no other owner is
-    read): the owner kinds whose reads have a per-record effect (a following budget reader's history, a provider
-    re-probe).  None when the world names no declaration or the one it names cannot be read (every binding is then
-    checked as before).  Round 6, K6-F2."""
+def _named_records(world: ScientificWorld, authorities: Authorities
+                   ) -> tuple[dict[OwnerKind, set[str]], tuple[BindingStatus, str]]:
+    """The budget accounts and providers the declaration in force names, exactly as :func:`project_world` binds them
+    (its ``budget`` references and its ``providers``), from the declaration alone (no other owner is read): the owner
+    kinds whose reads have a per-record effect (a following budget reader's history, a provider re-probe).  When the
+    world names no declaration, or the one it names cannot be read, it names none: no budget account or provider is
+    read for that world (round 6, K6-F2; round 7, R7-C-F3 / R7-C-F4).  Also returns the status and reason an unnamed
+    binding is reported with (OWNER_UNAVAILABLE when the declaration owner is unavailable, else MISMATCH)."""
+    none: dict[OwnerKind, set[str]] = {K.BUDGET_LEDGER: set(), K.EXPERIMENT: set(), K.PROVIDER_STATUS: set()}
     if world.declaration is None:
-        return None
+        return none, (BindingStatus.MISMATCH, "the world names no declaration in force")
     try:
         in_force = authorities.read(K.DECLARATION, world.declaration.record_id)
         if in_force is None:
-            return None
+            return none, (BindingStatus.MISMATCH, "the declaration owner holds no declaration the world names")
         declaration = ProtocolDeclaration.from_dict(in_force.payload["declaration"])
-    except (WorldRefused, KeyError, AttributeError):
-        return None
-    return {K.BUDGET_LEDGER: {b.ref for b in declaration.budget if b.kind == "ledger"},
-            K.EXPERIMENT: {b.ref for b in declaration.budget if b.kind == "experiment"},
-            K.PROVIDER_STATUS: {r.provider_id for a in declaration.actions for r in a.provider_requirements}}
+    except OwnerUnavailable as exc:
+        return none, (BindingStatus.OWNER_UNAVAILABLE, f"the declaration in force cannot be read now ({exc})")
+    except (WorldRefused, KeyError, AttributeError) as exc:
+        return none, (BindingStatus.MISMATCH, f"the declaration in force does not read back ({exc})")
+    return ({K.BUDGET_LEDGER: {b.ref for b in declaration.budget if b.kind == "ledger"},
+             K.EXPERIMENT: {b.ref for b in declaration.budget if b.kind == "experiment"},
+             K.PROVIDER_STATUS: set(declaration.providers)},
+            (BindingStatus.MISMATCH, "the declaration in force names no such account or provider"))
 
 
 def _kind_of(subject: str) -> OwnerKind:

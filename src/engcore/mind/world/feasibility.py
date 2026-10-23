@@ -332,15 +332,35 @@ def as_executed(world: ScientificWorld, spec: ActionSpec, name: str, value: Any)
     unit = world.variable(name).unit
     if not converts(value, unit):
         return value
-    control = spec.control(name)
     own = world.variable(name).domain
-    own_levels = own.levels if isinstance(own, DiscreteLevels) else ()
-    levels = control.domain if control is not None and isinstance(control.domain, DiscreteLevels) else own
-    if isinstance(levels, DiscreteLevels):            # one level set, never a fallback to another; and never a level
-        level = matched_level(levels, value, also=own_levels)   # the value is farther from than another (A6-F1)
+    levels = deciding_levels(world, spec, name)
+    if levels is not None:                            # one level set, never a fallback to another; and never a level
+        level = matched_level(levels, value,          # the value is farther from than another (A6-F1)
+                              also=own.levels if isinstance(own, DiscreteLevels) else ())
         if level is not None:
             value = level
     return as_unit(value, unit)
+
+
+def deciding_levels(world: ScientificWorld, spec: ActionSpec, name: str) -> DiscreteLevels | None:
+    """The one declared level set a value of ``name`` is matched in for ``spec``: the action's control domain when it
+    declares levels, else the variable's own domain when it does, else None."""
+    control = spec.control(name)
+    if control is not None and isinstance(control.domain, DiscreteLevels):
+        return control.domain
+    own = world.variable(name).domain
+    return own if isinstance(own, DiscreteLevels) else None
+
+
+def is_declared_level(world: ScientificWorld, spec: ActionSpec, name: str, executed: Any) -> bool:
+    """Whether ``executed`` (a value as executed) is EXACTLY one of the deciding set's declared levels as executed: a
+    level control is never executed at a value that is no declared level (R7-C-F1).  True when no level set decides."""
+    levels = deciding_levels(world, spec, name)
+    if levels is None or not isinstance(executed, Quantity):
+        return True
+    unit = world.variable(name).unit
+    return any(converts(level, unit) and value_payload(as_unit(level, unit)) == value_payload(executed)
+               for level in levels.levels)
 
 
 def _resolve(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None, name: str,
@@ -601,6 +621,12 @@ def _check_domains(world: ScientificWorld, spec: ActionSpec, proposal: ProposedA
             source = var.declaration.source
         else:
             source = control.declared_by
+        if found is None and not is_declared_level(world, spec, name, executed):
+            levels = deciding_levels(world, spec, name)      # a member by identity, but not matched to ONE level
+            source = control.declared_by if levels is control.domain else var.declaration.source
+            found = ("LEVEL_NOT_DECLARED", f"{assigned} is not matched to exactly one declared level (it lies nearer "
+                     "another declared level), so it is never executed as a level",
+                     {"declared_levels": [lv.to_dict() for lv in levels.levels]})
         if found is not None:
             code, message, detail = found
             status = F.INFEASIBLE_DOMAIN if code in ("VALUE_KIND_MISMATCH", "UNIT_INCOMPATIBLE") else \
@@ -615,6 +641,9 @@ def _check_domains(world: ScientificWorld, spec: ActionSpec, proposal: ProposedA
             continue
         executed = _decided_on(fixed.name, as_executed(world, spec, fixed.name, fixed.value))
         found = membership(var.domain, executed)
+        if found is None and not is_declared_level(world, spec, fixed.name, executed):
+            found = ("LEVEL_NOT_DECLARED", "the fixed condition is not matched to exactly one declared level",
+                     {"declared_levels": [lv.to_dict() for lv in var.domain.levels]})
         if found is not None:
             code, message, detail = found
             detail = {k: v for k, v in detail.items() if k != "proposed"}    # nobody proposed a fixed condition

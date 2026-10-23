@@ -245,10 +245,19 @@ class Authorities:
 
     def memoized(self) -> "Authorities":
         """The same readers, each owner pinned once and each record read once: one verification sees one consistent
-        state of every owner (a followed run head or declaration set is asked once, not once per binding)."""
+        state of every owner (a followed run head or declaration set is asked once, not once per binding).  Every
+        reader is pinned when the verification starts, whichever records it will read (a following reader observes
+        its owner at every verification, never only when a world happens to bind it); a pin an owner refuses is
+        recorded and raised only to a read of that owner (round 7, R7-C-F2)."""
         if all(type(r) is _Memo for r in self.readers):
             return self
-        return Authorities(tuple(r if type(r) is _Memo else _Memo(r) for r in self.readers))
+        memos = tuple(r if type(r) is _Memo else _Memo(r) for r in self.readers)
+        for memo in memos:
+            try:
+                memo._current()
+            except OwnerUnavailable:
+                pass                                  # recorded on the memo; raised to a read of this owner
+        return Authorities(memos)
 
     def reader(self, kind: OwnerKind) -> Any | None:
         return self._by_kind.get(OwnerKind(kind))

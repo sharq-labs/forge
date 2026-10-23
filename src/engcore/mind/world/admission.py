@@ -60,7 +60,7 @@ from .authority import Authorities, AuthorityReport
 from .base import StaleProposal, WorldRefused, digest, schema, value_payload
 from .feasibility import (
     CheckFamily, FeasibilityDecision, FeasibilityReason, FeasibilityStatus, FeasibleActionSpace, canonical,
-    as_executed, context_reads, decided_value,
+    as_executed, context_reads, decided_value, is_declared_level,
 )
 from .projection import verified_projection
 from .world import ScientificWorld
@@ -200,6 +200,9 @@ def _mint(space: FeasibleActionSpace, proposal: ProposedAction, report: Authorit
     for name, value in decision.decided:             # every value ANY family decided on is the value minted
         if name not in config or value_payload(value) != value_payload(config[name]):
             raise WorldRefused(f"{name!r}: a check decided on a value that is not the value to be executed")
+    for name, value in config.items():               # a level control executes exactly a declared level (R7-C-F1)
+        if not is_declared_level(world, spec, name, value):
+            raise WorldRefused(f"{name!r}: a value of a level-set variable is executed only as a declared level")
     context = tuple(_frozen(_context_entry(world, n)) for n in sorted(context_reads(world, spec) - set(config)))
     gating = spec.execution is ExecutionKind.MODEL_EXECUTION       # otherwise annotation only (never a gate)
     models = tuple(_frozen({"binding_id": a, "authority": None if world.applicability_binding(a).authority is None

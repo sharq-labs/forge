@@ -51,7 +51,7 @@ def test_a_restore_before_the_first_verification_is_refused_against_what_constru
     before_charges = before.charges[:-1]
     reader, _ = _followed(o)                                              # observes the spent account
     o.ledgers[lid] = BudgetLedger(total_budget=before.total_budget, cost_unit=before.cost_unit, charges=before_charges)
-    with pytest.raises(OwnerUnavailable, match="diverged"):
+    with pytest.raises(OwnerUnavailable, match="behind"):
         reader.read(OwnerKind.BUDGET_LEDGER, lid)
 
 
@@ -231,7 +231,6 @@ def test_a_value_nearer_another_declared_level_of_its_variable_is_never_executed
                           estimated_cost=b.cost(1, 0), estimated_duration=b.q(10, "s")),),
         channels=(b.channel("y"),), budget=b.budget(5, 0, ledger="tl"), references=(b.synthetic("tl/1"),))
     value = Quantity(1.000000000004, "A")
-    assert fz.as_executed(w, w.action("step"), "I", value) is not Quantity(1.0, "A")
     assert fz.as_executed(w, w.action("step"), "I", value) != Quantity(1.0, "A")
     d = FeasibleActionSpace.build(w).check(b.propose(w, "step", {"I": value}, ("y",)))
     assert not d.feasible and "LEVEL_NOT_DECLARED" in d.codes()

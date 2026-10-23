@@ -147,7 +147,8 @@ def matched_level(domain: DiscreteLevels, value: Quantity, also: tuple[Quantity,
     AS the declared level (``feasibility``); nothing else is matched: no nearest level, no interpolation.  A value the
     owner calls one level but that lies nearer another declared level (of ``domain``, or among ``also``: the other
     levels declared for the same variable) matches neither (the identity rule is not allowed to pick a level the value
-    is farther from)."""
+    is farther from).  Another spelling of the SAME level (one the owner calls the matched level, e.g. the variable's
+    700 mA beside the action's 0.7 A) is not another level (round 7, R7-C-F1 / A7-F1)."""
     found = [level for level in domain.levels if same_value(value, level)]
     if len(found) != 1:
         return None
@@ -155,7 +156,8 @@ def matched_level(domain: DiscreteLevels, value: Quantity, also: tuple[Quantity,
     base = base_unit(value.units)
     v = value.magnitude_in(base)
     distance = abs(v - level.magnitude_in(base))
-    others = [x for x in (*domain.levels, *also) if x is not level and converts(x, value.units)]
+    others = [x for x in (*domain.levels, *also)
+              if x is not level and converts(x, value.units) and not same_value(x, level)]
     if any(abs(v - other.magnitude_in(base)) < distance for other in others):
         return None
     return level

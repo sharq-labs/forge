@@ -244,8 +244,8 @@ def test_a_followed_budget_account_never_goes_back_a_revision():
     accounts["ledgers"] = {**o.ledgers, ref: before}                   # restored to an earlier revision
     with pytest.raises(OwnerUnavailable, match="went back a revision"):
         reader.read(OwnerKind.BUDGET_LEDGER, ref)
-    with pytest.raises(OwnerUnavailable, match="from then on"):        # and it stays refused (round 5)
-        reader.read(OwnerKind.BUDGET_LEDGER, ref)
+    with pytest.raises(OwnerUnavailable, match="while it is behind"):  # and it stays refused while it is behind
+        reader.read(OwnerKind.BUDGET_LEDGER, ref)                      # (round 5; round 7: a rewrite is for good)
 
 
 def test_the_desk_policy_admits_and_dispatches_only_certified_suggestions_whatever_the_port():
