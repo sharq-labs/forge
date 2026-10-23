@@ -445,6 +445,16 @@ class AccountPublication:
                 raise OwnerUnavailable("the account handoff is behind this publication's current generation")
             return self._generations
 
+    def _newer(self, token: _PublishedAccounts) -> _PublishedAccounts | None:
+        """Final observation boundary: open, and no publication since the reconciled token.
+
+        A later publication orders after this check; this is not an executor reservation.
+        """
+        with self._lock:
+            self._require_open()
+            latest = self._generations[-1]
+            return None if latest is token else latest
+
     def close(self) -> None:
         """Irreversibly invalidate all readers and snapshots of this source."""
         with self._lock:
@@ -567,8 +577,7 @@ class BudgetReader(_Reader):
                 reader._retain_publication(token)
             ticket = reader._ticket()
             try:
-                reader._observe_all(reader, ticket)      # the first authoritative baseline
-                token.source._require_open()
+                reader._reconcile_publication(reader, ticket, token)  # includes publications during construction
             finally:
                 reader._leave(ticket, False)
             return reader
@@ -825,8 +834,9 @@ class BudgetReader(_Reader):
         """Under the lock: a read state against the entries of the latest state of its account handed and not read back.
         None when there is none, or when the account's container began with exactly those entry objects both just
         before and just after the read-back (it moved on from that state: the record is cleared); "behind" when both
-        held a prefix of them; otherwise the reason it is refused for good (it rewrote them, or its entries could not be
-        listed, so it cannot be ordered against that state)."""
+        held a prefix of them; identity-incomparable entries remain unresolved until canonical normalization outside
+        the lock establishes their relation. Unlistable entries still refuse for good because they cannot be ordered
+        against the retained state."""
         unread = self._unread_entries.get(key)
         if unread is None:
             return None
@@ -841,7 +851,9 @@ class BudgetReader(_Reader):
             return None
         if _extends(unread, before) and _extends(unread, after):
             return "behind unread"
-        return self._rewrote_unread(key)
+        # Another comparison may install a raw barrier after this snapshot's
+        # canonical reconciliation. Detached equal entries need not share identity.
+        return "unresolved histories"
 
     @staticmethod
     def _rewrote_unread(key: tuple[str, str]) -> str:
@@ -1042,6 +1054,38 @@ class BudgetReader(_Reader):
             current = BudgetReader._from_bindings(generation.bindings, self.owner_id, frozenset(self._diverged))
             self._retain_accounts(current)
 
+    def _reconcile_publication(self, current: "BudgetReader", ticket: int,
+                               token: _PublishedAccounts) -> "BudgetReader":
+        """Reconcile publications arriving during read-back before returning authority.
+
+        Canonical read-back stays outside both locks. A changed generation starts a
+        bounded new comparison, including for the constructor baseline. Unchanged
+        detached restores may progress; sustained publication churn refuses only
+        this acquisition. All generations remain source-owned for the next attempt.
+        """
+        bindings = token.bindings                    # the pin still serves only its original handoff
+        for _ in range(_ATTEMPTS):
+            with self._lock:
+                current._unread_entries = dict(self._unread_entries)
+            current._readback = dict(self._readback)
+            current._in_follow = self._in_follow
+            current._fresh = self._fresh
+            current._fresh_lock = self._fresh_lock
+            current._source = self._source
+            observed = self._observe_all(current, ticket)
+            newer = self._source._newer(token)
+            if newer is None:
+                if current is not self:              # constructor keeps its live reader mode
+                    current._observed = observed
+                return current
+            with self._lock:
+                self._in_flight.add(ticket)
+                self._retain_publication(newer)
+                current = BudgetReader._handed(bindings, self.owner_id, frozenset(self._diverged))
+            token = newer
+        raise OwnerUnavailable("account publications changed throughout bounded reconciliation; "
+                               "refused for this verification only")
+
     def _recover_handing(self, ticket: int) -> None:
         """Under the lock: resume an uncompared handing into the existing unread-entry barrier.
 
@@ -1153,16 +1197,7 @@ class BudgetReader(_Reader):
                                     "hold a spend, so this reader refuses every account from then on (a new timeline "
                                     "is stated with a new reader)")
                 raise OwnerUnavailable(self._sealed) from None
-            with self._lock:
-                current._unread_entries = dict(self._unread_entries)
-            current._readback = dict(self._readback)     # a private copy: no other verification writes into it
-            current._in_follow = self._in_follow         # its read-back runs under this reader's read-through flag
-            current._fresh = self._fresh                 # one fresh-thread read-back per account across verifications
-            current._fresh_lock = self._fresh_lock
-            current._source = self._source
-            current._observed = self._observe_all(current, ticket)
-            self._source._require_open()  # terminal closure invalidates a pin even after comparison
-            return current
+            return self._reconcile_publication(current, ticket, mapping)
         except BaseException:
             # Preserve the interrupted handing before control returns to the owner.
             # A second interruption leaves it pending, and the next pin must resume it.

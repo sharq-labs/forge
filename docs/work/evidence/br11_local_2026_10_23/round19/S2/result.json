@@ -1,0 +1,45 @@
+{
+  "reviewed_sha": "0b605b43416d575b60f87ca57eea7a1d646489d5",
+  "reviewer": "S2 independent focused skeptic",
+  "findings": [
+    {
+      "id": "S2-F1",
+      "severity": "MAJOR",
+      "status": "deterministically reproduced",
+      "lines": "owners.py:823-844,866-879,939-951",
+      "impact": "honest forward detached replacement permanently refused based on identity alone",
+      "evidence": "r6-controls.log; test_s2_r6.py",
+      "result": "1 failed, 1 passed"
+    },
+    {
+      "id": "B-F1",
+      "severity": "MAJOR against written final-acceptance/current-generation contract",
+      "status": "independently replayed; interpretation explicitly conditional on written boundary",
+      "evidence": "late-publication.log",
+      "result": "2 passed characterization controls; executor counts 2 versus 1"
+    }
+  ],
+  "original_r6_isolated_result": "1 passed; scheduling-sensitive stress does not disprove deterministic repro",
+  "source_changes": false,
+  "limits": [
+    "finite synthetic software evidence",
+    "FAST precise interleaving unknown",
+    "B-F1 not reservation overlap and not loss of already retained history",
+    "source-capture linearization alternative requires explicit coherent contract decision"
+  ],
+  "report": "review.md",
+  "authorized_remediation": {
+    "files": [
+      "src/engcore/mind/world/owners.py (_against_unread only)",
+      "tests/mind/test_authority_review_r19.py"
+    ],
+    "red": "1 failed, 1 passed in 5.20s",
+    "focused": "73 passed in 7.82s",
+    "logs": [
+      "fix-red.log",
+      "fix-focused.log"
+    ],
+    "source_stable_during_focused": true,
+    "commit": false
+  }
+}

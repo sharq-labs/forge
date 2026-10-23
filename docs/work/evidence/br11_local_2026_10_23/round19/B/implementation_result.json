@@ -1,0 +1,34 @@
+{
+  "review_evidence_sha": "0b605b43416d575b60f87ca57eea7a1d646489d5",
+  "implementation_uncommitted": true,
+  "source_sha256": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3",
+  "changes": [
+    "AccountPublication._newer atomically checks open and publication identity at final observation boundary",
+    "BudgetReader._reconcile_publication shared by constructor and pin: up to three canonical comparisons outside locks; retain newly published histories while preserving original handed bindings",
+    "Persistent publication churn transiently refuses; active lease encloses retries; next acquisition can recover"
+  ],
+  "tests": [
+    {
+      "log": "currency-red.log",
+      "result": "1 failed, 1 passed in 1.39s",
+      "failure": "test_completed_spend_published_before_comparison_refuses_dispatch[False]",
+      "meaning": "Pre-change reproduction: actual second invocation."
+    },
+    {
+      "log": "currency-focused-1.log",
+      "result": "1 failed, 106 passed in 13.01s",
+      "failure": "test_a_compared_verification_decides_on_what_the_ones_in_flight_record[True]",
+      "meaning": "Failed approach adopting newest binding changed snapshot identity; corrected by rereading original binding while retaining newest history."
+    },
+    {
+      "log": "currency-focused-2.log",
+      "result": "118 passed in 13.43s",
+      "meaning": "R8, R10, lifetime cases, S2 and permanent publication tests."
+    }
+  ],
+  "limitations": [
+    "Final source check orders later publications after acceptance; no atomic executor reservation.",
+    "New generations force bounded rereconciliation; mutations of an unchanged retained object remain canonical snapshot semantics.",
+    "Focused synthetic controls only; parent runs full gates and independent reviewer."
+  ]
+}

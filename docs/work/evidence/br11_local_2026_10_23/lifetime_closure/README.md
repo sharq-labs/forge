@@ -1,6 +1,6 @@
 # BR1.1 owner-publication lifetime closure evidence
 
-Status: implementation and bounded tests complete; final ladder and independent Round19 pending. NOT CLOSED.
+Status: Round19 found two substantive corrective families; repaired source under full-gate rerun and fresh Round20 required. NOT CLOSED.
 Initial clean SHA: `a57f1fdd393d1c98f603f6eb1a4ed99fb708f149`; identical source/tests to Round18 `cc7ef06b0d08398173d9448ff47d8abb7e375d44`.
 Authorized primary: `/home/dev_kaeem/forge-gen2-authority-v1`, branch `research/mind-gen2-authority-binding-v1`, existing WSL Ubuntu24.04 CPython3.12.3 venv. No new implementation worktree/branch.
 
@@ -10,7 +10,7 @@ Round18 retained a raw returned dictionary before capture. Two interruptions lef
 
 `AccountPublication` now commits immutable native binding generations before handoff. It retains the actual canonical BudgetLedger/ScientificExperiment objects, whose native histories append in place; it creates no second budget/evidence vocabulary. Readers reconcile histories from every retained generation through the existing owner JSON normalization and comparison rules. Missing or unreadable history never implies unspent. A generation acknowledged earlier can grow later, so it remains retained.
 
-Terminal close invalidates source readers and snapshots. Retirement requires closure and no active acquisition leases, including construction. Leases are caller-owned before registration and marked inactive before removal, allowing retirement to recover interrupted removal without timeouts or GC assumptions. Open-source incremental retirement is deliberately unsupported. Read acceptance has a final open-source check; this is an in-process linearization boundary, not an atomic reservation/execution transaction.
+Terminal close invalidates source readers and snapshots. Retirement requires closure and no active acquisition leases, including construction. Leases are caller-owned before registration and marked inactive before removal, allowing retirement to recover interrupted removal without timeouts or GC assumptions. Open-source incremental retirement is deliberately unsupported. Read acceptance has a final open-source and generation-identity check. A new generation during comparison triggers bounded canonical rereconciliation against the original handed binding; sustained churn refuses transiently. Publications after the final check order later. This is an in-process observation boundary, not an atomic reservation/execution transaction.
 
 ## Necessary API migration
 
@@ -41,3 +41,9 @@ exception reason lines match the preserved same-environment base at1202ea6c.
 Rescore and authority benchmark MATCHES; Gen1 INTACT. Base failures remain red.
 FAST will run against a clean source commit in this same implementation checkout;
 then its curated evidence will be committed before independent Round19. No new implementation worktree.
+
+## Round19 corrective continuation
+See ../round19/README.md for complete disputed-finding disposition and failed-first approaches. Identity mismatch alone no longer establishes permanent divergence; canonical conflicting histories still do. Final generation checks cover constructor and ordinary pins. The initial helper incorrectly switched the pin to the latest binding; R10 caught that, and the corrected helper preserves original snapshot identity. Full gate results below will supersede the historical pre-FAST counts without concealing the failed Round19 gate.
+
+## Corrected-source evidence before final FAST
+At source hash efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3: targeted885passed, regression279passed, guards1600passed/2failed, affected expensive335passed/13failed/14errors. Rescore MATCHES, authority benchmark MATCHES, Gen1 INTACT. Ten isolated semantic mutants killed, zero survived/invalid/unexecuted;72positive controls passed before and after. Prior eight-mutant report remains historical; new two mutants specifically omit final generation check or restore identity-as-divergence. Native depth/control sweep rerun34cases,0duplicate dispatches. First rerun stopped on stale harness HEAD assertion before any scenario; only expected HEAD was updated, then all34cases executed.
