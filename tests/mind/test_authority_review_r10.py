@@ -305,9 +305,10 @@ def test_a_snapshot_reads_back_into_its_own_cache_until_it_compares(monkeypatch)
     assert reader._readback[("experiment", first)][0] != old               # adopted when A compared
 
 
-# ---- B10-4: account ids are exactly str (no id's code runs under the follower's lock) --------------------------------------------
-def test_an_account_id_that_is_not_exactly_a_str_is_refused():
+# ---- B10-4 (restated in round 11, F11-2): an id's code never runs under the follower's lock; a str subclass is its plain str --------
+def test_an_account_id_runs_no_code_under_the_lock_and_a_str_subclass_is_read_as_its_str():
     o = ax.owned("battery")
+    lid = _solver(o)
     held = []
     state = {"reader": None}
 
@@ -317,21 +318,20 @@ def test_an_account_id_that_is_not_exactly_a_str_is_refused():
                 held.append(state["reader"]._lock.locked())
             return str.__hash__(self)
 
-    with pytest.raises(WorldRefused, match="exactly a str"):
-        BudgetReader({Key("x"): o.ledgers[_solver(o)]})
+    with pytest.raises(WorldRefused, match="id is a str"):
+        BudgetReader({1: o.ledgers[lid]})                                  # the constructor: not an account id
     mode = {"key": False}
 
     def accounts():
         ledgers = dict(o.ledgers)
         if mode["key"]:
-            ledgers[Key("x")] = ledgers.pop(_solver(o))
+            ledgers[Key(lid)] = ledgers.pop(lid)
         return ledgers, dict(o.experiments)
 
     reader = BudgetReader.following(accounts)
     state["reader"] = reader
     mode["key"] = True
-    with pytest.raises(OwnerUnavailable, match="exactly a str"):
-        reader.pinned()
+    assert reader.pinned().read(OwnerKind.BUDGET_LEDGER, lid) is not None   # read under the plain str it spells
     assert True not in held
 
 
@@ -402,9 +402,9 @@ def test_a_read_through_from_the_read_back_is_refused_at_once(monkeypatch):
     reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
     monkeypatch.setattr(live, "to_dict", reads_through)
     state["reader"] = reader
-    with pytest.raises(OwnerUnavailable):
-        reader.read(OwnerKind.EXPERIMENT, eid)
-    assert len(ran) == 1                                                   # refused at once, never recursed
+    with pytest.raises(OwnerUnavailable, match="from then on"):            # round 11: the refusal repeats at every
+        reader.read(OwnerKind.EXPERIMENT, eid)                             # read-back, so the account is refused
+    assert len(ran) == 3                                                   # for good; each refused at once, never nested
 
 
 # ---- F10-3 / R10-D-F4 (B9-m1's case): the record served is the account handed over, not an object discarded since ------------------
