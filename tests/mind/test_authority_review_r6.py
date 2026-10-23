@@ -72,9 +72,11 @@ def test_an_older_snapshot_read_after_a_newer_one_serves_what_it_observed_and_re
     assert reader.read(OwnerKind.BUDGET_LEDGER, lid).revision == str(r0 + 1)    # and nothing was refused for good
 
 
-def test_concurrent_verifications_never_refuse_an_account_that_only_moves_forward():
+def test_concurrent_verifications_never_refuse_for_good_an_account_that_only_moves_forward():
     """B6-M1 / R6-C-M2 / R6-D2 under threads: verifications pin and read while the execution side moves the account
-    forward, replacing the object each time."""
+    forward, replacing the object each time.  Since round 7 a verification whose snapshot is older than one already
+    observed is refused while it is behind (a supplementary stress control; the deterministic one is the older-snapshot
+    test above); nothing is refused for good, and the account is read afterwards (round 8, A8-F1 / B8-m2)."""
     import threading
     o = ax.owned("battery")
     lid = _solver(o)
@@ -100,7 +102,9 @@ def test_concurrent_verifications_never_refuse_an_account_that_only_moves_forwar
     stop.set()
     for t in threads:
         t.join()
-    assert errors == [] and reader.read(OwnerKind.BUDGET_LEDGER, lid).revision == str(r0 + 40)
+    assert all("behind" in e for e in errors) and not any("rewrote" in e for e in errors), errors
+    assert reader.read(OwnerKind.BUDGET_LEDGER, lid).revision == str(r0 + 40)
+    assert reader.pinned().read(OwnerKind.BUDGET_LEDGER, lid).revision == str(r0 + 40)
 
 
 def test_a_spend_seen_by_a_verification_of_another_account_still_refuses_a_later_rollback():

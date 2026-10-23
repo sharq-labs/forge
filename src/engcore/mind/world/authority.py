@@ -247,16 +247,14 @@ class Authorities:
         """The same readers, each owner pinned once and each record read once: one verification sees one consistent
         state of every owner (a followed run head or declaration set is asked once, not once per binding).  Every
         reader is pinned when the verification starts, whichever records it will read (a following reader observes
-        its owner at every verification, never only when a world happens to bind it); a pin an owner refuses is
-        recorded and raised only to a read of that owner (round 7, R7-C-F2)."""
+        its owner at every verification, never only when a world happens to bind it); whatever a pin raises is kept
+        on the memo and raised only to a read of that owner, exactly as a lazy pin would have raised it (round 7,
+        R7-C-F2; round 8, B8-m5)."""
         if all(type(r) is _Memo for r in self.readers):
             return self
         memos = tuple(r if type(r) is _Memo else _Memo(r) for r in self.readers)
         for memo in memos:
-            try:
-                memo._current()
-            except OwnerUnavailable:
-                pass                                  # recorded on the memo; raised to a read of this owner
+            memo._pin_now()
         return Authorities(memos)
 
     def reader(self, kind: OwnerKind) -> Any | None:
@@ -372,6 +370,7 @@ class _Memo:
     def __init__(self, reader: Any) -> None:
         self._reader = reader
         self._pinned: Any = None
+        self._pin_error: Exception | None = None       # an eager pin's refusal, raised at the first read
         self._failure: OwnerUnavailable | None = None
         self.kinds = reader.kinds
         self.owner_id = reader.owner_id
@@ -379,7 +378,20 @@ class _Memo:
         self._history: dict[tuple[OwnerKind, str], Any] = {}
         self._refused: dict[tuple[OwnerKind, str], WorldRefused] = {}
 
+    def _pin_now(self) -> None:
+        """Pin when the verification starts; whatever the pin raises waits for a read of this owner."""
+        try:
+            self._current()
+        except Exception as exc:  # noqa: BLE001 - re-raised, unchanged, to the first read of this owner
+            self._failure = None
+            self._pin_error = exc
+
     def _current(self) -> Any:
+        if self._pin_error is not None:
+            error, self._pin_error = self._pin_error, None
+            if isinstance(error, OwnerUnavailable):
+                self._failure = error
+            raise error
         if self._failure is not None:
             raise self._failure
         if self._pinned is None:

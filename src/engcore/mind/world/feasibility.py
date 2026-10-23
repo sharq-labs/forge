@@ -332,14 +332,18 @@ def as_executed(world: ScientificWorld, spec: ActionSpec, name: str, value: Any)
     unit = world.variable(name).unit
     if not converts(value, unit):
         return value
-    own = world.variable(name).domain
+    level = _matched(world, spec, name, value)
+    return as_unit(value if level is None else level, unit)
+
+
+def _matched(world: ScientificWorld, spec: ActionSpec, name: str, value: Quantity) -> Quantity | None:
+    """The declared level ``value`` is matched to in the one deciding level set (never a fallback to another), never
+    a level the value is farther from than another declared level of either set (A6-F1), or None."""
     levels = deciding_levels(world, spec, name)
-    if levels is not None:                            # one level set, never a fallback to another; and never a level
-        level = matched_level(levels, value,          # the value is farther from than another (A6-F1)
-                              also=own.levels if isinstance(own, DiscreteLevels) else ())
-        if level is not None:
-            value = level
-    return as_unit(value, unit)
+    if levels is None:
+        return None
+    own = world.variable(name).domain
+    return matched_level(levels, value, also=own.levels if isinstance(own, DiscreteLevels) else ())
 
 
 def deciding_levels(world: ScientificWorld, spec: ActionSpec, name: str) -> DiscreteLevels | None:
@@ -353,14 +357,38 @@ def deciding_levels(world: ScientificWorld, spec: ActionSpec, name: str) -> Disc
 
 
 def is_declared_level(world: ScientificWorld, spec: ActionSpec, name: str, executed: Any) -> bool:
-    """Whether ``executed`` (a value as executed) is EXACTLY one of the deciding set's declared levels as executed: a
-    level control is never executed at a value that is no declared level (R7-C-F1).  True when no level set decides."""
+    """Whether ``executed`` (a value as executed) is EXACTLY one of the deciding set's declared levels as executed
+    (byte for byte, so a negative zero is not the zero level): a level-set value is never executed at a value that is
+    no declared level (R7-C-F1).  True when no level set decides."""
     levels = deciding_levels(world, spec, name)
     if levels is None or not isinstance(executed, Quantity):
         return True
     unit = world.variable(name).unit
-    return any(converts(level, unit) and value_payload(as_unit(level, unit)) == value_payload(executed)
+    exact = canonical_bytes(value_payload(executed))
+    return any(converts(level, unit) and canonical_bytes(value_payload(as_unit(level, unit))) == exact
                for level in levels.levels)
+
+
+def level_problem(world: ScientificWorld, spec: ActionSpec, name: str, value: Any,
+                  executed: Any) -> tuple[str, str, dict[str, Any]] | None:
+    """None unless a level set decides ``name`` and ``value`` is not decided and executed as one of its levels: the
+    value must be matched to exactly one declared level by the unit owner's identity rule (never one it is farther
+    from), and its value as executed must be exactly that level as executed.  One predicate for the domain family's
+    controls and fixed conditions (rounds 7 and 8)."""
+    levels = deciding_levels(world, spec, name)
+    if levels is None or not isinstance(value, Quantity) or not converts(value, world.variable(name).unit):
+        return None
+    detail = {"declared_levels": [lv.to_dict() for lv in levels.levels]}
+    if _matched(world, spec, name, value) is None:
+        if sum(1 for lv in levels.levels if same_value(value, lv)) == 1:
+            why = "it lies nearer another declared level"
+        else:
+            why = ("the unit owner's identity rule does not call this spelling a declared level (its conversion may "
+                   "be one: the identity rule's rounding edge, or a conversion that underflows)")
+        return "LEVEL_NOT_DECLARED", f"{value} is not matched to exactly one declared level: {why}", detail
+    if not is_declared_level(world, spec, name, executed):
+        return ("LEVEL_NOT_DECLARED", f"{value} as executed is not exactly the declared level as executed", detail)
+    return None
 
 
 def _resolve(world: ScientificWorld, spec: ActionSpec, proposal: ProposedAction | None, name: str,
@@ -621,12 +649,11 @@ def _check_domains(world: ScientificWorld, spec: ActionSpec, proposal: ProposedA
             source = var.declaration.source
         else:
             source = control.declared_by
-        if found is None and not is_declared_level(world, spec, name, executed):
-            levels = deciding_levels(world, spec, name)      # a member by identity, but not matched to ONE level
-            source = control.declared_by if levels is control.domain else var.declaration.source
-            found = ("LEVEL_NOT_DECLARED", f"{assigned} is not matched to exactly one declared level (it lies nearer "
-                     "another declared level), so it is never executed as a level",
-                     {"declared_levels": [lv.to_dict() for lv in levels.levels]})
+        if found is None:
+            found = level_problem(world, spec, name, assigned, executed)   # a member, but not decided as ONE level
+            if found is not None:
+                source = control.declared_by if deciding_levels(world, spec, name) is control.domain else \
+                    var.declaration.source
         if found is not None:
             code, message, detail = found
             status = F.INFEASIBLE_DOMAIN if code in ("VALUE_KIND_MISMATCH", "UNIT_INCOMPATIBLE") else \
@@ -641,9 +668,8 @@ def _check_domains(world: ScientificWorld, spec: ActionSpec, proposal: ProposedA
             continue
         executed = _decided_on(fixed.name, as_executed(world, spec, fixed.name, fixed.value))
         found = membership(var.domain, executed)
-        if found is None and not is_declared_level(world, spec, fixed.name, executed):
-            found = ("LEVEL_NOT_DECLARED", "the fixed condition is not matched to exactly one declared level",
-                     {"declared_levels": [lv.to_dict() for lv in var.domain.levels]})
+        if found is None:
+            found = level_problem(world, spec, fixed.name, fixed.value, executed)
         if found is not None:
             code, message, detail = found
             detail = {k: v for k, v in detail.items() if k != "proposed"}    # nobody proposed a fixed condition

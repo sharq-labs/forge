@@ -148,7 +148,7 @@ def matched_level(domain: DiscreteLevels, value: Quantity, also: tuple[Quantity,
     owner calls one level but that lies nearer another declared level (of ``domain``, or among ``also``: the other
     levels declared for the same variable) matches neither (the identity rule is not allowed to pick a level the value
     is farther from).  Another spelling of the SAME level (one the owner calls the matched level, e.g. the variable's
-    700 mA beside the action's 0.7 A) is not another level (round 7, R7-C-F1 / A7-F1)."""
+    0.7 A beside the action's 700 mA) is not another level (round 7, R7-C-F1 / A7-F1)."""
     found = [level for level in domain.levels if same_value(value, level)]
     if len(found) != 1:
         return None

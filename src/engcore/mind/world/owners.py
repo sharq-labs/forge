@@ -297,8 +297,8 @@ class BudgetReader(_Reader):
     verification starts, whichever world is verified: a proposer's world never chooses what is observed); an account is
     refused only to a verification that reads it, so an unreadable, behind or diverged account no world reads refuses
     nothing (the constructor still refuses an account set that is not exactly typed or that registers one object twice).
-    No lock is held while the execution side's ``accounts()`` runs or while accounts are read back; only the
-    comparison with what was observed is locked.  A pinned snapshot serves the records it observed (detached copies)
+    No lock is held while the execution side's ``accounts()`` runs; the read-back of the accounts it handed over and
+    the comparison with what was observed are one step under this reader's lock (round 8, B8-m1).  A pinned snapshot serves the records it observed (detached copies)
     and is never live.  A state between two verifications is never observed (a spend and a rollback both in between
     look like no change); at-most-once execution is the execution owner's.  A ledger is projected in the form its owner
     reads it back (``BudgetLedger.from_dict``), the form its digest is taken in; an experiment is read back whole by its
@@ -313,7 +313,7 @@ class BudgetReader(_Reader):
             raise WorldRefused("followed accounts are a callable the execution side answers with (ledgers, experiments)")
         reader = cls(*accounts(), owner_id=owner_id)
         reader._follow = accounts
-        reader._observe_all(reader._read_back())     # what is handed over at construction: the first baseline
+        reader._observe_all(reader)                  # what is handed over at construction: the first baseline
         return reader
 
     @property
@@ -347,11 +347,16 @@ class BudgetReader(_Reader):
         try:
             payload = copy.deepcopy(exp.to_dict())
             digest_ = _sha_json(_Payload(payload))
-            history = self._readback.get(digest_)
-            if history is None:                      # the owner reads the experiment back whole, once per content
-                back = ScientificExperiment.from_dict(payload)
-                history = self._history(back.evaluations)
-                self._readback[digest_] = history
+            cached = self._readback.get(key)
+            if cached is not None and cached[0] == digest_:
+                history = cached[1]
+            else:                                    # the owner reads the experiment back whole, once per content
+                rebuilt = ScientificExperiment.from_dict(payload)
+                back = rebuilt.to_dict()
+                if back["accounting"] != payload["accounting"] or back["budget"] != payload["budget"]:
+                    raise ValueError("its accounting is not its evaluations' (an account serialized while it moved)")
+                history = self._history(rebuilt.evaluations)
+                self._readback[key] = (digest_, history)
         except Exception as exc:  # noqa: BLE001 - an account its owner cannot read back is unavailable
             raise OwnerUnavailable(f"experiment {record_id!r} is not one its owner reads back: {exc}") from None
         return (OwnerRecord(K.EXPERIMENT, self.owner_id, record_id, str(len(payload["evaluations"])), digest_,
@@ -368,13 +373,15 @@ class BudgetReader(_Reader):
                 out[key] = str(exc)
         return out
 
-    def _observe_all(self, read: Mapping[tuple[str, str], Any]) -> dict[tuple[str, str], OwnerRecord | str | None]:
-        """The following reader's forward-only rule over EVERY account handed over (only this comparison and update
-        hold the lock): each account's record as observed, or the reason it is refused to a verification that reads
-        it."""
+    def _observe_all(self, snapshot: "BudgetReader") -> dict[tuple[str, str], OwnerRecord | str | None]:
+        """The following reader's forward-only rule over EVERY account handed over in ``snapshot``: the read-back and
+        the comparison are one step under this reader's lock, so what one verification read is compared before any
+        later read (a spend read by a verification is observed before a rollback can be read: B8-m1).  The execution
+        side's ``accounts()`` is never called under the lock.  Each account's record as observed, or the reason it is
+        refused to a verification that reads it."""
         observed: dict[tuple[str, str], OwnerRecord | str | None] = {}
         with self._lock:
-            for key, got in read.items():
+            for key, got in snapshot._read_back().items():
                 if isinstance(got, str):
                     observed[key] = got
                     continue
@@ -398,9 +405,9 @@ class BudgetReader(_Reader):
         return observed
 
     def pinned(self) -> "BudgetReader":
-        """One verification's snapshot: every account handed over now, read back without a lock, compared with what
-        this reader observed under its lock, and served only as observed (detached records taken at the pin; the next
-        verification observes any later move).  Never live."""
+        """One verification's snapshot: the accounts the execution side hands over now (asked with no lock held), read
+        back and compared with what this reader observed under its lock, and served only as observed (detached
+        records taken at the pin; the next verification observes any later move).  Never live."""
         if self._follow is None:
             return self
         try:
@@ -408,7 +415,7 @@ class BudgetReader(_Reader):
         except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
             raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
         current._readback = self._readback
-        current._observed = self._observe_all(current._read_back())
+        current._observed = self._observe_all(current)
         return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
@@ -422,7 +429,8 @@ class BudgetReader(_Reader):
         self._observed: dict[tuple[str, str], OwnerRecord | str | None] | None = None   # a pinned snapshot's records
         self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
         self._diverged: set[tuple[str, str]] = set()
-        self._readback: dict[str, tuple[str, ...]] = {}    # experiment content digest -> its owner read-back history
+        self._readback: dict[tuple[str, str], tuple[str, tuple[str, ...]]] = {}   # account -> (content digest, its
+        # owner read-back history): one entry per account, so the cache never outgrows the accounts' current histories
         self._lock = threading.Lock()
         self._ledgers = dict(ledgers or {})
         self._experiments = dict(experiments or {})

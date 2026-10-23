@@ -387,3 +387,6 @@ def test_every_spelling_of_one_level_is_decided_alike_and_executed_as_one_value(
             port.execute(r.admitted, gw)
             assert dict(calls[-1].settings)["T"] == level.magnitude, spelled
     assert len(outcomes) == 1, outcomes
+    # round 8 (A8-F3): the protocol's 95 degF level executes as 35.00000000000006 degC, above 35 degC, so a limit at
+    # 35 degC refuses it at a strict AND at an inclusive bound: decided = executed, at the ulp (README section 4)
+    assert level.magnitude > 35.0 and {code for _, codes in outcomes for code in codes} == {"CONSTRAINT_VIOLATED"}
