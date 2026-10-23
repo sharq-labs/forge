@@ -1,5 +1,5 @@
 {
- "br1_1_commit": "d89dd3b897cc0cf4d86f40d5365b5580e7dc36d4",
+ "br1_1_commit": "d5ef1e32f2b0976fc46e07aa5db3f3148173495d",
  "br1_1_round7_commit": "27b9f71fc0eaa49c6611690cd2502ea7eccf2005",
  "br1_commit": "1202ea6c3d96f5c31d0b142a32438da75e020cae",
  "command": "python <scratchpad>/perf_r7/br1_alternating5.py br1_code_1202ea6c=<1202ea6c checkout> br1_1_code_27b9f71=<27b9f71 archive> br1_1_code=<this branch>: five rounds, each running BR1's harness (benchmarks.mind_gen2_world_v1.run_benchmark.performance(C.load()['cases'], repeats=25)) once per checkout in that order, PYTHONPATH=<checkout>/src:<checkout> PYTHONHASHSEED=0",
@@ -10,205 +10,205 @@
  },
  "medians": {
   "br1_1_code": {
-   "ACTIONSPACE_BUILD_MS": 0.361,
-   "FEASIBILITY_P50_MS": 0.241,
-   "FEASIBILITY_P95_MS": 0.4675,
-   "SOLVER": 135.107,
-   "WORLD_BUILD_MS": 1.42
+   "ACTIONSPACE_BUILD_MS": 0.373,
+   "FEASIBILITY_P50_MS": 0.224,
+   "FEASIBILITY_P95_MS": 0.4079,
+   "SOLVER": 144.728,
+   "WORLD_BUILD_MS": 1.454
   },
   "br1_1_code_27b9f71": {
-   "ACTIONSPACE_BUILD_MS": 0.353,
-   "FEASIBILITY_P50_MS": 0.205,
-   "FEASIBILITY_P95_MS": 0.345,
-   "SOLVER": 160.087,
-   "WORLD_BUILD_MS": 1.547
+   "ACTIONSPACE_BUILD_MS": 0.441,
+   "FEASIBILITY_P50_MS": 0.1959,
+   "FEASIBILITY_P95_MS": 0.3373,
+   "SOLVER": 138.297,
+   "WORLD_BUILD_MS": 1.571
   },
   "br1_code_1202ea6c": {
-   "ACTIONSPACE_BUILD_MS": 0.432,
-   "FEASIBILITY_P50_MS": 0.1908,
-   "FEASIBILITY_P95_MS": 0.3638,
-   "SOLVER": 157.365,
-   "WORLD_BUILD_MS": 1.471
+   "ACTIONSPACE_BUILD_MS": 0.392,
+   "FEASIBILITY_P50_MS": 0.1887,
+   "FEASIBILITY_P95_MS": 0.3646,
+   "SOLVER": 151.01,
+   "WORLD_BUILD_MS": 1.207
   }
  },
  "ranges": {
   "br1_1_code": {
    "ACTIONSPACE_BUILD_MS": [
-    0.281,
-    0.507
+    0.306,
+    0.401
    ],
    "FEASIBILITY_P50_MS": [
-    0.2286,
-    0.2539
+    0.1852,
+    0.2339
    ],
    "FEASIBILITY_P95_MS": [
-    0.442,
-    1.4823
+    0.365,
+    0.6092
    ],
    "SOLVER": [
-    112.282,
-    150.905
+    129.424,
+    170.047
    ],
    "WORLD_BUILD_MS": [
-    1.188,
-    2.059
+    1.223,
+    2.213
    ]
   },
   "br1_1_code_27b9f71": {
    "ACTIONSPACE_BUILD_MS": [
-    0.298,
-    0.498
+    0.239,
+    0.54
    ],
    "FEASIBILITY_P50_MS": [
-    0.1941,
-    0.2306
+    0.1766,
+    0.2197
    ],
    "FEASIBILITY_P95_MS": [
-    0.3104,
-    0.4643
+    0.288,
+    0.415
    ],
    "SOLVER": [
-    136.225,
-    231.065
+    135.778,
+    173.706
    ],
    "WORLD_BUILD_MS": [
-    1.231,
-    2.118
+    1.025,
+    2.385
    ]
   },
   "br1_code_1202ea6c": {
    "ACTIONSPACE_BUILD_MS": [
-    0.398,
-    0.477
+    0.358,
+    0.427
    ],
    "FEASIBILITY_P50_MS": [
-    0.1835,
-    0.2205
+    0.1539,
+    0.2342
    ],
    "FEASIBILITY_P95_MS": [
-    0.2908,
-    0.458
+    0.2681,
+    0.4584
    ],
    "SOLVER": [
-    133.891,
-    164.941
+    122.702,
+    191.939
    ],
    "WORLD_BUILD_MS": [
-    1.322,
-    1.611
+    1.171,
+    1.628
    ]
   }
  },
  "runs": {
   "br1_1_code": [
    {
-    "ACTIONSPACE_BUILD_MS": 0.361,
-    "FEASIBILITY_P50_MS": 0.2528,
-    "FEASIBILITY_P95_MS": 0.5558,
-    "SOLVER": 135.107,
-    "WORLD_BUILD_MS": 1.324
+    "ACTIONSPACE_BUILD_MS": 0.395,
+    "FEASIBILITY_P50_MS": 0.1852,
+    "FEASIBILITY_P95_MS": 0.3686,
+    "SOLVER": 144.728,
+    "WORLD_BUILD_MS": 1.729
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.373,
+    "FEASIBILITY_P50_MS": 0.2339,
+    "FEASIBILITY_P95_MS": 0.516,
+    "SOLVER": 170.047,
+    "WORLD_BUILD_MS": 1.454
    },
    {
     "ACTIONSPACE_BUILD_MS": 0.358,
-    "FEASIBILITY_P50_MS": 0.241,
-    "FEASIBILITY_P95_MS": 0.442,
-    "SOLVER": 146.159,
-    "WORLD_BUILD_MS": 1.42
+    "FEASIBILITY_P50_MS": 0.2259,
+    "FEASIBILITY_P95_MS": 0.6092,
+    "SOLVER": 161.356,
+    "WORLD_BUILD_MS": 1.413
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.507,
-    "FEASIBILITY_P50_MS": 0.2337,
-    "FEASIBILITY_P95_MS": 1.4823,
-    "SOLVER": 112.282,
-    "WORLD_BUILD_MS": 2.059
+    "ACTIONSPACE_BUILD_MS": 0.401,
+    "FEASIBILITY_P50_MS": 0.216,
+    "FEASIBILITY_P95_MS": 0.4079,
+    "SOLVER": 129.424,
+    "WORLD_BUILD_MS": 2.213
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.478,
-    "FEASIBILITY_P50_MS": 0.2539,
-    "FEASIBILITY_P95_MS": 0.4675,
-    "SOLVER": 150.905,
-    "WORLD_BUILD_MS": 2.009
-   },
-   {
-    "ACTIONSPACE_BUILD_MS": 0.281,
-    "FEASIBILITY_P50_MS": 0.2286,
-    "FEASIBILITY_P95_MS": 0.4591,
-    "SOLVER": 132.327,
-    "WORLD_BUILD_MS": 1.188
+    "ACTIONSPACE_BUILD_MS": 0.306,
+    "FEASIBILITY_P50_MS": 0.224,
+    "FEASIBILITY_P95_MS": 0.365,
+    "SOLVER": 135.617,
+    "WORLD_BUILD_MS": 1.223
    }
   ],
   "br1_1_code_27b9f71": [
    {
-    "ACTIONSPACE_BUILD_MS": 0.306,
-    "FEASIBILITY_P50_MS": 0.2012,
-    "FEASIBILITY_P95_MS": 0.345,
-    "SOLVER": 222.517,
-    "WORLD_BUILD_MS": 1.231
+    "ACTIONSPACE_BUILD_MS": 0.239,
+    "FEASIBILITY_P50_MS": 0.1766,
+    "FEASIBILITY_P95_MS": 0.288,
+    "SOLVER": 135.778,
+    "WORLD_BUILD_MS": 1.025
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.353,
-    "FEASIBILITY_P50_MS": 0.2185,
-    "FEASIBILITY_P95_MS": 0.3955,
-    "SOLVER": 160.087,
-    "WORLD_BUILD_MS": 1.547
+    "ACTIONSPACE_BUILD_MS": 0.441,
+    "FEASIBILITY_P50_MS": 0.2137,
+    "FEASIBILITY_P95_MS": 0.415,
+    "SOLVER": 173.706,
+    "WORLD_BUILD_MS": 1.571
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.298,
-    "FEASIBILITY_P50_MS": 0.1941,
-    "FEASIBILITY_P95_MS": 0.3104,
-    "SOLVER": 136.225,
-    "WORLD_BUILD_MS": 1.361
+    "ACTIONSPACE_BUILD_MS": 0.322,
+    "FEASIBILITY_P50_MS": 0.2197,
+    "FEASIBILITY_P95_MS": 0.3916,
+    "SOLVER": 136.256,
+    "WORLD_BUILD_MS": 1.335
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.498,
-    "FEASIBILITY_P50_MS": 0.205,
-    "FEASIBILITY_P95_MS": 0.344,
-    "SOLVER": 231.065,
-    "WORLD_BUILD_MS": 2.118
+    "ACTIONSPACE_BUILD_MS": 0.54,
+    "FEASIBILITY_P50_MS": 0.1959,
+    "FEASIBILITY_P95_MS": 0.3373,
+    "SOLVER": 138.297,
+    "WORLD_BUILD_MS": 2.385
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.407,
-    "FEASIBILITY_P50_MS": 0.2306,
-    "FEASIBILITY_P95_MS": 0.4643,
-    "SOLVER": 146.262,
-    "WORLD_BUILD_MS": 1.574
+    "ACTIONSPACE_BUILD_MS": 0.449,
+    "FEASIBILITY_P50_MS": 0.1934,
+    "FEASIBILITY_P95_MS": 0.3185,
+    "SOLVER": 139.081,
+    "WORLD_BUILD_MS": 1.93
    }
   ],
   "br1_code_1202ea6c": [
    {
-    "ACTIONSPACE_BUILD_MS": 0.429,
-    "FEASIBILITY_P50_MS": 0.195,
-    "FEASIBILITY_P95_MS": 0.3638,
-    "SOLVER": 157.365,
-    "WORLD_BUILD_MS": 1.349
+    "ACTIONSPACE_BUILD_MS": 0.392,
+    "FEASIBILITY_P50_MS": 0.1726,
+    "FEASIBILITY_P95_MS": 0.3646,
+    "SOLVER": 191.939,
+    "WORLD_BUILD_MS": 1.207
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.442,
-    "FEASIBILITY_P50_MS": 0.2205,
-    "FEASIBILITY_P95_MS": 0.4054,
-    "SOLVER": 160.028,
-    "WORLD_BUILD_MS": 1.471
+    "ACTIONSPACE_BUILD_MS": 0.358,
+    "FEASIBILITY_P50_MS": 0.1997,
+    "FEASIBILITY_P95_MS": 0.3633,
+    "SOLVER": 122.702,
+    "WORLD_BUILD_MS": 1.196
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.432,
-    "FEASIBILITY_P50_MS": 0.1846,
-    "FEASIBILITY_P95_MS": 0.2908,
-    "SOLVER": 147.672,
-    "WORLD_BUILD_MS": 1.476
+    "ACTIONSPACE_BUILD_MS": 0.372,
+    "FEASIBILITY_P50_MS": 0.1539,
+    "FEASIBILITY_P95_MS": 0.2681,
+    "SOLVER": 142.033,
+    "WORLD_BUILD_MS": 1.171
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.477,
-    "FEASIBILITY_P50_MS": 0.1908,
-    "FEASIBILITY_P95_MS": 0.458,
-    "SOLVER": 133.891,
-    "WORLD_BUILD_MS": 1.611
+    "ACTIONSPACE_BUILD_MS": 0.416,
+    "FEASIBILITY_P50_MS": 0.1887,
+    "FEASIBILITY_P95_MS": 0.4522,
+    "SOLVER": 151.01,
+    "WORLD_BUILD_MS": 1.285
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.398,
-    "FEASIBILITY_P50_MS": 0.1835,
-    "FEASIBILITY_P95_MS": 0.3117,
-    "SOLVER": 164.941,
-    "WORLD_BUILD_MS": 1.322
+    "ACTIONSPACE_BUILD_MS": 0.427,
+    "FEASIBILITY_P50_MS": 0.2342,
+    "FEASIBILITY_P95_MS": 0.4584,
+    "SOLVER": 183.485,
+    "WORLD_BUILD_MS": 1.628
    }
   ]
  },

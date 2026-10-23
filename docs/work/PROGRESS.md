@@ -8573,7 +8573,12 @@ completeness critic):
   a handed spend only when its verification had started first. Q4: YES from C, PARTIAL from B and F, NO from A, D, E
   and the critic (which ruled both MINOR). Both treated as MAJOR and fixed in `d89dd3b` (README §9 lists every
   disposition), with the records in the commit after it;
-- round 11: see the update below.
+- round 11 at `aad2f69` (six lenses): 0 BLOCKER / 3 MAJOR / 22 MINOR (critic K11-F1, K11-F2 MINOR). R11-C-F1 = F11-1:
+  round 10 left the served experiment's `deepcopy` outside the classifying try, so owner-valid content nested ~500
+  levels deep raised out of every verification and a restore re-dispatched the executed action; F11-2: a handed
+  mapping the constructor refused hid a spend on another account. Q4: YES from C, F and the critic, PARTIAL from A, B,
+  D (classification by exception type), NO from E. Fixed in `d5ef1e3` (README §9), records in the commits after it;
+- round 12: see the update below.
 
 **Failed approaches, recorded so they are not repeated:**
 - **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
@@ -8637,6 +8642,16 @@ completeness critic):
 - **Refusing a verification while any other is in flight** (round 10's first candidate for the rule above): correct,
   but 3 of 160 admissions were decided in the reviewers' p10c load (4 threads, 30 experiment accounts). Round 10 waits
   instead, bounded and holding no lock, for the verifications in flight when one compared.
+- **Classifying a read-back failure by its exception type** (round 10's `_written`): a torn read of an honest top-up
+  raised the owner's own `ValueError` and was refused for good, while a deterministic `NotImplementedError` was taken
+  for a move and hid a spend. Round 11 classifies by behaviour over three attempts (alike = the state, for good;
+  different or the interpreter's iteration-mutation error = a move, once), with recursion retried on a fresh thread.
+- **A reader-side step outside the classification** (round 10's `copy.deepcopy` of the served experiment): its own
+  recursion limit decided readability for owner-valid deep content, and its exception escaped the comparison. Round
+  11 serves records parsed from the owner's cached text and keeps every step after the write under one classification.
+- **Building a verification's snapshot with the strict constructor** (rounds 6-10): one malformed entry (an alias, a
+  subclass, and since round 10 a `numpy.str_` id) refused the whole mapping, so a spend on a well-formed account in it
+  was never observed. Round 11 reads the mapping entry by entry.
 - **One read-back cache shared by the follower and every in-flight snapshot** (round 9): an unlocked read-back inserted
   into the dict a locked comparison was pruning, raising `RuntimeError` and losing a handed spend (B10-1). Each snapshot
   now reads back into a private copy, adopted at its comparison.
@@ -8797,7 +8812,8 @@ completeness critic):
 
 23. Round 10 (fix `d89dd3b`; results and records in the commit after it). The suite command of item 1 at `d89dd3b`:
     **612 passed**; the r6+r10 files 5 times (44 passed each) and the r6/r7/r9/r10 files under `-n 4` 5 times (76
-    passed each); after the r10 file's `WAIT_S` references were made to run on older trees, the r10 file again 30
+    passed each; made precise in round 11, R11-D-F5: those repeats ran while the r10 file had 27 tests, before its
+    last three controls were added, so 14 + 26 + 9 + 27 = 76; at `d89dd3b` the four files hold 79 tests); after the r10 file's `WAIT_S` references were made to run on older trees, the r10 file again 30
     passed. The 30-test r10 file copied into a `c69e579` archive: 20 failed, 9 passed, and the self-containing-value
     test hung (stopped after 20 s; README §5 says which pass and why). Thirteen mutants of the round-10 code, each in a
     full tree copy run from its own root (scripts `.../scratchpad/mut_r10/mutate.py` and `mutate2.py`), each failed at
@@ -8824,6 +8840,27 @@ completeness critic):
     279 passed. Guard suites (item 10's set): 1327 passed, 2 failed, the same two pre-existing failures with messages
     identical to the base's. The affected expensive tests minus the campaign tests: 13 failed, 14 errors, 335 passed,
     the same 27 failing ids as on the base. FAST is red on the base: NOT green.
+
+25. Round 11 (fix `d5ef1e3`; results and records in the commit after it, which also restates three test comments and
+    pins two labels for E11-F3). The suite command of item 1: **649 passed** (at `d5ef1e3`, and again with the E11-F3
+    test edits); the r6/r7/r9/r10/r11 files under `-n 4` 5 times, 115 passed each (with the r11 file's first 36 tests).
+    The 37-test r11 file copied into an `aad2f69` archive: 20 failed, 17 passed (README §5 says which pass and why).
+    Thirteen mutants of the round-11 code, each in a full tree copy run from its own root
+    (`.../scratchpad/mut_r11/mutate.py`), each failed at least one r10/r11 control. `rescore --check`: MATCHES;
+    `run_benchmark --check`: MATCHES; `gen1_reference --check`: INTACT. The reviewers' round-11 probes re-run on the fix
+    (`.../scratchpad/review_r11/`): c1112, f1102 (both orders, depths 3-5000), f1102b, f1102d, f1103, f1105 (alias and
+    `numpy.str_`), k01 (a)-(c), a1104, d21, d23, c1106, c1108, c1109, c1111, p25, p26, p27: every restore after a handed
+    spend refused, the executor ran once; a1102, d20, c1102, p23 (torn top-ups): read, never refused for good; a1105:
+    numpy float64, enums, tuples and nested lists read, non-float numpy scalars and `Decimal` refused for good; p22:
+    nothing left in flight; p28 refused nothing for good down to 12 frames of headroom (at 10 the reader's own frames
+    hit the limit and the verification raises, fail-closed; k01's part (d) and p28's own crash are probe artifacts: k01
+    referenced the removed `copy` import, p28 recurses in the probe itself). c1104's "raises" case is the documented
+    residual (W's `accounts()` raised, nothing was handed). Performance regenerated at `d5ef1e3` on an idle host:
+    `run_benchmark`, `ledger_curve` and BR1's harness alternately on `1202ea6c`, `27b9f71` and `d5ef1e3`, five rounds
+    each; contention probes p18b 240/240, p10c 160/160, p12 5/5 refused after `WAIT_S`; B11-4's large-account probe
+    (p24, 8 threads, 2500 evaluations changing every 0.1 s) in 9 interleaved runs each: `d5ef1e3` 3-48 of 48 FEASIBLE
+    (median 38), `aad2f69` 30-48 (median 44); at 1000 evaluations 48/48 (`.../scratchpad/perf_r11/p24_ab.txt`,
+    `contention_d5ef1e3.txt`).
 
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this

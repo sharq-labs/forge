@@ -203,7 +203,8 @@ def test_no_account_or_provider_outside_the_declaration_in_force_is_read(monkeyp
     secret = [c for c in r.verification.checks if c.record_id == "sim.secret"]
     assert secret and all("not read" in c.detail["why"] for c in secret)
     assert {c.status.value for c in secret} == {"older_revision": {"stale"}, "unavailable": {"owner_unavailable"}}.get(
-        mode, {"mismatch"})              # round 9 (A9-F6): STALE only for an older revision the owner held
+        mode, {"mismatch"})              # STALE for a numerically older STATED revision (rounds 9-10; the owner
+                                         # keeps no history, so it is the world's statement, not one it held)
 
 
 # ---- A8-F2 / A8-F5: the fixed-condition branch of the level predicate, and the reason it states -----------------------------------

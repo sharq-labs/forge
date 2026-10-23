@@ -221,7 +221,8 @@ def test_a_compared_verification_decides_on_what_the_ones_in_flight_record(spend
 
 def test_concurrent_admissions_through_one_desk_are_decided_not_refused():
     """Round 10's first candidate (refuse while any other verification is in flight) refused 157 of 160 admissions in
-    the reviewers' p10c load; the bounded wait decides them.  A refusal is allowed only as the wait's timeout."""
+    the reviewers' p10c load; the bounded wait decides them.  A refusal is allowed only as OWNER_UNAVAILABLE (the
+    wait's timeout)."""
     o = ax.owned("battery")
     other = BudgetLedger(total_budget=100.0)                               # an account no world reads, moving on
     reader, authorities, r = _desk(o, lambda: ({**o.ledgers, "other.ledger": other}, dict(o.experiments)))
@@ -248,6 +249,7 @@ def test_concurrent_admissions_through_one_desk_are_decided_not_refused():
     stop.set()
     feasible = sum(x == "FEASIBLE" for x in outcomes)
     assert len(outcomes) == 90 and feasible >= 60, outcomes
+    assert all(x == "FEASIBLE" or tuple(x) == ("AUTHORITY_OWNER_UNAVAILABLE",) for x in outcomes), outcomes
 
 
 # ---- B10-1: each snapshot reads back into a private cache (no unlocked writer shares the dict the comparison prunes) -------------
@@ -347,7 +349,8 @@ def test_a_world_stating_any_declaration_revision_is_refused_not_raised(revision
     payload["declaration"]["record_digest"] = "1" * 64
     forged = ScientificWorld.from_dict({k: v for k, v in payload.items() if k not in ("content_digest", "revision_id")})
     r = admit(FeasibleActionSpace.build(forged), o.propose("simulate_pulse", *SIM, world=forged), a)
-    assert r.admitted is None and r.codes()
+    assert r.admitted is None and tuple(r.codes()) == ("AUTHORITY_STALE",)   # the declaration binding: the owner
+    # states another record and keeps no history (E10-F3 / E11-F3: the label is pinned, not only the refusal)
 
 
 # ---- F10-5 / E10-F5: a pinned ledger record is detached from the account ---------------------------------------------------------
