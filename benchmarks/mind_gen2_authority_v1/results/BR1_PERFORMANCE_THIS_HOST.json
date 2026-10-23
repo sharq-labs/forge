@@ -1,76 +1,92 @@
 {
- "br1_1_commit": "26d772421445cddf77c185803f1c98024cdb7e49",
+ "br1_1_commit": "b572bfcd05573a2f8f24d63ce26c2826a7a2ced9",
  "br1_commit": "1202ea6c3d96f5c31d0b142a32438da75e020cae",
  "command": "for i in 1 2 3: for each checkout (1202ea6c, then this branch): cd <checkout> && PYTHONPATH=<checkout>/src:<checkout> PYTHONHASHSEED=0 python -c 'from benchmarks.mind_gen2_world_v1 import cases as C, run_benchmark as rb; r=rb.performance(C.load()[\"cases\"], repeats=25); print(r[...])'",
  "host": {
   "cpu_count": 4,
-  "platform": "Linux-6.18.44-fc-v140-x86_64-with-glibc2.39",
+  "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
   "python": "3.13.16"
  },
  "medians": {
   "br1_1_code": {
-   "ACTIONSPACE_BUILD_MS": 0.386,
-   "FEASIBILITY_P50_MS": 0.233,
-   "FEASIBILITY_P95_MS": 0.4152,
-   "SOLVER": 161.94,
-   "WORLD_BUILD_MS": 1.651
+   "ACTIONSPACE_BUILD_MS": 0.372,
+   "FEASIBILITY_P50_MS": 0.2562,
+   "FEASIBILITY_P95_MS": 0.4955,
+   "SOLVER": 171.458,
+   "WORLD_BUILD_MS": 1.582
   },
   "br1_code_1202ea6c": {
-   "ACTIONSPACE_BUILD_MS": 0.457,
-   "FEASIBILITY_P50_MS": 0.2438,
-   "FEASIBILITY_P95_MS": 0.4787,
-   "SOLVER": 163.434,
-   "WORLD_BUILD_MS": 1.48
+   "ACTIONSPACE_BUILD_MS": 0.453,
+   "FEASIBILITY_P50_MS": 0.2239,
+   "FEASIBILITY_P95_MS": 0.3715,
+   "SOLVER": 154.12,
+   "WORLD_BUILD_MS": 1.392
   }
  },
  "runs": {
   "br1_1_code": [
    {
-    "ACTIONSPACE_BUILD_MS": 0.386,
-    "FEASIBILITY_P50_MS": 0.233,
-    "FEASIBILITY_P95_MS": 0.414,
-    "SOLVER": 164.089,
-    "WORLD_BUILD_MS": 1.651
+    "ACTIONSPACE_BUILD_MS": 0.343,
+    "FEASIBILITY_P50_MS": 0.2562,
+    "FEASIBILITY_P95_MS": 0.4955,
+    "SOLVER": 182.804,
+    "WORLD_BUILD_MS": 1.582
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.375,
-    "FEASIBILITY_P50_MS": 0.2319,
-    "FEASIBILITY_P95_MS": 0.4152,
-    "SOLVER": 161.94,
-    "WORLD_BUILD_MS": 1.564
+    "ACTIONSPACE_BUILD_MS": 0.372,
+    "FEASIBILITY_P50_MS": 0.2639,
+    "FEASIBILITY_P95_MS": 0.5515,
+    "SOLVER": 161.637,
+    "WORLD_BUILD_MS": 1.566
    },
    {
-    "ACTIONSPACE_BUILD_MS": 0.394,
-    "FEASIBILITY_P50_MS": 0.2756,
-    "FEASIBILITY_P95_MS": 0.6281,
-    "SOLVER": 150.443,
-    "WORLD_BUILD_MS": 2.024
+    "ACTIONSPACE_BUILD_MS": 0.423,
+    "FEASIBILITY_P50_MS": 0.2549,
+    "FEASIBILITY_P95_MS": 0.4262,
+    "SOLVER": 171.458,
+    "WORLD_BUILD_MS": 1.684
    }
   ],
   "br1_code_1202ea6c": [
    {
-    "ACTIONSPACE_BUILD_MS": 0.457,
-    "FEASIBILITY_P50_MS": 0.2286,
-    "FEASIBILITY_P95_MS": 0.4006,
-    "SOLVER": 159.412,
-    "WORLD_BUILD_MS": 1.488
-   },
-   {
-    "ACTIONSPACE_BUILD_MS": 0.443,
-    "FEASIBILITY_P50_MS": 0.2438,
-    "FEASIBILITY_P95_MS": 0.4787,
-    "SOLVER": 163.434,
-    "WORLD_BUILD_MS": 1.48
-   },
-   {
-    "ACTIONSPACE_BUILD_MS": 0.491,
-    "FEASIBILITY_P50_MS": 0.2542,
-    "FEASIBILITY_P95_MS": 0.5169,
-    "SOLVER": 173.072,
+    "ACTIONSPACE_BUILD_MS": 0.442,
+    "FEASIBILITY_P50_MS": 0.2239,
+    "FEASIBILITY_P95_MS": 0.3592,
+    "SOLVER": 154.12,
     "WORLD_BUILD_MS": 1.392
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.464,
+    "FEASIBILITY_P50_MS": 0.2325,
+    "FEASIBILITY_P95_MS": 0.4194,
+    "SOLVER": 172.626,
+    "WORLD_BUILD_MS": 1.454
+   },
+   {
+    "ACTIONSPACE_BUILD_MS": 0.453,
+    "FEASIBILITY_P50_MS": 0.2217,
+    "FEASIBILITY_P95_MS": 0.3715,
+    "SOLVER": 154.082,
+    "WORLD_BUILD_MS": 1.384
    }
   ]
  },
  "schema": "forge.mind.gen2_authority.br1_performance_this_host/2",
- "statement": "BR1's own harness on BR1's 515 frozen cases, run alternately on BR1's code (br1_commit) and on BR1.1's code (br1_1_commit), three times each on one idle host; medians reported. Timings are host-dependent; single runs differ by up to ~50 % (FEASIBILITY_P95_MS on BR1.1's code: 0.414 to 0.628 ms) and by up to ~30 % on the other metrics, so a delta of the medians inside that band is noise. SOLVER is one in-repo solver execution (a Gen1 repsem judgment), the scale reference."
+ "spread_percent": {
+  "br1_1_code": {
+   "ACTIONSPACE_BUILD_MS": 23,
+   "FEASIBILITY_P50_MS": 4,
+   "FEASIBILITY_P95_MS": 29,
+   "SOLVER": 13,
+   "WORLD_BUILD_MS": 8
+  },
+  "br1_code_1202ea6c": {
+   "ACTIONSPACE_BUILD_MS": 5,
+   "FEASIBILITY_P50_MS": 5,
+   "FEASIBILITY_P95_MS": 17,
+   "SOLVER": 12,
+   "WORLD_BUILD_MS": 5
+  }
+ },
+ "statement": "BR1's own harness on BR1's 515 frozen cases, run alternately on BR1's code (br1_commit) and on BR1.1's code (br1_1_commit), three times each on one idle host; medians reported. Timings are host-dependent. In these runs single runs differ by up to 29 % (BR1.1) and 17 % (BR1) per metric; earlier runs on this host differed by up to ~50 % on FEASIBILITY_P95_MS, so a p95 delta inside that band is noise. SOLVER is one in-repo solver execution (a Gen1 repsem judgment), the scale reference."
 }

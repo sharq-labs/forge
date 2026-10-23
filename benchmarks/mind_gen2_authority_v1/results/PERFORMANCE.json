@@ -1,39 +1,39 @@
 {
- "ADMISSION_P50_MS": 19.0753,
- "ADMISSION_P95_MS": 22.4878,
- "AUTHORITY_VERIFY_P50_MS": 14.7808,
- "AUTHORITY_VERIFY_P95_MS": 18.2373,
- "CHECK_ON_OWNED_WORLDS_P50_MS": 0.3572,
- "CHECK_ON_OWNED_WORLDS_P95_MS": 0.5387,
- "DISPATCH_AUTHORIZATION_P50_MS": 20.393,
- "DISPATCH_AUTHORIZATION_P95_MS": 23.4739,
- "PROJECTION_BUILD_MS": 12.012,
+ "ADMISSION_P50_MS": 18.5339,
+ "ADMISSION_P95_MS": 24.3856,
+ "AUTHORITY_VERIFY_P50_MS": 14.3231,
+ "AUTHORITY_VERIFY_P95_MS": 19.8509,
+ "CHECK_ON_OWNED_WORLDS_P50_MS": 0.3501,
+ "CHECK_ON_OWNED_WORLDS_P95_MS": 0.5374,
+ "DISPATCH_AUTHORIZATION_P50_MS": 19.5819,
+ "DISPATCH_AUTHORIZATION_P95_MS": 26.8982,
+ "PROJECTION_BUILD_MS": 11.824,
  "PROJECTION_BUILD_MS_median_by_world": {
-  "battery": 13.497,
-  "drone": 11.741,
-  "gen1_pool": 12.284,
-  "hvac_chamber": 11.615,
-  "hvac_field": 12.512,
-  "motor": 11.66
+  "battery": 13.203,
+  "drone": 11.704,
+  "gen1_pool": 7.19,
+  "hvac_chamber": 12.244,
+  "hvac_field": 11.454,
+  "motor": 11.944
  },
  "SERIALIZED_OWNED_WORLD_BYTES": [
   7390,
   26267
  ],
  "br1_cases_on_br1_1_code": {
-  "ACTIONSPACE_BUILD_MS": 0.474,
-  "FEASIBILITY_P50_MS": 0.2459,
-  "FEASIBILITY_P95_MS": 0.4173,
+  "ACTIONSPACE_BUILD_MS": 0.355,
+  "FEASIBILITY_P50_MS": 0.2632,
+  "FEASIBILITY_P95_MS": 0.4791,
   "REFERENCE_SOLVER_MS": {
-   "median": 157.182,
+   "median": 151.712,
    "what": "one Gen1 repsem judgment (scipy least-squares model fit) on the synthetic mind_repsem_v1 IDENTIFIABLE fixture, seed 0: an in-repo solver execution"
   },
-  "WORLD_BUILD_MS": 1.749
+  "WORLD_BUILD_MS": 1.507
  },
- "code_revision": "0fc399b6f633f1c7d6e6e23e54e68f6fcf216d7e",
+ "code_revision": "b572bfcd05573a2f8f24d63ce26c2826a7a2ced9",
  "host": {
   "cpu_count": 4,
-  "platform": "Linux-6.18.44-fc-v140-x86_64-with-glibc2.39",
+  "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
   "python": "3.13.16"
  },
  "repeats": 25,
