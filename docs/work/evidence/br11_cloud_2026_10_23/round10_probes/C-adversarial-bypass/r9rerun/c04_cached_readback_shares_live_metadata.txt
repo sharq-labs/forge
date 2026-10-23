@@ -1,0 +1,4 @@
+(a) cached read-back form shares the live nested metadata object: False
+(a) after an in-place move, the cached 'read-back form' says v = 0 (cached under the content digest of v = 0)
+(b) pins 4000, refused 0, served records whose payload is not the record their digest names: 0 []
+exit 0

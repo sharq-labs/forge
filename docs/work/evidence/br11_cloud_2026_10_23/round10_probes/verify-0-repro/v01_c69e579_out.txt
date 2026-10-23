@@ -1,0 +1,28 @@
+no metadata              plain=True  owner_reads_back=4 | verification on spend: MISSING_INFORMATION ('AUTHORITY_STALE',) | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+flat {'seed': 1}         plain=True  owner_reads_back=4 | verification on spend: MISSING_INFORMATION ('AUTHORITY_STALE',) | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+nested list              plain=False owner_reads_back=4 | verification on spend: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | executor ran 2
+                         types in spent to_dict: ['FrozenList', 'NoneType', 'dict', 'int', 'list', 'str']
+nested dict              plain=False owner_reads_back=4 | verification on spend: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | executor ran 2
+                         types in spent to_dict: ['FrozenMapping', 'NoneType', 'dict', 'int', 'list', 'str']
+tuple                    plain=True  owner_reads_back=4 | verification on spend: MISSING_INFORMATION ('AUTHORITY_STALE',) | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r10/verify-0-repro/v01_nested_eval_meta_restore.py", line 82, in <module>
+    res = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), auth)
+                                          ^^^^^^^
+  File "/home/user/forge/benchmarks/mind_gen2_authority_v1/fixtures.py", line 193, in world
+    self._world = project_world(self.declaration, self.authorities())
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/projection.py", line 89, in project_world
+    reader, record = authorities.require(kind, b.ref)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/authority.py", line 271, in require
+    record = reader.read(OwnerKind(kind), record_id)
+  File "/home/user/forge/src/engcore/mind/world/authority.py", line 411, in read
+    self._reads[key] = self._current().read(kind, record_id)
+                       ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 484, in read
+    return self._read(kind, record_id)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 519, in _read
+    raise OwnerUnavailable(observed)
+engcore.mind.world.authority.OwnerUnavailable: experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner reads back: its serialization is not plain JSON data (exactly dict with str keys, list, str, int, float, bool or None)

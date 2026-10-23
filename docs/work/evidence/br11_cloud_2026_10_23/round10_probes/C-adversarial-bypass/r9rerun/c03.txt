@@ -1,0 +1,23 @@
+Exception in thread Thread-1 (spender):
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+    ~~~~~~~~^^
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r9/C-adversarial-bypass/c03_concurrent_forward_only.py", line 33, in spender
+    o.experiments[eid].record(ScientificEvaluation(f"bg.{i}", {}, status=EvaluationStatus.NOT_CONVERGED,
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                                   detail="x"))
+                                                   ^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/scientific/experiments/experiment.py", line 253, in record
+    raise ScientificCoreError(
+    ...<3 lines>...
+    )
+engcore.scientific.errors.ScientificCoreError: observation budget exhausted (20); cannot record 'bg.68'
+6.4s outcomes {('AUTHORITY_STALE',): 173, ('AUTHORITY_OWNER_UNAVAILABLE',): 7} errors []
+unavailable reasons: ['an earlier verification of this budget reader is still in flight (it may carry a later sta']
+diverged (for good): []
+a later observation: MISSING_INFORMATION ('AUTHORITY_STALE',)
+exit 0

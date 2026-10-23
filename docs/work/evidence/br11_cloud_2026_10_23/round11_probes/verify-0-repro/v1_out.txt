@@ -1,0 +1,16 @@
+to_json ok, len 7046
+json.loads ok
+from_dict ok
+to_json(rebuilt) ok; accounting equal: True
+exp.to_dict ok
+deepcopy at top of stack RecursionError
+admit RAISED RecursionError; frames (non-copy):
+    review_r11/verify-0-repro/v1_where.py 39 <module> | res = gw.admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM))
+    benchmarks/mind_gen2_authority_v1/fixtures.py 193 world | self._world = project_world(self.declaration, self.authorities())
+    benchmarks/mind_gen2_authority_v1/fixtures.py 185 authorities | BudgetReader.following(lambda: (self.ledgers, self.experiments)) if budget is None else budget,
+    mind/world/owners.py 351 following | reader._observe_all(reader, ticket)          # what is handed over at construction: the first baseline
+    mind/world/owners.py 438 _observe_all | read = snapshot._read_back()
+    mind/world/owners.py 419 _read_back | out[key] = self._account(key)
+    mind/world/owners.py 409 _account | back = copy.deepcopy(back)                   # JSON data this reader parsed: no code of the account runs
+    copy.py 137 deepcopy <- first copy.py frame
+total frames 1000

@@ -1,0 +1,2 @@
+nan  | D (compared while W in flight): refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILA) | executor ran 1
+cut  | D (compared while W in flight): refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILA) | executor ran 1

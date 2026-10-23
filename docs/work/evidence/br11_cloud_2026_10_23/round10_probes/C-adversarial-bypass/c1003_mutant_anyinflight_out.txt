@@ -1,0 +1,4 @@
+seq-no-rollback : T1 refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_STALE)) | executor ran 1 times (1 = only the first dispatch)
+seq-rollback    : T1 refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1 times (1 = only the first dispatch)
+r9-order        : T1 refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1 times (1 = only the first dispatch)
+mirror-order    : T1 refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1 times (1 = only the first dispatch)

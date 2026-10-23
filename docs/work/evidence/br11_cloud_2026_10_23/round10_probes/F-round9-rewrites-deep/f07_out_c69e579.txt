@@ -1,0 +1,3 @@
+T2 was handed the ledger at revision 2 (spent: True )
+re-dispatch after the rollback: refused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1 times
+a later re-dispatch: refused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)

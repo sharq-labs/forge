@@ -1,0 +1,10 @@
+applied alias_not_recorded2
+[alias_not_recorded2] 648 passed, 1 skipped in 25.72s
+applied moving_any_runtimeerror
+[moving_any_runtimeerror] E         Actual message: "budget ledger 'synthetic.battery.pulse-cell.solver' moved while it was serialized (3 read-backs failed differently): NotImplementedError: no"
+[moving_any_runtimeerror] E         Actual message: "budget ledger 'synthetic.battery.pulse-cell.solver' moved while it was serialized (3 read-backs failed differently): RuntimeError: no"
+[moving_any_runtimeerror] FAILED tests/mind/test_authority_review_r11.py::test_a_ledger_spend_whose_serialization_always_fails_refuses_the_account_for_good[exc0]
+[moving_any_runtimeerror] FAILED tests/mind/test_authority_review_r11.py::test_a_ledger_spend_whose_serialization_always_fails_refuses_the_account_for_good[exc1]
+[moving_any_runtimeerror] FAILED tests/mind/test_authority_review_r11.py::test_an_experiment_spend_whose_serialization_always_fails_refuses_the_account_for_good[exc0]
+[moving_any_runtimeerror] FAILED tests/mind/test_authority_review_r11.py::test_an_experiment_spend_whose_serialization_always_fails_refuses_the_account_for_good[exc1]
+[moving_any_runtimeerror] 4 failed, 644 passed, 1 skipped in 25.04s

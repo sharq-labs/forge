@@ -1,0 +1,3 @@
+OK evaluation                      plain=True first non-plain: None | BudgetReader: READ
+OK evaluation, validity assessed   plain=True first non-plain: None | BudgetReader: READ
+NOT_CONVERGED-style (no result)    plain=True first non-plain: None | BudgetReader: READ

@@ -1,0 +1,18 @@
+control {}                     | owner read-back: 4 | follower: read revision 4
+                               | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+nested list {'seeds':[1,2]}    | owner read-back: 4 | follower: read revision 4
+                               | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+nan float                      | owner read-back: 4 | follower: refused: one its owner writes down: ScientificExperiment cannot be serialized: Out of ran
+                               | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+datetime                       | owner read-back: 4 | follower: refused: one its owner writes down: Object of type datetime is not JSON serializable; the
+                               | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+bytes                          | owner read-back: 4 | follower: refused: one its owner writes down: Object of type bytes is not JSON serializable; the ac
+                               | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+set                            | owner read-back: 4 | follower: refused: one its owner writes down: Object of type FrozenSet is not JSON serializable; th
+                               | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+Decimal                        | owner read-back: 4 | follower: refused: one its owner writes down: Object of type Decimal is not JSON serializable; the 
+                               | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+int key                        | owner read-back: 4 | follower: read revision 4
+                               | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+object()                       | owner read-back: 4 | follower: refused: one its owner writes down: Object of type object is not JSON serializable; the a
+                               | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1

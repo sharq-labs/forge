@@ -1,0 +1,4 @@
+560 orders, 2 verifications
+[inplace] orders with a rollback decided after a handed spend: 0; accepts 940, refusals 180 (15.8 s)
+[replace] orders with a rollback decided after a handed spend: 0; accepts 956, refusals 164 (11.6 s)
+[exp] orders with a rollback decided after a handed spend: 0; accepts 940, refusals 180 (10.8 s)

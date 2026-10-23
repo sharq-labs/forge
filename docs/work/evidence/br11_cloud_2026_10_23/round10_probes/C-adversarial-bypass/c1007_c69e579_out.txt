@@ -1,0 +1,6 @@
+python ints/floats (control)   | owner's own digest of the spend: ok | follower on the spend: read revision 2
+                               | re-dispatch while spent: refused (MISSING_INFORMATION: AUTHORITY_STALE) | after the restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+numpy iteration                | owner's own digest of the spend: ok | follower on the spend: refused: budget ledger 'synthetic.battery.pulse-cell.solver' is not a ledger its owner reads back: 
+                               | re-dispatch while spent: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | after the restore: DISPATCHED AGAIN | executor ran 2
+numpy predicted                | owner's own digest of the spend: ok | follower on the spend: refused: budget ledger 'synthetic.battery.pulse-cell.solver' is not a ledger its owner reads back: 
+                               | re-dispatch while spent: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | after the restore: DISPATCHED AGAIN | executor ran 2

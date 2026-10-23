@@ -1,0 +1,119 @@
+Round-11 findings at aad2f69 (fixed or documented in d5ef1e3 / ec2c000; README section 9 lists the dispositions)
+
+[A11-F1] MINOR (A-scientific-authority) _written treats every RuntimeError (NotImplementedError included) as 'the account moved while it was serialized', so a spend recorded in a state that fails to serialize every time is never observed, and a restore re-dispatches the executed action
+  skeptics: -
+  fix asked: Classify by behaviour, not by exception type. Serialize the account a second time. If the two attempts differ, or one succeeds, the state moved (refused for this verification only). If both fail the same way, the state is _Unreadable (refused for good). Alternatively, limit the carve-out to the interpreter's 'changed size during iteration' RuntimeError. Add a1104 (both the ledger detail and the experiment dict-subclass forms) as a control. Otherwise, restate README §4/§9 and owners.py:325-330 to say that an unwritable state whose serialization raises a RuntimeError subclass is not observed.
+
+[A11-F2] MINOR (A-scientific-authority) A torn read of an honest in-place top-up (README: 'a move of the owner') is classified as an unwritable handed state and refuses the account for good (a fail-closed regression against c69e579)
+  skeptics: -
+  fix asked: Use the same remedy as A11-F1. Re-serialize once. If the second text differs from the first (or reads back), treat the failure as moving and refuse it for this verification only. Keep the for-good refusal for a failure that repeats on identical text. Add a1102 (both forms) as a deterministic control, or document that a read torn across a declaration change can refuse the account for good.
+
+[A11-F3] MINOR (A-scientific-authority) README §4 implies the owner-rule read-back now reads numpy scalars and enums, but an experiment whose evaluation metadata holds np.int64, np.float32, np.bool_ or Decimal is refused for good. Ledger non-decision fields become strings, and execution-side code also runs inside the owner's from_dict
+  skeptics: -
+  fix asked: In README §4 (and the §2 row), name what each owner rule refuses: experiments, anything to_json cannot write (non-float numpy scalars, Decimal, sets, bytes, datetime, NaN; numpy float64 and enums are read); ledgers, very little (canonical_digest's default=str turns it into text, so predicted/detail/ids may be served as strings). Say that such an experiment is refused for good. Change 'only inside the owner's own serialization' to 'inside the owner's own serialization and read-back (to_dict, from_dict, the JSON encoder)'.
+
+[A11-F4] MINOR (A-scientific-authority) Record precision: §9 says A9-F7 was done in round 10, but its README half (naming, per half of the exact-level guard, the r7 control test and the r8 fixed-condition test) is still not done. §5's 'round-9 controls 9/10' does not say which file revision it means
+  skeptics: -
+  fix asked: Name test_authority_review_r7.py::test_every_spelling_of_one_level_is_decided_alike_and_executed_as_one_value (controls) and the r8 fixed-condition level tests (e.g. test_a_fixed_condition_the_identity_rule_does_not_match_is_never_executed_as_a_level) in §9. Write 'the round-9 controls (the 10-test file as committed at e573096) 9/10 on ceaf8cd'.
+
+[B11-1] MINOR (B-architecture) Round 10 now refuses an honest account for good when a verification's read races with an ordinary top-up, or runs on a deep call stack
+  skeptics: -
+  fix asked: Classify a read-back failure as for good only when it reproduces on an unchanged serialization: write the account again, and if the text differs, refuse for this verification only. Also refuse RecursionError for this verification only unless it reproduces at a fixed baseline depth. For ledgers, detect a torn read as the experiment path does, by comparing the written derived totals (spent_general, spent_validation, remaining, overrun) with the read-back's. Catch Exception around the post-read-back steps at owners.py:406-409. Restate README section 4:178/189/199 and owners.py:326-328, and add p23 (both cases) as controls.
+
+[B11-2] MINOR (B-architecture) Three round-10 forward-only guarantees have no effective regression control: each mutant re-dispatches an executed action and passes all 611 BR1.1 tests
+  skeptics: -
+  fix asked: Add p25, p26 and p27 (or equivalents) to test_authority_review_r10.py. Assert that the re-dispatch is refused and the executor ran once, and confirm each fails on its mutant.
+
+[B11-3] MINOR (B-architecture) An interrupt while pinned()'s finally waits for the reader's lock leaks the ticket and the re-entrancy flag for good (B10-6 residual)
+  skeptics: -
+  fix asked: Reset the flag first, then discard the ticket in a nested try/finally. Or discard the ticket without the lock (set.discard is atomic under the GIL) and notify best-effort under the lock. Add p22 as a control.
+
+[B11-4] MINOR (B-architecture) The stated cost of the wait names only a slow accounts(); a pending verification's slow READ-BACK also refuses others, and does so under ordinary load
+  skeptics: -
+  fix asked: Say 'a verification whose accounts() or read-back does not complete within WAIT_S'. Add a large-account contention point to section 8.
+
+[R11-D-F1] MINOR (D-replay-stale) Round 10 refuses for good an honest account that moved forward while it was serialized: a concurrent top-up and record make the owner's from_dict reject the torn text, and that failure counts as 'unwritable'
+  skeptics: -
+  fix asked: Decide 'moved' by observing movement, not by exception class. When a read-back fails, write the account down again. Refuse for good only if the second write gives byte-identical text that fails the same way (or raises the same error type and message). Otherwise refuse for this verification only. Alternatively, run the torn checks on the parsed written text (budget/accounting against the written evaluations) before calling from_dict. Add d20's settrace interleaving as a deterministic control on a following reader: the torn verification is refused and the next one reads. Add a following-reader control for the accounting tear and for a RuntimeError while serializing, both asserting not 'from then on'.
+
+[R11-D-F2] MINOR (D-replay-stale) A spend whose serialization always raises a RuntimeError-family exception (including NotImplementedError) counts as 'moved', so it is never observed and a restore re-dispatches the executed action
+  skeptics: -
+  fix asked: Use the same remedy as R11-D-F1: if the failure repeats on a second write, the state is unwritable and is refused for good; only a failure that does not repeat is a move. Otherwise narrow README §4/§9 and owners.py:326-330 to say that a state whose serialization raises a RuntimeError subclass every time is treated as moving and is never observed. Add d21's NotImplementedError case as a control of whichever outcome is chosen.
+
+[R11-D-F3] MINOR (D-replay-stale) The ledger half of round 10's 'a handed state its owner cannot write down refuses the account for good' has no regression control; a mutant that drops it re-dispatches the executed action and passes every BR1.1 test
+  skeptics: -
+  fix asked: Add a ledger parameter set to the r10 for-good control: d23's tuple charge id and reservation-above-total spends, each asserting 'refused by this reader from then on' on a following reader, refused after a restore, and executor called once. Confirm that it fails on mutant_ledger_transient.py.
+
+[R11-D-F4] MINOR (D-replay-stale) STALE versus MISMATCH by numeral comparison has no multi-digit control: a lexical-comparison mutant and a no-leading-zero mutant pass every BR1.1 test
+  skeptics: -
+  fix asked: Add an older-revision case with multi-digit revisions (world '9', in force '10' gives STALE) and a zero-padded case ('009' against '10' gives STALE; '010' against '9' gives MISMATCH) to the r8/r10 declaration-mode control, or add a direct unit test of _lower_revision.
+
+[R11-D-F5] MINOR (D-replay-stale) PROGRESS item 23 records 76 passed for the r6/r7/r9/r10 files; those files hold 79 tests at d89dd3b and aad2f69
+  skeptics: -
+  fix asked: Correct item 23 to '79 passed', or name the subset that gave 76.
+
+[R11-D-F6] MINOR (D-replay-stale) Because the ledger read-back now uses default=str, served ledger values change type (Decimal, np.float32 and dates become strings) and a set's string depends on the hash seed; README §4 does not say so
+  skeptics: -
+  fix asked: In README §4, state that values the digest rule stringifies are served and digested as their str() (type changes), and that a value whose str() is process-dependent (a set) gives that ledger a process-dependent record digest. Optionally treat a ledger whose canonical text needed default=str as unwritable.
+
+[R11-C-F1] MAJOR (C-adversarial-bypass) A reader-side deepcopy outside the try still decides readability: valid deeply nested owner content hides a spend (a restore re-dispatches the executed action), and since round 10 one such handed account makes every admission and dispatch raise
+  skeptics: repro: MAJOR (confirmed=True); scope: MAJOR (confirmed=True)
+  fix asked: Serve detached copies without Python recursion: cache the read-back's canonical text, for example to_json(rebuilt), and serve json.loads(text) per read, which the C parser handles at this depth. Make _read_back convert ANY Exception from _account into _NotRead, so a verification never raises out of pinned(). Classify as for good only failures of the owner's own write or read-back. Add c1112 as controls: an unbound deeply nested account refuses no admission; a deep spend is observed and its restore refused; nothing raises out of admit or dispatch. Restate README §4/§9 if any reader-side step can still refuse.
+
+[R11-C-F2] MINOR (C-adversarial-bypass) Two round-10 forward-only guarantees have no effective regression control: each mutant passes the whole BR1.1 suite and re-dispatches the executed action
+  skeptics: -
+  fix asked: Add c1106 (both variants, asserting the re-dispatch is refused and the executor ran once) and c1108 as tests in test_authority_review_r10/r11. Optionally add controls for the ledger second-from_dict failure and the RecursionError classification.
+
+[R11-C-F3] MINOR (C-adversarial-bypass) _written classifies by exception TYPE, not cause: a torn read of a forward move is refused for good, and a deterministic RuntimeError from content is treated as 'moved', so that spend is never observed
+  skeptics: -
+  fix asked: Decide transient versus for good by cause, not exception type. On a failure, serialize the same objects once more: the same failure again means the state (for good); success or different text means it moved (transient). Detect a torn experiment from the written text's own consistency (accounting and budget against its evaluations) BEFORE calling from_dict. Otherwise restate README §4:178, §9:500-502 and owners.py:111-113.
+
+[R11-C-F4] MINOR (C-adversarial-bypass) Bounded-wait statements are imprecise: 'in flight' includes the read-back, the 'compared before any other decides' claim is only for verifications started before the comparison, and a snapshot the reader refuses is unlisted
+  skeptics: -
+  fix asked: In §4, §8 and the docstring, say that a verification is in flight from its start through its read-back. Say that one slow read-back (of any handed account, including one no world reads, quadratic for a changing experiment) makes verifications that compare meanwhile wait WAIT_S and be refused. Say that the guarantee covers states handed to verifications that started before the deciding one compared. Add 'a handed account set the reader refuses (not exactly typed, an id that is not exactly a str, one object under two ids)' to the never-observed list.
+
+[E11-F1] MINOR (E-forge-scientific) The forward-only guarantee is still stated for HANDED states, but it holds only for states read back and compared. A handed mapping that the per-verification constructor refuses (widened in round 10 by the exact-str id rule) is never observed, and it is missing from the 'never observed' list. K10-F1 item 1 is listed as fixed but was not done.
+  skeptics: -
+  fix asked: (a) Restate README §4:163-165 and 173-174 and owners.py:322-323 and 328-329 as 'a state handed to AND read back by one verification'. (b) Add 'a handed mapping the reader's constructor refuses (an id not exactly str, an account not exactly typed, one object under two ids)' to the never-observed list (README §4:197-200, owners.py:329-331). Optionally, after construction, treat such a refusal like _Unreadable (refuse the reader's accounts for good) and add a control. (c) Mark K10-F1 in §9 as partly done, or do item 1.
+
+[E11-F2] MINOR (E-forge-scientific) The RecursionError branch of _written, which makes a state nested past the recursion limit refuse its account for good, has no regression control. Deleting it silently reroutes that case to the per-verification branch, where a spend is never observed.
+  skeptics: -
+  fix asked: Add a deep-nesting parameter (for example the reduce expression above) to test_a_handed_state_its_owner_cannot_write_down_refuses_the_account_for_good (r10:105). Optionally, add a control that a RuntimeError raised while serializing (a dict mutated during iteration) refuses only that verification.
+
+[E11-F3] MINOR (E-forge-scientific) Remaining wording and assertion imprecisions after round 10
+  skeptics: -
+  fix asked: (a) Reword r8:206 to 'STALE for a numerically older stated revision (world-stated; the owner keeps no history)'. (b) Assert that every non-FEASIBLE outcome in r10:222-250 is the 'still in flight' timeout, or reword the docstring. (c) Say in README §4 that a read-through from inside the read-back refuses the account for good, or assert that outcome in r10:388-407. (d) Assert AUTHORITY_MISMATCH in r10:350.
+
+[F11-1] MAJOR (F-round10-rewrites-deep) Round 10 moved the experiment read-back's deepcopy outside the try that classifies read-back failures. An experiment the owner can read back, nested about 500 or more levels deep, makes every verification raise before it compares, so a handed spend is never observed and a restore re-dispatches the executed action
+  skeptics: repro: MAJOR (confirmed=True); scope: MINOR (confirmed=True)
+  fix asked: 1. Remove the reader's own Python-recursion step. Cache the canonical read-back text (to_json(rebuilt)) and serve json.loads(text) per read: the C parser has the same depth limits as the owner's own encoder. Otherwise move `_sha_json`, `_history` and the per-read copy inside the classifying try.
+2. Make _account total: convert any exception from a handed account's read-back into _NotRead. Choose for-good versus transient deliberately, given that RecursionError depends on stack depth.
+3. Make the wait sound when a pending verification leaves without comparing. For example, when a ticket leaves through _leave without _observe_all having recorded it, waiters decide on no account (refused for that verification only).
+4. Add f1102 (both orders) and f1102d as controls, and restate README §4 and §9.
+
+[F11-2] MAJOR (F-round10-rewrites-deep) A handed mapping the reader's constructor refuses (one account object under two ids; since round 10, any id that is not exactly str, e.g. numpy.str_) refuses the whole verification before any account is compared, so a spend on another, well-formed account is never observed and a restore re-dispatches
+  skeptics: scope: MINOR (confirmed=True); repro: MAJOR (confirmed=True)
+  fix asked: Do not drop a whole snapshot unseen. Either:
+- refuse only the offending entries (per key, as handed) and read back and compare the well-formed accounts; or
+- when a mapping is refused after accounts() returned, record each well-formed account it handed, or refuse those accounts for good, as for an unreadable handed state.
+
+Add f1105 (numpy.str_ id, alias) as a control, and list the remaining case, if any, among the never-observed states in README §4 and owners.py:329-331.
+
+[F11-3] MINOR (F-round10-rewrites-deep) The 'refused for good meanwhile' clause of the post-wait re-check, and four round-10 classifications, have no effective regression control
+  skeptics: -
+  fix asked: Add f1103 as a deterministic control: D waits for P, P's spend is unwritable, and D must be refused with the executor run once.
+
+Add controls for:
+- the RecursionError, RuntimeError and torn-experiment classifications (e.g. a RecursionError raised in to_dict refuses for good; a dict changing size refuses that verification only);
+- the served experiment payload not aliasing the cache;
+- a multi-digit STALE case ('9' against '10').
+
+[F11-4] MINOR (F-round10-rewrites-deep) Round-10 wording overstates the wait's guarantee and gives an incomplete never-observed list
+  skeptics: -
+  fix asked: Keep only the precise 'in flight when it compared' statement. Add every case that is never observed to the list in §4 and in the docstring, or remove each case by the fixes for F11-1 and F11-2.
+
+[K11-F1] MINOR (critic) The MAJOR's fix (R11-C-F1 / F11-1) has to classify the whole experiment read-back after `_written`, not only the deepcopy. Line 403 can raise KeyError, and the torn verdict at 403-405 can be deterministic. Each hides a spend, and a restore then re-dispatches the executed action.
+  fix asked: Put owners.py:393-412 under one classification. Remove the reader's own failure points: detach with the C JSON round trip, not deepcopy, and compare with `.get` so a missing key is a mismatch. Treat any remaining failure as `_Unreadable`. A torn verdict that repeats on identical text (the same content digest on a second serialization) is a property of the state, so refuse it for good like an unwritable state; apply the same re-serialize-once test to `_written`'s RuntimeError branch (A11-F1 / R11-D-F2 / R11-C-F3). Add controls: experiment metadata nested 600 deep (observed, restore refused), and the (d) case (refused for good).
+
+[K11-F2] MINOR (critic) Nothing tests that served experiment records are detached, and the MAJOR's fix changes exactly that line: a mutant that serves the cached object itself passes the whole BR1.1 suite
+  fix asked: Keep detachment, using the C JSON round trip (K11-F1). Add a control that mutates a served experiment payload (for example `payload['experiment']['metadata']` or `['accounting']`), then asserts that the next verification on unchanged content serves the owner's own text and that `rederive` gives the served digest.

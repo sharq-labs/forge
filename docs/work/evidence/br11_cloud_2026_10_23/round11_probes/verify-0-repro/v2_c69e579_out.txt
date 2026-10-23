@@ -1,0 +1,24 @@
+=== c69e579 depth: 500
+/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r11/verify-0-repro/tree-c69e579/src/engcore/mind/world/owners.py
+(A) before: FEASIBLE
+    owner writes/reads back the side state: True
+    admit (world never reads side) -> FEASIBLE
+    dispatch of an earlier admission -> DISPATCHED
+(B) first admission: FEASIBLE | bound experiment: synthetic.battery.pulse-cell.experiment
+    executor ran 1 | owner to_dict of spent state ok: True
+    Mind admission 1 on spent state -> ('AUTHORITY_OWNER_UNAVAILABLE',)
+    Mind admission 2 on spent state -> ('AUTHORITY_OWNER_UNAVAILABLE',)
+    reader seen len: {('ledger', 'synthetic.battery.pulse-cell.solver'): 1, ('experiment', 'synthetic.battery.pulse-cell.experiment'): 3} | diverged: []
+    re-dispatch after restore -> DISPATCHED AGAIN | executor ran 2
+=== c69e579 depth: 1000
+/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r11/verify-0-repro/tree-c69e579/src/engcore/mind/world/owners.py
+(A) before: FEASIBLE
+    owner writes/reads back the side state: True
+    admit (world never reads side) -> FEASIBLE
+    dispatch of an earlier admission -> DISPATCHED
+(B) first admission: FEASIBLE | bound experiment: synthetic.battery.pulse-cell.experiment
+    executor ran 1 | owner to_dict of spent state ok: True
+    Mind admission 1 on spent state -> ('AUTHORITY_OWNER_UNAVAILABLE',)
+    Mind admission 2 on spent state -> ('AUTHORITY_OWNER_UNAVAILABLE',)
+    reader seen len: {('ledger', 'synthetic.battery.pulse-cell.solver'): 1, ('experiment', 'synthetic.battery.pulse-cell.experiment'): 3} | diverged: []
+    re-dispatch after restore -> DISPATCHED AGAIN | executor ran 2

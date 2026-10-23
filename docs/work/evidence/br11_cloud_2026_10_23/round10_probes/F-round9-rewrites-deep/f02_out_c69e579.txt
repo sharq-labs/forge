@@ -1,0 +1,5 @@
+engcore from /home/user/forge/src/engcore/__init__.py
+following reader built with a non-str account id: accepted
+V's comparison ran the account id's __hash__ under the follower's lock: True
+  E.acquire inside it (timeout 3 s) acquired: False after 3.0 s -> without a timeout this is a deadlock
+  V: pinned | X: pinned after 3.0 s (blocked in _ticket while V held the lock)

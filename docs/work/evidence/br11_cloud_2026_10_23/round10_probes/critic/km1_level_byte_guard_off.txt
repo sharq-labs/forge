@@ -1,0 +1,3 @@
+FAILED tests/mind/test_authority_review_r7.py::test_a_level_control_is_never_executed_at_a_value_that_is_no_declared_level
+FAILED tests/mind/test_authority_review_r9.py::test_a_value_executed_at_another_declared_level_than_its_own_is_refused
+2 failed, 580 passed, 1 skipped in 22.35s

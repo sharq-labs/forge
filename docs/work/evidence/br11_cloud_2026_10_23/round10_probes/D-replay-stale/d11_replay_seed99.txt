@@ -1,0 +1,104 @@
+{
+"after the earlier verification completed": [
+"reproduced",
+"025cb8751a961de1",
+"59b36077b29a9959",
+""
+],
+"experiment meta bigint/unicode": [
+"reproduced",
+"9181f43e87dc69c2",
+"bbf22530aba70d75",
+""
+],
+"experiment meta bigint/unicode, JSON-restored": [
+"reproduced",
+"9181f43e87dc69c2",
+"bbf22530aba70d75",
+""
+],
+"experiment meta float-int": [
+"reproduced",
+"8b6854f6c5bc2c34",
+"971ab566343571ec",
+""
+],
+"experiment meta float-int, JSON-restored": [
+"reproduced",
+"8b6854f6c5bc2c34",
+"971ab566343571ec",
+""
+],
+"experiment meta nested": [
+"reproduced",
+"3d85053df449eb4f",
+"49458ce21021533c",
+""
+],
+"experiment meta nested, JSON-restored": [
+"reproduced",
+"3d85053df449eb4f",
+"49458ce21021533c",
+""
+],
+"experiment meta none": [
+"reproduced",
+"c157dc7abf2a2260",
+"c3a3d9c9dee75e6c",
+""
+],
+"experiment meta none, JSON-restored": [
+"reproduced",
+"c157dc7abf2a2260",
+"c3a3d9c9dee75e6c",
+""
+],
+"experiment meta tuple": [
+"reproduced",
+"20b07a11ecb63890",
+"7b869369be4895a0",
+""
+],
+"experiment meta tuple, JSON-restored": [
+"reproduced",
+"20b07a11ecb63890",
+"7b869369be4895a0",
+""
+],
+"in flight (earlier verification paused)": [
+"reproduced",
+"1e8437297204754d",
+"edf57ee3f4699c0c",
+""
+],
+"ledger behind": [
+"reproduced",
+"120122579fa25d95",
+"813fcfa0865d585d",
+""
+],
+"ledger rewrite": [
+"reproduced",
+"f543bf3798fc3a59",
+"66dea32200d7d227",
+""
+],
+"ledger with a charge": [
+"reproduced",
+"0965f531fe5f97f3",
+"8ba188902284cf2e",
+""
+],
+"ledger with a charge, JSON-restored": [
+"reproduced",
+"0965f531fe5f97f3",
+"8ba188902284cf2e",
+""
+],
+"older-revision world": [
+"reproduced",
+"13231b03a68bbdf1",
+"cd89d663c22d8d8d",
+""
+]
+}

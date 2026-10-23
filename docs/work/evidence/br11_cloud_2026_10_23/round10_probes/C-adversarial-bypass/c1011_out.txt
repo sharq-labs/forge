@@ -1,0 +1,2 @@
+A: ('AUTHORITY_OWNER_UNAVAILABLE',) | hooks ran: 0
+C key hooks ran 6 times; with the follower's lock held: 4

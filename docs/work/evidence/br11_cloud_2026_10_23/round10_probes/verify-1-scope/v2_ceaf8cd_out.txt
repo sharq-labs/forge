@@ -1,0 +1,9 @@
+control              | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+numpy iteration      | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+numpy predicted      | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+Decimal predicted    | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+nan predicted        | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+inf predicted        | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+str iteration        | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+float iteration      | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+bool iteration       | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1

@@ -1,0 +1,10 @@
+control (top-up and record with no verification in between):
+  the verification during the move: MISSING_INFORMATION ('AUTHORITY_STALE',)
+  account now: ExperimentBudget(max_observations=30, max_attempts=None), observations 21 (history only extended)
+  later admission 1 on a fresh projection: FEASIBLE () []
+  later admission 2 on a fresh projection: FEASIBLE () []
+race (a verification serializes the experiment while it is topped up and one observation is recorded):
+  the verification during the move: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',)
+  account now: ExperimentBudget(max_observations=30, max_attempts=None), observations 21 (history only extended)
+  later projection 1: OwnerUnavailable: experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner reads back: observation budget exhausted (20); cannot record 'run.after-top-up'; the account was handed over in that state, wh
+  later projection 2: OwnerUnavailable: experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner reads back: observation budget exhausted (20); cannot record 'run.after-top-up'; the account was handed over in that state, wh

@@ -1,0 +1,15 @@
+evaluation Quantity(np.float64)         plain=True  first non-plain: None
+evaluation Quantity(np.int64)           plain=True  first non-plain: None
+evaluation objective np.float64         plain=True  first non-plain: None
+evaluation metadata flat np.float64     plain=False first non-plain: $.metadata.s = np.float64(1.0) (numpy.float64)
+evaluation metadata flat str            plain=True  first non-plain: None
+evaluation metadata nested list         plain=False first non-plain: $.metadata.s = FrozenList([1, 2]) (engcore.scientific.results.immutable.FrozenList)
+evaluation metadata nested dict         plain=False first non-plain: $.metadata.s = FrozenMapping({'a': 1}) (engcore.scientific.results.immutable.FrozenMapping)
+evaluation metadata tuple               plain=True  first non-plain: None
+ledger settle python                    plain=True  first non-plain: None
+ledger settle realized np.float64       plain=True  first non-plain: None
+ledger settle predicted np.float64      plain=False first non-plain: $.charges[0].predicted = np.float64(2.0) (numpy.float64)
+ledger settle iteration np.int64        plain=False first non-plain: $.charges[0].iteration = np.int64(1) (numpy.int64)
+ledger settle predicted int             plain=True  first non-plain: None
+ledger total np.float64                 plain=True  first non-plain: None
+ledger enforced_cap np.float64          constructor refuses: ValueError: an enforced cap must name what enforces it; an unattributed cap is a declaration

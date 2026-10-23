@@ -8525,8 +8525,9 @@ The regression pack, SCIENTIFIC, `forge_check --changed` and certification were 
 
 Branch `research/mind-gen2-authority-binding-v1` (cloud worktree `/home/user/forge`, base `1202ea6c`, BR1's report
 commit; review-fix worktrees `/home/user/forge-fix`, `/home/user/forge-fix2`, pristine base `/home/user/forge-base`).
-Local only: not pushed, not merged, not certified. Report: `benchmarks/mind_gen2_authority_v1/README.md`. Conclusion:
-README §12 (written when the review loop closes; this entry is updated then).
+Not merged, not certified; pushed to `origin` (no PR) at the 2026-10-23 cloud handoff (item 27). Report:
+`benchmarks/mind_gen2_authority_v1/README.md`. Conclusion: README §12 (written when the review loop closes; this entry
+is updated then). Resume index: `docs/work/BR11_LOCAL_RESUME_CHECKPOINT_2026_10_23.md`.
 
 **What changed.** `engcore.mind.world` became a verified projection of FORGE's owners (`authority.py`, `owners.py`,
 `declaration.py`, `projection.py`, `admission.py`), with non-bypassable admission and dispatch (`ExecutionDesk`,
@@ -8578,7 +8579,9 @@ completeness critic):
   levels deep raised out of every verification and a restore re-dispatched the executed action; F11-2: a handed
   mapping the constructor refused hid a spend on another account. Q4: YES from C, F and the critic, PARTIAL from A, B,
   D (classification by exception type), NO from E. Fixed in `d5ef1e3` (README §9), records in the commits after it;
-- round 12: see the update below.
+- round 12 at `a96baa6`: INTERRUPTED / INCOMPLETE, no result (item 27): stopped at the cloud handoff after lenses A and
+  B had started and before any lens, skeptic or critic returned. Their probes left unverified MAJOR-class leads in the
+  budget follower (`docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/ROUND12_STATUS.md`).
 
 **Failed approaches, recorded so they are not repeated:**
 - **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
@@ -8868,6 +8871,23 @@ completeness critic):
     passed, 2 failed, the same two pre-existing failures with messages identical to the base's. The affected expensive
     tests minus the campaign tests: 13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base. FAST is
     red on the base: NOT green.
+
+27. Cloud handoff, 2026-10-23 (owner instruction: stop the cloud session, prepare a local resume, push the branch; no
+    new capability, review round, refactor, certification, PR or merge). Review round 12 (`wf_9cb45dfa-bb5`, at
+    `a96baa6`) was stopped after lenses A and B had started and before any lens returned: INTERRUPTED / INCOMPLETE, no
+    result; its probes and leads are preserved, unverified
+    (`docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/ROUND12_STATUS.md`). Evidence that lived only in
+    the session scratchpad and is cited here or in the report was copied to `docs/work/evidence/br11_cloud_2026_10_23/`
+    (439 files, 2.9 MB, `EVIDENCE_MANIFEST.sha256`; copied trees, temp trees, caches, full FAST logs, agent transcripts
+    and large regenerable record dumps were not kept). Resume index: `docs/work/BR11_LOCAL_RESUME_CHECKPOINT_2026_10_23.md`
+    (registered in `docs/ai/DOCSET.txt`); ACTIVE_PLAN's BR1.1 entry states the status and the next bounded task (R12-T1).
+    Handoff checks only (no FAST, SCIENTIFIC, assurance, mutation or expensive run): `python docs/ai/check_docs.py`:
+    AI_DOCS PASS (8 documents); `git diff --cached --check`: clean (the evidence directory is `* -text -whitespace`,
+    its captured outputs kept byte for byte); `sha256sum -c EVIDENCE_MANIFEST.sha256`: OK; `python tools/forge_check.py
+    --changed --base a96baa6` (every changed path `doc_only`; the gate's own 14-module contract selection): 299 passed,
+    5 failed, the 5 failures all in the base's failing ids (`test_domain_real_data` x4,
+    `test_multiphysics_window_control` x1) and failing identically at `ec2c000` without the handoff; the four
+    inventory tests' messages are identical with and without the evidence directory.
 
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this

@@ -1,0 +1,9 @@
+== rescore --check
+BR1_RESCORE MATCHES
+EXIT 0
+== run_benchmark --check
+AUTHORITY MATCHES
+EXIT 0
+== gen1_reference --check
+GEN1_REFERENCE INTACT
+EXIT 0

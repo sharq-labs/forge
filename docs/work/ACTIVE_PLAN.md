@@ -8,8 +8,17 @@ reference application).
 
 ## Current bounded task - GEN2-BR1.1 authority-bound ScientificWorld + non-bypassable admission (2026-10-22)
 
-Development repair of GEN2-BR1's AUTHORITY_DUPLICATION_BLOCKER on `research/mind-gen2-authority-binding-v1` (cloud
-worktree `/home/user/forge`, base `1202ea6c`, BR1's report commit). Local only: not pushed, not merged, not certified.
+Development repair of GEN2-BR1's AUTHORITY_DUPLICATION_BLOCKER on `research/mind-gen2-authority-binding-v1` (base
+`1202ea6c`, BR1's report commit). Pushed to `origin` at the 2026-10-23 cloud handoff for local resumption: no PR, not
+merged, not certified. **Status: IN_PROGRESS** (not closed): review round 11 found MAJORs, fixed in `d5ef1e3`; round 12
+(at `a96baa6`) was INTERRUPTED with no result, and its two started lenses left unverified MAJOR-class leads in
+`owners.BudgetReader`. Resume index: `docs/work/BR11_LOCAL_RESUME_CHECKPOINT_2026_10_23.md`.
+
+**Next bounded task (R12-T1):** reproduce each round-12 lead at HEAD from its preserved probe
+(`docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/ROUND12_STATUS.md`); fix each confirmed bypass in
+`owners.BudgetReader` with a failing-first control and a mutant it catches; classify the rest as fixed or documented;
+then run one complete fresh review round (six lenses, skeptics, critic). No other scope; no Portfolio, OD-3,
+certification or merge before BR1.1 closes.
 Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`: INTACT). Report:
 `benchmarks/mind_gen2_authority_v1/README.md`; conclusion in its §12 and in `docs/work/PROGRESS.md`.
 

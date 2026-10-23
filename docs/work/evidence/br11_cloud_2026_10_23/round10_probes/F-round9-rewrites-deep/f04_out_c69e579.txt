@@ -1,0 +1,7 @@
+engcore from /home/user/forge/src/engcore/__init__.py
+revision '²': admit RAISED ValueError: invalid literal for int() with base 10: '²'
+revision '٠': admit returned MISSING_INFORMATION, admitted=False; unnamed-binding labels []
+revision '0': admit returned MISSING_INFORMATION, admitted=False; unnamed-binding labels []
+revision '1x': admit returned MISSING_INFORMATION, admitted=False; unnamed-binding labels []
+revision '111111111111'...: admit RAISED ValueError: Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; use sys.set_in
+executor calls 0

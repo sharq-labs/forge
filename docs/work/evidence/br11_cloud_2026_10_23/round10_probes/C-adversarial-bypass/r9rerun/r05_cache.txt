@@ -1,0 +1,4 @@
+after 150 evaluations: cache entries 1, hashes retained 4, traced memory 0.2 MB, elapsed 3.4s
+after 300 evaluations: cache entries 1, hashes retained 4, traced memory 0.4 MB, elapsed 13.0s
+after 600 evaluations: cache entries 1, hashes retained 4, traced memory 0.8 MB, elapsed 61.9s
+exit 0

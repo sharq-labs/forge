@@ -1,0 +1,22 @@
+1. suggestions_only
+  admit a raw proposal on the suggestions_only gateway                  : refused (WorldRefused: this execution side admits and dispatches only proposals that carry th)
+  dispatch an action admitted elsewhere for a raw proposal              : refused (DispatchRefused: this execution side admits and dispatches only proposals that carry th)
+2. LM intake
+  LM suggestion admission: FEASIBLE ()
+  port.execute the LM-admitted action                                   : ACCEPTED -> ran
+  proposal whose assignments differ from its source suggestion          : ACCEPTED -> ProposedAction(action_id='simulate_pulse', world_revision='a
+  proposal re-sourced to another suggestion                             : refused (WorldRefused: a proposal's provenance and action are its source suggestion's, exactl)
+  proposal assignments edited in place after intake: admit              : refused (ProposalRefused: the proposal is not what its source suggestion yields in this world)
+3. edits in place / replace
+  dispatch AdmittedAction with .configuration edited in place           : refused (DispatchRefused: the admitted action is not what admission yields now (edited, forged o)
+  dispatch AdmittedAction with .proposal edited in place                : refused (DispatchRefused: the admitted action does not re-admit: the proposal is not what its so)
+  dispatch AdmittedAction with .synthetic edited in place               : refused (DispatchRefused: the admitted action is not what admission yields now (edited, forged o)
+  dispatch AdmittedAction with .execution edited in place               : ACCEPTED -> ran
+  dataclasses.replace(AdmittedAction)                                   : refused (WorldRefused: an AdmittedAction is minted only by admission (admit); a proposer, an )
+  guarded executor handed DispatchAuthorization with .settings edited   : refused (DispatchRefused: the authorization is not what was minted (edited after it was handed o)
+  guarded executor handed DispatchAuthorization with .configuration edited: refused (DispatchRefused: the authorization is not what was minted (edited after it was handed o)
+  guarded executor handed DispatchAuthorization with .observe edited    : refused (DispatchRefused: the authorization is not what was minted (edited after it was handed o)
+  dataclasses.replace(DispatchAuthorization)                            : refused (WorldRefused: a DispatchAuthorization is issued only by authorize_dispatch)
+  AdmissionResult(..., live=True) built by a caller                     : refused (WorldRefused: only admission states that a result was decided under live owner reade)
+  FeasibilityDecision with a status its reasons do not give             : refused (WorldRefused: a decision's status INFEASIBLE_PROTOCOL disagrees with its reasons)
+executor ran 1 times in section 3 (expected 0)

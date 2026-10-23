@@ -1,0 +1,13 @@
+ec2c000 bench(gen2): BR1.1 round 11 performance at d5ef1e3; report and records after review round 11
+FAST: 94 failed, 12632 passed, 186 skipped, 74 warnings, 5 errors in 435.70s (0:07:15)
+NEW
+FIXED
+REGRESSION: 279 passed in 12.37s
+GUARDS: 2 failed, 1364 passed, 48 warnings in 50.57s
+FAILED tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against
+FAILED tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one
+EXPENSIVE: 13 failed, 335 passed, 14 errors in 60.11s (0:01:00)
+EXPENSIVE_SAME_AS_BASE
+GUARD_MSGS_IDENTICAL
+
+[exited with code 0]

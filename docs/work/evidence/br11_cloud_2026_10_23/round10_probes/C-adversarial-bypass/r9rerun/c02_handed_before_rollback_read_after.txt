@@ -1,0 +1,21 @@
+Exception in thread T2:
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+    ~~~~~~~~^^
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r9/C-adversarial-bypass/c02_handed_before_rollback_read_after.py", line 42, in <lambda>
+    t2 = threading.Thread(target=lambda: reader.pinned(), name="T2", daemon=True)
+                                         ~~~~~~~~~~~~~^^
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 474, in pinned
+    current._observed = self._observe_all(current, ticket)
+                        ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+TypeError: paused() takes 2 positional arguments but 3 were given
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r9/C-adversarial-bypass/c02_handed_before_rollback_read_after.py", line 44, in <module>
+    assert handed.wait(10)
+           ~~~~~~~~~~~^^^^
+AssertionError
+exit 1

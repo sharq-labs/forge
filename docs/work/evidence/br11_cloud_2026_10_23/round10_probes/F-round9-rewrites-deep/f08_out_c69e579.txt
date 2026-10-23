@@ -1,0 +1,11 @@
+engcore from /home/user/forge/src/engcore/__init__.py
+neg zero     : admission FEASIBLE admitted=True; replay reproduced ; JSON restore -> 0
+subnormal    : admission FEASIBLE admitted=True; replay reproduced ; JSON restore -> 0
+2**70        : admission FEASIBLE admitted=True; replay reproduced ; JSON restore -> 0
+nan          : OwnerUnavailable: experiment 'synthetic.gen1.two-level-protocol.experiment' is not one its owner reads back: _Payload cannot be serialized: Out of range float values ar
+inf          : OwnerUnavailable: experiment 'synthetic.gen1.two-level-protocol.experiment' is not one its owner reads back: _Payload cannot be serialized: Out of range float values ar
+tuple        : admission FEASIBLE admitted=True; replay reproduced ; JSON restore -> 0
+bool         : admission FEASIBLE admitted=True; replay reproduced ; JSON restore -> 0
+nested empty : admission FEASIBLE admitted=True; replay reproduced ; JSON restore -> 0
+unicode      : admission FEASIBLE admitted=True; replay reproduced ; JSON restore -> 0
+big float    : admission FEASIBLE admitted=True; replay reproduced ; JSON restore -> 0

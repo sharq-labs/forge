@@ -1,0 +1,1 @@
+{'trials': 400, 'redispatched': 221, 'redispatched_after_spend_was_handed': 0, 'residual': 221} 45s

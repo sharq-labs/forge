@@ -1,0 +1,6 @@
+[none] nan  | D (compared while W in flight): refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILA) | executor ran 1
+cut  | D (compared while W in flight): refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILA) | executor ran 1 
+[M2_no_diverged_recheck] nan  | D (compared while W in flight): DISPATCHED AGAIN | executor ran 2
+cut  | D (compared while W in flight): DISPATCHED AGAIN | executor ran 2 
+[M12_exp_fromdict_transient] nan  | D (compared while W in flight): refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILA) | executor ran 1
+cut  | D (compared while W in flight): DISPATCHED AGAIN | executor ran 2 

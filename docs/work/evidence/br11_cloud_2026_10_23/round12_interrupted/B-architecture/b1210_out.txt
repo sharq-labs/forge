@@ -1,0 +1,1 @@
+verification handed the aliased spend: refused: budget ledger 'synthetic.battery.pulse-cell.solver' was hand; after the restore: refused; executor ran 1

@@ -1,0 +1,5 @@
+at normal depth: 2
+first at headroom 120: served 3
+first at headroom 11: ESCAPED RecursionError
+later, at normal depth: 122 diverged: {}
+in flight: set()

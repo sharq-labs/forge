@@ -1,0 +1,6 @@
+BR1_RESCORE MATCHES
+
+real	0m2.496s
+user	0m2.757s
+sys	0m0.207s
+exit=0

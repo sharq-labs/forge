@@ -1,0 +1,17 @@
+length {'worlds': 0, 'refused_world': 0, 'proposals': 0, 'admitted': 0, 'dispatched': 0, 'mint_refused': 0, 'problems': 0} 0s
+current {'worlds': 339, 'refused_world': 4, 'proposals': 52206, 'admitted': 21763, 'dispatched': 21763, 'mint_refused': 0, 'problems': 0} 829s
+pressure {'worlds': 402, 'refused_world': 5, 'proposals': 57750, 'admitted': 23563, 'dispatched': 23563, 'mint_refused': 0, 'problems': 0} 915s
+time {'worlds': 615, 'refused_world': 8, 'proposals': 85866, 'admitted': 35146, 'dispatched': 35146, 'mint_refused': 0, 'problems': 0} 1359s
+temperature {'worlds': 679, 'refused_world': 8, 'proposals': 91498, 'admitted': 36870, 'dispatched': 36870, 'mint_refused': 0, 'problems': 0} 1443s
+delta_temperature {'worlds': 743, 'refused_world': 8, 'proposals': 97130, 'admitted': 38642, 'dispatched': 38642, 'mint_refused': 0, 'problems': 0} 1545s
+energy {'worlds': 751, 'refused_world': 8, 'proposals': 97482, 'admitted': 38796, 'dispatched': 38796, 'mint_refused': 0, 'problems': 0} 1550s
+mass {'worlds': 815, 'refused_world': 8, 'proposals': 103114, 'admitted': 41180, 'dispatched': 41180, 'mint_refused': 0, 'problems': 0} 1645s
+angle {'worlds': 842, 'refused_world': 8, 'proposals': 104896, 'admitted': 41975, 'dispatched': 41975, 'mint_refused': 0, 'problems': 0} 1673s
+ratio {'worlds': 850, 'refused_world': 8, 'proposals': 105248, 'admitted': 42143, 'dispatched': 42143, 'mint_refused': 0, 'problems': 0} 1679s
+speed {'worlds': 877, 'refused_world': 8, 'proposals': 107030, 'admitted': 42860, 'dispatched': 42860, 'mint_refused': 0, 'problems': 0} 1707s
+{'worlds': 904, 'refused_world': 8, 'proposals': 108812, 'admitted': 43475, 'dispatched': 43475, 'mint_refused': 0, 'problems': 0} 1734s
+problems:
+  none
+one level class executed at more than one value:
+  none
+exit 0

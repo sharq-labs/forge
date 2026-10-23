@@ -1,0 +1,2 @@
+FAILED tests/mind/test_authority_review_r10.py::test_a_rollback_read_by_an_earlier_started_verification_never_redispatches
+1 failed, 597 passed in 23.30s

@@ -1,0 +1,4 @@
+FAILED tests/mind/test_authority_review_r11.py::test_an_experiment_whose_accounting_never_matches_its_read_back_is_refused_for_good[no_accounting]
+FAILED tests/mind/test_authority_review_r11.py::test_an_experiment_whose_accounting_never_matches_its_read_back_is_refused_for_good[budget_not_its_own]
+FAILED tests/mind/test_authority_review_r8.py::test_an_experiment_whose_serialized_accounting_is_not_its_evaluations_is_refused
+3 failed, 645 passed, 1 skipped in 25.89s

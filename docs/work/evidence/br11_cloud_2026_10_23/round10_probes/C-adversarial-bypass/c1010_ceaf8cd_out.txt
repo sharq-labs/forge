@@ -1,0 +1,2 @@
+plain metadata (control)     | admission after the run: MISSING_INFORMATION ('AUTHORITY_STALE',) | after the restore: refused (DispatchRefused: (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1
+nested metadata              | admission after the run: MISSING_INFORMATION ('AUTHORITY_STALE',) | after the restore: refused (DispatchRefused: (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1

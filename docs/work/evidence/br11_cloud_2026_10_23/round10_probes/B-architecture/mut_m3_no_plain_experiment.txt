@@ -1,0 +1,4 @@
+FAILED tests/mind/test_authority_review_r9.py::test_an_experiment_whose_data_is_not_plain_json_is_refused_without_running_its_code[value0]
+FAILED tests/mind/test_authority_review_r9.py::test_an_experiment_whose_data_is_not_plain_json_is_refused_without_running_its_code[value1]
+FAILED tests/mind/test_authority_review_r9.py::test_an_experiment_whose_data_is_not_plain_json_is_refused_without_running_its_code[value2]
+3 failed, 566 passed in 20.57s

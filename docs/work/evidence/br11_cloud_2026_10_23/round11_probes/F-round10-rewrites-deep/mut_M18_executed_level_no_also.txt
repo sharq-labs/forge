@@ -1,0 +1,2 @@
+FAILED tests/mind/test_authority_review_r6.py::test_a_value_nearer_another_declared_level_of_its_variable_is_never_executed_at_a_farther_one[action_levels0-variable_levels0]
+1 failed, 597 passed in 22.62s

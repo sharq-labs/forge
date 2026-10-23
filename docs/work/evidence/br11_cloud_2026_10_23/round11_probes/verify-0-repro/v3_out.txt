@@ -1,0 +1,3 @@
+caller extra frames 0: first metadata depth that raises -> 500
+caller extra frames 200: first metadata depth that raises -> 400
+caller extra frames 400: first metadata depth that raises -> 300
