@@ -1,0 +1,159 @@
+{
+  "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "lens": "S2 independent skeptic",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "scope": "Bounded software review of proposed findings; NO on other questions means no demonstrated new defect, not complete system review.",
+  "per_alias_verdicts": {
+    "R16-A-1": {
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "family": "mutable_capture",
+      "evidence": "S2/probe.py mode 2 and native depth 994; matched controls"
+    },
+    "R16-C-1": {
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "family": "mutable_capture",
+      "evidence": "S2/probe.py mode 2 and native depth 994; matched controls"
+    },
+    "R16-D-2": {
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "family": "mutable_capture",
+      "evidence": "S2/probe.py mode 2 and native depth 994; matched controls"
+    },
+    "R16-E-1": {
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "family": "mutable_capture",
+      "evidence": "S2/probe.py mode 2 and native depth 994; matched controls"
+    },
+    "R16-D-1": {
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "family": "post_return_registration",
+      "evidence": "S2/probe.py L974/L977; L978/L979 controls"
+    },
+    "R16-F-2": {
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "family": [
+        "post_return_registration",
+        "mutable_capture"
+      ],
+      "evidence": "F report read after publication; both static components independently executed by S2/probe.py."
+    },
+    "R16-B-1": {
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "family": "post_return_registration",
+      "evidence": "S2 independently executed lines 974 and 977, with 978/979 refusal controls. B additionally reports line 976; that exact line was not separately executed by S2.",
+      "report_review": "Read completed B/result.json, exact reviewed SHA matches. B original probe and 39-test command are reported by B, not rerun by S2; S2 command provenance remains in executions."
+    },
+    "R16-B-2": {
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "family": "mutable_capture",
+      "evidence": "S2 independently executed two capture interruptions and native depth 994; single/no interruption and detached-dict controls refused.",
+      "report_review": "Read completed B/result.json, exact reviewed SHA matches. B original probe and 39-test command are reported by B, not rerun by S2; S2 command provenance remains in executions."
+    }
+  },
+  "findings": [],
+  "executions": [
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S2/probe.py",
+      "exit": 0,
+      "result": "Independent probe: L974/L977 and two capture interruptions duplicate; L978/L979, no/one interruption, detached controls refuse; native depth 994 duplicates, 993 refuses. Depths 995/996 excluded because callback never handed spend.",
+      "log_path": "/home/dev_kaeem/br11-review/r16/S2/probe.log"
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/D/probe_identity.py",
+      "exit": 0,
+      "result": "Three injected exception types duplicate only with live dictionary; canonical integer iteration recovers, float/string forms falsely diverge.",
+      "log_path": "/home/dev_kaeem/br11-review/r16/S2/identity_reproduction.log"
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/C/probe_lifecycle.py",
+      "exit": 0,
+      "result": "Capture failure duplicates; post-retention failure refuses; two honest detached interruptions permanently diverge.",
+      "log_path": "/home/dev_kaeem/br11-review/r16/S2/lifecycle_reproduction.log"
+    }
+  ],
+  "source_status": "",
+  "minor_assessment": [
+    {
+      "aliases": [
+        "R16-D-3",
+        "R16-E-2",
+        "R16-F-1"
+      ],
+      "verdict": "CONFIRMED normalization family",
+      "execution": "identity_reproduction.log",
+      "note": "D float/string iteration cases executed; E exact numeric-field case not separately executed."
+    },
+    {
+      "aliases": [
+        "R16-C-2",
+        "R16-D-4",
+        "R16-F-3"
+      ],
+      "verdict": "CONFIRMED",
+      "execution": "lifecycle_reproduction.log"
+    }
+  ],
+  "counterarguments": [
+    "Repeated interrupts are not automatically excluded: the documented residual aborts pin without implicit success or permanent poisoning. This implementation later accepts a rollback after a successfully returned handing.",
+    "No private account mutation/introspection is needed for native depth 994: normal dict replacement and public BudgetLedger.from_dict/settle suffice. Private fields are read only for diagnostics.",
+    "Trace hooks are deterministic fault injection, not a claimed adversarial permission. The native depth capture corroboration uses no monkeypatch, no changed recursion limit, and confirms spent revision 2 was handed before raw tuple survives.",
+    "Desk durable at-most-once remains excluded; the finding concerns lost handed observation and incorrect subsequent currentness. Not every duplicate is a bypass: depths 995/996 never handed the spend and are excluded.",
+    "Detached mapping control protects account reference when live entry is replaced. It does not establish arbitrary safety if returned account objects themselves are maliciously mutated; private mutation remains separately excluded."
+  ],
+  "correction_scope": {
+    "locally_fixable": [
+      "Recover already-returned local mapping even when registration has not executed, with sentinel initialized before callback; this fixes tested post-return single interruption but does not prove arbitrary interrupt safety.",
+      "Retain completed native mapping entries progressively instead of discarding first-map capture when second-map capture fails.",
+      "Use existing canonical owner entry normalization for retained history.",
+      "Retain incomparable detached pending observations for canonical comparison; do not permanently mark divergence from entry identity mismatch alone."
+    ],
+    "hard_limit": "Under unrestricted repeated asynchronous/resource failures and an unchanged callback contract returning mutable dicts with no retention/acknowledgement duty, a generic reader-only guarantee of both no lost handed spend and eventual recovery of an unchanged honest reader is impossible after information has actually been lost. This is a logical indistinguishability argument, not formal verification.",
+    "indistinguishable_histories": [
+      "Prior reader observation H0. History A: callback returns live map pointing to H1 (H0 plus spend), capture and cleanup both interrupted before any account entry is retained; owner replaces map entry by H0.",
+      "History B: callback returns same-shape live map pointing to H0 and remains unchanged; same interruptions before any entry capture.",
+      "After returning to owner, reader may hold only unresolved token and same live mapping now containing H0 in both histories. Neither later canonical read, revision comparison nor pending retry can distinguish A from B. Accepting H0 violates A; permanently refusing H0 poisons honest B. A partial snapshot helps captured entries only."
+    ],
+    "alternatives_examined": {
+      "retry_cleanup": "Can fix bounded one-shot interruption; arbitrary repeated interruption/resource exhaustion prevents completion. Unbounded retry is availability/deadlock failure.",
+      "pending_marker": "Necessary fail-closed state, insufficient for automatic recovery once original data is gone; cannot silently convert unknown to success.",
+      "native_dict_copy_or_incremental_snapshot": "Narrower failure window and protects completed captures; allocation failure or interruption before capture still exists. Existing callback return is earlier than capture.",
+      "fresh_thread": "Addresses caller stack exhaustion but changes thread/reentrancy/lifecycle behavior and does not guarantee memory allocation or uninterrupted publication; worker setup can fail. Requires bounded protocol, not blanket proof.",
+      "catch_returned_local_mapping": "Fixes registration gap only when cleanup can actually capture original contents.",
+      "owner_retained_handoff": "Provides missing information by requiring stable owner snapshot retained until reader acknowledges; no second budget authority is needed, but changes current handoff/lifetime contract.",
+      "move_observation_linearization": "Calling observation complete only after capture narrows promise; it does not satisfy existing all-handed-spend guarantee and requires explicit contract decision."
+    },
+    "decision_needed": "If owner requires the universal all-returned-handings guarantee across repeated async/resource failures, approve an owner-retained immutable/native handoff with acknowledgement (including exactly when ownership transfers), or explicitly choose a narrower observed-after-capture contract. Do not claim local patches resolve information loss under unchanged assumptions. This does not block independent fixes of concrete local gaps/minors."
+  },
+  "tested_transitions": [
+    "post-return before registration",
+    "post-registration capture interruption",
+    "double capture/recovery interruption",
+    "live versus detached dictionaries",
+    "native stack resource exhaustion",
+    "canonical numeric normalization",
+    "two detached interrupted handings"
+  ],
+  "missing_coverage": [
+    "No pytest suite run by S2; executed probes only.",
+    "No source changes or fix verification.",
+    "No full FAST/certification/physical validation/formal proof."
+  ],
+  "verification_notes": "All three probe commands exit zero because they report outcomes; confirmed defects do not mean assertions for intended behavior passed. Initial S2 run printed checkpoint revision after redispatch mutation; corrected diagnostic to capture revision before dispatch and reran, preserving final corrected log. No source/git/dependency changes.",
+  "alias_finalization": "Read final B/result.json and F/result.json; all proposed MAJOR aliases now mapped to independently reproduced families. No additional probes during final alias amendment."
+}

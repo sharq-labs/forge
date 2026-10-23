@@ -39,8 +39,11 @@ Repeated affected-path measurements completed. Clean gate source commit `ec4d23d
 regression 279 passed; guards 1496 pass / 2 base failures; expensive subset 335 pass / 13 failures / 14 errors;
 FAST 12792 pass / 67 base failures / 190 skipped. Exact failure-ID comparison: NO NEW FAILURES VS BASE.
 Rescore/benchmark MATCHES; Gen1 INTACT. Complete repair/evidence batch committed locally.
-**Next executable step:** fresh Round 16 at the evidence-complete post-fix commit (six lenses, two independent
-skeptics per proposed BLOCKER/MAJOR, completeness critic). No source changes during review.
+**Round 16 RUNNING:** exact evidence-complete commit `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`,
+read-only checkout `/home/dev_kaeem/forge-r16-review`; scratch results `/home/dev_kaeem/br11-review/r16/`.
+Six independent lenses, then two independent skeptics per proposed BLOCKER/MAJOR and a completeness critic.
+Source/tests are identical to clean gate commit `ec4d23dc`. No source changes during review.
+Six lens reports collected: 8 MAJOR aliases / 2 unique families and 6 MINOR aliases / 2 unique families; Q4 YES. Both independent skeptics reproduced the two MAJOR families; final completeness record pending. Next: failing-first and separable local repairs (canonical retained history, interrupted detached reconciliation, post-return registration); preserve the pre-capture information-loss family as OPEN pending an explicit handoff/lifetime contract decision. Complete local tests/mutants/gates and fresh Round 17; no closure inferred from partial repairs.
 BR1.1 remains NOT CLOSED. No push, PR, merge, certification, OD-3, Portfolio or Kernel implementation.
 
 Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`: INTACT). Report:

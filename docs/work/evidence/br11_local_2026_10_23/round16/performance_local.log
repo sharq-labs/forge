@@ -1,0 +1,78 @@
+pre 0 {'verification_pin': 125.4065, 'comparison_pre_read_snapshot': 2.4935, 'seal': 6.3375, 'dispatch_authorization': 13048.7845, 'wait_2ms_bound': 2297.51, 'contention_pin': 158.4765} {'served': 32, 'refused': 0}
+post 0 {'verification_pin': 127.18199999999999, 'comparison_pre_read_snapshot': 3.109, 'seal': 6.652, 'dispatch_authorization': 12887.4085, 'wait_2ms_bound': 2293.544, 'contention_pin': 163.462} {'served': 32, 'refused': 0}
+post 1 {'verification_pin': 128.288, 'comparison_pre_read_snapshot': 2.314, 'seal': 6.052, 'dispatch_authorization': 12672.589, 'wait_2ms_bound': 2269.029, 'contention_pin': 175.107} {'served': 32, 'refused': 0}
+pre 1 {'verification_pin': 125.3675, 'comparison_pre_read_snapshot': 2.3055000000000003, 'seal': 6.265000000000001, 'dispatch_authorization': 12538.8395, 'wait_2ms_bound': 2288.218, 'contention_pin': 153.9155} {'served': 32, 'refused': 0}
+pre 2 {'verification_pin': 123.6255, 'comparison_pre_read_snapshot': 2.216, 'seal': 5.852, 'dispatch_authorization': 12446.435000000001, 'wait_2ms_bound': 2370.586, 'contention_pin': 152.9735} {'served': 32, 'refused': 0}
+post 2 {'verification_pin': 119.795, 'comparison_pre_read_snapshot': 2.4455, 'seal': 6.1805, 'dispatch_authorization': 12379.488, 'wait_2ms_bound': 2372.75, 'contention_pin': 174.99450000000002} {'served': 32, 'refused': 0}
+post 3 {'verification_pin': 126.305, 'comparison_pre_read_snapshot': 2.4515000000000002, 'seal': 6.2545, 'dispatch_authorization': 12794.9205, 'wait_2ms_bound': 2290.672, 'contention_pin': 168.877} {'served': 32, 'refused': 0}
+pre 3 {'verification_pin': 124.7985, 'comparison_pre_read_snapshot': 2.2430000000000003, 'seal': 6.026, 'dispatch_authorization': 12627.261, 'wait_2ms_bound': 2322.577, 'contention_pin': 179.9405} {'served': 32, 'refused': 0}
+pre 4 {'verification_pin': 123.94149999999999, 'comparison_pre_read_snapshot': 2.3200000000000003, 'seal': 6.037, 'dispatch_authorization': 12772.726999999999, 'wait_2ms_bound': 2258.422, 'contention_pin': 160.4605} {'served': 32, 'refused': 0}
+post 4 {'verification_pin': 124.14850000000001, 'comparison_pre_read_snapshot': 2.4555, 'seal': 6.5825, 'dispatch_authorization': 12979.654999999999, 'wait_2ms_bound': 2361.439, 'contention_pin': 172.411} {'served': 32, 'refused': 0}
+{
+  "verification_pin": {
+    "pre_range_us": [
+      123.6255,
+      125.4065
+    ],
+    "post_range_us": [
+      119.795,
+      128.288
+    ],
+    "verdict": "NO SPEED DIFFERENCE ESTABLISHED"
+  },
+  "comparison_pre_read_snapshot": {
+    "pre_range_us": [
+      2.216,
+      2.4935
+    ],
+    "post_range_us": [
+      2.314,
+      3.109
+    ],
+    "verdict": "NO SPEED DIFFERENCE ESTABLISHED"
+  },
+  "seal": {
+    "pre_range_us": [
+      5.852,
+      6.3375
+    ],
+    "post_range_us": [
+      6.052,
+      6.652
+    ],
+    "verdict": "NO SPEED DIFFERENCE ESTABLISHED"
+  },
+  "dispatch_authorization": {
+    "pre_range_us": [
+      12446.435000000001,
+      13048.7845
+    ],
+    "post_range_us": [
+      12379.488,
+      12979.654999999999
+    ],
+    "verdict": "NO SPEED DIFFERENCE ESTABLISHED"
+  },
+  "wait_2ms_bound": {
+    "pre_range_us": [
+      2258.422,
+      2370.586
+    ],
+    "post_range_us": [
+      2269.029,
+      2372.75
+    ],
+    "verdict": "NO SPEED DIFFERENCE ESTABLISHED"
+  },
+  "contention_pin": {
+    "pre_range_us": [
+      152.9735,
+      179.9405
+    ],
+    "post_range_us": [
+      163.462,
+      175.107
+    ],
+    "verdict": "NO SPEED DIFFERENCE ESTABLISHED"
+  }
+}

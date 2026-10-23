@@ -1,0 +1,52 @@
+...........F....                                                         [100%]
+=================================== FAILURES ===================================
+__________ test_concurrent_new_barrier_invalidates_old_reconciliation __________
+
+    def test_concurrent_new_barrier_invalidates_old_reconciliation():
+        import threading
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+        _settle(account, "first")
+        _interrupt_handing(reader)
+        _interrupt_handing(reader)
+        entered, resume = threading.Event(), threading.Event()
+        real_history = BudgetReader._history
+        real_read = BudgetReader._read_back
+        local = threading.local()
+        errors = []
+        def read(snapshot):
+            result = real_read(snapshot)
+            if threading.current_thread() is worker:
+                local.reconcile = True
+            return result
+        def history(items):
+            if getattr(local, "reconcile", False):
+                local.reconcile = False
+                entered.set()
+                assert resume.wait(5)
+            return real_history(items)
+        def run():
+            try:
+                reader.read(OwnerKind.BUDGET_LEDGER, "a")
+            except BaseException as exc:
+                errors.append(exc)
+        worker = threading.Thread(target=run)
+        with patch.object(BudgetReader, "_read_back", read), patch.object(BudgetReader, "_history", staticmethod(history)):
+            worker.start()
+            try:
+                assert entered.wait(5)
+                _settle(account, "second")
+                _interrupt_handing(reader)
+            finally:
+                resume.set()
+                worker.join(5)
+        assert not worker.is_alive()
+>       assert len(errors) == 1 and isinstance(errors[0], OwnerUnavailable)
+E       assert (0 == 1)
+E        +  where 0 = len([])
+
+tests/mind/test_authority_review_r16.py:173: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r16.py::test_concurrent_new_barrier_invalidates_old_reconciliation
+1 failed, 15 passed in 1.74s

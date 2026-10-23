@@ -1,0 +1,22 @@
+import pytest
+from engcore.mind.world import BudgetReader, OwnerKind
+from engcore.mind.world.authority import OwnerUnavailable
+from engcore.sria.campaign.budget import BudgetLedger
+from tests.mind.test_authority_review_r14 import _settle
+from tests.mind.test_authority_review_r16 import _interrupt_handing
+
+
+def test_retained_conflict_cannot_be_erased_by_returning_to_first_branch():
+    account = BudgetLedger(total_budget=100.)
+    _settle(account, "initial")
+    held = [account]
+    reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
+    other = BudgetLedger.from_dict(account.to_dict())
+    _settle(account, "first-branch")
+    _settle(other, "other-branch")
+    _interrupt_handing(reader)
+    held[0] = other
+    _interrupt_handing(reader)
+    held[0] = account
+    with pytest.raises(OwnerUnavailable):
+        reader.read(OwnerKind.BUDGET_LEDGER, "a")

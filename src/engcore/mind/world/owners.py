@@ -63,10 +63,11 @@ from engcore.providers.health import assess_health
 from engcore.providers.identity import content_digest
 from engcore.scientific import ModelNotFoundError, ScientificCoreError, to_json
 from engcore.scientific.experiments.experiment import ScientificExperiment
+from engcore.scientific.experiments.evaluation import ScientificEvaluation
 from engcore.scientific.models.definition import ScientificModelDefinition
 from engcore.scientific.models.registry import ModelRegistry
 from engcore.scientific.units.quantity import registry_fingerprint, verify_registry_unmutated
-from engcore.sria.campaign.budget import BudgetLedger
+from engcore.sria.campaign.budget import BudgetCharge, BudgetLedger
 from engcore.system_runtime.result import SystemCheckpoint, SystemRunResult
 from engcore.system_runtime.state import SystemState
 
@@ -110,6 +111,14 @@ class _RetainedHanding:
 
     def __init__(self, entries: tuple[tuple, tuple]) -> None:
         self.entries = entries
+
+
+class _PendingHistories:
+    """Identity-incomparable retained histories, awaiting owner reconciliation; no evidence of divergence."""
+    __slots__ = ("observations",)
+
+    def __init__(self, observations: tuple[tuple[Any, ...], ...]) -> None:
+        self.observations = observations
 
 
 class _NotRead:
@@ -676,19 +685,20 @@ class BudgetReader(_Reader):
 
     def _note_unread(self, key: tuple[str, str], entries: tuple[Any, ...]) -> str | None:
         """Under the lock: record the entry objects a state handed and not read back held, whatever its length (a
-        shorter one than the history observed may be a rewind that spent).  A later one must begin with the recorded
-        entries (it moved on) or be a prefix of them (behind); any other rewrote them: the reason it is refused for
-        good."""
+        shorter one than the history observed may be a rewind that spent). Identity prefixes need only the longer
+        observation. Incomparable identities retain both observations until owner normalization outside the lock can
+        establish their content relation; identity mismatch alone is not evidence of rewritten history."""
         earlier = self._unread_entries.get(key)
         if earlier is None:
             known = self._seen_entries.get(key)
             if known is None or not _extends(known, entries):   # adds no unseen entry; says nothing about other content
                 self._unread_entries[key] = entries
-        elif _extends(entries, earlier):
-            self._unread_entries[key] = entries
-        elif not _extends(earlier, entries):
-            self._diverged[key] = self._rewrote_unread(key)
-            return self._diverged[key]
+        else:
+            observations = earlier.observations if type(earlier) is _PendingHistories else (earlier,)
+            if any(_extends(previous, entries) for previous in observations):
+                return None                         # this observation adds no new entry identities
+            kept = tuple(previous for previous in observations if not _extends(entries, previous))
+            self._unread_entries[key] = (_PendingHistories((*kept, entries)) if kept else entries)
         return None
 
     def _against_unread(self, key: tuple[str, str], before: tuple[Any, ...] | None,
@@ -701,6 +711,8 @@ class BudgetReader(_Reader):
         unread = self._unread_entries.get(key)
         if unread is None:
             return None
+        if type(unread) is _PendingHistories:
+            return "unresolved histories"            # equality or divergence needs owner content, outside the lock
         if before is None or after is None:
             return (f"budget {key[0]} {key[1]!r}: its entries could not be listed without running its code while a "
                     "state of it handed and not read back is recorded, so it cannot be ordered against that state: "
@@ -732,17 +744,21 @@ class BudgetReader(_Reader):
         read, interrupted = snapshot._read_back()
         resolved = {}
         unresolved = {}
-        for key, entries in snapshot._unread_entries.items():
+        for key, barrier in snapshot._unread_entries.items():
             if key in snapshot._skip:
                 continue                            # retired accounts never run their content again
+            observations = barrier.observations if type(barrier) is _PendingHistories else (barrier,)
             got = read.get(key)
             if (type(got) is tuple and got[2] is not None and got[3] is not None
-                    and _extends(got[2], entries) and _extends(got[3], entries)):
+                    and all(_extends(got[2], entries) and _extends(got[3], entries) for entries in observations)):
                 continue                            # the current owner read already reconciles these objects
-            # Reconcile a detached checkpoint against the actual entries previously
-            # retained. Failure leaves the barrier in force, never implies equality.
+            # Reuse the entry owner's read-back normalization, exactly as the
+            # ordinary account history does. Never serialize under the lock.
+            owner = BudgetCharge if key[0] == "ledger" else ScientificEvaluation
             try:
-                resolved[key] = (entries, self._history(entries))
+                histories = tuple(self._history(owner.from_dict(entry.to_dict()) for entry in entries)
+                                  for entries in observations)
+                resolved[key] = (barrier, histories)
             except BaseException as exc:  # noqa: BLE001 - unread entries remain unread
                 unresolved[key] = (f"budget {key[0]} {key[1]!r}: previously unread entries could not be "
                                    f"reconciled ({_type_name(exc)}); refused for this verification only")
@@ -755,18 +771,19 @@ class BudgetReader(_Reader):
                     raise interrupted
                 raise OwnerUnavailable(self._sealed)
             pending = self._in_flight - {ticket}
-            for key, (entries, history) in resolved.items():
-                pending_entries = self._unread_entries.get(key)
-                if pending_entries is None or len(entries) != len(pending_entries) or not _extends(entries, pending_entries):
-                    continue                        # another comparison changed the barrier
+            for key, (barrier, histories) in resolved.items():
+                if self._unread_entries.get(key) is not barrier:
+                    continue                        # another comparison changed the exact barrier
                 seen = self._seen.get(key, ())
-                if history[:len(seen)] == seen:
-                    self._seen[key] = history
+                for history in histories:
+                    if history[:len(seen)] == seen:
+                        seen = history
+                    elif seen[:len(history)] != history:
+                        self._diverged[key] = self._rewrote_unread(key)
+                        break                       # owner-readable incompatible histories, not identity alone
+                else:
+                    self._seen[key] = seen
                     self._unread_entries.pop(key, None)
-                elif seen[:len(history)] == history:
-                    self._unread_entries.pop(key, None)
-                # A different readable history is still checked below against the
-                # retained identity barrier; nothing grants currency here.
             self._readback = {k: v for k, v in snapshot._readback.items() if k in read}   # the accounts handed now
             for key, got in read.items():
                 if key in self._diverged:
@@ -805,6 +822,9 @@ class BudgetReader(_Reader):
                     observed[key] = unresolved[key]
                     continue
                 against = self._against_unread(key, before, after)
+                if against == "unresolved histories":
+                    observed[key] = f"budget {key[0]} {key[1]!r}: retained histories await owner reconciliation"
+                    continue
                 if against == "behind unread":
                     observed[key] = self._behind_unread(key)
                     continue
@@ -956,6 +976,8 @@ class BudgetReader(_Reader):
         if self._sealed is not None:
             raise OwnerUnavailable(self._sealed)
         ticket, handed = 0, False
+        not_returned = object()
+        mapping = not_returned
         try:
             self._in_follow.active = True
             with self._lock:                         # the ticket is named before it is in flight: a finally that
@@ -997,7 +1019,10 @@ class BudgetReader(_Reader):
             # A second interruption leaves it pending, and the next pin must resume it.
             try:
                 with self._lock:
-                    if ticket in self._uncompared and self._sealed is None:
+                    if mapping is not not_returned and ticket in self._in_flight and self._sealed is None:
+                        handed = True
+                        if ticket not in self._uncompared:
+                            self._uncompared[ticket] = mapping
                         self._recover_handing(ticket)
             except BaseException:  # noqa: BLE001 - original failure propagates; pending is not acceptance
                 pass
@@ -1019,8 +1044,8 @@ class BudgetReader(_Reader):
         self._follow: Callable[[], Any] | None = None
         self._observed: dict[tuple[str, str], OwnerRecord | str | None] | None = None   # a pinned snapshot's records
         self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
-        self._unread_entries: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> the entry objects of the
-        # latest state handed and not read back that a later state must begin with
+        self._unread_entries: dict[tuple[str, str], tuple[Any, ...] | _PendingHistories] = {}   # account -> the entry objects of the
+        # states handed and not read back; incomparable identities await canonical owner reconciliation
         self._diverged: dict[tuple[str, str], str] = {}   # account -> why it is refused by this reader for good
         self._readback: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> (content digest, read-back text,
         # its digest, its history): one entry per account, so the cache never outgrows the accounts' current state

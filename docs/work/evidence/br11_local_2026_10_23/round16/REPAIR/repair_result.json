@@ -1,0 +1,313 @@
+{
+  "status": "LOCAL_SEPARABLE_REPAIRS_IMPLEMENTED; universal raw-capture MAJOR OPEN",
+  "base_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "files": {
+    "src/engcore/mind/world/owners.py": "636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb",
+    "tests/mind/test_authority_review_r16.py": "d3e8d5690ade087c84b2fc2d11410af2cd99cb005add555f085a9ab1284f9b08"
+  },
+  "changes": [
+    "Retained histories normalize through BudgetCharge.from_dict or ScientificEvaluation.from_dict before existing _history hashing, outside comparison lock.",
+    "Private _PendingHistories retains identity-incomparable observations in existing unread-entry barrier. Identity prefixes coalesce; canonical histories all must prefix-order against seen, else divergence. Apply only to identical barrier object.",
+    "Initialize callback result sentinel before invocation and recover returned mapping in exception cleanup even when handed flag/registration did not execute. No guarantee for repeated failed capture."
+  ],
+  "failing_first": {
+    "log": "/home/dev_kaeem/br11-review/r16/REPAIR/failing-first-corrected.log",
+    "result": "6 failed, 4 passed in 1.24s",
+    "source_sha256": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367"
+  },
+  "final_primary_before_last_test": {
+    "log": "/home/dev_kaeem/br11-review/r16/REPAIR/local-final.log",
+    "result": "102 passed in 2.65s; 15 R16 + 87 R15; root reruns after one new R16 control"
+  },
+  "open_challenge": {
+    "path": "/home/dev_kaeem/br11-review/r16/REPAIR/test_open_capture_challenge.py",
+    "log": "/home/dev_kaeem/br11-review/r16/REPAIR/open-capture.log",
+    "exit_code": 1,
+    "result": "1 failed in 1.53s; double capture interrupt still permits redispatch after live mapping rollback"
+  },
+  "mutants": [
+    {
+      "name": "baseline",
+      "source_sha256": "636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-baseline",
+        "-q",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-baseline.log",
+      "result": "16 passed in 1.90s"
+    },
+    {
+      "name": "raw_history",
+      "source_sha256": "5779d61c5aecf61cf91f12fdccc6a3ad08f3ee51ffd9f77a31035eef6177750a",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-raw_history",
+        "-q",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-raw_history.log",
+      "result": "3 failed, 13 passed in 2.63s"
+    },
+    {
+      "name": "identity_is_divergence",
+      "source_sha256": "c0596462c4209f686dba30dce9174cec6123e3fc5cc1e80ce6fea40e6821a868",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-identity_is_divergence",
+        "-q",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-identity_is_divergence.log",
+      "result": "6 failed, 10 passed in 7.90s"
+    },
+    {
+      "name": "discard_earlier",
+      "source_sha256": "027a0981a5e38f5d15cea978c909eca86749f9b61415b220e826562648549af1",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-discard_earlier",
+        "-q",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-discard_earlier.log",
+      "result": "3 failed, 13 passed in 2.28s"
+    },
+    {
+      "name": "unguarded_reconciliation",
+      "source_sha256": "9d9c7cd3725e18e4a42df3ad6ff8f28eae8dfbd674a13928fc6b5f4d676f6615",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-unguarded_reconciliation",
+        "-q",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-unguarded_reconciliation.log",
+      "result": "1 failed, 15 passed in 1.74s"
+    },
+    {
+      "name": "incompatible_is_prefix",
+      "source_sha256": "c20251f27105e7b8fdfa7a8d8096d08e827e0b9e59f41dccfef602520c1205d1",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-incompatible_is_prefix",
+        "-q",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-incompatible_is_prefix.log",
+      "result": "1 failed, 15 passed in 2.28s"
+    },
+    {
+      "name": "lose_post_return",
+      "source_sha256": "145a7a133ed52d15b708cd104405064b4ff94fb0ffe85b77cedd3b98d4048a60",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-lose_post_return",
+        "-q",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-lose_post_return.log",
+      "result": "2 failed, 14 passed in 2.08s"
+    }
+  ],
+  "failed_approaches": [
+    "Initial normalization fixture used nonexistent exploration enum; corrected to explore before production edits; failing-first.log retained and superseded by failing-first-corrected.log.",
+    "Initial isolated mutant runner PYTHONPATH was overridden by pytest pythonpath=src config; every apparent survivor from mutants.json is invalid proof. Corrected explicit -o pythonpath=isolated/src; all logs preserved.",
+    "Incompatible retained-history mutant initially survived weaker current=last-conflict case because normal seen comparison still caught it. Added H1/H2/H1 regression to owned suite; all six stable mutants now killed.",
+    "Temporary strict xfail challenge removed from gate suite per root; separate explicit expected-refusal challenge remains failing evidence."
+  ],
+  "limits": [
+    "No full FAST, certification, physical validation or universal async proof.",
+    "Alternatives retain owner entry references only. Memory grows with distinct incomparable unresolved observations until canonicalization succeeds; identical/prefix identity observations coalesce. Capping or forgetting unresolved observations would lose spend; no arbitrary cap introduced.",
+    "Normalization failure keeps unresolved barrier and transient refusal; does not establish equality or corruption.",
+    "Raw capture interrupted twice before entry retention remains information-loss architecture blocker. No owner handoff contract change made."
+  ],
+  "git": "No commit, refs or docs edited by this worker; root owns docs.",
+  "executions_recovered_from_tool_history": [
+    {
+      "name": "failing-first-corrected",
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-before2",
+        "-q",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "shell_command": "cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-before2 -q tests/mind/test_authority_review_r16.py > /home/dev_kaeem/br11-review/r16/REPAIR/failing-first-corrected.log 2>&1",
+      "host_tool_command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-before2 -q tests/mind/test_authority_review_r16.py > /home/dev_kaeem/br11-review/r16/REPAIR/failing-first-corrected.log 2>&1'",
+      "exit_code": 1,
+      "log_path": "/home/dev_kaeem/br11-review/r16/REPAIR/failing-first-corrected.log",
+      "result": "6 failed, 4 passed in 1.24s",
+      "provenance": "Recovered verbatim command structure and argv from actual functions.exec exec_command calls in this worker session; exit_code is returned command exit code."
+    },
+    {
+      "name": "local",
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-local",
+        "-q",
+        "tests/mind/test_authority_review_r16.py",
+        "tests/mind/test_authority_review_r15.py",
+        "tests/mind/test_authority_state_machine_r15.py"
+      ],
+      "shell_command": "cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-local -q tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py > /home/dev_kaeem/br11-review/r16/REPAIR/local.log 2>&1",
+      "host_tool_command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-local -q tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py > /home/dev_kaeem/br11-review/r16/REPAIR/local.log 2>&1'",
+      "exit_code": 0,
+      "log_path": "/home/dev_kaeem/br11-review/r16/REPAIR/local.log",
+      "result": "97 passed in 3.24s",
+      "provenance": "Recovered verbatim command structure and argv from actual functions.exec exec_command calls in this worker session; exit_code is returned command exit code."
+    },
+    {
+      "name": "local-final",
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-final",
+        "-q",
+        "tests/mind/test_authority_review_r16.py",
+        "tests/mind/test_authority_review_r15.py",
+        "tests/mind/test_authority_state_machine_r15.py"
+      ],
+      "shell_command": "cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-final -q tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py > /home/dev_kaeem/br11-review/r16/REPAIR/local-final.log 2>&1",
+      "host_tool_command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-final -q tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py > /home/dev_kaeem/br11-review/r16/REPAIR/local-final.log 2>&1'",
+      "exit_code": 0,
+      "log_path": "/home/dev_kaeem/br11-review/r16/REPAIR/local-final.log",
+      "result": "102 passed in 2.65s",
+      "provenance": "Recovered verbatim command structure and argv from actual functions.exec exec_command calls in this worker session; exit_code is returned command exit code."
+    },
+    {
+      "name": "open-capture",
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-open",
+        "-q",
+        "/home/dev_kaeem/br11-review/r16/REPAIR/test_open_capture_challenge.py"
+      ],
+      "shell_command": "cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-open -q /home/dev_kaeem/br11-review/r16/REPAIR/test_open_capture_challenge.py > /home/dev_kaeem/br11-review/r16/REPAIR/open-capture.log 2>&1",
+      "host_tool_command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-open -q /home/dev_kaeem/br11-review/r16/REPAIR/test_open_capture_challenge.py > /home/dev_kaeem/br11-review/r16/REPAIR/open-capture.log 2>&1'",
+      "exit_code": 1,
+      "log_path": "/home/dev_kaeem/br11-review/r16/REPAIR/open-capture.log",
+      "result": "1 failed in 1.53s",
+      "provenance": "Recovered verbatim command structure and argv from actual functions.exec exec_command calls in this worker session; exit_code is returned command exit code."
+    }
+  ]
+}

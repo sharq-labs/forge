@@ -1,0 +1,159 @@
+{
+  "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "lens": "F — scientific semantics and review completeness",
+  "review_mode": "STATIC_REVIEW_ONLY",
+  "verdict": "CHANGES REQUIRED",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [
+    {
+      "id": "R16-F-1",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Retained history hashes raw entries instead of canonical owner-normalized entries",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 745,
+      "symbol": "BudgetReader._observe_all",
+      "evidence_mode": "STATIC_REVIEW_NOT_EXECUTED",
+      "supporting_lines": [
+        "owners.py:472-474",
+        "owners.py:488-492",
+        "owners.py:763-767",
+        "owners.py:789-794",
+        "sria/campaign/budget.py:83-94",
+        "sria/campaign/budget.py:117-130"
+      ],
+      "smallest_reproduction": "Following reader baseline empty ledger. Publicly construct a replacement ledger with BudgetCharge realized=1 and from_general_pool=1 (integers), interrupt before its _account read-back, then restore through BudgetLedger.from_dict and read again.",
+      "actual_result": "Statically: retained raw JSON hashes integer 1; regular owner read-back hashes float 1.0. Recovery installs raw hash into _seen and then declares the canonical unchanged checkpoint rewritten, permanently diverged. NOT RUN.",
+      "expected_result": "Unchanged canonical checkpoint recovers; interruption does not establish corruption.",
+      "threat_families": [
+        "canonicalization/serialization identity",
+        "interruption recovery",
+        "detached restore",
+        "false corruption",
+        "parallel accounting comparison semantics"
+      ],
+      "proposed_correction": "Use the exact canonical owner normalization and JSON round-trip for retained entries, with integer-field and other normalization recovery controls.",
+      "trust_boundary": "Public owner constructors and restore; no private accounting mutation."
+    },
+    {
+      "id": "R16-F-2",
+      "severity": "MAJOR",
+      "severity_status": "PROPOSED_ON_STATIC_EVIDENCE",
+      "question": "Q4",
+      "title": "Interruption before native retention loses handed spend and permits later restored acceptance",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 974,
+      "symbol": "BudgetReader.pinned",
+      "evidence_mode": "STATIC_REVIEW_NOT_EXECUTED",
+      "supporting_lines": [
+        "owners.py:970-978",
+        "owners.py:995-1003",
+        "owners.py:865-874"
+      ],
+      "smallest_reproduction": "Admit at S0; execute and settle S1; accounts returns S1 in valid plain dicts; one KeyboardInterrupt at line 975/976 before _uncompared assignment; catch and publicly restore S0; dispatch previous admitted action. Related path: interrupt initial native capture and recovery before entry copying; mutate live dict entry to restored S0 before deferred recovery.",
+      "actual_result": "Statically: no retained S1 barrier exists, _leave removes ticket, later S0 equals seen state and can re-admit/redispatch. Duplicate execution NOT RUN by this lens.",
+      "expected_result": "A returned handed state remains an unresolved/recoverable obligation before later acceptance; no forgetting spend on interruption.",
+      "threat_families": [
+        "async interruption",
+        "handoff registration gap",
+        "hidden spend",
+        "live mapping replacement",
+        "rollback/restore",
+        "duplicate dispatch"
+      ],
+      "proposed_correction": "Make acquisition/retention and exceptional exit recoverable; add pre-registration/capture/recovery checkpoints and executor-call controls. If mutable callback information is insufficient, explicitly choose a retained immutable owner handoff published into a pre-registered slot and acknowledged after comparison; do not permanently poison an honest reader.",
+      "trust_boundary": "Public dict handing, operator interruption and public checkpoint restore. Handed spend, not wholly-between-verifications rollback."
+    },
+    {
+      "id": "R16-F-3",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Separate interrupted detached handings falsely establish rewritten history",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 912,
+      "symbol": "BudgetReader._recover_handing",
+      "evidence_mode": "STATIC_REVIEW_NOT_EXECUTED",
+      "supporting_lines": [
+        "owners.py:677-692",
+        "owners.py:687-690"
+      ],
+      "smallest_reproduction": "Stable ledger with one settled charge; accounts returns fresh public from_dict copies. Two separate pins each interrupt _handed once after capture and let recovery complete; next pin succeeds in execution but is refused permanently.",
+      "actual_result": "Statically: first recovery records U1; second recovery sees canonically equal U2 with distinct entry identities and _note_unread marks _diverged before canonical reconciliation. NOT RUN.",
+      "expected_result": "Finite interruptions of unchanged detached state may refuse transiently but never establish corruption or permanent retirement.",
+      "threat_families": [
+        "interrupted-to-interrupted transition",
+        "identity versus canonical equality",
+        "false corruption",
+        "recovery reconciliation"
+      ],
+      "proposed_correction": "Keep distinct native observations unresolved and reconcile their canonical owner histories outside lock before equality/divergence; apply only to identical pending barriers. Add repeated detached interruption controls plus true-spend contrasts.",
+      "trust_boundary": "Public detached checkpoints and external interruption; no private mutation."
+    }
+  ],
+  "tested_transitions": [],
+  "statically_inspected_transitions": [
+    "open to seal before comparison",
+    "seal while waiting and after waited completion",
+    "structural handing versus asynchronous/resource interruption",
+    "stable readback versus growth/rollback/ABA/history count",
+    "detached unread-history reconciliation",
+    "retired-account skip",
+    "immediate/deferred native-handing recovery",
+    "repeated current-content KeyboardInterrupt",
+    "public admission and live re-admission",
+    "UNKNOWN applicability/current-value containment refusal"
+  ],
+  "missing_coverage": [
+    "raw owner-valid numeric normalization then interrupted detached recovery",
+    "returned handing before lifecycle registration",
+    "repeated interruption before native entry capture with live mapping replacement",
+    "two separate interrupted canonically identical detached handings",
+    "experiment normalization-equivalence variants",
+    "cross-process/durable reservation and wholly unobserved rollback remain explicit limits"
+  ],
+  "executions": [],
+  "execution_status": "Tests/probes NOT RUN. Shell used for read-only file/git/hash inspection and explicitly authorized writes of only these report artifacts.",
+  "read_only_identity_command": {
+    "command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-r16-review && git rev-parse HEAD'",
+    "result": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+    "exit_code": 0,
+    "log_path": null
+  },
+  "trusted_historical_logs_read": [
+    {
+      "path": "docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_control.log",
+      "reported_result": "89 passed in 3.00s"
+    },
+    {
+      "path": "docs/work/evidence/br11_local_2026_10_23/round15/l1_release.log",
+      "reported_result": "115 passed in 8.67s"
+    },
+    {
+      "path": "docs/work/evidence/br11_local_2026_10_23/round15/l2_native_handoff.log",
+      "reported_result": "781 passed in 17.99s"
+    }
+  ],
+  "contract_assessment": {
+    "current_protocol": "After pre-capture information loss, unchanged S0 and handed S1 followed by restored S0 can be observationally identical to the reader. This is a conditional information-loss argument, not general impossibility.",
+    "concrete_alternative": "Execution-side immutable owner snapshot/version retained until acknowledgement, published into a pre-registered reader slot at an explicit commit point; canonical comparison followed by acknowledgement. No second budget/evidence authority required.",
+    "decision_needed": "Explicit owner handoff/restore retention obligations and semantics for legacy mutable callbacks; do not silently weaken no-lost-spend or honest-recovery requirements.",
+    "evidence_needed": [
+      "failure checkpoints around publication/capture/comparison/acknowledgement",
+      "repeated finite interruptions",
+      "concurrent restore and readers",
+      "canonical normalization equivalence",
+      "no owner content under comparison lock",
+      "honest recovery and spent-restore refusal",
+      "preserved replay/identity and bounded mutants"
+    ]
+  },
+  "report_path": "/home/dev_kaeem/br11-review/r16/F/review.md"
+}

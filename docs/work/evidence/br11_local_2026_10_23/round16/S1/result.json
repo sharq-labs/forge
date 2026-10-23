@@ -1,0 +1,336 @@
+{
+  "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "lens": "S1 independent skeptic: every proposed MAJOR/BLOCKER plus two minor families",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_scope": "Q4 YES. Other NO values mean no substantive defect found in this bounded changed-path review, not global proof of unchanged authorities. Q7 is not set YES because all reproduced second executions traverse ordinary admission/dispatch using the earlier admitted action; the loss is budget currentness.",
+  "source_identity": {
+    "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+    "owners_import": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+    "owners_sha256": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
+    "git_status_porcelain": "",
+    "interpreter": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "python": "CPython 3.12.3"
+  },
+  "findings": [
+    {
+      "id": "R16-S1-1",
+      "status": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Single interruption after callback return and before pending registration forgets handed spend",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 974,
+      "related_lines": [
+        976,
+        977,
+        995,
+        1000
+      ],
+      "smallest_reproduction": "One synthetic dispatch settles run.1. At reader.pinned line 974, 976, or 977, trace raises one KeyboardInterrupt after callback returned. Restore earlier ledger through its native mapping; ordinary gateway.dispatch runs executor a second time.",
+      "actual_result": "Lines 974/976/977: mapping present in frame locals, callback saw revision 2 versus baseline 1; no pending/unread barrier; executor_calls=2. Lines 978/979 controls: retained spend, executor_calls=1. Unchanged-account controls remain readable.",
+      "expected_result": "Returned spent account cannot be forgotten by exceptional cleanup and later checkpoint replacement; second executor call refused.",
+      "trust_boundary": "All owner state changes use public BudgetLedger.settle/from_dict or supported native dictionary replacement. The desk receives a previously admitted synthetic action and invokes its normal executor. Tracing/profiling and temporary helper wrappers schedule failures only; they neither grant authority nor edit reader bookkeeping. Private fields are read only for diagnostics. These are bounded software fault-injection results, not an attacker API or physical validation.",
+      "counterarguments": [
+        "This is not desk-level durable at-most-once: an intervening verification was handed spend, and uninterrupted/late-interrupt controls refuse the same redispatch.",
+        "Not the no-handing/failed-callback residual: exact returned mapping is recorded in frame locals.",
+        "The source-line injection models an interruption checkpoint, not a measured OS signal timing distribution."
+      ],
+      "proposed_correction": "Initialize a pending-acquisition/result slot before calling accounts and make the exceptional path retain the already returned local mapping even if the ordinary _uncompared registration did not finish. The observed line-974/976/977 variants have a mapping in locals and one interrupt, so a local cleanup repair can capture it before owner control resumes. Do not use handed=True alone as proof of a stored result. This repairs the demonstrated single-interrupt gap, not every repeated capture interruption.",
+      "evidence": [
+        "/home/dev_kaeem/br11-review/r16/S1/probe.log",
+        "/home/dev_kaeem/br11-review/r16/S1/probe_extra_boundaries.log"
+      ]
+    },
+    {
+      "id": "R16-S1-2",
+      "status": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Interrupted initial capture and recovery let a raw live mapping erase the original handing",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 977,
+      "related_lines": [
+        891,
+        899,
+        919,
+        978,
+        1001,
+        1002
+      ],
+      "smallest_reproduction": "Dispatch once, interrupt native capture and immediate recovery before stable retention, restore ledger through the live dictionary, then dispatch the original admitted action normally.",
+      "actual_result": "Live dict plus two KeyboardInterrupt, MemoryError, or RecursionError injections: pending=[tuple], unread={}, executor_calls=2. Zero/one failures and detached-dictionary controls: executor_calls=1. Unmodified production functions with trace/profile interruptions at first or second _items map independently reproduce count 2; single-interruption controls count 1. Default-limit native depths 994/995 reproduce raw pending and count 2; depth 993 retains _RetainedHanding and count 1.",
+      "expected_result": "Recovery must stay bound to originally handed accounts; current replacement contents cannot complete a lost historical comparison.",
+      "trust_boundary": "All owner state changes use public BudgetLedger.settle/from_dict or supported native dictionary replacement. The desk receives a previously admitted synthetic action and invokes its normal executor. Tracing/profiling and temporary helper wrappers schedule failures only; they neither grant authority nor edit reader bookkeeping. Private fields are read only for diagnostics. These are bounded software fault-injection results, not an attacker API or physical validation.",
+      "counterarguments": [
+        "Helper monkeypatching is not the sole support: production-unmodified trace/profile and native recursion runs corroborate the state transition.",
+        "Native recursion alone is not used to override the older explicit stack-exhaustion exclusion; asynchronous probes establish the new lifecycle failure independently.",
+        "Detached dictionary control shows raw pending is not always unsafe: its retained entries remain stable there.",
+        "Retaining the construction-time account is insufficient: a public replacement before settle leaves the spent object absent from that baseline; this variant also redispatches."
+      ],
+      "proposed_correction": [
+        "Retain each completed native mapping/entry capture progressively in the existing pending lifecycle buffer. Failure on the second mapping must not discard a completed first mapping. Canonicalize and reconcile retained account entries with the existing owner rules. This closes the partial-capture loss, but cannot reconstruct an entry never captured.",
+        "An explicitly uncaptured observation must not be discharged by rereading a live dictionary as though its present contents were the earlier handoff. A marker can safely refuse temporarily; marker deletion based only on unchanged present content would accept both indistinguishable histories. Keeping it forever would prevent an unchanged honest reader from recovering, so that alone is not a complete fix."
+      ],
+      "evidence": [
+        "/home/dev_kaeem/br11-review/r16/S1/probe.log",
+        "/home/dev_kaeem/br11-review/r16/S1/probe_followup.log"
+      ]
+    },
+    {
+      "id": "R16-S1-3",
+      "status": "CONFIRMED",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Retained raw entry history diverges from owner-normalized unchanged history",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 745,
+      "related_lines": [
+        488,
+        492,
+        763,
+        764,
+        790
+      ],
+      "smallest_reproduction": "Interrupt before _account for a new ordinary charge, then restore the unchanged ledger through BudgetLedger.from_dict and read it.",
+      "actual_result": "Float/string iteration 1.0/\"1\", and public BudgetCharge constructor integer realized/from_general_pool fields, permanently diverge only after interruption. Integer iteration and non-interrupted controls recover.",
+      "expected_result": "Equivalent owner-normalized checkpoint remains usable absent evidence of changed history.",
+      "trust_boundary": "All owner state changes use public BudgetLedger.settle/from_dict or supported native dictionary replacement. The desk receives a previously admitted synthetic action and invokes its normal executor. Tracing/profiling and temporary helper wrappers schedule failures only; they neither grant authority nor edit reader bookkeeping. Private fields are read only for diagnostics. These are bounded software fault-injection results, not an attacker API or physical validation.",
+      "counterarguments": [
+        "Although iteration is annotated int, public settle accepts the tested spellings and canonical from_dict normalizes them. The constructor integer-cost case also avoids any reliance on string typing."
+      ],
+      "proposed_correction": "Normalize retained BudgetCharge entries through the existing canonical owner read-back path before hashing; keep the exact JSON/default=str behavior used by successful _read_once. Establish the corresponding owner-canonical rule for experiment entries by differential controls. Do not create a competing numeric/history normalization.",
+      "evidence": [
+        "/home/dev_kaeem/br11-review/r16/S1/probe_followup.log"
+      ]
+    },
+    {
+      "id": "R16-S1-4",
+      "status": "CONFIRMED",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Two interrupted detached handings falsely retire unchanged content by identity",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 912,
+      "related_lines": [
+        682,
+        689,
+        690,
+        735
+      ],
+      "smallest_reproduction": "accounts returns fresh canonical copies of unchanged current ledger. Interrupt _handed once on each of two pins while immediate recovery succeeds; perform normal read afterward.",
+      "actual_result": "Two detached interruptions permanently set _diverged. One detached interruption and one/two same-object interruptions remain readable.",
+      "expected_result": "Identity differences of owner-equivalent copies are unresolved until canonical comparison; interruptions alone never prove rewritten history.",
+      "trust_boundary": "All owner state changes use public BudgetLedger.settle/from_dict or supported native dictionary replacement. The desk receives a previously admitted synthetic action and invokes its normal executor. Tracing/profiling and temporary helper wrappers schedule failures only; they neither grant authority nor edit reader bookkeeping. Private fields are read only for diagnostics. These are bounded software fault-injection results, not an attacker API or physical validation.",
+      "counterarguments": [
+        "This does not require numerical normalization; tested charges are ordinary canonical integer-iteration/float-cost values."
+      ],
+      "proposed_correction": "Keep an identity-mismatched interrupted observation unresolved rather than declaring it rewritten. Reconcile all already-retained alternatives by the owner-canonical history outside the comparison lock, then apply only if the same pending observations still exist. Existing _uncompared can retain them; avoid another authority/evidence vocabulary. Do not permit another callback to overwrite an unresolved barrier.",
+      "evidence": [
+        "/home/dev_kaeem/br11-review/r16/S1/probe_followup.log"
+      ]
+    }
+  ],
+  "per_report_finding_disposition": [
+    {
+      "alias": "R16-B-1",
+      "status": "CONFIRMED",
+      "severity": "MAJOR",
+      "finding": "R16-S1-1",
+      "independent_evidence": "probe.py line checkpoints 974/977; probe_extra_boundaries.py checkpoint 976; actual gateway executor count 2, late controls count 1."
+    },
+    {
+      "alias": "R16-D-1",
+      "status": "CONFIRMED",
+      "severity": "MAJOR",
+      "finding": "R16-S1-1",
+      "independent_evidence": "probe.py line checkpoints 974/977; probe_extra_boundaries.py checkpoint 976; actual gateway executor count 2, late controls count 1."
+    },
+    {
+      "alias": "R16-A-1",
+      "status": "CONFIRMED",
+      "severity": "MAJOR",
+      "finding": "R16-S1-2",
+      "independent_evidence": "probe.py 0/1/2 capture failures across three exception classes and live/detached maps; probe_followup.py production-unmodified trace/profile at first/second mapping; actual gateway count 2 only when original live capture lost."
+    },
+    {
+      "alias": "R16-B-2",
+      "status": "CONFIRMED",
+      "severity": "MAJOR",
+      "finding": "R16-S1-2",
+      "independent_evidence": "probe.py 0/1/2 capture failures across three exception classes and live/detached maps; probe_followup.py production-unmodified trace/profile at first/second mapping; actual gateway count 2 only when original live capture lost."
+    },
+    {
+      "alias": "R16-C-1",
+      "status": "CONFIRMED",
+      "severity": "MAJOR",
+      "finding": "R16-S1-2",
+      "independent_evidence": "probe.py 0/1/2 capture failures across three exception classes and live/detached maps; probe_followup.py production-unmodified trace/profile at first/second mapping; actual gateway count 2 only when original live capture lost."
+    },
+    {
+      "alias": "R16-D-2",
+      "status": "CONFIRMED",
+      "severity": "MAJOR",
+      "finding": "R16-S1-2",
+      "independent_evidence": "probe.py 0/1/2 capture failures across three exception classes and live/detached maps; probe_followup.py production-unmodified trace/profile at first/second mapping; actual gateway count 2 only when original live capture lost."
+    },
+    {
+      "alias": "R16-E-1",
+      "status": "CONFIRMED",
+      "severity": "MAJOR",
+      "finding": "R16-S1-2",
+      "independent_evidence": "probe.py 0/1/2 capture failures across three exception classes and live/detached maps; probe_followup.py production-unmodified trace/profile at first/second mapping; actual gateway count 2 only when original live capture lost."
+    },
+    {
+      "alias": "R16-F-2",
+      "status": "CONFIRMED_WITH_VARIANT_LIMIT",
+      "severity": "MAJOR",
+      "finding": [
+        "R16-S1-1",
+        "R16-S1-2"
+      ],
+      "independent_evidence": "F static lead independently executed at exact line 976: count 2. Its related two-capture path also confirmed. Exact line 975 trace variant did not redispatch (count 1, leaked in-flight ticket); do not claim that variant demonstrates duplicate execution. NOP/exception-table trace sensitivity was not promoted as a fresh bug without stronger evidence."
+    },
+    {
+      "alias": "R16-D-3",
+      "status": "CONFIRMED",
+      "severity": "MINOR",
+      "finding": "R16-S1-3",
+      "independent_evidence": "probe_followup.py eight normalization/interruption controls; F static lead is now independently executed."
+    },
+    {
+      "alias": "R16-E-2",
+      "status": "CONFIRMED",
+      "severity": "MINOR",
+      "finding": "R16-S1-3",
+      "independent_evidence": "probe_followup.py eight normalization/interruption controls; F static lead is now independently executed."
+    },
+    {
+      "alias": "R16-F-1",
+      "status": "CONFIRMED",
+      "severity": "MINOR",
+      "finding": "R16-S1-3",
+      "independent_evidence": "probe_followup.py eight normalization/interruption controls; F static lead is now independently executed."
+    },
+    {
+      "alias": "R16-C-2",
+      "status": "CONFIRMED",
+      "severity": "MINOR",
+      "finding": "R16-S1-4",
+      "independent_evidence": "probe_followup.py four detached/same-object and one/two interruption controls; F static lead is now independently executed."
+    },
+    {
+      "alias": "R16-D-4",
+      "status": "CONFIRMED",
+      "severity": "MINOR",
+      "finding": "R16-S1-4",
+      "independent_evidence": "probe_followup.py four detached/same-object and one/two interruption controls; F static lead is now independently executed."
+    },
+    {
+      "alias": "R16-F-3",
+      "status": "CONFIRMED",
+      "severity": "MINOR",
+      "finding": "R16-S1-4",
+      "independent_evidence": "probe_followup.py four detached/same-object and one/two interruption controls; F static lead is now independently executed."
+    }
+  ],
+  "architecture_assessment": {
+    "status": "LOCAL_REPAIRS_AVAILABLE; STRICT_GENERIC_HANDOFF_GUARANTEE_NEEDS_OWNER_DECISION",
+    "not_a_blanket_impossibility_claim": "The observed single-interrupt registration gap, lost first-map capture, numeric normalization and detached reconciliation have local corrections. No implementation fix was made or tested in this read-only review. The argument below concerns any future attempt to recover information after an uncaptured mutable handing has already been replaced; it does not prove that every preventive handoff redesign is impossible.",
+    "finite_indistinguishable_histories": [
+      "Both histories start with the same canonically observed H0 and identical verification sequence. Owner replaces its account with a fresh canonical copy L1, which the reader has never captured.",
+      "H_good leaves L1 unchanged. H_spend publicly settles a new charge on L1. Both callbacks return the same kind of live native dictionary.",
+      "Two finite pre-first-entry-capture interruptions occur: acquisition and cleanup recovery. Both leave only a raw pair of live dictionaries pending, with no L1 account/entry observation.",
+      "Both owners replace the entry with a fresh canonical H0 checkpoint. Interruption then stops. H_good is the unchanged honest restore that must eventually recover; H_spend must refuse H0 because the returned handing held a spend.",
+      "The executed comparison records equal reader-observable retained state (seen history, unread/diverged maps, pending map contents, construction-time account content, ticket count, no in-flight tickets, no seal). The L1 weak reference is dead in both cases: the original spend object is no longer retained. Later identical H0 handings cannot distinguish the histories."
+    ],
+    "consequence": "Accepting solely from subsequent H0 reads accepts both histories; permanent unresolved refusal blocks both. Additional bounded/arbitrary retries, waiting until interruptions stop, or comparing unchanged present identities/content adds no missing historical information. A new reader silently forgets the timeline and is not an automatic same-reader recovery.",
+    "alternatives_examined": [
+      {
+        "alternative": "Recover returned mapping in exception handler",
+        "assessment": "Good local fix for family1 when mapping is already stored and recovery completes; a second pre-capture interruption reopens the information-loss state."
+      },
+      {
+        "alternative": "Progressive native retention",
+        "assessment": "Preserves captured portions including E second-map loss, and is worth doing. It cannot reconstruct entries never captured before failure."
+      },
+      {
+        "alternative": "Fresh-thread capture or signal masking",
+        "assessment": "Can mitigate caller recursion and selected SIGINT paths; it does not guarantee a snapshot on MemoryError or other allowed interruption, and cannot serialize a live owner replacement without a shared retention/ownership contract."
+      },
+      {
+        "alternative": "Retain original account, compare identities, digest current mapping",
+        "assessment": "Public replacement before settle defeats construction-time account retention (executed). Honest detached restore changes identities. Current digest cannot reveal the lost intermediate L1."
+      },
+      {
+        "alternative": "Keep unresolved marker forever or automatically reset reader",
+        "assessment": "First preserves safety but violates unchanged honest eventual usability; second restores usability by forgetting observed timeline. Both are contract decisions, not complete transparent fixes."
+      },
+      {
+        "alternative": "Owner publishes stable pending handoff before handing and retains it through acknowledgement",
+        "assessment": "Can preserve both requirements without a second budget authority: publish native account-entry snapshot/history owned by execution side, keyed by the existing verification lifecycle, retained across reader interruption until authoritative comparison acknowledges. Requires stable publication and mutation/retention semantics; simply returning a new dictionary is not enough for all mutable experiment containers."
+      }
+    ],
+    "precise_decision_required": "For an accounts() result whose native entries were never captured, choose the owner contract: (A) require the execution owner to publish and retain a stable handoff/history until the reader acknowledges comparison, permitting eventual recovery after finite interruptions; or (B) explicitly narrow observation to completed stable native capture, documenting pre-capture rollback as unobservable; or (C) permit an unresolved refusal that requires an explicit owner-stated new timeline to recover. B weakens the present returned-handing guarantee; C relaxes same-reader eventual usability. A best preserves the stated invariants. A reader must not silently choose B or C.",
+    "evidence": "/home/dev_kaeem/br11-review/r16/S1/probe_followup.log (indistinguishable cases)",
+    "implementation_boundary": "This is a precise acquisition/ownership decision, not an invitation to introduce another scientific budget ledger, execution reservation, evidence vocabulary, or applicability authority."
+  },
+  "tested_transitions": [
+    "Callback returned -> handed flag -> try/lock -> pending registration -> native retention -> handing parse, exact lines 974/975/976/977/978/979.",
+    "Native capture and cleanup: 0/1/2 failures x KeyboardInterrupt/MemoryError/RecursionError x live/detached dictionary handings.",
+    "Native CPython depth 985..997 at unchanged limit 1000; only 994/995 raw-pending cases used as corroboration, 996/997 ignored because handing not established.",
+    "First and second native mapping capture under production-unmodified trace/profile interruption; single interruption controls.",
+    "Unchanged honest account recovery, normal restored rollback refusals, actual second ordinary desk executor count.",
+    "Canonical normalization with integer/float/string entry spellings and direct integer-cost owner constructors.",
+    "One/two interrupted equivalent detached handings vs same-object controls.",
+    "Concrete finite indistinguishable histories after never-captured replacement is garbage collected."
+  ],
+  "execution_summary": {
+    "probe_cases": 60,
+    "commands_executed": 3,
+    "command_exit_codes": [
+      0,
+      0,
+      0
+    ],
+    "meaning": "Probes report reproduced defects and controls; exit 0 does not mean lifecycle implementation is correct."
+  },
+  "executions": [
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S1/probe.py",
+      "exit": 0,
+      "log_path": "/home/dev_kaeem/br11-review/r16/S1/probe.log"
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S1/probe_followup.py",
+      "exit": 0,
+      "log_path": "/home/dev_kaeem/br11-review/r16/S1/probe_followup.log"
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S1/probe_extra_boundaries.py",
+      "exit": 0,
+      "log_path": "/home/dev_kaeem/br11-review/r16/S1/probe_extra_boundaries.log"
+    }
+  ],
+  "missing_coverage": [
+    "No production correction was implemented; no correction test or integration/certification result claimed.",
+    "No exhaustive bytecode or concurrency proof; fault scheduling is deterministic test instrumentation.",
+    "Exact line975 trace-specific ticket leak not promoted as a new finding because its NOP/exception-table boundary may be instrumentation-sensitive.",
+    "Native recursion caveat conflicts with broader R15 lifecycle text; async capture cases independently support the MAJOR.",
+    "No full FAST, broad gates, installation, Git mutation, remote service, scientific validation or certification.",
+    "No other skeptic report was read."
+  ],
+  "contract_notes": [
+    "Read CLAUDE, architecture map, current BR1.1 active queue, R15 matrix/repair self-checks, current README lifecycle and exclusions, source diff and nearest controls.",
+    "README 311-315/R15-REPAIR-3 promise retention across interrupted live mapping replacement. README 257-259 and owners docstring 444-445 retain broader old interruption/stack exclusions; these require clarification. The new explicit lifecycle guarantee and async probes are the basis here.",
+    "Existing R15 interrupted-handing tests fault _handed after _retain_handing succeeds; they do not exercise the missing registration or failing raw-to-native capture transition."
+  ],
+  "limitations": "Read-only synthetic software accounting review only; no physical validation, certification, formal proof, or source modification. All files written only in S1 scratch directory."
+}

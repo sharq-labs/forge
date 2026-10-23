@@ -1,0 +1,267 @@
+{
+  "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "comparison_base": "95f3869ed020b04c36c098f0c33050aa009212b6",
+  "lens": "B: scientific action accounting, effect uniqueness, admission and redispatch",
+  "status": "COMPLETE; two proposed MAJOR findings, independent review not certification",
+  "source_identity": {
+    "checkout": "/home/dev_kaeem/forge-r16-review",
+    "head_checked_before_execution": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+    "head_evidence": "Both recorded execution commands printed this SHA through git rev-parse HEAD before running Python; stdout is present in this review conversation.",
+    "owners_import": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+    "interpreter": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "environment": "native WSL2 Ubuntu-24.04; PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review; PYTHONDONTWRITEBYTECODE=1",
+    "import_evidence": "/home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.log",
+    "source_changes": "NONE; probes and result artifacts written only under assigned B directory"
+  },
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_rationale": {
+    "Q1": "No second state authority identified in this lens. The changed production code is BudgetReader lifecycle handling; this is a bounded negative result, not independent validation of the whole state subsystem.",
+    "Q2": "No second applicability authority identified. Admission still reprojects owner-verified bindings; no model-applicability production change was introduced by this repair.",
+    "Q3": "No duplicate units authority identified. The repair adds no conversion or units vocabulary.",
+    "Q4": "YES: both R16-B-1 and R16-B-2 demonstrate a handed spend being forgotten and the same admitted action running a second time after ordinary account checkpoint replacement.",
+    "Q5": "No scientific verdict or probabilistic-to-deterministic promotion identified. Admission remains explicitly action_admission_not_scientific_support.",
+    "Q6": "No external proposer route avoiding admission demonstrated. Executed raw-proposal, direct-mint, suggestion-authority and execution-side suggestions-only controls all passed.",
+    "Q7": "No execution of a raw or otherwise unadmitted action demonstrated. The findings concern false renewed currentness of an action originally admitted and are attributed to Q4; the generic dispatch checks executed in the targeted pack passed."
+  },
+  "findings": [
+    {
+      "id": "R16-B-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "A returned account handing interrupted before buffer registration is forgotten, allowing a second simulated execution after restore",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 974,
+      "related_lines": [
+        976,
+        977,
+        995,
+        1000,
+        1001,
+        1008
+      ],
+      "evidence_kind": "EXECUTED deterministic interruption probe",
+      "smallest_reproduction": {
+        "script": "/home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.py",
+        "cases": [
+          "interrupt_after_accounts_return",
+          "interrupt_after_handed_flag",
+          "interrupt_before_registry_store"
+        ],
+        "steps": [
+          "Build the existing synthetic battery fixture, following BudgetReader and ExecutionDesk gateway; retain the original BudgetLedger checkpoint with BudgetLedger.from_dict.",
+          "Dispatch the admitted simulate_pulse action once; the executor appends run.1 through ordinary BudgetLedger.settle.",
+          "Call reader.pinned with a one-shot line trace raising KeyboardInterrupt at pinned line 974, 976 or 977. accounts() has returned the live native account dictionaries and their ledger holds the settled spend.",
+          "The pin propagates KeyboardInterrupt. The cleanup checks only membership in _uncompared; the returned mapping was not registered, so neither a pending handing nor an unread spend remains.",
+          "Replace o.ledgers[lid] with the original checkpoint via normal dictionary assignment; dispatch the same previously admitted action through gateway.dispatch."
+        ]
+      },
+      "actual_result": "Each of the three checkpoints produced calls=2, refused=false, pending_before_restore={}, unread_before_restore={}, sealed=null and no diverged account. This is an actual second executor invocation, not merely a successful reader return.",
+      "expected_result": "The interrupted verification must preserve or fail closed on the account state it was already handed. Restoring an earlier checkpoint after that handed spend must not reauthorize the same admitted action; executor count remains one.",
+      "threat_families": [
+        "BaseException/async interruption",
+        "handing-registration boundary",
+        "hidden spend",
+        "rollback/restore",
+        "duplicate dispatch",
+        "cleanup"
+      ],
+      "trust_boundary": "The line tracer is deterministic fault scheduling, not a proposer-side authority change. It injects KeyboardInterrupt at an interruptible production transition and does not rewrite the ledger or mint an action. All account settlement, checkpoint replacement and dispatch use existing APIs. Thus this models an execution-side interruption and ordinary restore, not private scientific-state corruption by a proposer.",
+      "scope_limit": "The exact timing was modeled using sys.settrace, not a real asynchronously delivered OS signal. The returned accounts are nevertheless explicitly confirmed present in frame locals, and all subsequent production recovery/dispatch paths execute unchanged.",
+      "proposed_correction": "Make the returned-handing lifecycle recoverable before any exception path can return control to the owner. Cleanup must account for a callback result even when ticket registration has not completed; a later pin must not proceed as if no handing occurred. Add deterministic controls at the callback-return and pre-registration boundaries with executor-count assertions.",
+      "log_path": "/home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.log"
+    },
+    {
+      "id": "R16-B-2",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Twice-interrupted native capture retains a mutable mapping rather than the handed spend, so later recovery accepts the restored account",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 977,
+      "related_lines": [
+        978,
+        891,
+        899,
+        900,
+        919,
+        962,
+        964,
+        1001,
+        1002
+      ],
+      "evidence_kind": "EXECUTED deterministic interruption probe",
+      "smallest_reproduction": {
+        "script": "/home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.py",
+        "case": "retention_and_cleanup_interrupted",
+        "steps": [
+          "Create the same synthetic gateway and checkpoint, and dispatch once so the owner account holds the settled run.1.",
+          "Temporarily wrap _retain_handing to raise KeyboardInterrupt on exactly its first two entries, then delegate to the real implementation. No source file is changed.",
+          "Call reader.pinned. The first interruption occurs after _uncompared[ticket]=mapping but before native entry tuples are captured. Cleanup calls _recover_handing; its retry is the second interrupted capture.",
+          "The original interrupt propagates and pending_before_restore reports a tuple (the original pair containing live dictionaries), rather than _RetainedHanding; no unread entry barrier exists.",
+          "Restore the owner ledger through o.ledgers[lid]=checkpoint. The raw pending dictionary now points at the restored ledger.",
+          "The next gateway.dispatch first recovers the pending tuple using the restored dictionary contents, clears the pending record and executes the same admitted action again."
+        ]
+      },
+      "actual_result": "The case produced two explicit retention-entry interruptions, pending_before_restore={4: tuple}, unread_before_restore={}, calls=2 and refused=false. pending_after_dispatch was empty. The paired single-interruption control produced calls=1, refused=true and an unread barrier with two charge entries.",
+      "expected_result": "Repeated interruption may leave verification pending, but pending recovery must remain bound to the originally handed accounts. A later dictionary-entry replacement must not change what recovery observes or let the recorded spend vanish; executor count remains one.",
+      "threat_families": [
+        "BaseException/async interruption",
+        "native retention boundary",
+        "live mapping replacement",
+        "identity/aliasing",
+        "hidden spend",
+        "rollback/restore",
+        "duplicate dispatch",
+        "recovery"
+      ],
+      "trust_boundary": "The helper wrapper injects only KeyboardInterrupt at a deterministic phase; all ordinary helper behavior is delegated unchanged after two interruptions. This models resource/operator interruption before capture plus cleanup interruption, then normal account checkpoint replacement. No frozen-account mutation, private mint or executor extraction is used.",
+      "scope_limit": "The two interrupts were injected by a temporary in-memory helper wrapper, not a live OS timing experiment. The observed pending representation and actual second executor invocation establish the state transition under that modeled interruption.",
+      "proposed_correction": "Do not treat recovery of an uncaptured live mapping as recovery of the earlier handing. Preserve immutable native mapping entry observations through capture/cleanup, or retain an explicit unresolved state that cannot be discharged from changed live mappings. Add a control interrupting _retain_handing itself twice before dictionary-entry replacement; the existing _handed interruption controls begin after capture has succeeded.",
+      "log_path": "/home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.log"
+    }
+  ],
+  "tested_transitions": [
+    {
+      "transition": "admit -> dispatch -> one retention interruption -> cleanup records spend -> restore -> redispatch",
+      "result": "Correct refusal; executor calls=1. Positive control."
+    },
+    {
+      "transition": "admit -> dispatch -> accounts returns -> interruption before _uncompared registration -> restore -> redispatch",
+      "result": "Defect demonstrated at three line checkpoints; executor calls=2."
+    },
+    {
+      "transition": "admit -> dispatch -> raw mapping registered -> capture interrupted -> cleanup capture interrupted -> live entry restored -> recovery -> redispatch",
+      "result": "Defect demonstrated; executor calls=2."
+    },
+    {
+      "transition": "Round 15 deterministic lifecycle/read-back controls",
+      "result": "All 33 passed in the targeted 39-test command."
+    },
+    {
+      "transition": "raw proposal, direct admission minting and suggestion claiming authority",
+      "result": "All three selected existing controls passed; no unadmitted execution demonstrated."
+    },
+    {
+      "transition": "owner changes before dispatch and execution-side suggestion policy at desk/guard",
+      "result": "All three selected existing controls passed."
+    }
+  ],
+  "missing_coverage": [
+    "No broad gate, full FAST, certification, physical validation or formal proof was run.",
+    "No real signal timing/stress proof; interruption boundaries were deterministic test instrumentation.",
+    "New probes exercise the ledger branch and synthetic simulate_pulse executor, not every experiment branch or physical provider.",
+    "No exhaustive bytecode-level interruption, cleanup, wait, recovery or concurrency interleaving enumeration.",
+    "Q1-Q3 and Q5 conclusions are scoped static negatives; this lens did not independently exercise all owner implementations.",
+    "Durable at-most-once/reservation and a spend plus rollback entirely between verifications are documented limits, not tested or claimed repaired."
+  ],
+  "executions": [
+    {
+      "command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-r16-review && git rev-parse HEAD && env PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.py > /home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.log 2>&1; status=$?; cat /home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.log; exit $status'",
+      "exit_code": 0,
+      "result": "Five deterministic cases executed: one correct refusal (calls=1), three unregistered-handing checkpoints and one twice-interrupted capture case each allowed calls=2. Exit zero is the probe completion status, not a correctness pass.",
+      "log_path": "/home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.log"
+    },
+    {
+      "command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-r16-review && git rev-parse HEAD && env PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 1 -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/B/pt tests/mind/test_authority_review_r15.py tests/mind/test_authority_failing_first.py::test_j_a_raw_proposal_never_reaches_an_executor tests/mind/test_authority_failing_first.py::test_k_a_proposer_cannot_mint_an_admitted_action tests/mind/test_authority_failing_first.py::test_k_a_suggestion_cannot_carry_admission_or_binding_authority tests/mind/test_authority_failing_first.py::test_l_an_admitted_action_is_refused_at_dispatch_once_its_authority_moved tests/mind/test_authority_review_r3.py::test_the_desk_policy_admits_and_dispatches_only_certified_suggestions_whatever_the_port tests/mind/test_authority_review_r4.py::test_the_executor_guard_itself_applies_the_proposer_policy > /home/dev_kaeem/br11-review/r16/B/targeted_controls.log 2>&1; status=$?; cat /home/dev_kaeem/br11-review/r16/B/targeted_controls.log; exit $status'",
+      "exit_code": 0,
+      "result": "39 passed in 3.47s",
+      "log_path": "/home/dev_kaeem/br11-review/r16/B/targeted_controls.log"
+    }
+  ],
+  "probe_records": [
+    {
+      "label": "positive_control_handing_seen",
+      "events": [
+        "interrupt at native retention entry",
+        "KeyboardInterrupt"
+      ],
+      "calls": 1,
+      "refused": true,
+      "spent_revision": 2,
+      "restored_revision": 1,
+      "pending_before_restore": {},
+      "unread_before_restore": {
+        "('ledger', 'synthetic.battery.pulse-cell.solver')": 2
+      },
+      "sealed": null,
+      "diverged": [],
+      "pending_after_dispatch": {}
+    },
+    {
+      "label": "interrupt_after_accounts_return",
+      "events": [
+        "interrupt at pinned:974; mapping already handed=True",
+        "KeyboardInterrupt"
+      ],
+      "calls": 2,
+      "refused": false,
+      "spent_revision": 2,
+      "restored_revision": 2,
+      "pending_before_restore": {},
+      "unread_before_restore": {},
+      "sealed": null,
+      "diverged": [],
+      "pending_after_dispatch": {}
+    },
+    {
+      "label": "interrupt_after_handed_flag",
+      "events": [
+        "interrupt at pinned:976; mapping already handed=True",
+        "KeyboardInterrupt"
+      ],
+      "calls": 2,
+      "refused": false,
+      "spent_revision": 2,
+      "restored_revision": 2,
+      "pending_before_restore": {},
+      "unread_before_restore": {},
+      "sealed": null,
+      "diverged": [],
+      "pending_after_dispatch": {}
+    },
+    {
+      "label": "interrupt_before_registry_store",
+      "events": [
+        "interrupt at pinned:977; mapping already handed=True",
+        "KeyboardInterrupt"
+      ],
+      "calls": 2,
+      "refused": false,
+      "spent_revision": 2,
+      "restored_revision": 2,
+      "pending_before_restore": {},
+      "unread_before_restore": {},
+      "sealed": null,
+      "diverged": [],
+      "pending_after_dispatch": {}
+    },
+    {
+      "label": "retention_and_cleanup_interrupted",
+      "events": [
+        "interrupt at native retention entry",
+        "interrupt at native retention entry",
+        "KeyboardInterrupt"
+      ],
+      "calls": 2,
+      "refused": false,
+      "spent_revision": 2,
+      "restored_revision": 2,
+      "pending_before_restore": {
+        "4": "tuple"
+      },
+      "unread_before_restore": {},
+      "sealed": null,
+      "diverged": [],
+      "pending_after_dispatch": {}
+    }
+  ],
+  "reporting_note": "The probe records restored_revision after its attempted second dispatch, so value 2 in the defective cases includes the second settlement. Executor count and refusal fields are the effect-uniqueness evidence. Exact original revision was represented by the restored checkpoint, and the positive control log retains revision 1."
+}

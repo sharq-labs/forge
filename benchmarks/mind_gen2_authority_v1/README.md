@@ -308,13 +308,16 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
 
 ### Round-15 lifecycle and reconciliation clarification
 
-An interrupted valid handing is retained in native dict storage until comparison completes. Recovery reads only
-native entry containers into the existing unread-entry barrier, before a later pin proceeds; it never treats
-pending work as current. Another interruption leaves the handing pending. This lifecycle buffer is not a second
-budget ledger or evidence vocabulary. It preserves spend when an owner replaces a live dictionary entry after an
-interrupt, while unchanged honest handings can recover. Resource failure in native entry listing is not evidence
-of malformed storage. The repair's own failing-first handoff check and recovery-cleanup correction are recorded
-as R15-REPAIR-3 in the matrix.
+The Round-15 retention claim was too broad: Round 16 reproduced lost handed spend when native capture
+and immediate recovery both fail before any account entry is retained. A raw pending live dictionary can then be
+replaced by an earlier checkpoint, and later recovery cannot reconstruct the lost observation. This is an OPEN
+MAJOR, not an accepted exclusion or a successful recovery. The older stack/interruption exclusions above and the
+original Round-15 preservation promise conflict; neither changes the user's required all-handed-spend guarantee.
+
+Successfully retained entry observations survive later dictionary replacement. The Round-16 local repair also
+recovers an already-returned callback value across a one-shot pre-registration interruption. Repeated pre-capture
+failure remains open. A stable execution-owner handoff lifetime/publication/acknowledgement contract needs an explicit
+owner decision; no such protocol has been introduced. This buffer is not a budget ledger or scientific evidence.
 
 The current implementation checks a reader's seal under the comparison lock, including after a wait. Starting a
 verification while open grants no right to complete after sealing. The authoritative comparison remains atomic with
@@ -850,6 +853,25 @@ affected expensive subset 335 pass / 13 fail / 14 errors, FAST 12792 pass / 67 f
 match the unchanged base: **NO NEW FAILURES VS BASE**. Rescore and benchmark MATCHES; Gen1 INTACT.
 Exact source SHA and commands: `round15/recovery_candidate.json`, `executions.jsonl`, `gate_differential.json`.
 BR1.1 remains NOT CLOSED until the fresh review and all closure evidence are complete.
+
+### Round-16 review and separable local repairs (2026-10-24)
+
+Fresh review at `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`: six lenses, two independent skeptics per MAJOR
+alias, and completeness critic complete. Q4 YES; other Qs NO within bounded scope. Four distinct families (2 MAJOR,
+2 substantive MINOR), fourteen aliases. Evidence: `docs/work/evidence/br11_local_2026_10_23/round16/`.
+
+Local repairs reuse owner normalization for retained history, preserve identity-incomparable detached observations
+until canonical reconciliation, and recover the returned local mapping across the demonstrated registration gap.
+Canonical reconciliation runs outside the lock and applies only to the identical pending barrier. Missing or unreadable
+history never becomes equality. Distinct unresolved histories can consume memory until reconciliation succeeds;
+identity-prefix observations coalesce, and none is discarded to force recovery.
+
+Failing-first: 6 failed / 4 passed on reviewed source; final R16 controls: 16 passed. Six semantic mutants killed.
+L2 final: 797 passed; regression: 279 passed. Guards and affected expensive tests have no new failure IDs versus
+recorded base. Rescore/benchmark MATCHES; Gen1 INTACT. Five paired affected-path measurements have overlapping
+ranges on all six paths: NO SPEED DIFFERENCE ESTABLISHED. These are synthetic software measurements only.
+FAST and fresh Round17 are pending for this repair batch. The separate pre-capture challenge still FAILS; no xfail
+hides it in the normal suite. BR1.1 NOT CLOSED.
 
 ## 10. Q1–Q7
 

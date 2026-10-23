@@ -1,0 +1,5 @@
+{"sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1", "owners": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py", "python": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python"}
+{"line": 974, "pending": 0, "unread": {}, "refused": false, "executions": 2}
+{"line": 977, "pending": 0, "unread": {}, "refused": false, "executions": 2}
+{"line": 978, "pending": 0, "unread": {"('ledger', 'synthetic.battery.pulse-cell.solver')": 2}, "refused": true, "executions": 1}
+{"line": 979, "pending": 0, "unread": {"('ledger', 'synthetic.battery.pulse-cell.solver')": 2}, "refused": true, "executions": 1}

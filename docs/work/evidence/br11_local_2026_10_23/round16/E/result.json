@@ -1,0 +1,201 @@
+{
+  "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "lens": "E — replay, read-back and checkpoint restoration",
+  "source_identity": {
+    "sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+    "owners_file": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+    "python": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+    "PYTHONPATH": "/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "comparison": "95f3869ed020b04c36c098f0c33050aa009212b6..b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_scope": "Independent assessment of this replay/restoration lens, not an aggregate or certification. Q4 is YES from R16-E-1. R16-E-2 alone would make Q4 PARTIAL. Dispatch in R16-E-1 still goes through admission; the defect is lost observed budget history, not a separate proposer or executor bypass.",
+  "findings": [
+    {
+      "id": "R16-E-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Interrupted native capture leaves a live mapping in the unfinished buffer; checkpoint replacement erases a handed spend and permits redispatch",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 977,
+      "related_lines": [
+        891,
+        899,
+        900,
+        962,
+        964,
+        978,
+        1001,
+        1002
+      ],
+      "evidence_kind": "EXECUTED deterministic probes plus independent sys.settrace/sys.setprofile reproduction with production functions unmodified",
+      "smallest_reproduction": [
+        "Use _desk fixture with BudgetReader.following(lambda: (o.ledgers, o.experiments)); save a canonical pre-spend BudgetLedger checkpoint.",
+        "Dispatch the original admitted action once; its ordinary executor settles run.1.",
+        "Interrupt _items for the first or second mapping during _retain_handing, and interrupt the immediate recovery at the same checkpoint. No account or reader private state is changed by the probe.",
+        "After pin raises, _uncompared contains the original mutable pair (type tuple), not a _RetainedHanding. Replace o.ledgers[lid] with the saved checkpoint through the execution-owned mapping.",
+        "Remove fault injection and dispatch the original admitted action. Recovery reparses the now-restored mapping and the action executes a second time."
+      ],
+      "probe": "/home/dev_kaeem/br11-review/r16/E/test_e_replay.py::test_retention_interrupted_twice_keeps_spend",
+      "actual_result": "All six repeated-interruption combinations (KeyboardInterrupt, RecursionError, MemoryError x first/second mapping) print dispatch_refused False, executor_calls 2 and no divergence. The old action is readmitted after losing the handed spend.",
+      "expected_result": "A later verification cannot accept a restored budget as current while the original interrupted handing has not been authoritatively recovered. Either preserve and compare the originally handed spend or retain a genuine unresolved refusal; rereading a changed live mapping cannot complete its historical comparison.",
+      "controls": "All six single-interruption combinations refuse redispatch and retain executor_calls 1. Both completed-native-retention interrupted _handed controls recover an unchanged detached checkpoint without poisoning it.",
+      "threat_families": [
+        "interruption before stable native capture",
+        "incomplete recovery",
+        "live mapping replacement",
+        "hidden spend",
+        "checkpoint rollback",
+        "duplicate dispatch"
+      ],
+      "trust_boundary": "The owner callback returns ordinary public dicts and performs a supported detached checkpoint replacement. No malicious serializer, key hooks, private account mutation or introspection is required by the behavior. The first probe injects exceptions at _items; the independent trace_repro.py instead leaves every production function unmodified and uses CPython trace/profile hooks to raise KeyboardInterrupt at the native capture and immediate recovery checkpoints. Both are bounded fault-injection instrumentation, not an alleged attacker capability. The spend was handed at a verification, outside the expressly unobservable spend-and-rollback-between-verifications limit.",
+      "proposed_correction": "Do not treat a raw mutable mapping in _uncompared as a recoverable immutable historical handing. Retain each completed native-entry capture progressively before subsequent interruptible work, and keep uncaptured work explicitly unresolved rather than declaring it compared by rereading replacement mappings. Establish a safe recovery contract for interruption before the first stable capture without permanently sealing an honest reader merely because of interruption; add controls at _retain_handing/_items, not only _handed.",
+      "log": "/home/dev_kaeem/br11-review/r16/E/probe_expanded.log",
+      "unmodified_source_reproduction": "/home/dev_kaeem/br11-review/r16/E/trace_repro.py",
+      "unmodified_source_log": "/home/dev_kaeem/br11-review/r16/E/trace_repro.log"
+    },
+    {
+      "id": "R16-E-2",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Retained raw charge history is compared with normalized owner history and permanently rejects an honest detached checkpoint",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 745,
+      "related_lines": [
+        472,
+        473,
+        490,
+        495,
+        763,
+        764,
+        789,
+        790,
+        791
+      ],
+      "evidence_kind": "EXECUTED deterministic synthetic probe with non-interrupted control",
+      "smallest_reproduction": [
+        "Start a following reader with an empty ledger. Hand a ledger built through public BudgetLedger/BudgetCharge constructors with realized=1 and from_general_pool=1 (ordinary integers).",
+        "Interrupt once immediately before _account reads that newly handed charge; the native unread-entry barrier retains it.",
+        "Restore the unchanged ledger through BudgetLedger.from_dict(payload). Its owner normalizes the numeric charge fields to floats.",
+        "Read the restored account. Reconciliation hashes the raw retained charge to a different history from the owner-normalized read-back and permanently marks the honest account as rewritten."
+      ],
+      "probe": "/home/dev_kaeem/br11-review/r16/E/test_e_replay.py::test_integer_charge_checkpoint_recovers[True]",
+      "actual_result": "OwnerUnavailable: budget ledger a rewrote its history; _diverged permanently contains the account. Raw retained history 04541d50a680590dfa7a848845aa2b9fe2215f584cf835401405b5cbad3e3032 differs from restored history d5726c42faecb2749a9623325955a9114136d9d8e1205b6f30b9c4104d60d475.",
+      "expected_result": "An unchanged checkpoint that the canonical owner accepts and normalizes must recover after an interrupt, with no permanent divergence absent evidence of corruption. The ordinary non-interrupted read/restore control is accepted.",
+      "threat_families": [
+        "checkpoint normalization",
+        "raw versus canonical history",
+        "interruption recovery",
+        "false permanent retirement"
+      ],
+      "trust_boundary": "Public owner constructors and public owner round-trip only; no custom execution-side code in the account, no private mutation. Integers in float-valued constructor fields are accepted by the canonical owner. The failure is semantic availability, not false admission.",
+      "proposed_correction": "Canonicalize retained entries through the same owner read-back representation used by _read_once before hashing and updating _seen. Reuse owner normalization rather than introducing another history authority; add integer/float and other supported normalization round-trip controls.",
+      "log": "/home/dev_kaeem/br11-review/r16/E/probe_expanded.log"
+    }
+  ],
+  "tested_transitions": [
+    "Native mapping capture interrupted on first or second map, once versus twice, for KeyboardInterrupt/RecursionError/MemoryError; public mapping replacement after the failed pin; dispatch outcome checked (12 combinations).",
+    "Completed native capture followed by interrupted _handed and optionally interrupted immediate recovery; honest detached checkpoint reuse (2 controls).",
+    "Public integer-valued BudgetCharge -> interrupted unread barrier -> normalized detached checkpoint -> next read; non-interrupted baseline (2 controls).",
+    "Normal admission, observed-spend rollback, structural seal and unread spend -> AdmissionRecord -> replay_admission: all four REPRODUCED with correct FEASIBLE/MISSING_INFORMATION status.",
+    "Authorities.from_snapshot is nonlive and ExecutionDesk refuses it in all four record cases.",
+    "Static inspection of changed owners.py lifecycle, barrier identity reconciliation, seal checks, before/after entry matching, recovery cleanup; supporting canonical BudgetCharge load/serialization and AdmissionRecord/replay/live dispatch boundaries.",
+    "Independent unmodified-source CPython trace/profile checkpoints: native capture interrupted, immediate recovery interrupted, pending raw mapping replaced through owner checkpoint restore, stale admitted action incorrectly dispatches again."
+  ],
+  "missing_coverage": [
+    "No real OS signal/heap exhaustion was induced; interruptions are deterministic injections at exact function checkpoints, matching the strategy of existing R15 controls.",
+    "No exhaustive bytecode-interruption or concurrency exploration; no process-crash or cross-process durable recovery.",
+    "No new model applicability, system-state or unit-registry implementation probes; these mechanisms are unchanged by the repair.",
+    "No scientific validation, certification, full FAST, external providers, network requests, installs or source changes.",
+    "Recovery normalization may have more equivalent-type cases beyond the executed integer/float charge example; not claimed as demonstrated."
+  ],
+  "executions": [
+    {
+      "command": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -s -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/E/pt /home/dev_kaeem/br11-review/r16/E/test_e_replay.py",
+      "cwd": "/home/dev_kaeem/forge-r16-review",
+      "env": {
+        "sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+        "owners_file": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+        "python": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "PYTHONPATH": "/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 1,
+      "log": "/home/dev_kaeem/br11-review/r16/E/probe.log",
+      "result": "Discovery: 3 failed, 1 passed; superseded by expanded probe suite"
+    },
+    {
+      "command": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -s -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/E/pt /home/dev_kaeem/br11-review/r16/E/test_e_replay.py",
+      "cwd": "/home/dev_kaeem/forge-r16-review",
+      "env": {
+        "sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+        "owners_file": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+        "python": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "PYTHONPATH": "/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 1,
+      "log": "/home/dev_kaeem/br11-review/r16/E/probe_expanded.log",
+      "result": "7 failed, 9 passed; six duplicate-dispatch failures, one honest-checkpoint retirement failure"
+    },
+    {
+      "command": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -s -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/E/pt /home/dev_kaeem/br11-review/r16/E/test_e_record.py",
+      "cwd": "/home/dev_kaeem/forge-r16-review",
+      "env": {
+        "sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+        "owners_file": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+        "python": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "PYTHONPATH": "/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r16/E/record.log",
+      "result": "4 passed; historical replay and frozen-reader live-dispatch refusal controls"
+    },
+    {
+      "command": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/E/trace_repro.py",
+      "cwd": "/home/dev_kaeem/forge-r16-review",
+      "exit": 1,
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "log": "/home/dev_kaeem/br11-review/r16/E/trace_repro.log",
+      "result": "FAILED assertion after deterministic trace/profile injections: pending raw tuple, dispatch_refused False, executor_calls 2; production functions unmodified."
+    }
+  ],
+  "artifact_checksums": {
+    "probe_expanded_execution.json": "2aa726131e0447fa46fda908d879b1738edd5a3a3a74d023eb2027c8b6f4eda8",
+    "trace_repro.log": "8576ae3b85bf23601ae0060726dceb5d0eb8f30029707f6963db56927cd644bb",
+    "probe_expanded.log": "bfb8e13021160158d60aa2d1ad26d3f665100b3d07e3a35074f65fdce231a725",
+    "identity.json": "c10436dc39e4cce1414d0f40b150393be9273d15b94d0b835b0848b2368be184",
+    "trace_repro.py": "75bb362c73ba4ee3ced43cb36ed47f18fd0d928733934999a1f0055f42b40876",
+    "test_e_replay.py": "f62f8b53958d652690e23c1dafb4a656e60ed0905be67fad2faae49269cd0afb",
+    "run_probe.py": "19215087c188546d16c211742ae284b75257174b945985486c1523f701dea914",
+    "final_source_identity.txt": "ff5628b5ff5f66505f5d9223acdad6d697ee5a6c082cf3fec4c9ce20a31f1f75",
+    "record.log": "d26f204f08581c929ad87ad6d6df86f8e9450c7725a4a5dcf9ac08b9e301e6a2",
+    "probe_execution.json": "efa5981c3356cd83532bf6bcc591f31affbac0758cb97158d881d9ab5c609ab9",
+    "probe.log": "95d099c89664691a8eb6308522f17302add0c49520c859bbe5d905b697bf918d",
+    "test_e_record.py": "0e192705d00eb70f4d6e74e9ae8309f6d941b419c4a02533ad66466c34d76832",
+    "trace_execution.json": "2836be8122795448270b2f972e7799d3495d5e592d675eec8ac5005aa1899f42",
+    "run_expanded.py": "7fe4339ac3dfc188cf38b4a6283f89434ecd3aaa3b6f99c8ac21b5ce30d609e0",
+    "record_execution.json": "ac97438d0a76a6283d6d14ff96fff3fe1216569265274100f6a7fbf32a72cad9",
+    "run_record.py": "a92b5bd79d4ab0866762d3f0c405eee76847e10c711a4ad219166cfaf55c7f08",
+    "run_trace.py": "b1ac25f8b14e26d139f502d3e587ea4890298fb1d159475efe51c45653894522"
+  },
+  "source_clean_after_review": true,
+  "progress_hand_off": "Exact commands/results retained here for parent to append to PROGRESS; this read-only reviewer did not edit repository files."
+}

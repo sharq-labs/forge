@@ -1,0 +1,256 @@
+.FF.FFFF..                                                               [100%]
+=================================== FAILURES ===================================
+_____________ test_retained_history_uses_owner_normalization[1.0] ______________
+
+iteration = 1.0
+
+    @pytest.mark.parametrize("iteration", [1, 1.0, "1"])
+    def test_retained_history_uses_owner_normalization(iteration):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        held = {"a": account}
+        reader = BudgetReader.following(lambda: (held, {}))
+        account.settle(charge_id="new", action_id="new", iteration=iteration,
+                       family="explore", realized=1.)
+        _interrupt_handing(reader)
+        held["a"] = BudgetLedger.from_dict(account.to_dict())
+>       assert reader.read(OwnerKind.BUDGET_LEDGER, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r16.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1014: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1015: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7a566afd72c0>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1078: OwnerUnavailable
+_____________ test_retained_history_uses_owner_normalization[1_1] ______________
+
+iteration = '1'
+
+    @pytest.mark.parametrize("iteration", [1, 1.0, "1"])
+    def test_retained_history_uses_owner_normalization(iteration):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        held = {"a": account}
+        reader = BudgetReader.following(lambda: (held, {}))
+        account.settle(charge_id="new", action_id="new", iteration=iteration,
+                       family="explore", realized=1.)
+        _interrupt_handing(reader)
+        held["a"] = BudgetLedger.from_dict(account.to_dict())
+>       assert reader.read(OwnerKind.BUDGET_LEDGER, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r16.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1014: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1015: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7a566afd6450>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1078: OwnerUnavailable
+______________ test_repeated_detached_interruptions_reconcile[2] _______________
+
+count = 2
+
+    @pytest.mark.parametrize("count", [1, 2, 3])
+    def test_repeated_detached_interruptions_reconcile(count):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+        _settle(account, "new")
+        for _ in range(count):
+            _interrupt_handing(reader)
+>       assert reader.read(OwnerKind.BUDGET_LEDGER, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r16.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1014: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1015: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7a566b0ea0f0>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1078: OwnerUnavailable
+______________ test_repeated_detached_interruptions_reconcile[3] _______________
+
+count = 3
+
+    @pytest.mark.parametrize("count", [1, 2, 3])
+    def test_repeated_detached_interruptions_reconcile(count):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+        _settle(account, "new")
+        for _ in range(count):
+            _interrupt_handing(reader)
+>       assert reader.read(OwnerKind.BUDGET_LEDGER, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r16.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1014: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1015: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7a566afe52b0>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1078: OwnerUnavailable
+________ test_post_return_single_interrupt_retains_spend[handed = True] ________
+
+checkpoint = 'handed = True'
+
+    @pytest.mark.parametrize("checkpoint", ["handed = True", "self._uncompared[ticket] = mapping"])
+    def test_post_return_single_interrupt_retains_spend(checkpoint):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def execute(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, _, gateway, admitted = _desk(o, lambda: (o.ledgers, o.experiments), execute)
+        saved = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(admitted.admitted)
+        lines, start = inspect.getsourcelines(BudgetReader.pinned)
+        line = next(start + i for i, text in enumerate(lines) if text.strip() == checkpoint)
+        hits = []
+        def trace(frame, event, arg):
+            if event == "line" and frame.f_code is BudgetReader.pinned.__code__ and frame.f_lineno == line:
+                hits.append(line)
+                raise KeyboardInterrupt()
+            return trace
+        sys.settrace(trace)
+        try:
+            with pytest.raises(KeyboardInterrupt):
+                reader.pinned()
+        finally:
+            sys.settrace(None)
+        assert hits == [line]
+        o.ledgers[lid] = saved
+>       assert _refused(gateway, admitted.admitted)
+E       AssertionError: assert False
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x7a566ae05300>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r16.py:81: AssertionError
+_ test_post_return_single_interrupt_retains_spend[self._uncompared[ticket] = mapping] _
+
+checkpoint = 'self._uncompared[ticket] = mapping'
+
+    @pytest.mark.parametrize("checkpoint", ["handed = True", "self._uncompared[ticket] = mapping"])
+    def test_post_return_single_interrupt_retains_spend(checkpoint):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def execute(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, _, gateway, admitted = _desk(o, lambda: (o.ledgers, o.experiments), execute)
+        saved = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(admitted.admitted)
+        lines, start = inspect.getsourcelines(BudgetReader.pinned)
+        line = next(start + i for i, text in enumerate(lines) if text.strip() == checkpoint)
+        hits = []
+        def trace(frame, event, arg):
+            if event == "line" and frame.f_code is BudgetReader.pinned.__code__ and frame.f_lineno == line:
+                hits.append(line)
+                raise KeyboardInterrupt()
+            return trace
+        sys.settrace(trace)
+        try:
+            with pytest.raises(KeyboardInterrupt):
+                reader.pinned()
+        finally:
+            sys.settrace(None)
+        assert hits == [line]
+        o.ledgers[lid] = saved
+>       assert _refused(gateway, admitted.admitted)
+E       AssertionError: assert False
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x7a566ae3cee0>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r16.py:81: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r16.py::test_retained_history_uses_owner_normalization[1.0]
+FAILED tests/mind/test_authority_review_r16.py::test_retained_history_uses_owner_normalization[1_1]
+FAILED tests/mind/test_authority_review_r16.py::test_repeated_detached_interruptions_reconcile[2]
+FAILED tests/mind/test_authority_review_r16.py::test_repeated_detached_interruptions_reconcile[3]
+FAILED tests/mind/test_authority_review_r16.py::test_post_return_single_interrupt_retains_spend[handed = True]
+FAILED tests/mind/test_authority_review_r16.py::test_post_return_single_interrupt_retains_spend[self._uncompared[ticket] = mapping]
+6 failed, 4 passed in 1.24s

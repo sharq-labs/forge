@@ -1,0 +1,178 @@
+{
+  "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "lens": "CRITIC completeness and repair-boundary assessment",
+  "completion": "COMPLETE: six final lens reports and both final skeptic reports read; source unchanged; review gate FAILS",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_scope": "Bounded changed-path review, no global negative proof; Q4 is currentness loss through normal readmission, not raw Q7 execution bypass.",
+  "counts": {
+    "lens_reports": 6,
+    "independent_skeptics": 2,
+    "lens_finding_aliases": 14,
+    "major_aliases": 8,
+    "substantive_minor_aliases": 6,
+    "unique_defect_families": 4,
+    "unique_major": 2,
+    "unique_minor": 2,
+    "blocker_severity_findings": 0,
+    "new_critic_defects": 0,
+    "note": "S1 findings relabel the same four families; F2 spans two MAJOR families. Architecture completion blocker is not another defect count."
+  },
+  "skeptical_coverage": {
+    "R16-A-1": {
+      "S1": "CONFIRMED",
+      "S2": "CONFIRMED"
+    },
+    "R16-B-1": {
+      "S1": "CONFIRMED",
+      "S2": "CONFIRMED"
+    },
+    "R16-B-2": {
+      "S1": "CONFIRMED",
+      "S2": "CONFIRMED"
+    },
+    "R16-C-1": {
+      "S1": "CONFIRMED",
+      "S2": "CONFIRMED"
+    },
+    "R16-D-1": {
+      "S1": "CONFIRMED",
+      "S2": "CONFIRMED"
+    },
+    "R16-D-2": {
+      "S1": "CONFIRMED",
+      "S2": "CONFIRMED"
+    },
+    "R16-E-1": {
+      "S1": "CONFIRMED",
+      "S2": "CONFIRMED"
+    },
+    "R16-F-2": {
+      "S1": "CONFIRMED_WITH_VARIANT_LIMIT",
+      "S2": "CONFIRMED"
+    }
+  },
+  "all_major_aliases_two_independent_skeptics": true,
+  "findings": [],
+  "family_dispositions": [
+    {
+      "id": "registration_gap",
+      "severity": "MAJOR",
+      "aliases": [
+        "R16-B-1",
+        "R16-D-1",
+        "R16-F-2"
+      ],
+      "disposition": "OPEN; demonstrated one-shot gap locally repairable; excludes exact F2 line975 duplicate claim"
+    },
+    {
+      "id": "uncaptured_mutable_handing",
+      "severity": "MAJOR",
+      "aliases": [
+        "R16-A-1",
+        "R16-B-2",
+        "R16-C-1",
+        "R16-D-2",
+        "R16-E-1",
+        "R16-F-2"
+      ],
+      "disposition": "OPEN; partial retention locally repairable; complete unchanged-protocol guarantee needs owner contract decision"
+    },
+    {
+      "id": "canonical_normalization",
+      "severity": "MINOR",
+      "aliases": [
+        "R16-D-3",
+        "R16-E-2",
+        "R16-F-1"
+      ],
+      "disposition": "OPEN; local canonical owner normalization repair required; S1 independently executes exact constructor example"
+    },
+    {
+      "id": "repeated_detached_recovery",
+      "severity": "MINOR",
+      "aliases": [
+        "R16-C-2",
+        "R16-D-4",
+        "R16-F-3"
+      ],
+      "disposition": "OPEN; retain unresolved canonical alternatives instead of irreversible identity-only divergence"
+    }
+  ],
+  "reporting_corrections": [
+    "Exclude F2 exact line975 duplicate execution as NOT_REPRODUCED; line976 and capture components remain confirmed.",
+    "Native depth numbers differ by harness; only use cases confirming spent callback return.",
+    "Old README 257-259 and owners 444-445 exclusions conflict with newer README 311-315 interrupted-handing guarantee; clarify text explicitly. Async probes and user invariant independently ground current findings; native depth is corroboration, not sole boundary argument.",
+    "A/B current control passes do not negate failing attack controls; F static-only, E attack failures preserved.",
+    "E already probes both first- and second-map capture failure; do not label second-map failure wholly untested."
+  ],
+  "r15_matrix_audit": {
+    "rows": 25,
+    "repair_self_checks": 4,
+    "disposition": "Historical aliases accounted for; current bounded controls support old seal/readback fixes, not universal closure. R15-REPAIR-3 and detached canonical recovery remain incomplete under R16 transitions. Reporting-only rows do not make Q PARTIAL; CRIT15-2 remains documented availability residual."
+  },
+  "tested_transitions": [
+    "Critic executed no tests/probes. Read current A 87-control log, B 39-control log, E 7-failed/9-passed attack log, S1 and S2 probe evidence.",
+    "Independent skeptic evidence covers registration, raw capture and cleanup, first/second map capture, actual redispatch count, honest controls, canonical normalization and repeated detached recovery.",
+    "S1 paired finite histories demonstrate equal retained observable state after uncaptured replacement object disappears."
+  ],
+  "missing_coverage": [
+    "Exhaustive bytecode interruption / concurrency / cleanup-finalizer interactions",
+    "Progressive publication and recovery after partial capture; first/second-map failure already tested",
+    "Experiment-owner canonical normalization breadth",
+    "New Event/Barrier concurrency attack beyond rerun R15 controls",
+    "Free-threaded, cross-process, crash, durable at-most-once excluded or untested",
+    "Q1-Q3/Q5 predominantly static negative review, not fresh whole-subsystem testing",
+    "No repair implemented or tested by critic; no full FAST, scientific validation, certification or proof"
+  ],
+  "architecture_assessment": {
+    "status": "LOCAL_REPAIRS_AVAILABLE; COMPLETE_ALL_RETURNED_HANDINGS_GUARANTEE_REQUIRES_OWNER_DECISION",
+    "scope": "Conditional information loss under currently accepted mutable callback and finite failed capture/cleanup, not global impossibility",
+    "indistinguishable_histories": "H0 baseline; fresh owner account H1 with spend versus unchanged H0 handed via live map; two pre-first-entry failures; ordinary replacement to H0; original account unretained. Later reader-visible state can match. Acceptance loses handed spend in one; permanent refusal poisons honest other.",
+    "alternatives_examined": [
+      "returned-local sentinel recovery",
+      "progressive native capture",
+      "retry cleanup",
+      "fresh thread / signal masking",
+      "construction-time account retention",
+      "pending marker / reset reader",
+      "stable owner publication and acknowledgement",
+      "move observation linearization after capture"
+    ],
+    "locally_authorized_next": [
+      "Canonical owner normalization, contrast true changed history",
+      "Repeated detached failure controls and bounded reconciliation of existing retained observations",
+      "Returned-local registration cleanup with one/two failure contrasts",
+      "Progressive capture if bounded; preserve failing-first unresolved pre-capture loss control",
+      "Bounded gates/mutants and reviewable local fix commit; Round17 with architecture defect explicitly open"
+    ],
+    "owner_decision": "Authorize stable execution-side handoff publication/retention across restore until reader comparison acknowledges, specifying commit point, mutation lifetime, legacy callbacks and multiple readers; alternatively explicitly narrow observation to completed capture. The latter weakens current guarantee. Permanent honest poisoning is not allowed by current invariant.",
+    "stop_boundary": "Do not implement a replacement owner handoff protocol silently. Do not stop independent local repairs merely because complete closure needs a contract decision."
+  },
+  "recommendation": "CHANGES REQUIRED. Continue independent bounded fixes and Round17; prepare exact owner handoff decision for unresolved all-returned-handings guarantee. BR1.1 NOT CLOSED.",
+  "executions": [],
+  "execution_status": "Critic tests/probes NOT RUN; shell used only read-only inspection and own CRITIC artifact writes.",
+  "source_identity": {
+    "head": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+    "status": "",
+    "owners_sha256": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367"
+  },
+  "input_report_hashes": {
+    "A": "8bed1bf98d4a99890b9ed1d4de16b034fd96074910b24564727e59f656590512",
+    "B": "1c45efa5368426d890d46e33021a1cb143ae04332b2b691d06689232d7a5fa45",
+    "C": "efef7ecc58b9b54f012943041cb2e087f521d0efc0be5a169a06df1d9de8ad9c",
+    "D": "65cdc120559ad079ee387653d32ded2beebdec15c419627f04c6e5701c3a3a3a",
+    "E": "9bdbc53326a80d94c118bb9036c84217f6aeaa0ccdcad5d9c42307316d79413f",
+    "F": "60e07dd435361cbd5b2cb155e8f633878137d156c50cf7e33797415931b06d79",
+    "S1": "74b053397034b8027cac00db5b27715e30e1a01fed89b4da11fb734032de3ce1",
+    "S2": "8c7b1b40f6b1f7e8cff96d62c39a22dee351315d3e92f9fe75b376d457602dda"
+  },
+  "review_path": "/home/dev_kaeem/br11-review/r16/CRITIC/review.md"
+}

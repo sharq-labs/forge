@@ -1,0 +1,13 @@
+{
+  "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "source_checkout": "/home/dev_kaeem/forge-r16-review",
+  "git_status_porcelain": "",
+  "interpreter": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+  "python": "CPython 3.12.3",
+  "owners_import": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+  "source_hashes": {
+    "src/engcore/mind/world/owners.py": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
+    "tests/mind/test_authority_review_r15.py": "fb7401741ca3dd115cc2933887e359d162eae96c44d3026d6f41d34904736ada",
+    "tests/mind/test_authority_state_machine_r15.py": "d6686cf2e32a209de108f6624ed4a90d4fd6a9e3bd44268cb71889aea61ab69c"
+  }
+}

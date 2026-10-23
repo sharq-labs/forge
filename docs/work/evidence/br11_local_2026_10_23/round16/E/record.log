@@ -1,0 +1,6 @@
+normal FEASIBLE reproduced
+.observed_rollback MISSING_INFORMATION reproduced
+.seal MISSING_INFORMATION reproduced
+.unread_spend MISSING_INFORMATION reproduced
+.
+4 passed in 1.74s
