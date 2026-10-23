@@ -408,7 +408,7 @@ and `-n auto` on a large machine walks into the exhaustion documented in
 ## Running it without Docker
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,mcp,oracles]"   # the CI gate set; [oracles] provides mpmath
 python -m pytest -m "not expensive" -q -n 4 --dist loadfile
 python benchmarks/hard/score_hard.py --src src \
   --cases benchmarks/hard/cases_hard --workers 4 --split dev

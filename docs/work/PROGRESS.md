@@ -8093,3 +8093,42 @@ Environment: `{"TMPDIR": "D:/tmp/agent-archive-final", "PYTHONPATH": "C:\\Users\
 Result:94 passed; exit0; wall seconds 9.618442600010894. Output SHA256 `f75e069f24587ae62416522acbc9e5c5498e672480338a60c39a06ef6fa6e4c4`. No failures. Raw output and metadata: `docs/work/evidence/branch_ci_investigation_2026_10_20/agent-archive-final-gate.txt` and `.json`.
 
 Live GitHub Tests39488053735 and Branch Policy39488053796 failed with empty step metadata; dependent jobs reported skipped. Logs for branch-policy118853558670 and scope118853560388 returned404 BlobNotFound. Annotations unavailable through connector; browser signed out. Root cause UNVERIFIED pending owner-provided annotation. No billing diagnosis, workflow repair or hosted rerun claimed. Formal, full assurance and OD3 NOT RUN.
+
+## 2026-10-23 -- Docs-only quick wins from the repository-health audit
+
+Branch `docs/audit-quick-wins-2026-10-23` (worktree `D:/forge-docs-quickwins`), from `origin/main` `12862b0b`.
+Every changed path classifies `ordinary` under `python -m tools.certification.recertification_scope explain`; no
+certified, SHA-pinned or provenance-bound file was edited. No code or test changed.
+
+- Gate recipe unified in CLAUDE.md, README.md, docs/TESTING.md and docs/reproduce.md: CI install set
+  `.[dev,mcp,oracles]`; `forge_check --changed --base origin/main --workers 4` (the pinned substring
+  `python tools/forge_check.py --changed` is kept); FAST and SCIENTIFIC with `-n 4 --dist loadfile`; README no longer
+  recommends `-n auto`.
+- New `docs/work/FAILURE_BASELINE_2026-10-20.md`: the recorded Linux 3.12 FAST set (64 nodes: 8 OD-3 drift,
+  2 stale certified mutant N60d, 3 guard-vs-code, 49 behaviour-vs-test, 2 unresolved) and the 143 Windows-only nodes.
+  It is a comparison aid only; no registry state is assigned and nothing may read it to skip or deselect.
+- ACTIVE_PLAN: OD-6 marked merged (PR #157 `0284ae16`; line 3 keeps the pinned `Active epic:` prefix); OD-15 trigger
+  half marked stale (`324d1a7e`); OD-25 refreshed (0 of 2,499 jobs ran a step 2026-10-15..10-20; last executed job
+  2026-10-14 on `e193e573`); OD-31 pin marked applied in `abed661f` (OD-3 still open); the older duplicate OD-28 row
+  removed and the remaining row marked merged via PR #167 `337519d1`.
+- README: V&V layer location corrected to `credibility/`; CRAFTY_ARCHITECTURE_CONTEXT marked historical; SRIA.md
+  description no longer says nothing imports it; hold-out figures dated as historical.
+- "~6,600 lines" corrected in CLAUDE.md, docs/ai/CONTEXT_MAP.md and docs/ai/PROGRESS_INDEX.md (8,095 at `12862b0b`).
+
+Tests (Windows 11, CPython 3.14.2, shared venv; `PYTHONPATH` set to the worktree with `;`; temp redirected to `D:/tmp/qw`):
+
+- `python tools/forge_check.py --changed --base origin/main --workers 4` (worktree): FAIL, exit 1, 8 failed,
+  524 passed, 4 skipped in 25.50 s. All 8 are in the recorded Windows-only set: 7
+  `tests/test_local_assurance.py` (`test_source_gate_orchestration_preserves_checkout[*]` x6,
+  `test_child_exit_during_forced_kill_preserves_stream_error`) and
+  `tests/test_change_impact.py::test_f7_a_tree_with_a_refused_entry_narrows_nothing` (`WinError 1314`, symlink privilege).
+- Control: `python -m pytest -q -n 4 --dist loadfile -p no:cacheprovider --basetemp=... -m "not expensive"` over the
+  gate's 15 modules plus `tests/domains/kinetics/test_cstr_domain.py` and `benchmarks/domain_real_data/tests`, run on
+  pristine `12862b0b` (`D:/forge-redisc-base`) and on this branch: both FAIL, exit 1, 10 failed, 555 passed, 4 skipped;
+  identical failure sets. The 2 extra failures are
+  `benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance`
+  and `::test_synthetic_data_is_never_called_measured`: 6 files under
+  `docs/work/evidence/branch_ci_investigation_2026_10_20/` have no reviewed provenance row on `main`. Neither new file of
+  this branch is flagged.
+- `python docs/ai/check_docs.py`: AI_DOCS: PASS (7 documents; metadata and local paths only).
+- FAST, SCIENTIFIC, formal, full assurance and OD-3: NOT RUN.
