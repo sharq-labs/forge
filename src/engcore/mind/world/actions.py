@@ -299,10 +299,12 @@ class ActionSpec:
             if problem:
                 raise WorldRefused(f"action {aid!r} control {c.variable!r}: {problem}")
             if var.domain is not None and not _contained_as_executed(c.domain, var.domain, var.unit):
+                rule = ("the unit owner's level identity rule (a level is matched only by a value the owner calls that "
+                        "level)" if isinstance(var.domain, DiscreteLevels) else "the owner's bound rule")
                 raise WorldRefused(f"action {aid!r} control {c.variable!r}: a member or edge of the action domain, as "
-                                   "executed in the variable's unit, is outside the variable's declared domain by the "
-                                   "owner's bound rule (an action restricts, never widens; conversion noise at an edge "
-                                   "counts: state the domain in the variable's own unit to avoid it)")
+                                   "executed in the variable's unit, is outside the variable's declared domain by "
+                                   f"{rule} (an action restricts, never widens; conversion noise counts: state the "
+                                   "domain in the variable's own unit to avoid it)")
             if c.active_when is not None:
                 if c.active_when.variable == c.variable:
                     raise WorldRefused(f"action {aid!r}: control {c.variable!r} cannot guard itself")

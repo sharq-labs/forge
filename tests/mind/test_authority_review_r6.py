@@ -280,3 +280,33 @@ def test_an_over_budget_decision_records_the_remainder_basis_for_a_validate_ledg
                                                                            "t_on_s": Quantity(60, "s")}), p.authorities())
     over = {x.subject: x.detail for x in r.reasons if x.code == "OVER_BUDGET"}
     assert over["experiments"]["remaining_basis"] == "attempt_cap" and over["experiments"]["remaining"] == 0
+
+
+def test_a_br1_style_validate_refusal_records_both_pools_the_plan_compared_with():
+    """A6-F4: an unprojected (BR1-style) world keeps BR1's plan rule, and its OVER_BUDGET now states the remainder that
+    rule compared (validation_pool + general_pool for a VALIDATE action) and its basis."""
+    from engcore.mind.world import WorldBudget
+    from engcore.sria.decision.recommendation import BudgetPlan
+    base = b.battery_world()
+    sim = base.action("simulate_pulse")
+    bud = base.budget
+    plan = BudgetPlan(total_budget=10.0, reserved_validation_budget=6.0)
+    budget = WorldBudget(experiments=bud.experiments, observations_spent=bud.observations_spent, compute=bud.compute,
+                         compute_used=bud.compute_used, compute_spent=bud.compute_spent, cost=plan,
+                         cost_spent=(0.0, 0.0), cost_unit="EUR",
+                         unbounded=tuple((d, x) for d, x in bud.unbounded if d != "cost"),
+                         authority=b.synthetic("ledger/validate-cost"))
+    details = {}
+    for family in (ActionFamily.VALIDATE, ActionFamily.EXPLORE):
+        priced = dataclasses.replace(sim, family=family,
+                                     estimated_cost={**dict(sim.estimated_cost), "cost": Quantity(12.0, "dimensionless")})
+        w = b.world(base.world_id + ".v", base.variables, entities=base.entities, constraints=base.constraints,
+                    channels=base.channels, applicability=base.applicability, providers=base.providers,
+                    references=base.references + (b.synthetic("ledger/validate-cost"),), budget=budget,
+                    actions=tuple(priced if a.action_id == "simulate_pulse" else a for a in base.actions))
+        d = FeasibleActionSpace.build(w).check(b.propose(w, "simulate_pulse", *SIM))
+        details[family] = next(dict(r.detail) for r in d.reasons if r.code == "OVER_BUDGET" and r.subject == "cost")
+    assert details[ActionFamily.VALIDATE]["remaining"] == 10.0
+    assert details[ActionFamily.VALIDATE]["remaining_basis"] == "validation_pool+general_pool"
+    assert details[ActionFamily.EXPLORE]["remaining"] == 4.0
+    assert details[ActionFamily.EXPLORE]["remaining_basis"] == "general_pool"

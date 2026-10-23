@@ -57,6 +57,7 @@ from engcore.scientific.models.definition import UnknownReason
 from engcore.scientific.results.immutable import detach, freeze
 from engcore.scientific.units.quantity import registry_fingerprint
 from engcore.sria.actions import FeasibilityVerdict
+from engcore.sria.decision import ActionFamily
 from engcore.sria.decision.hypotheses import ProposalProvenance, ProposerKind
 from engcore.sria.decision.replay import ReplayMode, ReplayOutcome, ReplayResult
 
@@ -900,10 +901,15 @@ def _check_budget(world: ScientificWorld, spec: ActionSpec, c: _Collector) -> No
                 continue
             requested, remaining = (value_payload(x) if isinstance(x, Quantity) else x for x in (requested, remaining))
         else:
-            remaining = budget.remaining(dim)
+            remaining, remaining_basis = budget.remaining(dim), "compute_budget"
             if dim == "cost":                                   # the plan's own rule, on the raw amount
                 requested = amount.magnitude
                 ok = budget.cost.affordable(requested, family=spec.family)
+                if spec.family is ActionFamily.VALIDATE:        # the pools the plan compared (round 6, A6-F4)
+                    remaining = budget.cost.validation_pool + budget.cost.general_pool
+                    remaining_basis = "validation_pool+general_pool"
+                else:
+                    remaining_basis = "general_pool"
             elif dim == "wall_time":                            # the execution owner's rule (ResourceUsage.exceeded)
                 requested = amount.magnitude_in("second")
                 ok = "wall_seconds" not in budget.compute_used.plus(ResourceUsage(wall_seconds=requested)).exceeded(
@@ -915,10 +921,11 @@ def _check_budget(world: ScientificWorld, spec: ActionSpec, c: _Collector) -> No
             else:
                 requested = amount.value
                 ok = requested <= remaining
+                remaining_basis = "remaining_observations"
         if not ok:
             c.add(F.INFEASIBLE_BUDGET, "OVER_BUDGET", CheckFamily.BUDGET, dim,
                   "the action needs more than the budget owner says remains", requested=requested, remaining=remaining,
-                  **({"remaining_basis": remaining_basis} if statement is not None else {}))
+                  remaining_basis=remaining_basis)
     c.ran(CheckFamily.BUDGET, len(BUDGET_DIMENSIONS))
 
 

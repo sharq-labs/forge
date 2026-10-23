@@ -12,7 +12,8 @@ A proposal is never executable because it exists.  The only path to an executor 
    :class:`AdmittedAction`.
 2. :class:`AdmittedAction` is minted by admission alone: constructing one directly is refused.  It binds the
    proposal, the world revision, the action space, every authority binding verified, and the admission's identity,
-   and carries the execution kind, the provider requirements, the gating models and the world's synthetic status.
+   and carries the execution kind, the provider requirements, every applicability binding (each flagged ``gating``
+   or annotation-only) and the world's synthetic status.
 3. :func:`authorize_dispatch` (the execution owner's call, at dispatch time, with its CURRENT authorities) re-runs
    admission from the admitted action's own proposal and world and requires the identical admitted action.  The
    authorities must be LIVE (derived: every reader consults its owner at every read; a fixed run record, a fixed
