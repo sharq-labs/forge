@@ -35,9 +35,12 @@ Its 25 findings are dispositioned in `docs/work/evidence/br11_local_2026_10_23/r
 The repair has 33 deterministic controls plus 54 bounded generated traces (87 pass), and two existing R13 dictionary controls
 in mutation proof (89 pass; 36 fail on reviewed source). 16 correctness mutants killed; one redundant guard
 removal justified by an independent recovery path and its killed compound mutant. L2: 781 passed.
-Repeated affected-path measurements completed; final-source L3/L4 and reference checks follow.
-**Next executable steps:** finish L3/L4 differential and affected-path measurements; commit the R15 repair/evidence;
-fresh Round 16 at exactly that commit (six lenses, two independent skeptics per BLOCKER/MAJOR, completeness critic).
+Repeated affected-path measurements completed. Clean gate source commit `ec4d23dc238d2e8818170a4029a010538e23af72`: L1 115 passed,
+regression 279 passed; guards 1496 pass / 2 base failures; expensive subset 335 pass / 13 failures / 14 errors;
+FAST 12792 pass / 67 base failures / 190 skipped. Exact failure-ID comparison: NO NEW FAILURES VS BASE.
+Rescore/benchmark MATCHES; Gen1 INTACT. Complete repair/evidence batch committed locally.
+**Next executable step:** fresh Round 16 at the evidence-complete post-fix commit (six lenses, two independent
+skeptics per proposed BLOCKER/MAJOR, completeness critic). No source changes during review.
 BR1.1 remains NOT CLOSED. No push, PR, merge, certification, OD-3, Portfolio or Kernel implementation.
 
 Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`: INTACT). Report:

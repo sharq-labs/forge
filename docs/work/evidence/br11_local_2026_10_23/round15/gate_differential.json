@@ -1,10 +1,12 @@
 {
   "base_sha": "1202ea6c3d96f5c31d0b142a32438da75e020cae",
   "initial_changed_run": "INVALIDATED: copied historical pytest basetemp contaminated collection; interrupted; never gate evidence",
-  "source_sha256": "2bb8984a68f8723e7a5301cc2afab4a4dcb4a89299a9ddf3f1e23bc2aeb5c1cd",
+  "tested_sha": "ec4d23dc238d2e8818170a4029a010538e23af72",
+  "superseded": "Dirty FAST had two extra tree.clean failures. Earlier clean snapshots passed their base differential but were superseded by interrupted-handing repair; final evidence is *_release.",
+  "source_sha256": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
   "suites": [
     {
-      "suite": "guards",
+      "suite": "guards_release",
       "branch_failures": [
         "tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against",
         "tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one"
@@ -15,11 +17,11 @@
       ],
       "new_failures": [],
       "fixed_failures": [],
-      "branch_summary": "2 failed, 1474 passed in 30.86s",
+      "branch_summary": "2 failed, 1496 passed in 33.50s",
       "verdict": "NO NEW FAILURES VS BASE"
     },
     {
-      "suite": "expensive",
+      "suite": "expensive_release",
       "branch_failures": [
         "benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates",
         "tests/test_heterogeneous_ngspice.py::test_a2_the_provider_actually_computes_the_answer",
@@ -80,11 +82,11 @@
       ],
       "new_failures": [],
       "fixed_failures": [],
-      "branch_summary": "13 failed, 335 passed, 14 errors in 35.62s",
+      "branch_summary": "13 failed, 335 passed, 14 errors in 36.04s",
       "verdict": "NO NEW FAILURES VS BASE"
     },
     {
-      "suite": "fast_final",
+      "suite": "fast_release",
       "branch_failures": [
         "benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_source_is_byte_identical_to_its_source_commit",
         "benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance",
@@ -94,9 +96,7 @@
         "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
         "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
         "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies",
-        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
         "tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree",
-        "tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks",
         "tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds",
         "tests/test_core_freeze_v4_manifest.py::test_the_deep_surface_carries_methods_and_member_positions",
         "tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract",
@@ -225,13 +225,10 @@
         "tests/test_phase35_ws3_conjugate_interface.py::test_wrong_interface_semantics_are_refused[<lambda>-conservatively]",
         "tests/test_phase35_ws3_conjugate_interface.py::test_wrong_interface_semantics_are_refused[<lambda>-heat flux dimension]"
       ],
-      "new_failures": [
-        "tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1",
-        "tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks"
-      ],
+      "new_failures": [],
       "fixed_failures": [],
-      "branch_summary": "69 failed, 12768 passed, 190 skipped, 2 warnings in 300.06s (0:05:00)",
-      "verdict": "NEW FAILURES"
+      "branch_summary": "67 failed, 12792 passed, 190 skipped, 2 warnings in 319.36s (0:05:19)",
+      "verdict": "NO NEW FAILURES VS BASE"
     }
   ]
 }

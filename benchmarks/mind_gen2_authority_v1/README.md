@@ -845,7 +845,10 @@ and post-wait checks, interrupt poisoning, discarded before/history checks, and 
 The generated grammar covers start, wait, compare, seal, spend, top-up, restore, rollback, interruption and redispatch.
 It is bounded executable coverage, not exhaustive concurrency analysis or formal proof.
 
-L2 on the completed source: 781 passed. Fresh clean-snapshot L3/L4 results are recorded in the execution journal.
+Completed source: L1 115 passed, L2 781 passed, regression 279 passed. Clean-snapshot guards 1496 pass / 2 fail,
+affected expensive subset 335 pass / 13 fail / 14 errors, FAST 12792 pass / 67 fail / 190 skipped. All failure IDs
+match the unchanged base: **NO NEW FAILURES VS BASE**. Rescore and benchmark MATCHES; Gen1 INTACT.
+Exact source SHA and commands: `round15/recovery_candidate.json`, `executions.jsonl`, `gate_differential.json`.
 BR1.1 remains NOT CLOSED until the fresh review and all closure evidence are complete.
 
 ## 10. Q1–Q7
