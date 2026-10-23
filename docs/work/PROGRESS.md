@@ -9454,3 +9454,10 @@ Failing-first4failed12passed on unchanged636c5e66; L0 32passed; seven semantic m
 - R17 continuation execution: `performance_local`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round17/measure_authority.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/performance_local.log`.
 
 R17 gates L1 201pass, L2 813pass, regression279pass. Guards1528pass/2fail, expensive335pass/13fail/14errors; exact base IDs compared new0/fixed0. Rescore/benchmark MATCHES, Gen1 INTACT. Local sourcebee80307; raw capture remains open.
+
+- R17 continuation execution: `fast_clean`, source HEAD `41a763a697707db1897ee1fcbf1365495875e45b`; cwd `/home/dev_kaeem/forge-r17-gate-final`; `PYTHONPATH=/home/dev_kaeem/forge-r17-gate-final/src:/home/dev_kaeem/forge-r17-gate-final PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 4 --dist loadfile -m 'not expensive' -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/fast_clean.log`.
+
+- R17 continuation execution: `compare_gates`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 python3 /home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round17/compare_gates.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/compare_gates.log`.
+
+### R17 repair gates complete
+Clean source41a763a697707db1897ee1fcbf1365495875e45b FAST12824pass67fail190skip. Comparator new0/fixed0 for guards, expensive,FAST. NO NEW FAILURES VS BASE. References hold; seven mutants killed; ownerJSON repair ready fresh review; capture contract still OPEN.

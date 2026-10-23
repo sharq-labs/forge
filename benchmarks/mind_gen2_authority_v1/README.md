@@ -884,7 +884,7 @@ replaces the distinct owner rules. The stale caller-stack docstring exclusion is
 
 Failing-first4 failed/12 passed; 16 new controls; L0 32 passed, L1 201 passed including generated traces, L2 813 passed,
 regression279 passed. Seven semantic mutants killed. Guards1528 passed/2 base failures; expensive335 passed/13 base
-failures/14 base errors; exact IDs add no new failure. Rescore/benchmark MATCHES; Gen1 INTACT. Five paired measurements overlap on verification/comparison/dispatch/wait/contention (NO SPEED DIFFERENCE ESTABLISHED); seal ranges are lower and nonoverlapping in this bounded run only (6.049–6.331us before, 5.617–5.957us after), no general speed claim. FAST and fresh Round18 pending for this repair. Invalid serializer controls do not demonstrate a separate
+failures/14 base errors; exact IDs add no new failure. Rescore/benchmark MATCHES; Gen1 INTACT. Five paired measurements overlap on verification/comparison/dispatch/wait/contention (NO SPEED DIFFERENCE ESTABLISHED); seal ranges are lower and nonoverlapping in this bounded run only (6.049–6.331us before, 5.617–5.957us after), no general speed claim. Clean source41a763a6 FAST12824 passed/67 base failures/190 skipped; exact failureIDs in guards/expensive/FAST: NO NEW FAILURES VS BASE. Fresh Round18 next for this repair. Invalid serializer controls do not demonstrate a separate
 false-admission path: they preserve the unresolved obligation rather than treating invalid owner output as reconciled.
 BR1.1 remains NOT CLOSED. No execution-owner handoff contract has been selected or implemented.
 
