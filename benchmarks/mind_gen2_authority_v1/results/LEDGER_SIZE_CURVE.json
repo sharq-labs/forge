@@ -1,5 +1,5 @@
 {
- "code_revision": "e573096001cc27cbb2af16c27c04748ec0777e27",
+ "code_revision": "d89dd3b897cc0cf4d86f40d5365b5580e7dc36d4",
  "command": "python -m benchmarks.mind_gen2_authority_v1.ledger_curve",
  "host": {
   "platform": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
@@ -10,142 +10,142 @@
  "settled_charges": {
   "0": {
    "admission_min_max_ms": [
-    14.63,
-    28.45
+    17.41,
+    44.81
    ],
-   "admission_p50_ms": 19.89,
+   "admission_p50_ms": 21.71,
    "check_min_max_ms": [
-    0.316,
-    0.989
+    0.237,
+    0.349
    ],
-   "check_p50_ms": 0.387,
+   "check_p50_ms": 0.264,
    "status": "FEASIBLE"
   },
   "10": {
    "admission_min_max_ms": [
-    15.61,
-    33.79
+    20.95,
+    44.35
    ],
-   "admission_p50_ms": 20.49,
+   "admission_p50_ms": 22.74,
    "check_min_max_ms": [
-    0.531,
-    0.67
+    0.379,
+    0.675
    ],
-   "check_p50_ms": 0.575,
+   "check_p50_ms": 0.436,
    "status": "FEASIBLE"
   },
   "100": {
    "admission_min_max_ms": [
-    33.33,
-    67.33
+    27.43,
+    56.58
    ],
-   "admission_p50_ms": 41.9,
+   "admission_p50_ms": 37.78,
    "check_min_max_ms": [
-    0.982,
-    1.173
+    1.007,
+    1.799
    ],
-   "check_p50_ms": 1.046,
+   "check_p50_ms": 1.304,
    "status": "FEASIBLE"
   },
   "1000": {
    "admission_min_max_ms": [
-    133.1,
-    236.05
+    130.69,
+    267.19
    ],
-   "admission_p50_ms": 174.17,
+   "admission_p50_ms": 179.55,
    "check_min_max_ms": [
-    5.786,
-    15.595
+    5.709,
+    9.236
    ],
-   "check_p50_ms": 7.409,
+   "check_p50_ms": 7.658,
    "status": "FEASIBLE"
   }
  },
  "unbound_experiment_new_evaluation": {
   "0": {
    "admission_min_max_ms": [
-    18.6,
-    41.54
+    19.68,
+    31.23
    ],
-   "admission_p50_ms": 22.62,
+   "admission_p50_ms": 22.34,
    "status": "FEASIBLE"
   },
   "100": {
    "admission_min_max_ms": [
-    19.03,
-    42.98
+    18.78,
+    37.42
    ],
-   "admission_p50_ms": 29.88,
+   "admission_p50_ms": 27.11,
    "status": "FEASIBLE"
   },
   "1000": {
    "admission_min_max_ms": [
-    112.02,
-    253.8
+    103.07,
+    368.65
    ],
-   "admission_p50_ms": 130.03,
+   "admission_p50_ms": 133.16,
    "status": "FEASIBLE"
   },
   "300": {
    "admission_min_max_ms": [
-    34.58,
-    93.16
+    35.73,
+    107.78
    ],
-   "admission_p50_ms": 38.43,
+   "admission_p50_ms": 43.22,
    "status": "FEASIBLE"
   }
  },
  "unbound_ledger_charges": {
   "0": {
    "admission_min_max_ms": [
-    18.59,
-    29.99
+    18.54,
+    27.42
    ],
-   "admission_p50_ms": 20.23,
+   "admission_p50_ms": 20.04,
    "check_min_max_ms": [
-    0.305,
-    0.652
+    0.309,
+    0.464
    ],
-   "check_p50_ms": 0.346,
+   "check_p50_ms": 0.336,
    "status": "FEASIBLE"
   },
   "10": {
    "admission_min_max_ms": [
-    14.5,
-    50.66
+    18.6,
+    33.71
    ],
-   "admission_p50_ms": 20.4,
+   "admission_p50_ms": 20.17,
    "check_min_max_ms": [
-    0.427,
-    0.732
+    0.307,
+    0.467
    ],
-   "check_p50_ms": 0.525,
+   "check_p50_ms": 0.332,
    "status": "FEASIBLE"
   },
   "100": {
    "admission_min_max_ms": [
-    20.45,
-    33.09
+    16.8,
+    37.74
    ],
-   "admission_p50_ms": 21.27,
+   "admission_p50_ms": 22.46,
    "check_min_max_ms": [
-    0.3,
-    0.465
+    0.309,
+    0.71
    ],
-   "check_p50_ms": 0.335,
+   "check_p50_ms": 0.331,
    "status": "FEASIBLE"
   },
   "1000": {
    "admission_min_max_ms": [
-    35.23,
-    105.17
+    32.06,
+    119.1
    ],
-   "admission_p50_ms": 37.4,
+   "admission_p50_ms": 41.66,
    "check_min_max_ms": [
-    0.3,
-    0.394
+    0.342,
+    0.771
    ],
-   "check_p50_ms": 0.322,
+   "check_p50_ms": 0.518,
    "status": "FEASIBLE"
   }
  }

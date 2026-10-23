@@ -8566,7 +8566,14 @@ completeness critic):
   and the critic: the completion gate's review criteria held. The brief says not to loop on cosmetic MINORs; the
   non-cosmetic ones (some introduced by round 8) and the records were fixed in `17a1c31`, `e573096` (README §9), and
   round 10 reviews that change once;
-- round 10: see the update below.
+- round 10 at `c69e579` (six lenses): 0 BLOCKER / 2 MAJOR / 36 MINOR (critic K10-F1, K10-F2 MINOR). R10-C-F1 (repro
+  skeptic MAJOR, scope skeptic MINOR): round 9's exact-type plain-data rule refused ordinary owner content (an
+  evaluation's frozen nested metadata, numpy and enum values), so a spend recorded with it was never observed and a
+  restore re-dispatched the executed action, sequentially; R10-C-F2 (both skeptics MINOR): the ticket rule protected
+  a handed spend only when its verification had started first. Q4: YES from C, PARTIAL from B and F, NO from A, D, E
+  and the critic (which ruled both MINOR). Both treated as MAJOR and fixed in `d89dd3b` (README §9 lists every
+  disposition), with the records in the commit after it;
+- round 11: see the update below.
 
 **Failed approaches, recorded so they are not repeated:**
 - **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
@@ -8619,6 +8626,20 @@ completeness critic):
   verification handed a spend but not yet read back still did not protect it. Round 9: tickets taken when a
   verification starts, the read-back unlocked, and a verification that started while an earlier one is in flight
   decides on nothing (no waiting); experiments read back only from plain JSON data.
+- **An exact-type plain-data rule for account read-backs** (round 9, against code hooks and digest drift): it is a
+  second readability rule beside the owner's, and it refused content the owner writes down and reads back (an
+  evaluation's FrozenList/FrozenMapping metadata, numpy scalars, enums), so a spend recorded that way was never
+  observed and a restore re-authorized the executed action (R10-C-F1). Round 10 reads each account back by the owner's
+  own written form (ledger: `canonical_digest`'s JSON; experiment: `to_json`) and refuses for good an account handed
+  in a state the owner cannot write down.
+- **Ordering verifications by when they start** (round 9's ticket rule): a verification that started first but was
+  handed a restore after a later one was handed the spend decided first and re-dispatched (R10-C-F2).
+- **Refusing a verification while any other is in flight** (round 10's first candidate for the rule above): correct,
+  but 3 of 160 admissions were decided in the reviewers' p10c load (4 threads, 30 experiment accounts). Round 10 waits
+  instead, bounded and holding no lock, for the verifications in flight when one compared.
+- **One read-back cache shared by the follower and every in-flight snapshot** (round 9): an unlocked read-back inserted
+  into the dict a locked comparison was pruning, raising `RuntimeError` and losing a handed spend (B10-1). Each snapshot
+  now reads back into a private copy, adopted at its comparison.
 - **A mutation run under the repository's pytest config with only `PYTHONPATH` pointed at a mutant `src`**:
   `pyproject.toml`'s `pythonpath` puts the checkout's own `src` first, so the mutant was never imported. Mutants need a
   full tree copy run from its own root.
@@ -8773,6 +8794,29 @@ completeness critic):
     passed, 2 failed, the same two pre-existing failures with messages identical to the base's. The affected expensive
     tests minus the campaign tests: 13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base. FAST is
     red on the base: NOT green.
+
+23. Round 10 (fix `d89dd3b`; results and records in the commit after it). The suite command of item 1 at `d89dd3b`:
+    **612 passed**; the r6+r10 files 5 times (44 passed each) and the r6/r7/r9/r10 files under `-n 4` 5 times (76
+    passed each); after the r10 file's `WAIT_S` references were made to run on older trees, the r10 file again 30
+    passed. The 30-test r10 file copied into a `c69e579` archive: 20 failed, 9 passed, and the self-containing-value
+    test hung (stopped after 20 s; README §5 says which pass and why). Thirteen mutants of the round-10 code, each in a
+    full tree copy run from its own root (scripts `.../scratchpad/mut_r10/mutate.py` and `mutate2.py`), each failed at
+    least one r10 control. `rescore --check`: MATCHES; `run_benchmark --check`: MATCHES; `gen1_reference --check`:
+    INTACT. The reviewers' round-10 probes re-run on the fix (`.../scratchpad/review_r10/`): c1001, c1003, c1007, c1008,
+    c1010, f01 (both modes), d14, d14b and the scope skeptic's v1/v2 classes: every restore after a handed spend
+    refused, the executor ran once; d16/p11 (a self-containing value) refused in under 1 ms; d10b/p15 (forged
+    revisions '²', '¹⁰', '1²', 5000 digits) refused, not raised; f10 (ledger aliasing) detached; p10 no `RuntimeError`
+    (the 598/600 count it printed is its own unsynchronized counter); p10c 160 of 160 FEASIBLE; p18b (8 threads) 240 of
+    240; p12 (a stuck `accounts()`) 5 of 5 refused after `WAIT_S` each. Round 10's first candidate (refuse while any
+    other verification is in flight) gave p10c 3 of 160 FEASIBLE and was dropped before the commit. Performance
+    regenerated at `d89dd3b` on an idle host: `run_benchmark`, `ledger_curve` and BR1's harness alternately on
+    `1202ea6c`, `27b9f71` and `d89dd3b`, five rounds each (a first run of the first two overlapped test collection and
+    was discarded); an interleaved A/B of BR1's harness on `e573096` and `d89dd3b`, 8 runs each, gave p50 medians 0.229
+    and 0.230 ms (`.../scratchpad/perf_r10/ab_e573096_d89dd3b.txt`), so round 10 did not change the check's cost and
+    the larger BR1.1/BR1 gap in this file is the host's state (README §8). Correction to item 19 (A9-F2): since round
+    8 the identity rule is required of the proposed spelling itself, so an honest other-unit spelling whose conversion
+    is byte-equal to a 13+-digit level is refused (224043.6073475 mm for the level 8820.6144625 inch, which `15725ec`
+    admitted), and a fixed condition spelled that way is refused at bind (README §4).
 
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this

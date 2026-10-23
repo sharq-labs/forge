@@ -31,6 +31,9 @@ from engcore.sria.decision import ActionFamily
 SIM = ax.base("battery")["simulate_pulse"]
 
 
+_WAIT_S = getattr(BudgetReader, "WAIT_S", 1.0)                             # (a default on trees before round 10)
+
+
 def _solver(o):
     return next(k for k in o.ledgers if k.endswith(".solver"))
 
@@ -134,7 +137,7 @@ def test_a_self_containing_value_is_refused_at_once():
 
 # ---- R10-C-F2 / F10-1 / A10-F1 / E10-F1: the verification handed the spend started SECOND ----------------------------------------
 def test_a_rollback_read_by_an_earlier_started_verification_never_redispatches(monkeypatch):
-    monkeypatch.setattr(BudgetReader, "WAIT_S", 0.2)
+    monkeypatch.setattr(BudgetReader, "WAIT_S", 0.2, raising=False)   # (raising=False: also run on older trees)
     o = ax.owned("battery")
     lid = _solver(o)
     d_entered, restored, t2_handed, t2_resume = (threading.Event() for _ in range(4))
@@ -212,7 +215,7 @@ def test_a_compared_verification_decides_on_what_the_ones_in_flight_record(spend
             reader.pinned().read(OwnerKind.BUDGET_LEDGER, lid)
     else:
         assert reader.pinned().read(OwnerKind.BUDGET_LEDGER, lid) is not None   # nothing moved: V decides
-    assert time.perf_counter() - t0 < BudgetReader.WAIT_S                  # decided once W left, not on the timeout
+    assert time.perf_counter() - t0 < _WAIT_S                  # decided once W left, not on the timeout
     w.join(10)
 
 
@@ -448,7 +451,7 @@ def test_a_failed_accounts_call_refuses_only_its_own_verification():
     state["down"] = False
     t0 = time.perf_counter()
     assert reader.read(OwnerKind.BUDGET_LEDGER, lid) is not None
-    assert time.perf_counter() - t0 < BudgetReader.WAIT_S                  # no ticket left behind to wait for
+    assert time.perf_counter() - t0 < _WAIT_S                  # no ticket left behind to wait for
 
 
 # ---- A10-F6: bind executes a fixed condition by the check's own rule -------------------------------------------------------------

@@ -31,7 +31,8 @@ OWNER_DECISION_REQUIRED (BR1.1 does not decide these):
 - Budget reservation and at-most-once execution at the execution owner (the desk reserves nothing).
 - A provider status loader (`ProviderStatus.from_dict`) on the providers owner.
 - Protocol level semantics across units: an action level declared in another unit executes as its conversion into
-  the variable's unit, an ulp either side of any other spelling of that level (the variable's own, or a bound's), so a
+  the variable's unit, off any other spelling of that level (the variable's own, or a bound's) by conversion rounding
+  (one or several ulps: 8 for 95 degF in degC), so a
   bound placed at that level decides on the converted value and can go either way; this holds whether or not the
   variable declares a level set, and an action that declares -0.0 executes -0.0 (README §4). Should bind refuse an
   action level whose conversion into the variable's unit does not round-trip bit-exactly to the action's own spelling
