@@ -6,6 +6,27 @@ as open, or list EXC-1 as an open exception are superseded by that decision. The
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task - R21 integration gate recovery (2026-10-24)
+
+R21 is the current executable task. BR1.1 remains locally CLOSED; Kernel v0 and all
+new scientific implementation remain NOT STARTED. The owner explicitly authorized
+the documented full local-assurance workflow, campaigns, mutation shards and its
+certificate-only child, solely as prerequisites for a valid receipt. This supersedes
+the earlier assurance prohibition only for this bounded workflow. Repair and verify
+source/provenance first; freeze an independently technically reviewed source SHA;
+use controlled local WSL resources; preserve every failure; do not expand into OD-3,
+thermal, battery or UQ repairs. No push/merge unless SAFE_TO_PUSH is explicitly YES
+and every other mandatory gate is satisfied.
+
+Execution: reconcile main history (done at41663479) -> explicit provenance inventory
+repair and review -> immutable source -> documented local assurance -> certificate-only
+child and verification only if SOURCE_PASS -> publication only with protection and
+independent human approval. A technical AI review is not GitHub approving review.
+Current owner actions outstanding: supported private-repository protection capability
+(API403) and an independent human reviewer (only author sharq-labs is listed).
+No purchase, visibility change, governance change or self-approval is authorized.
+Evidence: docs/work/evidence/r21-integration-recovery/ and /home/dev_kaeem/br11-r21/.
+
 ## Current bounded task - GEN2-BR1.1 authority-bound ScientificWorld + non-bypassable admission (2026-10-22)
 
 **Current continuation (2026-10-24): CLOSED within BR1.1 development scope.** Approved lifetime contract implemented in0b605b4; Round19's two substantive families repaired inb4bbee0f with red-first controls. Fresh Round20 sixperspective review plus scientific skill and completeness critic: Q1–Q7 allNO,0BLOCKER/0MAJOR/0substantiveMINOR. Targeted885pass; cleanFAST12896pass/67basefailureIDs/190skip; provenance diagnostic differs1202vs456 and remains debt. Gen1 INTACT. Evidence `docs/work/evidence/br11_local_2026_10_23/round20/README.md`. No new owner decision. Scientific Contract Kernel v0 is next authorized Big Rock; NOT STARTED per mission stop boundary. No push/PR/merge/OD3/certification. Earlier round statuses below are historical checkpoints.
