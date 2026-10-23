@@ -64,14 +64,16 @@ ExecutionDesk (immutable; live readers; the execution owner's executor behind a 
 | SYSTEM_STATE | `system_runtime` `SystemRunResult` / `SystemCheckpoint` (`RunStateReader.following` re-asks the execution side for the head; a head never goes back) | (state owner, variable) of the head state; sequence; `SystemState.digest`; superseded states give STALE, unknown digests MISSING | none |
 | MODEL_RECORD | `scientific.ModelRegistry` (exact `ScientificModelDefinition`) | (model, version); sha256 of `engcore.scientific.to_json` (world-derived: the model defines no digest) | none |
 | PROVIDER_STATUS | `providers.ProviderRegistry.status` (the owner's cache, or `refresh=True`) + `providers.health.assess_health` | provider id; version; the health report's status-digest rule | none |
-| BUDGET_LEDGER | `sria.campaign.BudgetLedger` (`BudgetReader.following` for replaced account objects; an account never goes back a revision) | ledger id; settled charges; `canonical_digest` of `to_dict()` in the form `from_dict` reads it back | **added** read-only `digest` / `revision` |
-| EXPERIMENT | `scientific.experiments.ScientificExperiment` | experiment id; evaluations; sha256 of `to_json` (world-derived) | none |
+| BUDGET_LEDGER | `sria.campaign.BudgetLedger` (`BudgetReader.following` for replaced account objects; an account behind the history observed is refused while behind, a rewritten one for good) | ledger id; settled charges; `canonical_digest` of `to_dict()` in the form `from_dict` reads it back | **added** read-only `digest` / `revision` |
+| EXPERIMENT | `scientific.experiments.ScientificExperiment` (read back whole by `from_dict`, the rule replay uses) | experiment id; evaluations; sha256 of `to_json` (world-derived) | none |
 | DECLARATION | the `ProtocolDeclaration` in force, held detached (`DeclarationReader.following`: revisions only move forward, one content per revision) | declaration id; revision; content digest | none (no canonical protocol owner) |
 | UNIT_REGISTRY | `scientific.units` | `registry_fingerprint()` after `verify_registry_unmutated()` | none |
 
 - **Liveness** is derived from the reader's type and mode at every call: registry, ledger, experiment and unit readers
-  read mutable owner objects; following readers re-ask the execution side; fixed records, snapshots, memos and
-  look-alikes are not live. Only live readers back a desk or `authorize_dispatch`. Liveness states the MODE; which
+  read mutable owner objects; following readers re-ask the execution side; fixed records, snapshots (including every
+  following reader's pinned snapshot: run head, declaration set, budget accounts), memos and look-alikes are not live.
+  Only live readers back a desk or `authorize_dispatch`. `Authorities.memoized` pins every reader when a verification
+  starts, whatever the verification reads, so a following reader observes its owner at every verification. Liveness states the MODE; which
   record is current is the execution side's statement.
 - **Admission** never decides on the caller's object (a frozen record edited in place is not the world its identity
   names, and the rebuild refuses it) and mints on the owners' fresh projection (no caller-written text reaches an
@@ -79,15 +81,18 @@ ExecutionDesk (immutable; live readers; the execution owner's executor behind a 
 - **Decided = executed** (as requested; realization uncertainty is not assessed, `CONFIGURATION_BASIS`). Every family
   decides on each control assignment and fixed condition AS IT WILL BE EXECUTED (in its variable's declared unit by the
   unit owner's conversion; a declared discrete level of the action's control domain when it declares levels, else of
-  the variable's own domain, as that level; an integer as the exact integer), and a fixed condition is checked against its variable's own domain as executed, at
-  bind and at every check. Admission builds the configuration it mints from its sources by a separate path, and refuses
-  to mint unless every exact value any family read in the check (recorded in the decision, outside its identity) equals
-  the value minted; the executor's settings are their magnitudes. The proposal keeps the proposer's spelling; refusal
-  records carry both. (Rounds 2, 3 and 4 found a BLOCKER or MAJOR where the two differed.)
+  the variable's own domain, as that level; an integer as the exact integer), and a fixed condition is checked against
+  its variable's own domain as executed, at bind and at every check. A value of a level-set variable is executed only
+  as EXACTLY one declared level of the deciding set as executed: the domain family refuses anything else
+  (LEVEL_NOT_DECLARED), and admission refuses to mint it (an independent guard; round 7). Admission builds the
+  configuration it mints from its sources by a separate path, and refuses to mint unless every exact value any family
+  read in the check (recorded in the decision, outside its identity) equals the value minted; the executor's settings
+  are their magnitudes. The proposal keeps the proposer's spelling; refusal records carry both. (Rounds 2, 3, 4 and 7
+  found a BLOCKER or MAJOR where the two differed.)
 - **Dispatch.** The desk is immutable; it re-admits once; its executor is wrapped so that any authorization handed to it
   is re-derived, and authorizations name the providers and every applicability binding of the action, each flagged
-  `gating` (true only for a MODEL_EXECUTION action, whose execution the model's validity gates) or annotation-only. Authorizations
-  are minted from a fresh rebuild and have `verify()` for deferred execution. A desk built with `suggestions_only=True`
+  `gating` (true only for a MODEL_EXECUTION action, whose execution the model's validity gates) or annotation-only.
+  Authorizations are minted from a fresh rebuild and have `verify()` for deferred execution. A desk built with `suggestions_only=True`
   admits and dispatches only proposals that carry their certified `ExternalSuggestion`; the executor guard applies the
   same policy.
 - **Replay vs currentness.** `AdmissionRecord.of` (live owners only) records world, proposal, exactly the owner records
@@ -96,8 +101,9 @@ ExecutionDesk (immutable; live readers; the execution owner's executor behind a 
   records also under the identity they are filed under; a ledger or experiment account is filed under the reader's id;
   a provider report must be the owner's assessment of its status; a ledger's totals must be what its charges give), and
   only under this process's unit registry (`replay_decision` too, for a world that binds the unit registry; a BR1-style
-  world binds none, and its decisions replay under this process's registry as BR1's did). A recorded run history and recorded refusals are
-  replayed as recorded. BR1.1 is unmerged: records made at its intermediate development commits are not supported. REPRODUCED attests self-consistency under the owners' rules, not that the
+  world binds none, and its decisions replay under this process's registry as BR1's did). A recorded run history and
+  recorded refusals are replayed as recorded. BR1.1 is unmerged: records made at its intermediate development commits
+  are not supported. REPRODUCED attests self-consistency under the owners' rules, not that the
   owners held those records; it never authorizes a dispatch.
 - **Threat model.** Every record crossing the boundary is re-derived. A Python process is one trust domain: code that
   introspects private members, closures or tracebacks of execution-side objects is inside the execution side's trust
@@ -133,23 +139,33 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   admitted action and authorization; a refusal records the amount and the remainder the owner compared it with, in the
   ledger's unit, and which remainder that was (`general_pool`, or `validation_pool+general_pool` for a VALIDATE
   action; an experiment's `remaining_observations` or `attempt_cap`). A BR1-style world (no owner statement, never
-  admitted) keeps BR1's plan rule and record: its OVER_BUDGET states the plan's general remainder and no basis.
+  admitted) keeps BR1's plan rule; its OVER_BUDGET records the remainder that rule compared and its basis
+  (`general_pool`, or `validation_pool+general_pool` for a VALIDATE action; `compute_budget` for solver calls and wall
+  time; `remaining_observations` for experiments).
 - **Followed budget accounts.** A following budget reader observes every account the execution side hands over, at
-  its construction and at every verification (each verification's snapshot is taken and observed under one lock, in
-  order), whichever world is verified: a submitted world never chooses what is observed. A verification decides on
-  exactly the records its snapshot observed. An account only moves forward from the history the reader accepted for it
-  (in the owner's read-back form: a restore of an unchanged account is the same account, a top-up with the history
-  unchanged is a move of the owner); one that went back or rewrote its history is OWNER_UNAVAILABLE to every later
-  verification that reads it, with one message from the first refusal on (so the refusal is recordable and replays),
-  and adopting a new timeline is the execution side's statement, made with a new reader (rounds 5 and 6). Concurrent
-  verifications never refuse an account that only moved forward. An account no verification reads (unreadable or
-  diverged) refuses nothing; the constructor still refuses, for the whole reader, an account set that is not exactly
-  typed or that registers one object under two ids. A world bound to an account or a provider the declaration in force
-  does not name is AUTHORITY_MISMATCH without that record being read. A reader cannot refuse a state it never observed
-  (a spend and a rollback both between two verifications look like no change); at-most-once execution is the execution
-  owner's. Each verification reads every handed account back (a ledger's charges, an experiment's evaluations one at a
-  time), so admission cost grows with the accounts' histories (§8). The observation rule restates
-  `ScientificExperiment.record`, pinned by a differential test.
+  its construction and at every verification, whatever the verification reads (`Authorities.memoized` pins every
+  reader when a verification starts): a submitted world never chooses what is observed. Each pin reads every account
+  back with no lock held (the execution side's `accounts()` may take its own locks or read through the reader); only
+  the comparison with the history this reader observed is locked. An account only moves forward (in the owner's
+  read-back form: a restore of an unchanged account is the same account, a top-up with the history unchanged is a move
+  of the owner). An account BEHIND the longest history observed (it went back, or a concurrent verification's snapshot
+  is older than one already observed) is OWNER_UNAVAILABLE to a verification that reads it, for as long as it is
+  behind: a return to an earlier state never re-authorizes what the account had moved past, and a return to the state
+  observed is that state. An account that REWROTE its history (neither extends it nor is a prefix of it) is refused by
+  that reader from then on; adopting a new timeline is the execution side's statement, made with a new reader (rounds
+  5-7). Concurrent verifications never refuse an account that only moved forward for good. A refusal says the same
+  thing at every read, so it is recordable and replays. A pinned snapshot serves detached copies of the records it
+  observed (one serialization per account: record, digest and history describe one state) and is never live. An
+  account no verification reads (unreadable, behind or rewritten) refuses nothing; the constructor still refuses, for
+  the whole reader, an account set that is not exactly typed or that registers one object under two ids. A world bound
+  to an account or a provider the declaration in force does not name (named as `project_world` binds them: the
+  declaration's budget references and `providers`) is AUTHORITY_MISMATCH without that record being read; when the
+  declaration cannot be read, no account or provider is read for that world (OWNER_UNAVAILABLE if the declaration
+  owner is unavailable). A reader cannot refuse a state it never observed (a spend and a rollback both between two
+  verifications look like no change); at-most-once execution is the execution owner's. An experiment is read back
+  whole by its owner (`ScientificExperiment.from_dict`, the rule replay uses), once per content digest; every
+  verification reads every handed account back, so admission cost grows with the accounts' histories (§8). The
+  observation rule restates `ScientificExperiment.record`, pinned by a differential test.
 - **Synthetic** means labelled synthetic by the declaration (`SYNTHETIC_BASIS`).
 - **Lineage v2** records ancestors' statements; v1 (BR1) keeps its bytes and ids and verifies by walking the store. A
   projection is a root world; admission refuses a history no owner made.
@@ -161,11 +177,13 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   decides: the action's control domain when it declares levels, else the variable's own (never one after the other).
   A value the owner calls one level but that lies nearer another declared level, of that set or of the variable's own
   domain, matches neither (no world-made separation threshold: round 5 replaced the round-4 one; round 6 added the
-  variable's own levels). The cost of the owner's rule: a level whose base-unit magnitude has 13 or more significant
+  variable's own levels); another spelling of the SAME level (the variable's 0.7 A beside the action's 700 mA) is not
+  another level (round 7). A level declared by the action in another unit executes as its conversion into the
+  variable's unit, which can lie an ulp either side of the variable's own spelling of the same level; a strict bound at
+  that level is decided on the executed value (decided = executed). The cost of the owner's rule: a level whose base-unit magnitude has 13 or more significant
   digits can be refused in an honest other-unit spelling at the rule's rounding edge (3224.762319965 A is FEASIBLE,
   3.224762319965 kA is LEVEL_NOT_DECLARED; offset conversions such as degC to K add digits). It fails closed; spelling
-  such a level in its declared unit avoids it. A value that IS
-  a level is decided as the level even where its own spelling would decide otherwise at a bound (35.0000000001 degC is
+  such a level in its declared unit avoids it. A value that IS a level is decided as the level even where its own spelling would decide otherwise at a bound (35.0000000001 degC is
   35 degC to the unit owner, and it is checked and executed as 35 degC). Round 2's 64-ulp rule was absolute at a zero
   level and was withdrawn (round 3, R3-A2).
 - **Integers** are compared as exact integers; an integer domain's bounds stay within ±2**53 (the owner stores a bound

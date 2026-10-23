@@ -205,7 +205,8 @@ def test_liveness_is_derived_from_the_readers_and_never_asserted():
 
     duck = Authorities.of(*(LookAlike(r) if type(r) is BudgetReader else r for r in live.readers))
     memo = live.memoized()                                            # one verification's reads, cached
-    for authorities in (snapshot, relabelled, fixed_state, fixed_decl, duck, memo):
+    pinned_budget = Authorities.of(*(r.pinned() if type(r) is BudgetReader else r for r in live.readers))   # round 7
+    for authorities in (snapshot, relabelled, fixed_state, fixed_decl, duck, memo, pinned_budget):
         assert not authorities.live
         with pytest.raises(WorldRefused):
             ExecutionDesk(authorities, lambda auth: auth, accept_synthetic=True)

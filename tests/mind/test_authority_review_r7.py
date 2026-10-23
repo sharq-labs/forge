@@ -353,3 +353,37 @@ def test_an_over_budget_experiment_with_attempts_left_records_remaining_observat
     over = {x.subject: x.detail for x in r.reasons if x.code == "OVER_BUDGET"}
     assert over["experiments"]["remaining_basis"] == "remaining_observations"
     assert over["experiments"]["remaining"] == exp.remaining_observations == 0
+
+
+# ---- K7-F1 (BLOCKER) / K7-F2: offset units and a fixed protocol condition; strict and inclusive bounds -----------------------------
+@pytest.mark.parametrize("role", [R.CONTROLLED_INPUT, R.FIXED_PROTOCOL_CONDITION])
+@pytest.mark.parametrize("op", [Op.LESS_THAN, Op.LESS_EQUAL])
+def test_every_spelling_of_one_level_is_decided_alike_and_executed_as_one_value(role, op):
+    """Variable and own levels in degC, the protocol's levels in degF, a limit at the 35 degC level: every spelling the
+    unit owner calls 35 degC gets ONE decision, and an admitted one is executed as the protocol's level as executed."""
+    from engcore.mind.world import feasibility as fz
+    lim = DeclaredConstraint("t_lim", ConstraintDefinition("t_lim", "T", op, Quantity(35.0, "degC")), None, ("*",),
+                             P, "synthetic chamber limit")
+    w = b.world("synthetic.chamber", (
+        b.var("T", role, "degC", TS.CONSTANT_PER_RUN, domain=b.levels("degC", 25.0, 35.0)),
+        b.var("y", R.MEASUREMENT, "V", TS.TIME_SERIES)),
+        actions=(b.action("hold", ActionFamily.EXPLORE, ActionMode.INTERVENE,
+                          controls=(b.ctrl("T", b.levels("degF", 77.0, 95.0), b.P),), expected_observables=("y",),
+                          estimated_cost=b.cost(1, 0), estimated_duration=b.q(10, "s")),),
+        constraints=(lim,), channels=(b.channel("y"),), budget=b.budget(5, 0, ledger="ch"),
+        references=(b.synthetic("ch/1"),))
+    o = ax.owned("chamber", w)
+    calls = []
+    gw = ExecutionDesk(o.authorities(), calls.append, accept_synthetic=True).gateway()
+    port = MindWorldPort(FeasibleActionSpace.build(project_world(o.declaration, o.authorities())))
+    level = fz.as_executed(port.world, port.world.action("hold"), "T", Quantity(95.0, "degF"))
+    outcomes = set()
+    for spelled in (Quantity(95.0, "degF"), Quantity(35.0, "degC"), Quantity(308.15, "K"),
+                    Quantity(34.99999999999999, "degC"), Quantity(34.999999999999986, "degC"),
+                    Quantity(94.99999999999997, "degF")):
+        r = port.request_admission(o.propose("hold", {"T": spelled}, ("y",), world=port.world), gw)
+        outcomes.add((r.status.value, tuple(sorted(r.codes()))))
+        if r.admitted is not None:
+            port.execute(r.admitted, gw)
+            assert dict(calls[-1].settings)["T"] == level.magnitude, spelled
+    assert len(outcomes) == 1, outcomes
