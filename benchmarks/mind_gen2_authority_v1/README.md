@@ -244,32 +244,43 @@ subjects. The changes of rounds 3 to 6 left every case's status and codes unchan
 
 One idle host: 4 CPUs, Linux, Python 3.13.16. BR1's reported numbers were measured on another machine. For the delta,
 BR1's own harness ran on BR1's 515 cases alternately on BR1's code (`1202ea6c`) and on BR1.1's code at `26d7724`, three
-times each; the medians are below (`BR1_PERFORMANCE_THIS_HOST.json`, with every run and the command). Single runs on
-this host differ by up to ~30 %, so deltas inside that are noise; `PERFORMANCE.json` also carries one single run of the
-same harness (`br1_cases_on_br1_1_code`), which agrees within that band. The owned-world metrics are `PERFORMANCE.json`
-regenerated at `2422014` (`python -m benchmarks.mind_gen2_authority_v1.run_benchmark`, 25 repeats).
+times each; the medians are below (`BR1_PERFORMANCE_THIS_HOST.json`, which names both commits and holds every run and
+the command). Single runs on this host differ by up to ~50 % (FEASIBILITY p95 on BR1.1's code: 0.414 to 0.628 ms)
+and by up to ~30 % on the other metrics, so every delta in the table is inside the noise band: none is a measured
+speed-up or slow-down. `PERFORMANCE.json` (which names its code revision) also carries one single run of the same
+harness on the current code (`br1_cases_on_br1_1_code`), inside the same band. The owned-world metrics are
+`PERFORMANCE.json` regenerated at `0fc399b` (`python -m benchmarks.mind_gen2_authority_v1.run_benchmark`, 25
+repeats); `a058cf2` after it changes only refusal records and a bind message. Two runs at `c2d41fb` and `0fc399b`, whose
+measured code is identical, gave gen1_pool projection medians of 7.4 and 12.3 ms: per-world medians move by that much.
 
 | Metric (ms) | BR1 reported | BR1 code, this host | BR1.1 code, this host | Delta (this host) |
 |---|---|---|---|---|
-| WORLD_BUILD (BR1 cases) | 0.856 | 1.480 | 1.651 | +12 % (noise band) |
-| ACTIONSPACE_BUILD | 0.256 | 0.457 | 0.386 | −16 % |
+| WORLD_BUILD (BR1 cases) | 0.856 | 1.480 | 1.651 | +12 % (noise) |
+| ACTIONSPACE_BUILD | 0.256 | 0.457 | 0.386 | −16 % (noise) |
 | FEASIBILITY p50 | 0.140 | 0.244 | 0.233 | −4 % (noise) |
-| FEASIBILITY p95 | 0.263 | 0.479 | 0.415 | −13 % |
-| check on owned worlds p50 / p95 | — | — | 0.353 / 0.551 | new |
-| projection from owners (median by world) | — | — | 11.5 | new |
-| owner verification p50 / p95 | — | — | 13.8 / 18.1 | new |
-| admission (verify + rebuild + check + mint) p50 / p95 | — | — | 17.8 / 23.9 | new |
-| dispatch authorization (re-admission) p50 / p95 | — | — | 19.2 / 24.3 | new |
+| FEASIBILITY p95 | 0.263 | 0.479 | 0.415 | −13 % (noise) |
+| check on owned worlds p50 / p95 | — | — | 0.357 / 0.539 | new |
+| projection from owners (median by world) | — | — | 12.0 | new |
+| owner verification p50 / p95 | — | — | 14.8 / 18.2 | new |
+| admission (verify + rebuild + check + mint) p50 / p95 | — | — | 19.1 / 22.5 | new |
+| dispatch authorization (re-admission) p50 / p95 | — | — | 20.4 / 23.5 | new |
 | reference: one in-repo solver execution (median) | — | 163.4 | 161.9 | — |
 
 The check is as fast as BR1's within this host's noise. Admission costs ~50× the check and stays ~8× cheaper than one
 solver execution on these fixtures. Under `cProfile` (20 admissions, battery, at `26d7724`), the verified projection
-takes ~71 % of admission and the unit owner's `verify_registry_unmutated` alone ~24 %. Cost grows linearly with the
-bindings, the declarations in force and, measured, a bound ledger's settled charges: admission p50 20 / 34 / 38 / 197 ms
-and check p50 0.40 / 0.54 / 1.2 / 8.4 ms at 0 / 10 / 100 / 1000 charges (`python -m
-benchmarks.mind_gen2_authority_v1.ledger_curve`, `LEDGER_SIZE_CURVE.json`): the world carries every charge of a bound
-ledger, so past ~1000 charges an admission costs about one solver execution. Nothing is cached across admissions (a
-cache would be a currency claim).
+took ~71 % of admission and the unit owner's `verify_registry_unmutated` alone ~24 %. Cost grows with the bindings,
+the declarations in force and the budget accounts' histories:
+- a bound ledger's settled charges (the world carries every charge of a bound ledger): admission p50 22.5 / 24.2 / 40.5
+  / 199 ms and check p50 0.45 / 0.51 / 1.27 / 8.5 ms at 0 / 10 / 100 / 1000 charges (`python -m
+  benchmarks.mind_gen2_authority_v1.ledger_curve`, `LEDGER_SIZE_CURVE.json`, 41 repeats, with each point's fastest
+  and slowest run): about 0.18 ms per charge between 100 and 1000, so past ~1000 charges an admission costs about one
+  solver execution;
+- every account handed to a following budget reader, bound or not, is read back at every verification (round 6, §4):
+  one unbound ledger of 0 / 1000 / 5000 charges gave admission p50 21.6 / 39.8 / 108.6 ms on the battery fixture at
+  `defdf7b` (21 repeats; a scratch probe, not a committed result); a bound experiment's evaluations are read back one at
+  a time (linear, R6-D3; the round-4 follower rebuilt the whole experiment, quadratic in its evaluations).
+
+Nothing is cached across admissions (a cache would be a currency claim).
 
 ## 9. Review rounds
 

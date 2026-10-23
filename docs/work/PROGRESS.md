@@ -8660,6 +8660,22 @@ completeness critic):
     base's 99 (NEW 0, FIXED 0; the load-dependent timing test failed this time, as on the base). Regression pack: 279
     passed. Guard suites: 1215 passed, the same 2 pre-existing failures. FAST is red on the base: NOT green.
 
+15. Round 6 at `a058cf2` (fixes `0453a95`, `a058cf2`; provenance helpers `c2d41fb`, `0fc399b`): the suite command of
+    item 1, **531 passed**; `test_authority_review_r6.py` (14) copied into the `ceac320` tree: 9 failed, 5 passed (the
+    passing five guard paths that already held; the thread stress test failed there in 1 of 3 runs); the two
+    experiment-follower controls fail on a full-tree mutant (`/tmp/claude-0/-home-user/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/mut_r7tree`) whose follower skips the
+    experiment history check (2 failed, 11 passed then); `rescore --check`: MATCHES after regeneration (statuses and
+    codes of every case unchanged; the decisions digest moved with A6-F4's record); `run_benchmark --check`: MATCHES;
+    `gen1_reference --check`: INTACT. `run_benchmark` and `ledger_curve` regenerated `PERFORMANCE.json` and
+    `LEDGER_SIZE_CURVE.json` at `0fc399b` (both name it). A scratch probe (`/tmp/claude-0/-home-user/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/perf_r7/unbound_cost.py`) measured
+    admission with one unbound ledger of 0 / 1000 / 5000 charges: p50 21.6 / 39.8 / 108.6 ms (README §8).
+16. Gates at `a058cf2` (`/home/user/forge-gate2`): FAST (command of item 5) 93 failed, 5 errors, 12515 passed; against
+    the base's 99 failing ids NEW 0, FIXED 1 (the load-dependent timing test of item 10). Regression pack: 279 passed.
+    Guard suites (item 10's set): 1246 passed, 2 failed, the same two pre-existing failures with messages identical to
+    the base's (re-run on `/home/user/forge-base` and diffed). `forge_check.py --changed --base 1202ea6c... --dry-run`:
+    narrowing refused (unclassified `src/engcore/mind/world` and benchmark files) → whole FAST + regression pack, as
+    run above. FAST is red on the base: NOT green.
+
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
 cloud session); not used, and nothing was merged for it.
