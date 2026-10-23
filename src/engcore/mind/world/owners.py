@@ -99,12 +99,13 @@ class _Unreadable(OwnerUnavailable):
 
 
 class _NotRead:
-    """Why one handed account was not read back, and whether that refuses it for good (``_Unreadable``)."""
+    """Why one handed account was not read back, whether that refuses it for good (``_Unreadable``), and otherwise the
+    length of its history its owner's container stated then (how far the account had moved)."""
 
-    __slots__ = ("why", "for_good")
+    __slots__ = ("why", "for_good", "length")
 
-    def __init__(self, why: str, for_good: bool) -> None:
-        self.why, self.for_good = why, for_good
+    def __init__(self, why: str, for_good: bool, length: int = 0) -> None:
+        self.why, self.for_good, self.length = why, for_good, length
 
 
 class _Failed(Exception):
@@ -117,11 +118,38 @@ class _Failed(Exception):
 
 _ATTEMPTS = 3                                         # read-backs of one handed account before it is classified
 _MUTATION = ("changed size during iteration", "mutated during iteration", "changed during iteration")
+_CAUSE, _CONTEXT = BaseException.__dict__["__cause__"], BaseException.__dict__["__context__"]
 
 
-def _moving(exc: BaseException) -> bool:
+def _described(exc: BaseException) -> str:
+    """A failure as text, without letting the failure's own rendering raise out of the classification: a message that
+    cannot be rendered is described by the exception's type alone (the same text at every attempt)."""
+    name = type.__dict__["__name__"].__get__(type(exc))
+    try:
+        message = str.__str__(str(exc))
+    except Exception:  # noqa: BLE001 - a message that cannot be rendered is no message, never an escape
+        message = "(its message cannot be rendered)"
+    return f"{name}: {message}"
+
+
+def _moving(exc: BaseException, described: str) -> bool:
     """The interpreter's own signal that a container was mutated while it was iterated (exactly ``RuntimeError``)."""
-    return type(exc) is RuntimeError and any(m in str(exc) for m in _MUTATION)
+    return type(exc) is RuntimeError and any(m in described for m in _MUTATION)
+
+
+def _recursion(exc: BaseException) -> bool:
+    """Whether the interpreter's recursion limit is among a failure's causes (an owner may wrap it: the unit owner
+    raises ``UnitCompatibilityError`` from it).  Read through ``BaseException``'s own fields: no code of the failure runs."""
+    pending, seen = [exc], set()
+    while pending and len(seen) < 64:
+        e = pending.pop()
+        if id(e) in seen:
+            continue
+        seen.add(id(e))
+        if issubclass(type(e), RecursionError):
+            return True
+        pending.extend(n for n in (_CAUSE.__get__(e), _CONTEXT.__get__(e)) if n is not None)
+    return False
 
 
 class _Reader:
@@ -199,7 +227,8 @@ class RunStateReader(_Reader):
             else:
                 current = RunStateReader(record)
         except Exception as exc:  # noqa: BLE001 - an owner that cannot state its head is unavailable, never guessed
-            raise OwnerUnavailable(f"the execution side could not state the run's current head: {exc}") from None
+            raise OwnerUnavailable("the execution side could not state the run's current head: "
+                                   f"{_described(exc)}") from None
         if current.owner_id != self.owner_id:
             raise OwnerUnavailable("the followed head belongs to another run (its request digest changed); which run "
                                    "governs is a new statement, not a move of this one")
@@ -290,7 +319,8 @@ class ProviderRegistryReader(_Reader):
         except ProviderUnavailable:                   # the registry holds no such provider
             return None
         except Exception as exc:  # noqa: BLE001 - a probe that fails is an owner that cannot answer, never a guess
-            raise OwnerUnavailable(f"the provider registry could not probe {record_id!r}: {exc}") from None
+            raise OwnerUnavailable(f"the provider registry could not probe {record_id!r}: "
+                                   f"{_described(exc)}") from None
         report = assess_health(status)
         payload = status.to_dict()
         return OwnerRecord(K.PROVIDER_STATUS, self.owner_id, record_id, status.version or "-",
@@ -305,7 +335,7 @@ class BudgetReader(_Reader):
     ``BudgetReader(ledgers, experiments)`` reads the account OBJECTS handed over: live for their in-place changes
     (settled charges, recorded evaluations), not for an execution side that replaces an account object (as
     ``sria.campaign`` does on restore); its constructor refuses an account set that is not exactly typed, names an
-    account by anything but a str, or registers one object under two ids.  ``BudgetReader.following(accounts)`` asks
+    account by anything but a str, names two accounts by ids that spell one id, or registers one object under two ids.  ``BudgetReader.following(accounts)`` asks
     the execution side's ``accounts()`` for the current ``(ledgers, experiments)`` at every verification, and every
     account only moves forward: its history (a ledger's settled charges, an experiment's recorded evaluations, in the
     form the owner reads them back, so a restore of an unchanged account is the same history) must extend the longest
@@ -320,8 +350,9 @@ class BudgetReader(_Reader):
 
     What a verification is handed is read entry by entry (one malformed entry never hides the others): an account is
     named by its str id (a str subclass is read as the plain str it spells; an entry under any other key is no account
-    a world can bind, and is not read); an account that is not exactly its owner's type is refused for good; one
-    object handed under two ids is observed under both and refused to that verification.  Each account is read back by
+    a world can bind, and is not read); two entries that spell one id refuse that id for good; an account that is not
+    exactly its owner's type is refused for good; one object handed under two ids is observed under both and refused to
+    that verification.  Each account is read back by
     its owner from the text its owner writes it down as: a ledger by ``BudgetLedger.from_dict`` from its digest rule's
     JSON (``canonical_digest``: sorted keys, ``default=str``), an experiment whole by ``ScientificExperiment.from_dict``
     from ``to_json`` (once per account and content), so the record served, its digest and its history are detached
@@ -330,7 +361,15 @@ class BudgetReader(_Reader):
     type: any success is observed; three failures alike (the same failure on the same text) are the state itself, which
     its owner cannot write down and read back, and refuse the account from then on (that state cannot be ordered
     against what was observed, and it may hold a spend); failures that differ, or the interpreter's own "changed during
-    iteration" error, are an account moving while it was serialized, refused to that verification only.
+    iteration" error, are an account moving while it was serialized, refused to that verification only.  Either way a
+    state handed and not read back still observes how far its account had moved: its history's length, read from its
+    owner's own container (a ledger's charges, an experiment's evaluations) with no code of the account run, so the
+    account is decided on again only at or beyond that length, whatever its failures looked like (an account whose
+    length cannot be read that way is refused for good).  A failure is described without running any code of it that
+    could raise (an unrenderable message is described by its type), so no read-back failure leaves the classification.
+    A recursion failure (the interpreter's own, or one an owner wrapped) on every attempt is retried with the same
+    attempts on a fresh thread, waited for at most ``WAIT_S``: still running then, the account is not read back to that
+    verification.
 
     Each verification is in flight from its start, through ``accounts()`` and the read-back (both with no lock held:
     no execution-side code runs under the reader's lock), to its comparison, which holds the lock.  Every observation
@@ -344,8 +383,9 @@ class BudgetReader(_Reader):
     state never re-authorizes what such a state had moved past.  The cost: a verification whose ``accounts()`` or
     read-back does not complete within ``WAIT_S`` makes every verification that compares meanwhile wait ``WAIT_S`` and
     be refused, until it completes.  What is never observed: a state no verification was handed and read back (a spend
-    and its rollback both between two verifications look like no change), a state that kept moving through three
-    read-backs, an entry under a key that is not a str, the state of a verification whose ``accounts()`` raises or
+    and its rollback both between two verifications look like no change), the entries of a state handed and not read
+    back (only their number is observed: a later state at least that long that differs in them is not detected as a
+    rewrite), an entry under a key that is not a str, the state of a verification whose ``accounts()`` raises or
     hands no pair of mappings, and one interrupted (``BaseException``) between being handed accounts and comparing
     them; at-most-once execution is the execution owner's.  An ``accounts()`` or read-back that reads through the
     reader it feeds on the same thread is refused at once (from inside the read-back, that refusal repeats, so the
@@ -377,9 +417,11 @@ class BudgetReader(_Reader):
         return tuple(hashlib.sha256(json.dumps(x.to_dict(), sort_keys=True, default=str).encode("utf-8")).hexdigest()
                      for x in items)
 
-    def _read_once(self, key: tuple[str, str]) -> tuple[OwnerRecord, tuple[str, ...]]:
+    def _read_once(self, key: tuple[str, str], cache: dict[tuple[str, str], tuple[Any, ...]]) \
+            -> tuple[OwnerRecord, tuple[str, ...]]:
         """One read-back of one handed account: its record and history, both from ONE text its owner wrote, or
-        ``_Failed`` with the text written before the failure (if any)."""
+        ``_Failed`` with the text written before the failure (if any).  ``cache`` is the read-back cache it may use
+        and fill (private to the thread that runs it)."""
         kind, record_id = key
         text_: str | None = None
         try:
@@ -395,7 +437,7 @@ class BudgetReader(_Reader):
             exp = self._experiments[record_id]
             text_ = to_json(exp)
             content = hashlib.sha256(text_.encode("utf-8")).hexdigest()
-            cached = self._readback.get(key)
+            cached = cache.get(key)
             if cached is None or cached[0] != content:
                 written = json.loads(text_)
                 rebuilt = ScientificExperiment.from_dict(json.loads(text_))
@@ -407,15 +449,15 @@ class BudgetReader(_Reader):
                                      "or one whose accounting its owner does not derive)")
                 cached = (content, back_text, hashlib.sha256(back_text.encode("utf-8")).hexdigest(),
                           self._history(rebuilt.evaluations))
-                self._readback[key] = cached
+                cache[key] = cached
             _, back_text, digest_, history = cached
             back = json.loads(back_text)             # parsed from the owner's text at every read: never shared
             return (OwnerRecord(K.EXPERIMENT, self.owner_id, record_id, str(len(back["evaluations"])), digest_,
                                 {"budget": back["budget"], "accounting": back["accounting"], "experiment": back}),
                     history)
         except Exception as exc:  # noqa: BLE001 - classified by the caller over several attempts
-            raise _Failed(f"{type(exc).__name__}: {exc}", text_, _moving(exc), isinstance(exc, RecursionError)) \
-                from None
+            why = _described(exc)
+            raise _Failed(why, text_, _moving(exc, why), _recursion(exc)) from None
 
     def _account(self, key: tuple[str, str]) -> tuple[OwnerRecord | None, tuple[str, ...]]:
         """One handed account read back by its owner: its record and history (any attempt that succeeds), or, after
@@ -425,46 +467,65 @@ class BudgetReader(_Reader):
         if record_id not in (self._ledgers if kind == "ledger" else self._experiments):
             return None, ()
         what = f"budget {kind} {record_id!r}"
-        failures: list[_Failed] = []
-        for _ in range(_ATTEMPTS):
-            try:
-                return self._read_once(key)
-            except _Failed as failed:
-                failures.append(failed)
+        read, failures = self._attempts(key, self._readback)
+        if read is not None:
+            return read
         if all(f.recursion for f in failures):       # the state's depth, or this verification's caller's?
-            try:
-                return self._at_baseline_depth(key)
-            except _Failed as failed:
-                if failed.moving:
-                    raise OwnerUnavailable(f"{what} moved while it was serialized: {failed.why}") from None
+            read, failures = self._at_baseline_depth(key, what)
+            if read is not None:
+                return read
+            if all(f.recursion for f in failures):
                 raise _Unreadable(f"{what} is not one its owner writes down and reads back (it exceeds the "
-                                  f"interpreter's recursion limit on a fresh thread too): {failed.why}") from None
+                                  f"interpreter's recursion limit on a fresh thread too): {failures[-1].why}")
         if any(f.moving for f in failures) or len({(f.why, f.text) for f in failures}) > 1:
             raise OwnerUnavailable(f"{what} moved while it was serialized ({_ATTEMPTS} read-backs failed "
                                    f"differently): {failures[-1].why}")
         raise _Unreadable(f"{what} is not one its owner writes down and reads back ({_ATTEMPTS} read-backs failed "
                           f"alike): {failures[-1].why}")
 
-    def _at_baseline_depth(self, key: tuple[str, str]) -> tuple[OwnerRecord, tuple[str, ...]]:
-        """The read-back once more on a fresh thread (a shallow stack), under the same-thread read-through flag:
-        whether the state is too deep for its owner's rules, or only this verification's caller's stack was."""
+    def _attempts(self, key: tuple[str, str], cache: dict[tuple[str, str], tuple[Any, ...]]) \
+            -> tuple[tuple[OwnerRecord, tuple[str, ...]] | None, list[_Failed]]:
+        """Up to ``_ATTEMPTS`` read-backs of one handed account: the first that succeeds, or every failure."""
+        failures: list[_Failed] = []
+        for _ in range(_ATTEMPTS):
+            try:
+                return self._read_once(key, cache), failures
+            except _Failed as failed:
+                failures.append(failed)
+        return None, failures
+
+    def _at_baseline_depth(self, key: tuple[str, str], what: str) \
+            -> tuple[tuple[OwnerRecord, tuple[str, ...]] | None, list[_Failed]]:
+        """The same attempts once more on a fresh thread (a shallow stack), under the same-thread read-through flag:
+        whether the state is too deep for its owner's rules, or only this verification's caller's stack was.  The
+        thread fills a private copy of the read-back cache and is waited for at most ``WAIT_S``: one still running
+        then (it may wait on a lock this verification's caller holds) leaves the account not read back to this
+        verification (``OwnerUnavailable``), and whatever it does later reaches nothing this reader holds."""
         box: dict[str, Any] = {}
+        cache = dict(self._readback)
 
         def run() -> None:
             self._in_follow.active = True
             try:
-                box["read"] = self._read_once(key)
-            except _Failed as failed:
-                box["failed"] = failed
+                box["result"] = self._attempts(key, cache)
             finally:
                 self._in_follow.active = False
 
         thread = threading.Thread(target=run, name="budget-read-back", daemon=True)
-        thread.start()
-        thread.join()
-        if "read" in box:
-            return box["read"]
-        raise box.get("failed") or _Failed("the read-back on a fresh thread did not complete", None, False, False)
+        try:
+            thread.start()
+        except Exception as exc:  # noqa: BLE001 - no fresh thread now: the account is not read back to this verification
+            raise OwnerUnavailable(f"{what} was not read back: no fresh thread could start ({_described(exc)})") \
+                from None
+        thread.join(self.WAIT_S)
+        result = box.get("result")
+        if result is None:
+            if thread.is_alive():
+                raise OwnerUnavailable(f"{what} was not read back within {self.WAIT_S} s on a fresh thread")
+            return None, [_Failed("the read-back on a fresh thread did not complete", None, False, False)]
+        if result[0] is not None and key in cache:
+            self._readback[key] = cache[key]
+        return result
 
     def _read_back(self) -> dict[tuple[str, str], tuple[OwnerRecord | None, tuple[str, ...]] | _NotRead]:
         """Every account handed over, read back now (no lock held): its record and history, or why it was not read.
@@ -479,8 +540,20 @@ class BudgetReader(_Reader):
             except _Unreadable as exc:
                 out[key] = _NotRead(str(exc), True)
             except OwnerUnavailable as exc:
-                out[key] = _NotRead(str(exc), False)
+                length = self._length(key)
+                out[key] = _NotRead(str(exc), False, length) if length is not None else \
+                    _NotRead(f"{exc}; how far it had moved (its history's length) cannot be read without running "
+                             "its code either", True)
         return out
+
+    def _length(self, key: tuple[str, str]) -> int | None:
+        """How long the handed account's history is now, read from its owner's own container (a ledger's charges
+        tuple, an experiment's evaluations list) with no code of the account run, or None if that cannot be done."""
+        kind, record_id = key
+        account = (self._ledgers if kind == "ledger" else self._experiments)[record_id]
+        state = object.__getattribute__(account, "__dict__")     # the account is exactly its owner's type
+        entries = dict.get(state, "charges" if kind == "ledger" else "_evaluations") if type(state) is dict else None
+        return len(entries) if type(entries) in (tuple, list) else None
 
     def _observe_all(self, snapshot: "BudgetReader", ticket: int) -> dict[tuple[str, str], OwnerRecord | str | None]:
         """The following reader's forward-only rule over EVERY account handed over in ``snapshot``.  The read-back runs
@@ -512,7 +585,8 @@ class BudgetReader(_Reader):
                                                "spend): refused by this reader from then on (a new timeline is stated "
                                                "with a new reader)")
                         observed[key] = self._diverged[key]
-                    else:
+                    else:                            # not read back: how far it had moved is still observed
+                        self._reached[key] = max(self._reached.get(key, 0), got.length)
                         observed[key] = got.why
                     continue
                 record, history = got
@@ -529,7 +603,9 @@ class BudgetReader(_Reader):
                     observed[key] = self._behind(key)
                 else:
                     self._seen[key] = history
-                    if key in snapshot._aliased:
+                    if len(history) < self._reached.get(key, 0):
+                        observed[key] = self._behind(key)
+                    elif key in snapshot._aliased:
                         observed[key] = (f"budget {key[0]} {key[1]!r} was handed over as one account object under "
                                          "two ids (one account stating two accounts): observed, but refused for this "
                                          "verification")
@@ -554,14 +630,15 @@ class BudgetReader(_Reader):
                 for key, history in accepted.items():   # decided on what is observed once those have compared
                     if key in self._diverged:
                         observed[key] = self._diverged[key]
-                    elif len(self._seen.get(key, ())) > len(history):
+                    elif max(len(self._seen.get(key, ())), self._reached.get(key, 0)) > len(history):
                         observed[key] = self._behind(key)
         return observed
 
     @staticmethod
     def _behind(key: tuple[str, str]) -> str:
-        return (f"budget {key[0]} {key[1]!r} is behind the history this reader observed (it went back a revision, or "
-                "this verification's snapshot is older than one already observed): refused while it is behind")
+        return (f"budget {key[0]} {key[1]!r} is behind the history this reader observed (it went back a revision, "
+                "this verification's snapshot is older than one already observed, or its history is shorter than a "
+                "state of it a verification was handed and could not read back): refused while it is behind")
 
     def _leave(self, ticket: int, handed: bool) -> None:
         """``ticket`` is no longer in flight.  One that was handed accounts and never compared them makes every
@@ -587,6 +664,7 @@ class BudgetReader(_Reader):
         ledgers, experiments = handed
         snapshot = cls(owner_id=owner_id)
         objects: dict[int, list[tuple[str, str]]] = {}
+        spelled: set[tuple[str, str]] = set()
         for kind, mapping, owner_type, store in (("ledger", ledgers, BudgetLedger, snapshot._ledgers),
                                                  ("experiment", experiments, ScientificExperiment,
                                                   snapshot._experiments)):
@@ -594,6 +672,12 @@ class BudgetReader(_Reader):
                 if not issubclass(type(raw_id), str):
                     continue                         # no world binds an account by a key that is not a str
                 key = (kind, str.__str__(raw_id))    # the plain str it spells (no code of the id runs)
+                if key in spelled:                   # two entries (keys that differ only as objects) spell one id
+                    store.pop(key[1], None)
+                    snapshot._entry_refusals[key] = _NotRead(f"budget {kind} {key[1]!r} was handed under two entries "
+                                                             "that spell one id (two accounts stating one id)", True)
+                    continue
+                spelled.add(key)
                 if type(account) is not owner_type:
                     snapshot._entry_refusals[key] = _NotRead(f"budget {kind} {key[1]!r} is not exactly a "
                                                              f"{owner_type.__name__}", True)
@@ -624,12 +708,14 @@ class BudgetReader(_Reader):
             try:
                 mapping = self._follow()
             except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
-                raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
+                raise OwnerUnavailable("the execution side could not state its budget accounts: "
+                                       f"{_described(exc)}") from None
             handed = True
             try:
                 current = BudgetReader._handed(mapping, self.owner_id, skip)
             except Exception as exc:  # noqa: BLE001 - what was handed is not a pair of account mappings
-                raise OwnerUnavailable(f"the execution side handed over no pair of account mappings: {exc}") from None
+                raise OwnerUnavailable("the execution side handed over no pair of account mappings: "
+                                       f"{_described(exc)}") from None
             current._readback = dict(self._readback)     # a private copy: no other verification writes into it
             current._in_follow = self._in_follow         # its read-back runs under this reader's read-through flag
             current._observed = self._observe_all(current, ticket)
@@ -651,6 +737,7 @@ class BudgetReader(_Reader):
         self._follow: Callable[[], Any] | None = None
         self._observed: dict[tuple[str, str], OwnerRecord | str | None] | None = None   # a pinned snapshot's records
         self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
+        self._reached: dict[tuple[str, str], int] = {}   # account -> the longest history a state not read back stated
         self._diverged: dict[tuple[str, str], str] = {}   # account -> why it is refused by this reader for good
         self._readback: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> (content digest, read-back text,
         # its digest, its history): one entry per account, so the cache never outgrows the accounts' current state
@@ -668,6 +755,8 @@ class BudgetReader(_Reader):
             raise WorldRefused("a budget account id is a str")
         self._ledgers = {str.__str__(i): x for i, x in raw[0].items()}
         self._experiments = {str.__str__(i): x for i, x in raw[1].items()}
+        if len(self._ledgers) != len(raw[0]) or len(self._experiments) != len(raw[1]):
+            raise WorldRefused("two budget account ids spell one id (two accounts stating one id)")
         if any(type(x) is not BudgetLedger for x in self._ledgers.values()):
             raise WorldRefused("a budget ledger is exactly a BudgetLedger")
         if any(type(x) is not ScientificExperiment for x in self._experiments.values()):
@@ -747,7 +836,8 @@ class DeclarationReader(_Reader):
         try:
             current = DeclarationReader(self._follow(), self.owner_id)
         except Exception as exc:  # noqa: BLE001 - an owner that cannot state what is in force is unavailable
-            raise OwnerUnavailable(f"the execution side could not state the declarations in force: {exc}") from None
+            raise OwnerUnavailable("the execution side could not state the declarations in force: "
+                                   f"{_described(exc)}") from None
         held = [(k, current._held[k[0]]) for k in current._seen]
         with self._lock:                             # check everything, then advance: atomic per verification
             for key, d in held:
