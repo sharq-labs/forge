@@ -8934,12 +8934,52 @@ completeness critic):
       14, 48, 48 before and 31, 47, 48, 45, 48 after, every refusal "in flight", none "behind": no availability
       difference established (README §8).
 
+29. Fresh review round 13 and its fix, 2026-10-23 (same local environment as item 28).
+    - Round 13 (workflow `wf_e63abf7f-517`) at `3b407ddb`: six read-only lenses (A-D, F executing probes in a detached
+      worktree `~/forge-r13-review`; E static), two skeptics per BLOCKER/MAJOR, a completeness critic; 17 agents, all
+      returned. Outputs: `docs/work/evidence/br11_local_2026_10_23/review_results/review_r13_result.json` (rebuilt
+      from the workflow journal's full per-agent results). Q1-Q3, Q5-Q7 NO from every lens and the critic; Q4 YES
+      (A, B, C, F, critic) / PARTIAL (D, E). MAJOR after skeptics: F13-02 = R13-C-F1, R13-B-F1 (both skeptics MAJOR);
+      R13-C-F2 = R13-A-F1 (skeptics split: MAJOR / MINOR as the accepted interrupted residual; treated as MAJOR);
+      critic R13-CRIT-1 (not skeptic-verified; treated as MAJOR). 24 lens MINORs plus R13-CRIT-2. Gate NOT met.
+      Dispositions: README §9 "Round 13 dispositions".
+    - Fix `13051154`: a state not read back is observed as its history's entry objects (a later state must begin
+      with them; a prefix is behind; anything else refused for good), replacing round 12's length; any non-interrupt
+      `BaseException` from account content or a failure's rendering is a classified failure, an interrupt is re-raised
+      after the comparison; a handed mapping is read as a dict from its own storage (a non-dict refused to that
+      verification; the constructor refuses it); fresh-thread MINORs (liveness before result, one thread per account,
+      one deadline per verification); a verification in flight until its comparison ends; refusal texts.
+    - The round-11 control `test_a_verification_waited_for_that_leaves_uncompared_makes_the_waiter_decide_on_nothing`
+      failed on the fix (it injected a `BaseException` inside the read-back, which is now a classified failure); it
+      was restated to interrupt W at the snapshot step, where W still leaves uncompared, and still fails on
+      `no_abandon` and `handed_never_set` (recorded here and in README §9, not silent).
+    - Controls `tests/mind/test_authority_review_r13.py` (18) plus the restated r11 control on a tree whose
+      `owners.py` is `3b407ddb`'s: 14 failed, 5 passed (README §5 names them). The first version of the F13-02
+      control was vacuous (it re-admitted against the original world object, stale for another reason): mutant
+      `unread_length_only` survived; rewritten to project a world from the owners, after which it fails on that mutant.
+    - Mutation (`mutate_r13_local.py`, `run_mutants_r13.sh`, whole BR1.1 suite per mutant): 32 mutants; first pass 31
+      caught, `box_before_alive` survived because its control asserted only "not for good"; the control was
+      tightened to require the record be served and the mutant was caught on re-run. Round 12's surviving
+      `shared_cache` is now caught.
+    - At `13051154`: BR1.1 suite 685 passed; rescore MATCHES; run_benchmark MATCHES; Gen1 INTACT.
+    - Gates at `13051154` against `1202ea6c` (both re-run concurrently here): FAST 67 failed, 12696 passed, 190 skipped
+      (branch) / 67 failed, 12203 passed, 190 skipped (base); NEW 0, FIXED 0: FAST: NO NEW FAILURES VS BASE (red on
+      both, NOT green). Regression pack 279 passed on both. Guard suites: branch 1400 passed, 2 failed; base 913 passed,
+      2 failed; the same two pre-existing failures, identical summary lines. Affected expensive minus campaign: 13
+      failed, 14 errors, 335 passed on both, identical failing ids.
+    - Performance A/B (`ab_r12.py pre=<33258438 tree> post=<13051154 tree>`): admission p50 11.96 / 12.15 ms with
+      overlapping ranges: NO SPEED DIFFERENCE ESTABLISHED; desk at 2500 evaluations 46, 41, 45, 48, 47 before and 48,
+      46, 48, 48, 48 after (refusals "in flight"): no availability difference established.
+    - Next: a completely fresh review round 14 at the committed docs SHA (round 13 is not resumed).
+
 **Failed approach (round 12, recorded so it is not retried).** Classifying a read-back failure as "moving" or "the
 state" by what the failure looks like (its type, its message, its written text) cannot be made safe: an execution-side
-value chooses all three (b1204, b1208). Deciding the class by observing the account (its history length from the
-owner's container, read without running account code) is what closed it. Refusing every state not read back for good
-was considered and not adopted (not run): in the local re-run of a1203 an honest stress run had 8 verifications whose
-three read-backs all failed, and each would then have retired an honest account.
+value chooses all three (b1204, b1208). Observing the account instead (its history length from the owner's container,
+read without running account code) closed the re-dispatch of the SAME admitted action, but not a fresh admission after
+a restore plus one more charge: round 13 (F13-02) showed the length is not enough, and the entry objects replaced it
+(item 29). Refusing every state not read back for good was considered and not adopted (not run): in the local re-run
+of a1203 an honest stress run had 8 verifications whose three read-backs all failed, and each would then have retired
+an honest account.
 
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this

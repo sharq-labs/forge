@@ -20,9 +20,13 @@ R12-T1 done locally (2026-10-23, WSL2, CPython 3.12.3; PROGRESS item 28): every 
 uncontrolled); dispositions in README §9. Local commits are not pushed (WSL has no GitHub access; a bundle is handed to
 the Windows side).
 
-**Next bounded task (R13):** one complete fresh review round (six lenses, two skeptics per BLOCKER/MAJOR, a
-completeness critic) at the committed local SHA; round 12 is not resumed. No other scope; no Portfolio, Scientific
-Contract Kernel, OD-3, certification or merge before BR1.1 closes.
+Fresh review round 13 at `3b407ddb` did not meet the gate (Q4 YES: MAJORs F13-02 = R13-C-F1, R13-B-F1, R13-C-F2 =
+R13-A-F1, critic R13-CRIT-1); all fixed in `13051154` with controls (`test_authority_review_r13.py`) and 32 mutants
+each caught; gates show no new failures vs base (PROGRESS item 29).
+
+**Next bounded task (R14):** one complete fresh review round (six lenses, two skeptics per BLOCKER/MAJOR, a
+completeness critic) at the committed local SHA; earlier rounds are not resumed. No other scope; no Portfolio,
+Scientific Contract Kernel, OD-3, certification or merge before BR1.1 closes.
 Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`: INTACT). Report:
 `benchmarks/mind_gen2_authority_v1/README.md`; conclusion in its §12 and in `docs/work/PROGRESS.md`.
 

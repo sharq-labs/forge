@@ -19,7 +19,7 @@ validation, a certification or a closure result.** Context: `docs/work/PROGRESS.
 |---|---|
 | `baseline/` | the BR1.1 suite and the three checks at `d40aff44` before any change (`summary.txt`, `env.txt`) |
 | `r12_probes_d40aff44/` | every preserved round-12 probe re-run unchanged at `d40aff44` (one output per probe; `_summary.txt`) |
-| `controls/` | the round-12 controls on the tree before the fix (`r12_controls_prefix_d40aff44.txt`) |
+| `controls/` | the round-12 controls on the tree before the fix, as first run with 17 controls (`r12_controls_prefix_d40aff44.txt`: 13 failed, 4 passed), before the eighteenth (`test_a_state_not_read_back_while_a_rollback_waits_refuses_the_rollback`) was added; the 18-control figure (14 failed, 4 passed) is `mutation/summary.txt` `[base]`, which ran the committed 18-test file on a tree whose `owners.py` is `d40aff44`'s (round 13, E13-F6 / D13-3) |
 | `mutation/` | `mutate_r12_local.py`, `run_mutants_local.sh`, `summary.txt` (base + 18 mutants) |
 | `checks_33258438/` | the BR1.1 suite and the three checks at the fix commit |
 | `gates/` | `gates.sh`; per tree (`base_1202ea6c`, `branch_33258438`): `summary.txt`, `fast_failing_ids.txt`, `guards_failing.txt`, `expensive_failing_ids.txt`, `env.txt` |
@@ -32,3 +32,11 @@ The base's guard-suite run in `gates/base_1202ea6c/summary.txt` collected no tes
 ## Verify
 
 From this directory: `sha256sum -c EVIDENCE_MANIFEST.sha256`.
+
+## Round 13 (added with the round-13 fix)
+
+| Path | Content |
+|---|---|
+| `review_results/review_r13_result.json` | the fresh review round 13 at `3b407ddb`: six lens outputs (findings, prior-closure checks, Q1-Q7), every skeptic verdict and the critic, as the workflow returned them |
+| `round13/mutation/` | `mutate_r13_local.py`, `run_mutants_r13.sh`; `summary_first_pass.txt` (base = the round-13 controls and the restated round-11 control on a tree whose `owners.py` is `3b407ddb`'s, plus 32 mutants: 31 caught, `box_before_alive` passed); `summary_rerun_tightened_control.txt` (base and `box_before_alive` again after that control was tightened to require the record be served: caught) |
+| `round13/checks/`, `round13/gates/`, `round13/performance/` | the BR1.1 suite and checks, the gates against `1202ea6c` and the A/B at the round-13 fix |
