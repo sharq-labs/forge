@@ -225,7 +225,7 @@ def test_no_deadlock_with_an_execution_side_that_verifies_under_its_own_lock():
     for t in threads:
         t.join(10)
     assert not any(t.is_alive() for t in threads) and out["A"] == "FEASIBLE"      # no deadlock
-    assert out["B"] in ("FEASIBLE", "MISSING_INFORMATION")   # round 9: B may be refused while A is still in flight
+    assert out["B"] == "MISSING_INFORMATION"   # round 10: B waits (WAIT_S) for A, whose accounts() waits for B's lock
     assert admit(FeasibleActionSpace.build(world), o.propose("simulate_pulse", *SIM, world=world),
                  authorities).status.value == "FEASIBLE"
 
@@ -240,8 +240,8 @@ def test_an_unbound_experiment_its_owner_cannot_serialize_refuses_no_admission(v
     o.experiments["other.campaign.experiment"] = other
     r = admit(FeasibleActionSpace.build(world), o.propose("simulate_pulse", *SIM, world=world), o.authorities())
     assert r.feasible
-    with pytest.raises(OwnerUnavailable, match="reads back"):
-        BudgetReader(o.ledgers, o.experiments).read(OwnerKind.EXPERIMENT, "other.campaign.experiment")
+    with pytest.raises(OwnerUnavailable, match="owner writes down"):                    # round 10: its owner's own
+        BudgetReader(o.ledgers, o.experiments).read(OwnerKind.EXPERIMENT, "other.campaign.experiment")   # rule
 
 
 # ---- B7-m5: a snapshot serves a detached copy of what it observed -----------------------------------------------------------------
@@ -336,7 +336,8 @@ def test_a_world_bound_to_a_provider_the_declaration_does_not_name_is_refused_wi
     monkeypatch.setattr(ProviderRegistry, "status",
                         lambda self, pid, **kw: (probed.append(pid), real(self, pid, **kw))[1])
     r = admit(FeasibleActionSpace.build(world), o2.propose("simulate_pulse", *SIM, world=world), authorities)
-    assert r.admitted is None and "AUTHORITY_STALE" in r.codes()          # round 8: an older revision is STALE
+    assert r.admitted is None                                            # not the declaration in force (same id and
+    assert {c.status.value for c in r.verification.checks if c.record_id == "sim.secret"} == {"mismatch"}  # revision)
     why = [c.detail.get("why", "") for c in r.verification.checks if c.record_id == "sim.secret"]
     assert why and "not read" in why[0] and "sim.secret" not in probed and "sim.ecm" in probed
 
@@ -358,8 +359,10 @@ def test_an_over_budget_experiment_with_attempts_left_records_remaining_observat
     assert over["experiments"]["remaining"] == exp.remaining_observations == 0
 
 
-# ---- K7-F1 (BLOCKER) / K7-F2: offset units and a fixed protocol condition; strict and inclusive bounds -----------------------------
-@pytest.mark.parametrize("role", [R.CONTROLLED_INPUT, R.FIXED_PROTOCOL_CONDITION])
+# ---- K7-F1 (BLOCKER) / K7-F2: offset units, set through a protocol control; strict and inclusive bounds -------------------------
+# (the action fixed-condition half is controlled by test_authority_review_r8.py's fixed-condition level tests)
+@pytest.mark.parametrize("role", [R.CONTROLLED_INPUT, R.FIXED_PROTOCOL_CONDITION],
+                         ids=["controlled_input", "fixed_protocol_condition_variable_set_through_a_control"])
 @pytest.mark.parametrize("op", [Op.LESS_THAN, Op.LESS_EQUAL, Op.GREATER_THAN, Op.GREATER_EQUAL])
 def test_every_spelling_of_one_level_is_decided_alike_and_executed_as_one_value(role, op):
     """Variable and own levels in degC, the protocol's levels in degF, a limit at the 35 degC level: every spelling the

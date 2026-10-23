@@ -370,7 +370,7 @@ class _Memo:
     def __init__(self, reader: Any) -> None:
         self._reader = reader
         self._pinned: Any = None
-        self._pin_error: Exception | None = None       # an eager pin's refusal, raised at the first read
+        self._pin_error: Exception | None = None       # an eager pin's refusal, raised at every read of this owner
         self._failure: OwnerUnavailable | None = None
         self.kinds = reader.kinds
         self.owner_id = reader.owner_id
@@ -382,7 +382,7 @@ class _Memo:
         """Pin when the verification starts; whatever the pin raises waits for a read of this owner."""
         try:
             self._current()
-        except Exception as exc:  # noqa: BLE001 - re-raised, unchanged, to the first read of this owner
+        except Exception as exc:  # noqa: BLE001 - re-raised, unchanged, at every read of this owner
             self._failure = None
             self._pin_error = exc
 

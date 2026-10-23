@@ -94,33 +94,31 @@ def _sha_json(record: Any) -> str:
     return hashlib.sha256(to_json(record).encode("utf-8")).hexdigest()
 
 
-def _plain(value: Any) -> bool:
-    """Whether ``value`` is plain JSON data, checked by exact type so that no code of the value runs: dicts with str
-    keys, lists and tuples, str, int, float, bool, None."""
-    stack = [value]
-    while stack:
-        x = stack.pop()
-        t = type(x)
-        if t is dict:
-            for k, v in x.items():
-                if type(k) is not str:
-                    return False
-                stack.append(v)
-        elif t is list or t is tuple:
-            stack.extend(x)
-        elif t not in (str, int, float, bool, type(None)):
-            return False
-    return True
+class _Unreadable(OwnerUnavailable):
+    """An account state its owner cannot write down and read back (a property of the state handed over, not of the
+    moment it was read): it cannot be ordered against what a following reader observed."""
 
 
-class _Payload:
-    """A serialized record's payload, digested by the same ``to_json`` rule as the record it came from."""
+class _NotRead:
+    """Why one handed account was not read back, and whether that refuses it for good (``_Unreadable``)."""
 
-    def __init__(self, payload: Mapping[str, Any]) -> None:
-        self._payload = payload
+    __slots__ = ("why", "for_good")
 
-    def to_dict(self) -> Mapping[str, Any]:
-        return self._payload
+    def __init__(self, why: str, for_good: bool) -> None:
+        self.why, self.for_good = why, for_good
+
+
+def _written(write: Callable[[], str], what: str) -> str:
+    """``write()``: the account in the form its owner writes it down.  A ``RuntimeError`` other than recursion is the
+    account moving while it was serialized (refused for this read only); any other failure is the state itself."""
+    try:
+        return write()
+    except RecursionError as exc:
+        raise _Unreadable(f"{what} is not one its owner writes down: {exc}") from None
+    except RuntimeError as exc:
+        raise OwnerUnavailable(f"{what} moved while it was serialized: {exc}") from None
+    except Exception as exc:  # noqa: BLE001 - a state its owner cannot write down is unreadable
+        raise _Unreadable(f"{what} is not one its owner writes down: {exc}") from None
 
 
 class _Reader:
@@ -316,20 +314,30 @@ class BudgetReader(_Reader):
     verification starts, whichever world is verified: a proposer's world never chooses what is observed); an account is
     refused only to a verification that reads it, so an unreadable, behind or diverged account no world reads refuses
     nothing (the constructor still refuses an account set that is not exactly typed or that registers one object twice).
-    Each verification takes a ticket when it starts; the execution side's ``accounts()`` and the read-back of what it
-    hands over run with no lock held (no execution-side code ever runs under the reader's lock, and nothing waits);
-    only the comparison with what was observed holds the lock.  Every observation that extends the history is
-    recorded, but a verification that started while an earlier one is still in flight decides on no account (refused
-    for that verification only), so a spend an earlier verification was handed is never overtaken by a rollback a
-    later one reads (round 9).  An ``accounts()`` that reads through the reader it feeds is refused at once.  A pinned
-    snapshot serves the records it observed (detached copies) and is never live.  A state no verification was handed
-    is never observed (a spend and a rollback both before any verification starts look like no change); at-most-once
-    execution is the execution owner's.  A ledger is projected in the form its owner reads it back
-    (``BudgetLedger.from_dict``), the form its digest is taken in; an experiment is read back whole by its owner
-    (``ScientificExperiment.from_dict``, once per account and content) and only from plain JSON data (exact types,
-    str keys: no code of the account's values runs, and a JSON round trip changes no digest)."""
+    Each verification is in flight from its start to its comparison; the execution side's ``accounts()`` and the
+    read-back of what it hands over run with no lock held (no execution-side code runs under the reader's lock: account
+    ids are exactly ``str``), and only the comparison with what was observed holds the lock.  Every
+    observation that extends the history is recorded, and a verification decides on an account only once every other
+    verification that was in flight when it compared has compared too (whichever started first; it waits at most
+    ``WAIT_S``, holding no lock, and is refused for that verification only if one is still in flight), so a state handed
+    to one verification is compared before any other verification decides (round 10).  The cost: a verification
+    whose ``accounts()`` does not return within ``WAIT_S`` makes every verification that compares meanwhile wait
+    ``WAIT_S`` and be refused, until it returns.  A state handed over that its owner
+    cannot write down and read back (it cannot be ordered against what was observed, and it may hold a spend) refuses
+    its account from then on, as a rewrite does; a state that moved while it was serialized is refused for that
+    verification only.  So a return to an earlier state never re-authorizes what a state handed to a verification had
+    moved past.  What is never observed: a state no verification was handed or read back (a spend and its rollback both
+    between two verifications look like no change), a state that moved while it was serialized, and an ``accounts()``
+    that raises; at-most-once execution is the execution owner's.  An ``accounts()`` that reads through the reader it
+    feeds on the same thread is refused at once.  A pinned snapshot serves the records it observed (detached copies)
+    and is never live.  Each account is read back by its owner from the text its owner writes it down as: a ledger by
+    ``BudgetLedger.from_dict`` from its digest rule's JSON (``canonical_digest``: sorted keys, ``default=str``), an
+    experiment whole by ``ScientificExperiment.from_dict`` from ``to_json`` (once per account and content), so the
+    record served, its digest and its history are detached data that a checkpoint restore of the same account
+    reproduces, and no other rule decides which account content is readable."""
 
     kinds = frozenset({K.BUDGET_LEDGER, K.EXPERIMENT})
+    WAIT_S = 1.0                                     # the most a compared verification waits for the others in flight
 
     @classmethod
     def following(cls, accounts: Callable[[], tuple[Mapping[str, Any], Mapping[str, Any]]],
@@ -338,7 +346,11 @@ class BudgetReader(_Reader):
             raise WorldRefused("followed accounts are a callable the execution side answers with (ledgers, experiments)")
         reader = cls(*accounts(), owner_id=owner_id)
         reader._follow = accounts
-        reader._observe_all(reader, reader._ticket())   # what is handed over at construction: the first baseline
+        ticket = reader._ticket()
+        try:
+            reader._observe_all(reader, ticket)          # what is handed over at construction: the first baseline
+        finally:
+            reader._leave(ticket)
         return reader
 
     @property
@@ -359,94 +371,131 @@ class BudgetReader(_Reader):
             ledger = self._ledgers.get(record_id)
             if ledger is None:
                 return None, ()
-            try:                                     # the owner's read-back form: projection and digest, one rule
-                raw = ledger.to_dict()
-                if not _plain(raw):
-                    raise ValueError("its serialization is not plain JSON data")
-                back = BudgetLedger.from_dict(raw)
+            what = f"budget ledger {record_id!r}"
+            # The owner's read-back (``from_dict``, which normalizes what it reads), written down by the owner's own
+            # digest rule (``canonical_digest``: sorted keys, ``default=str``) and read back again from that text: a
+            # record detached from the account, whose digest a checkpoint restore of the same ledger reproduces.
+            text_ = _written(lambda: json.dumps(BudgetLedger.from_dict(ledger.to_dict()).to_dict(), sort_keys=True,
+                                                separators=(",", ":"), default=str), what)
+            try:
+                back = BudgetLedger.from_dict(json.loads(text_))
                 return (OwnerRecord(K.BUDGET_LEDGER, self.owner_id, record_id, str(back.revision), back.digest,
                                     {"ledger": back.to_dict()}), self._history(back.charges))
-            except Exception as exc:  # noqa: BLE001 - an account its owner cannot read back is unavailable
-                raise OwnerUnavailable(f"budget ledger {record_id!r} is not a ledger its owner reads back: {exc}") \
-                    from None
+            except Exception as exc:  # noqa: BLE001 - a ledger its owner cannot read back from its own text
+                raise _Unreadable(f"{what} is not one its owner reads back: {exc}") from None
         exp = self._experiments.get(record_id)
         if exp is None:
             return None, ()
-        try:
-            payload = exp.to_dict()
-            if not _plain(payload):                  # exact JSON types only: nothing the account holds can run code,
-                raise ValueError("its serialization is not plain JSON data (exactly dict with str keys, list, str, "
-                                 "int, float, bool or None)")    # and a JSON round trip changes no digest
-            text = to_json(_Payload(payload))
-            content = hashlib.sha256(text.encode("utf-8")).hexdigest()
-            cached = self._readback.get(key)
-            if cached is None or cached[0] != content:   # the owner reads the experiment back whole, once per content
-                rebuilt = ScientificExperiment.from_dict(json.loads(text))     # from detached plain data
+        what = f"experiment {record_id!r}"
+        # The experiment as its owner writes it down (``to_json``), read back whole by its owner from that text (once
+        # per account and content): what is digested, compared and served is detached data that a checkpoint restore
+        # of the same experiment reproduces.
+        text_ = _written(lambda: to_json(exp), what)
+        content = hashlib.sha256(text_.encode("utf-8")).hexdigest()
+        cached = self._readback.get(key)
+        if cached is None or cached[0] != content:
+            try:
+                written = json.loads(text_)
+                rebuilt = ScientificExperiment.from_dict(json.loads(text_))
                 back = json.loads(to_json(rebuilt))
-                if back["accounting"] != payload["accounting"] or back["budget"] != payload["budget"]:
-                    raise ValueError("its accounting is not its evaluations' (an account serialized while it moved)")
-                cached = (content, back, _sha_json(rebuilt), self._history(rebuilt.evaluations))
-                self._readback[key] = cached
-            _, back, digest_, history = cached
-            back = copy.deepcopy(back)                   # served in the owner's read-back form, the form replay uses
-        except Exception as exc:  # noqa: BLE001 - an account its owner cannot read back is unavailable
-            raise OwnerUnavailable(f"experiment {record_id!r} is not one its owner reads back: {exc}") from None
+            except Exception as exc:  # noqa: BLE001 - an experiment its owner cannot read back from its own text
+                raise _Unreadable(f"{what} is not one its owner reads back: {exc}") from None
+            if back["accounting"] != written["accounting"] or back["budget"] != written["budget"]:
+                raise OwnerUnavailable(f"{what} was serialized while it moved (its accounting is not its "
+                                       "evaluations')")
+            cached = (content, back, _sha_json(rebuilt), self._history(rebuilt.evaluations))
+            self._readback[key] = cached
+        _, back, digest_, history = cached
+        back = copy.deepcopy(back)                   # JSON data this reader parsed: no code of the account runs
         return (OwnerRecord(K.EXPERIMENT, self.owner_id, record_id, str(len(back["evaluations"])), digest_,
                             {"budget": back["budget"], "accounting": back["accounting"], "experiment": back}),
                 history)
 
-    def _read_back(self) -> dict[tuple[str, str], tuple[OwnerRecord | None, tuple[str, ...]] | str]:
-        """Every account handed over, read back now (no lock held): its record and history, or why it is refused."""
-        out: dict[tuple[str, str], tuple[OwnerRecord | None, tuple[str, ...]] | str] = {}
+    def _read_back(self) -> dict[tuple[str, str], tuple[OwnerRecord | None, tuple[str, ...]] | _NotRead]:
+        """Every account handed over, read back now (no lock held): its record and history, or why it was not read."""
+        out: dict[tuple[str, str], tuple[OwnerRecord | None, tuple[str, ...]] | _NotRead] = {}
         for key in [*(("ledger", i) for i in self._ledgers), *(("experiment", i) for i in self._experiments)]:
             try:
                 out[key] = self._account(key)
+            except _Unreadable as exc:
+                out[key] = _NotRead(str(exc), True)
             except OwnerUnavailable as exc:
-                out[key] = str(exc)
+                out[key] = _NotRead(str(exc), False)
         return out
 
     def _observe_all(self, snapshot: "BudgetReader", ticket: int) -> dict[tuple[str, str], OwnerRecord | str | None]:
         """The following reader's forward-only rule over EVERY account handed over in ``snapshot``.  The read-back runs
-        with no lock held (it runs the account objects' own serialization); only this comparison holds the lock, and it
-        runs no code of the accounts.  Every observation that extends the history is recorded; but a verification that
-        started (took its ticket) while an EARLIER one is still in flight decides on nothing (every account refused, for
-        that verification only): the earlier one may carry a later state (a spend it was handed before a restore), so
-        no verification decides until every earlier one has been compared (round 9: no lock is held across execution-
-        side code, and nothing waits)."""
+        with no lock held (it runs the account objects' own serialization, into the snapshot's private cache); only
+        the comparison holds the lock, and it runs no code of the accounts.  Every observation that extends the history
+        is recorded; a state handed over that its owner cannot write down and read back refuses its account from then on
+        (it cannot be ordered against what was observed, and it may hold a spend).  A verification decides on an account
+        only once every verification that was in flight when it compared has compared too, whichever started first: it
+        waits for them (at most ``WAIT_S``, holding no lock; a compared verification never waits for another compared
+        one, so no two wait for each other), then decides on what is observed by then (an account another verification
+        moved past is behind; one refused for good is refused).  Any still in flight after the wait: it decides on no
+        account (refused for that verification only).  Round 10: a state handed to one verification is compared before
+        any other verification decides."""
         read = snapshot._read_back()
         observed: dict[tuple[str, str], OwnerRecord | str | None] = {}
-        with self._lock:
+        accepted: dict[tuple[str, str], tuple[str, ...]] = {}
+        with self._changed:
             self._in_flight.discard(ticket)
-            earlier = any(t < ticket for t in self._in_flight)
-            self._readback = {k: v for k, v in self._readback.items() if k in read}   # one entry per account handed
-            snapshot._readback = self._readback
+            self._changed.notify_all()
+            pending = set(self._in_flight)
+            self._readback = {k: v for k, v in snapshot._readback.items() if k in read}   # the accounts handed now
             for key, got in read.items():
-                if isinstance(got, str):
-                    observed[key] = got
+                if key in self._diverged:
+                    observed[key] = self._diverged[key]
+                    continue
+                if type(got) is _NotRead:
+                    if got.for_good:
+                        self._diverged[key] = (f"{got.why}; the account was handed over in that state, which cannot "
+                                               "be ordered against the history this reader observed (it may hold a "
+                                               "spend): refused by this reader from then on (a new timeline is stated "
+                                               "with a new reader)")
+                        observed[key] = self._diverged[key]
+                    else:
+                        observed[key] = got.why
                     continue
                 record, history = got
                 if record is None:
                     observed[key] = None
                     continue
                 seen = self._seen.get(key, ())
-                if key in self._diverged or (history[:len(seen)] != seen and seen[:len(history)] != history):
-                    self._diverged.add(key)
-                    observed[key] = (f"budget {key[0]} {key[1]!r} rewrote its history (it neither extends nor is a "
-                                     "prefix of the history this reader observed): refused by this reader from then on "
-                                     "(a new timeline is stated with a new reader)")
+                if history[:len(seen)] != seen and seen[:len(history)] != history:
+                    self._diverged[key] = (f"budget {key[0]} {key[1]!r} rewrote its history (it neither extends nor is "
+                                           "a prefix of the history this reader observed): refused by this reader from "
+                                           "then on (a new timeline is stated with a new reader)")
+                    observed[key] = self._diverged[key]
                 elif len(history) < len(seen):
-                    observed[key] = (f"budget {key[0]} {key[1]!r} is behind the history this reader observed (it went "
-                                     "back a revision, or this verification's snapshot is older than one already "
-                                     "observed): refused while it is behind")
+                    observed[key] = self._behind(key)
                 else:
                     self._seen[key] = history
                     observed[key] = record
-            if earlier:
-                waiting = ("an earlier verification of this budget reader is still in flight (it may carry a later "
-                           "state of the accounts): this verification decides on no account; refused for this "
-                           "verification only")
-                observed = {k: (v if isinstance(v, str) or v is None else waiting) for k, v in observed.items()}
+                    accepted[key] = history
+            if pending and accepted:
+                if not self._changed.wait_for(lambda: not pending & self._in_flight, timeout=self.WAIT_S):
+                    waiting = (f"another verification of this budget reader was still in flight {self.WAIT_S} s after "
+                               "this one compared (it may hold a later state of the accounts, whichever verification "
+                               "started first): this verification decides on no account; refused for this verification "
+                               "only")
+                    return {k: (waiting if k in accepted else v) for k, v in observed.items()}
+                for key, history in accepted.items():   # decided on what is observed once those have compared
+                    if key in self._diverged:
+                        observed[key] = self._diverged[key]
+                    elif len(self._seen.get(key, ())) > len(history):
+                        observed[key] = self._behind(key)
         return observed
+
+    @staticmethod
+    def _behind(key: tuple[str, str]) -> str:
+        return (f"budget {key[0]} {key[1]!r} is behind the history this reader observed (it went back a revision, or "
+                "this verification's snapshot is older than one already observed): refused while it is behind")
+
+    def _leave(self, ticket: int) -> None:
+        with self._changed:
+            self._in_flight.discard(ticket)
+            self._changed.notify_all()
 
     def _ticket(self) -> int:
         with self._lock:
@@ -462,20 +511,23 @@ class BudgetReader(_Reader):
             return self
         if getattr(self._in_follow, "active", False):
             raise OwnerUnavailable("the execution side read through the budget reader it feeds while the reader was "
-                                   "asking for, or reading back, the accounts it would read")
-        self._in_follow.active = True
-        ticket = self._ticket()
+                                   "asking for, or reading back, the accounts it would read (on this thread)")
+        ticket = 0
         try:
+            self._in_follow.active = True
+            with self._lock:                         # the ticket is named before it is in flight: a finally that
+                self._tickets += 1                   # runs at any point discards exactly what was taken
+                ticket = self._tickets
+                self._in_flight.add(ticket)
             try:
                 current = BudgetReader(*self._follow(), owner_id=self.owner_id)
             except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
                 raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
-            current._readback = self._readback
+            current._readback = dict(self._readback)     # a private copy: no other verification writes into it
             current._observed = self._observe_all(current, ticket)
             return current
         finally:
-            with self._lock:
-                self._in_flight.discard(ticket)
+            self._leave(ticket)
             self._in_follow.active = False
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
@@ -488,15 +540,18 @@ class BudgetReader(_Reader):
         self._follow: Callable[[], Any] | None = None
         self._observed: dict[tuple[str, str], OwnerRecord | str | None] | None = None   # a pinned snapshot's records
         self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
-        self._diverged: set[tuple[str, str]] = set()
+        self._diverged: dict[tuple[str, str], str] = {}   # account -> why it is refused by this reader for good
         self._readback: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> (content digest, read-back form,
         # its digest, its history): one entry per account, so the cache never outgrows the accounts' current state
         self._in_follow = threading.local()          # set while this reader's accounts() or read-back runs on a thread
         self._tickets = 0                            # verifications of this reader, numbered when they start
         self._in_flight: set[int] = set()
         self._lock = threading.Lock()
+        self._changed = threading.Condition(self._lock)   # a verification left the in-flight set
         self._ledgers = dict(ledgers or {})
         self._experiments = dict(experiments or {})
+        if any(type(i) is not str for i in [*self._ledgers, *self._experiments]):
+            raise WorldRefused("a budget account id is exactly a str")
         if any(type(x) is not BudgetLedger for x in self._ledgers.values()):
             raise WorldRefused("a budget ledger is exactly a BudgetLedger")
         if any(type(x) is not ScientificExperiment for x in self._experiments.values()):

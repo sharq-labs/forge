@@ -1,8 +1,9 @@
 """GEN2-BR1.1 review round 8: one control per finding (benchmarks/mind_gen2_authority_v1/README.md).
 
-Round 8 found no BLOCKER or MAJOR from lenses A and B; these pin the MINOR fixes: the follower's read-back and its
-comparison are one locked step again (a spend a verification read is observed before a rollback can be read; the
-execution side's accounts() is still called with no lock held), the experiment read-back cache is one entry per
+Round 8 found no BLOCKER or MAJOR from lenses A and B; these pin the MINOR fixes: a spend a verification read is
+observed before a rollback can be read (round 8 locked the read-back with the comparison; rounds 9 and 10 replaced that
+with an unlocked read-back and a bounded wait for the verifications in flight; the execution side's accounts() is
+called with no lock held), the experiment read-back cache is one entry per
 account, a torn experiment serialization is refused, an eager pin's refusal of any kind waits for a read of that owner,
 the declaration modes that read no account or provider, and the level predicate (a fixed condition's branch, the
 refusal's stated reason, subnormal and signed-zero spellings)."""
@@ -46,8 +47,9 @@ def _followed(o):
 # ---- B8-m1: what a verification read is compared before a later read ------------------------------------------------------------
 def test_a_spend_one_verification_read_is_observed_before_a_rollback_can_be_read(monkeypatch):
     """Verification T2 reads the spent ledger back and is paused before it compares; the execution side rolls the
-    ledger back; a dispatch of the executed action then reads the rollback.  The dispatch waits for T2's comparison
-    (one locked step), sees the rollback as behind, and is refused: the executor runs once."""
+    ledger back; a dispatch of the executed action then reads the rollback.  The dispatch is refused while T2 is in
+    flight (round 10: it waits, at most WAIT_S, for T2's comparison, then sees the rollback as behind): the executor
+    runs once."""
     o = ax.owned("battery")
     lid = _solver(o)
     reader, authorities = _followed(o)

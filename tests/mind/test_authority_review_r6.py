@@ -75,8 +75,9 @@ def test_an_older_snapshot_read_after_a_newer_one_serves_what_it_observed_and_re
 def test_concurrent_verifications_never_refuse_for_good_an_account_that_only_moves_forward():
     """B6-M1 / R6-C-M2 / R6-D2 under threads: verifications pin and read while the execution side moves the account
     forward, replacing the object each time.  Since round 7 a verification whose snapshot is older than one already
-    observed is refused while it is behind (a supplementary stress control; the deterministic one is the older-snapshot
-    test above); nothing is refused for good, and the account is read afterwards (round 8, A8-F1 / B8-m2)."""
+    observed is refused while it is behind (a supplementary stress control; the deterministic one is
+    test_authority_review_r9.py::test_an_older_mapping_compared_after_a_newer_one_is_refused_only_for_its_verification);
+    nothing is refused for good, and the account is read afterwards (round 8, A8-F1 / B8-m2)."""
     import threading
     o = ax.owned("battery")
     lid = _solver(o)
@@ -102,7 +103,7 @@ def test_concurrent_verifications_never_refuse_for_good_an_account_that_only_mov
     stop.set()
     for t in threads:
         t.join()
-    assert all("behind" in e or "still in flight" in e for e in errors), errors        # transient (rounds 7, 9)
+    assert all("behind" in e or "in flight" in e for e in errors), errors              # transient (rounds 7, 9, 10)
     assert not any("rewrote" in e for e in errors), errors                                # never for good
     assert reader.read(OwnerKind.BUDGET_LEDGER, lid).revision == str(r0 + 40)
     assert reader.pinned().read(OwnerKind.BUDGET_LEDGER, lid).revision == str(r0 + 40)
@@ -202,7 +203,7 @@ def test_an_unchanged_experiment_is_read_back_by_its_owner_once_per_content(monk
 
 
 # ---- K6-F2: a world never chooses which accounts or providers are read ---------------------------------------------------------
-def test_a_world_bound_to_an_account_the_declaration_does_not_name_is_refused_without_reading_it():
+def test_a_world_bound_to_an_account_the_declaration_does_not_name_is_refused_without_checking_it_against_its_owner():
     o = ax.owned("battery")
     lid = _solver(o)
     o.ledgers["other.campaign.ledger"] = ax.ledger(10.0, 0.0, o.ledgers[lid].cost_unit, "other")

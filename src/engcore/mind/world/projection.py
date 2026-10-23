@@ -164,7 +164,8 @@ def _named_records(world: ScientificWorld, authorities: Authorities
     kinds whose reads have a per-record effect (a following budget reader's history, a provider re-probe).  When the
     world names no declaration, or the one it names cannot be read, it names none: no budget account or provider is
     read for that world (round 6, K6-F2; round 7, R7-C-F3 / R7-C-F4).  Also returns the status and reason an unnamed
-    binding is reported with (OWNER_UNAVAILABLE when the declaration owner is unavailable, else MISMATCH)."""
+    binding is reported with: OWNER_UNAVAILABLE when the declaration owner is unavailable; STALE when the world's
+    declaration states a numerically older revision than the one in force (rounds 8 and 9); else MISMATCH."""
     none: dict[OwnerKind, set[str]] = {K.BUDGET_LEDGER: set(), K.EXPERIMENT: set(), K.PROVIDER_STATUS: set()}
     if world.declaration is None:
         return none, (BindingStatus.MISMATCH, "the world names no declaration in force")
@@ -181,16 +182,25 @@ def _named_records(world: ScientificWorld, authorities: Authorities
              K.EXPERIMENT: {b.ref for b in declaration.budget if b.kind == "experiment"},
              K.PROVIDER_STATUS: set(declaration.providers)}
     if in_force.record_digest != world.declaration.record_digest:
-        older = world.declaration.revision.isdigit() and in_force.revision.isdigit() and \
-            int(world.declaration.revision) < int(in_force.revision)
-        if older:                                     # an older revision: STALE speaks
-            return named, (BindingStatus.STALE, f"the world's declaration is an older revision "
-                           f"({world.declaration.revision}; in force: {in_force.revision}), and the one in force names "
-                           "no such account or provider")
+        if _lower_revision(world.declaration.revision, in_force.revision):   # an older revision: STALE speaks
+            return named, (BindingStatus.STALE, f"the world's declaration states an older revision "
+                           f"({world.declaration.revision}; in force: {in_force.revision}; the declaration owner keeps "
+                           "no history, so a superseded revision is not told from one never held), and the one in "
+                           "force names no such account or provider")
         return named, (BindingStatus.MISMATCH, f"the world's declaration (revision {world.declaration.revision}) is not "
                        f"one the declaration owner holds (in force: revision {in_force.revision}, other content), and "
                        "the one in force names no such account or provider")
     return named, (BindingStatus.MISMATCH, "the declaration in force names no such account or provider")
+
+
+def _lower_revision(stated: object, in_force: object) -> bool:
+    """Whether the ``stated`` revision is numerically lower than the one ``in_force``: both plain ASCII decimal
+    numerals, compared as numerals (no ``int()`` of a proposer's string, so no Unicode digit and no length limit makes
+    a refusal raise instead)."""
+    if not all(type(r) is str and r.isascii() and r.isdigit() for r in (stated, in_force)):
+        return False
+    stated, in_force = stated.lstrip("0") or "0", in_force.lstrip("0") or "0"
+    return (len(stated), stated) < (len(in_force), in_force)
 
 
 def _kind_of(subject: str) -> OwnerKind:

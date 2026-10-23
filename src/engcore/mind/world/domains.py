@@ -36,7 +36,7 @@ from engcore.scientific.ir.values import BooleanValue, CategoricalValue, Integer
 from engcore.scientific.units.quantity import base_unit
 
 from .base import (
-    WorldRefused, converts, expect_schema, magnitude_key, names, require_value, same_value, schema, text, unit,
+    WorldRefused, as_unit, converts, expect_schema, magnitude_key, names, require_value, same_value, schema, text, unit,
     value_from, value_key, value_payload,
 )
 
@@ -161,6 +161,15 @@ def matched_level(domain: DiscreteLevels, value: Quantity, also: tuple[Quantity,
     if any(abs(v - other.magnitude_in(base)) < distance for other in others):
         return None
     return level
+
+
+def executed_level(levels: DiscreteLevels | None, value: Quantity, unit_: str, also: tuple[Quantity, ...] = ()) -> Quantity:
+    """A quantity that converts to ``unit_`` as an executor receives it: AS its matched declared level of ``levels``
+    (:func:`matched_level`, ``also`` the other levels declared for the variable) when there is one, else as itself, in
+    ``unit_`` by the unit owner's conversion.  The one rule the check (``feasibility.as_executed``) and bind (an
+    action's fixed condition) both execute a value by (round 10, A10-F6)."""
+    level = None if levels is None else matched_level(levels, value, also=also)
+    return as_unit(value if level is None else level, unit_)
 
 
 def _is_level(domain: DiscreteLevels, value: Quantity) -> bool:

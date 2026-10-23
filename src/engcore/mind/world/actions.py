@@ -55,7 +55,7 @@ from .base import (
 )
 from .domains import (
     DeclaredConstraint, DiscreteLevels, Guard, contained, declared_source, domain_from, domain_identity,
-    domain_problem, is_finite, matched_level, membership,
+    domain_problem, executed_level, is_finite, matched_level, membership,
 )
 from .variables import TemporalSemantics
 
@@ -179,12 +179,11 @@ def _domain_states_kind(domain: Any, value: Any) -> bool:
 
 
 def _fixed_as_executed(domain: Any, value: Any, unit_: str) -> Any:
-    """A fixed condition as every check executes it: its matched declared level when its variable is a level set, in
-    the variable's unit; otherwise its own conversion (round 9, A9-F1: bind tests the value the check tests)."""
-    if isinstance(domain, DiscreteLevels) and isinstance(value, Quantity) and converts(value, domain.unit):
-        level = matched_level(domain, value, also=domain.levels)
-        if level is not None:
-            return as_unit(level, unit_)
+    """A fixed condition as every check executes it (round 9, A9-F1: bind tests the value the check tests): by the
+    check's own rule (:func:`.domains.executed_level`), its deciding level set being its variable's own domain (a
+    variable fixed by an action is never also one of its controls); otherwise its own conversion."""
+    if isinstance(domain, DiscreteLevels) and isinstance(value, Quantity) and converts(value, unit_):
+        return executed_level(domain, value, unit_, also=domain.levels)
     return as_unit(value, unit_)
 
 

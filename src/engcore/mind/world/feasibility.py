@@ -66,7 +66,9 @@ from .base import (
     ProposalRefused, StaleProposal, WorldRefused, as_unit, converts, digest, expect_schema, same_value, schema,
     value_payload,
 )
-from .domains import DiscreteLevels, check_at_edges, finite_members, is_finite, matched_level, membership
+from .domains import (
+    DiscreteLevels, check_at_edges, executed_level, finite_members, is_finite, matched_level, membership,
+)
 from .variables import ValueOrigin
 from .world import APPLICABILITY_CONTEXT_ROLES, BUDGET_DIMENSIONS, ScientificWorld
 
@@ -332,8 +334,9 @@ def as_executed(world: ScientificWorld, spec: ActionSpec, name: str, value: Any)
     unit = world.variable(name).unit
     if not converts(value, unit):
         return value
-    level = _matched(world, spec, name, value)
-    return as_unit(value if level is None else level, unit)
+    own = world.variable(name).domain
+    return executed_level(deciding_levels(world, spec, name), value, unit,
+                          also=own.levels if isinstance(own, DiscreteLevels) else ())
 
 
 def _matched(world: ScientificWorld, spec: ActionSpec, name: str, value: Quantity) -> Quantity | None:

@@ -3,7 +3,8 @@
 Round 9 found 0 BLOCKER / 0 MAJOR and Q1-Q7 NO from every lens and the critic.  These pin its MINOR fixes: the
 follower's read-back runs with no lock held and a verification decides on nothing while an earlier-started one is in
 flight (no execution-side code under the lock, nothing waits, and a spend an earlier verification was handed is never
-overtaken by a rollback); an experiment is read back only from plain JSON data; the read-back cache keeps the accounts
+overtaken by a rollback; round 10 widened this to any other verification in flight); an experiment is read back from
+the text its owner writes it down as (round 10; round 9 required plain JSON data); the read-back cache keeps the accounts
 handed over now; an eager pin's error lasts the whole verification; the exact-level guard compares with the matched
 level; and bind tests a fixed condition as every check executes it."""
 
@@ -99,17 +100,17 @@ def test_an_older_mapping_compared_after_a_newer_one_is_refused_only_for_its_ver
     moved = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
     moved.settle(charge_id="m1", action_id="x", iteration=1, family=ActionFamily.EXPLORE, realized=0.5)
     o.ledgers[lid] = moved
-    with pytest.raises(OwnerUnavailable, match="still in flight"):         # B starts later: it decides on nothing,
-        reader.pinned().read(OwnerKind.BUDGET_LEDGER, lid)                 # but its observation is recorded
+    with pytest.raises(OwnerUnavailable, match="still in flight"):         # B decides on nothing while A is in
+        reader.pinned().read(OwnerKind.BUDGET_LEDGER, lid)                 # flight, but its observation is recorded
     resume.set()
     a.join(10)
     assert "behind" in out["A"]                                            # A's older mapping: refused for A only
     assert reader.read(OwnerKind.BUDGET_LEDGER, lid).revision == str(r0 + 1)   # nothing refused for good
 
 
-# ---- B9-m1 / B9-m2 / R9-D-F1: an experiment is read back only from plain JSON data -------------------------------------------------
+# ---- B9-m1 / B9-m2 / R9-D-F1: an experiment is read back from the text its owner writes down (round 10: no other rule) -------------
 class _Hooked:
-    """A metadata value whose code must never run while the follower reads accounts back."""
+    """A metadata value whose copy hooks must never run while the follower reads accounts back."""
 
     def __deepcopy__(self, memo):
         raise AssertionError("an execution-side hook ran during the read-back")
@@ -118,14 +119,14 @@ class _Hooked:
         raise AssertionError("an execution-side hook ran during the read-back")
 
 
-@pytest.mark.parametrize("value", [_Hooked(), {1: "int key"}, {"nested": [_Hooked()]}])
-def test_an_experiment_whose_data_is_not_plain_json_is_refused_without_running_its_code(value):
+@pytest.mark.parametrize("value", [_Hooked(), {"nested": [_Hooked()]}])
+def test_an_experiment_its_owner_cannot_write_down_is_refused_without_running_its_hooks(value):
     o = ax.gen1_pool()
     eid = next(iter(o.experiments))
     o.experiments[eid].metadata["note"] = value
-    with pytest.raises(OwnerUnavailable, match="plain JSON"):
+    with pytest.raises(OwnerUnavailable, match="owner writes down"):
         BudgetReader(o.ledgers, o.experiments).read(OwnerKind.EXPERIMENT, eid)
-    with pytest.raises(OwnerUnavailable, match="plain JSON"):
+    with pytest.raises(OwnerUnavailable, match="owner writes down"):
         BudgetReader.following(lambda: (o.ledgers, o.experiments)).read(OwnerKind.EXPERIMENT, eid)
 
 
