@@ -1,4 +1,5 @@
 """Bounded R16 interruption/owner-history regression controls; no scientific validation."""
+from tests.mind.publication_support import following
 import inspect
 import sys
 from unittest.mock import patch
@@ -30,7 +31,7 @@ def test_retained_history_uses_owner_normalization(iteration):
     account = BudgetLedger(total_budget=100.)
     _settle(account, "initial")
     held = {"a": account}
-    reader = BudgetReader.following(lambda: (held, {}))
+    reader = following(lambda: (held, {}))
     account.settle(charge_id="new", action_id="new", iteration=iteration,
                    family="explore", realized=1.)
     _interrupt_handing(reader)
@@ -43,7 +44,7 @@ def test_retained_history_uses_owner_normalization(iteration):
 def test_repeated_detached_interruptions_reconcile(count):
     account = BudgetLedger(total_budget=100.)
     _settle(account, "initial")
-    reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+    reader = following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
     _settle(account, "new")
     for _ in range(count):
         _interrupt_handing(reader)
@@ -87,7 +88,7 @@ def test_detached_pending_spend_never_disappears(kind):
     account = BudgetLedger(total_budget=100.)
     _settle(account, "initial")
     held = [account]
-    reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
+    reader = following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
     saved = BudgetLedger.from_dict(account.to_dict())
     _settle(account, "new")
     _interrupt_handing(reader)
@@ -102,7 +103,7 @@ def test_detached_pending_spend_never_disappears(kind):
 def test_unread_malformed_detached_history_stays_unresolved_then_recovers():
     account = BudgetLedger(total_budget=100.)
     _settle(account, "initial")
-    reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+    reader = following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
     _settle(account, "new")
     _interrupt_handing(reader)
     _interrupt_handing(reader)
@@ -134,7 +135,7 @@ def test_concurrent_new_barrier_invalidates_old_reconciliation():
     import threading
     account = BudgetLedger(total_budget=100.)
     _settle(account, "initial")
-    reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+    reader = following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
     _settle(account, "first")
     _interrupt_handing(reader)
     _interrupt_handing(reader)
@@ -181,7 +182,7 @@ def test_owner_malformed_retained_history_never_becomes_current():
     account = BudgetLedger(total_budget=100.)
     _settle(account, "initial")
     held = {"a": account}
-    reader = BudgetReader.following(lambda: (held, {}))
+    reader = following(lambda: (held, {}))
     checkpoint = BudgetLedger.from_dict(account.to_dict())
     # The owner accepts this charge, but its own from_dict cannot normalize it.
     account.settle(charge_id="unread", action_id="other", iteration="not-an-integer",
@@ -202,7 +203,7 @@ def test_experiment_detached_histories_reconcile_without_losing_attempts(rollbac
     o = ax.owned("battery")
     eid, account = next(iter(o.experiments.items()))
     held = [account]
-    reader = BudgetReader.following(lambda: ({}, {eid: ScientificExperiment.from_dict(held[0].to_dict())}))
+    reader = following(lambda: ({}, {eid: ScientificExperiment.from_dict(held[0].to_dict())}))
     checkpoint = ScientificExperiment.from_dict(account.to_dict())
     account.record(ScientificEvaluation("new", {}, status=EvaluationStatus.NOT_CONVERGED))
     _interrupt_handing(reader)
@@ -220,7 +221,7 @@ def test_retained_conflict_cannot_be_erased_by_returning_to_first_branch():
     account = BudgetLedger(total_budget=100.)
     _settle(account, "initial")
     held = [account]
-    reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
+    reader = following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
     other = BudgetLedger.from_dict(account.to_dict())
     _settle(account, "first-branch")
     _settle(other, "other-branch")

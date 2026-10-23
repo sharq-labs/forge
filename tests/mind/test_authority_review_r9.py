@@ -9,6 +9,7 @@ handed over now; an eager pin's error lasts the whole verification; the exact-le
 level; and bind tests a fixed condition as every check executes it."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import threading
 
@@ -56,7 +57,7 @@ def test_a_rollback_read_while_an_earlier_verification_holds_the_spend_never_red
     o = ax.owned("battery")
     lid = _solver(o)
     accounts, handed, resume = _paused_accounts(o, "T2")
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities)
     calls = []
@@ -84,7 +85,7 @@ def test_an_older_mapping_compared_after_a_newer_one_is_refused_only_for_its_ver
     o = ax.owned("battery")
     lid = _solver(o)
     accounts, handed, resume = _paused_accounts(o, "A")
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     r0 = o.ledgers[lid].revision
     out = {}
 
@@ -127,14 +128,14 @@ def test_an_experiment_its_owner_cannot_write_down_is_refused_without_running_it
     with pytest.raises(OwnerUnavailable, match="owner writes down"):
         BudgetReader(o.ledgers, o.experiments).read(OwnerKind.EXPERIMENT, eid)
     with pytest.raises(OwnerUnavailable, match="owner writes down"):
-        BudgetReader.following(lambda: (o.ledgers, o.experiments)).read(OwnerKind.EXPERIMENT, eid)
+        following(lambda: (o.ledgers, o.experiments)).read(OwnerKind.EXPERIMENT, eid)
 
 
 def test_a_served_experiment_never_shares_objects_with_the_account_handed_over():
     o = ax.gen1_pool()
     eid = next(iter(o.experiments))
     o.experiments[eid].metadata["runs"] = ["a"]
-    reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    reader = following(lambda: (o.ledgers, o.experiments))
     first = reader.read(OwnerKind.EXPERIMENT, eid)
     o.experiments[eid].metadata["runs"].append("b")                        # the live account moves in place
     assert first.payload["experiment"]["metadata"] == {"runs": ["a"]}
@@ -153,7 +154,7 @@ def test_the_read_back_cache_keeps_only_the_accounts_handed_over_now():
         eid = f"rotating.{state['i']}"
         return o.ledgers, {**o.experiments, eid: ScientificExperiment(eid, ScientificProblem("p"), ExperimentBudget(5))}
 
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     for i in range(10):
         state["i"] = i
         reader.pinned()

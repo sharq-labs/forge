@@ -35,7 +35,7 @@ from engcore.mind.world import ProposedAction, ScientificWorld, ValueOrigin
 from engcore.mind.world.authority import Authorities
 from engcore.mind.world.declaration import BudgetSource, ProtocolDeclaration, ValueSource
 from engcore.mind.world.owners import (
-    BudgetReader, DeclarationReader, ModelRegistryReader, ProviderRegistryReader, RunStateReader, UnitRegistryReader,
+    AccountPublication, BudgetReader, DeclarationReader, ModelRegistryReader, ProviderRegistryReader, RunStateReader, UnitRegistryReader,
 )
 from engcore.mind.world.projection import project_world
 from engcore.providers.catalog import ProviderRegistry
@@ -161,6 +161,11 @@ class Owned:
     head: Any = field(default=None, repr=False)               # the run record the execution side states is current
     probes: dict[str, bool] = field(default_factory=dict, repr=False)   # what each provider's probe finds now
 
+    _publication: AccountPublication = field(default_factory=AccountPublication, repr=False)
+
+    def publish_accounts(self):
+        return self._publication.publish(self.ledgers, self.experiments)
+
     def advance(self) -> None:
         """The execution side's run moves on: its head is now the run's later record (same run)."""
         self.head = self.run.result
@@ -182,7 +187,7 @@ class Owned:
             ModelRegistryReader(self.models if models is None else models, "fixture.models"),
             ProviderRegistryReader(self.providers if providers is None else providers, "fixture.providers",
                                    refresh=refresh),
-            BudgetReader.following(lambda: (self.ledgers, self.experiments)) if budget is None else budget,
+            BudgetReader.following(self.publish_accounts) if budget is None else budget,
             DeclarationReader.following(in_force),
             UnitRegistryReader(),
         )

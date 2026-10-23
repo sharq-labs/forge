@@ -54,6 +54,7 @@ import hashlib
 import json
 import threading
 import time
+from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Mapping
 
 from engcore.providers.catalog import (
@@ -105,12 +106,10 @@ class _InvalidHanding(OwnerUnavailable):
     """Structural evidence that the handing is not a pair of account dictionaries."""
 
 
+@dataclass(frozen=True, eq=False)
 class _RetainedHanding:
-    """Native mapping entries retained for an unfinished verification; never scientific evidence."""
-    __slots__ = ("entries",)
-
-    def __init__(self, entries: tuple[tuple, tuple]) -> None:
-        self.entries = entries
+    """Native mapping entries retained for verification; never scientific evidence."""
+    entries: tuple[tuple, tuple]
 
 
 class _PendingHistories:
@@ -379,6 +378,91 @@ def _items(mapping: Any) -> list[tuple[Any, Any]]:
     return list(dict.items(mapping))
 
 
+@dataclass(frozen=True, eq=False)
+class _PublishedAccounts:
+    source: "AccountPublication"
+    bindings: _RetainedHanding
+
+
+@dataclass(eq=False)
+class _PublicationLease:
+    active: bool = True
+
+
+class AccountPublication:
+    """Owner-side lifetime of published canonical budget accounts.
+
+    Publish BEFORE handing a binding to readers. Publication copies native mapping
+    entries, not scientific records. Replaced account objects remain retained, so
+    their append-only history survives restore even when reader capture never ran.
+    Every generation remains relevant until terminal close; acknowledging an early
+    read cannot retire an object that may subsequently be spent. No persistence or
+    exactly-once executor guarantee is implied. A new source states a new timeline.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._closed = False
+        self._generations: tuple[_PublishedAccounts, ...] = ()
+        self._leases: set[_PublicationLease] = set()
+
+    def publish(self, ledgers: Any = None, experiments: Any = None) -> _PublishedAccounts:
+        # No user mapping/key methods. Failure before the atomic commit publishes
+        # nothing; every previously published binding remains source-owned.
+        try:
+            bindings = _RetainedHanding((tuple(_items(ledgers)), tuple(_items(experiments))))
+        except TypeError as exc:
+            self.close()
+            raise _InvalidHanding(str(exc)) from None
+        token = _PublishedAccounts(self, bindings)
+        with self._lock:
+            self._require_open()
+            if self._generations:
+                previous = self._generations[-1]
+                if all(len(a) == len(b) and all(ka is kb and va is vb for (ka, va), (kb, vb) in zip(a, b))
+                       for a, b in zip(bindings.entries, previous.bindings.entries)):
+                    return previous
+            self._generations = (*self._generations, token)
+            return token
+
+    def _require_open(self) -> None:
+        if self._closed:
+            raise OwnerUnavailable("the account publication is terminally closed")
+
+    def _acquire(self, lease: _PublicationLease) -> None:
+        with self._lock:
+            self._require_open()
+            self._leases.add(lease)
+
+    def _release(self, lease: _PublicationLease) -> None:
+        with self._lock:
+            self._leases.discard(lease)
+
+    def _history(self, token: _PublishedAccounts) -> tuple[_PublishedAccounts, ...]:
+        with self._lock:
+            self._require_open()
+            if token.source is not self or not self._generations or token is not self._generations[-1]:
+                raise OwnerUnavailable("the account handoff is behind this publication's current generation")
+            return self._generations
+
+    def close(self) -> None:
+        """Irreversibly invalidate all readers and snapshots of this source."""
+        with self._lock:
+            self._closed = True
+
+    def retire(self) -> None:
+        """Release history only after terminal invalidation and proven pin quiescence.
+
+        Completed pins mark their lease inactive before cleanup, so interrupted
+        removal is recoverable here. Time and collection never establish quiescence.
+        """
+        with self._lock:
+            if not self._closed or any(lease.active for lease in self._leases):
+                raise OwnerUnavailable("publication retirement requires closure and quiescent readers")
+            self._generations = ()
+            self._leases.clear()
+
+
 class BudgetReader(_Reader):
     """Budget ledgers (``BudgetLedger``) and observation accounts (``ScientificExperiment``) by id.
 
@@ -387,7 +471,7 @@ class BudgetReader(_Reader):
     ``sria.campaign`` does on restore); its constructor refuses an account set that is not a dict or not exactly
     typed, names an account by anything but a str, names two accounts by ids that spell one id, or registers one object
     under two ids.  ``BudgetReader.following(accounts)`` asks the execution side's ``accounts()`` for the current
-    ``(ledgers, experiments)`` at every verification, and every account only moves forward: its history (a ledger's
+    ``AccountPublication.publish(ledgers, experiments)`` at every verification, and every account only moves forward: its history (a ledger's
     settled charges, an experiment's recorded evaluations, in the form the owner reads them back, so a restore of an
     unchanged account is the same history) must extend the longest history this reader observed for it.  An account
     BEHIND that history (it went back, or this verification's snapshot is older than one already observed) is refused
@@ -450,9 +534,8 @@ class BudgetReader(_Reader):
     refused, until it completes.  What is never observed: a state no verification was handed (a spend and its rollback
     both between two verifications look like no change), the content of a state handed and not read back (only its
     entry objects), an entry under a key that is not a str, the state of a verification whose ``accounts()`` raises or
-    hands no pair of mappings; at-most-once execution is the execution owner's. Repeated interruptions before stable
-    capture can still lose a returned mutable handing if the owner replaces it: this is an unresolved defect, not an
-    accepted caller-stack exclusion. An ``accounts()`` or
+    hands no pair of mappings; at-most-once execution is the execution owner's. Live callbacks return AccountPublication.publish tokens: source-retained bindings survive repeated
+    interruptions before reader capture. All source generations are reconciled before authority is served. An ``accounts()`` or
     read-back that reads through the reader it feeds on the same thread, or from its fresh thread, is refused at once
     (from inside the read-back, that refusal repeats, so the account is refused for good).  A pinned snapshot serves the
     records it observed and is never live."""
@@ -461,18 +544,37 @@ class BudgetReader(_Reader):
     WAIT_S = 1.0                                     # the most a compared verification waits for the others in flight
 
     @classmethod
-    def following(cls, accounts: Callable[[], tuple[dict[str, Any] | None, dict[str, Any] | None]],
+    def following(cls, accounts: Callable[[], _PublishedAccounts],
                   owner_id: str = "budget") -> "BudgetReader":
         if not callable(accounts):
-            raise WorldRefused("followed accounts are a callable the execution side answers with (ledgers, experiments)")
-        reader = cls(*accounts(), owner_id=owner_id)
-        reader._follow = accounts
-        ticket = reader._ticket()
+            raise WorldRefused("followed accounts are an owner publication callback")
+        token = accounts()
+        if type(token) is not _PublishedAccounts or type(token.source) is not AccountPublication:
+            raise WorldRefused("live budget following requires AccountPublication.publish; raw mappings have no lifetime")
+        lease = _PublicationLease()
         try:
-            reader._observe_all(reader, ticket)          # what is handed over at construction: the first baseline
+            token.source._acquire(lease)
+            token.source._history(token)
+            reader = cls._handed(token.bindings, owner_id, frozenset())
+            # Preserve construction's strict account-set contract; later handoffs
+            # still isolate invalid entries so they cannot hide other accounts.
+            if (reader._entry_refusals or reader._aliased or
+                    any(not issubclass(type(key), str) for entries in token.bindings.entries for key, _ in entries)):
+                raise WorldRefused("initial budget publication must have distinct str ids and exact canonical accounts")
+            reader._source = token.source
+            reader._follow = accounts
+            with reader._lock:
+                reader._retain_publication(token)
+            ticket = reader._ticket()
+            try:
+                reader._observe_all(reader, ticket)      # the first authoritative baseline
+                token.source._require_open()
+            finally:
+                reader._leave(ticket, False)
+            return reader
         finally:
-            reader._leave(ticket, False)
-        return reader
+            lease.active = False
+            token.source._release(lease)
 
     @property
     def live(self) -> bool:                          # derived from the mode: a pinned snapshot is never live (R7-D1)
@@ -743,7 +845,7 @@ class BudgetReader(_Reader):
 
     @staticmethod
     def _rewrote_unread(key: tuple[str, str]) -> str:
-        return (f"budget {key[0]} {key[1]!r} rewrote the entries of a state of it a verification was handed and could "
+        return (f"budget {key[0]} {key[1]!r} rewrote its history: the entries of a state of it a verification was handed and could "
                 "not read back (its owner's container no longer begins with exactly those entry objects): refused by "
                 "this reader from then on (a new timeline is stated with a new reader)")
 
@@ -839,7 +941,7 @@ class BudgetReader(_Reader):
                     continue
                 against = self._against_unread(key, before, after)
                 if against == "unresolved histories":
-                    observed[key] = f"budget {key[0]} {key[1]!r}: retained histories await owner reconciliation"
+                    observed[key] = f"budget {key[0]} {key[1]!r}: retained histories changed while comparisons were in flight; await owner reconciliation"
                     continue
                 if against == "behind unread":
                     observed[key] = self._behind_unread(key)
@@ -880,7 +982,7 @@ class BudgetReader(_Reader):
                     elif len(self._seen.get(key, ())) > len(history):
                         observed[key] = self._behind(key)
                     elif self._against_unread(key, before, after) is not None:
-                        observed[key] = (f"budget {key[0]} {key[1]!r}: another verification was handed a state of it "
+                        observed[key] = (f"budget {key[0]} {key[1]!r}: another verification in flight was handed a state of it "
                                          "meanwhile and could not read it back, and this state is not one that begins "
                                          "with that state's entries: refused for this verification only")
         if interrupted is not None:
@@ -918,6 +1020,8 @@ class BudgetReader(_Reader):
     @staticmethod
     def _retain_handing(handed: Any) -> _RetainedHanding:
         """Retain native mapping storage while an interrupted verification remains uncompared."""
+        if type(handed) is _PublishedAccounts:
+            return handed.bindings
         pair = tuple if issubclass(type(handed), tuple) else list if issubclass(type(handed), list) else None
         if pair is None or pair.__len__(handed) != 2:
             raise _InvalidHanding("accounts must be handed as a pair")
@@ -925,6 +1029,18 @@ class BudgetReader(_Reader):
         if any(m is not None and not issubclass(type(m), dict) for m in maps):
             raise _InvalidHanding("each account mapping must be a dict")
         return _RetainedHanding(tuple(_items(m) for m in maps))
+
+    def _retain_publication(self, token: _PublishedAccounts) -> None:
+        """Under reader lock: recover ALL source generations before any authority.
+
+        Canonical entry reconciliation remains outside this lock in _observe_all.
+        No cursor retires earlier generations: their accounts may have grown.
+        """
+        if type(token) is not _PublishedAccounts or token.source is not self._source:
+            raise _InvalidHanding("budget handoff must retain its original AccountPublication")
+        for generation in self._source._history(token):
+            current = BudgetReader._from_bindings(generation.bindings, self.owner_id, frozenset(self._diverged))
+            self._retain_accounts(current)
 
     def _recover_handing(self, ticket: int) -> None:
         """Under the lock: resume an uncompared handing into the existing unread-entry barrier.
@@ -934,6 +1050,10 @@ class BudgetReader(_Reader):
         """
         mapping = self._uncompared[ticket]
         current = BudgetReader._handed(mapping, self.owner_id, frozenset(self._diverged))
+        self._retain_accounts(current)
+        self._uncompared.pop(ticket)
+
+    def _retain_accounts(self, current: "BudgetReader") -> None:
         for key, refusal in current._entry_refusals.items():
             self._diverged[key] = refusal.why
         for kind, accounts in (("ledger", current._ledgers), ("experiment", current._experiments)):
@@ -943,16 +1063,20 @@ class BudgetReader(_Reader):
                     continue
                 entries = current._entries(key)
                 if entries is None:
-                    self._diverged[key] = f"budget {kind} {name!r}: interrupted handing has unlistable entries"
+                    self._diverged[key] = f"budget {kind} {name!r}: interrupted handing has unlistable entries; refused from then on"
                 else:
                     self._note_unread(key, entries)
-        self._uncompared.pop(ticket)
 
     @classmethod
     def _handed(cls, handed: Any, owner_id: str, skip: frozenset[tuple[str, str]]) -> "BudgetReader":
         """What one ``accounts()`` call handed over, entry by entry: an entry that is not an account never hides one
         that is (see the class docstring)."""
         retained = handed if type(handed) is _RetainedHanding else cls._retain_handing(handed)
+        return cls._from_bindings(retained, owner_id, skip)
+
+    @classmethod
+    def _from_bindings(cls, retained: _RetainedHanding, owner_id: str,
+                       skip: frozenset[tuple[str, str]]) -> "BudgetReader":
         ledger_entries, experiment_entries = retained.entries
         snapshot = cls(owner_id=owner_id)
         objects: dict[int, list[tuple[str, str]]] = {}
@@ -994,7 +1118,9 @@ class BudgetReader(_Reader):
         ticket, handed = 0, False
         not_returned = object()
         mapping = not_returned
+        lease = _PublicationLease()
         try:
+            self._source._acquire(lease)
             self._in_follow.active = True
             with self._lock:                         # the ticket is named before it is in flight: a finally that
                 for pending_ticket in tuple(self._uncompared):
@@ -1006,6 +1132,10 @@ class BudgetReader(_Reader):
                 skip = frozenset(self._diverged)
             try:
                 mapping = self._follow()
+            except _InvalidHanding:
+                with self._lock:
+                    self._sealed = "the owner publication handed not a pair of account dicts; this reader refuses every account from then on"
+                raise OwnerUnavailable(self._sealed) from None
             except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
                 raise OwnerUnavailable("the execution side could not state its budget accounts: "
                                        f"{_described(exc)}") from None
@@ -1014,6 +1144,7 @@ class BudgetReader(_Reader):
                 with self._lock:
                     self._uncompared[ticket] = mapping
                     self._uncompared[ticket] = BudgetReader._retain_handing(mapping)
+                    self._retain_publication(mapping)
                 current = BudgetReader._handed(self._uncompared[ticket], self.owner_id, skip)
             except _InvalidHanding as exc:  # structural evidence, never an asynchronous interruption
                 with self._lock:
@@ -1028,7 +1159,9 @@ class BudgetReader(_Reader):
             current._in_follow = self._in_follow         # its read-back runs under this reader's read-through flag
             current._fresh = self._fresh                 # one fresh-thread read-back per account across verifications
             current._fresh_lock = self._fresh_lock
+            current._source = self._source
             current._observed = self._observe_all(current, ticket)
+            self._source._require_open()  # terminal closure invalidates a pin even after comparison
             return current
         except BaseException:
             # Preserve the interrupted handing before control returns to the owner.
@@ -1049,6 +1182,8 @@ class BudgetReader(_Reader):
                 self._leave(ticket, handed)
             finally:
                 self._in_flight.discard(ticket)      # (atomic): never left in flight if the lock wait is interrupted
+                lease.active = False  # proof this pin can no longer consume source history
+                self._source._release(lease)
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
         if self._follow is not None:
@@ -1058,6 +1193,7 @@ class BudgetReader(_Reader):
     def __init__(self, ledgers: dict[str, BudgetLedger] | None = None,
                  experiments: dict[str, ScientificExperiment] | None = None, owner_id: str = "budget") -> None:
         self._follow: Callable[[], Any] | None = None
+        self._source: AccountPublication | None = None
         self._observed: dict[tuple[str, str], OwnerRecord | str | None] | None = None   # a pinned snapshot's records
         self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
         self._unread_entries: dict[tuple[str, str], tuple[Any, ...] | _PendingHistories] = {}   # account -> the entry objects of the
@@ -1107,6 +1243,8 @@ class BudgetReader(_Reader):
         self.owner_id = text(owner_id, "budget owner id")
 
     def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if self._source is not None:
+            self._source._require_open()
         kind = OwnerKind(kind)
         if kind not in self.kinds:
             return None

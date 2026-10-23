@@ -10,6 +10,7 @@ failure retried on a fresh thread; served experiment records are parsed from the
 for that leaves without comparing makes its waiters decide on nothing; and the controls rounds 10-11 lacked."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import enum
 import threading
@@ -39,7 +40,7 @@ def _solver(o):
 
 
 def _desk(o, accounts, executor):
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities)
     assert r.admitted is not None
@@ -98,7 +99,7 @@ def test_a_deeply_nested_account_no_world_reads_refuses_no_admission():
     o = ax.owned("battery")
     side = ax.experiment("other.campaign", 400, 3)
     side.metadata["trace"] = _nested(600)
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), {**o.experiments, "other.campaign": side}))
+    reader = following(lambda: (dict(o.ledgers), {**o.experiments, "other.campaign": side}))
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     assert admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities).feasible
 
@@ -185,7 +186,7 @@ def test_an_experiment_spend_whose_serialization_always_fails_refuses_the_accoun
 def test_an_experiment_whose_accounting_never_matches_its_read_back_is_refused_for_good(monkeypatch, break_it):
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     live = o.experiments[eid]
     real = live.to_dict
 
@@ -205,7 +206,7 @@ def test_an_experiment_whose_accounting_never_matches_its_read_back_is_refused_f
 def test_a_ledger_spend_its_owner_cannot_read_back_refuses_the_account_for_good():
     o = ax.owned("battery")
     lid = _solver(o)
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     o.ledgers[lid].settle(charge_id=("a", "tuple"), action_id="x", iteration=1, family=ActionFamily.EXPLORE,
                           realized=1.0)                                     # its JSON list is no charge id it reads
     with pytest.raises(OwnerUnavailable, match="from then on"):
@@ -230,7 +231,7 @@ def test_a_spend_too_deep_for_the_owners_encoder_refuses_the_account_for_good():
 def test_a_read_torn_by_an_honest_move_is_retried_not_refused_for_good(monkeypatch, kind):
     o = ax.owned("battery")
     lid, eid = _solver(o), next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     live = o.ledgers[lid] if kind == "ledger" else o.experiments[eid]
     real = live.to_dict
     torn = {"n": 0}
@@ -254,7 +255,7 @@ def test_a_read_torn_by_an_honest_move_is_retried_not_refused_for_good(monkeypat
 def test_an_account_that_keeps_moving_is_refused_once_and_read_when_it_rests(monkeypatch):
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     live = o.experiments[eid]
     real = live.to_dict
     state = {"moving": True}
@@ -291,7 +292,7 @@ def test_a_verification_on_a_deep_call_stack_never_refuses_an_honest_account_for
             raise RecursionError("maximum recursion depth exceeded")
         return real()
 
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     monkeypatch.setattr(live, "to_dict", depth_dependent)
 
     def deep(k):
@@ -314,7 +315,7 @@ def test_an_account_refused_for_good_is_not_read_back_again(monkeypatch):
         out["metadata"] = {"note": {1, 2}}
         return out
 
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     monkeypatch.setattr(live, "to_dict", unwritable)
     with pytest.raises(OwnerUnavailable, match="from then on"):
         reader.read(OwnerKind.EXPERIMENT, eid)
@@ -384,7 +385,7 @@ def test_a_verification_waited_for_that_leaves_uncompared_makes_the_waiter_decid
     # (Round 13: an exception raised inside the read-back is now a classified failure and an interrupt there is
     # re-raised only after the comparison, so W is interrupted at the snapshot step instead, where it still leaves
     # uncompared.)
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     monkeypatch.setattr(BudgetReader, "_handed", classmethod(interrupted_after_handed))
     w = threading.Thread(target=lambda: _absorb(reader.pinned), name="W", daemon=True)
     w.start()
@@ -408,7 +409,7 @@ def _absorb(fn):
 # ---- B11-3: an interrupted leave never leaves the ticket in flight or the flag set ---------------------------------------------
 def test_an_interrupted_leave_leaves_nothing_in_flight(monkeypatch):
     o = ax.owned("battery")
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
 
     def interrupted(ticket, handed):
         raise _Interrupted()
@@ -430,7 +431,7 @@ def test_editing_a_served_experiment_record_changes_nothing_later_verifications_
     from engcore.mind.world.owners import rederive
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     first = reader.read(OwnerKind.EXPERIMENT, eid)
     first.payload["experiment"]["metadata"]["edited"] = True               # a consumer edits what it was served
     first.payload["accounting"]["observations"] = -1

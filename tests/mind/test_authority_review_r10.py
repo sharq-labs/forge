@@ -9,6 +9,7 @@ back into a private cache (B10-1), account ids are exactly str (B10-4), a stated
 (B10-5), ledger records are detached (F10-5), and the read-back runs unlocked and under the same-thread flag (B10-7)."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import enum
 import threading
@@ -39,7 +40,7 @@ def _solver(o):
 
 
 def _desk(o, accounts):
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities)
     assert r.admitted is not None
@@ -131,7 +132,7 @@ def test_a_self_containing_value_is_refused_at_once():
     o.experiments[eid].metadata["loop"] = loop
     t0 = time.perf_counter()
     with pytest.raises(OwnerUnavailable, match="owner writes down"):
-        BudgetReader.following(lambda: (o.ledgers, o.experiments)).read(OwnerKind.EXPERIMENT, eid)
+        following(lambda: (o.ledgers, o.experiments)).read(OwnerKind.EXPERIMENT, eid)
     assert time.perf_counter() - t0 < 5.0
 
 
@@ -192,7 +193,7 @@ def test_a_compared_verification_decides_on_what_the_ones_in_flight_record(spend
                 raise RuntimeError("the execution side's store went away")
         return mapping
 
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     before = o.ledgers[lid]
     if spend is True:
         spent = BudgetLedger.from_dict(before.to_dict())
@@ -264,7 +265,7 @@ def test_no_verification_crashes_on_another_ones_read_back():
             i = n["i"]
         return {}, {f"c{(i + j) % 53}": pool[(i + j) % 40] for j in range(20)}   # a changing set of accounts
 
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     errors = []
 
     def worker():
@@ -286,7 +287,7 @@ def test_a_snapshot_reads_back_into_its_own_cache_until_it_compares(monkeypatch)
     o = ax.owned("battery")
     first = next(iter(o.experiments))
     last = ax.experiment("camp.last", 400, 3)
-    reader = BudgetReader.following(lambda: (o.ledgers, {**o.experiments, "camp.last": last}))
+    reader = following(lambda: (o.ledgers, {**o.experiments, "camp.last": last}))
     old = reader._readback[("experiment", first)][0]                       # (private: the cached content digest)
     o.experiments[first].record(ScientificEvaluation("moved", {}, status=EvaluationStatus.NOT_CONVERGED, detail="x"))
     entered, resume = threading.Event(), threading.Event()
@@ -330,7 +331,7 @@ def test_an_account_id_runs_no_code_under_the_lock_and_a_str_subclass_is_read_as
             ledgers[Key(lid)] = ledgers.pop(lid)
         return ledgers, dict(o.experiments)
 
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     state["reader"] = reader
     mode["key"] = True
     assert reader.pinned().read(OwnerKind.BUDGET_LEDGER, lid) is not None   # read under the plain str it spells
@@ -359,7 +360,7 @@ def test_a_pinned_ledger_record_does_not_move_with_the_account():
     lid = _solver(o)
     o.ledgers[lid].settle(charge_id="d1", action_id="x", iteration=1, family=ActionFamily.EXPLORE, realized=0.1,
                           detail={"runs": ["r1"]})
-    snapshot = BudgetReader.following(lambda: (o.ledgers, o.experiments)).pinned()
+    snapshot = following(lambda: (o.ledgers, o.experiments)).pinned()
     first = snapshot.read(OwnerKind.BUDGET_LEDGER, lid)
     o.ledgers[lid].charges[-1].detail["runs"].append("edited after the pin")     # the live account moves in place
     again = snapshot.read(OwnerKind.BUDGET_LEDGER, lid)
@@ -382,7 +383,7 @@ def test_the_read_back_runs_with_no_lock_held(monkeypatch):
         return real()
 
     monkeypatch.setattr(live, "to_dict", recorded)
-    reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    reader = following(lambda: (o.ledgers, o.experiments))
     state["reader"] = reader
     reader.pinned()
     assert held and True not in held
@@ -402,7 +403,7 @@ def test_a_read_through_from_the_read_back_is_refused_at_once(monkeypatch):
             state["reader"].pinned()                                       # the execution side reads through
         return real()
 
-    reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    reader = following(lambda: (o.ledgers, o.experiments))
     monkeypatch.setattr(live, "to_dict", reads_through)
     state["reader"] = reader
     with pytest.raises(OwnerUnavailable, match="from then on"):            # round 11: the refusal repeats at every
@@ -421,7 +422,7 @@ def test_an_equal_content_replacement_serves_the_account_handed_over():
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
     o.experiments[eid].metadata["runs"] = {"list": ["a"]}
-    reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    reader = following(lambda: (o.ledgers, o.experiments))
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     reader.read(OwnerKind.EXPERIMENT, eid)
     old = o.experiments[eid]
@@ -447,7 +448,7 @@ def test_a_failed_accounts_call_refuses_only_its_own_verification():
             raise ConnectionError("the ledger store is offline")
         return o.ledgers, o.experiments
 
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     state["down"] = True
     with pytest.raises(OwnerUnavailable, match="could not state"):
         reader.read(OwnerKind.BUDGET_LEDGER, lid)

@@ -28,10 +28,11 @@ def test_generated_owner_transition_trace(handing, effect, ending):
     if handing == "detached":
         original = reader._follow
         def copies():
-            ledgers, experiments = original()
+            original()  # preserve publication/seal side effects
+            ledgers, experiments = held, {}
             if mode["sealed"]:
                 return ledgers, experiments
-            return {k: BudgetLedger.from_dict(v.to_dict()) for k,v in ledgers.items()}, {}
+            return reader._source.publish({k: BudgetLedger.from_dict(v.to_dict()) for k,v in ledgers.items()}, {})
         reader._follow = copies
     if effect == "spend":
         _settle(account, "spent")

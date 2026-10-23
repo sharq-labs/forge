@@ -11,6 +11,7 @@ its read-back, a handing that is not a pair of dicts makes the reader refuse eve
 content observed) records nothing, so an honest unchanged checkpoint restore after it is read."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import threading
 import types
@@ -34,7 +35,7 @@ def _solver(o):
 
 
 def _desk(o, accounts, executor):
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities)
     assert r.admitted is not None
@@ -201,7 +202,7 @@ def test_content_raising_system_exit_or_generator_exit_is_a_failure_not_an_inter
     side = BudgetLedger(total_budget=10.0)
     side.settle(charge_id="c", action_id="x", iteration=1, family=ActionFamily.EXPLORE, realized=1.0,
                 detail=_RaisesOnStr(exc_type))
-    reader = BudgetReader.following(lambda: ({**o.ledgers, "side.ledger": side}, dict(o.experiments)))
+    reader = following(lambda: ({**o.ledgers, "side.ledger": side}, dict(o.experiments)))
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     assert admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities).feasible
     with pytest.raises(OwnerUnavailable, match="from then on"):
@@ -212,7 +213,7 @@ def test_content_raising_system_exit_or_generator_exit_is_a_failure_not_an_inter
 def test_an_unread_state_holding_only_observed_entries_lets_an_unchanged_checkpoint_restore_be_read():
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     live = o.experiments[eid]
     live.record(ScientificEvaluation("camp.1", {}, status=EvaluationStatus.NOT_CONVERGED, detail="x"))
     assert reader.read(OwnerKind.EXPERIMENT, eid) is not None              # read back: its entries observed
@@ -231,7 +232,7 @@ def test_an_unread_state_holding_only_observed_entries_lets_an_unchanged_checkpo
 def test_an_unread_state_with_a_new_entry_still_refuses_an_object_replacing_restore():
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     live = o.experiments[eid]
     before = ScientificExperiment.from_dict(live.to_dict())
     real = live.to_dict
@@ -255,7 +256,7 @@ def test_an_unread_state_with_a_new_entry_still_refuses_an_object_replacing_rest
 def test_an_unread_state_that_moved_on_in_place_is_cleared_and_an_unchanged_restore_is_read():
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     live = o.experiments[eid]
     real = live.to_dict
     state = {"moving": True}

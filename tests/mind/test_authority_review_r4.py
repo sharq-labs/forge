@@ -6,6 +6,7 @@ checked (K4-F1).  Now every value a check reads, a fixed condition's included, i
 mints from the sources by a separate path and requires every value any family decided on to equal it."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import dataclasses
 import json
@@ -264,7 +265,7 @@ def test_a_followed_account_whose_history_was_rewritten_at_the_same_length_is_re
     o.ledgers[lid].settle(charge_id="run-a", action_id="other", iteration=1, family=ActionFamily.EXPLORE, realized=1.0)
     d2 = o.ledgers[lid].to_dict()
     accounts = {"ledgers": dict(o.ledgers)}
-    reader = BudgetReader.following(lambda: (accounts["ledgers"], o.experiments))
+    reader = following(lambda: (accounts["ledgers"], o.experiments))
     assert reader.read(OwnerKind.BUDGET_LEDGER, lid) is not None       # D2 accepted
     restored = BudgetLedger.from_dict(d2)
     rewritten = BudgetLedger(total_budget=restored.total_budget, cost_unit=restored.cost_unit,
@@ -296,7 +297,7 @@ def test_a_followed_account_restored_unchanged_or_topped_up_is_the_same_account(
     gateway.dispatch(r.admitted)
     o.ledgers[lid] = BudgetLedger.from_dict(o.ledgers[lid].to_dict())   # a checkpoint restore, integer amounts
     gateway.dispatch(r.admitted)
-    reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    reader = following(lambda: (o.ledgers, o.experiments))
     assert reader.read(OwnerKind.BUDGET_LEDGER, lid) is not None
     o.ledgers[lid].total_budget = o.ledgers[lid].total_budget + 5.0     # a declaration top-up, history unchanged
     assert reader.read(OwnerKind.BUDGET_LEDGER, lid) is not None

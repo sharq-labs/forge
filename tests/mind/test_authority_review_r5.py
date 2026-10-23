@@ -6,6 +6,7 @@ went back or rewrote its history is now refused for good by that reader, and an 
 refuses nothing (round 6: every handed account is still observed at every verification)."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import dataclasses
 
@@ -36,7 +37,7 @@ def test_a_rolled_back_account_is_refused_at_every_later_dispatch_not_only_the_f
     o = ax.owned("battery")
     lid = _solver(o)
     before = BudgetLedger.from_dict(o.ledgers[lid].to_dict())          # the account as admitted
-    reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    reader = following(lambda: (o.ledgers, o.experiments))
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities)
     assert r.feasible
@@ -58,7 +59,7 @@ def test_a_rolled_back_account_is_refused_at_every_later_dispatch_not_only_the_f
 def test_an_account_the_world_does_not_bind_never_refuses_its_admission():
     o = ax.owned("battery")
     accounts = {"ledgers": {**o.ledgers, "unrelated": ax.ledger(1.0, 0.0, "hour", "unrelated")}}
-    reader = BudgetReader.following(lambda: (accounts["ledgers"], o.experiments))
+    reader = following(lambda: (accounts["ledgers"], o.experiments))
     assert reader.read(OwnerKind.BUDGET_LEDGER, _solver(o)) is not None
     broken = ax.ledger(1.0, 0.0, "hour", "unrelated")
     broken.reserved_validation_budget = 5.0                              # unreadable by its owner (in-place edit)

@@ -10,6 +10,7 @@ fresh-thread retry is waited for at most ``WAIT_S`` (R12-4), runs the same class
 and recognizes a recursion failure an owner wrapped (R12-5); and the controls the surviving mutants lacked (R12-6)."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import itertools
 import sys
@@ -35,7 +36,7 @@ def _solver(o):
 
 
 def _desk(o, accounts):
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities)
     assert r.admitted is not None
@@ -113,7 +114,7 @@ def test_an_unrenderable_account_no_world_reads_refuses_no_admission(detail):
     o = ax.owned("battery")
     side = BudgetLedger(total_budget=10.0)
     side.settle(charge_id="c", action_id="x", iteration=1, family=ActionFamily.EXPLORE, realized=1.0, detail=detail)
-    reader = BudgetReader.following(lambda: ({**o.ledgers, "side.ledger": side}, dict(o.experiments)))
+    reader = following(lambda: ({**o.ledgers, "side.ledger": side}, dict(o.experiments)))
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     assert admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities).feasible
 
@@ -175,7 +176,7 @@ def test_a_str_subclass_id_is_read_under_its_spelling_and_runs_no_code():
             ran.append("__str__")
             return "another.ledger"
 
-    reader = BudgetReader.following(lambda: ({Named(k): v for k, v in o.ledgers.items()}, dict(o.experiments)))
+    reader = following(lambda: ({Named(k): v for k, v in o.ledgers.items()}, dict(o.experiments)))
     assert reader.read(OwnerKind.BUDGET_LEDGER, lid) is not None
     assert reader.read(OwnerKind.BUDGET_LEDGER, "another.ledger") is None and ran == []
     strict = BudgetReader({Named(lid): o.ledgers[lid]}, {})
@@ -252,7 +253,7 @@ def test_a_state_not_read_back_whose_length_cannot_be_read_refuses_its_account_f
         pass
 
     object.__setattr__(live, "_evaluations", Evaluations(live._evaluations))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
 
     def moving():
         raise RuntimeError("dictionary changed size during iteration")
@@ -266,7 +267,7 @@ def test_a_state_not_read_back_whose_length_cannot_be_read_refuses_its_account_f
 def test_three_read_backs_torn_by_honest_records_refuse_once_then_read():
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     live = o.experiments[eid]
     real = live.to_dict
     calls = {"n": 0}
@@ -300,7 +301,7 @@ def test_a_fresh_thread_read_back_blocked_by_the_verifiers_own_lock_is_refused_w
                 raise RecursionError("maximum recursion depth exceeded")  # the verifying caller's deep stack
             return real()
 
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     object.__setattr__(live, "to_dict", to_dict)
     out = {}
 
@@ -341,7 +342,7 @@ def test_a_torn_fresh_thread_read_back_is_retried_not_refused_for_good():
             out["reserved_validation_budget"] = out["total_budget"] + 1.0
         return out
 
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     object.__setattr__(live, "to_dict", to_dict)
 
     def deep(k):
@@ -365,7 +366,7 @@ def test_a_recursion_failure_an_owner_wraps_is_retried_on_a_fresh_thread():
                 raise ValueError(f"unparsable unit 'megafarad': {exc}") from exc
         return real()
 
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     object.__setattr__(live, "to_dict", to_dict)
 
     def deep(k):
@@ -396,7 +397,7 @@ def test_a_read_through_from_the_fresh_thread_read_back_is_refused_at_once():
                 nested.append(str(exc))
         return real()
 
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     object.__setattr__(live, "to_dict", to_dict)
 
     def deep(k):

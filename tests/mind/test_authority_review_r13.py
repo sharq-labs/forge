@@ -11,6 +11,7 @@ mapping's entries are listed without hashing its keys, and the fresh-thread retr
 thread per account, one deadline per verification, the private cache, a verification in flight until it compared)."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import asyncio
 import threading
@@ -38,7 +39,7 @@ def _solver(o):
 
 
 def _desk(o, accounts, executor):
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     r = admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities)
     assert r.admitted is not None
@@ -99,7 +100,7 @@ def _readmitted(o, authorities, gateway):
 def test_an_honest_account_not_read_back_is_read_once_it_moves_on_in_place():
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     live = o.experiments[eid]
     real = live.to_dict
     state = {"moving": True}
@@ -168,7 +169,7 @@ def test_an_account_raising_a_base_exception_no_world_reads_refuses_no_admission
     side = BudgetLedger(total_budget=10.0)
     side.settle(charge_id="c", action_id="x", iteration=1, family=ActionFamily.EXPLORE, realized=1.0,
                 detail=_RaisesOnStr(_Halt))
-    reader = BudgetReader.following(lambda: ({**o.ledgers, "side.ledger": side}, dict(o.experiments)))
+    reader = following(lambda: ({**o.ledgers, "side.ledger": side}, dict(o.experiments)))
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     assert admit(FeasibleActionSpace.build(o.world), o.propose("simulate_pulse", *SIM), authorities).feasible
 
@@ -265,7 +266,7 @@ def test_a_handed_mapping_that_is_not_a_dict_refuses_the_verification():
             return len(self.d)
 
     state = {"pairs": False}
-    reader = BudgetReader.following(lambda: ((Pairs(o.ledgers) if state["pairs"] else dict(o.ledgers)),
+    reader = following(lambda: ((Pairs(o.ledgers) if state["pairs"] else dict(o.ledgers)),
                                              dict(o.experiments)))
     state["pairs"] = True
     with pytest.raises(OwnerUnavailable, match="not a pair of account dicts"):
@@ -284,7 +285,7 @@ def test_the_strict_constructor_reads_a_dict_from_its_own_storage():
 def test_a_shorter_state_not_read_back_never_replaces_a_longer_one():
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     live = o.experiments[eid]
     real = live.to_dict
     state = {"moving": True}
@@ -322,7 +323,7 @@ def test_a_fresh_thread_completing_after_the_wait_is_read_not_refused_for_good(m
             release.wait(10)                                               # completes only when released
         return real()
 
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     object.__setattr__(live, "to_dict", to_dict)
     monkeypatch.setattr(BudgetReader, "WAIT_S", 0.2)
     real_alive = threading.Thread.is_alive
@@ -364,7 +365,7 @@ def test_a_blocked_fresh_thread_is_not_joined_by_another_for_the_same_account(mo
             release.wait(10)
         return real()
 
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     object.__setattr__(live, "to_dict", to_dict)
     monkeypatch.setattr(BudgetReader, "WAIT_S", 0.2)
     try:
@@ -382,7 +383,7 @@ def test_fresh_thread_waits_share_one_deadline_per_verification(monkeypatch):
     e1 = next(iter(o.experiments))
     e2 = ax.experiment("other.campaign", 400, 3)
     release = threading.Event()
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), {**o.experiments, "other.campaign": e2}))
+    reader = following(lambda: (dict(o.ledgers), {**o.experiments, "other.campaign": e2}))
     for exp in (o.experiments[e1], e2):
         real = exp.to_dict
 
@@ -418,7 +419,7 @@ def test_an_abandoned_fresh_thread_writes_into_nothing_the_verification_holds(mo
     live = o.experiments[eid]
     real = live.to_dict
     release = threading.Event()
-    reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+    reader = following(lambda: (dict(o.ledgers), dict(o.experiments)))
     live.record(ScientificEvaluation("camp.1", {}, status=EvaluationStatus.NOT_CONVERGED, detail="x"))   # new content
 
     def to_dict():
@@ -461,7 +462,7 @@ def test_a_verification_interrupted_inside_its_comparison_makes_its_waiters_deci
             w_go.wait(10)
         return mapping
 
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     real_handed = BudgetReader._handed.__func__
 
     def handed(cls, *a):

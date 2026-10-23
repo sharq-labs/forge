@@ -4,6 +4,7 @@ All ordering uses events or explicit call checkpoints. Timeouts are deadlock
 bounds, never scheduling inputs. Synthetic contract evidence, not validation.
 """
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import sys
 import threading
@@ -29,7 +30,7 @@ def _simple():
     mode = {"sealed": False}
     def accounts():
         return (types.MappingProxyType(held) if mode["sealed"] else held), {}
-    return account, held, mode, BudgetReader.following(accounts)
+    return account, held, mode, following(accounts)
 
 
 def _seal(reader, mode):
@@ -263,7 +264,7 @@ def test_honest_growth_across_unread_checkpoint_never_means_rewritten(monkeypatc
 
 def test_unchanged_detached_accounts_recover_after_interrupt(monkeypatch):
     account, held, mode, reader = _simple()
-    reader._follow = lambda: ({k: BudgetLedger.from_dict(v.to_dict()) for k,v in held.items()}, {})
+    reader._follow = lambda: reader._source.publish({k: BudgetLedger.from_dict(v.to_dict()) for k,v in held.items()}, {})
     original = BudgetReader._account
     armed = [True]
     def interrupted(self, key):
@@ -385,7 +386,7 @@ def test_native_pair_subclasses_preserve_the_dict_handing_contract(base):
     account, held, mode, reader = _simple()
     class Pair(base):
         pass  # an honest native-container subclass, e.g. a named tuple
-    reader._follow = lambda: Pair((held, {}))
+    reader._follow = lambda: reader._source.publish(*Pair((held, {})))
     assert reader.read(K, "a") is not None
     assert reader._sealed is None
 

@@ -8,6 +8,7 @@ errors for unbound accounts, and read experiments back by another rule than repl
 rule than the projection's."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import copy
 import datetime
@@ -47,7 +48,7 @@ def _solver(o):
 
 
 def _followed(o, accounts=None):
-    reader = BudgetReader.following(accounts or (lambda: (o.ledgers, o.experiments)))
+    reader = following(accounts or (lambda: (o.ledgers, o.experiments)))
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     return reader, authorities
 
@@ -143,7 +144,7 @@ def test_a_level_control_is_never_executed_at_a_value_that_is_no_declared_level(
 # ---- B7-M1 = R7-D1 (MAJOR): a pinned budget snapshot is never live ----------------------------------------------------------------
 def test_a_pinned_budget_snapshot_is_not_live_and_backs_no_desk_or_dispatch():
     o = ax.owned("battery")
-    snapshot = BudgetReader.following(lambda: (o.ledgers, o.experiments)).pinned()
+    snapshot = following(lambda: (o.ledgers, o.experiments)).pinned()
     assert not is_live(snapshot)
     authorities = o.authorities(budget=snapshot)
     assert not authorities.live
@@ -249,7 +250,7 @@ def test_a_snapshot_serves_what_it_observed_after_an_in_place_change():
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
     o.experiments[eid].metadata["runs"] = ["a"]
-    snap = BudgetReader.following(lambda: (o.ledgers, o.experiments)).pinned()
+    snap = following(lambda: (o.ledgers, o.experiments)).pinned()
     first = copy.deepcopy(snap.read(OwnerKind.EXPERIMENT, eid).payload["experiment"]["metadata"])
     o.experiments[eid].metadata["runs"].append("b")
     assert snap.read(OwnerKind.EXPERIMENT, eid).payload["experiment"]["metadata"] == first == {"runs": ["a"]}
@@ -289,7 +290,7 @@ def test_an_unreadable_declaration_reads_no_account_or_provider_and_says_why():
     from engcore.mind.world import DeclarationReader
     held = {"set": [o.declaration]}
     decl = DeclarationReader.following(lambda: held["set"])
-    reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    reader = following(lambda: (o.ledgers, o.experiments))
     authorities = type(o.authorities()).of(*(decl if type(r) is DeclarationReader else reader if type(r) is BudgetReader
                                              else r for r in o.authorities().readers))
     held["set"] = None                                                   # the execution side cannot state it now

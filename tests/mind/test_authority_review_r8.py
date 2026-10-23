@@ -9,6 +9,7 @@ the declaration modes that read no account or provider, and the level predicate 
 refusal's stated reason, subnormal and signed-zero spellings)."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import threading
 
@@ -39,7 +40,7 @@ def _solver(o):
 
 
 def _followed(o):
-    reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    reader = following(lambda: (o.ledgers, o.experiments))
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     return reader, authorities
 
@@ -103,7 +104,7 @@ def test_the_execution_side_is_never_called_under_the_followers_lock():
             held.append(reader._lock.locked())
         return o.ledgers, o.experiments
 
-    reader = BudgetReader.following(accounts)
+    reader = following(accounts)
     reader.pinned()
     assert held == [False]
 
@@ -113,7 +114,7 @@ def test_the_experiment_read_back_cache_keeps_one_entry_per_account():
     from engcore.scientific.experiments import EvaluationStatus, ScientificEvaluation
     o = ax.gen1_pool()
     eid = next(iter(o.experiments))
-    reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    reader = following(lambda: (o.ledgers, o.experiments))
     for i in range(20):
         o.experiments[eid].record(ScientificEvaluation(f"c{i}", {}, status=EvaluationStatus.NOT_CONVERGED, detail="x"))
         assert reader.read(OwnerKind.EXPERIMENT, eid) is not None
@@ -305,7 +306,7 @@ def test_an_accounts_callable_that_reads_through_its_own_reader_is_refused_witho
                 seen.append(str(exc))
         return o.ledgers, o.experiments
 
-    state["reader"] = BudgetReader.following(accounts)
+    state["reader"] = following(accounts)
     assert state["reader"].read(OwnerKind.EXPERIMENT, eid) is not None
     assert len(seen) == 1 and "read through" in seen[0]
 

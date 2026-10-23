@@ -1,4 +1,5 @@
 """R17 owner JSON readback parity controls; bounded software evidence only."""
+from tests.mind.publication_support import following
 import json
 
 import pytest
@@ -36,7 +37,7 @@ def _fixture(kind):
         owner_kind = OwnerKind.EXPERIMENT
         follow = lambda: ({}, {"a": held[0]})
     held = [account]
-    return account, held, follow, BudgetReader.following(follow), owner_kind
+    return account, held, follow, following(follow), owner_kind
 
 
 def _append(account, kind, value, iteration=1):
@@ -63,7 +64,7 @@ def test_owner_json_equivalent_detached_history_recovers(kind, value):
     _append(account, kind, value)
     _interrupt_handing(reader)
     held[0] = _checkpoint(account, kind)
-    fresh = BudgetReader.following(follow)
+    fresh = following(follow)
     expected = fresh.read(owner_kind, "a")
     for _ in range(2):
         assert reader.read(owner_kind, "a") == expected
@@ -76,7 +77,7 @@ def test_ledger_retains_its_default_string_and_nonfinite_rules(value):
     _append(account, "ledger", value, iteration=_Iteration())
     _interrupt_handing(reader)
     held[0] = _checkpoint(account, "ledger")
-    assert reader.read(owner_kind, "a") == BudgetReader.following(follow).read(owner_kind, "a")
+    assert reader.read(owner_kind, "a") == following(follow).read(owner_kind, "a")
     assert not reader._diverged
 
 

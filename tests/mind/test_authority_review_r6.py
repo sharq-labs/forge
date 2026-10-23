@@ -7,6 +7,7 @@ verification and served as observed), proposer-directed reads, the level rule ov
 level sets, the fixed-kind rule, and controls that were missing (gating False, the recorded remainder basis)."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import dataclasses
 import json
@@ -36,7 +37,7 @@ def _solver(o):
 
 
 def _followed(o):
-    reader = BudgetReader.following(lambda: (o.ledgers, o.experiments))
+    reader = following(lambda: (o.ledgers, o.experiments))
     authorities = type(o.authorities()).of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     return reader, authorities
 

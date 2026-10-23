@@ -6,6 +6,7 @@ the proposer's spelling and executed the declared level; an integer was decided 
 Now every family decides on the configuration AS IT WILL BE EXECUTED and admission mints exactly that."""
 
 from __future__ import annotations
+from tests.mind.publication_support import following
 
 import dataclasses
 import json
@@ -235,7 +236,7 @@ def test_a_followed_budget_account_never_goes_back_a_revision():
     assert after.revision == before.revision + 1
     from engcore.mind.world import OwnerKind
     accounts = {"ledgers": {**o.ledgers, ref: before}}
-    reader = BudgetReader.following(lambda: (accounts["ledgers"], o.experiments))
+    reader = following(lambda: (accounts["ledgers"], o.experiments))
     authorities = Authorities.of(*(reader if type(r) is BudgetReader else r for r in o.authorities().readers))
     assert authorities.live
     assert reader.read(OwnerKind.BUDGET_LEDGER, ref) is not None       # the account as first read
