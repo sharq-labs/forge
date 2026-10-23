@@ -178,6 +178,16 @@ def _domain_states_kind(domain: Any, value: Any) -> bool:
     return isinstance(domain, ScientificVariable) and domain.kind is kinds.get(type(value))
 
 
+def _fixed_as_executed(domain: Any, value: Any, unit_: str) -> Any:
+    """A fixed condition as every check executes it: its matched declared level when its variable is a level set, in
+    the variable's unit; otherwise its own conversion (round 9, A9-F1: bind tests the value the check tests)."""
+    if isinstance(domain, DiscreteLevels) and isinstance(value, Quantity) and converts(value, domain.unit):
+        level = matched_level(domain, value, also=domain.levels)
+        if level is not None:
+            return as_unit(level, unit_)
+    return as_unit(value, unit_)
+
+
 def _fixed_level_problem(domain: Any, value: Any) -> bool:
     """Whether a fixed condition of a level-set variable is NOT matched to exactly one of its declared levels by the
     unit owner's identity rule, the rule every check applies to it (round 8, K8-F2: bind and check agree)."""
@@ -336,13 +346,15 @@ class ActionSpec:
                                    f"declared in {var.unit!r}: only a quantity the unit owner converts is executed in a "
                                    "unit-bearing variable (a typed value needs exactly 'dimensionless' or a declared "
                                    "domain of its kind)")
-            if var.domain is not None and membership(var.domain, as_unit(f.value, var.unit)) is not None:
-                raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value!r} is outside its declared domain "
-                                   "(as executed, in the variable's unit)")
             if _fixed_level_problem(var.domain, f.value):
                 raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value!r} is not one of its variable's declared "
-                                   "levels by the unit owner's identity rule (the rule every check applies to it; its "
-                                   "conversion may be one: the rule's rounding edge)")
+                                   "levels by the unit owner's identity rule (the rule every check applies to it: a "
+                                   "value nearer another level, or a spelling whose conversion is a level only at the "
+                                   "rule's rounding edge, by an underflow or across base units, is not)")
+            executed = _fixed_as_executed(var.domain, f.value, var.unit)        # what every check decides on
+            if var.domain is not None and membership(var.domain, executed) is not None:
+                raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value!r} is outside its declared domain "
+                                   "(as executed, in the variable's unit)")
         for name in self.expected_observables:
             if not world.declares(name):
                 raise WorldRefused(f"action {aid!r}: observable {name!r} is not a declared variable")

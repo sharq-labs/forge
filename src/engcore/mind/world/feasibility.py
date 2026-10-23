@@ -381,15 +381,18 @@ def level_problem(world: ScientificWorld, spec: ActionSpec, name: str, value: An
     if levels is None or not isinstance(value, Quantity) or not converts(value, world.variable(name).unit):
         return None
     detail = {"declared_levels": [lv.to_dict() for lv in levels.levels]}
-    if _matched(world, spec, name, value) is None:
+    level = _matched(world, spec, name, value)
+    if level is None:
         if sum(1 for lv in levels.levels if same_value(value, lv)) == 1:
             why = "it lies nearer another declared level"
         else:
-            why = ("the unit owner's identity rule does not call this spelling a declared level (its conversion may "
-                   "be one: the identity rule's rounding edge, or a conversion that underflows)")
+            why = ("the unit owner's identity rule does not call this spelling a declared level (a spelling whose "
+                   "conversion is one, at the rule's rounding edge, by an underflow, or across base units, is not)")
         return "LEVEL_NOT_DECLARED", f"{value} is not matched to exactly one declared level: {why}", detail
-    if not is_declared_level(world, spec, name, executed):
-        return ("LEVEL_NOT_DECLARED", f"{value} as executed is not exactly the declared level as executed", detail)
+    unit = world.variable(name).unit
+    if not isinstance(executed, Quantity) or canonical_bytes(value_payload(executed)) != canonical_bytes(
+            value_payload(as_unit(level, unit))):        # exactly THAT level as executed (a negative zero is not)
+        return ("LEVEL_NOT_DECLARED", f"{value} as executed is not exactly its declared level as executed", detail)
     return None
 
 
@@ -676,7 +679,7 @@ def _check_domains(world: ScientificWorld, spec: ActionSpec, proposal: ProposedA
             code, message, detail = found
             detail = {k: v for k, v in detail.items() if k != "proposed"}    # nobody proposed a fixed condition
             c.add(STATUS_BY_SOURCE[var.declaration.source], code, CheckFamily.DOMAIN, fixed.name,
-                  f"the action's fixed condition, as executed in the variable's unit, is outside its declared domain: "
+                  f"the action's fixed condition is not decided as a member of its variable's declared domain: "
                   f"{message}", declared_by=var.declaration.source.value,
                   **{**detail, "fixed_condition": value_payload(fixed.value), "as_executed": value_payload(executed)})
     c.ran(CheckFamily.DOMAIN, len(spec.controls) + len(spec.fixed_conditions))

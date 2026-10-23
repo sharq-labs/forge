@@ -102,7 +102,8 @@ def test_concurrent_verifications_never_refuse_for_good_an_account_that_only_mov
     stop.set()
     for t in threads:
         t.join()
-    assert all("behind" in e for e in errors) and not any("rewrote" in e for e in errors), errors
+    assert all("behind" in e or "still in flight" in e for e in errors), errors        # transient (rounds 7, 9)
+    assert not any("rewrote" in e for e in errors), errors                                # never for good
     assert reader.read(OwnerKind.BUDGET_LEDGER, lid).revision == str(r0 + 40)
     assert reader.pinned().read(OwnerKind.BUDGET_LEDGER, lid).revision == str(r0 + 40)
 

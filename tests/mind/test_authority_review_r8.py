@@ -162,8 +162,9 @@ def test_a_pin_refused_by_an_owner_the_world_does_not_read_refuses_nothing():
 
 
 # ---- B8-m6: every declaration mode that names no account or provider reads none ----------------------------------------------------
-@pytest.mark.parametrize("mode", ["older_revision", "not_in_force", "none", "unavailable"])
+@pytest.mark.parametrize("mode", ["older_revision", "other_content", "not_in_force", "none", "unavailable"])
 def test_no_account_or_provider_outside_the_declaration_in_force_is_read(monkeypatch, mode):
+    import dataclasses
     from engcore.mind.world import ScientificWorld
     from engcore.providers.catalog import ProviderRegistry
     base = b.battery_world()
@@ -172,8 +173,12 @@ def test_no_account_or_provider_outside_the_declaration_in_force_is_read(monkeyp
                  providers=base.providers + (b.provider("sim.secret", "1.0"),), budget=base.budget,
                  references=base.references, actions=base.actions)
     o2 = ax.owned("battery", w2)
-    world = o2.world
-    in_force = ax.owned("battery").declaration
+    world = o2.world                                                      # projected under o2's declaration
+    if mode == "older_revision":                                          # in force: the next revision, no sim.secret
+        in_force = dataclasses.replace(o2.declaration, revision=o2.declaration.revision + 1,
+                                       providers=tuple(p for p in o2.declaration.providers if p != "sim.secret"))
+    else:                                                                 # in force: same id and revision, other content
+        in_force = ax.owned("battery").declaration
     if mode == "not_in_force":
         payload = world.to_dict()
         payload["declaration"]["record_id"] = "unknown.declaration"
@@ -196,7 +201,7 @@ def test_no_account_or_provider_outside_the_declaration_in_force_is_read(monkeyp
     secret = [c for c in r.verification.checks if c.record_id == "sim.secret"]
     assert secret and all("not read" in c.detail["why"] for c in secret)
     assert {c.status.value for c in secret} == {"older_revision": {"stale"}, "unavailable": {"owner_unavailable"}}.get(
-        mode, {"mismatch"})                                                # round 8 (D8-F5): STALE speaks
+        mode, {"mismatch"})              # round 9 (A9-F6): STALE only for an older revision the owner held
 
 
 # ---- A8-F2 / A8-F5: the fixed-condition branch of the level predicate, and the reason it states -----------------------------------

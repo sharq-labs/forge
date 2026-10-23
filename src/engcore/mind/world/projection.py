@@ -180,10 +180,16 @@ def _named_records(world: ScientificWorld, authorities: Authorities
     named = {K.BUDGET_LEDGER: {b.ref for b in declaration.budget if b.kind == "ledger"},
              K.EXPERIMENT: {b.ref for b in declaration.budget if b.kind == "experiment"},
              K.PROVIDER_STATUS: set(declaration.providers)}
-    if in_force.record_digest != world.declaration.record_digest:   # an older (or other) revision: STALE speaks
-        return named, (BindingStatus.STALE, f"the world's declaration is not the one in force (revision "
-                       f"{world.declaration.revision}; in force: {in_force.revision}), and the one in force names no "
-                       "such account or provider")
+    if in_force.record_digest != world.declaration.record_digest:
+        older = world.declaration.revision.isdigit() and in_force.revision.isdigit() and \
+            int(world.declaration.revision) < int(in_force.revision)
+        if older:                                     # an older revision: STALE speaks
+            return named, (BindingStatus.STALE, f"the world's declaration is an older revision "
+                           f"({world.declaration.revision}; in force: {in_force.revision}), and the one in force names "
+                           "no such account or provider")
+        return named, (BindingStatus.MISMATCH, f"the world's declaration (revision {world.declaration.revision}) is not "
+                       f"one the declaration owner holds (in force: revision {in_force.revision}, other content), and "
+                       "the one in force names no such account or provider")
     return named, (BindingStatus.MISMATCH, "the declaration in force names no such account or provider")
 
 

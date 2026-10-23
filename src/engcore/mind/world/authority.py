@@ -387,11 +387,10 @@ class _Memo:
             self._pin_error = exc
 
     def _current(self) -> Any:
-        if self._pin_error is not None:
-            error, self._pin_error = self._pin_error, None
-            if isinstance(error, OwnerUnavailable):
-                self._failure = error
-            raise error
+        if self._pin_error is not None:               # kept for the whole verification: the owner is pinned once
+            if isinstance(self._pin_error, OwnerUnavailable):
+                self._failure = self._pin_error
+            raise self._pin_error
         if self._failure is not None:
             raise self._failure
         if self._pinned is None:

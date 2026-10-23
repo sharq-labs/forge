@@ -135,7 +135,7 @@ def test_a_level_control_is_never_executed_at_a_value_that_is_no_declared_level(
     proposal = o.propose("reach", {"x": Quantity(50, "m")}, ("y",))
     r = admit(FeasibleActionSpace.build(o.world), proposal, o.authorities())
     assert r.admitted is None and "LEVEL_NOT_DECLARED" in r.codes()
-    monkeypatch.setattr(fz, "is_declared_level", lambda *a: True)          # the family's guard regressed as well
+    monkeypatch.setattr(fz, "level_problem", lambda *a: None)             # the family's guard regressed as well
     with pytest.raises(WorldRefused, match="executed only as a declared level"):
         admit(FeasibleActionSpace.build(o.world), proposal, o.authorities())
 
@@ -224,7 +224,10 @@ def test_no_deadlock_with_an_execution_side_that_verifies_under_its_own_lock():
         t.start()
     for t in threads:
         t.join(10)
-    assert not any(t.is_alive() for t in threads) and out == {"A": "FEASIBLE", "B": "FEASIBLE"}
+    assert not any(t.is_alive() for t in threads) and out["A"] == "FEASIBLE"      # no deadlock
+    assert out["B"] in ("FEASIBLE", "MISSING_INFORMATION")   # round 9: B may be refused while A is still in flight
+    assert admit(FeasibleActionSpace.build(world), o.propose("simulate_pulse", *SIM, world=world),
+                 authorities).status.value == "FEASIBLE"
 
 
 # ---- B7-m4 / R7-D2: an unbound account its owner cannot serialize refuses nothing -------------------------------------------------

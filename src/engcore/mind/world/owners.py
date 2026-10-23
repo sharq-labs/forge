@@ -94,6 +94,25 @@ def _sha_json(record: Any) -> str:
     return hashlib.sha256(to_json(record).encode("utf-8")).hexdigest()
 
 
+def _plain(value: Any) -> bool:
+    """Whether ``value`` is plain JSON data, checked by exact type so that no code of the value runs: dicts with str
+    keys, lists and tuples, str, int, float, bool, None."""
+    stack = [value]
+    while stack:
+        x = stack.pop()
+        t = type(x)
+        if t is dict:
+            for k, v in x.items():
+                if type(k) is not str:
+                    return False
+                stack.append(v)
+        elif t is list or t is tuple:
+            stack.extend(x)
+        elif t not in (str, int, float, bool, type(None)):
+            return False
+    return True
+
+
 class _Payload:
     """A serialized record's payload, digested by the same ``to_json`` rule as the record it came from."""
 
@@ -313,7 +332,7 @@ class BudgetReader(_Reader):
             raise WorldRefused("followed accounts are a callable the execution side answers with (ledgers, experiments)")
         reader = cls(*accounts(), owner_id=owner_id)
         reader._follow = accounts
-        reader._observe_all(reader)                  # what is handed over at construction: the first baseline
+        reader._observe_all(reader, reader._ticket())   # what is handed over at construction: the first baseline
         return reader
 
     @property
@@ -335,7 +354,10 @@ class BudgetReader(_Reader):
             if ledger is None:
                 return None, ()
             try:                                     # the owner's read-back form: projection and digest, one rule
-                back = BudgetLedger.from_dict(ledger.to_dict())
+                raw = ledger.to_dict()
+                if not _plain(raw):
+                    raise ValueError("its serialization is not plain JSON data")
+                back = BudgetLedger.from_dict(raw)
                 return (OwnerRecord(K.BUDGET_LEDGER, self.owner_id, record_id, str(back.revision), back.digest,
                                     {"ledger": back.to_dict()}), self._history(back.charges))
             except Exception as exc:  # noqa: BLE001 - an account its owner cannot read back is unavailable
@@ -346,11 +368,15 @@ class BudgetReader(_Reader):
             return None, ()
         try:
             payload = exp.to_dict()
-            content = _sha_json(_Payload(payload))
+            if not _plain(payload):                  # exact JSON types only: nothing the account holds can run code,
+                raise ValueError("its serialization is not plain JSON data (exactly dict with str keys, list, str, "
+                                 "int, float, bool or None)")    # and a JSON round trip changes no digest
+            text = to_json(_Payload(payload))
+            content = hashlib.sha256(text.encode("utf-8")).hexdigest()
             cached = self._readback.get(key)
             if cached is None or cached[0] != content:   # the owner reads the experiment back whole, once per content
-                rebuilt = ScientificExperiment.from_dict(payload)
-                back = rebuilt.to_dict()
+                rebuilt = ScientificExperiment.from_dict(json.loads(text))     # from detached plain data
+                back = json.loads(to_json(rebuilt))
                 if back["accounting"] != payload["accounting"] or back["budget"] != payload["budget"]:
                     raise ValueError("its accounting is not its evaluations' (an account serialized while it moved)")
                 cached = (content, back, _sha_json(rebuilt), self._history(rebuilt.evaluations))
@@ -373,15 +399,22 @@ class BudgetReader(_Reader):
                 out[key] = str(exc)
         return out
 
-    def _observe_all(self, snapshot: "BudgetReader") -> dict[tuple[str, str], OwnerRecord | str | None]:
-        """The following reader's forward-only rule over EVERY account handed over in ``snapshot``: the read-back and
-        the comparison are one step under this reader's lock, so what one verification read is compared before any
-        later read (a spend read by a verification is observed before a rollback can be read: B8-m1).  The execution
-        side's ``accounts()`` is never called under the lock.  Each account's record as observed, or the reason it is
-        refused to a verification that reads it."""
+    def _observe_all(self, snapshot: "BudgetReader", ticket: int) -> dict[tuple[str, str], OwnerRecord | str | None]:
+        """The following reader's forward-only rule over EVERY account handed over in ``snapshot``.  The read-back runs
+        with no lock held (it runs the account objects' own serialization); only this comparison holds the lock, and it
+        runs no code of the accounts.  Every observation that extends the history is recorded; but a verification that
+        started (took its ticket) while an EARLIER one is still in flight decides on nothing (every account refused, for
+        that verification only): the earlier one may carry a later state (a spend it was handed before a restore), so
+        no verification decides until every earlier one has been compared (round 9: no lock is held across execution-
+        side code, and nothing waits)."""
+        read = snapshot._read_back()
         observed: dict[tuple[str, str], OwnerRecord | str | None] = {}
         with self._lock:
-            for key, got in snapshot._read_back().items():
+            self._in_flight.discard(ticket)
+            earlier = any(t < ticket for t in self._in_flight)
+            self._readback = {k: v for k, v in self._readback.items() if k in read}   # one entry per account handed
+            snapshot._readback = self._readback
+            for key, got in read.items():
                 if isinstance(got, str):
                     observed[key] = got
                     continue
@@ -402,7 +435,18 @@ class BudgetReader(_Reader):
                 else:
                     self._seen[key] = history
                     observed[key] = record
+            if earlier:
+                waiting = ("an earlier verification of this budget reader is still in flight (it may carry a later "
+                           "state of the accounts): this verification decides on no account; refused for this "
+                           "verification only")
+                observed = {k: (v if isinstance(v, str) or v is None else waiting) for k, v in observed.items()}
         return observed
+
+    def _ticket(self) -> int:
+        with self._lock:
+            self._tickets += 1
+            self._in_flight.add(self._tickets)
+            return self._tickets
 
     def pinned(self) -> "BudgetReader":
         """One verification's snapshot: the accounts the execution side hands over now (asked with no lock held), read
@@ -411,18 +455,22 @@ class BudgetReader(_Reader):
         if self._follow is None:
             return self
         if getattr(self._in_follow, "active", False):
-            raise OwnerUnavailable("the execution side's accounts() read through the budget reader it feeds (a read "
-                                   "while the reader is asking for the accounts it would read)")
+            raise OwnerUnavailable("the execution side read through the budget reader it feeds while the reader was "
+                                   "asking for, or reading back, the accounts it would read")
         self._in_follow.active = True
+        ticket = self._ticket()
         try:
-            current = BudgetReader(*self._follow(), owner_id=self.owner_id)
-        except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
-            raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
+            try:
+                current = BudgetReader(*self._follow(), owner_id=self.owner_id)
+            except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
+                raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
+            current._readback = self._readback
+            current._observed = self._observe_all(current, ticket)
+            return current
         finally:
+            with self._lock:
+                self._in_flight.discard(ticket)
             self._in_follow.active = False
-        current._readback = self._readback
-        current._observed = self._observe_all(current)
-        return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
         if self._follow is not None:
@@ -437,7 +485,9 @@ class BudgetReader(_Reader):
         self._diverged: set[tuple[str, str]] = set()
         self._readback: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> (content digest, read-back form,
         # its digest, its history): one entry per account, so the cache never outgrows the accounts' current state
-        self._in_follow = threading.local()          # set while this reader's accounts() runs on a thread
+        self._in_follow = threading.local()          # set while this reader's accounts() or read-back runs on a thread
+        self._tickets = 0                            # verifications of this reader, numbered when they start
+        self._in_flight: set[int] = set()
         self._lock = threading.Lock()
         self._ledgers = dict(ledgers or {})
         self._experiments = dict(experiments or {})
