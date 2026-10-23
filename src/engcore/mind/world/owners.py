@@ -316,12 +316,18 @@ class BudgetReader(_Reader):
     verification starts, whichever world is verified: a proposer's world never chooses what is observed); an account is
     refused only to a verification that reads it, so an unreadable, behind or diverged account no world reads refuses
     nothing (the constructor still refuses an account set that is not exactly typed or that registers one object twice).
-    No lock is held while the execution side's ``accounts()`` runs; the read-back of the accounts it handed over and
-    the comparison with what was observed are one step under this reader's lock (round 8, B8-m1).  A pinned snapshot serves the records it observed (detached copies)
-    and is never live.  A state between two verifications is never observed (a spend and a rollback both in between
-    look like no change); at-most-once execution is the execution owner's.  A ledger is projected in the form its owner
-    reads it back (``BudgetLedger.from_dict``), the form its digest is taken in; an experiment is read back whole by its
-    owner (``ScientificExperiment.from_dict``, once per content: the outcome is a function of the content)."""
+    Each verification takes a ticket when it starts; the execution side's ``accounts()`` and the read-back of what it
+    hands over run with no lock held (no execution-side code ever runs under the reader's lock, and nothing waits);
+    only the comparison with what was observed holds the lock.  Every observation that extends the history is
+    recorded, but a verification that started while an earlier one is still in flight decides on no account (refused
+    for that verification only), so a spend an earlier verification was handed is never overtaken by a rollback a
+    later one reads (round 9).  An ``accounts()`` that reads through the reader it feeds is refused at once.  A pinned
+    snapshot serves the records it observed (detached copies) and is never live.  A state no verification was handed
+    is never observed (a spend and a rollback both before any verification starts look like no change); at-most-once
+    execution is the execution owner's.  A ledger is projected in the form its owner reads it back
+    (``BudgetLedger.from_dict``), the form its digest is taken in; an experiment is read back whole by its owner
+    (``ScientificExperiment.from_dict``, once per account and content) and only from plain JSON data (exact types,
+    str keys: no code of the account's values runs, and a JSON round trip changes no digest)."""
 
     kinds = frozenset({K.BUDGET_LEDGER, K.EXPERIMENT})
 

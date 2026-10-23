@@ -180,9 +180,9 @@ def test_an_owner_whose_pin_fails_is_pinned_once_per_verification():
             return None
 
     memo = Authorities.of(Flaky()).memoized()
-    for _ in range(2):
+    for record_id in ("a", "b"):                                           # two records: no cached refusal of one
         with pytest.raises(WorldRefused, match="first pin refused"):
-            memo.read(OwnerKind.SYSTEM_STATE, "a")
+            memo.read(OwnerKind.SYSTEM_STATE, record_id)
     assert len(calls) == 1
 
 
