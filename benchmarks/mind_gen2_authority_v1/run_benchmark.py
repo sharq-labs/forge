@@ -23,6 +23,7 @@ import os
 import pathlib
 import platform
 import statistics
+import subprocess
 import sys
 import time
 from typing import Any
@@ -181,6 +182,19 @@ def _pct(samples: list[float], x: float) -> float:
     return round(samples[min(len(samples) - 1, int(round(x * (len(samples) - 1))))], 4)
 
 
+def code_revision() -> str:
+    """The commit the measured code is at (``+dirty`` when ``src`` or ``benchmarks`` differ from it), else UNKNOWN."""
+    root = pathlib.Path(__file__).resolve().parents[2]
+    try:
+        sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True,
+                             check=True).stdout.strip()
+        dirty = subprocess.run(["git", "status", "--porcelain", "--", "src", "benchmarks"], cwd=root,
+                               capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return "UNKNOWN"
+    return sha + ("+dirty" if dirty else "")
+
+
 def performance(repeats: int = 25) -> dict[str, Any]:
     br1 = br1_rb.performance(C.load()["cases"], repeats=repeats)
     projection, verify, admission, sizes, check, dispatch = {}, [], [], {}, [], []
@@ -213,6 +227,7 @@ def performance(repeats: int = 25) -> dict[str, Any]:
                     dispatch.append((time.perf_counter() - t0) * 1e3)
     return {
         "schema": "forge.mind.gen2_authority.performance/1",
+        "code_revision": code_revision(),
         "host": {"platform": platform.platform(), "python": platform.python_version(), "cpu_count": os.cpu_count()},
         "repeats": repeats,
         "br1_cases_on_br1_1_code": {k: br1[k] for k in ("WORLD_BUILD_MS", "ACTIONSPACE_BUILD_MS", "FEASIBILITY_P50_MS",
