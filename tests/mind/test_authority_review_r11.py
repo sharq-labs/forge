@@ -401,7 +401,7 @@ def test_a_verification_waited_for_that_leaves_uncompared_makes_the_waiter_decid
 def _absorb(fn):
     try:
         fn()
-    except _Interrupted:
+    except (_Interrupted, OwnerUnavailable):             # (round 14: an interrupted handing seals the reader)
         pass
 
 

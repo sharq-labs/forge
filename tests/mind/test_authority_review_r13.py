@@ -268,7 +268,7 @@ def test_a_handed_mapping_that_is_not_a_dict_refuses_the_verification():
     reader = BudgetReader.following(lambda: ((Pairs(o.ledgers) if state["pairs"] else dict(o.ledgers)),
                                              dict(o.experiments)))
     state["pairs"] = True
-    with pytest.raises(OwnerUnavailable, match="no pair of account mappings"):
+    with pytest.raises(OwnerUnavailable, match="not a pair of account dicts"):
         reader.read(OwnerKind.BUDGET_LEDGER, _solver(o))
 
 
