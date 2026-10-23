@@ -9461,3 +9461,81 @@ R17 gates L1 201pass, L2 813pass, regression279pass. Guards1528pass/2fail, expen
 
 ### R17 repair gates complete
 Clean source41a763a697707db1897ee1fcbf1365495875e45b FAST12824pass67fail190skip. Comparator new0/fixed0 for guards, expensive,FAST. NO NEW FAILURES VS BASE. References hold; seven mutants killed; ownerJSON repair ready fresh review; capture contract still OPEN.
+
+### Fresh Round18 launched
+Exactcc7ef06b0d08398173d9448ff47d8abb7e375d44, clean primary at launch. A/B/C active, D/E/F next. No expectation final; known capture defect remains OPEN and JSON local correction requires fresh review.
+
+### R18 lens A completed
+Known native capture MAJOR reproduced; JSON repair holds bounded controls; stable detached mapping matched control refuses. Full ack protocol not established necessary.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import subprocess; from engcore.mind.world import owners; print(owners.__file__); print(subprocess.check_output(['git','rev-parse','HEAD'],text=True)); assert owners.__file__ == '/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py'; assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip() == 'cc7ef06b0d08398173d9448ff47d8abb7e375d44'"], "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/A/identity.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/A/pt", "tests/mind/test_authority_review_r16.py", "tests/mind/test_authority_review_r17.py"], "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/A/controls.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r18/A/probe_native.py"], "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/A/native.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/A/pt_new", "/home/dev_kaeem/br11-review/r18/A/test_new_transitions.py"], "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/A/new_transitions.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r18/A/probe_stable_mapping.py"], "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/A/stable_mapping.log"}
+
+### R18 lens B completed
+Known native capture MAJOR reproduced; JSON repair holds bounded controls; stable detached mapping matched control refuses. Full ack protocol not established necessary.
+
+- {"command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/B/probe.py", "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r18/B/probe.log"}
+
+- {"command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/B/native.py", "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r18/B/native.log"}
+
+- {"command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/B/pt", "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r18/B/controls.log"}
+
+### R18 lensC completed
+44 final controls; initial harness mistakes corrected, no new production defect promoted; known native capture reproduced.
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -c 'import subprocess;from engcore.mind.world import owners;print(owners.__file__);print(subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True));assert owners.__file__.startswith('\"'\"'/home/dev_kaeem/forge-r18-review/'\"'\"');assert subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True).strip()=='\"'\"'cc7ef06b0d08398173d9448ff47d8abb7e375d44'\"'\"''", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/C/identity.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/C/pt tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py /home/dev_kaeem/br11-review/r18/C/test_new.py", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 1, "log": "/home/dev_kaeem/br11-review/r18/C/controls_initial.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/C/probe_native.py", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/C/native.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -c 'import subprocess;from engcore.mind.world import owners;print(owners.__file__);print(subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True));assert owners.__file__.startswith('\"'\"'/home/dev_kaeem/forge-r18-review/'\"'\"');assert subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True).strip()=='\"'\"'cc7ef06b0d08398173d9448ff47d8abb7e375d44'\"'\"''", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/C/identity.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/C/pt tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py /home/dev_kaeem/br11-review/r18/C/test_new.py", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 2, "log": "/home/dev_kaeem/br11-review/r18/C/controls_syntax.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/C/probe_native.py", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/C/native.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/C/pt tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py /home/dev_kaeem/br11-review/r18/C/test_new.py", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/C/controls_final.log"}
+
+### R18 D completed
+Known MAJOR only; no new normalization defect established. Copied mapping matched control prevents specific replacement failure; full ack protocol not proven necessary.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import engcore.mind.world.owners as o; print(o.__file__); assert o.__file__ == '/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py'"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/D/identity.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/D/pt", "/home/dev_kaeem/br11-review/r18/D/test_identity.py", "tests/mind/test_authority_review_r17.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/D/controls.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r18/D/native.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/D/native.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r18/D/stable_mapping.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/D/stable_mapping.log"}
+
+### R18 E completed
+Known MAJOR only; no new normalization defect established. Copied mapping matched control prevents specific replacement failure; full ack protocol not proven necessary.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-s", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/E/pt", "/home/dev_kaeem/br11-review/r18/E/test_e.py", "tests/mind/test_authority_review_r17.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r18/E/tests.log"}
+
+### R18 F scientific review completed
+Static-only CHANGES REQUIRED, Q4YES known capture defect; JSON normalization appears repaired. Tests NOT RUN by F. Minimal stable owner-publication lifetime supported; full acknowledgement protocol not established mandatory.
+
+### R18 S1 complete
+All6 aliases confirmed one known family, matched stable-owner-map controls prevent replacement; no new separable defect. Exact records below.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r18/S1/matched.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/S1/matched.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/S1/pt", "tests/mind/test_authority_review_r16.py", "tests/mind/test_authority_review_r17.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/S1/controls.log"}
+
+### R18 S2 complete
+All6 aliases confirmed one known family, matched stable-owner-map controls prevent replacement; no new separable defect. Exact records below.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import subprocess;from engcore.mind.world import owners;print(owners.__file__);assert owners.__file__=='/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py';s=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();print(s);assert s=='cc7ef06b0d08398173d9448ff47d8abb7e375d44'"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/S2/identity.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-s", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/S2/pt", "/home/dev_kaeem/br11-review/r18/S2/test_s2.py", "/home/dev_kaeem/br11-review/r18/E/test_e.py", "tests/mind/test_authority_review_r16.py", "tests/mind/test_authority_review_r17.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/S2/controls.log"}
+
+### R18 final critic and precise architectural handoff
+COMPLETE six lenses/two independent skeptics per alias/critic atcc7ef06b. One unique known Q4MAJOR (6aliases),0BLOCKER,0 open substantiveMINOR; no new separable defect. Prior JSON normalization correction held. Critic tests NOT RUN. OWNER_DECISION_REQUIRED stable published bindings/recoverable handed history across restore while processing pending. Full ack protocol optional, not necessity claim. No silent narrowed observation boundary or fixture-only workaround. Stop substantive implementation at this evidenced owner contract boundary after clean records/bundle. BR1.1 NOT CLOSED; no Kernel-ready claim.

@@ -888,9 +888,26 @@ failures/14 base errors; exact IDs add no new failure. Rescore/benchmark MATCHES
 false-admission path: they preserve the unresolved obligation rather than treating invalid owner output as reconciled.
 BR1.1 remains NOT CLOSED. No execution-owner handoff contract has been selected or implemented.
 
+### Round-18 final bounded review: precisely blocked (2026-10-24)
+
+Reviewed `cc7ef06b0d08398173d9448ff47d8abb7e375d44` (source/tests identical to gate source41a763a6).
+Six lenses, two independent skeptics per MAJOR alias, completeness critic COMPLETE. Q4 YES; other Qs NO within
+bounded scope. One known MAJOR family/six aliases; zero BLOCKER findings; zero open substantive MINOR; no new
+separable defect. JSON parity repair held in fresh controls. **BR1.1 NOT CLOSED.**
+
+The concrete owner decision is stable publication of account-ID bindings and recoverable handed history across
+checkpoint replacement while reader processing is pending. Matched fresh-dictionary publication controls prevent
+this exact loss; a full acknowledgement protocol is optional and not established necessary. Shallow mappings preserve
+bindings, not deep payload immutability. Reader-local retry/copy cannot reconstruct already-erased input under the
+current mutable callback contract. No new owner contract or weaker observation boundary is selected. See
+`docs/work/evidence/br11_local_2026_10_23/round18/OWNER_DECISION.md` and `CRITIC/review.md`.
+
+Maturity: IMPLEMENTED YES (development code, incomplete authority contract), TESTED YES, MEASURED YES;
+SCIENTIFICALLY_VERIFIED NO, CERTIFIED NO, FORMAL NO. No ready-for-Kernel claim. No remote change.
+
 ## 10. Q1–Q7
 
-Filled when the review loop closes. Before = GEN2-BR1's round-2 authority review.
+Latest completed R18: Q1 NO, Q2 NO, Q3 NO, Q4 YES, Q5 NO, Q6 NO, Q7 NO (bounded review). Closure gate FAILS.
 
 ## 11. Owner capabilities missing (failed closed, nothing worked around)
 
@@ -912,4 +929,4 @@ as needing recertification.
 
 ## 12. Final table and conclusion
 
-Filled when the review loop closes.
+NOT CLOSED: exact owner-publication lifetime decision required; all separable confirmed local corrections completed and freshly reviewed.

@@ -1,0 +1,35 @@
+[
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "/home/dev_kaeem/br11-review/r18/S1/matched.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "environment": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/S1/matched.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r18/S1/pt",
+      "tests/mind/test_authority_review_r16.py",
+      "tests/mind/test_authority_review_r17.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "environment": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/S1/controls.log"
+  }
+]

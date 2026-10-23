@@ -1,0 +1,62 @@
+[
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-c",
+      "import engcore.mind.world.owners as o; print(o.__file__); assert o.__file__ == '/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py'"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "environment": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/D/identity.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r18/D/pt",
+      "/home/dev_kaeem/br11-review/r18/D/test_identity.py",
+      "tests/mind/test_authority_review_r17.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "environment": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/D/controls.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "/home/dev_kaeem/br11-review/r18/D/native.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "environment": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/D/native.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "/home/dev_kaeem/br11-review/r18/D/stable_mapping.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "environment": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/D/stable_mapping.log"
+  }
+]

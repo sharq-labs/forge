@@ -1,0 +1,20 @@
+[
+  {
+    "command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -c 'import subprocess;from engcore.mind.world import owners;print(owners.__file__);print(subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True));assert owners.__file__.startswith('\"'\"'/home/dev_kaeem/forge-r18-review/'\"'\"');assert subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True).strip()=='\"'\"'cc7ef06b0d08398173d9448ff47d8abb7e375d44'\"'\"''",
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/C/identity.log"
+  },
+  {
+    "command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/C/pt tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py /home/dev_kaeem/br11-review/r18/C/test_new.py",
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "exit": 1,
+    "log": "/home/dev_kaeem/br11-review/r18/C/controls.log"
+  },
+  {
+    "command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/C/probe_native.py",
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/C/native.log"
+  }
+]

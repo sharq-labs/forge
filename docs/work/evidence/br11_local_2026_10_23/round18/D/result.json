@@ -1,0 +1,128 @@
+{
+  "reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "lens": "D identity/serialization/object semantics",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [
+    {
+      "id": "R18-D-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Live owner mapping still loses handed spend after native pre-capture interruption and checkpoint replacement",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1015,
+      "related_lines": [
+        927,
+        935,
+        1016,
+        1042
+      ],
+      "smallest_reproduction": "D/native.py: CPython 3.12.3 recursion limit 150, depth 145 or 146; dispatch once and settle owner; native reader.pinned() exhausts stack with raw tuple pending; replace owner mapping account with earlier checkpoint; redispatch original admission.",
+      "actual_result": "depth145 and146: RecursionError, pending_types=[tuple], redispatch_refused=false, executor_calls=2; no seal or divergence.",
+      "expected_result": "Handed spend remains an unresolved/currentness obligation after interruption; stale original admission must refuse after rollback, executor_calls=1.",
+      "evidence": "/home/dev_kaeem/br11-review/r18/D/native.log",
+      "threat_families": [
+        "pre-capture live-map alias loss",
+        "hidden spend after observed handing",
+        "rollback and duplicate dispatch"
+      ],
+      "trustscope": "Execution-side owner handing/checkpoint replacement plus native caller stack exhaustion; no malicious serializer, private owner mutation, or source patch. Does not demonstrate external proposer bypass or execution of an unadmitted action (Q6/Q7 remain NO).",
+      "proposed_correction": "Choose a minimum stable owner handing contract: returned mapping membership and referenced histories must remain recoverable without rollback/rewriting until retained comparison completes. Owner-produced detached immutable snapshots whose lifetime follows reader references can meet this without an acknowledgement protocol. A fresh dict copy is sufficient for demonstrated mapping replacement only; general in-place history changes need stable history ownership too. Reader-only later normalization cannot reconstruct vanished state, and permanent retirement merely on resource failure violates honest-reader recovery. Do not assert that a full publication/acknowledgement system is necessary.",
+      "control": "D/stable_mapping.py changes only callback to return dict copies. Same native depths145/146 retain raw tuples but redispatch_refused=true, executor_calls=1, seal=None. Depth144 also refuses in both variants.",
+      "classification": "Known open family reproduced on exact R18 SHA, not a new family."
+    }
+  ],
+  "repair_assessment": {
+    "status": "No new identity/serialization defect established within bounded lens. R17 JSON parity MINOR repaired in examined paths.",
+    "static_evidence": "_retained_entry ledger applies BudgetCharge.from_dict before sorted JSON/default=str roundtrip and final from_dict, matching _read_once ledger. Experiment uses to_json then ScientificEvaluation.from_dict then writability check, matching experiment path. Authoritative account read still performs whole-account accounting/budget checks. Histories reconciliation remains exact-barrier guarded outside lock. No parallel canonical record identity introduced.",
+    "executed_evidence": "46 tests passed: 30 independent controls (24 normalization/conflict permutations across ledger and experiment, 6 retained normalization exception recoveries), plus all16 R17 controls covering JSON keys/tuples, ledger normalization/default=str/nonfinite, true differences and invalid owner serializer content."
+  },
+  "minimum_handoff_assessment": "Stable snapshot ownership/lifetime is the semantic requirement. Explicit ack can bound retention but is one mechanism, not established necessity. Shallow copied mapping control establishes a smaller fix for exact reproduced trigger only. Fresh copies do not by themselves freeze referenced mutable account histories or prove arbitrary callback-return interruption coverage.",
+  "tested_transitions": [
+    "baseline -> interrupted numeric-key history -> detached JSON-equivalent current history",
+    "all six orderings of three identity-distinct equivalent or conflicting observations for both owners",
+    "retained normalization KeyboardInterrupt/MemoryError/ValueError -> temporary refusal -> honest recovery, no seal or divergence",
+    "owner-invalid serializer values remain unresolved (existing R17 controls executed)",
+    "native capture exhaustion -> raw pending live mapping -> checkpoint replacement -> duplicate dispatch",
+    "identical native capture exhaustion with copied mapping -> checkpoint replacement -> refusal"
+  ],
+  "missing_coverage": [
+    "No exhaustive Python serialization object model or concurrent arbitrary serializer mutation coverage. Custom owner-private mutation is within execution-side trust boundary.",
+    "No new full-budget admission, unit, applicability or proposer suite; Q1/Q2/Q3/Q5/Q6/Q7 NO is scoped to this diff and lens, not comprehensive system certification.",
+    "No full FAST, performance measurement, formal proof, scientific validation or certification.",
+    "Native depth147/148 output is not used to substantiate handed-spend finding because pending empty states do not independently establish callback returned.",
+    "Stable mapping control does not establish a complete stable-history owner contract or behavior at every asynchronous interruption boundary."
+  ],
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import engcore.mind.world.owners as o; print(o.__file__); assert o.__file__ == '/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py'"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/D/identity.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r18/D/pt",
+        "/home/dev_kaeem/br11-review/r18/D/test_identity.py",
+        "tests/mind/test_authority_review_r17.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/D/controls.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r18/D/native.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/D/native.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r18/D/stable_mapping.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/D/stable_mapping.log"
+    }
+  ],
+  "nonexecution_notes": [
+    "Initial read-only combined inspection ended exit1 solely because WSL rg unavailable; used grep subsequently. No source changes."
+  ]
+}

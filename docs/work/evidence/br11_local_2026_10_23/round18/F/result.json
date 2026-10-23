@@ -1,0 +1,96 @@
+{
+  "reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "lens": "F scientific semantics/completeness",
+  "review_method": "STATIC ONLY; no production imports, probes or tests executed",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_rationale": {
+    "Q1": "No second state authority introduced by retained-entry normalization.",
+    "Q2": "No applicability selection or evidence-bearing model execution change.",
+    "Q3": "No unit authority change.",
+    "Q4": "Known handed-spend loss remains in unchanged capture/recovery path; R18-F-1.",
+    "Q5": "Owner-entry reconciliation establishes history relations only, not scientific validity or deterministic physical truth.",
+    "Q6": "No new external proposer route or admission escape identified in this bounded change.",
+    "Q7": "No distinct unadmitted-action execution family established; Q4 is stale-currentness redispatch of an already admitted action."
+  },
+  "verdict": "CHANGES REQUIRED",
+  "findings": [
+    {
+      "id": "R18-F-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Pre-capture interruption still loses handed spend when live mapping entries are replaced",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1015,
+      "smallest reproduction": "Following callback returns its live ledger dict. Dispatch and settle once after saving an earlier checkpoint. Native capture and exception recovery both fail before _RetainedHanding exists, leaving the callback pair with live dict in _uncompared. Replace its ledger entry with the saved owner checkpoint. At the next pin _recover_handing reads the replacement, not the spent ledger that was handed, and the old admission can dispatch again.",
+      "actual result": "STATIC: raw mapping remains reachable at 1015/1041; 936 and 955 re-read it on recovery. No retained object/history distinguishes the spent handoff from the replacement. Historical R17 S1/probe.log lines 9-10 records this native family at 98d72b2e with raw_returned_handing=true, refused=false, calls=2. Changed-code diff leaves this mechanism unchanged. No probe executed at R18 by this lens.",
+      "expected result": "A spend already handed to verification remains an obligation across interruption and checkpoint replacement; lack of successful capture never establishes old-budget currentness. Honest interruption alone must not permanently seal a reader.",
+      "threat families": [
+        "pre-capture information loss",
+        "hidden spend",
+        "rollback redispatch"
+      ],
+      "proposed correction": "Smallest required semantic decision: the execution owner must preserve the returned association between account IDs and the handed append-only account histories until the reader has retained or reconciled it. For this demonstrated replacement family, fresh detached dicts of the existing owner objects per callback keep old references alive through _uncompared; replacement of the owner registry then cannot erase them. This is a plausible local owner-adapter fix, not proof that a new publication/acknowledgement subsystem is required. Specify whether returned dicts can be subsequently mutated and the release/lifetime rule, and test native double interruption, honest recovery, repeated restores and multiple readers. A bounded retry/sentinel-only reader change cannot reconstruct an already replaced object. Full acknowledgement or immutable snapshots are options if wider mutable handoffs must remain supported, not established necessities.",
+      "evidence_type": "static current-source analysis plus explicitly historical executed evidence",
+      "disposition": "OPEN; blocks closure, not a new scientific-policy redesign requirement"
+    }
+  ],
+  "resolved_prior_findings": [
+    {
+      "id": "R17-F-2",
+      "assessment": "Static repair confirmed: ledger entry normalization precedes JSON and final owner reconstruction; experiment entry uses Scientific Core JSON before reconstruction and checks writability again. Numeric-key order and tuple/list transformations now agree with ordinary readback. No R18 execution claim."
+    }
+  ],
+  "normalization_analysis": {
+    "ledger": "BudgetLedger.from_dict rebuilds each charge using BudgetCharge.from_dict. _read_once writes that normalized ledger through sorted JSON/default=str and rebuilds it again. _retained_entry reproduces precisely the charge portion, including integer iteration conversion before JSON. Permissive ledger default=str/NaN behavior is inherited, not added to Scientific Core.",
+    "experiment": "ScientificExperiment.to_dict emits evaluation.to_dict; from_dict calls ScientificEvaluation.from_dict for each and record checks global experiment consistency. _retained_entry follows per-evaluation JSON/readback and subsequent to_json writability. It does not substitute for whole-account budget/accounting validation: those still occur in _read_once.",
+    "multiple_histories": "All incomparable observations remain in _PendingHistories; histories are normalized outside lock, applied only to the same barrier identity, and every resolved history must be a prefix or extension of accumulated seen history. Unknown reconciliation keeps the barrier and refuses the account. No one-history-only shortcut added."
+  },
+  "tested_transitions": [],
+  "statically_inspected_transitions": [
+    "ledger owner normalization -> JSON -> owner reconstruction",
+    "experiment JSON -> owner reconstruction -> writability check",
+    "numeric-key detached equivalence",
+    "invalid owner serialization -> unresolved barrier",
+    "multiple detached histories -> exact barrier reconciliation",
+    "concurrent barrier replacement -> stale resolution ignored",
+    "seal check before authoritative comparison and after wait",
+    "callback raw mapping -> native capture failure -> recovery -> registry replacement"
+  ],
+  "missing_coverage": [
+    "No tests or native probes executed by this lens at reviewed R18 SHA.",
+    "No selected stable handoff lifetime control covering repeated interruption and owner replacement in current source.",
+    "Future detached-map correction needs controls for honest recovery, multiple readers, both ledger and experiment accounts, and repeated restores.",
+    "Bounded test sources and historical evidence are not exhaustive concurrency proof or scientific validation."
+  ],
+  "executions": [],
+  "tests": "NOT RUN",
+  "evidence_read": [
+    ".claude/skills/forge-scientific-review/SKILL.md",
+    "CLAUDE.md",
+    "docs/architecture/README.md",
+    "docs/scientific-core/scientific-intelligence-layer.md",
+    "docs/work/ACTIVE_PLAN.md (BR1.1 entry)",
+    "benchmarks/mind_gen2_authority_v1/README.md (scope, lifecycle and R17 disposition)",
+    "docs/work/evidence/br11_local_2026_10_23/round17/threat_disposition_matrix.json",
+    "docs/work/evidence/br11_local_2026_10_23/round17/S1/probe.py",
+    "docs/work/evidence/br11_local_2026_10_23/round17/S1/probe.log",
+    "docs/work/evidence/br11_local_2026_10_23/round17/REPAIR/result.json (scoped provenance)",
+    "tests/mind/test_authority_review_r16.py",
+    "tests/mind/test_authority_review_r17.py",
+    "src/engcore/mind/world/owners.py",
+    "src/engcore/sria/campaign/budget.py",
+    "src/engcore/scientific/experiments/experiment.py",
+    "src/engcore/scientific/experiments/evaluation.py",
+    "src/engcore/scientific/serialization.py",
+    "git diff 98d72b2e..cc7ef06b0d08398173d9448ff47d8abb7e375d44 -- src/engcore/mind/world/owners.py tests/mind/test_authority_review_r17.py"
+  ],
+  "limitations": "Review verdict only. Historical R17 output is identified as historical, not a new R18 run. No scientific validation, certification, owner protocol approval, or exhaustive absence-of-bypass claim. Q answers concern this bounded lens."
+}
