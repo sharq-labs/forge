@@ -1,0 +1,12 @@
+[
+  {
+    "suite": "guards_local",
+    "new": [],
+    "fixed": []
+  },
+  {
+    "suite": "expensive_local",
+    "new": [],
+    "fixed": []
+  }
+]

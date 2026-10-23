@@ -1,0 +1,14 @@
+[
+  {
+    "command": "PYTHONPATH=/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r17/D/pt tests/mind/test_authority_review_r16.py /home/dev_kaeem/br11-review/r17/D/test_identity.py",
+    "cwd": "/home/dev_kaeem/forge-r17-review",
+    "exit": 1,
+    "log": "/home/dev_kaeem/br11-review/r17/D/identity.log"
+  },
+  {
+    "command": "PYTHONPATH=/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r17/D/pt /home/dev_kaeem/br11-review/r17/D/test_open.py",
+    "cwd": "/home/dev_kaeem/forge-r17-review",
+    "exit": 1,
+    "log": "/home/dev_kaeem/br11-review/r17/D/open.log"
+  }
+]

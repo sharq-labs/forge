@@ -873,6 +873,21 @@ ranges on all six paths: NO SPEED DIFFERENCE ESTABLISHED. These are synthetic so
 Clean-source FAST: 12808 passed / 67 base failures / 190 skipped; exact failure-ID comparator reports NO NEW FAILURES VS BASE. Fresh Round17 is next for this repair batch. The separate pre-capture challenge still FAILS; no xfail
 hides it in the normal suite. BR1.1 NOT CLOSED.
 
+### Round-17 review and owner JSON parity repair (2026-10-24)
+
+Fresh review at `98d72b2ef854012780f4222706884b911c4a2f03`: six lenses, two independent skeptics for all
+six MAJOR aliases, completeness critic complete. One known pre-capture MAJOR remains OPEN; D2/F2 identified one
+new MINOR where retained entries omitted owner JSON normalization, falsely retiring numeric-key detached histories.
+The local repair now follows each owner's complete entry write/read order: ledger owner normalization then its JSON
+roundtrip; experiment Scientific Core JSON then owner readback and writability check. No shared permissive serializer
+replaces the distinct owner rules. The stale caller-stack docstring exclusion is corrected to an unresolved defect.
+
+Failing-first4 failed/12 passed; 16 new controls; L0 32 passed, L1 201 passed including generated traces, L2 813 passed,
+regression279 passed. Seven semantic mutants killed. Guards1528 passed/2 base failures; expensive335 passed/13 base
+failures/14 base errors; exact IDs add no new failure. Rescore/benchmark MATCHES; Gen1 INTACT. Five paired measurements overlap on verification/comparison/dispatch/wait/contention (NO SPEED DIFFERENCE ESTABLISHED); seal ranges are lower and nonoverlapping in this bounded run only (6.049–6.331us before, 5.617–5.957us after), no general speed claim. FAST and fresh Round18 pending for this repair. Invalid serializer controls do not demonstrate a separate
+false-admission path: they preserve the unresolved obligation rather than treating invalid owner output as reconciled.
+BR1.1 remains NOT CLOSED. No execution-owner handoff contract has been selected or implemented.
+
 ## 10. Q1–Q7
 
 Filled when the review loop closes. Before = GEN2-BR1's round-2 authority review.

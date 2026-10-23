@@ -1,0 +1,49 @@
+[
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-c",
+      "import subprocess;from engcore.mind.world import owners;print(owners.__file__);print(subprocess.check_output(['git','rev-parse','HEAD'],text=True));assert owners.__file__=='/home/dev_kaeem/forge-r17-review/src/engcore/mind/world/owners.py';assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()=='98d72b2ef854012780f4222706884b911c4a2f03'"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r17-review",
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r17/C/identity.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r17/C/pt",
+      "tests/mind/test_authority_review_r16.py",
+      "/home/dev_kaeem/br11-review/r17/C/test_lifecycle.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r17-review",
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r17/C/controls.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "/home/dev_kaeem/br11-review/r17/C/probe_native_depth.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r17-review",
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r17/C/native.log"
+  }
+]

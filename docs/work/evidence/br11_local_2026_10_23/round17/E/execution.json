@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp=/home/dev_kaeem/br11-review/r17/E/pt",
+    "-q",
+    "-s",
+    "/home/dev_kaeem/br11-review/r17/E/test_replay.py",
+    "tests/mind/test_authority_review_r16.py"
+  ],
+  "cwd": "/home/dev_kaeem/forge-r17-review",
+  "exit_code": 1,
+  "log": "/home/dev_kaeem/br11-review/r17/E/tests.log"
+}

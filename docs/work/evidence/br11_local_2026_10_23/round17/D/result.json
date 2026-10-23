@@ -1,0 +1,80 @@
+{
+  "reviewed_sha": "98d72b2ef854012780f4222706884b911c4a2f03",
+  "lens": "D identity/serialization/object semantics",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [
+    {
+      "id": "R17-D-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Twice-interrupted native capture still loses handed spend after checkpoint replacement",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1000,
+      "smallest_reproduction": "D/test_open.py: dispatch once; interrupt _retain_handing on normal and recovery paths; replace live mapping ledger with saved checkpoint; dispatch same admitted action.",
+      "actual_result": "Executed expected-refusal assertion fails: _refused returns False after checkpoint restore. Existing known family independently rerun against exact SHA.",
+      "expected_result": "Handed spend remains a forward-only barrier; restored checkpoint cannot redispatch.",
+      "threat_families": [
+        "native pre-capture interruption",
+        "live mapping replacement",
+        "hidden spend"
+      ],
+      "proposed_correction": "An explicit execution-owner lifetime/publication/acknowledgement contract must preserve handed state until capture/comparison, or equivalent recoverable owner history. Merely retrying a live mapping cannot recover an object no longer reachable. Permanently sealing any interrupted honest reader would contradict the stated no-corruption interruption invariant.",
+      "scope": "Existing unresolved contract blocker, not a new architecture selection. Synthetic injected interruptions model asynchronous faults; checkpoint replacement is ordinary execution-side handoff, no private account mutation."
+    },
+    {
+      "id": "R17-D-2",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Retained normalization omits owner JSON roundtrip and falsely retires honest numeric-key histories",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 759,
+      "smallest_reproduction": "D/test_identity.py::test_numeric_nested_keys_owner_json_normalization[ledger/experiment]. Record a new charge with detail={2:\"a\",10:\"b\"}, or evaluation metadata={\"keys\":{2:\"a\",10:\"b\"}}. Interrupt handing once, then replace by exact owner JSON/from_dict checkpoint. Fresh reader accepts checkpoint, original reader permanently refuses it.",
+      "actual_result": "Both expected-acceptance probes fail with OwnerUnavailable: rewrote its history; 31 other controls pass. Retained history sorts integer keys numerically; ordinary history has JSON-decoded string keys sorted lexicographically.",
+      "expected_result": "Same owner-written/read-back content reconciles without permanent divergence.",
+      "threat_families": [
+        "canonical normalization mismatch",
+        "detached checkpoint",
+        "false permanent retirement"
+      ],
+      "proposed_correction": "Canonicalize retained entries through the same owner JSON write/read steps as normal account history before hashing, preserving each owner serialization rule. Add numeric nested-key controls for ledger and experiment; do not narrow frozen owner acceptance merely to hide reader mismatch.",
+      "scope": "Local normalization repair; uses public owner constructor/record/settle/serialization paths, no private mutation. No false admission demonstrated."
+    }
+  ],
+  "tested_transitions": [
+    "16 R16 controls: canonical iteration normalization; repeated detached handings; post-return/pre-registration interruption; rollback and conflicting history; malformed retained data; exact barrier concurrency; experiment detachment",
+    "12 independent permutation controls: every order of three compatible prefixes or one conflicting branch; longest current accepted and rollback refused; conflict always retired",
+    "3 independent actual-JSON experiment checkpoints with nested dictionaries/lists, tuples, booleans/null",
+    "2 new numeric-key normalization expected-acceptance probes both fail",
+    "known double capture expected-refusal probe fails"
+  ],
+  "missing_coverage": [
+    "No exhaustive concurrency or asynchronous bytecode interruption proof",
+    "No full FAST, certification, performance or remote execution",
+    "Q1/Q2/Q3/Q5/Q6/Q7 conclusions scoped to changed identity/readback path; no independent full-system re-audit",
+    "Pre-capture result was reproduced with deterministic patched interruption, not an OS-delivered signal"
+  ],
+  "executions": [
+    {
+      "command": "PYTHONPATH=/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r17/D/pt tests/mind/test_authority_review_r16.py /home/dev_kaeem/br11-review/r17/D/test_identity.py",
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "exit": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/D/identity.log"
+    },
+    {
+      "command": "PYTHONPATH=/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r17/D/pt /home/dev_kaeem/br11-review/r17/D/test_open.py",
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "exit": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/D/open.log"
+    }
+  ],
+  "assessment": "NOT CLOSED. One known MAJOR persists and a residual normalization MINOR is demonstrated. Software regression evidence only; no scientific validation or certification.",
+  "contract_assessment": "A narrow local retry repair cannot reconstruct a handed mutable mapping after both capture attempts abort and owner replaces its contents. Stronger handoff lifetime or recoverable owner history is necessary to provide the stated guarantee without permanently poisoning an honest reader. This does not select a protocol on the owner behalf."
+}

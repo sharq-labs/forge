@@ -1,0 +1,17 @@
+R17 critic working notes; final awaiting S1/S2 reports.
+
+Source 98d72b2ef854012780f4222706884b911c4a2f03. Static artifact/source audit only; no critic tests, imports or source changes.
+
+Six MAJOR aliases A1/B1/C1/D1/E1/F1 = one previously open native pre-capture family. Two MINOR aliases D2/F2 = one residual owner normalization family. No BLOCKER demonstrated. Q4 YES; others NO within bounded changed-path review, not global proof.
+
+Read all six result files, BRIEF, CLAUDE, architecture map, active BR1.1 entry, README lifecycle clarification, R16 matrix, owners diff and capture/reconciliation source. Read A/B/C identity logs; A/C native evidence, C exact mapping identity evidence, D normalization failures, E expected-refusal failures; existing R16 regression executions are duplicated across lenses. F static-only cannot count as executable evidence.
+
+Native evidence used only where callback return is established by raw returned mapping retained; deepest empty-pending cases excluded. C exact evidence mapping revision2 becomes revision1 under ordinary owner replacement, gateway executes twice. Counterexample scripts exiting zero do not mean invariant holds. S2 tests assert known wrong outcomes and repeat alias labels, not six unique families.
+
+Separable local fix required before stopping: retained normalization must use complete owner-specific JSON write/read behavior. D numeric-key ledger and experiment expected-acceptance assertions fail although fresh readers accept. No false admission demonstrated from this defect: MINOR false permanent retirement. Repair requires fresh source review; S2 monkeypatched _history sensitivity cannot certify a production repair. Keep true divergent history rejection.
+
+Conditional architecture argument: once every reference to a returned state is absent and the mutable mapping has been replaced, a reader-only recovery cannot reconstruct the overwritten state. This is not a proof all local strategies are impossible. Fresh-stack work can repair recursion specifically; incremental retention repairs partial later-map loss; retries repair one-shot faults. None establishes preservation through arbitrary repeated failure before the first stable capture. Immutable publication, owner retained history, or an execution-side publication/acknowledgement protocol avoid the information-loss premise but select handoff lifetime semantics. Exact decision: who retains each handed version, until which capture/comparison acknowledgement, how interrupted publication/acknowledgement and concurrent readers/restore recover, and what owner-side recovery restores service. No need for a second budget authority. Permanent retirement solely from interruption violates honest-reader invariant; unbounded waiting violates bounded availability. Narrowing observation to successful capture changes the user contract and cannot be selected silently.
+
+Stale class docstring exclusions conflict with README/current review contract. Correct this documentation as part of local repair; do not count as a third semantic family or use to dismiss native proof. Parent informed.
+
+Coverage limits: no exhaustive bytecode/signal/OOM exploration; no owner publication/acknowledgement implementation; no scientific validation, certification or full FAST; Q1/Q2/Q3/Q5/Q6/Q7 bounded to diff and lens observations. New retained-history permutations, interrupted normalization/absence, stale barrier replacement and seal-during-reconciliation controls cover meaningful transitions, not full state-space proof.

@@ -1,0 +1,78 @@
+import itertools
+import json
+import pytest
+from engcore.mind.world import BudgetReader, OwnerKind
+from engcore.mind.world.authority import OwnerUnavailable
+from engcore.sria.campaign.budget import BudgetLedger
+from engcore.scientific import to_json
+from engcore.scientific.experiments.experiment import ScientificExperiment
+from engcore.scientific.experiments.evaluation import ScientificEvaluation, EvaluationStatus
+from tests.mind.test_authority_review_r14 import _settle, ax
+from tests.mind.test_authority_review_r16 import _interrupt_handing
+
+@pytest.mark.parametrize("order", list(itertools.permutations(range(3))))
+@pytest.mark.parametrize("conflict", [False, True])
+def test_all_retained_prefix_orders(order, conflict):
+    account = BudgetLedger(total_budget=100.)
+    _settle(account, "initial")
+    states = [BudgetLedger.from_dict(account.to_dict())]
+    _settle(account, "one")
+    states.append(BudgetLedger.from_dict(account.to_dict()))
+    _settle(account, "two")
+    states.append(BudgetLedger.from_dict(account.to_dict()))
+    if conflict:
+        states[1] = BudgetLedger.from_dict(states[0].to_dict())
+        _settle(states[1], "branch")
+    held = [states[0]]
+    reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
+    for index in order:
+        held[0] = states[index]
+        _interrupt_handing(reader)
+    held[0] = states[2]
+    if conflict:
+        with pytest.raises(OwnerUnavailable): reader.read(OwnerKind.BUDGET_LEDGER, "a")
+        assert reader._diverged
+    else:
+        assert reader.read(OwnerKind.BUDGET_LEDGER, "a") is not None
+        assert not reader._diverged
+        held[0] = states[0]
+        with pytest.raises(OwnerUnavailable): reader.read(OwnerKind.BUDGET_LEDGER, "a")
+
+@pytest.mark.parametrize("metadata", [{"nested":{"values":[1,2]}}, {"tuple":(1,2)}, {"bool":True,"null":None}])
+def test_experiment_real_json_detachment(metadata):
+    o = ax.owned("battery")
+    eid, account = next(iter(o.experiments.items()))
+    held = [account]
+    reader = BudgetReader.following(lambda: ({}, {eid:held[0]}))
+    account.record(ScientificEvaluation("new", {}, status=EvaluationStatus.NOT_CONVERGED, metadata=metadata))
+    _interrupt_handing(reader)
+    held[0] = ScientificExperiment.from_dict(json.loads(to_json(account)))
+    _interrupt_handing(reader)
+    assert reader.read(OwnerKind.EXPERIMENT, eid) is not None
+    assert not reader._diverged
+
+@pytest.mark.parametrize("kind", ["ledger", "experiment"])
+def test_numeric_nested_keys_owner_json_normalization(kind):
+    if kind == "ledger":
+        account = BudgetLedger(total_budget=100.)
+        held = [account]
+        reader = BudgetReader.following(lambda: ({"a":held[0]}, {}))
+        account.settle(charge_id="new", action_id="new", iteration=1, family="explore", realized=1., detail={2:"a",10:"b"})
+        clone=lambda: BudgetLedger.from_dict(json.loads(json.dumps(account.to_dict(), sort_keys=True, default=str)))
+        owner_kind=OwnerKind.BUDGET_LEDGER
+        eid="a"
+    else:
+        o=ax.owned("battery")
+        eid,account=next(iter(o.experiments.items()))
+        held=[account]
+        reader=BudgetReader.following(lambda: ({},{eid:held[0]}))
+        account.record(ScientificEvaluation("new",{},status=EvaluationStatus.NOT_CONVERGED,metadata={"keys":{2:"a",10:"b"}}))
+        clone=lambda: ScientificExperiment.from_dict(json.loads(to_json(account)))
+        owner_kind=OwnerKind.EXPERIMENT
+    _interrupt_handing(reader)
+    held[0]=clone()
+    # Fresh reader demonstrates the exact owner roundtrip is independently readable.
+    fresh=BudgetReader.following(lambda: ({eid:held[0]}, {}) if kind=="ledger" else ({},{eid:held[0]}))
+    assert fresh.read(owner_kind,eid) is not None
+    assert reader.read(owner_kind,eid) is not None
+    assert not reader._diverged

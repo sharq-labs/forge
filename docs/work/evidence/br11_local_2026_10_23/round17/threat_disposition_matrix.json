@@ -1,0 +1,127 @@
+{
+  "reviewed_sha": "98d72b2ef854012780f4222706884b911c4a2f03",
+  "authority": "review coverage only",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "counts": {
+    "major_aliases": 6,
+    "unique_major_families": 1,
+    "minor_aliases": 2,
+    "unique_minor_families": 1,
+    "blocker_defects": 0
+  },
+  "rows": [
+    {
+      "id": "R17-A-1",
+      "lens": "A",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Known pre-capture information loss still permits duplicate dispatch after native resource failure and checkpoint restore",
+      "source": "A/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_NATIVE_CAPTURE_CONTRACT_DECISION"
+    },
+    {
+      "id": "R17-B-1",
+      "lens": "B",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Twice-interrupted native capture still loses returned spend and allows duplicate simulation dispatch after owner checkpoint replacement",
+      "source": "B/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_NATIVE_CAPTURE_CONTRACT_DECISION"
+    },
+    {
+      "id": "R17-C-1",
+      "lens": "C",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Native pre-capture resource failure still permits handed spend to disappear and simulated execution to repeat",
+      "source": "C/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_NATIVE_CAPTURE_CONTRACT_DECISION"
+    },
+    {
+      "id": "R17-D-1",
+      "lens": "D",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Twice-interrupted native capture still loses handed spend after checkpoint replacement",
+      "source": "D/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_NATIVE_CAPTURE_CONTRACT_DECISION"
+    },
+    {
+      "id": "R17-D-2",
+      "lens": "D",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Retained normalization omits owner JSON roundtrip and falsely retires honest numeric-key histories",
+      "source": "D/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OWNER_JSON_PARITY_REPAIR_TESTED_PENDING_FRESH_REVIEW"
+    },
+    {
+      "id": "R17-E-1",
+      "lens": "E",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Unretained returned mapping forgets handed spend after two native capture interruptions and owner restore",
+      "source": "E/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_NATIVE_CAPTURE_CONTRACT_DECISION"
+    },
+    {
+      "id": "R17-F-1",
+      "lens": "F",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Pre-capture interruption still allows a handed spend to disappear on checkpoint replacement",
+      "source": "F/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_NATIVE_CAPTURE_CONTRACT_DECISION"
+    },
+    {
+      "id": "R17-F-2",
+      "lens": "F",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Retained normalization still omits the ordinary owner JSON round trip",
+      "source": "F/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OWNER_JSON_PARITY_REPAIR_TESTED_PENDING_FRESH_REVIEW"
+    }
+  ],
+  "closure": "NOT CLOSED"
+}

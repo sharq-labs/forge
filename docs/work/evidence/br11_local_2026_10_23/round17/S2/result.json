@@ -1,0 +1,199 @@
+{
+  "reviewed_sha": "98d72b2ef854012780f4222706884b911c4a2f03",
+  "lens": "S2 fresh independent skeptic",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "per_alias_verdicts": [
+    {
+      "alias": "A1",
+      "verdict": "UPHELD",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_execution": "test_capture[2-True-A1]; separately native.py depths145/146",
+      "actual": "Two capture interruptions, canonical checkpoint replacement, original admitted action executes twice. Raw returned mapping demonstrably changes revision2 to1.",
+      "controls": "Same alias with single interruption refuses restore; twice interrupted unchanged owner recovers readable, refuses old authorization, calls1, no seal.",
+      "trust_boundary": "Owner replaces public live dictionary entry with canonical BudgetLedger checkpoint. Synthetic exception injection selects capture/recovery checkpoints; independent unpatched native RecursionError corroborates. No private account state mutation or unadmitted action.",
+      "distinct_root_cause": false
+    },
+    {
+      "alias": "B1",
+      "verdict": "UPHELD",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_execution": "test_capture[2-True-B1]; separately native.py depths145/146",
+      "actual": "Two capture interruptions, canonical checkpoint replacement, original admitted action executes twice. Raw returned mapping demonstrably changes revision2 to1.",
+      "controls": "Same alias with single interruption refuses restore; twice interrupted unchanged owner recovers readable, refuses old authorization, calls1, no seal.",
+      "trust_boundary": "Owner replaces public live dictionary entry with canonical BudgetLedger checkpoint. Synthetic exception injection selects capture/recovery checkpoints; independent unpatched native RecursionError corroborates. No private account state mutation or unadmitted action.",
+      "distinct_root_cause": false
+    },
+    {
+      "alias": "C1",
+      "verdict": "UPHELD",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_execution": "test_capture[2-True-C1]; separately native.py depths145/146",
+      "actual": "Two capture interruptions, canonical checkpoint replacement, original admitted action executes twice. Raw returned mapping demonstrably changes revision2 to1.",
+      "controls": "Same alias with single interruption refuses restore; twice interrupted unchanged owner recovers readable, refuses old authorization, calls1, no seal.",
+      "trust_boundary": "Owner replaces public live dictionary entry with canonical BudgetLedger checkpoint. Synthetic exception injection selects capture/recovery checkpoints; independent unpatched native RecursionError corroborates. No private account state mutation or unadmitted action.",
+      "distinct_root_cause": false
+    },
+    {
+      "alias": "D1",
+      "verdict": "UPHELD",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_execution": "test_capture[2-True-D1]; separately native.py depths145/146",
+      "actual": "Two capture interruptions, canonical checkpoint replacement, original admitted action executes twice. Raw returned mapping demonstrably changes revision2 to1.",
+      "controls": "Same alias with single interruption refuses restore; twice interrupted unchanged owner recovers readable, refuses old authorization, calls1, no seal.",
+      "trust_boundary": "Owner replaces public live dictionary entry with canonical BudgetLedger checkpoint. Synthetic exception injection selects capture/recovery checkpoints; independent unpatched native RecursionError corroborates. No private account state mutation or unadmitted action.",
+      "distinct_root_cause": false
+    },
+    {
+      "alias": "E1",
+      "verdict": "UPHELD",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_execution": "test_capture[2-True-E1]; separately native.py depths145/146",
+      "actual": "Two capture interruptions, canonical checkpoint replacement, original admitted action executes twice. Raw returned mapping demonstrably changes revision2 to1.",
+      "controls": "Same alias with single interruption refuses restore; twice interrupted unchanged owner recovers readable, refuses old authorization, calls1, no seal.",
+      "trust_boundary": "Owner replaces public live dictionary entry with canonical BudgetLedger checkpoint. Synthetic exception injection selects capture/recovery checkpoints; independent unpatched native RecursionError corroborates. No private account state mutation or unadmitted action.",
+      "distinct_root_cause": false
+    },
+    {
+      "alias": "F1",
+      "verdict": "UPHELD",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_execution": "test_capture[2-True-F1]; separately native.py depths145/146",
+      "actual": "Two capture interruptions, canonical checkpoint replacement, original admitted action executes twice. Raw returned mapping demonstrably changes revision2 to1.",
+      "controls": "Same alias with single interruption refuses restore; twice interrupted unchanged owner recovers readable, refuses old authorization, calls1, no seal.",
+      "trust_boundary": "Owner replaces public live dictionary entry with canonical BudgetLedger checkpoint. Synthetic exception injection selects capture/recovery checkpoints; independent unpatched native RecursionError corroborates. No private account state mutation or unadmitted action.",
+      "distinct_root_cause": false
+    }
+  ],
+  "findings": [
+    {
+      "id": "R17-S2-1",
+      "aliases": [
+        "A1",
+        "B1",
+        "C1",
+        "D1",
+        "E1",
+        "F1"
+      ],
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Uncaptured returned mutable mapping loses handed spend on restore",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1000,
+      "related_lines": [
+        911,
+        920,
+        999,
+        1025,
+        1026
+      ],
+      "smallest_reproduction": "S2/native.py depths145/146 at recursion limit150: dispatch once, return spent owner mapping, capture/recovery RecursionError, restore earlier ledger in mapping, redispatch original admitted action.",
+      "actual_result": "Raw pending mapping revision2 changes to1; refusal false; executor calls2; sealed null.",
+      "expected_result": "Handed spend retained sufficiently to refuse original action after restore, calls1.",
+      "threat_families": [
+        "pre-capture interruption",
+        "mutable handing lifetime",
+        "hidden spend",
+        "redispatch"
+      ],
+      "proposed_correction": "Select a narrow owner publication/lifetime guarantee preserving the content until stable capture and appropriate acknowledgement. Cover restore and interruption. Do not silently weaken all-returned-handings scope."
+    },
+    {
+      "id": "R17-S2-2",
+      "aliases": [
+        "D2",
+        "F2"
+      ],
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Incomplete JSON normalization falsely retires honest numeric-key histories",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 759,
+      "related_lines": [
+        497,
+        499,
+        507,
+        508,
+        807
+      ],
+      "smallest_reproduction": "S2/test_independent.py::test_normalization: new ledger detail or experiment metadata with nested {2:a,10:b}; interrupted handed retention; exact owner JSON restored checkpoint; read twice.",
+      "actual_result": "Both numeric-key baseline cases permanently refuse with rewrote its history; fresh reader accepts same restored owner. Equivalent string-key cases recover.",
+      "expected_result": "Owner-equivalent restored history recovers without divergence.",
+      "threat_families": [
+        "JSON canonicalization mismatch",
+        "false permanent retirement"
+      ],
+      "proposed_correction": "Reconcile retained entries through complete matching owner JSON/write/read normalization before hashing, preserving separate ledger and experiment serialization semantics and existing incompatibility refusal. Straightforward local direction, no lifetime decision needed.",
+      "sensitivity": "Scratch-only monkeypatch wraps _history: JSON dumps(sort_keys=True,default=str), JSON loads, matching BudgetCharge/ScientificEvaluation.from_dict, then original _history. Four cases (numeric/string x ledger/experiment) recover. This normalizes BOTH current and retained histories and is only a bounded sensitivity experiment; not production fix implementation, no proof of complete owner serialization equivalence or compatibility. Production should match ledger and scientific experiment serialization paths exactly."
+    }
+  ],
+  "architecture_decision_analysis": {
+    "conclusion": "Explicit lifetime/handoff decision needed for complete guarantee under admitted repeated pre-capture interruption plus mutable replacement; local remedies remain possible for narrower reachable checkpoints.",
+    "reason": "After both native captures abort before retaining any entry, the only saved mapping aliases mutable owner storage. Once overwritten, reader-accessible state no longer contains the spend. Later re-read cannot distinguish lost-spend case from honest unchanged content in general. Refusing indefinitely/permanent sealing solely for interruption violates honest-recovery obligation; accepting reconstructed old content violates preservation.",
+    "qualification": "This is conditional information-loss reasoning, not a formal impossibility theorem for every reader implementation. Fresh-stack retry can fix this native recursion trigger. Incremental retention can fix a second-map interruption after first-map data was copied. More finite retries move the earliest failure window. A retention/immutable return/acknowledgement protocol can be narrow and use existing owners; no second budget authority is required. D2/F2 is separable local normalization work. No protocol selected or implemented."
+  },
+  "tested_transitions": [
+    "18 independently written per-alias cases: six shared-root reproductions, six one-interruption controls, six honest unchanged double-interruption recovery controls",
+    "8 normalization cases: two confirmed false-retirement baselines, two string-key controls, four scratch JSON-normalization sensitivity controls",
+    "16 committed R16 controls executed",
+    "9 native recursion depths138..146: depths145/146 confirmed shared failure, depths138..144 refused restore"
+  ],
+  "count_interpretation": "pytest42 passed means all assertions, including assertions that deliberately confirm known wrong outcomes, passed. It is NOT 42 safety controls passing, not six unique major defects, and not a production repair claim. Breakdown18+8+16. Native script exit0 confirms counterexample and control assertions.",
+  "missing_coverage": [
+    "No exhaustive async-bytecode/concurrency proof",
+    "No full FAST or scientific validation/certification",
+    "No actual provider/solver execution; synthetic executor",
+    "No production normalization repair or complete serializer-equivalence proof",
+    "Q1-Q3/Q5-Q7 NO lens-scoped, not exhaustive system review"
+  ],
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/S2/pt",
+        "/home/dev_kaeem/br11-review/r17/S2/test_independent.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/S2/tests.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r17/S2/native.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/S2/native.log"
+    }
+  ],
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "interpreter": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "cwd": "/home/dev_kaeem/forge-r17-review"
+  },
+  "identity_log": "/home/dev_kaeem/br11-review/r17/S2/identity.json",
+  "independence": "Read A-F reports/code; no S1 evidence used. Wrote independent assertions and executed exact source. All writes restricted to S2 scratch.",
+  "summary": "CHANGES REQUIRED. One shared MAJOR and one shared MINOR independently upheld. Scientific validation/certification NOT performed."
+}

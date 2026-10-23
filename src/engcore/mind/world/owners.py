@@ -450,8 +450,9 @@ class BudgetReader(_Reader):
     refused, until it completes.  What is never observed: a state no verification was handed (a spend and its rollback
     both between two verifications look like no change), the content of a state handed and not read back (only its
     entry objects), an entry under a key that is not a str, the state of a verification whose ``accounts()`` raises or
-    hands no pair of mappings, and one that leaves (the caller's own stack exhausted inside the reader) between being
-    handed accounts and comparing them; at-most-once execution is the execution owner's.  An ``accounts()`` or
+    hands no pair of mappings; at-most-once execution is the execution owner's. Repeated interruptions before stable
+    capture can still lose a returned mutable handing if the owner replaces it: this is an unresolved defect, not an
+    accepted caller-stack exclusion. An ``accounts()`` or
     read-back that reads through the reader it feeds on the same thread, or from its fresh thread, is refused at once
     (from inside the read-back, that refusal repeats, so the account is refused for good).  A pinned snapshot serves the
     records it observed and is never live."""
@@ -481,6 +482,22 @@ class BudgetReader(_Reader):
     def _history(items: Iterable[Any]) -> tuple[str, ...]:
         return tuple(hashlib.sha256(json.dumps(x.to_dict(), sort_keys=True, default=str).encode("utf-8")).hexdigest()
                      for x in items)
+
+    @staticmethod
+    def _retained_entry(kind: str, entry: Any) -> Any:
+        """The entry portion of the ordinary owner's write/read path, in the same order.
+
+        Ledger entries are owner-normalized before JSON (whose digest rule permits ``default=str``).
+        Experiment entries are written first, then rebuilt and checked writable by the Scientific Core.
+        JSON key/sequence normalization therefore matches detached checkpoints without widening either owner.
+        """
+        if kind == "ledger":
+            normalized = BudgetCharge.from_dict(entry.to_dict())
+            written = json.dumps(normalized.to_dict(), sort_keys=True, separators=(",", ":"), default=str)
+            return BudgetCharge.from_dict(json.loads(written))
+        rebuilt = ScientificEvaluation.from_dict(json.loads(to_json(entry)))
+        to_json(rebuilt)
+        return rebuilt
 
     def _read_once(self, key: tuple[str, str], cache: dict[tuple[str, str], tuple[Any, ...]]) \
             -> tuple[OwnerRecord, tuple[str, ...]]:
@@ -754,9 +771,8 @@ class BudgetReader(_Reader):
                 continue                            # the current owner read already reconciles these objects
             # Reuse the entry owner's read-back normalization, exactly as the
             # ordinary account history does. Never serialize under the lock.
-            owner = BudgetCharge if key[0] == "ledger" else ScientificEvaluation
             try:
-                histories = tuple(self._history(owner.from_dict(entry.to_dict()) for entry in entries)
+                histories = tuple(self._history(self._retained_entry(key[0], entry) for entry in entries)
                                   for entries in observations)
                 resolved[key] = (barrier, histories)
             except BaseException as exc:  # noqa: BLE001 - unread entries remain unread

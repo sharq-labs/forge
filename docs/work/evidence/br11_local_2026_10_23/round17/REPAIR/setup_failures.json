@@ -1,0 +1,1 @@
+[{"command":"wsl -d Ubuntu -- bash -lc ...","exit_code":1,"result":"WSL_E_DISTRO_NOT_FOUND; corrected distro to Ubuntu-24.04; no test executed"}]

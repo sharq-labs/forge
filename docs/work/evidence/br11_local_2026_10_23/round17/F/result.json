@@ -1,0 +1,77 @@
+{
+  "reviewed_sha": "98d72b2ef854012780f4222706884b911c4a2f03",
+  "lens": "F scientific semantics/completeness",
+  "review_method": "STATIC ONLY; no production execution, probes, tests or imports",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "verdict": "CHANGES REQUIRED",
+  "findings": [
+    {
+      "id": "R17-F-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Pre-capture interruption still allows a handed spend to disappear on checkpoint replacement",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 999,
+      "smallest reproduction": "Start following reader with live ledger mapping; dispatch once and settle run. Interrupt _retain_handing both on initial capture and immediate recovery before account references are retained. Replace mapping entry with the pre-spend owner checkpoint. Next pin recovers the now-restored mapping and dispatch can recur. No private account mutation is needed.",
+      "actual result": "Static path: _uncompared retains the original live mapping at 999; recovery at 920/939 rereads it later. Restored contents can clear pending recovery without retaining the spend. The preserved R16 REPAIR/open-capture.log reports the expected refusal assertion failing. NOT RUN by this reviewer.",
+      "expected result": "Unavailable handed history must not become acceptance after restore; an honest interruption alone must not permanently poison the reader.",
+      "threat families": [
+        "pre-capture information loss",
+        "hidden spend",
+        "rollback redispatch"
+      ],
+      "proposed correction": "Keep this OPEN. Select an owner handoff lifetime/publication contract retaining canonical snapshots or histories through acknowledgement, including restore, interruption and multiple-reader rules. Do not silently narrow observation to successful capture. Local sentinel registration and retry improvements reduce specific gaps but cannot recover contents already lost."
+    },
+    {
+      "id": "R17-F-2",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Retained normalization still omits the ordinary owner JSON round trip",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 759,
+      "smallest reproduction": "Use an empty BudgetLedger(100), following reader, then settle a new charge with detail={2: \"a\", 10: \"b\"}; interrupt after native mapping retention via _handed once, so recovery retains the charge. Supply an honest BudgetLedger.from_dict(account.to_dict()) detached checkpoint, then read the ledger.",
+      "actual result": "Static derivation: BudgetCharge.from_dict retains detail unchanged (budget.py:130), settle accepts it (321). Retained _history sorts integer detail keys as 2,10. Ordinary _read_once (497-501) serializes and JSON-decodes before hashing, making the keys strings; _history now sorts them as \"10\",\"2\". Different hashes for unchanged owner-readable content cause permanent _diverged at 807-811. NOT EXECUTED; independent executable confirmation requested from parent.",
+      "expected result": "Owner-readable unchanged detached checkpoints normalize identically and recover without evidence of rewritten history.",
+      "threat families": [
+        "canonical history mismatch",
+        "false permanent refusal",
+        "incomplete owner normalization"
+      ],
+      "proposed correction": "Use the complete existing owner serialization/read-back sequence for retained history, including its JSON transformation, before hashing. Add a deterministic numeric-key JSON transformation control alongside iteration normalization; retain rejection of truly incompatible histories. Do not tighten accepted owner payload types in the follower."
+    }
+  ],
+  "tested_transitions": [],
+  "statically_inspected_transitions": [
+    "callback return to registration sentinel recovery",
+    "raw mapping to retained native entries",
+    "multiple identity-incomparable histories to canonical prefix reconciliation",
+    "exact barrier replacement during unlocked normalization",
+    "sealed reader before authoritative comparison and after wait",
+    "unread malformed history refusal and later recovery",
+    "experiment attempt rollback",
+    "conflicting detached histories returned to first branch"
+  ],
+  "missing_coverage": [
+    "Full JSON-normalized retained history equivalence (numeric dictionary keys)",
+    "Repeated pre-capture interruption remains deliberately failing external challenge",
+    "Interruption during owner publication and acknowledgement requires selected owner contract",
+    "No execution or exhaustive concurrency proof by this lens"
+  ],
+  "executions": [],
+  "tests": "NOT RUN",
+  "evidence_read": [
+    "tests/mind/test_authority_review_r16.py",
+    "docs/work/evidence/br11_local_2026_10_23/round16/REPAIR/test_open_capture_challenge.py.txt",
+    "docs/work/evidence/br11_local_2026_10_23/round16/REPAIR/open-capture.log",
+    "docs/work/evidence/br11_local_2026_10_23/round16/threat_disposition_matrix.json"
+  ],
+  "limitations": "Independent static software review only; no scientific validation, certification or approval of a proposed protocol."
+}

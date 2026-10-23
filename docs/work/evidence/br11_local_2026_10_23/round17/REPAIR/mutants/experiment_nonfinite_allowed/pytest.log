@@ -1,0 +1,29 @@
+.............F..................                                         [100%]
+=================================== FAILURES ===================================
+__ test_owner_unserializable_retained_entry_stays_unresolved[experiment-nan] ___
+
+kind = 'experiment', value = nan
+
+    @pytest.mark.parametrize("kind,value", [
+        ("experiment", _Text()), ("experiment", float("nan")),
+        ("experiment", {2: "a", "10": "b"}), ("ledger", {2: "a", "10": "b"}),
+    ])
+    def test_owner_unserializable_retained_entry_stays_unresolved(kind, value):
+        account, held, _, reader, owner_kind = _fixture(kind)
+        old = _checkpoint(account, kind)
+        _append(account, kind, value)
+        with pytest.raises((TypeError, ValueError, ScientificCoreError)):
+            _checkpoint(account, kind)
+        _interrupt_handing(reader)
+        held[0] = old
+        for _ in range(2):
+            with pytest.raises(OwnerUnavailable):
+                reader.read(owner_kind, "a")
+>       assert reader._unread_entries
+E       assert {}
+E        +  where {} = <engcore.mind.world.owners.BudgetReader object at 0x73b4874c4e30>._unread_entries
+
+tests/mind/test_authority_review_r17.py:113: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-nan]
+1 failed, 31 passed in 1.87s

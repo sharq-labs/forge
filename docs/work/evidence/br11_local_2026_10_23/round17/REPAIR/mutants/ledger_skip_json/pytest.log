@@ -1,0 +1,49 @@
+F...............................                                         [100%]
+=================================== FAILURES ===================================
+_____ test_owner_json_equivalent_detached_history_recovers[value0-ledger] ______
+
+kind = 'ledger', value = {2: 'a', 10: 'b'}
+
+    @pytest.mark.parametrize("kind", ["ledger", "experiment"])
+    @pytest.mark.parametrize("value", [{2: "a", 10: "b"}, {"2": "a", "10": "b"}, (1, 2)])
+    def test_owner_json_equivalent_detached_history_recovers(kind, value):
+        account, held, follow, reader, owner_kind = _fixture(kind)
+        _append(account, kind, value)
+        _interrupt_handing(reader)
+        held[0] = _checkpoint(account, kind)
+        fresh = BudgetReader.following(follow)
+        expected = fresh.read(owner_kind, "a")
+        for _ in range(2):
+>           assert reader.read(owner_kind, "a") == expected
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r17.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../br11-review/r17/REPAIR/mutants/ledger_skip_json/src/engcore/mind/world/owners.py:1055: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../br11-review/r17/REPAIR/mutants/ledger_skip_json/src/engcore/mind/world/owners.py:1056: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x719304592d50>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+
+../br11-review/r17/REPAIR/mutants/ledger_skip_json/src/engcore/mind/world/owners.py:1119: OwnerUnavailable
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-ledger]
+1 failed, 31 passed in 2.05s
