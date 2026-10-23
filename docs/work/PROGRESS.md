@@ -8705,6 +8705,15 @@ completeness critic):
     each (`BR1_PERFORMANCE_THIS_HOST.json`; the alternation script is
     `/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/perf_r7/br1_alternating.py`).
 
+18. Gates at `b572bfc` (`/home/user/forge-gate2`, the code under review in round 8): FAST (command of item 5) 93
+    failed, 5 errors, 12537 passed; against the base's 99 failing ids NEW 0, FIXED 1 (the load-dependent timing test of
+    item 10). Regression pack: 279 passed. Guard suites (item 10's set): 1268 passed, 2 failed, the same two
+    pre-existing failures with messages identical to the base's. The affected expensive tests minus the campaign tests:
+    13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base. `forge_check.py --changed --base
+    1202ea6c... --dry-run`: narrowing refused (unclassified files) → whole FAST + regression pack, run above; it marks
+    `budget.py` and the certified harness tests as needing hardened recertification (NOT RUN). FAST is red on the
+    base: NOT green.
+
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
 cloud session); not used, and nothing was merged for it.
