@@ -15,7 +15,7 @@ no scientific claim, nothing certified or formal. Generation 1 stays sealed and 
   `admission.py`; changed: `__init__.py`, `world.py`, `feasibility.py`, `variables.py`, `base.py`, `actions.py`,
   `domains.py`, `port.py`; removed: `binders.py`). One owner file outside the package: `src/engcore/sria/campaign/budget.py`
   (read-only `BudgetLedger.digest` / `revision`).
-- **Tests:** `tests/mind/test_authority_{failing_first,mutations,cross_domain,review_r1,...,review_r6}.py`,
+- **Tests:** `tests/mind/test_authority_{failing_first,mutations,cross_domain,review_r1,...,review_r7}.py`,
   `tests/test_sria_budget_ledger_identity.py`; BR1's tests adapted where §3's interval rule requires
   (`tests/mind/test_world_{failing_first,contract}.py`, `benchmarks/mind_gen2_world_v1/tests`).
 - **Benchmark:** this directory (`fixtures.py`, `mutations.py`, `run_benchmark.py`, `rescore.py`,
@@ -201,30 +201,37 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
 
 ## 5. Controls
 
-Executed at `a058cf2` (command and environment in `docs/work/PROGRESS.md`): `tests/mind`,
+Executed at `b572bfc` (command and environment in `docs/work/PROGRESS.md`): `tests/mind`,
 `benchmarks/mind_gen2_authority_v1/tests`, `benchmarks/mind_gen2_world_v1/tests` and
-`tests/test_sria_budget_ledger_identity.py`, **531 passed** (including the expensive BR1-decision re-derivation).
+`tests/test_sria_budget_ledger_identity.py`, **553 passed** (including the expensive BR1-decision re-derivation).
 
 | Suite | Tests | What it pins |
 |---|---|---|
 | `test_authority_failing_first.py` | 29 | the brief's A–O, written failing first: no interval decides; lineage laundering; stale state/model/provider/budget/declaration; missing owner; unit spelling; protocol levels (no 1.15 A, nearest or interpolation); raw proposals never execute |
 | `test_authority_mutations.py` | 120 | every projected field and binding field edited, every admitted-action and authorization field edited, replay forgeries |
 | `test_authority_cross_domain.py` | 32 | battery, two HVAC worlds, drone, motor: the same guarantees in each |
-| `test_authority_review_r1.py` … `_r6.py` | 43 / 35 / 21 / 17 / 17 / 14 | one control per confirmed review finding (round 6: per finding behind a PARTIAL verdict); see below |
+| `test_authority_review_r1.py` … `_r7.py` | 43 / 35 / 21 / 17 / 17 / 14 / 22 | one control per confirmed review finding (round 6: per finding behind a PARTIAL verdict); see below |
 | `test_sria_budget_ledger_identity.py` | 5 | the owner addition: read-only, wire shape unchanged, round-trip identity |
 | benchmark tests | 7 | committed matrix and re-score reproduce; the re-score guard; BR1's decisions re-derived from BR1's code (expensive) |
 | BR1 tests adapted (`test_world_contract.py`, `test_world_failing_first.py`, BR1 benchmark) and unchanged (`test_world_boundary.py`) | 67 / 31 / 8 / 5 | BR1's contract under §3; BR1's committed results byte-identical; the package boundary |
 
 On the trees before their fixes (each file copied into a checkout of that SHA): the round-3 controls fail 20/21 on
 `1a87f7c`, the round-4 controls 16/17 on `d0a0408`, the round-5 controls (the file as committed at `2422014`, 11
-tests) 9/11 on `c52dcfd`, and the round-6 controls 9/14 on `ceac320`. On `c52dcfd` the two round-5 tests that pass are a
+tests) 9/11 on `c52dcfd`, the round-6 controls 9/14 on `ceac320` deterministically (plus the thread stress test
+non-deterministically), and the round-7 controls 19/22 on `27b9f71` (the round-1 liveness loop, extended with a pinned
+budget snapshot in round 7, fails there too). On `c52dcfd` the two round-5 tests that pass are a
 control for a round-4 reader fix (`test_a_refused_declaration_read_advances_nothing`) and E5-F3's control
 (`test_a_fixed_condition_at_its_variables_own_level_is_refused_where_the_level_is`: that path already held); one of the
 nine that fail there, the K5-F2 ledger control, fails at the round-4 follower's construction read rather than at the
-mapping it guards (reverting the mapping on a later tree makes it fail). On `ceac320` the five round-6 tests that pass
-guard paths that already held: the two experiment-follower controls (both fail on a mutant that drops the experiment
-history check), the gating-False and remainder-basis controls, and a thread stress test (it failed there in 1 of 3
-runs: the race is real but not deterministic). Round 6 also ran the round-5 fixed-kind test over three units (11 → 17).
+mapping it guards (reverting the mapping on a later tree makes it fail). On `ceac320` four of the round-6 tests that
+pass guard paths that already held: the two experiment-follower controls (both fail on a mutant of the 13-test file at
+`0453a95` that drops the experiment history check), and the gating-False and remainder-basis controls; the fifth, a
+thread stress test, reproduces the round-6 race only sometimes (1 of 3 of the builder's runs on `ceac320`, 2 of 3 of a
+round-7 reviewer's), so it is a supplementary control, not the deterministic one
+(`test_an_older_snapshot_read_after_a_newer_one_serves_what_it_observed_and_refuses_nothing`). On `27b9f71` the three
+round-7 tests that pass guard paths that already held: the replay of a refusal of an account behind, the provider half
+of K6-F2 (it fails on a mutant that stops naming providers) and the `remaining_observations` basis. Round 6 also ran
+the round-5 fixed-kind test over three units (11 → 17).
 
 ## 6. Owned fixtures and the authority matrix (`results/AUTHORITY.json`)
 
@@ -260,45 +267,46 @@ subjects. The changes of rounds 3 to 6 left every case's status and codes unchan
 
 ## 8. Performance (`results/PERFORMANCE.json`, `results/BR1_PERFORMANCE_THIS_HOST.json`, `results/LEDGER_SIZE_CURVE.json`)
 
-One idle host: 4 CPUs, Linux, Python 3.13.16. BR1's reported numbers were measured on another machine. For the delta,
-BR1's own harness ran on BR1's 515 cases alternately on BR1's code (`1202ea6c`) and on BR1.1's code at `26d7724`, three
-times each; the medians are below (`BR1_PERFORMANCE_THIS_HOST.json`, which names both commits and holds every run and
-the command). Single runs on this host differ by up to ~50 % (FEASIBILITY p95 on BR1.1's code: 0.414 to 0.628 ms)
-and by up to ~30 % on the other metrics, so every delta in the table is inside the noise band: none is a measured
-speed-up or slow-down. `PERFORMANCE.json` (which names its code revision) also carries one single run of the same
-harness on the current code (`br1_cases_on_br1_1_code`), inside the same band. The owned-world metrics are
-`PERFORMANCE.json` regenerated at `0fc399b` (`python -m benchmarks.mind_gen2_authority_v1.run_benchmark`, 25
-repeats); `a058cf2` after it changes only refusal records and a bind message. Two runs at `c2d41fb` and `0fc399b`, whose
-measured code is identical, gave gen1_pool projection medians of 7.4 and 12.3 ms: per-world medians move by that much.
+One idle host: 4 CPUs, Linux, Python 3.13.16 (the container restarted during round 7, so the kernel build differs from
+earlier rounds' files; every file names its host and code revision). BR1's reported numbers were measured on another
+machine. For the delta, BR1's own harness ran on BR1's 515 cases alternately on BR1's code (`1202ea6c`) and on
+BR1.1's code at `b572bfc`, three times each; the medians are below (`BR1_PERFORMANCE_THIS_HOST.json`, which holds
+every run, each metric's run-to-run spread and the command). In those runs single runs differ by up to 29 % per metric
+(FEASIBILITY p95 on BR1.1's code) and by 3-8 % on FEASIBILITY p50 and WORLD_BUILD; earlier runs on this host differed
+by up to ~50 % on p95. The owned-world metrics are `PERFORMANCE.json` regenerated at `b572bfc` (`python -m
+benchmarks.mind_gen2_authority_v1.run_benchmark`, 25 repeats; it also carries one single run of BR1's harness on the
+current code, `br1_cases_on_br1_1_code`).
 
 | Metric (ms) | BR1 reported | BR1 code, this host | BR1.1 code, this host | Delta (this host) |
 |---|---|---|---|---|
-| WORLD_BUILD (BR1 cases) | 0.856 | 1.480 | 1.651 | +12 % (noise) |
-| ACTIONSPACE_BUILD | 0.256 | 0.457 | 0.386 | −16 % (noise) |
-| FEASIBILITY p50 | 0.140 | 0.244 | 0.233 | −4 % (noise) |
-| FEASIBILITY p95 | 0.263 | 0.479 | 0.415 | −13 % (noise) |
-| check on owned worlds p50 / p95 | — | — | 0.357 / 0.539 | new |
-| projection from owners (median by world) | — | — | 12.0 | new |
-| owner verification p50 / p95 | — | — | 14.8 / 18.2 | new |
-| admission (verify + rebuild + check + mint) p50 / p95 | — | — | 19.1 / 22.5 | new |
-| dispatch authorization (re-admission) p50 / p95 | — | — | 20.4 / 23.5 | new |
-| reference: one in-repo solver execution (median) | — | 163.4 | 161.9 | — |
+| WORLD_BUILD (BR1 cases) | 0.856 | 1.392 | 1.582 | +14 % (outside the 5-8 % spread: slower) |
+| ACTIONSPACE_BUILD | 0.256 | 0.453 | 0.372 | −18 % (inside the 23 % spread: noise) |
+| FEASIBILITY p50 | 0.140 | 0.224 | 0.256 | +14 % (outside the 4-5 % spread: slower) |
+| FEASIBILITY p95 | 0.263 | 0.372 | 0.496 | +33 % (at the edge of the 17-29 % spread) |
+| check on owned worlds p50 / p95 | — | — | 0.350 / 0.537 | new |
+| projection from owners (median by world) | — | — | 11.8 | new |
+| owner verification p50 / p95 | — | — | 14.3 / 19.9 | new |
+| admission (verify + rebuild + check + mint) p50 / p95 | — | — | 18.5 / 24.4 | new |
+| dispatch authorization (re-admission) p50 / p95 | — | — | 19.6 / 26.9 | new |
+| reference: one in-repo solver execution (median) | — | 154.1 | 171.5 | — |
 
-The check is as fast as BR1's within this host's noise. Admission costs ~50× the check and stays ~8× cheaper than one
-solver execution on these fixtures. Under `cProfile` (20 admissions, battery, at `26d7724`), the verified projection
-took ~71 % of admission and the unit owner's `verify_registry_unmutated` alone ~24 %. Cost grows with the bindings,
-the declarations in force and the budget accounts' histories:
-- a bound ledger's settled charges (the world carries every charge of a bound ledger): admission p50 22.5 / 24.2 / 40.5
-  / 199 ms and check p50 0.45 / 0.51 / 1.27 / 8.5 ms at 0 / 10 / 100 / 1000 charges (`python -m
-  benchmarks.mind_gen2_authority_v1.ledger_curve`, `LEDGER_SIZE_CURVE.json`, 41 repeats, with each point's fastest
-  and slowest run): about 0.18 ms per charge between 100 and 1000, so past ~1000 charges an admission costs about one
-  solver execution;
-- every account handed to a following budget reader, bound or not, is read back at every verification (round 6, §4):
-  one unbound ledger of 0 / 1000 / 5000 charges gave admission p50 21.6 / 39.8 / 108.6 ms on the battery fixture at
-  `defdf7b` (21 repeats; a scratch probe, not a committed result); a bound experiment's evaluations are read back one at
-  a time (linear, R6-D3; the round-4 follower rebuilt the whole experiment, quadratic in its evaluations).
+The check on BR1's cases is ~14 % slower than BR1's at p50 on this host (the round 3-7 rules: deciding on the value as
+executed, the level identity and nearer-level rules, the exact-level guard), and about 0.26 ms per check. Admission
+costs ~50× the check and stays ~8-9× cheaper than one solver execution on these fixtures. Under `cProfile` (20
+admissions, battery, at `26d7724`), the verified projection took ~71 % of admission and the unit owner's
+`verify_registry_unmutated` alone ~24 %. Cost grows with the bindings, the declarations in force and the budget
+accounts' histories (`python -m benchmarks.mind_gen2_authority_v1.ledger_curve`, `LEDGER_SIZE_CURVE.json`, 41
+repeats, each point with its fastest and slowest run):
+- a bound ledger's settled charges (the world carries every charge of a bound ledger): admission p50 22.0 / 22.9 /
+  41.1 / 190 ms and check p50 0.45 / 0.54 / 1.23 / 8.6 ms at 0 / 10 / 100 / 1000 charges, about 0.17 ms per charge
+  between 100 and 1000, so past ~1000 charges an admission costs about one solver execution;
+- one unbound ledger handed to the following reader (read back at every verification, round 6-7): admission p50 21.5
+  / 21.4 / 23.6 / 37.6 ms at 0 / 10 / 100 / 1000 charges (about 0.016 ms per charge); a bound or unbound experiment is
+  read back whole by its owner once per content (the owner's `from_dict` is quadratic in the evaluations, so the first
+  verification after each new evaluation pays it; unchanged content is not re-read back).
 
-Nothing is cached across admissions (a cache would be a currency claim).
+Nothing is cached across admissions except that one experiment content was read back by its owner (a function of the
+content, not a currency claim).
 
 ## 9. Review rounds
 
@@ -314,10 +322,11 @@ completeness critic. The builder did not overrule a finding: each was fixed or i
 | 4 | `d0a0408` | A, B, C, D, E | 0 / 2 / 29 | **R4-A1 = R4-C-F1** (a fixed condition's own domain checked on its declared spelling, the converted value executed: 101.52641641114641 psi inside 700 kPa as spelled, 7.000000000000001 bar outside as executed): reproduced by both repro skeptics; both scope skeptics graded it MINOR (declared by the execution side, unreachable by a proposer); treated as MAJOR and fixed | **K4-F1 MAJOR** (the `d113d30` mint guard re-derived with the function that built the configuration, so a regression of the K-F1 kind was not caught), K4-F2..K4-F4 MINOR | `26d7724` |
 | 5 | `c52dcfd` | A, B, C, D, E | 0 / 3 / 23 | **B5-F1 = R5-C-F1 = R5-D1** (the round-4 budget follower took a history it had just refused as its baseline: a rolled-back account was refused once, then re-authorized): reproduced by every repro skeptic; B5-F1 confirmed MAJOR by both its skeptics | K5-F1..K5-F3 MINOR (follower tests never showed a refusal twice; two round-4 reader fixes had no control; gates last run before 26d7724) | `2422014` |
 | 6 | `ceac320` | A, B, C, D, E | 0 / 0 / 27 | none to verify; Q1, Q5, Q6 NO from every lens; Q2, Q3, Q4, Q7 PARTIAL from at least one lens, on MINOR findings only (the brief does not close on PARTIAL) | K6-F1 (the experiment half of the follower had no control), K6-F2 (a submitted world chose which accounts the follower read) MINOR | `0453a95`, `a058cf2` |
-| 7 | (this report's SHA) | A, B, C, D, E | | | | |
+| 7 | `27b9f71` | A, B, C, D, E, F (a deep attack on the two round-6 rewrites) | 1 / 4 / 30 | **R7-C-F1 BLOCKER** (both skeptics) = **A7-F1 MAJOR** (both skeptics) = E7-F2: round 6's nearer-level rule counted another spelling of the SAME level as another level, so a spelling of a refuted level was admitted and dispatched an ulp off the level; **B7-M1 = R7-D1 = F7-F1** (a pinned budget snapshot was derived live: a desk built on it re-dispatched an executed action): reproduced by every repro skeptic, graded MINOR by every scope skeptic (the execution side must build its desk from `pinned()`); treated as MAJOR and fixed | **K7-F1 BLOCKER** (the same class in offset temperature units and on a fixed protocol condition), K7-F2..K7-F4 MINOR | `9a61a01`, `14caa58`, `b572bfc` |
+| 8 | (this report's SHA) | | | | | |
 
-Rounds 2, 3 and 4 asked the same question three times: is the value a decision was made on the value an executor
-receives? `d113d30` answered it for controls (every family decides on the configuration as it will be executed);
+Rounds 2, 3, 4 and 7 asked the same question: is the value a decision was made on the value an executor receives (and,
+from round 7, is it exactly a declared level when the variable is a level set)? `d113d30` answered it for controls (every family decides on the configuration as it will be executed);
 `26d7724` extended it to fixed conditions and restored an independent mint check. Their regression tests fail 20/21
 (`test_authority_review_r3.py` on `1a87f7c`) and 16/17 (`test_authority_review_r4.py` on `d0a0408`).
 
@@ -326,7 +335,9 @@ for a control, and controls and fixed conditions are disjoint by construction). 
 (configuration from the sources, compared with the families' resolution). `d113d30` built the configuration through
 that same resolution, which made the check circular (K4-F1). `26d7724` builds it from the sources again and compares it
 with every exact value any family read in the check; tests that re-introduce the `bc6980c` read into the shared
-resolution, or a raw read into one family only, are refused at mint. A family that bypassed the shared reading path
+resolution, or a raw read into one family only, are refused at mint. Round 7 added a second independent guard: a
+value of a level-set variable is minted only if it is exactly one declared level of the deciding set as executed (the
+domain family refuses it too). A family that bypassed the shared reading path
 altogether would not be seen by this check; the per-value regression tests are the control for that.
 
 **MINOR dispositions.** Every MINOR of rounds 1–6 was fixed or is recorded as a documented residual; the builder did
@@ -351,7 +362,20 @@ chooses what is observed), A6-F6 / B6-M6 / R6-C-M3 / R6-D5 / E6-F1 / E6-F5 / E6-
 gating wording, the bind message, performance files name their code revision, the noise band, the curve regenerated
 with 41 repeats, the re-score guard raises, §5 attributions, §10), B6-M7 (gates re-run at `a058cf2`); documented —
 A6-F5 (the identity rule's rounding edge refuses some honest other-unit spellings, §4), B6-M5 (the constructor refuses
-a malformed account set for the whole reader, §4). The documented residuals of earlier rounds are those listed in §4 and §11 (no at-most-once execution or
+a malformed account set for the whole reader, §4). Round 7's: fixed — the BLOCKER and MAJORs above with K7-F1, K7-F2
+(cross-unit and offset-unit level controls; the vacuous r6 assertion removed) and K7-F3 (the round-1 liveness loop
+includes a pinned budget snapshot); A7-F2 / B7-m1 / R7-C-F3 / R7-D5 / F7-F3 / E7-F3 (providers named as the projection
+binds them, `declaration.providers`, with a control that fails on a mutant); B7-m2 / R7-C-F2 / R7-D4 / F7-F2 / E7-F1
+(every reader pinned when a verification starts); B7-m3 / R7-D3 / F7-F5 (no lock held across the execution side's
+`accounts()` or the read-backs); B7-m4 / R7-D2 / F7-F4 (an unbound account its owner cannot serialize refuses
+nothing); B7-m5 / F7-F7 / E7-F5 (records are detached copies of one serialization; the `remaining_observations` basis
+asserted); R7-C-F4 / F7-F6 (a world whose declaration cannot be read reads no account or provider); R7-D6 / F7-F8
+(experiments read back whole by the owner's rule, as replay does); A7-F3 / R7-C-F5 / E7-F4 / B7-m6 / R7-D7 (report
+precision: the BR1-style budget record, the `compute_budget` basis, the stress test's role, the mutant's file, §8
+regenerated and committed at `b572bfc`); K7-F4 (the round-8 brief lists `as_executed`, `matched_level` and the domain
+family as changed). To make the follower's refusals safe without a lock around the execution side's callback, round 7
+also changed what a refusal of an account BEHIND means: it lasts while the account is behind (an older concurrent
+snapshot is behind too), and only a rewritten history is refused for good (§4). The documented residuals of earlier rounds are those listed in §4 and §11 (no at-most-once execution or
 reservation; the declaration and synthetic labels are the declarer's; liveness is the reader's mode; the provider cache
 unless `refresh=True`; the in-process trust boundary; world-derived model and experiment digests; the provider rule
 restating `system_runtime` preflight; replay attests self-consistency, not provenance).

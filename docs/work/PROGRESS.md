@@ -8553,7 +8553,12 @@ completeness critic):
 - round 6 at `ceac320`: lenses 0 BLOCKER / 0 MAJOR (27 MINOR), critic K6-F1, K6-F2 MINOR; Q1, Q5, Q6 NO from every
   lens, Q2, Q3, Q4, Q7 PARTIAL from at least one lens on MINOR findings only. The brief does not close on PARTIAL, so
   every finding behind a PARTIAL was fixed or documented in `0453a95`, `a058cf2` (README §9);
-- round 7: see the update below.
+- round 7 at `27b9f71` (six lenses: A-E and F, a deep attack on the round-6 rewrites): BLOCKER R7-C-F1 = A7-F1
+  (MAJOR) and the critic's BLOCKER K7-F1 (round 6's nearer-level rule counted another spelling of the SAME level as
+  another level: a spelling of a refuted level was admitted and dispatched an ulp off it, also in offset temperature
+  units and on a fixed protocol condition); MAJOR B7-M1 = R7-D1 = F7-F1 (a pinned budget snapshot derived live;
+  scope skeptics graded it MINOR, treated as MAJOR); 30 MINOR; fixed in `9a61a01`, `14caa58`, `b572bfc` (README §9);
+- round 8: see the update below.
 
 **Failed approaches, recorded so they are not repeated:**
 - **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
@@ -8586,6 +8591,15 @@ completeness critic):
   accepted; a submitted world chose which accounts were tracked; reading outside the lock let an older snapshot be
   taken for a divergence. Every handed account is now observed at construction and at every verification, under one
   lock, and an account no verification reads refuses nothing.
+- **Excluding "the matched level" from the nearer-level rule by object identity** (round 6): another spelling of the
+  same level (the variable's 0.7 A beside the action's 700 mA) then counted as a nearer level, the value fell through
+  unmatched, and two rules (membership and as_executed) disagreed. Same-level spellings are excluded by the owner's
+  identity, and a level-set value is executed only as exactly a declared level (family and mint both check).
+- **Freezing a snapshot without deriving its liveness** (round 6's budget snapshot inherited `live = True`).
+- **Pinning a follower lazily, only when a record of its kind is read** (a verification that read no budget record
+  observed nothing), and **holding the follower's lock across the execution side's callback** (lock-order deadlock).
+  Every reader is pinned when a verification starts; only the comparison is locked, so a concurrent older snapshot is
+  "behind" (refused while behind), not a permanent divergence.
 - **A mutation run under the repository's pytest config with only `PYTHONPATH` pointed at a mutant `src`**:
   `pyproject.toml`'s `pythonpath` puts the checkout's own `src` first, so the mutant was never imported. Mutants need a
   full tree copy run from its own root.
@@ -8676,6 +8690,20 @@ completeness critic):
     narrowing refused (unclassified `src/engcore/mind/world` and benchmark files) → whole FAST + regression pack, as
     run above. FAST is red on the base: NOT green. The affected expensive tests minus the campaign tests (item 10's
     command): 13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base (NEW 0, FIXED 0).
+
+17. Round 7 at `b572bfc` (fixes `9a61a01`, `14caa58`; curve `888eecd`; controls `b572bfc`): the suite command of item
+    1, **553 passed**; `test_authority_review_r7.py` (22) copied into a `27b9f71` archive
+    (`/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/tree-27b9f71`): 19 failed, 3
+    passed (paths that already held); the extended round-1 liveness test fails there too; the provider control fails on
+    a full-tree mutant that stops naming providers (`.../scratchpad/mut_provider`: 1 failed, 31 passed over r6+r7);
+    every reviewer probe of the round-7 findings re-run on the fix tree gives the correct outcome (the a702 level fuzz
+    decides all 5440 honest cases exactly as `ceac320` did; c24b 0 of 26075 executed off a level; c25/c25b/c26/a709/
+    k01-k03 every spelling of a refuted level refused; r04/n06 no deadlock; r05 0 refusals under 50 settles; c12 an
+    older concurrent snapshot refused once, nothing refused for good); `rescore --check`: MATCHES; `run_benchmark
+    --check`: MATCHES; `gen1_reference --check`: INTACT. Performance regenerated at `b572bfc`: `run_benchmark`,
+    `ledger_curve` (bound and unbound curves) and BR1's harness alternately on `1202ea6c` and `b572bfc`, three runs
+    each (`BR1_PERFORMANCE_THIS_HOST.json`; the alternation script is
+    `/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/perf_r7/br1_alternating.py`).
 
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
