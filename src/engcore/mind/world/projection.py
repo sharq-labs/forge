@@ -177,10 +177,14 @@ def _named_records(world: ScientificWorld, authorities: Authorities
         return none, (BindingStatus.OWNER_UNAVAILABLE, f"the declaration in force cannot be read now ({exc})")
     except (WorldRefused, KeyError, AttributeError) as exc:
         return none, (BindingStatus.MISMATCH, f"the declaration in force does not read back ({exc})")
-    return ({K.BUDGET_LEDGER: {b.ref for b in declaration.budget if b.kind == "ledger"},
+    named = {K.BUDGET_LEDGER: {b.ref for b in declaration.budget if b.kind == "ledger"},
              K.EXPERIMENT: {b.ref for b in declaration.budget if b.kind == "experiment"},
-             K.PROVIDER_STATUS: set(declaration.providers)},
-            (BindingStatus.MISMATCH, "the declaration in force names no such account or provider"))
+             K.PROVIDER_STATUS: set(declaration.providers)}
+    if in_force.record_digest != world.declaration.record_digest:   # an older (or other) revision: STALE speaks
+        return named, (BindingStatus.STALE, f"the world's declaration is not the one in force (revision "
+                       f"{world.declaration.revision}; in force: {in_force.revision}), and the one in force names no "
+                       "such account or provider")
+    return named, (BindingStatus.MISMATCH, "the declaration in force names no such account or provider")
 
 
 def _kind_of(subject: str) -> OwnerKind:

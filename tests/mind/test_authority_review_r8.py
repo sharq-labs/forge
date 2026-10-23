@@ -162,7 +162,7 @@ def test_a_pin_refused_by_an_owner_the_world_does_not_read_refuses_nothing():
 
 
 # ---- B8-m6: every declaration mode that names no account or provider reads none ----------------------------------------------------
-@pytest.mark.parametrize("mode", ["in_force", "not_in_force", "none", "unavailable"])
+@pytest.mark.parametrize("mode", ["older_revision", "not_in_force", "none", "unavailable"])
 def test_no_account_or_provider_outside_the_declaration_in_force_is_read(monkeypatch, mode):
     from engcore.mind.world import ScientificWorld
     from engcore.providers.catalog import ProviderRegistry
@@ -195,13 +195,14 @@ def test_no_account_or_provider_outside_the_declaration_in_force_is_read(monkeyp
     assert r.admitted is None and "sim.secret" not in probed
     secret = [c for c in r.verification.checks if c.record_id == "sim.secret"]
     assert secret and all("not read" in c.detail["why"] for c in secret)
-    assert {c.status.value for c in secret} == ({"owner_unavailable"} if mode == "unavailable" else {"mismatch"})
+    assert {c.status.value for c in secret} == {"older_revision": {"stale"}, "unavailable": {"owner_unavailable"}}.get(
+        mode, {"mismatch"})                                                # round 8 (D8-F5): STALE speaks
 
 
 # ---- A8-F2 / A8-F5: the fixed-condition branch of the level predicate, and the reason it states -----------------------------------
 def _a803():
     lvs = DiscreteLevels("bar", (Quantity(835.78852837, "bar"),))
-    w = b.world("synthetic.a803", (
+    return b.world("synthetic.a803", (
         b.var("T", R.FIXED_PROTOCOL_CONDITION, "psi", TS.CONSTANT_PER_RUN, domain=lvs),
         b.var("mode", R.CONTROLLED_INPUT, "dimensionless", TS.CONSTANT_PER_RUN, domain=b.cats("mode", "a", "b")),
         b.var("y", R.MEASUREMENT, "V", TS.TIME_SERIES)),
@@ -210,11 +211,16 @@ def _a803():
                           fixed_conditions=(b.fixed("T", Quantity(83578852.83694999, "Pa")),), expected_observables=("y",),
                           estimated_cost=b.cost(1, 0), estimated_duration=b.q(10, "s")),),
         channels=(b.channel("y"),), budget=b.budget(5, 0, ledger="a803"), references=(b.synthetic("a803/1"),))
-    return ax.owned("a803", w)
 
 
 def test_a_fixed_condition_the_identity_rule_does_not_match_is_never_executed_as_a_level(monkeypatch):
-    o = _a803()
+    """Three independent guards (K8-F2, A8-F2): bind refuses it; with bind regressed, every check refuses it; with the
+    check regressed as well, mint refuses it."""
+    from engcore.mind.world import actions as actions_mod
+    with pytest.raises(WorldRefused, match="identity rule"):
+        _a803()
+    monkeypatch.setattr(actions_mod, "_fixed_level_problem", lambda domain, value: False)   # bind regressed
+    o = ax.owned("a803", _a803())
     proposal = o.propose("a", {"mode": b.cat("a")}, ("y",))
     d = FeasibleActionSpace.build(o.world).check(proposal)
     reason = next(x for x in d.reasons if x.code == "LEVEL_NOT_DECLARED")
@@ -244,3 +250,84 @@ def test_a_value_the_owner_does_not_call_zero_is_never_executed_as_the_zero_leve
         d = space.check(o.propose("a", {"p": value}, ("y",)))
         assert d.feasible and repr(dict(d.decided)["p"].magnitude) == "0.0", value   # the level, never -0.0
     assert not fz.is_declared_level(o.world, o.world.action("a"), "p", Quantity(-0.0, "kPa"))
+
+
+# ---- E8-F2: a typed value of a level-set variable is never a declared level -------------------------------------------------------
+def test_a_typed_value_is_never_a_declared_level_for_the_mint_guard():
+    from engcore.scientific.ir.values import IntegerValue
+    lv = DiscreteLevels("A", (Quantity(1.0, "A"), Quantity(2.0, "A")))
+    w = b.world("synthetic.typed", (
+        b.var("I", R.CONTROLLED_INPUT, "A", TS.CONSTANT_PER_RUN, domain=lv), b.var("y", R.MEASUREMENT, "V", TS.TIME_SERIES)),
+        actions=(b.action("a", ActionFamily.EXPLORE, ActionMode.INTERVENE, controls=(b.ctrl("I", lv, P),),
+                          expected_observables=("y",), estimated_cost=b.cost(1, 0), estimated_duration=b.q(10, "s")),),
+        channels=(b.channel("y"),), budget=b.budget(5, 0, ledger="t"), references=(b.synthetic("t/1"),))
+    assert not fz.is_declared_level(w, w.action("a"), "I", IntegerValue(1))
+    assert fz.is_declared_level(w, w.action("a"), "I", Quantity(1.0, "A"))
+
+
+# ---- D8-F2: an experiment is served in its owner's read-back form, so live and replay agree --------------------------------------
+def test_an_experiment_is_served_in_its_read_back_form_and_its_admission_replays():
+    import json
+    from engcore.mind.world import AdmissionRecord, replay_admission
+    from engcore.sria.decision.replay import ReplayOutcome
+    o = ax.gen1_pool()
+    eid = next(iter(o.experiments))
+    o.experiments[eid].experiment_id = f"  {o.experiments[eid].experiment_id}  "   # the owner's from_dict strips it
+    o._world = None
+    world = o.world
+    record = o.authorities().read(OwnerKind.EXPERIMENT, eid)
+    assert record.payload["experiment"]["experiment_id"] == o.experiments[eid].experiment_id.strip()   # read-back form
+    r = admit(FeasibleActionSpace.build(world), o.propose(*POOL, world=world), o.authorities())
+    rec = json.loads(json.dumps(AdmissionRecord.of(r, o.authorities()).to_dict()))
+    assert replay_admission(rec).outcome is ReplayOutcome.REPRODUCED
+
+
+# ---- R8-C-F4 / D8-F4: an accounts() that reads through the reader it feeds is refused at once, never recursed ---------------------
+def test_an_accounts_callable_that_reads_through_its_own_reader_is_refused_without_recursion():
+    o = ax.owned("battery")
+    eid = next(iter(o.experiments))
+    seen: list[str] = []
+    state = {"reader": None}
+
+    def accounts():
+        if state["reader"] is not None:
+            try:
+                state["reader"].read(OwnerKind.EXPERIMENT, eid)
+            except OwnerUnavailable as exc:
+                seen.append(str(exc))
+        return o.ledgers, o.experiments
+
+    state["reader"] = BudgetReader.following(accounts)
+    assert state["reader"].read(OwnerKind.EXPERIMENT, eid) is not None
+    assert len(seen) == 1 and "read through" in seen[0]
+
+
+# ---- E8-F3 / E7-F1: a verification of a budget-free world through the desk observes the follower ----------------------------------
+def test_a_budget_free_worlds_verification_through_the_desk_observes_a_spend():
+    import dataclasses
+    from engcore.mind.world import BudgetSource, MindWorldPort, project_world
+    o = ax.owned("battery")
+    lid = _solver(o)
+    d1 = o.declaration
+    d2 = dataclasses.replace(d1, declaration_id=d1.declaration_id + ".other", world_id=d1.world_id + ".other",
+                             budget=tuple(BudgetSource.unbounded(s.dimension, "synthetic: unbounded") for s in d1.budget))
+    auth = o.authorities(declarations=(d1, d2))
+    calls = []
+
+    def executor(a):
+        calls.append(a)
+        o.ledgers[lid].settle(charge_id=f"run-{len(calls)}", action_id="simulate_pulse", iteration=len(calls),
+                              family=ActionFamily.EXPLORE, realized=1.0)
+
+    gw = ExecutionDesk(auth, executor, accept_synthetic=True).gateway()
+    p1 = MindWorldPort(FeasibleActionSpace.build(project_world(d1, auth)))
+    p2 = MindWorldPort(FeasibleActionSpace.build(project_world(d2, auth)))
+    assert not [bd for _, bd, _ in p2.world.projected_facts() if bd is not None and bd.owner_kind.value == "budget_ledger"]
+    before = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+    r = p1.request_admission(o.propose("simulate_pulse", *SIM, world=p1.world), gw)
+    p1.execute(r.admitted, gw)                                             # the executor spends
+    p2.request_admission(o.propose("simulate_pulse", *SIM, world=p2.world), gw)   # a budget-free world's verification
+    o.ledgers[lid] = before                                                # the execution side rolls back
+    with pytest.raises(DispatchRefused, match="OWNER_UNAVAILABLE"):
+        p1.execute(r.admitted, gw)
+    assert len(calls) == 1

@@ -361,8 +361,10 @@ def is_declared_level(world: ScientificWorld, spec: ActionSpec, name: str, execu
     (byte for byte, so a negative zero is not the zero level): a level-set value is never executed at a value that is
     no declared level (R7-C-F1).  True when no level set decides."""
     levels = deciding_levels(world, spec, name)
-    if levels is None or not isinstance(executed, Quantity):
+    if levels is None:
         return True
+    if not isinstance(executed, Quantity):
+        return False                                  # a typed value is never a declared level (E8-F2)
     unit = world.variable(name).unit
     exact = canonical_bytes(value_payload(executed))
     return any(converts(level, unit) and canonical_bytes(value_payload(as_unit(level, unit))) == exact

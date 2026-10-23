@@ -333,7 +333,7 @@ def test_a_world_bound_to_a_provider_the_declaration_does_not_name_is_refused_wi
     monkeypatch.setattr(ProviderRegistry, "status",
                         lambda self, pid, **kw: (probed.append(pid), real(self, pid, **kw))[1])
     r = admit(FeasibleActionSpace.build(world), o2.propose("simulate_pulse", *SIM, world=world), authorities)
-    assert r.admitted is None and "AUTHORITY_MISMATCH" in r.codes()
+    assert r.admitted is None and "AUTHORITY_STALE" in r.codes()          # round 8: an older revision is STALE
     why = [c.detail.get("why", "") for c in r.verification.checks if c.record_id == "sim.secret"]
     assert why and "not read" in why[0] and "sim.secret" not in probed and "sim.ecm" in probed
 
@@ -357,7 +357,7 @@ def test_an_over_budget_experiment_with_attempts_left_records_remaining_observat
 
 # ---- K7-F1 (BLOCKER) / K7-F2: offset units and a fixed protocol condition; strict and inclusive bounds -----------------------------
 @pytest.mark.parametrize("role", [R.CONTROLLED_INPUT, R.FIXED_PROTOCOL_CONDITION])
-@pytest.mark.parametrize("op", [Op.LESS_THAN, Op.LESS_EQUAL])
+@pytest.mark.parametrize("op", [Op.LESS_THAN, Op.LESS_EQUAL, Op.GREATER_THAN, Op.GREATER_EQUAL])
 def test_every_spelling_of_one_level_is_decided_alike_and_executed_as_one_value(role, op):
     """Variable and own levels in degC, the protocol's levels in degF, a limit at the 35 degC level: every spelling the
     unit owner calls 35 degC gets ONE decision, and an admitted one is executed as the protocol's level as executed."""
@@ -387,6 +387,11 @@ def test_every_spelling_of_one_level_is_decided_alike_and_executed_as_one_value(
             port.execute(r.admitted, gw)
             assert dict(calls[-1].settings)["T"] == level.magnitude, spelled
     assert len(outcomes) == 1, outcomes
-    # round 8 (A8-F3): the protocol's 95 degF level executes as 35.00000000000006 degC, above 35 degC, so a limit at
-    # 35 degC refuses it at a strict AND at an inclusive bound: decided = executed, at the ulp (README section 4)
-    assert level.magnitude > 35.0 and {code for _, codes in outcomes for code in codes} == {"CONSTRAINT_VIOLATED"}
+    # round 8 (A8-F3, R8-C-F2): the protocol's 95 degF level executes as 35.00000000000006 degC, above 35 degC, so a
+    # limit at 35 degC refuses it below (strict AND inclusive) and admits it above (strict AND inclusive), executed as
+    # that one value: decided = executed, at the ulp (README section 4)
+    assert level.magnitude > 35.0
+    if op in (Op.LESS_THAN, Op.LESS_EQUAL):
+        assert {code for _, codes in outcomes for code in codes} == {"CONSTRAINT_VIOLATED"} and not calls
+    else:
+        assert outcomes == {("FEASIBLE", ())} and len(calls) == 6

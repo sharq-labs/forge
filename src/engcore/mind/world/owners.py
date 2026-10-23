@@ -345,22 +345,22 @@ class BudgetReader(_Reader):
         if exp is None:
             return None, ()
         try:
-            payload = copy.deepcopy(exp.to_dict())
-            digest_ = _sha_json(_Payload(payload))
+            payload = exp.to_dict()
+            content = _sha_json(_Payload(payload))
             cached = self._readback.get(key)
-            if cached is not None and cached[0] == digest_:
-                history = cached[1]
-            else:                                    # the owner reads the experiment back whole, once per content
+            if cached is None or cached[0] != content:   # the owner reads the experiment back whole, once per content
                 rebuilt = ScientificExperiment.from_dict(payload)
                 back = rebuilt.to_dict()
                 if back["accounting"] != payload["accounting"] or back["budget"] != payload["budget"]:
                     raise ValueError("its accounting is not its evaluations' (an account serialized while it moved)")
-                history = self._history(rebuilt.evaluations)
-                self._readback[key] = (digest_, history)
+                cached = (content, back, _sha_json(rebuilt), self._history(rebuilt.evaluations))
+                self._readback[key] = cached
+            _, back, digest_, history = cached
+            back = copy.deepcopy(back)                   # served in the owner's read-back form, the form replay uses
         except Exception as exc:  # noqa: BLE001 - an account its owner cannot read back is unavailable
             raise OwnerUnavailable(f"experiment {record_id!r} is not one its owner reads back: {exc}") from None
-        return (OwnerRecord(K.EXPERIMENT, self.owner_id, record_id, str(len(payload["evaluations"])), digest_,
-                            {"budget": payload["budget"], "accounting": payload["accounting"], "experiment": payload}),
+        return (OwnerRecord(K.EXPERIMENT, self.owner_id, record_id, str(len(back["evaluations"])), digest_,
+                            {"budget": back["budget"], "accounting": back["accounting"], "experiment": back}),
                 history)
 
     def _read_back(self) -> dict[tuple[str, str], tuple[OwnerRecord | None, tuple[str, ...]] | str]:
@@ -410,10 +410,16 @@ class BudgetReader(_Reader):
         records taken at the pin; the next verification observes any later move).  Never live."""
         if self._follow is None:
             return self
+        if getattr(self._in_follow, "active", False):
+            raise OwnerUnavailable("the execution side's accounts() read through the budget reader it feeds (a read "
+                                   "while the reader is asking for the accounts it would read)")
+        self._in_follow.active = True
         try:
             current = BudgetReader(*self._follow(), owner_id=self.owner_id)
         except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
             raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
+        finally:
+            self._in_follow.active = False
         current._readback = self._readback
         current._observed = self._observe_all(current)
         return current
@@ -429,8 +435,9 @@ class BudgetReader(_Reader):
         self._observed: dict[tuple[str, str], OwnerRecord | str | None] | None = None   # a pinned snapshot's records
         self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
         self._diverged: set[tuple[str, str]] = set()
-        self._readback: dict[tuple[str, str], tuple[str, tuple[str, ...]]] = {}   # account -> (content digest, its
-        # owner read-back history): one entry per account, so the cache never outgrows the accounts' current histories
+        self._readback: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> (content digest, read-back form,
+        # its digest, its history): one entry per account, so the cache never outgrows the accounts' current state
+        self._in_follow = threading.local()          # set while this reader's accounts() runs on a thread
         self._lock = threading.Lock()
         self._ledgers = dict(ledgers or {})
         self._experiments = dict(experiments or {})

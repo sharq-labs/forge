@@ -55,7 +55,7 @@ from .base import (
 )
 from .domains import (
     DeclaredConstraint, DiscreteLevels, Guard, contained, declared_source, domain_from, domain_identity,
-    domain_problem, is_finite, membership,
+    domain_problem, is_finite, matched_level, membership,
 )
 from .variables import TemporalSemantics
 
@@ -176,6 +176,14 @@ def _domain_states_kind(domain: Any, value: Any) -> bool:
     kinds = {IntegerValue: VariableKind.INTEGER, CategoricalValue: VariableKind.CATEGORICAL,
              BooleanValue: VariableKind.BOOLEAN}
     return isinstance(domain, ScientificVariable) and domain.kind is kinds.get(type(value))
+
+
+def _fixed_level_problem(domain: Any, value: Any) -> bool:
+    """Whether a fixed condition of a level-set variable is NOT matched to exactly one of its declared levels by the
+    unit owner's identity rule, the rule every check applies to it (round 8, K8-F2: bind and check agree)."""
+    if not isinstance(domain, DiscreteLevels) or not isinstance(value, Quantity) or not converts(value, domain.unit):
+        return False
+    return matched_level(domain, value, also=domain.levels) is None
 
 
 def _contained_as_executed(inner: Any, outer: Any, unit_: str) -> bool:
@@ -331,6 +339,10 @@ class ActionSpec:
             if var.domain is not None and membership(var.domain, as_unit(f.value, var.unit)) is not None:
                 raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value!r} is outside its declared domain "
                                    "(as executed, in the variable's unit)")
+            if _fixed_level_problem(var.domain, f.value):
+                raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value!r} is not one of its variable's declared "
+                                   "levels by the unit owner's identity rule (the rule every check applies to it; its "
+                                   "conversion may be one: the rule's rounding edge)")
         for name in self.expected_observables:
             if not world.declares(name):
                 raise WorldRefused(f"action {aid!r}: observable {name!r} is not a declared variable")

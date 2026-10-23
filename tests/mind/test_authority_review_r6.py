@@ -183,9 +183,9 @@ def test_an_experiment_rewritten_at_the_same_length_is_refused_for_good():
             reader.read(OwnerKind.EXPERIMENT, eid)
 
 
-def test_an_experiments_history_is_read_back_one_evaluation_at_a_time(monkeypatch):
-    """R6-D3: the follower reads each evaluation back on its own (linear); it never rebuilds the whole experiment,
-    whose re-recording scans for duplicates (quadratic in the evaluations)."""
+def test_an_unchanged_experiment_is_read_back_by_its_owner_once_per_content(monkeypatch):
+    """R6-D3, as restated in round 7 (E8-F4): the owner reads an experiment back whole (its quadratic from_dict, the
+    rule replay uses) once per content; a later verification of the unchanged experiment does not rebuild it."""
     from engcore.scientific.experiments.experiment import ScientificExperiment
     o = ax.gen1_pool()
     eid = next(iter(o.experiments))
