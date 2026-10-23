@@ -120,12 +120,20 @@ def verified_projection(world: ScientificWorld, authorities: Authorities
         return AuthorityReport(world.revision_id, (BindingCheck(
             BindingStatus.MISMATCH, K.DECLARATION, "-", "identity", "0" * 64,
             {"why": "the world's content is not the content its identity names (edited after it was built)"}),)), None
+    named = _named_records(world, authorities)
     for subject, binding, held in world.projected_facts():
         if binding is None:
             if subject in ("declaration", "unit_registry") or held is not None or subject.startswith("budget:"):
                 checks.append(BindingCheck(BindingStatus.UNVERIFIABLE, _kind_of(subject), "-", subject, "0" * 64,
                                            {"why": "this fact carries no authority binding (a copy no owner can "
                                                    "verify, such as a synthetic fixture reference)"}))
+            continue
+        if named is not None and binding.owner_kind in named and binding.record_id not in named[binding.owner_kind]:
+            checks.append(BindingCheck(BindingStatus.MISMATCH, binding.owner_kind, binding.record_id, subject,
+                                       binding.digest,
+                                       {"why": "the declaration in force names no such account or provider; it is not "
+                                               "read (a world never chooses which accounts or providers the execution "
+                                               "side reads)"}))
             continue
         checks.append(authorities.check(binding, subject, held))
     if all(c.ok for c in checks) and world.declaration is not None:
@@ -149,6 +157,25 @@ def verified_projection(world: ScientificWorld, authorities: Authorities
                                            "projection", world.declaration.digest))
     report = AuthorityReport(world.revision_id, tuple(checks))
     return report, (fresh if report.ok else None)
+
+
+def _named_records(world: ScientificWorld, authorities: Authorities) -> dict[OwnerKind, set[str]] | None:
+    """The budget accounts and providers the declaration in force names, from the declaration alone (no other owner is
+    read): the owner kinds whose reads have a per-record effect (a following budget reader's history, a provider
+    re-probe).  None when the world names no declaration or the one it names cannot be read (every binding is then
+    checked as before).  Round 6, K6-F2."""
+    if world.declaration is None:
+        return None
+    try:
+        in_force = authorities.read(K.DECLARATION, world.declaration.record_id)
+        if in_force is None:
+            return None
+        declaration = ProtocolDeclaration.from_dict(in_force.payload["declaration"])
+    except (WorldRefused, KeyError, AttributeError):
+        return None
+    return {K.BUDGET_LEDGER: {b.ref for b in declaration.budget if b.kind == "ledger"},
+            K.EXPERIMENT: {b.ref for b in declaration.budget if b.kind == "experiment"},
+            K.PROVIDER_STATUS: {r.provider_id for a in declaration.actions for r in a.provider_requirements}}
 
 
 def _kind_of(subject: str) -> OwnerKind:

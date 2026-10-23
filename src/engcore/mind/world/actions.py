@@ -40,10 +40,10 @@ from typing import Any, Mapping
 
 from engcore.mind.repsem.roles import RoleSource, VariableRole
 from engcore.scientific import (
-    ConstraintDefinition, Quantity, ScientificParameter, ScientificVariable, VariableKind, dimensionality,
+    ConstraintDefinition, Quantity, ScientificParameter, ScientificVariable, VariableKind,
 )
 from engcore.scientific import VariableRole as StudyRole
-from engcore.scientific.ir.values import IntegerValue
+from engcore.scientific.ir.values import BooleanValue, CategoricalValue, IntegerValue
 from engcore.sria.decision import ActionFamily
 from engcore.sria.decision.external import AUTHORITY_KEYS, EXTERNAL_SUGGESTION_SCHEMA, ExternalSuggestion
 from engcore.sria.decision.hypotheses import ProposalProvenance, ProposerKind
@@ -54,7 +54,7 @@ from .base import (
     require_value, schema, text, value_from, value_payload,
 )
 from .domains import (
-    DIMENSIONLESS, DeclaredConstraint, DiscreteLevels, Guard, contained, declared_source, domain_from, domain_identity,
+    DeclaredConstraint, DiscreteLevels, Guard, contained, declared_source, domain_from, domain_identity,
     domain_problem, is_finite, membership,
 )
 from .variables import TemporalSemantics
@@ -169,6 +169,13 @@ def _costs(value: Any, action_id: str) -> tuple[tuple[str, Any], ...]:
                                "budget's cost units (no percent or other scaled spelling)")
         out.append((dim, amount))
     return tuple(out)
+
+
+def _domain_states_kind(domain: Any, value: Any) -> bool:
+    """Whether a variable's own declared domain states the kind of a typed (non-quantity) value."""
+    kinds = {IntegerValue: VariableKind.INTEGER, CategoricalValue: VariableKind.CATEGORICAL,
+             BooleanValue: VariableKind.BOOLEAN}
+    return isinstance(domain, ScientificVariable) and domain.kind is kinds.get(type(value))
 
 
 def _contained_as_executed(inner: Any, outer: Any, unit_: str) -> bool:
@@ -313,10 +320,12 @@ class ActionSpec:
             if isinstance(f.value, Quantity) and not converts(f.value, var.unit):
                 raise WorldRefused(f"action {aid!r}: the unit owner does not convert fixed {f.name!r} = {f.value} into "
                                    f"{var.unit!r}")
-            if not isinstance(f.value, Quantity) and dimensionality(var.unit) != DIMENSIONLESS:
+            if not isinstance(f.value, Quantity) and var.unit != "dimensionless" and not _domain_states_kind(
+                    var.domain, f.value):
                 raise WorldRefused(f"action {aid!r}: fixed {f.name!r} is a {type(f.value).__name__} but the variable is "
                                    f"declared in {var.unit!r}: only a quantity the unit owner converts is executed in a "
-                                   "dimensioned unit")
+                                   "unit-bearing variable (a typed value needs exactly 'dimensionless' or a declared "
+                                   "domain of its kind)")
             if var.domain is not None and membership(var.domain, as_unit(f.value, var.unit)) is not None:
                 raise WorldRefused(f"action {aid!r}: fixed {f.name!r} = {f.value!r} is outside its declared domain "
                                    "(as executed, in the variable's unit)")

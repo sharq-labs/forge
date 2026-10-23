@@ -140,13 +140,14 @@ def _shown(value: Any) -> Any:
 EXACT_INTEGER_LIMIT = 2 ** 53
 
 
-def matched_level(domain: DiscreteLevels, value: Quantity) -> Quantity | None:
+def matched_level(domain: DiscreteLevels, value: Quantity, also: tuple[Quantity, ...] = ()) -> Quantity | None:
     """The declared level ``value`` IS, by the unit owner's one comparison rule (``canonical_magnitude`` in the base
     unit, the rule that also keeps the declared levels distinct: :func:`.base.same_value`), or None.  Relative at every
     scale, so a zero level is matched only by a value the owner calls zero.  A matched value is decided and executed
     AS the declared level (``feasibility``); nothing else is matched: no nearest level, no interpolation.  A value the
-    owner calls one level but that lies nearer another declared level matches neither (the identity rule is not
-    allowed to pick a level the value is farther from)."""
+    owner calls one level but that lies nearer another declared level (of ``domain``, or among ``also``: the other
+    levels declared for the same variable) matches neither (the identity rule is not allowed to pick a level the value
+    is farther from)."""
     found = [level for level in domain.levels if same_value(value, level)]
     if len(found) != 1:
         return None
@@ -154,7 +155,8 @@ def matched_level(domain: DiscreteLevels, value: Quantity) -> Quantity | None:
     base = base_unit(value.units)
     v = value.magnitude_in(base)
     distance = abs(v - level.magnitude_in(base))
-    if any(abs(v - other.magnitude_in(base)) < distance for other in domain.levels if other is not level):
+    others = [x for x in (*domain.levels, *also) if x is not level and converts(x, value.units)]
+    if any(abs(v - other.magnitude_in(base)) < distance for other in others):
         return None
     return level
 

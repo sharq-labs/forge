@@ -60,6 +60,7 @@ from engcore.providers.catalog import (
 from engcore.providers.health import assess_health
 from engcore.providers.identity import content_digest
 from engcore.scientific import ModelNotFoundError, ScientificCoreError, to_json
+from engcore.scientific.experiments.evaluation import ScientificEvaluation
 from engcore.scientific.experiments.experiment import ScientificExperiment
 from engcore.scientific.models.definition import ScientificModelDefinition
 from engcore.scientific.models.registry import ModelRegistry
@@ -280,9 +281,13 @@ class BudgetReader(_Reader):
     for it.  An account that went back or rewrote its history is refused from then on by this reader, whatever it
     states later (a return to an accepted state would re-authorize what the account had moved past); adopting a new
     timeline is the execution side's statement, made with a new reader.  A change to an account's declaration with its
-    history unchanged (a budget top-up) is a move of the owner.  Only the accounts a world binds are read and checked.
-    A ledger is projected in the form its owner reads it back (``BudgetLedger.from_dict``), the form its digest is
-    taken in."""
+    history unchanged (a budget top-up) is a move of the owner.  Every account handed over is observed at construction
+    and at every verification, whichever world is verified (a proposer's world never chooses what is observed); an
+    account is refused only to a verification that reads it, so an unreadable or diverged account no world reads
+    refuses nothing (the constructor still refuses an account set that is not exactly typed or that registers one
+    object twice).  A state between two verifications is never observed (a spend and a rollback both in between look
+    like no change); at-most-once execution is the execution owner's.  A ledger is projected in the form its owner
+    reads it back (``BudgetLedger.from_dict``), the form its digest is taken in."""
 
     kinds = frozenset({K.BUDGET_LEDGER, K.EXPERIMENT})
 
@@ -293,6 +298,8 @@ class BudgetReader(_Reader):
             raise WorldRefused("followed accounts are a callable the execution side answers with (ledgers, experiments)")
         reader = cls(*accounts(), owner_id=owner_id)
         reader._follow = accounts
+        with reader._lock:                 # what is handed over at construction is observed: the first baseline
+            reader._observe_all(reader)
         return reader
 
     @staticmethod
@@ -300,27 +307,67 @@ class BudgetReader(_Reader):
         return tuple(hashlib.sha256(json.dumps(x.to_dict(), sort_keys=True, default=str).encode("utf-8")).hexdigest()
                      for x in items)
 
-    def _advance(self, key: tuple[str, str], history: tuple[str, ...]) -> None:
-        """The following reader's forward-only rule for one account read in a verification (atomic)."""
-        with self._lock:
-            if key in self._diverged:
-                raise OwnerUnavailable(f"budget {key[0]} {key[1]!r} went back or rewrote its history earlier: this "
-                                       "reader refuses it from then on (a new timeline is stated with a new reader)")
-            seen = self._seen.get(key)
-            if seen is not None and history[:len(seen)] != seen:
+    def _account(self, key: tuple[str, str]) -> tuple[OwnerRecord | None, tuple[str, ...]]:
+        """One account's record and its history, both in the form its owner reads them back."""
+        kind, record_id = key
+        if kind == "ledger":
+            ledger = self._ledgers.get(record_id)
+            if ledger is None:
+                return None, ()
+            try:                                     # the owner's read-back form: projection and digest, one rule
+                back = BudgetLedger.from_dict(ledger.to_dict())
+                return (OwnerRecord(K.BUDGET_LEDGER, self.owner_id, record_id, str(ledger.revision), ledger.digest,
+                                    {"ledger": back.to_dict()}), self._history(back.charges))
+            except (ValueError, TypeError, KeyError) as exc:
+                raise OwnerUnavailable(f"budget ledger {record_id!r} is not a ledger its owner reads back: {exc}") \
+                    from None
+        exp = self._experiments.get(record_id)
+        if exp is None:
+            return None, ()
+        payload = exp.to_dict()
+        try:                                         # each evaluation as its owner reads it back (linear in them)
+            history = self._history(ScientificEvaluation.from_dict(e) for e in payload["evaluations"])
+        except (ValueError, TypeError, KeyError, ScientificCoreError) as exc:
+            raise OwnerUnavailable(f"experiment {record_id!r} is not one its owner reads back: {exc}") from None
+        return (OwnerRecord(K.EXPERIMENT, self.owner_id, record_id, str(len(exp.evaluations)), _sha_json(exp),
+                            {"budget": payload["budget"], "accounting": payload["accounting"], "experiment": payload}),
+                history)
+
+    def _observe_all(self, snapshot: "BudgetReader") -> dict[tuple[str, str], OwnerRecord | str | None]:
+        """The following reader's forward-only rule, applied (under its lock) to EVERY account the execution side
+        handed over in ``snapshot``, whichever world is verified: each account's record (or the reason it is refused)
+        as observed now.  An account its owner cannot read back, or one that diverged, is refused only when a
+        verification reads it (an account no world reads never refuses an admission)."""
+        observed: dict[tuple[str, str], OwnerRecord | str | None] = {}
+        for key in [*(("ledger", i) for i in snapshot._ledgers), *(("experiment", i) for i in snapshot._experiments)]:
+            try:
+                record, history = snapshot._account(key)
+            except OwnerUnavailable as exc:
+                observed[key] = str(exc)
+                continue
+            seen = self._seen.get(key, ())
+            if key in self._diverged or history[:len(seen)] != seen:
                 self._diverged.add(key)
-                raise OwnerUnavailable(f"budget {key[0]} {key[1]!r} went back a revision or rewrote its history: an "
-                                       "account only moves forward from what this reader accepted")
+                observed[key] = (f"budget {key[0]} {key[1]!r} diverged from the history this reader accepted (it went "
+                                 "back a revision or rewrote its history): refused by this reader from then on (a new "
+                                 "timeline is stated with a new reader)")
+                continue
             self._seen[key] = history
+            observed[key] = record
+        return observed
 
     def pinned(self) -> "BudgetReader":
+        """One verification's snapshot: every account handed over now, observed now (in the order snapshots are
+        taken: the lock orders them), and read only as observed (the records are taken at the pin, so an account moved
+        in place during the verification is not what it decides on; the next verification observes the move)."""
         if self._follow is None:
             return self
-        try:
-            current = BudgetReader(*self._follow(), owner_id=self.owner_id)
-        except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
-            raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
-        current._follower = self          # each account the snapshot reads is checked against this reader's history
+        with self._lock:
+            try:
+                current = BudgetReader(*self._follow(), owner_id=self.owner_id)
+            except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
+                raise OwnerUnavailable(f"the execution side could not state its budget accounts: {exc}") from None
+            current._observed = self._observe_all(current)
         return current
 
     def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
@@ -331,7 +378,7 @@ class BudgetReader(_Reader):
     def __init__(self, ledgers: Mapping[str, BudgetLedger] | None = None,
                  experiments: Mapping[str, ScientificExperiment] | None = None, owner_id: str = "budget") -> None:
         self._follow: Callable[[], Any] | None = None
-        self._follower: BudgetReader | None = None     # a pinned snapshot's following reader
+        self._observed: dict[tuple[str, str], OwnerRecord | str | None] | None = None   # a pinned snapshot's records
         self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
         self._diverged: set[tuple[str, str]] = set()
         self._lock = threading.Lock()
@@ -349,34 +396,15 @@ class BudgetReader(_Reader):
 
     def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
         kind = OwnerKind(kind)
-        if kind is K.BUDGET_LEDGER:
-            ledger = self._ledgers.get(record_id)
-            if ledger is None:
-                return None
-            try:                                     # the owner's read-back form: projection and digest, one rule
-                back = BudgetLedger.from_dict(ledger.to_dict())
-                record = OwnerRecord(kind, self.owner_id, record_id, str(ledger.revision), ledger.digest,
-                                     {"ledger": back.to_dict()})
-            except (ValueError, TypeError, KeyError) as exc:
-                raise OwnerUnavailable(f"budget ledger {record_id!r} is not a ledger its owner reads back: {exc}") \
-                    from None
-            if self._follower is not None:
-                self._follower._advance(("ledger", record_id), self._history(back.charges))
-            return record
-        if kind is K.EXPERIMENT:
-            exp = self._experiments.get(record_id)
-            if exp is None:
-                return None
-            payload = exp.to_dict()
-            if self._follower is not None:
-                try:
-                    back = ScientificExperiment.from_dict(payload)
-                except (ValueError, TypeError, KeyError, ScientificCoreError) as exc:
-                    raise OwnerUnavailable(f"experiment {record_id!r} is not one its owner reads back: {exc}") from None
-                self._follower._advance(("experiment", record_id), self._history(back.evaluations))
-            return OwnerRecord(kind, self.owner_id, record_id, str(len(exp.evaluations)), _sha_json(exp),
-                               {"budget": payload["budget"], "accounting": payload["accounting"], "experiment": payload})
-        return None
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+            raise OwnerUnavailable(observed)
+        return observed
 
 
 # ---- the declaration in force ----------------------------------------------------------------------------------------------------

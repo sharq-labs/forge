@@ -322,9 +322,9 @@ def _world_basis(world: ScientificWorld, name: str) -> _Resolved | None:
 
 def as_executed(world: ScientificWorld, spec: ActionSpec, name: str, value: Any) -> Any:
     """``value`` (assigned to, or fixed for, ``name``) as an executor will receive it: a quantity in the variable's
-    declared unit by the unit owner's conversion, a declared discrete level (of the action's control domain, else of
-    the variable's own domain) AS that declared level (the unit owner's identity rule, :func:`~.domains.matched_level`);
-    any other typed value as it is.  A quantity the unit
+    declared unit by the unit owner's conversion, a declared discrete level (of the action's control domain when it
+    declares levels, else of the variable's own domain; never one after the other) AS that declared level (the unit
+    owner's identity rule, :func:`~.domains.matched_level`); any other typed value as it is.  A quantity the unit
     owner does not convert stays as proposed: the domain family refuses it, so it is never executed."""
     if not isinstance(value, Quantity) or not world.declares(name):
         return value
@@ -332,12 +332,13 @@ def as_executed(world: ScientificWorld, spec: ActionSpec, name: str, value: Any)
     if not converts(value, unit):
         return value
     control = spec.control(name)
-    for levels in (None if control is None else control.domain, world.variable(name).domain):
-        if isinstance(levels, DiscreteLevels):          # the action's levels first, then the variable's own
-            level = matched_level(levels, value)
-            if level is not None:
-                value = level
-                break
+    own = world.variable(name).domain
+    own_levels = own.levels if isinstance(own, DiscreteLevels) else ()
+    levels = control.domain if control is not None and isinstance(control.domain, DiscreteLevels) else own
+    if isinstance(levels, DiscreteLevels):            # one level set, never a fallback to another; and never a level
+        level = matched_level(levels, value, also=own_levels)   # the value is farther from than another (A6-F1)
+        if level is not None:
+            value = level
     return as_unit(value, unit)
 
 

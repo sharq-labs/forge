@@ -2,7 +2,8 @@
 
 Round 5's MAJOR (B5-F1 = R5-C-F1 = R5-D1): the round-4 budget follower took a history it had just refused as its new
 baseline, so a rolled-back account was refused once and accepted at the next verification.  A followed account that
-went back or rewrote its history is now refused for good by that reader, and only the accounts a world binds are read."""
+went back or rewrote its history is now refused for good by that reader, and an account the world does not bind
+refuses nothing (round 6: every handed account is still observed at every verification)."""
 
 from __future__ import annotations
 
@@ -54,7 +55,7 @@ def test_a_rolled_back_account_is_refused_at_every_later_dispatch_not_only_the_f
     assert len(calls) == 1
 
 
-def test_an_account_the_world_does_not_bind_is_never_read_or_checked():
+def test_an_account_the_world_does_not_bind_never_refuses_its_admission():
     o = ax.owned("battery")
     accounts = {"ledgers": {**o.ledgers, "unrelated": ax.ledger(1.0, 0.0, "hour", "unrelated")}}
     reader = BudgetReader.following(lambda: (accounts["ledgers"], o.experiments))
@@ -135,10 +136,11 @@ def test_a_validate_refusal_records_both_pools_the_owner_compared_with():
 
 # ---- A5-F4: a fixed condition's kind fits its variable ----------------------------------------------------------------------------
 @pytest.mark.parametrize("value", [IntegerValue(7), CategoricalValue("high"), BooleanValue(True)])
-def test_a_non_quantity_fixed_condition_for_a_dimensioned_variable_is_refused(value):
-    with pytest.raises(WorldRefused, match="dimensioned unit"):
+@pytest.mark.parametrize("unit", ["bar", "degree", "percent"])         # round 6 (A6-F2): scaled dimensionless units too
+def test_a_non_quantity_fixed_condition_for_a_unit_bearing_variable_is_refused(value, unit):
+    with pytest.raises(WorldRefused, match="unit-bearing variable"):
         b.world("synthetic.fixed_kind", (
-            b.var("p", R.CONTROLLED_INPUT, "bar", TS.CONSTANT_PER_RUN),
+            b.var("p", R.CONTROLLED_INPUT, unit, TS.CONSTANT_PER_RUN),
             b.var("t_on", R.CONTROLLED_INPUT, "s", TS.CONSTANT_PER_RUN, domain=b.crange("t_on", "s", 0, 100)),
             b.var("y", R.MEASUREMENT, "V", TS.TIME_SERIES)),
             actions=(b.action("hold", ActionFamily.EXPLORE, ActionMode.INTERVENE,
