@@ -377,7 +377,7 @@ refuses nothing), R5-D2 (unbound accounts cost nothing in round 5; the quadratic
 was fixed in round 6, R6-D3), B5-M4 / K5-F1 / K5-F2 (tests that reproduce the defect they guard), R5-D4 / B5-M5 /
 E5-F6 (performance provenance, §8; the re-score guard raises explicitly since round 6), E5-F3 (a control for a path
 that already held, §5); K5-F3 (gates last run before the round's code) recurred as B6-M7 and is closed by the gates at
-`a058cf2` and again at `b572bfc` (PROGRESS items 16 and 18); documented — A5-F1 (declarations checked as executed fail closed at a converted edge, §4),
+`a058cf2`, `b572bfc` and `1c9303e` (PROGRESS items 16, 18 and 20); documented — A5-F1 (declarations checked as executed fail closed at a converted edge, §4),
 R5-D3 (`replay_decision`'s unit guard needs a world that binds the unit registry, §2), the case-level re-score guard
 (§7). Round 6's: fixed — A6-F1 (one level set; a value nearer a level of the variable's own domain matches neither),
 A6-F2 (the typed fixed-condition rule, §4), A6-F3 / B6-M2 / E6-F2 / E6-F3 (controls for gating False and the recorded
