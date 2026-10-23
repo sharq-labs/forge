@@ -2,8 +2,10 @@
 
 The world projects a bound ledger's whole history, so its cost grows with the charges settled; and a following budget
 reader reads every handed account back at every verification, bound or not.  Measured on the battery fixture's
-``simulate_pulse``: against its solver-call ledger with ``n`` extra settled charges (``settled_charges``), and with one
-extra UNBOUND ledger of ``n`` charges handed to the reader (``unbound_ledger_charges``).  41 repeats: median, and the
+``simulate_pulse``: against its solver-call ledger with ``n`` extra settled charges (``settled_charges``), with one
+extra UNBOUND ledger of ``n`` charges handed to the reader (``unbound_ledger_charges``), and with one extra UNBOUND
+experiment of ``n`` evaluations that records one more evaluation before every admission, so its owner reads it back
+whole at every admission (``unbound_experiment_new_evaluation``; the worst case of the once-per-content read-back).  41 repeats: median, and the
 fastest and slowest run, so the spread is visible.  Timings are host-dependent; the file names the code revision.
 
     python -m benchmarks.mind_gen2_authority_v1.ledger_curve           # writes the file
@@ -62,12 +64,40 @@ def curve(repeats: int = 41, unbound: bool = False) -> dict:
     return out
 
 
+def experiment_curve(repeats: int = 41) -> dict:
+    from engcore.scientific.experiments import EvaluationStatus, ScientificEvaluation
+    from engcore.scientific.experiments.experiment import ExperimentBudget, ScientificExperiment
+    from engcore.scientific.ir.problem import ScientificProblem
+    out = {}
+    for n in (0, 100, 300, 1000):
+        o = ax.owned("battery")
+        extra = ScientificExperiment("other.unbound.experiment", ScientificProblem("other.problem"),
+                                     ExperimentBudget(n + repeats + 10))
+        for i in range(n):
+            extra.record(ScientificEvaluation(f"e{i}", {}, status=EvaluationStatus.NOT_CONVERGED, detail="synthetic"))
+        o.experiments["other.unbound.experiment"] = extra
+        authorities = o.authorities()
+        space = FeasibleActionSpace.build(o.world)
+        proposal = o.propose("simulate_pulse", *ax.base("battery")["simulate_pulse"])
+        admission = []
+        for k in range(repeats):
+            extra.record(ScientificEvaluation(f"new{k}", {}, status=EvaluationStatus.NOT_CONVERGED, detail="synthetic"))
+            t0 = time.perf_counter()
+            result = admit(space, proposal, authorities)
+            admission.append((time.perf_counter() - t0) * 1e3)
+        out[str(n)] = {"admission_p50_ms": round(statistics.median(admission), 2),
+                       "admission_min_max_ms": [round(min(admission), 2), round(max(admission), 2)],
+                       "status": result.status.value}
+    return out
+
+
 def curves(repeats: int = 41) -> dict:
-    return {"schema": "forge.mind.gen2_authority.ledger_size_curve/4",
+    return {"schema": "forge.mind.gen2_authority.ledger_size_curve/5",
             "command": "python -m benchmarks.mind_gen2_authority_v1.ledger_curve",
             "code_revision": code_revision(),
             "host": {"platform": platform.platform(), "python": platform.python_version()},
-            "repeats": repeats, "settled_charges": curve(repeats), "unbound_ledger_charges": curve(repeats, True)}
+            "repeats": repeats, "settled_charges": curve(repeats), "unbound_ledger_charges": curve(repeats, True),
+            "unbound_experiment_new_evaluation": experiment_curve(repeats)}
 
 
 def main(argv: list[str]) -> int:
