@@ -40,3 +40,11 @@ From this directory: `sha256sum -c EVIDENCE_MANIFEST.sha256`.
 | `review_results/review_r13_result.json` | the fresh review round 13 at `3b407ddb`: six lens outputs (findings, prior-closure checks, Q1-Q7), every skeptic verdict and the critic, as the workflow returned them |
 | `round13/mutation/` | `mutate_r13_local.py`, `run_mutants_r13.sh`; `summary_first_pass.txt` (base = the round-13 controls and the restated round-11 control on a tree whose `owners.py` is `3b407ddb`'s, plus 32 mutants: 31 caught, `box_before_alive` passed); `summary_rerun_tightened_control.txt` (base and `box_before_alive` again after that control was tightened to require the record be served: caught) |
 | `round13/checks/`, `round13/gates/`, `round13/performance/` | the BR1.1 suite and checks, the gates against `1202ea6c` and the A/B at the round-13 fix |
+
+## Round 14 (added with the round-14 fix)
+
+| Path | Content |
+|---|---|
+| `review_results/review_r14_result.json` | the fresh review round 14 at `1c9fdd84` (six lenses, every skeptic verdict, the critic), rebuilt from the workflow journal's full per-agent results. Its brief's probe command imported `~/forge-r13-review` (`3b407ddb`), not `1c9fdd84` (R14-C-H1): each lens says which tree it ran against |
+| `round14/mutation/` | `mutate_r14_local.py`, `run_mutants_r14.sh`; `summary_first_pass.txt` (base = the round-14 controls on a tree whose `owners.py` is `1c9fdd84`'s, plus 38 mutants: 37 caught, `unread_not_cleared` passed); `summary_rerun_new_control.txt` (base and `unread_not_cleared` after the round-14 clearing control was added: caught) |
+| `round14/checks/`, `round14/gates/`, `round14/performance/` | the BR1.1 suite and checks, the gates against `1202ea6c` and the A/B (`13051154` against `7b4a0de8`) at the round-14 fix; `performance/` and `round13/performance/` also hold the instrumented desk probe the A/B harness runs (R14-B-F3) |

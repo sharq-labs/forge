@@ -8972,6 +8972,37 @@ completeness critic):
       46, 48, 48, 48 after (refusals "in flight"): no availability difference established.
     - Next: a completely fresh review round 14 at the committed docs SHA (round 13 is not resumed).
 
+30. Fresh review round 14 and its fix, 2026-10-23 (same local environment).
+    - Round 14 (workflow `wf_d353d99a-ae3`) at `1c9fdd84`: six lenses, two skeptics per BLOCKER/MAJOR, a critic; 17
+      agents, all returned (`review_results/review_r14_result.json`, rebuilt from the journal). Harness defect R14-C-H1:
+      the brief's probe command imported `~/forge-r13-review` (`3b407ddb`) and its pytest basetemp named the r13 scratch
+      directory; lenses A and C noticed and ran against `~/forge-r14-review`; the MAJOR also stands on lens E's static
+      reading of the correct mirror and on its skeptics. Fixed in the round-15 brief. Q1-Q3, Q5-Q7 NO from every lens
+      and the critic; Q4 YES from A, C, D, E, F and the critic (lens B answered NO: CRIT14-3, recorded as a missed
+      finding). MAJOR: R14-A-F1 = R14-C-F1 = D14-F1 = F14-F1 = E14-F1 (both skeptics each); critic CRIT14-1. 19 lens
+      MINORs, critic CRIT14-2 / CRIT14-3. Gate NOT met. Dispositions: README §9 "Round 14 dispositions".
+    - Fix `7b4a0de8`: every not-read-back state recorded as its entry objects whatever its length (unless its entry
+      objects are a prefix of those of the state last read back); read states checked against them just before and just
+      after the read-back; a handing that is not a pair of dicts seals the reader (every account refused from then on);
+      only `KeyboardInterrupt` is an interrupt; the fresh-thread check and registration under one lock; refusal texts;
+      dict annotations. Two existing controls changed, not weakened: the round-13 non-dict control's message match (the
+      refusal is now the sealing one) and the round-11 restated control's helper (its interrupted thread now raises the
+      sealing refusal, which it absorbs; before, the suite reported an unhandled thread exception warning).
+    - Controls `tests/mind/test_authority_review_r14.py` (9 items) on a tree whose `owners.py` is `1c9fdd84`'s: 7
+      failed, 2 passed. Mutation (`mutate_r14_local.py`, 38 mutants, whole BR1.1 suite each): first pass 37 caught;
+      `unread_not_cleared` survived (the round-13 control of it no longer reached the clearing once a state with no new
+      entry records nothing); a round-14 control with a new entry was added and caught it on re-run.
+    - At `7b4a0de8`: BR1.1 suite 694 passed (no warnings); rescore MATCHES; run_benchmark MATCHES; Gen1 INTACT.
+    - Gates at `7b4a0de8` against `1202ea6c` (both re-run concurrently): FAST 67 failed, 12705 passed, 190 skipped
+      (branch) / 67 failed, 12203 passed, 190 skipped (base); NEW 0, FIXED 0: FAST: NO NEW FAILURES VS BASE (red on
+      both, NOT green). Regression pack 279 passed on both. Guard suites: branch 1409 passed, 2 failed; base 913 passed,
+      2 failed; identical failure lines. Affected expensive minus campaign: 13 failed, 14 errors, 335 passed on both,
+      identical ids.
+    - A/B (`13051154` against `7b4a0de8`): admission p50 11.84 / 12.09 ms, overlapping: NO SPEED DIFFERENCE
+      ESTABLISHED; overloaded desk over 10 interleaved rounds each 42-48 before, 23-48 after (two low after-runs in the
+      first five, none in the second five): no availability difference established (README §8).
+    - Next: a completely fresh review round 15 at the committed record SHA.
+
 **Failed approach (round 12, recorded so it is not retried).** Classifying a read-back failure as "moving" or "the
 state" by what the failure looks like (its type, its message, its written text) cannot be made safe: an execution-side
 value chooses all three (b1204, b1208). Observing the account instead (its history length from the owner's container,

@@ -24,7 +24,12 @@ Fresh review round 13 at `3b407ddb` did not meet the gate (Q4 YES: MAJORs F13-02
 R13-A-F1, critic R13-CRIT-1); all fixed in `13051154` with controls (`test_authority_review_r13.py`) and 32 mutants
 each caught; gates show no new failures vs base (PROGRESS item 29).
 
-**Next bounded task (R14):** one complete fresh review round (six lenses, two skeptics per BLOCKER/MAJOR, a
+Fresh review round 14 at `1c9fdd84` did not meet the gate (Q4 YES: a not-read-back state shorter than the observed
+history was never recorded, five lenses; critic CRIT14-1, a regression of the dict-only rule); fixed in `7b4a0de8`
+with controls (`test_authority_review_r14.py`) and 38 mutants each caught; gates show no new failures vs base
+(PROGRESS item 30).
+
+**Next bounded task (R15):** one complete fresh review round (six lenses, two skeptics per BLOCKER/MAJOR, a
 completeness critic) at the committed local SHA; earlier rounds are not resumed. No other scope; no Portfolio,
 Scientific Contract Kernel, OD-3, certification or merge before BR1.1 closes.
 Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`: INTACT). Report:

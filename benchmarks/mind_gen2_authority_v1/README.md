@@ -156,8 +156,9 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   hands over is read entry by entry, so one malformed entry never hides another account (round 11, F11-2). Each of
   the two mappings is read as a dict from the dict's own storage (round 13): no code of the mapping (its truthiness,
   `__len__`, `keys`, `__iter__`, `items`) and no key's `__hash__` or `__eq__` runs, so a mapping cannot hide, add or
-  merge an entry; a mapping that is not a dict (a dict subclass is read as the dict it stores) is no pair of account
-  mappings, refused to that verification. An account is named by its str id (a str subclass, such as `numpy.str_` or a
+  merge an entry; a handing that is not a pair of dicts (a dict subclass is read as the dict it stores; `None` hands
+  no account) cannot be read, and since any account in it may hold a spend, the reader refuses every account from
+  then on (round 14; a new timeline is stated with a new reader). An account is named by its str id (a str subclass, such as `numpy.str_` or a
   `StrEnum` member, is read as the plain str it spells, and no code of the id runs); two entries whose keys spell one
   id (keys that differ only as objects, such as a str subclass hashing by identity) refuse that id by that reader for
   good (round 12); an entry under a key that is not a str is no account a world can bind and is not read (handing an
@@ -184,18 +185,22 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   serialized (an honest top-up read half-way included): not read back to that verification. Any exception the
   account's code raises is such a failure, including one that is not an `Exception` (round 13: a `BaseException`
   subclass such as `asyncio.CancelledError`); rendering a failure runs its own `__str__`, and whatever that raises is
-  caught and the failure described by its type (round 12; round 13 for a `BaseException` raised there). Only an
-  interrupt (`KeyboardInterrupt`, `SystemExit`, `GeneratorExit`, or a subclass) is not a failure: the account it
-  stopped and every account not read yet are not read back, the verification compares what it was handed, and the
-  interrupt is then re-raised (round 13).
+  caught and the failure described by its type (round 12; round 13 for a `BaseException` raised there). Only a
+  `KeyboardInterrupt` (or a subclass) is not a failure (round 14: `SystemExit` and `GeneratorExit` raised by account
+  content are failures): the account it stopped and every account not read yet are not read back, the verification
+  compares what it was handed, and the interrupt is then re-raised (round 13).
   A state handed and NOT read back is still observed as the entries of its history (round 13, replacing round 12's
-  length): the entry objects its owner's container held then (a ledger's `charges` tuple, an experiment's
+  length), whatever its length (round 14: a state shorter than the history observed may be a rewind that spent): the
+  entry objects its owner's container held then (a ledger's `charges` tuple, an experiment's
   `_evaluations` list, the containers the owners' `revision` and `attempts` count), listed directly with no code of the
   account run; an account whose entries cannot be listed that way is refused by that reader for good. A later state of
-  that account is decided on only if its container begins with exactly those entry objects (identity, in order): it
-  moved on in place, and from then on its history decides as for any read state; a container holding a prefix of them
-  is behind; any other container rewrote them and refuses the account by that reader from then on, as a readable state
-  that rewrote its history would. So the content of such a state is never observed, but no later state that does not
+  that account is decided on only if its container begins with exactly those entry objects (identity, in order) both
+  just before and just after its own read-back (round 14): it moved on in place, and from then on its history decides
+  as for any read state; a container holding a prefix of them both times is behind; any other rewrote them (or could
+  not be listed) and refuses the account by that reader from then on, as a readable state that rewrote its history
+  would. An unread state whose entry objects are a prefix of (or are) those of the state whose history was last
+  recorded holds nothing unobserved and records nothing (round 14), so a transient failure or an interrupt with no
+  new entry, then an honest unchanged checkpoint restore, does not retire the account. So the content of such a state is never observed, but no later state that does not
   extend it is decided on: a restore of the account after such a state, then any charges, is refused for good, and so
   is an object-replacing restore of unchanged content made while such a state is the latest the reader holds (identity
   is all that was observed of those entries; a fail-closed availability cost). When every attempt hits the
@@ -231,8 +236,8 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   that reads it, for as long as it is behind; a return to the state observed is that state. An account that REWROTE
   its history (neither extends it nor is a prefix of it), or the entries of a state of it handed and not read back, or
   that was handed over in a state its owner cannot write down and read back, is refused by that reader from then on
-  (and is not read back again); adopting a new timeline is the execution side's statement, made with a new reader
-  (rounds 5-13). Concurrent verifications never refuse for good an account that only moved forward in place and that
+  (and is not read back again), as is every account of a reader once it was handed something that is not a pair of
+  dicts; adopting a new timeline is the execution side's statement, made with a new reader (rounds 5-14). Concurrent verifications never refuse for good an account that only moved forward in place and that
   its owner reads back. A refusal that lasts (behind, rewritten, refused for good) says the same thing at every read,
   so it is recordable and replays; a refusal to one verification only (not read back, in flight, left uncompared)
   states that verification's cause, including the last failure's own text, which the execution side chooses and which
@@ -248,10 +253,10 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   declaration owner is unavailable). The follower itself still reads every handed account at every pin. What a reader
   never observes, and so cannot refuse: a state no verification was handed (a spend and its rollback both between two
   verifications look like no change), the content of a state handed and not read back (only its entry objects, above),
-  an account handed under a key that is not a str, the state of a verification whose `accounts()` raises or hands no
-  pair of account mappings (including a mapping that is not a dict), and that of one that leaves between being handed
-  accounts and comparing them (the caller's own stack exhausted inside the reader, or an interrupt outside the
-  read-back), which only the verifications then waiting for it refuse; at-most-once execution is the execution owner's.
+  an account handed under a key that is not a str, the state of a verification whose `accounts()` raises (nothing was
+  handed), and that of one that leaves between being handed accounts and comparing them (an interrupt, or the
+  caller's own stack exhausted, after its read-back and inside its comparison; inside the read-back either is
+  re-raised only after the comparison), which only the verifications then waiting for it refuse; at-most-once execution is the execution owner's.
   Every verification reads every handed account back (the cache keeps the accounts handed over now), so admission
   cost grows with the accounts' histories (§8). The observation rule restates `ScientificExperiment.record`, pinned by
   a differential test.
@@ -303,18 +308,19 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
 
 ## 5. Controls
 
-Executed at the round-13 fix commit (`13051154`, local WSL2, CPython 3.12.3; command and environment in
-`docs/work/PROGRESS.md` items 28-29): `tests/mind`, `benchmarks/mind_gen2_authority_v1/tests`,
-`benchmarks/mind_gen2_world_v1/tests` and `tests/test_sria_budget_ledger_identity.py`, **685 passed** (including the
+Executed at the round-14 fix commit (`7b4a0de8`, local WSL2, CPython 3.12.3; command and environment in
+`docs/work/PROGRESS.md` items 28-30): `tests/mind`, `benchmarks/mind_gen2_authority_v1/tests`,
+`benchmarks/mind_gen2_world_v1/tests` and `tests/test_sria_budget_ledger_identity.py`, **694 passed** (including the
 expensive BR1-decision re-derivation; 649 at the round-11 records commit `ec2c000` in the cloud, CPython 3.13.16, 649
-again locally at `d40aff44` before the round-12 fix, and 667 at the round-12 fix `33258438`).
+again locally at `d40aff44` before the round-12 fix, 667 at the round-12 fix `33258438`, 685 at the round-13 fix
+`13051154`).
 
 | Suite | Tests | What it pins |
 |---|---|---|
 | `test_authority_failing_first.py` | 29 | the brief's A–O, written failing first: no interval decides; lineage laundering; stale state/model/provider/budget/declaration; missing owner; unit spelling; protocol levels (no 1.15 A, nearest or interpolation); raw proposals never execute |
 | `test_authority_mutations.py` | 120 | every projected field and binding field edited, every admitted-action and authorization field edited, replay forgeries |
 | `test_authority_cross_domain.py` | 32 | battery, two HVAC worlds, drone, motor: the same guarantees in each |
-| `test_authority_review_r1.py` … `_r13.py` | 43 / 35 / 21 / 17 / 17 / 14 / 26 / 16 / 9 / 30 / 37 / 18 / 18 | one control per confirmed review finding (round 6: per finding behind a PARTIAL verdict; round 12: per confirmed lead of the interrupted round); see below |
+| `test_authority_review_r1.py` … `_r14.py` | 43 / 35 / 21 / 17 / 17 / 14 / 26 / 16 / 9 / 30 / 37 / 18 / 18 / 9 | one control per confirmed review finding (round 6: per finding behind a PARTIAL verdict; round 12: per confirmed lead of the interrupted round); see below |
 | `test_sria_budget_ledger_identity.py` | 5 | the owner addition: read-only, wire shape unchanged, round-trip identity |
 | benchmark tests | 7 | committed matrix and re-score reproduce; the re-score guard; BR1's decisions re-derived from BR1's code (expensive) |
 | BR1 tests adapted (`test_world_contract.py`, `test_world_failing_first.py`, BR1 benchmark) and unchanged (`test_world_boundary.py`) | 67 / 31 / 8 / 5 | BR1's contract under §3; BR1's committed results byte-identical; the package boundary |
@@ -385,7 +391,17 @@ fresh thread's result read before its liveness, a second fresh thread per accoun
 cache; the ticket discarded at the start of the comparison; the round-11 `no_abandon` and `handed_never_set`; and
 round 12's eleven re-checked on the rewritten code): each fails at least one control (31 in the first pass;
 `box_before_alive` passed there because its control asserted only "not for good", and was caught once the control
-required the record be served: `docs/work/evidence/br11_local_2026_10_23/round13/mutation/`).
+required the record be served: `docs/work/evidence/br11_local_2026_10_23/round13/mutation/`). The 9 round-14
+controls (8 tests, one over two exception types) on a tree whose `owners.py` is `1c9fdd84`'s: 7 fail; the 2 that pass
+guard paths round 13 already had (an unread state with a new entry refuses an object-replacing restore; one that
+moved on in place is cleared and an unchanged restore is read), each failing on its mutant. Thirty-eight mutants of
+the round-12/13/14 code (round 13's thirty-two adapted to the rewritten code, and six new: the length condition back,
+the known-content shortcut by length or off, the after-read listing ignored, the seal off, `SystemExit` /
+`GeneratorExit` taken as interrupts): each fails at least one control (37 in the first pass; `unread_not_cleared`
+passed there because the round-13 control of it no longer reaches the clearing once a state with no new entry records
+nothing, and was caught once the round-14 control with a new entry was added:
+`docs/work/evidence/br11_local_2026_10_23/round14/mutation/`). The one-fresh-thread-per-account lock (F14-F4) has no
+deterministic control: only a race between two verifications distinguishes it.
 Round 9 split the declaration modes into an older revision
 (STALE) and a same-revision declaration with other content (MISMATCH) (15 → 16 in r8). Round 6 ran the round-5 fixed-kind test over three units
 (11 → 17); round 8 ran the round-7 offset-unit level test over four bound operators with each decision pinned (22 → 26)
@@ -502,7 +518,17 @@ Round-13 fix (`13051154`) against the round-12 code (`33258438`), the same harne
 12.15 ms (11.51-12.78) after, the budget pin p50 0.17 ms in both: NO SPEED DIFFERENCE ESTABLISHED. The desk at 1000
 evaluations: 48 of 48 in all 10 runs; at 2500 (overloaded): 41 to 48 of 48 before (median 46) and 46 to 48 after
 (median 48), every refusal "in flight" (fail-closed): no availability difference established (overlapping ranges). The
-entry listing runs only after a read-back has failed (and lists one container then).
+entry listing runs for every handed account twice at every verification, just before and just after its read-back
+(round 14, E14-F3 / R14-B-F2: an earlier wording here said only after a failure; these figures measured that code).
+
+Round-14 fix (`7b4a0de8`) against the round-13 code (`13051154`), the same harness and host, interleaved
+(`docs/work/evidence/br11_local_2026_10_23/round14/performance/`): admission p50 11.84 ms (11.79-12.26) before and
+12.09 ms (11.68-12.80) after, the budget pin p50 0.17 ms in both: NO SPEED DIFFERENCE ESTABLISHED. The desk at 1000
+evaluations: 48 of 48 in all 10 runs. At 2500 (overloaded), 10 interleaved rounds each (the first 5 with the admission
+runs, 5 more of the desk alone because the first 5 gave two low after-runs): before 48, 47, 48, 48, 44 and 48, 46, 48,
+42, 48 (42 to 48); after 48, 48, 45, 23, 29 and 48, 46, 48, 43, 48 (23 to 48); every refusal "in flight"
+(fail-closed): the ranges overlap and the second five are alike, so no availability difference is established (the two
+low runs did not recur).
 
 Nothing is cached across admissions except, per account handed over now, the last content its owner read back (a
 function of the content, not a currency claim).
@@ -528,6 +554,7 @@ completeness critic. The builder did not overrule a finding: each was fixed or i
 | 11 | `aad2f69` | A, B, C, D, E, F (a deep attack on the round-10 rewrites) | 0 / 3 / 22 | **R11-C-F1** (both skeptics MAJOR) = **F11-1** (repro MAJOR, scope MINOR): round 10 moved the experiment read-back's `deepcopy` outside the try that classifies read-back failures, so owner-valid content nested ~500 levels deep raised out of every verification, a handed spend was never observed and a restore re-dispatched the executed action (and an unbound such account made every admission raise); **F11-2** (repro MAJOR, scope MINOR): a handed mapping the constructor refused (an id that is a `numpy.str_` since round 10's exact-str rule, or one object under two ids) hid a spend on another, well-formed account; all treated as MAJOR and fixed. Q4: YES from C, F and the critic, PARTIAL from A, B, D (read-back failures classified by exception type: a torn top-up refused for good, a deterministic `RuntimeError` hiding a spend), NO from E | K11-F1 (the whole read-back after the write must be classified), K11-F2 (served experiment records not controlled as detached) MINOR | `d5ef1e3` |
 | 12 | `a96baa6` | A, B started; C-F, skeptics and critic never ran | none returned | **INTERRUPTED / INCOMPLETE: no verdict** (the cloud session was stopped on the owner's instruction); the two lenses' probes are preserved as unverified leads and were triaged locally (below) | — | `33258438` |
 | 13 | `3b407ddb` (fresh round; local, WSL2, CPython 3.12.3) | A, B, C, D, E (static), F (a deep attack on the round-12 rewrites) | 0 / 5 / 24 (lenses) + 1 MAJOR / 1 MINOR (critic) | **F13-02** = **R13-C-F1** (both skeptics MAJOR, each): a state handed and not read back kept only its length, so a restore plus one more charge was accepted and a fresh admission dispatched the executed action again (also filed MINOR as R13-A-F2, R13-B-F2, E13-F3, D13-4); **R13-B-F1** (both skeptics MAJOR): `dict(mapping)` ran the key objects' `__hash__`/`__eq__`, merging or wiping handed accounts (a spend unobserved, dispatched again); **R13-C-F2** (scope MAJOR, repro MINOR: "the accepted interrupted residual") = **R13-A-F1** (both skeptics MINOR, same reason): account content raising a `BaseException` left every verification with no trace and a restore re-dispatched (also F13-03, R13-B-F3, E13-F4); treated as MAJOR and fixed, since the trigger is a property of the handed state, not an interruption | critic **R13-CRIT-1** MAJOR (not skeptic-verified; treated as MAJOR): the handed container's own code (truthiness, `keys`/`__iter__`) decided what was handed; R13-CRIT-2 MINOR (no control for keeping the longer unread state). Q1-Q3, Q5-Q7 NO from every lens and the critic; Q4 YES from A, B, C, F and the critic, PARTIAL from D, E: the gate did not hold | `13051154` |
+| 14 | `1c9fdd84` (fresh round; local) | A, B, C, D, E (static), F (a deep attack on the round-13 rewrites) | 0 / 5 / 19 (lenses) + 1 MAJOR / 2 MINOR (critic) | **R14-A-F1 = R14-C-F1 = D14-F1 = F14-F1 = E14-F1** (one finding from five lenses, both skeptics MAJOR for each): a handed state not read back and SHORTER than the history observed was never recorded, so a return to the observed checkpoint (or a longer state compared first) was accepted and a fresh admission dispatched the executed action again | critic **CRIT14-1** MAJOR (not skeptic-verified; treated as MAJOR): a regression of round 13's dict-only rule, an honest non-dict mapping handed at a verification left its state unobserved and the same authorization was dispatched again after a restore; CRIT14-2 MINOR (controls pinned refusals, not outcomes); CRIT14-3 MINOR (lens B answered Q4 NO and marked F13-02 closed against five confirmed MAJORs: recorded here as a missed finding, not a dissent). Q1-Q3, Q5-Q7 NO from every lens and the critic; Q4 YES from A, C, D, E, F and the critic. Harness defect R14-C-H1: the probe command the round's brief gave imported `~/forge-r13-review` (`3b407ddb`), not `1c9fdd84`; lenses A and C noticed and ran against `~/forge-r14-review`; the MAJOR stands on lens E's static reading of the correct tree and its skeptics; the brief is fixed for later rounds | `7b4a0de8` |
 
 **Round-12 lead triage (local, not a review result).** Every preserved probe
 (`docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/`) was re-run unchanged at `d40aff44` on WSL2 Ubuntu
@@ -590,6 +617,28 @@ at the top names r11-r13); R13-B-F6 (the vacuous §8 sentence restated). The rou
 an exception inside the read-back is now classified and an interrupt there is re-raised only after comparing, so W is
 interrupted at the snapshot step, where it still leaves uncompared; it still fails on the round-11 mutants `no_abandon`
 and `handed_never_set` (§5).
+
+**Round 14 dispositions** (review outputs: `docs/work/evidence/br11_local_2026_10_23/review_results/review_r14_result.json`;
+fixed in `7b4a0de8`, controls `test_authority_review_r14.py`, mutants §5). Fixed, MAJOR: R14-A-F1 = R14-C-F1 = D14-F1 =
+F14-F1 = E14-F1 (every state not read back is recorded as its entry objects whatever its length); CRIT14-1 (a handing
+that is not a pair of dicts makes the reader refuse every account from then on; the constructor already refused one).
+Fixed, MINOR: R14-C-F2 / F14-F2 (a read state is checked against unread entries listed just before AND just after its
+read-back); R14-C-F3 / E14-F2 (only a `KeyboardInterrupt` is an interrupt; `SystemExit` / `GeneratorExit` from content
+are failures); E14-F4 (an unlistable read state against a recorded unread state states that reason); D14-F3 (a refusal
+behind an unread state has its own text); F14-F4 / R14-B-F1 (the one-fresh-thread-per-account check and registration
+under one lock: a race, with no deterministic control); F14-F5 (§4 restated: a stack exhausted or an interrupt inside
+the read-back is re-raised after the comparison; only one after the read-back leaves uncompared); F14-F6 (`following()`
+and the constructor are annotated with dicts); E14-F3 / R14-B-F2 (§8: the entry listing runs twice per handed account
+at every verification); R14-B-F3 (the instrumented desk probe is committed beside the A/B harness in both performance
+directories); CRIT14-2 (outcome controls for the shorter unread state, sequential and concurrent, and for the non-dict
+handing, with mutants `r14_length_condition` and `seal_off`); R14-C-H1 (the round brief's probe path). Narrowed, not
+removed (availability, fail-closed): R14-C-F4 / F14-F3 / R14-A-F2 / D14-F2 (an object-replacing restore after a state
+not read back): an unread state whose entry objects are a prefix of those of the state last read back now records
+nothing, so a transient failure or an interrupt with no new entry, then an honest unchanged checkpoint resume, is read;
+after an unread state that holds a new entry, such a restore is still refused for good (§4). Recorded, no change:
+R14-B-F4 (lens B's judgements on the behaviours new in `13051154`: each fails closed). The round-13 control
+`test_a_handed_mapping_that_is_not_a_dict_refuses_the_verification` now matches the sealing refusal's text (it still
+asserts the refusal), and the round-11 restated control's helper absorbs that refusal in its interrupted thread.
 
 Rounds 2, 3, 4 and 7 asked the same question: is the value a decision was made on the value an executor receives (and,
 from round 7, is it exactly a declared level when the variable is a level set)? `d113d30` answered it for controls (every family decides on the configuration as it will be executed);

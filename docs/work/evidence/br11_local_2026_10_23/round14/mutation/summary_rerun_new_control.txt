@@ -1,0 +1,11 @@
+[base] FAILED tests/mind/test_authority_review_r14.py::test_a_shorter_spend_not_read_back_never_lets_the_observed_checkpoint_redispatch
+[base] FAILED tests/mind/test_authority_review_r14.py::test_a_shorter_state_not_read_back_that_compares_last_still_refuses_a_waiting_longer_one
+[base] FAILED tests/mind/test_authority_review_r14.py::test_an_in_place_rollback_during_its_own_read_back_is_not_accepted_against_an_unread_state
+[base] FAILED tests/mind/test_authority_review_r14.py::test_a_spend_handed_in_a_mapping_that_is_not_a_dict_is_never_redispatched
+[base] FAILED tests/mind/test_authority_review_r14.py::test_content_raising_system_exit_or_generator_exit_is_a_failure_not_an_interrupt[SystemExit]
+[base] FAILED tests/mind/test_authority_review_r14.py::test_content_raising_system_exit_or_generator_exit_is_a_failure_not_an_interrupt[GeneratorExit]
+[base] FAILED tests/mind/test_authority_review_r14.py::test_an_unread_state_holding_only_observed_entries_lets_an_unchanged_checkpoint_restore_be_read
+[base] 7 failed, 2 passed in 2.70s
+[unread_not_cleared] FAILED tests/mind/test_authority_review_r14.py::test_an_unread_state_that_moved_on_in_place_is_cleared_and_an_unchanged_restore_is_read
+[unread_not_cleared] 1 failed, 692 passed, 1 skipped in 18.01s
+DONE
