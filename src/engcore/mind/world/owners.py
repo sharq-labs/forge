@@ -1,7 +1,8 @@
 """Read-only adapters over the canonical owners a world is projected from.
 
 Each reader READS one owner through that owner's own API, states the identity of a record, and projects the allowed
-fields.  It never writes, converts, decides applicability, availability or affordability, and never issues a
+fields.  (The budget follower also lists a handed account's history entries straight from the owner's own container,
+the one the owner's ``revision`` / ``attempts`` count, so that no code of the account runs; see ``BudgetReader``.)  It never writes, converts, decides applicability, availability or affordability, and never issues a
 verdict.  Exact owner types are required: a look-alike or a subclass is not the owner.  Where the owner defines a
 digest (``SystemState.digest``, ``BudgetLedger.digest``, the provider health report's status digest, the unit
 registry fingerprint) that digest is the identity.  ``ScientificModelDefinition`` and ``ScientificExperiment`` define
@@ -52,6 +53,7 @@ from __future__ import annotations
 import hashlib
 import json
 import threading
+import time
 from typing import Any, Callable, Iterable, Mapping
 
 from engcore.providers.catalog import (
@@ -100,12 +102,12 @@ class _Unreadable(OwnerUnavailable):
 
 class _NotRead:
     """Why one handed account was not read back, whether that refuses it for good (``_Unreadable``), and otherwise the
-    length of its history its owner's container stated then (how far the account had moved)."""
+    entries of its history its owner's container held then (the entry objects themselves, in order)."""
 
-    __slots__ = ("why", "for_good", "length")
+    __slots__ = ("why", "for_good", "entries")
 
-    def __init__(self, why: str, for_good: bool, length: int = 0) -> None:
-        self.why, self.for_good, self.length = why, for_good, length
+    def __init__(self, why: str, for_good: bool, entries: tuple[Any, ...] = ()) -> None:
+        self.why, self.for_good, self.entries = why, for_good, entries
 
 
 class _Failed(Exception):
@@ -119,17 +121,32 @@ class _Failed(Exception):
 _ATTEMPTS = 3                                         # read-backs of one handed account before it is classified
 _MUTATION = ("changed size during iteration", "mutated during iteration", "changed during iteration")
 _CAUSE, _CONTEXT = BaseException.__dict__["__cause__"], BaseException.__dict__["__context__"]
+_INTERRUPTS = (KeyboardInterrupt, SystemExit, GeneratorExit)   # never classified as a failure: they are re-raised
+
+
+def _interrupt(exc: BaseException) -> bool:
+    return issubclass(type(exc), _INTERRUPTS)
+
+
+def _type_name(exc: BaseException) -> str:
+    return type.__dict__["__name__"].__get__(type(exc))     # the class's own name: no metaclass code runs
 
 
 def _described(exc: BaseException) -> str:
-    """A failure as text, without letting the failure's own rendering raise out of the classification: a message that
-    cannot be rendered is described by the exception's type alone (the same text at every attempt)."""
-    name = type.__dict__["__name__"].__get__(type(exc))
+    """A failure as text.  Rendering runs the failure's own ``__str__``; whatever that raises (other than an interrupt,
+    which is re-raised) is caught here and the failure is described by its type alone, the same text at every attempt."""
     try:
         message = str.__str__(str(exc))
-    except Exception:  # noqa: BLE001 - a message that cannot be rendered is no message, never an escape
+    except BaseException as failed:  # noqa: BLE001 - a message that cannot be rendered is no message, never an escape
+        if _interrupt(failed):
+            raise
         message = "(its message cannot be rendered)"
-    return f"{name}: {message}"
+    return f"{_type_name(exc)}: {message}"
+
+
+def _extends(entries: tuple[Any, ...], prefix: tuple[Any, ...]) -> bool:
+    """Whether ``entries`` begins with exactly the entry objects of ``prefix`` (identity, in order)."""
+    return len(entries) >= len(prefix) and all(a is b for a, b in zip(entries, prefix))
 
 
 def _moving(exc: BaseException, described: str) -> bool:
@@ -329,67 +346,92 @@ class ProviderRegistryReader(_Reader):
 
 
 # ---- the budget owners ---------------------------------------------------------------------------------------------------------
+def _items(mapping: Any) -> list[tuple[Any, Any]]:
+    """The entries of one handed account mapping, read from a dict's own storage: no code of the mapping (its
+    truthiness, ``__len__``, ``keys``, ``__iter__``, ``items``) and no key's ``__hash__`` or ``__eq__`` runs, so the
+    mapping cannot hide, add or merge an entry.  ``None`` hands no account; a mapping that is not a dict (a dict
+    subclass is read as the dict it stores) is refused (``TypeError``)."""
+    if mapping is None:
+        return []
+    if not issubclass(type(mapping), dict):
+        raise TypeError(f"an account mapping is a dict, not a {_type_name(mapping)}")
+    return list(dict.items(mapping))
+
+
 class BudgetReader(_Reader):
     """Budget ledgers (``BudgetLedger``) and observation accounts (``ScientificExperiment``) by id.
 
     ``BudgetReader(ledgers, experiments)`` reads the account OBJECTS handed over: live for their in-place changes
     (settled charges, recorded evaluations), not for an execution side that replaces an account object (as
-    ``sria.campaign`` does on restore); its constructor refuses an account set that is not exactly typed, names an
-    account by anything but a str, names two accounts by ids that spell one id, or registers one object under two ids.  ``BudgetReader.following(accounts)`` asks
-    the execution side's ``accounts()`` for the current ``(ledgers, experiments)`` at every verification, and every
-    account only moves forward: its history (a ledger's settled charges, an experiment's recorded evaluations, in the
-    form the owner reads them back, so a restore of an unchanged account is the same history) must extend the longest
-    history this reader observed for it.  An account BEHIND that history (it went back, or this verification's
-    snapshot is older than one already observed) is refused for as long as it is behind; an account that REWROTE its
-    history (neither extends nor is a prefix of it) is refused by this reader from then on; adopting a new timeline is
-    the execution side's statement, made with a new reader.  A change to an account's declaration with its history
-    unchanged (a budget top-up) is a move of the owner.  Every account handed over is observed at construction and at
-    every verification (``Authorities.memoized`` pins every reader when a verification starts, whichever world is
-    verified: a proposer's world never chooses what is observed); an account is refused only to a verification that
-    reads it, so an account no world reads refuses nothing.
+    ``sria.campaign`` does on restore); its constructor refuses an account set that is not a dict or not exactly
+    typed, names an account by anything but a str, names two accounts by ids that spell one id, or registers one object
+    under two ids.  ``BudgetReader.following(accounts)`` asks the execution side's ``accounts()`` for the current
+    ``(ledgers, experiments)`` at every verification, and every account only moves forward: its history (a ledger's
+    settled charges, an experiment's recorded evaluations, in the form the owner reads them back, so a restore of an
+    unchanged account is the same history) must extend the longest history this reader observed for it.  An account
+    BEHIND that history (it went back, or this verification's snapshot is older than one already observed) is refused
+    for as long as it is behind; an account that REWROTE its history (neither extends nor is a prefix of it) is refused
+    by this reader from then on; adopting a new timeline is the execution side's statement, made with a new reader.  A
+    change to an account's declaration with its history unchanged (a budget top-up) is a move of the owner.  Every
+    account handed over is observed at construction and at every verification (``Authorities.memoized`` pins every
+    reader when a verification starts, whichever world is verified: a proposer's world never chooses what is
+    observed); an account is refused only to a verification that reads it, so an account no world reads refuses
+    nothing.
 
-    What a verification is handed is read entry by entry (one malformed entry never hides the others): an account is
-    named by its str id (a str subclass is read as the plain str it spells; an entry under any other key is no account
-    a world can bind, and is not read); two entries that spell one id refuse that id for good; an account that is not
-    exactly its owner's type is refused for good; one object handed under two ids is observed under both and refused to
-    that verification.  Each account is read back by
-    its owner from the text its owner writes it down as: a ledger by ``BudgetLedger.from_dict`` from its digest rule's
-    JSON (``canonical_digest``: sorted keys, ``default=str``), an experiment whole by ``ScientificExperiment.from_dict``
-    from ``to_json`` (once per account and content), so the record served, its digest and its history are detached
-    data a checkpoint restore of the same account reproduces; the record served is parsed from that text at every
-    read.  A read-back is tried up to three times and its failure classified by what happens, not by the exception's
-    type: any success is observed; three failures alike (the same failure on the same text) are the state itself, which
-    its owner cannot write down and read back, and refuse the account from then on (that state cannot be ordered
-    against what was observed, and it may hold a spend); failures that differ, or the interpreter's own "changed during
-    iteration" error, are an account moving while it was serialized, refused to that verification only.  Either way a
-    state handed and not read back still observes how far its account had moved: its history's length, read from its
-    owner's own container (a ledger's charges, an experiment's evaluations) with no code of the account run, so the
-    account is decided on again only at or beyond that length, whatever its failures looked like (an account whose
-    length cannot be read that way is refused for good).  A failure is described without running any code of it that
-    could raise (an unrenderable message is described by its type), so no read-back failure leaves the classification.
-    A recursion failure (the interpreter's own, or one an owner wrapped) on every attempt is retried with the same
-    attempts on a fresh thread, waited for at most ``WAIT_S``: still running then, the account is not read back to that
-    verification.
+    What a verification is handed is read entry by entry (one malformed entry never hides the others): each of the two
+    mappings is read as a dict from the dict's own storage, so no code of the mapping or of its keys runs and nothing
+    can hide, add or merge an entry (a mapping that is not a dict is no pair of account mappings); an account is named
+    by its str id (a str subclass is read as the
+    plain str it spells, and no code of the id runs; an entry under any other key is no account a world can bind, and
+    is not read); two entries that spell one id refuse that id for good; an account that is not exactly its owner's
+    type is refused for good; one object handed under two ids is observed under both and refused to that verification.
+    Each account is read back by its owner from the text its owner writes it down as: a ledger by
+    ``BudgetLedger.from_dict`` from its digest rule's JSON (``canonical_digest``: sorted keys, ``default=str``), an
+    experiment whole by ``ScientificExperiment.from_dict`` from ``to_json`` (once per account and content), so the
+    record served, its digest and its history are detached data a checkpoint restore of the same account reproduces;
+    the record served is parsed from that text at every read.  A read-back is tried up to three times and its failure
+    classified by what happens, not by the exception's type: any success is observed; three failures alike (the same
+    failure on the same text) are the state itself, which its owner cannot write down and read back, and refuse the
+    account from then on (that state cannot be ordered against what was observed, and it may hold a spend); failures
+    that differ, or the interpreter's own "changed during iteration" error, are an account that may have moved while
+    it was serialized: not read back to that verification.  Any exception the account's code raises is such a failure
+    (including one that is not an ``Exception``); rendering a failure runs its own ``__str__``, and whatever that
+    raises is caught and the failure described by its type.  Only an interrupt (``KeyboardInterrupt``, ``SystemExit``,
+    ``GeneratorExit``) is not a failure: the account it stopped, and every account not read yet, are not read back, the
+    verification compares what it was handed, and then the interrupt is re-raised.
+
+    A state handed and NOT read back is still observed as the entries of its history: the entry objects its owner's
+    container held then (a ledger's ``charges`` tuple, an experiment's ``_evaluations`` list, the containers the owners'
+    ``revision`` and ``attempts`` count), listed with no code of the account run (an account whose entries cannot be
+    listed that way is refused for good).  A later state of that account is decided on only if its container begins
+    with exactly those entry objects (identity, in order): one whose container holds a prefix of them is behind; any
+    other rewrote them and is refused by this reader from then on, as a readable state that rewrote its history would
+    be.  So an object-replacing restore of the account after a state not read back (even of unchanged content) is
+    refused for good: identity is all that was observed of those entries.  A recursion failure (the interpreter's own,
+    or one an owner wrapped) on every attempt is retried with the same attempts on a fresh thread; a verification waits
+    for its fresh-thread read-backs at most ``WAIT_S`` in all, and a fresh thread still running then leaves its account
+    not read back (a later verification starts no second one for that account while it runs).
 
     Each verification is in flight from its start, through ``accounts()`` and the read-back (both with no lock held:
-    no execution-side code runs under the reader's lock), to its comparison, which holds the lock.  Every observation
-    that extends the history is recorded, and a verification decides on an account only once every other verification
-    in flight when it compared has compared too, whichever started first: it waits for them (at most ``WAIT_S``,
-    holding no lock; a compared verification never waits for another compared one), then decides on what is observed
-    by then (an account another verification moved past is behind; one refused for good is refused).  A verification
+    no execution-side code runs under the reader's lock), to the end of its comparison, which holds the lock.  Every
+    observation that extends the history is recorded, and a verification decides on an account only once every other
+    verification in flight when it compared has compared too, whichever started first: it waits for them (at most
+    ``WAIT_S``, holding no lock; a compared verification never waits for another compared one), then decides on what is
+    observed by then (an account another verification moved past is behind; one refused for good is refused; one whose
+    state another verification was handed and could not read back must extend that state's entries).  A verification
     it waited for that was handed accounts and left without comparing (interrupted), or one still in flight after
-    ``WAIT_S``, makes it decide on no account (refused to that verification only).  So a state handed to, and read back
-    by, a verification is compared before any verification that was waiting on it decides, and a return to an earlier
-    state never re-authorizes what such a state had moved past.  The cost: a verification whose ``accounts()`` or
-    read-back does not complete within ``WAIT_S`` makes every verification that compares meanwhile wait ``WAIT_S`` and
-    be refused, until it completes.  What is never observed: a state no verification was handed and read back (a spend
-    and its rollback both between two verifications look like no change), the entries of a state handed and not read
-    back (only their number is observed: a later state at least that long that differs in them is not detected as a
-    rewrite), an entry under a key that is not a str, the state of a verification whose ``accounts()`` raises or
-    hands no pair of mappings, and one interrupted (``BaseException``) between being handed accounts and comparing
-    them; at-most-once execution is the execution owner's.  An ``accounts()`` or read-back that reads through the
-    reader it feeds on the same thread is refused at once (from inside the read-back, that refusal repeats, so the
-    account is refused for good).  A pinned snapshot serves the records it observed and is never live."""
+    ``WAIT_S``, makes it decide on no account (refused to that verification only).  So a state handed to a
+    verification is compared before any verification that was waiting on it decides, and a return to an earlier state
+    never re-authorizes what such a state had moved past.  The cost: a verification whose ``accounts()`` or read-back
+    does not complete within ``WAIT_S`` makes every verification that compares meanwhile wait ``WAIT_S`` and be
+    refused, until it completes.  What is never observed: a state no verification was handed (a spend and its rollback
+    both between two verifications look like no change), the content of a state handed and not read back (only its
+    entry objects), an entry under a key that is not a str, the state of a verification whose ``accounts()`` raises or
+    hands no pair of mappings, and one that leaves (the caller's own stack exhausted inside the reader) between being
+    handed accounts and comparing them; at-most-once execution is the execution owner's.  An ``accounts()`` or
+    read-back that reads through the reader it feeds on the same thread, or from its fresh thread, is refused at once
+    (from inside the read-back, that refusal repeats, so the account is refused for good).  A pinned snapshot serves the
+    records it observed and is never live."""
 
     kinds = frozenset({K.BUDGET_LEDGER, K.EXPERIMENT})
     WAIT_S = 1.0                                     # the most a compared verification waits for the others in flight
@@ -455,18 +497,21 @@ class BudgetReader(_Reader):
             return (OwnerRecord(K.EXPERIMENT, self.owner_id, record_id, str(len(back["evaluations"])), digest_,
                                 {"budget": back["budget"], "accounting": back["accounting"], "experiment": back}),
                     history)
-        except Exception as exc:  # noqa: BLE001 - classified by the caller over several attempts
+        except BaseException as exc:  # noqa: BLE001 - classified by the caller over several attempts
+            if _interrupt(exc):
+                raise
             why = _described(exc)
             raise _Failed(why, text_, _moving(exc, why), _recursion(exc)) from None
 
     def _account(self, key: tuple[str, str]) -> tuple[OwnerRecord | None, tuple[str, ...]]:
         """One handed account read back by its owner: its record and history (any attempt that succeeds), or, after
         ``_ATTEMPTS`` failures, ``_Unreadable`` when they fail alike (the state itself) or ``OwnerUnavailable`` when
-        they differ or the interpreter says the account was mutated while it was iterated (it moved)."""
+        they differ or the interpreter says the account was mutated while it was iterated (not read back)."""
         kind, record_id = key
         if record_id not in (self._ledgers if kind == "ledger" else self._experiments):
             return None, ()
         what = f"budget {kind} {record_id!r}"
+        where = ""
         read, failures = self._attempts(key, self._readback)
         if read is not None:
             return read
@@ -477,11 +522,13 @@ class BudgetReader(_Reader):
             if all(f.recursion for f in failures):
                 raise _Unreadable(f"{what} is not one its owner writes down and reads back (it exceeds the "
                                   f"interpreter's recursion limit on a fresh thread too): {failures[-1].why}")
+            where = " on a fresh thread"
         if any(f.moving for f in failures) or len({(f.why, f.text) for f in failures}) > 1:
-            raise OwnerUnavailable(f"{what} moved while it was serialized ({_ATTEMPTS} read-backs failed "
-                                   f"differently): {failures[-1].why}")
-        raise _Unreadable(f"{what} is not one its owner writes down and reads back ({_ATTEMPTS} read-backs failed "
-                          f"alike): {failures[-1].why}")
+            raise OwnerUnavailable(f"{what} was not read back to this verification ({len(failures)} read-back attempts "
+                                   f"failed{where}, not alike or with the interpreter's mutation error, so it may have "
+                                   f"moved while it was serialized; the last: {failures[-1].why})")
+        raise _Unreadable(f"{what} is not one its owner writes down and reads back ({len(failures)} read-backs failed "
+                          f"alike{where}): {failures[-1].why}")
 
     def _attempts(self, key: tuple[str, str], cache: dict[tuple[str, str], tuple[Any, ...]]) \
             -> tuple[tuple[OwnerRecord, tuple[str, ...]] | None, list[_Failed]]:
@@ -498,9 +545,15 @@ class BudgetReader(_Reader):
             -> tuple[tuple[OwnerRecord, tuple[str, ...]] | None, list[_Failed]]:
         """The same attempts once more on a fresh thread (a shallow stack), under the same-thread read-through flag:
         whether the state is too deep for its owner's rules, or only this verification's caller's stack was.  The
-        thread fills a private copy of the read-back cache and is waited for at most ``WAIT_S``: one still running
-        then (it may wait on a lock this verification's caller holds) leaves the account not read back to this
-        verification (``OwnerUnavailable``), and whatever it does later reaches nothing this reader holds."""
+        thread fills a private copy of the read-back cache.  It is waited for until this verification's fresh-thread
+        deadline (``WAIT_S`` after its read-back started): one still running then (it may wait on a lock this
+        verification's caller holds), or one that ended without a result, leaves the account not read back to this
+        verification (``OwnerUnavailable``), and whatever it does later reaches nothing this reader holds.  While it
+        runs, no other verification of this reader starts a fresh thread for that account."""
+        earlier = self._fresh.get(key)
+        if earlier is not None and earlier.is_alive():
+            raise OwnerUnavailable(f"{what} was not read back: an earlier read-back of it on a fresh thread is still "
+                                   "running")
         box: dict[str, Any] = {}
         cache = dict(self._readback)
 
@@ -517,62 +570,117 @@ class BudgetReader(_Reader):
         except Exception as exc:  # noqa: BLE001 - no fresh thread now: the account is not read back to this verification
             raise OwnerUnavailable(f"{what} was not read back: no fresh thread could start ({_described(exc)})") \
                 from None
-        thread.join(self.WAIT_S)
+        self._fresh[key] = thread
+        thread.join(max(0.0, self._deadline - time.monotonic()))
+        if thread.is_alive():                        # first: a result set after this check is never read
+            raise OwnerUnavailable(f"{what} was not read back: its read-back on a fresh thread had not completed when "
+                                   f"this verification's {self.WAIT_S} s for fresh-thread read-backs ran out")
         result = box.get("result")
         if result is None:
-            if thread.is_alive():
-                raise OwnerUnavailable(f"{what} was not read back within {self.WAIT_S} s on a fresh thread")
-            return None, [_Failed("the read-back on a fresh thread did not complete", None, False, False)]
+            raise OwnerUnavailable(f"{what} was not read back: its read-back on a fresh thread ended without a result "
+                                   "(an interrupt)")
         if result[0] is not None and key in cache:
             self._readback[key] = cache[key]
         return result
 
-    def _read_back(self) -> dict[tuple[str, str], tuple[OwnerRecord | None, tuple[str, ...]] | _NotRead]:
-        """Every account handed over, read back now (no lock held): its record and history, or why it was not read.
-        Total: no failure of one account's read-back leaves this method or hides another account."""
-        out: dict[tuple[str, str], tuple[OwnerRecord | None, tuple[str, ...]] | _NotRead] = dict(self._entry_refusals)
+    def _read_back(self) -> tuple[dict[tuple[str, str], Any], BaseException | None]:
+        """Every account handed over, read back now (no lock held): its record, its history and the entry objects its
+        owner's container held just before the read-back (or why it was not read back), and the interrupt that stopped
+        the read-back, if one did.  Total: no failure of one account's read-back leaves this method or hides another
+        account; after an interrupt, every account not read yet is not read back, and the caller re-raises the
+        interrupt once it has compared."""
+        out: dict[tuple[str, str], Any] = dict(self._entry_refusals)
+        interrupted: BaseException | None = None
+        self._deadline = time.monotonic() + self.WAIT_S
         for key in [*(("ledger", i) for i in self._ledgers), *(("experiment", i) for i in self._experiments)]:
             if key in self._skip:                    # refused for good already: not read again
                 out[key] = _NotRead("", True)
                 continue
+            what = f"budget {key[0]} {key[1]!r}"
+            if interrupted is not None:
+                out[key] = self._unread(key, f"{what} was not read back: this verification's read-back was "
+                                             f"interrupted ({_type_name(interrupted)}) before it")
+                continue
+            before = self._entries(key)
             try:
-                out[key] = self._account(key)
+                record, history = self._account(key)
+                out[key] = (record, history, before)
             except _Unreadable as exc:
                 out[key] = _NotRead(str(exc), True)
             except OwnerUnavailable as exc:
-                length = self._length(key)
-                out[key] = _NotRead(str(exc), False, length) if length is not None else \
-                    _NotRead(f"{exc}; how far it had moved (its history's length) cannot be read without running "
-                             "its code either", True)
-        return out
+                out[key] = self._unread(key, str(exc))
+            except BaseException as exc:  # noqa: BLE001 - an interrupt (or the caller's stack): re-raised after comparing
+                interrupted = exc
+                out[key] = self._unread(key, f"{what} was not read back: its read-back was interrupted "
+                                             f"({_type_name(exc)})")
+        return out, interrupted
 
-    def _length(self, key: tuple[str, str]) -> int | None:
-        """How long the handed account's history is now, read from its owner's own container (a ledger's charges
-        tuple, an experiment's evaluations list) with no code of the account run, or None if that cannot be done."""
+    def _unread(self, key: tuple[str, str], why: str) -> _NotRead:
+        entries = self._entries(key)
+        if entries is None:
+            return _NotRead(f"{why}; which entries its history held cannot be listed without running its code either",
+                            True)
+        return _NotRead(why, False, entries)
+
+    def _entries(self, key: tuple[str, str]) -> tuple[Any, ...] | None:
+        """The entry objects of the handed account's history now, in order, read from its owner's own container (a
+        ledger's ``charges`` tuple, an experiment's ``_evaluations`` list: what the owners' ``revision`` and ``attempts``
+        count) directly, so that no code of the account runs; None if they cannot be listed that way."""
         kind, record_id = key
-        account = (self._ledgers if kind == "ledger" else self._experiments)[record_id]
-        state = object.__getattribute__(account, "__dict__")     # the account is exactly its owner's type
-        entries = dict.get(state, "charges" if kind == "ledger" else "_evaluations") if type(state) is dict else None
-        return len(entries) if type(entries) in (tuple, list) else None
+        name = "charges" if kind == "ledger" else "_evaluations"
+        for _ in range(_ATTEMPTS):
+            try:
+                account = (self._ledgers if kind == "ledger" else self._experiments)[record_id]
+                state = object.__getattribute__(account, "__dict__")     # the account is exactly its owner's type
+                if type(state) is not dict:
+                    return None
+                for field, value in list(dict.items(state)):
+                    if type(field) is str and field == name:
+                        return tuple(value) if type(value) in (tuple, list) else None
+                return None
+            except RuntimeError:                     # its __dict__ changed size while it was listed: list it again
+                continue
+            except Exception:  # noqa: BLE001 - not listable without running its code: None
+                return None
+        return None
+
+    def _note_unread(self, key: tuple[str, str], entries: tuple[Any, ...]) -> str | None:
+        """Under the lock: record the entry objects a state handed and not read back held.  A state at least as long as
+        the history observed is recorded (a shorter one is behind it); a later one must begin with the recorded entries
+        (it moved on) or be a prefix of them (behind); any other rewrote them: the reason it is refused for good."""
+        earlier = self._unread_entries.get(key)
+        if earlier is None:
+            if len(entries) >= len(self._seen.get(key, ())):
+                self._unread_entries[key] = entries
+        elif _extends(entries, earlier):
+            self._unread_entries[key] = entries
+        elif not _extends(earlier, entries):
+            self._diverged[key] = self._rewrote_unread(key)
+            return self._diverged[key]
+        return None
+
+    @staticmethod
+    def _rewrote_unread(key: tuple[str, str]) -> str:
+        return (f"budget {key[0]} {key[1]!r} rewrote the entries of a state of it a verification was handed and could "
+                "not read back (its owner's container no longer begins with exactly those entry objects): refused by "
+                "this reader from then on (a new timeline is stated with a new reader)")
 
     def _observe_all(self, snapshot: "BudgetReader", ticket: int) -> dict[tuple[str, str], OwnerRecord | str | None]:
         """The following reader's forward-only rule over EVERY account handed over in ``snapshot``.  The read-back runs
         with no lock held (it runs the account objects' own serialization, into the snapshot's private cache); only
         the comparison holds the lock, and it runs no code of the accounts.  Every observation that extends the history
-        is recorded; a handed account its owner cannot write down and read back refuses its account from then on.  A
-        verification decides on an account only once every verification in flight when it compared has compared too,
-        whichever started first: it waits for them (at most ``WAIT_S``, holding no lock; a compared verification never
-        waits for another compared one, so no two wait for each other), then decides on what is observed by then (an
-        account another verification moved past is behind; one refused for good is refused).  If one of them was still
-        in flight after the wait, or was handed accounts and left without comparing, it decides on no account (refused
-        for that verification only)."""
-        read = snapshot._read_back()
+        is recorded; a handed account its owner cannot write down and read back refuses its account from then on; one
+        not read back records its entry objects.  A verification leaves the in-flight set when its comparison ends,
+        and decides on an account only once every verification in flight when it compared has compared too, whichever
+        started first: it waits for them (at most ``WAIT_S``, holding no lock; a compared verification never waits for
+        another compared one, so no two wait for each other), then decides on what is observed by then.  If one of them
+        was still in flight after the wait, or was handed accounts and left without comparing, it decides on no account
+        (refused for that verification only).  An interrupt of the read-back is re-raised after the comparison."""
+        read, interrupted = snapshot._read_back()
         observed: dict[tuple[str, str], OwnerRecord | str | None] = {}
-        accepted: dict[tuple[str, str], tuple[str, ...]] = {}
+        accepted: dict[tuple[str, str], tuple[tuple[str, ...], tuple[Any, ...] | None]] = {}
         with self._changed:
-            self._in_flight.discard(ticket)
-            self._changed.notify_all()
-            pending = set(self._in_flight)
+            pending = self._in_flight - {ticket}
             self._readback = {k: v for k, v in snapshot._readback.items() if k in read}   # the accounts handed now
             for key, got in read.items():
                 if key in self._diverged:
@@ -585,11 +693,10 @@ class BudgetReader(_Reader):
                                                "spend): refused by this reader from then on (a new timeline is stated "
                                                "with a new reader)")
                         observed[key] = self._diverged[key]
-                    else:                            # not read back: how far it had moved is still observed
-                        self._reached[key] = max(self._reached.get(key, 0), got.length)
-                        observed[key] = got.why
+                    else:                            # not read back: its entry objects are still observed
+                        observed[key] = self._note_unread(key, got.entries) or got.why
                     continue
-                record, history = got
+                record, history, before = got
                 if record is None:
                     observed[key] = None
                     continue
@@ -599,20 +706,29 @@ class BudgetReader(_Reader):
                                            "a prefix of the history this reader observed): refused by this reader from "
                                            "then on (a new timeline is stated with a new reader)")
                     observed[key] = self._diverged[key]
-                elif len(history) < len(seen):
+                    continue
+                if len(history) < len(seen):
                     observed[key] = self._behind(key)
-                else:
-                    self._seen[key] = history
-                    if len(history) < self._reached.get(key, 0):
+                    continue
+                self._seen[key] = history
+                unread = self._unread_entries.get(key)
+                if unread is not None and (before is None or not _extends(before, unread)):
+                    if before is not None and _extends(unread, before):
                         observed[key] = self._behind(key)
-                    elif key in snapshot._aliased:
-                        observed[key] = (f"budget {key[0]} {key[1]!r} was handed over as one account object under "
-                                         "two ids (one account stating two accounts): observed, but refused for this "
-                                         "verification")
                     else:
-                        observed[key] = record
-                        accepted[key] = history
-            if pending and accepted:
+                        self._diverged[key] = self._rewrote_unread(key)
+                        observed[key] = self._diverged[key]
+                    continue
+                self._unread_entries.pop(key, None)  # it moved on from that state: its history decides from now on
+                if key in snapshot._aliased:
+                    observed[key] = (f"budget {key[0]} {key[1]!r} was handed over as one account object under two ids "
+                                     "(one account stating two accounts): observed, but refused for this verification")
+                else:
+                    observed[key] = record
+                    accepted[key] = (history, before)
+            self._in_flight.discard(ticket)          # compared: only now no longer in flight
+            self._changed.notify_all()
+            if interrupted is None and pending and accepted:
                 waiter = [pending, False]            # [the tickets waited for, one of them left without comparing]
                 self._waiters[ticket] = waiter
                 try:
@@ -627,18 +743,26 @@ class BudgetReader(_Reader):
                                "accounts, whichever verification started first): this verification decides on no "
                                "account; refused for this verification only")
                     return {k: (waiting if k in accepted else v) for k, v in observed.items()}
-                for key, history in accepted.items():   # decided on what is observed once those have compared
+                for key, (history, before) in accepted.items():   # decided on what is observed once those compared
+                    unread = self._unread_entries.get(key)
                     if key in self._diverged:
                         observed[key] = self._diverged[key]
-                    elif max(len(self._seen.get(key, ())), self._reached.get(key, 0)) > len(history):
+                    elif len(self._seen.get(key, ())) > len(history):
                         observed[key] = self._behind(key)
+                    elif unread is not None and (before is None or not _extends(before, unread)):
+                        observed[key] = (f"budget {key[0]} {key[1]!r}: another verification was handed a state of it "
+                                         "meanwhile and could not read it back, and this state is not one that begins "
+                                         "with that state's entries: refused for this verification only")
+        if interrupted is not None:
+            raise interrupted
         return observed
 
     @staticmethod
     def _behind(key: tuple[str, str]) -> str:
         return (f"budget {key[0]} {key[1]!r} is behind the history this reader observed (it went back a revision, "
-                "this verification's snapshot is older than one already observed, or its history is shorter than a "
-                "state of it a verification was handed and could not read back): refused while it is behind")
+                "this verification's snapshot is older than one already observed, or its owner's container holds a "
+                "prefix of the entries of a state of it a verification was handed and could not read back): refused "
+                "while it is behind")
 
     def _leave(self, ticket: int, handed: bool) -> None:
         """``ticket`` is no longer in flight.  One that was handed accounts and never compared them makes every
@@ -668,7 +792,7 @@ class BudgetReader(_Reader):
         for kind, mapping, owner_type, store in (("ledger", ledgers, BudgetLedger, snapshot._ledgers),
                                                  ("experiment", experiments, ScientificExperiment,
                                                   snapshot._experiments)):
-            for raw_id, account in dict(mapping or {}).items():
+            for raw_id, account in _items(mapping):
                 if not issubclass(type(raw_id), str):
                     continue                         # no world binds an account by a key that is not a str
                 key = (kind, str.__str__(raw_id))    # the plain str it spells (no code of the id runs)
@@ -718,6 +842,7 @@ class BudgetReader(_Reader):
                                        f"{_described(exc)}") from None
             current._readback = dict(self._readback)     # a private copy: no other verification writes into it
             current._in_follow = self._in_follow         # its read-back runs under this reader's read-through flag
+            current._fresh = self._fresh                 # one fresh-thread read-back per account across verifications
             current._observed = self._observe_all(current, ticket)
             return current
         finally:
@@ -737,7 +862,8 @@ class BudgetReader(_Reader):
         self._follow: Callable[[], Any] | None = None
         self._observed: dict[tuple[str, str], OwnerRecord | str | None] | None = None   # a pinned snapshot's records
         self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
-        self._reached: dict[tuple[str, str], int] = {}   # account -> the longest history a state not read back stated
+        self._unread_entries: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> the entry objects of the
+        # latest state handed and not read back that a later state must begin with
         self._diverged: dict[tuple[str, str], str] = {}   # account -> why it is refused by this reader for good
         self._readback: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> (content digest, read-back text,
         # its digest, its history): one entry per account, so the cache never outgrows the accounts' current state
@@ -745,18 +871,28 @@ class BudgetReader(_Reader):
         self._aliased: frozenset[tuple[str, str]] = frozenset()     # a snapshot's ids handed for one object
         self._skip: frozenset[tuple[str, str]] = frozenset()        # accounts refused for good when the pin started
         self._in_follow = threading.local()          # set while this reader's accounts() or read-back runs on a thread
+        self._fresh: dict[tuple[str, str], threading.Thread] = {}   # account -> its latest fresh read-back thread
+        self._deadline = 0.0                         # when this read-back's fresh-thread waits run out (monotonic)
         self._tickets = 0                            # verifications of this reader, numbered when they start
         self._in_flight: set[int] = set()
         self._waiters: dict[int, list[Any]] = {}     # a waiting ticket -> [the tickets it waits for, one left uncompared]
         self._lock = threading.Lock()
         self._changed = threading.Condition(self._lock)   # a verification left the in-flight set
-        raw = [dict(ledgers or {}), dict(experiments or {})]
-        if any(not issubclass(type(i), str) for m in raw for i in m):
-            raise WorldRefused("a budget account id is a str")
-        self._ledgers = {str.__str__(i): x for i, x in raw[0].items()}
-        self._experiments = {str.__str__(i): x for i, x in raw[1].items()}
-        if len(self._ledgers) != len(raw[0]) or len(self._experiments) != len(raw[1]):
-            raise WorldRefused("two budget account ids spell one id (two accounts stating one id)")
+        spelled: list[dict[str, Any]] = []
+        for mapping in (ledgers, experiments):       # read from a dict's own storage (see _items)
+            entries: dict[str, Any] = {}
+            try:
+                listed = _items(mapping)
+            except TypeError as exc:
+                raise WorldRefused(str(exc)) from None
+            for raw_id, account in listed:
+                if not issubclass(type(raw_id), str):
+                    raise WorldRefused("a budget account id is a str")
+                if str.__str__(raw_id) in entries:
+                    raise WorldRefused("two budget account ids spell one id (two accounts stating one id)")
+                entries[str.__str__(raw_id)] = account
+            spelled.append(entries)
+        self._ledgers, self._experiments = spelled
         if any(type(x) is not BudgetLedger for x in self._ledgers.values()):
             raise WorldRefused("a budget ledger is exactly a BudgetLedger")
         if any(type(x) is not ScientificExperiment for x in self._experiments.values()):
@@ -773,6 +909,7 @@ class BudgetReader(_Reader):
             return None
         key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
         if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
             return self._account(key)[0]
         observed = self._observed.get(key)
         if isinstance(observed, str):

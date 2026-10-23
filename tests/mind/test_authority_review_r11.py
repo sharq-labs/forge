@@ -371,19 +371,21 @@ class _Interrupted(BaseException):
 def test_a_verification_waited_for_that_leaves_uncompared_makes_the_waiter_decide_on_nothing(monkeypatch):
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
-    live = o.experiments[eid]
-    real = live.to_dict
     entered, go = threading.Event(), threading.Event()
+    real_handed = BudgetReader._handed.__func__
 
-    def interrupted_read_back():
+    def interrupted_after_handed(cls, *args):
         if threading.current_thread().name == "W":
             entered.set()
             go.wait(10)
-            raise _Interrupted()                                           # W is interrupted in its read-back
-        return real()
+            raise _Interrupted()                                           # W is interrupted after it was handed
+        return real_handed(cls, *args)                                     # accounts, before it compares them
 
+    # (Round 13: an exception raised inside the read-back is now a classified failure and an interrupt there is
+    # re-raised only after the comparison, so W is interrupted at the snapshot step instead, where it still leaves
+    # uncompared.)
     reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
-    monkeypatch.setattr(live, "to_dict", interrupted_read_back)
+    monkeypatch.setattr(BudgetReader, "_handed", classmethod(interrupted_after_handed))
     w = threading.Thread(target=lambda: _absorb(reader.pinned), name="W", daemon=True)
     w.start()
     assert entered.wait(10)
