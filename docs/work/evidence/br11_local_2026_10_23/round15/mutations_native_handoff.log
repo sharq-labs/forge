@@ -1,0 +1,20 @@
+reviewed_prefix 1 36 failed, 53 passed in 3.34s
+control 0 89 passed in 3.16s
+discard_interrupted_handing 1 12 failed, 77 passed in 3.26s
+Traceback (most recent call last):
+  File "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/run_mutations.py", line 77, in <module>
+    run(name,code)
+  File "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/run_mutations.py", line 23, in run
+    result = subprocess.run(args,cwd=TREE,env=env,capture_output=True,text=True,timeout=90)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2116, in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+  File "/usr/lib/python3.12/subprocess.py", line 1253, in _check_timeout
+    raise TimeoutExpired(
+subprocess.TimeoutExpired: Command '['/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python', '-m', 'pytest', 'tests/mind/test_authority_review_r15.py', 'tests/mind/test_authority_state_machine_r15.py', 'tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account', '-q', '-p', 'no:cacheprovider']' timed out after 90 seconds

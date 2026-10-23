@@ -1,0 +1,92 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  4%]
+........................................................................ [  9%]
+........................................................................ [ 14%]
+........................................................................ [ 19%]
+........................................................................ [ 24%]
+........................................................................ [ 29%]
+........................................................................ [ 34%]
+........................................................................ [ 38%]
+........................................................................ [ 43%]
+........................................................................ [ 48%]
+........................................................................ [ 53%]
+........................................................................ [ 58%]
+........................................................................ [ 63%]
+........................................................................ [ 68%]
+................................F.........................F............. [ 73%]
+........................................................................ [ 77%]
+........................................................................ [ 82%]
+........................................................................ [ 87%]
+........................................................................ [ 92%]
+........................................................................ [ 97%]
+......................................                                   [100%]
+=================================== FAILURES ===================================
+___ test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against ___
+[gw3] linux -- Python 3.12.3 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python
+
+    def test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against():
+        """A caller who can set the tolerance has defeated the verification.
+    
+        The CSTR gate took ``invariant_rel_tol`` as a keyword argument, so a caller
+        passing ``1e-3`` received a report awarding ANALYTICALLY_VERIFIED that read,
+        in every field a consumer looks at, exactly like one judged against 1e-9.
+        """
+        offenders = [
+            (path, function)
+            for path, function, _ in _gates_taking_bare_float_thresholds()
+        ]
+        # No exception. `run_verification_gate` took `min_contraction` and
+        # `analytic_rel_tol` as bare floats, and both gated a level; it now takes a
+        # `VerificationThresholds` and routes both through `award`, so a caller's
+        # numbers move the verdict and buy nothing.
+>       assert offenders == [], (
+            "a function takes a verification threshold as a bare float: "
+            + repr(list(_gates_taking_bare_float_thresholds()))
+        )
+E       AssertionError: a function takes a verification threshold as a bare float: [('src/engcore/domains/thermal_models/conduction1d_transient_fv.py', '__init__', ['conservation_atol', 'temperature_atol', 'local_power_atol'])]
+E       assert [('src/engcor..., '__init__')] == []
+E         
+E         Left contains one more item: ('src/engcore/domains/thermal_models/conduction1d_transient_fv.py', '__init__')
+E         Use -v to get more diff
+
+tests/test_core_guards.py:1125: AssertionError
+____________ test_every_reader_that_writes_a_schema_also_checks_one ____________
+[gw0] linux -- Python 3.12.3 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python
+
+    def test_every_reader_that_writes_a_schema_also_checks_one():
+        """Walked over the tree, so a new record cannot join the exceptions quietly.
+    
+        ``ModelRegistry`` and ``RealizationRegistry`` each wrote an explicit
+        versioned schema and accepted any payload at all — garbage, missing, or a
+        future version of their own family. 174 of the 183 readers here applied
+        the rule; these two were the scientific-core exceptions, and a future
+        shape read as the current one is exactly what a version exists to prevent.
+        """
+        missing = _readers_missing_a_schema_check()
+        unexpected = {
+            name: where for (name, where) in missing
+            if (name, where) not in _NESTED_WITHOUT_SCHEMA | _NESTED_WITHOUT_SCHEMA_AT
+        }
+>       assert unexpected == {}, (
+            "these read a serialized record without checking the schema it "
+            f"claims to be: {unexpected}"
+        )
+E       AssertionError: these read a serialized record without checking the schema it claims to be: {'_AuditOnlyRecord': 'src/engcore/numerical/mesh_adaptation.py', 'BalanceTerm': 'src/engcore/scientific/conservation.py', 'ConservationBalance': 'src/engcore/scientific/conservation.py', 'FieldDefinition': 'src/engcore/scientific/fields/definition.py', 'ConservationTermBinding': 'src/engcore/scientific/multiphysics/conservation.py', 'CoupledConservation': 'src/engcore/scientific/multiphysics/conservation.py', 'PortDefinition': 'src/engcore/scientific/multiphysics/ports.py'}
+E       assert {'_AuditOnlyR...tion.py', ...} == {}
+E         
+E         Left contains 7 more items:
+E         {'BalanceTerm': 'src/engcore/scientific/conservation.py',
+E          'ConservationBalance': 'src/engcore/scientific/conservation.py',
+E          'ConservationTermBinding': 'src/engcore/scientific/multiphysics/conservation.py',
+E          'CoupledConservation': 'src/engcore/scientific/multiphysics/conservation.py',
+E          'FieldDefinition': 'src/engcore/scientific/fields/definition.py',...
+E         
+E         ...Full output truncated (3 lines hidden), use '-vv' to show
+
+tests/test_core_semantic_invariants.py:429: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against
+FAILED tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one
+2 failed, 1476 passed in 34.65s

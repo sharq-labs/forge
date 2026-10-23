@@ -1,0 +1,33 @@
+E15-F1 | E-forge-scientific | Q4 | MINOR | - | critic-mentioned | R14-C-F2 is still open, though README section 9 marks it fixed. The entries listed just before a read-back (`before`) are thrown away unless an unread
+E15-F2 | E-forge-scientific | Q4 | MINOR | - | critic-mentioned | New in 7b4a0de8: an honest account that moved forward in place past a recorded unread state during a concurrent read-back is refused for good with the
+E15-F3 | E-forge-scientific | Q4 | MINOR | - |  | New in 7b4a0de8: the seal fires on ANY BaseException raised while a handing is parsed, including the caller's own stack exhaustion or an asynchronous 
+E15-F4 | E-forge-scientific | Q4 | MINOR | - |  | Report wording: the test list stops at r13; 'holds nothing unobserved' overstates; the unread entries are described as listed 'then' / 'just before'; 
+R15-A-F1 | A-scientific-authority | Q4 | MAJOR | scope=CONFIRMED/MAJOR; repro=CONFIRMED/MAJOR | critic-mentioned | The round-14 seal (CRIT14-1's fix) is checked only when a pin starts. A verification already in flight when another verification seals the reader stil
+R15-A-F2 | A-scientific-authority | Q4 | MINOR | - | critic-mentioned | README sections 4 and 9 overstate round 14's narrowing. A transient failure with no new entry, followed by an honest unchanged checkpoint resume, stil
+R15-A-F3 | A-scientific-authority | Q4 | MINOR | - | critic-mentioned | The round-14 before/after check (R14-C-F2's fix) is defeated by account code that rolls back during its own serialization and then rolls forward again
+R15-C-F1 | C-adversarial-bypass | Q4 | MAJOR | repro=CONFIRMED/MAJOR; scope=CONFIRMED/MAJOR | critic-mentioned | The CRIT14-1 seal is checked only when a verification starts, never when it compares. A verification already in flight when the reader seals accepts a
+R15-C-F2 | C-adversarial-bypass | Q4 | MINOR | - | critic-mentioned | The read-back's history is never reconciled with the entry objects listed just before and just after it. R14-C-F2's own reproduction still dispatches 
+R15-C-F3 | C-adversarial-bypass | Q4 | MINOR | - |  | README section 9 lists R14-C-F2 as 'Fixed', but its round-14 reproduction still dispatches again at 95f3869e
+F15-F1 | F-round14-rewrites-deep | Q4 | MAJOR | scope=CONFIRMED/MAJOR; repro=CONFIRMED/MAJOR | critic-mentioned | The round-14 seal (CRIT14-1 fix) is checked only when pinned() starts: a verification already past that check when another one is handed a non-dict ma
+F15-F2 | F-round14-rewrites-deep | Q4 | MINOR | - | critic-mentioned | The round-14 narrowing ('a transient failure with no new entry, then an honest unchanged checkpoint restore, does not retire the account') fails whene
+F15-F3 | F-round14-rewrites-deep | Q4 | MINOR | - | critic-mentioned | The before/after listing (F14-F2 fix) does not bind what the read-back read: a rollback undone before the after-listing clears the unread spend and th
+F15-F4 | F-round14-rewrites-deep | Q4 | MINOR | - |  | An interrupt (or stack exhaustion) as the 'before' listing is called escapes _read_back uncompared, contrary to the round-14 restatement that inside t
+F15-F5 | F-round14-rewrites-deep | Q4 | MINOR | - |  | A KeyboardInterrupt landing while a well-formed pair of dicts is walked seals the reader for good, with the false text 'handed over what is not a pair
+B15-F1 | B-architecture | Q4 | MAJOR | scope=CONFIRMED/MAJOR; repro=CONFIRMED/MAJOR | critic-mentioned | The round-14 seal is checked once, at the start of pinned() and outside the lock, and _observe_all never reads it. A verification already in flight wh
+B15-F2 | B-architecture | Q4 | MINOR | - | critic-mentioned | The round-14 before/after check compares the container's entry objects only with an unread record, never with the history the read-back produced. A re
+B15-F3 | B-architecture | Q4 | MINOR | - |  | Judgements on round 14's behaviours that are not pre-accepted (lens B). The seal is permanent and is also set by an interrupt landing in _handed, with
+B15-F4 | B-architecture | Q4 | MINOR | - |  | PROGRESS item 28's base guard-suite figure (913 passed, 2 failed at 1202ea6c) is backed by no evidence file for that run.
+D15-1 | D-replay-stale | Q4 | MINOR | - | critic-mentioned | An honest execution side whose accounts() hands detached copies (checkpoint/persisted store) loses EVERY account for good after one interrupted read-b
+D15-2 | D-replay-stale | Q4 | MINOR | - |  | The CRIT14-1 seal fires on an honest pair of dicts: the verifying caller's stack exhausted (or an interrupt landing) inside _handed seals the reader f
+D15-3 | D-replay-stale | Q4 | MINOR | - | critic-mentioned | The 'before' listing is only compared, never recorded: a state listed just before the read-back (holding the executed charge) that is rolled back in p
+D15-4 | D-replay-stale | Q4 | MINOR | - |  | Class docstring and README disagree about the unread-entries rule after round 14
+CRIT15-1 | critic | Q4 | MINOR | - |  | Lenses D and E misapplied the verdict rules: they answered Q4 PARTIAL and marked CRIT14-1 closed against four skeptic-confirmed MAJORs on CRIT14-1's o
+CRIT15-2 | critic | Q4 | MINOR | - |  | A KeyboardInterrupt raised by the content of any handed account, even one no world binds, makes every verification of every account raise KeyboardInte
+
+E-forge-scientific: Q1=NO Q2=NO Q3=NO Q4=PARTIAL Q5=NO Q6=NO Q7=NO
+A-scientific-authority: Q1=NO Q2=NO Q3=NO Q4=YES Q5=NO Q6=NO Q7=NO
+C-adversarial-bypass: Q1=NO Q2=NO Q3=NO Q4=YES Q5=NO Q6=NO Q7=NO
+F-round14-rewrites-deep: Q1=NO Q2=NO Q3=NO Q4=YES Q5=NO Q6=NO Q7=NO
+B-architecture: Q1=NO Q2=NO Q3=NO Q4=YES Q5=NO Q6=NO Q7=NO
+D-replay-stale: Q1=NO Q2=NO Q3=NO Q4=PARTIAL Q5=NO Q6=NO Q7=NO
+critic: Q1=NO Q2=NO Q3=NO Q4=YES Q5=NO Q6=NO Q7=NO

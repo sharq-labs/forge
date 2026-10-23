@@ -1,0 +1,8 @@
+all returned: True in 1.0s
+max latency s: 1.00  p50 0.00
+max fresh read-back threads alive at once: 1
+1 ('refused:was not read back: its read-back on a fresh thread had not c', 'served')
+17 ('refused:was not read back: an earlier read-back of it on a fresh thr', 'served')
+after release, alive: 0
+next verification side.ledger: True
+diverged: []

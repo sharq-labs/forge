@@ -1,0 +1,49 @@
+.................F...................................................... [ 80%]
+.................                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_seal_after_waited_verification_completes_still_refuses __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x755809342150>
+
+    def test_seal_after_waited_verification_completes_still_refuses(monkeypatch):
+        account, held, mode, reader = _simple()
+        handing, release, waiting = threading.Event(), threading.Event(), threading.Event()
+        original = reader._follow
+        def accounts():
+            if threading.current_thread().name == "other":
+                handing.set()
+                assert release.wait(10)
+            return original()
+        reader._follow = accounts
+        wait_for = reader._changed.wait_for
+        def checkpoint(predicate, timeout=None):
+            waiting.set()
+            result = wait_for(predicate, timeout)
+            # Exact boundary: the waited ticket has compared; a different ticket
+            # seals before this waiter finishes its authoritative recheck.
+            reader._changed.release()
+            try:
+                sealer, errors = _thread(lambda: _seal(reader, mode), "sealer")
+                _join(sealer)
+                assert errors == [None]
+            finally:
+                reader._changed.acquire()
+            return result
+        monkeypatch.setattr(reader._changed, "wait_for", checkpoint)
+        other, other_box = _thread(reader.pinned, "other")
+        assert handing.wait(10)
+        verifier, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert waiting.wait(10)
+        finally:
+            release.set()
+            _join(other)
+            _join(verifier)
+>       assert isinstance(box[0], OwnerUnavailable)
+E       AssertionError: assert False
+E        +  where False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_review_r15.py:355: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_seal_after_waited_verification_completes_still_refuses
+1 failed, 88 passed in 3.03s

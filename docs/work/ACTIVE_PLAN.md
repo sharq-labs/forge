@@ -29,9 +29,17 @@ history was never recorded, five lenses; critic CRIT14-1, a regression of the di
 with controls (`test_authority_review_r14.py`) and 38 mutants each caught; gates show no new failures vs base
 (PROGRESS item 30).
 
-**Next bounded task (R15):** one complete fresh review round (six lenses, two skeptics per BLOCKER/MAJOR, a
-completeness critic) at the committed local SHA; earlier rounds are not resumed. No other scope; no Portfolio,
-Scientific Contract Kernel, OD-3, certification or merge before BR1.1 closes.
+**R15 continuation (Codex, 2026-10-23):** recovered the clean native WSL clone at exact reviewed
+`95f3869ed020b04c36c098f0c33050aa009212b6`. Round 15 is complete (15 agents), aggregate Q4 YES.
+Its 25 findings are dispositioned in `docs/work/evidence/br11_local_2026_10_23/round15/threat_disposition_matrix.json`.
+The repair has 33 deterministic controls plus 54 bounded generated traces (87 pass), and two existing R13 dictionary controls
+in mutation proof (89 pass; 36 fail on reviewed source). 16 correctness mutants killed; one redundant guard
+removal justified by an independent recovery path and its killed compound mutant. L2: 781 passed.
+Repeated affected-path measurements completed; final-source L3/L4 and reference checks follow.
+**Next executable steps:** finish L3/L4 differential and affected-path measurements; commit the R15 repair/evidence;
+fresh Round 16 at exactly that commit (six lenses, two independent skeptics per BLOCKER/MAJOR, completeness critic).
+BR1.1 remains NOT CLOSED. No push, PR, merge, certification, OD-3, Portfolio or Kernel implementation.
+
 Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`: INTACT). Report:
 `benchmarks/mind_gen2_authority_v1/README.md`; conclusion in its §12 and in `docs/work/PROGRESS.md`.
 

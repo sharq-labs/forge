@@ -1,0 +1,11 @@
+................................................                         [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/_pytest/python.py:124
+  /home/dev_kaeem/forge-gen2-authority-v1/.venv/lib/python3.12/site-packages/_pytest/python.py:124: PytestRemovedIn10Warning: Passing a non-Collection iterable to parametrize is deprecated.
+  Test: tests/mind/test_authority_state_machine_r15.py::test_generated_executed_action_cannot_regain_authority, argvalues type: product
+  Please convert to a list or tuple.
+  See https://docs.pytest.org/en/stable/deprecations.html#parametrize-iterators
+    metafunc.parametrize(*marker.args, **marker.kwargs, _param_mark=marker)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+48 passed, 1 warning in 2.14s

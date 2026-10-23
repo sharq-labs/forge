@@ -244,8 +244,11 @@ def test_an_unread_state_with_a_new_entry_still_refuses_an_object_replacing_rest
     with pytest.raises(OwnerUnavailable):                                  # a new entry, never read back
         reader.read(OwnerKind.EXPERIMENT, eid)
     o.experiments[eid] = before
-    with pytest.raises(OwnerUnavailable, match="from then on"):
+    # R15 can now read the retained entry history through its owner's rule.
+    # The restored account is therefore known to be behind, and still refused.
+    with pytest.raises(OwnerUnavailable, match="behind"):
         reader.read(OwnerKind.EXPERIMENT, eid)
+    assert reader._seen[("experiment", eid)]
     assert real is not None
 
 

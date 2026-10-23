@@ -1,0 +1,502 @@
+[
+  {
+    "name": "reviewed_prefix",
+    "exit_code": 1,
+    "source_sha256": "b2e41329252d8a391941aa7e6341be1490a80d68b880938ed32e2a0d0e2619ea",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_seal_before_authoritative_comparison_refuses_inflight_pin[accounts]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_seal_before_authoritative_comparison_refuses_inflight_pin[read_back]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_sealed_spend_then_restore_never_redispatches",
+      "FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupt_at_entry_listing_preserves_previously_read_spend",
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[rollback]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[aba]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[lying]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[unread_rollback]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_honest_growth_across_unread_checkpoint_never_means_rewritten",
+      "FAILED tests/mind/test_authority_review_r15.py::test_unchanged_detached_accounts_recover_after_interrupt",
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_straddling_honest_growth_recovers_after_transient_failure",
+      "FAILED tests/mind/test_authority_review_r15.py::test_seal_after_waited_verification_completes_still_refuses",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-MemoryError]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[start-seal-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[start-seal-True]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-seal-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-seal-True]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-spend-True]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-interrupt-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-interrupt-True]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[read-seal-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[read-seal-True]"
+    ],
+    "summary": "36 failed, 53 passed in 3.53s"
+  },
+  {
+    "name": "control",
+    "exit_code": 0,
+    "source_sha256": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [],
+    "summary": "89 passed in 3.00s"
+  },
+  {
+    "name": "discard_interrupted_handing",
+    "exit_code": 1,
+    "source_sha256": "18311dd403c7caae7cbf4ad0f10b69450c7f50a6eac61cf3bbca2f858a203a28",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-MemoryError]"
+    ],
+    "summary": "12 failed, 77 passed in 3.06s"
+  },
+  {
+    "name": "retain_live_mapping",
+    "exit_code": 1,
+    "source_sha256": "d9a2f45a4e8f577221b9e5e17ef7d61f32233d7c969a77123877b04c41d580a6",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-MemoryError]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-spend-True]"
+    ],
+    "summary": "4 failed, 85 passed in 3.09s"
+  },
+  {
+    "name": "handing_dictionary_copy",
+    "exit_code": 1,
+    "source_sha256": "ccd85ccd284195008cdf2b7c1fef6c86c1def9945889a1d5e88652a03bed3251",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account[says_empty]",
+      "FAILED tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account[skips_the_solver]"
+    ],
+    "summary": "2 failed, 87 passed in 3.01s"
+  },
+  {
+    "name": "exact_pair_type",
+    "exit_code": 1,
+    "source_sha256": "ffff2719b92a63df7d88ab902162b90ad3363225a576d6dcb91b700e73052d27",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_native_pair_subclasses_preserve_the_dict_handing_contract[tuple]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_native_pair_subclasses_preserve_the_dict_handing_contract[list]"
+    ],
+    "summary": "2 failed, 87 passed in 3.06s"
+  },
+  {
+    "name": "reread_retired_content",
+    "exit_code": 1,
+    "source_sha256": "4eba0c05b04853b3b329e78d460c04a08dd0e9bea12e8f74a222eddc1162a8c5",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_retired_account_never_reruns_retained_content"
+    ],
+    "summary": "1 failed, 88 passed in 3.09s"
+  },
+  {
+    "name": "seal_entry_only",
+    "exit_code": 1,
+    "source_sha256": "f37b4a12efcd4e89210a0877fb082f05a0fd0c73d0739736eb5d027953ce4c4e",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_seal_before_authoritative_comparison_refuses_inflight_pin[accounts]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_seal_before_authoritative_comparison_refuses_inflight_pin[read_back]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_sealed_spend_then_restore_never_redispatches",
+      "FAILED tests/mind/test_authority_review_r15.py::test_seal_after_waited_verification_completes_still_refuses",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[start-seal-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[start-seal-True]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-seal-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-seal-True]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[read-seal-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[read-seal-True]"
+    ],
+    "summary": "10 failed, 79 passed in 3.07s"
+  },
+  {
+    "name": "no_comparison_seal",
+    "exit_code": 1,
+    "source_sha256": "9b16c71c202eb21c21786e6c473c9ef819516e0ca942084711b8247d0dd6fa4c",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_seal_before_authoritative_comparison_refuses_inflight_pin[accounts]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_seal_before_authoritative_comparison_refuses_inflight_pin[read_back]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_sealed_spend_then_restore_never_redispatches",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[start-seal-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[start-seal-True]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-seal-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-seal-True]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[read-seal-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[read-seal-True]"
+    ],
+    "summary": "9 failed, 80 passed in 3.05s"
+  },
+  {
+    "name": "no_post_wait_seal",
+    "exit_code": 1,
+    "source_sha256": "aa4323926fd566585a166a08b87f8788418f3797672577ad60299da42e886d86",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_seal_after_waited_verification_completes_still_refuses"
+    ],
+    "summary": "1 failed, 88 passed in 3.03s"
+  },
+  {
+    "name": "interrupt_poison",
+    "exit_code": 1,
+    "source_sha256": "0a6e1eb351bad8309ba1cc4b2ac875256c980307a6626ed18022f2fdc97491f8",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-MemoryError]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-interrupt-False]",
+      "FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-interrupt-True]"
+    ],
+    "summary": "17 failed, 72 passed in 3.10s"
+  },
+  {
+    "name": "no_reconciliation",
+    "exit_code": 1,
+    "source_sha256": "8f8b923b7e1c3f32f80068c6ae0934efd45ee3bc06a056c12150749a9bfa5f13",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[rollback]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[aba]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[lying]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_honest_growth_across_unread_checkpoint_never_means_rewritten"
+    ],
+    "summary": "4 failed, 85 passed in 3.03s"
+  },
+  {
+    "name": "no_history_count",
+    "exit_code": 1,
+    "source_sha256": "e51fe6585caf12760cb74b9f4abb9e871297894561c000a6c28fa6a654802b3c",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[aba]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[lying]"
+    ],
+    "summary": "2 failed, 87 passed in 3.07s"
+  },
+  {
+    "name": "drop_before_observation",
+    "exit_code": 1,
+    "source_sha256": "039eada1e37fad8fbbb7865192e3de017cf7a15ee59ac07097550d268e5c94e2",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[rollback]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[unread_rollback]"
+    ],
+    "summary": "2 failed, 87 passed in 2.98s"
+  },
+  {
+    "name": "comparison_outside_lock",
+    "exit_code": 1,
+    "source_sha256": "e93d36978b6701c87a8200328d9764427c8b357176e606e5cdd8201815b3bc69",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_comparison_is_atomic_with_seal"
+    ],
+    "summary": "1 failed, 88 passed in 3.02s"
+  },
+  {
+    "name": "no_retained_history_reconciliation",
+    "exit_code": 1,
+    "source_sha256": "6f2590d4bfa9b35b4905ed1c81b35e435670767cb604374efc6d76c667840b46",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_unchanged_detached_accounts_recover_after_interrupt",
+      "FAILED tests/mind/test_authority_review_r15.py::test_readback_straddling_honest_growth_recovers_after_transient_failure"
+    ],
+    "summary": "2 failed, 87 passed in 3.04s"
+  },
+  {
+    "name": "listing_outside_interrupt_guard",
+    "exit_code": 0,
+    "source_sha256": "49609888e04dcc7f42353b0c3cfa06303f27d5c76dda180b866a23a83f9d8ff0",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [],
+    "summary": "89 passed in 2.99s",
+    "justification": "Existing interrupted-handing recovery preserves the same entries even when listing leaves the inner guard. Redundant guard removal, not a correctness mutation after R15-REPAIR-3. Compound removal of listing guard and recovery is independently killed."
+  },
+  {
+    "name": "interrupt_implicit_success",
+    "exit_code": 1,
+    "source_sha256": "da30a02117be29928acd39ae48d328e26653314fa814d9699cfe41c297e038eb",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupt_at_entry_listing_preserves_previously_read_spend",
+      "FAILED tests/mind/test_authority_review_r15.py::test_unchanged_detached_accounts_recover_after_interrupt",
+      "FAILED tests/mind/test_authority_review_r15.py::test_repeated_content_interrupt_is_explicit_never_success_or_poison"
+    ],
+    "summary": "3 failed, 86 passed in 3.06s"
+  },
+  {
+    "name": "listing_outside_without_handing_recovery",
+    "exit_code": 1,
+    "source_sha256": "3c71ac1c9eccfc3861dea35b5fb684f6d4ddb9547718bca5f878a49dcd3265f6",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account",
+      "-q",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "/home/dev_kaeem/br11-review/r15-mutants-5prtgctb",
+    "failures": [
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupt_at_entry_listing_preserves_previously_read_spend",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-MemoryError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-KeyboardInterrupt]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-RecursionError]",
+      "FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-MemoryError]"
+    ],
+    "summary": "13 failed, 76 passed in 3.00s"
+  }
+]

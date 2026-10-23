@@ -1,0 +1,9 @@
+not read back: budget ledger 'synthetic.battery.pulse-cell.solver' was not read back to this ve
+unread recorded: True
+container still holds the spend: 2 > 1
+[lie] same authorization dispatched again: True; executor calls 2; unread now []; diverged []
+
+not read back: budget ledger 'synthetic.battery.pulse-cell.solver' was not read back to this ve
+unread recorded: True
+container still holds the spend: 2 > 1
+[aba] same authorization dispatched again: True; executor calls 2; unread now []; diverged []

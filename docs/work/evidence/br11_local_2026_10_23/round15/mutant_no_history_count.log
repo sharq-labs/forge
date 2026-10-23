@@ -1,0 +1,79 @@
+..........FF............................................................ [ 80%]
+.................                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_readback_must_reconcile_listed_entries_before_authorizing[aba] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75e79af83470>
+variant = 'aba'
+
+    @pytest.mark.parametrize("variant", ["rollback", "aba", "lying", "unread_rollback"])
+    def test_readback_must_reconcile_listed_entries_before_authorizing(monkeypatch, variant):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        live = o.ledgers[lid]
+        earlier, payload = live.charges, live.to_dict()
+        gateway.dispatch(result.admitted)
+        spent = live.charges
+        real = BudgetLedger.to_dict
+        def false_read():
+            if variant == "lying":
+                return payload
+            object.__setattr__(live, "charges", earlier)
+            value = real(live)
+            if variant == "aba":
+                object.__setattr__(live, "charges", spent)
+            if variant == "unread_rollback":
+                raise RuntimeError("dictionary changed size during iteration")
+            return value
+        object.__setattr__(live, "to_dict", false_read)
+>       assert _refused(gateway, result.admitted) and calls == [1]
+E       AssertionError: assert (False)
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x75e79ad78430>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r15.py:236: AssertionError
+____ test_readback_must_reconcile_listed_entries_before_authorizing[lying] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x75e79abd4950>
+variant = 'lying'
+
+    @pytest.mark.parametrize("variant", ["rollback", "aba", "lying", "unread_rollback"])
+    def test_readback_must_reconcile_listed_entries_before_authorizing(monkeypatch, variant):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        live = o.ledgers[lid]
+        earlier, payload = live.charges, live.to_dict()
+        gateway.dispatch(result.admitted)
+        spent = live.charges
+        real = BudgetLedger.to_dict
+        def false_read():
+            if variant == "lying":
+                return payload
+            object.__setattr__(live, "charges", earlier)
+            value = real(live)
+            if variant == "aba":
+                object.__setattr__(live, "charges", spent)
+            if variant == "unread_rollback":
+                raise RuntimeError("dictionary changed size during iteration")
+            return value
+        object.__setattr__(live, "to_dict", false_read)
+>       assert _refused(gateway, result.admitted) and calls == [1]
+E       AssertionError: assert (False)
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x75e79aa4c550>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r15.py:236: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[aba]
+FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[lying]
+2 failed, 87 passed in 3.07s

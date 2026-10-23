@@ -1,0 +1,7 @@
+owners: /home/dev_kaeem/forge-r15-review/src/engcore/mind/world/owners.py
+spend not read back: budget ledger 'synthetic.battery.pulse-cell.solver' was not 
+unread recorded: {('ledger', 'synthetic.battery.pulse-cell.solver'): 2}
+rollback (R14 control) -> REFUSED: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) calls 1 | container holds run.1: False
+spend not read back: budget ledger 'synthetic.battery.pulse-cell.solver' was not 
+unread recorded: {('ledger', 'synthetic.battery.pulse-cell.solver'): 2}
+aba -> DISPATCHED AGAIN calls 2 | container holds run.1: True

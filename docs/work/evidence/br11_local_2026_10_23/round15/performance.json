@@ -1,0 +1,323 @@
+{
+  "fixed_repetitions": 5,
+  "rows": [
+    {
+      "label": "pre",
+      "repetition": 0,
+      "tree": "/home/dev_kaeem/forge-r15-review",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py",
+        "child"
+      ],
+      "medians_us": {
+        "verification_pin": 124.689,
+        "comparison_pre_read_snapshot": 2.2024999999999997,
+        "seal": 9.3285,
+        "dispatch_authorization": 13225.671999999999,
+        "wait_2ms_bound": 2333.892,
+        "contention_pin": 174.7175
+      },
+      "contention": {
+        "served": 32,
+        "refused": 0
+      },
+      "source_sha256": "b2e41329252d8a391941aa7e6341be1490a80d68b880938ed32e2a0d0e2619ea",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "source_file": "/home/dev_kaeem/forge-r15-review/src/engcore/mind/world/owners.py"
+    },
+    {
+      "label": "post",
+      "repetition": 0,
+      "tree": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py",
+        "child"
+      ],
+      "medians_us": {
+        "verification_pin": 141.012,
+        "comparison_pre_read_snapshot": 2.4025,
+        "seal": 5.976000000000001,
+        "dispatch_authorization": 13288.0975,
+        "wait_2ms_bound": 2313.638,
+        "contention_pin": 204.0935
+      },
+      "contention": {
+        "served": 32,
+        "refused": 0
+      },
+      "source_sha256": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "source_file": "/home/dev_kaeem/forge-gen2-authority-v1/src/engcore/mind/world/owners.py"
+    },
+    {
+      "label": "post",
+      "repetition": 1,
+      "tree": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py",
+        "child"
+      ],
+      "medians_us": {
+        "verification_pin": 127.513,
+        "comparison_pre_read_snapshot": 2.4665,
+        "seal": 5.8475,
+        "dispatch_authorization": 13327.969,
+        "wait_2ms_bound": 2315.939,
+        "contention_pin": 192.894
+      },
+      "contention": {
+        "served": 32,
+        "refused": 0
+      },
+      "source_sha256": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "source_file": "/home/dev_kaeem/forge-gen2-authority-v1/src/engcore/mind/world/owners.py"
+    },
+    {
+      "label": "pre",
+      "repetition": 1,
+      "tree": "/home/dev_kaeem/forge-r15-review",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py",
+        "child"
+      ],
+      "medians_us": {
+        "verification_pin": 121.5275,
+        "comparison_pre_read_snapshot": 2.048,
+        "seal": 9.8145,
+        "dispatch_authorization": 13575.329000000002,
+        "wait_2ms_bound": 2337.492,
+        "contention_pin": 179.28500000000003
+      },
+      "contention": {
+        "served": 32,
+        "refused": 0
+      },
+      "source_sha256": "b2e41329252d8a391941aa7e6341be1490a80d68b880938ed32e2a0d0e2619ea",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "source_file": "/home/dev_kaeem/forge-r15-review/src/engcore/mind/world/owners.py"
+    },
+    {
+      "label": "pre",
+      "repetition": 2,
+      "tree": "/home/dev_kaeem/forge-r15-review",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py",
+        "child"
+      ],
+      "medians_us": {
+        "verification_pin": 123.758,
+        "comparison_pre_read_snapshot": 2.0214999999999996,
+        "seal": 9.9075,
+        "dispatch_authorization": 13567.3575,
+        "wait_2ms_bound": 2333.307,
+        "contention_pin": 175.663
+      },
+      "contention": {
+        "served": 32,
+        "refused": 0
+      },
+      "source_sha256": "b2e41329252d8a391941aa7e6341be1490a80d68b880938ed32e2a0d0e2619ea",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "source_file": "/home/dev_kaeem/forge-r15-review/src/engcore/mind/world/owners.py"
+    },
+    {
+      "label": "post",
+      "repetition": 2,
+      "tree": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py",
+        "child"
+      ],
+      "medians_us": {
+        "verification_pin": 127.20599999999999,
+        "comparison_pre_read_snapshot": 2.498,
+        "seal": 6.3335,
+        "dispatch_authorization": 13141.7605,
+        "wait_2ms_bound": 2253.347,
+        "contention_pin": 177.3615
+      },
+      "contention": {
+        "served": 32,
+        "refused": 0
+      },
+      "source_sha256": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "source_file": "/home/dev_kaeem/forge-gen2-authority-v1/src/engcore/mind/world/owners.py"
+    },
+    {
+      "label": "post",
+      "repetition": 3,
+      "tree": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py",
+        "child"
+      ],
+      "medians_us": {
+        "verification_pin": 130.1385,
+        "comparison_pre_read_snapshot": 2.5095,
+        "seal": 6.4915,
+        "dispatch_authorization": 13256.9195,
+        "wait_2ms_bound": 2270.233,
+        "contention_pin": 175.23250000000002
+      },
+      "contention": {
+        "served": 32,
+        "refused": 0
+      },
+      "source_sha256": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "source_file": "/home/dev_kaeem/forge-gen2-authority-v1/src/engcore/mind/world/owners.py"
+    },
+    {
+      "label": "pre",
+      "repetition": 3,
+      "tree": "/home/dev_kaeem/forge-r15-review",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py",
+        "child"
+      ],
+      "medians_us": {
+        "verification_pin": 119.70400000000001,
+        "comparison_pre_read_snapshot": 2.213,
+        "seal": 9.243500000000001,
+        "dispatch_authorization": 12897.94,
+        "wait_2ms_bound": 2284.783,
+        "contention_pin": 168.0565
+      },
+      "contention": {
+        "served": 32,
+        "refused": 0
+      },
+      "source_sha256": "b2e41329252d8a391941aa7e6341be1490a80d68b880938ed32e2a0d0e2619ea",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "source_file": "/home/dev_kaeem/forge-r15-review/src/engcore/mind/world/owners.py"
+    },
+    {
+      "label": "pre",
+      "repetition": 4,
+      "tree": "/home/dev_kaeem/forge-r15-review",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py",
+        "child"
+      ],
+      "medians_us": {
+        "verification_pin": 122.465,
+        "comparison_pre_read_snapshot": 1.971,
+        "seal": 10.002500000000001,
+        "dispatch_authorization": 12903.664499999999,
+        "wait_2ms_bound": 2291.723,
+        "contention_pin": 175.029
+      },
+      "contention": {
+        "served": 32,
+        "refused": 0
+      },
+      "source_sha256": "b2e41329252d8a391941aa7e6341be1490a80d68b880938ed32e2a0d0e2619ea",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "source_file": "/home/dev_kaeem/forge-r15-review/src/engcore/mind/world/owners.py"
+    },
+    {
+      "label": "post",
+      "repetition": 4,
+      "tree": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py",
+        "child"
+      ],
+      "medians_us": {
+        "verification_pin": 130.2415,
+        "comparison_pre_read_snapshot": 2.3655,
+        "seal": 6.207,
+        "dispatch_authorization": 12962.918000000001,
+        "wait_2ms_bound": 2313.599,
+        "contention_pin": 197.50400000000002
+      },
+      "contention": {
+        "served": 32,
+        "refused": 0
+      },
+      "source_sha256": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
+      "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+      "source_file": "/home/dev_kaeem/forge-gen2-authority-v1/src/engcore/mind/world/owners.py"
+    }
+  ],
+  "summary": {
+    "verification_pin": {
+      "pre_range_us": [
+        119.70400000000001,
+        124.689
+      ],
+      "post_range_us": [
+        127.20599999999999,
+        141.012
+      ],
+      "verdict": "NONOVERLAPPING RANGES IN THIS BOUNDED MEASUREMENT"
+    },
+    "comparison_pre_read_snapshot": {
+      "pre_range_us": [
+        1.971,
+        2.213
+      ],
+      "post_range_us": [
+        2.3655,
+        2.5095
+      ],
+      "verdict": "NONOVERLAPPING RANGES IN THIS BOUNDED MEASUREMENT"
+    },
+    "seal": {
+      "pre_range_us": [
+        9.243500000000001,
+        10.002500000000001
+      ],
+      "post_range_us": [
+        5.8475,
+        6.4915
+      ],
+      "verdict": "NONOVERLAPPING RANGES IN THIS BOUNDED MEASUREMENT"
+    },
+    "dispatch_authorization": {
+      "pre_range_us": [
+        12897.94,
+        13575.329000000002
+      ],
+      "post_range_us": [
+        12962.918000000001,
+        13327.969
+      ],
+      "verdict": "NO SPEED DIFFERENCE ESTABLISHED"
+    },
+    "wait_2ms_bound": {
+      "pre_range_us": [
+        2284.783,
+        2337.492
+      ],
+      "post_range_us": [
+        2253.347,
+        2315.939
+      ],
+      "verdict": "NO SPEED DIFFERENCE ESTABLISHED"
+    },
+    "contention_pin": {
+      "pre_range_us": [
+        168.0565,
+        179.28500000000003
+      ],
+      "post_range_us": [
+        175.23250000000002,
+        204.0935
+      ],
+      "verdict": "NO SPEED DIFFERENCE ESTABLISHED"
+    }
+  }
+}

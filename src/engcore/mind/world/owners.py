@@ -100,6 +100,18 @@ class _Unreadable(OwnerUnavailable):
     state handed over, not of the moment it was read): it cannot be ordered against what a following reader observed."""
 
 
+class _InvalidHanding(OwnerUnavailable):
+    """Structural evidence that the handing is not a pair of account dictionaries."""
+
+
+class _RetainedHanding:
+    """Native mapping entries retained for an unfinished verification; never scientific evidence."""
+    __slots__ = ("entries",)
+
+    def __init__(self, entries: tuple[tuple, tuple]) -> None:
+        self.entries = entries
+
+
 class _NotRead:
     """Why one handed account was not read back, whether that refuses it for good (``_Unreadable``), and otherwise the
     entries of its history its owner's container held then (the entry objects themselves, in order)."""
@@ -376,7 +388,8 @@ class BudgetReader(_Reader):
     account handed over is observed at construction and at every verification (``Authorities.memoized`` pins every
     reader when a verification starts, whichever world is verified: a proposer's world never chooses what is
     observed); an account is refused only to a verification that reads it, so an account no world reads refuses
-    nothing.
+    nothing, except that a KeyboardInterrupt during any account's current read-back aborts the entire pin.
+    Repeated interrupting content is an availability residual; it never implicitly succeeds or seals the reader.
 
     What a verification is handed is read entry by entry (one malformed entry never hides the others): each of the two
     mappings is read as a dict from the dict's own storage, so no code of the mapping or of its keys runs and nothing
@@ -400,16 +413,15 @@ class BudgetReader(_Reader):
     ``KeyboardInterrupt`` is not a failure: the account it stopped, and every account not read yet, are not read back,
     the verification compares what it was handed, and then the interrupt is re-raised.
 
-    A state handed and NOT read back is still observed as the entries of its history, whatever its length (a state
-    shorter than the history observed may be a rewind that spent): the entry objects its owner's container held then (a
-    ledger's ``charges`` tuple, an experiment's ``_evaluations`` list, the containers the owners' ``revision`` and
-    ``attempts`` count), listed with no code of the account run (an account whose entries cannot be listed that way is
-    refused for good).  A later state of that account is decided on only if its container begins with exactly those
-    entry objects (identity, in order) both just before and just after its read-back: one whose container holds a
-    prefix of them both times is behind; any other rewrote them (or could not be listed) and is refused by this reader
-    from then on, as a readable state that rewrote its history would be.  So an object-replacing restore of the account
-    after a state not read back (even of unchanged content) is refused for good: identity is all that was observed of
-    those entries.  A recursion failure (the interpreter's own,
+    A state handed and NOT read back retains the entry objects observed before and after the read-back.
+    A successful read must have identical entry objects at both boundaries and a history of the same length.
+    Growth during the read is refused transiently; rollback cannot erase the initial observation. A state whose
+    entries are an identity prefix of a stable previously read state adds no unseen entry (its other content is
+    not thereby observed). An unread barrier can be reconciled on a later verification by the existing canonical
+    entry-history rule, outside the comparison lock. Its result applies only if those exact retained entries are
+    still the pending barrier. Unreadability never implies equality: unresolved entries keep admission refused.
+    This permits unchanged detached checkpoints to recover after an interrupt, without forgiving a recorded spend.
+    A recursion failure (the interpreter's own,
     or one an owner wrapped) on every attempt is retried with the same attempts on a fresh thread; a verification waits
     for its fresh-thread read-backs at most ``WAIT_S`` in all, and a fresh thread still running then leaves its account
     not read back (a later verification starts no second one for that account while it runs).
@@ -604,22 +616,35 @@ class BudgetReader(_Reader):
                 out[key] = self._unread(key, f"{what} was not read back: this verification's read-back was "
                                              f"interrupted ({_type_name(interrupted)}) before it")
                 continue
-            before = self._entries(key)
+            before = None
             try:
+                before = self._entries(key)
                 record, history = self._account(key)
-                out[key] = (record, history, before, self._entries(key))   # its entries just before and just after
+                after = self._entries(key)
+                if (before is None or after is None or len(before) != len(after)
+                        or not _extends(before, after) or len(history) != len(after)):
+                    out[key] = self._unread(key, f"{what} was not read back as one stable entry history "
+                                                "(its listed entries and read-back did not reconcile)", before)
+                else:
+                    out[key] = (record, history, before, after)
             except _Unreadable as exc:
                 out[key] = _NotRead(str(exc), True)
             except OwnerUnavailable as exc:
-                out[key] = self._unread(key, str(exc))
+                out[key] = self._unread(key, str(exc), before)
             except BaseException as exc:  # noqa: BLE001 - an interrupt (or the caller's stack): re-raised after comparing
                 interrupted = exc
                 out[key] = self._unread(key, f"{what} was not read back: its read-back was interrupted "
-                                             f"({_type_name(exc)})")
+                                             f"({_type_name(exc)})", before)
         return out, interrupted
 
-    def _unread(self, key: tuple[str, str], why: str) -> _NotRead:
+    def _unread(self, key: tuple[str, str], why: str,
+                before: tuple[Any, ...] | None = None) -> _NotRead:
         entries = self._entries(key)
+        if before is not None and entries is not None:
+            if _extends(before, entries):
+                entries = before                    # never discard the state listed before a rollback
+            elif not _extends(entries, before):
+                return _NotRead(f"{why}; its entry history changed to a different timeline during read-back", True)
         if entries is None:
             return _NotRead(f"{why}; which entries its history held cannot be listed without running its code either",
                             True)
@@ -641,6 +666,8 @@ class BudgetReader(_Reader):
                     if type(field) is str and field == name:
                         return tuple(value) if type(value) in (tuple, list) else None
                 return None
+            except (RecursionError, MemoryError):
+                raise                               # resource failure is not evidence of malformed account storage
             except RuntimeError:                     # its __dict__ changed size while it was listed: list it again
                 continue
             except Exception:  # noqa: BLE001 - not listable without running its code: None
@@ -655,7 +682,7 @@ class BudgetReader(_Reader):
         earlier = self._unread_entries.get(key)
         if earlier is None:
             known = self._seen_entries.get(key)
-            if known is None or not _extends(known, entries):   # a prefix of a state read back holds nothing unseen
+            if known is None or not _extends(known, entries):   # adds no unseen entry; says nothing about other content
                 self._unread_entries[key] = entries
         elif _extends(entries, earlier):
             self._unread_entries[key] = entries
@@ -703,10 +730,43 @@ class BudgetReader(_Reader):
         was still in flight after the wait, or was handed accounts and left without comparing, it decides on no account
         (refused for that verification only).  An interrupt of the read-back is re-raised after the comparison."""
         read, interrupted = snapshot._read_back()
+        resolved = {}
+        unresolved = {}
+        for key, entries in snapshot._unread_entries.items():
+            if key in snapshot._skip:
+                continue                            # retired accounts never run their content again
+            got = read.get(key)
+            if (type(got) is tuple and got[2] is not None and got[3] is not None
+                    and _extends(got[2], entries) and _extends(got[3], entries)):
+                continue                            # the current owner read already reconciles these objects
+            # Reconcile a detached checkpoint against the actual entries previously
+            # retained. Failure leaves the barrier in force, never implies equality.
+            try:
+                resolved[key] = (entries, self._history(entries))
+            except BaseException as exc:  # noqa: BLE001 - unread entries remain unread
+                unresolved[key] = (f"budget {key[0]} {key[1]!r}: previously unread entries could not be "
+                                   f"reconciled ({_type_name(exc)}); refused for this verification only")
         observed: dict[tuple[str, str], OwnerRecord | str | None] = {}
-        accepted: dict[tuple[str, str], tuple[tuple[str, ...], tuple[Any, ...] | None]] = {}
+        accepted: dict[tuple[str, str], tuple[tuple[str, ...], tuple[Any, ...] | None,
+                                             tuple[Any, ...] | None]] = {}
         with self._changed:
+            if self._sealed is not None:
+                if interrupted is not None:
+                    raise interrupted
+                raise OwnerUnavailable(self._sealed)
             pending = self._in_flight - {ticket}
+            for key, (entries, history) in resolved.items():
+                pending_entries = self._unread_entries.get(key)
+                if pending_entries is None or len(entries) != len(pending_entries) or not _extends(entries, pending_entries):
+                    continue                        # another comparison changed the barrier
+                seen = self._seen.get(key, ())
+                if history[:len(seen)] == seen:
+                    self._seen[key] = history
+                    self._unread_entries.pop(key, None)
+                elif seen[:len(history)] == history:
+                    self._unread_entries.pop(key, None)
+                # A different readable history is still checked below against the
+                # retained identity barrier; nothing grants currency here.
             self._readback = {k: v for k, v in snapshot._readback.items() if k in read}   # the accounts handed now
             for key, got in read.items():
                 if key in self._diverged:
@@ -741,6 +801,9 @@ class BudgetReader(_Reader):
                     self._seen_entries[key] = after  # the entry objects of the state whose history was recorded
                 else:
                     self._seen_entries.pop(key, None)
+                if key in unresolved and key in self._unread_entries:
+                    observed[key] = unresolved[key]
+                    continue
                 against = self._against_unread(key, before, after)
                 if against == "behind unread":
                     observed[key] = self._behind_unread(key)
@@ -755,6 +818,7 @@ class BudgetReader(_Reader):
                 else:
                     observed[key] = record
                     accepted[key] = (history, before, after)
+            self._uncompared.pop(ticket, None)
             self._in_flight.discard(ticket)          # compared: only now no longer in flight
             self._changed.notify_all()
             if interrupted is None and pending and accepted:
@@ -772,6 +836,8 @@ class BudgetReader(_Reader):
                                "accounts, whichever verification started first): this verification decides on no "
                                "account; refused for this verification only")
                     return {k: (waiting if k in accepted else v) for k, v in observed.items()}
+                if self._sealed is not None:
+                    raise OwnerUnavailable(self._sealed)
                 for key, (history, before, after) in accepted.items():   # decided on what is observed once compared
                     if key in self._diverged:
                         observed[key] = self._diverged[key]
@@ -813,18 +879,52 @@ class BudgetReader(_Reader):
             self._in_flight.add(self._tickets)
             return self._tickets
 
+    @staticmethod
+    def _retain_handing(handed: Any) -> _RetainedHanding:
+        """Retain native mapping storage while an interrupted verification remains uncompared."""
+        pair = tuple if issubclass(type(handed), tuple) else list if issubclass(type(handed), list) else None
+        if pair is None or pair.__len__(handed) != 2:
+            raise _InvalidHanding("accounts must be handed as a pair")
+        maps = pair.__getitem__(handed, 0), pair.__getitem__(handed, 1)
+        if any(m is not None and not issubclass(type(m), dict) for m in maps):
+            raise _InvalidHanding("each account mapping must be a dict")
+        return _RetainedHanding(tuple(_items(m) for m in maps))
+
+    def _recover_handing(self, ticket: int) -> None:
+        """Under the lock: resume an uncompared handing into the existing unread-entry barrier.
+
+        Only native account storage is inspected. No serialization or account content runs.
+        If interrupted again the handing remains pending; no later pin can bypass its recovery.
+        """
+        mapping = self._uncompared[ticket]
+        current = BudgetReader._handed(mapping, self.owner_id, frozenset(self._diverged))
+        for key, refusal in current._entry_refusals.items():
+            self._diverged[key] = refusal.why
+        for kind, accounts in (("ledger", current._ledgers), ("experiment", current._experiments)):
+            for name in accounts:
+                key = kind, name
+                if key in self._diverged:
+                    continue
+                entries = current._entries(key)
+                if entries is None:
+                    self._diverged[key] = f"budget {kind} {name!r}: interrupted handing has unlistable entries"
+                else:
+                    self._note_unread(key, entries)
+        self._uncompared.pop(ticket)
+
     @classmethod
     def _handed(cls, handed: Any, owner_id: str, skip: frozenset[tuple[str, str]]) -> "BudgetReader":
         """What one ``accounts()`` call handed over, entry by entry: an entry that is not an account never hides one
         that is (see the class docstring)."""
-        ledgers, experiments = handed
+        retained = handed if type(handed) is _RetainedHanding else cls._retain_handing(handed)
+        ledger_entries, experiment_entries = retained.entries
         snapshot = cls(owner_id=owner_id)
         objects: dict[int, list[tuple[str, str]]] = {}
         spelled: set[tuple[str, str]] = set()
-        for kind, mapping, owner_type, store in (("ledger", ledgers, BudgetLedger, snapshot._ledgers),
-                                                 ("experiment", experiments, ScientificExperiment,
+        for kind, entries, owner_type, store in (("ledger", ledger_entries, BudgetLedger, snapshot._ledgers),
+                                                 ("experiment", experiment_entries, ScientificExperiment,
                                                   snapshot._experiments)):
-            for raw_id, account in _items(mapping):
+            for raw_id, account in entries:
                 if not issubclass(type(raw_id), str):
                     continue                         # no world binds an account by a key that is not a str
                 key = (kind, str.__str__(raw_id))    # the plain str it spells (no code of the id runs)
@@ -859,6 +959,9 @@ class BudgetReader(_Reader):
         try:
             self._in_follow.active = True
             with self._lock:                         # the ticket is named before it is in flight: a finally that
+                for pending_ticket in tuple(self._uncompared):
+                    if pending_ticket not in self._in_flight:
+                        self._recover_handing(pending_ticket)
                 self._tickets += 1                   # runs at any point discards exactly what was taken
                 ticket = self._tickets
                 self._in_flight.add(ticket)
@@ -870,22 +973,35 @@ class BudgetReader(_Reader):
                                        f"{_described(exc)}") from None
             handed = True
             try:
-                current = BudgetReader._handed(mapping, self.owner_id, skip)
-            except BaseException as exc:  # noqa: BLE001 - handed, and not read: any account in it may hold a spend
+                with self._lock:
+                    self._uncompared[ticket] = mapping
+                    self._uncompared[ticket] = BudgetReader._retain_handing(mapping)
+                current = BudgetReader._handed(self._uncompared[ticket], self.owner_id, skip)
+            except _InvalidHanding as exc:  # structural evidence, never an asynchronous interruption
                 with self._lock:
                     self._sealed = ("the execution side handed over what is not a pair of account dicts "
                                     f"({_type_name(exc)}): the accounts in it were not observed and any of them may "
                                     "hold a spend, so this reader refuses every account from then on (a new timeline "
                                     "is stated with a new reader)")
-                if _interrupt(exc):
-                    raise
                 raise OwnerUnavailable(self._sealed) from None
+            with self._lock:
+                current._unread_entries = dict(self._unread_entries)
             current._readback = dict(self._readback)     # a private copy: no other verification writes into it
             current._in_follow = self._in_follow         # its read-back runs under this reader's read-through flag
             current._fresh = self._fresh                 # one fresh-thread read-back per account across verifications
             current._fresh_lock = self._fresh_lock
             current._observed = self._observe_all(current, ticket)
             return current
+        except BaseException:
+            # Preserve the interrupted handing before control returns to the owner.
+            # A second interruption leaves it pending, and the next pin must resume it.
+            try:
+                with self._lock:
+                    if ticket in self._uncompared and self._sealed is None:
+                        self._recover_handing(ticket)
+            except BaseException:  # noqa: BLE001 - original failure propagates; pending is not acceptance
+                pass
+            raise
         finally:
             self._in_follow.active = False
             try:
@@ -915,11 +1031,12 @@ class BudgetReader(_Reader):
         self._fresh: dict[tuple[str, str], threading.Thread] = {}   # account -> its latest fresh read-back thread
         self._fresh_lock = threading.Lock()          # guards _fresh's check-and-register (shared with snapshots)
         self._seen_entries: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> the entry objects of the state
-        # whose history was last recorded (listed alike just before and just after its read-back)
+        # whose history was last recorded (identical listings and matching read-back history length)
         self._sealed: str | None = None              # why every account is refused from then on (an unreadable handing)
         self._deadline = 0.0                         # when this read-back's fresh-thread waits run out (monotonic)
         self._tickets = 0                            # verifications of this reader, numbered when they start
         self._in_flight: set[int] = set()
+        self._uncompared: dict[int, Any] = {}         # interrupted handing awaiting existing unread-entry observation
         self._waiters: dict[int, list[Any]] = {}     # a waiting ticket -> [the tickets it waits for, one left uncompared]
         self._lock = threading.Lock()
         self._changed = threading.Condition(self._lock)   # a verification left the in-flight set

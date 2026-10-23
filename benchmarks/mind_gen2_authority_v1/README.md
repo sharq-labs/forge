@@ -15,7 +15,7 @@ no scientific claim, nothing certified or formal. Generation 1 stays sealed and 
   `admission.py`; changed: `__init__.py`, `world.py`, `feasibility.py`, `variables.py`, `base.py`, `actions.py`,
   `domains.py`, `port.py`; removed: `binders.py`). One owner file outside the package: `src/engcore/sria/campaign/budget.py`
   (read-only `BudgetLedger.digest` / `revision`).
-- **Tests:** `tests/mind/test_authority_{failing_first,mutations,cross_domain,review_r1,...,review_r13}.py`,
+- **Tests:** `tests/mind/test_authority_{failing_first,mutations,cross_domain,review_r1,...,review_r15}.py`,
   `tests/test_sria_budget_ledger_identity.py`; BR1's tests adapted where §3's interval rule requires
   (`tests/mind/test_world_{failing_first,contract}.py`, `benchmarks/mind_gen2_world_v1/tests`).
 - **Benchmark:** this directory (`fixtures.py`, `mutations.py`, `run_benchmark.py`, `rescore.py`,
@@ -199,7 +199,7 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   as for any read state; a container holding a prefix of them both times is behind; any other rewrote them (or could
   not be listed) and refuses the account by that reader from then on, as a readable state that rewrote its history
   would. An unread state whose entry objects are a prefix of (or are) those of the state whose history was last
-  recorded holds nothing unobserved and records nothing (round 14), so a transient failure or an interrupt with no
+  recorded adds no unseen entry and records nothing (round 14), so a transient failure or an interrupt with no
   new entry, then an honest unchanged checkpoint restore, does not retire the account. So the content of such a state is never observed, but no later state that does not
   extend it is decided on: a restore of the account after such a state, then any charges, is refused for good, and so
   is an object-replacing restore of unchanged content made while such a state is the latest the reader holds (identity
@@ -305,6 +305,39 @@ Deciding state preconditions needs an owner capability FORGE lacks (§11).
   dimensionless, such as degree, percent or ppm) a fixed condition is a quantity the unit owner converts.
 - **Who may propose:** a proposer's kind is caller-asserted; a deployment hosting an external or language-model
   proposer builds its desk with `suggestions_only=True` (the execution side's policy).
+
+### Round-15 lifecycle and reconciliation clarification
+
+An interrupted valid handing is retained in native dict storage until comparison completes. Recovery reads only
+native entry containers into the existing unread-entry barrier, before a later pin proceeds; it never treats
+pending work as current. Another interruption leaves the handing pending. This lifecycle buffer is not a second
+budget ledger or evidence vocabulary. It preserves spend when an owner replaces a live dictionary entry after an
+interrupt, while unchanged honest handings can recover. Resource failure in native entry listing is not evidence
+of malformed storage. The repair's own failing-first handoff check and recovery-cleanup correction are recorded
+as R15-REPAIR-3 in the matrix.
+
+The current implementation checks a reader's seal under the comparison lock, including after a wait. Starting a
+verification while open grants no right to complete after sealing. The authoritative comparison remains atomic with
+sealing. A structural invalid handing seals the reader; an interrupt, stack exhaustion or allocation failure while
+parsing an honest handing does not establish owner corruption and does not seal it.
+
+A read-back is served only when its before/after entry objects are identical and the serialized history has the same
+length. A moving read is refused for that verification. The retained unread observation includes the state listed
+before the read, so an in-place rollback cannot erase a spend. The entry-listing step is inside interruption handling:
+already read accounts compare before the interrupt propagates.
+
+On a later verification, retained unread entry objects may be reconciled through the **existing canonical entry
+history rule**, outside the lock. The resulting history applies only to the identical still-pending barrier. It can
+establish that an unchanged detached checkpoint is the observed state, or that a restored account is behind a spend.
+Failure to read those entries is an explicit refusal, never equality or currentness. No new persistent scientific
+authority or execution ledger is introduced. This supersedes the older unconditional description of object-replacing
+restore as permanent retirement. Owner content that remains unreadable can still prevent recovery.
+
+A KeyboardInterrupt raised repeatedly by current account content aborts each entire pin, even when the account is
+unbound (CRIT15-2). This is an explicit availability residual: no implicit success, no permanent seal solely from
+interruption. There is no sound exception-class distinction between operator interruption and content raising that
+same exception, so the code does not invent one. This qualifies the older statement that an unbound account refuses
+nothing. Execution-side code and private mutation remain inside the documented in-process trust boundary.
 
 ## 5. Controls
 
@@ -527,11 +560,32 @@ Round-14 fix (`7b4a0de8`) against the round-13 code (`13051154`), the same harne
 evaluations: 48 of 48 in all 10 runs. At 2500 (overloaded), 10 interleaved rounds each (the first 5 with the admission
 runs, 5 more of the desk alone because the first 5 gave two low after-runs): before 48, 47, 48, 48, 44 and 48, 46, 48,
 42, 48 (42 to 48); after 48, 48, 45, 23, 29 and 48, 46, 48, 43, 48 (23 to 48); every refusal "in flight"
-(fail-closed): the ranges overlap and the second five are alike, so no availability difference is established (the two
+(fail-closed): the ranges overlap, so no availability difference is established; the extra five runs were chosen after seeing the first results (a data-dependent extension, not a fixed stopping rule) (the two
 low runs did not recur).
 
 Nothing is cached across admissions except, per account handed over now, the last content its owner read back (a
 function of the content, not a currency claim).
+
+### Round-15 affected-path measurement
+
+Fixed five paired runs, alternating pre/post order, on the same CPython 3.12.3 WSL host with no other campaign tests
+running. Pre: exact reviewed `95f3869e`; post source checksum and every sample are in
+`round15/performance.json` (under the local evidence directory). Units below are microseconds, ranges of run medians.
+
+| Path | Before | After | Interpretation |
+|---|---:|---:|---|
+| verification_pin | 119.70–124.69 | 127.21–141.01 | NONOVERLAPPING RANGES IN THIS BOUNDED MEASUREMENT |
+| comparison_pre_read_snapshot | 1.97–2.21 | 2.37–2.51 | NONOVERLAPPING RANGES IN THIS BOUNDED MEASUREMENT |
+| seal | 9.24–10.00 | 5.85–6.49 | NONOVERLAPPING RANGES IN THIS BOUNDED MEASUREMENT |
+| dispatch_authorization | 12897.94–13575.33 | 12962.92–13327.97 | NO SPEED DIFFERENCE ESTABLISHED |
+| wait_2ms_bound | 2284.78–2337.49 | 2253.35–2315.94 | NO SPEED DIFFERENCE ESTABLISHED |
+| contention_pin | 168.06–179.29 | 175.23–204.09 | NO SPEED DIFFERENCE ESTABLISHED |
+
+The isolated comparison uses an already read synthetic snapshot and includes ticket bookkeeping. The wait probe
+uses an explicitly blocked verification and a 2 ms bound. Contention uses four threads and eight barrier-synchronized
+reads each: all 32/32 were served in each of ten runs. Availability is recorded separately; safe refusal would not
+be false admission. Verification and comparison medians increased in these nonoverlapping ranges; structural sealing decreased.
+These bounded microbenchmarks do not establish a general speed claim. No physical simulation, scientific validation, certification or formal measurement campaign ran.
 
 ## 9. Review rounds
 
@@ -622,7 +676,7 @@ and `handed_never_set` (§5).
 fixed in `7b4a0de8`, controls `test_authority_review_r14.py`, mutants §5). Fixed, MAJOR: R14-A-F1 = R14-C-F1 = D14-F1 =
 F14-F1 = E14-F1 (every state not read back is recorded as its entry objects whatever its length); CRIT14-1 (a handing
 that is not a pair of dicts makes the reader refuse every account from then on; the constructor already refused one).
-Fixed, MINOR: R14-C-F2 / F14-F2 (a read state is checked against unread entries listed just before AND just after its
+Round-14 attempt, MINOR: F14-F2 was fixed, but R14-C-F2 remained open at the Round-15 SHA (the check covered only a recorded unread state). The change checked unread entries just before AND just after its
 read-back); R14-C-F3 / E14-F2 (only a `KeyboardInterrupt` is an interrupt; `SystemExit` / `GeneratorExit` from content
 are failures); E14-F4 (an unlistable read state against a recorded unread state states that reason); D14-F3 (a refusal
 behind an unread state has its own text); F14-F4 / R14-B-F1 (the one-fresh-thread-per-account check and registration
@@ -767,6 +821,32 @@ label, the read-through refused for good, §4). The documented residuals of earl
 reservation; the declaration and synthetic labels are the declarer's; liveness is the reader's mode; the provider cache
 unless `refresh=True`; the in-process trust boundary; world-derived model and experiment digests; the provider rule
 restating `system_runtime` preflight; replay attests self-consistency, not provenance).
+
+### Round 15 dispositions (completed review; repaired locally)
+
+Reviewed source: `95f3869ed020b04c36c098f0c33050aa009212b6`. Six lenses, eight skeptical verifications,
+one critic: all 15 returned. Aggregate Q1-Q3/Q5-Q7 NO; **Q4 YES**. The four MAJOR reports describe one seal
+lifecycle defect. D/E's PARTIAL answers do not override the confirmed MAJOR; E supplied static findings, not executed
+probes. R14-C-F2 was still open at that SHA, while F14-F2's narrower unread-barrier case was closed.
+
+The complete 25-row machine-readable disposition and coverage matrix, original journal results, rerun probes,
+failing-first logs and mutation results are in
+`docs/work/evidence/br11_local_2026_10_23/round15/`. This is review coverage evidence only, never scientific authority.
+Repairs cover sealing during in-flight verification, read-back/entry reconciliation, interruption while parsing or
+listing, and recovery of honest detached accounts. CRIT15-2 is the explicit availability residual above.
+B15-F4: the preserved R14 base rerun (`reused_base_r14/`) supports 913 passed / 2 failed guards; the missing R12
+guard rerun is not reconstructed or retrospectively claimed as present.
+
+Deterministic controls: 33 new R15 tests plus 54 generated traces (87 pass), plus two R13 dictionary-subclass
+controls in the mutation harness (89 pass). On reviewed production source that harness has 36 failures / 53 passes.
+Sixteen correctness mutants are killed; the single redundant inner-listing-guard removal remains protected by
+handing recovery, and removing both safeguards is killed. Mutants include entry-only sealing, omitted comparison
+and post-wait checks, interrupt poisoning, discarded before/history checks, and comparison outside the lock.
+The generated grammar covers start, wait, compare, seal, spend, top-up, restore, rollback, interruption and redispatch.
+It is bounded executable coverage, not exhaustive concurrency analysis or formal proof.
+
+L2 on the completed source: 781 passed. Fresh clean-snapshot L3/L4 results are recorded in the execution journal.
+BR1.1 remains NOT CLOSED until the fresh review and all closure evidence are complete.
 
 ## 10. Q1–Q7
 
