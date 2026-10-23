@@ -8818,6 +8818,13 @@ completeness critic):
     is byte-equal to a 13+-digit level is refused (224043.6073475 mm for the level 8820.6144625 inch, which `15725ec`
     admitted), and a fixed condition spelled that way is refused at bind (README §4).
 
+24. Gates at `4156c36` (`/home/user/forge-gate2`, the code under review in round 11; `d89dd3b`'s code plus the r10
+    test file's older-tree edit): FAST (command of item 5) 93 failed, 5 errors, 12596 passed; against the base's 99
+    failing ids NEW 0, FIXED 1 (the load-dependent timing test of item 10, which passed this time). Regression pack:
+    279 passed. Guard suites (item 10's set): 1327 passed, 2 failed, the same two pre-existing failures with messages
+    identical to the base's. The affected expensive tests minus the campaign tests: 13 failed, 14 errors, 335 passed,
+    the same 27 failing ids as on the base. FAST is red on the base: NOT green.
+
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
 cloud session); not used, and nothing was merged for it.
