@@ -8862,6 +8862,13 @@ completeness critic):
     (median 38), `aad2f69` 30-48 (median 44); at 1000 evaluations 48/48 (`.../scratchpad/perf_r11/p24_ab.txt`,
     `contention_d5ef1e3.txt`).
 
+26. Gates at `ec2c000` (`/home/user/forge-gate2`, the code under review in round 12): FAST (command of item 5) 94
+    failed, 5 errors, 12632 passed; failing ids identical to the base's 99 (NEW 0, FIXED 0; the load-dependent timing
+    test of item 10 failed this time, as on the base). Regression pack: 279 passed. Guard suites (item 10's set): 1364
+    passed, 2 failed, the same two pre-existing failures with messages identical to the base's. The affected expensive
+    tests minus the campaign tests: 13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base. FAST is
+    red on the base: NOT green.
+
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
 cloud session); not used, and nothing was merged for it.
