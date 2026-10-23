@@ -8674,7 +8674,8 @@ completeness critic):
     Guard suites (item 10's set): 1246 passed, 2 failed, the same two pre-existing failures with messages identical to
     the base's (re-run on `/home/user/forge-base` and diffed). `forge_check.py --changed --base 1202ea6c... --dry-run`:
     narrowing refused (unclassified `src/engcore/mind/world` and benchmark files) → whole FAST + regression pack, as
-    run above. FAST is red on the base: NOT green.
+    run above. FAST is red on the base: NOT green. The affected expensive tests minus the campaign tests (item 10's
+    command): 13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base (NEW 0, FIXED 0).
 
 SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
 NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
