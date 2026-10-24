@@ -552,11 +552,12 @@ def test_a_missing_private_superlu_makes_the_provider_unavailable_not_the_model_
     assert "superlu" in reason.lower()
 
 
-@pytest.mark.parametrize("name,value", [
-    ("conservation_rtol", 2e-12), ("conservation_atol", Quantity(2e-9,"J")),
-    ("temperature_atol", Quantity(2e-9,"K")), ("local_power_atol", Quantity(2e-8,"W")),
+@pytest.mark.parametrize("name,value,field", [
+    ("conservation_rtol", 2e-12, "rtol"), ("conservation_atol", Quantity(2e-9,"J"), "atol"),
+    ("temperature_atol", Quantity(2e-9,"K"), "temperature_atol"),
+    ("local_power_atol", Quantity(2e-8,"W"), "local_power_atol"),
 ])
-def test_numerical_tolerances_bind_configuration_without_awarding_assurance(name, value):
+def test_numerical_tolerances_bind_configuration_without_awarding_assurance(name, value, field):
     original, changed = session(), session(**{name: value})
     assert original._config_digest != changed._config_digest
     result = advance(changed, left=fixed(300), right=fixed(300))
@@ -564,6 +565,12 @@ def test_numerical_tolerances_bind_configuration_without_awarding_assurance(name
     assert result.energy.uncertainty.kind is UncertaintyKind.UNKNOWN
     assert result.execution.diagnostics.error_estimate is None
     assert result.to_dict()["classification"] == "numerical_balance_not_certified_error_or_physical_validation"
-    setattr(original, name, value)
+    # The constructor arguments are not all the stored attribute names: mutate the live fields
+    # that _configuration() actually binds (rtol/atol for the conservation tolerances).
+    stored_value = value
+    if isinstance(value, Quantity):
+        unit = {"atol": "J", "temperature_atol": "K", "local_power_atol": "W"}[field]
+        stored_value = value.magnitude_in(unit)
+    setattr(original, field, stored_value)
     with pytest.raises(NumericalRefusal, match="configuration drift"):
         advance(original, left=fixed(300), right=fixed(300))

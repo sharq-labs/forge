@@ -5385,7 +5385,8 @@
       "evidence": [
         {
           "path": "tools/certification/core_freeze_v4.py",
-          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255"
+          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255",
+          "commit": "8ab7dfba70199ee2cf120e86b6fcc1fca844364d"
         },
         {
           "path": "certification/CORE_FREEZE_V4.md",
@@ -5402,7 +5403,8 @@
       "evidence": [
         {
           "path": "tools/certification/core_freeze_v4.py",
-          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255"
+          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255",
+          "commit": "8ab7dfba70199ee2cf120e86b6fcc1fca844364d"
         },
         {
           "path": "certification/CORE_FREEZE_V4.md",
@@ -5432,7 +5434,8 @@
       "evidence": [
         {
           "path": "tools/certification/api_surface_v4.py",
-          "sha256": "57070c7ab2c6310f765fd65880a7ae778516ec39a581ce74aec981cdb1054106"
+          "sha256": "57070c7ab2c6310f765fd65880a7ae778516ec39a581ce74aec981cdb1054106",
+          "commit": "08e1b02f1e2e639b3b72c1821bba977a99b6df61"
         },
         {
           "path": "certification/CORE_FREEZE_V4.md",
@@ -8190,7 +8193,8 @@
         },
         {
           "path": "tools/certification/core_freeze_v4.py",
-          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255"
+          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255",
+          "commit": "8ab7dfba70199ee2cf120e86b6fcc1fca844364d"
         }
       ]
     },
@@ -8211,7 +8215,8 @@
         },
         {
           "path": "tools/certification/core_freeze_v4.py",
-          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255"
+          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255",
+          "commit": "8ab7dfba70199ee2cf120e86b6fcc1fca844364d"
         }
       ]
     },
@@ -8232,7 +8237,8 @@
         },
         {
           "path": "tools/certification/core_freeze_v4.py",
-          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255"
+          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255",
+          "commit": "8ab7dfba70199ee2cf120e86b6fcc1fca844364d"
         }
       ]
     },
@@ -8253,7 +8259,8 @@
         },
         {
           "path": "tools/certification/core_freeze_v4.py",
-          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255"
+          "sha256": "f2022ec37ebde118b899ab08bcf7882f6f8f30a33a27a3c6f666ee15724e6255",
+          "commit": "8ab7dfba70199ee2cf120e86b6fcc1fca844364d"
         }
       ]
     },
