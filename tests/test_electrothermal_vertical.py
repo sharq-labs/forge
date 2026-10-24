@@ -1579,23 +1579,17 @@ def test_l2_the_marginal_configuration_measures_a_ratio_of_one():
     assert ratio == pytest.approx(1.0, abs=1e-12)
 
 
-def test_l3_no_relaxation_appears_anywhere_in_the_module():
-    """Fail condition §12.10: relaxation is a separate decision, not a knob."""
-    source = pathlib.Path(inspect.getfile(cp)).read_text(encoding="utf-8")
-    tree = ast.parse(source)
-    identifiers = (
-        {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
-        | {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
-        | {n.arg for n in ast.walk(tree) if isinstance(n, ast.arg)}
-        | {
-            n.name
-            for n in ast.walk(tree)
-            if isinstance(n, (ast.FunctionDef, ast.ClassDef))
-        }
-    )
-    for forbidden in ("omega", "relax", "damp", "aitken", "anderson",
-                      "rollback", "checkpoint"):
-        assert not any(forbidden in name.lower() for name in identifiers), forbidden
+def test_l3_the_preregistered_nominal_plan_remains_unrelaxed_by_default():
+    """The original proof remains unrelaxed; BR18 later added an explicit opt-in."""
+    _, dependencies = compose(NOMINAL)
+    plan = cp.nominal_plan(NOMINAL, dependencies, seed=Quantity(300.0, KELVIN))
+    assert plan.relaxation_factor is None
+    assert "relaxation_factor" not in plan.to_dict()
+    assert cp.FixedPointCouplingPlan.from_dict(plan.to_dict()).relaxation_factor is None
+    run = cp.run_fixed_point_coupling(NOMINAL, plan, run_id="original-unrelaxed")
+    assert run.outcome is cp.CouplingOutcome.CRITERION_MET
+    assert only_temperature(run) == pytest.approx(338.577018, abs=1e-6)
+    assert run.plan.relaxation_factor is None
 
 
 # =====================================================================

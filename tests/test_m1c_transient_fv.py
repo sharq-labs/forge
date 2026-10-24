@@ -55,7 +55,8 @@ def region(left=0,right=1,*,area=1,k=1,c=1,missing=False):
 
 
 def session(nodes=(0,.2,.7,1),*,regions=None,temperatures=None,contacts=(),provider=None,admission=ADMISSION,
-            residual_rtol=1e-12,conservation_rtol=1e-12):
+            residual_rtol=1e-12,conservation_rtol=1e-12, conservation_atol=Quantity(1e-9,"J"),
+            temperature_atol=Quantity(1e-9,"K"), local_power_atol=Quantity(1e-8,"W")):
     a=VertexDualAdapter1D(Grid1D(tuple(nodes),"m"),admission=StateAdapterAdmission.OD6_VERTEX_DUAL_STATE_V1,
         root_context="fixture:transient",coordinate_frame="fixture:axis",store=InMemoryBulkStore())
     regions=tuple(regions or (region(),))
@@ -69,8 +70,8 @@ def session(nodes=(0,.2,.7,1),*,regions=None,temperatures=None,contacts=(),provi
     return TransientConduction1D(a,regions=regions,contacts=tuple(contacts),basis=BASIS,initial_time=initial_time,
         initial=initial,admission=admission,provider=provider or SparseFVProvider(),
         method=NumericalMethod("sparse_direct",SolverSettings(tolerances={"residual_rtol":residual_rtol})),
-        conservation_atol=Quantity(1e-9,"J"),conservation_rtol=conservation_rtol,
-        temperature_atol=Quantity(1e-9,"K"),local_power_atol=Quantity(1e-8,"W"))
+        conservation_atol=conservation_atol,conservation_rtol=conservation_rtol,
+        temperature_atol=temperature_atol,local_power_atol=local_power_atol)
 
 
 def flux(v):return ConductionBoundary(BoundaryKind.INWARD_HEAT_FLUX,Quantity(v,"W/m**2"))
@@ -549,3 +550,20 @@ def test_a_missing_private_superlu_makes_the_provider_unavailable_not_the_model_
     assert model_id == MODEL.model_id
     assert available is False and backend == "SuperLU:unavailable"
     assert "superlu" in reason.lower()
+
+
+@pytest.mark.parametrize("name,value", [
+    ("conservation_rtol", 2e-12), ("conservation_atol", Quantity(2e-9,"J")),
+    ("temperature_atol", Quantity(2e-9,"K")), ("local_power_atol", Quantity(2e-8,"W")),
+])
+def test_numerical_tolerances_bind_configuration_without_awarding_assurance(name, value):
+    original, changed = session(), session(**{name: value})
+    assert original._config_digest != changed._config_digest
+    result = advance(changed, left=fixed(300), right=fixed(300))
+    assert result.temperature.uncertainty.kind is UncertaintyKind.UNKNOWN
+    assert result.energy.uncertainty.kind is UncertaintyKind.UNKNOWN
+    assert result.execution.diagnostics.error_estimate is None
+    assert result.to_dict()["classification"] == "numerical_balance_not_certified_error_or_physical_validation"
+    setattr(original, name, value)
+    with pytest.raises(NumericalRefusal, match="configuration drift"):
+        advance(original, left=fixed(300), right=fixed(300))

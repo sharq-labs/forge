@@ -9730,3 +9730,225 @@ Independent final-source technical review PASS atd05abfdf8216eda24a6235a9c7565d2
 Authorized boundedrepairs complete. BLOCKED on required59failure remediation outsideR21 scientific/OD3scope and separate private-protection/humanapproval owneractions. Do not rerun merely to relabelred; obtain explicit separate repairauthority, preservefailures, then newreviewedsource/fullworkflow. Finalreportcontains exactownerdecisions and reproduction/verification/reviewer/SHA table. No newBigRock, thermal/battery/UQimplementation or broadOD3change started.
 
 Final independent completeness review PASS for accurate BLOCKED closure (FINAL_REPORT SHA2568cd96b01d4fbefae9c5abe7e8a2836d06e1ef496aa84399ac76166e044dde1a7):59JUnitIDs, failure/ JUnithashes, unchangedcertificate and NOTRUNlatergates checked. Executed `.forge/venvs/3.12/bin/python docs/ai/check_docs.py`:AI_DOCS:PASS8documents; `git diff --check`:exit0. `git merge-base --is-ancestor 1202ea6c3d96f5c31d0b142a32438da75e020cae HEAD` and samewith5ac5267781b9310fa205e9f2c1d12b34aa86e235:bothexit0. FinalGitHubread:main5ac52677/unprotected;PR184OPENd40aff44/dirty;PR185OPEN1202ea6c;onlyCOMMENTEDbotreview. Documentationcheckpoint does not alter measuredtestsource or createassurancereceipt.
+
+## 2026-10-24 — R22 bounded required-gate repair authorized
+
+Owner explicitly authorized repair of59remaining failures, necessaryOD-3, independentreview and fullassurance; NO PUSH/MERGE. Startingclean05a9e4d4, priorofficialfailure evidence retained atd05abfdf. Read-only independent reviews begun for coupling/field and frozenCore/mutation groups; parent examines schema/threshold/replay. No gate weakening or historical evidence rewrite authorized.
+
+
+### R22 repair execution evidence (2026-10-24)
+
+All raw commands, exit codes and output are preserved outside the checkout in `/home/dev_kaeem/br11-r22`. Historical R21 evidence is unchanged.
+
+- `red-59`: exact command/result record:
+```json
+{
+  "command": [
+    ".forge/venvs/3.12/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile",
+    "-p",
+    "no:cacheprovider",
+    "tests/claims/test_offline_revalidation.py::test_offline_verification_never_returns_verified",
+    "tests/claims/test_offline_revalidation.py::test_replay_re_earns_what_offline_verification_cannot",
+    "tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds",
+    "tests/test_core_freeze_v4_manifest.py::test_the_deep_surface_carries_methods_and_member_positions",
+    "tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against",
+    "tests/test_core_scientific_audit_batch55.py::test_r67_every_folded_mutation_still_matches_the_live_source_exactly_once",
+    "tests/test_core_scientific_audit_batch56.py::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see",
+    "tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one",
+    "tests/test_electrothermal_vertical.py::test_l3_no_relaxation_appears_anywhere_in_the_module",
+    "tests/test_interface_flux_execution.py::test_unqualified_direct_mapper_escape_and_stale_support_refuse",
+    "tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable",
+    "tests/test_mutation_population_v4.py::test_every_folded_mutation_still_matches_the_source_it_names",
+    "tests/test_phase1_conservative_cell_mapping.py::test_a_constant_field_maps_to_the_same_constant",
+    "tests/test_phase1_conservative_cell_mapping.py::test_a_non_convex_quadrilateral_is_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_a_signed_field_that_integrates_to_zero_is_conserved_without_division_by_zero",
+    "tests/test_phase1_conservative_cell_mapping.py::test_a_source_partly_outside_the_target_support_is_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_a_target_outside_the_source_support_is_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_hexahedral_cells_are_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_node_fields_are_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_offset_scale_units_are_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_structured_remap_between_unequal_cell_counts_per_axis",
+    "tests/test_phase1_conservative_cell_mapping.py::test_structured_remap_matches_hand_computed_overlaps",
+    "tests/test_phase1_conservative_cell_mapping.py::test_unequal_triangles_are_weighted_by_their_overlap_area",
+    "tests/test_phase1_coupling_convergence_coverage.py::test_a_self_loop_is_a_lagged_edge",
+    "tests/test_phase2_coupling_authority.py::test_a_relaxed_native_plan_is_built_with_torn_only_relaxation",
+    "tests/test_phase2_coupling_authority.py::test_an_iteration_limit_is_not_completed_on_both_paths",
+    "tests/test_phase2_coupling_authority.py::test_the_runtime_build_keeps_every_produced_result",
+    "tests/test_phase2_coupling_authority.py::test_the_runtime_build_reaches_the_native_outcome_iterations_and_values[nominal]",
+    "tests/test_phase2_coupling_authority.py::test_the_runtime_build_reaches_the_native_outcome_iterations_and_values[two_stage]",
+    "tests/test_phase2_coupling_authority.py::test_the_torn_edges_are_exactly_the_edges_the_runtime_requires_criteria_on",
+    "tests/test_phase2_external_coupling.py::test_a_crashed_provider_is_a_classified_refusal_not_a_numerical_failure",
+    "tests/test_phase2_external_coupling.py::test_a_field_coupled_run_maps_the_flux_conservatively_and_records_it",
+    "tests/test_phase2_external_coupling.py::test_a_flux_mapped_by_nearest_site_is_refused",
+    "tests/test_phase2_external_coupling.py::test_a_numerical_non_convergence_keeps_its_retryable_type",
+    "tests/test_phase2_external_coupling.py::test_the_authority_refuses_mock_external_participants_unless_allowed",
+    "tests/test_phase2_external_coupling.py::test_the_contract_is_honoured_by_a_conservative_flux_and_a_consistent_temperature",
+    "tests/test_phase2_field_transfer.py::test_a_constant_maps_to_the_same_constant_between_two_tetrahedralizations_of_a_cube",
+    "tests/test_phase2_field_transfer.py::test_a_degenerate_tetrahedron_is_refused",
+    "tests/test_phase2_field_transfer.py::test_a_vector_field_is_remapped_component_by_component",
+    "tests/test_phase2_field_transfer.py::test_tetrahedral_remap_conserves_the_integral_and_stays_within_the_source_range",
+    "tests/test_phase2_field_transfer.py::test_the_same_tetrahedra_in_another_order_map_as_a_permutation",
+    "tests/test_phase2_review_regressions.py::test_a_redundant_forward_tear_is_refused",
+    "tests/test_phase2_review_regressions.py::test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build",
+    "tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[1]",
+    "tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[2]",
+    "tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[3]",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_a_refused_transfer_is_a_recorded_stop_on_both_paths",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_a_relaxed_plan_requires_criteria_on_the_torn_edges_only",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_an_iteration_limit_reproduces_the_native_final_iterate",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[nominal]",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[nominal_relaxed]",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[two_stage]",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[two_stage_relaxed]",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_an_explicit_plan_is_admitted_only_as_satisfied_to_its_splitting_error",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_an_honest_graph_is_admitted_and_states_both_conditions_and_what_it_does_not_establish",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_an_implicit_plan_must_measure_both_interface_edges",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_the_receiver_sign_flips_with_the_declared_normal",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_wrong_interface_semantics_are_refused[<lambda>-conservatively]",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_wrong_interface_semantics_are_refused[<lambda>-heat flux dimension]"
+  ],
+  "exit": 1,
+  "seconds": 36.10102605819702,
+  "head": "05a9e4d43e60e5ab643d385c2f06c7adc8b5eeca",
+  "pending": "authorization docs only"
+}
+```
+
+- `authority-first`: exact command/result record:
+```json
+{
+  "command": [
+    ".forge/venvs/3.12/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_r22_integrity_guards.py",
+    "tests/test_core_semantic_invariants.py",
+    "tests/test_core_guards.py",
+    "tests/claims/test_offline_revalidation.py",
+    "tests/test_interface_flux_execution.py",
+    "tests/test_multiphysics_window_control.py",
+    "tests/test_electrothermal_vertical.py",
+    "tests/test_electrothermal_fixed_point_relaxation.py",
+    "-m",
+    "not expensive"
+  ],
+  "exit": 0,
+  "seconds": 31.99
+}
+```
+
+- `field-first`: exact command/result record:
+```json
+{
+  "command": [
+    ".forge/venvs/3.12/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_phase1_conservative_cell_mapping.py",
+    "tests/test_phase2_field_transfer.py"
+  ],
+  "exit": 0,
+  "seconds": 1.34
+}
+```
+
+- `adapter-first`: exact command/result record:
+```json
+{
+  "command": [
+    ".forge/venvs/3.12/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_phase2_coupling_authority.py",
+    "tests/test_phase35_ws2_runtime_migration.py",
+    "tests/test_phase2_review_regressions.py",
+    "tests/test_phase1_coupling_convergence_coverage.py"
+  ],
+  "exit": 5,
+  "seconds": 0.54
+}
+```
+
+- `adapter-second`: exact command/result record:
+```json
+{
+  "command": [
+    ".forge/venvs/3.12/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_phase2_coupling_authority.py",
+    "tests/test_phase35_ws2_electrothermal_migration.py",
+    "tests/test_phase2_review_regressions.py",
+    "tests/test_phase1_coupling_convergence_coverage.py"
+  ],
+  "exit": 1,
+  "seconds": 1.78
+}
+```
+
+Results: red-59 reproduced all 59 failures before repairs; authority-first 592 passed; field-first 26 passed. adapter-first ran no tests (incorrect WS2 filename, exit 5), corrected in adapter-second: 56 passed, one failed (`test_a_self_loop_is_refused_before_convergence_planning`, expected refusal diagnostic regex mismatch). The assertion now names the actual internal-physics boundary; rerun pending. None of these are physical-model validation or full-assurance completion.
+
+Replay diagnostic `/home/dev_kaeem/br11-r22/replay-id-red.json` showed a correct parent provenance run ID distinct from the selected thermal subreport ID; the old predicate rejected this valid binding. The window diagnostic measured 7 plain and 4 remembered rejections across eight quarter-second accepted windows ending at 2 seconds; the final plain window is already clipped to the stable step.
+
+
+R22 follow-up review and gate evidence:
+
+- The neighbor test named `test_a_redundant_forward_tear_is_refused` was a plan-construction mixed-dimension refusal; renamed it to state that scope. The separate `test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build` tampers a frozen native plan and asserts the runtime forward-tear refusal directly.
+- Added adapter regressions for Joule port meanings and preserved endpoints/conversion/transport declaration, both enumerated thermal result metrics, missing conversion, incompatible conversion forms, and an unrecognized same-dimension source metric.
+- Independent review found the schema guard accepted any attribute named `require_schema`. Narrowed it to direct calls through imports from the canonical serialization helper (and the explicitly inspected HybridUQ local helper), and added decoy-attribute and aliased-canonical-import controls. The first narrowed run exposed six legitimate HybridUQ local helper imports; the helper resolver was extended to that inspected module, and the corrected run passed.
+- Exact first focused command: `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_r22_integrity_guards.py tests/test_core_semantic_invariants.py tests/test_phase2_coupling_authority.py` — **175 passed, 1 failed** (schema guard correctly exposed six trusted local helper calls, causing the aggregate assertion failure; no defect in scientific records was alleged).
+- Exact corrected focused command (same argv): **176 passed in 13.35s**, exit 0.
+- Exact forward-tear + adapter command: `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_phase2_coupling_authority.py tests/test_phase2_review_regressions.py::test_a_mixed_dimension_forward_tear_is_refused_during_plan_construction tests/test_phase2_review_regressions.py::test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build` — **29 passed in 0.92s**, exit 0.
+- Exact adapter group command: `.forge/venvs/3.12/bin/python -m pytest -q -n 4 --dist loadfile -p no:cacheprovider tests/test_phase2_coupling_authority.py tests/test_phase35_ws2_electrothermal_migration.py tests/test_phase2_review_regressions.py tests/test_phase1_coupling_convergence_coverage.py` — **63 passed, 1 warning in 1.74s**, exit 0. Warning: expected overflow probe in `relaxation.py:203`.
+
+
+R22 freeze and assurance preparation:
+
+- Added `api_surface_v4.historical_surface_problems` and made the Core Freeze verifier use it to authenticate the stored deep surface against both candidate Git bytes and the manifest digest. Historical manifest/surface/certificate files were not regenerated or changed.
+- Added adversarial descendant-comparator controls for add-only acceptance versus exact-mode refusal; method removal/rename/role/signature/default/parameter-kind changes; symbol identity/kind; enum order; dataclass field order; duplicate identities; inconsistent symbol/method counts; and historical byte/digest mismatches.
+- Exact new-control command: `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_core_freeze_v4_manifest.py::test_r22_deep_surface_descendant_comparator_rejects_breaking_changes tests/test_core_freeze_v4_manifest.py::test_r22_deep_surface_history_requires_candidate_bytes_and_manifest_digest` — **2 passed in 0.06s**, exit 0.
+- Exact broad command: `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_core_freeze_v4_manifest.py tests/test_core_scientific_audit_batch56.py` — **27 passed, 2 failed in 156.13s**, exit 1. Both failures are the intended `tree.clean` binding assertions because this source-review run was performed with uncommitted changes; all reported freeze surface/history checks in the failure diagnostics passed. Rerun from a clean committed clone is required before interpreting this gate.
+- Independent follow-up reviews: coupling/runtime adapter **PASS**, schema/threshold/replay **PASS**. Freeze reviewer originally identified missing adversarial controls and correctly noted N60d runner was refused by `.git/worktrees` admission; controls are now added and read-only follow-up is pending.
+- Mutation attempt record: N60d was not executed. The first malformed ID file was refused as an unknown ID; the corrected request was then refused before mutation by the certified runner because `.git/worktrees` contains registered historical worktrees. No guard, registration, or checkout was changed to bypass this. The named-target mutation must run from a separate clean local clone with independent Git storage.
+
+
+Freeze-control follow-up and independent review closure:
+
+- Added the final two adversarial comparator controls requested by the freeze reviewer: candidate-byte-only tampering while stored bytes/digest still match, and a literal default `False`→`True` mutation while `has_default` remains true. Exact focused command: `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_core_freeze_v4_manifest.py::test_r22_deep_surface_descendant_comparator_rejects_breaking_changes tests/test_core_freeze_v4_manifest.py::test_r22_deep_surface_history_requires_candidate_bytes_and_manifest_digest` — **2 passed in 0.07s**, exit 0.
+- Freeze reviewer follow-up: **PASS** by read-only inspection. It confirms all requested negative controls, history authentication checks and exact-mode refusal are present. Limitation retained explicitly: historical V4 records default presence, not literal values; no frozen snapshot was rewritten.
+- Schema/threshold/replay reviewer follow-up: **PASS** by read-only inspection; coupling/runtime adapter reviewer follow-up: **PASS** by read-only inspection. These are source reviews, not test or scientific-validation evidence.

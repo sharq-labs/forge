@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import hashlib
 import importlib
+import dataclasses
+import copy
 
 import numpy as np
 import pytest
@@ -131,6 +133,61 @@ def _plan(system, budget=50, relaxation=None):
 
         plan = dataclasses.replace(plan, relaxation_factor=relaxation)
     return plan
+
+
+def _plan_for_temperature_metric(metric):
+    problems = cp.coupled_problems(NOMINAL, {s.component_id: s.conductor.reference_resistance for s in NOMINAL.stages})
+    dependencies = cp.coupled_dependencies(NOMINAL, problems, temperature_metric=metric)
+    return cp.nominal_plan(NOMINAL, dependencies, seed=Quantity(300.0, KELVIN), tolerance=Quantity(1e-6, KELVIN), max_iterations=50)
+
+
+def test_runtime_adapter_preserves_declared_joule_meanings_conversion_and_endpoints():
+    plan = _plan(NOMINAL)
+    built = runtime_equivalent(NOMINAL, plan)
+    heat = next(d for d in plan.dependencies if d.conversion is not None)
+    edge = next(e for e in built.graph.edges if e.edge_id == f"{heat.source_problem_id}.{heat.source_quantity}->{heat.target_problem_id}.{heat.target_quantity}")
+    source = next(p for p in built.graph.participants if p.participant_id == heat.source_problem_id)
+    target = next(p for p in built.graph.participants if p.participant_id == heat.target_problem_id)
+    source_port = next(p for p in source.outputs if p.port_id == heat.source_quantity)
+    target_port = next(p for p in target.inputs if p.port_id == heat.target_quantity)
+    assert source_port.quantity == "electrical" and target_port.quantity == "thermal"
+    assert edge.source.participant_id == heat.source_problem_id and edge.source.port_id == heat.source_quantity
+    assert edge.target.participant_id == heat.target_problem_id and edge.target.port_id == heat.target_quantity
+    assert edge.conversion == heat.conversion
+    assert edge.transport_declaration == heat.transport_declaration
+
+
+@pytest.mark.parametrize("metric, expected", [(lump.TEMPERATURE_METRIC, "final_temperature"), (lump.STEADY_STATE_TEMPERATURE_METRIC, "steady_state_temperature")])
+def test_runtime_adapter_uses_the_enumerated_temperature_metric_meaning(metric, expected):
+    plan = _plan_for_temperature_metric(metric)
+    built = runtime_equivalent(NOMINAL, plan)
+    dependency = next(d for d in plan.dependencies if d.source_quantity == metric)
+    edge = next(e for e in built.graph.edges if e.edge_id == f"{dependency.source_problem_id}.{metric}->{dependency.target_problem_id}.{dependency.target_quantity}")
+    source = next(p for p in built.graph.participants if p.participant_id == dependency.source_problem_id)
+    port = next(p for p in source.outputs if p.port_id == metric)
+    assert port.quantity == expected
+    assert edge.source.participant_id == dependency.source_problem_id and edge.source.port_id == metric
+    assert edge.target.participant_id == dependency.target_problem_id and edge.target.port_id == dependency.target_quantity
+
+
+@pytest.mark.parametrize("mutation, message", [("missing_conversion", "legacy quantity meanings|domain meanings"), ("incompatible_conversion", "conflicts with domain meanings"), ("unknown_metric", "no domain meaning")])
+def test_runtime_adapter_refuses_unbound_or_incompatible_domain_mappings(mutation, message):
+    plan = _plan(NOMINAL)
+    dependencies = list(plan.dependencies)
+    index = next(i for i, d in enumerate(dependencies) if d.conversion is not None)
+    heat = dependencies[index]
+    if mutation == "missing_conversion":
+        altered = copy.copy(heat)
+        object.__setattr__(altered, "conversion", None)
+    elif mutation == "incompatible_conversion":
+        altered = dataclasses.replace(heat, conversion=dataclasses.replace(heat.conversion, input_form="thermal", output_form="electrical"))
+    else:
+        altered = dataclasses.replace(heat, source_quantity="unrecognized_power_metric")
+    dependencies[index] = altered
+    tampered = copy.copy(plan)
+    object.__setattr__(tampered, "dependencies", tuple(dependencies))
+    with pytest.raises(InvalidScientificProblem, match=message):
+        runtime_equivalent(NOMINAL, tampered)
 
 
 @pytest.mark.parametrize("system", [NOMINAL, TWO_STAGE], ids=["nominal", "two_stage"])

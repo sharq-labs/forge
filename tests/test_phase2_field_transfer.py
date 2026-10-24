@@ -31,6 +31,7 @@ from engcore.scientific.fields import CellType, FieldDefinition, FieldLocation, 
 from engcore.scientific.multiphysics import FieldMappingDefinition, FieldMappingMethod
 from engcore.scientific.results.data_reference import ScientificDataReference
 from engcore.scientific.units.quantity import Quantity
+from tests.test_phase1_conservative_cell_mapping import _density_semantics
 
 CUBE = np.array([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0), (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)], float)
 #: five tetrahedra of the cube in hexahedron vertex order: four corners (1/6) and a centre (1/3)
@@ -57,14 +58,16 @@ def _mesh(store, mesh_id, cells, cell_type=CellType.TETRAHEDRON, points=CUBE):
 
 
 def _cell_field(store, mesh, values, unit="W/m**3"):
-    definition = FieldDefinition("q", unit, mesh.mesh_id, FieldLocation.CELL)
+    definition = FieldDefinition("q", unit, mesh.mesh_id, FieldLocation.CELL,
+                                 semantics=_density_semantics(unit, mesh.spatial_dimension))
     record, _ = FieldValue(definition, mesh, np.asarray(values, float)).store(store)
     return record
 
 
-def _map(store, record, source, target, method=FieldMappingMethod.CONSERVATIVE_CELL, location=FieldLocation.CELL):
+def _map(store, record, source, target, method=FieldMappingMethod.CONSERVATIVE_CELL, location=FieldLocation.CELL, unit="W/m**3"):
     definition = FieldMappingDefinition("map", method)
-    target_definition = FieldDefinition("q_t", "W/m**3", target.mesh_id, location)
+    target_definition = FieldDefinition("q_t", unit, target.mesh_id, location,
+                                        semantics=_density_semantics(unit, target.spatial_dimension))
     result = FieldMapper(BulkDataResolver(store), store).execute(record, source, target_definition, target, definition)
     return FieldValue.from_record(result.record, target, BulkDataResolver(store)).values, result.diagnostics
 
@@ -139,29 +142,27 @@ def test_a_degenerate_tetrahedron_is_refused():
 # ---- vector fields ------------------------------------------------------------------------------------------------
 
 
-def test_a_vector_field_is_remapped_component_by_component():
+def test_typed_vector_mapping_refuses_while_scalar_components_match_independent_overlaps():
     store = InMemoryBulkStore()
     source = StructuredMesh("fine", Quantity(3, "m"), Quantity(3, "m"), 4, 4)
     target = StructuredMesh("coarse", Quantity(3, "m"), Quantity(3, "m"), 3, 3)
     a = np.arange(9.0).reshape(3, 3)
     b = (np.arange(9.0) ** 2).reshape(3, 3)
-    definition = FieldDefinition("v", "W/m**2", "fine", FieldLocation.CELL, components=2)
+    definition = FieldDefinition("v", "W/m**2", "fine", FieldLocation.CELL, components=2,
+                                 semantics=_density_semantics("W/m**2", 2))
     record, _ = FieldValue(definition, source, np.stack([a, b], axis=-1)).store(store)
-    target_definition = FieldDefinition("v_t", "W/m**2", "coarse", FieldLocation.CELL, components=2)
+    target_definition = FieldDefinition("v_t", "W/m**2", "coarse", FieldLocation.CELL, components=2,
+                                        semantics=_density_semantics("W/m**2", 2))
     mapper = FieldMapper(BulkDataResolver(store), store)
-    result = mapper.execute(record, source, target_definition, target,
-                            FieldMappingDefinition("m", FieldMappingMethod.CONSERVATIVE_CELL))
-    vector = FieldValue.from_record(result.record, target, BulkDataResolver(store)).values
-    for component, scalar in enumerate((a, b)):
-        scalar_record = _scalar(store, source, scalar)
-        alone, _ = _map(store, scalar_record, source, target)
-        np.testing.assert_allclose(vector[..., component], alone, rtol=0, atol=1e-13)
-
-
-def _scalar(store, mesh, values):
-    definition = FieldDefinition("s", "W/m**3", mesh.mesh_id, FieldLocation.CELL)
-    record, _ = FieldValue(definition, mesh, values).store(store)
-    return record
+    with pytest.raises(InvalidScientificProblem, match="scalar CELL fields only"):
+        mapper.execute(record, source, target_definition, target,
+                       FieldMappingDefinition("m", FieldMappingMethod.CONSERVATIVE_CELL))
+    overlap = np.array([[1.0, 0.0], [0.5, 0.5], [0.0, 1.0]])
+    for scalar in (a, b):
+        scalar_record = _cell_field(store, source, scalar, unit="W/m**2")
+        alone, _ = _map(store, scalar_record, source, target, unit="W/m**2")
+        expected = overlap.T @ scalar @ overlap / 2.25
+        np.testing.assert_allclose(alone, expected, rtol=0, atol=1e-13)
 
 
 # ---- search structures against brute force ------------------------------------------------------------------

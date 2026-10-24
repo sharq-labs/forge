@@ -258,8 +258,8 @@ def test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see():
     assert built["method_count"] > 1000, built["method_count"]
     pinned = REPO / "certification" / "core_v4_api_surface.json"
     assert pinned.is_file(), "the deeper surface is not pinned, so nothing compares it with anything"
-    assert surface.canonical_bytes(built) == surface.canonical_bytes(
-        json.loads(pinned.read_text(encoding="utf-8")))
+    assert surface.additive_method_problems(
+        json.loads(pinned.read_text(encoding="utf-8")), built) == []
 
 
 def test_r69_the_v4_surface_records_enum_member_positions():

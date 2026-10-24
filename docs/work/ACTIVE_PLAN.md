@@ -6,6 +6,21 @@ as open, or list EXC-1 as an open exception are superseded by that decision. The
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task — R22 required-gate repair (2026-10-24)
+
+Owner explicitly authorized bounded repair of the59 remaining R21 failures,
+including necessary OD-3 work, independent review and full assurance. This supersedes
+the R21 stop on these repairs only. Preserve all historical failures, scientific
+invariants, evidence identities and gates. No new Big Rock. **No push or merge.**
+
+Start: clean05a9e4d43e60e5ab643d385c2f06c7adc8b5eeca; R21 measured source d05abfdf.
+Plan: classify59 by rootcause -> red-first bounded repair groups -> affected gates
+and independent scientific/compatibility review -> clean immutable reviewed source
+-> full documented local assurance -> certificate-only child/verify only after
+SOURCE_PASS. Stop only for a concrete unresolved scientific/architectural decision.
+Raw evidence stays outside checkout at /home/dev_kaeem/br11-r22/; R21 evidence is
+preserved. GitHub governance is not changed and cannot authorize publication.
+
 ## Current bounded task - R21 integration gate recovery (2026-10-24)
 
 **R21 status: BLOCKED after completed bounded integration repairs.** Main-history reconciliation, all1211unknown provenance entries, complete746classification, retention/secret audit, local runtime setup and two required-runtime test portability repairs are complete. Final reviewed measured source`d05abfdf8216eda24a6235a9c7565d276f9a7fcc`:officialassurance REFUSED atFAST311 (59failed12922passed176skipped), SAFE_TO_PUSH:NO. Allfourinitialadditionalfailuresresolved;59remainingIDs matchRound20comparison, not a causal-equivalence claim. No receipt/certificatechild/push/merge. Stop for separate scientific/Core/OD3 repair authorization and private-protection/independent-human-review owneractions. Exact evidence and59nodeIDs: `docs/work/evidence/r21-integration-recovery/FINAL_REPORT.md`. No automatic retry, gate weakening or newBigRock.

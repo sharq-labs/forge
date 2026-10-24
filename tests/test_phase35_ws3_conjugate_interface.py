@@ -11,6 +11,10 @@ NOT RUN (Phase 3.5 build phase): docs/work/DEFERRED_VALIDATION.md, DV-91.
 from __future__ import annotations
 
 import pytest
+from dataclasses import replace
+from tests.test_phase2_external_coupling import (
+    SOLID, FLUID, TEMPERATURE, HEAT_FLUX, TRANSFER, FLUX_S, FLUX_F, TEMP_S, TEMP_F,
+)
 
 from engcore.execution.multiphysics.conjugate_interface import (
     CHT_FENICSX_OPENFOAM, ConjugateHeatTransferInterface, PairStage, ProviderPairMaturity, StageStatus,
@@ -25,14 +29,12 @@ from engcore.scientific.multiphysics import (
 )
 from engcore.scientific.units.quantity import Quantity
 
-SOLID = StructuredMesh("solid", Quantity(1, "m"), Quantity(1, "m"), 3, 3)
-FLUID = StructuredMesh("fluid", Quantity(1, "m"), Quantity(1, "m"), 4, 4)
-
-
 def _port(pid, direction, unit, mesh, quantity):
-    definition = FieldDefinition(f"{pid}_{mesh}", unit, mesh, FieldLocation.CELL)
+    base = {("q", "solid"): FLUX_S, ("q", "fluid"): FLUX_F,
+            ("t", "solid"): TEMP_S, ("t", "fluid"): TEMP_F}[(pid, mesh)]
+    definition = replace(base, unit=unit)
     return PortDefinition(pid, PortDirection(direction), PortKind.FIELD, quantity, unit, field=definition,
-                          algebra=FieldAlgebra.SCALAR)
+                          algebra=FieldAlgebra.SCALAR, semantics=definition.semantics.quantity)
 
 
 def _spec(pid, ports):
@@ -44,9 +46,9 @@ def _graph(*, flux_unit="W/m**2", flux_method=FieldMappingMethod.CONSERVATIVE_CE
     solid = _spec("solid", [_port("q", "output", flux_unit, "solid", "heat_flux"), _port("t", "input", temp_unit, "solid", "temperature")])
     fluid = _spec("fluid", [_port("q", "input", flux_unit, "fluid", "heat_flux"), _port("t", "output", temp_unit, "fluid", "temperature")])
     flux = CouplingEdge("e_flux", PortRef("solid", "q"), PortRef("fluid", "q"), mapping=FieldMappingDefinition("flux", flux_method),
-                        transport_declaration="interface heat flux density")
+                        interface_transfer=TRANSFER)
     temp = CouplingEdge("e_temp", PortRef("fluid", "t"), PortRef("solid", "t"),
-                        mapping=FieldMappingDefinition("temp", FieldMappingMethod.BILINEAR))
+                        mapping=FieldMappingDefinition("temp", FieldMappingMethod.CONSERVATIVE_CELL))
     return PhysicsGraph("cht", (solid, fluid), (flux, temp), supports=(SOLID, FLUID))
 
 
@@ -65,17 +67,23 @@ def _interface(normal="outward_normal_of:solid", **kw):
     return ConjugateHeatTransferInterface(**{**base, **kw})
 
 
+def _admit(interface, graph, plan):
+    return admit_conjugate_interface(interface, graph, plan,
+        temperature_semantics=TEMPERATURE, heat_flux_semantics=HEAT_FLUX)
+
+
 def test_an_honest_graph_is_admitted_and_states_both_conditions_and_what_it_does_not_establish():
-    admission = admit_conjugate_interface(_interface(), _graph(), _plan())
+    admission = _admit(_interface(), _graph(), _plan())
     record = admission.to_dict()
     assert admission.dirichlet_receiver == "solid" and admission.neumann_receiver == "fluid"
     # the flux is stated along the SOURCE's (solid's) outward normal: heat leaving the solid enters the fluid
-    assert admission.receiver_flux_sign == +1
+    assert admission.receiver_flux_sign == -1
     assert "validation" in record["does_not_establish"] and "stability" in " ".join(record["does_not_establish"])
 
 
-def test_the_receiver_sign_flips_with_the_declared_normal():
-    assert admit_conjugate_interface(_interface("outward_normal_of:fluid"), _graph(), _plan()).receiver_flux_sign == -1
+def test_legacy_receiver_normal_cannot_override_the_executed_sign():
+    with pytest.raises(InvalidScientificProblem, match="source-normal migration"):
+        _admit(_interface("outward_normal_of:fluid"), _graph(), _plan())
 
 
 @pytest.mark.parametrize("normal", ["outward normal of the solid", "outward_normal_of:wall", ""])
@@ -85,26 +93,28 @@ def test_a_flux_without_an_explicit_participant_normal_is_refused(normal):
 
 
 @pytest.mark.parametrize("graph,match", [
-    (lambda: _graph(flux_method=FieldMappingMethod.NEAREST), "conservatively"),
-    (lambda: _graph(flux_unit="W"), "heat flux dimension"),
+    (lambda: _graph(flux_method=FieldMappingMethod.NEAREST), "full-coverage"),
+    (lambda: _graph(flux_unit="W"), "dimension"),
     # a power-like "temperature" field is refused while the graph is built (it must be
     # transported whole), before the interface admission can name the missing temperature
     # dimension; either refusal keeps the wrong semantics out
-    (lambda: _graph(temp_unit="W/m**2", flux_unit="W/m**2"), "temperature dimension|transported whole"),
+    (lambda: _graph(temp_unit="W/m**2", flux_unit="W/m**2"), "dimension"),
 ])
 def test_wrong_interface_semantics_are_refused(graph, match):
     with pytest.raises(InvalidScientificProblem, match=match):
-        admit_conjugate_interface(_interface(), graph(), _plan())
+        _admit(_interface(), graph(), _plan())
 
 
 def test_an_implicit_plan_must_measure_both_interface_edges():
-    with pytest.raises(InvalidScientificProblem, match="no criterion"):
-        admit_conjugate_interface(_interface(), _graph(), _plan(criteria=("e_temp",)))
+    with pytest.raises(InvalidScientificProblem, match="must monitor edges"):
+        _admit(_interface(), _graph(), _plan(criteria=("e_temp",)))
 
 
-def test_an_explicit_plan_is_admitted_only_as_satisfied_to_its_splitting_error():
-    record = admit_conjugate_interface(_interface(), _graph(), _plan(CouplingScheme.EXPLICIT)).to_dict()
-    assert "splitting error" in record["satisfied_to"]
+def test_an_explicit_plan_admission_does_not_establish_physical_conditions():
+    record = _admit(_interface(), _graph(), _plan(CouplingScheme.EXPLICIT)).to_dict()
+    assert record["execution"]["coupled_physical_conservation"] == "unknown"
+    assert record["execution"]["numerical_solution_verification"] == "not established"
+    assert record["execution"]["implicit"] is False
 
 
 def test_the_cht_pair_claims_nothing_it_has_not_shown():

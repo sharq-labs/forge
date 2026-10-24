@@ -38,7 +38,7 @@ from engcore.systems.electrothermal.runtime_adapter import runtime_equivalent
 # ---- 1. forward tears ---------------------------------------------------------------------------------------------
 
 
-def test_a_redundant_forward_tear_is_refused():
+def test_a_mixed_dimension_forward_tear_is_refused_during_plan_construction():
     conductor = mat.TemperatureDependentConductor(
         component_id="R1", reference_resistance=Quantity(10.0, "ohm"),
         temperature_coefficient=Quantity(0.00393, "1/kelvin"), reference_temperature=Quantity(293.15, "kelvin"))
@@ -51,10 +51,9 @@ def test_a_redundant_forward_tear_is_refused():
     plan = cp.nominal_plan(system, dependencies, seed=Quantity(300.0, "kelvin"))
     torn_keys = {cp.edge_key(t.dependency) for t in plan.torn}
     extra = next(d for d in dependencies if cp.edge_key(d) not in torn_keys)  # an edge the order already runs forward
-    redundant = dataclasses.replace(
-        plan, torn=plan.torn + (cp.TornEndpoint(dependency=extra, initial_value=_seed_for(extra)),))
-    with pytest.raises(InvalidScientificProblem, match="run forward"):
-        runtime_equivalent(system, redundant)
+    with pytest.raises(InvalidScientificProblem, match="different dimensions"):
+        dataclasses.replace(
+            plan, torn=plan.torn + (cp.TornEndpoint(dependency=extra, initial_value=_seed_for(extra)),))
 
 
 def test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build():

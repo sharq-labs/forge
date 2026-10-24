@@ -186,8 +186,13 @@ def test_unqualified_direct_mapper_escape_and_stale_support_refuse():
     a, b, fa, fb, transfer = fixture()
     store = InMemoryBulkStore()
     record, _ = FieldValue(fa, a, np.array([[2.,6.]])).store(store)
-    with pytest.raises(InvalidScientificProblem, match="A-4"):
-        FieldMapper(BulkDataResolver(store), store).execute(record, a, fb, b, FieldMappingDefinition("m", "conservative_cell"))
+    mapper = FieldMapper(BulkDataResolver(store), store)
+    with pytest.raises(InvalidScientificProblem, match="field meanings, kinds or measures differ"):
+        mapper.execute(record, a, fb, b, FieldMappingDefinition("m", "conservative_cell"))
+    # Even identical normal conventions cannot bypass executable interface admission.
+    same_convention = replace(fb, semantics=fa.semantics)
+    with pytest.raises(InvalidScientificProblem, match="A-4 normal/sign admission"):
+        mapper.execute(record, a, same_convention, b, FieldMappingDefinition("m", "conservative_cell"))
     with pytest.raises(InvalidScientificProblem, match="support identity"):
         transfer.admit(fa, a, fb, replace(b, length_x=Quantity(5,"m")), FieldMappingDefinition("m", "conservative_cell"))
 

@@ -181,19 +181,43 @@ def runtime_equivalent(
         raise InvalidScientificProblem(f"coupling plan {plan.plan_id!r} does not fit this composition: " + "; ".join(issues))
     executors = cp._executors(system, problems)
 
-    inputs: dict[str, dict[str, str]] = {pid: {} for pid in problem_ids}
-    outputs: dict[str, dict[str, str]] = {pid: {} for pid in problem_ids}
+    # Port identifiers locate results; they are not physical quantity meanings.
+    # Resolve meanings only from this domain's declared composition, never units.
+    declared = {}
+    for metric in (cp.lump.TEMPERATURE_METRIC, cp.lump.STEADY_STATE_TEMPERATURE_METRIC):
+        for dependency in cp.coupled_dependencies(system, problems, temperature_metric=metric):
+            if dependency.conversion is not None:
+                meanings = (dependency.conversion.input_form, dependency.conversion.output_form)
+            else:
+                meanings = (dependency.source_quantity, dependency.source_quantity)
+            declared[cp.edge_key(dependency)] = meanings
+
+    inputs: dict[str, dict[str, tuple[str, str]]] = {pid: {} for pid in problem_ids}
+    outputs: dict[str, dict[str, tuple[str, str]]] = {pid: {} for pid in problem_ids}
     for dependency in plan.dependencies:
-        inputs[dependency.target_problem_id][dependency.target_quantity] = dependency.unit_exemplar
-        outputs[dependency.source_problem_id].setdefault(dependency.source_quantity, dependency.unit_exemplar)
+        meanings = declared.get(cp.edge_key(dependency))
+        if meanings is None:
+            raise InvalidScientificProblem("runtime adapter has no domain meaning for dependency " + str(cp.edge_key(dependency)))
+        if dependency.conversion is not None and meanings != (
+            dependency.conversion.input_form, dependency.conversion.output_form
+        ):
+            raise InvalidScientificProblem("runtime adapter dependency conversion conflicts with domain meanings")
+        for ports, pid, name, meaning in (
+            (inputs, dependency.target_problem_id, dependency.target_quantity, meanings[1]),
+            (outputs, dependency.source_problem_id, dependency.source_quantity, meanings[0]),
+        ):
+            declaration = (dependency.unit_exemplar, meaning)
+            if name in ports[pid] and ports[pid][name] != declaration:
+                raise InvalidScientificProblem("runtime adapter port has conflicting domain meanings or units")
+            ports[pid][name] = declaration
 
     specs: dict[str, ParticipantSpec] = {}
     participants: dict[str, ResultParticipant] = {}
     for pid in problem_ids:
         ports = tuple(
-            PortDefinition(name, PortDirection.INPUT, PortKind.SCALAR, name, unit) for name, unit in sorted(inputs[pid].items())
+            PortDefinition(name, PortDirection.INPUT, PortKind.SCALAR, meaning, unit) for name, (unit, meaning) in sorted(inputs[pid].items())
         ) + tuple(
-            PortDefinition(name, PortDirection.OUTPUT, PortKind.SCALAR, name, unit) for name, unit in sorted(outputs[pid].items())
+            PortDefinition(name, PortDirection.OUTPUT, PortKind.SCALAR, meaning, unit) for name, (unit, meaning) in sorted(outputs[pid].items())
         )
         if not ports:
             raise InvalidScientificProblem(f"problem {pid!r} takes part in no dependency; it is not a coupling participant")

@@ -33,6 +33,8 @@ import pathlib
 
 import pytest
 
+from tests.guard_ast_support import canonical_import_names, unconditional_refusal, calls_canonical_helper
+
 from engcore.scientific.errors import ScientificCoreError
 from engcore.scientific.ir.values import IntegerValue
 from engcore.scientific.ir.variables import ScientificVariable, VariableKind
@@ -366,6 +368,19 @@ _NESTED_WITHOUT_SCHEMA_AT = frozenset({
 _SCHEMA_CHECKERS = frozenset({"require_schema", "require_schema_any"})
 
 
+def _canonical_schema_checker_names(tree, module_name):
+    trusted_modules = ("engcore.scientific.serialization", "engcore.hybrid_uq._records")
+    return set().union(*(
+        canonical_import_names(tree, module_name, trusted, checker)
+        for trusted in trusted_modules for checker in _SCHEMA_CHECKERS
+    ))
+
+
+def _calls_canonical_schema_checker(member, names):
+    return any(isinstance(call, ast.Call) and isinstance(call.func, ast.Name) and call.func.id in names
+               for call in ast.walk(member))
+
+
 def _to_dict_names_a_schema(name: str, where: str) -> bool:
     """Whether the class's ``to_dict`` writes a ``schema`` key (then it is not nested)."""
     tree = ast.parse((REPO_ROOT / where).read_bytes().decode("utf-8"))
@@ -384,6 +399,10 @@ def _readers_missing_a_schema_check() -> dict[tuple[str, str], str]:
         if "__pycache__" in path.parts:
             continue
         tree = ast.parse(path.read_bytes().decode("utf-8"))
+        module_name = ".".join(path.relative_to(REPO_ROOT / "src").with_suffix("").parts)
+        semantic_checkers = canonical_import_names(
+            tree, module_name, "engcore.scientific.semantics", "semantic_extension")
+        schema_checkers = _canonical_schema_checker_names(tree, module_name)
         for node in ast.walk(tree):
             if not isinstance(node, ast.ClassDef):
                 continue
@@ -391,10 +410,6 @@ def _readers_missing_a_schema_check() -> dict[tuple[str, str], str]:
                 if not (isinstance(member, ast.FunctionDef)
                         and member.name == "from_dict"):
                     continue
-                called = {
-                    getattr(c.func, "id", None) or getattr(c.func, "attr", None)
-                    for c in ast.walk(member) if isinstance(c, ast.Call)
-                }
                 # A reader passes if it delegates to the helper OR names the
                 # key itself: `MultirotorStudyBinding` compares
                 # `payload.get("schema")` by hand, which is the rule applied
@@ -404,7 +419,7 @@ def _readers_missing_a_schema_check() -> dict[tuple[str, str], str]:
                     isinstance(c, ast.Constant) and c.value == "schema"
                     for c in ast.walk(member)
                 )
-                if not (called & _SCHEMA_CHECKERS) and not names_the_key:
+                if not (_calls_canonical_schema_checker(member, schema_checkers) or calls_canonical_helper(member, semantic_checkers)) and not names_the_key and not unconditional_refusal(member):
                     # keyed by (class, file): two classes may share a name
                     # (`ReferenceCondition`), and one must not hide the other
                     where = path.relative_to(REPO_ROOT).as_posix()
