@@ -120,6 +120,14 @@ warm FAST runs: modules within 2.5 s, tests within 1.8 s, whole runs of identica
 code up to x1.25; none of six real run pairs (including a cold first run) was
 flagged, a synthetic x2.2 module was.
 
+**Run ledger** (`tools/run_observatory`). Any command, a test tier included, can be run
+through `python -m tools.run_observatory run [--adapter pytest] -- <command>`: it keeps
+the exit code and seals an immutable receipt (git identity, workload and environment
+ids, monotonic wall time, process-tree CPU / memory / I/O, outcome counts) in a run
+root outside the repository, indexed by SQLite, with comparability-classed baseline
+deltas. Developer telemetry, never evidence or certification; see
+`docs/performance/run-observatory.md`.
+
 `--changed` runs the union of:
 
 1. the repository/layer guards (`ARCHITECTURE_TESTS`);

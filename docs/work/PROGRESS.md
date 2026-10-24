@@ -8094,6 +8094,34 @@ Result:94 passed; exit0; wall seconds 9.618442600010894. Output SHA256 `f75e069f
 
 Live GitHub Tests39488053735 and Branch Policy39488053796 failed with empty step metadata; dependent jobs reported skipped. Logs for branch-policy118853558670 and scope118853560388 returned404 BlobNotFound. Annotations unavailable through connector; browser signed out. Root cause UNVERIFIED pending owner-provided annotation. No billing diagnosis, workflow repair or hosted rerun claimed. Formal, full assurance and OD3 NOT RUN.
 
+## 2026-10-22 — BR-RUN-OBS-01 Run Observatory v1 (developer tooling; not evidence, not certification)
+Branch `feat/run-observatory-v1`, worktree `D:/forge-run-observatory`, exact clean base `12862b0b8821e2564d8c94853f31d44ced55eebf` (origin/main, confirmed equal to `git ls-remote origin refs/heads/main`). Implementation commit `589e800b41cedc27ee15f910e69e005b92811adf`: `tools/run_observatory/`, `tests/test_run_observatory.py`, `tests/test_run_observatory_process.py`, `docs/performance/run-observatory.md`. No `src/engcore` file changed or imported. Not in ACTIVE_PLAN; no queue entry added. A Battery v3 run active in another worktree was not inspected or touched; FAST was **NOT RUN** to avoid CPU contention with it.
+
+Environment: Windows 11 10.0.26200, Python 3.14.2 (`phyx/.venv`), i7-14650HX 16C/24T, psutil 7.2.2, another ~5-worker Python workload active throughout (timings are MEASURED on a loaded machine).
+
+- Failing-first: both test modules failed at collection (`ModuleNotFoundError: tools.run_observatory`) before implementation.
+- Targeted: `python -m pytest -q -p no:cacheprovider --basetemp=<scratch> tests/test_run_observatory.py tests/test_run_observatory_process.py` → 73 passed (the Ctrl+Break interrupt test executed, not skipped).
+- Changed-file gate: `python tools/forge_check.py --changed --base 12862b0b8821e2564d8c94853f31d44ced55eebf` (env `PYTEST_ADDOPTS=--basetemp=<scratch> -p no:cacheprovider`) → 662 passed, 3 failed, 3 skipped, exit 1, 179 s. Same selection minus the two new modules on a detached worktree at the exact base → 589 passed, 3 failed, 3 skipped. Failed nodes identical on both: `tests/test_change_impact.py::test_f7_a_tree_with_a_refused_entry_narrows_nothing` (WinError 1314, symlink privilege: environmental), `tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one`, `tests/test_mutation_population_v4.py::test_every_folded_mutation_still_matches_the_source_it_names` (baseline). NEW deterministic failures 0, NEW errors 0. Not a green gate. The gate reports RECERTIFICATION_REQUIRED (owner-run) because any `tests/**` change hits the `assurance_suites` trigger; not run.
+- First gate run found a test defect, fixed before commit: the outer `PYTEST_ADDOPTS` (`--basetemp`) leaked into the pytest the observatory runs (exit 4); the process tests now strip `PYTEST_*` from the child environment.
+- Dogfood (ledger `D:/forge-run-ledger`, clean tree at `589e800b`): two runs of `python -c "print(sum(i * i for i in range(3_000_000)))"` → distinct RUN_IDs, same WORKLOAD_ID `82e228c4…`, same ENVIRONMENT_ID `be93ebaa…`, second EXACT_COMPARABLE to the first, wall 0.160 → 0.159 s (−0.5 %), PERFORMANCE UNCHANGED (policy v1). `range(4_000_000)` → WORKLOAD_VARIANT, no deltas, NOT_COMPARABLE. `sys.exit(3)` → RUN_FAIL, wrapper exit 3. `verify --all` VALID ×5; SQLite WAL, `integrity_check` ok.
+- Overhead (`overhead.py`, 7 interleaved repeats, external wall medians): trivial `pass` 0.0275 s direct vs 0.5624 s observed (+0.535 s); 20M sum of squares 1.0689 s vs 1.6081 s (+0.539 s, +50 %). A fixed ~0.54 s per run outside the measured window (observer start-up, git/distribution/GPU identity, sealing); the child wall recorded in receipts (median 1.0543 s) matches direct execution. Sub-second workloads are materially slower to run observed; their recorded durations are not.
+
+### BR-RUN-OBS-01 follow-up — environment-facts cache (fixed observer overhead)
+Commit `1ce0d573f0f954d91b6b74231feb4fdc450f04c8` on `feat/run-observatory-v1`. Profile of one observed `python -c pass` at `578ff981` (cProfile): `execute` 0.50 s, of which environment probing 0.31 s (distributions 0.16, two WMI queries 0.10, `nvidia-smi` 0.05), `capture_git` 0.12 s (five git calls), CLI imports 0.12 s. Change: environment facts cached in `<run-root>/cache/` under a key binding interpreter, site-packages mtimes, boot minute, host, salt, child executable stat and psutil presence, 24 h TTL; facts byte-identical, so ENVIRONMENT_ID is unchanged (tested); one `git rev-parse` for root/HEAD/tree/ref; `importlib.metadata` and `xml` imported lazily. Failing-first: the 4 cache tests failed (`TypeError ... env_cache`, `AttributeError ... cached_environment_facts`) before the change; the 2 new git edge tests (branch with `/`, detached HEAD, no commits) passed before and after.
+
+- Targeted: `python -m pytest -q tests/test_run_observatory.py tests/test_run_observatory_process.py` (env `PYTEST_ADDOPTS=--basetemp=<scratch> -p no:cacheprovider`) → 79 passed.
+- Measured through the observatory itself (ledger `D:/forge-run-ledger`, instrument = frozen detached worktree at `578ff981` for both arms, workload `python obs_bench.py 10 <inner ledger>` = 10 observed `python -c pass`, `--input obs_bench.py`, one WORKLOAD_ID `1845e509…` and one ENVIRONMENT_ID across all 9 runs, arms alternated A/B ×3 after 3 A-only runs): A (`578ff981`, 6 runs) wall median 9.24 s (7.53–10.10), CPU median 8.96 s, per observed run 0.885 s; B (`1ce0d573`, 3 runs) wall median 3.80 s (3.27–4.01), CPU median 3.91 s, per observed run 0.337 s. First B run vs preceding A: CODE_VARIANT, −55.4 %, PERFORMANCE_IMPROVED (policy v1). Same machine still running a ~5-worker workload throughout.
+- Policy noise observed: A-vs-A (identical code) 7.531 → 9.485 s read EXACT_COMPARABLE +25.9 %, PERFORMANCE_REGRESSION — a false positive of the default 25 % / 1 s bar on a loaded machine; recorded in `docs/performance/run-observatory.md`, policy unchanged.
+- Standalone `overhead.py` (7 interleaved repeats, fresh run root, so first observed run probes): trivial `pass` 0.0313 → 0.3049 s (+0.274 s, was +0.535 s); 20M sum of squares 1.0842 → 1.3473 s (+0.263 s, +24 %, was +50 %).
+- Changed-file gate at `1ce0d573` (`--base 12862b0b…`): 791 passed, 5 failed, 3 skipped, exit 1, 171 s. Selection grew because `docs/work/PROGRESS.md` is now in the diff (modules that mention it). Failed: the 3 baseline nodes recorded above plus `tests/foundations/test_v2_blindfold.py::test_the_subprocess_escrow_keeps_its_secrets_in_the_child` and `tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable`; both re-run on a detached worktree at the exact base → same 2 failed. NEW failures 0, NEW errors 0; not green. RECERTIFICATION_REQUIRED (owner-run) unchanged; FAST NOT RUN (Battery v3 still active).
+
+### BR-RUN-OBS-01 follow-up — noise-aware performance policy v2 and host-load context
+Commit `132ebba91b40998c9c878759d4e9ae5724f3ba59`. Policy v2 (default; v1 kept as `POLICY_V1` / `--policy-version 1`): the v1 bars (25 % and 1.0 s) and the candidate outside the band of the last 10 completed runs exactly comparable to the baseline (same workload, environment, code, status, started before the candidate) by 5 %; fewer than 3 such runs → `NOT_ENOUGH_REPEATS` (new performance reading, vocabulary test updated). New receipt section `host_load` (system CPU busy over the run window minus the run's tree, `PARTIAL`, context only, never in a reading) and `comparison.noise` / `comparison.host_load`. Failing-first: 12 tests failed before the change (`TypeError: compare() got an unexpected keyword argument 'history'`, missing `POLICY_V1`, `host_load`, `NOT_ENOUGH_REPEATS`).
+
+- Targeted: `python -m pytest -q tests/test_run_observatory.py tests/test_run_observatory_process.py` (env `PYTEST_ADDOPTS=--basetemp=<scratch> -p no:cacheprovider`) → 86 passed.
+- Re-read of recorded ledger pairs (`python -m tools.run_observatory --run-root D:/forge-run-ledger compare <cand> <base>`): the A-vs-A false positive `20261022T122037Z-f26687f666cb4941` vs `20261022T122025Z-f8e29da697064e6d` (+25.9 %) → v2 UNCHANGED, band 5 runs 7.531–10.095 s, within band; with `--policy-version=1` → PERFORMANCE_REGRESSION (unchanged v1 behaviour). Real improvement `20261022T122020Z-09ee6612a7e84859` vs `20261022T122011Z-2c8320eb09e64a43` (CODE_VARIANT, −55.4 %) → v2 PERFORMANCE_IMPROVED, band 4 runs 8.347–10.095 s, outside. First A pair (1 earlier run, +6.4 %) → UNCHANGED (inside the bars).
+- Live runs at `132ebba9`, `python -c "print(sum(i * i for i in range(8_000_000)))"` ×4 (`20261022T123149Z-f502be0ca55b4151` … `20261022T123151Z-b78d09a9586d4923`): 0.609 / 0.645 / 0.643 / 0.671 s, all UNCHANGED, band growing 1→3 runs; host load 8.1 / 8.2 / 8.7 / 10.2 of 24 cores busy outside the run (machine 38–46 % busy) — the concurrent Battery v3 workload.
+- Changed-file gate (`--base 12862b0b…`): 798 passed, 5 failed, 3 skipped, exit 1, 219 s; the 5 failed nodes are the baseline set recorded above (all failing on the exact base). NEW failures 0, NEW errors 0; not green. RECERTIFICATION_REQUIRED (owner-run) unchanged; FAST NOT RUN (Battery v3 still active).
 
 ## 2026-10-21 — BR-BATT-REDISC-01 battery historical-rediscovery development pilot (non-formal)
 
@@ -10010,3 +10038,43 @@ R22 full-assurance rerun follow-up (a257bc4fb10515a9f870d9b2c9941a89126a7d77):
 - Exact focused command: .forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance; 2 passed in 13.48s, exit 0.
 - Independent read-only provenance review: PASS. It confirmed the artifact digest is unchanged, the historical source blob matches the recorded digest, and the new commit identity binds that source. The review does not claim to establish the original producer invocation.
 - This source needs a new immutable commit and complete local-assurance rerun. The failed run remains preserved; SAFE_TO_PUSH is NO, and no push or merge was performed.
+
+
+## PR #186 review repair — 2026-10-24
+
+Bounded repair of stored-log redaction across chunks, child-relative JUnit
+paths and POSIX descendant termination. Main d19d7694 is merged locally;
+both DOCSET entries and both progress histories retained. No published history
+rewritten. Oversized pending log records fail closed with an explicit omission
+flag; raw passthrough/hashing retain their documented semantics.
+
+Windows interpreter: C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe.
+Commands/results:
+- `tools/forge_check.py --changed --base d19d76946506d5b3625f8eaa031dd87c7e2bfdd2 --workers 4`: exit 1, pytest INTERNALERROR, shared temp directory permission denied.
+- `-m pytest tests/test_run_observatory.py -q --tb=short`: 26 passed, 2 POSIX skips, 53 setup errors (shared temp permissions).
+- Same targeted command with `--basetemp=.pytest-review-temp/pr186-targeted`: 26 passed, 2 skips, 53 setup errors (missing parent). Parent created for retry.
+- Retry with `--basetemp=.pytest-review-temp/pr186-targeted-2`: interrupted after the new long-line probe exposed excessive regex rescanning; no pass claimed. One earlier failure remains to diagnose on retry.
+- WSL `PYTHONPATH=src:. /home/dev_kaeem/forge-r22-assurance/.forge/venvs/3.12/bin/python -m pytest tests/test_run_observatory.py -q --tb=short`: interrupted at the same long-line regression. Corrected regex boundary; rerun pending.
+Logs remain externally in C:/Users/dev_kaeem/.codex/forge-integration-20261024-131933/pr186-*.log and /home/dev_kaeem/pr186-*.log.
+Official assurance, independent approval and protected publication remain pending.
+
+
+PR #186 verification follow-up:
+- WSL `PYTHONPATH=src:. /home/dev_kaeem/forge-r22-assurance/.forge/venvs/3.12/bin/python -m pytest tests/test_run_observatory.py -q --tb=short`: 81 passed in 9.87s after regex repair (pr186-targeted-linux-2.log).
+- Windows targeted with `--basetemp=.pytest-review-temp/pr186-targeted-3`: 78 passed, 2 skipped, 1 failure: test_d_outside_a_repository_git_identity_is_unknown_not_clean. The temp path was inside this Git tree.
+- Windows targeted with `--basetemp=C:/Users/dev_kaeem/.codex/forge-integration-20261024-131933/pr186-pytest-temp`: 79 passed, 2 POSIX skips in 21.92s (pr186-targeted-windows-4.log).
+- Official `local_assurance prepare --python311 /home/dev_kaeem/forge-gen2-authority-v1/.forge/venvs/r21-bootstrap/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11 --python312 /usr/bin/python3.12`: first REFUSED, ngspice absent from PATH. Repeated with existing provider-ngspice PATH and LD_LIBRARY_PATH: LOCAL_ASSURANCE_PREPARE PASS (pr186-prepare-2.log).
+- WSL `.forge/venvs/3.12/bin/python tools/forge_check.py --changed --base d19d76946506d5b3625f8eaa031dd87c7e2bfdd2 --workers 4`: 905 passed, 1 failed in 56.39s. Failure: test_16_a_rerun_with_the_same_failures_reads_no_new_failures. The first child pytest created untracked bytecode, correctly yielding CODE_VARIANT. The fixture now disables child bytecode generation so its unchanged-source premise holds; no production identity rule or assertion weakened.
+Pending rerun on that fixture repair and fresh official immutable-source assurance.
+
+
+PR #186 bounded completion / user scope correction:
+- WSL `.forge/venvs/3.12/bin/python tools/forge_check.py --changed --base d19d76946506d5b3625f8eaa031dd87c7e2bfdd2 --workers 4`: 906 passed in 58.83s (pr186-changed-linux-2.log), on bc7e6d19.
+- WSL `.forge/venvs/3.12/bin/python tools/forge_check.py --regression --workers 4`: 279 passed in 4.66s (pr186-regression-linux.log), on bc7e6d19.
+- Follow-up handles an interrupt before monitor attachment by signaling the isolated POSIX group directly. WSL `.forge/venvs/3.12/bin/python -m pytest tests/test_run_observatory.py -q -k interrupt`: 3 passed, 79 deselected in 0.73s (pr186-final-interrupt.log), on the final working patch.
+- `git diff --check`: exit 0. `git ls-files -u`: empty; both documentation conflicts resolved, retaining both sides.
+User narrowed the task to "just solve conflicts" while local verification was
+running. No full local_assurance run or certificate-child issuance started.
+SAFE_TO_PUSH remains NO for the new source; no push or merge performed.
+The existing R22 evidence remains unchanged. Local repairs and failure logs
+are preserved; no independent review or protection bypass was attempted.
