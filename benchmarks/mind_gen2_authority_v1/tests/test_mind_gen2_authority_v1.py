@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import pathlib
 import subprocess
 
+import pint
 import pytest
+
+from engcore.scientific.units.quantity import registry_fingerprint, verify_registry_unmutated
 
 from benchmarks.mind_gen2_authority_v1 import rescore
 from benchmarks.mind_gen2_authority_v1 import run_benchmark as rb
@@ -14,8 +18,38 @@ from benchmarks.mind_gen2_authority_v1 import run_benchmark as rb
 HERE = pathlib.Path(rb.__file__).resolve().parent
 
 
+# Runtime-qualified frozen references: full backend identity is part of each world revision.
+# Neither an unknown registry nor a new Pint version may silently select a nearby reference.
+_AUTHORITY_REFERENCES = {
+    "0250d7145147491d3f611b1c043e8afd8223e17093e761e219e84235edd9526a": (
+        "0.26.2", rb.AUTHORITY_PATH,
+        "8ea925ded8c048aa48a29328a0ac413266fb483c7a6cd1d1d780b4c368964ae6"),
+    "2471419917a94a8aa5b9612f022ba5249b871cad3780bf55b5e2137d955b2b41": (
+        "0.25.3", HERE / "results/runtime/AUTHORITY_pint_0_25_3.json",
+        "b7f09d39028bf5d0d4b7c3ce45c1789c5aeeacb193028c1320906f213d4e8651"),
+}
+
+
+def _authority_reference(fingerprint, pint_version):
+    assert fingerprint in _AUTHORITY_REFERENCES, "unreviewed unit-registry fingerprint"
+    version, path, digest = _AUTHORITY_REFERENCES[fingerprint]
+    assert pint_version == version, "unreviewed Pint version for unit-registry fingerprint"
+    payload = path.read_bytes()
+    assert hashlib.sha256(payload).hexdigest() == digest, "frozen authority reference bytes changed"
+    return payload
+
+
 def test_the_authority_matrix_reproduces():
-    assert rb._dump(rb.matrix()) == rb.AUTHORITY_PATH.read_bytes()
+    verify_registry_unmutated()
+    expected = _authority_reference(registry_fingerprint(), pint.__version__)
+    assert rb._dump(rb.matrix()) == expected
+
+
+def test_an_unreviewed_runtime_cannot_select_an_authority_reference():
+    with pytest.raises(AssertionError, match="unreviewed unit-registry fingerprint"):
+        _authority_reference("0" * 64, pint.__version__)
+    with pytest.raises(AssertionError, match="unreviewed Pint version"):
+        _authority_reference(registry_fingerprint(), "unreviewed")
 
 
 def test_the_br1_rescore_reproduces():

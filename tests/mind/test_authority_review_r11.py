@@ -13,6 +13,7 @@ from __future__ import annotations
 from tests.mind.publication_support import following
 
 import enum
+import json
 import threading
 import time
 
@@ -28,6 +29,7 @@ from engcore.mind.world.authority import OwnerUnavailable
 from engcore.mind.world.projection import _lower_revision
 from engcore.scientific.experiments.evaluation import EvaluationStatus, ScientificEvaluation
 from engcore.scientific.experiments.experiment import ScientificExperiment
+from engcore.scientific.serialization import to_json
 from engcore.sria.campaign.budget import BudgetLedger
 from engcore.sria.decision import ActionFamily
 
@@ -91,8 +93,42 @@ def _spend_then_restore(o, eid, change, accounts=None, restore=lambda: None):
 def test_a_deeply_nested_spend_is_observed_and_its_rollback_never_redispatches(depth):
     o = ax.owned("battery")
     eid = next(iter(o.experiments))
+    # Check the owner's serialization independently of BudgetReader. CPython 3.11's JSON encoder
+    # cannot round-trip depth 2000 even on a fresh thread; 3.12 can. Neither may redispatch a rollback.
+    control = ax.owned("battery").experiments[eid]
+    control.record(ScientificEvaluation("run.1", {}, status=EvaluationStatus.NOT_CONVERGED, detail="observed"))
+    control.metadata["trace"] = _nested(depth)
+    outcome, unexpected = [], []
+
+    def owner_round_trip():
+        try:
+            written = to_json(control)
+            rebuilt = ScientificExperiment.from_dict(json.loads(written))
+            assert to_json(rebuilt) == written
+        except RecursionError:
+            outcome.append(False)
+        except BaseException as exc:
+            unexpected.append(exc)
+        else:
+            outcome.append(True)
+
+    thread = threading.Thread(target=owner_round_trip, daemon=True)
+    thread.start()
+    thread.join(10)
+    assert not thread.is_alive(), "independent owner round-trip did not finish"
+    if unexpected:
+        raise unexpected[0]
+    assert len(outcome) == 1
+    if depth in (3, 600):
+        assert outcome == [True], "readable-depth positive control must round-trip"
+
     refused, calls, reader = _spend_then_restore(o, eid, lambda e: e.metadata.__setitem__("trace", _nested(depth)))
-    assert refused and calls == 1 and reader._diverged == {}               # observed, not refused for good
+    assert refused and calls == 1
+    if outcome[0]:
+        assert reader._diverged == {}                                    # readable spend was observed
+    else:
+        assert set(reader._diverged) == {("experiment", eid)}
+        assert "recursion" in reader._diverged[("experiment", eid)]      # unreadable even on a fresh thread
 
 
 def test_a_deeply_nested_account_no_world_reads_refuses_no_admission():

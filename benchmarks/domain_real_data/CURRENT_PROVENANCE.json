@@ -33483,6 +33483,29 @@
           "commit": "41663479890a656a9a0e62bd8334e5e59510218a"
         }
       ]
+    },
+    {
+      "path": "benchmarks/mind_gen2_authority_v1/results/runtime/AUTHORITY_pint_0_25_3.json",
+      "sha256": "b7f09d39028bf5d0d4b7c3ce45c1789c5aeeacb193028c1320906f213d4e8651",
+      "class": "DERIVED",
+      "role": "RUNTIME_QUALIFIED_CONTRACT_RESULT",
+      "rationale": "Computed once from unchanged synthetic-contract matrix generator using Python 3.11.17/Pint 0.25.3; full backend fingerprint and generation comparison are recorded in runtime/README.md. Six backend-bound world revisions differ from the preserved Pint 0.26.2 reference; all other matrix fields match. No physical validation, registry-wide semantic equivalence, certification or formal proof is asserted.",
+      "evidence": [
+        {
+          "path": "benchmarks/mind_gen2_authority_v1/run_benchmark.py",
+          "sha256": "83a7e6f2a90f0941a9cb95888711b0d63b3d9d108b5f5e5f68ebebdc6e5a84ea",
+          "commit": "5d98271ae14c72202163a46b5b73ca736c3316ab"
+        },
+        {
+          "path": "benchmarks/mind_gen2_authority_v1/fixtures.py",
+          "sha256": "c7359bc481d3bdc71a2f5e0310b001a971b794889981924430ca35d2ed6b678e",
+          "commit": "5d98271ae14c72202163a46b5b73ca736c3316ab"
+        },
+        {
+          "path": "benchmarks/mind_gen2_authority_v1/results/runtime/README.md",
+          "sha256": "497a8dc41eb862f25836806ef83269e789e4207a6382944e738efb2386314e2e"
+        }
+      ]
     }
   ]
 }
