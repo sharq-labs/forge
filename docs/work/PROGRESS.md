@@ -10066,3 +10066,15 @@ PR #186 verification follow-up:
 - Official `local_assurance prepare --python311 /home/dev_kaeem/forge-gen2-authority-v1/.forge/venvs/r21-bootstrap/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11 --python312 /usr/bin/python3.12`: first REFUSED, ngspice absent from PATH. Repeated with existing provider-ngspice PATH and LD_LIBRARY_PATH: LOCAL_ASSURANCE_PREPARE PASS (pr186-prepare-2.log).
 - WSL `.forge/venvs/3.12/bin/python tools/forge_check.py --changed --base d19d76946506d5b3625f8eaa031dd87c7e2bfdd2 --workers 4`: 905 passed, 1 failed in 56.39s. Failure: test_16_a_rerun_with_the_same_failures_reads_no_new_failures. The first child pytest created untracked bytecode, correctly yielding CODE_VARIANT. The fixture now disables child bytecode generation so its unchanged-source premise holds; no production identity rule or assertion weakened.
 Pending rerun on that fixture repair and fresh official immutable-source assurance.
+
+
+PR #186 bounded completion / user scope correction:
+- WSL `.forge/venvs/3.12/bin/python tools/forge_check.py --changed --base d19d76946506d5b3625f8eaa031dd87c7e2bfdd2 --workers 4`: 906 passed in 58.83s (pr186-changed-linux-2.log), on bc7e6d19.
+- WSL `.forge/venvs/3.12/bin/python tools/forge_check.py --regression --workers 4`: 279 passed in 4.66s (pr186-regression-linux.log), on bc7e6d19.
+- Follow-up handles an interrupt before monitor attachment by signaling the isolated POSIX group directly. WSL `.forge/venvs/3.12/bin/python -m pytest tests/test_run_observatory.py -q -k interrupt`: 3 passed, 79 deselected in 0.73s (pr186-final-interrupt.log), on the final working patch.
+- `git diff --check`: exit 0. `git ls-files -u`: empty; both documentation conflicts resolved, retaining both sides.
+User narrowed the task to "just solve conflicts" while local verification was
+running. No full local_assurance run or certificate-child issuance started.
+SAFE_TO_PUSH remains NO for the new source; no push or merge performed.
+The existing R22 evidence remains unchanged. Local repairs and failure logs
+are preserved; no independent review or protection bypass was attempted.

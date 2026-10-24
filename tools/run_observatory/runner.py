@@ -689,8 +689,14 @@ def _stop_child(proc: subprocess.Popen | None, monitor: metrics.ProcessTreeMonit
         except KeyboardInterrupt:
             break
     try:
-        monitor.terminate_tree() if getattr(monitor, "_proc", None) is not None else proc.kill()
-    except OSError:
+        if not WINDOWS:
+            # An interrupt can arrive between Popen and monitor.attach().
+            os.killpg(proc.pid, signal.SIGKILL)
+        elif getattr(monitor, "_proc", None) is not None:
+            monitor.terminate_tree()
+        else:
+            proc.kill()
+    except ProcessLookupError:
         pass
     try:
         return proc.wait(timeout=30)

@@ -865,3 +865,16 @@ def test_interrupt_stops_descendants_even_when_parent_exits(repo, run_root, monk
                 os.kill(int(pidfile.read_text()), signal.SIGKILL)
             except ProcessLookupError:
                 pass
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX process-group interrupt contract")
+def test_interrupt_before_monitor_attach_still_kills_the_group(monkeypatch):
+    import signal
+    signals = []
+    class Child:
+        pid = 12345
+        def wait(self, timeout):
+            return -signal.SIGKILL
+    monkeypatch.setattr(os, "killpg", lambda pid, sig: signals.append((pid, sig)))
+    assert runner._stop_child(Child(), metrics.ProcessTreeMonitor(), 0, signal.SIGINT) == -signal.SIGKILL
+    assert signals == [(12345, signal.SIGINT), (12345, signal.SIGKILL)]
