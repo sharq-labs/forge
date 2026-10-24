@@ -679,7 +679,10 @@ def _stop_child(proc: subprocess.Popen | None, monitor: metrics.ProcessTreeMonit
             rc = proc.wait(timeout=0.2)
             # The parent may exit while workers ignore the forwarded signal.
             if not WINDOWS:
-                monitor.terminate_tree()
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
             return rc
         except subprocess.TimeoutExpired:
             continue

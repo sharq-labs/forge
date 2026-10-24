@@ -58,7 +58,11 @@ def _cli_args(run_root: Path, repo: Path, *args: str) -> list[str]:
 
 def _child_env() -> dict[str, str]:
     """The outer pytest's options (``--basetemp`` above all) must not reach a pytest the observatory runs."""
-    return {k: v for k, v in os.environ.items() if not k.startswith(("PYTEST_", "PYTHONBREAKPOINT"))}
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTEST_", "PYTHONBREAKPOINT"))}
+    # The two-run comparison requires an unchanged fixture repository. A first
+    # pytest import must not introduce an untracked __pycache__ between runs.
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    return env
 
 
 def _cli(run_root: Path, repo: Path, *args: str, **kw) -> subprocess.CompletedProcess:
